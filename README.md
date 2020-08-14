@@ -1,4 +1,6 @@
-# Cesium Native (for Unreal Engine)
+# Cesium Native
+
+[CesiumJS](https://github.com/CesiumGS/cesium)-like functionality for C++.
 
 ## Prerequisites
 
