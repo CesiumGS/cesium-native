@@ -47,6 +47,8 @@ namespace CesiumGeometry {
          * 
          * @param position The position.
          * @return The distance squared from the position to the closest point on this bounding sphere.
+         *
+         * @snippet TestBoundingSphere.cpp distanceSquaredTo
          */
         double computeDistanceSquaredToPosition(const glm::dvec3& position) const;
 
