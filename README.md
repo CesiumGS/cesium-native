@@ -22,7 +22,7 @@
   * `popd`
 * Open the cesium-native folder with Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2019 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7. Alternatively, you can build from the command-line as follows:
   * `mkdir build`
-  * `cmake -B build -S .
+  * `cmake -B build -S .`
   * `cmake --build build --config Debug`
 
 ## Building documentation
