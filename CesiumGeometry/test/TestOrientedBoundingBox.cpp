@@ -1,11 +1,9 @@
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <optional>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include "catch2/catch.hpp"
 #include "CesiumGeometry/OrientedBoundingBox.h"
 #include "Cesium3DTiles/Camera.h"
+#include <optional>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 using namespace CesiumGeometry;
 using namespace Cesium3DTiles;
