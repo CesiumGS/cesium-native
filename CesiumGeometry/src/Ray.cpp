@@ -1,4 +1,9 @@
 #include "CesiumGeometry/Ray.h"
+#include "CesiumUtility/Math.h"
+#include <glm/geometric.hpp>
+#include <stdexcept>
+
+using namespace CesiumUtility;
 
 namespace CesiumGeometry {
 
@@ -6,6 +11,11 @@ namespace CesiumGeometry {
         _origin(origin),
         _direction(direction)
     {
+        //>>includeStart('debug', pragmas.debug);
+        if (!Math::equalsEpsilon(glm::length(direction), 1.0, Math::EPSILON6)) {
+            throw std::invalid_argument("direction must be normalized.");
+        }
+        //>>includeEnd('debug');
     }
 
     Ray Ray::operator-() const {

@@ -1,5 +1,9 @@
 #include "CesiumGeometry/Plane.h"
+#include "CesiumUtility/Math.h"
 #include <glm/geometric.hpp>
+#include <stdexcept>
+
+using namespace CesiumUtility;
 
 namespace CesiumGeometry {
 
@@ -7,6 +11,11 @@ namespace CesiumGeometry {
         _normal(normal),
         _distance(distance)
     {
+        //>>includeStart('debug', pragmas.debug);
+        if (!Math::equalsEpsilon(glm::length(normal), 1.0, Math::EPSILON6)) {
+            throw std::invalid_argument("normal must be normalized.");
+        }
+        //>>includeEnd('debug');
     }
 
     Plane::Plane(const glm::dvec3& point, const glm::dvec3& normal) :

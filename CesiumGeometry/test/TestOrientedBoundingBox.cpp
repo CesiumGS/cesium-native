@@ -1,11 +1,9 @@
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <optional>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include "catch2/catch.hpp"
 #include "CesiumGeometry/OrientedBoundingBox.h"
 #include "Cesium3DTiles/Camera.h"
+#include <optional>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 using namespace CesiumGeometry;
 using namespace Cesium3DTiles;
@@ -305,8 +303,7 @@ TEST_CASE("OrientedBoundingBox::intersectPlane") {
     }
 }
 
-TEST_CASE("OrientedBoundingBox examples") {
-    {
+TEST_CASE("OrientedBoundingBox constructor example") {
     //! [Constructor]
     // Create an OrientedBoundingBox using a transformation matrix, a position where the box will be translated, and a scale.
     glm::dvec3 center = glm::dvec3(1.0, 0.0, 0.0);
@@ -319,9 +316,9 @@ TEST_CASE("OrientedBoundingBox examples") {
     auto obb = OrientedBoundingBox(center, halfAxes);
     //! [Constructor]
     (void)obb;
-    }
+}
 
-    {
+TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition example") {
     auto anyOldBoxArray = []() {
         return std::vector<OrientedBoundingBox> {
             { glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(1.0) },
@@ -343,5 +340,4 @@ TEST_CASE("OrientedBoundingBox examples") {
 
     CHECK(boxes[0].getCenter().x == 2.0);
     CHECK(boxes[1].getCenter().x == 1.0);
-    }
 }
