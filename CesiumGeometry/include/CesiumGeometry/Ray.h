@@ -14,7 +14,9 @@ namespace CesiumGeometry {
          * @brief Construct a new ray.
          * 
          * @param origin The origin of the ray.
-         * @param direction The direction of the ray.
+         * @param direction The direction of the ray (normalized).
+         * 
+         * @exception std::exception `direction` must be normalized.
          */
         Ray(const glm::dvec3& origin, const glm::dvec3& direction);
 
