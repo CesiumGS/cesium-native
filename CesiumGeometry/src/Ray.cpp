@@ -1,6 +1,7 @@
 #include "CesiumGeometry/Ray.h"
 #include "CesiumUtility/Math.h"
 #include <glm/geometric.hpp>
+#include <stdexcept>
 
 using namespace CesiumUtility;
 
