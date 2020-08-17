@@ -12,7 +12,7 @@ namespace CesiumGeometry {
     {
         //>>includeStart('debug', pragmas.debug);
         if (!Math::equalsEpsilon(glm::length(normal), 1.0, Math::EPSILON6)) {
-            throw std::exception("normal must be normalized.");
+            throw std::invalid_argument("normal must be normalized.");
         }
         //>>includeEnd('debug');
     }
