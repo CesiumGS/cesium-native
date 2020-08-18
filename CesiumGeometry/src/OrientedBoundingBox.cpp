@@ -6,44 +6,6 @@
 #include "CesiumUtility/Math.h"
 
 namespace CesiumGeometry {
-    /*static*/ OrientedBoundingBox OrientedBoundingBox::fromPlaneExtents(
-        const glm::dvec3& planeOrigin,
-        const glm::dvec3& planeXAxis,
-        const glm::dvec3& planeYAxis,
-        const glm::dvec3& planeZAxis,
-        double minimumX,
-        double maximumX,
-        double minimumY,
-        double maximumY,
-        double minimumZ,
-        double maximumZ
-    ) {
-        glm::dmat3 halfAxes(planeXAxis, planeYAxis, planeZAxis);
-
-        glm::dvec3 centerOffset(
-            (minimumX + maximumX) / 2.0,
-            (minimumY + maximumY) / 2.0,
-            (minimumZ + maximumZ) / 2.0
-        );
-
-        glm::dvec3 scale(
-            (maximumX - minimumX) / 2.0,
-            (maximumY - minimumY) / 2.0,
-            (maximumZ - minimumZ) / 2.0
-        );
-
-        glm::dmat3 scaledHalfAxes(
-            halfAxes[0] * scale.x,
-            halfAxes[1] * scale.y,
-            halfAxes[2] * scale.z
-        );
-
-        return OrientedBoundingBox(
-            planeOrigin + (halfAxes * centerOffset),
-            scaledHalfAxes
-        );
-    }
-
     CullingResult OrientedBoundingBox::intersectPlane(const Plane& plane) const {
         glm::dvec3 normal = plane.getNormal();
 

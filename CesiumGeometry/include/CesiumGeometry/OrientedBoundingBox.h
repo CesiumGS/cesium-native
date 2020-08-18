@@ -17,19 +17,6 @@ namespace CesiumGeometry {
      */
     class CESIUMGEOMETRY_API OrientedBoundingBox {
     public:
-        static OrientedBoundingBox fromPlaneExtents(
-            const glm::dvec3& planeOrigin,
-            const glm::dvec3& planeXAxis,
-            const glm::dvec3& planeYAxis,
-            const glm::dvec3& planeZAxis,
-            double minimumX,
-            double maximumX,
-            double minimumY,
-            double maximumY,
-            double minimumZ,
-            double maximumZ
-        );
-
         /**
          * @brief Constructs a new instance.
          * 
