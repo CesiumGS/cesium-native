@@ -11,19 +11,6 @@ using namespace CesiumGeometry;
 
 namespace CesiumGeospatial {
     BoundingRegion::BoundingRegion(
-        double west,
-        double south,
-        double east,
-        double north,
-        double minimumHeight,
-        double maximumHeight,
-        const Ellipsoid& ellipsoid
-    ) :
-        BoundingRegion(Rectangle(west, south, east, north), minimumHeight, maximumHeight, ellipsoid)
-    {
-    }
-
-    BoundingRegion::BoundingRegion(
         const Rectangle& rectangle,
         double minimumHeight,
         double maximumHeight,
@@ -185,6 +172,44 @@ namespace CesiumGeospatial {
         return result;
     }
 
+    static OrientedBoundingBox fromPlaneExtents(
+        const glm::dvec3& planeOrigin,
+        const glm::dvec3& planeXAxis,
+        const glm::dvec3& planeYAxis,
+        const glm::dvec3& planeZAxis,
+        double minimumX,
+        double maximumX,
+        double minimumY,
+        double maximumY,
+        double minimumZ,
+        double maximumZ
+    ) {
+        glm::dmat3 halfAxes(planeXAxis, planeYAxis, planeZAxis);
+
+        glm::dvec3 centerOffset(
+            (minimumX + maximumX) / 2.0,
+            (minimumY + maximumY) / 2.0,
+            (minimumZ + maximumZ) / 2.0
+        );
+
+        glm::dvec3 scale(
+            (maximumX - minimumX) / 2.0,
+            (maximumY - minimumY) / 2.0,
+            (maximumZ - minimumZ) / 2.0
+        );
+
+        glm::dmat3 scaledHalfAxes(
+            halfAxes[0] * scale.x,
+            halfAxes[1] * scale.y,
+            halfAxes[2] * scale.z
+        );
+
+        return OrientedBoundingBox(
+            planeOrigin + (halfAxes * centerOffset),
+            scaledHalfAxes
+        );
+    }
+
     /*static*/ OrientedBoundingBox BoundingRegion::_computeBoundingBox(
         const Rectangle& rectangle,
         double minimumHeight,
@@ -257,7 +282,7 @@ namespace CesiumGeospatial {
             );
             maxZ = maximumHeight; // Since the tangent plane touches the surface at height = 0, this is okay
 
-            return OrientedBoundingBox::fromPlaneExtents(
+            return fromPlaneExtents(
                 tangentPlane.getOrigin(),
                 tangentPlane.getXAxis(),
                 tangentPlane.getYAxis(),
@@ -315,7 +340,7 @@ namespace CesiumGeospatial {
         maxZ = 0.0; // plane origin starts at maxZ already
 
         // min and max are local to the plane axes
-        return OrientedBoundingBox::fromPlaneExtents(
+        return fromPlaneExtents(
             planeOrigin,
             planeXAxis,
             planeYAxis,

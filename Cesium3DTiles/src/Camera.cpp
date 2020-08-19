@@ -70,9 +70,9 @@ namespace Cesium3DTiles {
         glm::dvec3 normal = right * l;
         normal = nearCenter + normal;
         normal = normal - this->_position;
-        glm::normalize(normal);
+        normal = glm::normalize(normal);
         normal = glm::cross(normal, this->_up);
-        glm::normalize(normal);
+        normal = glm::normalize(normal);
 
         this->_leftPlane = Plane(
             normal,

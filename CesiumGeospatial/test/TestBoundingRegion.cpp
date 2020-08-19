@@ -33,29 +33,31 @@ TEST_CASE("BoundingRegion") {
             10.0
         );
 
+        const Rectangle& rectangle = region.getRectangle();
+
         auto testCase = GENERATE_COPY(
             // Inside bounding region
-            TestCase { region.getWest() + Math::EPSILON6, region.getSouth(), region.getMinimumHeight(), 0.0 },
+            TestCase { rectangle.getWest() + Math::EPSILON6, rectangle.getSouth(), region.getMinimumHeight(), 0.0 },
             // Outside bounding region
-            TestCase { region.getWest(), region.getSouth(), region.getMaximumHeight() + 1.0, 1.0 },
+            TestCase { rectangle.getWest(), rectangle.getSouth(), region.getMaximumHeight() + 1.0, 1.0 },
             // Inside rectangle, above height
             TestCase { 0.0, 0.0, 20.0, 10.0 },
             // Inside rectangle, below height
             TestCase { 0.0, 0.0, 5.0, 0.0 },
             // From southwest
             updateDistance(TestCase {
-                region.getEast() + offset,
-                region.getNorth() + offset,
+                rectangle.getEast() + offset,
+                rectangle.getNorth() + offset,
                 0.0,
                 0.0
-            }, region.getEast(), region.getNorth(), 0.0),
+            }, rectangle.getEast(), rectangle.getNorth(), 0.0),
             // From northeast
             updateDistance(TestCase {
-                region.getWest() - offset,
-                region.getSouth() - offset,
+                rectangle.getWest() - offset,
+                rectangle.getSouth() - offset,
                 0.0,
                 0.0
-            }, region.getWest(), region.getSouth(), 0.0)
+            }, rectangle.getWest(), rectangle.getSouth(), 0.0)
         );
 
         glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
