@@ -36,7 +36,7 @@ namespace Cesium3DTiles {
         }
         std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
         if (bounds.size() >= 4) {
-            this->_bounds = Rectangle(bounds[0], bounds[1], bounds[2], bounds[3]);
+            this->_bounds = Rectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3]);
         }
 
         // TODO: use other tile URLs.
@@ -50,6 +50,7 @@ namespace Cesium3DTiles {
             return "";
         });
 
+        this->_externalRoot[0].setBoundingVolume(BoundingRegion(this->_bounds, -1000.0, 9000.0));
         this->_externalRoot[0].setContentUri(Uri::resolve(url, instancedTemplate, true));
     }
 

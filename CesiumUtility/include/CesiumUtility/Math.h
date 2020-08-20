@@ -101,6 +101,20 @@ namespace CesiumUtility {
         static inline double radiansToDegrees(double angleRadians) {
             return angleRadians * 180.0 / Math::ONE_PI;
         }
+
+        /**
+         * Computes the linear interpolation of two values.
+         *
+         * @param p The start value to interpolate.
+         * @param q The end value to interpolate.
+         * @param time The time of interpolation generally in the range `[0.0, 1.0]`.
+         * @returns The linearly interpolated value.
+         *
+         * @snippet TestMath.cpp lerp
+         */
+        static inline double lerp(double p, double q, double time) {
+            return (1.0 - time) * p + time * q;
+        }
     };
 
 }

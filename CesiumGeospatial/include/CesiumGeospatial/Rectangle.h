@@ -14,6 +14,8 @@ namespace CesiumGeospatial {
             double north
         );
 
+        static Rectangle fromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees);
+
         double getWest() const { return this->_west; }
         double getSouth() const { return this->_south; }
         double getEast() const { return this->_east; }

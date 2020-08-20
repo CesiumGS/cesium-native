@@ -18,6 +18,15 @@ namespace CesiumGeospatial {
     {
     }
 
+    /*static*/ Rectangle Rectangle::fromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees) {
+        return Rectangle(
+            Math::degreesToRadians(westDegrees),
+            Math::degreesToRadians(southDegrees),
+            Math::degreesToRadians(eastDegrees),
+            Math::degreesToRadians(northDegrees)
+        );
+    }
+
     double Rectangle::computeWidth() const {
         double east = this->_east;
         double west = this->_west;
