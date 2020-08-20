@@ -155,6 +155,24 @@ namespace Cesium3DTiles {
         this->_pContentRequest->bind(std::bind(&Tile::contentResponseReceived, this, std::placeholders::_1));
     }
 
+    void Tile::loadReadyContent(std::unique_ptr<TileContent> pReadyContent) {
+        if (this->getState() != LoadState::Unloaded) {
+            return;
+        }
+
+        this->_pContent = std::move(pReadyContent);
+
+        const TilesetExternals& externals = this->_pTileset->getExternals();
+        if (externals.pPrepareRendererResources) {
+            this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
+        }
+        else {
+            this->_pRendererResources = nullptr;
+        }
+
+        this->setState(LoadState::ContentLoaded);
+    }
+
     bool Tile::unloadContent() {
         // Cannot unload while an async operation is in progress.
         // Also, don't unload tiles with external tileset content at all, because reloading
@@ -244,18 +262,16 @@ namespace Cesium3DTiles {
             return;
         }
 
-        gsl::span<const uint8_t> data = pResponse->data();
-
         const TilesetExternals& externals = this->_pTileset->getExternals();
 
-        externals.pTaskProcessor->startTask([data, &externals, this]() {
+        externals.pTaskProcessor->startTask([pResponse, &externals, this]() {
             if (this->getState() == LoadState::Destroying) {
                 this->_pTileset->notifyTileDoneLoading(this);
                 this->setState(LoadState::Failed);
                 return;
             }
 
-            std::unique_ptr<TileContent> pContent = TileContentFactory::createContent(*this, data, this->_pContentRequest->url());
+            std::unique_ptr<TileContent> pContent = TileContentFactory::createContent(*this, pResponse->data(), this->_pContentRequest->url(), pResponse->contentType());
             if (pContent) {
                 this->_pContent = std::move(pContent);
 

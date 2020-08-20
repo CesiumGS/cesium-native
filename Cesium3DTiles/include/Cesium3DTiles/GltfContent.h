@@ -7,11 +7,12 @@
 
 namespace Cesium3DTiles {
 
-    class CESIUM3DTILES_API Batched3DModelContent : public TileContent {
+    class CESIUM3DTILES_API GltfContent : public TileContent {
     public:
         static std::string TYPE;
 
-        Batched3DModelContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url);
+        GltfContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url);
+        GltfContent(const Tile& tile, tinygltf::Model&& data, const std::string& url);
 
         const tinygltf::Model& gltf() const { return this->_gltf; }
 

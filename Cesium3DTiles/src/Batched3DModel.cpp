@@ -1,10 +1,8 @@
-#include "Cesium3DTiles/Batched3DModelContent.h"
+#include "Batched3DModel.h"
 #include <stdexcept>
-#include "tiny_gltf.h"
 
 namespace Cesium3DTiles {
-
-	std::string Batched3DModelContent::TYPE = "b3dm";
+    std::string Batched3DModel::MAGIC = "b3dm";
 
 	struct B3dmHeader
 	{
@@ -36,9 +34,7 @@ namespace Cesium3DTiles {
 		uint32_t batchLength;
 	};
 
-	Batched3DModelContent::Batched3DModelContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& /*url*/) :
-		TileContent(tile)
-	{
+    std::unique_ptr<GltfContent> Batched3DModel::load(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) {
 		// TODO: actually use the b3dm payload
 		if (data.size() < sizeof(B3dmHeader)) {
 			throw std::runtime_error("The B3DM is invalid because it is too small to include a B3DM header.");
@@ -107,14 +103,7 @@ namespace Cesium3DTiles {
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
 
-		tinygltf::TinyGLTF loader;
-		std::string errors;
-		std::string warnings;
-
-		/*bool loadSucceeded =*/ loader.LoadBinaryFromMemory(&this->_gltf, &errors, &warnings, glbData.data(), static_cast<unsigned int>(glbData.size()));
-		//if (!loadSucceeded) {
-		//	throw std::runtime_error("Failed to load glTF model from B3DM.");
-		//}
-	}
+        return std::make_unique<GltfContent>(tile, glbData, url);
+    }
 
 }

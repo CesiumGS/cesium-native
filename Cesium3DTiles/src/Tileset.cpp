@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
+#include "Cesium3DTiles/TerrainLayerJsonContent.h"
 #include "Uri.h"
 #include "TilesetJson.h"
 #include <chrono>
@@ -161,6 +162,12 @@ namespace Cesium3DTiles {
 
         std::string url = ionResponse.value<std::string>("url", "");
         std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+        
+        // For terrain resources, we need to append `/layer.json` to the end of the URL.
+        if (ionResponse.value<std::string>("type", "") == "TERRAIN") {
+            url = Uri::resolve(url, "layer.json");
+        }
+
         std::string urlWithToken = Uri::addQuery(url, "access_token", accessToken);
 
         // When we assign _pTilesetRequest, the previous request and response
@@ -192,15 +199,18 @@ namespace Cesium3DTiles {
             using nlohmann::json;
             json tileset = json::parse(data.begin(), data.end());
 
-            json& rootJson = tileset["root"];
-
             std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
             pRootTile->setTileset(this);
 
-            this->_createTile(*pRootTile, rootJson, this->_pTilesetJsonRequest->url());
+            json::iterator rootIt = tileset.find("root");
+            if (rootIt != tileset.end()) {
+                json& rootJson = *rootIt;
+                this->_createTile(*pRootTile, rootJson, this->_pTilesetJsonRequest->url());
+            } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
+                this->_createTerrainTile(*pRootTile, tileset, this->_pTilesetJsonRequest->url());
+            }
 
             this->_pRootTile = std::move(pRootTile);
-
             this->markInitialLoadComplete();
         });
     }
@@ -302,6 +312,12 @@ namespace Cesium3DTiles {
                 this->_createTile(child, childJson, baseUrl);
             }
         }
+    }
+
+    void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson, const std::string& baseUrl) const {
+        std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(tile, layerJson, baseUrl);
+        tile.setBoundingVolume(CesiumGeospatial::BoundingRegion(pContent->getBounds(), -1000.0, 9000.0));
+        tile.loadReadyContent(std::move(pContent));
     }
 
     static void markTileNonRendered(TileSelectionState::Result lastResult, Tile& tile, ViewUpdateResult& result) {

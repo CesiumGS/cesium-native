@@ -60,7 +60,7 @@ namespace Cesium3DTiles {
 
         /**
          * When true, the tileset will guarantee that the tileset will never be rendered with holes in place
-         * of tiles that are not yet loaded. It does this be refusing to refine a parent tile until all of its
+         * of tiles that are not yet loaded. It does this by refusing to refine a parent tile until all of its
          * child tiles are ready to render. Thus, when the camera moves, we will always have something - even
          * if it's low resolution - to render any part of the tileset that becomes visible. When false, overall
          * loading will be faster, but newly-visible parts of the tileset may initially be blank.
@@ -201,6 +201,8 @@ namespace Cesium3DTiles {
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
         void _createTile(Tile& tile, const nlohmann::json& tileJson, const std::string& baseUrl) const;
+        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, const std::string& baseUrl) const;
+
         TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);

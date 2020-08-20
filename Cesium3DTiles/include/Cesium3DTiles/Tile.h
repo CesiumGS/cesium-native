@@ -127,6 +127,17 @@ namespace Cesium3DTiles {
         bool isRenderable() const;
 
         void loadContent();
+
+        /**
+         * @brief "Loads" tile content that is already ready to go.
+         * 
+         * This method is usually called from a load thread and it calls {@see IPrepareRendererResources::prepareInLoadThread}
+         * before returning.
+         * 
+         * @param pReadyContent The tile's content
+         */
+        void loadReadyContent(std::unique_ptr<TileContent> pReadyContent);
+
         bool unloadContent();
         void cancelLoadContent();
 
