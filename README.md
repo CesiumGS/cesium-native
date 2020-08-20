@@ -4,19 +4,19 @@
 
 ## Prerequisites
 
-* Visual Studio 2019 or GCC v7.x+. Other compilers may work but haven't been tested.
-* CMake (add it to your path during install!)
+* Visual Studio 2019 with `Desktop Development with C++ workload` or GCC v7.x+. Other compilers may work but haven't been tested.
+* CMake 3.15 or higher (add it to your path during install!)
 
 ## Getting Started
 
 * Check out the repo with `git clone git@github.com:CesiumGS/cesium-native.git --recurse-submodules` so that you get the third party submodules.
 * Build the draco library with CMake:
-  * `pushd extern; mkdir build; cd build; mkdir draco; cd draco`
+  * `pushd extern; mkdir -p build; cd build; mkdir -p draco; cd draco`
   * `cmake ../../draco/`
   * `cmake --build . --config Release`
   * `popd`
 * Build the uriparser library with CMake:
-  * `pushd extern; mkdir build; cd build; mkdir uriparser; cd uriparser`
+  * `pushd extern; mkdir -p build; cd build; mkdir -p uriparser; cd uriparser`
   * `cmake ../../uriparser/ -DCMAKE_BUILD_TYPE=Release -D URIPARSER_BUILD_TESTS:BOOL=OFF -D URIPARSER_BUILD_DOCS:BOOL=OFF -D BUILD_SHARED_LIBS:BOOL=OFF -D URIPARSER_ENABLE_INSTALL:BOOL=OFF -D URIPARSER_BUILD_TOOLS:BOOL=OFF`
   * `cmake --build . --config Release`
   * `popd`
