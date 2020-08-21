@@ -1,7 +1,10 @@
-#include "QuantizedMesh.h"
+#include "QuantizedMeshContent.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumGeospatial/Rectangle.h"
 #include "Cesium3DTiles/Tile.h"
+#include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/TerrainLayerJsonContent.h"
+#include "Uri.h"
 #include "tiny_gltf.h"
 #include <stdexcept>
 #include <glm/vec3.hpp>
@@ -10,7 +13,143 @@ using namespace CesiumUtility;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
-    std::string QuantizedMesh::CONTENT_TYPE = "application/vnd.quantized-mesh";
+    std::string QuantizedMeshContent::CONTENT_TYPE = "application/vnd.quantized-mesh";
+
+    QuantizedMeshContent::QuantizedMeshContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) :
+        GltfContent(tile, createGltf(tile, data), url),
+        _level(-1),
+        _x(0),
+        _y(0)
+    {
+        const Tile* pParent = tile.getParent();
+        if (pParent) {
+            if (pParent == tile.getTileset()->getRootTile()) {
+                this->_level = 0;
+                this->_x = 0;
+                this->_y = 0;
+            } else {
+                const QuantizedMeshContent* pContent = static_cast<const QuantizedMeshContent*>(pParent->getContent());
+                if (pContent) {
+                    this->_level = pContent->getLevel() + 1;
+                    this->_x = pContent->getX() * 2;
+                    this->_y = pContent->getY() * 2;
+
+                    const CesiumGeospatial::Rectangle& rectangle = std::get<BoundingRegion>(tile.getBoundingVolume()).getRectangle();
+                    const CesiumGeospatial::Rectangle& parentRectangle = std::get<BoundingRegion>(pParent->getBoundingVolume()).getRectangle();
+                    if (rectangle.getWest() > parentRectangle.getWest()) {
+                        ++this->_x;
+                    }
+                    if (rectangle.getSouth() > parentRectangle.getSouth()) {
+                        ++this->_y;
+                    }
+                }
+            }
+        }
+    }
+
+    static std::string createTileUrl(const TerrainLayerJsonContent& rootContent, uint32_t level, uint32_t x, uint32_t y) {
+        const std::vector<std::string>& tilesUrlTemplates = rootContent.getTilesUrlTemplates();
+        const std::string& version = rootContent.getVersion();
+
+        std::string instancedTemplate = Uri::substituteTemplateParameters(tilesUrlTemplates[0], [&version, level, x, y](const std::string& placeholder) -> std::string {
+            if (placeholder == "z") {
+                return std::to_string(level);
+            } else if (placeholder == "x") {
+                return std::to_string(x);
+            } else if (placeholder == "y") {
+                return std::to_string(y);
+            } else if (placeholder == "version") {
+                return version;
+            }
+
+            return "";
+        });
+
+        return Uri::resolve(rootContent.getLayerJsonUrl(), instancedTemplate, true);
+    }
+
+    void QuantizedMeshContent::finalizeLoad(Tile& tile) {
+        // Tileset* pTileset = tile.getTileset();
+        // Tile* pRoot = pTileset->getRootTile();
+        // TileContent* pContent = pRoot->getContent();
+        // if (pContent && pContent->getType() == TerrainLayerJsonContent::TYPE) {
+        //     TerrainLayerJsonContent* pLayerJson = static_cast<TerrainLayerJsonContent*>(pContent);
+        //     // TODO: check availability for children
+        // }
+
+        // Create child tiles
+        // TODO: only create them if they really exist
+        if (tile.getChildren().size() > 0) {
+            if (tile.getChildren().size() != 4) {
+                // We already have children, but the wrong number. Let's give up.
+                GltfContent::finalizeLoad(tile);
+                return;
+            }
+        } else {
+            tile.createChildTiles(4);
+        }
+
+        gsl::span<Tile> children = tile.getChildren();
+        Tile& sw = children[0];
+        Tile& se = children[1];
+        Tile& nw = children[2];
+        Tile& ne = children[3];
+
+        sw.setTileset(tile.getTileset());
+        se.setTileset(tile.getTileset());
+        nw.setTileset(tile.getTileset());
+        ne.setTileset(tile.getTileset());
+
+        sw.setParent(&tile);
+        se.setParent(&tile);
+        nw.setParent(&tile);
+        ne.setParent(&tile);
+
+        double childGeometricError = tile.getGeometricError() * 0.5;
+        sw.setGeometricError(childGeometricError);
+        se.setGeometricError(childGeometricError);
+        nw.setGeometricError(childGeometricError);
+        ne.setGeometricError(childGeometricError);
+
+        const BoundingRegion& region = std::get<BoundingRegion>(tile.getBoundingVolume());
+        const CesiumGeospatial::Rectangle& rectangle = region.getRectangle();
+        Cartographic center = rectangle.computeCenter();
+
+        sw.setBoundingVolume(BoundingRegion(
+            CesiumGeospatial::Rectangle(rectangle.getWest(), rectangle.getSouth(), center.longitude, center.latitude),
+            region.getMinimumHeight(), // TODO
+            region.getMaximumHeight()
+        ));
+        se.setBoundingVolume(BoundingRegion(
+            CesiumGeospatial::Rectangle(center.longitude, rectangle.getSouth(), rectangle.getEast(), center.latitude),
+            region.getMinimumHeight(), // TODO
+            region.getMaximumHeight()
+        ));
+        nw.setBoundingVolume(BoundingRegion(
+            CesiumGeospatial::Rectangle(rectangle.getWest(), center.latitude, center.longitude, rectangle.getNorth()),
+            region.getMinimumHeight(), // TODO
+            region.getMaximumHeight()
+        ));
+        ne.setBoundingVolume(BoundingRegion(
+            CesiumGeospatial::Rectangle(center.longitude, center.latitude, rectangle.getEast(), rectangle.getNorth()),
+            region.getMinimumHeight(), // TODO
+            region.getMaximumHeight()
+        ));
+
+        QuantizedMeshContent* pContent = static_cast<QuantizedMeshContent*>(tile.getContent());
+        uint32_t level = pContent->getLevel() + 1;
+        uint32_t x = pContent->getX() * 2;
+        uint32_t y = pContent->getY() * 2;
+
+        TerrainLayerJsonContent* pRootContent = static_cast<TerrainLayerJsonContent*>(tile.getTileset()->getRootTile()->getContent());
+
+        sw.setContentUri(createTileUrl(*pRootContent, level, x, y));
+        se.setContentUri(createTileUrl(*pRootContent, level, x + 1, y));
+        nw.setContentUri(createTileUrl(*pRootContent, level, x, y + 1));
+        ne.setContentUri(createTileUrl(*pRootContent, level, x + 1, y + 1));
+
+        GltfContent::finalizeLoad(tile);
+    }
 
     struct QuantizedMeshHeader
     {
@@ -68,9 +207,9 @@ namespace Cesium3DTiles {
         }
     }
 
-    std::unique_ptr<GltfContent> QuantizedMesh::load(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) {
+    /*static*/ tinygltf::Model QuantizedMeshContent::createGltf(const Tile& tile, const gsl::span<const uint8_t>& data) {
         if (data.size() < headerLength) {
-            return nullptr;
+            return tinygltf::Model();
         }
 
         size_t readIndex = 0;
@@ -88,19 +227,19 @@ namespace Cesium3DTiles {
         const gsl::span<const uint16_t> uBuffer(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += uBuffer.size_bytes();
         if (readIndex > data.size()) {
-            return nullptr;
+            return tinygltf::Model();
         }
 
         const gsl::span<const uint16_t> vBuffer(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += vBuffer.size_bytes();
         if (readIndex > data.size()) {
-            return nullptr;
+            return tinygltf::Model();
         }
 
         const gsl::span<const uint16_t> heightBuffer(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += heightBuffer.size_bytes();
         if (readIndex > data.size()) {
-            return nullptr;
+            return tinygltf::Model();
         }
 
         int32_t u = 0;
@@ -215,20 +354,20 @@ namespace Cesium3DTiles {
             if ((readIndex % 4) != 0) {
                 readIndex += 2;
                 if (readIndex > data.size()) {
-                    return nullptr;
+                    return tinygltf::Model();
                 }
             }
 
             uint32_t triangleCount = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
             readIndex += sizeof(uint32_t);
             if (readIndex > data.size()) {
-                return nullptr;
+                return tinygltf::Model();
             }
 
             const gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t*>(data.data() + readIndex), triangleCount * 3);
             readIndex += indices.size_bytes();
             if (readIndex > data.size()) {
-                return nullptr;
+                return tinygltf::Model();
             }
 
             indicesBuffer.data.resize(triangleCount * 3 * sizeof(uint32_t));
@@ -244,13 +383,13 @@ namespace Cesium3DTiles {
             uint32_t triangleCount = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
             readIndex += sizeof(uint32_t);
             if (readIndex > data.size()) {
-                return nullptr;
+                return tinygltf::Model();
             }
 
             const gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t*>(data.data() + readIndex), triangleCount * 3);
             readIndex += indices.size_bytes();
             if (readIndex > data.size()) {
-                return nullptr;
+                return tinygltf::Model();
             }
 
             indicesBuffer.data.resize(triangleCount * 3 * sizeof(uint16_t));
@@ -263,7 +402,17 @@ namespace Cesium3DTiles {
             decodeIndices(indices, outputIndices);
         }
 
-        return std::make_unique<GltfContent>(tile, std::move(model), url);
+        model.nodes.emplace_back();
+        tinygltf::Node& node = model.nodes[0];
+        node.mesh = 0;
+        node.matrix = {
+            1.0, 0.0,  0.0, 0.0,
+            0.0, 0.0, -1.0, 0.0,
+            0.0, 1.0,  0.0, 0.0,
+            center.x, center.z, -center.y, 1.0
+        };
+
+        return model;
     }
 
 }

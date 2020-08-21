@@ -18,12 +18,16 @@ namespace Cesium3DTiles {
         virtual void finalizeLoad(Tile& tile);
 
         const CesiumGeospatial::Rectangle& getBounds() const { return this->_bounds; }
+        const std::string& getLayerJsonUrl() const { return this->_layerJsonUrl; }
+        const std::vector<std::string>& getTilesUrlTemplates() const { return this->_tilesUrlTemplates; }
+        const std::string& getVersion() const { return this->_version; }
 
     private:
         std::vector<Tile> _externalRoot;
         std::vector<std::string> _tilesUrlTemplates;
         std::string _version;
         CesiumGeospatial::Rectangle _bounds;
+        std::string _layerJsonUrl;
     };
 
 }
