@@ -16,57 +16,30 @@ namespace Cesium3DTiles {
     std::string QuantizedMeshContent::CONTENT_TYPE = "application/vnd.quantized-mesh";
 
     QuantizedMeshContent::QuantizedMeshContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) :
-        GltfContent(tile, createGltf(tile, data), url),
-        _level(-1),
-        _x(0),
-        _y(0)
+        GltfContent(tile, createGltf(tile, data), url)
     {
-        const Tile* pParent = tile.getParent();
-        if (pParent) {
-            if (pParent == tile.getTileset()->getRootTile()) {
-                this->_level = 0;
-                this->_x = 0;
-                this->_y = 0;
-            } else {
-                const QuantizedMeshContent* pContent = static_cast<const QuantizedMeshContent*>(pParent->getContent());
-                if (pContent) {
-                    this->_level = pContent->getLevel() + 1;
-                    this->_x = pContent->getX() * 2;
-                    this->_y = pContent->getY() * 2;
-
-                    const CesiumGeospatial::Rectangle& rectangle = std::get<BoundingRegion>(tile.getBoundingVolume()).getRectangle();
-                    const CesiumGeospatial::Rectangle& parentRectangle = std::get<BoundingRegion>(pParent->getBoundingVolume()).getRectangle();
-                    if (rectangle.getWest() > parentRectangle.getWest()) {
-                        ++this->_x;
-                    }
-                    if (rectangle.getSouth() > parentRectangle.getSouth()) {
-                        ++this->_y;
-                    }
-                }
-            }
-        }
     }
 
-    static std::string createTileUrl(const TerrainLayerJsonContent& rootContent, uint32_t level, uint32_t x, uint32_t y) {
-        const std::vector<std::string>& tilesUrlTemplates = rootContent.getTilesUrlTemplates();
-        const std::string& version = rootContent.getVersion();
+    // static std::string createTileUrl(const TerrainLayerJsonContent& rootContent, uint32_t level, uint32_t x, uint32_t y) {
+    //     const std::vector<std::string>& tilesUrlTemplates = rootContent.getTilesUrlTemplates();
+    //     const std::string& version = rootContent.getVersion();
 
-        std::string instancedTemplate = Uri::substituteTemplateParameters(tilesUrlTemplates[0], [&version, level, x, y](const std::string& placeholder) -> std::string {
-            if (placeholder == "z") {
-                return std::to_string(level);
-            } else if (placeholder == "x") {
-                return std::to_string(x);
-            } else if (placeholder == "y") {
-                return std::to_string(y);
-            } else if (placeholder == "version") {
-                return version;
-            }
+    //     std::string instancedTemplate = Uri::substituteTemplateParameters(tilesUrlTemplates[0], [&version, level, x, y](const std::string& placeholder) -> std::string {
+    //         if (placeholder == "z") {
+    //             return std::to_string(level);
+    //         } else if (placeholder == "x") {
+    //             return std::to_string(x);
+    //         } else if (placeholder == "y") {
+    //             return std::to_string(y);
+    //         } else if (placeholder == "version") {
+    //             return version;
+    //         }
 
-            return "";
-        });
+    //         return "";
+    //     });
 
-        return Uri::resolve(rootContent.getLayerJsonUrl(), instancedTemplate, true);
-    }
+    //     return Uri::resolve(rootContent.getLayerJsonUrl(), instancedTemplate, true);
+    // }
 
     void QuantizedMeshContent::finalizeLoad(Tile& tile) {
         // Tileset* pTileset = tile.getTileset();
@@ -76,6 +49,8 @@ namespace Cesium3DTiles {
         //     TerrainLayerJsonContent* pLayerJson = static_cast<TerrainLayerJsonContent*>(pContent);
         //     // TODO: check availability for children
         // }
+
+        // TODO: update the bounding volume heights.
 
         // Create child tiles
         // TODO: only create them if they really exist
@@ -136,17 +111,15 @@ namespace Cesium3DTiles {
             region.getMaximumHeight()
         ));
 
-        QuantizedMeshContent* pContent = static_cast<QuantizedMeshContent*>(tile.getContent());
-        uint32_t level = pContent->getLevel() + 1;
-        uint32_t x = pContent->getX() * 2;
-        uint32_t y = pContent->getY() * 2;
+        const QuadtreeID& id = std::get<QuadtreeID>(tile.getTileID());
+        uint32_t level = id.level + 1;
+        uint32_t x = id.x * 2;
+        uint32_t y = id.y * 2;
 
-        TerrainLayerJsonContent* pRootContent = static_cast<TerrainLayerJsonContent*>(tile.getTileset()->getRootTile()->getContent());
-
-        sw.setContentUri(createTileUrl(*pRootContent, level, x, y));
-        se.setContentUri(createTileUrl(*pRootContent, level, x + 1, y));
-        nw.setContentUri(createTileUrl(*pRootContent, level, x, y + 1));
-        ne.setContentUri(createTileUrl(*pRootContent, level, x + 1, y + 1));
+        sw.setTileID(QuadtreeID(level, x, y));
+        se.setTileID(QuadtreeID(level, x + 1, y));
+        nw.setTileID(QuadtreeID(level, x, y + 1));
+        ne.setTileID(QuadtreeID(level, x + 1, y + 1));
 
         GltfContent::finalizeLoad(tile);
     }

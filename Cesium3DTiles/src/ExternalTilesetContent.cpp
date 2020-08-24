@@ -10,7 +10,7 @@ namespace Cesium3DTiles {
     ExternalTilesetContent::ExternalTilesetContent(
         const Tile& tile,
         const gsl::span<const uint8_t>& data,
-        const std::string& url
+        const std::string& /*url*/
     ) :
         TileContent(tile),
         _externalRoot(1)
@@ -19,7 +19,7 @@ namespace Cesium3DTiles {
 
         json tilesetJson = json::parse(data.begin(), data.end());
         this->_externalRoot[0].setParent(const_cast<Tile*>(&tile));
-        tile.getTileset()->loadTilesFromJson(this->_externalRoot[0], tilesetJson, url);
+        tile.getTileset()->loadTilesFromJson(this->_externalRoot[0], tilesetJson);
     }
 
     void ExternalTilesetContent::finalizeLoad(Tile& tile) {

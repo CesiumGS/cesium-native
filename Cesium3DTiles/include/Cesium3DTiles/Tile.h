@@ -14,6 +14,7 @@
 #include "Cesium3DTiles/TileSelectionState.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
+#include "Cesium3DTiles/TileID.h"
 
 namespace Cesium3DTiles {
     class Tileset;
@@ -104,8 +105,8 @@ namespace Cesium3DTiles {
         const glm::dmat4x4& getTransform() const { return this->_transform; }
         void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
 
-        const std::optional<std::string>& getContentUri() const { return this->_contentUri; }
-        void setContentUri(const std::optional<std::string>& value);
+        const TileID& getTileID() const { return this->_id; }
+        void setTileID(const TileID& id);
 
         const std::optional<BoundingVolume>& getContentBoundingVolume() const { return this->_contentBoundingVolume; }
         void setContentBoundingVolume(const std::optional<BoundingVolume>& value) { this->_contentBoundingVolume = value; }
@@ -168,7 +169,7 @@ namespace Cesium3DTiles {
         std::optional<Refine> _refine;
         glm::dmat4x4 _transform;
 
-        std::optional<std::string> _contentUri;
+        TileID _id;
         std::optional<BoundingVolume> _contentBoundingVolume;
 
         // Load state and data.

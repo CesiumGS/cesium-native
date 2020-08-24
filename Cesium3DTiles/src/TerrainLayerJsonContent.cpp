@@ -17,7 +17,7 @@ namespace Cesium3DTiles {
         const std::string& url
     ) :
         TileContent(tile),
-        _externalRoot(1),
+        _externalRoot(2),
         _tilesUrlTemplates(),
         _version(),
         _bounds(0.0, 0.0, 0.0, 0.0)
@@ -26,6 +26,9 @@ namespace Cesium3DTiles {
 
         this->_externalRoot[0].setTileset(const_cast<Tileset*>(tile.getTileset()));
         this->_externalRoot[0].setParent(const_cast<Tile*>(&tile));
+
+        this->_externalRoot[1].setTileset(const_cast<Tileset*>(tile.getTileset()));
+        this->_externalRoot[1].setParent(const_cast<Tile*>(&tile));
 
         this->_tilesUrlTemplates = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
         this->_version = layerJson.value<std::string>("version", "");
@@ -42,19 +45,21 @@ namespace Cesium3DTiles {
 
         this->_layerJsonUrl = url;
 
-        // TODO: use other tile URLs.
-        std::string instancedTemplate = Uri::substituteTemplateParameters(this->_tilesUrlTemplates[0], [this](const std::string& placeholder) -> std::string {
-            if (placeholder == "z" || placeholder == "x" || placeholder == "y") {
-                return "0";
-            } else if (placeholder == "version") {
-                return this->_version;
-            }
+        this->_externalRoot[0].setBoundingVolume(BoundingRegion(Rectangle(
+            this->_bounds.getWest(),
+            this->_bounds.getSouth(),
+            this->_bounds.computeCenter().longitude,
+            this->_bounds.getNorth()
+        ), -1000.0, 9000.0));
+        this->_externalRoot[0].setTileID(QuadtreeID(0, 0, 0));
 
-            return "";
-        });
-
-        this->_externalRoot[0].setBoundingVolume(BoundingRegion(this->_bounds, -1000.0, 9000.0));
-        this->_externalRoot[0].setContentUri(Uri::resolve(url, instancedTemplate, true));
+        this->_externalRoot[1].setBoundingVolume(BoundingRegion(Rectangle(
+            this->_bounds.computeCenter().longitude,
+            this->_bounds.getSouth(),
+            this->_bounds.getEast(),
+            this->_bounds.getNorth()
+        ), -1000.0, 9000.0));
+        this->_externalRoot[1].setTileID(QuadtreeID(0, 1, 0));
 
         double geometricError = (
             Ellipsoid::WGS84.getRadii().x *

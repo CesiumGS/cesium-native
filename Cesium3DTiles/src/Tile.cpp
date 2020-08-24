@@ -6,6 +6,7 @@
 #include <chrono>
 
 using namespace CesiumGeometry;
+using namespace std::string_literals;
 
 namespace Cesium3DTiles {
 
@@ -19,7 +20,7 @@ namespace Cesium3DTiles {
         _geometricError(0.0),
         _refine(),
         _transform(1.0),
-        _contentUri(),
+        _id(""s),
         _contentBoundingVolume(),
         _state(LoadState::Unloaded),
         _pContentRequest(nullptr),
@@ -61,7 +62,7 @@ namespace Cesium3DTiles {
         _geometricError(rhs._geometricError),
         _refine(rhs._refine),
         _transform(rhs._transform),
-        _contentUri(rhs._contentUri),
+        _id(std::move(rhs._id)),
         _contentBoundingVolume(rhs._contentBoundingVolume),
         _state(rhs.getState()),
         _pContentRequest(std::move(rhs._pContentRequest)),
@@ -82,7 +83,7 @@ namespace Cesium3DTiles {
             this->_geometricError = rhs._geometricError;
             this->_refine = rhs._refine;
             this->_transform = rhs._transform;
-            this->_contentUri = rhs._contentUri;
+            this->_id = std::move(rhs._id);
             this->_contentBoundingVolume = rhs._contentBoundingVolume;
             this->setState(rhs.getState());
             this->_pContentRequest = std::move(rhs._pContentRequest);
@@ -119,8 +120,8 @@ namespace Cesium3DTiles {
         this->_children = std::move(children);
     }
 
-    void Tile::setContentUri(const std::optional<std::string>& value) {
-        this->_contentUri = value;
+    void Tile::setTileID(const TileID& id) {
+        this->_id = id;
     }
 
     bool Tile::isRenderable() const {
@@ -141,17 +142,9 @@ namespace Cesium3DTiles {
             return;
         }
 
-        if (!this->getContentUri().has_value()) {
-            // TODO: should we let the renderer do some preparation even if there's no content?
-            this->setState(LoadState::ContentLoaded);
-            this->_pTileset->notifyTileDoneLoading(this);
-            return;
-        }
-
         this->setState(LoadState::ContentLoading);
-
-        IAssetAccessor* pAssetAccessor = this->_pTileset->getExternals().pAssetAccessor;
-        this->_pContentRequest = pAssetAccessor->requestAsset(*this->_contentUri);
+        
+        this->_pContentRequest = this->getTileset()->requestTileContent(*this);
         this->_pContentRequest->bind(std::bind(&Tile::contentResponseReceived, this, std::placeholders::_1));
     }
 

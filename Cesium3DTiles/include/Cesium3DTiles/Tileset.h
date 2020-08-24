@@ -159,9 +159,10 @@ namespace Cesium3DTiles {
          * Loads a tile tree from a tileset.json file. This method is safe to call from any thread.
          * @param rootTile A blank tile into which to load the root.
          * @param tileJson The parsed tileset.json.
-         * @param baseUrl The base URL of the tileset.json.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const std::string& baseUrl) const;
+        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson) const;
+
+        std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
     private:
         struct TraversalDetails {
@@ -200,8 +201,8 @@ namespace Cesium3DTiles {
 
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const std::string& baseUrl) const;
-        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, const std::string& baseUrl) const;
+        void _createTile(Tile& tile, const nlohmann::json& tileJson) const;
+        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson);
 
         TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
@@ -225,6 +226,9 @@ namespace Cesium3DTiles {
         std::unique_ptr<IAssetRequest> _pTilesetJsonRequest;
         std::atomic<bool> _isDoingInitialLoad;
 
+        std::string _version;
+        std::string _tileBaseUrl;
+        std::vector<std::string> _implicitTileUrls;
         std::unique_ptr<Tile> _pRootTile;
 
         uint32_t _previousFrameNumber;
