@@ -1,0 +1,2 @@
+#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
+
