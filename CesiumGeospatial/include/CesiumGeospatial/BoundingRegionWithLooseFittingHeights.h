@@ -42,7 +42,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeConservativeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const { return this->_region.computeDistanceSquaredToPosition(position, ellipsoid); }
+        double computeConservativeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const;
 
         /**
          * @brief Computes the conservative distance-squared from a longitude-latitude-height position
@@ -59,7 +59,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeConservativeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const { return this->_region.computeDistanceSquaredToPosition(position, ellipsoid); }
+        double computeConservativeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const;
 
         /**
          * @brief Computes the conservative distance-squared from a position to the closest point in this bounding region, when the longitude-latitude-height
@@ -76,7 +76,7 @@ namespace CesiumGeospatial {
          * @param cartesianPosition The position as ellipsoid-centered Cartesian coordinates.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeConservativeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const { return this->_region.computeDistanceSquaredToPosition(cartographicPosition, cartesianPosition); }
+        double computeConservativeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const;
 
     private:
         BoundingRegion _region;

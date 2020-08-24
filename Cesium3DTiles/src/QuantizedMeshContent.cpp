@@ -15,31 +15,23 @@ using namespace CesiumGeospatial;
 namespace Cesium3DTiles {
     std::string QuantizedMeshContent::CONTENT_TYPE = "application/vnd.quantized-mesh";
 
+    struct QuantizedMeshContent::LoadedData {
+        tinygltf::Model gltf;
+        double minimumHeight;
+        double maximumHeight;
+    };
+
     QuantizedMeshContent::QuantizedMeshContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) :
-        GltfContent(tile, createGltf(tile, data), url)
+        QuantizedMeshContent(tile, QuantizedMeshContent::load(tile, data), url)
     {
+
     }
 
-    // static std::string createTileUrl(const TerrainLayerJsonContent& rootContent, uint32_t level, uint32_t x, uint32_t y) {
-    //     const std::vector<std::string>& tilesUrlTemplates = rootContent.getTilesUrlTemplates();
-    //     const std::string& version = rootContent.getVersion();
-
-    //     std::string instancedTemplate = Uri::substituteTemplateParameters(tilesUrlTemplates[0], [&version, level, x, y](const std::string& placeholder) -> std::string {
-    //         if (placeholder == "z") {
-    //             return std::to_string(level);
-    //         } else if (placeholder == "x") {
-    //             return std::to_string(x);
-    //         } else if (placeholder == "y") {
-    //             return std::to_string(y);
-    //         } else if (placeholder == "version") {
-    //             return version;
-    //         }
-
-    //         return "";
-    //     });
-
-    //     return Uri::resolve(rootContent.getLayerJsonUrl(), instancedTemplate, true);
-    // }
+    QuantizedMeshContent::QuantizedMeshContent(const Tile& tile, LoadedData&& loadedData, const std::string& url) :
+        GltfContent(tile, std::move(loadedData.gltf), url),
+        _minimumHeight(loadedData.minimumHeight),
+        _maximumHeight(loadedData.maximumHeight)
+    {}
 
     void QuantizedMeshContent::finalizeLoad(Tile& tile) {
         // Tileset* pTileset = tile.getTileset();
@@ -50,7 +42,14 @@ namespace Cesium3DTiles {
         //     // TODO: check availability for children
         // }
 
-        // TODO: update the bounding volume heights.
+        // Update the bounding volume with precise heights.
+        const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+        if (pLooseRegion) {
+            const BoundingRegion& br = pLooseRegion->getBoundingRegion();
+            tile.setBoundingVolume(BoundingRegion(br.getRectangle(), this->_minimumHeight, this->_maximumHeight));
+        }
+
+        const BoundingRegion& br = std::get<BoundingRegion>(tile.getBoundingVolume());
 
         // Create child tiles
         // TODO: only create them if they really exist
@@ -86,30 +85,29 @@ namespace Cesium3DTiles {
         nw.setGeometricError(childGeometricError);
         ne.setGeometricError(childGeometricError);
 
-        const BoundingRegion& region = std::get<BoundingRegion>(tile.getBoundingVolume());
-        const CesiumGeospatial::Rectangle& rectangle = region.getRectangle();
+        const CesiumGeospatial::Rectangle& rectangle = br.getRectangle();
         Cartographic center = rectangle.computeCenter();
 
-        sw.setBoundingVolume(BoundingRegion(
+        sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
             CesiumGeospatial::Rectangle(rectangle.getWest(), rectangle.getSouth(), center.longitude, center.latitude),
-            region.getMinimumHeight(), // TODO
-            region.getMaximumHeight()
-        ));
-        se.setBoundingVolume(BoundingRegion(
+            this->_minimumHeight,
+            this->_maximumHeight
+        )));
+        se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
             CesiumGeospatial::Rectangle(center.longitude, rectangle.getSouth(), rectangle.getEast(), center.latitude),
-            region.getMinimumHeight(), // TODO
-            region.getMaximumHeight()
-        ));
-        nw.setBoundingVolume(BoundingRegion(
+            this->_minimumHeight,
+            this->_maximumHeight
+        )));
+        nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
             CesiumGeospatial::Rectangle(rectangle.getWest(), center.latitude, center.longitude, rectangle.getNorth()),
-            region.getMinimumHeight(), // TODO
-            region.getMaximumHeight()
-        ));
-        ne.setBoundingVolume(BoundingRegion(
+            this->_minimumHeight,
+            this->_maximumHeight
+        )));
+        ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
             CesiumGeospatial::Rectangle(center.longitude, center.latitude, rectangle.getEast(), rectangle.getNorth()),
-            region.getMinimumHeight(), // TODO
-            region.getMaximumHeight()
-        ));
+            this->_minimumHeight,
+            this->_maximumHeight
+        )));
 
         const QuadtreeID& id = std::get<QuadtreeID>(tile.getTileID());
         uint32_t level = id.level + 1;
@@ -180,9 +178,9 @@ namespace Cesium3DTiles {
         }
     }
 
-    /*static*/ tinygltf::Model QuantizedMeshContent::createGltf(const Tile& tile, const gsl::span<const uint8_t>& data) {
+    /*static*/ QuantizedMeshContent::LoadedData QuantizedMeshContent::load(const Tile& tile, const gsl::span<const uint8_t>& data) {
         if (data.size() < headerLength) {
-            return tinygltf::Model();
+            return LoadedData();
         }
 
         size_t readIndex = 0;
@@ -200,26 +198,38 @@ namespace Cesium3DTiles {
         const gsl::span<const uint16_t> uBuffer(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += uBuffer.size_bytes();
         if (readIndex > data.size()) {
-            return tinygltf::Model();
+            return LoadedData();
         }
 
         const gsl::span<const uint16_t> vBuffer(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += vBuffer.size_bytes();
         if (readIndex > data.size()) {
-            return tinygltf::Model();
+            return LoadedData();
         }
 
         const gsl::span<const uint16_t> heightBuffer(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += heightBuffer.size_bytes();
         if (readIndex > data.size()) {
-            return tinygltf::Model();
+            return LoadedData();
         }
 
         int32_t u = 0;
         int32_t v = 0;
         int32_t height = 0;
 
-        const CesiumGeospatial::Rectangle& rectangle = std::get<BoundingRegion>(tile.getBoundingVolume()).getRectangle();
+        const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&tile.getBoundingVolume());
+        if (!pRegion) {
+            const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+            if (pLooseRegion) {
+                pRegion = &pLooseRegion->getBoundingRegion();
+            }
+        }
+
+        if (!pRegion) {
+            return LoadedData();
+        }
+
+        const CesiumGeospatial::Rectangle& rectangle = pRegion->getRectangle();
         double west = rectangle.getWest();
         double south = rectangle.getSouth();
         double east = rectangle.getEast();
@@ -327,20 +337,20 @@ namespace Cesium3DTiles {
             if ((readIndex % 4) != 0) {
                 readIndex += 2;
                 if (readIndex > data.size()) {
-                    return tinygltf::Model();
+                    return LoadedData();
                 }
             }
 
             uint32_t triangleCount = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
             readIndex += sizeof(uint32_t);
             if (readIndex > data.size()) {
-                return tinygltf::Model();
+                return LoadedData();
             }
 
             const gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t*>(data.data() + readIndex), triangleCount * 3);
             readIndex += indices.size_bytes();
             if (readIndex > data.size()) {
-                return tinygltf::Model();
+                return LoadedData();
             }
 
             indicesBuffer.data.resize(triangleCount * 3 * sizeof(uint32_t));
@@ -356,13 +366,13 @@ namespace Cesium3DTiles {
             uint32_t triangleCount = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
             readIndex += sizeof(uint32_t);
             if (readIndex > data.size()) {
-                return tinygltf::Model();
+                return LoadedData();
             }
 
             const gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t*>(data.data() + readIndex), triangleCount * 3);
             readIndex += indices.size_bytes();
             if (readIndex > data.size()) {
-                return tinygltf::Model();
+                return LoadedData();
             }
 
             indicesBuffer.data.resize(triangleCount * 3 * sizeof(uint16_t));
@@ -385,7 +395,11 @@ namespace Cesium3DTiles {
             center.x, center.z, -center.y, 1.0
         };
 
-        return model;
+        return LoadedData {
+            model,
+            minimumHeight,
+            maximumHeight
+        };
     }
 
 }

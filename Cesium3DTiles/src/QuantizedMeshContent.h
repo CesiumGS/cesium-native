@@ -16,7 +16,13 @@ namespace Cesium3DTiles {
         virtual void finalizeLoad(Tile& tile) override;
 
     private:
-        static tinygltf::Model createGltf(const Tile& tile, const gsl::span<const uint8_t>& data);
+        struct LoadedData;
+        static LoadedData load(const Tile& tile, const gsl::span<const uint8_t>& data);
+
+        QuantizedMeshContent(const Tile& tile, LoadedData&& loadedData, const std::string& url);
+
+        double _minimumHeight;
+        double _maximumHeight;
     };
 
 }

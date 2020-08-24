@@ -45,20 +45,20 @@ namespace Cesium3DTiles {
 
         this->_layerJsonUrl = url;
 
-        this->_externalRoot[0].setBoundingVolume(BoundingRegion(Rectangle(
+        this->_externalRoot[0].setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(Rectangle(
             this->_bounds.getWest(),
             this->_bounds.getSouth(),
             this->_bounds.computeCenter().longitude,
             this->_bounds.getNorth()
-        ), -1000.0, 9000.0));
+        ), -1000.0, 9000.0)));
         this->_externalRoot[0].setTileID(QuadtreeID(0, 0, 0));
 
-        this->_externalRoot[1].setBoundingVolume(BoundingRegion(Rectangle(
+        this->_externalRoot[1].setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(Rectangle(
             this->_bounds.computeCenter().longitude,
             this->_bounds.getSouth(),
             this->_bounds.getEast(),
             this->_bounds.getNorth()
-        ), -1000.0, 9000.0));
+        ), -1000.0, 9000.0)));
         this->_externalRoot[1].setTileID(QuadtreeID(0, 1, 0));
 
         double geometricError = (
