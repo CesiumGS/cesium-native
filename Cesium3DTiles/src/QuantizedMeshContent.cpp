@@ -34,14 +34,6 @@ namespace Cesium3DTiles {
     {}
 
     void QuantizedMeshContent::finalizeLoad(Tile& tile) {
-        // Tileset* pTileset = tile.getTileset();
-        // Tile* pRoot = pTileset->getRootTile();
-        // TileContent* pContent = pRoot->getContent();
-        // if (pContent && pContent->getType() == TerrainLayerJsonContent::TYPE) {
-        //     TerrainLayerJsonContent* pLayerJson = static_cast<TerrainLayerJsonContent*>(pContent);
-        //     // TODO: check availability for children
-        // }
-
         // Update the bounding volume with precise heights.
         const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
         if (pLooseRegion) {
@@ -155,8 +147,15 @@ namespace Cesium3DTiles {
         uint32_t vertexCount;
     };
 
+    struct ExtensionHeader
+    {
+        uint8_t extensionId;
+        uint32_t extensionLength;
+    };
+
     // We can't use sizeof(QuantizedMeshHeader) because it may be padded.
     const size_t headerLength = 92;
+    const size_t extensionHeaderLength = 5;
 
     int32_t zigZagDecode(int32_t value) {
         return (value >> 1) ^ (-(value & 1));
@@ -176,6 +175,32 @@ namespace Cesium3DTiles {
                 ++highest;
             }
         }
+    }
+
+    template <class T>
+    static T readValue(const gsl::span<const uint8_t>& data, size_t offset, T defaultValue) {
+        if (offset >= 0 && offset + sizeof(T) <= data.size()) {
+            return *reinterpret_cast<const T*>(data.data() + offset);
+        }
+        return defaultValue;
+    }
+
+    static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
+        const uint8_t rangeMax = 255;
+
+        glm::dvec3 result;
+
+        result.x = CesiumUtility::Math::fromSNorm(x, rangeMax);
+        result.y = CesiumUtility::Math::fromSNorm(y, rangeMax);
+        result.z = 1.0 - (std::abs(result.x) + std::abs(result.y));
+
+        if (result.z < 0.0) {
+            double oldVX = result.x;
+            result.x = (1.0 - std::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
+            result.y = (1.0 - std::abs(oldVX)) * CesiumUtility::Math::signNotZero(result.y);
+        }
+
+        return glm::normalize(result);
     }
 
     /*static*/ QuantizedMeshContent::LoadedData QuantizedMeshContent::load(const Tile& tile, const gsl::span<const uint8_t>& data) {
@@ -270,9 +295,6 @@ namespace Cesium3DTiles {
         primitive.attributes.emplace("POSITION", positionAccessorId);
         primitive.material = 0;
 
-        // model.buffers.push_back(tinygltf::Buffer());
-        // tinygltf::Buffer& indexBuffer = model.buffers[model.buffers.size() - 1];
-
         float* pPositions = reinterpret_cast<float*>(positionBuffer.data.data());
         size_t positionOutputIndex = 0;
 
@@ -321,7 +343,7 @@ namespace Cesium3DTiles {
         tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
         indicesBufferView.buffer = indicesBufferId;
         indicesBufferView.byteOffset = 0;
-        positionBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
+        indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
         int indicesAccessorId = static_cast<int>(model.accessors.size());
         model.accessors.emplace_back();
@@ -332,6 +354,8 @@ namespace Cesium3DTiles {
 
         primitive.indices = indicesBufferId;
 
+        size_t indexSizeBytes;
+
         if (pHeader->vertexCount > 65536) {
             // 32-bit indices
             if ((readIndex % 4) != 0) {
@@ -341,7 +365,7 @@ namespace Cesium3DTiles {
                 }
             }
 
-            uint32_t triangleCount = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+            uint32_t triangleCount = readValue<uint32_t>(data, readIndex, 0);
             readIndex += sizeof(uint32_t);
             if (readIndex > data.size()) {
                 return LoadedData();
@@ -361,9 +385,11 @@ namespace Cesium3DTiles {
 
             gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(indicesBuffer.data.data()), indicesBuffer.data.size() / sizeof(uint32_t));
             decodeIndices(indices, outputIndices);
+
+            indexSizeBytes = 4;
         } else {
             // 16-bit indices
-            uint32_t triangleCount = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+            uint32_t triangleCount = readValue<uint32_t>(data, readIndex, 0);
             readIndex += sizeof(uint32_t);
             if (readIndex > data.size()) {
                 return LoadedData();
@@ -383,6 +409,81 @@ namespace Cesium3DTiles {
 
             gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(indicesBuffer.data.data()), indicesBuffer.data.size() / sizeof(uint16_t));
             decodeIndices(indices, outputIndices);
+
+            indexSizeBytes = 2;
+        }
+
+        // Skip edge indices (for now, TODO)
+        uint32_t westVertexCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        readIndex += westVertexCount * indexSizeBytes;
+
+        uint32_t southVertexCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        readIndex += southVertexCount * indexSizeBytes;
+
+        uint32_t eastVertexCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        readIndex += eastVertexCount * indexSizeBytes;
+
+        uint32_t northVertexCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        readIndex += northVertexCount * indexSizeBytes;
+
+        if (readIndex > data.size()) {
+            return LoadedData();
+        }
+
+        while (readIndex < data.size()) {
+            const ExtensionHeader* pExtension = reinterpret_cast<const ExtensionHeader*>(data.data() + readIndex);
+            readIndex += extensionHeaderLength;
+            if (readIndex > data.size()) {
+                break;
+            }
+
+            if (pExtension->extensionId == 1) {
+                // Oct-encoded per-vertex normals
+                const uint8_t* pNormalData = reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+                readIndex += vertexCount * 2;
+                if (readIndex > data.size()) {
+                    break;
+                }
+
+                int normalBufferId = static_cast<int>(model.buffers.size());
+                model.buffers.emplace_back();
+                tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+                normalBuffer.data.resize(vertexCount * 3 * sizeof(float));
+
+                int normalBufferViewId = static_cast<int>(model.bufferViews.size());
+                model.bufferViews.emplace_back();
+                tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
+                normalBufferView.buffer = normalBufferId;
+                normalBufferView.byteOffset = 0;
+                normalBufferView.byteStride = 3 * sizeof(float);
+                normalBufferView.byteLength = normalBuffer.data.size();
+                normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+
+                int normalAccessorId = static_cast<int>(model.accessors.size());
+                model.accessors.emplace_back();
+                tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
+                normalAccessor.bufferView = normalBufferViewId;
+                normalAccessor.byteOffset = 0;
+                normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+                normalAccessor.count = vertexCount;
+                normalAccessor.type = TINYGLTF_TYPE_VEC3;
+                
+                primitive.attributes.emplace("NORMAL", normalAccessorId);
+
+                float* pNormals = reinterpret_cast<float*>(normalBuffer.data.data());
+                size_t normalOutputIndex = 0;
+
+                for (size_t i = 0; i < vertexCount * 2; i += 2) {
+                    glm::dvec3 normal = octDecode(pNormalData[i], pNormalData[i + 1]);
+                    pNormals[normalOutputIndex++] = static_cast<float>(normal.x);
+                    pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
+                    pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
+                }
+            }
         }
 
         model.nodes.emplace_back();

@@ -21,6 +21,7 @@ namespace Cesium3DTiles {
         const std::string& getLayerJsonUrl() const { return this->_layerJsonUrl; }
         const std::vector<std::string>& getTilesUrlTemplates() const { return this->_tilesUrlTemplates; }
         const std::string& getVersion() const { return this->_version; }
+        const std::vector<std::string>& getExtensions() const { return this->_extensions; }
 
     private:
         std::vector<Tile> _externalRoot;
@@ -28,6 +29,7 @@ namespace Cesium3DTiles {
         std::string _version;
         CesiumGeospatial::Rectangle _bounds;
         std::string _layerJsonUrl;
+        std::vector<std::string> _extensions;
     };
 
 }

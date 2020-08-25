@@ -25,6 +25,7 @@ namespace Cesium3DTiles {
         _version(),
         _pRootTile(),
         _tileBaseUrl(),
+        _tileHeaders(),
         _implicitTileUrls(),
         _loadQueueHigh(),
         _loadQueueMedium(),
@@ -53,6 +54,7 @@ namespace Cesium3DTiles {
         _version(),
         _pRootTile(),
         _tileBaseUrl(),
+        _tileHeaders(),
         _implicitTileUrls(),
         _loadQueueHigh(),
         _loadQueueMedium(),
@@ -149,20 +151,15 @@ namespace Cesium3DTiles {
     }
 
     std::unique_ptr<IAssetRequest> Tileset::requestTileContent(Tile& tile) {
-        const TileID& tileID = tile.getTileID();
+        struct Operation {
+            const Tileset& tileset;
 
-        const std::string& version = this->_version;
-        std::string url;
+            std::string operator()(const std::string& url) {
+                return url;
+            }
 
-        switch (tileID.index()) {
-        case 0:
-            url = std::get<std::string>(tileID);
-            break;
-
-        case 1:
-            {
-                const QuadtreeID& quadtreeID = std::get<QuadtreeID>(tileID);
-                url = Uri::substituteTemplateParameters(this->_implicitTileUrls[0], [&version, &quadtreeID](const std::string& placeholder) -> std::string {
+            std::string operator()(const QuadtreeID& quadtreeID) {
+                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level" || placeholder == "z") {
                         return std::to_string(quadtreeID.level);
                     } else if (placeholder == "x") {
@@ -170,18 +167,15 @@ namespace Cesium3DTiles {
                     } else if (placeholder == "y") {
                         return std::to_string(quadtreeID.y);
                     } else if (placeholder == "version") {
-                        return version;
+                        return this->tileset._version;
                     }
 
                     return placeholder;
                 });
             }
-            break;
 
-        case 2:
-            {
-                const OctreeID& octreeID = std::get<OctreeID>(tileID);
-                url = Uri::substituteTemplateParameters(this->_implicitTileUrls[0], [&version, &octreeID](const std::string& placeholder) -> std::string {
+            std::string operator()(const OctreeID& octreeID) {
+                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level") {
                         return std::to_string(octreeID.level);
                     } else if (placeholder == "x") {
@@ -191,19 +185,19 @@ namespace Cesium3DTiles {
                     } else if (placeholder == "z") {
                         return std::to_string(octreeID.z);
                     } else if (placeholder == "version") {
-                        return version;
+                        return this->tileset._version;
                     }
 
                     return placeholder;
                 });
             }
-            break;
-        }
+        };
 
+        std::string url = std::visit(Operation { *this }, tile.getTileID());
         std::string fullUrl = Uri::resolve(this->_tileBaseUrl, url, true);
 
         IAssetAccessor* pAssetAccessor = this->getExternals().pAssetAccessor;
-        return pAssetAccessor->requestAsset(fullUrl);
+        return pAssetAccessor->requestAsset(fullUrl, this->_tileHeaders);
     }
 
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
@@ -233,13 +227,13 @@ namespace Cesium3DTiles {
             url = Uri::resolve(url, "layer.json");
         }
 
-        std::string urlWithToken = Uri::addQuery(url, "access_token", accessToken);
+        this->_tileHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
 
         // When we assign _pTilesetRequest, the previous request and response
         // that we're currently handling may immediately be deleted.
         pRequest = nullptr;
         pResponse = nullptr;
-        this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(urlWithToken);
+        this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url, this->_tileHeaders);
         this->_pTilesetJsonRequest->bind(std::bind(&Tileset::_tilesetJsonResponseReceived, this, std::placeholders::_1));
     }
 
@@ -274,6 +268,7 @@ namespace Cesium3DTiles {
                 json& rootJson = *rootIt;
                 this->_createTile(*pRootTile, rootJson);
             } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
+                this->_tileHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
                 this->_createTerrainTile(*pRootTile, tileset);
             }
 
@@ -382,6 +377,16 @@ namespace Cesium3DTiles {
     void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson) {
         std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(tile, layerJson, this->_tileBaseUrl);
         this->_implicitTileUrls = pContent->getTilesUrlTemplates();
+
+        const std::vector<std::string>& extensions = pContent->getExtensions();
+
+        // Request normals if they're available
+        if (std::find(extensions.begin(), extensions.end(), "octvertexnormals") != extensions.end()) {
+            for (std::string& url : this->_implicitTileUrls) {
+                url = Uri::addQuery(url, "extensions", "octvertexnormals");
+            }
+        }
+
         tile.setBoundingVolume(CesiumGeospatial::BoundingRegion(pContent->getBounds(), -1000.0, 9000.0));
         tile.loadReadyContent(std::move(pContent));
     }

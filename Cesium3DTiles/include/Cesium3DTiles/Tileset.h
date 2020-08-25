@@ -228,6 +228,7 @@ namespace Cesium3DTiles {
 
         std::string _version;
         std::string _tileBaseUrl;
+        std::vector<std::pair<std::string, std::string>> _tileHeaders;
         std::vector<std::string> _implicitTileUrls;
         std::unique_ptr<Tile> _pRootTile;
 

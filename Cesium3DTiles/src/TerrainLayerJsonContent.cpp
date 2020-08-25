@@ -32,6 +32,7 @@ namespace Cesium3DTiles {
 
         this->_tilesUrlTemplates = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
         this->_version = layerJson.value<std::string>("version", "");
+        this->_extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
 
         json::const_iterator boundsIt = layerJson.find("bounds");
         if (boundsIt == layerJson.end()) {
