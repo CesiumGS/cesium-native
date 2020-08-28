@@ -3,7 +3,7 @@
 #include "CesiumGeospatial/Library.h"
 #include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeospatial/Rectangle.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 
 namespace CesiumGeometry {
@@ -27,7 +27,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          */
         BoundingRegion(
-            const Rectangle& rectangle,
+            const GlobeRectangle& rectangle,
             double minimumHeight,
             double maximumHeight,
             const Ellipsoid& ellipsoid = Ellipsoid::WGS84
@@ -36,7 +36,7 @@ namespace CesiumGeospatial {
         /**
          * @brief Gets the bounding rectangle of the region.
          */
-        const Rectangle& getRectangle() const { return this->_rectangle; }
+        const GlobeRectangle& getRectangle() const { return this->_rectangle; }
 
         /**
          * @brief Gets the minimum height of the region.
@@ -95,12 +95,12 @@ namespace CesiumGeospatial {
 
 private:
         static CesiumGeometry::OrientedBoundingBox _computeBoundingBox(
-            const Rectangle& rectangle,
+            const GlobeRectangle& rectangle,
             double minimumHeight,
             double maximumHeight,
             const Ellipsoid& ellipsoid);
 
-        Rectangle _rectangle;
+        GlobeRectangle _rectangle;
         double _minimumHeight;
         double _maximumHeight;
         CesiumGeometry::OrientedBoundingBox _boundingBox;

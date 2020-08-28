@@ -156,4 +156,13 @@ namespace CesiumGeospatial {
             positionZ * zMultiplier
         );
     }
+
+    double Ellipsoid::getMaximumRadius() const {
+        return std::max(this->_radii.x, std::max(this->_radii.y, this->_radii.z));
+    }
+
+    double Ellipsoid::getMinimumRadius() const {
+        return std::min(this->_radii.x, std::min(this->_radii.y, this->_radii.z));
+    }
+
 }

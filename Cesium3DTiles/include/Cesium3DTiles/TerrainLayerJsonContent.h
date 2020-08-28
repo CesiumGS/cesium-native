@@ -17,7 +17,7 @@ namespace Cesium3DTiles {
         virtual const std::string& getType() const { return TerrainLayerJsonContent::TYPE; }
         virtual void finalizeLoad(Tile& tile);
 
-        const CesiumGeospatial::Rectangle& getBounds() const { return this->_bounds; }
+        const CesiumGeospatial::GlobeRectangle& getBounds() const { return this->_bounds; }
         const std::string& getLayerJsonUrl() const { return this->_layerJsonUrl; }
         const std::vector<std::string>& getTilesUrlTemplates() const { return this->_tilesUrlTemplates; }
         const std::string& getVersion() const { return this->_version; }
@@ -27,7 +27,7 @@ namespace Cesium3DTiles {
         std::vector<Tile> _externalRoot;
         std::vector<std::string> _tilesUrlTemplates;
         std::string _version;
-        CesiumGeospatial::Rectangle _bounds;
+        CesiumGeospatial::GlobeRectangle _bounds;
         std::string _layerJsonUrl;
         std::vector<std::string> _extensions;
     };

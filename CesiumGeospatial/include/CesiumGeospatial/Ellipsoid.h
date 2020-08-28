@@ -21,6 +21,8 @@ namespace CesiumGeospatial {
         glm::dvec3 cartographicToCartesian(const Cartographic& cartographic) const;
         std::optional<Cartographic> cartesianToCartographic(const glm::dvec3& cartesian) const;
         std::optional<glm::dvec3> scaleToGeodeticSurface(const glm::dvec3& cartesian) const;
+        double getMaximumRadius() const;
+        double getMinimumRadius() const;
 
     private:
         glm::dvec3 _radii;

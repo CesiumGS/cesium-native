@@ -19,6 +19,7 @@
 namespace Cesium3DTiles {
     class Tileset;
     class TileContent;
+    class RasterOverlayTileProvider;
     
     class CESIUM3DTILES_API Tile {
     public:
@@ -156,6 +157,8 @@ namespace Cesium3DTiles {
         void contentResponseReceived(IAssetRequest* pRequest);
 
     private:
+        void loadOverlays(RasterOverlayTileProvider& tileProvider, const CesiumGeospatial::GlobeRectangle& tileRectangle);
+
         // Position in bounding-volume hierarchy.
         Tileset* _pTileset;
         Tile* _pParent;
@@ -180,6 +183,9 @@ namespace Cesium3DTiles {
 
         // Selection state
         TileSelectionState _lastSelectionState;
+
+        // Overlays
+        // std::vector<tinygltf::Image>
     };
 
 }

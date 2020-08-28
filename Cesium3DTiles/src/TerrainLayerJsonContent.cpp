@@ -6,6 +6,7 @@
 #include "Uri.h"
 
 using namespace CesiumGeospatial;
+using namespace CesiumGeometry;
 
 namespace Cesium3DTiles {
 
@@ -41,26 +42,26 @@ namespace Cesium3DTiles {
         }
         std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
         if (bounds.size() >= 4) {
-            this->_bounds = Rectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3]);
+            this->_bounds = GlobeRectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3]);
         }
 
         this->_layerJsonUrl = url;
 
-        this->_externalRoot[0].setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(Rectangle(
+        this->_externalRoot[0].setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(GlobeRectangle(
             this->_bounds.getWest(),
             this->_bounds.getSouth(),
             this->_bounds.computeCenter().longitude,
             this->_bounds.getNorth()
         ), -1000.0, 9000.0)));
-        this->_externalRoot[0].setTileID(QuadtreeID(0, 0, 0));
+        this->_externalRoot[0].setTileID(QuadtreeTileID(0, 0, 0));
 
-        this->_externalRoot[1].setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(Rectangle(
+        this->_externalRoot[1].setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(GlobeRectangle(
             this->_bounds.computeCenter().longitude,
             this->_bounds.getSouth(),
             this->_bounds.getEast(),
             this->_bounds.getNorth()
         ), -1000.0, 9000.0)));
-        this->_externalRoot[1].setTileID(QuadtreeID(0, 1, 0));
+        this->_externalRoot[1].setTileID(QuadtreeTileID(0, 1, 0));
 
         double geometricError = (
             Ellipsoid::WGS84.getRadii().x *

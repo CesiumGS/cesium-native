@@ -1,6 +1,6 @@
 #include "QuantizedMeshContent.h"
 #include "CesiumUtility/Math.h"
-#include "CesiumGeospatial/Rectangle.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/TerrainLayerJsonContent.h"
@@ -11,6 +11,7 @@
 
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
+using namespace CesiumGeometry;
 
 namespace Cesium3DTiles {
     std::string QuantizedMeshContent::CONTENT_TYPE = "application/vnd.quantized-mesh";
@@ -77,39 +78,39 @@ namespace Cesium3DTiles {
         nw.setGeometricError(childGeometricError);
         ne.setGeometricError(childGeometricError);
 
-        const CesiumGeospatial::Rectangle& rectangle = br.getRectangle();
+        const CesiumGeospatial::GlobeRectangle& rectangle = br.getRectangle();
         Cartographic center = rectangle.computeCenter();
 
         sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::Rectangle(rectangle.getWest(), rectangle.getSouth(), center.longitude, center.latitude),
+            CesiumGeospatial::GlobeRectangle(rectangle.getWest(), rectangle.getSouth(), center.longitude, center.latitude),
             this->_minimumHeight,
             this->_maximumHeight
         )));
         se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::Rectangle(center.longitude, rectangle.getSouth(), rectangle.getEast(), center.latitude),
+            CesiumGeospatial::GlobeRectangle(center.longitude, rectangle.getSouth(), rectangle.getEast(), center.latitude),
             this->_minimumHeight,
             this->_maximumHeight
         )));
         nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::Rectangle(rectangle.getWest(), center.latitude, center.longitude, rectangle.getNorth()),
+            CesiumGeospatial::GlobeRectangle(rectangle.getWest(), center.latitude, center.longitude, rectangle.getNorth()),
             this->_minimumHeight,
             this->_maximumHeight
         )));
         ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::Rectangle(center.longitude, center.latitude, rectangle.getEast(), rectangle.getNorth()),
+            CesiumGeospatial::GlobeRectangle(center.longitude, center.latitude, rectangle.getEast(), rectangle.getNorth()),
             this->_minimumHeight,
             this->_maximumHeight
         )));
 
-        const QuadtreeID& id = std::get<QuadtreeID>(tile.getTileID());
+        const QuadtreeTileID& id = std::get<QuadtreeTileID>(tile.getTileID());
         uint32_t level = id.level + 1;
         uint32_t x = id.x * 2;
         uint32_t y = id.y * 2;
 
-        sw.setTileID(QuadtreeID(level, x, y));
-        se.setTileID(QuadtreeID(level, x + 1, y));
-        nw.setTileID(QuadtreeID(level, x, y + 1));
-        ne.setTileID(QuadtreeID(level, x + 1, y + 1));
+        sw.setTileID(QuadtreeTileID(level, x, y));
+        se.setTileID(QuadtreeTileID(level, x + 1, y));
+        nw.setTileID(QuadtreeTileID(level, x, y + 1));
+        ne.setTileID(QuadtreeTileID(level, x + 1, y + 1));
 
         GltfContent::finalizeLoad(tile);
     }
@@ -254,7 +255,7 @@ namespace Cesium3DTiles {
             return LoadedData();
         }
 
-        const CesiumGeospatial::Rectangle& rectangle = pRegion->getRectangle();
+        const CesiumGeospatial::GlobeRectangle& rectangle = pRegion->getRectangle();
         double west = rectangle.getWest();
         double south = rectangle.getSouth();
         double east = rectangle.getEast();

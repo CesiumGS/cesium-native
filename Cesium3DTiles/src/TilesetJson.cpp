@@ -25,7 +25,7 @@ namespace Cesium3DTiles {
 		json::const_iterator regionIt = bvIt->find("region");
 		if (regionIt != bvIt->end() && regionIt->is_array() && regionIt->size() >= 6) {
 			const json& a = *regionIt;
-			return BoundingRegion(Rectangle(a[0], a[1], a[2], a[3]), a[4], a[5]);
+			return BoundingRegion(GlobeRectangle(a[0], a[1], a[2], a[3]), a[4], a[5]);
 		}
 
 		json::const_iterator sphereIt = bvIt->find("sphere");

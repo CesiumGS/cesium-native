@@ -1,6 +1,6 @@
 #include "catch2/catch.hpp"
 #include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Rectangle.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumGeometry/Plane.h"
@@ -28,12 +28,12 @@ TEST_CASE("BoundingRegion") {
         };
 
         BoundingRegion region(
-            Rectangle(-0.001, -0.001, 0.001, 0.001),
+            GlobeRectangle(-0.001, -0.001, 0.001, 0.001),
             0.0,
             10.0
         );
 
-        const Rectangle& rectangle = region.getRectangle();
+        const GlobeRectangle& rectangle = region.getRectangle();
 
         auto testCase = GENERATE_COPY(
             // Inside bounding region
@@ -68,7 +68,7 @@ TEST_CASE("BoundingRegion") {
 
     SECTION("intersectPlane") {
         BoundingRegion region(
-            Rectangle(0.0, 0.0, 1.0, 1.0),
+            GlobeRectangle(0.0, 0.0, 1.0, 1.0),
             0.0,
             1.0
         );

@@ -11,6 +11,7 @@
 #include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/ViewUpdateResult.h"
 #include "Cesium3DTiles/Camera.h"
+#include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "CesiumUtility/Json.h"
 
 namespace Cesium3DTiles {
@@ -140,6 +141,9 @@ namespace Cesium3DTiles {
         Tile* getRootTile() { return this->_pRootTile.get(); }
         const Tile* getRootTile() const { return this->_pRootTile.get(); }
 
+        RasterOverlayCollection& getOverlays() { return this->_overlays; }
+        const RasterOverlayCollection& getOverlays() const { return this->_overlays; }
+
         /**
          * Updates this view, returning the set of tiles to render in this view.
          * @param camera The updated camera.
@@ -241,6 +245,8 @@ namespace Cesium3DTiles {
         std::atomic<uint32_t> _loadsInProgress;
 
         CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> _loadedTiles;
+
+        RasterOverlayCollection _overlays;
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

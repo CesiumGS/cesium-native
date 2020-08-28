@@ -8,6 +8,9 @@
 #include "TilesetJson.h"
 #include <chrono>
 
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
+
 namespace Cesium3DTiles {
     Tileset::Tileset(
         const TilesetExternals& externals,
@@ -31,7 +34,8 @@ namespace Cesium3DTiles {
         _loadQueueMedium(),
         _loadQueueLow(),
         _loadsInProgress(0),
-        _loadedTiles()
+        _loadedTiles(),
+        _overlays()
     {
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
         this->_pTilesetJsonRequest->bind(std::bind(&Tileset::_tilesetJsonResponseReceived, this, std::placeholders::_1));
@@ -60,7 +64,8 @@ namespace Cesium3DTiles {
         _loadQueueMedium(),
         _loadQueueLow(),
         _loadsInProgress(0),
-        _loadedTiles()
+        _loadedTiles(),
+        _overlays()
     {
         std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -158,7 +163,7 @@ namespace Cesium3DTiles {
                 return url;
             }
 
-            std::string operator()(const QuadtreeID& quadtreeID) {
+            std::string operator()(const QuadtreeTileID& quadtreeID) {
                 return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level" || placeholder == "z") {
                         return std::to_string(quadtreeID.level);
@@ -174,7 +179,7 @@ namespace Cesium3DTiles {
                 });
             }
 
-            std::string operator()(const OctreeID& octreeID) {
+            std::string operator()(const OctreeTileID& octreeID) {
                 return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level") {
                         return std::to_string(octreeID.level);
@@ -387,7 +392,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        tile.setBoundingVolume(CesiumGeospatial::BoundingRegion(pContent->getBounds(), -1000.0, 9000.0));
+        tile.setBoundingVolume(BoundingRegion(pContent->getBounds(), -1000.0, 9000.0));
         tile.loadReadyContent(std::move(pContent));
     }
 
