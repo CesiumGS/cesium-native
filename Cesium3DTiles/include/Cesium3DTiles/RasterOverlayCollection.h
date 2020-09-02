@@ -9,13 +9,15 @@
 
 namespace Cesium3DTiles {
 
+    class TilesetExternals;
+
     class CESIUM3DTILES_API RasterOverlayCollection {
     public:
         RasterOverlayCollection();
 
         void push_back(std::unique_ptr<RasterOverlay>&& pOverlay);
 
-        void createTileProviders(IAssetAccessor& assetAccessor);
+        void createTileProviders(TilesetExternals& assetAccessor);
 
         gsl::span<RasterOverlayTileProvider*> getTileProviders() { return this->_quickTileProviders; }
 

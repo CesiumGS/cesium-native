@@ -2,14 +2,15 @@
 
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/RasterOverlayTileRequest.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGeospatial/QuadtreeTilingScheme.h"
+#include <unordered_map>
 
 namespace Cesium3DTiles {
 
-    class IAssetAccessor;
+    class TilesetExternals;
+    class RasterOverlayTile;
 
     /**
      * @brief Provides individuals tiles for a {@link RasterOverlay} on demand.
@@ -18,6 +19,7 @@ namespace Cesium3DTiles {
     class CESIUM3DTILES_API RasterOverlayTileProvider {
     public:
         RasterOverlayTileProvider(
+            TilesetExternals& tilesetExternals,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeospatial::QuadtreeTilingScheme& tilingScheme,
             uint32_t minimumLevel,
@@ -34,16 +36,24 @@ namespace Cesium3DTiles {
         uint32_t getWidth() const { return this->_imageWidth; }
         uint32_t getHeight() const { return this->_imageHeight; }
 
-        virtual std::unique_ptr<RasterOverlayTileRequest> requestImage(const CesiumGeometry::QuadtreeTileID& id, IAssetAccessor& accessor) = 0;
+        std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
 
-        uint32_t getLevelWithMaximumTexelSpacing(double totalWidthMeters, double texelSpacingMeters, double latitudeClosestToEquator) const;
+        uint32_t getLevelWithMaximumTexelSpacing(double texelSpacingMeters, double latitudeClosestToEquator) const;
+
+        void notifyTileLoaded(RasterOverlayTile& tile);
+        TilesetExternals& getExternals() { return *this->_pTilesetExternals; }
+
+    protected:
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) = 0;
 
     private:
+        TilesetExternals* _pTilesetExternals;
         CesiumGeospatial::Projection _projection;
         CesiumGeospatial::QuadtreeTilingScheme _tilingScheme;
         uint32_t _minimumLevel;
         uint32_t _maximumLevel;
         uint32_t _imageWidth;
         uint32_t _imageHeight;
+        std::unordered_map<CesiumGeometry::QuadtreeTileID, std::weak_ptr<RasterOverlayTile>> _tiles;
     };
 }

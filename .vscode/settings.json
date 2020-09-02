@@ -94,7 +94,8 @@
         "string_view": "cpp",
         "shared_mutex": "cpp",
         "gsl_assert": "cpp",
-        "compare": "cpp"
+        "compare": "cpp",
+        "resumable": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

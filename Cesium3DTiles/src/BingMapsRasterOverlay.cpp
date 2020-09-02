@@ -1,9 +1,11 @@
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
+#include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
 
@@ -23,6 +25,7 @@ namespace Cesium3DTiles {
     class BingMapsTileProvider : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
+            TilesetExternals& tilesetExternals,
             const std::string& urlTemplate,
             const std::vector<std::string>& subdomains,
             uint32_t width,
@@ -31,9 +34,10 @@ namespace Cesium3DTiles {
             uint32_t maximumLevel
         ) :
             RasterOverlayTileProvider(
+                tilesetExternals,
                 CesiumGeospatial::WebMercatorProjection(),
                 CesiumGeospatial::QuadtreeTilingScheme(
-                    CesiumGeospatial::WebMercatorProjection::MAXIMUM_RECTANGLE.toSimpleRectangle(),
+                    CesiumGeospatial::WebMercatorProjection::computeMaximumProjectedRectangle(CesiumGeospatial::Ellipsoid::WGS84),
                     2, 2
                 ),
                 minimumLevel,
@@ -48,24 +52,25 @@ namespace Cesium3DTiles {
 
         virtual ~BingMapsTileProvider() {}
 
-        virtual std::unique_ptr<RasterOverlayTileRequest> requestImage(const CesiumGeometry::QuadtreeTileID& id, IAssetAccessor& accessor) override {
-            std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &id](const std::string& key) {
+    protected:
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
+            std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
-                    return BingMapsTileProvider::tileXYToQuadKey(id.level, id.x, id.y);
+                    return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.y);
                 } else if (key == "subdomain") {
-                    size_t subdomainIndex = (id.level + id.x + id.y) % this->_subdomains.size();
+                    size_t subdomainIndex = (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
                     return this->_subdomains[subdomainIndex];
                 }
                 return key;
             });
 
-            return std::make_unique<RasterOverlayTileRequest>(accessor.requestAsset(url));
+            return std::make_unique<RasterOverlayTile>(*this, tileID, this->getExternals().pAssetAccessor->requestAsset(url));
         }
     
     private:
         static std::string tileXYToQuadKey(uint32_t level, uint32_t x, uint32_t y) {
             std::string quadkey = "";
-            for (uint32_t i = level; i >= 0; --i) {
+            for (int32_t i = static_cast<int32_t>(level); i >= 0; --i) {
                 uint32_t bitmask = 1 << i;
                 uint32_t digit = 0;
 
@@ -105,14 +110,14 @@ namespace Cesium3DTiles {
     BingMapsRasterOverlay::~BingMapsRasterOverlay() {
     }
 
-    void BingMapsRasterOverlay::createTileProvider(IAssetAccessor& assetAccessor, std::function<BingMapsRasterOverlay::CreateTileProviderCallback> callback) {
+    void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback> callback) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
         metadataUrl = Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
         metadataUrl = Uri::addQuery(metadataUrl, "key", this->_key);
         metadataUrl = Uri::addQuery(metadataUrl, "uriScheme", "https");
 
-        std::unique_ptr<IAssetRequest> pRequest = assetAccessor.requestAsset(metadataUrl);
-        pRequest->bind([this, callback](IAssetRequest* pRequest) {
+        this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
+        this->_pMetadataRequest->bind([this, callback, &tilesetExternals](IAssetRequest* pRequest) {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
@@ -153,7 +158,7 @@ namespace Cesium3DTiles {
                 return "{" + key + "}";
             });
 
-            callback(std::make_unique<BingMapsTileProvider>(url, subdomains, width, height, 0, maximumLevel));
+            callback(std::make_unique<BingMapsTileProvider>(tilesetExternals, url, subdomains, width, height, 0, maximumLevel));
         });
     }
 }

@@ -6,7 +6,12 @@ namespace CesiumGeospatial {
 
     /*static*/ const double WebMercatorProjection::MAXIMUM_LATITUDE = WebMercatorProjection::mercatorAngleToGeodeticLatitude(CesiumUtility::Math::ONE_PI);
 
-    /*static*/ const GlobeRectangle WebMercatorProjection::MAXIMUM_RECTANGLE = GlobeRectangle(-180.0, -MAXIMUM_LATITUDE, 180.0, MAXIMUM_LATITUDE);
+    /*static*/ const GlobeRectangle WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE = GlobeRectangle(-CesiumUtility::Math::ONE_PI, -MAXIMUM_LATITUDE, CesiumUtility::Math::ONE_PI, MAXIMUM_LATITUDE);
+
+    /*static*/ CesiumGeometry::Rectangle WebMercatorProjection::computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid) {
+        double value = ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
+        return CesiumGeometry::Rectangle(-value, -value, value, value);
+    }
 
     WebMercatorProjection::WebMercatorProjection(const Ellipsoid& ellipsoid) :
         _ellipsoid(ellipsoid),

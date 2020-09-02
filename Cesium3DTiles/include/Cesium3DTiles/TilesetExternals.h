@@ -3,9 +3,14 @@
 #include <functional>
 #include "Cesium3DTiles/Library.h"
 
+namespace CesiumGeometry {
+    class Rectangle;
+}
+
 namespace Cesium3DTiles {
     class IAssetAccessor;
     class Tile;
+    class RasterOverlayTile;
 
     class CESIUM3DTILES_API IPrepareRendererResources {
     public:
@@ -41,7 +46,15 @@ namespace Cesium3DTiles {
          * @param pMainThreadResult The result returned by \ref prepareInMainThread. If \ref prepareInMainThread
          *        has not yet been called, this parameter will be nullptr.
          */
-        virtual void free(Tile& tile, void* pLoadThreadResult, void* pMainThreadResult) = 0;        
+        virtual void free(Tile& tile, void* pLoadThreadResult, void* pMainThreadResult) = 0;
+
+        virtual void* prepareRasterInLoadThread(const RasterOverlayTile& rasterTile) = 0;
+        virtual void* prepareRasterInMainThread(const RasterOverlayTile& rasterTile, void* pLoadThreadResult) = 0;
+        virtual void* attachRasterInMainThread(
+            const Tile& tile,
+            const RasterOverlayTile& rasterTile,
+            const CesiumGeometry::Rectangle& textureCoordinateRectangle
+        ) = 0;
     };
 
     class ITaskProcessor {

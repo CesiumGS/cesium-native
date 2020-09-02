@@ -15,12 +15,15 @@
 #include "CesiumUtility/DoublyLinkedList.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/TileID.h"
+#include "Cesium3DTiles/Gltf.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
+#include "Cesium3DTiles/RasterMappedTo3DTile.h"
 
 namespace Cesium3DTiles {
     class Tileset;
     class TileContent;
     class RasterOverlayTileProvider;
-    
+
     class CESIUM3DTILES_API Tile {
     public:
         /**
@@ -185,7 +188,7 @@ namespace Cesium3DTiles {
         TileSelectionState _lastSelectionState;
 
         // Overlays
-        // std::vector<tinygltf::Image>
+        std::vector<RasterMappedTo3DTile> _rasterTiles;
     };
 
 }

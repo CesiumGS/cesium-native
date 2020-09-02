@@ -6,7 +6,7 @@
 
 namespace Cesium3DTiles {
 
-    class IAssetAccessor;
+    class TilesetExternals;
     class RasterOverlayTileProvider;
 
     class RasterOverlay {
@@ -23,10 +23,10 @@ namespace Cesium3DTiles {
         /**
          * @brief Asynchronously creates a new tile provider for this overlay.
          * 
-         * @param assetAccessor The object used to download any assets that are required to create the tile provider.
+         * @param tilesetExternals The external interfaces to use.
          * @param callback The callback that receives the new tile provider when it is ready.
          */
-        virtual void createTileProvider(IAssetAccessor& assetAccessor, std::function<CreateTileProviderCallback> callback) = 0;
+        virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback> callback) = 0;
     };
 
 }

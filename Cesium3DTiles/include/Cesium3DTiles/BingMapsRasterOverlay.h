@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "CesiumGeospatial/Ellipsoid.h"
@@ -72,7 +73,7 @@ namespace Cesium3DTiles {
             const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
         virtual ~BingMapsRasterOverlay() override;
 
-        virtual void createTileProvider(IAssetAccessor& assetAccessor, std::function<CreateTileProviderCallback> callback) override;
+        virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback> callback) override;
 
     private:
         std::string _url;
@@ -80,6 +81,7 @@ namespace Cesium3DTiles {
         std::string _mapStyle;
         std::string _culture;
         CesiumGeospatial::Ellipsoid _ellipsoid;
+        std::unique_ptr<IAssetRequest> _pMetadataRequest;
     };
 
 }

@@ -12,9 +12,31 @@ namespace CesiumGeometry {
         {
         }
 
+        bool operator==(const QuadtreeTileID& other) const {
+            return this->level == other.level && this->x == other.x && this->y == other.y;
+        }
+
+        bool operator!=(const QuadtreeTileID& other) const {
+            return this->level != other.level || this->x != other.x || this->y != other.y;
+        }
+
         uint32_t level;
         uint32_t x;
         uint32_t y;
     };
 
+}
+
+namespace std {
+    template <>
+    struct hash<CesiumGeometry::QuadtreeTileID> {
+        size_t operator()(const CesiumGeometry::QuadtreeTileID& key) const noexcept {
+            // TODO: is this hash function any good? Probably not.
+            std::hash<uint32_t> h;
+            return
+                h(key.level) ^
+                (h(key.x) << 1) ^
+                (h(key.y) << 2);
+        }
+    };
 }

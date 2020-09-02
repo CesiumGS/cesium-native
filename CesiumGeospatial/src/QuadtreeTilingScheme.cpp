@@ -62,7 +62,7 @@ namespace CesiumGeospatial {
 
         double yTileHeight = this->_rectangle.computeHeight() / yTiles;
         double bottom = this->_rectangle.minimumY + tileID.y * yTileHeight;
-        double top = this->_rectangle.minimumY - (tileID.y + 1) * yTileHeight;
+        double top = this->_rectangle.minimumY + (tileID.y + 1) * yTileHeight;
 
         return Rectangle(left, bottom, right, top);
     }

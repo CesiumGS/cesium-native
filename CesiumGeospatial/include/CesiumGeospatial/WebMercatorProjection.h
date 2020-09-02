@@ -35,10 +35,12 @@ namespace CesiumGeospatial {
 
         /**
          * @brief The maximum bounding rectangle of the Web Mercator projection,
-         * ranging from -180 to 180 degrees longitude and
+         * ranging from -PI to PI radians longitude and
          * from -MAXIMUM_LATITUDE to +MAXIMUM_LATITUDE.
          */
-        static const GlobeRectangle MAXIMUM_RECTANGLE;
+        static const GlobeRectangle MAXIMUM_GLOBE_RECTANGLE;
+
+        static CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
         /**
          * @brief Constructs a new instance.

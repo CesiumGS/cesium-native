@@ -740,6 +740,8 @@ namespace Cesium3DTiles {
 
     void Tileset::markInitialLoadComplete() {
         this->_isDoingInitialLoad.store(false, std::memory_order::memory_order_release);
+
+        this->getOverlays().createTileProviders(this->_externals);
     }
 
 }

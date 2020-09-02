@@ -232,8 +232,9 @@ namespace Cesium3DTiles {
     }
 
     void Tile::update(uint32_t /*previousFrameNumber*/, uint32_t /*currentFrameNumber*/) {
+        const TilesetExternals& externals = this->_pTileset->getExternals();
+
         if (this->getState() == LoadState::ContentLoaded) {
-            const TilesetExternals& externals = this->_pTileset->getExternals();
             if (externals.pPrepareRendererResources) {
                 this->_pRendererResources = externals.pPrepareRendererResources->prepareInMainThread(*this, this->getRendererResources());
             }
@@ -247,6 +248,14 @@ namespace Cesium3DTiles {
             this->_pContentRequest.reset();
 
             this->setState(LoadState::Done);
+        }
+
+        for (RasterMappedTo3DTile& mappedRasterTile : this->_rasterTiles) {
+            if (mappedRasterTile.getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
+                RasterOverlayTile& rasterTile = mappedRasterTile.getRasterTile();
+                rasterTile.loadInMainThread();
+                mappedRasterTile.attachToTile(*this);
+            }
         }
     }
 
@@ -352,10 +361,9 @@ namespace Cesium3DTiles {
 
         // TODO: don't assume we can just unproject the corners; it may be more complicated than that with more exotic projections.
         // The ultimate solution is to unproject each vertex, but that requires loading geometry before we can even start loading imagery.
-        Cartographic sw = projection.unproject(glm::dvec2(providerRectangleProjected.minimumX, providerRectangleProjected.minimumY));
-        Cartographic ne = projection.unproject(glm::dvec2(providerRectangleProjected.maximumX, providerRectangleProjected.maximumY));
-
-        GlobeRectangle providerRectangle = GlobeRectangle(sw.longitude, sw.latitude, ne.longitude, ne.latitude);
+        // We could use this simple approach for lon/lat aligned projections like web mercator, but project each vertex for
+        // more complicated projections.
+        GlobeRectangle providerRectangle = unprojectRectangleSimple(projection, providerRectangleProjected);
 
         // Compute the rectangle of the imagery from this imageryProvider that overlaps
         // the geometry tile.  The ImageryProvider and ImageryLayer both have the
@@ -363,8 +371,8 @@ namespace Cesium3DTiles {
         // always fully contains the ImageryProvider's rectangle.
         // TODO: intersect with the imagery layer's bounds, when we have an imagery layer with bounds.
 
-        GlobeRectangle imageryBounds = providerRectangle;
-        std::optional<GlobeRectangle> maybeRectangle = tileRectangle.intersect(imageryBounds);
+        GlobeRectangle imageryBoundsGeodetic = providerRectangle;
+        std::optional<GlobeRectangle> maybeRectangle = tileRectangle.intersect(imageryBoundsGeodetic);
         GlobeRectangle rectangle(0.0, 0.0, 0.0, 0.0);
 
         if (maybeRectangle) {
@@ -379,7 +387,7 @@ namespace Cesium3DTiles {
             //     return false;
             // }
 
-            GlobeRectangle baseImageryRectangle = imageryBounds;
+            GlobeRectangle baseImageryRectangle = imageryBoundsGeodetic;
             GlobeRectangle baseTerrainRectangle = tileRectangle;
 
             double north, south;
@@ -430,7 +438,8 @@ namespace Cesium3DTiles {
         // images attached to a terrain tile than there are available texture units.  So that's for the future.
         const double errorRatio = 1.0;
         double targetGeometricError = errorRatio * this->getGeometricError();
-        uint32_t imageryLevel = tileProvider.getLevelWithMaximumTexelSpacing(projection.getEllipsoid().getMaximumRadius(), targetGeometricError, latitudeClosestToEquator);
+        // TODO: dividing by 8 to change the default 3D Tiles SSE (16) back to the terrain SSE (2)
+        uint32_t imageryLevel = tileProvider.getLevelWithMaximumTexelSpacing(targetGeometricError / 8.0, latitudeClosestToEquator);
         imageryLevel = std::max(0U, imageryLevel);
 
         uint32_t maximumLevel = tileProvider.getMaximumLevel();
@@ -443,71 +452,72 @@ namespace Cesium3DTiles {
             imageryLevel = minimumLevel;
         }
 
-        std::optional<QuadtreeTileID> northwestTileCoordinatesOpt = imageryTilingScheme.positionToTile(
-            projection.project(rectangle.getNorthwest()),
+        std::optional<QuadtreeTileID> southwestTileCoordinatesOpt = imageryTilingScheme.positionToTile(
+            projection.project(rectangle.getSouthwest()),
             imageryLevel
         );
-        std::optional<QuadtreeTileID> southeastTileCoordinatesOpt = imageryTilingScheme.positionToTile(
-            projection.project(rectangle.getSoutheast()),
+        std::optional<QuadtreeTileID> northeastTileCoordinatesOpt = imageryTilingScheme.positionToTile(
+            projection.project(rectangle.getNortheast()),
             imageryLevel
         );
 
         // Because of the intersection, we should always have valid tile coordinates. But give up if we don't.
-        if (!northwestTileCoordinatesOpt || !southeastTileCoordinatesOpt) {
+        if (!southwestTileCoordinatesOpt || !northeastTileCoordinatesOpt) {
             return;
         }
 
-        QuadtreeTileID northwestTileCoordinates = northwestTileCoordinatesOpt.value();
-        QuadtreeTileID southeastTileCoordinates = southeastTileCoordinatesOpt.value();
+        QuadtreeTileID southwestTileCoordinates = southwestTileCoordinatesOpt.value();
+        QuadtreeTileID northeastTileCoordinates = northeastTileCoordinatesOpt.value();
 
-        // If the southeast corner of the rectangle lies very close to the north or west side
-        // of the southeast tile, we don't actually need the southernmost or easternmost
+        // If the northeast corner of the rectangle lies very close to the south or west side
+        // of the northeast tile, we don't actually need the northernmost or easternmost
         // tiles.
-        // Similarly, if the northwest corner of the rectangle lies very close to the south or east side
-        // of the northwest tile, we don't actually need the northernmost or westernmost tiles.
+        // Similarly, if the southwest corner of the rectangle lies very close to the north or east side
+        // of the southwest tile, we don't actually need the southernmost or westernmost tiles.
 
         // We define "very close" as being within 1/512 of the width of the tile.
         double veryCloseX = tileRectangle.computeWidth() / 512.0;
         double veryCloseY = tileRectangle.computeHeight() / 512.0;
 
-        GlobeRectangle northwestTileRectangle = unprojectRectangleSimple(projection, imageryTilingScheme.tileToRectangle(northwestTileCoordinates));
+        GlobeRectangle southwestTileRectangle = unprojectRectangleSimple(projection, imageryTilingScheme.tileToRectangle(southwestTileCoordinates));
         
         if (
-            std::abs(northwestTileRectangle.getSouth() - tileRectangle.getNorth()) < veryCloseY &&
-            northwestTileCoordinates.y < southeastTileCoordinates.y
+            std::abs(southwestTileRectangle.getNorth() - tileRectangle.getSouth()) < veryCloseY &&
+            southwestTileCoordinates.y < northeastTileCoordinates.y
         ) {
-            ++northwestTileCoordinates.y;
+            ++southwestTileCoordinates.y;
         }
 
         if (
-            std::abs(northwestTileRectangle.getEast() - tileRectangle.getWest()) < veryCloseX &&
-            northwestTileCoordinates.x < southeastTileCoordinates.x
+            std::abs(southwestTileRectangle.getEast() - tileRectangle.getWest()) < veryCloseX &&
+            southwestTileCoordinates.x < northeastTileCoordinates.x
         ) {
-            ++northwestTileCoordinates.x;
+            ++southwestTileCoordinates.x;
         }
 
-        GlobeRectangle southeastTileRectangle = unprojectRectangleSimple(projection, imageryTilingScheme.tileToRectangle(southeastTileCoordinates));
+        GlobeRectangle northeastTileRectangle = unprojectRectangleSimple(projection, imageryTilingScheme.tileToRectangle(northeastTileCoordinates));
 
         if (
-            std::abs(southeastTileRectangle.getNorth() - tileRectangle.getSouth()) < veryCloseY &&
-            southeastTileCoordinates.y > northwestTileCoordinates.y
+            std::abs(northeastTileRectangle.getNorth() - tileRectangle.getSouth()) < veryCloseY &&
+            northeastTileCoordinates.y > southwestTileCoordinates.y
         ) {
-            --southeastTileCoordinates.y;
+            --northeastTileCoordinates.y;
         }
 
         if (
-            std::abs(southeastTileRectangle.getWest() - tileRectangle.getEast()) < veryCloseX &&
-            southeastTileCoordinates.x > northwestTileCoordinates.x
+            std::abs(northeastTileRectangle.getWest() - tileRectangle.getEast()) < veryCloseX &&
+            northeastTileCoordinates.x > southwestTileCoordinates.x
         ) {
-            --southeastTileCoordinates.x;
+            --northeastTileCoordinates.x;
         }
 
         // Create TileImagery instances for each imagery tile overlapping this terrain tile.
         // We need to do all texture coordinate computations in the imagery tile's tiling scheme.
 
         Rectangle terrainRectangle = projectRectangleSimple(projection, tileRectangle);
-        Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(northwestTileCoordinates);
-        std::optional<Rectangle> clippedImageryRectangle = imageryRectangle.intersect(providerRectangleProjected).value();
+        Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
+        Rectangle imageryBounds = providerRectangleProjected.intersect(terrainRectangle).value();
+        std::optional<Rectangle> clippedImageryRectangle = imageryRectangle.intersect(imageryBounds).value();
 
         veryCloseX = terrainRectangle.computeWidth() / 512.0;
         veryCloseY = terrainRectangle.computeHeight() / 512.0;
@@ -515,8 +525,8 @@ namespace Cesium3DTiles {
         double minU;
         double maxU = 0.0;
 
-        double minV = 1.0;
-        double maxV;
+        double minV;
+        double maxV = 0.0;
 
         // If this is the northern-most or western-most tile in the imagery tiling scheme,
         // it may not start at the northern or western edge of the terrain tile.
@@ -542,17 +552,17 @@ namespace Cesium3DTiles {
         //     );
         // }
 
-        double initialMinV = minV;
+        double initialMaxV = maxV;
 
         for (
-            uint32_t i = northwestTileCoordinates.x;
-            i <= southeastTileCoordinates.x;
+            uint32_t i = southwestTileCoordinates.x;
+            i <= northeastTileCoordinates.x;
             ++i
         ) {
             minU = maxU;
 
-            imageryRectangle = imageryTilingScheme.tileToRectangle(QuadtreeTileID(imageryLevel, i, northwestTileCoordinates.y));
-            clippedImageryRectangle = imageryRectangle.intersect(providerRectangleProjected);
+            imageryRectangle = imageryTilingScheme.tileToRectangle(QuadtreeTileID(imageryLevel, i, southwestTileCoordinates.y));
+            clippedImageryRectangle = imageryRectangle.intersect(imageryBounds);
 
             if (!clippedImageryRectangle) {
                 continue;
@@ -565,45 +575,49 @@ namespace Cesium3DTiles {
             // should be 1.0 to make sure rounding errors don't make the last
             // image fall shy of the edge of the terrain tile.
             if (
-                i == southeastTileCoordinates.x &&
+                i == northeastTileCoordinates.x &&
                 (/*this.isBaseLayer()*/ true || std::abs(clippedImageryRectangle.value().maximumX - terrainRectangle.maximumX) < veryCloseX)
             ) {
                 maxU = 1.0;
             }
 
-            minV = initialMinV;
+            maxV = initialMaxV;
 
             for (
-                uint32_t j = northwestTileCoordinates.y;
-                j <= southeastTileCoordinates.y;
+                uint32_t j = southwestTileCoordinates.y;
+                j <= northeastTileCoordinates.y;
                 ++j
             ) {
-                maxV = minV;
+                minV = maxV;
 
                 imageryRectangle = imageryTilingScheme.tileToRectangle(QuadtreeTileID(imageryLevel, i, j));
-                clippedImageryRectangle = imageryRectangle.intersect(providerRectangleProjected);
+                clippedImageryRectangle = imageryRectangle.intersect(imageryBounds);
 
                 if (!clippedImageryRectangle) {
                     continue;
                 }
 
-                minV = std::max(
-                    0.0,
-                    (clippedImageryRectangle.value().minimumY - terrainRectangle.minimumY) / terrainRectangle.computeHeight()
+                maxV = std::min(
+                    1.0,
+                    (clippedImageryRectangle.value().maximumY - terrainRectangle.minimumY) / terrainRectangle.computeHeight()
                 );
 
-                // If this is the southern-most imagery tile mapped to this terrain tile,
-                // and there are more imagery tiles to the south of this one, the minV
-                // should be 0.0 to make sure rounding errors don't make the last
+                // If this is the northern-most imagery tile mapped to this terrain tile,
+                // and there are more imagery tiles to the north of this one, the maxV
+                // should be 1.0 to make sure rounding errors don't make the last
                 // image fall shy of the edge of the terrain tile.
                 if (
-                    j == southeastTileCoordinates.y &&
-                    (/*this.isBaseLayer()*/ true || std::abs(clippedImageryRectangle.value().minimumY - terrainRectangle.minimumY) < veryCloseY)
+                    j == northeastTileCoordinates.y &&
+                    (/*this.isBaseLayer()*/ true || std::abs(clippedImageryRectangle.value().maximumY - terrainRectangle.maximumY) < veryCloseY)
                 ) {
-                    minV = 0.0;
+                    maxV = 1.0;
                 }
 
                 Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
+
+                std::shared_ptr<RasterOverlayTile> pTile = tileProvider.getTile(QuadtreeTileID(imageryLevel, i, j));
+                this->_rasterTiles.emplace_back(pTile, texCoordsRectangle);
+
                 // var imagery = this.getImageryFromCache(i, j, imageryLevel);
                 // surfaceTile.imagery.splice(
                 //     insertionPoint,
@@ -614,5 +628,10 @@ namespace Cesium3DTiles {
             }
         }
     }
+
+    // void Tile::RasterTile::loadComplete(tinygltf::Image&& loadedImage) {
+    //     this->image = std::move(loadedImage);
+    //     this->pImageRequest.reset();
+    // }
 
 }

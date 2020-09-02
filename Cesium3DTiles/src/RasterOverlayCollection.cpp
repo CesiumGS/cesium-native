@@ -10,9 +10,9 @@ namespace Cesium3DTiles {
         this->_overlays.push_back(std::move(pOverlay));
     }
 
-    void RasterOverlayCollection::createTileProviders(IAssetAccessor& assetAccessor) {
+    void RasterOverlayCollection::createTileProviders(TilesetExternals& tilesetExternals) {
         for (std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
-            pOverlay->createTileProvider(assetAccessor, std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
+            pOverlay->createTileProvider(tilesetExternals, std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
         }
     }
 
