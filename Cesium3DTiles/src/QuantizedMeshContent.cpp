@@ -265,11 +265,25 @@ namespace Cesium3DTiles {
         
         int positionBufferId = static_cast<int>(model.buffers.size());
         model.buffers.emplace_back();
-        tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
-        positionBuffer.data.resize(vertexCount * 3 * sizeof(float));
+
+        int uvBufferId = static_cast<int>(model.buffers.size());
+        model.buffers.emplace_back();
 
         int positionBufferViewId = static_cast<int>(model.bufferViews.size());
         model.bufferViews.emplace_back();
+
+        int uvBufferViewId = static_cast<int>(model.bufferViews.size());
+        model.bufferViews.emplace_back();
+
+        int positionAccessorId = static_cast<int>(model.accessors.size());
+        model.accessors.emplace_back();
+
+        int uvAccessorId = static_cast<int>(model.accessors.size());
+        model.accessors.emplace_back();
+
+        tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+        positionBuffer.data.resize(vertexCount * 3 * sizeof(float));
+
         tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
         positionBufferView.buffer = positionBufferId;
         positionBufferView.byteOffset = 0;
@@ -277,15 +291,30 @@ namespace Cesium3DTiles {
         positionBufferView.byteLength = positionBuffer.data.size();
         positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-        int positionAccessorId = static_cast<int>(model.accessors.size());
-        model.accessors.emplace_back();
         tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
         positionAccessor.bufferView = positionBufferViewId;
         positionAccessor.byteOffset = 0;
         positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
         positionAccessor.count = vertexCount;
         positionAccessor.type = TINYGLTF_TYPE_VEC3;
-        
+
+        tinygltf::Buffer& uvBuffer = model.buffers[uvBufferId];
+        uvBuffer.data.resize(vertexCount * 2 * sizeof(float));
+
+        tinygltf::BufferView& uvBufferView = model.bufferViews[uvBufferViewId];
+        uvBufferView.buffer = uvBufferId;
+        uvBufferView.byteOffset = 0;
+        uvBufferView.byteStride = 2 * sizeof(float);
+        uvBufferView.byteLength = uvBuffer.data.size();
+        uvBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+
+        tinygltf::Accessor& uvAccessor = model.accessors[uvAccessorId];
+        uvAccessor.bufferView = uvBufferViewId;
+        uvAccessor.byteOffset = 0;
+        uvAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+        uvAccessor.count = vertexCount;
+        uvAccessor.type = TINYGLTF_TYPE_VEC2;
+
         int meshId = static_cast<int>(model.meshes.size());
         model.meshes.emplace_back();
         tinygltf::Mesh& mesh = model.meshes[meshId];
@@ -294,10 +323,14 @@ namespace Cesium3DTiles {
         tinygltf::Primitive& primitive = mesh.primitives[0];
         primitive.mode = TINYGLTF_MODE_TRIANGLES;
         primitive.attributes.emplace("POSITION", positionAccessorId);
+        primitive.attributes.emplace("TEXCOORD_0", uvAccessorId);
         primitive.material = 0;
 
         float* pPositions = reinterpret_cast<float*>(positionBuffer.data.data());
         size_t positionOutputIndex = 0;
+        
+        float *pUVs = reinterpret_cast<float*>(uvBuffer.data.data());
+        size_t uvOutputIndex = 0;
 
         const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
 
@@ -313,8 +346,11 @@ namespace Cesium3DTiles {
             v += zigZagDecode(vBuffer[i]);
             height += zigZagDecode(heightBuffer[i]);
 
-            double longitude = Math::lerp(west, east, static_cast<double>(u) / 32767.0);
-            double latitude = Math::lerp(south, north, static_cast<double>(v) / 32767.0);
+            double uRatio = static_cast<double>(u) / 32767.0;
+            double vRatio = static_cast<double>(v) / 32767.0;
+
+            double longitude = Math::lerp(west, east, uRatio);
+            double latitude = Math::lerp(south, north, vRatio);
             double heightMeters = Math::lerp(minimumHeight, maximumHeight, static_cast<double>(height) / 32767.0);
 
             glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
@@ -322,6 +358,9 @@ namespace Cesium3DTiles {
             pPositions[positionOutputIndex++] = static_cast<float>(position.x);
             pPositions[positionOutputIndex++] = static_cast<float>(position.y);
             pPositions[positionOutputIndex++] = static_cast<float>(position.z);
+
+            pUVs[uvOutputIndex++] = static_cast<float>(uRatio);
+            pUVs[uvOutputIndex++] = static_cast<float>(vRatio);
 
             minX = std::min(minX, position.x);
             minY = std::min(minY, position.y);

@@ -118,7 +118,7 @@ namespace Cesium3DTiles {
         TileContent* getContent() { return this->_pContent.get(); }
         const TileContent* getContent() const { return this->_pContent.get(); }
 
-        void* getRendererResources() { return this->_pRendererResources; }
+        void* getRendererResources() const { return this->_pRendererResources; }
 
         LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
 
