@@ -1,7 +1,8 @@
 #pragma once
 
-#include <functional>
 #include "Cesium3DTiles/Library.h"
+#include <functional>
+#include <glm/vec2.hpp>
 
 namespace CesiumGeometry {
     class Rectangle;
@@ -53,7 +54,9 @@ namespace Cesium3DTiles {
         virtual void* attachRasterInMainThread(
             const Tile& tile,
             const RasterOverlayTile& rasterTile,
-            const CesiumGeometry::Rectangle& textureCoordinateRectangle
+            const CesiumGeometry::Rectangle& textureCoordinateRectangle,
+            const glm::dvec2& translation,
+            const glm::dvec2& scale
         ) = 0;
     };
 

@@ -4,7 +4,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeospatial/Projection.h"
-#include "CesiumGeospatial/QuadtreeTilingScheme.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include <unordered_map>
 
 namespace Cesium3DTiles {
@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
         RasterOverlayTileProvider(
             TilesetExternals& tilesetExternals,
             const CesiumGeospatial::Projection& projection,
-            const CesiumGeospatial::QuadtreeTilingScheme& tilingScheme,
+            const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
             uint32_t minimumLevel,
             uint32_t maximumLevel,
             uint32_t imageWidth,
@@ -30,7 +30,7 @@ namespace Cesium3DTiles {
         virtual ~RasterOverlayTileProvider() = 0 {}
 
         const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
-        const CesiumGeospatial::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
+        const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
         uint32_t getMinimumLevel() const { return this->_minimumLevel; }
         uint32_t getMaximumLevel() const { return this->_maximumLevel; }
         uint32_t getWidth() const { return this->_imageWidth; }
@@ -49,7 +49,7 @@ namespace Cesium3DTiles {
     private:
         TilesetExternals* _pTilesetExternals;
         CesiumGeospatial::Projection _projection;
-        CesiumGeospatial::QuadtreeTilingScheme _tilingScheme;
+        CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
         uint32_t _minimumLevel;
         uint32_t _maximumLevel;
         uint32_t _imageWidth;

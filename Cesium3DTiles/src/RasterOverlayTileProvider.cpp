@@ -10,7 +10,7 @@ namespace Cesium3DTiles {
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         TilesetExternals& tilesetExternals,
         const CesiumGeospatial::Projection& projection,
-        const CesiumGeospatial::QuadtreeTilingScheme& tilingScheme,
+        const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
         uint32_t minimumLevel,
         uint32_t maximumLevel,
         uint32_t imageWidth,

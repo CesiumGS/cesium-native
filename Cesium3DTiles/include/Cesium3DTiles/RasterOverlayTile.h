@@ -37,7 +37,7 @@ namespace Cesium3DTiles {
         const tinygltf::Image& getImage() const { return this->_image; }
         void loadInMainThread();
 
-        void* getRendererResources() { return this->_pRendererResources; }
+        void* getRendererResources() const { return this->_pRendererResources; }
         void setRendererResources(void* pValue) { this->_pRendererResources = pValue; }
 
     private:

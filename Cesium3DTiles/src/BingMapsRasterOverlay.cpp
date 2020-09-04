@@ -36,7 +36,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 tilesetExternals,
                 CesiumGeospatial::WebMercatorProjection(),
-                CesiumGeospatial::QuadtreeTilingScheme(
+                CesiumGeometry::QuadtreeTilingScheme(
                     CesiumGeospatial::WebMercatorProjection::computeMaximumProjectedRectangle(CesiumGeospatial::Ellipsoid::WGS84),
                     2, 2
                 ),
@@ -56,7 +56,7 @@ namespace Cesium3DTiles {
         virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
             std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
-                    return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.y);
+                    return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.computeInvertedY(this->getTilingScheme()));
                 } else if (key == "subdomain") {
                     size_t subdomainIndex = (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
                     return this->_subdomains[subdomainIndex];

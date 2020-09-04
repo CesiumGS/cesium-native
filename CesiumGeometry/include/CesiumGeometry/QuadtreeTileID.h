@@ -3,6 +3,7 @@
 #include "CesiumGeometry/Library.h"
 
 namespace CesiumGeometry {
+    class QuadtreeTilingScheme;
 
     struct CESIUMGEOMETRY_API QuadtreeTileID {
         QuadtreeTileID(uint32_t level, uint32_t x, uint32_t y) :
@@ -19,6 +20,8 @@ namespace CesiumGeometry {
         bool operator!=(const QuadtreeTileID& other) const {
             return this->level != other.level || this->x != other.x || this->y != other.y;
         }
+
+        uint32_t computeInvertedY(const QuadtreeTilingScheme& tilingScheme) const;
 
         uint32_t level;
         uint32_t x;

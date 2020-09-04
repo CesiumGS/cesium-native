@@ -117,7 +117,9 @@ namespace Cesium3DTiles {
 
     void Tile::createChildTiles(std::vector<Tile>&& children) {
         if (this->_children.size() > 0) {
-            throw std::runtime_error("Children already created.");
+            // TODO
+            return;
+            //throw std::runtime_error("Children already created.");
         }
         this->_children = std::move(children);
     }
@@ -250,11 +252,13 @@ namespace Cesium3DTiles {
             this->setState(LoadState::Done);
         }
 
-        for (RasterMappedTo3DTile& mappedRasterTile : this->_rasterTiles) {
-            if (mappedRasterTile.getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
-                RasterOverlayTile& rasterTile = mappedRasterTile.getRasterTile();
-                rasterTile.loadInMainThread();
-                mappedRasterTile.attachToTile(*this);
+        if (this->getState() == LoadState::Done) {
+            for (RasterMappedTo3DTile& mappedRasterTile : this->_rasterTiles) {
+                if (mappedRasterTile.getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
+                    RasterOverlayTile& rasterTile = mappedRasterTile.getRasterTile();
+                    rasterTile.loadInMainThread();
+                    mappedRasterTile.attachToTile(*this);
+                }
             }
         }
     }
@@ -346,6 +350,12 @@ namespace Cesium3DTiles {
             // TODO: Currently on Web Mercator is supported
             return;
         }
+
+        // const Cesium3DTiles::TileID& id = this->getTileID();
+        // const CesiumGeometry::QuadtreeTileID* pQuadtreeID = std::get_if<CesiumGeometry::QuadtreeTileID>(&id);
+        // if (!pQuadtreeID || pQuadtreeID->level != 14 || pQuadtreeID->x != 5503 || pQuadtreeID->y != 11627) {
+        //     return;
+        // }
 
         const WebMercatorProjection& projection = *pWebMercatorProjection;
 
@@ -515,6 +525,8 @@ namespace Cesium3DTiles {
         // We need to do all texture coordinate computations in the imagery tile's tiling scheme.
 
         Rectangle terrainRectangle = projectRectangleSimple(projection, tileRectangle);
+        double terrainWidth = terrainRectangle.computeWidth();
+        double terrainHeight = terrainRectangle.computeHeight();
         Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
         Rectangle imageryBounds = providerRectangleProjected.intersect(terrainRectangle).value();
         std::optional<Rectangle> clippedImageryRectangle = imageryRectangle.intersect(imageryBounds).value();
@@ -615,8 +627,16 @@ namespace Cesium3DTiles {
 
                 Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
+                double scaleX = terrainWidth / imageryRectangle.computeWidth();
+                double scaleY = terrainHeight / imageryRectangle.computeHeight();
+                glm::dvec2 translation(
+                    (scaleX * (terrainRectangle.minimumX - imageryRectangle.minimumX)) / terrainWidth,
+                    (scaleY * (terrainRectangle.minimumY - imageryRectangle.minimumY)) / terrainHeight
+                );
+                glm::dvec2 scale(scaleX, scaleY);
+
                 std::shared_ptr<RasterOverlayTile> pTile = tileProvider.getTile(QuadtreeTileID(imageryLevel, i, j));
-                this->_rasterTiles.emplace_back(pTile, texCoordsRectangle);
+                this->_rasterTiles.emplace_back(pTile, texCoordsRectangle, translation, scale);
 
                 // var imagery = this.getImageryFromCache(i, j, imageryLevel);
                 // surfaceTile.imagery.splice(

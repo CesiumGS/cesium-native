@@ -1,8 +1,6 @@
-#include "CesiumGeospatial/QuadtreeTilingScheme.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
 
-using namespace CesiumGeometry;
-
-namespace CesiumGeospatial {
+namespace CesiumGeometry {
 
     QuadtreeTilingScheme::QuadtreeTilingScheme(
         const CesiumGeometry::Rectangle& rectangle,

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "CesiumGeospatial/Library.h"
+#include "CesiumGeometry/Library.h"
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include <optional>
 #include <glm/vec2.hpp>
 
-namespace CesiumGeospatial {
+namespace CesiumGeometry {
 
     /**
      * @brief Defines how a rectangular region is divided into quadtree tiles.
      */
-    class CESIUMGEOSPATIAL_API QuadtreeTilingScheme {
+    class CESIUMGEOMETRY_API QuadtreeTilingScheme {
     public:
         /**
          * @brief Constructs a new instance.
