@@ -31,7 +31,9 @@ namespace Cesium3DTiles {
         TilesetExternals& externals = this->getRasterTile().getTileProvider().getExternals();
         externals.pPrepareRendererResources->attachRasterInMainThread(
             tile,
+            0, // TODO
             this->getRasterTile(),
+            this->getRasterTile().getRendererResources(),
             this->getTextureCoordinateRectangle(),
             this->getTranslation(),
             this->getScale()

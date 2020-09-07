@@ -631,21 +631,8 @@ namespace Cesium3DTiles {
 
                 std::shared_ptr<RasterOverlayTile> pTile = tileProvider.getTile(QuadtreeTileID(imageryLevel, i, j));
                 this->_rasterTiles.emplace_back(pTile, texCoordsRectangle, translation, scale);
-
-                // var imagery = this.getImageryFromCache(i, j, imageryLevel);
-                // surfaceTile.imagery.splice(
-                //     insertionPoint,
-                //     0,
-                //     new TileImagery(imagery, texCoordsRectangle, useWebMercatorT)
-                // );
-                // ++insertionPoint;
             }
         }
     }
-
-    // void Tile::RasterTile::loadComplete(tinygltf::Image&& loadedImage) {
-    //     this->image = std::move(loadedImage);
-    //     this->pImageRequest.reset();
-    // }
 
 }
