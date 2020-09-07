@@ -334,6 +334,10 @@ namespace Cesium3DTiles {
 
         const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
 
+        WebMercatorProjection projection(ellipsoid);
+        double southMercatorY = projection.geodeticLatitudeToMercatorAngle(south);
+        double oneOverMercatorHeight = 1.0 / (projection.geodeticLatitudeToMercatorAngle(north) - southMercatorY);
+
         double minX = std::numeric_limits<double>::max();
         double minY = std::numeric_limits<double>::max();
         double minZ = std::numeric_limits<double>::max();
@@ -360,7 +364,8 @@ namespace Cesium3DTiles {
             pPositions[positionOutputIndex++] = static_cast<float>(position.z);
 
             pUVs[uvOutputIndex++] = static_cast<float>(uRatio);
-            pUVs[uvOutputIndex++] = static_cast<float>(vRatio);
+            //pUVs[uvOutputIndex++] = static_cast<float>(vRatio);
+            pUVs[uvOutputIndex++] = static_cast<float>((projection.geodeticLatitudeToMercatorAngle(latitude) - southMercatorY) * oneOverMercatorHeight);
 
             minX = std::min(minX, position.x);
             minY = std::min(minY, position.y);
