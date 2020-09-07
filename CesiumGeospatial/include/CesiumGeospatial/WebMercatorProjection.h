@@ -12,7 +12,7 @@ namespace CesiumGeospatial {
 
     /**
      * The map projection used by Google Maps, Bing Maps, and most of ArcGIS Online, EPSG:3857. This
-     * projection use geodetic longitude and latitude expressed with WGS84 and transforms them to Mercator using
+     * projection uses geodetic longitude and latitude expressed with WGS84 and transforms them to Mercator using
      * the spherical (rather than ellipsoidal) equations.
      *
      * @see GeographicProjection

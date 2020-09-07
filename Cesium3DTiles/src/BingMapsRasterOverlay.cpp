@@ -110,7 +110,7 @@ namespace Cesium3DTiles {
     BingMapsRasterOverlay::~BingMapsRasterOverlay() {
     }
 
-    void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback> callback) {
+    void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
         metadataUrl = Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
         metadataUrl = Uri::addQuery(metadataUrl, "key", this->_key);

@@ -46,7 +46,7 @@ namespace Cesium3DTiles {
         double latitudeClosestToEquator
     ) const {
         // PERFORMANCE_IDEA: factor out the stuff that doesn't change.
-        // TODO: this cimputation is correct only when tilingSchemeRectangle is in meters at the equator, as it is with a Web Mercator projection.
+        // TODO: this computation is correct only when tilingSchemeRectangle is in meters at the equator, as it is with a Web Mercator projection.
         const QuadtreeTilingScheme& tilingScheme = this->getTilingScheme();
         double latitudeFactor =
             std::get_if<WebMercatorProjection>(&this->getProjection()) != nullptr

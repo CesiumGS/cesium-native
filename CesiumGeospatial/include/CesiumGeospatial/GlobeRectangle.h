@@ -67,7 +67,7 @@ namespace CesiumGeospatial {
          * latitude and longitude in radians and produces a correct intersection, taking into account the fact that
          * the same angle can be represented with multiple values as well as the wrapping of longitude at the
          * anti-meridian.  For a simple intersection that ignores these factors and can be used with projected
-         * coordinates, see {@link Rectangle::simpleIntersect}.
+         * coordinates, see {@link Rectangle::intersect}.
          *
          * @param other The other rectangle to intersect with this one.
          * @returns The intersection rectangle, or `std::nullopt` if there is no intersection.

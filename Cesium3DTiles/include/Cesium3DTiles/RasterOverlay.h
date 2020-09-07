@@ -9,6 +9,9 @@ namespace Cesium3DTiles {
     class TilesetExternals;
     class RasterOverlayTileProvider;
 
+    /**
+     * @brief The base class for a quadtree-tiled raster image that can be draped over a {@link Tileset}.
+     */
     class RasterOverlay {
     public:
         virtual ~RasterOverlay() = 0 {}
@@ -26,7 +29,7 @@ namespace Cesium3DTiles {
          * @param tilesetExternals The external interfaces to use.
          * @param callback The callback that receives the new tile provider when it is ready.
          */
-        virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback> callback) = 0;
+        virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback>&& callback) = 0;
     };
 
 }

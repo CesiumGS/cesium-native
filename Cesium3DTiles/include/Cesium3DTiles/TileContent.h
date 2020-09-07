@@ -23,7 +23,6 @@ namespace Cesium3DTiles {
         virtual void finalizeLoad(Tile& tile) = 0;
 
     private:
-        // TODO: use VectorReference instead of a raw pointer
         const Tile* _pTile;
     };
 

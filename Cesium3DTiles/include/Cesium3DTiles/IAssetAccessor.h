@@ -7,7 +7,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief Provides asynchronous access to 3D Tiles assets like tileset.json and tile content.
+     * @brief Provides asynchronous access to assets, usually files downloaded via HTTP.
      */
     class CESIUM3DTILES_API IAssetAccessor {
     public:

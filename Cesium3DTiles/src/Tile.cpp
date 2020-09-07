@@ -347,15 +347,9 @@ namespace Cesium3DTiles {
         const QuadtreeTilingScheme& imageryTilingScheme = tileProvider.getTilingScheme();
         const WebMercatorProjection* pWebMercatorProjection = std::get_if<WebMercatorProjection>(&tileProvider.getProjection());
         if (!pWebMercatorProjection) {
-            // TODO: Currently on Web Mercator is supported
+            // TODO: Currently only Web Mercator is supported
             return;
         }
-
-        // const Cesium3DTiles::TileID& id = this->getTileID();
-        // const CesiumGeometry::QuadtreeTileID* pQuadtreeID = std::get_if<CesiumGeometry::QuadtreeTileID>(&id);
-        // if (!pQuadtreeID || pQuadtreeID->level != 14 || pQuadtreeID->x != 5503 || pQuadtreeID->y != 11627) {
-        //     return;
-        // }
 
         const WebMercatorProjection& projection = *pWebMercatorProjection;
 
