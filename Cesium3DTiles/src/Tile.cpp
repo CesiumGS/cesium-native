@@ -1,10 +1,11 @@
-#include "Cesium3DTiles/Tile.h"
-#include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
+#include "Cesium3DTiles/IPrepareRendererResources.h"
+#include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContentFactory.h"
-#include <chrono>
+#include "Cesium3DTiles/Tileset.h"
 #include <algorithm>
+#include <chrono>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -329,14 +330,14 @@ namespace Cesium3DTiles {
     // These functions assume the rectangle is still a rectangle after projecting, which is true for Web Mercator -> geographic,
     // but not necessarily true for others.
 
-    static Rectangle projectRectangleSimple(const WebMercatorProjection& projection, const GlobeRectangle& rectangle) {
+    static CesiumGeometry::Rectangle projectRectangleSimple(const WebMercatorProjection& projection, const GlobeRectangle& rectangle) {
         glm::dvec3 sw = projection.project(rectangle.getSouthwest());
         glm::dvec3 ne = projection.project(rectangle.getNortheast());
 
-        return Rectangle(sw.x, sw.y, ne.x, ne.y);
+        return CesiumGeometry::Rectangle(sw.x, sw.y, ne.x, ne.y);
     }
 
-    static GlobeRectangle unprojectRectangleSimple(const WebMercatorProjection& projection, const Rectangle& rectangle) {
+    static GlobeRectangle unprojectRectangleSimple(const WebMercatorProjection& projection, const CesiumGeometry::Rectangle& rectangle) {
         Cartographic sw = projection.unproject(rectangle.getLowerLeft());
         Cartographic ne = projection.unproject(rectangle.getUpperRight());
 
@@ -351,6 +352,12 @@ namespace Cesium3DTiles {
             return;
         }
 
+        // const Cesium3DTiles::TileID& id = this->getTileID();
+        // const CesiumGeometry::QuadtreeTileID* pQuadtreeID = std::get_if<CesiumGeometry::QuadtreeTileID>(&id);
+        // if (!pQuadtreeID || pQuadtreeID->level != 14 || pQuadtreeID->x != 5503 || pQuadtreeID->y != 11626) {
+        //     return;
+        // }
+
         const WebMercatorProjection& projection = *pWebMercatorProjection;
 
         // Use Web Mercator for our texture coordinate computations if this imagery layer uses
@@ -361,7 +368,7 @@ namespace Cesium3DTiles {
         //     tileRectangle.getNorth() <= WebMercatorProjection::MAXIMUM_LATITUDE &&
         //     tileRectangle.getSouth() >= -WebMercatorProjection::MAXIMUM_LATITUDE;
 
-        const Rectangle& providerRectangleProjected = imageryTilingScheme.getRectangle();
+        const CesiumGeometry::Rectangle& providerRectangleProjected = imageryTilingScheme.getRectangle();
 
         // TODO: don't assume we can just unproject the corners; it may be more complicated than that with more exotic projections.
         // The ultimate solution is to unproject each vertex, but that requires loading geometry before we can even start loading imagery.
@@ -518,12 +525,12 @@ namespace Cesium3DTiles {
         // Create TileImagery instances for each imagery tile overlapping this terrain tile.
         // We need to do all texture coordinate computations in the imagery tile's tiling scheme.
 
-        Rectangle terrainRectangle = projectRectangleSimple(projection, tileRectangle);
+        CesiumGeometry::Rectangle terrainRectangle = projectRectangleSimple(projection, tileRectangle);
         double terrainWidth = terrainRectangle.computeWidth();
         double terrainHeight = terrainRectangle.computeHeight();
-        Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
-        Rectangle imageryBounds = providerRectangleProjected.intersect(terrainRectangle).value();
-        std::optional<Rectangle> clippedImageryRectangle = imageryRectangle.intersect(imageryBounds).value();
+        CesiumGeometry::Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
+        CesiumGeometry::Rectangle imageryBounds = providerRectangleProjected.intersect(terrainRectangle).value();
+        std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle = imageryRectangle.intersect(imageryBounds).value();
 
         veryCloseX = terrainRectangle.computeWidth() / 512.0;
         veryCloseY = terrainRectangle.computeHeight() / 512.0;
@@ -619,7 +626,7 @@ namespace Cesium3DTiles {
                     maxV = 1.0;
                 }
 
-                Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
+                CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
                 double scaleX = terrainWidth / imageryRectangle.computeWidth();
                 double scaleY = terrainHeight / imageryRectangle.computeHeight();

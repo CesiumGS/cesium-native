@@ -1,3 +1,4 @@
+#include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"

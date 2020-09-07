@@ -1,5 +1,6 @@
-#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/IAssetResponse.h"
+#include "Cesium3DTiles/IPrepareRendererResources.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 
