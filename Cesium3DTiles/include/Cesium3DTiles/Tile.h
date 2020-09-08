@@ -160,8 +160,6 @@ namespace Cesium3DTiles {
         void contentResponseReceived(IAssetRequest* pRequest);
 
     private:
-        void loadOverlays(RasterOverlayTileProvider& tileProvider, const CesiumGeospatial::GlobeRectangle& tileRectangle);
-
         // Position in bounding-volume hierarchy.
         Tileset* _pTileset;
         Tile* _pParent;

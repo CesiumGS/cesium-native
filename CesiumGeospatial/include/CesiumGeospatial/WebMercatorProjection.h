@@ -64,6 +64,14 @@ namespace CesiumGeospatial {
         glm::dvec3 project(const Cartographic& cartographic) const;
 
         /**
+         * Projects a globe rectangle to Web Mercator coordinates by projecting the southwest and northeast corners.
+         * 
+         * @param rectangle The globe rectangle to project.
+         * @return The projected rectangle.
+         */
+        CesiumGeometry::Rectangle project(const CesiumGeospatial::GlobeRectangle& rectangle) const;
+
+        /**
          * Converts Web Mercator X and Y coordinates, expressed in meters, to a {@link Cartographic}
          * containing geodetic ellipsoid coordinates. The height is set to 0.0.
          *
@@ -81,6 +89,14 @@ namespace CesiumGeospatial {
          * @returns The equivalent cartographic coordinates.
          */
         Cartographic unproject(const glm::dvec3& projectedCoordinates) const;
+
+        /**
+         * Unprojects a Web Mercator rectangle to the globe by unprojecting the southwest and northeast corners.
+         * 
+         * @param rectangle The rectangle to unproject.
+         * @returns The unprojected rectangle.
+         */
+        CesiumGeospatial::GlobeRectangle unproject(const CesiumGeometry::Rectangle& rectangle) const;
 
         /**
          * Converts a Mercator angle, in the range -PI to PI, to a geodetic latitude

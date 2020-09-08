@@ -21,6 +21,7 @@ namespace CesiumGeometry {
         glm::dvec2 getLowerRight() const { return glm::dvec2(this->maximumX, this->minimumY); }
         glm::dvec2 getUpperLeft() const { return glm::dvec2(this->minimumX, this->maximumY); }
         glm::dvec2 getUpperRight() const { return glm::dvec2(this->maximumX, this->maximumY); }
+        glm::dvec2 getCenter() const { return glm::dvec2((this->minimumX + this->maximumX) * 0.5, (this->minimumY + this->maximumY) * 0.5); }
 
         double computeWidth() const;
         double computeHeight() const;

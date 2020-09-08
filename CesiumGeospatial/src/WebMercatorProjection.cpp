@@ -30,6 +30,12 @@ namespace CesiumGeospatial {
         );
     }
 
+    CesiumGeometry::Rectangle WebMercatorProjection::project(const CesiumGeospatial::GlobeRectangle& rectangle) const {
+        glm::dvec3 sw = this->project(rectangle.getSouthwest());
+        glm::dvec3 ne = this->project(rectangle.getNortheast());
+        return CesiumGeometry::Rectangle(sw.x, sw.y, ne.x, ne.y);
+    }
+
     Cartographic WebMercatorProjection::unproject(const glm::dvec2& projectedCoordinates) const {
         double oneOverEarthSemimajorAxis = this->_oneOverSemimajorAxis;
 
@@ -44,6 +50,12 @@ namespace CesiumGeospatial {
         Cartographic result = this->unproject(glm::dvec2(projectedCoordinates));
         result.height = projectedCoordinates.z;
         return result;
+    }
+
+    CesiumGeospatial::GlobeRectangle WebMercatorProjection::unproject(const CesiumGeometry::Rectangle& rectangle) const {
+        Cartographic sw = this->unproject(rectangle.getLowerLeft());
+        Cartographic ne = this->unproject(rectangle.getUpperRight());
+        return GlobeRectangle(sw.longitude, sw.latitude, ne.longitude, ne.latitude);
     }
 
     /*static*/ double WebMercatorProjection::mercatorAngleToGeodeticLatitude(double mercatorAngle) {

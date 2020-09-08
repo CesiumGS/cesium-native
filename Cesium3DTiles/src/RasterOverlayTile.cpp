@@ -50,7 +50,6 @@ namespace Cesium3DTiles {
 
             this->setState(LoadState::Loaded);
             this->_pImageRequest.reset();
-            this->_pTileProvider->notifyTileLoaded(*this);
         }
 
         void RasterOverlayTile::setState(LoadState newState) {
