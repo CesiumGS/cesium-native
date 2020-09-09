@@ -24,6 +24,14 @@ namespace CesiumGeospatial {
         double getMaximumRadius() const;
         double getMinimumRadius() const;
 
+        bool operator==(const Ellipsoid& rhs) const {
+            return this->_radii == rhs._radii;
+        };
+
+        bool operator!=(const Ellipsoid& rhs) const {
+            return this->_radii != rhs._radii;
+        };
+
     private:
         glm::dvec3 _radii;
         glm::dvec3 _radiiSquared;

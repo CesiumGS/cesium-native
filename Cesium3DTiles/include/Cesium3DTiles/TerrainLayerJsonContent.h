@@ -23,6 +23,13 @@ namespace Cesium3DTiles {
         const std::string& getVersion() const { return this->_version; }
         const std::vector<std::string>& getExtensions() const { return this->_extensions; }
 
+        virtual void createRasterOverlayTextureCoordinates(
+            uint32_t /*textureCoordinateID*/,
+            const CesiumGeospatial::Projection& /*projection*/,
+            const CesiumGeometry::Rectangle& /*rectangle*/
+        ) override {
+        }
+
     private:
         std::vector<Tile> _externalRoot;
         std::vector<std::string> _tilesUrlTemplates;

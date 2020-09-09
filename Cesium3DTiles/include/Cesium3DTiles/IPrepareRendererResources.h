@@ -57,7 +57,7 @@ namespace Cesium3DTiles {
          * @param overlayTextureCoordinateID The ID of these texture coordinates.
          * @param textureCoordinates The texture coordinates, with u and v components interleaved.
          */
-        virtual void addRasterOverlayTextureCoordinates(Tile& tile, uint32_t overlayTextureCoordinateID, const gsl::span<const float>& textureCoordinates) = 0;
+        virtual void addRasterOverlayTextureCoordinates(const Tile& tile, uint32_t overlayTextureCoordinateID, const gsl::span<const float>& textureCoordinates) = 0;
 
         /**
          * Prepares a raster overlay tile. This method is invoked in the load thread, and

@@ -320,6 +320,35 @@ namespace Cesium3DTiles {
                     return;
                 }
 
+                // Generate texture coordinates for each projection.
+                if (!this->_rasterTiles.empty()) {
+                    CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
+                    CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&this->_boundingVolume);
+                    
+                    const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+                    if (pRegion) {
+                        pRectangle = &pRegion->getRectangle();
+                    } else if (pLooseRegion) {
+                        pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+                    }
+
+                    if (pRectangle) {
+                        std::vector<Projection> projections;
+                        uint32_t projectionID = 0;
+
+                        for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
+                            const CesiumGeospatial::Projection& projection = mappedTile.getRasterTile().getTileProvider().getProjection();
+
+                            if (std::find(projections.begin(), projections.end(), projection) == projections.end()) {
+                                CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
+                                this->getContent()->createRasterOverlayTextureCoordinates(projectionID, projection, rectangle);
+                                projections.push_back(projection);
+                                ++projectionID;
+                            }
+                        }
+                    }
+                }
+
                 if (externals.pPrepareRendererResources) {
                     this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
                 }

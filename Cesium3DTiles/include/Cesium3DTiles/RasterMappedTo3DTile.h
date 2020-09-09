@@ -24,6 +24,8 @@ namespace Cesium3DTiles {
 
         RasterOverlayTile& getRasterTile() { return *this->_pRasterTile; }
         const RasterOverlayTile& getRasterTile() const { return *this->_pRasterTile; }
+        uint32_t getTextureCoordinateID() const { return this->_textureCoordinateID; }
+        void setTextureCoordinateID(uint32_t textureCoordinateID) { this->_textureCoordinateID = textureCoordinateID; }
         const CesiumGeometry::Rectangle& getTextureCoordinateRectangle() const { return this->_textureCoordinateRectangle; }
         const glm::dvec2& getTranslation() const { return this->_translation; }
         const glm::dvec2& getScale() const { return this->_scale; }
@@ -33,6 +35,7 @@ namespace Cesium3DTiles {
 
     private:
         std::shared_ptr<RasterOverlayTile> _pRasterTile;
+        uint32_t _textureCoordinateID;
         CesiumGeometry::Rectangle _textureCoordinateRectangle;
         glm::dvec2 _translation;
         glm::dvec2 _scale;

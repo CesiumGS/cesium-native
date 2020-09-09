@@ -3,6 +3,30 @@
 
 namespace CesiumGeospatial {
 
+    glm::dvec3 projectPosition(const Projection& projection, const Cartographic& position) {
+        struct Operation {
+            const Cartographic& position;
+
+            glm::dvec3 operator()(const WebMercatorProjection& webMercator) {
+                return webMercator.project(position);
+            }
+        };
+
+        return std::visit(Operation { position }, projection);
+    }
+
+    Cartographic unprojectPosition(const Projection& projection, const glm::dvec3& position) {
+        struct Operation {
+            const glm::dvec3& position;
+
+            Cartographic operator()(const WebMercatorProjection& webMercator) {
+                return webMercator.unproject(position);
+            }
+        };
+
+        return std::visit(Operation { position }, projection);
+    }
+
     CesiumGeometry::Rectangle projectRectangleSimple(const Projection& projection, const GlobeRectangle& rectangle) {
         struct Operation {
             const GlobeRectangle& rectangle;

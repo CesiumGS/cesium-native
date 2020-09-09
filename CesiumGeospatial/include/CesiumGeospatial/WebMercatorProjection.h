@@ -116,6 +116,14 @@ namespace CesiumGeospatial {
          */
         static double geodeticLatitudeToMercatorAngle(double latitude);
 
+        bool operator==(const WebMercatorProjection& rhs) const {
+            return this->_ellipsoid == rhs._ellipsoid;
+        };
+
+        bool operator!=(const WebMercatorProjection& rhs) const {
+            return this->_ellipsoid != rhs._ellipsoid;
+        };
+
     private:
         Ellipsoid _ellipsoid;
         double _semimajorAxis;

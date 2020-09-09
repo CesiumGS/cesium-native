@@ -12,6 +12,7 @@ namespace Cesium3DTiles {
         const glm::dvec2& scale
     ) :
         _pRasterTile(pRasterTile),
+        _textureCoordinateID(0),
         _textureCoordinateRectangle(textureCoordinateRectangle),
         _translation(translation),
         _scale(scale),
