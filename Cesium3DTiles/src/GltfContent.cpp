@@ -62,6 +62,7 @@ namespace Cesium3DTiles {
         uvAccessor.type = TINYGLTF_TYPE_VEC2;
 
 		GltfWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
+		GltfAccessor<glm::vec2> oldUvs(gltf, 1);
 
 		double width = rectangle.computeWidth();
 		double height = rectangle.computeHeight();
@@ -83,10 +84,20 @@ namespace Cesium3DTiles {
 			// Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and (1.0, 1.0) at the (maximumX, maximumY) corner.
 			// The coordinates should stay inside these bounds if the input rectangle actually bounds the vertices,
 			// but we'll clamp to be safe.
-			uvWriter[i] = glm::dvec2(
+			glm::dvec2 uv(
 				CesiumUtility::Math::clamp((projectedPosition.x - rectangle.minimumX) / width, 0.0, 1.0),
 				CesiumUtility::Math::clamp((projectedPosition.y - rectangle.minimumY) / height, 0.0, 1.0)
 			);
+
+			glm::dvec2 oldUv = oldUvs[i];
+
+			if (glm::distance(uv, oldUv) > 0.05) {
+				// TODO: hack hack hack
+				uvWriter[i] = oldUv;
+			}
+			else {
+				uvWriter[i] = uv;
+			}
 		}
 
 		return uvAccessorId;
@@ -100,7 +111,7 @@ namespace Cesium3DTiles {
 		std::vector<int> positionAccessorsToTextureCoordinateAccessor;
 		positionAccessorsToTextureCoordinateAccessor.resize(this->_gltf.accessors.size(), 0);
 
-		std::string attributeName = "_OVERLAY" + std::to_string(textureCoordinateID);
+		std::string attributeName = "_CESIUMOVERLAY_" + std::to_string(textureCoordinateID);
 
 		this->forEachPrimitiveInScene(-1, [&positionAccessorsToTextureCoordinateAccessor, &attributeName, &projection, &rectangle](
             tinygltf::Model& gltf,
@@ -122,6 +133,11 @@ namespace Cesium3DTiles {
 			int textureCoordinateAccessorIndex = positionAccessorsToTextureCoordinateAccessor[positionAccessorIndex];
 			if (textureCoordinateAccessorIndex > 0) {
 				primitive.attributes[attributeName] = textureCoordinateAccessorIndex;
+				return;
+			}
+
+			// TODO remove this check
+			if (primitive.attributes.find(attributeName) != primitive.attributes.end()) {
 				return;
 			}
 

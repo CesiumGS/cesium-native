@@ -51,15 +51,6 @@ namespace Cesium3DTiles {
         virtual void free(Tile& tile, void* pLoadThreadResult, void* pMainThreadResult) = 0;
 
         /**
-         * Adds a set of texture coordinates to a tile for use with raster overlays.
-         * 
-         * @param tile The tile to which to add the set of texture coordinates.
-         * @param overlayTextureCoordinateID The ID of these texture coordinates.
-         * @param textureCoordinates The texture coordinates, with u and v components interleaved.
-         */
-        virtual void addRasterOverlayTextureCoordinates(const Tile& tile, uint32_t overlayTextureCoordinateID, const gsl::span<const float>& textureCoordinates) = 0;
-
-        /**
          * Prepares a raster overlay tile. This method is invoked in the load thread, and
          * it may not modify the tile.
          * 

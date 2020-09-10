@@ -363,9 +363,9 @@ namespace Cesium3DTiles {
             pPositions[positionOutputIndex++] = static_cast<float>(position.y);
             pPositions[positionOutputIndex++] = static_cast<float>(position.z);
 
-            pUVs[uvOutputIndex++] = static_cast<float>(uRatio);
-            //pUVs[uvOutputIndex++] = static_cast<float>(vRatio);
-            pUVs[uvOutputIndex++] = static_cast<float>((projection.geodeticLatitudeToMercatorAngle(latitude) - southMercatorY) * oneOverMercatorHeight);
+             pUVs[uvOutputIndex++] = static_cast<float>(uRatio);
+             //pUVs[uvOutputIndex++] = static_cast<float>(vRatio);
+             pUVs[uvOutputIndex++] = static_cast<float>((projection.geodeticLatitudeToMercatorAngle(latitude) - southMercatorY) * oneOverMercatorHeight);
 
             minX = std::min(minX, position.x);
             minY = std::min(minY, position.y);
@@ -480,27 +480,35 @@ namespace Cesium3DTiles {
         }
 
         while (readIndex < data.size()) {
-            const ExtensionHeader* pExtension = reinterpret_cast<const ExtensionHeader*>(data.data() + readIndex);
-            readIndex += extensionHeaderLength;
-            if (readIndex > data.size()) {
+            if (readIndex + extensionHeaderLength > data.size()) {
                 break;
             }
 
-            if (pExtension->extensionId == 1) {
+            uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+            readIndex += sizeof(uint8_t);
+            uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+            readIndex += sizeof(uint32_t);
+
+            if (extensionID == 1) {
                 // Oct-encoded per-vertex normals
-                const uint8_t* pNormalData = reinterpret_cast<const uint8_t*>(data.data() + readIndex);
-                readIndex += vertexCount * 2;
-                if (readIndex > data.size()) {
+                if (readIndex + vertexCount * 2 > data.size()) {
                     break;
                 }
 
+                const uint8_t* pNormalData = reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+
                 int normalBufferId = static_cast<int>(model.buffers.size());
                 model.buffers.emplace_back();
-                tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
-                normalBuffer.data.resize(vertexCount * 3 * sizeof(float));
 
                 int normalBufferViewId = static_cast<int>(model.bufferViews.size());
                 model.bufferViews.emplace_back();
+
+                int normalAccessorId = static_cast<int>(model.accessors.size());
+                model.accessors.emplace_back();
+
+                tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+                normalBuffer.data.resize(vertexCount * 3 * sizeof(float));
+
                 tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
                 normalBufferView.buffer = normalBufferId;
                 normalBufferView.byteOffset = 0;
@@ -508,8 +516,6 @@ namespace Cesium3DTiles {
                 normalBufferView.byteLength = normalBuffer.data.size();
                 normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-                int normalAccessorId = static_cast<int>(model.accessors.size());
-                model.accessors.emplace_back();
                 tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
                 normalAccessor.bufferView = normalBufferViewId;
                 normalAccessor.byteOffset = 0;
@@ -529,6 +535,8 @@ namespace Cesium3DTiles {
                     pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
                 }
             }
+
+            readIndex += extensionLength;
         }
 
         model.nodes.emplace_back();

@@ -139,7 +139,10 @@ namespace Cesium3DTiles {
 
         return
             this->getState() >= LoadState::ContentLoaded &&
-            (!this->_pContent || this->_pContent->getType() != ExternalTilesetContent::TYPE);
+            (!this->_pContent || this->_pContent->getType() != ExternalTilesetContent::TYPE) &&
+            !std::any_of(this->_rasterTiles.begin(), this->_rasterTiles.end(), [](const RasterMappedTo3DTile& rasterTile) {
+                return rasterTile.getRasterTile().getState() == RasterOverlayTile::LoadState::Loading;
+            });
     }
 
     void Tile::loadContent() {
@@ -172,9 +175,16 @@ namespace Cesium3DTiles {
             RasterOverlayCollection& overlays = tileset.getOverlays();
             gsl::span<RasterOverlayTileProvider*> providers = overlays.getTileProviders();
             
+            // Map raster tiles to a new vector first, and then replace the old one.
+            // Doing it in this order ensures that tiles that are already loaded and that we
+            // still need are not freed too soon.
+            std::vector<RasterMappedTo3DTile> newRasterTiles;
+
             for (RasterOverlayTileProvider* pProvider : providers) {
-                pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
+                pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), newRasterTiles);
             }
+
+            this->_rasterTiles = std::move(newRasterTiles);
         }
         
         this->_pContentRequest = tileset.requestTileContent(*this);
@@ -339,11 +349,18 @@ namespace Cesium3DTiles {
                         for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
                             const CesiumGeospatial::Projection& projection = mappedTile.getRasterTile().getTileProvider().getProjection();
 
-                            if (std::find(projections.begin(), projections.end(), projection) == projections.end()) {
+                            auto existingCoordinatesIt = std::find(projections.begin(), projections.end(), projection);
+                            if (existingCoordinatesIt == projections.end()) {
+                                // Create new texture coordinates for this not-previously-seen projection
                                 CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
                                 this->getContent()->createRasterOverlayTextureCoordinates(projectionID, projection, rectangle);
                                 projections.push_back(projection);
+
+                                mappedTile.setTextureCoordinateID(projectionID);
                                 ++projectionID;
+                            } else {
+                                // Use previously-added texture coordinates.
+                                mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt - projections.begin()));
                             }
                         }
                     }
