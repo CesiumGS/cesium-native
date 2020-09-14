@@ -62,7 +62,6 @@ namespace Cesium3DTiles {
         uvAccessor.type = TINYGLTF_TYPE_VEC2;
 
 		GltfWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
-		GltfAccessor<glm::vec2> oldUvs(gltf, 1);
 
 		double width = rectangle.computeWidth();
 		double height = rectangle.computeHeight();
@@ -90,16 +89,7 @@ namespace Cesium3DTiles {
 				CesiumUtility::Math::clamp((projectedPosition.y - rectangle.minimumY) / height, 0.0, 1.0)
 			);
 
-			glm::vec2 oldUv = oldUvs[i];
-
-			if (glm::distance(uv, oldUv) > 0.05) {
-				// TODO: hack hack hack
-				// uvWriter[i] = oldUv;
-				uvWriter[i] = uv;
-			}
-			else {
-				uvWriter[i] = uv;
-			}
+			uvWriter[i] = uv;
 		}
 
 		return uvAccessorId;

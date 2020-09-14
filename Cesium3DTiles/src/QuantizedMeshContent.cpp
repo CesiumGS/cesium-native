@@ -266,19 +266,10 @@ namespace Cesium3DTiles {
         int positionBufferId = static_cast<int>(model.buffers.size());
         model.buffers.emplace_back();
 
-        int uvBufferId = static_cast<int>(model.buffers.size());
-        model.buffers.emplace_back();
-
         int positionBufferViewId = static_cast<int>(model.bufferViews.size());
         model.bufferViews.emplace_back();
 
-        int uvBufferViewId = static_cast<int>(model.bufferViews.size());
-        model.bufferViews.emplace_back();
-
         int positionAccessorId = static_cast<int>(model.accessors.size());
-        model.accessors.emplace_back();
-
-        int uvAccessorId = static_cast<int>(model.accessors.size());
         model.accessors.emplace_back();
 
         tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
@@ -298,23 +289,6 @@ namespace Cesium3DTiles {
         positionAccessor.count = vertexCount;
         positionAccessor.type = TINYGLTF_TYPE_VEC3;
 
-        tinygltf::Buffer& uvBuffer = model.buffers[uvBufferId];
-        uvBuffer.data.resize(vertexCount * 2 * sizeof(float));
-
-        tinygltf::BufferView& uvBufferView = model.bufferViews[uvBufferViewId];
-        uvBufferView.buffer = uvBufferId;
-        uvBufferView.byteOffset = 0;
-        uvBufferView.byteStride = 2 * sizeof(float);
-        uvBufferView.byteLength = uvBuffer.data.size();
-        uvBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
-
-        tinygltf::Accessor& uvAccessor = model.accessors[uvAccessorId];
-        uvAccessor.bufferView = uvBufferViewId;
-        uvAccessor.byteOffset = 0;
-        uvAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-        uvAccessor.count = vertexCount;
-        uvAccessor.type = TINYGLTF_TYPE_VEC2;
-
         int meshId = static_cast<int>(model.meshes.size());
         model.meshes.emplace_back();
         tinygltf::Mesh& mesh = model.meshes[meshId];
@@ -323,20 +297,12 @@ namespace Cesium3DTiles {
         tinygltf::Primitive& primitive = mesh.primitives[0];
         primitive.mode = TINYGLTF_MODE_TRIANGLES;
         primitive.attributes.emplace("POSITION", positionAccessorId);
-        primitive.attributes.emplace("TEXCOORD_0", uvAccessorId);
         primitive.material = 0;
 
         float* pPositions = reinterpret_cast<float*>(positionBuffer.data.data());
         size_t positionOutputIndex = 0;
         
-        float *pUVs = reinterpret_cast<float*>(uvBuffer.data.data());
-        size_t uvOutputIndex = 0;
-
         const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
-
-        WebMercatorProjection projection(ellipsoid);
-        double southMercatorY = projection.geodeticLatitudeToMercatorAngle(south);
-        double oneOverMercatorHeight = 1.0 / (projection.geodeticLatitudeToMercatorAngle(north) - southMercatorY);
 
         double minX = std::numeric_limits<double>::max();
         double minY = std::numeric_limits<double>::max();
@@ -362,10 +328,6 @@ namespace Cesium3DTiles {
             pPositions[positionOutputIndex++] = static_cast<float>(position.x);
             pPositions[positionOutputIndex++] = static_cast<float>(position.y);
             pPositions[positionOutputIndex++] = static_cast<float>(position.z);
-
-             pUVs[uvOutputIndex++] = static_cast<float>(uRatio);
-             //pUVs[uvOutputIndex++] = static_cast<float>(vRatio);
-             pUVs[uvOutputIndex++] = static_cast<float>((projection.geodeticLatitudeToMercatorAngle(latitude) - southMercatorY) * oneOverMercatorHeight);
 
             minX = std::min(minX, position.x);
             minY = std::min(minY, position.y);
