@@ -199,6 +199,10 @@ namespace Cesium3DTiles {
         };
 
         std::string url = std::visit(Operation { *this }, tile.getTileID());
+        if (url.empty()) {
+            return nullptr;
+        }
+
         std::string fullUrl = Uri::resolve(this->_tileBaseUrl, url, true);
 
         IAssetAccessor* pAssetAccessor = this->getExternals().pAssetAccessor;

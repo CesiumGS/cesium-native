@@ -57,7 +57,7 @@ namespace Cesium3DTiles {
 
         double twoToTheLevelPower = levelZeroMaximumTexelSpacingMeters / geometricError;
         double level = std::log2(twoToTheLevelPower);
-        double rounded = std::round(level);
+        double rounded = std::max(std::round(level), 0.0);
         return static_cast<uint32_t>(rounded);
     }
 

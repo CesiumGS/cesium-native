@@ -118,9 +118,7 @@ namespace Cesium3DTiles {
 
     void Tile::createChildTiles(std::vector<Tile>&& children) {
         if (this->_children.size() > 0) {
-            // TODO
-            return;
-            //throw std::runtime_error("Children already created.");
+            throw std::runtime_error("Children already created.");
         }
         this->_children = std::move(children);
     }
@@ -188,7 +186,12 @@ namespace Cesium3DTiles {
         }
         
         this->_pContentRequest = tileset.requestTileContent(*this);
-        this->_pContentRequest->bind(std::bind(&Tile::contentResponseReceived, this, std::placeholders::_1));
+        if (this->_pContentRequest) {
+            this->_pContentRequest->bind(std::bind(&Tile::contentResponseReceived, this, std::placeholders::_1));
+        } else {
+            this->_pTileset->notifyTileDoneLoading(this);
+            this->setState(LoadState::ContentLoaded);
+        }
     }
 
     void Tile::loadReadyContent(std::unique_ptr<TileContent> pReadyContent) {

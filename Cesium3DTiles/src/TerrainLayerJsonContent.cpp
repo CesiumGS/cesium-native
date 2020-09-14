@@ -73,6 +73,7 @@ namespace Cesium3DTiles {
         geometricError *= 8.0;
 
         this->_externalRoot[0].setGeometricError(geometricError);
+        this->_externalRoot[1].setGeometricError(geometricError);
     }
 
     void TerrainLayerJsonContent::finalizeLoad(Tile& tile) {
