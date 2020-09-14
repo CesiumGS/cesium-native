@@ -33,8 +33,6 @@ namespace Cesium3DTiles {
 		const CesiumGeospatial::Projection& projection,
 		const CesiumGeometry::Rectangle& rectangle
 	) {
-		GltfAccessor<glm::vec3> positionAccessor(gltf, positionAccessorIndex);
-
         int uvBufferId = static_cast<int>(gltf.buffers.size());
         gltf.buffers.emplace_back();
 
@@ -43,6 +41,8 @@ namespace Cesium3DTiles {
 
         int uvAccessorId = static_cast<int>(gltf.accessors.size());
         gltf.accessors.emplace_back();
+
+		GltfAccessor<glm::vec3> positionAccessor(gltf, positionAccessorIndex);
 
         tinygltf::Buffer& uvBuffer = gltf.buffers[uvBufferId];
         uvBuffer.data.resize(positionAccessor.size() * 2 * sizeof(float));
@@ -69,7 +69,8 @@ namespace Cesium3DTiles {
 
 		for (size_t i = 0; i < positionAccessor.size(); ++i) {
 			// Get the ECEF position
-			const glm::dvec3& positionEcef = transform * glm::dvec4(positionAccessor[i], 1.0);
+			glm::vec3 position = positionAccessor[i];
+			glm::dvec3 positionEcef = transform * glm::dvec4(position, 1.0);
 			
 			// Convert it to cartographic
 			std::optional<CesiumGeospatial::Cartographic> cartographic = CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(positionEcef);
@@ -84,16 +85,17 @@ namespace Cesium3DTiles {
 			// Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and (1.0, 1.0) at the (maximumX, maximumY) corner.
 			// The coordinates should stay inside these bounds if the input rectangle actually bounds the vertices,
 			// but we'll clamp to be safe.
-			glm::dvec2 uv(
+			glm::vec2 uv(
 				CesiumUtility::Math::clamp((projectedPosition.x - rectangle.minimumX) / width, 0.0, 1.0),
 				CesiumUtility::Math::clamp((projectedPosition.y - rectangle.minimumY) / height, 0.0, 1.0)
 			);
 
-			glm::dvec2 oldUv = oldUvs[i];
+			glm::vec2 oldUv = oldUvs[i];
 
 			if (glm::distance(uv, oldUv) > 0.05) {
 				// TODO: hack hack hack
-				uvWriter[i] = oldUv;
+				// uvWriter[i] = oldUv;
+				uvWriter[i] = uv;
 			}
 			else {
 				uvWriter[i] = uv;
