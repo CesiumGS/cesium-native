@@ -92,7 +92,10 @@
         "cwctype": "cpp",
         "memory_resource": "cpp",
         "string_view": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "gsl_assert": "cpp",
+        "compare": "cpp",
+        "resumable": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

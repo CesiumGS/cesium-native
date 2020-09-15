@@ -2,6 +2,12 @@
 
 #include <string>
 #include "Cesium3DTiles/Library.h"
+#include "CesiumGeospatial/Projection.h"
+#include <vector>
+
+namespace CesiumGeometry {
+    class Rectangle;
+}
 
 namespace Cesium3DTiles {
     
@@ -22,8 +28,13 @@ namespace Cesium3DTiles {
          */
         virtual void finalizeLoad(Tile& tile) = 0;
 
+        virtual void createRasterOverlayTextureCoordinates(
+            uint32_t textureCoordinateID,
+            const CesiumGeospatial::Projection& projection,
+            const CesiumGeometry::Rectangle& rectangle
+        ) = 0;
+
     private:
-        // TODO: use VectorReference instead of a raw pointer
         const Tile* _pTile;
     };
 

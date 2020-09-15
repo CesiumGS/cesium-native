@@ -14,11 +14,16 @@
 #include "Cesium3DTiles/TileSelectionState.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
+#include "Cesium3DTiles/TileID.h"
+#include "Cesium3DTiles/Gltf.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
+#include "Cesium3DTiles/RasterMappedTo3DTile.h"
 
 namespace Cesium3DTiles {
     class Tileset;
     class TileContent;
-    
+    class RasterOverlayTileProvider;
+
     class CESIUM3DTILES_API Tile {
     public:
         /**
@@ -104,8 +109,8 @@ namespace Cesium3DTiles {
         const glm::dmat4x4& getTransform() const { return this->_transform; }
         void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
 
-        const std::optional<std::string>& getContentUri() const { return this->_contentUri; }
-        void setContentUri(const std::optional<std::string>& value);
+        const TileID& getTileID() const { return this->_id; }
+        void setTileID(const TileID& id);
 
         const std::optional<BoundingVolume>& getContentBoundingVolume() const { return this->_contentBoundingVolume; }
         void setContentBoundingVolume(const std::optional<BoundingVolume>& value) { this->_contentBoundingVolume = value; }
@@ -113,7 +118,7 @@ namespace Cesium3DTiles {
         TileContent* getContent() { return this->_pContent.get(); }
         const TileContent* getContent() const { return this->_pContent.get(); }
 
-        void* getRendererResources() { return this->_pRendererResources; }
+        void* getRendererResources() const { return this->_pRendererResources; }
 
         LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
 
@@ -127,6 +132,17 @@ namespace Cesium3DTiles {
         bool isRenderable() const;
 
         void loadContent();
+
+        /**
+         * @brief "Loads" tile content that is already ready to go.
+         * 
+         * This method is usually called from a load thread and it calls {@see IPrepareRendererResources::prepareInLoadThread}
+         * before returning.
+         * 
+         * @param pReadyContent The tile's content
+         */
+        void loadReadyContent(std::unique_ptr<TileContent> pReadyContent);
+
         bool unloadContent();
         void cancelLoadContent();
 
@@ -157,7 +173,7 @@ namespace Cesium3DTiles {
         std::optional<Refine> _refine;
         glm::dmat4x4 _transform;
 
-        std::optional<std::string> _contentUri;
+        TileID _id;
         std::optional<BoundingVolume> _contentBoundingVolume;
 
         // Load state and data.
@@ -168,6 +184,9 @@ namespace Cesium3DTiles {
 
         // Selection state
         TileSelectionState _lastSelectionState;
+
+        // Overlays
+        std::vector<RasterMappedTo3DTile> _rasterTiles;
     };
 
 }

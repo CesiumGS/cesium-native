@@ -149,47 +149,51 @@ namespace Cesium3DTiles {
 
     bool Camera::isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const {
         // TODO: use plane masks
-        switch (boundingVolume.index()) {
-        case 0:
-        {
-            const OrientedBoundingBox& boundingBox = std::get<OrientedBoundingBox>(boundingVolume);
-            return Cesium3DTiles::isBoundingVolumeVisible(boundingBox, this->_leftPlane, this->_rightPlane, this->_bottomPlane, this->_topPlane);
-        }
-        case 1:
-        {
-            const BoundingRegion& boundingRegion = std::get<BoundingRegion>(boundingVolume);
-            return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion, this->_leftPlane, this->_rightPlane, this->_bottomPlane, this->_topPlane);
-        }
-        case 2:
-        {
-            const BoundingSphere& boundingSphere = std::get<BoundingSphere>(boundingVolume);
-            return Cesium3DTiles::isBoundingVolumeVisible(boundingSphere, this->_leftPlane, this->_rightPlane, this->_bottomPlane, this->_topPlane);
-        }
-        default:
-            return true;
-        }
+        struct Operation {
+            const Camera& camera;
+
+            bool operator()(const OrientedBoundingBox& boundingBox) {
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingBox, camera._leftPlane, camera._rightPlane, camera._bottomPlane, camera._topPlane);
+            }
+
+            bool operator()(const BoundingRegion& boundingRegion) {
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion, camera._leftPlane, camera._rightPlane, camera._bottomPlane, camera._topPlane);
+            }
+
+            bool operator()(const BoundingSphere& boundingSphere) {
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingSphere, camera._leftPlane, camera._rightPlane, camera._bottomPlane, camera._topPlane);
+            }
+
+            bool operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion.getBoundingRegion(), camera._leftPlane, camera._rightPlane, camera._bottomPlane, camera._topPlane);
+            }
+        };
+
+        return std::visit(Operation { *this }, boundingVolume);
     }
 
     double Camera::computeDistanceSquaredToBoundingVolume(const BoundingVolume& boundingVolume) const {
-        switch (boundingVolume.index()) {
-        case 0:
-        {
-            const OrientedBoundingBox& boundingBox = std::get<OrientedBoundingBox>(boundingVolume);
-            return boundingBox.computeDistanceSquaredToPosition(this->_position);
-        }
-        case 1:
-        {
-            const BoundingRegion& boundingRegion = std::get<BoundingRegion>(boundingVolume);
-            return boundingRegion.computeDistanceSquaredToPosition(this->_position);
-        }
-        case 2:
-        {
-            const BoundingSphere& boundingSphere = std::get<BoundingSphere>(boundingVolume);
-            return boundingSphere.computeDistanceSquaredToPosition(this->_position);
-        }
-        default:
-            return 0.0;
-        }
+        struct Operation {
+            const Camera& camera;
+
+            double operator()(const OrientedBoundingBox& boundingBox) {
+                return boundingBox.computeDistanceSquaredToPosition(camera._position);
+            }
+
+            double operator()(const BoundingRegion& boundingRegion) {
+                return boundingRegion.computeDistanceSquaredToPosition(camera._position);
+            }
+
+            double operator()(const BoundingSphere& boundingSphere) {
+                return boundingSphere.computeDistanceSquaredToPosition(camera._position);
+            }
+
+            double operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+                return boundingRegion.computeConservativeDistanceSquaredToPosition(camera._position);
+            }
+        };
+
+        return std::visit(Operation { *this }, boundingVolume);
     }
 
     double Camera::computeScreenSpaceError(double geometricError, double distance) const {

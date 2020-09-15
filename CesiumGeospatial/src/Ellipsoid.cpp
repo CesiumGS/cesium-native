@@ -23,7 +23,7 @@ namespace CesiumGeospatial {
     }
 
     glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const glm::dvec3& position) const {
-        return glm::normalize(position * this->_radiiSquared);
+        return glm::normalize(position * this->_oneOverRadiiSquared);
     }
 
     glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const Cartographic& cartographic) const {
@@ -141,9 +141,9 @@ namespace CesiumGeospatial {
             // "denominator" here refers to the use of this expression in the velocity and acceleration
             // computations in the sections to follow.
             denominator =
-            x2 * xMultiplier3 * oneOverRadiiSquaredX +
-            y2 * yMultiplier3 * oneOverRadiiSquaredY +
-            z2 * zMultiplier3 * oneOverRadiiSquaredZ;
+                x2 * xMultiplier3 * oneOverRadiiSquaredX +
+                y2 * yMultiplier3 * oneOverRadiiSquaredY +
+                z2 * zMultiplier3 * oneOverRadiiSquaredZ;
 
             double derivative = -2.0 * denominator;
 
@@ -156,4 +156,13 @@ namespace CesiumGeospatial {
             positionZ * zMultiplier
         );
     }
+
+    double Ellipsoid::getMaximumRadius() const {
+        return std::max(this->_radii.x, std::max(this->_radii.y, this->_radii.z));
+    }
+
+    double Ellipsoid::getMinimumRadius() const {
+        return std::min(this->_radii.x, std::min(this->_radii.y, this->_radii.z));
+    }
+
 }

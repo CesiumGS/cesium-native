@@ -3,23 +3,34 @@
 #include <string>
 #include "Cesium3DTiles/Library.h"
 #include "IAssetRequest.h"
+#include <memory>
 
 namespace Cesium3DTiles {
 
-    /// <summary>
-    /// Provides asynchronous access to 3D Tiles assets like tileset.json and tile content.
-    /// </summary>
+    /**
+     * @brief Provides asynchronous access to assets, usually files downloaded via HTTP.
+     */
     class CESIUM3DTILES_API IAssetAccessor {
     public:
+        /**
+         * @brief An HTTP header represented as a key/value pair.
+         */
+        typedef std::pair<std::string, std::string> THeader;
+
         virtual ~IAssetAccessor() = default;
 
-        /// <summary>
-        /// Starts a new request for the asset with the given URL. The request proceeds asynchronously
-        /// without blocking the calling thread.
-        /// </summary>
-        /// <param name="url">The URL of the asset.</param>
-        /// <returns>The in-progress asset request.</returns>
-        virtual std::unique_ptr<IAssetRequest> requestAsset(const std::string& url) = 0;
+        /**
+         * @brief Starts a new request for the asset with the given URL.
+         * The request proceeds asynchronously without blocking the calling thread.
+         * 
+         * @param url The URL of the asset.
+         * @param headers The headers to include in the request.
+         * @return The in-progress asset request.
+         */
+        virtual std::unique_ptr<IAssetRequest> requestAsset(
+            const std::string& url,
+            const std::vector<THeader>& headers = std::vector<THeader>()
+        ) = 0;
 
         /**
          * Ticks the asset accessor system while the main thread is blocked.

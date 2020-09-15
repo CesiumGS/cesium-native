@@ -11,7 +11,7 @@ using namespace CesiumGeometry;
 
 namespace CesiumGeospatial {
     BoundingRegion::BoundingRegion(
-        const Rectangle& rectangle,
+        const GlobeRectangle& rectangle,
         double minimumHeight,
         double maximumHeight,
         const Ellipsoid& ellipsoid
@@ -211,7 +211,7 @@ namespace CesiumGeospatial {
     }
 
     /*static*/ OrientedBoundingBox BoundingRegion::_computeBoundingBox(
-        const Rectangle& rectangle,
+        const GlobeRectangle& rectangle,
         double minimumHeight,
         double maximumHeight,
         const Ellipsoid& ellipsoid

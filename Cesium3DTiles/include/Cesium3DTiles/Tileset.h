@@ -11,6 +11,7 @@
 #include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/ViewUpdateResult.h"
 #include "Cesium3DTiles/Camera.h"
+#include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "CesiumUtility/Json.h"
 
 namespace Cesium3DTiles {
@@ -30,7 +31,7 @@ namespace Cesium3DTiles {
          * The maximum number of tiles that may simultaneously be in the process
          * of loading.
          */
-        uint32_t maximumSimultaneousTileLoads = 10;
+        uint32_t maximumSimultaneousTileLoads = 20;
 
         /**
          * Indicates whether the ancestors of rendered tiles should be preloaded.
@@ -60,7 +61,7 @@ namespace Cesium3DTiles {
 
         /**
          * When true, the tileset will guarantee that the tileset will never be rendered with holes in place
-         * of tiles that are not yet loaded. It does this be refusing to refine a parent tile until all of its
+         * of tiles that are not yet loaded. It does this by refusing to refine a parent tile until all of its
          * child tiles are ready to render. Thus, when the camera moves, we will always have something - even
          * if it's low resolution - to render any part of the tileset that becomes visible. When false, overall
          * loading will be faster, but newly-visible parts of the tileset may initially be blank.
@@ -140,6 +141,9 @@ namespace Cesium3DTiles {
         Tile* getRootTile() { return this->_pRootTile.get(); }
         const Tile* getRootTile() const { return this->_pRootTile.get(); }
 
+        RasterOverlayCollection& getOverlays() { return this->_overlays; }
+        const RasterOverlayCollection& getOverlays() const { return this->_overlays; }
+
         /**
          * Updates this view, returning the set of tiles to render in this view.
          * @param camera The updated camera.
@@ -159,9 +163,10 @@ namespace Cesium3DTiles {
          * Loads a tile tree from a tileset.json file. This method is safe to call from any thread.
          * @param rootTile A blank tile into which to load the root.
          * @param tileJson The parsed tileset.json.
-         * @param baseUrl The base URL of the tileset.json.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const std::string& baseUrl) const;
+        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson) const;
+
+        std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
     private:
         struct TraversalDetails {
@@ -200,7 +205,9 @@ namespace Cesium3DTiles {
 
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const std::string& baseUrl) const;
+        void _createTile(Tile& tile, const nlohmann::json& tileJson) const;
+        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson);
+
         TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
@@ -223,6 +230,10 @@ namespace Cesium3DTiles {
         std::unique_ptr<IAssetRequest> _pTilesetJsonRequest;
         std::atomic<bool> _isDoingInitialLoad;
 
+        std::string _version;
+        std::string _tileBaseUrl;
+        std::vector<std::pair<std::string, std::string>> _tileHeaders;
+        std::vector<std::string> _implicitTileUrls;
         std::unique_ptr<Tile> _pRootTile;
 
         uint32_t _previousFrameNumber;
@@ -234,6 +245,8 @@ namespace Cesium3DTiles {
         std::atomic<uint32_t> _loadsInProgress;
 
         CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> _loadedTiles;
+
+        RasterOverlayCollection _overlays;
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

@@ -17,6 +17,13 @@ namespace Cesium3DTiles {
         virtual const std::string& getType() const { return ExternalTilesetContent::TYPE; }
         virtual void finalizeLoad(Tile& tile);
 
+        virtual void createRasterOverlayTextureCoordinates(
+            uint32_t /*textureCoordinateID*/,
+            const CesiumGeospatial::Projection& /*projection*/,
+            const CesiumGeometry::Rectangle& /*rectangle*/
+        ) override {
+        }
+
     private:
         std::vector<Tile> _externalRoot;
     };

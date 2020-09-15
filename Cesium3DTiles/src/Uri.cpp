@@ -1,6 +1,7 @@
 #include "Uri.h"
 #define URI_STATIC_BUILD
 #include "uriparser/Uri.h"
+#include <stdexcept>
 
 std::string Uri::resolve(const std::string& base, const std::string& relative, bool useBaseQuery)
 {
@@ -76,7 +77,11 @@ std::string Uri::resolve(const std::string& base, const std::string& relative, b
 std::string Uri::addQuery(const std::string& uri, const std::string& key, const std::string& value)
 {
 	// TODO
-	return uri + "&" + key + "=" + value;
+	if (uri.find('?') != std::string::npos) {
+		return uri + "&" + key + "=" + value;
+	} else {
+		return uri + "?" + key + "=" + value;
+	}
 	//UriUriA baseUri;
 
 	//if (uriParseSingleUriA(&baseUri, uri.c_str(), nullptr) != URI_SUCCESS)
@@ -86,4 +91,33 @@ std::string Uri::addQuery(const std::string& uri, const std::string& key, const 
 	//}
 
 	//uriFreeUriMembersA(&baseUri);
+}
+
+std::string Uri::substituteTemplateParameters(const std::string& templateUri, const std::function<SubstitutionCallbackSignature>& substitutionCallback) {
+	std::string result;
+	std::string placeholder;
+
+	size_t startPos = 0;
+	size_t nextPos;
+
+	// Find the start of a parameter
+	while ((nextPos = templateUri.find('{', startPos)) != std::string::npos) {
+		result.append(templateUri, startPos, nextPos - startPos);
+
+		// Find the end of this parameter
+		++nextPos;
+		size_t endPos = templateUri.find('}', nextPos);
+		if (endPos == std::string::npos) {
+			throw std::runtime_error("Unclosed template parameter");
+		}
+
+		placeholder = templateUri.substr(nextPos, endPos - nextPos);
+		result.append(substitutionCallback(placeholder));
+
+		startPos = endPos + 1;
+	}
+
+	result.append(templateUri, startPos, templateUri.length() - startPos);
+
+	return result;
 }
