@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-
+#include <memory>
 #include <functional>
 
 namespace Cesium3DTiles {
@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
      */
     class RasterOverlay {
     public:
-        virtual ~RasterOverlay() = 0 {}
+        virtual ~RasterOverlay() {}
 
         /**
          * @brief A callback that receives the tile provider when it asynchronously becomes ready.

@@ -124,7 +124,7 @@ namespace Cesium3DTiles {
 
 		tinygltf::Buffer& gltfBuffer()
 		{
-			return const_cast<tinygltf::Accessor&>(this->_accessor.gltfBuffer());
+			return const_cast<tinygltf::Buffer&>(this->_accessor.gltfBuffer());
 		}
 
 		const tinygltf::BufferView& gltfBufferView() const

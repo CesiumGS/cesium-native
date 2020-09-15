@@ -118,7 +118,7 @@ namespace Cesium3DTiles {
 			}
 
 			int positionAccessorIndex = positionIt->second;
-			if (positionAccessorIndex < 0 || positionAccessorIndex >= gltf.accessors.size()) {
+			if (positionAccessorIndex < 0 || positionAccessorIndex >= static_cast<int>(gltf.accessors.size())) {
 				return;
 			}
 
@@ -204,13 +204,13 @@ namespace Cesium3DTiles {
 		}
 
 		int meshId = node.mesh;
-		if (meshId >= 0 && meshId < model.meshes.size()) {
+		if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
 			const tinygltf::Mesh& mesh = model.meshes[meshId];
 			forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
 		}
 
 		for (int childNodeId : node.children) {
-			if (childNodeId >= 0 && childNodeId < model.nodes.size()) {
+			if (childNodeId >= 0 && childNodeId < static_cast<int>(model.nodes.size())) {
 				forEachPrimitiveInNodeObject(nodeTransform, model, model.nodes[childNodeId], callback);
 			}
 		}
@@ -218,7 +218,7 @@ namespace Cesium3DTiles {
 
 	static void forEachPrimitiveInSceneObject(const glm::dmat4x4& transform, const tinygltf::Model& model, const tinygltf::Scene& scene, std::function<GltfContent::ForEachPrimitiveInSceneConstCallback>& callback) {
 		for (int nodeID : scene.nodes) {
-			if (nodeID >= 0 && nodeID < model.nodes.size()) {
+			if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
 				forEachPrimitiveInNodeObject(transform, model, model.nodes[nodeID], callback);
 			}
 		}
@@ -230,10 +230,10 @@ namespace Cesium3DTiles {
 		const tinygltf::Model& model = this->_gltf;
 		if (sceneID >= 0) {
 			// Use the user-specified scene if it exists.
-			if (sceneID < model.scenes.size()) {
+			if (sceneID < static_cast<int>(model.scenes.size())) {
 				forEachPrimitiveInSceneObject(rootTransform, model, model.scenes[sceneID], callback);
 			}
-		} else if (model.defaultScene >= 0 && model.defaultScene < model.scenes.size()) {
+		} else if (model.defaultScene >= 0 && model.defaultScene < static_cast<int>(model.scenes.size())) {
 			// Use the default scene
 			forEachPrimitiveInSceneObject(rootTransform, model, model.scenes[model.defaultScene], callback);
 		} else if (model.scenes.size() > 0) {

@@ -128,9 +128,9 @@ namespace Cesium3DTiles {
 
     void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback) {
         if (this->_ionAssetID > 0) {
-            std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
-            url = Uri::addQuery(url, "access_token", this->_ionAccessToken);
-            this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(url);
+            std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
+            ionUrl = Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
+            this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(ionUrl);
             this->_pMetadataRequest->bind([this, &tilesetExternals, callback](IAssetRequest* pRequest) mutable {
                 IAssetResponse* pResponse = pRequest->response();
 
@@ -188,8 +188,8 @@ namespace Cesium3DTiles {
         metadataUrl = Uri::addQuery(metadataUrl, "uriScheme", "https");
 
         std::unique_ptr<IAssetRequest> pRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
-        pRequest->bind([callback, &tilesetExternals, url, culture](IAssetRequest* pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
+        pRequest->bind([callback, &tilesetExternals, url, culture](IAssetRequest* pCompletedRequest) {
+            IAssetResponse* pResponse = pCompletedRequest->response();
 
             using namespace nlohmann;
             
@@ -220,19 +220,19 @@ namespace Cesium3DTiles {
             // placeholder image for missing tiles.
             resolvedUrl = Uri::addQuery(resolvedUrl, "n", "z");
 
-            resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [culture](const std::string& key) {
-                if (key == "culture") {
+            resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [culture](const std::string& templateKey) {
+                if (templateKey == "culture") {
                     return culture;
                 }
 
                 // Keep other placeholders
-                return "{" + key + "}";
+                return "{" + templateKey + "}";
             });
 
             callback(std::make_unique<BingMapsTileProvider>(tilesetExternals, resolvedUrl, subdomains, width, height, 0, maximumLevel));
         });
 
-        return std::move(pRequest);
+        return pRequest;
     }
 
 }

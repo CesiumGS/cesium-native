@@ -3,6 +3,7 @@
 #include <string>
 #include "Cesium3DTiles/Library.h"
 #include "IAssetRequest.h"
+#include <memory>
 
 namespace Cesium3DTiles {
 

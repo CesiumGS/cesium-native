@@ -2,11 +2,11 @@
 
 namespace CesiumGeometry {
 
-    Rectangle::Rectangle(double minimumX, double minimumY, double maximumX, double maximumY) :
-        minimumX(minimumX),
-        minimumY(minimumY),
-        maximumX(maximumX),
-        maximumY(maximumY)
+    Rectangle::Rectangle(double minimumXIn, double minimumYIn, double maximumXIn, double maximumYIn) :
+        minimumX(minimumXIn),
+        minimumY(minimumYIn),
+        maximumX(maximumXIn),
+        maximumY(maximumYIn)
     {
     }
 

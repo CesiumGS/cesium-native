@@ -28,7 +28,7 @@ namespace Cesium3DTiles {
             uint32_t imageWidth,
             uint32_t imageHeight
         );
-        virtual ~RasterOverlayTileProvider() = 0 {}
+        virtual ~RasterOverlayTileProvider() {}
 
         const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
         const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
