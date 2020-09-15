@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "CesiumGeospatial/Ellipsoid.h"
+#include <functional>
 
 namespace Cesium3DTiles {
 
@@ -71,17 +72,35 @@ namespace Cesium3DTiles {
             const std::string& mapStyle = BingMapsStyle::AERIAL,
             const std::string& culture = "",
             const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
+        BingMapsRasterOverlay(
+            uint32_t ionAssetID,
+            const std::string& ionAccessToken
+        );
         virtual ~BingMapsRasterOverlay() override;
 
         virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback>&& callback) override;
 
     private:
+        static std::unique_ptr<IAssetRequest> createBingProvider(
+            TilesetExternals& tilesetExternals,
+            std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback,
+            const std::string& url,
+            const std::string& key,
+            const std::string& mapStyle,
+            const std::string& culture
+        );
+
         std::string _url;
         std::string _key;
         std::string _mapStyle;
         std::string _culture;
         CesiumGeospatial::Ellipsoid _ellipsoid;
+
+        uint32_t _ionAssetID;
+        std::string _ionAccessToken;
+
         std::unique_ptr<IAssetRequest> _pMetadataRequest;
+        std::function<CreateTileProviderCallback> _callback;
     };
 
 }

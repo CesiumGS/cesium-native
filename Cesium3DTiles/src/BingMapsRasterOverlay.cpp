@@ -103,7 +103,23 @@ namespace Cesium3DTiles {
         _key(key),
         _mapStyle(mapStyle),
         _culture(culture),
-        _ellipsoid(ellipsoid)
+        _ellipsoid(ellipsoid),
+        _ionAssetID(0),
+        _ionAccessToken("")
+    {
+    }
+
+    BingMapsRasterOverlay::BingMapsRasterOverlay(
+        uint32_t ionAssetID,
+        const std::string& ionAccessToken
+    ) :
+        _url(""),
+        _key(""),
+        _mapStyle(BingMapsStyle::AERIAL),
+        _culture(""),
+        _ellipsoid(CesiumGeospatial::Ellipsoid::WGS84),
+        _ionAssetID(ionAssetID),
+        _ionAccessToken(ionAccessToken)
     {
     }
 
@@ -111,13 +127,68 @@ namespace Cesium3DTiles {
     }
 
     void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback) {
-        std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
+        if (this->_ionAssetID > 0) {
+            std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
+            url = Uri::addQuery(url, "access_token", this->_ionAccessToken);
+            this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(url);
+            this->_pMetadataRequest->bind([this, &tilesetExternals, callback](IAssetRequest* pRequest) mutable {
+                IAssetResponse* pResponse = pRequest->response();
+
+                using namespace nlohmann;
+                
+                json response = json::parse(pResponse->data().begin(), pResponse->data().end());
+                json::iterator optionsIt = response.find("options");
+                if (
+                    optionsIt == response.end() ||
+                    response.value("type", "unknown") != "IMAGERY" ||
+                    response.value("externalType", "unknown") != "BING"
+                ) {
+                    // TODO: report invalid imagery type.
+                    return;
+                }
+
+                json options = *optionsIt;
+                std::string url = options.value("url", "");
+                std::string key = options.value("key", "");
+                std::string mapStyle = options.value("mapStyle", "AERIAL");
+                std::string culture = options.value("culture", "");
+
+                this->_pMetadataRequest = BingMapsRasterOverlay::createBingProvider(
+                    tilesetExternals,
+                    std::move(callback),
+                    url,
+                    key,
+                    mapStyle,
+                    culture
+                );
+            });
+        } else {
+            this->_pMetadataRequest = BingMapsRasterOverlay::createBingProvider(
+                tilesetExternals,
+                std::move(callback),
+                this->_url,
+                this->_key,
+                this->_mapStyle,
+                this->_culture
+            );
+        }
+    }
+
+    /*static*/ std::unique_ptr<IAssetRequest> BingMapsRasterOverlay::createBingProvider(
+        TilesetExternals& tilesetExternals,
+        std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback,
+        const std::string& url,
+        const std::string& key,
+        const std::string& mapStyle,
+        const std::string& culture
+    ) {
+        std::string metadataUrl = Uri::resolve(url, "REST/v1/Imagery/Metadata/" + mapStyle, true);
         metadataUrl = Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
-        metadataUrl = Uri::addQuery(metadataUrl, "key", this->_key);
+        metadataUrl = Uri::addQuery(metadataUrl, "key", key);
         metadataUrl = Uri::addQuery(metadataUrl, "uriScheme", "https");
 
-        this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
-        this->_pMetadataRequest->bind([this, callback, &tilesetExternals](IAssetRequest* pRequest) {
+        std::unique_ptr<IAssetRequest> pRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
+        pRequest->bind([callback, &tilesetExternals, url, culture](IAssetRequest* pRequest) {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
@@ -143,22 +214,25 @@ namespace Cesium3DTiles {
 
             // TODO: attribution
 
-            std::string url = Uri::resolve(this->_url, urlTemplate);
+            std::string resolvedUrl = Uri::resolve(url, urlTemplate);
 
             // Tell the Bing servers to send a zero-length response instead of a
             // placeholder image for missing tiles.
-            url = Uri::addQuery(url, "n", "z");
+            resolvedUrl = Uri::addQuery(resolvedUrl, "n", "z");
 
-            url = Uri::substituteTemplateParameters(url, [this](const std::string& key) {
+            resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [culture](const std::string& key) {
                 if (key == "culture") {
-                    return this->_culture;
+                    return culture;
                 }
 
                 // Keep other placeholders
                 return "{" + key + "}";
             });
 
-            callback(std::make_unique<BingMapsTileProvider>(tilesetExternals, url, subdomains, width, height, 0, maximumLevel));
+            callback(std::make_unique<BingMapsTileProvider>(tilesetExternals, resolvedUrl, subdomains, width, height, 0, maximumLevel));
         });
+
+        return std::move(pRequest);
     }
+
 }
