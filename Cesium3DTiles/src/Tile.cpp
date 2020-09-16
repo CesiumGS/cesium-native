@@ -163,7 +163,7 @@ namespace Cesium3DTiles {
         }
 
         // TODO: support overlay mapping for tiles that aren't region-based.
-        // Probably be creating a placeholder for each raster overlay and resolving it to actual raster tiles once
+        // Probably by creating a placeholder for each raster overlay and resolving it to actual raster tiles once
         // we have real geometry. This will also be necessary for raster overlays with a projection that isn't
         // nicely lon/lat aligned like geographic or web mercator, because we won't know our raster rectangle
         // until we can project each vertex.
