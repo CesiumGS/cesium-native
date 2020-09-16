@@ -15,6 +15,7 @@ namespace Cesium3DTiles {
             double /*tileGeometricError*/,
             const glm::dmat4& /*tileTransform*/,
             const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+            TileRefine /*tileRefine*/,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         ) {
@@ -26,12 +27,13 @@ namespace Cesium3DTiles {
             const TileID& /*tileID*/,
             const BoundingVolume& /*tileBoundingVolume*/,
             double /*tileGeometricError*/,
-            const glm::dmat4& /*tileTransform*/,
+            const glm::dmat4& tileTransform,
             const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+            TileRefine tileRefine,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         ) {
-            return std::make_unique<ExternalTilesetContent>(tileset, data, url);
+            return std::make_unique<ExternalTilesetContent>(tileset, tileTransform, tileRefine, data, url);
         });
 
         TileContentFactory::registerMagic(Batched3DModel::MAGIC, Batched3DModel::load);
@@ -43,6 +45,7 @@ namespace Cesium3DTiles {
             double /*tileGeometricError*/,
             const glm::dmat4& /*tileTransform*/,
             const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+            TileRefine /*tileRefine*/,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         ) {

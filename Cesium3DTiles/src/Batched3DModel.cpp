@@ -41,6 +41,7 @@ namespace Cesium3DTiles {
 		double /*tileGeometricError*/,
 		const glm::dmat4& /*tileTransform*/,
 		const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+		TileRefine /*tileRefine*/,
 		const std::string& url,
 		const gsl::span<const uint8_t>& data
 	) {

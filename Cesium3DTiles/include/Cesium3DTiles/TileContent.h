@@ -12,7 +12,7 @@ namespace CesiumGeometry {
 namespace Cesium3DTiles {
 
     class Tile;
-    
+
     class CESIUM3DTILES_API TileContent {
     public:
         TileContent();

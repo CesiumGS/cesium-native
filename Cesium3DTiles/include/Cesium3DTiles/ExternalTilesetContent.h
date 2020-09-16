@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileContent.h"
 #include "Cesium3DTiles/Tile.h"
+#include "Cesium3DTiles/TileRefine.h"
 
 namespace Cesium3DTiles {
 
@@ -16,6 +17,8 @@ namespace Cesium3DTiles {
 
         ExternalTilesetContent(
             Tileset& tileset,
+            const glm::dmat4& tileTransform,
+            TileRefine tileRefine,
             const gsl::span<const uint8_t>& data,
             const std::string& url
         );

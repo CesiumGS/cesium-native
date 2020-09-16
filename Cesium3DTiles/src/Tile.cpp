@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
         _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat4())),
         _viewerRequestVolume(),
         _geometricError(0.0),
-        _refine(),
+        _refine(TileRefine::Replace),
         _transform(1.0),
         _id(""s),
         _contentBoundingVolume(),
@@ -319,6 +319,7 @@ namespace Cesium3DTiles {
                 this->getGeometricError(),
                 this->getTransform(),
                 this->getContentBoundingVolume(),
+                this->getRefine(),
                 this->_pContentRequest->url(),
                 pResponse->contentType(),
                 pResponse->data()

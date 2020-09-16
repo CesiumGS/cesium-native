@@ -21,6 +21,7 @@ namespace Cesium3DTiles {
         double tileGeometricError,
         const glm::dmat4& tileTransform,
         const std::optional<BoundingVolume>& tileContentBoundingVolume,
+        TileRefine tileRefine,
         const std::string& url,
         const std::string& contentType,
         const gsl::span<const uint8_t>& data
@@ -29,19 +30,19 @@ namespace Cesium3DTiles {
 
         auto itMagic = TileContentFactory::_factoryFunctionsByMagic.find(magic);
         if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
-            return itMagic->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, url, data);
+            return itMagic->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
         std::string baseContentType = contentType.substr(0, contentType.find(';'));
 
         auto itContentType = TileContentFactory::_factoryFunctionsByContentType.find(baseContentType);
         if (itContentType != TileContentFactory::_factoryFunctionsByContentType.end()) {
-            return itContentType->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, url, data);
+            return itContentType->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
         itMagic = TileContentFactory::_factoryFunctionsByMagic.find("json");
         if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
-            return itMagic->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, url, data);
+            return itMagic->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
         // No content type registered for this magic or content type

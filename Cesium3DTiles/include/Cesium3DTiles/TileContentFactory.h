@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileID.h"
+#include "Cesium3DTiles/TileRefine.h"
 #include <functional>
 #include <gsl/span>
 #include <memory>
@@ -23,6 +24,7 @@ namespace Cesium3DTiles {
             double tileGeometricError,
             const glm::dmat4& tileTransform,
             const std::optional<BoundingVolume>& tileContentBoundingVolume,
+            TileRefine tileRefine,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         );
@@ -37,6 +39,7 @@ namespace Cesium3DTiles {
             double tileGeometricError,
             const glm::dmat4& tileTransform,
             const std::optional<BoundingVolume>& tileContentBoundingVolume,
+            TileRefine tileRefine,
             const std::string& url,
             const std::string& contentType,
             const gsl::span<const uint8_t>& data

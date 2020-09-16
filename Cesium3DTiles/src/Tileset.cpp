@@ -155,8 +155,8 @@ namespace Cesium3DTiles {
         --this->_loadsInProgress;
     }
 
-    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson) const {
-        this->_createTile(rootTile, tilesetJson["root"]);
+    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const {
+        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine);
     }
 
     std::unique_ptr<IAssetRequest> Tileset::requestTileContent(Tile& tile) {
@@ -279,7 +279,7 @@ namespace Cesium3DTiles {
             json::iterator rootIt = tileset.find("root");
             if (rootIt != tileset.end()) {
                 json& rootJson = *rootIt;
-                this->_createTile(*pRootTile, rootJson);
+                this->_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace);
             } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
                 this->_tileHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
                 this->_createTerrainTile(*pRootTile, tileset);
@@ -290,7 +290,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson) const {
+    void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const {
         using nlohmann::json;
 
         if (!tileJson.is_object())
@@ -299,17 +299,9 @@ namespace Cesium3DTiles {
         }
 
         tile.setTileset(const_cast<Tileset*>(this));
-        Tile* pParent = tile.getParent();
 
         std::optional<glm::dmat4x4> tileTransform = TilesetJson::getTransformProperty(tileJson, "transform");
-        glm::dmat4x4 transform = tileTransform.value_or(glm::dmat4x4(1.0));
-
-        if (tileTransform && pParent) {
-            transform = pParent->getTransform() * transform;
-        } else if (pParent) {
-            transform = pParent->getTransform();
-        }
-
+        glm::dmat4x4 transform = parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
         tile.setTransform(transform);
 
         json::const_iterator contentIt = tileJson.find("content");
@@ -357,14 +349,14 @@ namespace Cesium3DTiles {
         if (refineIt != tileJson.end()) {
             const std::string& refine = *refineIt;
             if (refine == "REPLACE") {
-                tile.setRefine(Tile::Refine::Replace);
+                tile.setRefine(TileRefine::Replace);
             } else if (refine == "ADD") {
-                tile.setRefine(Tile::Refine::Add);
+                tile.setRefine(TileRefine::Add);
             } else {
                 // TODO: report invalid value
             }
-        } else if (pParent) {
-            tile.setRefine(pParent->getRefine());
+        } else {
+            tile.setRefine(parentRefine);
         }
 
         if (childrenIt != tileJson.end())
@@ -382,13 +374,13 @@ namespace Cesium3DTiles {
                 const json& childJson = childrenJson[i];
                 Tile& child = childTiles[i];
                 child.setParent(&tile);
-                this->_createTile(child, childJson);
+                this->_createTile(child, childJson, transform, tile.getRefine());
             }
         }
     }
 
     void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson) {
-        std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(layerJson, this->_tileBaseUrl);
+        std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(*this, layerJson, this->_tileBaseUrl);
         this->_implicitTileUrls = pContent->getTilesUrlTemplates();
 
         const std::vector<std::string>& extensions = pContent->getExtensions();
@@ -570,7 +562,7 @@ namespace Cesium3DTiles {
         bool queuedForLoad = false;
 
         // If this tile uses additive refinement, we need to render this tile in addition to its children.
-        if (tile.getRefine() == Tile::Refine::Add) {
+        if (tile.getRefine() == TileRefine::Add) {
             result.tilesToRenderThisFrame.push_back(&tile);
             this->_loadQueueMedium.push_back(&tile);
             queuedForLoad = true;
@@ -589,7 +581,7 @@ namespace Cesium3DTiles {
             // Nothing else to do except mark this tile refined and return.
             TraversalDetails noChildrenTraversalDetails;
 
-            if (tile.getRefine() == Tile::Refine::Add) {
+            if (tile.getRefine() == TileRefine::Add) {
                 noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
                 noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(lastFrameNumber) == TileSelectionState::Result::Rendered;
                 noChildrenTraversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
@@ -650,7 +642,7 @@ namespace Cesium3DTiles {
             traversalDetails.allAreRenderable = tile.isRenderable();
             traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
         } else {
-            if (tile.getRefine() != Tile::Refine::Add) {
+            if (tile.getRefine() != TileRefine::Add) {
                 markTileNonRendered(lastFrameNumber, tile, result);
             }
             tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Refined));

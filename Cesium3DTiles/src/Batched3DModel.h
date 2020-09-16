@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileID.h"
+#include "Cesium3DTiles/TileRefine.h"
 #include <memory>
 #include <string>
 
@@ -21,6 +22,7 @@ namespace Cesium3DTiles {
             double tileGeometricError,
             const glm::dmat4& tileTransform,
             const std::optional<BoundingVolume>& tileContentBoundingVolume,
+            TileRefine tileRefine,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         );

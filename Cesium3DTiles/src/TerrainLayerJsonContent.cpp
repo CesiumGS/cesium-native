@@ -13,6 +13,7 @@ namespace Cesium3DTiles {
     std::string TerrainLayerJsonContent::TYPE = "terrainLayerJson";
 
     TerrainLayerJsonContent::TerrainLayerJsonContent(
+        Tileset& tileset,
         const nlohmann::json& layerJson,
         const std::string& url
     ) :
@@ -22,6 +23,9 @@ namespace Cesium3DTiles {
         _version(),
         _bounds(0.0, 0.0, 0.0, 0.0)
     {
+        this->_externalRoot[0].setTileset(&tileset);
+        this->_externalRoot[1].setTileset(&tileset);
+
         using nlohmann::json;
 
         this->_tilesUrlTemplates = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
