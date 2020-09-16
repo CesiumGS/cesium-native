@@ -388,7 +388,7 @@ namespace Cesium3DTiles {
     }
 
     void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson) {
-        std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(tile, layerJson, this->_tileBaseUrl);
+        std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(layerJson, this->_tileBaseUrl);
         this->_implicitTileUrls = pContent->getTilesUrlTemplates();
 
         const std::vector<std::string>& extensions = pContent->getExtensions();

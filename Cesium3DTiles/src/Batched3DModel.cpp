@@ -34,7 +34,16 @@ namespace Cesium3DTiles {
 		uint32_t batchLength;
 	};
 
-    std::unique_ptr<GltfContent> Batched3DModel::load(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) {
+    std::unique_ptr<GltfContent> Batched3DModel::load(
+		Tileset& /*tileset*/,
+		const TileID& /*tileID*/,
+		const BoundingVolume& /*tileBoundingVolume*/,
+		double /*tileGeometricError*/,
+		const glm::dmat4& /*tileTransform*/,
+		const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+		const std::string& url,
+		const gsl::span<const uint8_t>& data
+	) {
 		// TODO: actually use the b3dm payload
 		if (data.size() < sizeof(B3dmHeader)) {
 			throw std::runtime_error("The B3DM is invalid because it is too small to include a B3DM header.");
@@ -103,7 +112,7 @@ namespace Cesium3DTiles {
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
 
-        return std::make_unique<GltfContent>(tile, glbData, url);
+        return std::make_unique<GltfContent>(glbData, url);
     }
 
 }

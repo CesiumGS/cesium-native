@@ -13,23 +13,16 @@ namespace Cesium3DTiles {
     std::string TerrainLayerJsonContent::TYPE = "terrainLayerJson";
 
     TerrainLayerJsonContent::TerrainLayerJsonContent(
-        const Tile& tile,
         const nlohmann::json& layerJson,
         const std::string& url
     ) :
-        TileContent(tile),
+        TileContent(),
         _externalRoot(2),
         _tilesUrlTemplates(),
         _version(),
         _bounds(0.0, 0.0, 0.0, 0.0)
     {
         using nlohmann::json;
-
-        this->_externalRoot[0].setTileset(const_cast<Tileset*>(tile.getTileset()));
-        this->_externalRoot[0].setParent(const_cast<Tile*>(&tile));
-
-        this->_externalRoot[1].setTileset(const_cast<Tileset*>(tile.getTileset()));
-        this->_externalRoot[1].setParent(const_cast<Tile*>(&tile));
 
         this->_tilesUrlTemplates = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
         this->_version = layerJson.value<std::string>("version", "");
@@ -77,6 +70,12 @@ namespace Cesium3DTiles {
     }
 
     void TerrainLayerJsonContent::finalizeLoad(Tile& tile) {
+        this->_externalRoot[0].setTileset(tile.getTileset());
+        this->_externalRoot[0].setParent(&tile);
+
+        this->_externalRoot[1].setTileset(tile.getTileset());
+        this->_externalRoot[1].setParent(&tile);
+
         tile.createChildTiles(std::move(this->_externalRoot));
         tile.setGeometricError(999999999.0);
     }

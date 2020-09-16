@@ -12,8 +12,8 @@ namespace Cesium3DTiles {
     public:
         static std::string TYPE;
 
-        GltfContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url);
-        GltfContent(const Tile& tile, tinygltf::Model&& data, const std::string& url);
+        GltfContent(const gsl::span<const uint8_t>& data, const std::string& url);
+        GltfContent(tinygltf::Model&& data, const std::string& url);
 
         const tinygltf::Model& gltf() const { return this->_gltf; }
 

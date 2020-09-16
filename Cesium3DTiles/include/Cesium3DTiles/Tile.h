@@ -144,7 +144,6 @@ namespace Cesium3DTiles {
         void loadReadyContent(std::unique_ptr<TileContent> pReadyContent);
 
         bool unloadContent();
-        void cancelLoadContent();
 
         /**
          * Gives this tile a chance to update itself each render frame.
