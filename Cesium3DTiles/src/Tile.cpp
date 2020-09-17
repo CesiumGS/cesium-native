@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
         _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat4())),
         _viewerRequestVolume(),
         _geometricError(0.0),
-        _refine(),
+        _refine(TileRefine::Replace),
         _transform(1.0),
         _id(""s),
         _contentBoundingVolume(),
@@ -242,17 +242,6 @@ namespace Cesium3DTiles {
         return true;
     }
 
-    void Tile::cancelLoadContent() {
-        if (this->_pContentRequest) {
-            this->_pContentRequest->cancel();
-            this->_pContentRequest.release();
-
-            if (this->getState() == LoadState::ContentLoading) {
-                this->setState(LoadState::Unloaded);
-            }
-        }
-    }
-
     void Tile::update(uint32_t /*previousFrameNumber*/, uint32_t /*currentFrameNumber*/) {
         const TilesetExternals& externals = this->_pTileset->getExternals();
 
@@ -323,7 +312,18 @@ namespace Cesium3DTiles {
                 return;
             }
 
-            std::unique_ptr<TileContent> pContent = TileContentFactory::createContent(*this, pResponse->data(), this->_pContentRequest->url(), pResponse->contentType());
+            std::unique_ptr<TileContent> pContent = TileContentFactory::createContent(
+                *this->getTileset(),
+                this->getTileID(),
+                this->getBoundingVolume(),
+                this->getGeometricError(),
+                this->getTransform(),
+                this->getContentBoundingVolume(),
+                this->getRefine(),
+                this->_pContentRequest->url(),
+                pResponse->contentType(),
+                pResponse->data()
+            );
             if (pContent) {
                 this->_pContent = std::move(pContent);
 

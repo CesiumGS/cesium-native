@@ -14,24 +14,35 @@ namespace Cesium3DTiles {
         TileContentFactory::_factoryFunctionsByContentType[lowercaseContentType] = factoryFunction;
     }
 
-    std::unique_ptr<TileContent> TileContentFactory::createContent(const Cesium3DTiles::Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url, const std::string& contentType) {
+    std::unique_ptr<TileContent> TileContentFactory::createContent(
+        Tileset& tileset,
+        const TileID& tileID,
+        const BoundingVolume& tileBoundingVolume,
+        double tileGeometricError,
+        const glm::dmat4& tileTransform,
+        const std::optional<BoundingVolume>& tileContentBoundingVolume,
+        TileRefine tileRefine,
+        const std::string& url,
+        const std::string& contentType,
+        const gsl::span<const uint8_t>& data
+    ) {
         std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
         auto itMagic = TileContentFactory::_factoryFunctionsByMagic.find(magic);
         if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
-            return itMagic->second(tile, data, url);
+            return itMagic->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
         std::string baseContentType = contentType.substr(0, contentType.find(';'));
 
         auto itContentType = TileContentFactory::_factoryFunctionsByContentType.find(baseContentType);
         if (itContentType != TileContentFactory::_factoryFunctionsByContentType.end()) {
-            return itContentType->second(tile, data, url);
+            return itContentType->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
         itMagic = TileContentFactory::_factoryFunctionsByMagic.find("json");
         if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
-            return itMagic->second(tile, data, url);
+            return itMagic->second(tileset, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
         // No content type registered for this magic or content type

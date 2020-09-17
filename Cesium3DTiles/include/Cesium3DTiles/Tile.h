@@ -1,23 +1,24 @@
 #pragma once
 
-#include <optional>
-#include <memory>
-#include <string>
-#include <vector>
+#include "Cesium3DTiles/BoundingVolume.h"
+#include "Cesium3DTiles/ExternalTilesetContent.h"
+#include "Cesium3DTiles/Gltf.h"
+#include "Cesium3DTiles/IAssetRequest.h"
+#include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
+#include "Cesium3DTiles/TileContent.h"
+#include "Cesium3DTiles/TileID.h"
+#include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/TileSelectionState.h"
+#include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
-#include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/IAssetRequest.h"
-#include "Cesium3DTiles/TileContent.h"
-#include "Cesium3DTiles/BoundingVolume.h"
-#include "Cesium3DTiles/TileSelectionState.h"
-#include "CesiumUtility/DoublyLinkedList.h"
-#include "Cesium3DTiles/ExternalTilesetContent.h"
-#include "Cesium3DTiles/TileID.h"
-#include "Cesium3DTiles/Gltf.h"
-#include "Cesium3DTiles/RasterOverlayTile.h"
-#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace Cesium3DTiles {
     class Tileset;
@@ -64,11 +65,6 @@ namespace Cesium3DTiles {
             Done = 3
         };
 
-        enum class Refine {
-            Add = 0,
-            Replace = 1
-        };
-
         Tile();
         ~Tile();
         Tile(Tile& rhs) noexcept = delete;
@@ -99,8 +95,8 @@ namespace Cesium3DTiles {
         double getGeometricError() const { return this->_geometricError; }
         void setGeometricError(double value) { this->_geometricError = value; }
 
-        const std::optional<Refine>& getRefine() const { return this->_refine; }
-        void setRefine(const std::optional<Refine>& value) { this->_refine = value; }
+        TileRefine getRefine() const { return this->_refine; }
+        void setRefine(TileRefine value) { this->_refine = value; }
 
         /// <summary>
         /// Gets the transformation matrix for this tile. This matrix does _not_ need to be multiplied
@@ -144,7 +140,6 @@ namespace Cesium3DTiles {
         void loadReadyContent(std::unique_ptr<TileContent> pReadyContent);
 
         bool unloadContent();
-        void cancelLoadContent();
 
         /**
          * Gives this tile a chance to update itself each render frame.
@@ -170,7 +165,7 @@ namespace Cesium3DTiles {
         BoundingVolume _boundingVolume;
         std::optional<BoundingVolume> _viewerRequestVolume;
         double _geometricError;
-        std::optional<Refine> _refine;
+        TileRefine _refine;
         glm::dmat4x4 _transform;
 
         TileID _id;

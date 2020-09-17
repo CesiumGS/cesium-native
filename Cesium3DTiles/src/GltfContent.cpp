@@ -7,8 +7,8 @@ namespace Cesium3DTiles {
 
 	std::string GltfContent::TYPE = "gltf";
 
-	GltfContent::GltfContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& /*url*/) :
-		TileContent(tile)
+	GltfContent::GltfContent(const gsl::span<const uint8_t>& data, const std::string& /*url*/) :
+		TileContent()
 	{
 		tinygltf::TinyGLTF loader;
 		std::string errors;
@@ -20,8 +20,8 @@ namespace Cesium3DTiles {
 		//}
 	}
 
-	GltfContent::GltfContent(const Tile& tile, tinygltf::Model&& data, const std::string& /*url*/) :
-		TileContent(tile),
+	GltfContent::GltfContent(tinygltf::Model&& data, const std::string& /*url*/) :
+		TileContent(),
 		_gltf(std::move(data))
 	{
 	}

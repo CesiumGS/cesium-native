@@ -8,17 +8,48 @@
 namespace Cesium3DTiles {
 
     void registerAllTileContentTypes() {
-        TileContentFactory::registerMagic(GltfContent::TYPE, [](const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) {
-            return std::make_unique<GltfContent>(tile, data, url);
+        TileContentFactory::registerMagic(GltfContent::TYPE, [](
+            Tileset& /*tileset*/,
+            const TileID& /*tileID*/,
+            const BoundingVolume& /*tileBoundingVolume*/,
+            double /*tileGeometricError*/,
+            const glm::dmat4& /*tileTransform*/,
+            const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+            TileRefine /*tileRefine*/,
+            const std::string& url,
+            const gsl::span<const uint8_t>& data
+        ) {
+            return std::make_unique<GltfContent>(data, url);
         });
 
-        TileContentFactory::registerMagic(ExternalTilesetContent::TYPE, [](const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) {
-            return std::make_unique<ExternalTilesetContent>(tile, data, url);
+        TileContentFactory::registerMagic(ExternalTilesetContent::TYPE, [](
+            Tileset& tileset,
+            const TileID& /*tileID*/,
+            const BoundingVolume& /*tileBoundingVolume*/,
+            double /*tileGeometricError*/,
+            const glm::dmat4& tileTransform,
+            const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+            TileRefine tileRefine,
+            const std::string& url,
+            const gsl::span<const uint8_t>& data
+        ) {
+            return std::make_unique<ExternalTilesetContent>(tileset, tileTransform, tileRefine, data, url);
         });
 
         TileContentFactory::registerMagic(Batched3DModel::MAGIC, Batched3DModel::load);
-        TileContentFactory::registerContentType(QuantizedMeshContent::CONTENT_TYPE, [](const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) {
-            return std::make_unique<QuantizedMeshContent>(tile, data, url);
+
+        TileContentFactory::registerContentType(QuantizedMeshContent::CONTENT_TYPE, [](
+            Tileset& /*tileset*/,
+            const TileID& /*tileID*/,
+            const BoundingVolume& tileBoundingVolume,
+            double /*tileGeometricError*/,
+            const glm::dmat4& /*tileTransform*/,
+            const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
+            TileRefine /*tileRefine*/,
+            const std::string& url,
+            const gsl::span<const uint8_t>& data
+        ) {
+            return std::make_unique<QuantizedMeshContent>(tileBoundingVolume, data, url);
         });
     }
 

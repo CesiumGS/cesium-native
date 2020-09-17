@@ -163,8 +163,10 @@ namespace Cesium3DTiles {
          * Loads a tile tree from a tileset.json file. This method is safe to call from any thread.
          * @param rootTile A blank tile into which to load the root.
          * @param tileJson The parsed tileset.json.
+         * @param parentTransform The new tile's parent transform.
+         * @param parentRefine The default refinment to use if not specified explicitly for this tile.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson) const;
+        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const;
 
         std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
@@ -205,7 +207,7 @@ namespace Cesium3DTiles {
 
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson) const;
+        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const;
         void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson);
 
         TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);

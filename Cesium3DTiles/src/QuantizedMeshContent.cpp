@@ -22,14 +22,18 @@ namespace Cesium3DTiles {
         double maximumHeight;
     };
 
-    QuantizedMeshContent::QuantizedMeshContent(const Tile& tile, const gsl::span<const uint8_t>& data, const std::string& url) :
-        QuantizedMeshContent(tile, QuantizedMeshContent::load(tile, data), url)
+    QuantizedMeshContent::QuantizedMeshContent(
+        const BoundingVolume& tileBoundingVolume,
+        const gsl::span<const uint8_t>& data,
+        const std::string& url
+    ) :
+        QuantizedMeshContent(QuantizedMeshContent::load(tileBoundingVolume, data), url)
     {
 
     }
 
-    QuantizedMeshContent::QuantizedMeshContent(const Tile& tile, LoadedData&& loadedData, const std::string& url) :
-        GltfContent(tile, std::move(loadedData.gltf), url),
+    QuantizedMeshContent::QuantizedMeshContent(LoadedData&& loadedData, const std::string& url) :
+        GltfContent(std::move(loadedData.gltf), url),
         _minimumHeight(loadedData.minimumHeight),
         _maximumHeight(loadedData.maximumHeight)
     {}
@@ -204,7 +208,10 @@ namespace Cesium3DTiles {
         return glm::normalize(result);
     }
 
-    /*static*/ QuantizedMeshContent::LoadedData QuantizedMeshContent::load(const Tile& tile, const gsl::span<const uint8_t>& data) {
+    /*static*/ QuantizedMeshContent::LoadedData QuantizedMeshContent::load(
+        const BoundingVolume& tileBoundingVolume,
+        const gsl::span<const uint8_t>& data
+    ) {
         if (data.size() < headerLength) {
             return LoadedData();
         }
@@ -243,9 +250,9 @@ namespace Cesium3DTiles {
         int32_t v = 0;
         int32_t height = 0;
 
-        const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&tile.getBoundingVolume());
+        const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
         if (!pRegion) {
-            const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+            const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&tileBoundingVolume);
             if (pLooseRegion) {
                 pRegion = &pLooseRegion->getBoundingRegion();
             }

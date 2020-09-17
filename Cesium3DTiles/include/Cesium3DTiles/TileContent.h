@@ -10,12 +10,12 @@ namespace CesiumGeometry {
 }
 
 namespace Cesium3DTiles {
-    
+
     class Tile;
 
     class CESIUM3DTILES_API TileContent {
     public:
-        TileContent(const Tile& tile);
+        TileContent();
         virtual ~TileContent();
 
         virtual const std::string& getType() const = 0;
@@ -33,9 +33,6 @@ namespace Cesium3DTiles {
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::Rectangle& rectangle
         ) = 0;
-
-    private:
-        const Tile* _pTile;
     };
 
 }
