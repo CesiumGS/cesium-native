@@ -16,6 +16,7 @@ namespace Cesium3DTiles {
         GltfContent(tinygltf::Model&& data, const std::string& url);
 
         const tinygltf::Model& gltf() const { return this->_gltf; }
+        tinygltf::Model& gltf() { return this->_gltf; }
 
         virtual const std::string& getType() const { return TYPE; }
         virtual void finalizeLoad(Tile& /*tile*/) {}

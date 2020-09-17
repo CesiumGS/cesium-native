@@ -1,4 +1,5 @@
 #include "Batched3DModel.h"
+#include "CesiumUtility/Json.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {
@@ -112,8 +113,34 @@ namespace Cesium3DTiles {
 		}
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
+        std::unique_ptr<GltfContent> pGltf = std::make_unique<GltfContent>(glbData, url);
 
-        return std::make_unique<GltfContent>(glbData, url);
+		if (header.featureTableJsonByteLength > 0) {
+			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
+		
+			using nlohmann::json;
+			json response = json::parse(featureTableJsonData.begin(), featureTableJsonData.end());
+			std::vector<double> rtcCenter = response.value("RTC_CENTER", std::vector<double>());
+			if (rtcCenter.size() == 3) {
+				// Add the RTC_CENTER value to the glTF itself.
+				tinygltf::Model& gltf = pGltf->gltf();
+
+				tinygltf::Value::Object extras;
+				if (gltf.extras.IsObject()) {
+					extras = gltf.extras.Get<tinygltf::Value::Object>();
+				}
+				
+				extras["RTC_CENTER"] = tinygltf::Value(tinygltf::Value::Array {
+					tinygltf::Value(rtcCenter[0]),
+					tinygltf::Value(rtcCenter[1]),
+					tinygltf::Value(rtcCenter[2])
+				});
+
+				gltf.extras = tinygltf::Value(extras);
+			}
+		}
+
+		return pGltf;
     }
 
 }
