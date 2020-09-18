@@ -12,17 +12,15 @@ namespace Cesium3DTiles {
         const glm::dmat4& tileTransform,
         TileRefine tileRefine,
         const gsl::span<const uint8_t>& data,
-        const std::string& /*url*/
+        const std::string& url
     ) :
         TileContent(),
         _externalRoot(1)
     {
-        this->_externalRoot[0].setTransform(tileTransform);
-
         using nlohmann::json;
 
         json tilesetJson = json::parse(data.begin(), data.end());
-        tileset.loadTilesFromJson(this->_externalRoot[0], tilesetJson, tileTransform, tileRefine);
+        tileset.loadTilesFromJson(this->_externalRoot[0], tilesetJson, tileTransform, tileRefine, url);
     }
 
     void ExternalTilesetContent::finalizeLoad(Tile& tile) {

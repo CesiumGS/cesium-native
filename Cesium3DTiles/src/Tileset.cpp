@@ -155,62 +155,18 @@ namespace Cesium3DTiles {
         --this->_loadsInProgress;
     }
 
-    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const {
-        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine);
+    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const {
+        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, baseUrl);
     }
 
     std::unique_ptr<IAssetRequest> Tileset::requestTileContent(Tile& tile) {
-        struct Operation {
-            const Tileset& tileset;
-
-            std::string operator()(const std::string& url) {
-                return url;
-            }
-
-            std::string operator()(const QuadtreeTileID& quadtreeID) {
-                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
-                    if (placeholder == "level" || placeholder == "z") {
-                        return std::to_string(quadtreeID.level);
-                    } else if (placeholder == "x") {
-                        return std::to_string(quadtreeID.x);
-                    } else if (placeholder == "y") {
-                        return std::to_string(quadtreeID.y);
-                    } else if (placeholder == "version") {
-                        return this->tileset._version;
-                    }
-
-                    return placeholder;
-                });
-            }
-
-            std::string operator()(const OctreeTileID& octreeID) {
-                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
-                    if (placeholder == "level") {
-                        return std::to_string(octreeID.level);
-                    } else if (placeholder == "x") {
-                        return std::to_string(octreeID.x);
-                    } else if (placeholder == "y") {
-                        return std::to_string(octreeID.y);
-                    } else if (placeholder == "z") {
-                        return std::to_string(octreeID.z);
-                    } else if (placeholder == "version") {
-                        return this->tileset._version;
-                    }
-
-                    return placeholder;
-                });
-            }
-        };
-
-        std::string url = std::visit(Operation { *this }, tile.getTileID());
+        std::string url = this->getResolvedContentUrl(tile);
         if (url.empty()) {
             return nullptr;
         }
 
-        std::string fullUrl = Uri::resolve(this->_tileBaseUrl, url, true);
-
         IAssetAccessor* pAssetAccessor = this->getExternals().pAssetAccessor;
-        return pAssetAccessor->requestAsset(fullUrl, this->_tileHeaders);
+        return pAssetAccessor->requestAsset(url, this->_tileHeaders);
     }
 
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
@@ -279,7 +235,7 @@ namespace Cesium3DTiles {
             json::iterator rootIt = tileset.find("root");
             if (rootIt != tileset.end()) {
                 json& rootJson = *rootIt;
-                this->_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace);
+                this->_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, "");
             } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
                 this->_tileHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
                 this->_createTerrainTile(*pRootTile, tileset);
@@ -290,7 +246,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const {
+    void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const {
         using nlohmann::json;
 
         if (!tileJson.is_object())
@@ -315,7 +271,7 @@ namespace Cesium3DTiles {
             }
 
             if (uriIt != contentIt->end()) {
-                tile.setTileID(*uriIt);
+                tile.setTileID(Uri::resolve(baseUrl, *uriIt));
             }
 
             std::optional<BoundingVolume> contentBoundingVolume = TilesetJson::getBoundingVolumeProperty(*contentIt, "boundingVolume");
@@ -374,7 +330,7 @@ namespace Cesium3DTiles {
                 const json& childJson = childrenJson[i];
                 Tile& child = childTiles[i];
                 child.setParent(&tile);
-                this->_createTile(child, childJson, transform, tile.getRefine());
+                this->_createTile(child, childJson, transform, tile.getRefine(), baseUrl);
             }
         }
     }
@@ -742,6 +698,57 @@ namespace Cesium3DTiles {
         this->_isDoingInitialLoad.store(false, std::memory_order::memory_order_release);
 
         this->getOverlays().createTileProviders(this->_externals);
+    }
+
+    std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
+        struct Operation {
+            const Tileset& tileset;
+
+            std::string operator()(const std::string& url) {
+                return url;
+            }
+
+            std::string operator()(const QuadtreeTileID& quadtreeID) {
+                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
+                    if (placeholder == "level" || placeholder == "z") {
+                        return std::to_string(quadtreeID.level);
+                    } else if (placeholder == "x") {
+                        return std::to_string(quadtreeID.x);
+                    } else if (placeholder == "y") {
+                        return std::to_string(quadtreeID.y);
+                    } else if (placeholder == "version") {
+                        return this->tileset._version;
+                    }
+
+                    return placeholder;
+                });
+            }
+
+            std::string operator()(const OctreeTileID& octreeID) {
+                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
+                    if (placeholder == "level") {
+                        return std::to_string(octreeID.level);
+                    } else if (placeholder == "x") {
+                        return std::to_string(octreeID.x);
+                    } else if (placeholder == "y") {
+                        return std::to_string(octreeID.y);
+                    } else if (placeholder == "z") {
+                        return std::to_string(octreeID.z);
+                    } else if (placeholder == "version") {
+                        return this->tileset._version;
+                    }
+
+                    return placeholder;
+                });
+            }
+        };
+
+        std::string url = std::visit(Operation { *this }, tile.getTileID());
+        if (url.empty()) {
+            return url;
+        }
+
+        return Uri::resolve(this->_tileBaseUrl, url, true);
     }
 
 }
