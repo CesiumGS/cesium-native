@@ -165,8 +165,9 @@ namespace Cesium3DTiles {
          * @param tileJson The parsed tileset.json.
          * @param parentTransform The new tile's parent transform.
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
+         * @param baseUrl The base URL to use to resolve tile URLs.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const;
+        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const;
 
         std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
@@ -207,7 +208,7 @@ namespace Cesium3DTiles {
 
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine) const;
+        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const;
         void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson);
 
         TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
@@ -219,6 +220,7 @@ namespace Cesium3DTiles {
 
         bool isDoingInitialLoad() const;
         void markInitialLoadComplete();
+        std::string getResolvedContentUrl(const Tile& tile) const;
 
         TilesetExternals _externals;
 
