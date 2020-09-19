@@ -36,13 +36,8 @@ namespace Cesium3DTiles {
 	};
 
     std::unique_ptr<GltfContent> Batched3DModel::load(
-		Tileset& /*tileset*/,
-		const TileID& /*tileID*/,
-		const BoundingVolume& /*tileBoundingVolume*/,
-		double /*tileGeometricError*/,
-		const glm::dmat4& /*tileTransform*/,
-		const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
-		TileRefine /*tileRefine*/,
+        const TileContext& /*tileContext*/,
+        const CompleteTileDefinition& /*tile*/,
 		const std::string& url,
 		const gsl::span<const uint8_t>& data
 	) {

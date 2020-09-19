@@ -1,11 +1,11 @@
 #pragma once
 
-#include <gsl/span>
-#include <vector>
+#include "Cesium3DTiles/CompleteTileDefinition.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileContent.h"
-#include "Cesium3DTiles/Tile.h"
-#include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/TileContext.h"
+#include <gsl/span>
+#include <vector>
 
 namespace Cesium3DTiles {
 
@@ -16,9 +16,8 @@ namespace Cesium3DTiles {
         static std::string TYPE;
 
         ExternalTilesetContent(
-            Tileset& tileset,
-            const glm::dmat4& tileTransform,
-            TileRefine tileRefine,
+            const TileContext& tileContext,
+            const CompleteTileDefinition& tile,
             const gsl::span<const uint8_t>& data,
             const std::string& url
         );

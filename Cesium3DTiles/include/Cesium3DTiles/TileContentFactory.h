@@ -4,6 +4,8 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/TileContext.h"
+#include "Cesium3DTiles/CompleteTileDefinition.h"
 #include <functional>
 #include <gsl/span>
 #include <memory>
@@ -18,13 +20,8 @@ namespace Cesium3DTiles {
         TileContentFactory() = delete;
 
         typedef std::unique_ptr<TileContent> FactoryFunctionSignature(
-            Tileset& tileset,
-            const TileID& tileID,
-            const BoundingVolume& tileBoundingVolume,
-            double tileGeometricError,
-            const glm::dmat4& tileTransform,
-            const std::optional<BoundingVolume>& tileContentBoundingVolume,
-            TileRefine tileRefine,
+            const TileContext& tileContext,
+            const CompleteTileDefinition& tile,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         );
@@ -33,13 +30,8 @@ namespace Cesium3DTiles {
         static void registerMagic(const std::string& magic, FactoryFunction factoryFunction);
         static void registerContentType(const std::string& contentType, FactoryFunction factoryFunction);
         static std::unique_ptr<TileContent> createContent(
-            Tileset& tileset,
-            const TileID& tileID,
-            const BoundingVolume& tileBoundingVolume,
-            double tileGeometricError,
-            const glm::dmat4& tileTransform,
-            const std::optional<BoundingVolume>& tileContentBoundingVolume,
-            TileRefine tileRefine,
+            const TileContext& tileContext,
+            const CompleteTileDefinition& tile,
             const std::string& url,
             const std::string& contentType,
             const gsl::span<const uint8_t>& data

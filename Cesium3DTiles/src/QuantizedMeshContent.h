@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Cesium3DTiles/BoundingVolume.h"
+#include "Cesium3DTiles/CompleteTileDefinition.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/TileContext.h"
 #include <memory>
 #include <string>
 
@@ -13,7 +14,8 @@ namespace Cesium3DTiles {
         static std::string CONTENT_TYPE;
 
         QuantizedMeshContent(
-            const BoundingVolume& tileBoundingVolume,
+            const TileContext& tileContext,
+            const CompleteTileDefinition& tile,
             const gsl::span<const uint8_t>& data,
             const std::string& url
         );

@@ -313,13 +313,16 @@ namespace Cesium3DTiles {
             }
 
             std::unique_ptr<TileContent> pContent = TileContentFactory::createContent(
-                *this->getTileset(),
-                this->getTileID(),
-                this->getBoundingVolume(),
-                this->getGeometricError(),
-                this->getTransform(),
-                this->getContentBoundingVolume(),
-                this->getRefine(),
+                this->getTileset()->getTileContexts()[0],
+                CompleteTileDefinition {
+                    this->getTileID(),
+                    this->getBoundingVolume(),
+                    this->getViewerRequestVolume(),
+                    this->getGeometricError(),
+                    this->getRefine(),
+                    this->getTransform(),
+                    this->getContentBoundingVolume()
+                },
                 this->_pContentRequest->url(),
                 pResponse->contentType(),
                 pResponse->data()

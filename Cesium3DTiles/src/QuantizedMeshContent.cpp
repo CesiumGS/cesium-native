@@ -23,11 +23,12 @@ namespace Cesium3DTiles {
     };
 
     QuantizedMeshContent::QuantizedMeshContent(
-        const BoundingVolume& tileBoundingVolume,
+        const TileContext& /*tileContext*/,
+        const CompleteTileDefinition& tile,
         const gsl::span<const uint8_t>& data,
         const std::string& url
     ) :
-        QuantizedMeshContent(QuantizedMeshContent::load(tileBoundingVolume, data), url)
+        QuantizedMeshContent(QuantizedMeshContent::load(tile.boundingVolume, data), url)
     {
 
     }

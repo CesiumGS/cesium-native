@@ -144,6 +144,8 @@ namespace Cesium3DTiles {
         RasterOverlayCollection& getOverlays() { return this->_overlays; }
         const RasterOverlayCollection& getOverlays() const { return this->_overlays; }
 
+        const gsl::span<const TileContext> getTileContexts() const { return this->_tileContexts; }
+
         /**
          * Updates this view, returning the set of tiles to render in this view.
          * @param camera The updated camera.
@@ -251,6 +253,8 @@ namespace Cesium3DTiles {
         CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> _loadedTiles;
 
         RasterOverlayCollection _overlays;
+
+        std::vector<TileContext> _tileContexts;
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

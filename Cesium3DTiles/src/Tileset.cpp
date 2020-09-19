@@ -222,6 +222,12 @@ namespace Cesium3DTiles {
 
         this->_tileBaseUrl = this->_pTilesetJsonRequest->url();
 
+        this->_tileContexts.push_back(TileContext {
+            this,
+            this->_pTilesetJsonRequest->url(),
+            std::nullopt
+        });
+
         gsl::span<const uint8_t> data = pResponse->data();
 
         const TilesetExternals& externals = this->getExternals();
