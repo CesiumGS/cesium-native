@@ -13,8 +13,59 @@
 #include "Cesium3DTiles/Camera.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "CesiumUtility/Json.h"
+#include "CesiumUtility/DoublyLinkedList.h"
 
 namespace Cesium3DTiles {
+
+    typedef size_t TilePrimaryKey;
+    typedef size_t TileContextPrimaryKey;
+    typedef size_t VisitedTilePrimaryKey;
+    typedef size_t UnvisitedTilePrimaryKey;
+
+    struct TileRange {
+        TilePrimaryKey first;
+        uint32_t count;
+    };
+
+    struct TileData {
+        std::vector<TileID> ids;
+        std::vector<TilePrimaryKey> parents;
+        std::vector<BoundingVolume> boundingVolumes;
+        std::vector<double> geometricErrors;
+        std::vector<TileContextPrimaryKey> contexts;
+
+        // TODO: replace std::unordered_map with a hashmap that isn't terrible.
+        // https://martin.ankerl.com/2019/04/01/hashmap-benchmarks-01-overview/
+        // Or: A simple vector sorted on primary key that we can walk in step
+        // with the vectors above, or binary search through if necessary.
+        std::unordered_map<TilePrimaryKey, BoundingVolume> viewerRequestVolumes;
+        std::unordered_map<TilePrimaryKey, TileRefine> refineModes;
+        std::unordered_map<TilePrimaryKey, BoundingVolume> contentBoundingVolumeS;
+        std::unordered_map<TilePrimaryKey, glm::dmat4> transforms;
+        std::unordered_map<TilePrimaryKey, TileRange> children;
+
+        std::unordered_map<TilePrimaryKey, VisitedTilePrimaryKey> visitedTileIndices;
+        std::unordered_map<TilePrimaryKey, UnvisitedTilePrimaryKey> unvisitedTileIndices;
+    };
+
+    struct VisitedTile {
+        TilePrimaryKey tilePrimaryKey;
+        double minimumDistance;
+        double maximumDistance;
+        BoundingVolume boundingVolume;
+        bool culled : 1;
+        bool rendered : 1;
+    };
+
+    struct VisitedTileData {
+        std::vector<VisitedTile> visitedTiles;
+        std::vector<VisitedTile> nextVisitedTiles;
+    
+        // References to tiles that were not visited in the last frame and are therefore
+        // candidates for unloading. Tiles that were visited less recently are closer to
+        // the front of the vector.
+        std::vector<TilePrimaryKey> unvistedTiles;
+    };
 
     /**
      * Additional options for configuring a \ref Tileset.
@@ -135,12 +186,6 @@ namespace Cesium3DTiles {
          */
         const TilesetOptions& getOptions() const { return this->_options; }
 
-        /**
-         * Gets the root tile of this tileset, or nullptr if there is currently no root tile.
-         */
-        Tile* getRootTile() { return this->_pRootTile.get(); }
-        const Tile* getRootTile() const { return this->_pRootTile.get(); }
-
         RasterOverlayCollection& getOverlays() { return this->_overlays; }
         const RasterOverlayCollection& getOverlays() const { return this->_overlays; }
 
@@ -163,13 +208,9 @@ namespace Cesium3DTiles {
 
         /**
          * Loads a tile tree from a tileset.json file. This method is safe to call from any thread.
-         * @param rootTile A blank tile into which to load the root.
-         * @param tileJson The parsed tileset.json.
-         * @param parentTransform The new tile's parent transform.
-         * @param parentRefine The default refinment to use if not specified explicitly for this tile.
-         * @param baseUrl The base URL to use to resolve tile URLs.
+         * @param tilesetJson The parsed tileset.json.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const;
+        static TileData loadTilesFromJson(const nlohmann::json& tilesetJson);
 
         std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
@@ -210,15 +251,16 @@ namespace Cesium3DTiles {
 
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const;
-        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson);
+        void _layerJsonResponseReceived(IAssetRequest* pRequest);
+        static void _createTile(TileData& tiles, TileContextPrimaryKey contextID, TilePrimaryKey parentTile, const nlohmann::json& tileJson);
+        void _createTerrain(TileData& tiles, TileContextPrimaryKey contextID, const nlohmann::json& layerJson);
 
-        TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
-        TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
-        TraversalDetails _visitVisibleChildrenNearToFar(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, TilePrimaryKey tile, ViewUpdateResult& result);
+        TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, TilePrimaryKey tile, ViewUpdateResult& result);
+        TraversalDetails _visitVisibleChildrenNearToFar(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, TilePrimaryKey tile, ViewUpdateResult& result);
         void _processLoadQueue();
         void _unloadCachedTiles();
-        void _markTileVisited(Tile& tile);
+        void _markTileVisited(TilePrimaryKey tile);
 
         bool isDoingInitialLoad() const;
         void markInitialLoadComplete();
@@ -236,18 +278,14 @@ namespace Cesium3DTiles {
         std::unique_ptr<IAssetRequest> _pTilesetJsonRequest;
         std::atomic<bool> _isDoingInitialLoad;
 
-        std::string _version;
-        std::string _tileBaseUrl;
-        std::vector<std::pair<std::string, std::string>> _tileHeaders;
-        std::vector<std::string> _implicitTileUrls;
-        std::unique_ptr<Tile> _pRootTile;
+        TileData _tiles;
 
         uint32_t _previousFrameNumber;
         ViewUpdateResult _updateResult;
 
-        std::vector<Tile*> _loadQueueHigh;
-        std::vector<Tile*> _loadQueueMedium;
-        std::vector<Tile*> _loadQueueLow;
+        std::vector<TilePrimaryKey> _loadQueueHigh;
+        std::vector<TilePrimaryKey> _loadQueueMedium;
+        std::vector<TilePrimaryKey> _loadQueueLow;
         std::atomic<uint32_t> _loadsInProgress;
 
         CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> _loadedTiles;

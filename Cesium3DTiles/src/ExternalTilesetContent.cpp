@@ -9,9 +9,9 @@ namespace Cesium3DTiles {
 
     ExternalTilesetContent::ExternalTilesetContent(
         const TileContext& tileContext,
-        const CompleteTileDefinition& tile,
+        const CompleteTileDefinition& /*tile*/,
         const gsl::span<const uint8_t>& data,
-        const std::string& url
+        const std::string& /*url*/
     ) :
         TileContent(),
         _externalRoot(1)
@@ -19,7 +19,7 @@ namespace Cesium3DTiles {
         using nlohmann::json;
 
         json tilesetJson = json::parse(data.begin(), data.end());
-        tileContext.pTileset->loadTilesFromJson(this->_externalRoot[0], tilesetJson, tile.transform, tile.refine, url);
+        tileContext.pTileset->loadTilesFromJson(tilesetJson);
     }
 
     void ExternalTilesetContent::finalizeLoad(Tile& tile) {

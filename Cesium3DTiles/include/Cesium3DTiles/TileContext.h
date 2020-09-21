@@ -18,6 +18,8 @@ namespace Cesium3DTiles {
     struct TileContext {
         Tileset* pTileset; // TODO: remove this
         std::string baseUrl;
+        std::vector<std::pair<std::string, std::string>> requestHeaders;
+        std::optional<std::string> version;
         std::optional<ImplicitTilingContext> implicitContext;
     };
 

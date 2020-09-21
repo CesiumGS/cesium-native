@@ -20,7 +20,7 @@ namespace CesiumGeospatial {
     class CESIUMGEOSPATIAL_API WebMercatorProjection {
     public:
         /**
-         * The maximum latitude (both North and South) supported by a Web Mercator
+         * The maximum latitude (both North and South) in radians supported by a Web Mercator
          * (EPSG:3857) projection.  Technically, the Mercator projection is defined
          * for any latitude up to (but not including) 90 degrees, but it makes sense
          * to cut it off sooner because it grows exponentially with increasing latitude.
