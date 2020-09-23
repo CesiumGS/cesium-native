@@ -35,23 +35,6 @@ namespace Cesium3DTiles {
 
     Tile::~Tile() {
         this->prepareToDestroy();
-
-        // Wait for this tile to exit the "Destroying" state, indicating that
-        // work happening in the loading thread has concluded.
-        if (this->getState() == LoadState::Destroying) {
-            const auto timeoutSeconds = std::chrono::seconds(5LL);
-
-            auto start = std::chrono::steady_clock::now();
-            while (this->getState() == LoadState::Destroying) {
-                auto duration = std::chrono::steady_clock::now() - start;
-                if (duration > timeoutSeconds) {
-                    // TODO: report timeout, because it may be followed by a crash.
-                    return;
-                }
-                this->_pTileset->getExternals().pAssetAccessor->tick();
-            }
-        }
-
         this->unloadContent();
     }
 
@@ -237,6 +220,7 @@ namespace Cesium3DTiles {
         this->_pRendererResources = nullptr;
         this->_pContentRequest.reset();
         this->_pContent.reset();
+        this->_rasterTiles.clear();
         this->setState(LoadState::Unloaded);
 
         return true;
@@ -303,9 +287,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        const TilesetExternals& externals = this->_pTileset->getExternals();
-
-        externals.pTaskProcessor->startTask([pResponse, &externals, this]() {
+        this->_pTileset->getExternals().pTaskProcessor->startTask([pResponse, this]() {
             if (this->getState() == LoadState::Destroying) {
                 this->_pTileset->notifyTileDoneLoading(this);
                 this->setState(LoadState::Failed);
@@ -369,6 +351,7 @@ namespace Cesium3DTiles {
                     }
                 }
 
+                const TilesetExternals& externals = this->_pTileset->getExternals();
                 if (externals.pPrepareRendererResources) {
                     this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
                 }

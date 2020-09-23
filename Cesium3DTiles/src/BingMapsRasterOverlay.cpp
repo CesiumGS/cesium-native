@@ -64,7 +64,7 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            return std::make_unique<RasterOverlayTile>(*this, tileID, this->getExternals().pAssetAccessor->requestAsset(url));
+            return std::make_shared<RasterOverlayTile>(*this, tileID, this->getExternals().pAssetAccessor->requestAsset(url));
         }
     
     private:

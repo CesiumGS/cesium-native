@@ -24,7 +24,6 @@ namespace Cesium3DTiles {
         _options(options),
         _pIonRequest(),
         _pTilesetJsonRequest(),
-        _isDoingInitialLoad(true),
         _version(),
         _tileBaseUrl(),
         _tileHeaders(),
@@ -39,6 +38,7 @@ namespace Cesium3DTiles {
         _loadedTiles(),
         _overlays()
     {
+        ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
         this->_pTilesetJsonRequest->bind(std::bind(&Tileset::_tilesetJsonResponseReceived, this, std::placeholders::_1));
     }
@@ -56,7 +56,6 @@ namespace Cesium3DTiles {
         _options(options),
         _pIonRequest(),
         _pTilesetJsonRequest(),
-        _isDoingInitialLoad(true),
         _version(),
         _tileBaseUrl(),
         _tileHeaders(),
@@ -77,11 +76,13 @@ namespace Cesium3DTiles {
             url += "?access_token=" + ionAccessToken;
         }
 
+        ++this->_loadsInProgress;
         this->_pIonRequest = this->_externals.pAssetAccessor->requestAsset(url);
         this->_pIonRequest->bind(std::bind(&Tileset::_ionResponseReceived, this, std::placeholders::_1));
     }
 
     Tileset::~Tileset() {
+        // Tell all async loads to wrap it up.
         if (this->_pIonRequest) {
             this->_pIonRequest->cancel();
         }
@@ -90,28 +91,19 @@ namespace Cesium3DTiles {
             this->_pTilesetJsonRequest->cancel();
         }
 
-        // Wait for this tileset to finish its initial load. Until then, work may be happening
-        // in a background thread and allowing the tileset to be destroyed may cause a crash.
-        if (this->isDoingInitialLoad()) {
-            const auto timeoutSeconds = std::chrono::seconds(10LL);
-
-            auto start = std::chrono::steady_clock::now();
-            while (this->isDoingInitialLoad()) {
-                auto duration = std::chrono::steady_clock::now() - start;
-                if (duration > timeoutSeconds) {
-                    // TODO: report timeout, because it may be followed by a crash.
-                    return;
-                }
-                this->getExternals().pAssetAccessor->tick();
-            }
-        }
-
         // Tell any ContentLoading tiles that we're destroying.
         Tile* pCurrent = this->_loadedTiles.head();
         while (pCurrent) {
             Tile* pNext = this->_loadedTiles.next(pCurrent);
             pCurrent->prepareToDestroy();
             pCurrent = pNext;
+        }
+
+        // Wait for all asynchronous loading to terminate.
+        // If you're hanging here, it's most likely caused by _loadsInProgress not being
+        // decremented correctly when an async load ends.
+        while (this->_loadsInProgress.load(std::memory_order::memory_order_acquire) > 0) {
+            this->_externals.pAssetAccessor->tick();
         }
     }
 
@@ -124,14 +116,6 @@ namespace Cesium3DTiles {
         result.tilesToRenderThisFrame.clear();
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
-
-        if (this->isDoingInitialLoad()) {
-            return result;
-        }
-
-        // Now that loading is finished, free the requests.
-        this->_pTilesetJsonRequest.reset();
-        this->_pIonRequest.reset();
 
         Tile* pRootTile = this->getRootTile();
         if (!pRootTile) {
@@ -173,13 +157,13 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
-            this->markInitialLoadComplete();
+            this->notifyTileDoneLoading(nullptr);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
-            this->markInitialLoadComplete();
+            this->notifyTileDoneLoading(nullptr);
             return;
         }
 
@@ -202,6 +186,8 @@ namespace Cesium3DTiles {
         // that we're currently handling may immediately be deleted.
         pRequest = nullptr;
         pResponse = nullptr;
+        this->_pIonRequest.reset();
+
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url, this->_tileHeaders);
         this->_pTilesetJsonRequest->bind(std::bind(&Tileset::_tilesetJsonResponseReceived, this, std::placeholders::_1));
     }
@@ -210,13 +196,15 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
-            this->markInitialLoadComplete();
+            this->_pTilesetJsonRequest.reset();
+            this->notifyTileDoneLoading(nullptr);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
-            this->markInitialLoadComplete();
+            this->_pTilesetJsonRequest.reset();
+            this->notifyTileDoneLoading(nullptr);
             return;
         }
 
@@ -242,7 +230,11 @@ namespace Cesium3DTiles {
             }
 
             this->_pRootTile = std::move(pRootTile);
-            this->markInitialLoadComplete();
+
+            this->getOverlays().createTileProviders(this->_externals);
+
+            this->_pTilesetJsonRequest.reset();
+            this->notifyTileDoneLoading(nullptr);
         });
     }
 
@@ -688,16 +680,6 @@ namespace Cesium3DTiles {
 
     void Tileset::_markTileVisited(Tile& tile) {
         this->_loadedTiles.insertAtTail(tile);
-    }
-
-    bool Tileset::isDoingInitialLoad() const {
-        return this->_isDoingInitialLoad.load(std::memory_order::memory_order_acquire);
-    }
-
-    void Tileset::markInitialLoadComplete() {
-        this->_isDoingInitialLoad.store(false, std::memory_order::memory_order_release);
-
-        this->getOverlays().createTileProviders(this->_externals);
     }
 
     std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
