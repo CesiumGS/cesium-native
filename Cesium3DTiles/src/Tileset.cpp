@@ -332,11 +332,6 @@ namespace Cesium3DTiles {
         this->_version = layerJson.value("version", "");
         this->_implicitTileUrls = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
 
-        std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
-        CesiumGeometry::Rectangle rectangle = bounds.size() >= 4
-            ? CesiumGeometry::Rectangle(bounds[0], bounds[1], bounds[2], bounds[3])
-            : CesiumGeometry::Rectangle(-180.0, -90.0, 180.0, 90.0);
-
         std::string projectionString = layerJson.value<std::string>("projection", "EPSG:4326");
         CesiumGeospatial::Projection projection;
         CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
