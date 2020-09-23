@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/TileContentLoadResult.h"
 #include <functional>
 #include <gsl/span>
 #include <memory>
@@ -17,7 +18,7 @@ namespace Cesium3DTiles {
     public:
         TileContentFactory() = delete;
 
-        typedef std::unique_ptr<TileContent> FactoryFunctionSignature(
+        typedef std::unique_ptr<TileContentLoadResult> FactoryFunctionSignature(
             Tileset& tileset,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
@@ -32,7 +33,7 @@ namespace Cesium3DTiles {
 
         static void registerMagic(const std::string& magic, FactoryFunction factoryFunction);
         static void registerContentType(const std::string& contentType, FactoryFunction factoryFunction);
-        static std::unique_ptr<TileContent> createContent(
+        static std::unique_ptr<TileContentLoadResult> createContent(
             Tileset& tileset,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,

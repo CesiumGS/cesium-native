@@ -1,11 +1,12 @@
 #pragma once
 
+#include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include <variant>
 
 namespace CesiumGeospatial {
 
-    typedef std::variant<WebMercatorProjection> Projection;
+    typedef std::variant<GeographicProjection, WebMercatorProjection> Projection;
 
     glm::dvec3 projectPosition(const Projection& projection, const Cartographic& position);
     Cartographic unprojectPosition(const Projection& projection, const glm::dvec3& position);

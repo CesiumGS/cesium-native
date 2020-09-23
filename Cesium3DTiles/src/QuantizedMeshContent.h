@@ -1,36 +1,26 @@
 #pragma once
 
 #include "Cesium3DTiles/BoundingVolume.h"
-#include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/Library.h"
-#include <memory>
-#include <string>
+#include "Cesium3DTiles/TileContentLoadResult.h"
 
 namespace Cesium3DTiles {
 
-    class CESIUM3DTILES_API QuantizedMeshContent : public GltfContent {
+    class CESIUM3DTILES_API QuantizedMeshContent {
     public:
         static std::string CONTENT_TYPE;
 
-        QuantizedMeshContent(
+        static std::unique_ptr<TileContentLoadResult> load(
+            Tileset& tileset,
+            const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
-            const gsl::span<const uint8_t>& data,
-            const std::string& url
-        );
-
-        virtual void finalizeLoad(Tile& tile) override;
-
-    private:
-        struct LoadedData;
-        static LoadedData load(
-            const BoundingVolume& tileBoundingVolume,
+            double tileGeometricError,
+            const glm::dmat4& tileTransform,
+            const std::optional<BoundingVolume>& tileContentBoundingVolume,
+            TileRefine tileRefine,
+            const std::string& url,
             const gsl::span<const uint8_t>& data
         );
-
-        QuantizedMeshContent(LoadedData&& loadedData, const std::string& url);
-
-        double _minimumHeight;
-        double _maximumHeight;
     };
 
 }

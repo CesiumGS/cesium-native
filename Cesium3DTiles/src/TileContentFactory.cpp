@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
         TileContentFactory::_factoryFunctionsByContentType[lowercaseContentType] = factoryFunction;
     }
 
-    std::unique_ptr<TileContent> TileContentFactory::createContent(
+    std::unique_ptr<TileContentLoadResult> TileContentFactory::createContent(
         Tileset& tileset,
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,

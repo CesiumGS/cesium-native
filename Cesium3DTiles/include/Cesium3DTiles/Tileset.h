@@ -218,8 +218,6 @@ namespace Cesium3DTiles {
         void _unloadCachedTiles();
         void _markTileVisited(Tile& tile);
 
-        bool isDoingInitialLoad() const;
-        void markInitialLoadComplete();
         std::string getResolvedContentUrl(const Tile& tile) const;
 
         TilesetExternals _externals;
@@ -232,7 +230,6 @@ namespace Cesium3DTiles {
 
         std::unique_ptr<IAssetRequest> _pIonRequest;
         std::unique_ptr<IAssetRequest> _pTilesetJsonRequest;
-        std::atomic<bool> _isDoingInitialLoad;
 
         std::string _version;
         std::string _tileBaseUrl;
