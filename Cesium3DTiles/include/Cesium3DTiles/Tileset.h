@@ -134,6 +134,7 @@ namespace Cesium3DTiles {
          * Gets this tileset's options.
          */
         const TilesetOptions& getOptions() const { return this->_options; }
+        TilesetOptions& getOptions() { return this->_options; }
 
         /**
          * Gets the root tile of this tileset, or nullptr if there is currently no root tile.
