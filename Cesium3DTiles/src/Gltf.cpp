@@ -19,14 +19,14 @@ namespace Cesium3DTiles {
 
 	/*static*/ void Gltf::forEachPrimitiveInScene(tinygltf::Model& gltf, int sceneID, std::function<ForEachPrimitiveInSceneCallback>&& callback) {
 		return Gltf::forEachPrimitiveInScene(const_cast<const tinygltf::Model&>(gltf), sceneID, [&callback](
-            const tinygltf::Model& gltf,
+            const tinygltf::Model& gltf_,
 			const tinygltf::Node& node,
             const tinygltf::Mesh& mesh,
             const tinygltf::Primitive& primitive,
             const glm::dmat4& transform
 		) {
 			callback(
-				const_cast<tinygltf::Model&>(gltf),
+				const_cast<tinygltf::Model&>(gltf_),
 				const_cast<tinygltf::Node&>(node),
 				const_cast<tinygltf::Mesh&>(mesh),
 				const_cast<tinygltf::Primitive&>(primitive),
