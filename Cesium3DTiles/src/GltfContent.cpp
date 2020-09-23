@@ -109,7 +109,7 @@ namespace Cesium3DTiles {
 		std::string attributeName = "_CESIUMOVERLAY_" + std::to_string(textureCoordinateID);
 
 		Gltf::forEachPrimitiveInScene(gltf, -1, [&positionAccessorsToTextureCoordinateAccessor, &attributeName, &projection, &rectangle](
-            tinygltf::Model& gltf,
+            tinygltf::Model& gltf_,
             tinygltf::Node& /*node*/,
             tinygltf::Mesh& /*mesh*/,
             tinygltf::Primitive& primitive,
@@ -121,7 +121,7 @@ namespace Cesium3DTiles {
 			}
 
 			int positionAccessorIndex = positionIt->second;
-			if (positionAccessorIndex < 0 || positionAccessorIndex >= static_cast<int>(gltf.accessors.size())) {
+			if (positionAccessorIndex < 0 || positionAccessorIndex >= static_cast<int>(gltf_.accessors.size())) {
 				return;
 			}
 
@@ -137,7 +137,7 @@ namespace Cesium3DTiles {
 			}
 
 			// Generate new texture coordinates
-			int nextTextureCoordinateAccessorIndex = generateOverlayTextureCoordinates(gltf, positionAccessorIndex, transform, projection, rectangle);
+			int nextTextureCoordinateAccessorIndex = generateOverlayTextureCoordinates(gltf_, positionAccessorIndex, transform, projection, rectangle);
 			primitive.attributes[attributeName] = nextTextureCoordinateAccessorIndex;
 			positionAccessorsToTextureCoordinateAccessor[positionAccessorIndex] = nextTextureCoordinateAccessorIndex;
 		});
