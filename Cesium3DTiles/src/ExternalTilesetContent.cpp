@@ -5,28 +5,26 @@
 
 namespace Cesium3DTiles {
 
-    std::string ExternalTilesetContent::TYPE = "json";
-
-    ExternalTilesetContent::ExternalTilesetContent(
+    /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
         Tileset& tileset,
+        const TileID& /*tileID*/,
+        const BoundingVolume& /*tileBoundingVolume*/,
+        double /*tileGeometricError*/,
         const glm::dmat4& tileTransform,
+        const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
         TileRefine tileRefine,
-        const gsl::span<const uint8_t>& data,
-        const std::string& url
-    ) :
-        TileContent(),
-        _externalRoot(1)
-    {
+        const std::string& url,
+        const gsl::span<const uint8_t>& data
+    ) {
+        std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
+        pResult->childTiles.emplace(1);
+
         using nlohmann::json;
 
         json tilesetJson = json::parse(data.begin(), data.end());
-        tileset.loadTilesFromJson(this->_externalRoot[0], tilesetJson, tileTransform, tileRefine, url);
-    }
+        tileset.loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, url);
 
-    void ExternalTilesetContent::finalizeLoad(Tile& tile) {
-        this->_externalRoot[0].setParent(&tile);
-        tile.createChildTiles(std::move(this->_externalRoot));
-        tile.setGeometricError(999999999.0);
+        return pResult;
     }
 
 }

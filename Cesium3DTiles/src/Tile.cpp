@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/GltfContent.h"
 #include <algorithm>
 #include <chrono>
 
@@ -120,7 +121,7 @@ namespace Cesium3DTiles {
 
         return
             this->getState() >= LoadState::ContentLoaded &&
-            (!this->_pContent || this->_pContent->getType() != ExternalTilesetContent::TYPE) &&
+            (!this->_pContent || this->_pContent->model.has_value()) &&
             !std::any_of(this->_rasterTiles.begin(), this->_rasterTiles.end(), [](const RasterMappedTo3DTile& rasterTile) {
                 return rasterTile.getRasterTile().getState() == RasterOverlayTile::LoadState::Loading;
             });
@@ -177,36 +178,11 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tile::loadReadyContent(std::unique_ptr<TileContent> pReadyContent) {
-        if (this->getState() != LoadState::Unloaded) {
-            return;
-        }
-
-        this->_pContent = std::move(pReadyContent);
-
-        const TilesetExternals& externals = this->_pTileset->getExternals();
-        if (externals.pPrepareRendererResources) {
-            this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
-        }
-        else {
-            this->_pRendererResources = nullptr;
-        }
-
-        this->setState(LoadState::ContentLoaded);
-    }
-
     bool Tile::unloadContent() {
         // Cannot unload while an async operation is in progress.
-        // Also, don't unload tiles with external tileset content at all, because reloading
-        // currently won't work correctly.
-        if (
-            this->getState() == Tile::LoadState::ContentLoading ||
-            (this->getContent() != nullptr && this->getContent()->getType() == ExternalTilesetContent::TYPE)
-        ) {
+        if (this->getState() == Tile::LoadState::ContentLoading) {
             return false;
         }
-
-        // TODO: unload raster tiles
 
         const TilesetExternals& externals = this->_pTileset->getExternals();
         if (externals.pPrepareRendererResources) {
@@ -234,9 +210,26 @@ namespace Cesium3DTiles {
                 this->_pRendererResources = externals.pPrepareRendererResources->prepareInMainThread(*this, this->getRendererResources());
             }
 
-            TileContent* pContent = this->getContent();
-            if (pContent) {
-                pContent->finalizeLoad(*this);
+            if (this->_pContent) {
+                // Apply children from content, but only if we don't already have children.
+                if (this->_pContent->childTiles && this->getChildren().size() == 0) {
+                    for (Tile& childTile : this->_pContent->childTiles.value()) {
+                        childTile.setParent(this);
+                    }
+                    this->createChildTiles(std::move(this->_pContent->childTiles.value()));
+                }
+
+                // If this tile has no model, set its geometric error very high so we refine past it.
+                // Note that "no" model is different from having a model, but it is blank. In the latter
+                // case, we'll happily render nothing in the space of this tile, which is sometimes useful.
+                if (!this->_pContent->model) {
+                    this->setGeometricError(999999999.0);
+                }
+
+                // A new and improved bounding volume.
+                if (this->_pContent->updatedBoundingVolume) {
+                    this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
+                }
             }
 
             // Free the request now that it is complete.
@@ -294,7 +287,7 @@ namespace Cesium3DTiles {
                 return;
             }
 
-            std::unique_ptr<TileContent> pContent = TileContentFactory::createContent(
+            this->_pContent = std::move(TileContentFactory::createContent(
                 *this->getTileset(),
                 this->getTileID(),
                 this->getBoundingVolume(),
@@ -305,17 +298,16 @@ namespace Cesium3DTiles {
                 this->_pContentRequest->url(),
                 pResponse->contentType(),
                 pResponse->data()
-            );
-            if (pContent) {
-                this->_pContent = std::move(pContent);
+            ));
 
-                if (this->getState() == LoadState::Destroying) {
-                    this->_pTileset->notifyTileDoneLoading(this);
-                    this->setState(LoadState::Failed);
-                    return;
-                }
+            if (this->getState() == LoadState::Destroying) {
+                this->_pTileset->notifyTileDoneLoading(this);
+                this->setState(LoadState::Failed);
+                return;
+            }
 
-                // Generate texture coordinates for each projection.
+            // Generate texture coordinates for each projection.
+            if (this->_pContent && this->_pContent->model) {
                 if (!this->_rasterTiles.empty()) {
                     CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
                     CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&this->_boundingVolume);
@@ -338,7 +330,8 @@ namespace Cesium3DTiles {
                             if (existingCoordinatesIt == projections.end()) {
                                 // Create new texture coordinates for this not-previously-seen projection
                                 CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
-                                this->getContent()->createRasterOverlayTextureCoordinates(projectionID, projection, rectangle);
+
+                                GltfContent::createRasterOverlayTextureCoordinates(this->_pContent->model.value(), projectionID, projection, rectangle);
                                 projections.push_back(projection);
 
                                 mappedTile.setTextureCoordinateID(projectionID);

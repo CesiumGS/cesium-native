@@ -1,9 +1,9 @@
-#include "Batched3DModel.h"
+#include "Batched3DModelContent.h"
+#include "Cesium3DTiles/GltfContent.h"
 #include "CesiumUtility/Json.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {
-    std::string Batched3DModel::MAGIC = "b3dm";
 
 	struct B3dmHeader
 	{
@@ -35,14 +35,14 @@ namespace Cesium3DTiles {
 		uint32_t batchLength;
 	};
 
-    std::unique_ptr<GltfContent> Batched3DModel::load(
-		Tileset& /*tileset*/,
-		const TileID& /*tileID*/,
-		const BoundingVolume& /*tileBoundingVolume*/,
-		double /*tileGeometricError*/,
-		const glm::dmat4& /*tileTransform*/,
-		const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
-		TileRefine /*tileRefine*/,
+    std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
+		Tileset& tileset,
+		const TileID& tileID,
+		const BoundingVolume& tileBoundingVolume,
+		double tileGeometricError,
+		const glm::dmat4& tileTransform,
+		const std::optional<BoundingVolume>& tileContentBoundingVolume,
+		TileRefine tileRefine,
 		const std::string& url,
 		const gsl::span<const uint8_t>& data
 	) {
@@ -113,9 +113,19 @@ namespace Cesium3DTiles {
 		}
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
-        std::unique_ptr<GltfContent> pGltf = std::make_unique<GltfContent>(glbData, url);
+        std::unique_ptr<TileContentLoadResult> pResult = GltfContent::load(
+			tileset,
+			tileID,
+			tileBoundingVolume,
+			tileGeometricError,
+			tileTransform,
+			tileContentBoundingVolume,
+			tileRefine,
+			url, 
+			glbData
+		);
 
-		if (header.featureTableJsonByteLength > 0) {
+		if (pResult->model && header.featureTableJsonByteLength > 0) {
 			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
 		
 			using nlohmann::json;
@@ -123,7 +133,7 @@ namespace Cesium3DTiles {
 			std::vector<double> rtcCenter = response.value("RTC_CENTER", std::vector<double>());
 			if (rtcCenter.size() == 3) {
 				// Add the RTC_CENTER value to the glTF itself.
-				tinygltf::Model& gltf = pGltf->gltf();
+				tinygltf::Model& gltf = pResult->model.value();
 
 				tinygltf::Value::Object extras;
 				if (gltf.extras.IsObject()) {
@@ -140,7 +150,7 @@ namespace Cesium3DTiles {
 			}
 		}
 
-		return pGltf;
+		return pResult;
     }
 
 }

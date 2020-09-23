@@ -1,12 +1,13 @@
-#include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
-#include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/TerrainLayerJsonContent.h"
 #include "Cesium3DTiles/TileID.h"
-#include "Uri.h"
+#include "Cesium3DTiles/Tileset.h"
+#include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
-#include <chrono>
+#include "Uri.h"
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -225,7 +226,6 @@ namespace Cesium3DTiles {
                 json& rootJson = *rootIt;
                 this->_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, "");
             } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
-                this->_tileHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
                 this->_createTerrainTile(*pRootTile, tileset);
             }
 
@@ -328,10 +328,48 @@ namespace Cesium3DTiles {
     }
 
     void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson) {
-        std::unique_ptr<TerrainLayerJsonContent> pContent = std::make_unique<TerrainLayerJsonContent>(*this, layerJson, this->_tileBaseUrl);
-        this->_implicitTileUrls = pContent->getTilesUrlTemplates();
+        this->_tileHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
+        this->_version = layerJson.value("version", "");
+        this->_implicitTileUrls = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
 
-        const std::vector<std::string>& extensions = pContent->getExtensions();
+        std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
+        CesiumGeometry::Rectangle rectangle = bounds.size() >= 4
+            ? CesiumGeometry::Rectangle(bounds[0], bounds[1], bounds[2], bounds[3])
+            : CesiumGeometry::Rectangle(-180.0, -90.0, 180.0, 90.0);
+
+        std::string projectionString = layerJson.value<std::string>("projection", "EPSG:4326");
+        CesiumGeospatial::Projection projection;
+        CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
+        CesiumGeometry::Rectangle quadtreeRectangleProjected(0.0, 0.0, 0.0, 0.0);
+        uint32_t quadtreeXTiles;
+
+        if (projectionString == "EPSG:4326") {
+            CesiumGeospatial::GeographicProjection geographic;
+            projection = geographic;
+            quadtreeRectangleGlobe = GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+            quadtreeRectangleProjected = geographic.project(quadtreeRectangleGlobe);
+            quadtreeXTiles = 2;
+        } else if (projectionString == "EPSG:3857") {
+            CesiumGeospatial::WebMercatorProjection webMercator;
+            projection = webMercator;
+            quadtreeRectangleGlobe = WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+            quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
+            quadtreeXTiles = 1;
+        } else {
+            // Unsupported projection
+            // TODO: report error
+            return;
+        }
+
+        CesiumGeometry::QuadtreeTilingScheme tilingScheme(quadtreeRectangleProjected, quadtreeXTiles, 1);
+
+        // context.implicitContext = ImplicitTilingContext {
+        //     layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>()),
+        //     tilingScheme,
+        //     projection
+        // };
+
+        std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
 
         // Request normals if they're available
         if (std::find(extensions.begin(), extensions.end(), "octvertexnormals") != extensions.end()) {
@@ -340,8 +378,38 @@ namespace Cesium3DTiles {
             }
         }
 
-        tile.setBoundingVolume(BoundingRegion(pContent->getBounds(), -1000.0, 9000.0));
-        tile.loadReadyContent(std::move(pContent));
+        tile.setTileset(this);
+        tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+            quadtreeRectangleGlobe,
+            -1000.0,
+            -9000.0
+        )));
+        tile.setGeometricError(999999999.0);
+        tile.createChildTiles(quadtreeXTiles);
+
+        for (uint32_t i = 0; i < quadtreeXTiles; ++i) {
+            Tile& childTile = tile.getChildren()[i];
+            QuadtreeTileID id(0, i, 0);
+
+            childTile.setTileset(this);
+            childTile.setParent(&tile);
+            childTile.setTileID(id);
+            childTile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+                unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id)),
+                -1000.0,
+                -9000.0
+            )));
+            childTile.setGeometricError(
+                8.0 * (
+                    Ellipsoid::WGS84.getRadii().x *
+                    2.0 *
+                    CesiumUtility::Math::ONE_PI *
+                    0.25
+                ) / (
+                    65 * quadtreeXTiles
+                )
+            );
+        }
     }
 
     static void markTileNonRendered(TileSelectionState::Result lastResult, Tile& tile, ViewUpdateResult& result) {

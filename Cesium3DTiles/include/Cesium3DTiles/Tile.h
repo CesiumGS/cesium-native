@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/BoundingVolume.h"
-#include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
@@ -24,6 +23,7 @@ namespace Cesium3DTiles {
     class Tileset;
     class TileContent;
     class RasterOverlayTileProvider;
+    struct TileContentLoadResult;
 
     class CESIUM3DTILES_API Tile {
     public:
@@ -111,8 +111,8 @@ namespace Cesium3DTiles {
         const std::optional<BoundingVolume>& getContentBoundingVolume() const { return this->_contentBoundingVolume; }
         void setContentBoundingVolume(const std::optional<BoundingVolume>& value) { this->_contentBoundingVolume = value; }
 
-        TileContent* getContent() { return this->_pContent.get(); }
-        const TileContent* getContent() const { return this->_pContent.get(); }
+        TileContentLoadResult* getContent() { return this->_pContent.get(); }
+        const TileContentLoadResult* getContent() const { return this->_pContent.get(); }
 
         void* getRendererResources() const { return this->_pRendererResources; }
 
@@ -128,16 +128,6 @@ namespace Cesium3DTiles {
         bool isRenderable() const;
 
         void loadContent();
-
-        /**
-         * @brief "Loads" tile content that is already ready to go.
-         * 
-         * This method is usually called from a load thread and it calls {@see IPrepareRendererResources::prepareInLoadThread}
-         * before returning.
-         * 
-         * @param pReadyContent The tile's content
-         */
-        void loadReadyContent(std::unique_ptr<TileContent> pReadyContent);
 
         bool unloadContent();
 
@@ -174,7 +164,7 @@ namespace Cesium3DTiles {
         // Load state and data.
         std::atomic<LoadState> _state;
         std::unique_ptr<IAssetRequest> _pContentRequest;
-        std::unique_ptr<TileContent> _pContent;
+        std::unique_ptr<TileContentLoadResult> _pContent;
         void* _pRendererResources;
 
         // Selection state

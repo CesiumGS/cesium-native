@@ -7,6 +7,10 @@ namespace CesiumGeospatial {
         struct Operation {
             const Cartographic& position;
 
+            glm::dvec3 operator()(const GeographicProjection& geographic) {
+                return geographic.project(position);
+            }
+
             glm::dvec3 operator()(const WebMercatorProjection& webMercator) {
                 return webMercator.project(position);
             }
@@ -18,6 +22,10 @@ namespace CesiumGeospatial {
     Cartographic unprojectPosition(const Projection& projection, const glm::dvec3& position) {
         struct Operation {
             const glm::dvec3& position;
+
+            Cartographic operator()(const GeographicProjection& geographic) {
+                return geographic.unproject(position);
+            }
 
             Cartographic operator()(const WebMercatorProjection& webMercator) {
                 return webMercator.unproject(position);
@@ -31,6 +39,10 @@ namespace CesiumGeospatial {
         struct Operation {
             const GlobeRectangle& rectangle;
 
+            CesiumGeometry::Rectangle operator()(const GeographicProjection& geographic) {
+                return geographic.project(rectangle);
+            }
+
             CesiumGeometry::Rectangle operator()(const WebMercatorProjection& webMercator) {
                 return webMercator.project(rectangle);
             }
@@ -43,6 +55,10 @@ namespace CesiumGeospatial {
         struct Operation {
             const CesiumGeometry::Rectangle& rectangle;
 
+            GlobeRectangle operator()(const GeographicProjection& geographic) {
+                return geographic.unproject(rectangle);
+            }
+
             GlobeRectangle operator()(const WebMercatorProjection& webMercator) {
                 return webMercator.unproject(rectangle);
             }
@@ -54,6 +70,10 @@ namespace CesiumGeospatial {
     double computeApproximateConversionFactorToMetersNearPosition(const Projection& projection, const glm::dvec2& position) {
         struct Operation {
             const glm::dvec2& position;
+
+            double operator()(const GeographicProjection& /*geographic*/) {
+                return 1.0;
+            }
 
             double operator()(const WebMercatorProjection& webMercator) {
                 // TODO: is there a better estimate?
