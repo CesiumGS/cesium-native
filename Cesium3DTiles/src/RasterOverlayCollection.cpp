@@ -2,10 +2,6 @@
 
 namespace Cesium3DTiles {
 
-    class Placeholder {
-
-    };
-
     RasterOverlayCollection::RasterOverlayCollection() {
 
     }
