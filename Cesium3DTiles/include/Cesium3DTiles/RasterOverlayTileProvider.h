@@ -11,6 +11,7 @@
 namespace Cesium3DTiles {
 
     class TilesetExternals;
+    class RasterOverlay;
     class RasterOverlayTile;
 
     /**
@@ -19,7 +20,19 @@ namespace Cesium3DTiles {
      */
     class CESIUM3DTILES_API RasterOverlayTileProvider {
     public:
+        /**
+         * Constructs a placeholder tile provider.
+         * 
+         * @param pOverlay The raster overlay.
+         * @param tilesetExternals Tileset externals.
+         */
         RasterOverlayTileProvider(
+            RasterOverlay* pOverlay,
+            TilesetExternals& tilesetExternals
+        );
+
+        RasterOverlayTileProvider(
+            RasterOverlay* pOverlay,
             TilesetExternals& tilesetExternals,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -29,6 +42,9 @@ namespace Cesium3DTiles {
             uint32_t imageHeight
         );
         virtual ~RasterOverlayTileProvider() {}
+
+        RasterOverlay* getOverlay() { return this->_pOverlay; }
+        const RasterOverlay* getOverlay() const { return this->_pOverlay; }
 
         const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
         const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
@@ -67,9 +83,10 @@ namespace Cesium3DTiles {
         );
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) = 0;
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
     private:
+        RasterOverlay* _pOverlay;
         TilesetExternals* _pTilesetExternals;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
@@ -78,5 +95,6 @@ namespace Cesium3DTiles {
         uint32_t _imageWidth;
         uint32_t _imageHeight;
         std::unordered_map<CesiumGeometry::QuadtreeTileID, std::weak_ptr<RasterOverlayTile>> _tiles;
+        std::shared_ptr<RasterOverlayTile> _pPlaceholder;
     };
 }

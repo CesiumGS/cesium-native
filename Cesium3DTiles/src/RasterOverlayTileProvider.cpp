@@ -8,6 +8,23 @@ using namespace CesiumGeospatial;
 namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
+        RasterOverlay* pOverlay,
+        TilesetExternals& tilesetExternals
+    ) :
+        _pOverlay(pOverlay),
+        _pTilesetExternals(&tilesetExternals),
+        _projection(CesiumGeospatial::GeographicProjection()),
+        _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
+        _minimumLevel(0),
+        _maximumLevel(0),
+        _imageWidth(1),
+        _imageHeight(1),
+        _pPlaceholder(std::make_shared<RasterOverlayTile>(*this))
+    {
+    }
+
+    RasterOverlayTileProvider::RasterOverlayTileProvider(
+        RasterOverlay* pOverlay,
         TilesetExternals& tilesetExternals,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -16,13 +33,15 @@ namespace Cesium3DTiles {
         uint32_t imageWidth,
         uint32_t imageHeight
     ) :
+        _pOverlay(pOverlay),
         _pTilesetExternals(&tilesetExternals),
         _projection(projection),
         _tilingScheme(tilingScheme),
         _minimumLevel(minimumLevel),
         _maximumLevel(maximumLevel),
         _imageWidth(imageWidth),
-        _imageHeight(imageHeight)
+        _imageHeight(imageHeight),
+        _pPlaceholder(nullptr)
     {
     }
 
@@ -81,6 +100,16 @@ namespace Cesium3DTiles {
         std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
         std::optional<size_t> outputIndex
     ) {
+        if (this->_pPlaceholder) {
+            outputRasterTiles.push_back(RasterMappedTo3DTile(
+                this->_pPlaceholder,
+                CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0),
+                glm::dvec2(0.0), 
+                glm::dvec2(1.0)
+            ));
+            return;
+        }
+
         const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
         // Use Web Mercator for our texture coordinate computations if this imagery layer uses
@@ -309,6 +338,10 @@ namespace Cesium3DTiles {
             }
         }
 
+    }
+
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
+        return this->_pPlaceholder;
     }
 
 }

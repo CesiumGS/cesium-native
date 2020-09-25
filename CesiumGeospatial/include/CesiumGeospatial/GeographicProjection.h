@@ -26,6 +26,8 @@ namespace CesiumGeospatial {
          */
         static const GlobeRectangle MAXIMUM_GLOBE_RECTANGLE;
 
+        static CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+
         /**
          * @brief Constructs a new instance.
          * 
