@@ -82,6 +82,7 @@ namespace Cesium3DTiles {
 
     private:
         static std::unique_ptr<IAssetRequest> createBingProvider(
+            BingMapsRasterOverlay* pOverlay,
             TilesetExternals& tilesetExternals,
             std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback,
             const std::string& url,

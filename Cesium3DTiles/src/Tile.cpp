@@ -127,6 +127,20 @@ namespace Cesium3DTiles {
             });
     }
 
+    static const CesiumGeospatial::GlobeRectangle* getTileRectangleForOverlays(const Tile& tile) {
+        const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
+        const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+        
+        const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+        if (pRegion) {
+            pRectangle = &pRegion->getRectangle();
+        } else if (pLooseRegion) {
+            pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+        }
+
+        return pRectangle;
+    }
+
     void Tile::loadContent() {
         if (this->getState() != LoadState::Unloaded) {
             return;
@@ -136,22 +150,13 @@ namespace Cesium3DTiles {
 
         Tileset& tileset = *this->getTileset();
 
-        CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
-        CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&this->_boundingVolume);
-        
-        const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-        if (pRegion) {
-            pRectangle = &pRegion->getRectangle();
-        } else if (pLooseRegion) {
-            pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-        }
-
         // TODO: support overlay mapping for tiles that aren't region-based.
         // Probably by creating a placeholder for each raster overlay and resolving it to actual raster tiles once
         // we have real geometry. This will also be necessary for raster overlays with a projection that isn't
         // nicely lon/lat aligned like geographic or web mercator, because we won't know our raster rectangle
         // until we can project each vertex.
 
+        const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
         if (pRectangle) {
             // Map overlays to this tile.
             RasterOverlayCollection& overlays = tileset.getOverlays();
@@ -239,11 +244,27 @@ namespace Cesium3DTiles {
         }
 
         if (this->getState() == LoadState::Done) {
-            for (RasterMappedTo3DTile& mappedRasterTile : this->_rasterTiles) {
+            for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
+                RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
+
                 if (mappedRasterTile.getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
                     RasterOverlayTile& rasterTile = mappedRasterTile.getRasterTile();
-                    rasterTile.loadInMainThread();
-                    mappedRasterTile.attachToTile(*this);
+                    if (rasterTile.getState() == RasterOverlayTile::LoadState::Placeholder) {
+                        // Try to replace this placeholder with real tiles.
+                        RasterOverlayCollection& overlays = this->getTileset()->getOverlays();
+                        RasterOverlayTileProvider& placeholder = rasterTile.getTileProvider();
+                        RasterOverlayTileProvider* pReadyProvider = overlays.findProviderForPlaceholder(&placeholder);
+                        if (pReadyProvider) {
+                            this->_rasterTiles.erase(this->_rasterTiles.begin() + i);
+                            --i;
+
+                            const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
+                           pReadyProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles); 
+                        }
+                    } else {
+                        rasterTile.loadInMainThread();
+                        mappedRasterTile.attachToTile(*this);
+                    }
                 }
             }
         }

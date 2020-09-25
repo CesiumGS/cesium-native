@@ -13,7 +13,7 @@ namespace Cesium3DTiles {
     class RasterOverlayTile {
     public:
         enum class LoadState {
-            Destroying = -2,
+            Placeholder = -2,
 
             Failed = -1,
 
@@ -25,6 +25,15 @@ namespace Cesium3DTiles {
 
             Done = 3
         };
+
+        /**
+         * Constructs a placeholder tile for the tile provider.
+         * 
+         * @param tileProvider The tile provider.
+         */
+        RasterOverlayTile(
+            RasterOverlayTileProvider& tileProvider
+        );
 
         RasterOverlayTile(
             RasterOverlayTileProvider& tileProvider,

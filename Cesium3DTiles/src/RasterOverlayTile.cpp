@@ -7,6 +7,18 @@
 namespace Cesium3DTiles {
 
         RasterOverlayTile::RasterOverlayTile(
+            RasterOverlayTileProvider& tileProvider
+        ) :
+            _pTileProvider(&tileProvider),
+            _tileID(0, 0, 0),
+            _state(LoadState::Placeholder),
+            _pImageRequest(),
+            _image(),
+            _pRendererResources(nullptr)
+        {
+        }
+
+        RasterOverlayTile::RasterOverlayTile(
             RasterOverlayTileProvider& tileProvider,
             const CesiumGeometry::QuadtreeTileID& tileID,
             std::unique_ptr<IAssetRequest>&& pImageRequest

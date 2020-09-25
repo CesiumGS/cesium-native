@@ -11,6 +11,12 @@ namespace CesiumGeospatial {
         CesiumUtility::Math::PI_OVER_TWO
     );
 
+    /*static*/ CesiumGeometry::Rectangle GeographicProjection::computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid) {
+        double longitudeValue = ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
+        double latitudeValue = ellipsoid.getMaximumRadius() * CesiumUtility::Math::PI_OVER_TWO;
+        return CesiumGeometry::Rectangle(-longitudeValue, -latitudeValue, longitudeValue, latitudeValue);
+    }
+
     GeographicProjection::GeographicProjection(const Ellipsoid& ellipsoid) :
         _ellipsoid(ellipsoid),
         _semimajorAxis(ellipsoid.getMaximumRadius()),
