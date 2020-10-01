@@ -21,7 +21,7 @@ target_include_directories(
 
         # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
-        ${CMAKE_CURRENT_BINARY_DIR}/..
+        ${CMAKE_BINARY_DIR}
     PUBLIC
         include
     PRIVATE
