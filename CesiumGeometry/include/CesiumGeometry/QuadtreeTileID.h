@@ -6,10 +6,10 @@ namespace CesiumGeometry {
     class QuadtreeTilingScheme;
 
     struct CESIUMGEOMETRY_API QuadtreeTileID {
-        QuadtreeTileID(uint32_t level, uint32_t x, uint32_t y) :
-            level(level),
-            x(x),
-            y(y)
+        QuadtreeTileID(uint32_t level_, uint32_t x_, uint32_t y_) :
+            level(level_),
+            x(x_),
+            y(y_)
         {
         }
 

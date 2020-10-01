@@ -11,8 +11,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/extern/Catch2/
 include(CTest)
 enable_testing()
 
-add_subdirectory(extern/Catch2)
-add_subdirectory(extern/GSL)
+add_subdirectory(extern EXCLUDE_FROM_ALL)
 
 function(configure_cesium_library targetName)
     if (MSVC)

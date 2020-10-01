@@ -15,12 +15,10 @@ target_sources(
 
 target_include_directories(
     CesiumGeospatial
-    SYSTEM PUBLIC
-        ${PROJECT_SOURCE_DIR}/extern/glm
     PUBLIC
         include
     PRIVATE
         src
 )
 
-target_link_libraries(CesiumGeospatial PUBLIC CesiumGeometry CesiumUtility GSL)
+target_link_libraries(CesiumGeospatial PUBLIC CesiumGeometry CesiumUtility)
