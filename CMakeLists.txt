@@ -77,6 +77,9 @@ add_subdirectory(CesiumGeospatial)
 add_subdirectory(Cesium3DTiles)
 
 include(Catch)
-catch_discover_tests(cesium-native-tests)
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    catch_discover_tests(cesium-native-tests)
+endif()
 
 add_subdirectory(doc)
