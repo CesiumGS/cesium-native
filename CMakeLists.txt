@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
+
 project(
     cesium-native
     VERSION 0.1.0
@@ -11,8 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/extern/Catch2/
 include(CTest)
 enable_testing()
 
-add_subdirectory(extern/Catch2)
-add_subdirectory(extern/GSL)
+add_subdirectory(extern EXCLUDE_FROM_ALL)
 
 function(configure_cesium_library targetName)
     if (MSVC)
@@ -25,9 +25,6 @@ function(configure_cesium_library targetName)
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
-        # Use the multithreaded, release, DLL version of the runtime library no matter what.
-        # This is appropriate for Unreal Engine, but needs to be configurable for other things.
-        MSVC_RUNTIME_LIBRARY MultiThreadedDLL
     )
 
     if (BUILD_SHARED_LIBS)
@@ -78,6 +75,9 @@ add_subdirectory(CesiumGeospatial)
 add_subdirectory(Cesium3DTiles)
 
 include(Catch)
-catch_discover_tests(cesium-native-tests)
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    catch_discover_tests(cesium-native-tests)
+endif()
 
 add_subdirectory(doc)

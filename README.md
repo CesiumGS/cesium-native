@@ -9,21 +9,27 @@
 
 ## Getting Started
 
-* Check out the repo with `git clone git@github.com:CesiumGS/cesium-native.git --recurse-submodules` so that you get the third party submodules.
-* Build the draco library with CMake:
-  * `pushd extern; mkdir build; cd build; mkdir draco; cd draco`
-  * `cmake ../../draco/`
-  * `cmake --build . --config Release`
-  * `popd`
-* Build the uriparser library with CMake:
-  * `pushd extern; mkdir build; cd build; mkdir uriparser; cd uriparser`
-  * `cmake ../../uriparser/ -DCMAKE_BUILD_TYPE=Release -D URIPARSER_BUILD_TESTS:BOOL=OFF -D URIPARSER_BUILD_DOCS:BOOL=OFF -D BUILD_SHARED_LIBS:BOOL=OFF -D URIPARSER_ENABLE_INSTALL:BOOL=OFF -D URIPARSER_BUILD_TOOLS:BOOL=OFF`
-  * `cmake --build . --config Release`
-  * `popd`
-* Open the cesium-native folder with Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2019 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7. Alternatively, you can build from the command-line as follows:
-  * `mkdir build`
-  * `cmake -B build -S .`
-  * `cmake --build build --config Debug`
+Check out the repo with:
+
+```bash
+git clone git@github.com:CesiumGS/cesium-native.git --recurse-submodules
+```
+
+If you forget the `--recurse-submodules`, nothing will work because the git submodules will be missing. You should be able to fix it with:
+
+```bash
+git submodule update --init --recursive
+```
+
+You can then build cesium-native on the command-line with CMake:
+
+```bash
+mkdir build
+cmake -B build -S .
+cmake --build build --config Debug
+```
+
+Or, you can easily build it in Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2019 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
 
 ## Building documentation
 

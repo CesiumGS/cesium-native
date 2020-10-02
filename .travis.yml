@@ -15,9 +15,6 @@ matrix:
         - export PATH=/usr/bin:$PATH
 
 script:
-  - cd extern
-  - ./build.sh
-  - cd ..
   - mkdir -p build
   - cd build
   - cmake ..
