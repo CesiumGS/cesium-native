@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Tile.h"
+#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 
 namespace Cesium3DTiles {
 
@@ -21,11 +22,16 @@ namespace Cesium3DTiles {
         std::optional<std::vector<Tile>> childTiles;
 
         /**
-         * An improved bounding volume for this tile, more accurate than the one the tile use originally.
+         * An improved bounding volume for this tile, more accurate than the one the tile used originally.
          */
         std::optional<BoundingVolume> updatedBoundingVolume;
 
-        // TODO: loading content can also reveal new tile availability
+        /**
+         * Available quadtree tiles discovered as a result of loading this tile.
+         */
+        std::vector<CesiumGeometry::QuadtreeTileRectangularRange> availableTileRectangles;
+
+        // TODO: other forms of tile availability, like a bitfield?
     };
 
 }

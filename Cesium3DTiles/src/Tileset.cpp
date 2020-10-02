@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
@@ -366,10 +367,27 @@ namespace Cesium3DTiles {
 
         std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
 
-        // Request normals if they're available
+
+        // Request normals and metadata if they're available
+        std::string extensionsToRequest;
+
         if (std::find(extensions.begin(), extensions.end(), "octvertexnormals") != extensions.end()) {
+            if (!extensionsToRequest.empty()) {
+                extensionsToRequest += "-";
+            }
+            extensionsToRequest += "octvertexnormals";
+        }
+
+        if (std::find(extensions.begin(), extensions.end(), "metadata") != extensions.end()) {
+            if (!extensionsToRequest.empty()) {
+                extensionsToRequest += "-";
+            }
+            extensionsToRequest += "metadata";
+        }
+
+        if (!extensionsToRequest.empty()) {
             for (std::string& url : this->_implicitTileUrls) {
-                url = Uri::addQuery(url, "extensions", "octvertexnormals");
+                url = Uri::addQuery(url, "extensions", extensionsToRequest);
             }
         }
 

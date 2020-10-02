@@ -1,13 +1,14 @@
-#include "QuantizedMeshContent.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
+#include "Cesium3DTiles/TerrainLayerJsonContent.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
-#include "Cesium3DTiles/TerrainLayerJsonContent.h"
-#include "Uri.h"
+#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumUtility/Math.h"
+#include "QuantizedMeshContent.h"
 #include "tiny_gltf.h"
-#include <stdexcept>
+#include "Uri.h"
 #include <glm/vec3.hpp>
+#include <stdexcept>
 
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
@@ -105,6 +106,8 @@ namespace Cesium3DTiles {
         return glm::normalize(result);
     }
 
+    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
+
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
         Tileset& tileset,
         const TileID& tileID,
@@ -117,6 +120,7 @@ namespace Cesium3DTiles {
         const gsl::span<const uint8_t>& data
     ) {
         // TODO: use context plus tileID to compute the tile's rectangle, rather than inferring it from the parent tile.
+        const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
 
@@ -412,6 +416,21 @@ namespace Cesium3DTiles {
                     pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
                     pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
                 }
+            } else if (extensionID == 4) {
+                // Metadata
+                if (readIndex + sizeof(uint32_t) > data.size()) {
+                    break;
+                }
+
+                uint32_t jsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+                readIndex += sizeof(uint32_t);
+
+                if (readIndex + sizeof(uint32_t) + jsonLength > data.size()) {
+                    break;
+                }
+
+                gsl::span<const char> json(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), jsonLength);
+                processMetadata(id, json, *pResult);
             }
 
             readIndex += extensionLength;
@@ -473,7 +492,6 @@ namespace Cesium3DTiles {
             maximumHeight
         )));
 
-        const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
         uint32_t level = id.level + 1;
         uint32_t x = id.x * 2;
         uint32_t y = id.y * 2;
@@ -484,6 +502,52 @@ namespace Cesium3DTiles {
         ne.setTileID(QuadtreeTileID(level, x + 1, y + 1));
 
         return pResult;
+    }
+
+    struct TileRange {
+        uint32_t minimumX;
+        uint32_t minimumY;
+        uint32_t maximumX;
+        uint32_t maximumY;
+    };
+
+    static void from_json(const nlohmann::json& json, TileRange& range) {
+        json.at("startX").get_to(range.minimumX);
+        json.at("startY").get_to(range.minimumY);
+        json.at("endX").get_to(range.maximumX);
+        json.at("endY").get_to(range.maximumY);
+    }
+
+    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> metadataString, TileContentLoadResult& result) {
+        using namespace nlohmann;
+        json metadata = json::parse(metadataString.begin(), metadataString.end());
+
+        json::iterator availableIt = metadata.find("available");
+        if (availableIt == metadata.end()) {
+            return;
+        }
+
+        json& available = *availableIt;
+        if (available.size() == 0) {
+            return;
+        }
+
+        uint32_t level = tileID.level + 1;
+        for (size_t i = 0; i < available.size(); ++i) {
+            std::vector<TileRange> rangesAtLevel = available[i].get<std::vector<TileRange>>();
+
+            for (const TileRange& range : rangesAtLevel) {
+                result.availableTileRectangles.push_back(CesiumGeometry::QuadtreeTileRectangularRange {
+                    level,
+                    range.minimumX,
+                    range.minimumY,
+                    range.maximumX,
+                    range.maximumY
+                });
+            }
+
+            ++level;
+        }
     }
 
 }

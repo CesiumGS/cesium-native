@@ -18,6 +18,14 @@ namespace CesiumGeometry {
             position.y <= this->maximumY;
     }
 
+    bool Rectangle::overlaps(const Rectangle& other) const {
+        double left = std::max(this->minimumX, other.minimumX);
+        double bottom = std::max(this->minimumY, other.minimumY);
+        double right = std::min(this->maximumX, other.maximumX);
+        double top = std::min(this->maximumY, other.maximumY);
+        return bottom < top && left < right;
+    }
+
     double Rectangle::computeWidth() const {
         return this->maximumX - this->minimumX;
     }
