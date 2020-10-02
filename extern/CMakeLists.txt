@@ -1,7 +1,5 @@
-# Do a release build of all third-party dependencies.
-set(CMAKE_BUILD_TYPE Release)
-
 add_subdirectory(Catch2)
+
 add_subdirectory(GSL)
 
 option(URIPARSER_BUILD_TESTS off)

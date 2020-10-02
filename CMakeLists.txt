@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
+
 project(
     cesium-native
     VERSION 0.1.0
@@ -24,9 +25,6 @@ function(configure_cesium_library targetName)
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
-        # Use the multithreaded, release, DLL version of the runtime library no matter what.
-        # This is appropriate for Unreal Engine, but needs to be configurable for other things.
-        MSVC_RUNTIME_LIBRARY MultiThreadedDLL
     )
 
     if (BUILD_SHARED_LIBS)
