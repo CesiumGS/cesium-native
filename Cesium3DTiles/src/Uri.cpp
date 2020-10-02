@@ -1,5 +1,4 @@
 #include "Uri.h"
-#define URI_STATIC_BUILD
 #include "uriparser/Uri.h"
 #include <stdexcept>
 
