@@ -250,7 +250,10 @@ namespace Cesium3DTiles {
                     for (Tile& childTile : this->_pContent->childTiles.value()) {
                         childTile.setParent(this);
                     }
+
                     this->createChildTiles(std::move(this->_pContent->childTiles.value()));
+
+                    this->getTileset()->addContext(std::move(this->_pContent->pNewTileContext));
                 }
 
                 // If this tile has no model, set its geometric error very high so we refine past it.

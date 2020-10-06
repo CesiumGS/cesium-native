@@ -173,6 +173,7 @@ namespace Cesium3DTiles {
         void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
 
         std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
+        void addContext(std::unique_ptr<TileContext>&& pNewContext);
 
     private:
         struct TraversalDetails {
