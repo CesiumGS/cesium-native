@@ -149,6 +149,10 @@ namespace Cesium3DTiles {
         return pAssetAccessor->requestAsset(url, tile.getContext()->requestHeaders);
     }
 
+    void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
+        this->_contexts.push_back(std::move(pNewContext));
+    }
+
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {

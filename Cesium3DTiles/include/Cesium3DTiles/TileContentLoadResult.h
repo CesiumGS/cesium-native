@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Tile.h"
+#include "Cesium3DTiles/TileContext.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 
 namespace Cesium3DTiles {
@@ -20,6 +21,11 @@ namespace Cesium3DTiles {
          * contains the root tiles of the subtree. This is ignored if the tile already has any child tiles.
          */
         std::optional<std::vector<Tile>> childTiles;
+
+        /**
+         * A new context, if any, used by the `childTiles`.
+         */
+        std::unique_ptr<TileContext> pNewTileContext;
 
         /**
          * An improved bounding volume for this tile, more accurate than the one the tile used originally.

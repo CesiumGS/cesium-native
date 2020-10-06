@@ -2,6 +2,7 @@
 #include "CesiumUtility/Json.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "Uri.h"
 
 namespace Cesium3DTiles {
 
@@ -13,16 +14,23 @@ namespace Cesium3DTiles {
         const glm::dmat4& tileTransform,
         const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
         TileRefine tileRefine,
-        const std::string& /*url*/,
+        const std::string& url,
         const gsl::span<const uint8_t>& data
     ) {
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
         pResult->childTiles.emplace(1);
 
+        pResult->pNewTileContext = std::make_unique<TileContext>();
+        TileContext* pContext = pResult->pNewTileContext.get();
+        pContext->pTileset = context.pTileset;
+        pContext->baseUrl = url;
+        pContext->requestHeaders = context.requestHeaders;
+        pContext->version = context.version;
+
         using nlohmann::json;
 
         json tilesetJson = json::parse(data.begin(), data.end());
-        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, context);
+        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
 
         return pResult;
     }
