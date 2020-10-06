@@ -13,7 +13,7 @@ namespace CesiumGeometry {
             for (uint32_t i = 0; i < this->_tilingScheme.getRootTilesX(); ++i) {
                 QuadtreeTileID id(0, i, j);
                 Rectangle extent = tilingScheme.tileToRectangle(id);
-                this->_rootNodes[rowStart + i] = std::make_unique<QuadtreeNode>(id, extent);
+                this->_rootNodes[rowStart + i] = std::make_unique<QuadtreeNode>(id, extent, nullptr);
             }
         }
     }
@@ -48,6 +48,17 @@ namespace CesiumGeometry {
         }
 
         return 0;
+    }
+
+    bool QuadtreeTileAvailability::isTileAvailable(const QuadtreeTileID& id) const {
+        // Get the center of the tile and find the maximum level at that position.
+        // Because availability is by tile, if the level is available at that point, it
+        // is sure to be available for the whole tile.  We assume that if a tile at level n exists,
+        // then all its parent tiles back to level 0 exist too.  This isn't really enforced
+        // anywhere, but Cesium would never load a tile for which this is not true.
+        CesiumGeometry::Rectangle rectangle = this->_tilingScheme.tileToRectangle(id);
+        glm::dvec2 center = rectangle.getCenter();
+        return this->computeMaximumLevelAtPosition(center) >= id.level;
     }
 
     /*static*/ void QuadtreeTileAvailability::putRectangleInQuadtree(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel, QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTileAvailability::RectangleWithLevel& rectangle) {
@@ -130,10 +141,12 @@ namespace CesiumGeometry {
             const std::vector<RectangleWithLevel>& rectangles = pNode->rectangles;
 
             // Rectangles are sorted by level, lowest first.
-            for (size_t i = rectangles.size() - 1; i >= 0 && rectangles[i].level > maxLevel; --i) {
-                const RectangleWithLevel& rectangle = rectangles[i];
-                if (rectangle.rectangle.contains(position)) {
-                    maxLevel = rectangle.level;
+            if (rectangles.size() > 0) {
+                for (size_t i = rectangles.size() - 1; i >= 0 && rectangles[i].level > maxLevel; --i) {
+                    const RectangleWithLevel& rectangle = rectangles[i];
+                    if (rectangle.rectangle.contains(position)) {
+                        maxLevel = rectangle.level;
+                    }
                 }
             }
 
@@ -149,16 +162,16 @@ namespace CesiumGeometry {
         }
 
         QuadtreeTileID llID(node.id.level + 1, node.id.x * 2, node.id.y * 2);
-        node.ll = std::make_unique<QuadtreeNode>(llID, tilingScheme.tileToRectangle(llID));
+        node.ll = std::make_unique<QuadtreeNode>(llID, tilingScheme.tileToRectangle(llID), &node);
         
         QuadtreeTileID lrID(llID.level, llID.x + 1, llID.y);
-        node.lr = std::make_unique<QuadtreeNode>(lrID, tilingScheme.tileToRectangle(lrID));
+        node.lr = std::make_unique<QuadtreeNode>(lrID, tilingScheme.tileToRectangle(lrID), &node);
 
         QuadtreeTileID ulID(llID.level, llID.x, llID.y + 1);
-        node.ul = std::make_unique<QuadtreeNode>(ulID, tilingScheme.tileToRectangle(ulID));
+        node.ul = std::make_unique<QuadtreeNode>(ulID, tilingScheme.tileToRectangle(ulID), &node);
 
         QuadtreeTileID urID(llID.level, llID.x + 1, llID.y + 1);
-        node.ur = std::make_unique<QuadtreeNode>(urID, tilingScheme.tileToRectangle(urID));
+        node.ur = std::make_unique<QuadtreeNode>(urID, tilingScheme.tileToRectangle(urID), &node);
     }
 
 }

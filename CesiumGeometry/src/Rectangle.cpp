@@ -26,6 +26,15 @@ namespace CesiumGeometry {
         return bottom < top && left < right;
     }
 
+    bool Rectangle::fullyContains(const Rectangle& other) const {
+        return (
+            other.minimumX >= this->minimumX &&
+            other.maximumX <= this->maximumX &&
+            other.minimumY >= this->minimumY &&
+            other.maximumY <= this->maximumY
+        );
+    }
+
     double Rectangle::computeWidth() const {
         return this->maximumX - this->minimumX;
     }

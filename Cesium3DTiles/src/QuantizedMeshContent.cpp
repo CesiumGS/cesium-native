@@ -109,10 +109,10 @@ namespace Cesium3DTiles {
     static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
-        const TileContext& context,
+        const TileContext& /*context*/,
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,
-        double tileGeometricError,
+        double /*tileGeometricError*/,
         const glm::dmat4& /*tileTransform*/,
         const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
         TileRefine /*tileRefine*/,
@@ -423,7 +423,6 @@ namespace Cesium3DTiles {
                 }
 
                 uint32_t jsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
-                readIndex += sizeof(uint32_t);
 
                 if (readIndex + sizeof(uint32_t) + jsonLength > data.size()) {
                     break;
@@ -447,59 +446,6 @@ namespace Cesium3DTiles {
         };
 
         pResult->updatedBoundingVolume = BoundingRegion(rectangle, minimumHeight, maximumHeight);
-
-        // Create child tiles
-        // TODO: only create them if they really exist
-        pResult->childTiles.emplace(4);
-
-        std::vector<Tile>& children = pResult->childTiles.value();
-        Tile& sw = children[0];
-        Tile& se = children[1];
-        Tile& nw = children[2];
-        Tile& ne = children[3];
-
-        sw.setContext(const_cast<TileContext*>(&context));
-        se.setContext(const_cast<TileContext*>(&context));
-        nw.setContext(const_cast<TileContext*>(&context));
-        ne.setContext(const_cast<TileContext*>(&context));
-
-        double childGeometricError = tileGeometricError * 0.5;
-        sw.setGeometricError(childGeometricError);
-        se.setGeometricError(childGeometricError);
-        nw.setGeometricError(childGeometricError);
-        ne.setGeometricError(childGeometricError);
-
-        Cartographic rectangleCenter = rectangle.computeCenter();
-
-        sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::GlobeRectangle(rectangle.getWest(), rectangle.getSouth(), rectangleCenter.longitude, rectangleCenter.latitude),
-            minimumHeight,
-            maximumHeight
-        )));
-        se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::GlobeRectangle(rectangleCenter.longitude, rectangle.getSouth(), rectangle.getEast(), rectangleCenter.latitude),
-            minimumHeight,
-            maximumHeight
-        )));
-        nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::GlobeRectangle(rectangle.getWest(), rectangleCenter.latitude, rectangleCenter.longitude, rectangle.getNorth()),
-            minimumHeight,
-            maximumHeight
-        )));
-        ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            CesiumGeospatial::GlobeRectangle(rectangleCenter.longitude, rectangleCenter.latitude, rectangle.getEast(), rectangle.getNorth()),
-            minimumHeight,
-            maximumHeight
-        )));
-
-        uint32_t level = id.level + 1;
-        uint32_t x = id.x * 2;
-        uint32_t y = id.y * 2;
-
-        sw.setTileID(QuadtreeTileID(level, x, y));
-        se.setTileID(QuadtreeTileID(level, x + 1, y));
-        nw.setTileID(QuadtreeTileID(level, x, y + 1));
-        ne.setTileID(QuadtreeTileID(level, x + 1, y + 1));
 
         return pResult;
     }

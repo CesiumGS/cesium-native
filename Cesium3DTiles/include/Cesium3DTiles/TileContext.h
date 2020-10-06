@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
 #include <string>
@@ -14,6 +15,7 @@ namespace Cesium3DTiles {
         std::vector<std::string> tileTemplateUrls;
         CesiumGeometry::QuadtreeTilingScheme tilingScheme;
         CesiumGeospatial::Projection projection;
+        CesiumGeometry::QuadtreeTileAvailability availability;
     };
 
     class TileContext {

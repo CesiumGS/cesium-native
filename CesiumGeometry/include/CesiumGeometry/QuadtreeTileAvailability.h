@@ -16,6 +16,7 @@ namespace CesiumGeometry {
 
         void addAvailableTileRange(const QuadtreeTileRectangularRange& range);
         uint32_t computeMaximumLevelAtPosition(const glm::dvec2& position) const;
+        bool isTileAvailable(const QuadtreeTileID& id) const;
 
     private:
         struct RectangleWithLevel {
@@ -24,9 +25,15 @@ namespace CesiumGeometry {
         };
 
         struct QuadtreeNode {
-            QuadtreeNode(const QuadtreeTileID& id_, const Rectangle& extent_) :
+            QuadtreeNode(const QuadtreeTileID& id_, const Rectangle& extent_, QuadtreeNode* pParent_) :
                 id(id_),
-                extent(extent_)
+                extent(extent_),
+                pParent(pParent_),
+                ll(),
+                lr(),
+                ul(),
+                ur(),
+                rectangles()
             {}
 
             QuadtreeTileID id;

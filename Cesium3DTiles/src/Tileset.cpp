@@ -377,7 +377,8 @@ namespace Cesium3DTiles {
         context.implicitContext = {
             layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>()),
             tilingScheme,
-            projection
+            projection,
+            CesiumGeometry::QuadtreeTileAvailability(tilingScheme, layerJson.value<uint32_t>("maxzoom", 30))
         };
 
         std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
