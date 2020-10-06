@@ -8,7 +8,7 @@
 namespace Cesium3DTiles {
 
     void registerAllTileContentTypes() {
-        TileContentFactory::registerMagic("gltf", GltfContent::load);
+        TileContentFactory::registerMagic("glTF", GltfContent::load);
         TileContentFactory::registerMagic("b3dm", Batched3DModelContent::load);
         TileContentFactory::registerMagic("json", ExternalTilesetContent::load);
 
