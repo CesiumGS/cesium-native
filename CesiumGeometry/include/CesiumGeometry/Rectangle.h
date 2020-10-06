@@ -16,6 +16,8 @@ namespace CesiumGeometry {
         double maximumY;
 
         bool contains(const glm::dvec2& position) const;
+        bool overlaps(const Rectangle& other) const;
+        bool fullyContains(const Rectangle& other) const;
 
         glm::dvec2 getLowerLeft() const { return glm::dvec2(this->minimumX, this->minimumY); }
         glm::dvec2 getLowerRight() const { return glm::dvec2(this->maximumX, this->minimumY); }

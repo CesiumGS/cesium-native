@@ -36,7 +36,7 @@ namespace Cesium3DTiles {
 	};
 
     std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
-		Tileset& tileset,
+		const TileContext& context,
 		const TileID& tileID,
 		const BoundingVolume& tileBoundingVolume,
 		double tileGeometricError,
@@ -114,7 +114,7 @@ namespace Cesium3DTiles {
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
         std::unique_ptr<TileContentLoadResult> pResult = GltfContent::load(
-			tileset,
+			context,
 			tileID,
 			tileBoundingVolume,
 			tileGeometricError,

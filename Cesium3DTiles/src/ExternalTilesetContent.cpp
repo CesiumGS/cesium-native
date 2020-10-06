@@ -6,14 +6,14 @@
 namespace Cesium3DTiles {
 
     /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
-        Tileset& tileset,
+        const TileContext& context,
         const TileID& /*tileID*/,
         const BoundingVolume& /*tileBoundingVolume*/,
         double /*tileGeometricError*/,
         const glm::dmat4& tileTransform,
         const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
         TileRefine tileRefine,
-        const std::string& url,
+        const std::string& /*url*/,
         const gsl::span<const uint8_t>& data
     ) {
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
@@ -22,7 +22,7 @@ namespace Cesium3DTiles {
         using nlohmann::json;
 
         json tilesetJson = json::parse(data.begin(), data.end());
-        tileset.loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, url);
+        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, context);
 
         return pResult;
     }

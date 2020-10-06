@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
@@ -18,6 +19,7 @@ namespace Cesium3DTiles {
         const std::string& url,
         const TilesetOptions& options
     ) :
+        _contexts(),
         _externals(externals),
         _url(url),
         _ionAssetID(),
@@ -25,10 +27,6 @@ namespace Cesium3DTiles {
         _options(options),
         _pIonRequest(),
         _pTilesetJsonRequest(),
-        _version(),
-        _tileBaseUrl(),
-        _tileHeaders(),
-        _implicitTileUrls(),
         _pRootTile(),
         _previousFrameNumber(0),
         _updateResult(),
@@ -50,6 +48,7 @@ namespace Cesium3DTiles {
         const std::string& ionAccessToken,
         const TilesetOptions& options
     ) :
+        _contexts(),
         _externals(externals),
         _url(),
         _ionAssetID(ionAssetID),
@@ -57,10 +56,6 @@ namespace Cesium3DTiles {
         _options(options),
         _pIonRequest(),
         _pTilesetJsonRequest(),
-        _version(),
-        _tileBaseUrl(),
-        _tileHeaders(),
-        _implicitTileUrls(),
         _pRootTile(),
         _previousFrameNumber(0),
         _updateResult(),
@@ -140,8 +135,8 @@ namespace Cesium3DTiles {
         --this->_loadsInProgress;
     }
 
-    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const {
-        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, baseUrl);
+    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
+        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context);
     }
 
     std::unique_ptr<IAssetRequest> Tileset::requestTileContent(Tile& tile) {
@@ -151,7 +146,7 @@ namespace Cesium3DTiles {
         }
 
         IAssetAccessor* pAssetAccessor = this->getExternals().pAssetAccessor;
-        return pAssetAccessor->requestAsset(url, this->_tileHeaders);
+        return pAssetAccessor->requestAsset(url, tile.getContext()->requestHeaders);
     }
 
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
@@ -176,12 +171,22 @@ namespace Cesium3DTiles {
         std::string url = ionResponse.value<std::string>("url", "");
         std::string accessToken = ionResponse.value<std::string>("accessToken", "");
         
-        // For terrain resources, we need to append `/layer.json` to the end of the URL.
-        if (ionResponse.value<std::string>("type", "") == "TERRAIN") {
-            url = Uri::resolve(url, "layer.json");
+        std::string type = ionResponse.value<std::string>("type", "");
+        if (type == "TERRAIN") {
+            // For terrain resources, we need to append `/layer.json` to the end of the URL.
+            url = Uri::resolve(url, "layer.json", true);
+        } else if (type != "3DTILES") {
+            // TODO: report unsupported type.
+            this->notifyTileDoneLoading(nullptr);
+            return;
         }
 
-        this->_tileHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+        this->_contexts.push_back(std::move(std::make_unique<TileContext>()));
+        TileContext& context = *this->_contexts[0];
+
+        context.pTileset = this;
+        context.baseUrl = url;
+        context.requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
 
         // When we assign _pTilesetRequest, the previous request and response
         // that we're currently handling may immediately be deleted.
@@ -189,7 +194,7 @@ namespace Cesium3DTiles {
         pResponse = nullptr;
         this->_pIonRequest.reset();
 
-        this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url, this->_tileHeaders);
+        this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(context.baseUrl, context.requestHeaders);
         this->_pTilesetJsonRequest->bind(std::bind(&Tileset::_tilesetJsonResponseReceived, this, std::placeholders::_1));
     }
 
@@ -209,24 +214,31 @@ namespace Cesium3DTiles {
             return;
         }
 
-        this->_tileBaseUrl = this->_pTilesetJsonRequest->url();
+        if (this->_contexts.empty()) {
+            this->_contexts.push_back(std::move(std::make_unique<TileContext>()));
+        }
+
+        TileContext& context = *this->_contexts[0];
+
+        context.pTileset = this;
+        context.baseUrl = this->_pTilesetJsonRequest->url();
 
         gsl::span<const uint8_t> data = pResponse->data();
 
         const TilesetExternals& externals = this->getExternals();
-        externals.pTaskProcessor->startTask([data, &externals, this]() {
+        externals.pTaskProcessor->startTask([data, &externals, this, &context]() {
             using nlohmann::json;
             json tileset = json::parse(data.begin(), data.end());
 
             std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
-            pRootTile->setTileset(this);
+            pRootTile->setContext(&context);
 
             json::iterator rootIt = tileset.find("root");
             if (rootIt != tileset.end()) {
                 json& rootJson = *rootIt;
-                this->_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, "");
+                this->_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, context);
             } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
-                this->_createTerrainTile(*pRootTile, tileset);
+                this->_createTerrainTile(*pRootTile, tileset, context);
             }
 
             this->_pRootTile = std::move(pRootTile);
@@ -238,7 +250,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const {
+    void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
         using nlohmann::json;
 
         if (!tileJson.is_object())
@@ -246,7 +258,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        tile.setTileset(const_cast<Tileset*>(this));
+        tile.setContext(const_cast<TileContext*>(&context));
 
         std::optional<glm::dmat4x4> tileTransform = TilesetJson::getTransformProperty(tileJson, "transform");
         glm::dmat4x4 transform = parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
@@ -263,7 +275,7 @@ namespace Cesium3DTiles {
             }
 
             if (uriIt != contentIt->end()) {
-                tile.setTileID(Uri::resolve(baseUrl, *uriIt));
+                tile.setTileID(Uri::resolve(context.baseUrl, *uriIt));
             }
 
             std::optional<BoundingVolume> contentBoundingVolume = TilesetJson::getBoundingVolumeProperty(*contentIt, "boundingVolume");
@@ -322,15 +334,16 @@ namespace Cesium3DTiles {
                 const json& childJson = childrenJson[i];
                 Tile& child = childTiles[i];
                 child.setParent(&tile);
-                this->_createTile(child, childJson, transform, tile.getRefine(), baseUrl);
+                this->_createTile(child, childJson, transform, tile.getRefine(), context);
             }
         }
     }
 
-    void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson) {
-        this->_tileHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
-        this->_version = layerJson.value("version", "");
-        this->_implicitTileUrls = layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>());
+    void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context) {
+        context.requestHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
+        context.version = layerJson.value("version", "");
+
+        std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
 
         std::string projectionString = layerJson.value<std::string>("projection", "EPSG:4326");
         CesiumGeospatial::Projection projection;
@@ -341,13 +354,17 @@ namespace Cesium3DTiles {
         if (projectionString == "EPSG:4326") {
             CesiumGeospatial::GeographicProjection geographic;
             projection = geographic;
-            quadtreeRectangleGlobe = GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+            quadtreeRectangleGlobe = bounds.size() >= 4
+                ? CesiumGeospatial::GlobeRectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3])
+                : GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
             quadtreeRectangleProjected = geographic.project(quadtreeRectangleGlobe);
             quadtreeXTiles = 2;
         } else if (projectionString == "EPSG:3857") {
             CesiumGeospatial::WebMercatorProjection webMercator;
             projection = webMercator;
-            quadtreeRectangleGlobe = WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+            quadtreeRectangleGlobe = bounds.size() >= 4
+                ? CesiumGeospatial::GlobeRectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3])
+                : WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
             quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
             quadtreeXTiles = 1;
         } else {
@@ -358,22 +375,39 @@ namespace Cesium3DTiles {
 
         CesiumGeometry::QuadtreeTilingScheme tilingScheme(quadtreeRectangleProjected, quadtreeXTiles, 1);
 
-        // context.implicitContext = ImplicitTilingContext {
-        //     layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>()),
-        //     tilingScheme,
-        //     projection
-        // };
+        context.implicitContext = {
+            layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>()),
+            tilingScheme,
+            projection,
+            CesiumGeometry::QuadtreeTileAvailability(tilingScheme, layerJson.value<uint32_t>("maxzoom", 30))
+        };
 
         std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
 
-        // Request normals if they're available
+        // Request normals and metadata if they're available
+        std::string extensionsToRequest;
+
         if (std::find(extensions.begin(), extensions.end(), "octvertexnormals") != extensions.end()) {
-            for (std::string& url : this->_implicitTileUrls) {
-                url = Uri::addQuery(url, "extensions", "octvertexnormals");
+            if (!extensionsToRequest.empty()) {
+                extensionsToRequest += "-";
+            }
+            extensionsToRequest += "octvertexnormals";
+        }
+
+        if (std::find(extensions.begin(), extensions.end(), "metadata") != extensions.end()) {
+            if (!extensionsToRequest.empty()) {
+                extensionsToRequest += "-";
+            }
+            extensionsToRequest += "metadata";
+        }
+
+        if (!extensionsToRequest.empty()) {
+            for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
+                url = Uri::addQuery(url, "extensions", extensionsToRequest);
             }
         }
 
-        tile.setTileset(this);
+        tile.setContext(&context);
         tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
             quadtreeRectangleGlobe,
             -1000.0,
@@ -386,7 +420,7 @@ namespace Cesium3DTiles {
             Tile& childTile = tile.getChildren()[i];
             QuadtreeTileID id(0, i, 0);
 
-            childTile.setTileset(this);
+            childTile.setContext(&context);
             childTile.setParent(&tile);
             childTile.setTileID(id);
             childTile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
@@ -747,14 +781,18 @@ namespace Cesium3DTiles {
 
     std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
         struct Operation {
-            const Tileset& tileset;
+            const TileContext& context;
 
             std::string operator()(const std::string& url) {
                 return url;
             }
 
             std::string operator()(const QuadtreeTileID& quadtreeID) {
-                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
+                if (!this->context.implicitContext) {
+                    return std::string();
+                }
+
+                return Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level" || placeholder == "z") {
                         return std::to_string(quadtreeID.level);
                     } else if (placeholder == "x") {
@@ -762,7 +800,7 @@ namespace Cesium3DTiles {
                     } else if (placeholder == "y") {
                         return std::to_string(quadtreeID.y);
                     } else if (placeholder == "version") {
-                        return this->tileset._version;
+                        return this->context.version.value_or(std::string());
                     }
 
                     return placeholder;
@@ -770,7 +808,11 @@ namespace Cesium3DTiles {
             }
 
             std::string operator()(const OctreeTileID& octreeID) {
-                return Uri::substituteTemplateParameters(tileset._implicitTileUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
+                if (!this->context.implicitContext) {
+                    return std::string();
+                }
+
+                return Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level") {
                         return std::to_string(octreeID.level);
                     } else if (placeholder == "x") {
@@ -780,7 +822,7 @@ namespace Cesium3DTiles {
                     } else if (placeholder == "z") {
                         return std::to_string(octreeID.z);
                     } else if (placeholder == "version") {
-                        return this->tileset._version;
+                        return this->context.version.value_or(std::string());
                     }
 
                     return placeholder;
@@ -788,12 +830,12 @@ namespace Cesium3DTiles {
             }
         };
 
-        std::string url = std::visit(Operation { *this }, tile.getTileID());
+        std::string url = std::visit(Operation { *tile.getContext() }, tile.getTileID());
         if (url.empty()) {
             return url;
         }
 
-        return Uri::resolve(this->_tileBaseUrl, url, true);
+        return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
 }

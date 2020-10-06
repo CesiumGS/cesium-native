@@ -8,13 +8,13 @@
 
 namespace Cesium3DTiles {
     
-    class Tileset;
+    class TileContext;
 
     class CESIUM3DTILES_API TerrainLayerJsonContent : public TileContent {
     public:
         static std::string TYPE;
 
-        TerrainLayerJsonContent(Tileset& tileset, const nlohmann::json& layerJson, const std::string& url);
+        TerrainLayerJsonContent(TileContext& context, const nlohmann::json& layerJson, const std::string& url);
 
         virtual const std::string& getType() const { return TerrainLayerJsonContent::TYPE; }
         virtual void finalizeLoad(Tile& tile);

@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
 
     Tile::Tile() :
         _loadedTilesLinks(),
-        _pTileset(nullptr),
+        _pContext(nullptr),
         _pParent(nullptr),
         _children(),
         _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat4())),
@@ -41,7 +41,7 @@ namespace Cesium3DTiles {
 
     Tile::Tile(Tile&& rhs) noexcept :
         _loadedTilesLinks(),
-        _pTileset(rhs._pTileset),
+        _pContext(rhs._pContext),
         _pParent(rhs._pParent),
         _children(std::move(rhs._children)),
         _boundingVolume(rhs._boundingVolume),
@@ -62,7 +62,7 @@ namespace Cesium3DTiles {
     Tile& Tile::operator=(Tile&& rhs) noexcept {
         if (this != &rhs) {
             this->_loadedTilesLinks = std::move(rhs._loadedTilesLinks);
-            this->_pTileset = rhs._pTileset;
+            this->_pContext = rhs._pContext;
             this->_pParent = rhs._pParent;
             this->_children = std::move(rhs._children);
             this->_boundingVolume = rhs._boundingVolume;
@@ -178,7 +178,7 @@ namespace Cesium3DTiles {
         if (this->_pContentRequest) {
             this->_pContentRequest->bind(std::bind(&Tile::contentResponseReceived, this, std::placeholders::_1));
         } else {
-            this->_pTileset->notifyTileDoneLoading(this);
+            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::ContentLoaded);
         }
     }
@@ -189,7 +189,7 @@ namespace Cesium3DTiles {
             return false;
         }
 
-        const TilesetExternals& externals = this->_pTileset->getExternals();
+        const TilesetExternals& externals = this->getTileset()->getExternals();
         if (externals.pPrepareRendererResources) {
             if (this->getState() == LoadState::ContentLoaded) {
                 externals.pPrepareRendererResources->free(*this, this->_pRendererResources, nullptr);
@@ -207,8 +207,37 @@ namespace Cesium3DTiles {
         return true;
     }
 
+    static void createImplicitTile(const ImplicitTilingContext& implicitContext, Tile& parent, Tile& child, const QuadtreeTileID& childID) {
+        child.setContext(parent.getContext());
+        child.setParent(&parent);
+        child.setTileID(childID);
+        child.setGeometricError(parent.getGeometricError() * 0.5);
+
+        double minimumHeight = -1000.0;
+        double maximumHeight = 9000.0;
+
+        const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&parent.getBoundingVolume());
+        if (!pRegion) {
+            const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&parent.getBoundingVolume());
+            if (pLooseRegion) {
+                pRegion = &pLooseRegion->getBoundingRegion();
+            }
+        }
+
+        if (pRegion) {
+            minimumHeight = pRegion->getMinimumHeight();
+            maximumHeight = pRegion->getMaximumHeight();
+        }
+
+        child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+            unprojectRectangleSimple(implicitContext.projection, implicitContext.tilingScheme.tileToRectangle(childID)),
+            minimumHeight,
+            maximumHeight
+        )));
+    }
+
     void Tile::update(uint32_t /*previousFrameNumber*/, uint32_t /*currentFrameNumber*/) {
-        const TilesetExternals& externals = this->_pTileset->getExternals();
+        const TilesetExternals& externals = this->getTileset()->getExternals();
 
         if (this->getState() == LoadState::ContentLoaded) {
             if (externals.pPrepareRendererResources) {
@@ -234,6 +263,13 @@ namespace Cesium3DTiles {
                 // A new and improved bounding volume.
                 if (this->_pContent->updatedBoundingVolume) {
                     this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
+                }
+
+                if (!this->_pContent->availableTileRectangles.empty() && this->getContext()->implicitContext) {
+                    ImplicitTilingContext& context = this->getContext()->implicitContext.value();
+                    for (const QuadtreeTileRectangularRange& range : this->_pContent->availableTileRectangles) {
+                        context.availability.addAvailableTileRange(range);
+                    }
                 }
             }
 
@@ -268,6 +304,40 @@ namespace Cesium3DTiles {
                 }
             }
         }
+
+        if (
+            this->getContext()->implicitContext &&
+            this->getChildren().size() == 0
+        ) {
+            // Check if any child tiles are known to be available, and create them if they are.
+            const ImplicitTilingContext& implicitContext = this->getContext()->implicitContext.value();
+            const CesiumGeometry::QuadtreeTileAvailability& availability = implicitContext.availability;
+
+            QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
+
+            QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
+            uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
+
+            QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+            uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
+
+            QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+            uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
+
+            QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+            uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
+
+            size_t childCount = sw + se + nw + ne;
+            if (childCount > 0) {
+                this->_children.resize(childCount);
+
+                uint32_t i = 0;
+                if (sw) createImplicitTile(implicitContext, *this, this->_children[i++], swID);
+                if (se) createImplicitTile(implicitContext, *this, this->_children[i++], seID);
+                if (nw) createImplicitTile(implicitContext, *this, this->_children[i++], nwID);
+                if (ne) createImplicitTile(implicitContext, *this, this->_children[i++], neID);
+            }
+        }
     }
 
     void Tile::setState(LoadState value) {
@@ -276,7 +346,7 @@ namespace Cesium3DTiles {
 
     void Tile::contentResponseReceived(IAssetRequest* pRequest) {
         if (this->getState() == LoadState::Destroying) {
-            this->_pTileset->notifyTileDoneLoading(this);
+            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::Failed);
             return;
         }
@@ -289,27 +359,27 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
-            this->_pTileset->notifyTileDoneLoading(this);
+            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::Failed);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
-            this->_pTileset->notifyTileDoneLoading(this);
+            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::Failed);
             return;
         }
 
-        this->_pTileset->getExternals().pTaskProcessor->startTask([pResponse, this]() {
+        this->getTileset()->getExternals().pTaskProcessor->startTask([pResponse, this]() {
             if (this->getState() == LoadState::Destroying) {
-                this->_pTileset->notifyTileDoneLoading(this);
+                this->getTileset()->notifyTileDoneLoading(this);
                 this->setState(LoadState::Failed);
                 return;
             }
 
             this->_pContent = std::move(TileContentFactory::createContent(
-                *this->getTileset(),
+                *this->getContext(),
                 this->getTileID(),
                 this->getBoundingVolume(),
                 this->getGeometricError(),
@@ -322,7 +392,7 @@ namespace Cesium3DTiles {
             ));
 
             if (this->getState() == LoadState::Destroying) {
-                this->_pTileset->notifyTileDoneLoading(this);
+                this->getTileset()->notifyTileDoneLoading(this);
                 this->setState(LoadState::Failed);
                 return;
             }
@@ -365,7 +435,7 @@ namespace Cesium3DTiles {
                     }
                 }
 
-                const TilesetExternals& externals = this->_pTileset->getExternals();
+                const TilesetExternals& externals = this->getTileset()->getExternals();
                 if (externals.pPrepareRendererResources) {
                     this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
                 }
@@ -374,7 +444,7 @@ namespace Cesium3DTiles {
                 }
             }
 
-            this->_pTileset->notifyTileDoneLoading(this);
+            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::ContentLoaded);
         });
     }
