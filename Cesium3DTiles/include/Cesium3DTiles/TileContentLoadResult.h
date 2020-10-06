@@ -17,15 +17,15 @@ namespace Cesium3DTiles {
         std::optional<tinygltf::Model> model;
 
         /**
+         * A new context, if any, used by the `childTiles`.
+         */
+        std::unique_ptr<TileContext> pNewTileContext;
+
+        /**
          * New child tiles discovered by loading this tile. For example, if the content is an external tileset, this property
          * contains the root tiles of the subtree. This is ignored if the tile already has any child tiles.
          */
         std::optional<std::vector<Tile>> childTiles;
-
-        /**
-         * A new context, if any, used by the `childTiles`.
-         */
-        std::unique_ptr<TileContext> pNewTileContext;
 
         /**
          * An improved bounding volume for this tile, more accurate than the one the tile used originally.
