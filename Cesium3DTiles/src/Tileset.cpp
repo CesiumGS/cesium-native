@@ -344,9 +344,6 @@ namespace Cesium3DTiles {
         context.version = layerJson.value("version", "");
 
         std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
-        CesiumGeometry::Rectangle rectangle = bounds.size() >= 4
-            ? CesiumGeometry::Rectangle(bounds[0], bounds[1], bounds[2], bounds[3])
-            : CesiumGeometry::Rectangle(-180.0, -90.0, 180.0, 90.0);
 
         std::string projectionString = layerJson.value<std::string>("projection", "EPSG:4326");
         CesiumGeospatial::Projection projection;
@@ -357,13 +354,17 @@ namespace Cesium3DTiles {
         if (projectionString == "EPSG:4326") {
             CesiumGeospatial::GeographicProjection geographic;
             projection = geographic;
-            quadtreeRectangleGlobe = GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+            quadtreeRectangleGlobe = bounds.size() >= 4
+                ? CesiumGeospatial::GlobeRectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3])
+                : GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
             quadtreeRectangleProjected = geographic.project(quadtreeRectangleGlobe);
             quadtreeXTiles = 2;
         } else if (projectionString == "EPSG:3857") {
             CesiumGeospatial::WebMercatorProjection webMercator;
             projection = webMercator;
-            quadtreeRectangleGlobe = WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+            quadtreeRectangleGlobe = bounds.size() >= 4
+                ? CesiumGeospatial::GlobeRectangle::fromDegrees(bounds[0], bounds[1], bounds[2], bounds[3])
+                : WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
             quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
             quadtreeXTiles = 1;
         } else {
