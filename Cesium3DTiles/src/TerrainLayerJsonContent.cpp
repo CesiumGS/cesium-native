@@ -13,7 +13,7 @@ namespace Cesium3DTiles {
     std::string TerrainLayerJsonContent::TYPE = "terrainLayerJson";
 
     TerrainLayerJsonContent::TerrainLayerJsonContent(
-        Tileset& tileset,
+        TileContext& context,
         const nlohmann::json& layerJson,
         const std::string& url
     ) :
@@ -23,8 +23,8 @@ namespace Cesium3DTiles {
         _version(),
         _bounds(0.0, 0.0, 0.0, 0.0)
     {
-        this->_externalRoot[0].setTileset(&tileset);
-        this->_externalRoot[1].setTileset(&tileset);
+        this->_externalRoot[0].setContext(&context);
+        this->_externalRoot[1].setContext(&context);
 
         using nlohmann::json;
 
@@ -74,10 +74,10 @@ namespace Cesium3DTiles {
     }
 
     void TerrainLayerJsonContent::finalizeLoad(Tile& tile) {
-        this->_externalRoot[0].setTileset(tile.getTileset());
+        this->_externalRoot[0].setContext(tile.getContext());
         this->_externalRoot[0].setParent(&tile);
 
-        this->_externalRoot[1].setTileset(tile.getTileset());
+        this->_externalRoot[1].setContext(tile.getContext());
         this->_externalRoot[1].setParent(&tile);
 
         tile.createChildTiles(std::move(this->_externalRoot));

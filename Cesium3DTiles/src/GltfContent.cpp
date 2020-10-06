@@ -6,7 +6,7 @@
 namespace Cesium3DTiles {
 
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
-		Tileset& /*tileset*/,
+		const TileContext& /*context*/,
 		const TileID& /*tileID*/,
 		const BoundingVolume& /*tileBoundingVolume*/,
 		double /*tileGeometricError*/,

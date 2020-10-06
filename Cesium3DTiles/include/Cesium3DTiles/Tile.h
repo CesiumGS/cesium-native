@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/TileContent.h"
+#include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TileSelectionState.h"
@@ -73,9 +74,12 @@ namespace Cesium3DTiles {
 
         void prepareToDestroy();
 
-        Tileset* getTileset() { return this->_pTileset; }
-        const Tileset* getTileset() const { return this->_pTileset; }
-        void setTileset(Tileset* pTileset) { this->_pTileset = pTileset; }
+        Tileset* getTileset() { return this->_pContext->pTileset; }
+        const Tileset* getTileset() const { return this->_pContext->pTileset; }
+        
+        TileContext* getContext() { return this->_pContext; }
+        const TileContext* getContext() const { return this->_pContext; }
+        void setContext(TileContext* pContext) { this->_pContext = pContext; }
 
         Tile* getParent() { return this->_pParent; }
         const Tile* getParent() const { return this->_pParent; }
@@ -146,7 +150,7 @@ namespace Cesium3DTiles {
 
     private:
         // Position in bounding-volume hierarchy.
-        Tileset* _pTileset;
+        TileContext* _pContext;
         Tile* _pParent;
         std::vector<Tile> _children;
 

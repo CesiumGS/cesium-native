@@ -19,7 +19,7 @@ namespace Cesium3DTiles {
         TileContentFactory() = delete;
 
         typedef std::unique_ptr<TileContentLoadResult> FactoryFunctionSignature(
-            Tileset& tileset,
+            const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
             double tileGeometricError,
@@ -34,7 +34,7 @@ namespace Cesium3DTiles {
         static void registerMagic(const std::string& magic, FactoryFunction factoryFunction);
         static void registerContentType(const std::string& contentType, FactoryFunction factoryFunction);
         static std::unique_ptr<TileContentLoadResult> createContent(
-            Tileset& tileset,
+            const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
             double tileGeometricError,

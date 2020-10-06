@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
     class CESIUM3DTILES_API Batched3DModelContent {
     public:
         static std::unique_ptr<TileContentLoadResult> load(
-            Tileset& tileset,
+            const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
             double tileGeometricError,

@@ -1,18 +1,20 @@
 #pragma once
 
+#include "Cesium3DTiles/Camera.h"
+#include "Cesium3DTiles/IAssetRequest.h"
+#include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/RasterOverlayCollection.h"
+#include "Cesium3DTiles/Tile.h"
+#include "Cesium3DTiles/TileContext.h"
+#include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/ViewUpdateResult.h"
+#include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumUtility/Json.h"
+#include <atomic>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
-#include <memory>
-#include <atomic>
-#include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/TilesetExternals.h"
-#include "Cesium3DTiles/Tile.h"
-#include "Cesium3DTiles/IAssetRequest.h"
-#include "Cesium3DTiles/ViewUpdateResult.h"
-#include "Cesium3DTiles/Camera.h"
-#include "Cesium3DTiles/RasterOverlayCollection.h"
-#include "CesiumUtility/Json.h"
 
 namespace Cesium3DTiles {
 
@@ -166,9 +168,9 @@ namespace Cesium3DTiles {
          * @param tileJson The parsed tileset.json.
          * @param parentTransform The new tile's parent transform.
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
-         * @param baseUrl The base URL to use to resolve tile URLs.
+         * @param context The context of the new tiles.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const;
+        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
 
         std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
@@ -209,8 +211,8 @@ namespace Cesium3DTiles {
 
         void _ionResponseReceived(IAssetRequest* pRequest);
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const std::string& baseUrl) const;
-        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson);
+        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
+        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
 
         TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
@@ -221,6 +223,7 @@ namespace Cesium3DTiles {
 
         std::string getResolvedContentUrl(const Tile& tile) const;
 
+        std::vector<std::unique_ptr<TileContext>> _contexts;
         TilesetExternals _externals;
 
         std::optional<std::string> _url;
@@ -232,10 +235,6 @@ namespace Cesium3DTiles {
         std::unique_ptr<IAssetRequest> _pIonRequest;
         std::unique_ptr<IAssetRequest> _pTilesetJsonRequest;
 
-        std::string _version;
-        std::string _tileBaseUrl;
-        std::vector<std::pair<std::string, std::string>> _tileHeaders;
-        std::vector<std::string> _implicitTileUrls;
         std::unique_ptr<Tile> _pRootTile;
 
         uint32_t _previousFrameNumber;

@@ -109,7 +109,7 @@ namespace Cesium3DTiles {
     static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
-        Tileset& tileset,
+        const TileContext& context,
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,
         double tileGeometricError,
@@ -458,10 +458,10 @@ namespace Cesium3DTiles {
         Tile& nw = children[2];
         Tile& ne = children[3];
 
-        sw.setTileset(&tileset);
-        se.setTileset(&tileset);
-        nw.setTileset(&tileset);
-        ne.setTileset(&tileset);
+        sw.setContext(const_cast<TileContext*>(&context));
+        se.setContext(const_cast<TileContext*>(&context));
+        nw.setContext(const_cast<TileContext*>(&context));
+        ne.setContext(const_cast<TileContext*>(&context));
 
         double childGeometricError = tileGeometricError * 0.5;
         sw.setGeometricError(childGeometricError);
