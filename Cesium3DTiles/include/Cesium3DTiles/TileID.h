@@ -7,6 +7,6 @@
 
 namespace Cesium3DTiles {
 
-    typedef std::variant<std::string, CesiumGeometry::QuadtreeTileID, CesiumGeometry::OctreeTileID> TileID;
+    typedef std::variant<std::string, CesiumGeometry::QuadtreeTileID, CesiumGeometry::OctreeTileID, CesiumGeometry::QuadtreeChild> TileID;
 
 }

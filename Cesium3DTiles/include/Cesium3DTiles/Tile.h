@@ -147,6 +147,7 @@ namespace Cesium3DTiles {
     protected:
         void setState(LoadState value);
         void contentResponseReceived(IAssetRequest* pRequest);
+        void upsampleParent();
 
     private:
         // Position in bounding-volume hierarchy.

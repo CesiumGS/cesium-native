@@ -832,6 +832,10 @@ namespace Cesium3DTiles {
                     return placeholder;
                 });
             }
+
+            std::string operator()(QuadtreeChild /*subdividedParent*/) {
+                return std::string();
+            }
         };
 
         std::string url = std::visit(Operation { *tile.getContext() }, tile.getTileID());

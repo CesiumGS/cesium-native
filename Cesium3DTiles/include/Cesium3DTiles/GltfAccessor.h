@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Gltf.h"
+#include <stdexcept>
 
 namespace Cesium3DTiles {
 
