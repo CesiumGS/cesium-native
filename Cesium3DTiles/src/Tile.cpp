@@ -276,7 +276,7 @@ namespace Cesium3DTiles {
 
         sw.setTileID(QuadtreeChild::LowerLeft);
         se.setTileID(QuadtreeChild::LowerRight);
-        nw.setTileID(QuadtreeChild::Northwest);
+        nw.setTileID(QuadtreeChild::UpperLeft);
         ne.setTileID(QuadtreeChild::UpperRight);
 
         const GlobeRectangle& rectangle = pRegion->getRectangle();

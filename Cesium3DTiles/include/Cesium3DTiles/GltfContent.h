@@ -33,6 +33,14 @@ namespace Cesium3DTiles {
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::Rectangle& rectangle
         );
+
+        static size_t copyVertexAttribute(
+            const tinygltf::Model& model,
+            const tinygltf::Accessor& accessor,
+            size_t vertexIndex,
+            gsl::span<uint8_t>& destination,
+            size_t destinationOffset
+        );
     };
 
 }

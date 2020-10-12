@@ -2,23 +2,10 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <variant>
 
 namespace CesiumGeometry {
-    /**
-     * A vertex resulting from clipping a triangle against a threshold. It may either be a
-     * simple index referring to an existing vertex (identified with an index value of
-     * 0, 1, or 2), or if the index is -1, it is an interpolation between two vertices.
-     */
-    struct TriangleClipVertex
-    {
-        TriangleClipVertex(int index);
-        TriangleClipVertex(int first, int second, double t);
-
-        /**
-         * The index of the existing vertex.
-         */
-        int index;
-
+    struct InterpolatedVertex {
         /**
          * The index of the first vertex to interpolate between. Ignored
          * if @link index is not -1.
@@ -39,6 +26,12 @@ namespace CesiumGeometry {
     };
 
     /**
+     * A vertex resulting from clipping a triangle against a threshold. It may either be a
+     * simple index referring to an existing vertex, or an interpolation between two vertices.
+     */
+    typedef std::variant<int, InterpolatedVertex> TriangleClipVertex;
+
+    /**
      * Splits a 2D triangle at given axis-aligned threshold value and returns the resulting
      * polygon on a given side of the threshold.  The resulting polygon may have 0, 1, 2,
      * 3, or 4 vertices.
@@ -46,6 +39,9 @@ namespace CesiumGeometry {
      * @param threshold The threshold coordinate value at which to clip the triangle.
      * @param keepAbove true to keep the portion of the triangle above the threshold, or false
      *                  to keep the portion below.
+     * @param i0 The index of the first vertex in the triangle in counter-clockwise order, used only to construct the TriangleClipVertex result.
+     * @param i1 The index of the second vertex in the triangle in counter-clockwise order, used only to construct the TriangleClipVertex result.
+     * @param i2 The index of the third vertex in the triangle in counter-clockwise order, used only to construct the TriangleClipVertex result.
      * @param u0 The coordinate of the first vertex in the triangle, in counter-clockwise order.
      * @param u1 The coordinate of the second vertex in the triangle, in counter-clockwise order.
      * @param u2 The coordinate of the third vertex in the triangle, in counter-clockwise order.
@@ -61,6 +57,9 @@ namespace CesiumGeometry {
     void clipTriangleAtAxisAlignedThreshold(
         double threshold,
         bool keepAbove,
+        int i0,
+        int i1,
+        int i2,
         double u0,
         double u1,
         double u2,
