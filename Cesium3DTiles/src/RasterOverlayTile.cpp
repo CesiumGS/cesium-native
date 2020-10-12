@@ -48,6 +48,8 @@ namespace Cesium3DTiles {
                 return;
             }
 
+            this->_pImageRequest.reset();
+
             // Do the final main thread raster loading
             TilesetExternals& externals = this->_pTileProvider->getExternals();
             this->_pRendererResources = externals.pPrepareRendererResources->prepareRasterInMainThread(*this, this->_pRendererResources);
@@ -55,22 +57,21 @@ namespace Cesium3DTiles {
         }
 
         void RasterOverlayTile::requestComplete(IAssetRequest* pRequest) {
-            // TODO: dispatch image decoding to a separate thread.
             IAssetResponse* pResponse = pRequest->response();
             
-            std::string errors;
-            std::string warnings;
-
-            gsl::span<const uint8_t> data = pResponse->data();
-            tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
-
-            // TODO: load failure?
-
             TilesetExternals& externals = this->_pTileProvider->getExternals();
-            this->_pRendererResources = externals.pPrepareRendererResources->prepareRasterInLoadThread(*this);
+            externals.pTaskProcessor->startTask([pResponse, this]() {
+                std::string errors;
+                std::string warnings;
 
-            this->setState(LoadState::Loaded);
-            this->_pImageRequest.reset();
+                gsl::span<const uint8_t> data = pResponse->data();
+                tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
+
+                // TODO: load failure?
+                this->_pRendererResources = this->_pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
+
+                this->setState(LoadState::Loaded);
+            });
         }
 
         void RasterOverlayTile::setState(LoadState newState) {
