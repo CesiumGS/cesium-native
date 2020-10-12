@@ -48,6 +48,8 @@ namespace Cesium3DTiles {
                 return;
             }
 
+            this->_pImageRequest.reset();
+
             // Do the final main thread raster loading
             TilesetExternals& externals = this->_pTileProvider->getExternals();
             this->_pRendererResources = externals.pPrepareRendererResources->prepareRasterInMainThread(*this, this->_pRendererResources);
@@ -69,7 +71,6 @@ namespace Cesium3DTiles {
                 this->_pRendererResources = this->_pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
 
                 this->setState(LoadState::Loaded);
-                this->_pImageRequest.reset();
             });
         }
 
