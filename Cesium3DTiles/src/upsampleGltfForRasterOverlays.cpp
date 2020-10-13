@@ -18,9 +18,9 @@ namespace Cesium3DTiles {
 
         // Copy the entire parent model except for the meshes/primitives, buffers,
         // bufferViews, and accessors, which we'll be rewriting.
-        result.accessors = parentModel.accessors;
         result.animations = parentModel.animations;
         result.materials = parentModel.materials;
+        result.meshes = parentModel.meshes;
         result.nodes = parentModel.nodes;
         result.textures = parentModel.textures;
         result.images = parentModel.images;
@@ -52,100 +52,115 @@ namespace Cesium3DTiles {
         size_t offset;
         int32_t stride;
         int32_t numberOfFloatsPerVertex;
+        int32_t accessorIndex;
+        std::vector<double> minimums;
+        std::vector<double> maximums;
     };
 
     static void copyVertexAttributes(
-        const std::vector<FloatVertexAttribute>& vertexAttributes,
+        std::vector<FloatVertexAttribute>& vertexAttributes,
         const CesiumGeometry::TriangleClipVertex& vertex,
-        gsl::span<float> output,
-        uint32_t& outputIndex
+        std::vector<float>& output,
+        bool skipMinMaxUpdate = false
     ) {
         struct Operation {
-            const std::vector<FloatVertexAttribute>& vertexAttributes;
-            gsl::span<float>& output;
-            uint32_t& outputIndex;
+            std::vector<FloatVertexAttribute>& vertexAttributes;
+            std::vector<float>& output;
+            bool skipMinMaxUpdate;
 
             void operator()(int vertexIndex) {
-                for (const FloatVertexAttribute& attribute : vertexAttributes) {
+                for (FloatVertexAttribute& attribute : vertexAttributes) {
                     const float* pInput = reinterpret_cast<const float*>(attribute.buffer.data() + attribute.offset + attribute.stride * vertexIndex);
                     for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
-                        output[outputIndex] = *pInput;
-                        ++outputIndex;
+                        float value = *pInput;
+                        output.push_back(value);
+                        if (!skipMinMaxUpdate) {
+                            attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = std::max(attribute.minimums[i], static_cast<double>(value));
+                        }
+                        ++pInput;
                     }
                     
                 }
             }
 
             void operator()(const CesiumGeometry::InterpolatedVertex& vertex) {
-                for (const FloatVertexAttribute& attribute : vertexAttributes) {
+                for (FloatVertexAttribute& attribute : vertexAttributes) {
                     const float* pInput0 = reinterpret_cast<const float*>(attribute.buffer.data() + attribute.offset + attribute.stride * vertex.first);
                     const float* pInput1 = reinterpret_cast<const float*>(attribute.buffer.data() + attribute.offset + attribute.stride * vertex.second);
                     for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
-                        output[outputIndex] = glm::mix(*pInput0, *pInput1, vertex.t);
-                        ++outputIndex;
+                        float value = glm::mix(*pInput0, *pInput1, vertex.t);
+                        output.push_back(value);
+                        if (!skipMinMaxUpdate) {
+                            attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = std::max(attribute.minimums[i], static_cast<double>(value));
+                        }
+                        ++pInput0;
+                        ++pInput1;
                     }
                     
                 }
             }
         };
 
-        std::visit(Operation { vertexAttributes, output, outputIndex }, vertex);
+        std::visit(Operation { vertexAttributes, output, skipMinMaxUpdate }, vertex);
     }
 
     static void copyVertexAttributes(
-        const std::vector<FloatVertexAttribute>& vertexAttributes,
+        std::vector<FloatVertexAttribute>& vertexAttributes,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const CesiumGeometry::TriangleClipVertex& vertex,
-        gsl::span<float> output,
-        uint32_t& outputIndex
+        std::vector<float>& output
     ) {
         struct Operation {
-            const std::vector<FloatVertexAttribute>& vertexAttributes;
+            std::vector<FloatVertexAttribute>& vertexAttributes;
             const std::vector<CesiumGeometry::TriangleClipVertex>& complements;
-            gsl::span<float>& output;
-            uint32_t& outputIndex;
+            std::vector<float>& output;
 
             void operator()(int vertexIndex) {
                 if (vertexIndex < 0) {
-                    copyVertexAttributes(vertexAttributes, complements[~vertexIndex], output, outputIndex);
+                    copyVertexAttributes(vertexAttributes, complements[~vertexIndex], output);
                 } else {
-                    copyVertexAttributes(vertexAttributes, vertexIndex, output, outputIndex);
+                    copyVertexAttributes(vertexAttributes, vertexIndex, output);
                 }
             }
 
             void operator()(const CesiumGeometry::InterpolatedVertex& vertex) {
-                const int maxFloats = 100;
-                float temp0[maxFloats];
-                float temp1[maxFloats];
-                uint32_t outputIndex0 = 0;
-                uint32_t outputIndex1 = 0;
+                size_t outputIndex0 = output.size();
 
+                // Copy the two vertices into the output array
                 if (vertex.first < 0) {
-                    copyVertexAttributes(vertexAttributes, complements[~vertex.first], gsl::span(temp0, maxFloats), outputIndex0);
+                    copyVertexAttributes(vertexAttributes, complements[~vertex.first], output, true);
                 } else {
-                    copyVertexAttributes(vertexAttributes, vertex.first, gsl::span(temp0, maxFloats), outputIndex0);
+                    copyVertexAttributes(vertexAttributes, vertex.first, output, true);
                 }
 
+                size_t outputIndex1 = output.size();
                 
                 if (vertex.second < 0) {
-                    copyVertexAttributes(vertexAttributes, complements[~vertex.second], gsl::span(temp1, maxFloats), outputIndex1);
+                    copyVertexAttributes(vertexAttributes, complements[~vertex.second], output, true);
                 } else {
-                    copyVertexAttributes(vertexAttributes, vertex.second, gsl::span(temp1, maxFloats), outputIndex1);
+                    copyVertexAttributes(vertexAttributes, vertex.second, output, true);
                 }
 
-                const float* pInput0 = temp0;
-                const float* pInput1 = temp1;
-
-                for (const FloatVertexAttribute& attribute : vertexAttributes) {
+                // Interpolate between them and overwrite the first with the result.
+                for (FloatVertexAttribute& attribute : vertexAttributes) {
                     for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
-                        output[outputIndex] = glm::mix(*pInput0, *pInput1, vertex.t);
-                        ++outputIndex;
+                        float value = glm::mix(output[outputIndex0], output[outputIndex1], vertex.t);
+                        output[outputIndex0] = value;
+                        attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
+                        attribute.maximums[i] = std::max(attribute.minimums[i], static_cast<double>(value));
+                        ++outputIndex0;
+                        ++outputIndex1;
                     }
                 }
+
+                // Remove the temporary second, which is now pointed to be outputIndex0.
+                output.erase(output.begin() + outputIndex0, output.end());
             }
         };
 
-        std::visit(Operation { vertexAttributes, complements, output, outputIndex }, vertex);
+        std::visit(Operation { vertexAttributes, complements, output, }, vertex);
     }
 
     template <class T>
@@ -212,9 +227,6 @@ namespace Cesium3DTiles {
         size_t indexBufferIndex = model.buffers.size();
         model.buffers.emplace_back();
 
-        // tinygltf::Buffer& vertexBuffer = model.buffers[vertexBufferIndex];
-        // tinygltf::Buffer& indexBuffer = model.buffers[indexBufferIndex];
-
         size_t vertexBufferViewIndex = model.bufferViews.size();
         model.bufferViews.emplace_back();
 
@@ -263,7 +275,6 @@ namespace Cesium3DTiles {
             tinygltf::Accessor& newAccessor = model.accessors.back();
             newAccessor.bufferView = static_cast<int>(vertexBufferIndex);
             newAccessor.byteOffset = vertexSizeFloats * sizeof(float);
-            // TODO: newAccessor.count
             newAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
             newAccessor.type = accessor.type;
 
@@ -273,7 +284,10 @@ namespace Cesium3DTiles {
                 buffer.data,
                 accessor.byteOffset,
                 accessorByteStride,
-                accessorComponentElements
+                accessorComponentElements,
+                attribute.second,
+                std::vector<double>(accessorComponentElements, std::numeric_limits<double>::max()),
+                std::vector<double>(accessorComponentElements, std::numeric_limits<double>::lowest()),
             });
 
         }
@@ -296,9 +310,9 @@ namespace Cesium3DTiles {
         // Maps old (parentModel) vertex indices to new (model) vertex indices.
         std::vector<uint32_t> vertexMap(uvAccessor.size(), std::numeric_limits<uint32_t>::max());
 
-        std::vector<unsigned char> newVertexBuffer(vertexSizeFloats * sizeof(float));
-        gsl::span<float> newVertexFloats(reinterpret_cast<float*>(newVertexBuffer.data()), newVertexBuffer.size() / sizeof(float));
-        uint32_t nextWriteIndex = 0;
+        // std::vector<unsigned char> newVertexBuffer(vertexSizeFloats * sizeof(float));
+        // gsl::span<float> newVertexFloats(reinterpret_cast<float*>(newVertexBuffer.data()), newVertexBuffer.size() / sizeof(float));
+        std::vector<float> newVertexFloats;
         std::vector<uint32_t> indices;
 
         for (size_t i = 0; i < indicesAccessor.size(); i += 3) {
@@ -334,7 +348,7 @@ namespace Cesium3DTiles {
             );
 
             // Add the clipped triangle or quad, if any
-            addClippedPolygon(newVertexFloats, nextWriteIndex, indices, attributes, vertexMap, clippedA, clippedB);
+            addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clippedA, clippedB);
 
             // If the East-West clip yielded a quad (rather than a triangle), clip the second triangle of the quad, too.
             if (clippedA.size() > 3) {
@@ -352,32 +366,69 @@ namespace Cesium3DTiles {
                 );
 
                 // Add the clipped triangle or quad, if any
-                addClippedPolygon(newVertexFloats, nextWriteIndex, indices, attributes, vertexMap, clippedA, clippedB);
+                addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clippedA, clippedB);
             }
         }
+
+        // Update the accessor vertex counts
+        size_t numberOfVertices = newVertexFloats.size() / vertexSizeFloats;
+        for (const FloatVertexAttribute& attribute : attributes) {
+            tinygltf::Accessor& accessor = model.accessors[attribute.accessorIndex];
+            accessor.count = numberOfVertices;
+            accessor.minValues = std::move(attribute.minimums);
+            accessor.maxValues = std::move(attribute.maximums);
+        }
+
+        // Add an accessor for the indices
+        size_t indexAccessorIndex = model.accessors.size();
+        model.accessors.emplace_back();
+        tinygltf::Accessor& newIndicesAccessor = model.accessors.back();
+        newIndicesAccessor.bufferView = static_cast<int>(indexBufferViewIndex);
+        newIndicesAccessor.count = indices.size();
+        newIndicesAccessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT;
+        newIndicesAccessor.type = TINYGLTF_TYPE_SCALAR;
+
+        // Populate the buffers
+        tinygltf::Buffer& vertexBuffer = model.buffers[vertexBufferIndex];
+        vertexBuffer.data.resize(newVertexFloats.size() * sizeof(float));
+        float* pAsFloats = reinterpret_cast<float*>(vertexBuffer.data.data());
+        std::copy(newVertexFloats.begin(), newVertexFloats.end(), pAsFloats);
+        vertexBufferView.byteLength = vertexBuffer.data.size();
+        vertexBufferView.byteStride = vertexSizeFloats * sizeof(float);
+
+        tinygltf::Buffer& indexBuffer = model.buffers[indexBufferIndex];
+        indexBuffer.data.resize(indices.size() * sizeof(uint32_t));
+        uint32_t* pAsUint32s = reinterpret_cast<uint32_t*>(indexBuffer.data.data());
+        std::copy(indices.begin(), indices.end(), pAsUint32s);
+        indexBufferView.byteLength = indexBuffer.data.size();
+
+        primitive.indices = static_cast<int>(indexAccessorIndex);
     }
 
     static uint32_t getOrCreateVertex(
-        gsl::span<float>& output,
-        uint32_t& outputIndex,
-        const std::vector<FloatVertexAttribute>& attributes,
+        std::vector<float>& output,
+        std::vector<FloatVertexAttribute>& attributes,
         std::vector<uint32_t>& vertexMap,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const CesiumGeometry::TriangleClipVertex& clipVertex
     ) {
         const int* pIndex = std::get_if<int>(&clipVertex);
         if (pIndex) {
+            if (*pIndex < 0) {
+                return getOrCreateVertex(output, attributes, vertexMap, complements, complements[~(*pIndex)]);
+            }
+
             uint32_t existingIndex = vertexMap[*pIndex];
             if (existingIndex != std::numeric_limits<uint32_t>::max()) {
                 return existingIndex;
             }
         }
 
-        uint32_t beforeOutput = outputIndex;
-        copyVertexAttributes(attributes, complements, clipVertex, output, outputIndex);
-        uint32_t newIndex = beforeOutput / (outputIndex - beforeOutput);
+        uint32_t beforeOutput = static_cast<uint32_t>(output.size());
+        copyVertexAttributes(attributes, complements, clipVertex, output);
+        uint32_t newIndex = beforeOutput / (static_cast<uint32_t>(output.size()) - beforeOutput);
 
-        if (pIndex) {
+        if (pIndex && *pIndex >= 0) {
             vertexMap[*pIndex] = newIndex;
         }
 
@@ -385,10 +436,9 @@ namespace Cesium3DTiles {
     }
 
     static void addClippedPolygon(
-        gsl::span<float>& output,
-        uint32_t& outputIndex,
+        std::vector<float>& output,
         std::vector<uint32_t>& indices,
-        const std::vector<FloatVertexAttribute>& attributes,
+        std::vector<FloatVertexAttribute>& attributes,
         std::vector<uint32_t>& vertexMap,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult
@@ -397,16 +447,20 @@ namespace Cesium3DTiles {
             return;
         }
 
-        uint32_t i0 = getOrCreateVertex(output, outputIndex, attributes, vertexMap, complements, clipResult[0]);
-        uint32_t i1 = getOrCreateVertex(output, outputIndex, attributes, vertexMap, complements, clipResult[1]);
-        uint32_t i2 = getOrCreateVertex(output, outputIndex, attributes, vertexMap, complements, clipResult[2]);
+        uint32_t i0 = getOrCreateVertex(output, attributes, vertexMap, complements, clipResult[0]);
+        uint32_t i1 = getOrCreateVertex(output, attributes, vertexMap, complements, clipResult[1]);
+        uint32_t i2 = getOrCreateVertex(output, attributes, vertexMap, complements, clipResult[2]);
 
         indices.push_back(i0);
         indices.push_back(i1);
         indices.push_back(i2);
 
         if (clipResult.size() > 3) {
+            uint32_t i3 = getOrCreateVertex(output, attributes, vertexMap, complements, clipResult[3]);
 
+            indices.push_back(i0);
+            indices.push_back(i2);
+            indices.push_back(i3);
         }
     }
 
@@ -420,7 +474,7 @@ namespace Cesium3DTiles {
         if (
             primitive.mode != TINYGLTF_MODE_TRIANGLES ||
             primitive.indices < 0 ||
-            primitive.indices >= model.accessors.size()
+            primitive.indices >= parentModel.accessors.size()
         ) {
             // Not indexed triangles, so we don't know how to divide this primitive (yet).
             // So just copy it verbatim.
@@ -428,7 +482,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        tinygltf::Accessor& indicesAccessorGltf = model.accessors[primitive.indices];
+        const tinygltf::Accessor& indicesAccessorGltf = parentModel.accessors[primitive.indices];
         if (indicesAccessorGltf.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
             upsamplePrimitiveForRasterOverlays<uint16_t>(parentModel, model, mesh, primitive, childID);
         } else if (indicesAccessorGltf.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {

@@ -58,6 +58,10 @@ namespace Cesium3DTiles {
 
         void RasterOverlayTile::requestComplete(IAssetRequest* pRequest) {
             IAssetResponse* pResponse = pRequest->response();
+            if (pResponse == nullptr) {
+                this->setState(LoadState::Failed);
+                return;
+            }
             
             TilesetExternals& externals = this->_pTileProvider->getExternals();
             externals.pTaskProcessor->startTask([pResponse, this]() {

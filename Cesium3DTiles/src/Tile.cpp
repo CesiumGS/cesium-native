@@ -354,7 +354,8 @@ namespace Cesium3DTiles {
 
         if (
             this->getContext()->implicitContext &&
-            this->getChildren().size() == 0
+            this->getChildren().size() == 0 &&
+            std::get_if<QuadtreeTileID>(&this->_id)
         ) {
             // Check if any child tiles are known to be available, and create them if they are.
             const ImplicitTilingContext& implicitContext = this->getContext()->implicitContext.value();
@@ -539,12 +540,16 @@ namespace Cesium3DTiles {
         // ID is of type `SubdividedParent`.
         Tile* pParent = this->getParent();
         if (!pParent || pParent->getState() != LoadState::Done) {
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(LoadState::ContentLoaded);
             return;
         }
 
         TileContentLoadResult* pParentContent = pParent->getContent();
         const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
         if (!pParent || !pParentContent || !pParentContent->model || !pSubdividedParentID) {
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(LoadState::ContentLoaded);
             return;
         }
 
@@ -553,6 +558,15 @@ namespace Cesium3DTiles {
         this->getTileset()->getExternals().pTaskProcessor->startTask([this, &parentModel, pSubdividedParentID]() {
             std::unique_ptr<TileContentLoadResult> pContent = std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
+            this->_pContent = std::move(pContent);
+
+            if (this->getTileset()->getExternals().pPrepareRendererResources) {
+                this->_pRendererResources = this->getTileset()->getExternals().pPrepareRendererResources->prepareInLoadThread(*this);
+            }
+            else {
+                this->_pRendererResources = nullptr;
+            }
+
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::ContentLoaded);
         });
