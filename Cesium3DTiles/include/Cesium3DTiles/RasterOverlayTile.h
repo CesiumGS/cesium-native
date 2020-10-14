@@ -44,6 +44,7 @@ namespace Cesium3DTiles {
         ~RasterOverlayTile();
 
         RasterOverlayTileProvider& getTileProvider() { return *this->_pTileProvider; }
+        const CesiumGeometry::QuadtreeTileID& getID() { return this->_tileID; }
         LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
         const tinygltf::Image& getImage() const { return this->_image; }
         void loadInMainThread();

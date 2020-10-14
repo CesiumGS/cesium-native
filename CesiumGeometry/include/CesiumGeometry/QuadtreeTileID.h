@@ -5,6 +5,13 @@
 namespace CesiumGeometry {
     class QuadtreeTilingScheme;
 
+    enum class QuadtreeChild {
+        LowerLeft = 0,
+        LowerRight = 1,
+        UpperLeft = 2,
+        UpperRight = 3
+    };
+
     struct CESIUMGEOMETRY_API QuadtreeTileID {
         QuadtreeTileID(uint32_t level_, uint32_t x_, uint32_t y_) :
             level(level_),

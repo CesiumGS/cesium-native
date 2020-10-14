@@ -46,6 +46,18 @@ namespace Cesium3DTiles {
     }
 
     std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
+        std::shared_ptr<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
+        if (pTile) {
+            return pTile;
+        }
+
+        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
+        this->_tiles[id] = pNew;
+
+        return pNew;
+    }
+
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id) {
         auto it = this->_tiles.find(id);
         if (it != this->_tiles.end()) {
             std::shared_ptr<RasterOverlayTile> pTile = it->second.lock();
@@ -54,10 +66,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
-        this->_tiles[id] = pNew;
-
-        return pNew;
+        return nullptr;
     }
 
     uint32_t RasterOverlayTileProvider::computeLevelFromGeometricError(
@@ -103,9 +112,7 @@ namespace Cesium3DTiles {
         if (this->_pPlaceholder) {
             outputRasterTiles.push_back(RasterMappedTo3DTile(
                 this->_pPlaceholder,
-                CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0),
-                glm::dvec2(0.0), 
-                glm::dvec2(1.0)
+                CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)
             ));
             return;
         }
@@ -223,8 +230,6 @@ namespace Cesium3DTiles {
         // Create TileImagery instances for each imagery tile overlapping this terrain tile.
         // We need to do all texture coordinate computations in the imagery provider's projection.
 
-        double terrainWidth = geometryRectangle.computeWidth();
-        double terrainHeight = geometryRectangle.computeHeight();
         CesiumGeometry::Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
         CesiumGeometry::Rectangle imageryBounds = intersection;
         std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle = imageryRectangle.intersect(imageryBounds).value();
@@ -324,16 +329,8 @@ namespace Cesium3DTiles {
 
                 CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
-                double scaleX = terrainWidth / imageryRectangle.computeWidth();
-                double scaleY = terrainHeight / imageryRectangle.computeHeight();
-                glm::dvec2 translation(
-                    (scaleX * (geometryRectangle.minimumX - imageryRectangle.minimumX)) / terrainWidth,
-                    (scaleY * (geometryRectangle.minimumY - imageryRectangle.minimumY)) / terrainHeight
-                );
-                glm::dvec2 scale(scaleX, scaleY);
-
                 std::shared_ptr<RasterOverlayTile> pTile = this->getTile(QuadtreeTileID(imageryLevel, i, j));
-                outputRasterTiles.emplace(outputRasterTiles.begin() + realOutputIndex, pTile, texCoordsRectangle, translation, scale);
+                outputRasterTiles.emplace(outputRasterTiles.begin() + realOutputIndex, pTile, texCoordsRectangle);
                 ++realOutputIndex;
             }
         }

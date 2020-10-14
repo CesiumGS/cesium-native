@@ -131,7 +131,12 @@ namespace Cesium3DTiles {
         return result;
     }
 
+    void Tileset::notifyTileStartLoading(Tile* /*pTile*/) {
+        ++this->_loadsInProgress;
+    }
+
     void Tileset::notifyTileDoneLoading(Tile* /*pTile*/) {
+        assert(this->_loadsInProgress > 0);
         --this->_loadsInProgress;
     }
 
@@ -144,6 +149,8 @@ namespace Cesium3DTiles {
         if (url.empty()) {
             return nullptr;
         }
+
+        this->notifyTileStartLoading(&tile);
 
         IAssetAccessor* pAssetAccessor = this->getExternals().pAssetAccessor;
         return pAssetAccessor->requestAsset(url, tile.getContext()->requestHeaders);
@@ -741,7 +748,6 @@ namespace Cesium3DTiles {
 
         for (Tile* pTile : queue) {
             if (pTile->getState() == Tile::LoadState::Unloaded) {
-                ++loadsInProgress;
                 pTile->loadContent();
 
                 if (loadsInProgress >= maximumLoadsInProgress) {
@@ -831,6 +837,10 @@ namespace Cesium3DTiles {
 
                     return placeholder;
                 });
+            }
+
+            std::string operator()(QuadtreeChild /*subdividedParent*/) {
+                return std::string();
             }
         };
 

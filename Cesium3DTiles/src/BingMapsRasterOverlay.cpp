@@ -221,10 +221,6 @@ namespace Cesium3DTiles {
 
             std::string resolvedUrl = Uri::resolve(url, urlTemplate);
 
-            // Tell the Bing servers to send a zero-length response instead of a
-            // placeholder image for missing tiles.
-            resolvedUrl = Uri::addQuery(resolvedUrl, "n", "z");
-
             resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [culture](const std::string& templateKey) {
                 if (templateKey == "culture") {
                     return culture;
