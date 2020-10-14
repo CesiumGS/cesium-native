@@ -242,22 +242,37 @@ namespace Cesium3DTiles {
         uint32_t vertexSizeFloats = 0;
         int uvAccessorIndex = -1;
 
+        std::vector<std::string> toRemove;
+
         for (std::pair<const std::string, int>& attribute : primitive.attributes) {
             if (attribute.first == "_CESIUMOVERLAY_0") {
                 uvAccessorIndex = attribute.second;
+
+                // Do not include _CESIUMOVERLAY_0, it will be generated later.
+                toRemove.push_back(attribute.first);
+                continue;
+            }
+
+            if (attribute.first.find("_CESIUM_OVERLAY_") == 0) {
+                // Do not include _CESIUMOVERLAY_*, it will be generated later.
+                toRemove.push_back(attribute.first);
+                continue;
             }
 
             if (attribute.second < 0 || attribute.second >= parentModel.accessors.size()) {
+                toRemove.push_back(attribute.first);
                 continue;
             }
 
             const tinygltf::Accessor& accessor = parentModel.accessors[attribute.second];
             if (accessor.bufferView < 0 || accessor.bufferView >= parentModel.bufferViews.size()) {
+                toRemove.push_back(attribute.first);
                 continue;
             }
 
             const tinygltf::BufferView& bufferView = parentModel.bufferViews[accessor.bufferView];
             if (bufferView.buffer < 0 || bufferView.buffer >= parentModel.buffers.size()) {
+                toRemove.push_back(attribute.first);
                 continue;
             }
 
@@ -296,6 +311,10 @@ namespace Cesium3DTiles {
             // We don't know how to divide this primitive, so just copy it verbatim.
             // TODO
             return;
+        }
+
+        for (std::string& attribute : toRemove) {
+            primitive.attributes.erase(attribute);
         }
 
         bool keepAboveU = childID == CesiumGeometry::QuadtreeChild::LowerRight || childID == CesiumGeometry::QuadtreeChild::UpperRight;

@@ -269,6 +269,12 @@ namespace Cesium3DTiles {
         nw.setContext(parent.getContext());
         ne.setContext(parent.getContext());
 
+        double geometricError = parent.getGeometricError() * 0.5;
+        sw.setGeometricError(geometricError);
+        se.setGeometricError(geometricError);
+        nw.setGeometricError(geometricError);
+        ne.setGeometricError(geometricError);
+
         sw.setParent(&parent);
         se.setParent(&parent);
         nw.setParent(&parent);
@@ -483,44 +489,9 @@ namespace Cesium3DTiles {
                 return;
             }
 
-            // Generate texture coordinates for each projection.
             if (this->_pContent && this->_pContent->model) {
-                if (!this->_rasterTiles.empty()) {
-                    CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
-                    CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&this->_boundingVolume);
-                    
-                    const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-                    if (pRegion) {
-                        pRectangle = &pRegion->getRectangle();
-                    } else if (pLooseRegion) {
-                        pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-                    }
-
-                    if (pRectangle) {
-                        std::vector<Projection> projections;
-                        uint32_t projectionID = 0;
-
-                        for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
-                            const CesiumGeospatial::Projection& projection = mappedTile.getRasterTile().getTileProvider().getProjection();
-
-                            auto existingCoordinatesIt = std::find(projections.begin(), projections.end(), projection);
-                            if (existingCoordinatesIt == projections.end()) {
-                                // Create new texture coordinates for this not-previously-seen projection
-                                CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
-
-                                GltfContent::createRasterOverlayTextureCoordinates(this->_pContent->model.value(), projectionID, projection, rectangle);
-                                projections.push_back(projection);
-
-                                mappedTile.setTextureCoordinateID(projectionID);
-                                ++projectionID;
-                            } else {
-                                // Use previously-added texture coordinates.
-                                mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt - projections.begin()));
-                            }
-                        }
-                    }
-                }
-
+                this->generateTextureCoordinates();
+        
                 const TilesetExternals& externals = this->getTileset()->getExternals();
                 if (externals.pPrepareRendererResources) {
                     this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
@@ -533,6 +504,45 @@ namespace Cesium3DTiles {
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::ContentLoaded);
         });
+    }
+
+    void Tile::generateTextureCoordinates() {
+        // Generate texture coordinates for each projection.
+        if (!this->_rasterTiles.empty()) {
+            CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
+            CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&this->_boundingVolume);
+            
+            const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+            if (pRegion) {
+                pRectangle = &pRegion->getRectangle();
+            } else if (pLooseRegion) {
+                pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+            }
+
+            if (pRectangle) {
+                std::vector<Projection> projections;
+                uint32_t projectionID = 0;
+
+                for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
+                    const CesiumGeospatial::Projection& projection = mappedTile.getRasterTile().getTileProvider().getProjection();
+
+                    auto existingCoordinatesIt = std::find(projections.begin(), projections.end(), projection);
+                    if (existingCoordinatesIt == projections.end()) {
+                        // Create new texture coordinates for this not-previously-seen projection
+                        CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
+
+                        GltfContent::createRasterOverlayTextureCoordinates(this->_pContent->model.value(), projectionID, projection, rectangle);
+                        projections.push_back(projection);
+
+                        mappedTile.setTextureCoordinateID(projectionID);
+                        ++projectionID;
+                    } else {
+                        // Use previously-added texture coordinates.
+                        mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt - projections.begin()));
+                    }
+                }
+            }
+        }
     }
 
     void Tile::upsampleParent() {
@@ -559,6 +569,8 @@ namespace Cesium3DTiles {
             std::unique_ptr<TileContentLoadResult> pContent = std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
             this->_pContent = std::move(pContent);
+
+            this->generateTextureCoordinates();
 
             if (this->getTileset()->getExternals().pPrepareRendererResources) {
                 this->_pRendererResources = this->getTileset()->getExternals().pPrepareRendererResources->prepareInLoadThread(*this);
