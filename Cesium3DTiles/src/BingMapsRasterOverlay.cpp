@@ -217,6 +217,10 @@ namespace Cesium3DTiles {
                 return;
             }
 
+            if (urlTemplate.find("n=z") == std::string::npos) {
+                urlTemplate = Uri::addQuery(urlTemplate, "n", "z");
+            }
+
             // TODO: attribution
 
             std::string resolvedUrl = Uri::resolve(url, urlTemplate);
