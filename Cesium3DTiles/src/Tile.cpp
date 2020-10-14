@@ -181,9 +181,17 @@ namespace Cesium3DTiles {
         } else {
             const QuadtreeChild* pSubdivided = std::get_if<QuadtreeChild>(&this->getTileID());
             if (pSubdivided) {
-                this->upsampleParent();
+                // We can't upsample this tile until its parent tile is done loading.
+                if (this->getParent() && this->getParent()->getState() == LoadState::Done) {
+                    this->upsampleParent();
+                } else {
+                    // Try again later. Push the parent tile loading along if we can.
+                    if (this->getParent()) {
+                        this->getParent()->loadContent();
+                    }
+                    this->setState(LoadState::Unloaded);
+                }
             } else {
-                this->getTileset()->notifyTileDoneLoading(this);
                 this->setState(LoadState::ContentLoaded);
             }
         }
@@ -550,7 +558,6 @@ namespace Cesium3DTiles {
         // ID is of type `SubdividedParent`.
         Tile* pParent = this->getParent();
         if (!pParent || pParent->getState() != LoadState::Done) {
-            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::ContentLoaded);
             return;
         }
@@ -558,12 +565,13 @@ namespace Cesium3DTiles {
         TileContentLoadResult* pParentContent = pParent->getContent();
         const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
         if (!pParent || !pParentContent || !pParentContent->model || !pSubdividedParentID) {
-            this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::ContentLoaded);
             return;
         }
 
         tinygltf::Model& parentModel = pParentContent->model.value();
+
+        this->getTileset()->notifyTileStartLoading(this);
 
         this->getTileset()->getExternals().pTaskProcessor->startTask([this, &parentModel, pSubdividedParentID]() {
             std::unique_ptr<TileContentLoadResult> pContent = std::make_unique<TileContentLoadResult>();
@@ -585,3 +593,4 @@ namespace Cesium3DTiles {
     }
 
 }
+ 

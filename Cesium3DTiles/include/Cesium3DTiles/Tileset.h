@@ -157,6 +157,12 @@ namespace Cesium3DTiles {
         const ViewUpdateResult& updateView(const Camera& camera);
 
         /**
+         * Notifies the tileset that the given tile has started loading.
+         * This method may be called from any thread.
+         */
+        void notifyTileStartLoading(Tile* pTile);
+
+        /**
          * Notifies the tileset that the given tile has finished loading and is ready to render.
          * This method may be called from any thread.
          */

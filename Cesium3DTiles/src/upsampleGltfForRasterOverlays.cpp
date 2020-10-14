@@ -76,7 +76,7 @@ namespace Cesium3DTiles {
                         output.push_back(value);
                         if (!skipMinMaxUpdate) {
                             attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                            attribute.maximums[i] = std::max(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
                         }
                         ++pInput;
                     }
@@ -93,7 +93,7 @@ namespace Cesium3DTiles {
                         output.push_back(value);
                         if (!skipMinMaxUpdate) {
                             attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                            attribute.maximums[i] = std::max(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
                         }
                         ++pInput0;
                         ++pInput1;
@@ -149,7 +149,7 @@ namespace Cesium3DTiles {
                         float value = glm::mix(output[outputIndex0], output[outputIndex1], vertex.t);
                         output[outputIndex0] = value;
                         attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                        attribute.maximums[i] = std::max(attribute.minimums[i], static_cast<double>(value));
+                        attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
                         ++outputIndex0;
                         ++outputIndex1;
                     }
@@ -389,7 +389,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        // Update the accessor vertex counts
+        // Update the accessor vertex counts and min/max values
         size_t numberOfVertices = newVertexFloats.size() / vertexSizeFloats;
         for (const FloatVertexAttribute& attribute : attributes) {
             tinygltf::Accessor& accessor = model.accessors[attribute.accessorIndex];
