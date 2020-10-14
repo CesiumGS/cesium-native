@@ -13,6 +13,25 @@ namespace Cesium3DTiles {
         CesiumGeometry::QuadtreeChild childID
     );
 
+    struct FloatVertexAttribute {
+        const std::vector<unsigned char>& buffer;
+        size_t offset;
+        int32_t stride;
+        int32_t numberOfFloatsPerVertex;
+        int32_t accessorIndex;
+        std::vector<double> minimums;
+        std::vector<double> maximums;
+    };
+
+    static void addClippedPolygon(
+        std::vector<float>& output,
+        std::vector<uint32_t>& indices,
+        std::vector<FloatVertexAttribute>& attributes,
+        std::vector<uint32_t>& vertexMap,
+        const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
+        const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult
+    );
+
     tinygltf::Model upsampleGltfForRasterOverlays(const tinygltf::Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
         tinygltf::Model result;
 
@@ -46,16 +65,6 @@ namespace Cesium3DTiles {
 
         return result;
     }
-
-    struct FloatVertexAttribute {
-        const std::vector<unsigned char>& buffer;
-        size_t offset;
-        int32_t stride;
-        int32_t numberOfFloatsPerVertex;
-        int32_t accessorIndex;
-        std::vector<double> minimums;
-        std::vector<double> maximums;
-    };
 
     static void copyVertexAttributes(
         std::vector<FloatVertexAttribute>& vertexAttributes,
@@ -182,33 +191,6 @@ namespace Cesium3DTiles {
         return std::visit(Operation { accessor }, vertex);
     }
 
-    template <class T>
-    static T getVertexValue(const Cesium3DTiles::GltfAccessor<T>& accessor, const std::vector<CesiumGeometry::TriangleClipVertex>& complements, const CesiumGeometry::TriangleClipVertex& vertex) {
-        struct Operation {
-            const Cesium3DTiles::GltfAccessor<T>& accessor;
-            const std::vector<CesiumGeometry::TriangleClipVertex>& complements;
-
-            TA_CENTER operator()(int vertexIndex) {
-                return get(vertexIndex);
-            }
-
-            T operator()(const CesiumGeometry::InterpolatedVertex& vertex) {
-                T v0 = get(vertex.first);
-                T v1 = get(vertex.second);
-                return glm::mix(v0, v1, vertex.t);
-            }
-
-            T get(int vertexIndex) {
-                if (vertexIndex < 0) {
-                    return getVertexValue(accessor, complements[~vertexIndex]);
-                }
-                return accessor[vertexIndex];
-            }
-        };
-
-        return std::visit(Operation { accessor, complements }, vertex);
-    }
-
     template <class TIndex>
     static void upsamplePrimitiveForRasterOverlays(
         const tinygltf::Model& parentModel,
@@ -259,19 +241,19 @@ namespace Cesium3DTiles {
                 continue;
             }
 
-            if (attribute.second < 0 || attribute.second >= parentModel.accessors.size()) {
+            if (attribute.second < 0 || attribute.second >= static_cast<int>(parentModel.accessors.size())) {
                 toRemove.push_back(attribute.first);
                 continue;
             }
 
             const tinygltf::Accessor& accessor = parentModel.accessors[attribute.second];
-            if (accessor.bufferView < 0 || accessor.bufferView >= parentModel.bufferViews.size()) {
+            if (accessor.bufferView < 0 || accessor.bufferView >= static_cast<int>(parentModel.bufferViews.size())) {
                 toRemove.push_back(attribute.first);
                 continue;
             }
 
             const tinygltf::BufferView& bufferView = parentModel.bufferViews[accessor.bufferView];
-            if (bufferView.buffer < 0 || bufferView.buffer >= parentModel.buffers.size()) {
+            if (bufferView.buffer < 0 || bufferView.buffer >= static_cast<int>(parentModel.buffers.size())) {
                 toRemove.push_back(attribute.first);
                 continue;
             }
@@ -493,7 +475,7 @@ namespace Cesium3DTiles {
         if (
             primitive.mode != TINYGLTF_MODE_TRIANGLES ||
             primitive.indices < 0 ||
-            primitive.indices >= parentModel.accessors.size()
+            primitive.indices >= static_cast<int>(parentModel.accessors.size())
         ) {
             // Not indexed triangles, so we don't know how to divide this primitive (yet).
             // So just copy it verbatim.
