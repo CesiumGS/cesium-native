@@ -41,7 +41,13 @@ namespace Cesium3DTiles {
             // Unattach the old tile
             if (this->_pReadyTile && this->getState() != AttachmentState::Unattached) {
                 TilesetExternals& externals = tile.getTileset()->getExternals();
-                externals.pPrepareRendererResources->detachRasterInMainThread(tile, this->getTextureCoordinateID(), *this->_pReadyTile, this->_pReadyTile->getRendererResources());
+                externals.pPrepareRendererResources->detachRasterInMainThread(
+                    tile,
+                    this->getTextureCoordinateID(),
+                    *this->_pReadyTile,
+                    this->_pReadyTile->getRendererResources(),
+                    this->getTextureCoordinateRectangle()
+                );
                 this->_state = AttachmentState::Unattached;
             }
 
@@ -73,7 +79,13 @@ namespace Cesium3DTiles {
             if (candidate && candidate->getState() >= RasterOverlayTile::LoadState::Loaded && candidate != this->_pReadyTile) {
                 if (this->getState() != AttachmentState::Unattached) {
                     TilesetExternals& externals = tile.getTileset()->getExternals();
-                    externals.pPrepareRendererResources->detachRasterInMainThread(tile, this->getTextureCoordinateID(), *this->_pReadyTile, this->_pReadyTile->getRendererResources());
+                    externals.pPrepareRendererResources->detachRasterInMainThread(
+                        tile,
+                        this->getTextureCoordinateID(),
+                        *this->_pReadyTile,
+                        this->_pReadyTile->getRendererResources(),
+                        this->getTextureCoordinateRectangle()
+                    );
                     this->_state = AttachmentState::Unattached;
                 }
 

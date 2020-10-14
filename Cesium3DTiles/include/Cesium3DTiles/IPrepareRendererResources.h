@@ -124,7 +124,8 @@ namespace Cesium3DTiles {
             const Tile& tile,
             uint32_t overlayTextureCoordinateID,
             const RasterOverlayTile& rasterTile,
-            void* pMainThreadRendererResources
+            void* pMainThreadRendererResources,
+            const CesiumGeometry::Rectangle& textureCoordinateRectangle
         ) = 0;
     };
 
