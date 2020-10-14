@@ -124,7 +124,7 @@ namespace Cesium3DTiles {
             this->getState() >= LoadState::ContentLoaded &&
             (!this->_pContent || this->_pContent->model.has_value()) &&
             !std::any_of(this->_rasterTiles.begin(), this->_rasterTiles.end(), [](const RasterMappedTo3DTile& rasterTile) {
-                return rasterTile.getRasterTile().getState() == RasterOverlayTile::LoadState::Loading;
+                return rasterTile.getLoadingTile() && rasterTile.getLoadingTile()->getState() == RasterOverlayTile::LoadState::Loading;
             });
     }
 
@@ -407,28 +407,25 @@ namespace Cesium3DTiles {
             for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
                 RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
 
-                if (mappedRasterTile.getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
-                    RasterOverlayTile& rasterTile = mappedRasterTile.getRasterTile();
-                    if (rasterTile.getState() == RasterOverlayTile::LoadState::Placeholder) {
-                        // Try to replace this placeholder with real tiles.
-                        RasterOverlayCollection& overlays = this->getTileset()->getOverlays();
-                        RasterOverlayTileProvider& placeholder = rasterTile.getTileProvider();
-                        RasterOverlayTileProvider* pReadyProvider = overlays.findProviderForPlaceholder(&placeholder);
-                        if (pReadyProvider) {
-                            this->_rasterTiles.erase(this->_rasterTiles.begin() + i);
-                            --i;
+                std::shared_ptr<RasterOverlayTile>& pLoadingTile = mappedRasterTile.getLoadingTile();
+                if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
+                    // Try to replace this placeholder with real tiles.
+                    RasterOverlayCollection& overlays = this->getTileset()->getOverlays();
+                    RasterOverlayTileProvider& placeholder = pLoadingTile->getTileProvider();
+                    RasterOverlayTileProvider* pReadyProvider = overlays.findProviderForPlaceholder(&placeholder);
+                    if (pReadyProvider) {
+                        this->_rasterTiles.erase(this->_rasterTiles.begin() + i);
+                        --i;
 
-                            const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
-                            pReadyProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles); 
-                        }
-                    } else {
-                        rasterTile.loadInMainThread();
-                        mappedRasterTile.attachToTile(*this);
-
-                        // TODO: check more precise raster overlay tile availability, rather than just max level?
-                        moreRasterDetailAvailable |= rasterTile.getID().level < rasterTile.getTileProvider().getMaximumLevel();
+                        const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
+                        pReadyProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
                     }
+
+                    continue;
                 }
+
+                RasterMappedTo3DTile::MoreDetailAvailable moreDetailAvailable = mappedRasterTile.update(*this);
+                moreRasterDetailAvailable |= moreDetailAvailable == RasterMappedTo3DTile::MoreDetailAvailable::Yes;
             }
 
             // If this tile still has no children after it's done loading, but it does have raster tiles
@@ -532,7 +529,15 @@ namespace Cesium3DTiles {
                 uint32_t projectionID = 0;
 
                 for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
-                    const CesiumGeospatial::Projection& projection = mappedTile.getRasterTile().getTileProvider().getProjection();
+                    std::shared_ptr<RasterOverlayTile> pTile = mappedTile.getLoadingTile();
+                    if (!pTile) {
+                        pTile = mappedTile.getReadyTile();
+                        if (!pTile) {
+                            continue;
+                        }
+                    }
+
+                    const CesiumGeospatial::Projection& projection = pTile->getTileProvider().getProjection();
 
                     auto existingCoordinatesIt = std::find(projections.begin(), projections.end(), projection);
                     if (existingCoordinatesIt == projections.end()) {

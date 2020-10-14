@@ -54,6 +54,7 @@ namespace Cesium3DTiles {
         uint32_t getHeight() const { return this->_imageHeight; }
 
         std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
+        std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near

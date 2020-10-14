@@ -62,6 +62,11 @@ namespace Cesium3DTiles {
                 this->setState(LoadState::Failed);
                 return;
             }
+
+            if (pResponse->data().size() == 0) {
+                this->setState(LoadState::Failed);
+                return;
+            }
             
             TilesetExternals& externals = this->_pTileProvider->getExternals();
             externals.pTaskProcessor->startTask([pResponse, this]() {
