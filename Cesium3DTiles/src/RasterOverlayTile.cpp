@@ -74,12 +74,15 @@ namespace Cesium3DTiles {
                 std::string warnings;
 
                 gsl::span<const uint8_t> data = pResponse->data();
-                tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
+                bool success = tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
 
-                // TODO: load failure?
-                this->_pRendererResources = this->_pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
-
-                this->setState(LoadState::Loaded);
+                if (success) {
+                    this->_pRendererResources = this->_pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
+                    this->setState(LoadState::Loaded);
+                } else {
+                    this->_pRendererResources = nullptr;
+                    this->setState(LoadState::Failed);
+                }
             });
         }
 
