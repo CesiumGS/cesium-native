@@ -101,6 +101,14 @@ namespace Cesium3DTiles {
         while (this->_loadsInProgress.load(std::memory_order::memory_order_acquire) > 0) {
             this->_externals.pAssetAccessor->tick();
         }
+
+        // Now that no tiles are in the loading state, unload all tiles
+        pCurrent = this->_loadedTiles.head();
+        while (pCurrent) {
+            Tile* pNext = this->_loadedTiles.next(pCurrent);
+            pCurrent->unloadContent();
+            pCurrent = pNext;
+        }
     }
 
     const ViewUpdateResult& Tileset::updateView(const Camera& camera) {
