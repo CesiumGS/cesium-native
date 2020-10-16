@@ -19,6 +19,16 @@ namespace CesiumGeometry {
         bool overlaps(const Rectangle& other) const;
         bool fullyContains(const Rectangle& other) const;
 
+        /**
+         * Computes the signed distance from a position to the edge of the rectangle.
+         * If the position is inside the rectangle, the distance is negative. If it is
+         * outside the rectangle, it is positive.
+         * 
+         * @param position The position.
+         * @return The signed distance.
+         */
+        double computeSignedDistance(const glm::dvec2& position) const;
+
         glm::dvec2 getLowerLeft() const { return glm::dvec2(this->minimumX, this->minimumY); }
         glm::dvec2 getLowerRight() const { return glm::dvec2(this->maximumX, this->minimumY); }
         glm::dvec2 getUpperLeft() const { return glm::dvec2(this->minimumX, this->maximumY); }

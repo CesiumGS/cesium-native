@@ -1,4 +1,6 @@
 #include "CesiumGeometry/Rectangle.h"
+#include <glm/common.hpp>
+#include <glm/geometric.hpp>
 
 namespace CesiumGeometry {
 
@@ -33,6 +35,23 @@ namespace CesiumGeometry {
             other.minimumY >= this->minimumY &&
             other.maximumY <= this->maximumY
         );
+    }
+
+    double Rectangle::computeSignedDistance(const glm::dvec2& position) const {
+        glm::dvec2 bottomLeftDistance = glm::dvec2(minimumX, minimumY) - position;
+        glm::dvec2 topRightDistance = position - glm::dvec2(maximumX, maximumY);
+        glm::dvec2 maxDistance = glm::max(bottomLeftDistance, topRightDistance);
+
+        if (maxDistance.x <= 0.0 && maxDistance.y <= 0.0) {
+            // Inside, report closest edge.
+            return std::max(maxDistance.x, maxDistance.y);
+        } else if (maxDistance.x > 0.0 && maxDistance.y > 0.0) {
+            // Outside in both directions, closest point is a corner
+            return glm::length(maxDistance);
+        } else {
+            // Outside in one direction, report the distance in that direction.
+            return std::max(maxDistance.x, maxDistance.y);
+        }
     }
 
     double Rectangle::computeWidth() const {

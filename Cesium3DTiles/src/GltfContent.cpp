@@ -83,6 +83,28 @@ namespace Cesium3DTiles {
 			// Project it with the raster overlay's projection
 			glm::dvec3 projectedPosition = projectPosition(projection, cartographic.value());
 
+			// If the position is near the anti-meridian and the projected position is outside the expected range, try
+			// using the equivalent longitude on the other side of the anti-meridian to see if that gets us closer.
+			if (
+				std::abs(std::abs(cartographic.value().longitude) - CesiumUtility::Math::ONE_PI) < CesiumUtility::Math::EPSILON5 &&
+				(
+					projectedPosition.x < rectangle.minimumX ||
+					projectedPosition.x > rectangle.maximumX ||
+					projectedPosition.y < rectangle.minimumY ||
+					projectedPosition.y > rectangle.maximumY
+				)
+			) {
+				cartographic.value().longitude += cartographic.value().longitude < 0.0 ? CesiumUtility::Math::TWO_PI : -CesiumUtility::Math::TWO_PI;
+				glm::dvec3 projectedPosition2 = projectPosition(projection, cartographic.value());
+				
+				double distance1 = rectangle.computeSignedDistance(projectedPosition);
+				double distance2 = rectangle.computeSignedDistance(projectedPosition2);
+
+				if (distance2 < distance1) {
+					projectedPosition = projectedPosition2;
+				}
+			}
+
 			// Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and (1.0, 1.0) at the (maximumX, maximumY) corner.
 			// The coordinates should stay inside these bounds if the input rectangle actually bounds the vertices,
 			// but we'll clamp to be safe.
