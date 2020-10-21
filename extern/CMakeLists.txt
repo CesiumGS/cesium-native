@@ -12,4 +12,5 @@ add_subdirectory(draco)
 
 add_subdirectory(glm)
 
+set(BUILD_TESTS OFF)
 add_subdirectory(tinyxml2)
