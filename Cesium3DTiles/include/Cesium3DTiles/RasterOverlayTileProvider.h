@@ -36,6 +36,7 @@ namespace Cesium3DTiles {
             TilesetExternals& tilesetExternals,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+            const CesiumGeometry::Rectangle& coverageRectangle,
             uint32_t minimumLevel,
             uint32_t maximumLevel,
             uint32_t imageWidth,
@@ -48,12 +49,13 @@ namespace Cesium3DTiles {
 
         const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
         const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
+        const CesiumGeometry::Rectangle& getCoverageRectangle() const { return this->_coverageRectangle; }
         uint32_t getMinimumLevel() const { return this->_minimumLevel; }
         uint32_t getMaximumLevel() const { return this->_maximumLevel; }
         uint32_t getWidth() const { return this->_imageWidth; }
         uint32_t getHeight() const { return this->_imageHeight; }
 
-        std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
+        std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner = nullptr);
         std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
@@ -84,13 +86,14 @@ namespace Cesium3DTiles {
         );
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner = nullptr);
 
     private:
         RasterOverlay* _pOverlay;
         TilesetExternals* _pTilesetExternals;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
+        CesiumGeometry::Rectangle _coverageRectangle;
         uint32_t _minimumLevel;
         uint32_t _maximumLevel;
         uint32_t _imageWidth;

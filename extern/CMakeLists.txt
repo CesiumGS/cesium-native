@@ -11,3 +11,5 @@ add_subdirectory(uriparser)
 add_subdirectory(draco)
 
 add_subdirectory(glm)
+
+add_subdirectory(tinyxml2)

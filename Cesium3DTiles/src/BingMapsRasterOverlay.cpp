@@ -25,14 +25,16 @@ namespace Cesium3DTiles {
     class BingMapsTileProvider : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
-            BingMapsRasterOverlay* pOverlay,
+            RasterOverlay* pOverlay,
             TilesetExternals& tilesetExternals,
+            const std::string& baseUrl,
             const std::string& urlTemplate,
             const std::vector<std::string>& subdomains,
             uint32_t width,
             uint32_t height,
             uint32_t minimumLevel,
-            uint32_t maximumLevel
+            uint32_t maximumLevel,
+            const std::string& culture
         ) :
             RasterOverlayTileProvider(
                 pOverlay,
@@ -42,6 +44,7 @@ namespace Cesium3DTiles {
                     CesiumGeospatial::WebMercatorProjection::computeMaximumProjectedRectangle(CesiumGeospatial::Ellipsoid::WGS84),
                     2, 2
                 ),
+                CesiumGeospatial::WebMercatorProjection::computeMaximumProjectedRectangle(CesiumGeospatial::Ellipsoid::WGS84),
                 minimumLevel,
                 maximumLevel,
                 width,
@@ -50,12 +53,29 @@ namespace Cesium3DTiles {
             _urlTemplate(urlTemplate),
             _subdomains(subdomains)
         {
+            if (this->_urlTemplate.find("n=z") == std::string::npos) {
+                this->_urlTemplate = Uri::addQuery(this->_urlTemplate, "n", "z");
+            }
+
+            // TODO: attribution
+
+            std::string resolvedUrl = Uri::resolve(baseUrl, this->_urlTemplate);
+
+            resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [&culture](const std::string& templateKey) {
+                if (templateKey == "culture") {
+                    return culture;
+                }
+
+                // Keep other placeholders
+                return "{" + templateKey + "}";
+            });
+
         }
 
         virtual ~BingMapsTileProvider() {}
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner) override {
             std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
                     return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.computeInvertedY(this->getTilingScheme()));
@@ -66,7 +86,7 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            return std::make_shared<RasterOverlayTile>(*this, tileID, this->getExternals().pAssetAccessor->requestAsset(url));
+            return std::make_shared<RasterOverlayTile>(pOwner ? *pOwner : *this, tileID, this->getExternals().pAssetAccessor->requestAsset(url));
         }
     
     private:
@@ -105,23 +125,7 @@ namespace Cesium3DTiles {
         _key(key),
         _mapStyle(mapStyle),
         _culture(culture),
-        _ellipsoid(ellipsoid),
-        _ionAssetID(0),
-        _ionAccessToken("")
-    {
-    }
-
-    BingMapsRasterOverlay::BingMapsRasterOverlay(
-        uint32_t ionAssetID,
-        const std::string& ionAccessToken
-    ) :
-        _url(""),
-        _key(""),
-        _mapStyle(BingMapsStyle::AERIAL),
-        _culture(""),
-        _ellipsoid(CesiumGeospatial::Ellipsoid::WGS84),
-        _ionAssetID(ionAssetID),
-        _ionAccessToken(ionAccessToken)
+        _ellipsoid(ellipsoid)
     {
     }
 
@@ -129,71 +133,13 @@ namespace Cesium3DTiles {
     }
 
     void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback) {
-        if (this->_ionAssetID > 0) {
-            std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
-            ionUrl = Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
-            this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(ionUrl);
-            this->_pMetadataRequest->bind([this, &tilesetExternals, callback](IAssetRequest* pRequest) mutable {
-                IAssetResponse* pResponse = pRequest->response();
-
-                using namespace nlohmann;
-                
-                json response = json::parse(pResponse->data().begin(), pResponse->data().end());
-                json::iterator optionsIt = response.find("options");
-                if (
-                    optionsIt == response.end() ||
-                    response.value("type", "unknown") != "IMAGERY" ||
-                    response.value("externalType", "unknown") != "BING"
-                ) {
-                    // TODO: report invalid imagery type.
-                    return;
-                }
-
-                json options = *optionsIt;
-                std::string url = options.value("url", "");
-                std::string key = options.value("key", "");
-                std::string mapStyle = options.value("mapStyle", "AERIAL");
-                std::string culture = options.value("culture", "");
-
-                this->_pMetadataRequest = BingMapsRasterOverlay::createBingProvider(
-                    this,
-                    tilesetExternals,
-                    std::move(callback),
-                    url,
-                    key,
-                    mapStyle,
-                    culture
-                );
-            });
-        } else {
-            this->_pMetadataRequest = BingMapsRasterOverlay::createBingProvider(
-                this,
-                tilesetExternals,
-                std::move(callback),
-                this->_url,
-                this->_key,
-                this->_mapStyle,
-                this->_culture
-            );
-        }
-    }
-
-    /*static*/ std::unique_ptr<IAssetRequest> BingMapsRasterOverlay::createBingProvider(
-        BingMapsRasterOverlay* pOverlay,
-        TilesetExternals& tilesetExternals,
-        std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback,
-        const std::string& url,
-        const std::string& key,
-        const std::string& mapStyle,
-        const std::string& culture
-    ) {
-        std::string metadataUrl = Uri::resolve(url, "REST/v1/Imagery/Metadata/" + mapStyle, true);
+        std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
         metadataUrl = Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
-        metadataUrl = Uri::addQuery(metadataUrl, "key", key);
+        metadataUrl = Uri::addQuery(metadataUrl, "key", this->_key);
         metadataUrl = Uri::addQuery(metadataUrl, "uriScheme", "https");
 
-        std::unique_ptr<IAssetRequest> pRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
-        pRequest->bind([pOverlay, callback, &tilesetExternals, url, culture](IAssetRequest* pCompletedRequest) {
+        this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
+        this->_pMetadataRequest->bind([this, callback, &tilesetExternals](IAssetRequest* pCompletedRequest) {
             IAssetResponse* pResponse = pCompletedRequest->response();
 
             using namespace nlohmann;
@@ -217,27 +163,19 @@ namespace Cesium3DTiles {
                 return;
             }
 
-            if (urlTemplate.find("n=z") == std::string::npos) {
-                urlTemplate = Uri::addQuery(urlTemplate, "n", "z");
-            }
-
-            // TODO: attribution
-
-            std::string resolvedUrl = Uri::resolve(url, urlTemplate);
-
-            resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [culture](const std::string& templateKey) {
-                if (templateKey == "culture") {
-                    return culture;
-                }
-
-                // Keep other placeholders
-                return "{" + templateKey + "}";
-            });
-
-            callback(std::make_unique<BingMapsTileProvider>(pOverlay, tilesetExternals, resolvedUrl, subdomains, width, height, 0, maximumLevel));
+            callback(std::make_unique<BingMapsTileProvider>(
+                this,
+                tilesetExternals,
+                this->_url,
+                urlTemplate,
+                subdomains,
+                width,
+                height,
+                0,
+                maximumLevel,
+                this->_culture
+            ));
         });
-
-        return pRequest;
     }
 
 }

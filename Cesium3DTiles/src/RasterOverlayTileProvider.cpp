@@ -15,6 +15,7 @@ namespace Cesium3DTiles {
         _pTilesetExternals(&tilesetExternals),
         _projection(CesiumGeospatial::GeographicProjection()),
         _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
+        _coverageRectangle(0.0, 0.0, 0.0, 0.0),
         _minimumLevel(0),
         _maximumLevel(0),
         _imageWidth(1),
@@ -28,6 +29,7 @@ namespace Cesium3DTiles {
         TilesetExternals& tilesetExternals,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+        const CesiumGeometry::Rectangle& coverageRectangle,
         uint32_t minimumLevel,
         uint32_t maximumLevel,
         uint32_t imageWidth,
@@ -37,6 +39,7 @@ namespace Cesium3DTiles {
         _pTilesetExternals(&tilesetExternals),
         _projection(projection),
         _tilingScheme(tilingScheme),
+        _coverageRectangle(coverageRectangle),
         _minimumLevel(minimumLevel),
         _maximumLevel(maximumLevel),
         _imageWidth(imageWidth),
@@ -45,13 +48,13 @@ namespace Cesium3DTiles {
     {
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner) {
         std::shared_ptr<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
         if (pTile) {
             return pTile;
         }
 
-        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
+        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id, pOwner);
         this->_tiles[id] = pNew;
 
         return pNew;
@@ -337,7 +340,7 @@ namespace Cesium3DTiles {
 
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/, RasterOverlayTileProvider* /*pOwner*/) {
         return this->_pPlaceholder;
     }
 
