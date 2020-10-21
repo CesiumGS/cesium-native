@@ -38,6 +38,10 @@ namespace Cesium3DTiles {
     }
 
     void RasterOverlayCollection::overlayCreated(std::unique_ptr<RasterOverlayTileProvider>&& pOverlayProvider) {
+        if (!pOverlayProvider) {
+            return;
+        }
+
         RasterOverlay* pOverlay = pOverlayProvider->getOverlay();
 
         auto it = std::find_if(this->_placeholders.begin(), this->_placeholders.end(), [pOverlay](const std::unique_ptr<RasterOverlayTileProvider>& pPlaceholder) {

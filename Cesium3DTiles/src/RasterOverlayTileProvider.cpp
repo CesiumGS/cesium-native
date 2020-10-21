@@ -15,6 +15,7 @@ namespace Cesium3DTiles {
         _pTilesetExternals(&tilesetExternals),
         _projection(CesiumGeospatial::GeographicProjection()),
         _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
+        _coverageRectangle(0.0, 0.0, 0.0, 0.0),
         _minimumLevel(0),
         _maximumLevel(0),
         _imageWidth(1),
@@ -28,6 +29,7 @@ namespace Cesium3DTiles {
         TilesetExternals& tilesetExternals,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+        const CesiumGeometry::Rectangle& coverageRectangle,
         uint32_t minimumLevel,
         uint32_t maximumLevel,
         uint32_t imageWidth,
@@ -37,6 +39,7 @@ namespace Cesium3DTiles {
         _pTilesetExternals(&tilesetExternals),
         _projection(projection),
         _tilingScheme(tilingScheme),
+        _coverageRectangle(coverageRectangle),
         _minimumLevel(minimumLevel),
         _maximumLevel(maximumLevel),
         _imageWidth(imageWidth),
@@ -45,13 +48,13 @@ namespace Cesium3DTiles {
     {
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner) {
         std::shared_ptr<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
         if (pTile) {
             return pTile;
         }
 
-        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
+        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id, pOwner);
         this->_tiles[id] = pNew;
 
         return pNew;
@@ -127,16 +130,16 @@ namespace Cesium3DTiles {
         //     tileRectangle.getNorth() <= WebMercatorProjection::MAXIMUM_LATITUDE &&
         //     tileRectangle.getSouth() >= -WebMercatorProjection::MAXIMUM_LATITUDE;
 
-        const CesiumGeometry::Rectangle& providerRectangle = imageryTilingScheme.getRectangle();
+        const CesiumGeometry::Rectangle& providerRectangle = this->getCoverageRectangle();
+        const CesiumGeometry::Rectangle& tilingSchemeRectangle = imageryTilingScheme.getRectangle();
 
-        // Compute the rectangle of the imagery from this imageryProvider that overlaps
-        // the geometry tile.  The ImageryProvider and ImageryLayer both have the
-        // opportunity to constrain the rectangle.  The imagery TilingScheme's rectangle
-        // always fully contains the ImageryProvider's rectangle.
-        // TODO: intersect with the imagery layer's bounds, when we have an imagery layer with bounds.
+        // Compute the rectangle of the imagery from this raster tile provider that overlaps
+        // the geometry tile.  The RasterOverlayTileProvider and its tiling scheme both have the
+        // opportunity to constrain the rectangle.
+        CesiumGeometry::Rectangle imageryRectangle = tilingSchemeRectangle.intersect(providerRectangle).value_or(tilingSchemeRectangle);
 
         CesiumGeometry::Rectangle intersection(0.0, 0.0, 0.0, 0.0);
-        std::optional<CesiumGeometry::Rectangle> maybeIntersection = geometryRectangle.intersect(providerRectangle);
+        std::optional<CesiumGeometry::Rectangle> maybeIntersection = geometryRectangle.intersect(imageryRectangle);
         if (maybeIntersection) {
             intersection = maybeIntersection.value();
         } else {
@@ -230,7 +233,7 @@ namespace Cesium3DTiles {
         // Create TileImagery instances for each imagery tile overlapping this terrain tile.
         // We need to do all texture coordinate computations in the imagery provider's projection.
 
-        CesiumGeometry::Rectangle imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
+        imageryRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
         CesiumGeometry::Rectangle imageryBounds = intersection;
         std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle = imageryRectangle.intersect(imageryBounds).value();
 
@@ -337,7 +340,7 @@ namespace Cesium3DTiles {
 
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/, RasterOverlayTileProvider* /*pOwner*/) {
         return this->_pPlaceholder;
     }
 
