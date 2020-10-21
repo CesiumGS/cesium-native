@@ -132,7 +132,7 @@ namespace Cesium3DTiles {
             }
 
             std::string credit = this->_options.credit.value_or("");
-            CesiumGeospatial::Ellipsoid ellipsoid = this->_options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+            // CesiumGeospatial::Ellipsoid ellipsoid = this->_options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
 
             tinyxml2::XMLElement* pTileFormat = pRoot->FirstChildElement("TileFormat");
             std::string fileExtension = this->_options.fileExtension.value_or(getAttributeString(pTileFormat, "extension").value_or("png"));
