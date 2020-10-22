@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include <memory>
 #include <functional>
 
@@ -30,6 +31,8 @@ namespace Cesium3DTiles {
          * @param callback The callback that receives the new tile provider when it is ready.
          */
         virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback>&& callback) = 0;
+
+        std::vector<CesiumGeospatial::GlobeRectangle> cutouts;
     };
 
 }
