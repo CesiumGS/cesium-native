@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/RasterOverlay.h"
 
 namespace Cesium3DTiles {
 
@@ -76,7 +77,58 @@ namespace Cesium3DTiles {
                 gsl::span<const uint8_t> data = pResponse->data();
                 bool success = tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
 
-                if (success) {
+                const int bytesPerPixel = 4;
+                if (success && this->_image.image.size() >= static_cast<size_t>(this->_image.width * this->_image.height * bytesPerPixel)) {
+                    RasterOverlayTileProvider* pTileProvider = this->_pTileProvider;
+                    RasterOverlay* pOverlay = pTileProvider->getOverlay();
+
+                    CesiumGeometry::Rectangle tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID());
+                    double tileWidth = tileRectangle.computeWidth();
+                    double tileHeight = tileRectangle.computeHeight();
+
+                    const CesiumGeospatial::Projection& projection = pTileProvider->getProjection();
+
+                    const std::vector<CesiumGeospatial::GlobeRectangle>& cutouts = pOverlay->cutouts;
+
+                    std::vector<unsigned char>& imageData = this->_image.image;
+                    int width = this->_image.width;
+                    int height = this->_image.width;
+
+                    for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
+                        CesiumGeometry::Rectangle cutoutRectangle = projectRectangleSimple(projection, rectangle);
+                        std::optional<CesiumGeometry::Rectangle> cutoutInTileOpt = tileRectangle.intersect(cutoutRectangle);
+                        if (!cutoutInTileOpt) {
+                            continue;
+                        }
+
+                        CesiumGeometry::Rectangle& cutoutInTile = cutoutInTileOpt.value();
+                        double startU = (cutoutInTile.minimumX - tileRectangle.minimumX) / tileWidth;
+                        double endU = (cutoutInTile.maximumX - tileRectangle.minimumX) / tileWidth;
+                        double startV = (cutoutInTile.minimumY - tileRectangle.minimumY) / tileHeight;
+                        double endV = (cutoutInTile.maximumY - tileRectangle.minimumY) / tileHeight;
+
+                        // The first row in the image is at v coordinate 1.0.
+                        startV = 1.0 - startV;
+                        endV = 1.0 - endV;
+
+                        std::swap(startV, endV);
+
+                        uint32_t startPixelX = static_cast<uint32_t>(std::floor(startU * width));
+                        uint32_t endPixelX = static_cast<uint32_t>(std::ceil(endU * width));
+                        uint32_t startPixelY = static_cast<uint32_t>(std::floor(startV * height));
+                        uint32_t endPixelY = static_cast<uint32_t>(std::ceil(endV * height));
+
+                        for (uint32_t j = startPixelY; j < endPixelY; ++j) {
+                            uint32_t rowStart = j * width * bytesPerPixel;
+                            for (uint32_t i = startPixelX; i < endPixelX; ++i) {
+                                uint32_t pixelStart = rowStart + i * bytesPerPixel;
+                                
+                                // Set alpha to 0
+                                imageData[pixelStart + 3] = 0;
+                            }
+                        }
+                    }
+
                     this->_pRendererResources = this->_pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
                     this->setState(LoadState::Loaded);
                 } else {
