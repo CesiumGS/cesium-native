@@ -78,7 +78,7 @@ namespace Cesium3DTiles {
                 bool success = tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
 
                 const int bytesPerPixel = 4;
-                if (success && this->_image.image.size() >= this->_image.width * this->_image.height * bytesPerPixel) {
+                if (success && this->_image.image.size() >= static_cast<size_t>(this->_image.width * this->_image.height * bytesPerPixel)) {
                     RasterOverlayTileProvider* pTileProvider = this->_pTileProvider;
                     RasterOverlay* pOverlay = pTileProvider->getOverlay();
 
