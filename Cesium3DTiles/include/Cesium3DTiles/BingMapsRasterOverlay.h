@@ -77,6 +77,17 @@ namespace Cesium3DTiles {
      */
     class CESIUM3DTILES_API BingMapsRasterOverlay : public RasterOverlay {
     public:
+
+        /**
+         * @brief Creates a new instance
+         *
+         * @param url The url of the Bing Maps server hosting the imagery
+         * @param key The Bing Maps key for your application, which can be created at https://www.bingmapsportal.com/
+         * @param mapStyle The type of Bing Maps imagery to load. A value from {@link BingMapsStyle}, with {@link BingMapsStyle::AERIAL} being the default.
+         * @param culture The culture to use when requesting Bing Maps imagery. Not all cultures are supported. 
+         * See http://msdn.microsoft.com/en-us/library/hh441729.aspx for information on the supported cultures.
+         * @param ellipsoid The ellipsoid, with {@link CesiumGeospatial::Ellipsoid::WGS84} being the default.
+         */
         BingMapsRasterOverlay(
             const std::string& url,
             const std::string& key,

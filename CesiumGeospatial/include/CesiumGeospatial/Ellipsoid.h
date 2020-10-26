@@ -9,6 +9,13 @@ namespace CesiumGeospatial {
 
     class CESIUMGEOSPATIAL_API  Ellipsoid {
     public:
+
+        /**
+         * @brief An Ellipsoid instance initialized to the WGS84 standard.
+         *
+         * The ellipsoid is initialized to the  World Geodetic System (WGS84) standard, as defined
+         * in https://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf.
+         */
         static const Ellipsoid WGS84;
 
         Ellipsoid(double x, double y, double z);
