@@ -18,13 +18,13 @@ if (DOXYGEN_FOUND)
         ../CesiumUtility/test
     )
 
-    # The CESIUM3DTILES_API macro confuses doxygen, causing it
+    # These macro definitions confuse doxygen, causing it
     # to omit the respective elements in the documentation,
-    # so ignore this macro during doxygen preprocessing:
+    # so ignore these macros during doxygen preprocessing:
     set(DOXYGEN_ENABLE_PREPROCESSING YES)
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
-    set(DOXYGEN_PREDEFINED "CESIUM3DTILES_API")
+    set(DOXYGEN_PREDEFINED "CESIUM3DTILES_API" "CESIUMGEOMETRY_API" "CESIUMUTILITY_API" "CESIUMGEOSPATIAL_API")
 
     doxygen_add_docs(
         cesium-native-docs
