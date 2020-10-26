@@ -8,62 +8,73 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief Styles of Bing maps overlays
+     *
+     * Constants that can be passed to a {@link BingMapsRasterOverlay} to
+     * indicate the overlays that should be painted.
+     */
     struct BingMapsStyle {
         /**
-         * Aerial imagery.
+         * @brief Aerial imagery.
          */
         static const std::string AERIAL;
 
         /**
-         * Aerial imagery with a road overlay.
+         * @brief Aerial imagery with a road overlay.
          * @deprecated See https://github.com/CesiumGS/cesium/issues/7128.
          * Use `BingMapsStyle.AERIAL_WITH_LABELS_ON_DEMAND` instead
          */
         static const std::string AERIAL_WITH_LABELS;
 
         /**
-         * Aerial imagery with a road overlay.
+         * @brief Aerial imagery with a road overlay.
          */
         static const std::string AERIAL_WITH_LABELS_ON_DEMAND;
 
         /**
-         * Roads without additional imagery.         *
+         * @brief Roads without additional imagery.
          * @deprecated See https://github.com/CesiumGS/cesium/issues/7128.
          * Use `BingMapsStyle.ROAD_ON_DEMAND` instead
          */
         static const std::string ROAD;
 
         /**
-         * Roads without additional imagery.
+         * @brief Roads without additional imagery.
          */
         static const std::string ROAD_ON_DEMAND;
 
         /**
-         * A dark version of the road maps.
+         * @brief A dark version of the road maps.
          */
         static const std::string CANVAS_DARK;
 
         /**
-         * A lighter version of the road maps.
+         * @brief A lighter version of the road maps.
          */
         static const std::string CANVAS_LIGHT;
 
         /**
-         * A grayscale version of the road maps.
+         * @brief A grayscale version of the road maps.
          */
         static const std::string CANVAS_GRAY;
 
         /**
-         * Ordnance Survey imagery. This imagery is visible only for the London, UK area.
+         * @brief Ordnance Survey imagery. 
+         * 
+         * This imagery is visible only for the London, UK area.
          */
         static const std::string ORDNANCE_SURVEY;
 
         /**
-         * Collins Bart imagery.
+         * @brief Collins Bart imagery.
          */
         static const std::string COLLINS_BART;
     };
 
+    /**
+     * @brief A {@link RasterOverlay} that uses Bing maps as the source for the imagery data.
+     */
     class CESIUM3DTILES_API BingMapsRasterOverlay : public RasterOverlay {
     public:
         BingMapsRasterOverlay(
