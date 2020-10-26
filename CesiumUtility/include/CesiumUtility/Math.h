@@ -8,26 +8,68 @@ namespace CesiumUtility {
 
     class CESIUMUTILITY_API Math {
     public:
+
+        /** @brief 0.1 */
         static const double EPSILON1;
+
+        /** @brief 0.01 */
         static const double EPSILON2;
+
+        /** @brief 0.001 */
         static const double EPSILON3;
+
+        /** @brief 0.0001 */
         static const double EPSILON4;
+
+        /** @brief 0.00001 */
         static const double EPSILON5;
+
+        /** @brief 0.000001 */
         static const double EPSILON6;
+
+        /** @brief 0.0000001 */
         static const double EPSILON7;
+
+        /** @brief 0.00000001 */
         static const double EPSILON8;
+
+        /** @brief 0.000000001 */
         static const double EPSILON9;
+
+        /** @brief 0.0000000001 */
         static const double EPSILON10;
+
+        /** @brief 0.00000000001 */
         static const double EPSILON11;
+
+        /** @brief 0.000000000001 */
         static const double EPSILON12;
+
+        /** @brief 0.0000000000001 */
         static const double EPSILON13;
+
+        /** @brief 0.00000000000001 */
         static const double EPSILON14;
+
+        /** @brief 0.000000000000001 */
         static const double EPSILON15;
+
+        /** @brief 0.0000000000000001 */
         static const double EPSILON16;
+
+        /** @brief 0.00000000000000001 */
         static const double EPSILON17;
+
+        /** @brief 0.000000000000000001 */
         static const double EPSILON18;
+
+        /** @brief 0.0000000000000000001 */
         static const double EPSILON19;
+
+        /** @brief 0.00000000000000000001 */
         static const double EPSILON20;
+
+        /** @brief 0.000000000000000000001 */
         static const double EPSILON21;
 
         static const double ONE_PI;

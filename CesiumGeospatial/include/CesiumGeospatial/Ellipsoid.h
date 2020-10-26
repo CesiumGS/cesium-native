@@ -21,7 +21,19 @@ namespace CesiumGeospatial {
         glm::dvec3 cartographicToCartesian(const Cartographic& cartographic) const;
         std::optional<Cartographic> cartesianToCartographic(const glm::dvec3& cartesian) const;
         std::optional<glm::dvec3> scaleToGeodeticSurface(const glm::dvec3& cartesian) const;
+
+        /**
+         * @brief The maximum radius in any dimension
+         *
+         * @return The maximum radius
+         */
         double getMaximumRadius() const;
+
+        /**
+         * @brief The minimum radius in any dimension
+         *
+         * @return The minimum radius
+         */
         double getMinimumRadius() const;
 
         bool operator==(const Ellipsoid& rhs) const {

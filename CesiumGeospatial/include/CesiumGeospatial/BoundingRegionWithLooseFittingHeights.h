@@ -6,11 +6,11 @@
 namespace CesiumGeospatial {
 
     /**
-     * @brief A {@see BoundingRegion} whose heights might be very inaccurate and so distances should be estimated conservatively
+     * @brief A {@link BoundingRegion} whose heights might be very inaccurate and so distances should be estimated conservatively
      * for level-of-detail computations.
      * 
-     * An instance of this class serves as a marker of the imprecision of the heights in a {@see BoundingRegion}, and also
-     * has a {@see BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition} method to compute
+     * An instance of this class serves as a marker of the imprecision of the heights in a {@link BoundingRegion}, and also
+     * has a {@link BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition} method to compute
      * the conservative distance metric.
      */
     class CESIUMGEOSPATIAL_API BoundingRegionWithLooseFittingHeights {
