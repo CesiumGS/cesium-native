@@ -6,6 +6,9 @@
 
 namespace CesiumUtility {
 
+    /**
+     * @brief Mathematical constants and functions
+     */
     class CESIUMUTILITY_API Math {
     public:
 
@@ -72,8 +75,19 @@ namespace CesiumUtility {
         /** @brief 0.000000000000000000001 */
         static const double EPSILON21;
 
+        /**
+         * @brief pi
+         */
         static const double ONE_PI;
+
+        /**
+         * @brief two times pi
+         */
         static const double TWO_PI;
+
+        /**
+         * @brief pi divded by two
+         */
         static const double PI_OVER_TWO;
 
         template<glm::length_t L, typename T, glm::qualifier Q>
