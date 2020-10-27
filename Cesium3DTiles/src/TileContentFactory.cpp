@@ -1,5 +1,4 @@
 #include "Cesium3DTiles/TileContentFactory.h"
-#include "Cesium3DTiles/TileContent.h"
 #include <algorithm>
 
 namespace Cesium3DTiles {

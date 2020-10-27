@@ -1,4 +1,3 @@
-#include "Cesium3DTiles/TerrainLayerJsonContent.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"

@@ -6,7 +6,6 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
-#include "Cesium3DTiles/TileContent.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
@@ -102,10 +101,10 @@ namespace Cesium3DTiles {
         TileRefine getRefine() const { return this->_refine; }
         void setRefine(TileRefine value) { this->_refine = value; }
 
-        /// <summary>
-        /// Gets the transformation matrix for this tile. This matrix does _not_ need to be multiplied
-        /// with the tile's parent's transform as this has already been done.
-        /// </summary>
+        /**
+         * Gets the transformation matrix for this tile. This matrix does _not_ need to be multiplied
+         * with the tile's parent's transform as this has already been done.
+         */
         const glm::dmat4x4& getTransform() const { return this->_transform; }
         void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
 
