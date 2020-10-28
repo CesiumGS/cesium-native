@@ -109,7 +109,7 @@ namespace Cesium3DTiles {
          * @brief Computes the screen space error from a given geometric error
          *
          * Computes the screen space error (SSE) that results from the given
-         * geometric error, when it is viewn with this camera from the given
+         * geometric error, when it is viewed with this camera from the given
          * distance.
          *
          * The given distance will be clamped to a small positive value if
