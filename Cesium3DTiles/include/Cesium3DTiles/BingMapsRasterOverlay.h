@@ -73,7 +73,7 @@ namespace Cesium3DTiles {
     };
 
     /**
-     * @brief A {@link RasterOverlay} that uses Bing maps as the source for the imagery data.
+     * @brief A {@link RasterOverlay} that uses Bing Maps as the source for the imagery data.
      */
     class CESIUM3DTILES_API BingMapsRasterOverlay : public RasterOverlay {
     public:
