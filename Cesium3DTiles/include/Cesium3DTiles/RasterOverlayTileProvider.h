@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
     class RasterOverlayTile;
 
     /**
-     * @brief Provides individuals tiles for a {@link RasterOverlay} on demand.
+     * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
      * 
      */
     class CESIUM3DTILES_API RasterOverlayTileProvider {

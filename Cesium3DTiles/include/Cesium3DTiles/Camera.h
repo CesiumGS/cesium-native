@@ -10,6 +10,11 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief A camera in 3D space.
+     *
+     * A camera is defined by a position, orientation and the view frustum.
+     */
     class CESIUM3DTILES_API Camera {
     public:
         // TODO: Add support for orthographic and off-center perspective frustums
@@ -23,61 +28,97 @@ namespace Cesium3DTiles {
             double verticalFieldOfView
         );
 
-        /// <summary>
-        /// Gets the position of the camera in Earth-centered, Earth-fixed coordinates.
-        /// </summary>
+        /**
+         * @brief Gets the position of the camera in Earth-centered, Earth-fixed coordinates.
+         */
         const glm::dvec3& getPosition() const { return this->_position; }
 
-        /// <summary>
-        /// Gets the look direction of the camera in Earth-centered, Earth-fixed coordinates.
-        /// </summary>
+        /**
+         * @brief Gets the look direction of the camera in Earth-centered, Earth-fixed coordinates.
+         */
         const glm::dvec3& getDirection() const { return this->_direction; }
 
-        /// <summary>
-        /// Gets the up direction of the camera in Earth-centered, Earth-fixed coordinates.
-        /// </summary>
+        /**
+         * @brief Gets the up direction of the camera in Earth-centered, Earth-fixed coordinates.
+         */
         const glm::dvec3& getUp() const { return this->_up; }
 
-        /// <summary>
-        /// Gets the size of the viewport in pixels.
-        /// </summary>
+        /**
+         * @brief Gets the size of the viewport in pixels.
+         */
         const glm::dvec2& getViewportSize() const { return this->_viewportSize; }
 
-        /// <summary>
-        /// Gets the horizontal field-of-view angle in radians.
-        /// </summary>
+        /**
+         * @brief Gets the horizontal field-of-view angle in radians.
+         */
         double getHorizontalFieldOfView() const { return this->_horizontalFieldOfView; }
 
-        /// <summary>
-        /// Gets the vertical field-of-view angle in radians.
-        /// </summary>
+        /**
+         * @brief Gets the vertical field-of-view angle in radians.
+         */
         double getVerticalFieldOfView() const { return this->_verticalFieldOfView; }
 
-        /// <summary>
-        /// Gets the denominator used in screen-space error (SSE) computations,
-        /// <c>2.0 * tan(0.5 * verticalFieldOfView)</c>.
-        /// </summary>
+        /**
+         * @brief Gets the denominator used in screen-space error (SSE) computations.
+         * 
+         * The denominator is <code>2.0 * tan(0.5 * verticalFieldOfView)</code>
+         */
         double getScreenSpaceErrorDenominator() const { return this->_sseDenominator; }
 
-        /// <summary>
-        /// Updates the position and orientation of the camera.
-        /// </summary>
-        /// <param name="position">The new position.</param>
-        /// <param name="direction">The new look direction vector.</param>
-        /// <param name="up">The new up vector.</param>
+        /**
+         * @brief Updates the position and orientation of the camera.
+         * 
+         * @param position The new position
+         * @param direction The new look direction vector
+         * @param up The new up vector
+         */
         void updatePositionAndOrientation(const glm::dvec3& position, const glm::dvec3& direction, const glm::dvec3& up);
 
-        /// <summary>
-        /// Updates the camera's view parameters.
-        /// </summary>
-        /// <param name="viewportSize">The new size of the viewport.</param>
-        /// <param name="horizontalFieldOfView">The horizontal field of view angle in radians.</param>
-        /// <param name="verticalFieldOfView">The vertical field of view angle in radians.</param>
+        /**
+         * @brief Updates the camera's view parameters.
+         *
+         * @param viewportSize The new size of the viewport, in pixels
+         * @param horizontalFieldOfView The horizontal field of view angle in radians.
+         * @param verticalFieldOfView The vertical field of view angle in radians.
+         */
         void updateViewParameters(const glm::dvec2& viewportSize, double horizontalFieldOfView, double verticalFieldOfView);
 
+        /**
+         * @brief Returns whether the given {@link BoundingVolume} is visible for this camera
+         *
+         * Returns whether the given bounding volume is completely visible,
+         * meaning that all four planes of the given volume are completely
+         * contained in the frustum of this camera.
+         *
+         * @return Whether the bounding volume is visible
+         */
         bool isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const;
 
+        /**
+         * @brief Computes the squared distance to the given {@link BoundingVolume}.
+         * 
+         * Computes the squared euclidean distance from the position of this camera
+         * to the closest point of the given bounding volume.
+         * 
+         * @param boundingVolume The bounding volume
+         * @returns The squared distance
+         */
         double computeDistanceSquaredToBoundingVolume(const BoundingVolume& boundingVolume) const;
+
+        /**
+         * @brief Computes the screen space error from a given geometric error
+         *
+         * Computes the screen space error (SSE) that results from the given
+         * geometric error, when it is viewed with this camera from the given
+         * distance.
+         *
+         * The given distance will be clamped to a small positive value if
+         * it is negative or too close to zero.
+         *
+         * @param geometricError The geometric error
+         * @param distance The viewing distance
+         * @return The screen space error
+         */
         double computeScreenSpaceError(double geometricError, double distance) const;
 
     private:

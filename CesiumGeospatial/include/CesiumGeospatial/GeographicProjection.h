@@ -12,7 +12,7 @@ namespace CesiumGeospatial {
 
     /**
      * A simple map projection where longitude and latitude are linearly mapped to X and Y by multiplying
-     * them (in radians) by the {@see Ellipsoid::getMaximumRadius}. This projection is commonly known as geographic,
+     * them (in radians) by the {@link Ellipsoid::getMaximumRadius()}. This projection is commonly known as geographic,
      * equirectangular, equidistant cylindrical, or plate carrée. It is also known as EPSG:4326.
      * 
      * @see WebMercatorProjection

@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @brief Classes for geospatial computations in Cesium
+ */
+namespace CesiumGeospatial {}
+
 #if defined(_WIN32) && defined(CESIUM_SHARED)
     #ifdef CESIUMGEOSPATIAL_BUILDING
         #define CESIUMGEOSPATIAL_API __declspec(dllexport)

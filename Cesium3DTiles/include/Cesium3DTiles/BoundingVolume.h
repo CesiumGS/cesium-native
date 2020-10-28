@@ -9,6 +9,16 @@
 
 namespace Cesium3DTiles {
 
+    /** 
+     * @brief A bounding volume
+     *
+     * This is a `std::variant` for different types of bounding volumes
+     *
+     * @see CesiumGeometry::BoundingSphere
+     * @see CesiumGeometry::OrientedBoundingBox
+     * @see CesiumGeospatial::BoundingRegion
+     * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
+     */
     typedef std::variant<
         CesiumGeometry::BoundingSphere,
         CesiumGeometry::OrientedBoundingBox,
