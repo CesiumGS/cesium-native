@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
+#include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include <memory>
 #include <functional>
 
@@ -15,7 +15,8 @@ namespace Cesium3DTiles {
      */
     class RasterOverlay {
     public:
-        virtual ~RasterOverlay() {}
+        RasterOverlay();
+        virtual ~RasterOverlay();
 
         /**
          * @brief A callback that receives the tile provider when it asynchronously becomes ready.
@@ -32,7 +33,14 @@ namespace Cesium3DTiles {
          */
         virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback>&& callback) = 0;
 
-        std::vector<CesiumGeospatial::GlobeRectangle> cutouts;
+        /**
+         * @brief Get a collection containing the sections of this overlay and its associated tileset that are not rendered.
+         */
+        const RasterOverlayCutoutCollection& getCutouts() const { return this->_cutouts; }
+        RasterOverlayCutoutCollection& getCutouts() { return this->_cutouts; }
+
+    private:
+        RasterOverlayCutoutCollection _cutouts;
     };
 
 }

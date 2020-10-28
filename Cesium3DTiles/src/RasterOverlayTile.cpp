@@ -88,7 +88,7 @@ namespace Cesium3DTiles {
 
                     const CesiumGeospatial::Projection& projection = pTileProvider->getProjection();
 
-                    const std::vector<CesiumGeospatial::GlobeRectangle>& cutouts = pOverlay->cutouts;
+                    gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = pOverlay->getCutouts().getCutouts();
 
                     std::vector<unsigned char>& imageData = this->_image.image;
                     int width = this->_image.width;

@@ -84,8 +84,8 @@ namespace Cesium3DTiles {
                         float value = *pInput;
                         output.push_back(value);
                         if (!skipMinMaxUpdate) {
-                            attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                            attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
+                            attribute.minimums[i] = glm::min(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = glm::max(attribute.maximums[i], static_cast<double>(value));
                         }
                         ++pInput;
                     }
@@ -101,8 +101,8 @@ namespace Cesium3DTiles {
                         float value = glm::mix(*pInput0, *pInput1, vertex.t);
                         output.push_back(value);
                         if (!skipMinMaxUpdate) {
-                            attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                            attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
+                            attribute.minimums[i] = glm::min(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = glm::max(attribute.maximums[i], static_cast<double>(value));
                         }
                         ++pInput0;
                         ++pInput1;
@@ -157,8 +157,8 @@ namespace Cesium3DTiles {
                     for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
                         float value = glm::mix(output[outputIndex0], output[outputIndex1], vertex.t);
                         output[outputIndex0] = value;
-                        attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                        attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
+                        attribute.minimums[i] = glm::min(attribute.minimums[i], static_cast<double>(value));
+                        attribute.maximums[i] = glm::max(attribute.maximums[i], static_cast<double>(value));
                         ++outputIndex0;
                         ++outputIndex1;
                     }

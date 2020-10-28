@@ -66,7 +66,7 @@ TEST_CASE("OrientedBoundingBox::intersectPlane") {
 
             p0 += testCase.center;
             double d = -glm::dot(p0, n);
-            if (std::abs(d) > 0.0001 && glm::dot(n, n) > 0.0001) {
+            if (glm::abs(d) > 0.0001 && glm::dot(n, n) > 0.0001) {
                 return std::optional(Plane(n, d));
             }
 

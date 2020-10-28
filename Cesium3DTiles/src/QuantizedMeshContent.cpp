@@ -94,12 +94,12 @@ namespace Cesium3DTiles {
 
         result.x = CesiumUtility::Math::fromSNorm(x, rangeMax);
         result.y = CesiumUtility::Math::fromSNorm(y, rangeMax);
-        result.z = 1.0 - (std::abs(result.x) + std::abs(result.y));
+        result.z = 1.0 - (glm::abs(result.x) + glm::abs(result.y));
 
         if (result.z < 0.0) {
             double oldVX = result.x;
-            result.x = (1.0 - std::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
-            result.y = (1.0 - std::abs(oldVX)) * CesiumUtility::Math::signNotZero(result.y);
+            result.x = (1.0 - glm::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
+            result.y = (1.0 - glm::abs(oldVX)) * CesiumUtility::Math::signNotZero(result.y);
         }
 
         return glm::normalize(result);
@@ -248,13 +248,13 @@ namespace Cesium3DTiles {
             pPositions[positionOutputIndex++] = static_cast<float>(position.y);
             pPositions[positionOutputIndex++] = static_cast<float>(position.z);
 
-            minX = std::min(minX, position.x);
-            minY = std::min(minY, position.y);
-            minZ = std::min(minZ, position.z);
+            minX = glm::min(minX, position.x);
+            minY = glm::min(minY, position.y);
+            minZ = glm::min(minZ, position.z);
 
-            maxX = std::max(maxX, position.x);
-            maxY = std::max(maxY, position.y);
-            maxZ = std::max(maxZ, position.z);
+            maxX = glm::max(maxX, position.x);
+            maxY = glm::max(maxY, position.y);
+            maxZ = glm::max(maxZ, position.z);
         }
 
         positionAccessor.minValues = { minX, minY, minZ };
