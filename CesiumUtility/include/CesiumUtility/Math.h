@@ -6,32 +6,88 @@
 
 namespace CesiumUtility {
 
+    /**
+     * @brief Mathematical constants and functions
+     */
     class CESIUMUTILITY_API Math {
     public:
+
+        /** @brief 0.1 */
         static const double EPSILON1;
+
+        /** @brief 0.01 */
         static const double EPSILON2;
+
+        /** @brief 0.001 */
         static const double EPSILON3;
+
+        /** @brief 0.0001 */
         static const double EPSILON4;
+
+        /** @brief 0.00001 */
         static const double EPSILON5;
+
+        /** @brief 0.000001 */
         static const double EPSILON6;
+
+        /** @brief 0.0000001 */
         static const double EPSILON7;
+
+        /** @brief 0.00000001 */
         static const double EPSILON8;
+
+        /** @brief 0.000000001 */
         static const double EPSILON9;
+
+        /** @brief 0.0000000001 */
         static const double EPSILON10;
+
+        /** @brief 0.00000000001 */
         static const double EPSILON11;
+
+        /** @brief 0.000000000001 */
         static const double EPSILON12;
+
+        /** @brief 0.0000000000001 */
         static const double EPSILON13;
+
+        /** @brief 0.00000000000001 */
         static const double EPSILON14;
+
+        /** @brief 0.000000000000001 */
         static const double EPSILON15;
+
+        /** @brief 0.0000000000000001 */
         static const double EPSILON16;
+
+        /** @brief 0.00000000000000001 */
         static const double EPSILON17;
+
+        /** @brief 0.000000000000000001 */
         static const double EPSILON18;
+
+        /** @brief 0.0000000000000000001 */
         static const double EPSILON19;
+
+        /** @brief 0.00000000000000000001 */
         static const double EPSILON20;
+
+        /** @brief 0.000000000000000000001 */
         static const double EPSILON21;
 
+        /**
+         * @brief pi
+         */
         static const double ONE_PI;
+
+        /**
+         * @brief two times pi
+         */
         static const double TWO_PI;
+
+        /**
+         * @brief pi divded by two
+         */
         static const double PI_OVER_TWO;
 
         template<glm::length_t L, typename T, glm::qualifier Q>
@@ -82,7 +138,9 @@ namespace CesiumUtility {
         }
 
         /**
-         * Returns the sign of the value; 1 if the value is positive, -1 if the value is
+         * @brief Returns the sign of the value
+         *
+         * This is 1 if the value is positive, -1 if the value is
          * negative, or 0 if the value is 0.
          *
          * @param value The value to return the sign of.
@@ -97,9 +155,11 @@ namespace CesiumUtility {
         }
 
         /**
-         * Returns 1.0 if the given value is positive or zero, and -1.0 if it is negative.
+         * @brief Returns 1.0 if the given value is positive or zero, and -1.0 if it is negative.
+         *
          * This is similar to {@link Math::sign} except that returns 1.0 instead of
          * 0.0 when the input value is 0.0.
+         *
          * @param value The value to return the sign of.
          * @returns The sign of value.
          */
@@ -108,9 +168,9 @@ namespace CesiumUtility {
         }
 
         /**
-         * Produces an angle in the range -Pi <= angle <= Pi which is equivalent to the provided angle.
+         * @brief Produces an angle in the range -Pi <= angle <= Pi which is equivalent to the provided angle.
          *
-         * @param angle in radians
+         * @param angle The angle in radians
          * @returns The angle in the range [`-Math::ONE_PI`, `Math::ONE_PI`].
          */
         static inline double negativePiToPi(double angle) {
@@ -118,9 +178,9 @@ namespace CesiumUtility {
         }
 
         /**
-         * Produces an angle in the range 0 <= angle <= 2Pi which is equivalent to the provided angle.
+         * @brief Produces an angle in the range 0 <= angle <= 2Pi which is equivalent to the provided angle.
          *
-         * @param angle in radians
+         * @param angle The angle in radians
          * @returns The angle in the range [0, `Math::TWO_PI`].
          */
         static inline double zeroToTwoPi(double angle) {
@@ -135,7 +195,7 @@ namespace CesiumUtility {
         }
 
         /**
-         * The modulo operation that also works for negative dividends.
+         * @brief The modulo operation that also works for negative dividends.
          *
          * @param m The dividend.
          * @param n The divisor.
@@ -146,8 +206,9 @@ namespace CesiumUtility {
         }
 
         /**
-         * Converts degrees to radians.
-         * @param degrees The angle to convert in degrees.
+         * @brief Converts degrees to radians.
+         *
+         * @param angleDegrees The angle to convert in degrees.
          * @returns The corresponding angle in radians.
          */
         static inline double degreesToRadians(double angleDegrees) {
@@ -155,8 +216,9 @@ namespace CesiumUtility {
         }
 
         /**
-         * Converts radians to degrees.
-         * @param radians The angle to convert in radians.
+         * @brief Converts radians to degrees.
+         *
+         * @param angleRadians The angle to convert in radians.
          * @returns The corresponding angle in degrees.
          */
         static inline double radiansToDegrees(double angleRadians) {
@@ -164,7 +226,7 @@ namespace CesiumUtility {
         }
 
         /**
-         * Computes the linear interpolation of two values.
+         * @brief Computes the linear interpolation of two values.
          *
          * @param p The start value to interpolate.
          * @param q The end value to interpolate.
@@ -178,7 +240,7 @@ namespace CesiumUtility {
         }
 
         /**
-         * Constraint a value to lie between two values.
+         * @brief Constrain a value to lie between two values.
          *
          * @param value The value to constrain.
          * @param min The minimum value.
@@ -190,7 +252,8 @@ namespace CesiumUtility {
         };
 
         /**
-         * Converts a scalar value in the range [-1.0, 1.0] to a SNORM in the range [0, rangeMaximum]
+         * @brief Converts a scalar value in the range [-1.0, 1.0] to a SNORM in the range [0, rangeMaximum]
+         *
          * @param value The scalar value in the range [-1.0, 1.0]
          * @param rangeMaximum The maximum value in the mapped range, 255 by default.
          * @returns A SNORM value, where 0 maps to -1.0 and rangeMaximum maps to 1.0.
@@ -203,7 +266,8 @@ namespace CesiumUtility {
             );
         };
         /**
-         * Converts a SNORM value in the range [0, rangeMaximum] to a scalar in the range [-1.0, 1.0].
+         * @brief Converts a SNORM value in the range [0, rangeMaximum] to a scalar in the range [-1.0, 1.0].
+         *
          * @param value SNORM value in the range [0, rangeMaximum]
          * @param rangeMaximum The maximum value in the SNORM range, 255 by default.
          * @returns Scalar in the range [-1.0, 1.0].

@@ -5,36 +5,55 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief A description of the state of a {@link Tile} during the rendering process
+     *
+     * Instances of this class combine a frame number and a {@link TileSelectionState::Result}
+     * that describes the actual state of the tile. Instances of this class are stored in
+     * a {@link Tile}, and are used to track the state of the tile during the rendering
+     * process. The {@link Tileset} updates this state while traversing the tile hierarchy,
+     * tracking whether a tile was rendered, culled, or refined in the last frame.
+     */
     class TileSelectionState {
     public:
+
+        /**
+         * @brief Enumeration of possible results of a {@link TileSelectionState}
+         */
         enum class CESIUM3DTILES_API Result {
             /**
-             * There was no selection result, perhaps because the tile wasn't visited last frame.
+             * @brief There was no selection result.
+             *
+             * This may be the case when the tile wasn't visited last frame.
              */
             None = 0,
 
             /**
-             * This tile was deemed not visible and culled.
+             * @brief This tile was deemed not visible and culled.
              */
             Culled = 1,
 
             /**
-             * The tile was selected for rendering.
+             * @brief The tile was selected for rendering.
              */
             Rendered = 2,
 
             /**
-             * This tile did not meet the required screen-space error and was refined.
+             * @brief This tile did not meet the required screen-space error and was refined.
              */
             Refined = 3,
 
             /**
+             * @brief This tile was rendered but then removed from the render list
+             *
              * This tile was originally rendered, but it got kicked out of the render list
              * in favor of an ancestor because it is not yet renderable.
              */
             RenderedAndKicked = 4,
 
             /**
+             * @brief This tile was refined but then removed from the render list
+             *
              * This tile was originally refined, but its rendered descendants got kicked out of the
              * render list in favor of an ancestor because it is not yet renderable.
              */
@@ -42,7 +61,7 @@ namespace Cesium3DTiles {
         };
 
         /**
-         * Initializes a new instance with a selection result of `None`.
+         * @brief Initializes a new instance with {@link TileSelectionState::Result::None}
          */
         TileSelectionState() :
             _frameNumber(0),
@@ -50,7 +69,8 @@ namespace Cesium3DTiles {
         {}
 
         /**
-         * Initializes a new instance with a given selection result.
+         * @brief Initializes a new instance with a given {@link TileSelectionState::Result}.
+         *
          * @param frameNumber The frame number in which the selection took place.
          * @param result The result of the selection.
          */
@@ -60,11 +80,13 @@ namespace Cesium3DTiles {
         {}
 
         /**
-         * Gets the result of selection. The given frame number must
-         * match the frame number in which selection last took place.
-         * Otherwise, /ref Result::None is returned.
+         * @brief Gets the result of selection. 
+         * 
+         * The given frame number must match the frame number in which selection last took place.
+         * Otherwise, {@link TileSelectionState::Result::None} is returned.
+         *
          * @param frameNumber The previous frame number.
-         * @return The selection result.
+         * @return The {@link TileSelectionState::Result}
          */
         Result getResult(uint32_t frameNumber) const {
             if (this->_frameNumber != frameNumber) {
@@ -74,12 +96,13 @@ namespace Cesium3DTiles {
         }
 
         /**
-         * Determines if this tile or its descendents were kicked from the render list.
-         * In other words, if its last selection result was /ref Result::RenderedAndKicked
-         * or /ref Result::RefinedAndKicked.
+         * @brief Determines if this tile or its descendents were kicked from the render list.
+         *
+         * In other words, if its last selection result was {@link TileSelectionState::Result::RenderedAndKicked}
+         * or {@link TileSelectionState::Result::RefinedAndKicked}.
+         *
          * @param frameNumber The previous frame number.
-         * @return true The tile was kicked.
-         * @return false The tile was not kicked.
+         * @return `true` if the tile was kicked, and `false` otherwise
          */
         bool wasKicked(uint32_t frameNumber) const {
             Result result = this->getResult(frameNumber);
@@ -87,10 +110,12 @@ namespace Cesium3DTiles {
         }
 
         /**
-         * Gets the original selection result prior to being kicked.
+         * @brief Gets the original selection result prior to being kicked.
+         *
          * If the tile wasn't kicked, the original value is returned.
+         *
          * @param frameNumber The previous frame number.
-         * @return The selection result prior to being kicked.
+         * @return The {@link TileSelectionState::Result} prior to being kicked.
          */
         Result getOriginalResult(uint32_t frameNumber) const {
             Result result = this->getResult(frameNumber);
@@ -106,7 +131,7 @@ namespace Cesium3DTiles {
         }
 
         /**
-         * Marks this tile as "kicked".
+         * @brief Marks this tile as "kicked".
          */
         void kick() {
             switch (this->_result) {

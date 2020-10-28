@@ -10,7 +10,7 @@ namespace CesiumGeometry {
     class Plane;
 
     /**
-     * @brief A {@link BoundingVolume} defined as a closed and convex cuboid with any orientation.
+     * @brief A bounding volume defined as a closed and convex cuboid with any orientation.
      * 
      * @see BoundingSphere
      * @see BoundingRegion
