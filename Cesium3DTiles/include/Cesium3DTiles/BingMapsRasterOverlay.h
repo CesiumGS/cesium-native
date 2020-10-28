@@ -9,7 +9,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief Styles of Bing maps overlays
+     * @brief Styles of Bing Maps overlays
      *
      * Constants that can be passed to a {@link BingMapsRasterOverlay} to
      * indicate the overlays that should be painted.
