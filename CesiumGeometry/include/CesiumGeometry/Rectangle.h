@@ -62,7 +62,7 @@ namespace CesiumGeometry {
          * @brief Checks whether this rectangle overlaps the given rectangle
          *
          * This means that this rectangle and the given rectangle have 
-         * a non-empty intersection. If any of the rectangles is empty,
+         * a non-empty intersection. If either of the rectangles is empty,
          * then this will always return `false`.
          * 
          * @param other The other rectangle
