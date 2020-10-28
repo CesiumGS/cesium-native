@@ -26,6 +26,30 @@ namespace Cesium3DTiles {
     class RasterOverlayTileProvider;
     struct TileContentLoadResult;
 
+    /**
+     * @brief A tile in a {@link Tileset}.
+     * 
+     * The tiles of a tileset form a hierarchy, where each tile may contain 
+     * renderable content, and each tile as an associated bounding volume.
+     * 
+     * The actual hierarchy is represented with the {@link Tile::getParent}
+     * and {@link Tile::getChildren} functions.
+     * 
+     * The renderable content is provided as an {@link TileContentLoadResult}
+     * from the {@link Tile::getContent} function. Tiles may have content with 
+     * different levels of detail. The {@link Tile::getGeometricError} function 
+     * returns the geometric error of the representation of the renderable 
+     * content of a tile.
+     * 
+     * The {@ link BoundingVolume} is given by the {@lint Tile::getBoundingVolume}
+     * function. This bounding volme closes the renderable content of the 
+     * tile itself, as well as the renderable content of all children, yielding 
+     * a spatially coherent hierarchy of bounding volumes.
+     * 
+     * The bounding volume of the content of an individual tile is given 
+     * by the {@link Tile::getContentBoundingVolume} function.
+     * 
+     */
     class CESIUM3DTILES_API Tile {
     public:
         /**
@@ -33,43 +57,70 @@ namespace Cesium3DTiles {
          */
         enum class LoadState {
             /**
-             * This tile is in the process of being destroyed. Any pointers to it
-             * will soon be invalid.
+             * @brief This tile is in the process of being destroyed. 
+             *
+             * Any pointers to it will soon be invalid.
              */
             Destroying = -2,
 
             /**
-             * Something went wrong while loading this tile.
+             * @brief Something went wrong while loading this tile.
              */
             Failed = -1,
 
             /**
-             * The tile is not yet loaded at all, beyond the metadata in tileset.json.
+             * @brief The tile is not yet loaded at all, beyond the metadata in tileset.json.
              */
             Unloaded = 0,
 
             /**
-             * The tile content is currently being loaded. Note that while a tile is in this state, its
-             * \ref Tile::getContent, \ref Tile::setContent, \ref Tile::getState, and \ref Tile::setState
-             * methods may be called from the load thread.
+             * @brief The tile content is currently being loaded. 
+             *
+             * Note that while a tile is in this state, its \ref Tile::getContent, \ref Tile::setContent,
+             * \ref Tile::getState, and \ref Tile::setState methods may be called from the load thread.
              */
             ContentLoading = 1,
 
             /**
-             * The tile content has finished loading.
+             * @brief The tile content has finished loading.
              */
             ContentLoaded = 2,
 
             /**
-             * The tile is completely done loading.
+             * @brief The tile is completely done loading.
              */
             Done = 3
         };
 
+        /**
+         * @brief Default constructor for an empty, uninitialized tile
+         */
         Tile();
+
+        /**
+         * @brief Default destructor, which clears all resources associated with this tile
+         */
         ~Tile();
+
+        /**
+         * @brief Copy constructor
+         *
+         * @param rhs The other instance
+         */
         Tile(Tile& rhs) noexcept = delete;
+
+        /**
+         * @brief Copy constructor
+         * 
+         * @param rhs The other instance
+         */
         Tile(Tile&& rhs) noexcept;
+
+        /**
+         * @brief Assignment operator
+         *
+         * @param rhs The other instance
+         */
         Tile& operator=(Tile&& rhs) noexcept;
 
         void prepareToDestroy();
@@ -102,10 +153,12 @@ namespace Cesium3DTiles {
         TileRefine getRefine() const { return this->_refine; }
         void setRefine(TileRefine value) { this->_refine = value; }
 
-        /// <summary>
-        /// Gets the transformation matrix for this tile. This matrix does _not_ need to be multiplied
-        /// with the tile's parent's transform as this has already been done.
-        /// </summary>
+        /**
+        * @brief Gets the transformation matrix for this tile. 
+        *
+        * This matrix does _not_ need to be multiplied with the tile's parent's transform 
+        * as this has already been done.
+        */
         const glm::dmat4x4& getTransform() const { return this->_transform; }
         void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
 
@@ -127,7 +180,7 @@ namespace Cesium3DTiles {
         void setLastSelectionState(const TileSelectionState& newState) { this->_lastSelectionState = newState; }
 
         /**
-         * Determines if this tile is currently renderable.
+         * @brief Determines if this tile is currently renderable.
          */
         bool isRenderable() const;
 
@@ -136,7 +189,8 @@ namespace Cesium3DTiles {
         bool unloadContent();
 
         /**
-         * Gives this tile a chance to update itself each render frame.
+         * @brief Gives this tile a chance to update itself each render frame.
+         * 
          * @param previousFrameNumber The number of the previous render frame.
          * @param currentFrameNumber The number of the current render frame.
          */

@@ -9,7 +9,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief Styles of Bing Maps overlays
+     * @brief Styles of Bing Maps overlays.
      *
      * Constants that can be passed to a {@link BingMapsRasterOverlay} to
      * indicate the overlays that should be painted.
@@ -79,7 +79,7 @@ namespace Cesium3DTiles {
     public:
 
         /**
-         * @brief Creates a new instance
+         * @brief Creates a new instance.
          *
          * @param url The url of the Bing Maps server hosting the imagery
          * @param key The Bing Maps key for your application, which can be created at https://www.bingmapsportal.com/
