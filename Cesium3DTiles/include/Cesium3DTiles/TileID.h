@@ -7,6 +7,18 @@
 
 namespace Cesium3DTiles {
 
-    typedef std::variant<std::string, CesiumGeometry::QuadtreeTileID, CesiumGeometry::OctreeTileID, CesiumGeometry::QuadtreeChild> TileID;
+    typedef std::variant<
+        // A URL
+        std::string,
+
+        // A tile in an implicit quadtree.
+        CesiumGeometry::QuadtreeTileID,
+
+        // A tile in an implicit octree.
+        CesiumGeometry::OctreeTileID,
+
+        // One of four tiles created by dividing a parent tile into four parts.
+        CesiumGeometry::QuadtreeChild
+    > TileID;
 
 }

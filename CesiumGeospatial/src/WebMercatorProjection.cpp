@@ -1,6 +1,8 @@
-#include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Math.h"
+#include <glm/exponential.hpp>
+#include <glm/trigonometric.hpp>
 
 namespace CesiumGeospatial {
 
@@ -59,15 +61,15 @@ namespace CesiumGeospatial {
     }
 
     /*static*/ double WebMercatorProjection::mercatorAngleToGeodeticLatitude(double mercatorAngle) {
-        return CesiumUtility::Math::PI_OVER_TWO - 2.0 * atan(exp(-mercatorAngle));
+        return CesiumUtility::Math::PI_OVER_TWO - 2.0 * glm::atan(glm::exp(-mercatorAngle));
     }
 
     /*static*/ double WebMercatorProjection::geodeticLatitudeToMercatorAngle(double latitude) {
         // Clamp the latitude coordinate to the valid Mercator bounds.
         latitude = CesiumUtility::Math::clamp(latitude, -WebMercatorProjection::MAXIMUM_LATITUDE, WebMercatorProjection::MAXIMUM_LATITUDE);
 
-        double sinLatitude = sin(latitude);
-        return 0.5 * log((1.0 + sinLatitude) / (1.0 - sinLatitude));
+        double sinLatitude = glm::sin(latitude);
+        return 0.5 * glm::log((1.0 + sinLatitude) / (1.0 - sinLatitude));
     }
 
 }

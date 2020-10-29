@@ -16,17 +16,17 @@ namespace CesiumGeometry {
 
         // plane is used as if it is its normal; the first three components are assumed to be normalized
         double radEffective =
-            std::abs(
+            glm::abs(
                 normal.x * xAxisDirectionAndHalfLength.x +
                 normal.y * xAxisDirectionAndHalfLength.y +
                 normal.z * xAxisDirectionAndHalfLength.z
             ) +
-            std::abs(
+            glm::abs(
                 normal.x * yAxisDirectionAndHalfLength.x +
                 normal.y * yAxisDirectionAndHalfLength.y +
                 normal.z * yAxisDirectionAndHalfLength.z
             ) +
-            std::abs(
+            glm::abs(
                 normal.x * zAxisDirectionAndHalfLength.x +
                 normal.y * zAxisDirectionAndHalfLength.y +
                 normal.z * zAxisDirectionAndHalfLength.z

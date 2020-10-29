@@ -6,7 +6,6 @@
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "upsampleGltfForRasterOverlays.h"
-#include <algorithm>
 #include <chrono>
 
 using namespace CesiumGeometry;

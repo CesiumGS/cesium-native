@@ -1,5 +1,5 @@
 #include "Cesium3DTiles/Camera.h"
-#include <algorithm>
+#include <glm/trigonometric.hpp>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -43,7 +43,7 @@ namespace Cesium3DTiles {
         this->_horizontalFieldOfView = horizontalFieldOfView;
         this->_verticalFieldOfView = verticalFieldOfView;
 
-        this->_sseDenominator = 2.0 * tan(0.5 * this->_verticalFieldOfView);
+        this->_sseDenominator = 2.0 * glm::tan(0.5 * this->_verticalFieldOfView);
 
         this->_updateCullingVolume();
     }
@@ -52,9 +52,9 @@ namespace Cesium3DTiles {
         double fovx = this->_horizontalFieldOfView;
         double fovy = this->_verticalFieldOfView;
 
-        double t = tan(0.5 * fovy);
+        double t = glm::tan(0.5 * fovy);
         double b = -t;
-        double r = tan(0.5 * fovx);
+        double r = glm::tan(0.5 * fovx);
         double l = -r;
 
         double n = 1.0;
@@ -84,7 +84,7 @@ namespace Cesium3DTiles {
         normal = nearCenter + normal;
         normal = normal - this->_position;
         normal = glm::cross(this->_up, normal);
-        normal = normalize(normal);
+        normal = glm::normalize(normal);
 
         this->_rightPlane = Plane(
             normal,
@@ -198,7 +198,7 @@ namespace Cesium3DTiles {
 
     double Camera::computeScreenSpaceError(double geometricError, double distance) const {
         // Avoid divide by zero when viewer is inside the tile
-        distance = std::max(distance, 1e-7);
+        distance = glm::max(distance, 1e-7);
         double sseDenominator = this->_sseDenominator;
         return (geometricError * this->_viewportSize.y) / (distance * sseDenominator);
     }

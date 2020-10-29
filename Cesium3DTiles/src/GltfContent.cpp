@@ -86,7 +86,7 @@ namespace Cesium3DTiles {
 			// If the position is near the anti-meridian and the projected position is outside the expected range, try
 			// using the equivalent longitude on the other side of the anti-meridian to see if that gets us closer.
 			if (
-				std::abs(std::abs(cartographic.value().longitude) - CesiumUtility::Math::ONE_PI) < CesiumUtility::Math::EPSILON5 &&
+				glm::abs(glm::abs(cartographic.value().longitude) - CesiumUtility::Math::ONE_PI) < CesiumUtility::Math::EPSILON5 &&
 				(
 					projectedPosition.x < rectangle.minimumX ||
 					projectedPosition.x > rectangle.maximumX ||

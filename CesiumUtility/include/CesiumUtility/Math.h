@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/gtc/epsilon.hpp>
-#include <algorithm>
 #include "CesiumUtility/Library.h"
 
 namespace CesiumUtility {
@@ -96,7 +95,7 @@ namespace CesiumUtility {
         }
 
         static inline double relativeEpsilonToAbsolute(double a, double b, double relativeEpsilon) {
-            return relativeEpsilon * std::max(std::abs(a), std::abs(b));
+            return relativeEpsilon * glm::max(glm::abs(a), glm::abs(b));
         }
 
         template<glm::length_t L, typename T, glm::qualifier Q>
@@ -123,7 +122,7 @@ namespace CesiumUtility {
          * @snippet TestMath.cpp equalsEpsilon
          */
         static inline bool equalsEpsilon(double left, double right, double relativeEpsilon, double absoluteEpsilon) {
-            double diff = std::abs(left - right);
+            double diff = glm::abs(left - right);
             return
                 diff <= absoluteEpsilon ||
                 diff <= relativeEpsilonToAbsolute(left, right, relativeEpsilon);
@@ -186,8 +185,8 @@ namespace CesiumUtility {
         static inline double zeroToTwoPi(double angle) {
             double mod = Math::mod(angle, Math::TWO_PI);
             if (
-                std::abs(mod) < Math::EPSILON14 &&
-                std::abs(angle) > Math::EPSILON14
+                glm::abs(mod) < Math::EPSILON14 &&
+                glm::abs(angle) > Math::EPSILON14
             ) {
                 return Math::TWO_PI;
             }
@@ -236,7 +235,7 @@ namespace CesiumUtility {
          * @snippet TestMath.cpp lerp
          */
         static inline double lerp(double p, double q, double time) {
-            return (1.0 - time) * p + time * q;
+            return glm::mix(p, q, time);
         }
 
         /**
@@ -248,7 +247,7 @@ namespace CesiumUtility {
          * @returns The value clamped so that min <= value <= max.
          */
         static inline double clamp(double value, double min, double max) {
-            return value < min ? min : value > max ? max : value;
+            return glm::clamp(value, min, max);
         };
 
         /**
@@ -261,7 +260,7 @@ namespace CesiumUtility {
          * @see Math::fromSNorm
          */
         static inline double toSNorm(double value, double rangeMaximum = 255.0) {
-            return std::round(
+            return glm::round(
                 (Math::clamp(value, -1.0, 1.0) * 0.5 + 0.5) * rangeMaximum
             );
         };
