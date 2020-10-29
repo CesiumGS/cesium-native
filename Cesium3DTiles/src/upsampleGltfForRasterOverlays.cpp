@@ -217,9 +217,11 @@ namespace Cesium3DTiles {
 
         tinygltf::BufferView& vertexBufferView = model.bufferViews[vertexBufferViewIndex];
         vertexBufferView.buffer = static_cast<int>(vertexBufferIndex);
+        vertexBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
         tinygltf::BufferView& indexBufferView = model.bufferViews[indexBufferViewIndex];
         indexBufferView.buffer = static_cast<int>(indexBufferIndex);
+        indexBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
         uint32_t vertexSizeFloats = 0;
         int uvAccessorIndex = -1;
@@ -385,6 +387,7 @@ namespace Cesium3DTiles {
         model.accessors.emplace_back();
         tinygltf::Accessor& newIndicesAccessor = model.accessors.back();
         newIndicesAccessor.bufferView = static_cast<int>(indexBufferViewIndex);
+        newIndicesAccessor.byteOffset = 0;
         newIndicesAccessor.count = indices.size();
         newIndicesAccessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT;
         newIndicesAccessor.type = TINYGLTF_TYPE_SCALAR;
