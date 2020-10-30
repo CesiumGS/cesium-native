@@ -119,6 +119,9 @@ namespace Cesium3DTiles {
         result.tilesToRenderThisFrame.clear();
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
+        result.tilesVisited = 0;
+        result.tilesCulled = 0;
+        result.maxDepthVisited = 0;
 
         Tile* pRootTile = this->getRootTile();
         if (!pRootTile) {
@@ -129,7 +132,12 @@ namespace Cesium3DTiles {
         this->_loadQueueMedium.clear();
         this->_loadQueueLow.clear();
 
-        this->_visitTileIfVisible(previousFrameNumber, currentFrameNumber, camera, false, *pRootTile, result);
+        this->_visitTileIfVisible(previousFrameNumber, currentFrameNumber, 0, camera, false, *pRootTile, result);
+
+        result.tilesLoadingLowPriority = static_cast<uint32_t>(this->_loadQueueLow.size());
+        result.tilesLoadingMediumPriority = static_cast<uint32_t>(this->_loadQueueMedium.size());
+        result.tilesLoadingHighPriority = static_cast<uint32_t>(this->_loadQueueHigh.size());
+
         this->_unloadCachedTiles();
         this->_processLoadQueue();
 
@@ -491,6 +499,12 @@ namespace Cesium3DTiles {
         markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
     }
 
+    static void addTileToLoadQueue(std::vector<Tile*>& loadQueue, Tile& tile) {
+        if (tile.getState() == Tile::LoadState::Unloaded) {
+            loadQueue.push_back(&tile);
+        }
+    }
+
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * It is not yet known whether the tile is visible.
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
@@ -499,6 +513,7 @@ namespace Cesium3DTiles {
     Tileset::TraversalDetails Tileset::_visitTileIfVisible(
         uint32_t lastFrameNumber,
         uint32_t currentFrameNumber,
+        uint32_t depth,
         const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
@@ -514,13 +529,15 @@ namespace Cesium3DTiles {
 
             // Preload this culled sibling if requested.
             if (this->_options.preloadSiblings) {
-                this->_loadQueueLow.push_back(&tile);
+                addTileToLoadQueue(this->_loadQueueLow, tile);
             }
+
+            ++result.tilesCulled;
 
             return TraversalDetails();
         }
 
-        return this->_visitTile(lastFrameNumber, currentFrameNumber, camera, ancestorMeetsSse, tile, result);
+        return this->_visitTile(lastFrameNumber, currentFrameNumber, depth, camera, ancestorMeetsSse, tile, result);
     }
 
     // Visits a tile for possible rendering. When we call this function with a tile:
@@ -531,11 +548,15 @@ namespace Cesium3DTiles {
     Tileset::TraversalDetails Tileset::_visitTile(
         uint32_t lastFrameNumber,
         uint32_t currentFrameNumber,
+        uint32_t depth,
         const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
         ViewUpdateResult& result
     ) {
+        ++result.tilesVisited;
+        result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
+
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
         // If this is a leaf tile, just render it (it's already been deemed visible).
@@ -544,7 +565,7 @@ namespace Cesium3DTiles {
             // Render this leaf tile.
             tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Rendered));
             result.tilesToRenderThisFrame.push_back(&tile);
-            this->_loadQueueMedium.push_back(&tile);
+            addTileToLoadQueue(this->_loadQueueMedium, tile);
 
             TraversalDetails traversalDetails;
             traversalDetails.allAreRenderable = tile.isRenderable();
@@ -567,7 +588,7 @@ namespace Cesium3DTiles {
             for (Tile& child : children) {
                 if (!child.isRenderable()) {
                     waitingForChildren = true;
-                    this->_loadQueueMedium.push_back(&child);
+                    addTileToLoadQueue(this->_loadQueueMedium, child);
                 }
             }
         }
@@ -591,7 +612,7 @@ namespace Cesium3DTiles {
             if (renderThisTile) {
                 // Only load this tile if it (not just an ancestor) meets the SSE.
                 if (meetsSse) {
-                    this->_loadQueueMedium.push_back(&tile);
+                    addTileToLoadQueue(this->_loadQueueMedium, tile);
                 }
 
                 markChildrenNonRendered(lastFrameNumber, tile, result);
@@ -616,7 +637,7 @@ namespace Cesium3DTiles {
 
             // Load this blocker tile with high priority, but only if this tile (not just an ancestor) meets the SSE.
             if (meetsSse) {
-                this->_loadQueueHigh.push_back(&tile);
+                addTileToLoadQueue(this->_loadQueueHigh, tile);
             }
         }
 
@@ -627,7 +648,7 @@ namespace Cesium3DTiles {
         // If this tile uses additive refinement, we need to render this tile in addition to its children.
         if (tile.getRefine() == TileRefine::Add) {
             result.tilesToRenderThisFrame.push_back(&tile);
-            this->_loadQueueMedium.push_back(&tile);
+            addTileToLoadQueue(this->_loadQueueMedium, tile);
             queuedForLoad = true;
         }
 
@@ -636,7 +657,7 @@ namespace Cesium3DTiles {
         size_t loadIndexMedium = this->_loadQueueMedium.size();
         size_t loadIndexHigh = this->_loadQueueHigh.size();
 
-        TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(lastFrameNumber, currentFrameNumber, camera, ancestorMeetsSse, tile, result);
+        TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(lastFrameNumber, currentFrameNumber, depth, camera, ancestorMeetsSse, tile, result);
 
         if (firstRenderedDescendantIndex == result.tilesToRenderThisFrame.size()) {
             // No descendant tiles were added to the render list by the function above, meaning they were all
@@ -695,7 +716,7 @@ namespace Cesium3DTiles {
                 this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + loadIndexHigh, this->_loadQueueHigh.end());
 
                 if (!queuedForLoad) {
-                    this->_loadQueueMedium.push_back(&tile);
+                    addTileToLoadQueue(this->_loadQueueMedium, tile);
                 }
 
                 traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -712,7 +733,7 @@ namespace Cesium3DTiles {
         }
 
         if (this->_options.preloadAncestors && !queuedForLoad) {
-            this->_loadQueueLow.push_back(&tile);
+            addTileToLoadQueue(this->_loadQueueLow, tile);
         }
 
         return traversalDetails;
@@ -721,6 +742,7 @@ namespace Cesium3DTiles {
     Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
         uint32_t lastFrameNumber,
         uint32_t currentFrameNumber,
+        uint32_t depth,
         const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
@@ -734,6 +756,7 @@ namespace Cesium3DTiles {
             TraversalDetails childTraversal = this->_visitTileIfVisible(
                 lastFrameNumber,
                 currentFrameNumber,
+                depth + 1,
                 camera,
                 ancestorMeetsSse,
                 child,
