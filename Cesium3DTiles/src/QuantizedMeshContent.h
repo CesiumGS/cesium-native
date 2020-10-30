@@ -6,10 +6,14 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief A class that can create a {@link TileContentLoadResult} from quantized data.
+     */
     class CESIUM3DTILES_API QuantizedMeshContent {
     public:
         static std::string CONTENT_TYPE;
 
+        /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(
             const TileContext& context,
             const TileID& tileID,

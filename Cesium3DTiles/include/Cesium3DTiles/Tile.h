@@ -35,13 +35,13 @@ namespace Cesium3DTiles {
      * The actual hierarchy is represented with the {@link Tile::getParent}
      * and {@link Tile::getChildren} functions.
      * 
-     * The renderable content is provided as an {@link TileContentLoadResult}
+     * The renderable content is provided as a {@link TileContentLoadResult}
      * from the {@link Tile::getContent} function. Tiles may have content with 
      * different levels of detail. The {@link Tile::getGeometricError} function 
      * returns the geometric error of the representation of the renderable 
      * content of a tile.
      * 
-     * The {@ link BoundingVolume} is given by the {@lint Tile::getBoundingVolume}
+     * The {@link BoundingVolume} is given by the {@link Tile::getBoundingVolume}
      * function. This bounding volme closes the renderable content of the 
      * tile itself, as well as the renderable content of all children, yielding 
      * a spatially coherent hierarchy of bounding volumes.
@@ -168,7 +168,18 @@ namespace Cesium3DTiles {
         const std::optional<BoundingVolume>& getContentBoundingVolume() const { return this->_contentBoundingVolume; }
         void setContentBoundingVolume(const std::optional<BoundingVolume>& value) { this->_contentBoundingVolume = value; }
 
+        /**
+         * @brief Returns the {@link TileContentLoadResult} for the content of this tile.
+         * 
+         * This will be a `nullptr` if the content of this tile has not yet been loaded,
+         * as indicated by the indicated by the {@link Tile::getState} of 
+         * this tile not being {@link Tile::LoadState::ContentLoaded}.
+         * 
+         * @return The tile content load result, or `nullptr` if no content is loaded
+         */
         TileContentLoadResult* getContent() { return this->_pContent.get(); }
+
+        /** @copydoc Tile::getContent() */
         const TileContentLoadResult* getContent() const { return this->_pContent.get(); }
 
         void* getRendererResources() const { return this->_pRendererResources; }
@@ -184,8 +195,36 @@ namespace Cesium3DTiles {
          */
         bool isRenderable() const;
 
+        /**
+         * @brief Trigger the process of loading the {@link Tile::getContent}
+         * 
+         * This function is not supposed to be called by clients.
+         * 
+         * If this tile was already unloaded (indicated by the {@link Tile::getState} of 
+         * this tile being {@link Tile::LoadState::Unloaded}), then nothing will be done.
+         * 
+         * Otherwise, the tile will go into the {@link Tile::LoadState::ContentLoading}
+         * state, and the request for loading the tile content will be sent out. The
+         * response of the request will be received asynchronously. Depending on the
+         * type of the tile and the response, the tile will eventually go into the
+         * {@link Tile::LoadState::ContentLoaded} state, and the {@link Tile::getContent}
+         * will be available.
+         */
         void loadContent();
 
+        /**
+         * @brief Frees all resources that have been allocated for the {@link Tile::getContent}.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * If this tile was already unloaded (indicated by the {@link Tile::getState} of
+         * this tile being {@link Tile::LoadState::Unloaded}), then nothing will be done.
+         * 
+         * Otherwise, the resources that have been allocated for the tile content will
+         * be freed.
+         * 
+         * @return Whether the content was unloaded.
+         */
         bool unloadContent();
 
         /**
@@ -200,6 +239,17 @@ namespace Cesium3DTiles {
 
     protected:
         void setState(LoadState value);
+
+        /**
+         * @brief Will be called when the response for loading the tile content was received.
+         * 
+         * This will examine the response of the given {@link IAssetRequest} and
+         * create the {@link Tile::getContent} of this tile. The requests are 
+         * triggered by {@link Tile::loadContent}, and this function will be
+         * called asynchronously when the response arrives. 
+         * 
+         * @param pRequest The {@link IAssetRequest} for which the response was received.
+         */
         void contentResponseReceived(IAssetRequest* pRequest);
         void generateTextureCoordinates();
         void upsampleParent();
