@@ -76,8 +76,8 @@ namespace Cesium3DTiles {
             /**
              * @brief The tile content is currently being loaded. 
              *
-             * Note that while a tile is in this state, its \ref Tile::getContent, \ref Tile::setContent,
-             * \ref Tile::getState, and \ref Tile::setState methods may be called from the load thread.
+             * Note that while a tile is in this state, its {@link Tile::getContent}, {@link Tile::setContent},
+             * {@link Tile::getState}, and {@link Tile::setState} methods may be called from the load thread.
              */
             ContentLoading = 1,
 
