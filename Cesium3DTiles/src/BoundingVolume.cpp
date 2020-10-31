@@ -1,5 +1,4 @@
 #include "Cesium3DTiles/BoundingVolume.h"
-#include <algorithm>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -24,8 +23,8 @@ namespace Cesium3DTiles {
             BoundingVolume operator()(const BoundingSphere& boundingSphere) {
                 glm::dvec3 center = transform * glm::dvec4(boundingSphere.getCenter(), 1.0);
 
-                double uniformScale = std::max(
-                    std::max(
+                double uniformScale = glm::max(
+                    glm::max(
                         glm::length(glm::dvec3(transform[0])),
                         glm::length(glm::dvec3(transform[1]))
                     ),

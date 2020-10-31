@@ -1,7 +1,6 @@
 #include "CesiumGeometry/Rectangle.h"
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
-#include <algorithm>
 
 namespace CesiumGeometry {
 
@@ -22,10 +21,10 @@ namespace CesiumGeometry {
     }
 
     bool Rectangle::overlaps(const Rectangle& other) const {
-        double left = std::max(this->minimumX, other.minimumX);
-        double bottom = std::max(this->minimumY, other.minimumY);
-        double right = std::min(this->maximumX, other.maximumX);
-        double top = std::min(this->maximumY, other.maximumY);
+        double left = glm::max(this->minimumX, other.minimumX);
+        double bottom = glm::max(this->minimumY, other.minimumY);
+        double right = glm::min(this->maximumX, other.maximumX);
+        double top = glm::min(this->maximumY, other.maximumY);
         return bottom < top && left < right;
     }
 
@@ -45,13 +44,13 @@ namespace CesiumGeometry {
 
         if (maxDistance.x <= 0.0 && maxDistance.y <= 0.0) {
             // Inside, report closest edge.
-            return std::max(maxDistance.x, maxDistance.y);
+            return glm::max(maxDistance.x, maxDistance.y);
         } else if (maxDistance.x > 0.0 && maxDistance.y > 0.0) {
             // Outside in both directions, closest point is a corner
             return glm::length(maxDistance);
         } else {
             // Outside in one direction, report the distance in that direction.
-            return std::max(maxDistance.x, maxDistance.y);
+            return glm::max(maxDistance.x, maxDistance.y);
         }
     }
 
@@ -64,10 +63,10 @@ namespace CesiumGeometry {
     }
 
     std::optional<Rectangle> Rectangle::intersect(const Rectangle& other) const {
-        double left = std::max(this->minimumX, other.minimumX);
-        double bottom = std::max(this->minimumY, other.minimumY);
-        double right = std::min(this->maximumX, other.maximumX);
-        double top = std::min(this->maximumY, other.maximumY);
+        double left = glm::max(this->minimumX, other.minimumX);
+        double bottom = glm::max(this->minimumY, other.minimumY);
+        double right = glm::min(this->maximumX, other.maximumX);
+        double top = glm::min(this->maximumY, other.maximumY);
 
         if (bottom >= top || left >= right) {
             return std::nullopt;

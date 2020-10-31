@@ -5,7 +5,7 @@
 #include <gsl/span>
 
 namespace CesiumGeometry {
-    class Rectangle;
+    struct Rectangle;
 }
 
 namespace Cesium3DTiles {

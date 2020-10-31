@@ -1,7 +1,6 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
-#include "Cesium3DTiles/TerrainLayerJsonContent.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeospatial/GeographicProjection.h"

@@ -1,5 +1,5 @@
 #include "CesiumGeospatial/Projection.h"
-#include <cmath>
+#include <glm/trigonometric.hpp>
 
 namespace CesiumGeospatial {
 
@@ -77,7 +77,7 @@ namespace CesiumGeospatial {
 
             double operator()(const WebMercatorProjection& webMercator) {
                 // TODO: is there a better estimate?
-                return std::cos(webMercator.unproject(position).latitude);
+                return glm::cos(webMercator.unproject(position).latitude);
             }
         };
 

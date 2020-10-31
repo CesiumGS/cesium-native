@@ -87,8 +87,8 @@ namespace Cesium3DTiles {
             (this->_imageWidth * tilingScheme.getNumberOfXTilesAtLevel(0));
 
         double twoToTheLevelPower = levelZeroMaximumTexelSpacingMeters / geometricError;
-        double level = std::log2(twoToTheLevelPower);
-        double rounded = std::max(std::round(level), 0.0);
+        double level = glm::log2(twoToTheLevelPower);
+        double rounded = glm::max(glm::round(level), 0.0);
         return static_cast<uint32_t>(rounded);
     }
 
@@ -159,7 +159,7 @@ namespace Cesium3DTiles {
         // TODO: dividing by 8 to change the default 3D Tiles SSE (16) back to the terrain SSE (2)
         // TODO: Correct latitude factor, which is really a property of the projection.
         uint32_t imageryLevel = this->computeLevelFromGeometricError(targetGeometricError / 8.0, intersection.getCenter());
-        imageryLevel = std::max(0U, imageryLevel);
+        imageryLevel = glm::max(0U, imageryLevel);
 
         uint32_t maximumLevel = this->getMaximumLevel();
         if (imageryLevel > maximumLevel) {
@@ -201,14 +201,14 @@ namespace Cesium3DTiles {
         CesiumGeometry::Rectangle southwestTileRectangle = imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
         
         if (
-            std::abs(southwestTileRectangle.maximumY - geometryRectangle.minimumY) < veryCloseY &&
+            glm::abs(southwestTileRectangle.maximumY - geometryRectangle.minimumY) < veryCloseY &&
             southwestTileCoordinates.y < northeastTileCoordinates.y
         ) {
             ++southwestTileCoordinates.y;
         }
 
         if (
-            std::abs(southwestTileRectangle.maximumX - geometryRectangle.minimumX) < veryCloseX &&
+            glm::abs(southwestTileRectangle.maximumX - geometryRectangle.minimumX) < veryCloseX &&
             southwestTileCoordinates.x < northeastTileCoordinates.x
         ) {
             ++southwestTileCoordinates.x;
@@ -217,14 +217,14 @@ namespace Cesium3DTiles {
         CesiumGeometry::Rectangle northeastTileRectangle = imageryTilingScheme.tileToRectangle(northeastTileCoordinates);
 
         if (
-            std::abs(northeastTileRectangle.maximumY - geometryRectangle.minimumY) < veryCloseY &&
+            glm::abs(northeastTileRectangle.maximumY - geometryRectangle.minimumY) < veryCloseY &&
             northeastTileCoordinates.y > southwestTileCoordinates.y
         ) {
             --northeastTileCoordinates.y;
         }
 
         if (
-            std::abs(northeastTileRectangle.minimumX - geometryRectangle.maximumX) < veryCloseX &&
+            glm::abs(northeastTileRectangle.minimumX - geometryRectangle.maximumX) < veryCloseX &&
             northeastTileCoordinates.x > southwestTileCoordinates.x
         ) {
             --northeastTileCoordinates.x;
@@ -251,9 +251,9 @@ namespace Cesium3DTiles {
         // TODO
         // if (
         //     /*!this.isBaseLayer()*/ false &&
-        //     std::abs(clippedImageryRectangle.value().getWest() - terrainRectangle.getWest()) >= veryCloseX
+        //     glm::abs(clippedImageryRectangle.value().getWest() - terrainRectangle.getWest()) >= veryCloseX
         // ) {
-        //     maxU = std::min(
+        //     maxU = glm::min(
         //         1.0,
         //         (clippedImageryRectangle.value().getWest() - terrainRectangle.getWest()) / terrainRectangle.computeWidth()
         //     );
@@ -261,9 +261,9 @@ namespace Cesium3DTiles {
 
         // if (
         //     /*!this.isBaseLayer()*/ false &&
-        //     std::abs(clippedImageryRectangle.value().getNorth() - terrainRectangle.getNorth()) >= veryCloseY
+        //     glm::abs(clippedImageryRectangle.value().getNorth() - terrainRectangle.getNorth()) >= veryCloseY
         // ) {
-        //     minV = std::max(
+        //     minV = glm::max(
         //         0.0,
         //         (clippedImageryRectangle.value().getNorth() - terrainRectangle.getSouth()) / terrainRectangle.computeHeight()
         //     );
@@ -285,7 +285,7 @@ namespace Cesium3DTiles {
                 continue;
             }
 
-            maxU = std::min(1.0, (clippedImageryRectangle.value().maximumX - geometryRectangle.minimumX) / geometryRectangle.computeWidth());
+            maxU = glm::min(1.0, (clippedImageryRectangle.value().maximumX - geometryRectangle.minimumX) / geometryRectangle.computeWidth());
 
             // If this is the eastern-most imagery tile mapped to this terrain tile,
             // and there are more imagery tiles to the east of this one, the maxU
@@ -293,7 +293,7 @@ namespace Cesium3DTiles {
             // image fall shy of the edge of the terrain tile.
             if (
                 i == northeastTileCoordinates.x &&
-                (/*this.isBaseLayer()*/ true || std::abs(clippedImageryRectangle.value().maximumX - geometryRectangle.maximumX) < veryCloseX)
+                (/*this.isBaseLayer()*/ true || glm::abs(clippedImageryRectangle.value().maximumX - geometryRectangle.maximumX) < veryCloseX)
             ) {
                 maxU = 1.0;
             }
@@ -314,7 +314,7 @@ namespace Cesium3DTiles {
                     continue;
                 }
 
-                maxV = std::min(
+                maxV = glm::min(
                     1.0,
                     (clippedImageryRectangle.value().maximumY - geometryRectangle.minimumY) / geometryRectangle.computeHeight()
                 );
@@ -325,7 +325,7 @@ namespace Cesium3DTiles {
                 // image fall shy of the edge of the terrain tile.
                 if (
                     j == northeastTileCoordinates.y &&
-                    (/*this.isBaseLayer()*/ true || std::abs(clippedImageryRectangle.value().maximumY - geometryRectangle.maximumY) < veryCloseY)
+                    (/*this.isBaseLayer()*/ true || glm::abs(clippedImageryRectangle.value().maximumY - geometryRectangle.maximumY) < veryCloseY)
                 ) {
                     maxV = 1.0;
                 }

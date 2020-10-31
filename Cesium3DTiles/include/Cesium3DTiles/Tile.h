@@ -6,7 +6,6 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
-#include "Cesium3DTiles/TileContent.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"

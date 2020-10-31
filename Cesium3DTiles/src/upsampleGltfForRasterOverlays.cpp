@@ -84,8 +84,8 @@ namespace Cesium3DTiles {
                         float value = *pInput;
                         output.push_back(value);
                         if (!skipMinMaxUpdate) {
-                            attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                            attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
+                            attribute.minimums[i] = glm::min(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = glm::max(attribute.maximums[i], static_cast<double>(value));
                         }
                         ++pInput;
                     }
@@ -101,8 +101,8 @@ namespace Cesium3DTiles {
                         float value = glm::mix(*pInput0, *pInput1, vertex.t);
                         output.push_back(value);
                         if (!skipMinMaxUpdate) {
-                            attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                            attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
+                            attribute.minimums[i] = glm::min(attribute.minimums[i], static_cast<double>(value));
+                            attribute.maximums[i] = glm::max(attribute.maximums[i], static_cast<double>(value));
                         }
                         ++pInput0;
                         ++pInput1;
@@ -157,8 +157,8 @@ namespace Cesium3DTiles {
                     for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
                         float value = glm::mix(output[outputIndex0], output[outputIndex1], vertex.t);
                         output[outputIndex0] = value;
-                        attribute.minimums[i] = std::min(attribute.minimums[i], static_cast<double>(value));
-                        attribute.maximums[i] = std::max(attribute.maximums[i], static_cast<double>(value));
+                        attribute.minimums[i] = glm::min(attribute.minimums[i], static_cast<double>(value));
+                        attribute.maximums[i] = glm::max(attribute.maximums[i], static_cast<double>(value));
                         ++outputIndex0;
                         ++outputIndex1;
                     }
@@ -217,9 +217,11 @@ namespace Cesium3DTiles {
 
         tinygltf::BufferView& vertexBufferView = model.bufferViews[vertexBufferViewIndex];
         vertexBufferView.buffer = static_cast<int>(vertexBufferIndex);
+        vertexBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
         tinygltf::BufferView& indexBufferView = model.bufferViews[indexBufferViewIndex];
         indexBufferView.buffer = static_cast<int>(indexBufferIndex);
+        indexBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
         uint32_t vertexSizeFloats = 0;
         int uvAccessorIndex = -1;
@@ -385,6 +387,7 @@ namespace Cesium3DTiles {
         model.accessors.emplace_back();
         tinygltf::Accessor& newIndicesAccessor = model.accessors.back();
         newIndicesAccessor.bufferView = static_cast<int>(indexBufferViewIndex);
+        newIndicesAccessor.byteOffset = 0;
         newIndicesAccessor.count = indices.size();
         newIndicesAccessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT;
         newIndicesAccessor.type = TINYGLTF_TYPE_SCALAR;

@@ -147,8 +147,8 @@ namespace Cesium3DTiles {
                 tinyxml2::XMLElement* pTileset = pTilesets->FirstChildElement("TileSet");
                 while (pTileset) {
                     uint32_t level = getAttributeUint32(pTileset, "order").value_or(0);
-                    minimumLevel = std::min(minimumLevel, level);
-                    maximumLevel = std::max(maximumLevel, level);
+                    minimumLevel = glm::min(minimumLevel, level);
+                    maximumLevel = glm::max(maximumLevel, level);
 
                     pTileset = pTileset->NextSiblingElement("TileSet");
                 }
@@ -183,7 +183,7 @@ namespace Cesium3DTiles {
                 }
             }
 
-            minimumLevel = std::min(minimumLevel, maximumLevel);
+            minimumLevel = glm::min(minimumLevel, maximumLevel);
 
             minimumLevel = this->_options.minimumLevel.value_or(minimumLevel);
             maximumLevel = this->_options.maximumLevel.value_or(maximumLevel);

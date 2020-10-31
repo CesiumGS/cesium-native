@@ -9,15 +9,13 @@ namespace CesiumGeometry {
     /**
      * @brief A 2D rectangle
      */
-    class CESIUMGEOMETRY_API Rectangle {
-    public:
-
+    struct CESIUMGEOMETRY_API Rectangle {
         /**
          * @brief Creates a new instance
          *
          * Creates a new rectangle from the given coordinates. This implicitly
          * assumes that the given coordinates form a valid rectangle, meaning
-         * that `mimimumX <= maximumX` and `mimimumY <= maximumY`.
+         * that `minimumX <= maximumX` and `minimumY <= maximumY`.
          * 
          * @param minimumX The minimum x-coordinate
          * @param minimumY The minimum y-coordinate

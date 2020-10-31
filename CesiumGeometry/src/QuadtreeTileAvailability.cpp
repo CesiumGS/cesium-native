@@ -1,5 +1,6 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include <algorithm>
+#include <glm/common.hpp>
 
 namespace CesiumGeometry {
 
@@ -111,16 +112,16 @@ namespace CesiumGeometry {
             // in multiple tiles and we need to check all of them, so use recursion.
             if (ll + lr + ul + ur > 1) {
                 if (ll) {
-                    maxLevel = std::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->ll, position));
+                    maxLevel = glm::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->ll, position));
                 }
                 if (lr) {
-                    maxLevel = std::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->lr, position));
+                    maxLevel = glm::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->lr, position));
                 }
                 if (ul) {
-                    maxLevel = std::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->ul, position));
+                    maxLevel = glm::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->ul, position));
                 }
                 if (ur) {
-                    maxLevel = std::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->ur, position));
+                    maxLevel = glm::max(maxLevel, findMaxLevelFromNode(pNode, *pNode->ur, position));
                 }
                 break;
             } else if (ll) {

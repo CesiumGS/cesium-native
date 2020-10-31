@@ -6,7 +6,6 @@
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "upsampleGltfForRasterOverlays.h"
-#include <algorithm>
 #include <chrono>
 
 using namespace CesiumGeometry;
@@ -201,6 +200,18 @@ namespace Cesium3DTiles {
         // Cannot unload while an async operation is in progress.
         if (this->getState() == Tile::LoadState::ContentLoading) {
             return false;
+        }
+
+        // If a child tile is being upsampled from this one, we can't unload this one yet.
+        if (this->getState() == Tile::LoadState::Done && !this->getChildren().empty()) {
+            for (const Tile& child : this->getChildren()) {
+                if (
+                    child.getState() == Tile::LoadState::ContentLoading &&
+                    std::get_if<CesiumGeometry::QuadtreeChild>(&child.getTileID()) != nullptr
+                ) {
+                    return false;
+                }
+            }
         }
 
         const TilesetExternals& externals = this->getTileset()->getExternals();

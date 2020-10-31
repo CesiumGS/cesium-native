@@ -1,6 +1,7 @@
 #include "CesiumGeospatial/Ellipsoid.h"
-#include <glm/geometric.hpp>
 #include "CesiumUtility/Math.h"
+#include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
 
 using namespace CesiumUtility;
 
@@ -29,12 +30,12 @@ namespace CesiumGeospatial {
     glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const Cartographic& cartographic) const {
         double longitude = cartographic.longitude;
         double latitude = cartographic.latitude;
-        double cosLatitude = cos(latitude);
+        double cosLatitude = glm::cos(latitude);
 
         return glm::normalize(glm::dvec3(
-            cosLatitude * cos(longitude),
-            cosLatitude * sin(longitude),
-            sin(latitude)
+            cosLatitude * glm::cos(longitude),
+            cosLatitude * glm::sin(longitude),
+            glm::sin(latitude)
         ));
     }
 
@@ -57,8 +58,8 @@ namespace CesiumGeospatial {
         glm::dvec3 n = this->geodeticSurfaceNormal(p.value());
         glm::dvec3 h = cartesian - p.value();
 
-        double longitude = atan2(n.y, n.x);
-        double latitude = asin(n.z);
+        double longitude = glm::atan(n.y, n.x);
+        double latitude = glm::asin(n.z);
         double height = Math::sign(glm::dot(h, cartesian)) * glm::length(h);
 
         return Cartographic(longitude, latitude, height);
@@ -148,7 +149,7 @@ namespace CesiumGeospatial {
             double derivative = -2.0 * denominator;
 
             correction = func / derivative;
-        } while (std::abs(func) > Math::EPSILON12);
+        } while (glm::abs(func) > Math::EPSILON12);
 
         return glm::dvec3(
             positionX * xMultiplier,
@@ -158,11 +159,11 @@ namespace CesiumGeospatial {
     }
 
     double Ellipsoid::getMaximumRadius() const {
-        return std::max(this->_radii.x, std::max(this->_radii.y, this->_radii.z));
+        return glm::max(this->_radii.x, glm::max(this->_radii.y, this->_radii.z));
     }
 
     double Ellipsoid::getMinimumRadius() const {
-        return std::min(this->_radii.x, std::min(this->_radii.y, this->_radii.z));
+        return glm::min(this->_radii.x, glm::min(this->_radii.y, this->_radii.z));
     }
 
 }

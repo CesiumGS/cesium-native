@@ -99,10 +99,10 @@ namespace CesiumGeospatial {
         }
 
         double west = CesiumUtility::Math::negativePiToPi(
-            std::max(rectangleWest, otherRectangleWest)
+            glm::max(rectangleWest, otherRectangleWest)
         );
         double east = CesiumUtility::Math::negativePiToPi(
-            std::min(rectangleEast, otherRectangleEast)
+            glm::min(rectangleEast, otherRectangleEast)
         );
 
         if (
@@ -113,8 +113,8 @@ namespace CesiumGeospatial {
             return std::nullopt;
         }
 
-        double south = std::max(this->_south, other._south);
-        double north = std::min(this->_north, other._north);
+        double south = glm::max(this->_south, other._south);
+        double north = glm::min(this->_north, other._north);
 
         if (south >= north) {
             return std::nullopt;

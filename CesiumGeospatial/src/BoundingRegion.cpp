@@ -258,8 +258,8 @@ namespace CesiumGeospatial {
             glm::dvec2 perimeterProjectedSW = tangentPlane.projectPointToNearestOnPlane(perimeterCartesianSW);
             glm::dvec2 perimeterProjectedSC = tangentPlane.projectPointToNearestOnPlane(perimeterCartesianSC);
 
-            minX = std::min(
-                std::min(
+            minX = glm::min(
+                glm::min(
                     perimeterProjectedNW.x,
                     perimeterProjectedCW.x
                 ),
@@ -268,15 +268,15 @@ namespace CesiumGeospatial {
 
             maxX = -minX; // symmetrical
 
-            maxY = std::max(perimeterProjectedNW.y, perimeterProjectedNC.y);
-            minY = std::min(perimeterProjectedSW.y, perimeterProjectedSC.y);
+            maxY = glm::max(perimeterProjectedNW.y, perimeterProjectedNC.y);
+            minY = glm::min(perimeterProjectedSW.y, perimeterProjectedSC.y);
 
             // Compute minimum Z using the rectangle at minimum height, since it will be deeper than the maximum height
             perimeterCartographicNW.height = perimeterCartographicSW.height = minimumHeight;
             perimeterCartesianNW = ellipsoid.cartographicToCartesian(perimeterCartographicNW);
             perimeterCartesianSW = ellipsoid.cartographicToCartesian(perimeterCartographicSW);
 
-            minZ = std::min(
+            minZ = glm::min(
                 plane.getPointDistance(perimeterCartesianNW),
                 plane.getPointDistance(perimeterCartesianSW)
             );
@@ -313,8 +313,8 @@ namespace CesiumGeospatial {
         );
         planeOrigin.z = 0.0; // center the plane on the equator to simpify plane normal calculation
         bool isPole =
-            std::abs(planeOrigin.x) < Math::EPSILON10 &&
-            std::abs(planeOrigin.y) < Math::EPSILON10;
+            glm::abs(planeOrigin.x) < Math::EPSILON10 &&
+            glm::abs(planeOrigin.y) < Math::EPSILON10;
         glm::dvec3 planeNormal = !isPole
             ? glm::normalize(planeOrigin)
             : glm::dvec3(1.0, 0.0, 0.0);
