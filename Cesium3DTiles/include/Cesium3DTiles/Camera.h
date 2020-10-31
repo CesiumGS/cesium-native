@@ -25,6 +25,7 @@ namespace Cesium3DTiles {
          * @param position The position of the eye point of the camera.
          * @param direction The view direction vector of the camera.
          * @param up The up vector of the camera.
+         * @param viewportSize The new size of the viewport, in pixels.
          * @param horizontalFieldOfView The horizontal field-of-view (opening)
          * angle of the camera, in radians.
          * @param verticalFieldOfView The vertical field-of-view (opening)
