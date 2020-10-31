@@ -122,34 +122,181 @@ namespace Cesium3DTiles {
          */
         Tile& operator=(Tile&& rhs) noexcept;
 
+        /**
+         * @brief Prepares this tile for being destroyed.
+         * 
+         * This function is not supposed to be called by clients.
+         * 
+         * It will cancel all pending requests for this tile, 
+         * and make sure that the resources that have been 
+         * allocated by this tile can be freed.
+         */
         void prepareToDestroy();
 
+        /**
+         * @brief Returns the {@link Tileset} to which this tile belongs.
+         */
         Tileset* getTileset() { return this->_pContext->pTileset; }
+
+        /** @copydoc Tile::getTileset() */
         const Tileset* getTileset() const { return this->_pContext->pTileset; }
         
+        /**
+         * @brief Returns the {@link TileContext} of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @return The tile context
+         */
         TileContext* getContext() { return this->_pContext; }
+
+        /** @copydoc Tile::getContext() */
         const TileContext* getContext() const { return this->_pContext; }
+
+        /**
+         * @brief Set the {@link TileContext} of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @param pContext The tile context
+         */
         void setContext(TileContext* pContext) { this->_pContext = pContext; }
 
+        /**
+         * @brief Returns the parent of this tile in the tile hierarchy.
+         * 
+         * This will be the `nullptr` if this is the root tile.
+         * 
+         * @return The parent
+         */
         Tile* getParent() { return this->_pParent; }
+
+        /** @copydoc Tile::getParent() */
         const Tile* getParent() const { return this->_pParent; }
+
+        /**
+         * @brief Set the parent of this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @param pParent The parent tile 
+         */
         void setParent(Tile* pParent) { this->_pParent = pParent; }
 
-        gsl::span<const Tile> getChildren() const { return gsl::span<const Tile>(this->_children); }
+        /**
+         * @brief Returns a *view* on the children of this tile.
+         * 
+         * The returned span will become invalid when this tile is destroyed.
+         * 
+         * @return The children of this tile
+         */
         gsl::span<Tile> getChildren() { return gsl::span<Tile>(this->_children); }
+
+        /** @copydoc Tile::getChildren() */
+        gsl::span<const Tile> getChildren() const { return gsl::span<const Tile>(this->_children); }
+
+        /**
+         * @brief Allocates space for the given number of child tiles.
+         * 
+         * This function is not supposed to be called by clients.
+         * 
+         * @param count The number of child tiles
+         * @throws `std::runtime_error` if this tile already has children
+         */
         void createChildTiles(size_t count);
+
+        /**
+         * @brief Assigns the given child tiles to this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @param children The child tiles
+         * @throws `std::runtime_error` if this tile already has children
+         */
         void createChildTiles(std::vector<Tile>&& children);
 
+        /**
+         * @brief Returns the {@link BoundingVolume} of this tile.
+         * 
+         * This is a bounding volume that encloses the content of this tile,
+         * as well as the content of all child tiles. 
+         * 
+         * @see Tile::getContentBoundingVolume
+         * 
+         * @return The bounding volume.
+         */
         const BoundingVolume& getBoundingVolume() const { return this->_boundingVolume; }
+
+        /**
+         * @brief Set the {@link BoundingVolume} of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @param value The bounding volume.
+         */
         void setBoundingVolume(const BoundingVolume& value) { this->_boundingVolume = value; }
 
+        /**
+         * @brief Returns the viewer request volume of this tile.
+         * 
+         * The viewer request volume is an optional {@link BoundingVolume} that
+         * may be associated with a tile. It allows controlling the rendering 
+         * process of the tile content: If the viewer request volume is present,
+         * then the content of the tile will only be rendered when the viewer
+         * (i.e. the camera position) is inside the viewer request volume.
+         * 
+         * @return The viewer request volume, or an empty optional
+         */
         const std::optional<BoundingVolume>& getViewerRequestVolume() const { return this->_viewerRequestVolume; }
+
+        /**
+         * @brief Set the viewer request volume of this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @param value The viewer request volume
+         */
         void setViewerRequestVolume(const std::optional<BoundingVolume>& value) { this->_viewerRequestVolume = value; }
 
+        /**
+         * @brief Returns the geometric error of this tile.
+         *
+         * This is the error, in meters, introduced if this tile is rendered and its children 
+         * are not. This is used to compute screen space error, i.e., the error measured in pixels.
+         * 
+         * @return The geometric error of this tile, in meters
+         */
         double getGeometricError() const { return this->_geometricError; }
+
+        /**
+         * @brief Set the geometric error of the contents of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @param value The geometric error, in meters
+         */
         void setGeometricError(double value) { this->_geometricError = value; }
 
+        /**
+         * @brief The refinement strategy of this tile.
+         * 
+         * Returns the {@link TileRefine} value that indicates the refinement strategy
+         * for this tile. This is {@link TileRefine::Add} when the content of the 
+         * child tiles is *added* to the content of this tile during refinement, and
+         * {@link TileRefine::Replace} when the content of the child tiles *replaces*
+         * the content of this tile during refinement. 
+         * 
+         * @return The refinement strategy.
+         */
         TileRefine getRefine() const { return this->_refine; }
+
+        /**
+         * @brief Set the refinement strategy of this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @param value The refinement strategy.
+         */
         void setRefine(TileRefine value) { this->_refine = value; }
 
         /**
@@ -157,14 +304,57 @@ namespace Cesium3DTiles {
         *
         * This matrix does _not_ need to be multiplied with the tile's parent's transform 
         * as this has already been done.
+        * 
+        * @return The transform matrix
         */
         const glm::dmat4x4& getTransform() const { return this->_transform; }
+
+        /**
+         * @brief Set the transformation matrix for this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @param value The transform matrix
+         */
         void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
 
+        /**
+         * @brief Returns the {@link TileID} of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @return The tile ID
+         */
         const TileID& getTileID() const { return this->_id; }
+
+        /**
+         * @brief Set the {@link TileID} of this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @param id The tile ID
+         */
         void setTileID(const TileID& id);
 
+        /**
+         * @brief Returns the {@link BoundingVolume} of the renderable content of this tile.
+         * 
+         * The content bounding volume is a bounding volume that tightly fits only the
+         * renderable content of the tile. This enables tighter view frustum culling, 
+         * making it possible to exclude from rendering any content not in the view
+         * frustum.
+         * 
+         * @see Tile::getBoundingVolume
+         */
         const std::optional<BoundingVolume>& getContentBoundingVolume() const { return this->_contentBoundingVolume; }
+
+        /**
+         * @brief Set the {@link BoundingVolume} of the renderable content of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @param value The content bounding volume
+         */
         void setContentBoundingVolume(const std::optional<BoundingVolume>& value) { this->_contentBoundingVolume = value; }
 
         /**

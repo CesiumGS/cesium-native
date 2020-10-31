@@ -10,7 +10,7 @@ namespace Cesium3DTiles {
      * @brief A structure summarizing the results of {@link Tileset::updateView}.
      * 
      * This is not supposed to be used by clients. It is used for the internal 
-     * bookkeeping, and to update the {@link Tile::getSelectionState} of the
+     * bookkeeping, and to update the {@link Tile::getLastSelectionState} of the
      * tiles throughout the rendering process.
      */
     class CESIUM3DTILES_API ViewUpdateResult {
