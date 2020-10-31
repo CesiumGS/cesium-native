@@ -148,6 +148,8 @@ namespace Cesium3DTiles {
          * @param rasterTile The raster overlay tile to remove.
          * @param pMainThreadRendererResources The renderer resources for this raster tile, as created and returned by
          *        {@link prepareRasterInMainThread}.
+         * @param textureCoordinateRectangle Defines the range of texture coordinates in which this raster tile should be applied, in
+         *        the order west, south, east north. Each coordinate is in the range 0.0 (southwest corner) to 1.0 (northeast corner).
          */
         virtual void detachRasterInMainThread(
             const Tile& tile,

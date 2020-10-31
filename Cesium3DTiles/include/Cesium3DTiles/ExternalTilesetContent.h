@@ -29,7 +29,6 @@ namespace Cesium3DTiles {
          * @param tileContentBoundingVolume Tile content {@link BoundingVolume}
          * @param tileRefine The {@link TileRefine}
          * @param url The source URL
-         * @param contentType The content type
          * @param data The raw input data
          * @return The {@link TileContentLoadResult}
          */

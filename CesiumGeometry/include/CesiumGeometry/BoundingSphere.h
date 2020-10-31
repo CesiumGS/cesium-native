@@ -36,9 +36,9 @@ namespace CesiumGeometry {
          * 
          * @param plane The plane to test against.
          * @return
-         *  * {@link CullingResult::Inside} if the entire sphere is on the side of the plane the normal is pointing.
-         *  * {@link CullingResult::Outside} if the entire sphere is on the opposite side.
-         *  * {@link CullingResult::Intersecting} if the sphere intersects the plane.
+         *  * {@link GesiumGeometry::CullingResult::Inside} if the entire sphere is on the side of the plane the normal is pointing.
+         *  * {@link GesiumGeometry::CullingResult::Outside} if the entire sphere is on the opposite side.
+         *  * {@link GesiumGeometry::CullingResult::Intersecting} if the sphere intersects the plane.
          */
         CullingResult intersectPlane(const Plane& plane) const;
 

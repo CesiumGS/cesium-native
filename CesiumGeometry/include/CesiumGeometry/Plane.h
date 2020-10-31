@@ -63,7 +63,7 @@ namespace CesiumGeometry {
         double getDistance() const { return this->_distance; }
 
         /**
-         * Computes the signed shortest distance of a point to this plane.
+         * @brief Computes the signed shortest distance of a point to this plane.
          * The sign of the distance determines which side of the plane the point
          * is on.  If the distance is positive, the point is in the half-space
          * in the direction of the normal; if negative, the point is in the half-space
@@ -76,7 +76,7 @@ namespace CesiumGeometry {
         double getPointDistance(const glm::dvec3& point) const;
 
         /**
-         * Projects a point onto this plane.
+         * @brief Projects a point onto this plane.
          * @param point The point to project onto the plane.
          * @returns The projected point.
          */

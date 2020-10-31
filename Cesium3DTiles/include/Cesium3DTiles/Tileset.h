@@ -19,8 +19,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * Additional options for configuring a {@link Tileset}.
-     * 
+     * @brief Additional options for configuring a {@link Tileset}.
      */
     struct CESIUM3DTILES_API TilesetOptions {
         /**
@@ -84,7 +83,7 @@ namespace Cesium3DTiles {
     };
 
     /**
-     * A <a href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D Tiles tileset</a>,
+     * @brief A <a href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D Tiles tileset</a>,
      * used for streaming massive heterogeneous 3D geospatial datasets.
      */
     class CESIUM3DTILES_API Tileset {
@@ -143,9 +142,7 @@ namespace Cesium3DTiles {
          */
         const TilesetExternals& getExternals() const { return this->_externals; }
 
-        /**
-         * @brief Gets the {@link TilesetOptions} of this tileset.
-         */
+        /** @copydoc Tileset::getOptions() */
         const TilesetOptions& getOptions() const { return this->_options; }
 
         /**
@@ -159,6 +156,8 @@ namespace Cesium3DTiles {
          * This may be `nullptr` if there is currently no root tile.
          */
         Tile* getRootTile() { return this->_pRootTile.get(); }
+
+        /** @copydoc Tileset::getRootTile() */
         const Tile* getRootTile() const { return this->_pRootTile.get(); }
 
         RasterOverlayCollection& getOverlays() { return this->_overlays; }
