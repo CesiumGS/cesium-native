@@ -127,8 +127,6 @@ namespace CesiumGeospatial {
     }
 
     double BoundingRegion::computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const {
-        double bboxDistanceSquared = this->getBoundingBox().computeDistanceSquaredToPosition(cartesianPosition);
-
         double result = 0.0;
         if (!this->_rectangle.contains(cartographicPosition)) {
             const glm::dvec3& southwestCornerCartesian = this->_southwestCornerCartesian;
@@ -171,6 +169,7 @@ namespace CesiumGeospatial {
             result += distanceBelowBottom * distanceBelowBottom;
         }
 
+        double bboxDistanceSquared = this->getBoundingBox().computeDistanceSquaredToPosition(cartesianPosition);
         return glm::max(bboxDistanceSquared, result);
     }
 
