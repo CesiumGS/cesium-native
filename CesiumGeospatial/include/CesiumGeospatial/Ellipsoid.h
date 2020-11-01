@@ -51,7 +51,7 @@ namespace CesiumGeospatial {
          * @brief Computes the normal of the plane tangent to the surface of the ellipsoid at the provided position.
          * 
          * @param position The cartesian position for which to to determine the surface normal.
-         * @return The normal
+         * @return The normal.
          */
         glm::dvec3 geodeticSurfaceNormal(const glm::dvec3& position) const;
 
@@ -59,7 +59,7 @@ namespace CesiumGeospatial {
          * @brief Computes the normal of the plane tangent to the surface of the ellipsoid at the provided position.
          *
          * @param cartographic The {@link Cartographic} position for which to to determine the surface normal.
-         * @return The normal
+         * @return The normal.
          */
         glm::dvec3 geodeticSurfaceNormal(const Cartographic& cartographic) const;
 
@@ -67,7 +67,7 @@ namespace CesiumGeospatial {
          * @brief Converts the provided {@link Cartographic} to cartesian representation.
          *
          * @param cartographic The {@link Cartographic} position.
-         * @return The cartesian representation
+         * @return The cartesian representation.
          */
         glm::dvec3 cartographicToCartesian(const Cartographic& cartographic) const;
 
@@ -76,7 +76,7 @@ namespace CesiumGeospatial {
          * 
          * The result will be the empty optional if the given cartesian is at the center of this ellipsoid.
          * 
-         * @param cartesian The cartesian position
+         * @param cartesian The cartesian position.
          * @return The {@link Cartographic} representation, or the empty optional if
          * the cartesian is at the center of this ellipsoid.
          */
@@ -87,7 +87,7 @@ namespace CesiumGeospatial {
          *
          * The result will be the empty optional if the position is at the center of this ellipsoid.
          *
-         * @param cartesian The cartesian position
+         * @param cartesian The cartesian position.
          * @return The scaled position, or the empty optional if
          * the cartesian is at the center of this ellipsoid.
          */
@@ -108,14 +108,14 @@ namespace CesiumGeospatial {
         double getMinimumRadius() const;
 
         /**
-         * @brief Returns `true` if two elliposids are equal
+         * @brief Returns `true` if two elliposids are equal.
          */
         bool operator==(const Ellipsoid& rhs) const {
             return this->_radii == rhs._radii;
         };
 
         /**
-         * @brief Returns `true` if two elliposids are *not* equal
+         * @brief Returns `true` if two elliposids are *not* equal.
          */
         bool operator!=(const Ellipsoid& rhs) const {
             return this->_radii != rhs._radii;

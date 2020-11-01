@@ -86,7 +86,7 @@ namespace Cesium3DTiles {
          * @param mapStyle The type of Bing Maps imagery to load. A value from {@link BingMapsStyle}, with {@link BingMapsStyle::AERIAL} being the default.
          * @param culture The culture to use when requesting Bing Maps imagery. Not all cultures are supported. 
          * See http://msdn.microsoft.com/en-us/library/hh441729.aspx for information on the supported cultures.
-         * @param ellipsoid The ellipsoid, with {@link CesiumGeospatial::Ellipsoid::WGS84} being the default.
+         * @param ellipsoid The ellipsoid. Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
          */
         BingMapsRasterOverlay(
             const std::string& url,

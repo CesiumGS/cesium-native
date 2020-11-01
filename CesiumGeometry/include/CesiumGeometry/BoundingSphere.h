@@ -35,10 +35,10 @@ namespace CesiumGeometry {
          * @brief Determines on which side of a plane this boundings sphere is located.
          * 
          * @param plane The plane to test against.
-         * @return
-         *  * {@link CullingResult::Inside} if the entire sphere is on the side of the plane the normal is pointing.
-         *  * {@link CullingResult::Outside} if the entire sphere is on the opposite side.
-         *  * {@link CullingResult::Intersecting} if the sphere intersects the plane.
+         * @return The {@link CullingResult}:
+         *  * `Inside` if the entire sphere is on the side of the plane the normal is pointing.
+         *  * `Outside` if the entire sphere is on the opposite side.
+         *  * `Intersecting` if the sphere intersects the plane.
          */
         CullingResult intersectPlane(const Plane& plane) const;
 

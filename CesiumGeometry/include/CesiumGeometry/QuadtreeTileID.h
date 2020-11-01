@@ -57,14 +57,14 @@ namespace CesiumGeometry {
         }
 
         /**
-         * @brief Returns `true` if two identifiers are equal
+         * @brief Returns `true` if two identifiers are equal.
          */
         bool operator==(const QuadtreeTileID& other) const {
             return this->level == other.level && this->x == other.x && this->y == other.y;
         }
 
         /**
-         * @brief Returns `true` if two identifiers are *not* equal
+         * @brief Returns `true` if two identifiers are *not* equal.
          */
         bool operator!=(const QuadtreeTileID& other) const {
             return this->level != other.level || this->x != other.x || this->y != other.y;
@@ -88,12 +88,12 @@ namespace CesiumGeometry {
         uint32_t level;
 
         /**
-         * @brief The x-coordinate of this tile ID
+         * @brief The x-coordinate of this tile ID.
          */
         uint32_t x;
 
         /**
-         * @brief The y-coordinate of this tile ID
+         * @brief The y-coordinate of this tile ID.
          */
         uint32_t y;
     };

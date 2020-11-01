@@ -108,9 +108,10 @@ namespace CesiumUtility {
         }
 
         /**
-         * Determines if two values are equal using an absolute or relative tolerance test. This is useful
-         * to avoid problems due to roundoff error when comparing floating-point values directly. The values are
-         * first compared using an absolute tolerance test. If that fails, a relative tolerance test is performed.
+         * @brief Determines if two values are equal using an absolute or relative tolerance test. 
+         * 
+         * This is useful to avoid problems due to roundoff error when comparing floating-point values directly. 
+         * The values are first compared using an absolute tolerance test. If that fails, a relative tolerance test is performed.
          * Use this test if you are unsure of the magnitudes of left and right.
          *
          * @param left The first value to compare.

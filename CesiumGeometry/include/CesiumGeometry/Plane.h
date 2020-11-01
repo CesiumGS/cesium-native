@@ -69,7 +69,6 @@ namespace CesiumGeometry {
          * in the direction of the normal; if negative, the point is in the half-space
          * opposite to the normal; if zero, the plane passes through the point.
          *
-         * @param plane The plane.
          * @param point The point.
          * @returns The signed shortest distance of the point to the plane.
          */

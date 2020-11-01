@@ -2,14 +2,26 @@
 
 namespace CesiumUtility {
 
+    /** 
+     * @brief A class containing the pointers for an element in a {@link DoublyLinkedList}.
+     */
     template <class T>
     class DoublyLinkedListPointers {
     public:
+
+        /** 
+         * @brief Default constructor.
+         */
         DoublyLinkedListPointers() :
             pNext(nullptr),
             pPrevious(nullptr)
         {}
 
+        /**
+         * @brief Copy constructor.
+         * 
+         * @param rhs The other instance.
+         */
         // Following the example of boost::instrusive::list's list_member_hook, the
         // copy constructor and assignment operator do nothing.
         // https://www.boost.org/doc/libs/1_73_0/doc/html/boost/intrusive/list_member_hook.html
@@ -17,6 +29,11 @@ namespace CesiumUtility {
             DoublyLinkedListPointers()
         {}
 
+        /**
+         * @brief Assignment operator.
+         *
+         * @param rhs The other instance.
+         */
         DoublyLinkedListPointers& operator=(const DoublyLinkedListPointers& /*rhs*/) {
             return *this;
         }
@@ -30,7 +47,9 @@ namespace CesiumUtility {
     };
 
     /**
-     * A doubly-linked list where the previous and next pointers are embedded directly in
+     * @brief A doubly-linked list.
+     *
+     * In this implementation, the previous and next pointers are embedded directly in
      * the data object.
      * 
      * @tparam T The data object type.
@@ -39,6 +58,10 @@ namespace CesiumUtility {
     template <class T, DoublyLinkedListPointers<T> (T::*Pointers)>
     class DoublyLinkedList {
     public:
+
+        /**
+         * @brief Removes the given node from this list.
+         */
         void remove(T& node) {
             DoublyLinkedListPointers<T>& nodePointers = node.*Pointers;
 
@@ -62,6 +85,9 @@ namespace CesiumUtility {
             nodePointers.pNext = nullptr;
         }
 
+        /**
+         * @brief Insert the given node after the other node.
+         */
         void insertAfter(T& after, T& node) {
             this->remove(node);
             
@@ -84,6 +110,9 @@ namespace CesiumUtility {
             ++this->_size;
         }
 
+        /**
+         * @brief Insert the given node before the other node.
+         */
         void insertBefore(T& before, T& node) {
             this->remove(node);
 
@@ -106,6 +135,9 @@ namespace CesiumUtility {
             ++this->_size;
         }
 
+        /**
+         * @brief Insert the given node as the new head of the list.
+         */
         void insertAtHead(T& node) {
             this->remove(node);
 
@@ -120,6 +152,9 @@ namespace CesiumUtility {
             ++this->_size;
         }
 
+        /**
+         * @brief Insert the given node as the new tail of the list.
+         */
         void insertAtTail(T& node) {
             this->remove(node);
 
@@ -134,30 +169,51 @@ namespace CesiumUtility {
             ++this->_size;
         }
 
+        /**
+         * @brief Returns the size of this list.
+         */
         size_t size() {
             return this->_size;
         }
 
+        /**
+         * @brief Returns the head node of this list, or `nullptr` if the list is empty.
+         */
         T* head() {
             return this->_pHead;
         }
 
+        /**
+         * @brief Returns the tail node of this list, or `nullptr` if the list is empty.
+         */
         T* tail() {
             return this->_pTail;
         }
 
+        /**
+         * @brief Returns the next node after the given one, or `nullptr` if the given node is the tail.
+         */
         T* next(T& node) {
             return (node.*Pointers).pNext;
         }
 
+        /**
+         * @brief Returns the next node after the given one, or the head if the given node is `nullptr`.
+         */
         T* next(T* pNode) {
             return pNode ? this->next(*pNode) : this->_pHead;
         }
 
+        /**
+         * @brief Returns the previous node before the given one, or `nullptr` if the given node is the head.
+         */
         T* previous(T& node) {
             return (node.*Pointers).pPrevious;
         }
 
+        /**
+         * @brief Returns the previous node before the given one, or the tail if the given node is `nullptr`.
+         */
         T* previous(T* pNode) {
             return pNode ? this->previous(*pNode) : this->_pTail;
         }

@@ -75,8 +75,9 @@ namespace Cesium3DTiles {
             /**
              * @brief The tile content is currently being loaded. 
              *
-             * Note that while a tile is in this state, its {@link Tile::getContent}, {@link Tile::setContent},
-             * {@link Tile::getState}, and {@link Tile::setState} methods may be called from the load thread.
+             * Note that while a tile is in this state, its {@link Tile::getContent},
+             * {@link Tile::getState}, and {@link Tile::setState} methods may be 
+             * called from the load thread.
              */
             ContentLoading = 1,
 
@@ -92,33 +93,33 @@ namespace Cesium3DTiles {
         };
 
         /**
-         * @brief Default constructor for an empty, uninitialized tile
+         * @brief Default constructor for an empty, uninitialized tile.
          */
         Tile();
 
         /**
-         * @brief Default destructor, which clears all resources associated with this tile
+         * @brief Default destructor, which clears all resources associated with this tile.
          */
         ~Tile();
 
         /**
-         * @brief Copy constructor
+         * @brief Copy constructor.
          *
-         * @param rhs The other instance
+         * @param rhs The other instance.
          */
         Tile(Tile& rhs) noexcept = delete;
 
         /**
-         * @brief Copy constructor
+         * @brief Copy constructor.
          * 
-         * @param rhs The other instance
+         * @param rhs The other instance.
          */
         Tile(Tile&& rhs) noexcept;
 
         /**
-         * @brief Assignment operator
+         * @brief Assignment operator.
          *
-         * @param rhs The other instance
+         * @param rhs The other instance.
          */
         Tile& operator=(Tile&& rhs) noexcept;
 
@@ -146,7 +147,7 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          *
-         * @return The tile context
+         * @return The tile context.
          */
         TileContext* getContext() { return this->_pContext; }
 
@@ -158,7 +159,7 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          *
-         * @param pContext The tile context
+         * @param pContext The tile context.
          */
         void setContext(TileContext* pContext) { this->_pContext = pContext; }
 
@@ -167,7 +168,7 @@ namespace Cesium3DTiles {
          * 
          * This will be the `nullptr` if this is the root tile.
          * 
-         * @return The parent
+         * @return The parent.
          */
         Tile* getParent() { return this->_pParent; }
 
@@ -179,7 +180,7 @@ namespace Cesium3DTiles {
          *
          * This function is not supposed to be called by clients.
          *
-         * @param pParent The parent tile 
+         * @param pParent The parent tile .
          */
         void setParent(Tile* pParent) { this->_pParent = pParent; }
 
@@ -188,7 +189,7 @@ namespace Cesium3DTiles {
          * 
          * The returned span will become invalid when this tile is destroyed.
          * 
-         * @return The children of this tile
+         * @return The children of this tile.
          */
         gsl::span<Tile> getChildren() { return gsl::span<Tile>(this->_children); }
 
@@ -200,8 +201,8 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          * 
-         * @param count The number of child tiles
-         * @throws `std::runtime_error` if this tile already has children
+         * @param count The number of child tiles.
+         * @throws `std::runtime_error` if this tile already has children.
          */
         void createChildTiles(size_t count);
 
@@ -210,8 +211,8 @@ namespace Cesium3DTiles {
          *
          * This function is not supposed to be called by clients.
          *
-         * @param children The child tiles
-         * @throws `std::runtime_error` if this tile already has children
+         * @param children The child tiles.
+         * @throws `std::runtime_error` if this tile already has children.
          */
         void createChildTiles(std::vector<Tile>&& children);
 
@@ -245,7 +246,7 @@ namespace Cesium3DTiles {
          * then the content of the tile will only be rendered when the viewer
          * (i.e. the camera position) is inside the viewer request volume.
          * 
-         * @return The viewer request volume, or an empty optional
+         * @return The viewer request volume, or an empty optional.
          */
         const std::optional<BoundingVolume>& getViewerRequestVolume() const { return this->_viewerRequestVolume; }
 
@@ -254,7 +255,7 @@ namespace Cesium3DTiles {
          *
          * This function is not supposed to be called by clients.
          *
-         * @param value The viewer request volume
+         * @param value The viewer request volume.
          */
         void setViewerRequestVolume(const std::optional<BoundingVolume>& value) { this->_viewerRequestVolume = value; }
 
@@ -264,7 +265,7 @@ namespace Cesium3DTiles {
          * This is the error, in meters, introduced if this tile is rendered and its children 
          * are not. This is used to compute screen space error, i.e., the error measured in pixels.
          * 
-         * @return The geometric error of this tile, in meters
+         * @return The geometric error of this tile, in meters.
          */
         double getGeometricError() const { return this->_geometricError; }
 
@@ -273,7 +274,7 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          *
-         * @param value The geometric error, in meters
+         * @param value The geometric error, in meters.
          */
         void setGeometricError(double value) { this->_geometricError = value; }
 
@@ -281,9 +282,9 @@ namespace Cesium3DTiles {
          * @brief The refinement strategy of this tile.
          * 
          * Returns the {@link TileRefine} value that indicates the refinement strategy
-         * for this tile. This is {@link TileRefine::Add} when the content of the 
+         * for this tile. This is `Add` when the content of the 
          * child tiles is *added* to the content of this tile during refinement, and
-         * {@link TileRefine::Replace} when the content of the child tiles *replaces*
+         * `Replace` when the content of the child tiles *replaces*
          * the content of this tile during refinement. 
          * 
          * @return The refinement strategy.
@@ -305,7 +306,7 @@ namespace Cesium3DTiles {
         * This matrix does _not_ need to be multiplied with the tile's parent's transform 
         * as this has already been done.
         * 
-        * @return The transform matrix
+        * @return The transform matrix.
         */
         const glm::dmat4x4& getTransform() const { return this->_transform; }
 
@@ -314,7 +315,7 @@ namespace Cesium3DTiles {
          *
          * This function is not supposed to be called by clients.
          *
-         * @param value The transform matrix
+         * @param value The transform matrix.
          */
         void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
 
@@ -323,7 +324,7 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          *
-         * @return The tile ID
+         * @return The tile ID.
          */
         const TileID& getTileID() const { return this->_id; }
 
@@ -332,7 +333,7 @@ namespace Cesium3DTiles {
          *
          * This function is not supposed to be called by clients.
          *
-         * @param id The tile ID
+         * @param id The tile ID.
          */
         void setTileID(const TileID& id);
 
@@ -371,12 +372,39 @@ namespace Cesium3DTiles {
         /** @copydoc Tile::getContent() */
         const TileContentLoadResult* getContent() const { return this->_pContent.get(); }
 
+        /** 
+         * @brief Returns internal resources required for rendering this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @return The renderer resources.
+         */
         void* getRendererResources() const { return this->_pRendererResources; }
 
+        /**
+         * @brief Returns the {@link LoadState} of this tile.
+         */
         LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
 
+        /**
+         * @brief Returns the {@link TileSelectionState} of this tile.
+         *
+         * This function is not supposed to be called by clients.
+         *
+         * @return The last selection state
+         */
         TileSelectionState& getLastSelectionState() { return this->_lastSelectionState; }
+
+        /** @copydoc Tile::getLastSelectionState() */
         const TileSelectionState& getLastSelectionState() const { return this->_lastSelectionState; }
+
+        /**
+         * @brief Set the {@link TileSelectionState} of this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @param newState The new stace
+         */
         void setLastSelectionState(const TileSelectionState& newState) { this->_lastSelectionState = newState; }
 
         /**
@@ -385,7 +413,7 @@ namespace Cesium3DTiles {
         bool isRenderable() const;
 
         /**
-         * @brief Trigger the process of loading the {@link Tile::getContent}
+         * @brief Trigger the process of loading the {@link Tile::getContent}.
          * 
          * This function is not supposed to be called by clients.
          * 
@@ -427,6 +455,10 @@ namespace Cesium3DTiles {
         CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
 
     protected:
+
+        /**
+         * @brief Set the {@link LoadState} of this tile.
+         */
         void setState(LoadState value);
 
         /**

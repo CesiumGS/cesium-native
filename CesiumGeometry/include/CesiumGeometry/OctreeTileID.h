@@ -18,10 +18,10 @@ namespace CesiumGeometry {
         /**
          * @brief Creates a new instance.
          *
-         * @param level The level of the node, with 0 being the root
-         * @param x The x-coordinate of the tile
-         * @param y The y-coordinate of the tile
-         * @param z The z-coordinate of the tile
+         * @param level The level of the node, with 0 being the root.
+         * @param x The x-coordinate of the tile.
+         * @param y The y-coordinate of the tile.
+         * @param z The z-coordinate of the tile.
          */
         OctreeTileID(uint32_t level, uint32_t x, uint32_t y, uint32_t z) :
             level(level),
@@ -37,17 +37,17 @@ namespace CesiumGeometry {
         uint32_t level;
 
         /**
-         * @brief The x-coordinate of this tile ID
+         * @brief The x-coordinate of this tile ID.
          */
         uint32_t x;
 
         /**
-         * @brief The y-coordinate of this tile ID
+         * @brief The y-coordinate of this tile ID.
          */
         uint32_t y;
 
         /**
-         * @brief The z-coordinate of this tile ID
+         * @brief The z-coordinate of this tile ID.
          */
         uint32_t z;
     };
