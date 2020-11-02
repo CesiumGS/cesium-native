@@ -12,7 +12,8 @@ namespace Cesium3DTiles {
         const glm::dvec3& up,
         const glm::dvec2& viewportSize,
         double horizontalFieldOfView,
-        double verticalFieldOfView
+        double verticalFieldOfView,
+        const CesiumGeospatial::Ellipsoid& ellipsoid
     ) :
         _position(position),
         _direction(direction),
@@ -20,7 +21,9 @@ namespace Cesium3DTiles {
         _viewportSize(viewportSize),
         _horizontalFieldOfView(horizontalFieldOfView),
         _verticalFieldOfView(verticalFieldOfView),
+        _ellipsoid(ellipsoid),
         _sseDenominator(0.0),
+        _positionCartographic(),
         _leftPlane(glm::dvec3(0.0, 0.0, 1.0), 0.0),
         _rightPlane(glm::dvec3(0.0, 0.0, 1.0), 0.0),
         _topPlane(glm::dvec3(0.0, 0.0, 1.0), 0.0),
@@ -34,6 +37,8 @@ namespace Cesium3DTiles {
         this->_position = position;
         this->_direction = direction;
         this->_up = up;
+
+       this->_positionCartographic = this->_ellipsoid.cartesianToCartographic(position);
 
         this->_updateCullingVolume();
     }
@@ -181,7 +186,11 @@ namespace Cesium3DTiles {
             }
 
             double operator()(const BoundingRegion& boundingRegion) {
-                return boundingRegion.computeDistanceSquaredToPosition(camera._position);
+                if (camera._positionCartographic) {
+                    return boundingRegion.computeDistanceSquaredToPosition(camera._positionCartographic.value(), camera._position);
+                } else {
+                    return boundingRegion.computeDistanceSquaredToPosition(camera._position);
+                }
             }
 
             double operator()(const BoundingSphere& boundingSphere) {
@@ -189,7 +198,11 @@ namespace Cesium3DTiles {
             }
 
             double operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
-                return boundingRegion.computeConservativeDistanceSquaredToPosition(camera._position);
+                if (camera._positionCartographic) {
+                    return boundingRegion.computeConservativeDistanceSquaredToPosition(camera._positionCartographic.value(), camera._position);
+                } else {
+                    return boundingRegion.computeConservativeDistanceSquaredToPosition(camera._position);
+                }
             }
         };
 

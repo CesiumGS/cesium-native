@@ -18,6 +18,11 @@
 
 namespace Cesium3DTiles {
 
+    struct FogDensityAtHeight {
+        double cameraHeight;
+        double fogDensity;
+    };
+
     /**
      * Additional options for configuring a \ref Tileset.
      * 
@@ -77,6 +82,38 @@ namespace Cesium3DTiles {
          * this number or until only required tiles remain, whichever comes first.
          */
         uint32_t maximumCachedTiles = 400;
+
+        /**
+         * A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
+         * The density of the fog increases as this number approaches 1.0 and becomes less dense as it approaches zero.
+         * The more dense the fog is, the more aggressively the tiles are culled. For example, if the camera is a height of
+         * 1000.0m above the ellipsoid, increasing the value to 3.0e-3 will cause many tiles close to the viewer be culled.
+         * Decreasing the value will push the fog further from the viewer, but decrease performance as more of the tiles are rendered.
+         * Tiles are culled when `1.0 - glm::exp(-(distance * distance * fogDensity * fogDensity))` is >= 1.0.
+         */
+        std::vector<FogDensityAtHeight> fogDensityTable = {
+            { 359.393, 2.0e-5 },
+            { 800.749, 2.0e-4 },
+            { 1275.6501, 1.0e-4 },
+            { 2151.1192, 7.0e-5 },
+            { 3141.7763, 5.0e-5 },
+            { 4777.5198, 4.0e-5 },
+            { 6281.2493, 3.0e-5 },
+            { 12364.307, 1.9e-5 },
+            { 15900.765, 1.0e-5 },
+            { 49889.0549, 8.5e-6 },
+            { 78026.8259, 6.2e-6,},
+            { 99260.7344, 5.8e-6 },
+            { 120036.3873, 5.3e-6 },
+            { 151011.0158, 5.2e-6 },
+            { 156091.1953, 5.1e-6 },
+            { 203849.3112, 4.2e-6 },
+            { 274866.9803, 4.0e-6 },
+            { 319916.3149, 3.4e-6 },
+            { 493552.0528, 2.6e-6 },
+            { 628733.5874, 2.2e-6 },
+            { 1000000.0, 0.0 }
+        };
     };
 
     /**
@@ -221,9 +258,17 @@ namespace Cesium3DTiles {
         void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
         void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
 
-        TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
-        TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
-        TraversalDetails _visitVisibleChildrenNearToFar(uint32_t lastFrameNumber, uint32_t currentFrameNumber, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        struct FrameState {
+            const Camera& camera;
+            uint32_t lastFrameNumber;
+            uint32_t currentFrameNumber;
+            double fogDensity;
+        };
+
+        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
+        TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+
         void _processLoadQueue();
         void _unloadCachedTiles();
         void _markTileVisited(Tile& tile);

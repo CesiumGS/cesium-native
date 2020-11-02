@@ -1,12 +1,13 @@
 #pragma once
 
-#include <vector>
+#include "Cesium3DTiles/BoundingVolume.h"
+#include "Cesium3DTiles/Library.h"
+#include "CesiumGeometry/Plane.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <glm/mat3x3.hpp>
-#include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/BoundingVolume.h"
-#include "CesiumGeometry/Plane.h"
+#include <vector>
 
 namespace Cesium3DTiles {
 
@@ -25,7 +26,8 @@ namespace Cesium3DTiles {
             const glm::dvec3& up,
             const glm::dvec2& viewportSize,
             double horizontalFieldOfView,
-            double verticalFieldOfView
+            double verticalFieldOfView,
+            const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84
         );
 
         /**
@@ -42,6 +44,14 @@ namespace Cesium3DTiles {
          * @brief Gets the up direction of the camera in Earth-centered, Earth-fixed coordinates.
          */
         const glm::dvec3& getUp() const { return this->_up; }
+
+        /**
+         * @brief Gets the position of the camera as a longitude / latitude / height.
+         * 
+         * The result may be `std::nullopt` if the Cartesian position is
+         * very near the center of the Ellipsoid.
+         */
+        const std::optional<CesiumGeospatial::Cartographic>& getPositionCartographic() const { return this->_positionCartographic; }
 
         /**
          * @brief Gets the size of the viewport in pixels.
@@ -130,7 +140,10 @@ namespace Cesium3DTiles {
         glm::dvec2 _viewportSize;
         double _horizontalFieldOfView;
         double _verticalFieldOfView;
+        CesiumGeospatial::Ellipsoid _ellipsoid;
+
         double _sseDenominator;
+        std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
         CesiumGeometry::Plane _leftPlane;
         CesiumGeometry::Plane _rightPlane;
