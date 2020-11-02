@@ -297,7 +297,7 @@ namespace Cesium3DTiles {
         std::vector<Tile*> _loadQueueLow;
         std::atomic<uint32_t> _loadsInProgress;
 
-        CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> _loadedTiles;
+        Tile::LoadedLinkedList _loadedTiles;
 
         RasterOverlayCollection _overlays;
 
