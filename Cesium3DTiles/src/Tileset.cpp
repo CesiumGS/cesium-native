@@ -8,11 +8,13 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
+#include <glm/common.hpp>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
+
     Tileset::Tileset(
         const TilesetExternals& externals,
         const std::string& url,
@@ -110,6 +112,41 @@ namespace Cesium3DTiles {
         }
     }
 
+    static bool operator<(const FogDensityAtHeight& fogDensity, double height) {
+        return fogDensity.cameraHeight < height;
+    }
+
+    static double computeFogDensity(const std::vector<FogDensityAtHeight>& fogDensityTable, const Camera& camera) {
+        double height = camera.getPositionCartographic().value_or(Cartographic(0.0, 0.0, 0.0)).height;
+
+        // Find the entry that is for >= this camera height.
+        auto nextIt = std::lower_bound(fogDensityTable.begin(), fogDensityTable.end(), height);
+
+        if (nextIt == fogDensityTable.end()) {
+            return fogDensityTable.back().fogDensity;
+        } else if (nextIt == fogDensityTable.begin()) {
+            return nextIt->fogDensity;
+        }
+
+        auto prevIt = nextIt - 1;
+
+        double heightA = prevIt->cameraHeight;
+        double densityA = prevIt->fogDensity;
+
+        double heightB = nextIt->cameraHeight;
+        double densityB = nextIt->fogDensity;
+
+        double t = glm::clamp(
+            (height - heightA) / (heightB - heightA),
+            0.0,
+            1.0
+        );
+
+        double density = glm::mix(densityA, densityB, t);
+
+        return density;
+    }
+
     const ViewUpdateResult& Tileset::updateView(const Camera& camera) {
         uint32_t previousFrameNumber = this->_previousFrameNumber; 
         uint32_t currentFrameNumber = previousFrameNumber + 1;
@@ -122,6 +159,7 @@ namespace Cesium3DTiles {
         result.tilesVisited = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
+        result.fogDensity = computeFogDensity(this->_options.fogDensityTable, camera);
 
         Tile* pRootTile = this->getRootTile();
         if (!pRootTile) {
@@ -523,7 +561,25 @@ namespace Cesium3DTiles {
         this->_markTileVisited(tile);
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        if (!camera.isBoundingVolumeVisible(boundingVolume)) {
+        bool isVisible = camera.isBoundingVolumeVisible(boundingVolume);
+
+        double distance = 0.0;
+
+        if (isVisible) {
+            // Is it culled by fog?
+            double distanceSquared = camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
+            distance = sqrt(distanceSquared);
+
+            if (result.fogDensity > 0.0) {
+                double fogScalar = distance * result.fogDensity;
+                double fog = 1.0 - glm::exp(-(fogScalar * fogScalar));
+                if (fog >= 1.0) {
+                    isVisible = false;
+                }
+            }
+        }
+
+        if (!isVisible) {
             markTileAndChildrenNonRendered(lastFrameNumber, tile, result);
             tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Culled));
 
@@ -536,8 +592,8 @@ namespace Cesium3DTiles {
 
             return TraversalDetails();
         }
-
-        return this->_visitTile(lastFrameNumber, currentFrameNumber, depth, camera, ancestorMeetsSse, tile, result);
+    
+        return this->_visitTile(lastFrameNumber, currentFrameNumber, depth, camera, ancestorMeetsSse, tile, distance, result);
     }
 
     // Visits a tile for possible rendering. When we call this function with a tile:
@@ -552,6 +608,7 @@ namespace Cesium3DTiles {
         const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
+        double distance,
         ViewUpdateResult& result
     ) {
         ++result.tilesVisited;
@@ -573,10 +630,6 @@ namespace Cesium3DTiles {
             traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
             return traversalDetails;
         }
-
-        const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        double distanceSquared = camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
-        double distance = sqrt(distanceSquared);
 
         // Does this tile meet the screen-space error?
         double sse = camera.computeScreenSpaceError(tile.getGeometricError(), distance);

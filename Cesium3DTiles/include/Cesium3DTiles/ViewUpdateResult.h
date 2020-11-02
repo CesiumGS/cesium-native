@@ -8,9 +8,9 @@ namespace Cesium3DTiles {
 
     struct CESIUM3DTILES_API ViewUpdateResult {
         std::vector<Tile*> tilesToRenderThisFrame;
-
-        // std::vector<Tile*> newTilesToRenderThisFrame;
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
+
+        double fogDensity;
 
         uint32_t tilesLoadingLowPriority;
         uint32_t tilesLoadingMediumPriority;
