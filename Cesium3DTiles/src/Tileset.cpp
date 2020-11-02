@@ -144,6 +144,16 @@ namespace Cesium3DTiles {
 
         double density = glm::mix(densityA, densityB, t);
 
+        // CesiumJS will also fade out the fog based on the camera angle,
+        // so when we're looking straight down there's no fog. This is unfortunate
+        // because it prevents the fog culling from being used in place of horizon
+        // culling. Horizon culling is the only thing in CesiumJS that prevents
+        // tiles on the back side of the globe from being rendered.
+        // Since we're not actually _rendering_ the fog in cesium-native (that's on
+        // the renderer), we don't need to worry about the fog making the globe
+        // looked washed out in straight down views. So here we don't fade by
+        // angle at all.
+
         return density;
     }
 
@@ -159,18 +169,26 @@ namespace Cesium3DTiles {
         result.tilesVisited = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
-        result.fogDensity = computeFogDensity(this->_options.fogDensityTable, camera);
 
         Tile* pRootTile = this->getRootTile();
         if (!pRootTile) {
             return result;
         }
 
+        double fogDensity = computeFogDensity(this->_options.fogDensityTable, camera);
+
         this->_loadQueueHigh.clear();
         this->_loadQueueMedium.clear();
         this->_loadQueueLow.clear();
 
-        this->_visitTileIfVisible(previousFrameNumber, currentFrameNumber, 0, camera, false, *pRootTile, result);
+        FrameState frameState {
+            camera,
+            previousFrameNumber,
+            currentFrameNumber,
+            fogDensity
+        };
+
+        this->_visitTileIfVisible(frameState, 0, false, *pRootTile, result);
 
         result.tilesLoadingLowPriority = static_cast<uint32_t>(this->_loadQueueLow.size());
         result.tilesLoadingMediumPriority = static_cast<uint32_t>(this->_loadQueueMedium.size());
@@ -549,29 +567,27 @@ namespace Cesium3DTiles {
     //   * The tile may or may not be renderable.
     //   * The tile has not yet been added to a load queue.
     Tileset::TraversalDetails Tileset::_visitTileIfVisible(
-        uint32_t lastFrameNumber,
-        uint32_t currentFrameNumber,
+        const FrameState& frameState,
         uint32_t depth,
-        const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
         ViewUpdateResult& result
     ) {
-        tile.update(lastFrameNumber, currentFrameNumber);
+        tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
         this->_markTileVisited(tile);
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        bool isVisible = camera.isBoundingVolumeVisible(boundingVolume);
+        bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
 
         double distance = 0.0;
 
         if (isVisible) {
             // Is it culled by fog?
-            double distanceSquared = camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
+            double distanceSquared = frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
             distance = sqrt(distanceSquared);
 
-            if (result.fogDensity > 0.0) {
-                double fogScalar = distance * result.fogDensity;
+            if (frameState.fogDensity > 0.0) {
+                double fogScalar = distance * frameState.fogDensity;
                 double fog = 1.0 - glm::exp(-(fogScalar * fogScalar));
                 if (fog >= 1.0) {
                     isVisible = false;
@@ -580,8 +596,8 @@ namespace Cesium3DTiles {
         }
 
         if (!isVisible) {
-            markTileAndChildrenNonRendered(lastFrameNumber, tile, result);
-            tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Culled));
+            markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
+            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Culled));
 
             // Preload this culled sibling if requested.
             if (this->_options.preloadSiblings) {
@@ -593,7 +609,7 @@ namespace Cesium3DTiles {
             return TraversalDetails();
         }
     
-        return this->_visitTile(lastFrameNumber, currentFrameNumber, depth, camera, ancestorMeetsSse, tile, distance, result);
+        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, result);
     }
 
     // Visits a tile for possible rendering. When we call this function with a tile:
@@ -602,10 +618,8 @@ namespace Cesium3DTiles {
     //   * The tile may or may not be renderable.
     //   * The tile has not yet been added to a load queue.
     Tileset::TraversalDetails Tileset::_visitTile(
-        uint32_t lastFrameNumber,
-        uint32_t currentFrameNumber,
+        const FrameState& frameState,
         uint32_t depth,
-        const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
         double distance,
@@ -620,19 +634,19 @@ namespace Cesium3DTiles {
         gsl::span<Tile> children = tile.getChildren();
         if (children.size() == 0) {
             // Render this leaf tile.
-            tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Rendered));
+            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
             result.tilesToRenderThisFrame.push_back(&tile);
             addTileToLoadQueue(this->_loadQueueMedium, tile);
 
             TraversalDetails traversalDetails;
             traversalDetails.allAreRenderable = tile.isRenderable();
-            traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(lastFrameNumber) == TileSelectionState::Result::Rendered;
+            traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
             traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
             return traversalDetails;
         }
 
         // Does this tile meet the screen-space error?
-        double sse = camera.computeScreenSpaceError(tile.getGeometricError(), distance);
+        double sse = frameState.camera.computeScreenSpaceError(tile.getGeometricError(), distance);
         bool meetsSse = sse < this->_options.maximumScreenSpaceError;
 
         // If we're forbidding holes, don't refine if any children are still loading.
@@ -656,7 +670,7 @@ namespace Cesium3DTiles {
             // 3. The tile is done loading and ready to render.
             //
             // Note that even if we decide to render a tile here, it may later get "kicked" in favor of an ancestor.
-            TileSelectionState::Result originalResult = lastFrameSelectionState.getOriginalResult(lastFrameNumber);
+            TileSelectionState::Result originalResult = lastFrameSelectionState.getOriginalResult(frameState.lastFrameNumber);
             bool oneRenderedLastFrame = originalResult == TileSelectionState::Result::Rendered;
             bool twoCulledOrNotVisited = originalResult == TileSelectionState::Result::Culled || originalResult == TileSelectionState::Result::None;
             bool threeCompletelyLoaded = tile.isRenderable();
@@ -668,13 +682,13 @@ namespace Cesium3DTiles {
                     addTileToLoadQueue(this->_loadQueueMedium, tile);
                 }
 
-                markChildrenNonRendered(lastFrameNumber, tile, result);
-                tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Rendered));
+                markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
+                tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
                 result.tilesToRenderThisFrame.push_back(&tile);
 
                 TraversalDetails traversalDetails;
                 traversalDetails.allAreRenderable = tile.isRenderable();
-                traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(lastFrameNumber) == TileSelectionState::Result::Rendered;
+                traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
                 traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
 
                 return traversalDetails;
@@ -710,7 +724,7 @@ namespace Cesium3DTiles {
         size_t loadIndexMedium = this->_loadQueueMedium.size();
         size_t loadIndexHigh = this->_loadQueueHigh.size();
 
-        TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(lastFrameNumber, currentFrameNumber, depth, camera, ancestorMeetsSse, tile, result);
+        TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(frameState, depth, ancestorMeetsSse, tile, result);
 
         if (firstRenderedDescendantIndex == result.tilesToRenderThisFrame.size()) {
             // No descendant tiles were added to the render list by the function above, meaning they were all
@@ -720,13 +734,13 @@ namespace Cesium3DTiles {
 
             if (tile.getRefine() == TileRefine::Add) {
                 noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
-                noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(lastFrameNumber) == TileSelectionState::Result::Rendered;
+                noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
                 noChildrenTraversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
             } else {
-                markTileNonRendered(lastFrameNumber, tile, result);
+                markTileNonRendered(frameState.lastFrameNumber, tile, result);
             }
 
-            tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Refined));
+            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Refined));
             return noChildrenTraversalDetails;
         }
 
@@ -743,7 +757,7 @@ namespace Cesium3DTiles {
                 Tile* pWorkTile = renderList[i];
                 while (
                     pWorkTile != nullptr &&
-                    !pWorkTile->getLastSelectionState().wasKicked(currentFrameNumber) &&
+                    !pWorkTile->getLastSelectionState().wasKicked(frameState.currentFrameNumber) &&
                     pWorkTile != &tile
                 ) {
                     pWorkTile->getLastSelectionState().kick();
@@ -754,12 +768,12 @@ namespace Cesium3DTiles {
             // Remove all descendants from the render list and add this tile.
             renderList.erase(renderList.begin() + firstRenderedDescendantIndex, renderList.end());
             renderList.push_back(&tile);
-            tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Rendered));
+            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
 
             // If we're waiting on heaps of descendants, the above will take too long. So in that case,
             // load this tile INSTEAD of loading any of the descendants, and tell the up-level we're only waiting
             // on this tile. Keep doing this until we actually manage to render this tile.
-            bool wasRenderedLastFrame = lastFrameSelectionState.getResult(lastFrameNumber) == TileSelectionState::Result::Rendered;
+            bool wasRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
             bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
 
             if (!wasReallyRenderedLastFrame && traversalDetails.notYetRenderableCount > this->_options.loadingDescendantLimit) {
@@ -780,9 +794,9 @@ namespace Cesium3DTiles {
             traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
         } else {
             if (tile.getRefine() != TileRefine::Add) {
-                markTileNonRendered(lastFrameNumber, tile, result);
+                markTileNonRendered(frameState.lastFrameNumber, tile, result);
             }
-            tile.setLastSelectionState(TileSelectionState(currentFrameNumber, TileSelectionState::Result::Refined));
+            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Refined));
         }
 
         if (this->_options.preloadAncestors && !queuedForLoad) {
@@ -793,10 +807,8 @@ namespace Cesium3DTiles {
     }
 
     Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
-        uint32_t lastFrameNumber,
-        uint32_t currentFrameNumber,
+        const FrameState& frameState,
         uint32_t depth,
-        const Camera& camera,
         bool ancestorMeetsSse,
         Tile& tile,
         ViewUpdateResult& result
@@ -807,10 +819,8 @@ namespace Cesium3DTiles {
         gsl::span<Tile> children = tile.getChildren();
         for (Tile& child : children) {
             TraversalDetails childTraversal = this->_visitTileIfVisible(
-                lastFrameNumber,
-                currentFrameNumber,
+                frameState,
                 depth + 1,
-                camera,
                 ancestorMeetsSse,
                 child,
                 result

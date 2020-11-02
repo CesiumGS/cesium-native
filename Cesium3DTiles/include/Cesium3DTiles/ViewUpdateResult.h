@@ -10,8 +10,6 @@ namespace Cesium3DTiles {
         std::vector<Tile*> tilesToRenderThisFrame;
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
 
-        double fogDensity;
-
         uint32_t tilesLoadingLowPriority;
         uint32_t tilesLoadingMediumPriority;
         uint32_t tilesLoadingHighPriority;

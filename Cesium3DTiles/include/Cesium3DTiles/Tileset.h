@@ -258,9 +258,17 @@ namespace Cesium3DTiles {
         void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
         void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
 
-        TraversalDetails _visitTile(uint32_t lastFrameNumber, uint32_t currentFrameNumber, uint32_t depth, const Camera& camera, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
-        TraversalDetails _visitTileIfVisible(uint32_t lastFrameNumber, uint32_t currentFrameNumber, uint32_t depth, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
-        TraversalDetails _visitVisibleChildrenNearToFar(uint32_t lastFrameNumber, uint32_t currentFrameNumber, uint32_t depth, const Camera& camera, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        struct FrameState {
+            const Camera& camera;
+            uint32_t lastFrameNumber;
+            uint32_t currentFrameNumber;
+            double fogDensity;
+        };
+
+        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
+        TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+
         void _processLoadQueue();
         void _unloadCachedTiles();
         void _markTileVisited(Tile& tile);
