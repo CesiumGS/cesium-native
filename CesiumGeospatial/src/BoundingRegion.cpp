@@ -169,7 +169,8 @@ namespace CesiumGeospatial {
             result += distanceBelowBottom * distanceBelowBottom;
         }
 
-        return result;
+        double bboxDistanceSquared = this->getBoundingBox().computeDistanceSquaredToPosition(cartesianPosition);
+        return glm::max(bboxDistanceSquared, result);
     }
 
     static OrientedBoundingBox fromPlaneExtents(

@@ -15,7 +15,6 @@ using namespace std::string_literals;
 namespace Cesium3DTiles {
 
     Tile::Tile() :
-        _loadedTilesLinks(),
         _pContext(nullptr),
         _pParent(nullptr),
         _children(),
@@ -30,7 +29,8 @@ namespace Cesium3DTiles {
         _pContentRequest(nullptr),
         _pContent(nullptr),
         _pRendererResources(nullptr),
-        _lastSelectionState()
+        _lastSelectionState(),
+        _loadedTilesLinks()
     {
     }
 
@@ -40,7 +40,6 @@ namespace Cesium3DTiles {
     }
 
     Tile::Tile(Tile&& rhs) noexcept :
-        _loadedTilesLinks(),
         _pContext(rhs._pContext),
         _pParent(rhs._pParent),
         _children(std::move(rhs._children)),
@@ -55,7 +54,8 @@ namespace Cesium3DTiles {
         _pContentRequest(std::move(rhs._pContentRequest)),
         _pContent(std::move(rhs._pContent)),
         _pRendererResources(rhs._pRendererResources),
-        _lastSelectionState(rhs._lastSelectionState)
+        _lastSelectionState(rhs._lastSelectionState),
+        _loadedTilesLinks()
     {
     }
 

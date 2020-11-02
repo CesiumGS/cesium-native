@@ -452,8 +452,6 @@ namespace Cesium3DTiles {
          */
         void update(uint32_t previousFrameNumber, uint32_t currentFrameNumber);
 
-        CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
-
     protected:
 
         /**
@@ -503,6 +501,11 @@ namespace Cesium3DTiles {
 
         // Overlays
         std::vector<RasterMappedTo3DTile> _rasterTiles;
+
+        CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+
+    public:
+        typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> LoadedLinkedList;
     };
 
 }

@@ -21,14 +21,18 @@ namespace Cesium3DTiles {
          */
         std::vector<Tile*> tilesToRenderThisFrame;
 
-        // std::vector<Tile*> newTilesToRenderThisFrame;
-
         /**
          * @brief The tiles that have been removed from the render list for the current frame
          */
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
 
-        // uint32_t tilesLoading;
+        uint32_t tilesLoadingLowPriority;
+        uint32_t tilesLoadingMediumPriority;
+        uint32_t tilesLoadingHighPriority;
+
+        uint32_t tilesVisited;
+        uint32_t tilesCulled;
+        uint32_t maxDepthVisited;
     };
 
 }
