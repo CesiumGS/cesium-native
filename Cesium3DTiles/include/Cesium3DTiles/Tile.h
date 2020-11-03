@@ -29,7 +29,7 @@ namespace Cesium3DTiles {
      * @brief A tile in a {@link Tileset}.
      * 
      * The tiles of a tileset form a hierarchy, where each tile may contain 
-     * renderable content, and each tile as an associated bounding volume.
+     * renderable content, and each tile has an associated bounding volume.
      * 
      * The actual hierarchy is represented with the {@link Tile::getParent}
      * and {@link Tile::getChildren} functions.
@@ -41,7 +41,7 @@ namespace Cesium3DTiles {
      * content of a tile.
      * 
      * The {@link BoundingVolume} is given by the {@link Tile::getBoundingVolume}
-     * function. This bounding volme closes the renderable content of the 
+     * function. This bounding volme encloses the renderable content of the 
      * tile itself, as well as the renderable content of all children, yielding 
      * a spatially coherent hierarchy of bounding volumes.
      * 
@@ -110,14 +110,14 @@ namespace Cesium3DTiles {
         Tile(Tile& rhs) noexcept = delete;
 
         /**
-         * @brief Copy constructor.
+         * @brief Move constructor.
          * 
          * @param rhs The other instance.
          */
         Tile(Tile&& rhs) noexcept;
 
         /**
-         * @brief Assignment operator.
+         * @brief Move assignment operator.
          *
          * @param rhs The other instance.
          */

@@ -13,7 +13,7 @@ namespace Cesium3DTiles {
     class Tileset;
 
     /**
-     * @brief A class that can create a {@link TileContentLoadResult} from JSON data.
+     * @brief Creates a {@link TileContentLoadResult} from 3D Tiles external tileset.json data.
      */
     class CESIUM3DTILES_API ExternalTilesetContent {
     public:
@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Create the {@link TileContentLoadResult} from the given input data.
          * 
-         * @param context The {@link TileContext}
+         * @param context The {@link TileContext}.
          * @param tileID The {@link TileID}
          * @param tileBoundingVolume The tile {@link BoundingVolume}
          * @param tileGeometricError The geometric error

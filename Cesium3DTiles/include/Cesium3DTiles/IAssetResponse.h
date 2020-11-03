@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
         virtual ~IAssetResponse() = default;
 
         /**
-         * @brief Returns the HTTP response code
+         * @brief Returns the HTTP response code.
          */
         virtual uint16_t statusCode() const = 0;
 

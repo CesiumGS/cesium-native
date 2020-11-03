@@ -7,7 +7,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief A class that can create a {@link TileContentLoadResult} from quantized data.
+     * @brief Creates a {@link TileContentLoadResult} from `quantized-mesh-1.0` data.
      */
     class CESIUM3DTILES_API QuantizedMeshContent {
     public:

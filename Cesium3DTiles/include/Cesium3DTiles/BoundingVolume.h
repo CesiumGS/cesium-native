@@ -39,10 +39,10 @@ namespace Cesium3DTiles {
     CESIUM3DTILES_API BoundingVolume transformBoundingVolume(const glm::dmat4x4& transform, const BoundingVolume& boundingVolume);
 
     /**
-     * @brief Returns the center of the given  {@link BoundingVolume}
+     * @brief Returns the center of the given {@link BoundingVolume}.
      * 
-     * @param boundingVolume The bounding volume
-     * @return The center point
+     * @param boundingVolume The bounding volume.
+     * @return The center point.
      */
     CESIUM3DTILES_API glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
 }

@@ -15,10 +15,10 @@ namespace Cesium3DTiles {
     class RasterOverlayTile;
 
     /**
-     * @brief An interface for classes that can prepare resources for a renderer.
+     * @brief When implemented for a rendering engine, allows renderer resources to be created and destroyed under the control of a {@link Tileset}.
      * 
      * It is not supposed to be used directly by clients. It is implemented
-     * by external classes to provide an infrastructure for preparing the
+     * for specific rendering engines to provide an infrastructure for preparing the
      * data of a {@link Tile} so that it can be used for rendering.
      * 
      * Instances of this class are associated with a {@link Tileset}, in the

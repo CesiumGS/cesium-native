@@ -11,7 +11,7 @@ namespace CesiumGeospatial {
     class Cartographic;
 
     /**
-     * @brief A projection where longitude and latitude are mapped using an {@link Ellipsoid}.
+     * @brief A map projection where longitude and latitude are mapped using an {@link Ellipsoid}.
      *
      * The longitude and latitude are linearly mapped to X and Y by multiplying them (in radians) 
      * by the {@link Ellipsoid::getMaximumRadius()}. This projection is commonly known as geographic,

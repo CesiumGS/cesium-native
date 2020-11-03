@@ -9,9 +9,8 @@ namespace CesiumGeospatial {
     /**
      * @brief A projection.
      * 
-     * This is a `std::variant` of different types of projections that
-     * can convert between cartographic and geodedic coordinates based
-     * on an {@link Ellipsoid}.
+     * This is a `std::variant` of different types of map projections that
+     * can convert between projected map coordinates and Cartographic coordinates.
      * 
      * @see GeographicProjection
      * @see WebMercatorProjection

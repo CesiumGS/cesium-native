@@ -8,7 +8,7 @@ namespace Cesium3DTiles {
     class IPrepareRendererResources;
 
     /**
-     * @brief Interface for classes that can process tasks.
+     * @brief When implemented by a rendering engine, allows a {@link Tileset} to create tasks to be asynchronously executed in background threads.
      *
      * Not supposed to be used by clients.
      */
@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
         virtual ~ITaskProcessor() = default;
 
         /**
-         * @brief Start a task that executes the given function
+         * @brief Starts a task that executes the given function in a background thread.
          * 
          * @param f The function to execute
          */
@@ -29,7 +29,7 @@ namespace Cesium3DTiles {
     };
 
     /**
-     * @brief Infrastructure elements for a {@link Tileset}.
+     * @brief External interfaces used by a {@link Tileset}.
      * 
      * Not supposed to be used by clients.
      */
@@ -37,12 +37,12 @@ namespace Cesium3DTiles {
     public:
 
         /**
-         * @brief An external {@link IAssetAccessor}
+         * @brief An external {@link IAssetAccessor}.
          */
         IAssetAccessor* pAssetAccessor;
 
         /**
-         * @brief External {@link IPrepareRendererResources}
+         * @brief An external {@link IPrepareRendererResources}.
          */
         IPrepareRendererResources* pPrepareRendererResources;
 

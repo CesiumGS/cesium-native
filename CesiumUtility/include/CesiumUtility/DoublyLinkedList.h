@@ -3,7 +3,7 @@
 namespace CesiumUtility {
 
     /** 
-     * @brief A class containing the pointers for an element in a {@link DoublyLinkedList}.
+     * @brief Contains the previous and next pointers for an element in a {@link DoublyLinkedList}.
      */
     template <class T>
     class DoublyLinkedListPointers {

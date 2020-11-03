@@ -58,7 +58,7 @@ namespace CesiumGeospatial {
         const Ellipsoid& getEllipsoid() const { return this->_ellipsoid; }
 
         /**
-         * @brief Converts geodedic ellipsoid coordinates to geographic coordinates.
+         * @brief Converts geodedic ellipsoid coordinates to Web Mercator coordinates.
          *
          * Converts geodetic ellipsoid coordinates, in radians, to the equivalent Web Mercator
          * X, Y, Z coordinates expressed in meters.  The height is copied unmodified to the `z` coordinate.

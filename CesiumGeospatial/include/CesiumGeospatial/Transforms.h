@@ -8,13 +8,13 @@
 namespace CesiumGeospatial {
 
     /**
-     * @brief Functions for transforming positions to various reference frames.
+     * @brief Transforms positions to various reference frames.
      */
     class CESIUMGEOSPATIAL_API Transforms {
     public:
 
         /**
-         * @brief Computes a transformation from east-north-up axes to an ellipsoid reference frame.
+         * @brief Computes a transformation from east-north-up axes to an ellipsoid-fixed reference frame.
          * 
          * Computes a 4x4 transformation matrix from a reference frame with an east-north-up axes 
          * centered at the provided origin to the provided ellipsoid's fixed reference frame. 

@@ -9,7 +9,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief Functions for loading and processing glTF models
+     * @brief Functions for loading and processing glTF models.
      * 
      * This class offers basic functions for loading glTF models as `tinygltf::Model`
      * instances, and for processing the mesh primitives that appear in the resulting 
@@ -27,7 +27,7 @@ namespace Cesium3DTiles {
             /**
              * @brief The gltf model that was loaded.
              * 
-             * This will be an empty optional if the model was not loaded successfully.
+             * This will be `std::nullopt` if the model was not loaded successfully.
              */
             std::optional<tinygltf::Model> model;
 
@@ -45,14 +45,14 @@ namespace Cesium3DTiles {
         /**
          * @brief Load a glTF model from the given input data.
          * 
-         * @param data The input data
+         * @param data The input data.
          * @return The {@link LoadResult} containing the model (if it could be loaded),
          * and possible warning- or error messages.
          */
         static LoadResult load(const gsl::span<const uint8_t>& data);
 
         /**
-         * @brief A callback function for {@link Gltf::forEachPrimitiveInScene}
+         * @brief A callback function for {@link Gltf::forEachPrimitiveInScene}.
          */
         typedef void ForEachPrimitiveInSceneCallback(
             tinygltf::Model& gltf,
@@ -68,7 +68,7 @@ namespace Cesium3DTiles {
          * The callback will be applied to all meshes, depending on
          * the given `sceneID` and the given glTF asset:
          * 
-         * If the given `sceneID` is positive and exists in the given glTF,
+         * If the given `sceneID` is non-negative and exists in the given glTF,
          * then it will be applied to all meshes of this scene.
          * Otherwise, if the glTF model as a default scene, then it will
          * be applied to all meshes of the default scene. 
@@ -78,14 +78,14 @@ namespace Cesium3DTiles {
          * Otherwise (if there are no scenes and no nodes), then all meshes 
          * will be traversed.
          * 
-         * @param gltf The glTF model
+         * @param gltf The glTF model.
          * @param sceneID The scene ID (index)
          * @param callback The callback to apply
          */
         static void forEachPrimitiveInScene(tinygltf::Model& gltf, int sceneID, std::function<ForEachPrimitiveInSceneCallback>&& callback);
 
         /**
-         * @brief A callback function for {@link Gltf::forEachPrimitiveInScene}
+         * @brief A callback function for {@link Gltf::forEachPrimitiveInScene}.
          */
         typedef void ForEachPrimitiveInSceneConstCallback(
             const tinygltf::Model& gltf,

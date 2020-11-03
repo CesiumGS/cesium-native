@@ -3,7 +3,7 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief Enumeration of refinement strategies for a {@link Tile}.
+     * @brief Refinement strategies for a {@link Tile}.
      */
     enum class TileRefine {
 

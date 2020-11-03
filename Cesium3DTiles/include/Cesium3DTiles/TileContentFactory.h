@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
     class Tileset;
 
     /**
-     * @brief A class managing the creation of {@link Tile::getContent} from raw data.
+     * @brief Creates {@link TileContentLoadResult} from raw data.
      * 
      * The class offers a lookup functionality for functions that can create
      * {@link TileContentLoadResult} instances from raw data. It allows 
@@ -61,7 +61,7 @@ namespace Cesium3DTiles {
          * {@link TileContentLoadResult} from the input data.
          * 
          * @param magic The string describing the magic header.
-         * @param factoryFunction The function that will be used to create the tile content
+         * @param factoryFunction The function that will be used to create the tile content.
          */
         static void registerMagic(const std::string& magic, FactoryFunction factoryFunction);
 
@@ -72,7 +72,7 @@ namespace Cesium3DTiles {
          * It is used for deciding whether the given factory function should be 
          * used to create the {@link TileContentLoadResult} from the raw response data.
          *
-         * @param contentType The string describing the content type
+         * @param contentType The string describing the content type.
          * @param factoryFunction The function that will be used to create the tile content
          */
         static void registerContentType(const std::string& contentType, FactoryFunction factoryFunction);
@@ -93,7 +93,7 @@ namespace Cesium3DTiles {
          * If a matching function is found, it will be applied to the given
          * input, and the result will be returned.
          * 
-         * @param context The {@link TileContext}
+         * @param context The {@link TileContext}.
          * @param tileID The {@link TileID}
          * @param tileBoundingVolume The tile {@link BoundingVolume}
          * @param tileGeometricError The geometric error
@@ -105,7 +105,7 @@ namespace Cesium3DTiles {
          * @param data The raw input data
          * @return The tile content load result, or `nullptr` if there is
          * no factory function registered for the magic header of the given
-         * data, and no factory function for the given content type
+         * data, and no factory function for the given content type.
          */
         static std::unique_ptr<TileContentLoadResult> createContent(
             const TileContext& context,

@@ -10,7 +10,7 @@ namespace Cesium3DTiles {
     class Tile;
 
     /**
-     * @brief A structure describing the result of loading a {@link Tile::getContent}.
+     * @brief The result of loading a {@link Tile}'s content.
      * 
      * Different types of tiles can be created from different data sources. This
      * structure provides a unified view on the actual tile content data. 

@@ -51,7 +51,7 @@ namespace Cesium3DTiles {
     /**
      * @brief Returns a string consisting of the first four ("magic") bytes of the given data
      * 
-     * @param data The raw data
+     * @param data The raw data.
      * @return The string, or an empty optional if the given data contains less than 4 bytes
      */
     std::optional<std::string> TileContentFactory::getMagic(const gsl::span<const uint8_t>& data) {

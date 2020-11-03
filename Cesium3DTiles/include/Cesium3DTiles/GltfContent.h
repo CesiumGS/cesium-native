@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
     class Tileset;
 
     /**
-     * @brief A class that can create a {@link TileContentLoadResult} from glTF data.
+     * @brief Creates {@link TileContentLoadResult} from glTF data.
      */
     class CESIUM3DTILES_API GltfContent {
     public:

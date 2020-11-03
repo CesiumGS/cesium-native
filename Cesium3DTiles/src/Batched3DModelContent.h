@@ -13,7 +13,7 @@ namespace Cesium3DTiles {
     class Tileset;
 
     /**
-     * @brief A class that can create a {@link TileContentLoadResult} from B3DM data.
+     * @brief Creates a {@link TileContentLoadResult} from B3DM data.
      */
     class CESIUM3DTILES_API Batched3DModelContent {
     public:

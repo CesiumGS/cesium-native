@@ -204,7 +204,7 @@ namespace Cesium3DTiles {
          * @brief Updates this view, returning the set of tiles to render in this view.
          * @param camera The updated camera.
          * @returns The set of tiles to render in the updated camera view. This value is only valid until
-         *          the next call to `updateView` or until the view is destroyed, whichever comes first.
+         *          the next call to `updateView` or until the tileset is destroyed, whichever comes first.
          */
         const ViewUpdateResult& updateView(const Camera& camera);
 
@@ -238,7 +238,7 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          * 
-         * @param tile The tile for which the content is requested
+         * @param tile The tile for which the content is requested.
          * @return The pointer to the {@link IAssetRequest} that will
          * complete when the content is available
          */
@@ -249,7 +249,7 @@ namespace Cesium3DTiles {
     private:
         struct TraversalDetails {
             /**
-             * @brief Whether all selected tiles are renderable.
+             * @brief Whether all selected tiles in this tile's subtree are renderable.
              * 
              * This is `true` if all selected (i.e. not culled or refined) tiles in this tile's subtree
              * are renderable. If the subtree is renderable, we'll render it; no drama.
@@ -257,7 +257,7 @@ namespace Cesium3DTiles {
             bool allAreRenderable = true;
 
             /**
-             * @brief Whether any tile was rendered in the last frame
+             * @brief Whether any tile in this tile's subtree was rendered in the last frame.
              * 
              * This is `true` if any tiles in this tile's subtree were rendered last frame. If any
              * were, we must render the subtree rather than this tile, because rendering
@@ -267,7 +267,7 @@ namespace Cesium3DTiles {
             bool anyWereRenderedLastFrame = false;
 
             /**
-             * @brief The number of selected tiles that are not yet rendered
+             * @brief The number of selected tiles in this tile's subtree that are not yet renderable.
              * 
              * Counts the number of selected tiles in this tile's subtree that are
              * not yet ready to be rendered because they need more loading. Note that

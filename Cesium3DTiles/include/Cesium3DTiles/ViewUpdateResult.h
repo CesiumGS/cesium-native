@@ -7,7 +7,7 @@ namespace Cesium3DTiles {
     class Tile;
 
     /**
-     * @brief A structure summarizing the results of {@link Tileset::updateView}.
+     * @brief Reports the results of {@link Tileset::updateView}.
      * 
      * This is not supposed to be used by clients. It is used for the internal 
      * bookkeeping, and to update the {@link Tile::getLastSelectionState} of the
@@ -17,7 +17,7 @@ namespace Cesium3DTiles {
     public:
 
         /**
-         * @brief The tiles that are contained in the render list of the current frame
+         * @brief The tiles that are contained in the render list of the current frame.
          */
         std::vector<Tile*> tilesToRenderThisFrame;
 
