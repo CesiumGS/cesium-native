@@ -580,7 +580,7 @@ namespace Cesium3DTiles {
 
         TileContentLoadResult* pParentContent = pParent->getContent();
         const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
-        if (!pParent || !pParentContent || !pParentContent->model || !pSubdividedParentID) {
+        if (!pParentContent || !pParentContent->model || !pSubdividedParentID) {
             this->setState(LoadState::ContentLoaded);
             return;
         }

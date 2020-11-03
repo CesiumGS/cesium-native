@@ -140,7 +140,7 @@ namespace CesiumGeospatial {
          * @brief Returns `true` if two projections (i.e. their ellipsoids) are *not* equal.
          */
         bool operator!=(const WebMercatorProjection& rhs) const {
-            return this->_ellipsoid != rhs._ellipsoid;
+            return !(*this == rhs);
         };
 
     private:

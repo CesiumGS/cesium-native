@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/GltfContent.h"
+#include "Cesium3DTiles/GltfWriter.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumUtility/Math.h"
 #include <stdexcept>

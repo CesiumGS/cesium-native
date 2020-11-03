@@ -16,14 +16,18 @@ namespace Cesium3DTiles {
      * models.
      */
     class CESIUM3DTILES_API Gltf {
+
+    private:
+
+        /** @brief This class cannot be instantiated */
+        Gltf() = delete;
+
     public:
 
         /**
          * @brief A summary of the result of loading a glTF model from raw data.
          */
         struct LoadResult {
-        public:
-
             /**
              * @brief The gltf model that was loaded.
              * 
@@ -100,5 +104,6 @@ namespace Cesium3DTiles {
         /** @copydoc Gltf::forEachPrimitiveInScene() */
         static void forEachPrimitiveInScene(const tinygltf::Model& gltf, int sceneID, std::function<ForEachPrimitiveInSceneConstCallback>&& callback);
     };
+
 
 }

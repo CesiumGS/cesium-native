@@ -4,6 +4,8 @@
 #include "CesiumGeometry/Ray.h"
 #include "CesiumGeometry/IntersectionTests.h"
 
+#include <stdexcept>
+
 using namespace CesiumGeometry;
 
 namespace CesiumGeospatial {
@@ -13,11 +15,8 @@ namespace CesiumGeospatial {
         const Ellipsoid& ellipsoid
     ) :
         EllipsoidTangentPlane(
-            Transforms::eastNorthUpToFixedFrame(
-                ellipsoid.scaleToGeodeticSurface(origin).value(),
-                ellipsoid
-            )
-        )
+            computeEastNorthUpToFixedFrame(origin, ellipsoid),
+            ellipsoid)
     {
     }
 
@@ -50,5 +49,19 @@ namespace CesiumGeospatial {
             glm::dot(this->_yAxis, v)
         );
     }
+
+    /* static */ glm::dmat4 EllipsoidTangentPlane::computeEastNorthUpToFixedFrame(
+        const glm::dvec3& origin,
+        const Ellipsoid& ellipsoid) {
+        const auto scaledOrigin = ellipsoid.scaleToGeodeticSurface(origin);
+        if (!scaledOrigin) {
+            throw std::invalid_argument("The position may not be at the center of the ellipsoid");
+        }
+        return Transforms::eastNorthUpToFixedFrame(
+            scaledOrigin.value(), ellipsoid);
+    }
+
+
+
 
 }

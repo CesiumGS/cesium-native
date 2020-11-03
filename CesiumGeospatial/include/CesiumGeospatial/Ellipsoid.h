@@ -118,7 +118,7 @@ namespace CesiumGeospatial {
          * @brief Returns `true` if two elliposids are *not* equal.
          */
         bool operator!=(const Ellipsoid& rhs) const {
-            return this->_radii != rhs._radii;
+            return !(*this == rhs);
         };
 
     private:
