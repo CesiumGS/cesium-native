@@ -9,9 +9,12 @@ namespace Cesium3DTiles {
     /**
      * @brief Reports the results of {@link Tileset::updateView}.
      * 
-     * This is not supposed to be used by clients. It is used for the internal 
-     * bookkeeping, and to update the {@link Tile::getLastSelectionState} of the
-     * tiles throughout the rendering process.
+     * Users of a {@link Tileset} will call {@link Tileset::updateView} and receive
+     * this structure so that they can update the state of their rendering system
+     * accordingly. The tileset will internally keep track the current state of the 
+     * tiles as their {@link Tile::getLastSelectionState} throughout the rendering 
+     * process, and use this structure to provide information about the state
+     * changes of tiles to clients.
      */
     class CESIUM3DTILES_API ViewUpdateResult {
     public:

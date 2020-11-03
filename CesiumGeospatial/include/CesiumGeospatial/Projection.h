@@ -22,7 +22,8 @@ namespace CesiumGeospatial {
      * 
      * @param projection The projection.
      * @param position The {@link Cartographic} position.
-     * @return The coordinates of the projected point, in meters.
+     * @return The coordinates of the projected point, in the coordinate system
+     * of the given projection.
      */
     glm::dvec3 projectPosition(const Projection& projection, const Cartographic& position);
 

@@ -35,13 +35,12 @@ namespace Cesium3DTiles {
      * and {@link Tile::getChildren} functions.
      * 
      * The renderable content is provided as a {@link TileContentLoadResult}
-     * from the {@link Tile::getContent} function. Tiles may have content with 
-     * different levels of detail. The {@link Tile::getGeometricError} function 
-     * returns the geometric error of the representation of the renderable 
+     * from the {@link Tile::getContent} function. The {@link Tile::getGeometricError}
+     * function returns the geometric error of the representation of the renderable 
      * content of a tile.
      * 
      * The {@link BoundingVolume} is given by the {@link Tile::getBoundingVolume}
-     * function. This bounding volme encloses the renderable content of the 
+     * function. This bounding volume encloses the renderable content of the 
      * tile itself, as well as the renderable content of all children, yielding 
      * a spatially coherent hierarchy of bounding volumes.
      * 
@@ -421,11 +420,11 @@ namespace Cesium3DTiles {
          * this tile being {@link Tile::LoadState::Unloaded}), then nothing will be done.
          * 
          * Otherwise, the tile will go into the {@link Tile::LoadState::ContentLoading}
-         * state, and the request for loading the tile content will be sent out. The
-         * response of the request will be received asynchronously. Depending on the
-         * type of the tile and the response, the tile will eventually go into the
-         * {@link Tile::LoadState::ContentLoaded} state, and the {@link Tile::getContent}
-         * will be available.
+         * state, and the request for loading the tile content will be sent out. The 
+         * function will then return, and the response of the request will be received 
+         * asynchronously. Depending on the type of the tile and the response, the tile 
+         * will eventually go into the {@link Tile::LoadState::ContentLoaded} state, 
+         * and the {@link Tile::getContent} will be available.
          */
         void loadContent();
 
@@ -434,8 +433,9 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          *
-         * If this tile was already unloaded (indicated by the {@link Tile::getState} of
-         * this tile being {@link Tile::LoadState::Unloaded}), then nothing will be done.
+         * If the operation for loading the tile content is currently in progress, as indicated by
+         * the {@link Tile::getState} of this tile being {@link Tile::LoadState::ContentLoading}), 
+         * then nothing will be done, and `false` will be returned.
          * 
          * Otherwise, the resources that have been allocated for the tile content will
          * be freed.

@@ -31,6 +31,7 @@ namespace Cesium3DTiles {
          * angle of the camera, in radians.
          * @param verticalFieldOfView The vertical field-of-view (opening)
          * angle of the camera, in radians.
+         * @param ellipsoid The ellipsoid. Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
          */
         Camera(
             const glm::dvec3& position,

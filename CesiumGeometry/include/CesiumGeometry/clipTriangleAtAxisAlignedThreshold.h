@@ -15,23 +15,17 @@ namespace CesiumGeometry {
     struct InterpolatedVertex {
         /**
          * @brief The index of the first vertex to interpolate between. 
-         *
-         * Ignored if index is not -1.
          */
         int first;
 
         /**
          * @brief The index of the second vertex to interpolate between. 
-         *
-         * Ignored if index is not -1.
          */
         int second;
 
         /**
          * @brief The fraction of the distance from {@link first} to {@link second} at 
          * which to interpolate. 
-         *
-         * Ignored if index is not -1.
          */
         double t;
     };

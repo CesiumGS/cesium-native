@@ -12,8 +12,11 @@ namespace Cesium3DTiles {
     /**
      * @brief The result of loading a {@link Tile}'s content.
      * 
-     * Different types of tiles can be created from different data sources. This
-     * structure provides a unified view on the actual tile content data. 
+     * The result of loading a tile's content depends on the specific type of content.
+     * It can yield a glTF model, a tighter-fitting bounding volume, or knowledge of 
+     * the availability of tiles deeper in the tile hierarchy. This structure 
+     * encapsulates all of those possibilities. Each possible result is therefore
+     * provided as an `std::optional`.
      * 
      * Instances of this structure are created internally, by the {@link TileContentFactory},
      * when the response to a network request for loading the tile content was

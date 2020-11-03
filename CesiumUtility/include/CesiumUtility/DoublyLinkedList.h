@@ -31,8 +31,6 @@ namespace CesiumUtility {
 
         /**
          * @brief Assignment operator.
-         *
-         * @param rhs The other instance.
          */
         DoublyLinkedListPointers& operator=(const DoublyLinkedListPointers& /*rhs*/) {
             return *this;

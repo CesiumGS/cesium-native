@@ -65,18 +65,20 @@ namespace Cesium3DTiles {
         /**
          * @brief Apply the given callback to all relevant primitives.
          * 
-         * The callback will be applied to all meshes, depending on
-         * the given `sceneID` and the given glTF asset:
-         * 
          * If the given `sceneID` is non-negative and exists in the given glTF,
-         * then it will be applied to all meshes of this scene.
-         * Otherwise, if the glTF model as a default scene, then it will
-         * be applied to all meshes of the default scene. 
-         * Otherwise, it will be applied to all meshes of the the first scene.
-         * Otherwise, it will be applied to all meshes that can be found
-         * by starting a traversal at the root node.
-         * Otherwise (if there are no scenes and no nodes), then all meshes 
-         * will be traversed.
+         * then the given callback will be applied to all meshes of this scene.
+         * 
+         * If the given `sceneId` is negative, then the meshes that the callback
+         * will be applied to depends on the structure of the glTF model:
+         * 
+         * * If the glTF model has a default scene, then it will
+         *   be applied to all meshes of the default scene. 
+         * * Otherwise, it will be applied to all meshes of the the first scene.
+         * * Otherwise (if the glTF model does not contain any scenes), it will 
+         *   be applied to all meshes that can be found by starting a traversal 
+         *   at the root node.
+         * * Otherwise (if there are no scenes and no nodes), then all meshes 
+         *   will be traversed.
          * 
          * @param gltf The glTF model.
          * @param sceneID The scene ID (index)

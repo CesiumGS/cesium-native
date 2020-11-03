@@ -35,6 +35,7 @@ namespace Cesium3DTiles {
      * 
      * @param transform The transform matrix.
      * @param boundingVolume The bounding volume.
+     * @return The transformed bounding volume.
      */
     CESIUM3DTILES_API BoundingVolume transformBoundingVolume(const glm::dmat4x4& transform, const BoundingVolume& boundingVolume);
 
