@@ -11,18 +11,21 @@ namespace CesiumGeospatial {
     class Cartographic;
 
     /**
-     * The map projection used by Google Maps, Bing Maps, and most of ArcGIS Online, EPSG:3857. This
-     * projection uses geodetic longitude and latitude expressed with WGS84 and transforms them to Mercator using
-     * the spherical (rather than ellipsoidal) equations.
+     * @brief The map projection used by Google Maps, Bing Maps, and most of ArcGIS Online, EPSG:3857. 
+     * 
+     * This projection uses geodetic longitude and latitude expressed with WGS84 and transforms them to 
+     * Mercator using the spherical (rather than ellipsoidal) equations.
      *
      * @see GeographicProjection
      */
     class CESIUMGEOSPATIAL_API WebMercatorProjection {
     public:
         /**
-         * The maximum latitude (both North and South) supported by a Web Mercator
-         * (EPSG:3857) projection.  Technically, the Mercator projection is defined
-         * for any latitude up to (but not including) 90 degrees, but it makes sense
+         * @brief The maximum latitude (both North and South) supported by a Web Mercator
+         * (EPSG:3857) projection. 
+         * 
+         * Technically, the Mercator projection is defined for any latitude
+         * up to (but not including) 90 degrees, but it makes sense
          * to cut it off sooner because it grows exponentially with increasing latitude.
          * The logic behind this particular cutoff value, which is the one used by
          * Google Maps, Bing Maps, and Esri, is that it makes the projection
@@ -45,16 +48,18 @@ namespace CesiumGeospatial {
         /**
          * @brief Constructs a new instance.
          * 
-         * @param ellipsoid The ellipsoid.
+         * @param ellipsoid The {@link Ellipsoid}.
          */
         WebMercatorProjection(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
         /**
-         * @brief Gets the ellipsoid.
+         * @brief Gets the {@link Ellipsoid}.
          */
         const Ellipsoid& getEllipsoid() const { return this->_ellipsoid; }
 
         /**
+         * @brief Converts geodedic ellipsoid coordinates to Web Mercator coordinates.
+         *
          * Converts geodetic ellipsoid coordinates, in radians, to the equivalent Web Mercator
          * X, Y, Z coordinates expressed in meters.  The height is copied unmodified to the `z` coordinate.
          *
@@ -64,7 +69,9 @@ namespace CesiumGeospatial {
         glm::dvec3 project(const Cartographic& cartographic) const;
 
         /**
-         * Projects a globe rectangle to Web Mercator coordinates by projecting the southwest and northeast corners.
+         * @brief Projects a globe rectangle to Web Mercator coordinates.
+         * 
+         * This is done by projecting the southwest and northeast corners.
          * 
          * @param rectangle The globe rectangle to project.
          * @return The projected rectangle.
@@ -72,6 +79,8 @@ namespace CesiumGeospatial {
         CesiumGeometry::Rectangle project(const CesiumGeospatial::GlobeRectangle& rectangle) const;
 
         /**
+         * @brief Converts Web Mercator coordinates to geodetic ellipsoid coordinates.
+         * 
          * Converts Web Mercator X and Y coordinates, expressed in meters, to a {@link Cartographic}
          * containing geodetic ellipsoid coordinates. The height is set to 0.0.
          *
@@ -81,6 +90,8 @@ namespace CesiumGeospatial {
         Cartographic unproject(const glm::dvec2& projectedCoordinates) const;
 
         /**
+         * @brief Converts Web Mercator coordinates to geodetic ellipsoid coordinates.
+         * 
          * Converts Web Mercator X, Y coordinates, expressed in meters, to a {@link Cartographic}
          * containing geodetic ellipsoid coordinates. The Z coordinate is copied unmodified to the
          * height.
@@ -91,7 +102,9 @@ namespace CesiumGeospatial {
         Cartographic unproject(const glm::dvec3& projectedCoordinates) const;
 
         /**
-         * Unprojects a Web Mercator rectangle to the globe by unprojecting the southwest and northeast corners.
+         * @brief Unprojects a Web Mercator rectangle to the globe.
+         *
+         * This is done by unprojecting the southwest and northeast corners.
          * 
          * @param rectangle The rectangle to unproject.
          * @returns The unprojected rectangle.
@@ -99,7 +112,7 @@ namespace CesiumGeospatial {
         CesiumGeospatial::GlobeRectangle unproject(const CesiumGeometry::Rectangle& rectangle) const;
 
         /**
-         * Converts a Mercator angle, in the range -PI to PI, to a geodetic latitude
+         * @brief Converts a Mercator angle, in the range -PI to PI, to a geodetic latitude
          * in the range -PI/2 to PI/2.
          *
          * @param mercatorAngle The angle to convert.
@@ -108,7 +121,7 @@ namespace CesiumGeospatial {
         static double mercatorAngleToGeodeticLatitude(double mercatorAngle);
 
         /**
-         * Converts a geodetic latitude in radians, in the range -PI/2 to PI/2, to a Mercator
+         * @brief Converts a geodetic latitude in radians, in the range -PI/2 to PI/2, to a Mercator
          * angle in the range -PI to PI.
          *
          * @param latitude The geodetic latitude in radians.
@@ -116,10 +129,16 @@ namespace CesiumGeospatial {
          */
         static double geodeticLatitudeToMercatorAngle(double latitude);
 
+        /**
+         * @brief Returns `true` if two projections (i.e. their ellipsoids) are equal.
+         */
         bool operator==(const WebMercatorProjection& rhs) const {
             return this->_ellipsoid == rhs._ellipsoid;
         };
 
+        /**
+         * @brief Returns `true` if two projections (i.e. their ellipsoids) are *not* equal.
+         */
         bool operator!=(const WebMercatorProjection& rhs) const {
             return this->_ellipsoid != rhs._ellipsoid;
         };

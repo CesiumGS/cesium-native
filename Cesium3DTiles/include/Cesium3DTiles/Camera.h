@@ -20,6 +20,19 @@ namespace Cesium3DTiles {
     public:
         // TODO: Add support for orthographic and off-center perspective frustums
 
+        /**
+         * @brief Creates a new instance.
+         * 
+         * @param position The position of the eye point of the camera.
+         * @param direction The view direction vector of the camera.
+         * @param up The up vector of the camera.
+         * @param viewportSize The size of the viewport, in pixels.
+         * @param horizontalFieldOfView The horizontal field-of-view (opening)
+         * angle of the camera, in radians.
+         * @param verticalFieldOfView The vertical field-of-view (opening)
+         * angle of the camera, in radians.
+         * @param ellipsoid The ellipsoid. Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+         */
         Camera(
             const glm::dvec3& position,
             const glm::dvec3& direction,
@@ -87,7 +100,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Updates the camera's view parameters.
          *
-         * @param viewportSize The new size of the viewport, in pixels
+         * @param viewportSize The new size of the viewport, in pixels.
          * @param horizontalFieldOfView The horizontal field of view angle in radians.
          * @param verticalFieldOfView The vertical field of view angle in radians.
          */
@@ -96,9 +109,9 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns whether the given {@link BoundingVolume} is visible for this camera
          *
-         * Returns whether the given bounding volume is completely visible,
-         * meaning that all four planes of the given volume are completely
-         * contained in the frustum of this camera.
+         * Returns whether the given bounding volume is visible for this camera,
+         * meaning that the given volume is at least partially contained in 
+         * the frustum of this camera.
          *
          * @return Whether the bounding volume is visible
          */
@@ -145,6 +158,9 @@ namespace Cesium3DTiles {
         double _sseDenominator;
         std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
+        // The planes that describe the view frustum of this camera,
+        // as computed in _updateCullingVolume. The normals of these
+        // planes will point inwards.
         CesiumGeometry::Plane _leftPlane;
         CesiumGeometry::Plane _rightPlane;
         CesiumGeometry::Plane _topPlane;

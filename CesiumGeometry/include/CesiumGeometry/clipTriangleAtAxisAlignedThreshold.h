@@ -5,36 +5,44 @@
 #include <variant>
 
 namespace CesiumGeometry {
+
+    /**
+     * @brief A structure describing a vertex that results from interpolating two other vertices.
+     * 
+     * The vertices to interpolate between are given via their indices. This is
+     * used as one representation of a vertex in a {@link TriangleClipVertex}.
+     */
     struct InterpolatedVertex {
         /**
-         * The index of the first vertex to interpolate between. Ignored
-         * if @link index is not -1.
+         * @brief The index of the first vertex to interpolate between. 
          */
         int first;
 
         /**
-         * The index of the second vertex to interpolate between. Ignored
-         * if @link index is not -1.
+         * @brief The index of the second vertex to interpolate between. 
          */
         int second;
 
         /**
-         * The fraction of the distance from @link first to @link second at
-         * which to interpolate. Ignored if @link index is not -1.
+         * @brief The fraction of the distance from {@link first} to {@link second} at 
+         * which to interpolate. 
          */
         double t;
     };
 
     /**
-     * A vertex resulting from clipping a triangle against a threshold. It may either be a
-     * simple index referring to an existing vertex, or an interpolation between two vertices.
+     * @brief A vertex resulting from clipping a triangle against a threshold. 
+     * 
+     * It may either be a simple index referring to an existing vertex, 
+     * or an interpolation between two vertices.
      */
     typedef std::variant<int, InterpolatedVertex> TriangleClipVertex;
 
     /**
-     * Splits a 2D triangle at given axis-aligned threshold value and returns the resulting
-     * polygon on a given side of the threshold.  The resulting polygon may have 0, 1, 2,
-     * 3, or 4 vertices.
+     * @brief Splits a 2D triangle at given axis-aligned threshold value and returns the resulting
+     * polygon on a given side of the threshold. 
+     *
+     * The resulting polygon may have 0, 1, 2, 3, or 4 vertices.
      *
      * @param threshold The threshold coordinate value at which to clip the triangle.
      * @param keepAbove true to keep the portion of the triangle above the threshold, or false
