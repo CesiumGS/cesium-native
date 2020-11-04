@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @brief Classes that implement the Cesium 3D Tiles standard
+ * @brief Classes that implement the 3D Tiles standard
  */
 namespace Cesium3DTiles {}
 

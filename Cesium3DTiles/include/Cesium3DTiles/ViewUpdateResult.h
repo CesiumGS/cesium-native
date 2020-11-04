@@ -6,8 +6,27 @@
 namespace Cesium3DTiles {
     class Tile;
 
-    struct CESIUM3DTILES_API ViewUpdateResult {
+    /**
+     * @brief Reports the results of {@link Tileset::updateView}.
+     * 
+     * Users of a {@link Tileset} will call {@link Tileset::updateView} and receive
+     * this structure so that they can update the state of their rendering system
+     * accordingly. The tileset will internally keep track the current state of the 
+     * tiles as their {@link Tile::getLastSelectionState} throughout the rendering 
+     * process, and use this structure to provide information about the state
+     * changes of tiles to clients.
+     */
+    class CESIUM3DTILES_API ViewUpdateResult {
+    public:
+
+        /**
+         * @brief The tiles that are contained in the render list of the current frame.
+         */
         std::vector<Tile*> tilesToRenderThisFrame;
+
+        /**
+         * @brief The tiles that have been removed from the render list for the current frame
+         */
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
 
         uint32_t tilesLoadingLowPriority;

@@ -9,31 +9,52 @@ namespace Cesium3DTiles {
 
     class Tile;
 
+    /**
+     * @brief The result of loading a {@link Tile}'s content.
+     * 
+     * The result of loading a tile's content depends on the specific type of content.
+     * It can yield a glTF model, a tighter-fitting bounding volume, or knowledge of 
+     * the availability of tiles deeper in the tile hierarchy. This structure 
+     * encapsulates all of those possibilities. Each possible result is therefore
+     * provided as an `std::optional`.
+     * 
+     * Instances of this structure are created internally, by the {@link TileContentFactory},
+     * when the response to a network request for loading the tile content was
+     * received.
+     */
     struct TileContentLoadResult {
         /**
-         * The glTF model to be rendered for this tile. If this is `std::nullopt`, the tile cannot be rendered.
-         * If it has a value but the model is blank, the tile can be "rendered", but it is rendered as nothing.
+         * @brief The glTF model to be rendered for this tile. 
+         *
+         * If this is `std::nullopt`, the tile cannot be rendered.
+         * If it has a value but the model is blank, the tile can 
+         * be "rendered", but it is rendered as nothing.
          */
         std::optional<tinygltf::Model> model;
 
         /**
-         * A new context, if any, used by the `childTiles`.
+         * @brief A new context, if any, used by the `childTiles`.
          */
         std::unique_ptr<TileContext> pNewTileContext;
 
         /**
-         * New child tiles discovered by loading this tile. For example, if the content is an external tileset, this property
-         * contains the root tiles of the subtree. This is ignored if the tile already has any child tiles.
+         * @brief New child tiles discovered by loading this tile. 
+         * 
+         * For example, if the content is an external tileset, this property
+         * contains the root tiles of the subtree. This is ignored if the 
+         * tile already has any child tiles.
          */
         std::optional<std::vector<Tile>> childTiles;
 
         /**
-         * An improved bounding volume for this tile, more accurate than the one the tile used originally.
+         * @brief An improved bounding volume for this tile.
+         *
+         * If this is available, then it is more accurate than the one the tile used originally.
          */
         std::optional<BoundingVolume> updatedBoundingVolume;
 
         /**
-         * Available quadtree tiles discovered as a result of loading this tile.
+         * @brief Available quadtree tiles discovered as a result of loading this tile.
          */
         std::vector<CesiumGeometry::QuadtreeTileRectangularRange> availableTileRectangles;
 

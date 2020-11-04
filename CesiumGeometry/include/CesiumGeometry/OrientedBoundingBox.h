@@ -50,10 +50,10 @@ namespace CesiumGeometry {
          * @brief Determines on which side of a plane the bounding box is located.
          * 
          * @param plane The plane to test against.
-         * @return
-         *  * {@link CullingResult::Inside} if the entire box is on the side of the plane the normal is pointing.
-         *  * {@link CullingResult::Outside} if the entire box is on the opposite side.
-         *  * {@link CullingResult::Intersecting} if the box intersects the plane.
+         * @return The {@link CullingResult}:
+         *  * `Inside` if the entire box is on the side of the plane the normal is pointing.
+         *  * `Outside` if the entire box is on the opposite side.
+         *  * `Intersecting` if the box intersects the plane.
          */
         CullingResult intersectPlane(const Plane& plane) const;
 

@@ -57,10 +57,10 @@ namespace CesiumGeospatial {
          * @brief Determines on which side of a plane the bounding region is located.
          * 
          * @param plane The plane to test against.
-         * @return
-         *  * {@link CullingResult::Inside} if the entire region is on the side of the plane the normal is pointing.
-         *  * {@link CullingResult::Outside} if the entire region is on the opposite side.
-         *  * {@link CullingResult::Intersecting} if the region intersects the plane.
+         * @return The {@link CesiumGeometry::CullingResult} 
+         *  * `Inside` if the entire region is on the side of the plane the normal is pointing.
+         *  * `Outside` if the entire region is on the opposite side.
+         *  * `Intersecting` if the region intersects the plane.
          */
         CesiumGeometry::CullingResult intersectPlane(const CesiumGeometry::Plane& plane) const;
 
