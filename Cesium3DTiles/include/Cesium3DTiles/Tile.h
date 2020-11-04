@@ -416,8 +416,8 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          * 
-         * If this tile was already unloaded (indicated by the {@link Tile::getState} of 
-         * this tile being {@link Tile::LoadState::Unloaded}), then nothing will be done.
+         * If this tile is not in its initial state (indicated by the {@link Tile::getState} of 
+         * this tile being *not* {@link Tile::LoadState::Unloaded}), then nothing will be done.
          * 
          * Otherwise, the tile will go into the {@link Tile::LoadState::ContentLoading}
          * state, and the request for loading the tile content will be sent out. The 
