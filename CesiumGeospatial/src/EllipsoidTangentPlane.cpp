@@ -55,7 +55,7 @@ namespace CesiumGeospatial {
         const Ellipsoid& ellipsoid) {
         const auto scaledOrigin = ellipsoid.scaleToGeodeticSurface(origin);
         if (!scaledOrigin) {
-            throw std::invalid_argument("The position may not be at the center of the ellipsoid");
+            throw std::invalid_argument("The origin must not be near the center of the ellipsoid.");
         }
         return Transforms::eastNorthUpToFixedFrame(
             scaledOrigin.value(), ellipsoid);

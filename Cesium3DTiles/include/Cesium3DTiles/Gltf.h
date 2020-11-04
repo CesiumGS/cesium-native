@@ -17,12 +17,10 @@ namespace Cesium3DTiles {
      */
     class CESIUM3DTILES_API Gltf {
 
-    private:
+    public:
 
         /** @brief This class cannot be instantiated */
         Gltf() = delete;
-
-    public:
 
         /**
          * @brief A summary of the result of loading a glTF model from raw data.
