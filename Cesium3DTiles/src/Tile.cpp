@@ -522,7 +522,9 @@ namespace Cesium3DTiles {
         });
     }
 
-    void Tile::generateTextureCoordinates() {
+    std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates() {
+        std::optional<CesiumGeospatial::BoundingRegion> result;
+
         // Generate texture coordinates for each projection.
         if (!this->_rasterTiles.empty()) {
             CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
@@ -555,7 +557,13 @@ namespace Cesium3DTiles {
                         // Create new texture coordinates for this not-previously-seen projection
                         CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
 
-                        GltfContent::createRasterOverlayTextureCoordinates(this->_pContent->model.value(), projectionID, projection, rectangle);
+                        CesiumGeospatial::BoundingRegion boundingRegion = GltfContent::createRasterOverlayTextureCoordinates(this->_pContent->model.value(), projectionID, projection, rectangle);
+                        if (result) {
+                            result = boundingRegion.computeUnion(result.value());
+                        } else {
+                            result = boundingRegion;
+                        }
+
                         projections.push_back(projection);
 
                         mappedTile.setTextureCoordinateID(projectionID);
@@ -567,6 +575,8 @@ namespace Cesium3DTiles {
                 }
             }
         }
+
+        return result;
     }
 
     void Tile::upsampleParent() {
@@ -594,7 +604,7 @@ namespace Cesium3DTiles {
             pContent->model = upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
             this->_pContent = std::move(pContent);
 
-            this->generateTextureCoordinates();
+            this->_pContent->updatedBoundingVolume = this->generateTextureCoordinates();
 
             if (this->getTileset()->getExternals().pPrepareRendererResources) {
                 this->_pRendererResources = this->getTileset()->getExternals().pPrepareRendererResources->prepareInLoadThread(*this);

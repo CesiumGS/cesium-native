@@ -123,4 +123,38 @@ namespace CesiumGeospatial {
         return GlobeRectangle(west, south, east, north);
     }
 
+    GlobeRectangle GlobeRectangle::computeUnion(const GlobeRectangle& other) const {
+        double rectangleEast = this->_east;
+        double rectangleWest = this->_west;
+
+        double otherRectangleEast = other._east;
+        double otherRectangleWest = other._west;
+
+        if (rectangleEast < rectangleWest && otherRectangleEast > 0.0) {
+            rectangleEast += CesiumUtility::Math::TWO_PI;
+        } else if (otherRectangleEast < otherRectangleWest && rectangleEast > 0.0) {
+            otherRectangleEast += CesiumUtility::Math::TWO_PI;
+        }
+
+        if (rectangleEast < rectangleWest && otherRectangleWest < 0.0) {
+            otherRectangleWest += CesiumUtility::Math::TWO_PI;
+        } else if (otherRectangleEast < otherRectangleWest && rectangleWest < 0.0) {
+            rectangleWest += CesiumUtility::Math::TWO_PI;
+        }
+
+        double west = CesiumUtility::Math::convertLongitudeRange(
+            glm::min(rectangleWest, otherRectangleWest)
+        );
+        double east = CesiumUtility::Math::convertLongitudeRange(
+            glm::max(rectangleEast, otherRectangleEast)
+        );
+
+        return GlobeRectangle(
+            west,
+            glm::min(this->_south, other._south),
+            east,
+            glm::max(this->_north, other._north)
+        );
+    }
+
 }

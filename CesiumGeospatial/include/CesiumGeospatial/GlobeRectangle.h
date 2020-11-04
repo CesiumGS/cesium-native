@@ -131,6 +131,14 @@ namespace CesiumGeospatial {
          */
         std::optional<GlobeRectangle> intersect(const GlobeRectangle& other) const;
 
+        /**
+         * @brief Computes the union of this globe rectangle with another.
+         * 
+         * @param other The other globe rectangle.
+         * @return The union.
+         */
+        GlobeRectangle computeUnion(const GlobeRectangle& other) const;
+
     private:
         double _west;
         double _south;

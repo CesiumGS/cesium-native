@@ -35,8 +35,7 @@ namespace Cesium3DTiles {
     tinygltf::Model upsampleGltfForRasterOverlays(const tinygltf::Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
         tinygltf::Model result;
 
-        // Copy the entire parent model except for the meshes/primitives, buffers,
-        // bufferViews, and accessors, which we'll be rewriting.
+        // Copy the entire parent model except for the buffers, bufferViews, and accessors, which we'll be rewriting.
         result.animations = parentModel.animations;
         result.materials = parentModel.materials;
         result.meshes = parentModel.meshes;

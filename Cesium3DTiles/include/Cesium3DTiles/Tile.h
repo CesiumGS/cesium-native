@@ -470,7 +470,7 @@ namespace Cesium3DTiles {
          * @param pRequest The {@link IAssetRequest} for which the response was received.
          */
         void contentResponseReceived(IAssetRequest* pRequest);
-        void generateTextureCoordinates();
+        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates();
         void upsampleParent();
 
     private:

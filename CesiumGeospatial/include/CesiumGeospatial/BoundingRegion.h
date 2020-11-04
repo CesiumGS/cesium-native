@@ -93,6 +93,14 @@ namespace CesiumGeospatial {
          */
         double computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const;
 
+        /**
+         * @brief Computes the union of this bounding region with another.
+         * 
+         * @param other The other bounding region.
+         * @return The union.
+         */
+        BoundingRegion computeUnion(const BoundingRegion& other) const;
+
 private:
         static CesiumGeometry::OrientedBoundingBox _computeBoundingBox(
             const GlobeRectangle& rectangle,

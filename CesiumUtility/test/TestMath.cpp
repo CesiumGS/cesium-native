@@ -29,3 +29,11 @@ TEST_CASE("Math::equalsEpsilon example") {
     CHECK(c == true);
     CHECK(d == false);
 }
+
+TEST_CASE("Math::convertLongitudeRange example") {
+    //! [convertLongitudeRange]
+    // Convert 270 degrees to -90 degrees longitude
+    double longitude = CesiumUtility::Math::convertLongitudeRange(CesiumUtility::Math::degreesToRadians(270.0));
+    //! [convertLongitudeRange]
+    CHECK(longitude == CesiumUtility::Math::degreesToRadians(-90.0));
+}

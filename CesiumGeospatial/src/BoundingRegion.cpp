@@ -173,6 +173,14 @@ namespace CesiumGeospatial {
         return glm::max(bboxDistanceSquared, result);
     }
 
+    BoundingRegion BoundingRegion::computeUnion(const BoundingRegion& other) const {
+        return BoundingRegion(
+            this->_rectangle.computeUnion(other._rectangle),
+            glm::min(this->_minimumHeight, other._minimumHeight),
+            glm::max(this->_maximumHeight, other._maximumHeight)
+        );
+    }
+
     static OrientedBoundingBox fromPlaneExtents(
         const glm::dvec3& planeOrigin,
         const glm::dvec3& planeXAxis,
