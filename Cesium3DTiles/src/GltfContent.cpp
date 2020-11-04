@@ -90,6 +90,8 @@ namespace Cesium3DTiles {
 			glm::dvec3 projectedPosition = projectPosition(projection, cartographic.value());
 
 			double longitude = cartographic.value().longitude;
+			double latitude = cartographic.value().latitude;
+			double ellipsoidHeight = cartographic.value().height;
 
 			// If the position is near the anti-meridian and the projected position is outside the expected range, try
 			// using the equivalent longitude on the other side of the anti-meridian to see if that gets us closer.
@@ -114,12 +116,16 @@ namespace Cesium3DTiles {
 				}
 			}
 
-			west = glm::min(west, longitude);
-			east = glm::max(east, longitude);
-			south = glm::min(south, cartographic.value().latitude);
-			north = glm::max(north, cartographic.value().latitude);
-			minimumHeight = glm::min(minimumHeight, cartographic.value().height);
-			maximumHeight = glm::max(maximumHeight, cartographic.value().height);
+			// The computation of longitude is very unstable at the poles,
+			// so don't let extreme latitudes affect the longitude bounding box.
+			if (glm::abs(glm::abs(latitude) - CesiumUtility::Math::PI_OVER_TWO) > CesiumUtility::Math::EPSILON6) {
+				west = glm::min(west, longitude);
+				east = glm::max(east, longitude);
+			}
+			south = glm::min(south, latitude);
+			north = glm::max(north, latitude);
+			minimumHeight = glm::min(minimumHeight, ellipsoidHeight);
+			maximumHeight = glm::max(maximumHeight, ellipsoidHeight);
 
 			// Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and (1.0, 1.0) at the (maximumX, maximumY) corner.
 			// The coordinates should stay inside these bounds if the input rectangle actually bounds the vertices,
