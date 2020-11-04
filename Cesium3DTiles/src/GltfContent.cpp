@@ -33,7 +33,13 @@ namespace Cesium3DTiles {
 		int positionAccessorIndex,
 		const glm::dmat4x4& transform,
 		const CesiumGeospatial::Projection& projection,
-		const CesiumGeometry::Rectangle& rectangle
+		const CesiumGeometry::Rectangle& rectangle,
+		double& west,
+		double& south,
+		double& east,
+		double& north,
+		double& minimumHeight,
+		double& maximumHeight
 	) {
         int uvBufferId = static_cast<int>(gltf.buffers.size());
         gltf.buffers.emplace_back();
@@ -83,6 +89,8 @@ namespace Cesium3DTiles {
 			// Project it with the raster overlay's projection
 			glm::dvec3 projectedPosition = projectPosition(projection, cartographic.value());
 
+			double longitude = cartographic.value().longitude;
+
 			// If the position is near the anti-meridian and the projected position is outside the expected range, try
 			// using the equivalent longitude on the other side of the anti-meridian to see if that gets us closer.
 			if (
@@ -102,8 +110,16 @@ namespace Cesium3DTiles {
 
 				if (distance2 < distance1) {
 					projectedPosition = projectedPosition2;
+					longitude = cartographic.value().longitude;
 				}
 			}
+
+			west = glm::min(west, longitude);
+			east = glm::max(east, longitude);
+			south = glm::min(south, cartographic.value().latitude);
+			north = glm::max(north, cartographic.value().latitude);
+			minimumHeight = glm::min(minimumHeight, cartographic.value().height);
+			maximumHeight = glm::max(maximumHeight, cartographic.value().height);
 
 			// Scale to (0.0, 0.0) at the (minimumX, minimumY) corner, and (1.0, 1.0) at the (maximumX, maximumY) corner.
 			// The coordinates should stay inside these bounds if the input rectangle actually bounds the vertices,
@@ -119,7 +135,7 @@ namespace Cesium3DTiles {
 		return uvAccessorId;
 	}
 
-	/*static*/ void GltfContent::createRasterOverlayTextureCoordinates(
+	/*static*/ CesiumGeospatial::BoundingRegion GltfContent::createRasterOverlayTextureCoordinates(
 		tinygltf::Model& gltf,
 		uint32_t textureCoordinateID,
 		const CesiumGeospatial::Projection& projection,
@@ -130,7 +146,14 @@ namespace Cesium3DTiles {
 
 		std::string attributeName = "_CESIUMOVERLAY_" + std::to_string(textureCoordinateID);
 
-		Gltf::forEachPrimitiveInScene(gltf, -1, [&positionAccessorsToTextureCoordinateAccessor, &attributeName, &projection, &rectangle](
+		double west = CesiumUtility::Math::ONE_PI;
+		double south = CesiumUtility::Math::PI_OVER_TWO;
+		double east = -CesiumUtility::Math::ONE_PI;
+		double north = -CesiumUtility::Math::PI_OVER_TWO;
+		double minimumHeight = std::numeric_limits<double>::max();
+		double maximumHeight = std::numeric_limits<double>::lowest();
+
+		Gltf::forEachPrimitiveInScene(gltf, -1, [&positionAccessorsToTextureCoordinateAccessor, &attributeName, &projection, &rectangle, &west, &south, &east, &north, &minimumHeight, &maximumHeight](
             tinygltf::Model& gltf_,
             tinygltf::Node& /*node*/,
             tinygltf::Mesh& /*mesh*/,
@@ -159,10 +182,16 @@ namespace Cesium3DTiles {
 			}
 
 			// Generate new texture coordinates
-			int nextTextureCoordinateAccessorIndex = generateOverlayTextureCoordinates(gltf_, positionAccessorIndex, transform, projection, rectangle);
+			int nextTextureCoordinateAccessorIndex = generateOverlayTextureCoordinates(gltf_, positionAccessorIndex, transform, projection, rectangle, west, south, east, north, minimumHeight, maximumHeight);
 			primitive.attributes[attributeName] = nextTextureCoordinateAccessorIndex;
 			positionAccessorsToTextureCoordinateAccessor[positionAccessorIndex] = nextTextureCoordinateAccessorIndex;
 		});
+
+		return CesiumGeospatial::BoundingRegion(
+			CesiumGeospatial::GlobeRectangle(west, south, east, north),
+			minimumHeight,
+			maximumHeight
+		);
 	}
 
 }

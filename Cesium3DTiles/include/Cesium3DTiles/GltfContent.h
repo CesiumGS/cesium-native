@@ -27,7 +27,7 @@ namespace Cesium3DTiles {
             const gsl::span<const uint8_t>& data
         );
 
-        static void createRasterOverlayTextureCoordinates(
+        static CesiumGeospatial::BoundingRegion createRasterOverlayTextureCoordinates(
             tinygltf::Model& gltf,
             uint32_t textureCoordinateID,
             const CesiumGeospatial::Projection& projection,

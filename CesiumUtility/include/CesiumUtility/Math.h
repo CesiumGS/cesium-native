@@ -277,6 +277,28 @@ namespace CesiumUtility {
             return (Math::clamp(value, 0.0, rangeMaximum) / rangeMaximum) * 2.0 - 1.0;
         }
 
+        /**
+         * Converts a longitude value, in radians, to the range [`-Math::ONE_PI`, `Math::ONE_PI`).
+         *
+         * @param {Number} angle The longitude value, in radians, to convert to the range [`-Math::ONE_PI`, `Math::ONE_PI`).
+         * @returns {Number} The equivalent longitude value in the range [`-Math::ONE_PI`, `Math::ONE_PI`).
+         *
+         * @snippet TestMath.cpp convertLongitudeRange
+         */
+        static inline double convertLongitudeRange(double angle) {
+            double twoPi = Math::TWO_PI;
+
+            double simplified = angle - glm::floor(angle / twoPi) * twoPi;
+
+            if (simplified < -Math::ONE_PI) {
+                return simplified + twoPi;
+            }
+            if (simplified >= Math::ONE_PI) {
+                return simplified - twoPi;
+            }
+
+            return simplified;
+        };
 
     };
 

@@ -144,7 +144,7 @@ namespace Cesium3DTiles {
     protected:
         void setState(LoadState value);
         void contentResponseReceived(IAssetRequest* pRequest);
-        void generateTextureCoordinates();
+        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates();
         void upsampleParent();
 
     private:
