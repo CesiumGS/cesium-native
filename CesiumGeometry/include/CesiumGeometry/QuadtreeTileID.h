@@ -67,7 +67,7 @@ namespace CesiumGeometry {
          * @brief Returns `true` if two identifiers are *not* equal.
          */
         bool operator!=(const QuadtreeTileID& other) const {
-            return this->level != other.level || this->x != other.x || this->y != other.y;
+            return !(*this == other);
         }
 
         /**

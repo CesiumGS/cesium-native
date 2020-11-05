@@ -23,7 +23,7 @@ namespace CesiumGeospatial {
          * 
          * @param origin The origin, in cartesian coordinates.
          * @param ellipsoid The ellipsoid. Default value: {@link Ellipsoid::WGS84}.
-         * @throws An `std::bad_optional_access` if the given origin is at the
+         * @throws An `std::invalid_argument` if the given origin is at the
          * center of the ellipsoid.
          */
         EllipsoidTangentPlane(
@@ -87,6 +87,16 @@ namespace CesiumGeospatial {
         glm::dvec2 projectPointToNearestOnPlane(const glm::dvec3& cartesian);
 
     private:
+
+        /**
+         * Computes the matrix that is used for the constructor (if the origin
+         * and ellipsoid are given), but throws an `std::invalid_argument` if
+         * the origin is at the center of the ellipsoid. 
+         */
+        static glm::dmat4 computeEastNorthUpToFixedFrame(
+            const glm::dvec3& origin,
+            const Ellipsoid& ellipsoid);
+
         Ellipsoid _ellipsoid;
         glm::dvec3 _origin;
         glm::dvec3 _xAxis;

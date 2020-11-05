@@ -36,14 +36,6 @@ namespace Cesium3DTiles {
         virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback>&& callback) override;
 
     private:
-        static std::unique_ptr<IAssetRequest> createProvider(
-            TileMapServiceRasterOverlay* pOverlay,
-            TilesetExternals& tilesetExternals,
-            std::function<TileMapServiceRasterOverlay::CreateTileProviderCallback>&& callback,
-            const std::string& url,
-            const TileMapServiceRasterOverlayOptions& options
-        );
-
         std::string _url;
         std::vector<IAssetAccessor::THeader> _headers;
         TileMapServiceRasterOverlayOptions _options;
