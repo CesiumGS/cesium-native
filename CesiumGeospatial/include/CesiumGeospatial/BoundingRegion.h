@@ -112,12 +112,14 @@ private:
         double _minimumHeight;
         double _maximumHeight;
         CesiumGeometry::OrientedBoundingBox _boundingBox;
+
         glm::dvec3 _southwestCornerCartesian;
         glm::dvec3 _northeastCornerCartesian;
         glm::dvec3 _westNormal;
         glm::dvec3 _eastNormal;
         glm::dvec3 _southNormal;
         glm::dvec3 _northNormal;
+        bool _planesAreInvalid;
     };
 
 }

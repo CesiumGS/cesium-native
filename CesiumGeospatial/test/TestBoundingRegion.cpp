@@ -66,6 +66,48 @@ TEST_CASE("BoundingRegion") {
         CHECK(Math::equalsEpsilon(sqrt(region.computeDistanceSquaredToPosition(position)), testCase.expectedDistance, Math::EPSILON6));
     }
 
+    SECTION("computeDistanceSquaredToPosition with degenerate region") {
+        struct TestCase {
+            double longitude;
+            double latitude;
+            double height;
+            double expectedDistance;
+        };
+
+        auto updateDistance = [](TestCase testCase, double longitude, double latitude, double height) -> TestCase {
+            glm::dvec3 boxPosition = Ellipsoid::WGS84.cartographicToCartesian(Cartographic(longitude, latitude, height));
+            glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(Cartographic(testCase.longitude, testCase.latitude, testCase.height));
+            testCase.expectedDistance = glm::distance(boxPosition, position);
+            return testCase;
+        };
+
+        BoundingRegion region(
+            GlobeRectangle(
+                -1.03,
+                0.2292,
+                -1.03,
+                0.2292
+            ),
+            0.0,
+            3.0
+        );
+
+        auto testCase = GENERATE_COPY(
+            TestCase { -1.03, 0.2292, 4.0, 1.0 },
+            TestCase { -1.03, 0.2292, 3.0, 0.0 },
+            TestCase { -1.03, 0.2292, 2.0, 0.0 },
+            updateDistance(
+                TestCase { -1.02, 0.2291, 2.0, 0.0 },
+                -1.03, 0.2292, 2.0
+            )
+        );
+
+        glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
+            Cartographic(testCase.longitude, testCase.latitude, testCase.height)
+        );
+        CHECK(Math::equalsEpsilon(sqrt(region.computeDistanceSquaredToPosition(position)), testCase.expectedDistance, Math::EPSILON6));
+    }
+
     SECTION("intersectPlane") {
         BoundingRegion region(
             GlobeRectangle(0.0, 0.0, 1.0, 1.0),
@@ -80,4 +122,5 @@ TEST_CASE("BoundingRegion") {
 
         CHECK(region.intersectPlane(plane) == CullingResult::Intersecting);
     }
+
 }
