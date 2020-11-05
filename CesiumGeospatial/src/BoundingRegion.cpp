@@ -25,7 +25,8 @@ namespace CesiumGeospatial {
         _westNormal(),
         _eastNormal(),
         _southNormal(),
-        _northNormal()
+        _northNormal(),
+        _planesAreInvalid(false)
     {
         // The middle latitude on the western edge.
         glm::dvec3 westernMidpointCartesian = ellipsoid.cartographicToCartesian(
@@ -53,6 +54,11 @@ namespace CesiumGeospatial {
         glm::dvec3 westVector = westernMidpointCartesian - easternMidpointCartesian;
         glm::dvec3 eastWestNormal = glm::normalize(westVector);
 
+        if (!Math::equalsEpsilon(glm::length(eastWestNormal), 1.0, Math::EPSILON6)) {
+            this->_planesAreInvalid = true;
+            return;
+        }
+
         double south = rectangle.getSouth();
         glm::dvec3 southSurfaceNormal;
 
@@ -67,10 +73,17 @@ namespace CesiumGeospatial {
             );
 
             // Find a point that is on the west and the south planes
-            this->_southwestCornerCartesian = IntersectionTests::rayPlane(
+            std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
                 Ray(southCenterCartesian, eastWestNormal),
                 westPlane
-            ).value();
+            );
+
+            if (!intersection) {
+                this->_planesAreInvalid = true;
+                return;
+            }
+
+            this->_southwestCornerCartesian = intersection.value();
             southSurfaceNormal = ellipsoid.geodeticSurfaceNormal(southCenterCartesian);
         } else {
             southSurfaceNormal = ellipsoid.geodeticSurfaceNormal(rectangle.getSoutheast());
@@ -95,10 +108,17 @@ namespace CesiumGeospatial {
             );
 
             // Find a point that is on the east and the north planes
-            this->_northeastCornerCartesian = IntersectionTests::rayPlane(
+            std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
                 Ray(northCenterCartesian, -eastWestNormal),
                 eastPlane
-            ).value();
+            );
+
+            if (!intersection) {
+                this->_planesAreInvalid = true;
+                return;
+            }
+
+            this->_northeastCornerCartesian = intersection.value();
             northSurfaceNormal = ellipsoid.geodeticSurfaceNormal(northCenterCartesian);
         } else {
             northSurfaceNormal = ellipsoid.geodeticSurfaceNormal(rectangle.getNorthwest());
@@ -128,45 +148,48 @@ namespace CesiumGeospatial {
 
     double BoundingRegion::computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const {
         double result = 0.0;
-        if (!this->_rectangle.contains(cartographicPosition)) {
-            const glm::dvec3& southwestCornerCartesian = this->_southwestCornerCartesian;
-            const glm::dvec3& northeastCornerCartesian = this->_northeastCornerCartesian;
-            const glm::dvec3& westNormal = this->_westNormal;
-            const glm::dvec3& southNormal = this->_southNormal;
-            const glm::dvec3& eastNormal = this->_eastNormal;
-            const glm::dvec3& northNormal = this->_northNormal;
 
-            glm::dvec3 vectorFromSouthwestCorner = cartesianPosition - southwestCornerCartesian;
-            double distanceToWestPlane = glm::dot(vectorFromSouthwestCorner, westNormal);
-            double distanceToSouthPlane = glm::dot(vectorFromSouthwestCorner, southNormal);
+        if (!this->_planesAreInvalid) {
+            if (!this->_rectangle.contains(cartographicPosition)) {
+                const glm::dvec3& southwestCornerCartesian = this->_southwestCornerCartesian;
+                const glm::dvec3& northeastCornerCartesian = this->_northeastCornerCartesian;
+                const glm::dvec3& westNormal = this->_westNormal;
+                const glm::dvec3& southNormal = this->_southNormal;
+                const glm::dvec3& eastNormal = this->_eastNormal;
+                const glm::dvec3& northNormal = this->_northNormal;
 
-            glm::dvec3 vectorFromNortheastCorner = cartesianPosition - northeastCornerCartesian;
-            double distanceToEastPlane = glm::dot(vectorFromNortheastCorner, eastNormal);
-            double distanceToNorthPlane = glm::dot(vectorFromNortheastCorner, northNormal);
+                glm::dvec3 vectorFromSouthwestCorner = cartesianPosition - southwestCornerCartesian;
+                double distanceToWestPlane = glm::dot(vectorFromSouthwestCorner, westNormal);
+                double distanceToSouthPlane = glm::dot(vectorFromSouthwestCorner, southNormal);
 
-            if (distanceToWestPlane > 0.0) {
-                result += distanceToWestPlane * distanceToWestPlane;
-            } else if (distanceToEastPlane > 0.0) {
-                result += distanceToEastPlane * distanceToEastPlane;
+                glm::dvec3 vectorFromNortheastCorner = cartesianPosition - northeastCornerCartesian;
+                double distanceToEastPlane = glm::dot(vectorFromNortheastCorner, eastNormal);
+                double distanceToNorthPlane = glm::dot(vectorFromNortheastCorner, northNormal);
+
+                if (distanceToWestPlane > 0.0) {
+                    result += distanceToWestPlane * distanceToWestPlane;
+                } else if (distanceToEastPlane > 0.0) {
+                    result += distanceToEastPlane * distanceToEastPlane;
+                }
+
+                if (distanceToSouthPlane > 0.0) {
+                    result += distanceToSouthPlane * distanceToSouthPlane;
+                } else if (distanceToNorthPlane > 0.0) {
+                    result += distanceToNorthPlane * distanceToNorthPlane;
+                }
             }
 
-            if (distanceToSouthPlane > 0.0) {
-                result += distanceToSouthPlane * distanceToSouthPlane;
-            } else if (distanceToNorthPlane > 0.0) {
-                result += distanceToNorthPlane * distanceToNorthPlane;
+            double cameraHeight = cartographicPosition.height;
+            double minimumHeight = this->_minimumHeight;
+            double maximumHeight = this->_maximumHeight;
+
+            if (cameraHeight > maximumHeight) {
+                double distanceAboveTop = cameraHeight - maximumHeight;
+                result += distanceAboveTop * distanceAboveTop;
+            } else if (cameraHeight < minimumHeight) {
+                double distanceBelowBottom = minimumHeight - cameraHeight;
+                result += distanceBelowBottom * distanceBelowBottom;
             }
-        }
-
-        double cameraHeight = cartographicPosition.height;
-        double minimumHeight = this->_minimumHeight;
-        double maximumHeight = this->_maximumHeight;
-
-        if (cameraHeight > maximumHeight) {
-            double distanceAboveTop = cameraHeight - maximumHeight;
-            result += distanceAboveTop * distanceAboveTop;
-        } else if (cameraHeight < minimumHeight) {
-            double distanceBelowBottom = minimumHeight - cameraHeight;
-            result += distanceBelowBottom * distanceBelowBottom;
         }
 
         double bboxDistanceSquared = this->getBoundingBox().computeDistanceSquaredToPosition(cartesianPosition);
