@@ -269,6 +269,7 @@ namespace Cesium3DTiles {
         context.pTileset = this;
         context.baseUrl = url;
         context.requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+        context.failedTileCallback = std::bind(&Tileset::_onIonTileFailed, this, std::placeholders::_1);
 
         // When we assign _pTilesetRequest, the previous request and response
         // that we're currently handling may immediately be deleted.
@@ -521,6 +522,108 @@ namespace Cesium3DTiles {
                 )
             );
         }
+    }
+
+    FailedTileAction Tileset::_onIonTileFailed(Tile& failedTile) {
+        IAssetRequest* pRequest = failedTile.getContentRequest();
+        if (!pRequest) {
+            return FailedTileAction::GiveUp;
+        }
+
+         IAssetResponse* pResponse = pRequest->response();
+         if (!pResponse) {
+             return FailedTileAction::GiveUp;
+         }
+
+         uint16_t statusCode = pResponse->statusCode();
+         if (statusCode != 401) {
+             return FailedTileAction::GiveUp;
+         }
+
+        if (!this->_ionAssetID) {
+            return FailedTileAction::GiveUp;
+        }
+
+        if (!this->_pIonRequest) {
+            std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID.value()) + "/endpoint";
+            if (this->_ionAccessToken)
+            {
+                url += "?access_token=" + this->_ionAccessToken.value();
+            }
+
+            ++this->_loadsInProgress;
+            this->_pIonRequest = this->_externals.pAssetAccessor->requestAsset(url);
+            this->_pIonRequest->bind([this, &failedTile](IAssetRequest* pIonRequest) {
+                TileContext* pContext = failedTile.getContext();
+
+                // TODO: Unreal Engine will always invoke this callback from the game thread, but we
+                // can't count on that in general. If it's raised asynchronously, we'll have a
+                // race condition.
+                IAssetResponse* pIonResponse = pIonRequest->response();
+
+                bool failed = true;
+
+                if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
+                    // Update the context with the new token.
+                    gsl::span<const uint8_t> data = pIonResponse->data();
+
+                    using nlohmann::json;
+                    json ionResponse = json::parse(data.begin(), data.end());
+
+                    std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+                    
+                    auto authIt = std::find_if(
+                        pContext->requestHeaders.begin(),
+                        pContext->requestHeaders.end(),
+                        [](auto& headerPair) {
+                            return headerPair.first == "Authorization";
+                        }
+                    );
+                    if (authIt != pContext->requestHeaders.end()) {
+                        authIt->second = "Bearer " + accessToken;
+                    } else {
+                        pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                    }
+
+                    failed = false;
+                }
+
+                // Put all auth-failed tiles in this context back into the Unloaded state.
+                // TODO: the way this is structured, requests already in progress with the old key
+                // might complete after the key has been updated, and there's nothing here clever
+                // enough to avoid refreshing the key _again_ in that instance.
+
+                Tile* pTile = this->_loadedTiles.head();
+
+                while (pTile) {
+                    if (
+                        pTile->getContext() == pContext &&
+                        pTile->getState() == Tile::LoadState::FailedTemporarily &&
+                        pTile->getContentRequest() &&
+                        pTile->getContentRequest()->response() &&
+                        pTile->getContentRequest()->response()->statusCode() == 401
+                    ) {
+                        if (failed) {
+                            pTile->markPermanentlyFailed();
+                        } else {
+                            pTile->unloadContent();
+                        }
+                    }
+
+                    pTile = this->_loadedTiles.next(*pTile);
+                }
+
+                // When we assign _pIonRequest, the previous request and response
+                // that we're currently handling may immediately be deleted.
+                pIonRequest = nullptr;
+                pIonResponse = nullptr;
+                this->_pIonRequest.reset();
+
+                this->notifyTileDoneLoading(nullptr);
+            });
+        }
+
+        return FailedTileAction::Wait;
     }
 
     static void markTileNonRendered(TileSelectionState::Result lastResult, Tile& tile, ViewUpdateResult& result) {
