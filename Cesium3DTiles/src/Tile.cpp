@@ -334,6 +334,26 @@ namespace Cesium3DTiles {
     void Tile::update(uint32_t /*previousFrameNumber*/, uint32_t /*currentFrameNumber*/) {
         const TilesetExternals& externals = this->getTileset()->getExternals();
 
+        if (this->getState() == LoadState::FailedTemporarily) {
+            // Check with the TileContext to see if we should retry.
+            if (this->_pContext->failedTileCallback) {
+                FailedTileAction action = this->_pContext->failedTileCallback(*this);
+                switch (action) {
+                    case FailedTileAction::GiveUp:
+                        this->setState(LoadState::Failed);
+                        break;
+                    case FailedTileAction::Retry:
+                        this->setState(LoadState::Unloaded);
+                        break;
+                    case FailedTileAction::Wait:
+                        // Do nothing for now.
+                        break;
+                }
+            } else {
+                this->setState(LoadState::Failed);
+            }
+        }
+
         if (this->getState() == LoadState::ContentLoaded) {
             if (externals.pPrepareRendererResources) {
                 this->_pRendererResources = externals.pPrepareRendererResources->prepareInMainThread(*this, this->getRendererResources());
@@ -448,6 +468,12 @@ namespace Cesium3DTiles {
         }
     }
 
+    void Tile::markPermanentlyFailed() {
+        if (this->getState() == LoadState::FailedTemporarily) {
+            this->setState(LoadState::Failed);
+        }
+    }
+
     void Tile::setState(LoadState value) {
         this->_state.store(value, std::memory_order::memory_order_release);
     }
@@ -468,14 +494,14 @@ namespace Cesium3DTiles {
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
             this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::Failed);
+            this->setState(LoadState::FailedTemporarily);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
             this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::Failed);
+            this->setState(LoadState::FailedTemporarily);
             return;
         }
 

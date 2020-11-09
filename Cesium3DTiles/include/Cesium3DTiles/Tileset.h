@@ -290,6 +290,7 @@ namespace Cesium3DTiles {
         void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
         void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
         void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
+        FailedTileAction _onIonTileFailed(Tile& failedTile);
 
         struct FrameState {
             const Camera& camera;

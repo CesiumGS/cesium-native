@@ -59,12 +59,17 @@ namespace Cesium3DTiles {
              *
              * Any pointers to it will soon be invalid.
              */
-            Destroying = -2,
+            Destroying = -3,
 
             /**
-             * @brief Something went wrong while loading this tile.
+             * @brief Something went wrong while loading this tile and it will not be retried.
              */
-            Failed = -1,
+            Failed = -2,
+
+            /**
+             * @brief Something went wrong while loading this tile, but it may be a temporary problem.
+             */
+            FailedTemporarily = -1,
 
             /**
              * @brief The tile is not yet loaded at all, beyond the metadata in tileset.json.
@@ -386,6 +391,11 @@ namespace Cesium3DTiles {
         LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
 
         /**
+         * @brief Returns the content request that is currently in flight, if any.
+         */
+        IAssetRequest* getContentRequest() { return this->_pContentRequest.get(); }
+
+        /**
          * @brief Returns the {@link TileSelectionState} of this tile.
          *
          * This function is not supposed to be called by clients.
@@ -451,6 +461,16 @@ namespace Cesium3DTiles {
          * @param currentFrameNumber The number of the current render frame.
          */
         void update(uint32_t previousFrameNumber, uint32_t currentFrameNumber);
+
+        /**
+         * @brief Marks the tile as permanently failing to load.
+         * 
+         * This function is not supposed to be called by clients.
+         * 
+         * Moves the tile from the `FailedTemporarily` state to the `Failed` state.
+         * If the tile is not in the `FailedTemporarily` state, this method does nothing.
+         */
+        void markPermanentlyFailed();
 
     protected:
 

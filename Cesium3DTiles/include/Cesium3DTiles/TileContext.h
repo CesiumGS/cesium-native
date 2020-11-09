@@ -18,6 +18,29 @@ namespace Cesium3DTiles {
         CesiumGeometry::QuadtreeTileAvailability availability;
     };
 
+    /**
+     * @brief The action to take for a failed tile.
+     */
+    enum class FailedTileAction {
+        /**
+         * @brief This failure is considered permanent and this tile should not be retried.
+         */
+        GiveUp,
+
+        /**
+         * @brief This tile should be retried immediately.
+         */
+        Retry,
+
+        /**
+         * @brief This tile should be considered failed for now but possibly retried later.
+         */
+        Wait
+    };
+
+    typedef FailedTileAction FailedTileSignature(Tile& failedTile);
+    typedef std::function<FailedTileSignature> FailedTileCallback;
+
     class TileContext {
     public:
         Tileset* pTileset;
@@ -25,6 +48,7 @@ namespace Cesium3DTiles {
         std::vector<std::pair<std::string, std::string>> requestHeaders;
         std::optional<std::string> version;
         std::optional<ImplicitTilingContext> implicitContext;
+        FailedTileCallback failedTileCallback;
     };
 
 }
