@@ -117,6 +117,15 @@ namespace Cesium3DTiles {
             { 628733.5874, 2.2e-6 },
             { 1000000.0, 0.0 }
         };
+
+        /**
+         * @brief Whether to render tiles directly under the camera, even if they're not in the view frustum.
+         * 
+         * This is useful for detecting the camera's collision with terrain and other models.
+         * NOTE: This option currently only works with tiles that use a `region` as their bounding volume.
+         * It is ignored for other bounding volume types.
+         */
+        bool renderTilesUnderCamera = true;
     };
 
     /**

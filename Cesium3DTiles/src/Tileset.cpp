@@ -682,6 +682,24 @@ namespace Cesium3DTiles {
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
         bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
 
+        if (!isVisible && this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
+            const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
+            const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+            
+            const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+            if (pRegion) {
+                pRectangle = &pRegion->getRectangle();
+            } else if (pLooseRegion) {
+                pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+            }
+
+            if (pRectangle) {
+                if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
+                    isVisible = true;
+                }
+            }
+        }
+
         double distance = 0.0;
 
         if (isVisible) {
