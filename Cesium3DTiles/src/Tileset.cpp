@@ -553,19 +553,19 @@ namespace Cesium3DTiles {
 
             ++this->_loadsInProgress;
             this->_pIonRequest = this->_externals.pAssetAccessor->requestAsset(url);
-            this->_pIonRequest->bind([this, &failedTile](IAssetRequest* pRequest) {
+            this->_pIonRequest->bind([this, &failedTile](IAssetRequest* pIonRequest) {
                 TileContext* pContext = failedTile.getContext();
 
                 // TODO: Unreal Engine will always invoke this callback from the game thread, but we
                 // can't count on that in general. If it's raised asynchronously, we'll have a
                 // race condition.
-                IAssetResponse* pResponse = pRequest->response();
+                IAssetResponse* pIonResponse = pIonRequest->response();
 
                 bool failed = true;
 
-                if (pResponse && pResponse->statusCode() >= 200 && pResponse->statusCode() < 300) {
+                if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
                     // Update the context with the new token.
-                    gsl::span<const uint8_t> data = pResponse->data();
+                    gsl::span<const uint8_t> data = pIonResponse->data();
 
                     using nlohmann::json;
                     json ionResponse = json::parse(data.begin(), data.end());
@@ -615,8 +615,8 @@ namespace Cesium3DTiles {
 
                 // When we assign _pIonRequest, the previous request and response
                 // that we're currently handling may immediately be deleted.
-                pRequest = nullptr;
-                pResponse = nullptr;
+                pIonRequest = nullptr;
+                pIonResponse = nullptr;
                 this->_pIonRequest.reset();
 
                 this->notifyTileDoneLoading(nullptr);
