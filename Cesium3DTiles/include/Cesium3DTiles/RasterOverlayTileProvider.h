@@ -15,13 +15,18 @@ namespace Cesium3DTiles {
     class RasterOverlayTile;
 
     /**
-     * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
+     * @brief Provides individual {@link RasterOverlayTile} instances for a {@link RasterOverlay} on demand.
      * 
+     * Instances of this class are created by a {@link RasterOverlay}.
+     * 
+     * @see BingMapsTileProvider
+     * @see IonRasterOverlayProvider
+     * @see TileMapServiceTileProvider
      */
     class CESIUM3DTILES_API RasterOverlayTileProvider {
     public:
         /**
-         * Constructs a placeholder tile provider.
+         * @brief Constructs a placeholder tile provider.
          * 
          * @param pOverlay The raster overlay.
          * @param tilesetExternals Tileset externals.
@@ -31,6 +36,19 @@ namespace Cesium3DTiles {
             TilesetExternals& tilesetExternals
         );
 
+        /**
+         * @brief Creates a new instance.
+         * 
+         * @param pOverlay The {@link RasterOverlay}. May not be `nullptr`.
+         * @param tilesetExternals The {@link TilesetExternals}.
+         * @param projection The {@link CesiumGeospatial::Projection}.
+         * @param tilingScheme The {@link CesiumGeometry::QuadtreeTilingScheme}.
+         * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
+         * @param minimumLevel The minimum tile level.
+         * @param maximumLevel The maximum tile level.
+         * @param imageWidth The image width.
+         * @param imageHeight The image height.
+         */
         RasterOverlayTileProvider(
             RasterOverlay* pOverlay,
             TilesetExternals& tilesetExternals,
@@ -44,21 +62,62 @@ namespace Cesium3DTiles {
         );
         virtual ~RasterOverlayTileProvider() {}
 
+        /**
+         * @brief Returns the {@link RasterOverlay} that created this instance.
+         */
         RasterOverlay* getOverlay() { return this->_pOverlay; }
+
+        /** @copydoc getOverlay */
         const RasterOverlay* getOverlay() const { return this->_pOverlay; }
 
+        /**
+         * @brief Returns the {@link CesiumGeospatial::Projection} of this instance.
+         */
         const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
+
+        /**
+         * @brief Returns the {@link CesiumGeometry::QuadtreeTilingScheme} of this instance.
+         */
         const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
+
+        /**
+         * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this instance.
+         */
         const CesiumGeometry::Rectangle& getCoverageRectangle() const { return this->_coverageRectangle; }
+
+        /**
+         * @brief Returns the minimum tile level of this instance.
+         */
         uint32_t getMinimumLevel() const { return this->_minimumLevel; }
+
+        /**
+         * @brief Returns the maximum tile level of this instance.
+         */
         uint32_t getMaximumLevel() const { return this->_maximumLevel; }
+
+        /**
+         * @brief Returns the image width of this instance.
+         */
         uint32_t getWidth() const { return this->_imageWidth; }
+
+        /**
+         * @brief Returns the image height of this instance.
+         */
         uint32_t getHeight() const { return this->_imageHeight; }
 
+        /**
+         * @brief Returns the {@link RasterOverlayTile} with the given ID, requesting it if necessary.
+         * 
+         * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain
+         * @param pOwner The owner
+         * @return The tile
+         */
         std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner = nullptr);
         std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
+         * @brief Computes an appropriate tile level for a given geometric error.
+         * 
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near
          * a given projected position. The position is required because coordinates in many projections will
          * map to real-world meters differently in different parts of the globe.
@@ -69,6 +128,9 @@ namespace Cesium3DTiles {
          */
         uint32_t computeLevelFromGeometricError(double geometricError, const glm::dvec2& position) const;
 
+        /**
+         * @brief Returns the {@link TilesetExternals} of this instance.
+         */
         TilesetExternals& getExternals() { return *this->_pTilesetExternals; }
 
         void mapRasterTilesToGeometryTile(

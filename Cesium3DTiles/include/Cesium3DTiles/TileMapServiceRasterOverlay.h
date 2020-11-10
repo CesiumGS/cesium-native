@@ -10,6 +10,9 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief Options for time map service accesses.
+     */
     struct TileMapServiceRasterOverlayOptions {
         std::optional<std::string> fileExtension;
         std::optional<std::string> credit;
@@ -24,8 +27,20 @@ namespace Cesium3DTiles {
         std::optional<bool> flipXY;
     };
 
+    /**
+     * @brief A {@link RasterOverlay} based on tile map service imagery.
+     */
     class CESIUM3DTILES_API TileMapServiceRasterOverlay : public RasterOverlay {
     public:
+
+        /**
+         * @brief Creates a new instance.
+         * 
+         * @param url The base URL
+         * @param headers The headers. This is a list of pairs of strings of the
+         * form (Key,Value) that will be inserted as request headers internally.
+         * @param options The {@link TileMapServiceRasterOverlayOptions}.
+         */
         TileMapServiceRasterOverlay(
             const std::string& url,
             const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>(),

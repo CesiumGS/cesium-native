@@ -18,8 +18,17 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief Defines the fog density at a certain height.
+     * 
+     * @see TilesetOptions::fogDensityTable
+     */
     struct FogDensityAtHeight {
+
+        /** @brief The height. */
         double cameraHeight;
+
+        /** @brief The fog density. */
         double fogDensity;
     };
 
@@ -87,7 +96,7 @@ namespace Cesium3DTiles {
         uint32_t maximumCachedTiles = 400;
 
         /**
-         * A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
+         * @brief A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
          * The density of the fog increases as this number approaches 1.0 and becomes less dense as it approaches zero.
          * The more dense the fog is, the more aggressively the tiles are culled. For example, if the camera is a height of
          * 1000.0m above the ellipsoid, increasing the value to 3.0e-3 will cause many tiles close to the viewer be culled.
@@ -197,7 +206,12 @@ namespace Cesium3DTiles {
         /** @copydoc Tileset::getRootTile() */
         const Tile* getRootTile() const { return this->_pRootTile.get(); }
 
+        /**
+         * @brief Returns the {@link RasterOverlayCollection} of this tileset.
+         */
         RasterOverlayCollection& getOverlays() { return this->_overlays; }
+
+        /** @copydoc Tileset::getOverlays() */
         const RasterOverlayCollection& getOverlays() const { return this->_overlays; }
 
         /**

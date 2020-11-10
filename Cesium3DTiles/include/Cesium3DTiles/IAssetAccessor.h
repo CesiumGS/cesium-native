@@ -33,7 +33,8 @@ namespace Cesium3DTiles {
         ) = 0;
 
         /**
-         * Ticks the asset accessor system while the main thread is blocked.
+         * @brief Ticks the asset accessor system while the main thread is blocked.
+         * 
          * If the asset accessor is not dependent on the main thread to
          * dispatch requests, this method does not need to do anything.
          */
