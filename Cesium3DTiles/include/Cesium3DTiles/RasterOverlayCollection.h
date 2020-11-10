@@ -18,6 +18,10 @@ namespace Cesium3DTiles {
         void add(std::unique_ptr<RasterOverlay>&& pOverlay);
         void remove(RasterOverlay* pOverlay);
 
+        typedef std::vector<std::unique_ptr<RasterOverlay>>::const_iterator const_iterator;
+        const_iterator begin() const { return this->_overlays.begin(); }
+        const_iterator end() const { return this->_overlays.end(); }
+
         gsl::span<RasterOverlayTileProvider*> getTileProviders() { return this->_quickTileProviders; }
 
         RasterOverlayTileProvider* findProviderForPlaceholder(RasterOverlayTileProvider* pPlaceholder);
@@ -30,8 +34,6 @@ namespace Cesium3DTiles {
         std::vector<std::unique_ptr<RasterOverlayTileProvider>> _placeholders;
         std::vector<std::unique_ptr<RasterOverlayTileProvider>> _tileProviders;
         std::vector<RasterOverlayTileProvider*> _quickTileProviders;
-        std::vector<std::unique_ptr<RasterOverlay>> _removedOverlays;
-
     };
 
 }

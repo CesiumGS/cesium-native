@@ -231,6 +231,15 @@ namespace Cesium3DTiles {
         this->_contexts.push_back(std::move(pNewContext));
     }
 
+    void Tileset::forEachLoadedTile(const std::function<void (Tile& tile)>& callback) {
+        Tile* pCurrent = this->_loadedTiles.head();
+        while (pCurrent) {
+            Tile* pNext = this->_loadedTiles.next(pCurrent);
+            callback(*pCurrent);
+            pCurrent = pNext;
+        }
+    }
+
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {

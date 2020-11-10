@@ -417,6 +417,14 @@ namespace Cesium3DTiles {
         void setLastSelectionState(const TileSelectionState& newState) { this->_lastSelectionState = newState; }
 
         /**
+         * @brief Returns the raster overlay tiles that have been mapped to this tile.
+         */
+        std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() { return this->_rasterTiles; }
+
+        /** @copydoc Tile::getMappedRasterTiles() */
+        const std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() const { return this->_rasterTiles; }
+
+        /**
          * @brief Determines if this tile is currently renderable.
          */
         bool isRenderable() const;

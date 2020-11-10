@@ -8,10 +8,10 @@ using namespace CesiumGeospatial;
 namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
-        RasterOverlay* pOverlay,
-        TilesetExternals& tilesetExternals
+        RasterOverlay& owner,
+        const TilesetExternals& tilesetExternals
     ) :
-        _pOverlay(pOverlay),
+        _pOwner(&owner),
         _pTilesetExternals(&tilesetExternals),
         _projection(CesiumGeospatial::GeographicProjection()),
         _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
@@ -20,13 +20,13 @@ namespace Cesium3DTiles {
         _maximumLevel(0),
         _imageWidth(1),
         _imageHeight(1),
-        _pPlaceholder(std::make_shared<RasterOverlayTile>(*this))
+        _pPlaceholder(std::make_shared<RasterOverlayTile>(owner))
     {
     }
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
-        RasterOverlay* pOverlay,
-        TilesetExternals& tilesetExternals,
+        RasterOverlay& owner,
+        const TilesetExternals& tilesetExternals,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
         const CesiumGeometry::Rectangle& coverageRectangle,
@@ -35,7 +35,7 @@ namespace Cesium3DTiles {
         uint32_t imageWidth,
         uint32_t imageHeight
     ) :
-        _pOverlay(pOverlay),
+        _pOwner(&owner),
         _pTilesetExternals(&tilesetExternals),
         _projection(projection),
         _tilingScheme(tilingScheme),
@@ -48,13 +48,13 @@ namespace Cesium3DTiles {
     {
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner) {
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
         std::shared_ptr<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
         if (pTile) {
             return pTile;
         }
 
-        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id, pOwner);
+        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
         this->_tiles[id] = pNew;
 
         return pNew;
@@ -340,7 +340,7 @@ namespace Cesium3DTiles {
 
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/, RasterOverlayTileProvider* /*pOwner*/) {
+    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
         return this->_pPlaceholder;
     }
 

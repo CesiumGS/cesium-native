@@ -13,35 +13,6 @@
 
 namespace Cesium3DTiles {
 
-    class IonRasterOverlayProvider : public RasterOverlayTileProvider {
-    public:
-        IonRasterOverlayProvider(
-            IonRasterOverlay* pOverlay,
-            std::unique_ptr<RasterOverlayTileProvider>&& pAggregate
-        ) :
-            RasterOverlayTileProvider(
-                pOverlay,
-                pAggregate->getExternals(),
-                pAggregate->getProjection(),
-                pAggregate->getTilingScheme(),
-                pAggregate->getCoverageRectangle(),
-                pAggregate->getMinimumLevel(),
-                pAggregate->getMaximumLevel(),
-                pAggregate->getWidth(),
-                pAggregate->getHeight()
-            ),
-            _pAggregate(std::move(pAggregate))
-        {
-        }
-
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner) override {
-            return this->_pAggregate->getTile(tileID, pOwner ? pOwner : this);
-        }
-
-    private:
-        std::unique_ptr<RasterOverlayTileProvider> _pAggregate;
-    };
-
     IonRasterOverlay::IonRasterOverlay(
         uint32_t ionAssetID,
         const std::string& ionAccessToken
@@ -55,11 +26,11 @@ namespace Cesium3DTiles {
     IonRasterOverlay::~IonRasterOverlay() {
     }
 
-    void IonRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<IonRasterOverlay::CreateTileProviderCallback>&& callback) {
+    void IonRasterOverlay::createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
         ionUrl = Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
-        this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(ionUrl);
-        this->_pMetadataRequest->bind([this, &tilesetExternals, callback](IAssetRequest* pRequest) mutable {
+        this->_pMetadataRequest = externals.pAssetAccessor->requestAsset(ionUrl);
+        this->_pMetadataRequest->bind([this, &externals, pOwner, callback](IAssetRequest* pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
@@ -102,9 +73,7 @@ namespace Cesium3DTiles {
                 );
             }
 
-            this->_aggregatedOverlay->createTileProvider(tilesetExternals, [this, callback](std::unique_ptr<RasterOverlayTileProvider> pTileProvider) {
-                callback(std::move(std::make_unique<IonRasterOverlayProvider>(this, std::move(pTileProvider))));
-            });
+            this->_aggregatedOverlay->createTileProvider(externals, pOwner ? pOwner : this, std::move(callback));
         });
     }
 

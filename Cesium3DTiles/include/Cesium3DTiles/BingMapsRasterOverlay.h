@@ -97,7 +97,7 @@ namespace Cesium3DTiles {
         );
         virtual ~BingMapsRasterOverlay() override;
 
-        virtual void createTileProvider(TilesetExternals& tilesetExternals, std::function<CreateTileProviderCallback>&& callback) override;
+        virtual void createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) override;
 
     private:
         std::string _url;
@@ -107,7 +107,6 @@ namespace Cesium3DTiles {
         CesiumGeospatial::Ellipsoid _ellipsoid;
 
         std::unique_ptr<IAssetRequest> _pMetadataRequest;
-        std::function<CreateTileProviderCallback> _callback;
     };
 
 }

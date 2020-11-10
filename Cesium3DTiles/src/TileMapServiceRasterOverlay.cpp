@@ -110,10 +110,10 @@ namespace Cesium3DTiles {
         return std::nullopt;
     }
 
-    void TileMapServiceRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<TileMapServiceRasterOverlay::CreateTileProviderCallback>&& callback) {
+    void TileMapServiceRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, RasterOverlay* pOwner, std::function<TileMapServiceRasterOverlay::CreateTileProviderCallback>&& callback) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
         this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(xmlUrl, this->_headers);
-        this->_pMetadataRequest->bind([this, &tilesetExternals, callback](IAssetRequest* pRequest) mutable {
+        this->_pMetadataRequest->bind([this, &tilesetExternals, pOwner, callback](IAssetRequest* pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
 
             gsl::span<const uint8_t> data = pResponse->data();
@@ -216,7 +216,7 @@ namespace Cesium3DTiles {
             );
 
             callback(std::make_unique<TileMapServiceTileProvider>(
-                this,
+                pOwner ? *pOwner: *this,
                 tilesetExternals,
                 projection,
                 tilingScheme,

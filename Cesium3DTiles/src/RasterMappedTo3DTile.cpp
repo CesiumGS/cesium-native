@@ -24,7 +24,7 @@ namespace Cesium3DTiles {
 
     RasterMappedTo3DTile::MoreDetailAvailable RasterMappedTo3DTile::update(Tile& tile) {
         if (this->getState() == AttachmentState::Attached) {
-            return this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getTileProvider().getMaximumLevel()
+            return this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getOverlay().getTileProvider()->getMaximumLevel()
                 ? MoreDetailAvailable::Yes
                 : MoreDetailAvailable::No;
         }
@@ -33,7 +33,7 @@ namespace Cesium3DTiles {
         while (this->_pLoadingTile && this->_pLoadingTile->getState() == RasterOverlayTile::LoadState::Failed && this->_pLoadingTile->getID().level > 0) {
             CesiumGeometry::QuadtreeTileID thisID = this->_pLoadingTile->getID();
             CesiumGeometry::QuadtreeTileID parentID(thisID.level - 1, thisID.x >> 1, thisID.y >> 1);
-            this->_pLoadingTile = this->_pLoadingTile->getTileProvider().getTile(parentID);
+            this->_pLoadingTile = this->_pLoadingTile->getOverlay().getTileProvider()->getTile(parentID);
         }
 
         // If the loading tile is now ready, make it the ready tile.
@@ -61,7 +61,7 @@ namespace Cesium3DTiles {
 
         // Find the closest ready ancestor tile.
         if (this->_pLoadingTile) {
-            RasterOverlayTileProvider& tileProvider = this->_pLoadingTile->getTileProvider();
+            RasterOverlayTileProvider& tileProvider = *this->_pLoadingTile->getOverlay().getTileProvider();
 
             std::shared_ptr<RasterOverlayTile> candidate;
             CesiumGeometry::QuadtreeTileID id = this->_pLoadingTile->getID();
@@ -118,7 +118,7 @@ namespace Cesium3DTiles {
         if (this->_pLoadingTile) {
             return MoreDetailAvailable::Unknown;
         } else {
-            return this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getTileProvider().getMaximumLevel()
+            return this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getOverlay().getTileProvider()->getMaximumLevel()
                 ? MoreDetailAvailable::Yes
                 : MoreDetailAvailable::No;
         }
@@ -143,7 +143,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        RasterOverlayTileProvider& tileProvider = this->_pReadyTile->getTileProvider();
+        RasterOverlayTileProvider& tileProvider = *this->_pReadyTile->getOverlay().getTileProvider();
         CesiumGeometry::Rectangle geometryRectangle = projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
         CesiumGeometry::Rectangle imageryRectangle = tileProvider.getTilingScheme().tileToRectangle(this->_pReadyTile->getID());
 

@@ -25,8 +25,8 @@ namespace Cesium3DTiles {
     class BingMapsTileProvider : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
-            RasterOverlay* pOverlay,
-            TilesetExternals& tilesetExternals,
+            RasterOverlay& owner,
+            const TilesetExternals& tilesetExternals,
             const std::string& baseUrl,
             const std::string& urlTemplate,
             const std::vector<std::string>& subdomains,
@@ -37,7 +37,7 @@ namespace Cesium3DTiles {
             const std::string& culture
         ) :
             RasterOverlayTileProvider(
-                pOverlay,
+                owner,
                 tilesetExternals,
                 CesiumGeospatial::WebMercatorProjection(),
                 CesiumGeometry::QuadtreeTilingScheme(
@@ -75,7 +75,7 @@ namespace Cesium3DTiles {
         virtual ~BingMapsTileProvider() {}
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner) override {
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
             std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
                     return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.computeInvertedY(this->getTilingScheme()));
@@ -86,7 +86,7 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            return std::make_shared<RasterOverlayTile>(pOwner ? *pOwner : *this, tileID, this->getExternals().pAssetAccessor->requestAsset(url));
+            return std::make_shared<RasterOverlayTile>(this->getOwner(), tileID, this->getExternals().pAssetAccessor->requestAsset(url));
         }
     
     private:
@@ -132,14 +132,14 @@ namespace Cesium3DTiles {
     BingMapsRasterOverlay::~BingMapsRasterOverlay() {
     }
 
-    void BingMapsRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, std::function<BingMapsRasterOverlay::CreateTileProviderCallback>&& callback) {
+    void BingMapsRasterOverlay::createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
         metadataUrl = Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
         metadataUrl = Uri::addQuery(metadataUrl, "key", this->_key);
         metadataUrl = Uri::addQuery(metadataUrl, "uriScheme", "https");
 
-        this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(metadataUrl);
-        this->_pMetadataRequest->bind([this, callback, &tilesetExternals](IAssetRequest* pCompletedRequest) {
+        this->_pMetadataRequest = externals.pAssetAccessor->requestAsset(metadataUrl);
+        this->_pMetadataRequest->bind([this, callback, pOwner, &externals](IAssetRequest* pCompletedRequest) {
             IAssetResponse* pResponse = pCompletedRequest->response();
 
             using namespace nlohmann;
@@ -164,8 +164,8 @@ namespace Cesium3DTiles {
             }
 
             callback(std::make_unique<BingMapsTileProvider>(
-                this,
-                tilesetExternals,
+                pOwner ? *pOwner : *this,
+                externals,
                 this->_url,
                 urlTemplate,
                 subdomains,
