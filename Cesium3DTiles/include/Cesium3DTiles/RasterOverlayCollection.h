@@ -18,8 +18,6 @@ namespace Cesium3DTiles {
         void add(std::unique_ptr<RasterOverlay>&& pOverlay);
         void remove(RasterOverlay* pOverlay);
 
-        void createTileProviders();
-
         gsl::span<RasterOverlayTileProvider*> getTileProviders() { return this->_quickTileProviders; }
 
         RasterOverlayTileProvider* findProviderForPlaceholder(RasterOverlayTileProvider* pPlaceholder);

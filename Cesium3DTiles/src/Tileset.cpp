@@ -326,8 +326,6 @@ namespace Cesium3DTiles {
 
             this->_pRootTile = std::move(pRootTile);
 
-            this->getOverlays().createTileProviders();
-
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);
         });

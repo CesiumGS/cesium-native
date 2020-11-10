@@ -14,7 +14,17 @@ namespace Cesium3DTiles {
     }
 
     void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
+        RasterOverlay* pOverlayRaw = pOverlay.get();
+
         this->_overlays.push_back(std::move(pOverlay));
+        this->_placeholders.push_back(std::make_unique<RasterOverlayTileProvider>(
+            pOverlayRaw,
+            this->_pTileset->getExternals()
+        ));
+        this->_tileProviders.push_back(nullptr);
+        this->_quickTileProviders.push_back(this->_placeholders.back().get());
+
+        pOverlayRaw->createTileProvider(this->_pTileset->getExternals(), std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
     }
 
     void RasterOverlayCollection::remove(RasterOverlay* pOverlay) {
@@ -24,20 +34,6 @@ namespace Cesium3DTiles {
         if (it != this->_overlays.end()) {
             this->_removedOverlays.emplace_back(std::move(*it));
             this->_overlays.erase(it);
-        }
-    }
-
-    void RasterOverlayCollection::createTileProviders() {
-        for (std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
-            this->_placeholders.push_back(std::make_unique<RasterOverlayTileProvider>(
-                pOverlay.get(),
-                this->_pTileset->getExternals()
-            ));
-
-            this->_tileProviders.push_back(nullptr);
-            this->_quickTileProviders.push_back(this->_placeholders.back().get());
-
-            pOverlay->createTileProvider(this->_pTileset->getExternals(), std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
         }
     }
 
