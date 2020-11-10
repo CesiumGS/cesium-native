@@ -36,7 +36,7 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays()
+        _overlays(*this)
     {
         ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
@@ -65,7 +65,7 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays()
+        _overlays(*this)
     {
         std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -326,7 +326,7 @@ namespace Cesium3DTiles {
 
             this->_pRootTile = std::move(pRootTile);
 
-            this->getOverlays().createTileProviders(this->_externals);
+            this->getOverlays().createTileProviders();
 
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);

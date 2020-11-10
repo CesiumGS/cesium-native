@@ -1,26 +1,43 @@
 #include "Cesium3DTiles/RasterOverlayCollection.h"
+#include "Cesium3DTiles/Tileset.h"
 
 namespace Cesium3DTiles {
 
-    RasterOverlayCollection::RasterOverlayCollection() {
-
+    RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) :
+        _pTileset(&tileset),
+        _overlays(),
+        _placeholders(),
+        _tileProviders(),
+        _quickTileProviders(),
+        _removedOverlays()
+    {
     }
 
-    void RasterOverlayCollection::push_back(std::unique_ptr<RasterOverlay>&& pOverlay) {
+    void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
         this->_overlays.push_back(std::move(pOverlay));
     }
 
-    void RasterOverlayCollection::createTileProviders(TilesetExternals& tilesetExternals) {
+    void RasterOverlayCollection::remove(RasterOverlay* pOverlay) {
+        auto it = std::find_if(this->_overlays.begin(), this->_overlays.end(), [pOverlay](std::unique_ptr<RasterOverlay>& pCheck) {
+            return pCheck.get() == pOverlay;
+        });
+        if (it != this->_overlays.end()) {
+            this->_removedOverlays.emplace_back(std::move(*it));
+            this->_overlays.erase(it);
+        }
+    }
+
+    void RasterOverlayCollection::createTileProviders() {
         for (std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
             this->_placeholders.push_back(std::make_unique<RasterOverlayTileProvider>(
                 pOverlay.get(),
-                tilesetExternals
+                this->_pTileset->getExternals()
             ));
 
             this->_tileProviders.push_back(nullptr);
             this->_quickTileProviders.push_back(this->_placeholders.back().get());
 
-            pOverlay->createTileProvider(tilesetExternals, std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
+            pOverlay->createTileProvider(this->_pTileset->getExternals(), std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
         }
     }
 
