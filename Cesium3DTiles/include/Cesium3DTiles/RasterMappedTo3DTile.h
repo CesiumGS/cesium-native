@@ -17,6 +17,10 @@ namespace Cesium3DTiles {
      */
     class RasterMappedTo3DTile {
     public:
+
+        /**
+         * @brief The states indicating whether the raster tile is attached to the geometry.
+         */
         enum class AttachmentState {
             /**
              * @brief This raster tile is not yet attached to the geometry at all.
@@ -38,7 +42,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Creates a new instance.
          * 
-         * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the geometry
+         * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the geometry.
          * @param textureCoordinateRectangle The texture coordinate rectangle that indicates
          * the region that is covered by the raster overlay tile.
          */
@@ -77,16 +81,16 @@ namespace Cesium3DTiles {
          * tile rendering infrastructure, to identify the texture coordinates
          * in the rendering environment.
          * 
-         * @return The texture coordinate ID
+         * @return The texture coordinate ID.
          */
         uint32_t getTextureCoordinateID() const { return this->_textureCoordinateID; }
 
         /**
-         * @brief Sets the texture coordinate ID
+         * @brief Sets the texture coordinate ID.
          * 
          * @see getTextureCoordinateID
          * 
-         * @param textureCoordinateID The ID
+         * @param textureCoordinateID The ID.
          */
         void setTextureCoordinateID(uint32_t textureCoordinateID) { this->_textureCoordinateID = textureCoordinateID; }
         
@@ -98,7 +102,7 @@ namespace Cesium3DTiles {
          * to the `(west, south, east, north)` of the tile region,
          * and each coordinate is in the range `[0,1]`.
          * 
-         * @return The texture coordinate rectangle
+         * @return The texture coordinate rectangle.
          */
         const CesiumGeometry::Rectangle& getTextureCoordinateRectangle() const { return this->_textureCoordinateRectangle; }
         
@@ -110,7 +114,7 @@ namespace Cesium3DTiles {
          * specific for the projection that is used by the tile provider)
          * and the {@link getTextureCoordinateRectangle}.
          *
-         * @returns The translation
+         * @returns The translation.
          */
         const glm::dvec2& getTranslation() const { return this->_translation; }
 
@@ -119,7 +123,7 @@ namespace Cesium3DTiles {
          * 
          * @see getTranslation
          *
-         * @returns The scaling
+         * @returns The scaling.
          */
         const glm::dvec2& getScale() const { return this->_scale; }
         
@@ -141,13 +145,13 @@ namespace Cesium3DTiles {
          */
         enum class MoreDetailAvailable {
 
-            /** @brief There are no more detailed raster tiles */
+            /** @brief There are no more detailed raster tiles. */
             No = 0,
 
-            /** @brief There are more detailed raster tiles */
+            /** @brief There are more detailed raster tiles. */
             Yes = 1,
 
-            /** @brief It is not known whether more detailed raster tiles are available */
+            /** @brief It is not known whether more detailed raster tiles are available. */
             Unknown = 2
         };
 
@@ -158,8 +162,8 @@ namespace Cesium3DTiles {
          * will return whether there is a more detailed version of the 
          * raster data available.
          * 
-         * @param tile The owner tile
-         * @return The {@link MoreDetailAvailable} state
+         * @param tile The owner tile.
+         * @return The {@link MoreDetailAvailable} state.
          */
         MoreDetailAvailable update(Tile& tile);
 

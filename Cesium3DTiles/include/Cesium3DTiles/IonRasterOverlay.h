@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
          * imagery data that was obtained from the Cesium ion asset
          * with the given ID, accessed with the given access token.
          * 
-         * @param ionAssetID The asset ID
+         * @param ionAssetID The asset ID.
          * @param ionAccessToken The access token.
          */
         IonRasterOverlay(

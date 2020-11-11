@@ -108,11 +108,18 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the {@link RasterOverlayTile} with the given ID, requesting it if necessary.
          * 
-         * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain
-         * @param pOwner The owner
-         * @return The tile
+         * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
+         * @param pOwner The owner.
+         * @return The tile.
          */
         std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner = nullptr);
+
+        /**
+         * @brief Returns the {@link RasterOverlayTile} with the given ID, or `nullptr` if there is no such tile.
+         * 
+         * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
+         * @return The tile, or `nullptr`.
+         */
         std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
@@ -133,6 +140,16 @@ namespace Cesium3DTiles {
          */
         TilesetExternals& getExternals() { return *this->_pTilesetExternals; }
 
+        /**
+         * @brief Map raster tiles to geometry tile.
+         * 
+         * This function is not supposed to be called by clients.
+         * 
+         * @param geometryRectangle The rectangle.
+         * @param targetGeometricError The geometric error.
+         * @param outputRasterTiles The raster tiles.
+         * @param outputIndex The output index.
+         */
         void mapRasterTilesToGeometryTile(
             const CesiumGeospatial::GlobeRectangle& geometryRectangle,
             double targetGeometricError,
@@ -140,6 +157,7 @@ namespace Cesium3DTiles {
             std::optional<size_t> outputIndex = std::nullopt
         );
 
+        /** @copydoc mapRasterTilesToGeometryTile */
         void mapRasterTilesToGeometryTile(
             const CesiumGeometry::Rectangle& geometryRectangle,
             double targetGeometricError,

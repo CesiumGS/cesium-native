@@ -40,7 +40,7 @@ namespace Cesium3DTiles {
             Failed = -1,
 
             /**
-             * @brief The initial state
+             * @brief The initial state.
              */
             Unloaded = 0,
 
@@ -117,7 +117,7 @@ namespace Cesium3DTiles {
          * This will only contain valid image data if the {@link getState} of
          * this tile is {@link LoadState `Loaded`} or {@link LoadState `Done`}.
          * 
-         * @return The image data
+         * @return The image data.
          */
         const tinygltf::Image& getImage() const { return this->_image; }
 

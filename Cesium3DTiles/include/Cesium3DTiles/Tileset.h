@@ -254,10 +254,17 @@ namespace Cesium3DTiles {
          * 
          * @param tile The tile for which the content is requested.
          * @return The pointer to the {@link IAssetRequest} that will
-         * complete when the content is available
+         * complete when the content is available.
          */
         std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
 
+        /**
+         * @brief Add the given {@link TileContext} to this tile set.
+         * 
+         * This function is not supposed to be called by clients.
+         *
+         * @param pNewContext The new context. May not be `nullptr`.
+         */
         void addContext(std::unique_ptr<TileContext>&& pNewContext);
 
     private:
