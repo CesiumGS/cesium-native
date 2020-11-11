@@ -94,7 +94,7 @@ namespace Cesium3DTiles {
      * created, they may create additional contexts - for example, 
      * for *external* tilesets that generate a whole new context
      * with a new base URL. Each context is added to the set of
-     * {@link Tileset::getContexts} of the tileset.
+     * contexts of the tileset with {@link Tileset::addContext}.
      * 
      * Tilesets that contain terrain tiles may additionally create
      * an {@link ImplicitTilingContext}.

@@ -93,7 +93,7 @@ namespace Cesium3DTiles {
             std::unique_ptr<IAssetRequest>&& pImageRequest
         );
 
-        /** @brief Default destructor */
+        /** @brief Default destructor. */
         ~RasterOverlayTile();
 
         /** 
@@ -131,7 +131,16 @@ namespace Cesium3DTiles {
          */
         void loadInMainThread();
 
+        /**
+         * @brief Returns the renderer resources that have been created for this tile.
+         */
         void* getRendererResources() const { return this->_pRendererResources; }
+
+        /**
+         * @brief Set the renderer resources for this tile.
+         * 
+         * This function is not supposed to be called by clients.
+         */
         void setRendererResources(void* pValue) { this->_pRendererResources = pValue; }
 
     private:

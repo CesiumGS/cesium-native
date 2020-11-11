@@ -72,6 +72,8 @@ namespace Cesium3DTiles {
          * @return The tile, or `nullptr`.
          */
         std::shared_ptr<RasterOverlayTile>& getReadyTile() { return this->_pReadyTile; }
+
+        /** @copydoc getReadyTile */
         const std::shared_ptr<RasterOverlayTile>& getReadyTile() const { return this->_pReadyTile; }
 
         /**

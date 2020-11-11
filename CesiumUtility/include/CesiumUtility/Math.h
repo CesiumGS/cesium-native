@@ -89,20 +89,60 @@ namespace CesiumUtility {
          */
         static const double PI_OVER_TWO;
 
+        /**
+         * @brief Converts a relative to an absolute epsilon, for the epsilon-equality check between two values.
+         * 
+         * @tparam L The length type.
+         * @tparam T value value type.
+         * @tparam Q The GLM qualifier type.
+         * 
+         * @param a The first value.
+         * @param b The the second value.
+         * @param relativeEpsilon The relative epsilon.
+         * @return The absolute epsilon.
+         */
         template<glm::length_t L, typename T, glm::qualifier Q>
         static inline glm::vec<L, T, Q> relativeEpsilonToAbsolute(const glm::vec<L, T, Q>& a, const glm::vec<L, T, Q>& b, double relativeEpsilon) {
             return relativeEpsilon * glm::max(glm::abs(a), glm::abs(b));
         }
 
+        /**
+         * @brief Converts a relative to an absolute epsilon, for the epsilon-equality check between two values.
+         *
+         * @param a The first value.
+         * @param b The the second value.
+         * @param relativeEpsilon The relative epsilon.
+         * @return The absolute epsilon.
+         */
         static inline double relativeEpsilonToAbsolute(double a, double b, double relativeEpsilon) {
             return relativeEpsilon * glm::max(glm::abs(a), glm::abs(b));
         }
 
+        /**
+         * @brief Checks whether two values are equal up to a given relative epsilon.
+         *
+         * @tparam L The length type.
+         * @tparam T value value type.
+         * @tparam Q The GLM qualifier type.
+         *
+         * @param left The first value.
+         * @param right The the second value.
+         * @param relativeEpsilon The relative epsilon.
+         * @return Whether the values are epsilon-equal
+         */
         template<glm::length_t L, typename T, glm::qualifier Q>
         static bool equalsEpsilon(const glm::vec<L, T, Q>& left, const glm::vec<L, T, Q>& right, double relativeEpsilon) {
             return Math::equalsEpsilon(left, right, relativeEpsilon, relativeEpsilon);
         }
 
+        /**
+         * @brief Checks whether two values are equal up to a given relative epsilon.
+         *
+         * @param left The first value.
+         * @param right The the second value.
+         * @param relativeEpsilon The relative epsilon.
+         * @return Whether the values are epsilon-equal
+         */
         static inline bool equalsEpsilon(double left, double right, double relativeEpsilon) {
             return equalsEpsilon(left, right, relativeEpsilon, relativeEpsilon);
         }
@@ -129,6 +169,23 @@ namespace CesiumUtility {
                 diff <= relativeEpsilonToAbsolute(left, right, relativeEpsilon);
         }
 
+        /**
+         * @brief Determines if two values are equal using an absolute or relative tolerance test.
+         *
+         * This is useful to avoid problems due to roundoff error when comparing floating-point values directly.
+         * The values are first compared using an absolute tolerance test. If that fails, a relative tolerance test is performed.
+         * Use this test if you are unsure of the magnitudes of left and right.
+         *
+         * @tparam L The length type.
+         * @tparam T value value type.
+         * @tparam Q The GLM qualifier type.
+         * 
+         * @param left The first value to compare.
+         * @param right The other value to compare.
+         * @param relativeEpsilon The maximum inclusive delta between `left` and `right` for the relative tolerance test.
+         * @param absoluteEpsilon The maximum inclusive delta between `left` and `right` for the absolute tolerance test.
+         * @returns `true` if the values are equal within the epsilon; otherwise, `false`.
+         */
         template<glm::length_t L, typename T, glm::qualifier Q>
         static inline bool equalsEpsilon(const glm::vec<L, T, Q>& left, const glm::vec<L, T, Q>& right, double relativeEpsilon, double absoluteEpsilon) {
             glm::vec<L, T, Q> diff = glm::abs(left - right);
@@ -138,7 +195,7 @@ namespace CesiumUtility {
         }
 
         /**
-         * @brief Returns the sign of the value
+         * @brief Returns the sign of the value.
          *
          * This is 1 if the value is positive, -1 if the value is
          * negative, or 0 if the value is 0.
@@ -170,7 +227,7 @@ namespace CesiumUtility {
         /**
          * @brief Produces an angle in the range -Pi <= angle <= Pi which is equivalent to the provided angle.
          *
-         * @param angle The angle in radians
+         * @param angle The angle in radians.
          * @returns The angle in the range [`-Math::ONE_PI`, `Math::ONE_PI`].
          */
         static inline double negativePiToPi(double angle) {
@@ -180,7 +237,7 @@ namespace CesiumUtility {
         /**
          * @brief Produces an angle in the range 0 <= angle <= 2Pi which is equivalent to the provided angle.
          *
-         * @param angle The angle in radians
+         * @param angle The angle in radians.
          * @returns The angle in the range [0, `Math::TWO_PI`].
          */
         static inline double zeroToTwoPi(double angle) {
@@ -254,7 +311,7 @@ namespace CesiumUtility {
         /**
          * @brief Converts a scalar value in the range [-1.0, 1.0] to a SNORM in the range [0, rangeMaximum]
          *
-         * @param value The scalar value in the range [-1.0, 1.0]
+         * @param value The scalar value in the range [-1.0, 1.0].
          * @param rangeMaximum The maximum value in the mapped range, 255 by default.
          * @returns A SNORM value, where 0 maps to -1.0 and rangeMaximum maps to 1.0.
          *
@@ -268,7 +325,7 @@ namespace CesiumUtility {
         /**
          * @brief Converts a SNORM value in the range [0, rangeMaximum] to a scalar in the range [-1.0, 1.0].
          *
-         * @param value SNORM value in the range [0, rangeMaximum]
+         * @param value SNORM value in the range [0, rangeMaximum].
          * @param rangeMaximum The maximum value in the SNORM range, 255 by default.
          * @returns Scalar in the range [-1.0, 1.0].
          *
@@ -281,8 +338,8 @@ namespace CesiumUtility {
         /**
          * Converts a longitude value, in radians, to the range [`-Math::ONE_PI`, `Math::ONE_PI`).
          *
-         * @param {Number} angle The longitude value, in radians, to convert to the range [`-Math::ONE_PI`, `Math::ONE_PI`).
-         * @returns {Number} The equivalent longitude value in the range [`-Math::ONE_PI`, `Math::ONE_PI`).
+         * @param angle The longitude value, in radians, to convert to the range [`-Math::ONE_PI`, `Math::ONE_PI`).
+         * @returns The equivalent longitude value in the range [`-Math::ONE_PI`, `Math::ONE_PI`).
          *
          * @snippet TestMath.cpp convertLongitudeRange
          */

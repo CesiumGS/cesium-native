@@ -37,7 +37,7 @@ namespace Cesium3DTiles {
          * This is not supposed to be called by clients.
          * 
          * It will be called for all {@link RasterMappedTo3DTile} objects of a {@link Tile},
-         * and extend the given glTF model accessors with accessors that contain the 
+         * and extend the accessors of the given glTF model with accessors that contain the 
          * texture coordinate sets for different projections. Further details are not
          * specified here.
          * 

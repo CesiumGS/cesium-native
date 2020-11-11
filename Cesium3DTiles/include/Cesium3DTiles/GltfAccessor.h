@@ -20,7 +20,7 @@ namespace Cesium3DTiles {
 	 * glm::vec3 position = positions[i];
 	 * ```
 	 *
-	 * @tparam T The type of the elements in the accessor
+	 * @tparam T The type of the elements in the accessor.
 	 */
 	template <class T>
 	class GltfAccessor {
@@ -99,7 +99,7 @@ namespace Cesium3DTiles {
 		 * @brief Provides the specified accessor element.
 		 * 
 		 * @param i The index of the element.
-		 * @returns The constant reference to the accessor element
+		 * @returns The constant reference to the accessor element.
 		 * @throws A `std::range_error` if the given index is negative
 		 * or not smaller than the {@link size} of this accessor.
 		 */
@@ -118,7 +118,7 @@ namespace Cesium3DTiles {
 		 * 
 		 * This is the number of elements of type `T` that this accessor contains.
 		 * 
-		 * @returns The size
+		 * @returns The size.
 		 */
 		size_t size() const
 		{
@@ -126,7 +126,7 @@ namespace Cesium3DTiles {
 		}
 
 		/**
-		 * @brief Returns the underyling buffer implementation
+		 * @brief Returns the underyling buffer implementation.
 		 */
 		const tinygltf::Buffer& gltfBuffer() const
 		{
@@ -134,7 +134,7 @@ namespace Cesium3DTiles {
 		}
 
 		/**
-		 * @brief Returns the underyling buffer view implementation
+		 * @brief Returns the underyling buffer view implementation.
 		 */
 		const tinygltf::BufferView& gltfBufferView() const
 		{
@@ -142,7 +142,7 @@ namespace Cesium3DTiles {
 		}
 
 		/**
-		 * @brief Returns the underyling acessor implementation
+		 * @brief Returns the underyling acessor implementation.
 		 */
 		const tinygltf::Accessor& gltfAccessor() const
 		{

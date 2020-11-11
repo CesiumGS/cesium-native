@@ -166,6 +166,19 @@ namespace Cesium3DTiles {
         );
 
     protected:
+
+        /**
+         * @brief Returns a new {@link RasterOverlayTile}.
+         * 
+         * Concrete implementations of this class will create the raster overlay tile
+         * for the given ID, usually by issuing a network request to a URL that is
+         * created by generating a relative URL from the given tile ID and resolving
+         * it against a base URL.
+         * 
+         * @param tileID The {@link CesiumGeometry::QuadtreeTileID}
+         * @param pOwner The owner
+         * @return The new raster overlay tile
+         */
         virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner = nullptr);
 
     private:

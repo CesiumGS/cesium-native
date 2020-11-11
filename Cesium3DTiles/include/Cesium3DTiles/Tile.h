@@ -490,7 +490,23 @@ namespace Cesium3DTiles {
          * @param pRequest The {@link IAssetRequest} for which the response was received.
          */
         void contentResponseReceived(IAssetRequest* pRequest);
+
+        /**
+         * @brief Generates texture coordiantes for the raster overlays of the content of this tile. 
+         * 
+         * This will extend the accessors of the glTF model of the content of this
+         * tile with accessors that contain the texture coordinate sets for different 
+         * projections. Further details are not specified here.
+         * 
+         * @return The bounding region
+         */
         std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates();
+
+        /**
+         * @brief Upsample the parent of this tile.
+         * 
+         * This method should only be called when this tile's parent is already loaded.
+         */
         void upsampleParent();
 
     private:
@@ -525,6 +541,10 @@ namespace Cesium3DTiles {
         CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
 
     public:
+
+        /**
+         * @brief A {@link CesiumUtility::DoublyLinkedList} for tile objects.
+         */
         typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks> LoadedLinkedList;
     };
 

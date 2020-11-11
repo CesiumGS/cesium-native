@@ -28,6 +28,12 @@ namespace CesiumGeospatial {
          */
         static const GlobeRectangle MAXIMUM_GLOBE_RECTANGLE;
 
+        /**
+         * @brief Computes the maximum rectangle that can be covered with this projection
+         * 
+         * @param ellipsoid The {@link Ellipsoid}. Default value: {@link Ellipsoid::WGS84}.
+         * @return The rectangle
+         */
         static CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
         /**

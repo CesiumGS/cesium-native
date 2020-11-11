@@ -49,14 +49,14 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns a view on the {@link RasterOverlayTileProvider} instances of this collection.
          * 
-         * @return The raster overlay tile provider instances,
+         * @return The raster overlay tile provider instances.
          */
         gsl::span<RasterOverlayTileProvider*> getTileProviders() { return this->_quickTileProviders; }
 
         /**
          * @brief Returns the  {@link RasterOverlayTileProvider} for the given placeholder.
          * 
-         * @param pPlaceholder The placeholder
+         * @param pPlaceholder The placeholder.
          * @return The raster overlay tile provider, or `nullptr` if no matching instance is found.
          */
         RasterOverlayTileProvider* findProviderForPlaceholder(RasterOverlayTileProvider* pPlaceholder);
