@@ -10,6 +10,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TileSelectionState.h"
+#include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>
 #include <glm/mat4x4.hpp>
@@ -417,6 +418,14 @@ namespace Cesium3DTiles {
         void setLastSelectionState(const TileSelectionState& newState) { this->_lastSelectionState = newState; }
 
         /**
+         * @brief Returns the raster overlay tiles that have been mapped to this tile.
+         */
+        std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() { return this->_rasterTiles; }
+
+        /** @copydoc Tile::getMappedRasterTiles() */
+        const std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() const { return this->_rasterTiles; }
+
+        /**
          * @brief Determines if this tile is currently renderable.
          */
         bool isRenderable() const;
@@ -489,9 +498,9 @@ namespace Cesium3DTiles {
          * 
          * @param pRequest The {@link IAssetRequest} for which the response was received.
          */
-        void contentResponseReceived(IAssetRequest* pRequest);
-        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates();
-        void upsampleParent();
+        void contentResponseReceived(const std::vector<CesiumGeospatial::Projection>& projections, IAssetRequest* pRequest);
+        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(const std::vector<CesiumGeospatial::Projection>& projections);
+        void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
 
     private:
         // Position in bounding-volume hierarchy.

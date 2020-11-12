@@ -23,17 +23,17 @@ namespace Cesium3DTiles {
         /**
          * Constructs a placeholder tile provider.
          * 
-         * @param pOverlay The raster overlay.
+         * @param pOwner The raster overlay that owns this tile provider.
          * @param tilesetExternals Tileset externals.
          */
         RasterOverlayTileProvider(
-            RasterOverlay* pOverlay,
-            TilesetExternals& tilesetExternals
+            RasterOverlay& owner,
+            const TilesetExternals& tilesetExternals
         );
 
         RasterOverlayTileProvider(
-            RasterOverlay* pOverlay,
-            TilesetExternals& tilesetExternals,
+            RasterOverlay& wwner,
+            const TilesetExternals& tilesetExternals,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
             const CesiumGeometry::Rectangle& coverageRectangle,
@@ -44,8 +44,10 @@ namespace Cesium3DTiles {
         );
         virtual ~RasterOverlayTileProvider() {}
 
-        RasterOverlay* getOverlay() { return this->_pOverlay; }
-        const RasterOverlay* getOverlay() const { return this->_pOverlay; }
+        bool isPlaceholder() const { return this->_pPlaceholder != nullptr; }
+
+        RasterOverlay& getOwner() { return *this->_pOwner; }
+        const RasterOverlay& getOwner() const { return *this->_pOwner; }
 
         const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
         const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
@@ -55,8 +57,10 @@ namespace Cesium3DTiles {
         uint32_t getWidth() const { return this->_imageWidth; }
         uint32_t getHeight() const { return this->_imageHeight; }
 
-        std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id, RasterOverlayTileProvider* pOwner = nullptr);
+        std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
         std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
+
+        uint32_t getNumberOfTilesLoading() const;
 
         /**
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near
@@ -69,7 +73,7 @@ namespace Cesium3DTiles {
          */
         uint32_t computeLevelFromGeometricError(double geometricError, const glm::dvec2& position) const;
 
-        TilesetExternals& getExternals() { return *this->_pTilesetExternals; }
+        const TilesetExternals& getExternals() { return *this->_pTilesetExternals; }
 
         void mapRasterTilesToGeometryTile(
             const CesiumGeospatial::GlobeRectangle& geometryRectangle,
@@ -86,11 +90,11 @@ namespace Cesium3DTiles {
         );
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner = nullptr);
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
     private:
-        RasterOverlay* _pOverlay;
-        TilesetExternals* _pTilesetExternals;
+        RasterOverlay* _pOwner;
+        const TilesetExternals* _pTilesetExternals;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
         CesiumGeometry::Rectangle _coverageRectangle;

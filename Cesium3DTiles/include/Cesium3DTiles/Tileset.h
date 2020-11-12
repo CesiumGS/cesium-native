@@ -255,6 +255,13 @@ namespace Cesium3DTiles {
 
         void addContext(std::unique_ptr<TileContext>&& pNewContext);
 
+        /**
+         * @brief Invokes a function for each tile that is currently loaded.
+         * 
+         * @param callback The function to invoke.
+         */
+        void forEachLoadedTile(const std::function<void (Tile& tile)>& callback);
+
     private:
         struct TraversalDetails {
             /**

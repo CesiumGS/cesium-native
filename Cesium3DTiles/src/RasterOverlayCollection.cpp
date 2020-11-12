@@ -1,61 +1,62 @@
 #include "Cesium3DTiles/RasterOverlayCollection.h"
+#include "Cesium3DTiles/Tileset.h"
 
 namespace Cesium3DTiles {
 
-    RasterOverlayCollection::RasterOverlayCollection() {
-
+    RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) :
+        _pTileset(&tileset),
+        _overlays()
+    {
     }
 
-    void RasterOverlayCollection::push_back(std::unique_ptr<RasterOverlay>&& pOverlay) {
+    void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
+        RasterOverlay* pOverlayRaw = pOverlay.get();
         this->_overlays.push_back(std::move(pOverlay));
+        pOverlayRaw->createTileProvider(this->_pTileset->getExternals());
+
+        // Add this overlay to existing geometry tiles.
+        this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
+            // The tile rectangle doesn't matter for a placeholder.
+            pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
+                CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
+                tile.getGeometricError(),
+                tile.getMappedRasterTiles()
+            );
+        });
     }
 
-    void RasterOverlayCollection::createTileProviders(TilesetExternals& tilesetExternals) {
-        for (std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
-            this->_placeholders.push_back(std::make_unique<RasterOverlayTileProvider>(
-                pOverlay.get(),
-                tilesetExternals
-            ));
+    void RasterOverlayCollection::remove(RasterOverlay* pOverlay) {
+        // Remove all mappings of this overlay to geometry tiles.
+        auto removeCondition = [pOverlay](RasterMappedTo3DTile& mapped) {
+            return (
+                (mapped.getLoadingTile() && &mapped.getLoadingTile()->getOverlay() == pOverlay) ||
+                (mapped.getReadyTile() && &mapped.getReadyTile()->getOverlay() == pOverlay)
+            );
+        };
 
-            this->_tileProviders.push_back(nullptr);
-            this->_quickTileProviders.push_back(this->_placeholders.back().get());
+        this->_pTileset->forEachLoadedTile([&removeCondition](Tile& tile) {
+            std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
+            auto firstToRemove = std::remove_if(mapped.begin(), mapped.end(), removeCondition);
 
-            pOverlay->createTileProvider(tilesetExternals, std::bind(&RasterOverlayCollection::overlayCreated, this, std::placeholders::_1));
-        }
-    }
-
-    RasterOverlayTileProvider* RasterOverlayCollection::findProviderForPlaceholder(RasterOverlayTileProvider* pPlaceholder) {
-        for (size_t i = 0; i < this->_placeholders.size(); ++i) {
-            if (this->_placeholders[i].get() == pPlaceholder) {
-                if (this->_quickTileProviders[i] != pPlaceholder) {
-                    return this->_quickTileProviders[i];
-                }
-                break;
+            for (auto it = firstToRemove; it != mapped.end(); ++it) {
+                it->detachFromTile(tile);
             }
-        }
 
-        return nullptr;
-    }
+            mapped.erase(firstToRemove, mapped.end());
+        });
 
-    void RasterOverlayCollection::overlayCreated(std::unique_ptr<RasterOverlayTileProvider>&& pOverlayProvider) {
-        if (!pOverlayProvider) {
+        auto it = std::find_if(this->_overlays.begin(), this->_overlays.end(), [pOverlay](std::unique_ptr<RasterOverlay>& pCheck) {
+            return pCheck.get() == pOverlay;
+        });
+        if (it == this->_overlays.end()) {
             return;
         }
 
-        RasterOverlay* pOverlay = pOverlayProvider->getOverlay();
-
-        auto it = std::find_if(this->_placeholders.begin(), this->_placeholders.end(), [pOverlay](const std::unique_ptr<RasterOverlayTileProvider>& pPlaceholder) {
-            if (pPlaceholder->getOverlay() == pOverlay) {
-                return true;
-            }
-            return false;
-        });
-
-        assert(it != this->_placeholders.end());
-
-        size_t index = it - this->_placeholders.begin();
-        this->_quickTileProviders[index] = pOverlayProvider.get();
-        this->_tileProviders[index] = std::move(pOverlayProvider);
+        // Tell the overlay provider to destroy itself, which effectively transfers ownership
+        // _of_ itself, _to_ itself. It will delete itself when all in-progress loads
+        // are complete, which may be immediately.
+        (*it)->destroySafely(std::move(*it));
+        this->_overlays.erase(it);
     }
 
 }

@@ -8,7 +8,7 @@
 
 namespace Cesium3DTiles {
 
-    class RasterOverlayTileProvider;
+    class RasterOverlay;
 
     class RasterOverlayTile {
     public:
@@ -32,18 +32,20 @@ namespace Cesium3DTiles {
          * @param tileProvider The tile provider.
          */
         RasterOverlayTile(
-            RasterOverlayTileProvider& tileProvider
+            RasterOverlay& overlay
         );
 
         RasterOverlayTile(
-            RasterOverlayTileProvider& tileProvider,
+            RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
             std::unique_ptr<IAssetRequest>&& pImageRequest
         );
 
         ~RasterOverlayTile();
 
-        RasterOverlayTileProvider& getTileProvider() { return *this->_pTileProvider; }
+        void load(std::shared_ptr<RasterOverlayTile>& pThis);
+
+        RasterOverlay& getOverlay() { return *this->_pOverlay; }
         const CesiumGeometry::QuadtreeTileID& getID() { return this->_tileID; }
         LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
         const tinygltf::Image& getImage() const { return this->_image; }
@@ -56,11 +58,12 @@ namespace Cesium3DTiles {
         void requestComplete(IAssetRequest* pRequest);
         void setState(LoadState newState);
 
-        RasterOverlayTileProvider* _pTileProvider;
+        RasterOverlay* _pOverlay;
         CesiumGeometry::QuadtreeTileID _tileID;
         std::atomic<LoadState> _state;
         std::unique_ptr<IAssetRequest> _pImageRequest;
         tinygltf::Image _image;
         void* _pRendererResources;
+        std::shared_ptr<RasterOverlayTile> _pSelf;
     };
 }

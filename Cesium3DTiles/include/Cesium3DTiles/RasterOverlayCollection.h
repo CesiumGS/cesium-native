@@ -9,28 +9,22 @@
 
 namespace Cesium3DTiles {
 
-    class TilesetExternals;
+    class Tileset;
 
     class CESIUM3DTILES_API RasterOverlayCollection {
     public:
-        RasterOverlayCollection();
+        RasterOverlayCollection(Tileset& tileset);
 
-        void push_back(std::unique_ptr<RasterOverlay>&& pOverlay);
+        void add(std::unique_ptr<RasterOverlay>&& pOverlay);
+        void remove(RasterOverlay* pOverlay);
 
-        void createTileProviders(TilesetExternals& assetAccessor);
-
-        gsl::span<RasterOverlayTileProvider*> getTileProviders() { return this->_quickTileProviders; }
-
-        RasterOverlayTileProvider* findProviderForPlaceholder(RasterOverlayTileProvider* pPlaceholder);
+        typedef std::vector<std::unique_ptr<RasterOverlay>>::const_iterator const_iterator;
+        const_iterator begin() const { return this->_overlays.begin(); }
+        const_iterator end() const { return this->_overlays.end(); }
 
     private:
-        void overlayCreated(std::unique_ptr<RasterOverlayTileProvider>&& pOverlay);
-
+        Tileset* _pTileset;
         std::vector<std::unique_ptr<RasterOverlay>> _overlays;
-        std::vector<std::unique_ptr<RasterOverlayTileProvider>> _placeholders;
-        std::vector<std::unique_ptr<RasterOverlayTileProvider>> _tileProviders;
-        std::vector<RasterOverlayTileProvider*> _quickTileProviders;
-
     };
 
 }
