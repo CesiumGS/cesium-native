@@ -77,8 +77,7 @@ namespace Cesium3DTiles {
                 return;
             }
             
-            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
-            const TilesetExternals& externals = pTileProvider->getExternals();
+            const TilesetExternals& externals = this->_pOverlay->getTileProvider()->getExternals();
 
             externals.pTaskProcessor->startTask([pResponse, this]() {
                 std::string errors;
