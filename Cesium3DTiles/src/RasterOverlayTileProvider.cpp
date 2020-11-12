@@ -55,6 +55,7 @@ namespace Cesium3DTiles {
         }
 
         std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
+        pNew->load(pNew);
         this->_tiles[id] = pNew;
 
         return pNew;
@@ -70,6 +71,19 @@ namespace Cesium3DTiles {
         }
 
         return nullptr;
+    }
+
+    uint32_t RasterOverlayTileProvider::getNumberOfTilesLoading() const {
+        uint32_t count = 0;
+
+        for (auto& pair : this->_tiles) {
+            std::shared_ptr<RasterOverlayTile> pTile = pair.second.lock();
+            if (pTile && pTile->getState() == RasterOverlayTile::LoadState::Loading) {
+                ++count;
+            }
+        }
+
+        return count;
     }
 
     uint32_t RasterOverlayTileProvider::computeLevelFromGeometricError(

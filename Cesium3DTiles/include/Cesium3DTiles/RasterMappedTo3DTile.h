@@ -54,6 +54,8 @@ namespace Cesium3DTiles {
         };
 
         MoreDetailAvailable update(Tile& tile);
+        void detachFromTile(Tile& tile);
+        
         // void attachToTile(Tile& tile);
 
     private:

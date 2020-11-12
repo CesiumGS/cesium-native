@@ -44,6 +44,8 @@ namespace Cesium3DTiles {
         );
         virtual ~RasterOverlayTileProvider() {}
 
+        bool isPlaceholder() const { return this->_pPlaceholder != nullptr; }
+
         RasterOverlay& getOwner() { return *this->_pOwner; }
         const RasterOverlay& getOwner() const { return *this->_pOwner; }
 
@@ -57,6 +59,8 @@ namespace Cesium3DTiles {
 
         std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
         std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
+
+        uint32_t getNumberOfTilesLoading() const;
 
         /**
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near
@@ -84,17 +88,6 @@ namespace Cesium3DTiles {
             std::vector<RasterMappedTo3DTile>& outputRasterTiles,
             std::optional<size_t> outputIndex = std::nullopt
         );
-
-        /**
-         * @brief Safely destroys this overlay tile provider and its associated overlay.
-         * 
-         * The overlay will not be truly destroyed until all in-progress tile loads complete. This may happen
-         * before this function returns if no loads are in progress.
-         * 
-         * @param pOverlayTileProvider A unique pointer to this instance, allowing it to take ownership of itself.
-         * @param pOverlay A unique pointer to the corresponding overlay. Ownership will be taken of this overlay.
-         */
-        void destroySafely(std::unique_ptr<RasterOverlayTileProvider>&& pOverlayTileProvider, std::unique_ptr<RasterOverlay>&& pOverlay);
 
     protected:
         virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);

@@ -15,7 +15,8 @@ namespace Cesium3DTiles {
             _state(LoadState::Placeholder),
             _pImageRequest(),
             _image(),
-            _pRendererResources(nullptr)
+            _pRendererResources(nullptr),
+            _pSelf(nullptr)
         {
         }
 
@@ -29,10 +30,9 @@ namespace Cesium3DTiles {
             _state(LoadState::Unloaded),
             _pImageRequest(std::move(pImageRequest)),
             _image(),
-            _pRendererResources(nullptr)
+            _pRendererResources(nullptr),
+            _pSelf(nullptr)
         {
-            this->_pImageRequest->bind(std::bind(&RasterOverlayTile::requestComplete, this, std::placeholders::_1));
-            this->setState(LoadState::Loading);
         }
 
         RasterOverlayTile::~RasterOverlayTile() {
@@ -43,6 +43,12 @@ namespace Cesium3DTiles {
             void* pMainThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? this->_pRendererResources : nullptr;
 
             externals.pPrepareRendererResources->freeRaster(*this, pLoadThreadResult, pMainThreadResult);
+        }
+
+        void RasterOverlayTile::load(std::shared_ptr<RasterOverlayTile>& pThis) {
+            this->_pSelf = pThis;
+            this->setState(LoadState::Loading);
+            this->_pImageRequest->bind(std::bind(&RasterOverlayTile::requestComplete, this, std::placeholders::_1));
         }
 
         void RasterOverlayTile::loadInMainThread() {
@@ -139,6 +145,13 @@ namespace Cesium3DTiles {
                     this->_pRendererResources = nullptr;
                     this->setState(LoadState::Failed);
                 }
+
+                if (this->getOverlay().isBeingDestroyed()) {
+                    this->getOverlay().destroySafely(nullptr);
+                }
+
+                // Now that we're done loading we can allow this tile to be destroyed.
+                this->_pSelf.reset();
             });
         }
 

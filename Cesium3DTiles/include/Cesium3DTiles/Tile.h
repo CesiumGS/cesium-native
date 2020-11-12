@@ -10,6 +10,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TileSelectionState.h"
+#include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>
 #include <glm/mat4x4.hpp>
@@ -497,9 +498,9 @@ namespace Cesium3DTiles {
          * 
          * @param pRequest The {@link IAssetRequest} for which the response was received.
          */
-        void contentResponseReceived(IAssetRequest* pRequest);
-        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates();
-        void upsampleParent();
+        void contentResponseReceived(const std::vector<CesiumGeospatial::Projection>& projections, IAssetRequest* pRequest);
+        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(const std::vector<CesiumGeospatial::Projection>& projections);
+        void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
 
     private:
         // Position in bounding-volume hierarchy.

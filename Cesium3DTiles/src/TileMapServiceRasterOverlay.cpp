@@ -15,8 +15,8 @@ namespace Cesium3DTiles {
     class TileMapServiceTileProvider : public RasterOverlayTileProvider {
     public:
         TileMapServiceTileProvider(
-            RasterOverlay* pOverlay,
-            TilesetExternals& tilesetExternals,
+            RasterOverlay& owner,
+            const TilesetExternals& tilesetExternals,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
             const CesiumGeometry::Rectangle& coverageRectangle,
@@ -29,7 +29,7 @@ namespace Cesium3DTiles {
             uint32_t maximumLevel
         ) :
             RasterOverlayTileProvider(
-                pOverlay,
+                owner,
                 tilesetExternals,
                 projection,
                 tilingScheme,
@@ -48,7 +48,7 @@ namespace Cesium3DTiles {
         virtual ~TileMapServiceTileProvider() {}
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID, RasterOverlayTileProvider* pOwner) override {
+        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
             std::string url = Uri::resolve(
                 this->_url,
                 std::to_string(tileID.level) + "/" +
@@ -58,7 +58,7 @@ namespace Cesium3DTiles {
                 true
             );
 
-            return std::make_shared<RasterOverlayTile>(pOwner ? *pOwner : *this, tileID, this->getExternals().pAssetAccessor->requestAsset(url, this->_headers));
+            return std::make_shared<RasterOverlayTile>(this->getOwner(), tileID, this->getExternals().pAssetAccessor->requestAsset(url, this->_headers));
         }
     
     private:
@@ -110,7 +110,7 @@ namespace Cesium3DTiles {
         return std::nullopt;
     }
 
-    void TileMapServiceRasterOverlay::createTileProvider(TilesetExternals& tilesetExternals, RasterOverlay* pOwner, std::function<TileMapServiceRasterOverlay::CreateTileProviderCallback>&& callback) {
+    void TileMapServiceRasterOverlay::createTileProvider(const TilesetExternals& tilesetExternals, RasterOverlay* pOwner, std::function<TileMapServiceRasterOverlay::CreateTileProviderCallback>&& callback) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
         this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(xmlUrl, this->_headers);
         this->_pMetadataRequest->bind([this, &tilesetExternals, pOwner, callback](IAssetRequest* pRequest) mutable {

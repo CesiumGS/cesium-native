@@ -30,10 +30,23 @@ namespace Cesium3DTiles {
         const RasterOverlayTileProvider* getTileProvider() const;
 
         /**
+         * @brief Gets the placeholder tile provider for this overlay.
+         * 
+         * Returns `nullptr` if {@link createTileProvider} has not yet been called.
+         */
+        RasterOverlayTileProvider* getPlaceholder() { return this->_pPlaceholder.get(); }
+        const RasterOverlayTileProvider* getPlaceholder() const { return this->_pPlaceholder.get(); }
+
+        /**
          * @brief Get a collection containing the sections of this overlay and its associated tileset that are not rendered.
          */
         const RasterOverlayCutoutCollection& getCutouts() const { return this->_cutouts; }
         RasterOverlayCutoutCollection& getCutouts() { return this->_cutouts; }
+
+        /**
+         * @brief Returns whether this overlay is in the process of being destroyed.
+         */
+        bool isBeingDestroyed() const { return this->_pSelf != nullptr; }
 
         /**
          * @brief A callback that receives the tile provider when it asynchronously becomes ready.
@@ -67,10 +80,21 @@ namespace Cesium3DTiles {
          */
         virtual void createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) = 0;
 
+        /**
+         * @brief Safely destroys this overlay.
+         * 
+         * The overlay will not be truly destroyed until all in-progress tile loads complete. This may happen
+         * before this function returns if no loads are in progress.
+         * 
+         * @param pOverlay A unique pointer to this instance, allowing transfer of ownership.
+         */
+        void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay);
+
     private:
         std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
         std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;
         RasterOverlayCutoutCollection _cutouts;
+        std::unique_ptr<RasterOverlay> _pSelf;
     };
 
 }

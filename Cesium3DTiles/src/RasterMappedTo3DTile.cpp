@@ -124,6 +124,27 @@ namespace Cesium3DTiles {
         }
     }
 
+    void RasterMappedTo3DTile::detachFromTile(Tile& tile) {
+        if (this->getState() == AttachmentState::Unattached) {
+            return;
+        }
+
+        if (!this->_pReadyTile) {
+            return;
+        }
+
+        TilesetExternals& externals = tile.getTileset()->getExternals();
+        externals.pPrepareRendererResources->detachRasterInMainThread(
+            tile,
+            this->getTextureCoordinateID(),
+            *this->_pReadyTile,
+            this->_pReadyTile->getRendererResources(),
+            this->getTextureCoordinateRectangle()
+        );
+
+        this->_state = AttachmentState::Unattached;
+    }
+
     void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
         if (!this->_pReadyTile) {
             return;
