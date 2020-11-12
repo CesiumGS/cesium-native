@@ -29,8 +29,8 @@ namespace Cesium3DTiles {
         // Remove all mappings of this overlay to geometry tiles.
         auto removeCondition = [pOverlay](RasterMappedTo3DTile& mapped) {
             return (
-                mapped.getLoadingTile() && &mapped.getLoadingTile()->getOverlay() == pOverlay ||
-                mapped.getReadyTile() && &mapped.getReadyTile()->getOverlay() == pOverlay
+                (mapped.getLoadingTile() && &mapped.getLoadingTile()->getOverlay() == pOverlay) ||
+                (mapped.getReadyTile() && &mapped.getReadyTile()->getOverlay() == pOverlay)
             );
         };
 
