@@ -13,6 +13,13 @@ namespace Cesium3DTiles {
 
     /**
      * @brief The base class for a quadtree-tiled raster image that can be draped over a {@link Tileset}.
+     * 
+     * Instances of this class can be added to the {@link RasterOverlayCollection}
+     * that is returned by {@link Tileset::getOverlays}.
+     *
+     * @see BingMapsRasterOverlay
+     * @see IonRasterOverlay
+     * @see TileMapServiceRasterOverlay     
      */
     class RasterOverlay {
     public:
@@ -27,6 +34,8 @@ namespace Cesium3DTiles {
          * provide tiles, a placeholder tile provider will be returned.
          */
         RasterOverlayTileProvider* getTileProvider();
+
+        /** @copydoc getTileProvider */
         const RasterOverlayTileProvider* getTileProvider() const;
 
         /**
@@ -35,13 +44,17 @@ namespace Cesium3DTiles {
          * Returns `nullptr` if {@link createTileProvider} has not yet been called.
          */
         RasterOverlayTileProvider* getPlaceholder() { return this->_pPlaceholder.get(); }
+
+        /** @copydoc getPlaceholder */
         const RasterOverlayTileProvider* getPlaceholder() const { return this->_pPlaceholder.get(); }
 
         /**
          * @brief Get a collection containing the sections of this overlay and its associated tileset that are not rendered.
          */
-        const RasterOverlayCutoutCollection& getCutouts() const { return this->_cutouts; }
         RasterOverlayCutoutCollection& getCutouts() { return this->_cutouts; }
+
+        /** @copydoc getCutouts */
+        const RasterOverlayCutoutCollection& getCutouts() const { return this->_cutouts; }
 
         /**
          * @brief Returns whether this overlay is in the process of being destroyed.

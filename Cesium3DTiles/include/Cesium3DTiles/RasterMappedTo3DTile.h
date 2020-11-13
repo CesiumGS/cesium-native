@@ -168,6 +168,10 @@ namespace Cesium3DTiles {
          * @return The {@link MoreDetailAvailable} state.
          */
         MoreDetailAvailable update(Tile& tile);
+
+        /**
+         * @brief Detach the raster from the given tile.
+         */
         void detachFromTile(Tile& tile);
         
         // void attachToTile(Tile& tile);
