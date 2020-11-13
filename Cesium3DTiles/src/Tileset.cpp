@@ -36,7 +36,7 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays()
+        _overlays(*this)
     {
         ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
@@ -65,7 +65,7 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays()
+        _overlays(*this)
     {
         std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -231,6 +231,15 @@ namespace Cesium3DTiles {
         this->_contexts.push_back(std::move(pNewContext));
     }
 
+    void Tileset::forEachLoadedTile(const std::function<void (Tile& tile)>& callback) {
+        Tile* pCurrent = this->_loadedTiles.head();
+        while (pCurrent) {
+            Tile* pNext = this->_loadedTiles.next(pCurrent);
+            callback(*pCurrent);
+            pCurrent = pNext;
+        }
+    }
+
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
@@ -325,8 +334,6 @@ namespace Cesium3DTiles {
             }
 
             this->_pRootTile = std::move(pRootTile);
-
-            this->getOverlays().createTileProviders(this->_externals);
 
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);
@@ -681,6 +688,24 @@ namespace Cesium3DTiles {
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
         bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
+
+        if (!isVisible && this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
+            const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
+            const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+            
+            const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+            if (pRegion) {
+                pRectangle = &pRegion->getRectangle();
+            } else if (pLooseRegion) {
+                pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+            }
+
+            if (pRectangle) {
+                if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
+                    isVisible = true;
+                }
+            }
+        }
 
         double distance = 0.0;
 

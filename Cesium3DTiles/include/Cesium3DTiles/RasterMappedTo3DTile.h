@@ -168,7 +168,8 @@ namespace Cesium3DTiles {
          * @return The {@link MoreDetailAvailable} state.
          */
         MoreDetailAvailable update(Tile& tile);
-
+        void detachFromTile(Tile& tile);
+        
         // void attachToTile(Tile& tile);
 
     private:

@@ -8,40 +8,47 @@
 namespace Cesium3DTiles {
 
         RasterOverlayTile::RasterOverlayTile(
-            RasterOverlayTileProvider& tileProvider
+            RasterOverlay& overlay
         ) :
-            _pTileProvider(&tileProvider),
+            _pOverlay(&overlay),
             _tileID(0, 0, 0),
             _state(LoadState::Placeholder),
             _pImageRequest(),
             _image(),
-            _pRendererResources(nullptr)
+            _pRendererResources(nullptr),
+            _pSelf(nullptr)
         {
         }
 
         RasterOverlayTile::RasterOverlayTile(
-            RasterOverlayTileProvider& tileProvider,
+            RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
             std::unique_ptr<IAssetRequest>&& pImageRequest
         ) :
-            _pTileProvider(&tileProvider),
+            _pOverlay(&overlay),
             _tileID(tileID),
             _state(LoadState::Unloaded),
             _pImageRequest(std::move(pImageRequest)),
             _image(),
-            _pRendererResources(nullptr)
+            _pRendererResources(nullptr),
+            _pSelf(nullptr)
         {
-            this->_pImageRequest->bind(std::bind(&RasterOverlayTile::requestComplete, this, std::placeholders::_1));
-            this->setState(LoadState::Loading);
         }
 
         RasterOverlayTile::~RasterOverlayTile() {
-            TilesetExternals& externals = this->_pTileProvider->getExternals();
+            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
+            const TilesetExternals& externals = pTileProvider->getExternals();
 
             void* pLoadThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? nullptr : this->_pRendererResources;
             void* pMainThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? this->_pRendererResources : nullptr;
 
             externals.pPrepareRendererResources->freeRaster(*this, pLoadThreadResult, pMainThreadResult);
+        }
+
+        void RasterOverlayTile::load(std::shared_ptr<RasterOverlayTile>& pThis) {
+            this->_pSelf = pThis;
+            this->setState(LoadState::Loading);
+            this->_pImageRequest->bind(std::bind(&RasterOverlayTile::requestComplete, this, std::placeholders::_1));
         }
 
         void RasterOverlayTile::loadInMainThread() {
@@ -52,7 +59,8 @@ namespace Cesium3DTiles {
             this->_pImageRequest.reset();
 
             // Do the final main thread raster loading
-            TilesetExternals& externals = this->_pTileProvider->getExternals();
+            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
+            const TilesetExternals& externals = pTileProvider->getExternals();
             this->_pRendererResources = externals.pPrepareRendererResources->prepareRasterInMainThread(*this, this->_pRendererResources);
             this->setState(LoadState::Done);
         }
@@ -69,7 +77,8 @@ namespace Cesium3DTiles {
                 return;
             }
             
-            TilesetExternals& externals = this->_pTileProvider->getExternals();
+            const TilesetExternals& externals = this->_pOverlay->getTileProvider()->getExternals();
+
             externals.pTaskProcessor->startTask([pResponse, this]() {
                 std::string errors;
                 std::string warnings;
@@ -79,8 +88,8 @@ namespace Cesium3DTiles {
 
                 const int bytesPerPixel = 4;
                 if (success && this->_image.image.size() >= static_cast<size_t>(this->_image.width * this->_image.height * bytesPerPixel)) {
-                    RasterOverlayTileProvider* pTileProvider = this->_pTileProvider;
-                    RasterOverlay* pOverlay = pTileProvider->getOverlay();
+                    RasterOverlay& overlay = this->getOverlay();
+                    RasterOverlayTileProvider* pTileProvider = overlay.getTileProvider();
 
                     CesiumGeometry::Rectangle tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID());
                     double tileWidth = tileRectangle.computeWidth();
@@ -88,7 +97,7 @@ namespace Cesium3DTiles {
 
                     const CesiumGeospatial::Projection& projection = pTileProvider->getProjection();
 
-                    gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = pOverlay->getCutouts().getCutouts();
+                    gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = overlay.getCutouts().getCutouts();
 
                     std::vector<unsigned char>& imageData = this->_image.image;
                     int width = this->_image.width;
@@ -129,12 +138,19 @@ namespace Cesium3DTiles {
                         }
                     }
 
-                    this->_pRendererResources = this->_pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
+                    this->_pRendererResources = pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
                     this->setState(LoadState::Loaded);
                 } else {
                     this->_pRendererResources = nullptr;
                     this->setState(LoadState::Failed);
                 }
+
+                if (this->getOverlay().isBeingDestroyed()) {
+                    this->getOverlay().destroySafely(nullptr);
+                }
+
+                // Now that we're done loading we can allow this tile to be destroyed.
+                this->_pSelf.reset();
             });
         }
 
