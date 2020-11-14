@@ -9,6 +9,7 @@
 #include "TilesetJson.h"
 #include "Uri.h"
 #include <glm/common.hpp>
+#include <iostream>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -320,7 +321,19 @@ namespace Cesium3DTiles {
         const TilesetExternals& externals = this->getExternals();
         externals.pTaskProcessor->startTask([data, &externals, this, &context]() {
             using nlohmann::json;
-            json tileset = json::parse(data.begin(), data.end());
+            json tileset;
+
+            try {
+                tileset = json::parse(data.begin(), data.end());
+            }
+            catch (json::parse_error error) {
+                std::cerr << "JSON parse error: " << error.what() << std::endl;
+                std::string jsonString(data.begin(), data.end());
+                std::cerr << "JSON data: " << std::endl << jsonString << std::endl;
+                this->_pTilesetJsonRequest.reset();
+                this->notifyTileDoneLoading(nullptr);
+                return;
+            }
 
             std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
             pRootTile->setContext(&context);
