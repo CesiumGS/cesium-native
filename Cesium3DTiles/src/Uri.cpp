@@ -56,13 +56,16 @@ std::string Uri::resolve(const std::string& base, const std::string& relative, b
 	if (useBaseQuery)
 	{
 		std::string query(baseUri.query.first, baseUri.query.afterLast);
-		if (resolvedUri.query.first)
+		if (query.length() > 0)
 		{
-			result += "&" + query;
-		}
-		else
-		{
-			result += "?" + query;
+			if (resolvedUri.query.first)
+			{
+				result += "&" + query;
+			}
+			else
+			{
+				result += "?" + query;
+			}
 		}
 	}
 
