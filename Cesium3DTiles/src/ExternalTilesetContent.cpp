@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Uri.h"
+#include <iostream>
 
 namespace Cesium3DTiles {
 
@@ -28,10 +29,16 @@ namespace Cesium3DTiles {
         pContext->version = context.version;
 
         using nlohmann::json;
-
-        json tilesetJson = json::parse(data.begin(), data.end());
-        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
-
+        json tilesetJson;
+        try {
+            tilesetJson = json::parse(data.begin(), data.end());
+            context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
+        }
+        catch (json::parse_error error) {
+            std::cerr << "JSON parse error: " << error.what() << std::endl;
+            std::string jsonString(data.begin(), data.end());
+            std::cerr << "JSON data: " << std::endl << jsonString << std::endl;
+        }
         return pResult;
     }
 
