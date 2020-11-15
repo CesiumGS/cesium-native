@@ -57,10 +57,11 @@ namespace CesiumGeometry {
      *               vertices. If this vector already contains elements, the result is pushed onto the end
      *               of the vector.
      *
-     * @example
+     * ```
      * TODO port this CesiumJS example to cesium-native
      * var result = Cesium.Intersections2D.clipTriangleAtAxisAlignedThreshold(0.5, false, 0.2, 0.6, 0.4);
      * // result === [2, 0, -1, 1, 0, 0.25, -1, 1, 2, 0.5]
+     * ```
      */
     void clipTriangleAtAxisAlignedThreshold(
         double threshold,

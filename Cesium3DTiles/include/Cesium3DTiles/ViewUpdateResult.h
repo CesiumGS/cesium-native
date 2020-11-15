@@ -29,6 +29,7 @@ namespace Cesium3DTiles {
          */
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
 
+        //! @cond Doxygen_Suppress
         uint32_t tilesLoadingLowPriority;
         uint32_t tilesLoadingMediumPriority;
         uint32_t tilesLoadingHighPriority;
@@ -36,6 +37,7 @@ namespace Cesium3DTiles {
         uint32_t tilesVisited;
         uint32_t tilesCulled;
         uint32_t maxDepthVisited;
+        //! @endcond
     };
 
 }

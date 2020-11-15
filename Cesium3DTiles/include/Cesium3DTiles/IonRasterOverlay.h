@@ -8,8 +8,22 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
+     */
     class CESIUM3DTILES_API IonRasterOverlay : public RasterOverlay {
     public:
+
+        /**
+         * @brief Creates a new instance.
+         * 
+         * The tiles that are provided by this instance will contain
+         * imagery data that was obtained from the Cesium ion asset
+         * with the given ID, accessed with the given access token.
+         * 
+         * @param ionAssetID The asset ID.
+         * @param ionAccessToken The access token.
+         */
         IonRasterOverlay(
             uint32_t ionAssetID,
             const std::string& ionAccessToken

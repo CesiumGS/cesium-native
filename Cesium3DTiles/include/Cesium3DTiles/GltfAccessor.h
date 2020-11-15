@@ -5,6 +5,23 @@
 
 namespace Cesium3DTiles {
 
+	/**
+	 * @brief A view on the data of one accessor of a glTF asset.
+	 * 
+	 * It provides the actual accessor data like an array of elements.
+	 * The type of the accessor elements is determined by the template 
+	 * parameter. Instances are created from an input glTF model
+	 * and an accessor index, and the {@link operator[]()} 
+	 * can be used to access the elements:
+	 * 
+	 * ```
+	 * tinygltf::Model model;
+	 * GltfAccessor<glm::vec3> positions(model, accessorIndex)
+	 * glm::vec3 position = positions[i];
+	 * ```
+	 *
+	 * @tparam T The type of the elements in the accessor.
+	 */
 	template <class T>
 	class GltfAccessor {
 	private:
@@ -17,6 +34,20 @@ namespace Cesium3DTiles {
 		size_t _size;
 
 	public:
+
+		/**
+		 * @brief Creates a new instance.
+		 * 
+		 * The resulting instance will provide the data of the specified
+		 * accessor from the given model.
+		 * 
+		 * @param model The glTF model.
+		 * @param accessorID The ID (index) of the accessor.
+		 * @throws An `std::runtime_error` may be thrown when there are 
+		 * inconsistencies in the given model. This may refer to the model
+		 * itself, or to cases where the size of the template parameter `T`
+		 * does not match the size of the elements of the specified accessor.
+		 */
 		GltfAccessor(const tinygltf::Model& model, size_t accessorID)
 		{
 			const tinygltf::Accessor& accessor = model.accessors[accessorID];
@@ -64,6 +95,14 @@ namespace Cesium3DTiles {
 			this->_pBufferViewData = pBufferViewData;
 		}
 
+		/**
+		 * @brief Provides the specified accessor element.
+		 * 
+		 * @param i The index of the element.
+		 * @returns The constant reference to the accessor element.
+		 * @throws A `std::range_error` if the given index is negative
+		 * or not smaller than the {@link size} of this accessor.
+		 */
 		const T& operator[](size_t i) const
 		{
 			if (i < 0 || i >= this->_size)
@@ -74,21 +113,37 @@ namespace Cesium3DTiles {
 			return *reinterpret_cast<const T*>(this->_pBufferViewData + i * this->_stride + this->_offset);
 		}
 
+		/**
+		 * @brief Returns the size (number of elements) of this accessor. 
+		 * 
+		 * This is the number of elements of type `T` that this accessor contains.
+		 * 
+		 * @returns The size.
+		 */
 		size_t size() const
 		{
 			return this->_size;
 		}
 
+		/**
+		 * @brief Returns the underyling buffer implementation.
+		 */
 		const tinygltf::Buffer& gltfBuffer() const
 		{
 			return *this->_pGltfBuffer;
 		}
 
+		/**
+		 * @brief Returns the underyling buffer view implementation.
+		 */
 		const tinygltf::BufferView& gltfBufferView() const
 		{
 			return *this->_pGltfBufferView;
 		}
 
+		/**
+		 * @brief Returns the underyling acessor implementation.
+		 */
 		const tinygltf::Accessor& gltfAccessor() const
 		{
 			return *this->_pGltfAccessor;

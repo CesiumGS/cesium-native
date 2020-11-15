@@ -10,11 +10,41 @@ namespace Cesium3DTiles {
 
     class Tileset;
 
+    /**
+     * @brief A tiling context that was created for terrain tiles.
+     * 
+     * A terrain tileset is a multi-resolution quadtree pyramid of heightmaps, as described in
+     * the <a href="https://github.com/CesiumGS/quantized-mesh">quantized-mesh-1.0</a> 
+     * specification. The URLs for the individual tiles are computed from the base URL of
+     * the tileset. 
+     */
     class ImplicitTilingContext {
     public:
+
+        /**
+         * @brief The templates for the relative URLs of tiles.
+         * 
+         * The template elements of these URLs may be `x`, `y`, or `z` (or `level`),
+         * and will be substituted with the corresponding information from 
+         * a {@link CesiumGeometry::QuadtreeTileID}. The `version` template 
+         * element will be substituted with the version number of the owning
+         * context.
+         */
         std::vector<std::string> tileTemplateUrls;
+
+        /**
+         * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} for this context.
+         */
         CesiumGeometry::QuadtreeTilingScheme tilingScheme;
+
+        /**
+         * @brief The {@link CesiumGeospatial::Projection} for this context.
+         */
         CesiumGeospatial::Projection projection;
+
+        /**
+         * @brief The {@link CesiumGeometry::QuadtreeTileAvailability} for this context.
+         */
         CesiumGeometry::QuadtreeTileAvailability availability;
     };
 
@@ -38,16 +68,77 @@ namespace Cesium3DTiles {
         Wait
     };
 
+    /**
+     * @brief Signature of {@link FailedTileCallback}.
+     */
     typedef FailedTileAction FailedTileSignature(Tile& failedTile);
+
+    /**
+     * @brief A function that serves as a callback for failed tile loading
+     * in a {@link TileContext}.
+     */
     typedef std::function<FailedTileSignature> FailedTileCallback;
 
+    /**
+     * @brief A context in which a {@link Tileset} operates.
+     * 
+     * The context summarizes the information which is needed by a tileset
+     * in order to load {@link Tile} data. This includes the base URL
+     * that a tileset was loaded from, as well as request headers.
+     * The data of individual tiles is obtained by resolving the relative
+     * URLs that are obtained from the tiles against the base URL of the
+     * context.
+     * 
+     * One tile context is created for each tileset when the initial
+     * tileset data is received. When further tiles are loaded or
+     * created, they may create additional contexts - for example, 
+     * for *external* tilesets that generate a whole new context
+     * with a new base URL. Each context is added to the set of
+     * contexts of the tileset with {@link Tileset::addContext}.
+     * 
+     * Tilesets that contain terrain tiles may additionally create
+     * an {@link ImplicitTilingContext}.
+     */
     class TileContext {
     public:
+
+        /**
+         * @brief The {@link Tileset} that this context belongs to.
+         */
         Tileset* pTileset;
+
+        /**
+         * @brief The base URL that the tileset was loaded from.
+         */
         std::string baseUrl;
+
+        /**
+         * @brief Request headers that are required for requesting tile data.
+         * 
+         * These are pairs of strings of the form (Key, Value) that will 
+         * be added to the request headers of outgoing requests for tile data.
+         */
         std::vector<std::pair<std::string, std::string>> requestHeaders;
+
+        /**
+         * @brief The version number of the tileset.
+         */
         std::optional<std::string> version;
+
+        /**
+         * @brief An {@link ImplicitTilingContext} that may have been
+         * created for terrain tilesets.
+         */
         std::optional<ImplicitTilingContext> implicitContext;
+
+        /**
+         * @brief An optional {@link FailedTileCallback}.
+         * 
+         * This callback will be called when a {@link Tile} goes into the
+         * {@link Tile::LoadState `FailedTemporarily`} state, and returns
+         * a {@link FailedTileAction} indicating how to react to the 
+         * failure.
+         */
         FailedTileCallback failedTileCallback;
     };
 

@@ -16,8 +16,14 @@ namespace Cesium3DTiles {
     public:
         RasterOverlayCutoutCollection();
 
+        /**
+         * @brief Add the given {@link CesiumGeospatial::GlobeRectangle} to this collection.
+         */
         void push_back(const CesiumGeospatial::GlobeRectangle& cutoutRectangle);
 
+        /**
+         * @brief Returns the {@link CesiumGeospatial::GlobeRectangle} objects of this collection.
+         */
         gsl::span<const CesiumGeospatial::GlobeRectangle> getCutouts() { return this->_cutouts; }
 
     private:
