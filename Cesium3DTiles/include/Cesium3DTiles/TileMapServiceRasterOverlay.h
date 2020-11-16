@@ -11,22 +11,79 @@
 namespace Cesium3DTiles {
 
     /**
-     * @brief Options for time map service accesses.
+     * @brief Options for tile map service accesses.
      */
     struct TileMapServiceRasterOverlayOptions {
-        //! @cond Doxygen_Suppress
+        
+        /** 
+         * @brief The file extension for images on the server. 
+         */
         std::optional<std::string> fileExtension;
+
+        /** 
+         * @brief A credit for the data source, which is displayed on the canvas. 
+         */
         std::optional<std::string> credit;
+
+        /**
+         * @brief The minimum level-of-detail supported by the imagery provider. 
+         * 
+         * Take care when specifying this that the number of tiles at the minimum 
+         * level is small, such as four or less. A larger number is likely to 
+         * result in rendering problems.
+         */
         std::optional<uint32_t> minimumLevel;
+
+        /**
+         * @brief The maximum level-of-detail supported by the imagery provider.
+         *
+         * This will be `std::nullopt` if there is no limit.
+         */
         std::optional<uint32_t> maximumLevel;
+
+        /**
+         * @brief The {@link CesiumGeometry::Rectangle}, in radians, covered by the image.
+         */
         std::optional<CesiumGeometry::Rectangle> coverageRectangle;
+
+        /**
+         * @brief The {@link CesiumGeospatial::Projection} that is used.
+         */
         std::optional<CesiumGeospatial::Projection> projection;
+
+        /**
+         * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} specifying how 
+         * the ellipsoidal surface is broken into tiles. 
+         */
         std::optional<CesiumGeometry::QuadtreeTilingScheme> tilingScheme;
+
+        /**
+         * @brief The {@link CesiumGeospatial::Ellipsoid}. 
+         *
+         * If the `tilingScheme` is specified, this parameter is ignored and 
+         * the tiling scheme's ellipsoid is used instead. If neither parameter 
+         * is specified, the {@link CesiumGeospatial::Ellipsoid::WGS84} is used.
+         */
         std::optional<CesiumGeospatial::Ellipsoid> ellipsoid;
+
+        /**
+         * @brief Pixel width of image tiles.
+         */
         std::optional<uint32_t> tileWidth;
+
+        /**
+         * @brief Pixel height of image tiles.
+         */
         std::optional<uint32_t> tileHeight;
+
+        /**
+         * @brief An otion to flip the x- and y values of a tile map resource.
+         *
+         * Older versions of gdal2tiles.py flipped X and Y values in `tilemapresource.xml`. 
+         * Specifying this option will do the same, allowing for loading of these 
+         * incorrect tilesets.
+         */
         std::optional<bool> flipXY;
-        //! @endcond
     };
 
     /**
