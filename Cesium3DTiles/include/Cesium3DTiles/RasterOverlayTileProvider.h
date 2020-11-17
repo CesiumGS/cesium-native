@@ -126,7 +126,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the number of tiles that are currently loading.
          */
-        uint32_t getNumberOfTilesLoading() const;
+        uint32_t getNumberOfTilesLoading() const noexcept;
 
         /**
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near

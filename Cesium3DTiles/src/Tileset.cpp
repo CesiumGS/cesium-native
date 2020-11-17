@@ -103,14 +103,6 @@ namespace Cesium3DTiles {
             this->_externals.pAssetAccessor->tick();
         }
 
-        // Now that no tiles are in the loading state, unload all tiles
-        pCurrent = this->_loadedTiles.head();
-        while (pCurrent) {
-            Tile* pNext = this->_loadedTiles.next(pCurrent);
-            pCurrent->unloadContent();
-            pCurrent = pNext;
-        }
-
         // Wait for all overlays to wrap up their loading, too.
         uint32_t tilesLoading = 1;
         while (tilesLoading > 0) {

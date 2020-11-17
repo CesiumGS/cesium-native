@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
     RasterOverlay::~RasterOverlay() {
     }
 
-    RasterOverlayTileProvider* RasterOverlay::getTileProvider() {
+    RasterOverlayTileProvider* RasterOverlay::getTileProvider() noexcept {
         return this->_pTileProvider ? this->_pTileProvider.get() : this->_pPlaceholder.get();
     }
 

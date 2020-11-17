@@ -38,7 +38,7 @@ namespace Cesium3DTiles {
          * If the asset accessor is not dependent on the main thread to
          * dispatch requests, this method does not need to do anything.
          */
-        virtual void tick() = 0;
+        virtual void tick() noexcept = 0;
     };
 
 }

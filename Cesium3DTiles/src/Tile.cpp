@@ -82,7 +82,7 @@ namespace Cesium3DTiles {
         return *this;
     }
 
-    void Tile::prepareToDestroy() {
+    void Tile::prepareToDestroy() noexcept {
         if (this->_pContentRequest) {
             this->_pContentRequest->cancel();
         }
@@ -231,7 +231,12 @@ namespace Cesium3DTiles {
         }
     }
 
-    bool Tile::unloadContent() {
+    bool Tile::unloadContent() noexcept {
+
+        if (this->getState() == Tile::LoadState::Unloaded) {
+            return true;
+        }
+
         // Cannot unload while an async operation is in progress.
         if (this->getState() == Tile::LoadState::ContentLoading) {
             return false;
@@ -507,7 +512,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tile::setState(LoadState value) {
+    void Tile::setState(LoadState value) noexcept {
         this->_state.store(value, std::memory_order::memory_order_release);
     }
 

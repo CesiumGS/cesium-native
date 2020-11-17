@@ -38,7 +38,7 @@ namespace Cesium3DTiles {
          * @brief Cancels the request.
          * This method may only be called from the thread that created the request.
          */
-        virtual void cancel() = 0;
+        virtual void cancel() noexcept = 0;
     };
 
 }

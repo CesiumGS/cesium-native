@@ -68,7 +68,7 @@ namespace Cesium3DTiles {
          * @param pMainThreadResult The result returned by {@link prepareInMainThread}. 
          * If {@link prepareInMainThread} has not yet been called, this parameter will be `nullptr`.
          */
-        virtual void free(Tile& tile, void* pLoadThreadResult, void* pMainThreadResult) = 0;
+        virtual void free(Tile& tile, void* pLoadThreadResult, void* pMainThreadResult) noexcept = 0;
 
         /**
          * @brief Prepares a raster overlay tile. 

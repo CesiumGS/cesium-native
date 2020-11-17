@@ -190,7 +190,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the {@link TilesetExternals} that summarize the external interfaces used by this tileset.
          */
-        TilesetExternals& getExternals() { return this->_externals; }
+        TilesetExternals& getExternals() noexcept { return this->_externals; }
 
         /**
          * @brief Gets the {@link TilesetExternals} that summarize the external interfaces used by this tileset.
