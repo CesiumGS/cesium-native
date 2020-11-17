@@ -110,6 +110,17 @@ namespace Cesium3DTiles {
             pCurrent->unloadContent();
             pCurrent = pNext;
         }
+
+        // Wait for all overlays to wrap up their loading, too.
+        uint32_t tilesLoading = 1;
+        while (tilesLoading > 0) {
+            this->_externals.pAssetAccessor->tick();
+
+            tilesLoading = 0;
+            for (auto& pOverlay : this->_overlays) {
+                tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
+            }
+        }
     }
 
     static bool operator<(const FogDensityAtHeight& fogDensity, double height) {
