@@ -73,7 +73,7 @@ namespace Cesium3DTiles {
         return nullptr;
     }
 
-    uint32_t RasterOverlayTileProvider::getNumberOfTilesLoading() const {
+    uint32_t RasterOverlayTileProvider::getNumberOfTilesLoading() const noexcept {
         uint32_t count = 0;
 
         for (auto& pair : this->_tiles) {

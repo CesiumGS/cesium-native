@@ -112,7 +112,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the current {@link LoadState}.
          */
-        LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
+        LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
 
         /**
          * @brief Returns the image data for the tile.

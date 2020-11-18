@@ -33,7 +33,7 @@ namespace Cesium3DTiles {
          * If {@link createTileProvider} has been called but the overlay is not yet ready to
          * provide tiles, a placeholder tile provider will be returned.
          */
-        RasterOverlayTileProvider* getTileProvider();
+        RasterOverlayTileProvider* getTileProvider() noexcept;
 
         /** @copydoc getTileProvider */
         const RasterOverlayTileProvider* getTileProvider() const;

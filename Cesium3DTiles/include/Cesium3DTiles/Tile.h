@@ -23,7 +23,6 @@
 namespace Cesium3DTiles {
     class Tileset;
     class TileContent;
-    class RasterOverlayTileProvider;
     struct TileContentLoadResult;
 
     /**
@@ -137,12 +136,12 @@ namespace Cesium3DTiles {
          * and make sure that the resources that have been 
          * allocated by this tile can be freed.
          */
-        void prepareToDestroy();
+        void prepareToDestroy() noexcept;
 
         /**
          * @brief Returns the {@link Tileset} to which this tile belongs.
          */
-        Tileset* getTileset() { return this->_pContext->pTileset; }
+        Tileset* getTileset() noexcept { return this->_pContext->pTileset; }
 
         /** @copydoc Tile::getTileset() */
         const Tileset* getTileset() const { return this->_pContext->pTileset; }
@@ -196,7 +195,7 @@ namespace Cesium3DTiles {
          * 
          * @return The children of this tile.
          */
-        gsl::span<Tile> getChildren() { return gsl::span<Tile>(this->_children); }
+        gsl::span<Tile> getChildren() noexcept { return gsl::span<Tile>(this->_children); }
 
         /** @copydoc Tile::getChildren() */
         gsl::span<const Tile> getChildren() const { return gsl::span<const Tile>(this->_children); }
@@ -331,7 +330,7 @@ namespace Cesium3DTiles {
          *
          * @return The tile ID.
          */
-        const TileID& getTileID() const { return this->_id; }
+        const TileID& getTileID() const noexcept { return this->_id; }
 
         /**
          * @brief Set the {@link TileID} of this tile.
@@ -389,7 +388,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the {@link LoadState} of this tile.
          */
-        LoadState getState() const { return this->_state.load(std::memory_order::memory_order_acquire); }
+        LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
 
         /**
          * @brief Returns the content request that is currently in flight, if any.
@@ -461,7 +460,7 @@ namespace Cesium3DTiles {
          * 
          * @return Whether the content was unloaded.
          */
-        bool unloadContent();
+        bool unloadContent() noexcept;
 
         /**
          * @brief Gives this tile a chance to update itself each render frame.
@@ -481,12 +480,12 @@ namespace Cesium3DTiles {
          */
         void markPermanentlyFailed();
 
-    protected:
+    private:
 
         /**
          * @brief Set the {@link LoadState} of this tile.
          */
-        void setState(LoadState value);
+        void setState(LoadState value) noexcept;
 
         /**
          * @brief Will be called when the response for loading the tile content was received.
@@ -519,7 +518,6 @@ namespace Cesium3DTiles {
          */
         void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
 
-    private:
         // Position in bounding-volume hierarchy.
         TileContext* _pContext;
         Tile* _pParent;
