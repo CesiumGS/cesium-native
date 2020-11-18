@@ -34,6 +34,7 @@ namespace Cesium3DTiles {
 		size_t _size;
 
 	public:
+		typedef T value_type;
 
 		/**
 		 * @brief Creates a new instance.
