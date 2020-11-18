@@ -28,4 +28,4 @@ target_include_directories(
         src
 )
 
-target_link_libraries(Cesium3DTiles PUBLIC CesiumGeospatial CesiumGeometry CesiumUtility uriparser draco tinyxml2)
+target_link_libraries(Cesium3DTiles PUBLIC CesiumGeospatial CesiumGeometry CesiumUtility uriparser draco tinyxml2 spdlog)
