@@ -8,6 +8,7 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
+#include "Logging.h"
 
 namespace Cesium3DTiles {
 
@@ -143,8 +144,17 @@ namespace Cesium3DTiles {
             IAssetResponse* pResponse = pCompletedRequest->response();
 
             using namespace nlohmann;
-            
-            json response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            json response;
+            try
+            {
+                response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            }
+            catch (const json::parse_error& error)
+            {
+                LOG_ERROR("Error when parsing Bing maps raster overlay metadata: " + std::string(error.what()));
+                callback(nullptr);
+                return;
+            }
 
             json& resource = response["/resourceSets/0/resources/0"_json_pointer];
             if (!resource.is_object()) {

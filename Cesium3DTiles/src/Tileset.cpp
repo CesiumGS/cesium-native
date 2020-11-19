@@ -8,6 +8,7 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
+#include "Logging.h"
 #include <glm/common.hpp>
 
 using namespace CesiumGeometry;
@@ -247,12 +248,14 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
+            LOG_ERROR("Did not receive a valid response for " + pRequest->url());
             this->notifyTileDoneLoading(nullptr);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
+            LOG_ERROR("Received status code " + std::to_string(pResponse->statusCode()) + " for " + pRequest->url());
             this->notifyTileDoneLoading(nullptr);
             return;
         }
@@ -260,7 +263,17 @@ namespace Cesium3DTiles {
         gsl::span<const uint8_t> data = pResponse->data();
 
         using nlohmann::json;
-        json ionResponse = json::parse(data.begin(), data.end());
+        json ionResponse;
+        try
+        {
+            ionResponse = json::parse(data.begin(), data.end());
+        }
+        catch (const json::parse_error& error)
+        {
+            LOG_ERROR("Error when parsing response JSON: " + std::string(error.what()));
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
 
         std::string url = ionResponse.value<std::string>("url", "");
         std::string accessToken = ionResponse.value<std::string>("accessToken", "");
@@ -271,6 +284,7 @@ namespace Cesium3DTiles {
             url = Uri::resolve(url, "layer.json", true);
         } else if (type != "3DTILES") {
             // TODO: report unsupported type.
+            LOG_ERROR("Layer type " + type + " is not supported");
             this->notifyTileDoneLoading(nullptr);
             return;
         }
@@ -297,6 +311,7 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
+            LOG_ERROR("Did not receive a valid response for tileset " + pRequest->url());
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);
             return;
@@ -304,6 +319,7 @@ namespace Cesium3DTiles {
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
+            LOG_ERROR("Received status code " + std::to_string(pResponse->statusCode()) + " for tileset " + pRequest->url());
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);
             return;
@@ -323,7 +339,17 @@ namespace Cesium3DTiles {
         const TilesetExternals& externals = this->getExternals();
         externals.pTaskProcessor->startTask([data, &externals, this, &context]() {
             using nlohmann::json;
-            json tileset = json::parse(data.begin(), data.end());
+            json tileset;
+            try
+            {
+                tileset = json::parse(data.begin(), data.end());
+            }
+            catch (const json::parse_error& error)
+            {
+                LOG_ERROR("Error when parsing tileset JSON: " + std::string(error.what()));
+                this->notifyTileDoneLoading(nullptr);
+                return;
+            }
 
             std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
             pRootTile->setContext(&context);
@@ -577,25 +603,38 @@ namespace Cesium3DTiles {
                     // Update the context with the new token.
                     gsl::span<const uint8_t> data = pIonResponse->data();
 
+                    bool failedParsing = false;
                     using nlohmann::json;
-                    json ionResponse = json::parse(data.begin(), data.end());
-
-                    std::string accessToken = ionResponse.value<std::string>("accessToken", "");
-                    
-                    auto authIt = std::find_if(
-                        pContext->requestHeaders.begin(),
-                        pContext->requestHeaders.end(),
-                        [](auto& headerPair) {
-                            return headerPair.first == "Authorization";
-                        }
-                    );
-                    if (authIt != pContext->requestHeaders.end()) {
-                        authIt->second = "Bearer " + accessToken;
-                    } else {
-                        pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                    json ionResponse;
+                    try
+                    {
+                        ionResponse = json::parse(data.begin(), data.end());
                     }
+                    catch (const json::parse_error& error)
+                    {
+                        LOG_ERROR("Error when parsing ion response: " + std::string(error.what()));
+                        failedParsing = true;
+                    }
+                    if (!failedParsing)
+                    {
+                        std::string accessToken = ionResponse.value<std::string>("accessToken", "");
 
-                    failed = false;
+                        auto authIt = std::find_if(
+                            pContext->requestHeaders.begin(),
+                            pContext->requestHeaders.end(),
+                            [](auto& headerPair) {
+                                return headerPair.first == "Authorization";
+                            }
+                        );
+                        if (authIt != pContext->requestHeaders.end()) {
+                            authIt->second = "Bearer " + accessToken;
+                        }
+                        else {
+                            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                        }
+
+                        failed = false;
+                    }
                 }
 
                 // Put all auth-failed tiles in this context back into the Unloaded state.

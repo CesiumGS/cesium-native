@@ -10,6 +10,7 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
+#include "Logging.h"
 
 namespace Cesium3DTiles {
 
@@ -33,11 +34,27 @@ namespace Cesium3DTiles {
         this->_pMetadataRequest->bind([this, &externals, pOwner, callback](IAssetRequest* pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
 
+            // TODO Can the fact that this returns and leaves the "_aggregatedOverlay"
+            // initialized in some cases lead to errors? (If not: Why is the 
+            // _aggregatedOverlay stored as a member?)
+
             using namespace nlohmann;
-            
-            json response = json::parse(pResponse->data().begin(), pResponse->data().end());
-            if (response.value("type", "unknown") != "IMAGERY") {
+            json response;
+            try
+            {
+                response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            }
+            catch (const json::parse_error& error)
+            {
+                LOG_ERROR("Error when parsing ion raster overlay metadata JSON: " + std::string(error.what()));
+                callback(nullptr);
+                return;
+            }
+
+            std::string type = response.value("type", "unknown");
+            if (type != "IMAGERY") {
                 // TODO: report invalid imagery type.
+                LOG_ERROR("Ion raster overlay metadata response type is not 'IMAGERY', but " + type);
                 callback(nullptr);
                 return;
             }
@@ -47,10 +64,12 @@ namespace Cesium3DTiles {
                 json::iterator optionsIt = response.find("options");
                 if (optionsIt == response.end()) {
                     // TODO: report incomplete Bing options
+                    LOG_ERROR("Ion raster overlay metadata response does not contain 'options'");
                     callback(nullptr);
                     return;
                 }
 
+                // TODO Do these values have to be error-checked in any way?
                 json options = *optionsIt;
                 std::string url = options.value("url", "");
                 std::string key = options.value("key", "");

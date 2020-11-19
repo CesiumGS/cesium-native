@@ -2,7 +2,9 @@
 #include "Cesium3DTiles/GltfWriter.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumUtility/Math.h"
+#include "Logging.h"
 #include <stdexcept>
+
 
 namespace Cesium3DTiles {
 
@@ -24,8 +26,13 @@ namespace Cesium3DTiles {
 
 		tinygltf::TinyGLTF loader;
 		pResult->model.emplace();
-		loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
-
+		bool success = loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
+		if (!success) {
+			LOG_CRITICAL("Failed to load binary glTF from memory: " + errors);
+		}
+		if (!warnings.empty()) {
+			LOG_WARN("Warning when loading binary glTF from memory: " + warnings);
+		}
 		return pResult;
 	}
 

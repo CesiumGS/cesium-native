@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Uri.h"
+#include "Logging.h"
 
 namespace Cesium3DTiles {
 
@@ -29,9 +30,16 @@ namespace Cesium3DTiles {
 
         using nlohmann::json;
 
-        json tilesetJson = json::parse(data.begin(), data.end());
-        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
-
+        json tilesetJson;
+        try
+        {
+            tilesetJson = json::parse(data.begin(), data.end());
+            context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
+        }
+        catch (const json::parse_error& error)
+        {
+            LOG_ERROR("Error when parsing external tileset content: " + std::string(error.what()));
+        }
         return pResult;
     }
 
