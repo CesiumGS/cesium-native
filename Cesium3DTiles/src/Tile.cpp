@@ -7,7 +7,6 @@
 #include "Cesium3DTiles/Tileset.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include <chrono>
-// #include <iostream>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
