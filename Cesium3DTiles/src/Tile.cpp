@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/Tileset.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include <chrono>
+// #include <iostream>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -510,6 +511,86 @@ namespace Cesium3DTiles {
         if (this->getState() == LoadState::FailedTemporarily) {
             this->setState(LoadState::Failed);
         }
+    }
+
+    // static bool debugStuff = false;
+
+    // static std::string formatID(const TileID& tileID) {
+    //     struct Operation {
+    //         std::string operator()(const std::string& url) {
+    //             return url;
+    //         }
+
+    //         std::string operator()(const QuadtreeTileID& quadtreeID) {
+    //             return "L" + std::to_string(quadtreeID.level) + "X" + std::to_string(quadtreeID.x) + "Y" + std::to_string(quadtreeID.y);
+    //         }
+
+    //         std::string operator()(const OctreeTileID& octreeID) {
+    //             return "L" + std::to_string(octreeID.level) + "X" + std::to_string(octreeID.x) + "Y" + std::to_string(octreeID.y) + "Z" + std::to_string(octreeID.z);
+    //         }
+
+    //         std::string operator()(QuadtreeChild subdividedParent) {
+    //             switch (subdividedParent) {
+    //                 case QuadtreeChild::LowerLeft:
+    //                     return "LowerLeft";
+    //                 case QuadtreeChild::LowerRight:
+    //                     return "LowerRight";
+    //                 case QuadtreeChild::UpperLeft:
+    //                     return "UpperLeft";
+    //                 case QuadtreeChild::UpperRight:
+    //                     return "UpperRight";
+    //             }
+    //             return std::string();
+    //         }
+    //     };
+
+    //     return std::visit(Operation { }, tileID);
+    // }
+
+    size_t Tile::computeByteSize() const {
+        // We can't compute the size of a tile that is loading.
+        if (this->getState() == LoadState::ContentLoading) {
+            return 0;
+        }
+
+        size_t bytes = 0;
+
+        const TileContentLoadResult* pContent = this->getContent();
+        if (pContent && pContent->model) {
+            const tinygltf::Model& model = pContent->model.value();
+            for (const tinygltf::Buffer& buffer : model.buffers) {
+                bytes += buffer.data.size();
+            }
+        }
+
+        for (const RasterMappedTo3DTile& raster : this->_rasterTiles) {
+            const std::shared_ptr<RasterOverlayTile>& pReadyTile = raster.getReadyTile();
+            if (!pReadyTile) {
+                continue;
+            }
+
+            size_t imageBytes = pReadyTile->getImage().image.size();
+            bytes += imageBytes / pReadyTile.use_count();
+
+            // if (debugStuff) {
+            //     std::cout << "Geometry Tile ID: " << formatID(this->getTileID()) << std::endl;
+            //     std::cout << "Raster Tile ID: " << formatID(pReadyTile->getID()) << std::endl;
+            //     std::cout << "Use count: " << pReadyTile.use_count() << std::endl;
+            //     const Tileset* pTileset = this->getTileset();
+            //     const_cast<Tileset*>(pTileset)->forEachLoadedTile([&pReadyTile](Tile& tile) {
+            //         for (auto& rasterTile : tile._rasterTiles) {
+            //             if (rasterTile.getReadyTile() == pReadyTile) {
+            //                 std::cout << "Raster ready found on geometry tile " << formatID(tile.getTileID()) << std::endl;
+            //             }
+            //             if (rasterTile.getLoadingTile() == pReadyTile) {
+            //                 std::cout << "Raster loading found on geometry tile " << formatID(tile.getTileID()) << std::endl;
+            //             }
+            //         }
+            //     });
+            // }
+        }
+        
+        return bytes;
     }
 
     void Tile::setState(LoadState value) noexcept {

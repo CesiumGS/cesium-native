@@ -480,6 +480,11 @@ namespace Cesium3DTiles {
          */
         void markPermanentlyFailed();
 
+        /**
+         * @brief Determines the number of bytes in this tile's geometry and texture data.
+         */
+        size_t computeByteSize() const;
+
     private:
 
         /**

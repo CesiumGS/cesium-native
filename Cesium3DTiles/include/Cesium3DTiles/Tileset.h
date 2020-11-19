@@ -86,14 +86,14 @@ namespace Cesium3DTiles {
         bool forbidHoles = false;
 
         /**
-         * @brief The maximum number of tiles that may be cached. 
+         * @brief The maximum number of bytes that may be cached.
          * 
          * Note that this value, even if 0, will never
          * cause tiles that are needed for rendering to be unloaded. However, if the total number of
-         * loaded tiles is greater than this value, tiles will be unloaded until the total is under
+         * loaded bytes is greater than this value, tiles will be unloaded until the total is under
          * this number or until only required tiles remain, whichever comes first.
          */
-        uint32_t maximumCachedTiles = 400;
+        size_t maximumCachedBytes = 512 * 1024 * 1024;
 
         /**
          * @brief A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
@@ -371,6 +371,12 @@ namespace Cesium3DTiles {
         Tile::LoadedLinkedList _loadedTiles;
 
         RasterOverlayCollection _overlays;
+
+        struct LoadStatistics {
+            size_t geometryByteLength = 0;
+            size_t texturesByteLength = 0;
+            size_t overlayTexturesByteLength = 0;
+        } _loadStatistics;
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

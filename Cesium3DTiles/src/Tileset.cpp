@@ -36,7 +36,8 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays(*this)
+        _overlays(*this),
+        _loadStatistics()
     {
         ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
@@ -65,7 +66,8 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays(*this)
+        _overlays(*this),
+        _loadStatistics()
     {
         std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -988,24 +990,32 @@ namespace Cesium3DTiles {
     }
 
     void Tileset::_unloadCachedTiles() {
-        Tile* pTile = this->_loadedTiles.head();
+        const size_t maxBytes = this->getOptions().maximumCachedBytes;
 
-        while (this->_loadedTiles.size() > this->_options.maximumCachedTiles) {
-            if (pTile == nullptr || pTile == this->_pRootTile.get()) {
-                // We've either removed all tiles or the next tile is the root.
-                // The root tile marks the beginning of the tiles that were used
-                // for rendering last frame.
-                break;
+        Tile* pRoot = this->_pRootTile.get();
+        Tile* pTile = this->_loadedTiles.tail();
+        bool unloadable = false;
+        size_t bytes = 0;
+
+        while (pTile) {
+            Tile* pPrevious = this->_loadedTiles.previous(*pTile);
+
+            bool unloaded = false;
+
+            if (unloadable && bytes > maxBytes) {
+                unloaded = pTile->unloadContent();
+                if (unloaded) {
+                    this->_loadedTiles.remove(*pTile);
+                }
+            } else if (pTile == pRoot) {
+                unloadable = true;
             }
 
-            Tile* pNext = this->_loadedTiles.next(*pTile);
-
-            bool removed = pTile->unloadContent();
-            if (removed) {
-                this->_loadedTiles.remove(*pTile);
+            if (!unloaded) {
+                bytes += pTile->computeByteSize();
             }
 
-            pTile = pNext;
+            pTile = pPrevious;
         }
     }
 
