@@ -80,6 +80,11 @@ namespace Cesium3DTiles {
         {}
 
         /**
+         * @brief Gets the frame number in which selection took place.
+         */
+        uint32_t getFrameNumber() const noexcept { return this->_frameNumber; }
+
+        /**
          * @brief Gets the result of selection. 
          * 
          * The given frame number must match the frame number in which selection last took place.

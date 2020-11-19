@@ -20,7 +20,8 @@ namespace Cesium3DTiles {
         _maximumLevel(0),
         _imageWidth(1),
         _imageHeight(1),
-        _pPlaceholder(std::make_shared<RasterOverlayTile>(owner))
+        _pPlaceholder(std::make_shared<RasterOverlayTile>(owner)),
+        _tileDataBytes(0)
     {
     }
 
@@ -44,7 +45,8 @@ namespace Cesium3DTiles {
         _maximumLevel(maximumLevel),
         _imageWidth(imageWidth),
         _imageHeight(imageHeight),
-        _pPlaceholder(nullptr)
+        _pPlaceholder(nullptr),
+        _tileDataBytes(0)
     {
     }
 
@@ -351,7 +353,14 @@ namespace Cesium3DTiles {
                 ++realOutputIndex;
             }
         }
+    }
 
+    void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) {
+        this->_tileDataBytes += pTile->getImage().image.size();
+    }
+
+    void RasterOverlayTileProvider::notifyTileUnloading(RasterOverlayTile* pTile) {
+        this->_tileDataBytes -= pTile->getImage().image.size();
     }
 
     std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
