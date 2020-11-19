@@ -244,6 +244,11 @@ namespace Cesium3DTiles {
         void notifyTileDoneLoading(Tile* pTile);
 
         /**
+         * @brief Notifies the tileset that the given tile is about to be unloaded.
+         */
+        void notifyTileUnloading(Tile* pTile);
+
+        /**
          * @brief Loads a tile tree from a tileset.json file. 
          * 
          * This method is safe to call from any thread.
@@ -282,6 +287,11 @@ namespace Cesium3DTiles {
          * @param callback The function to invoke.
          */
         void forEachLoadedTile(const std::function<void (Tile& tile)>& callback);
+
+        /**
+         * @brief Gets the total number of bytes of tile and raster overlay data that are currently loaded.
+         */
+        size_t getTotalDataBytes() const;
 
     private:
         struct TraversalDetails {
@@ -372,11 +382,7 @@ namespace Cesium3DTiles {
 
         RasterOverlayCollection _overlays;
 
-        struct LoadStatistics {
-            size_t geometryByteLength = 0;
-            size_t texturesByteLength = 0;
-            size_t overlayTexturesByteLength = 0;
-        } _loadStatistics;
+        std::atomic<size_t> _tileDataBytes;
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

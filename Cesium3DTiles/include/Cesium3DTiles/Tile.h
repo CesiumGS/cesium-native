@@ -514,7 +514,7 @@ namespace Cesium3DTiles {
          *
          * @return The bounding region
          */
-        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(const std::vector<CesiumGeospatial::Projection>& projections);
+        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(tinygltf::Model& model, const std::vector<CesiumGeospatial::Projection>& projections);
 
         /**
          * @brief Upsample the parent of this tile.

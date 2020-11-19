@@ -37,7 +37,7 @@ namespace Cesium3DTiles {
         _loadsInProgress(0),
         _loadedTiles(),
         _overlays(*this),
-        _loadStatistics()
+        _tileDataBytes(0)
     {
         ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
@@ -67,7 +67,7 @@ namespace Cesium3DTiles {
         _loadsInProgress(0),
         _loadedTiles(),
         _overlays(*this),
-        _loadStatistics()
+        _tileDataBytes(0)
     {
         std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -211,9 +211,19 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
     }
 
-    void Tileset::notifyTileDoneLoading(Tile* /*pTile*/) {
+    void Tileset::notifyTileDoneLoading(Tile* pTile) {
         assert(this->_loadsInProgress > 0);
         --this->_loadsInProgress;
+
+        if (pTile) {
+            this->_tileDataBytes += pTile->computeByteSize();
+        }
+    }
+
+    void Tileset::notifyTileUnloading(Tile* pTile) {
+        if (pTile) {
+            this->_tileDataBytes -= pTile->computeByteSize();
+        }
     }
 
     void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
@@ -243,6 +253,19 @@ namespace Cesium3DTiles {
             callback(*pCurrent);
             pCurrent = pNext;
         }
+    }
+
+    size_t Tileset::getTotalDataBytes() const {
+        size_t bytes = this->_tileDataBytes;
+
+        for (auto& pOverlay : this->_overlays) {
+            const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
+            if (pProvider) {
+                bytes += pProvider->getTileDataBytes();
+            }
+        }
+
+        return bytes;
     }
 
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
@@ -992,30 +1015,24 @@ namespace Cesium3DTiles {
     void Tileset::_unloadCachedTiles() {
         const size_t maxBytes = this->getOptions().maximumCachedBytes;
 
-        Tile* pRoot = this->_pRootTile.get();
-        Tile* pTile = this->_loadedTiles.tail();
-        bool unloadable = false;
-        size_t bytes = 0;
+        Tile* pTile = this->_loadedTiles.head();
 
-        while (pTile) {
-            Tile* pPrevious = this->_loadedTiles.previous(*pTile);
-
-            bool unloaded = false;
-
-            if (unloadable && bytes > maxBytes) {
-                unloaded = pTile->unloadContent();
-                if (unloaded) {
-                    this->_loadedTiles.remove(*pTile);
-                }
-            } else if (pTile == pRoot) {
-                unloadable = true;
+        while (this->getTotalDataBytes() > maxBytes) {
+            if (pTile == nullptr || pTile == this->_pRootTile.get()) {
+                // We've either removed all tiles or the next tile is the root.
+                // The root tile marks the beginning of the tiles that were used
+                // for rendering last frame.
+                break;
             }
 
-            if (!unloaded) {
-                bytes += pTile->computeByteSize();
+            Tile* pNext = this->_loadedTiles.next(*pTile);
+
+            bool removed = pTile->unloadContent();
+            if (removed) {
+                this->_loadedTiles.remove(*pTile);
             }
 
-            pTile = pPrevious;
+            pTile = pNext;
         }
     }
 
