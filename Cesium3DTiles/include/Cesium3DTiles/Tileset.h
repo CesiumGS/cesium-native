@@ -373,9 +373,24 @@ namespace Cesium3DTiles {
         uint32_t _previousFrameNumber;
         ViewUpdateResult _updateResult;
 
-        std::vector<Tile*> _loadQueueHigh;
-        std::vector<Tile*> _loadQueueMedium;
-        std::vector<Tile*> _loadQueueLow;
+        struct LoadRecord {
+            Tile* pTile;
+
+            /**
+             * @brief The relative priority of loading this tile.
+             * 
+             * Lower priority values low sooner.
+             */
+            double priority;
+
+            bool operator<(const LoadRecord& rhs) {
+                return this->priority < rhs.priority;
+            }
+        };
+
+        std::vector<LoadRecord> _loadQueueHigh;
+        std::vector<LoadRecord> _loadQueueMedium;
+        std::vector<LoadRecord> _loadQueueLow;
         std::atomic<uint32_t> _loadsInProgress;
 
         Tile::LoadedLinkedList _loadedTiles;
@@ -383,6 +398,9 @@ namespace Cesium3DTiles {
         RasterOverlayCollection _overlays;
 
         std::atomic<size_t> _tileDataBytes;
+
+        static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const FrameState& frameState, Tile& tile, double distance);
+        static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;
