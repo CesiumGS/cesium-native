@@ -531,7 +531,7 @@ namespace Cesium3DTiles {
             const std::vector<tinygltf::BufferView>& bufferViews = model.bufferViews;
             for (const tinygltf::Image& image : model.images) {
                 int bufferView = image.bufferView;
-                if (bufferView < 0 || bufferView >= bufferViews.size()) {
+                if (bufferView < 0 || bufferView >= static_cast<int>(bufferViews.size())) {
                     continue;
                 }
 
