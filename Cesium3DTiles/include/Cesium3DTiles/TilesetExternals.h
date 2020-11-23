@@ -39,17 +39,17 @@ namespace Cesium3DTiles {
         /**
          * @brief An external {@link IAssetAccessor}.
          */
-        IAssetAccessor* pAssetAccessor;
+        std::shared_ptr<IAssetAccessor> pAssetAccessor;
 
         /**
          * @brief An external {@link IPrepareRendererResources}.
          */
-        IPrepareRendererResources* pPrepareRendererResources;
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources;
 
         /**
          * @brief An external {@link ITaskProcessor}
          */
-        ITaskProcessor* pTaskProcessor;
+        std::shared_ptr<ITaskProcessor> pTaskProcessor;
     };
 
 }

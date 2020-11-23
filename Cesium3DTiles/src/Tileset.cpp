@@ -238,7 +238,7 @@ namespace Cesium3DTiles {
 
         this->notifyTileStartLoading(&tile);
 
-        IAssetAccessor* pAssetAccessor = this->getExternals().pAssetAccessor;
+        std::shared_ptr<IAssetAccessor>& pAssetAccessor = this->getExternals().pAssetAccessor;
         return pAssetAccessor->requestAsset(url, tile.getContext()->requestHeaders);
     }
 
