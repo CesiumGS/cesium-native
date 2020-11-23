@@ -50,7 +50,7 @@ namespace Cesium3DTiles {
 			}
 			catch (const json::parse_error& error)
 			{
-				LOG_ERROR("Error when parsing feature table JSON: " + std::string(error.what()));
+				LOG_ERROR("Error when parsing feature table JSON: %s", error.what());
 				return;
 			}
 

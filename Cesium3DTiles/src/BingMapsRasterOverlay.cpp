@@ -151,7 +151,7 @@ namespace Cesium3DTiles {
             }
             catch (const json::parse_error& error)
             {
-                LOG_ERROR("Error when parsing Bing maps raster overlay metadata: " + std::string(error.what()));
+                LOG_ERROR("Error when parsing Bing maps raster overlay metadata: %s", error.what());
                 callback(nullptr);
                 return;
             }

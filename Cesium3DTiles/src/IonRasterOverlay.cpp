@@ -46,7 +46,7 @@ namespace Cesium3DTiles {
             }
             catch (const json::parse_error& error)
             {
-                LOG_ERROR("Error when parsing ion raster overlay metadata JSON: " + std::string(error.what()));
+                LOG_ERROR("Error when parsing ion raster overlay metadata JSON: %s", error.what());
                 callback(nullptr);
                 return;
             }
@@ -54,7 +54,7 @@ namespace Cesium3DTiles {
             std::string type = response.value("type", "unknown");
             if (type != "IMAGERY") {
                 // TODO: report invalid imagery type.
-                LOG_ERROR("Ion raster overlay metadata response type is not 'IMAGERY', but " + type);
+                LOG_ERROR("Ion raster overlay metadata response type is not 'IMAGERY', but %s", type);
                 callback(nullptr);
                 return;
             }
