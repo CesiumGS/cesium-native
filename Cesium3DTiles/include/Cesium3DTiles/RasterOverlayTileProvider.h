@@ -169,6 +169,25 @@ namespace Cesium3DTiles {
             std::optional<size_t> outputIndex = std::nullopt
         );
 
+        /**
+         * @brief Notifies the tile provider that a tile has finished loading.
+         * 
+         * This function is not supposed to be called by clients.
+         */
+        void notifyTileLoaded(RasterOverlayTile* pTile);
+
+        /**
+         * @brief Notifies the tile provider that a tile is about to be unloaded.
+         * 
+         * This function is not supposed to be called by clients.
+         */
+        void notifyTileUnloading(RasterOverlayTile* pTile);
+
+        /**
+         * @brief Gets the number of bytes of tile data that are currently loaded.
+         */
+        size_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
+
     protected:
 
         /**
@@ -196,5 +215,6 @@ namespace Cesium3DTiles {
         uint32_t _imageHeight;
         std::unordered_map<CesiumGeometry::QuadtreeTileID, std::weak_ptr<RasterOverlayTile>> _tiles;
         std::shared_ptr<RasterOverlayTile> _pPlaceholder;
+        std::atomic<size_t> _tileDataBytes;
     };
 }

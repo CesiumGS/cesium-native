@@ -86,14 +86,14 @@ namespace Cesium3DTiles {
         bool forbidHoles = false;
 
         /**
-         * @brief The maximum number of tiles that may be cached. 
+         * @brief The maximum number of bytes that may be cached.
          * 
          * Note that this value, even if 0, will never
          * cause tiles that are needed for rendering to be unloaded. However, if the total number of
-         * loaded tiles is greater than this value, tiles will be unloaded until the total is under
+         * loaded bytes is greater than this value, tiles will be unloaded until the total is under
          * this number or until only required tiles remain, whichever comes first.
          */
-        uint32_t maximumCachedTiles = 400;
+        size_t maximumCachedBytes = 512 * 1024 * 1024;
 
         /**
          * @brief A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
@@ -244,6 +244,11 @@ namespace Cesium3DTiles {
         void notifyTileDoneLoading(Tile* pTile);
 
         /**
+         * @brief Notifies the tileset that the given tile is about to be unloaded.
+         */
+        void notifyTileUnloading(Tile* pTile);
+
+        /**
          * @brief Loads a tile tree from a tileset.json file. 
          * 
          * This method is safe to call from any thread.
@@ -282,6 +287,11 @@ namespace Cesium3DTiles {
          * @param callback The function to invoke.
          */
         void forEachLoadedTile(const std::function<void (Tile& tile)>& callback);
+
+        /**
+         * @brief Gets the total number of bytes of tile and raster overlay data that are currently loaded.
+         */
+        size_t getTotalDataBytes() const;
 
     private:
         struct TraversalDetails {
@@ -363,14 +373,34 @@ namespace Cesium3DTiles {
         uint32_t _previousFrameNumber;
         ViewUpdateResult _updateResult;
 
-        std::vector<Tile*> _loadQueueHigh;
-        std::vector<Tile*> _loadQueueMedium;
-        std::vector<Tile*> _loadQueueLow;
+        struct LoadRecord {
+            Tile* pTile;
+
+            /**
+             * @brief The relative priority of loading this tile.
+             * 
+             * Lower priority values low sooner.
+             */
+            double priority;
+
+            bool operator<(const LoadRecord& rhs) {
+                return this->priority < rhs.priority;
+            }
+        };
+
+        std::vector<LoadRecord> _loadQueueHigh;
+        std::vector<LoadRecord> _loadQueueMedium;
+        std::vector<LoadRecord> _loadQueueLow;
         std::atomic<uint32_t> _loadsInProgress;
 
         Tile::LoadedLinkedList _loadedTiles;
 
         RasterOverlayCollection _overlays;
+
+        std::atomic<size_t> _tileDataBytes;
+
+        static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const FrameState& frameState, Tile& tile, double distance);
+        static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

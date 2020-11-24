@@ -37,6 +37,8 @@ namespace Cesium3DTiles {
 
         RasterOverlayTile::~RasterOverlayTile() {
             RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
+            pTileProvider->notifyTileUnloading(this);
+
             const TilesetExternals& externals = pTileProvider->getExternals();
 
             void* pLoadThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? nullptr : this->_pRendererResources;
@@ -62,6 +64,9 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
             const TilesetExternals& externals = pTileProvider->getExternals();
             this->_pRendererResources = externals.pPrepareRendererResources->prepareRasterInMainThread(*this, this->_pRendererResources);
+
+            pTileProvider->notifyTileLoaded(this);
+
             this->setState(LoadState::Done);
         }
 

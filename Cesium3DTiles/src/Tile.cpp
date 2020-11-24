@@ -254,6 +254,8 @@ namespace Cesium3DTiles {
             }
         }
 
+        this->getTileset()->notifyTileUnloading(this);
+
         const TilesetExternals& externals = this->getTileset()->getExternals();
         if (externals.pPrepareRendererResources) {
             if (this->getState() == LoadState::ContentLoaded) {
@@ -512,6 +514,35 @@ namespace Cesium3DTiles {
         }
     }
 
+    size_t Tile::computeByteSize() const {
+        size_t bytes = 0;
+
+        const TileContentLoadResult* pContent = this->getContent();
+        if (pContent && pContent->model) {
+            const tinygltf::Model& model = pContent->model.value();
+
+            // Add up the glTF buffers
+            for (const tinygltf::Buffer& buffer : model.buffers) {
+                bytes += buffer.data.size();
+            }
+
+            // For images loaded from buffers, subtract the buffer size and add
+            // the decoded image size instead.
+            const std::vector<tinygltf::BufferView>& bufferViews = model.bufferViews;
+            for (const tinygltf::Image& image : model.images) {
+                int bufferView = image.bufferView;
+                if (bufferView < 0 || bufferView >= static_cast<int>(bufferViews.size())) {
+                    continue;
+                }
+
+                bytes -= bufferViews[bufferView].byteLength;
+                bytes += image.image.size();
+            }
+        }
+
+        return bytes;
+    }
+
     void Tile::setState(LoadState value) noexcept {
         this->_state.store(value, std::memory_order::memory_order_release);
     }
@@ -550,7 +581,7 @@ namespace Cesium3DTiles {
                 return;
             }
 
-            this->_pContent = std::move(TileContentFactory::createContent(
+            std::unique_ptr<TileContentLoadResult> pContent = std::move(TileContentFactory::createContent(
                 *this->getContext(),
                 this->getTileID(),
                 this->getBoundingVolume(),
@@ -569,8 +600,10 @@ namespace Cesium3DTiles {
                 return;
             }
 
-            if (this->_pContent && this->_pContent->model) {
-                this->generateTextureCoordinates(projections);
+            if (pContent && pContent->model) {
+                this->generateTextureCoordinates(pContent->model.value(), projections);
+
+                this->_pContent = std::move(pContent);
         
                 const TilesetExternals& externals = this->getTileset()->getExternals();
                 if (externals.pPrepareRendererResources) {
@@ -579,6 +612,8 @@ namespace Cesium3DTiles {
                 else {
                     this->_pRendererResources = nullptr;
                 }
+            } else {
+                this->_pContent = std::move(pContent);
             }
 
             this->getTileset()->notifyTileDoneLoading(this);
@@ -586,7 +621,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates(const std::vector<Projection>& projections) {
+    std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates(tinygltf::Model& model, const std::vector<Projection>& projections) {
         std::optional<CesiumGeospatial::BoundingRegion> result;
 
         // Generate texture coordinates for each projection.
@@ -608,7 +643,7 @@ namespace Cesium3DTiles {
 
                     CesiumGeometry::Rectangle rectangle = projectRectangleSimple(projection, *pRectangle);
 
-                    CesiumGeospatial::BoundingRegion boundingRegion = GltfContent::createRasterOverlayTextureCoordinates(this->_pContent->model.value(), projectionID, projection, rectangle);
+                    CesiumGeospatial::BoundingRegion boundingRegion = GltfContent::createRasterOverlayTextureCoordinates(model, projectionID, projection, rectangle);
                     if (result) {
                         result = boundingRegion.computeUnion(result.value());
                     } else {
@@ -644,9 +679,11 @@ namespace Cesium3DTiles {
         this->getTileset()->getExternals().pTaskProcessor->startTask([this, &parentModel, projections, pSubdividedParentID]() {
             std::unique_ptr<TileContentLoadResult> pContent = std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
+            if (pContent->model) {
+                pContent->updatedBoundingVolume = this->generateTextureCoordinates(pContent->model.value(), projections);
+            }
+            
             this->_pContent = std::move(pContent);
-
-            this->_pContent->updatedBoundingVolume = this->generateTextureCoordinates(projections);
 
             if (this->getTileset()->getExternals().pPrepareRendererResources) {
                 this->_pRendererResources = this->getTileset()->getExternals().pPrepareRendererResources->prepareInLoadThread(*this);

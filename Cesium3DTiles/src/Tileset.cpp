@@ -37,7 +37,8 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays(*this)
+        _overlays(*this),
+        _tileDataBytes(0)
     {
         ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
@@ -66,7 +67,8 @@ namespace Cesium3DTiles {
         _loadQueueLow(),
         _loadsInProgress(0),
         _loadedTiles(),
-        _overlays(*this)
+        _overlays(*this),
+        _tileDataBytes(0)
     {
         std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -210,9 +212,19 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
     }
 
-    void Tileset::notifyTileDoneLoading(Tile* /*pTile*/) {
+    void Tileset::notifyTileDoneLoading(Tile* pTile) {
         assert(this->_loadsInProgress > 0);
         --this->_loadsInProgress;
+
+        if (pTile) {
+            this->_tileDataBytes += pTile->computeByteSize();
+        }
+    }
+
+    void Tileset::notifyTileUnloading(Tile* pTile) {
+        if (pTile) {
+            this->_tileDataBytes -= pTile->computeByteSize();
+        }
     }
 
     void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
@@ -242,6 +254,19 @@ namespace Cesium3DTiles {
             callback(*pCurrent);
             pCurrent = pNext;
         }
+    }
+
+    size_t Tileset::getTotalDataBytes() const {
+        size_t bytes = this->_tileDataBytes;
+
+        for (auto& pOverlay : this->_overlays) {
+            const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
+            if (pProvider) {
+                bytes += pProvider->getTileDataBytes();
+            }
+        }
+
+        return bytes;
     }
 
     void Tileset::_ionResponseReceived(IAssetRequest* pRequest) {
@@ -707,12 +732,6 @@ namespace Cesium3DTiles {
         markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
     }
 
-    static void addTileToLoadQueue(std::vector<Tile*>& loadQueue, Tile& tile) {
-        if (tile.getState() == Tile::LoadState::Unloaded) {
-            loadQueue.push_back(&tile);
-        }
-    }
-
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * It is not yet known whether the tile is visible.
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
@@ -771,7 +790,7 @@ namespace Cesium3DTiles {
 
             // Preload this culled sibling if requested.
             if (this->_options.preloadSiblings) {
-                addTileToLoadQueue(this->_loadQueueLow, tile);
+                addTileToLoadQueue(this->_loadQueueLow, frameState, tile, distance);
             }
 
             ++result.tilesCulled;
@@ -806,7 +825,7 @@ namespace Cesium3DTiles {
             // Render this leaf tile.
             tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
             result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, tile);
+            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
 
             TraversalDetails traversalDetails;
             traversalDetails.allAreRenderable = tile.isRenderable();
@@ -825,7 +844,11 @@ namespace Cesium3DTiles {
             for (Tile& child : children) {
                 if (!child.isRenderable()) {
                     waitingForChildren = true;
-                    addTileToLoadQueue(this->_loadQueueMedium, child);
+
+                    // We're using the distance to the parent tile to compute the load priority.
+                    // This is fine because the relative priority of the children is irrelevant;
+                    // we can't display any of them until all are loaded, anyway.
+                    addTileToLoadQueue(this->_loadQueueMedium, frameState, child, distance);
                 }
             }
         }
@@ -849,7 +872,7 @@ namespace Cesium3DTiles {
             if (renderThisTile) {
                 // Only load this tile if it (not just an ancestor) meets the SSE.
                 if (meetsSse) {
-                    addTileToLoadQueue(this->_loadQueueMedium, tile);
+                    addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
                 }
 
                 markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
@@ -874,7 +897,7 @@ namespace Cesium3DTiles {
 
             // Load this blocker tile with high priority, but only if this tile (not just an ancestor) meets the SSE.
             if (meetsSse) {
-                addTileToLoadQueue(this->_loadQueueHigh, tile);
+                addTileToLoadQueue(this->_loadQueueHigh, frameState, tile, distance);
             }
         }
 
@@ -885,7 +908,7 @@ namespace Cesium3DTiles {
         // If this tile uses additive refinement, we need to render this tile in addition to its children.
         if (tile.getRefine() == TileRefine::Add) {
             result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, tile);
+            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
             queuedForLoad = true;
         }
 
@@ -953,7 +976,7 @@ namespace Cesium3DTiles {
                 this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + loadIndexHigh, this->_loadQueueHigh.end());
 
                 if (!queuedForLoad) {
-                    addTileToLoadQueue(this->_loadQueueMedium, tile);
+                    addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
                 }
 
                 traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -970,7 +993,7 @@ namespace Cesium3DTiles {
         }
 
         if (this->_options.preloadAncestors && !queuedForLoad) {
-            addTileToLoadQueue(this->_loadQueueLow, tile);
+            addTileToLoadQueue(this->_loadQueueLow, frameState, tile, distance);
         }
 
         return traversalDetails;
@@ -1004,32 +1027,18 @@ namespace Cesium3DTiles {
         return traversalDetails;
     }
 
-    static void processQueue(const std::vector<Tile*>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress) {
-        if (loadsInProgress >= maximumLoadsInProgress) {
-            return;
-        }
-
-        for (Tile* pTile : queue) {
-            if (pTile->getState() == Tile::LoadState::Unloaded) {
-                pTile->loadContent();
-
-                if (loadsInProgress >= maximumLoadsInProgress) {
-                    break;
-                }
-            }
-        }
-    }
-
     void Tileset::_processLoadQueue() {
-        processQueue(this->_loadQueueHigh, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
-        processQueue(this->_loadQueueMedium, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
-        processQueue(this->_loadQueueLow, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
+        Tileset::processQueue(this->_loadQueueHigh, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
+        Tileset::processQueue(this->_loadQueueMedium, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
+        Tileset::processQueue(this->_loadQueueLow, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
     }
 
     void Tileset::_unloadCachedTiles() {
+        const size_t maxBytes = this->getOptions().maximumCachedBytes;
+
         Tile* pTile = this->_loadedTiles.head();
 
-        while (this->_loadedTiles.size() > this->_options.maximumCachedTiles) {
+        while (this->getTotalDataBytes() > maxBytes) {
             if (pTile == nullptr || pTile == this->_pRootTile.get()) {
                 // We've either removed all tiles or the next tile is the root.
                 // The root tile marks the beginning of the tiles that were used
@@ -1115,4 +1124,44 @@ namespace Cesium3DTiles {
         return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
+    /*static*/ void Tileset::addTileToLoadQueue(
+        std::vector<Tileset::LoadRecord>& loadQueue,
+        const FrameState& frameState,
+        Tile& tile,
+        double distance
+    ) {
+        if (tile.getState() == Tile::LoadState::Unloaded) {
+            double loadPriority = 0.0;
+
+            glm::dvec3 tileDirection = getBoundingVolumeCenter(tile.getBoundingVolume()) - frameState.camera.getPosition();
+            double magnitude = glm::length(tileDirection);
+            if (magnitude >= CesiumUtility::Math::EPSILON5) {
+                tileDirection /= magnitude;
+                loadPriority = (1.0 - glm::dot(tileDirection, frameState.camera.getDirection())) * distance;
+            }
+
+            loadQueue.push_back({
+                &tile,
+                loadPriority
+            });
+        }
+    }
+
+    /*static*/ void Tileset::processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress) {
+        if (loadsInProgress >= maximumLoadsInProgress) {
+            return;
+        }
+
+        std::sort(queue.begin(), queue.end());
+
+        for (LoadRecord& record : queue) {
+            if (record.pTile->getState() == Tile::LoadState::Unloaded) {
+                record.pTile->loadContent();
+
+                if (loadsInProgress >= maximumLoadsInProgress) {
+                    break;
+                }
+            }
+        }
+    }
 }
