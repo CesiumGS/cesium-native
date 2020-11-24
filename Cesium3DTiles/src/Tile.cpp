@@ -2,11 +2,11 @@
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
+#include "Cesium3DTiles/ITaskProcessor.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "upsampleGltfForRasterOverlays.h"
-#include <chrono>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

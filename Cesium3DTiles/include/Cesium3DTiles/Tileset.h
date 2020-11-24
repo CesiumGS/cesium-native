@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cesium3DTiles/AsyncSystem.h"
 #include "Cesium3DTiles/Camera.h"
 #include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
@@ -197,6 +198,9 @@ namespace Cesium3DTiles {
          */
         const TilesetExternals& getExternals() const { return this->_externals; }
 
+        AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
+        const AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+
         /** @copydoc Tileset::getOptions() */
         const TilesetOptions& getOptions() const { return this->_options; }
 
@@ -358,6 +362,7 @@ namespace Cesium3DTiles {
 
         std::vector<std::unique_ptr<TileContext>> _contexts;
         TilesetExternals _externals;
+        AsyncSystem _asyncSystem;
 
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;

@@ -1,9 +1,10 @@
 #include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
+#include "Cesium3DTiles/ITaskProcessor.h"
+#include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "Cesium3DTiles/RasterOverlay.h"
 
 namespace Cesium3DTiles {
 
@@ -81,7 +82,7 @@ namespace Cesium3DTiles {
                 this->setState(LoadState::Failed);
                 return;
             }
-            
+
             const TilesetExternals& externals = this->_pOverlay->getTileProvider()->getExternals();
 
             externals.pTaskProcessor->startTask([pResponse, this]() {

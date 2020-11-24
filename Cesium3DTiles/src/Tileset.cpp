@@ -1,12 +1,14 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/IAssetResponse.h"
+#include "Cesium3DTiles/ITaskProcessor.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
-#include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
+#include "Cesium3DTiles/AsyncSystem.h"
 #include "Uri.h"
 #include <glm/common.hpp>
 
@@ -22,6 +24,7 @@ namespace Cesium3DTiles {
     ) :
         _contexts(),
         _externals(externals),
+        _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -39,6 +42,12 @@ namespace Cesium3DTiles {
         _overlays(*this),
         _tileDataBytes(0)
     {
+        // std::shared_ptr<AsyncSystem> pAsync = std::make_shared<AsyncSystem>(externals.pAssetAccessor, externals.pTaskProcessor);
+        // pAsync->requestAsset("foo").thenInTaskThread([](std::unique_ptr<IAssetRequest>& /*pRequest*/) {
+        //     return 42;
+        // }).thenInMainThread([](double /*x*/) {
+        // });
+
         ++this->_loadsInProgress;
         this->_pTilesetJsonRequest = this->_externals.pAssetAccessor->requestAsset(url);
         this->_pTilesetJsonRequest->bind(std::bind(&Tileset::_tilesetJsonResponseReceived, this, std::placeholders::_1));
@@ -52,6 +61,7 @@ namespace Cesium3DTiles {
     ) :
         _contexts(),
         _externals(externals),
+        _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -78,6 +88,11 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
         this->_pIonRequest = this->_externals.pAssetAccessor->requestAsset(url);
         this->_pIonRequest->bind(std::bind(&Tileset::_ionResponseReceived, this, std::placeholders::_1));
+
+        // this->_asyncSystem.requestAsset("").thenInMainThread([this](std::unique_ptr<IAssetRequest> pRequest) {
+        //     // return 42;
+        //     return this->_asyncSystem.requestAsset("another");
+        // });
     }
 
     Tileset::~Tileset() {

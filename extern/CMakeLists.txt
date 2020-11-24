@@ -14,3 +14,5 @@ add_subdirectory(glm)
 
 set(BUILD_TESTS OFF CACHE BOOL "Build tinyxml2 tests" FORCE)
 add_subdirectory(tinyxml2)
+
+add_subdirectory(asyncplusplus)
