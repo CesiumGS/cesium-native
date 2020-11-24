@@ -34,10 +34,6 @@ namespace Cesium3DTiles {
         this->_pMetadataRequest->bind([this, &externals, pOwner, callback](IAssetRequest* pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
 
-            // TODO Can the fact that this returns and leaves the "_aggregatedOverlay"
-            // initialized in some cases lead to errors? (If not: Why is the 
-            // _aggregatedOverlay stored as a member?)
-
             using namespace nlohmann;
             json response;
             try
@@ -69,7 +65,6 @@ namespace Cesium3DTiles {
                     return;
                 }
 
-                // TODO Do these values have to be error-checked in any way?
                 json options = *optionsIt;
                 std::string url = options.value("url", "");
                 std::string key = options.value("key", "");
