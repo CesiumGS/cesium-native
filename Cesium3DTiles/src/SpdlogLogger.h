@@ -28,6 +28,9 @@ namespace {
 			return Cesium3DTiles::ILogger::Level::ERROR;
 		case spdlog::level::level_enum::critical:
 			return Cesium3DTiles::ILogger::Level::CRITICAL;
+		case spdlog::level::level_enum::off:
+		case spdlog::level::level_enum::n_levels:
+			break;
 		}
 		// Should never happen:
 		return Cesium3DTiles::ILogger::Level::WARN;
@@ -50,7 +53,7 @@ public:
 protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override {
 		spdlog::memory_buf_t formatted;
-		base_sink<Mutex>::formatter_->format(msg, formatted);
+		spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
 		std::string formattedString = fmt::to_string(formatted);
 
 		Cesium3DTiles::ILogger::Level cesiumLevel = translate(msg.level);
