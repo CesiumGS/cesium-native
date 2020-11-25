@@ -11,7 +11,7 @@ namespace Cesium3DTiles {
     void registerAllTileContentTypes() {
 
         // TODO This should not be done here, but in a more generic "initialize3DTiles" function
-        impl::initializeLogging();
+        Logging::initializeLogging();
 
         TileContentFactory::registerMagic("glTF", GltfContent::load);
         TileContentFactory::registerMagic("b3dm", Batched3DModelContent::load);
