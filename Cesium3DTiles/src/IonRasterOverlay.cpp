@@ -10,7 +10,7 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
-#include "Logging.h"
+#include "Cesium3DTiles/Logging.h"
 
 namespace Cesium3DTiles {
 

@@ -8,7 +8,7 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
-#include "Logging.h"
+#include "Cesium3DTiles/Logging.h"
 #include <glm/common.hpp>
 
 using namespace CesiumGeometry;

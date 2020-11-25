@@ -1,7 +1,7 @@
 
 #include "spdlog/spdlog.h"
 
-#include "Logging.h"
+#include "Cesium3DTiles/Logging.h"
 
 namespace Cesium3DTiles {
     namespace impl {

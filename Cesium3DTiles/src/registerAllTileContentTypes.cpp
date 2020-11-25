@@ -4,7 +4,7 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Batched3DModelContent.h"
 #include "QuantizedMeshContent.h"
-#include "Logging.h"
+#include "Cesium3DTiles/Logging.h"
 
 namespace Cesium3DTiles {
 

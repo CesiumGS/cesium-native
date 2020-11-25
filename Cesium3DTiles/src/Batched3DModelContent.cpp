@@ -1,7 +1,7 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "CesiumUtility/Json.h"
-#include "Logging.h"
+#include "Cesium3DTiles/Logging.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {
