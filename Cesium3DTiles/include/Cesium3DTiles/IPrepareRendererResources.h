@@ -8,6 +8,10 @@ namespace CesiumGeometry {
     struct Rectangle;
 }
 
+namespace tinygltf {
+    struct Image;
+}
+
 namespace Cesium3DTiles {
 
     class IAssetAccessor;
@@ -75,11 +79,11 @@ namespace Cesium3DTiles {
          *
          * This method is invoked in the load thread, and it may not modify the tile.
          * 
-         * @param rasterTile The raster tile to prepare.
+         * @param image The raster tile image to prepare.
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareRasterInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareRasterInLoadThread(const RasterOverlayTile& rasterTile) = 0;
+        virtual void* prepareRasterInLoadThread(const tinygltf::Image& image) = 0;
 
         /**
          * @brief Further preprares a raster overlay tile. 

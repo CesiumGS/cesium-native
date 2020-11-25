@@ -178,6 +178,8 @@ namespace Cesium3DTiles {
     }
 
     const ViewUpdateResult& Tileset::updateView(const Camera& camera) {
+        this->_asyncSystem.runMainThreadTasks();
+
         uint32_t previousFrameNumber = this->_previousFrameNumber; 
         uint32_t currentFrameNumber = previousFrameNumber + 1;
 

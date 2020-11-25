@@ -4,7 +4,11 @@
 #include <string>
 #include <vector>
 #include <memory>
+
+#pragma warning(push)
+#pragma warning(disable:4458 4324)
 #include <async++.h>
+#pragma warning(pop)
 
 namespace Cesium3DTiles {
     class IAssetAccessor;
@@ -101,6 +105,18 @@ namespace Cesium3DTiles {
     template <class T>
     class Future {
     public:
+        Future() :
+            _pSchedulers(),
+            _task()
+        {
+        }
+
+        Future(Future<T>&& rhs) :
+            _pSchedulers(std::move(rhs._pSchedulers)),
+            _task(std::move(rhs._task))
+        {
+        }
+
         Future(std::shared_ptr<Impl::AsyncSystemSchedulers> pSchedulers, async::task<T>&& task) :
             _pSchedulers(pSchedulers),
             _task(std::move(task))
@@ -141,24 +157,13 @@ namespace Cesium3DTiles {
             std::shared_ptr<ITaskProcessor> pTaskProcessor
         );
 
-        void test() {
-            Future<std::unique_ptr<IAssetRequest>> future = this->requestAsset("");
-            future.thenInMainThread([this](std::unique_ptr<IAssetRequest> pRequest) {
-                return this->requestAsset("").thenInMainThread([this](std::unique_ptr<IAssetRequest> pFoo) {
-                    return this->runInMainThread([]() {
-                        return 42;
-                    });
-                });
-            });
-        }
-
         Future<std::unique_ptr<IAssetRequest>> requestAsset(
             const std::string& url,
             const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>()
         ) const;
 
         template <class Func>
-        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type> runInWorkerThread(Func&& f) {
+        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type> runInWorkerThread(Func&& f) const {
             return Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type>(
                 this->_pSchedulers,
                 async::spawn(this->_pSchedulers->workerThreadScheduler, unwrapFuture<Func>(std::forward<Func>(f)))
@@ -166,11 +171,15 @@ namespace Cesium3DTiles {
         }
 
         template <class Func>
-        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type> runInMainThread(Func&& f) {
+        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type> runInMainThread(Func&& f) const {
             return Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type>(
                 this->_pSchedulers,
                 async::spawn(this->_pSchedulers->mainThreadScheduler, unwrapFuture<Func>(std::forward<Func>(f)))
             );
+        }
+
+        void runMainThreadTasks() {
+            this->_pSchedulers->mainThreadScheduler.run_all_tasks();
         }
 
     private:

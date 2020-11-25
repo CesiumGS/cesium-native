@@ -16,7 +16,8 @@ namespace Cesium3DTiles {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
-            const TilesetExternals& tilesetExternals,
+            const AsyncSystem& asyncSystem,
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
             const CesiumGeometry::Rectangle& coverageRectangle,
@@ -30,7 +31,8 @@ namespace Cesium3DTiles {
         ) :
             RasterOverlayTileProvider(
                 owner,
-                tilesetExternals,
+                asyncSystem,
+                pPrepareRendererResources,
                 projection,
                 tilingScheme,
                 coverageRectangle,
@@ -48,7 +50,7 @@ namespace Cesium3DTiles {
         virtual ~TileMapServiceTileProvider() {}
 
     protected:
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
+        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
             std::string url = Uri::resolve(
                 this->_url,
                 std::to_string(tileID.level) + "/" +
@@ -58,7 +60,7 @@ namespace Cesium3DTiles {
                 true
             );
 
-            return std::make_shared<RasterOverlayTile>(this->getOwner(), tileID, this->getExternals().pAssetAccessor->requestAsset(url, this->_headers));
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, this->getAsyncSystem().requestAsset(url, this->_headers));
         }
     
     private:
@@ -110,10 +112,23 @@ namespace Cesium3DTiles {
         return std::nullopt;
     }
 
-    void TileMapServiceRasterOverlay::createTileProvider(const TilesetExternals& tilesetExternals, RasterOverlay* pOwner, std::function<TileMapServiceRasterOverlay::CreateTileProviderCallback>&& callback) {
+    Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
+        const AsyncSystem& asyncSystem,
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        RasterOverlay* pOwner
+    ) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
-        this->_pMetadataRequest = tilesetExternals.pAssetAccessor->requestAsset(xmlUrl, this->_headers);
-        this->_pMetadataRequest->bind([this, &tilesetExternals, pOwner, callback](IAssetRequest* pRequest) mutable {
+
+        pOwner = pOwner ? pOwner : this;
+
+        return asyncSystem.requestAsset(xmlUrl, this->_headers).thenInWorkerThread([
+            pOwner,
+            asyncSystem,
+            pPrepareRendererResources,
+            options = this->_options,
+            url = this->_url,
+            headers = this->_headers
+        ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
             gsl::span<const uint8_t> data = pResponse->data();
@@ -121,23 +136,23 @@ namespace Cesium3DTiles {
             tinyxml2::XMLDocument doc;
             tinyxml2::XMLError error = doc.Parse(reinterpret_cast<const char*>(data.data()), data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
-                callback(nullptr);
-                return;
+                // TODO: report error
+                return nullptr;
             }
 
             tinyxml2::XMLElement* pRoot = doc.RootElement();
             if (!pRoot) {
-                callback(nullptr);
-                return;
+                // TODO: report error
+                return nullptr;
             }
 
-            std::string credit = this->_options.credit.value_or("");
+            std::string credit = options.credit.value_or("");
             // CesiumGeospatial::Ellipsoid ellipsoid = this->_options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
 
             tinyxml2::XMLElement* pTileFormat = pRoot->FirstChildElement("TileFormat");
-            std::string fileExtension = this->_options.fileExtension.value_or(getAttributeString(pTileFormat, "extension").value_or("png"));
-            uint32_t tileWidth = this->_options.tileWidth.value_or(getAttributeUint32(pTileFormat, "width").value_or(256));
-            uint32_t tileHeight = this->_options.tileHeight.value_or(getAttributeUint32(pTileFormat, "height").value_or(256));
+            std::string fileExtension = options.fileExtension.value_or(getAttributeString(pTileFormat, "extension").value_or("png"));
+            uint32_t tileWidth = options.tileWidth.value_or(getAttributeUint32(pTileFormat, "width").value_or(256));
+            uint32_t tileHeight = options.tileHeight.value_or(getAttributeUint32(pTileFormat, "height").value_or(256));
 
             uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
             uint32_t maximumLevel = 0;
@@ -159,8 +174,8 @@ namespace Cesium3DTiles {
             uint32_t rootTilesX = 1;
             bool isRectangleInDegrees = false;
 
-            if (this->_options.projection) {
-                projection = this->_options.projection.value();
+            if (options.projection) {
+                projection = options.projection.value();
             } else {
                 std::string projectionName = getAttributeString(pTilesets, "profile").value_or("mercator");
 
@@ -185,13 +200,13 @@ namespace Cesium3DTiles {
 
             minimumLevel = glm::min(minimumLevel, maximumLevel);
 
-            minimumLevel = this->_options.minimumLevel.value_or(minimumLevel);
-            maximumLevel = this->_options.maximumLevel.value_or(maximumLevel);
+            minimumLevel = options.minimumLevel.value_or(minimumLevel);
+            maximumLevel = options.maximumLevel.value_or(maximumLevel);
 
             CesiumGeometry::Rectangle coverageRectangle = projectRectangleSimple(projection, tilingSchemeRectangle);
 
-            if (this->_options.coverageRectangle) {
-                coverageRectangle = this->_options.coverageRectangle.value();
+            if (options.coverageRectangle) {
+                coverageRectangle = options.coverageRectangle.value();
             } else {
                 tinyxml2::XMLElement* pBoundingBox = pRoot->FirstChildElement("BoundingBox");
 
@@ -215,20 +230,21 @@ namespace Cesium3DTiles {
                 1
             );
 
-            callback(std::make_unique<TileMapServiceTileProvider>(
-                pOwner ? *pOwner: *this,
-                tilesetExternals,
+            return std::make_unique<TileMapServiceTileProvider>(
+                *pOwner,
+                asyncSystem,
+                pPrepareRendererResources,
                 projection,
                 tilingScheme,
                 coverageRectangle,
-                this->_url,
-                this->_headers,
+                url,
+                headers,
                 fileExtension.size() > 0 ? "." + fileExtension : fileExtension,
                 tileWidth,
                 tileHeight,
                 minimumLevel,
                 maximumLevel
-            ));
+            );
         });
     }
 

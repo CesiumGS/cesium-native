@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cesium3DTiles/AsyncSystem.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
@@ -9,7 +10,7 @@
 namespace Cesium3DTiles {
 
     class RasterOverlay;
-
+    
     /**
      * @brief Raster image data for a tile in a quadtree.
      *
@@ -83,21 +84,16 @@ namespace Cesium3DTiles {
          *
          * @param overlay The {@link RasterOverlay}.
          * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for this tile.
-         * @param pImageRequest The pending request for the image data.
+         * @param imageRequest The pending request for the image data.
          */
         RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
-            std::unique_ptr<IAssetRequest>&& pImageRequest
+            Future<std::unique_ptr<IAssetRequest>>&& imageRequest
         );
 
         /** @brief Default destructor. */
         ~RasterOverlayTile();
-
-        /**
-         * @brief Load the data.
-         */
-        void load(std::shared_ptr<RasterOverlayTile>& pThis);
 
         /**
          * @brief Returns the {@link RasterOverlay} of this instance.
@@ -146,16 +142,26 @@ namespace Cesium3DTiles {
          */
         void setRendererResources(void* pValue) { this->_pRendererResources = pValue; }
 
+        /**
+         * @brief Adds a counted reference to this instance.
+         */
+        void addReference();
+
+        /**
+         * @brief Removes a counted reference from this instance.
+         */
+        void releaseReference();
+
+        uint32_t getReferenceCount() const { return this->_references; }
+
     private:
-        void requestComplete(IAssetRequest* pRequest);
         void setState(LoadState newState);
 
         RasterOverlay* _pOverlay;
         CesiumGeometry::QuadtreeTileID _tileID;
         std::atomic<LoadState> _state;
-        std::unique_ptr<IAssetRequest> _pImageRequest;
         tinygltf::Image _image;
         void* _pRendererResources;
-        std::shared_ptr<RasterOverlayTile> _pSelf;
+        uint32_t _references;
     };
 }

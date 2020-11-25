@@ -9,10 +9,11 @@ namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
-        const TilesetExternals& tilesetExternals
+        const AsyncSystem& asyncSystem
     ) :
         _pOwner(&owner),
-        _pTilesetExternals(&tilesetExternals),
+        _asyncSystem(asyncSystem),
+        _pPrepareRendererResources(nullptr),
         _projection(CesiumGeospatial::GeographicProjection()),
         _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
         _coverageRectangle(0.0, 0.0, 0.0, 0.0),
@@ -20,14 +21,17 @@ namespace Cesium3DTiles {
         _maximumLevel(0),
         _imageWidth(1),
         _imageHeight(1),
-        _pPlaceholder(std::make_shared<RasterOverlayTile>(owner)),
+        _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
         _tileDataBytes(0)
     {
+        // Placeholders should never be removed.
+        this->_pPlaceholder->addReference();
     }
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
-        const TilesetExternals& tilesetExternals,
+        const AsyncSystem& asyncSystem,
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
         const CesiumGeometry::Rectangle& coverageRectangle,
@@ -37,7 +41,8 @@ namespace Cesium3DTiles {
         uint32_t imageHeight
     ) :
         _pOwner(&owner),
-        _pTilesetExternals(&tilesetExternals),
+        _asyncSystem(asyncSystem),
+        _pPrepareRendererResources(pPrepareRendererResources),
         _projection(projection),
         _tilingScheme(tilingScheme),
         _coverageRectangle(coverageRectangle),
@@ -50,26 +55,23 @@ namespace Cesium3DTiles {
     {
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
-        std::shared_ptr<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
+    CesiumUtility::IntrusivePointer<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
         if (pTile) {
             return pTile;
         }
 
-        std::shared_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
-        pNew->load(pNew);
-        this->_tiles[id] = pNew;
+        std::unique_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pResult = pNew.get();
 
-        return pNew;
+        this->_tiles[id] = std::move(pNew);
+        return pResult;
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id) {
+    CesiumUtility::IntrusivePointer<RasterOverlayTile> RasterOverlayTileProvider::getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id) {
         auto it = this->_tiles.find(id);
         if (it != this->_tiles.end()) {
-            std::shared_ptr<RasterOverlayTile> pTile = it->second.lock();
-            if (pTile) {
-                return pTile;
-            }
+            return it->second.get();
         }
 
         return nullptr;
@@ -79,8 +81,7 @@ namespace Cesium3DTiles {
         uint32_t count = 0;
 
         for (auto& pair : this->_tiles) {
-            std::shared_ptr<RasterOverlayTile> pTile = pair.second.lock();
-            if (pTile && pTile->getState() == RasterOverlayTile::LoadState::Loading) {
+            if (pair.second && pair.second->getState() == RasterOverlayTile::LoadState::Loading) {
                 ++count;
             }
         }
@@ -130,7 +131,7 @@ namespace Cesium3DTiles {
     ) {
         if (this->_pPlaceholder) {
             outputRasterTiles.push_back(RasterMappedTo3DTile(
-                this->_pPlaceholder,
+                this->_pPlaceholder.get(),
                 CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)
             ));
             return;
@@ -348,7 +349,7 @@ namespace Cesium3DTiles {
 
                 CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
-                std::shared_ptr<RasterOverlayTile> pTile = this->getTile(QuadtreeTileID(imageryLevel, i, j));
+                CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTile(QuadtreeTileID(imageryLevel, i, j));
                 outputRasterTiles.emplace(outputRasterTiles.begin() + realOutputIndex, pTile, texCoordsRectangle);
                 ++realOutputIndex;
             }
@@ -361,10 +362,21 @@ namespace Cesium3DTiles {
 
     void RasterOverlayTileProvider::notifyTileUnloading(RasterOverlayTile* pTile) {
         this->_tileDataBytes -= pTile->getImage().image.size();
+        this->_tiles.erase(pTile->getID());
     }
 
-    std::shared_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
-        return this->_pPlaceholder;
+    void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) {
+        assert(pTile->getReferenceCount() == 0);
+
+        auto it = this->_tiles.find(pTile->getID());
+        assert(it != this->_tiles.end());
+        assert(it->second.get() == pTile);
+
+        this->_tiles.erase(it);
+    }
+
+    std::unique_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
+        return nullptr;
     }
 
 }

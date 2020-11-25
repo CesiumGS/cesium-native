@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
             async::event_task<std::unique_ptr<IAssetRequest>> event;
         };
 
-        std::shared_ptr<Receiver> pReceiver = std::make_unique<Receiver>();
+        std::shared_ptr<Receiver> pReceiver = std::make_shared<Receiver>();
         pReceiver->pRequest = this->_pSchedulers->pAssetAccessor->requestAsset(url, headers);
 
         Future<std::unique_ptr<IAssetRequest>> result(this->_pSchedulers, pReceiver->event.get_task());

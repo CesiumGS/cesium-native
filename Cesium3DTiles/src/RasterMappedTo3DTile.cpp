@@ -9,7 +9,7 @@
 namespace Cesium3DTiles {
 
     RasterMappedTo3DTile::RasterMappedTo3DTile(
-        const std::shared_ptr<RasterOverlayTile>& pRasterTile,
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pRasterTile,
         const CesiumGeometry::Rectangle& textureCoordinateRectangle
     ) :
         _pLoadingTile(pRasterTile),
@@ -53,7 +53,7 @@ namespace Cesium3DTiles {
 
             // Mark the loading tile read.
             this->_pReadyTile = this->_pLoadingTile;
-            this->_pLoadingTile.reset();
+            this->_pLoadingTile = nullptr;
 
             // Compute the translation and scale for the new tile.
             this->computeTranslationAndScale(tile);
@@ -63,20 +63,20 @@ namespace Cesium3DTiles {
         if (this->_pLoadingTile) {
             RasterOverlayTileProvider& tileProvider = *this->_pLoadingTile->getOverlay().getTileProvider();
 
-            std::shared_ptr<RasterOverlayTile> candidate;
+            CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate;
             CesiumGeometry::QuadtreeTileID id = this->_pLoadingTile->getID();
             while (id.level > 0) {
                 --id.level;
                 id.x >>= 1;
                 id.y >>= 1;
 
-                candidate = tileProvider.getTileWithoutRequesting(id);
-                if (candidate && candidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
+                pCandidate = tileProvider.getTileWithoutRequesting(id);
+                if (pCandidate && pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
                     break;
                 }
             }
 
-            if (candidate && candidate->getState() >= RasterOverlayTile::LoadState::Loaded && candidate != this->_pReadyTile) {
+            if (pCandidate && pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded && this->_pReadyTile != pCandidate) {
                 if (this->getState() != AttachmentState::Unattached) {
                     TilesetExternals& externals = tile.getTileset()->getExternals();
                     externals.pPrepareRendererResources->detachRasterInMainThread(
@@ -89,7 +89,7 @@ namespace Cesium3DTiles {
                     this->_state = AttachmentState::Unattached;
                 }
 
-                this->_pReadyTile = candidate;
+                this->_pReadyTile = pCandidate;
 
                 // Compute the translation and scale for the new tile.
                 this->computeTranslationAndScale(tile);

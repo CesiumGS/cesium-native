@@ -480,7 +480,7 @@ namespace Cesium3DTiles {
             for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
                 RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
 
-                std::shared_ptr<RasterOverlayTile>& pLoadingTile = mappedRasterTile.getLoadingTile();
+                RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
                 if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
                     // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();

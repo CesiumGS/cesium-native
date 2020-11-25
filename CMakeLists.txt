@@ -16,7 +16,7 @@ add_subdirectory(extern EXCLUDE_FROM_ALL)
 
 function(configure_cesium_library targetName)
     if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /external:W0 /experimental:external /external:anglebrackets)
+        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow)
     endif()

@@ -6,13 +6,14 @@
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
+#include "CesiumUtility/IntrusivePointer.h"
 #include <unordered_map>
 
 namespace Cesium3DTiles {
 
-    class TilesetExternals;
     class RasterOverlay;
     class RasterOverlayTile;
+    class IPrepareRendererResources;
 
     /**
      * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
@@ -24,18 +25,19 @@ namespace Cesium3DTiles {
          * Constructs a placeholder tile provider.
          * 
          * @param owner The raster overlay that owns this tile provider.
-         * @param tilesetExternals Tileset externals.
+         * @param asyncSystem The async system used to request assets and do work in threads.
          */
         RasterOverlayTileProvider(
             RasterOverlay& owner,
-            const TilesetExternals& tilesetExternals
+            const AsyncSystem& asyncSystem
         );
 
         /**
          * @brief Creates a new instance.
          *
          * @param owner The {@link RasterOverlay}. May not be `nullptr`.
-         * @param tilesetExternals The {@link TilesetExternals}.
+         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param projection The {@link CesiumGeospatial::Projection}.
          * @param tilingScheme The {@link CesiumGeometry::QuadtreeTilingScheme}.
          * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
@@ -46,7 +48,8 @@ namespace Cesium3DTiles {
          */
         RasterOverlayTileProvider(
             RasterOverlay& owner,
-            const TilesetExternals& tilesetExternals,
+            const AsyncSystem& asyncSystem,
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
             const CesiumGeometry::Rectangle& coverageRectangle,
@@ -71,6 +74,19 @@ namespace Cesium3DTiles {
 
         /** @copydoc getOwner */
         const RasterOverlay& getOwner() const { return *this->_pOwner; }
+
+        /**
+         * @brief Get the system to use for asychronous requests and threaded work.
+         */
+        AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
+
+        /** @copydoc getAsyncSystem */
+        const AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+
+        /**
+         * @brief Gets the interface used to prepare raster overlay images for rendering.
+         */
+        const std::shared_ptr<IPrepareRendererResources>& getPrepareRendererResources() const { return this->_pPrepareRendererResources; }
 
         /**
          * @brief Returns the {@link CesiumGeospatial::Projection} of this instance.
@@ -113,7 +129,7 @@ namespace Cesium3DTiles {
          * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
          * @return The tile.
          */
-        std::shared_ptr<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
          * @brief Returns the {@link RasterOverlayTile} with the given ID, or `nullptr` if there is no such tile.
@@ -121,7 +137,7 @@ namespace Cesium3DTiles {
          * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
          * @return The tile, or `nullptr`.
          */
-        std::shared_ptr<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
          * @brief Returns the number of tiles that are currently loading.
@@ -138,11 +154,6 @@ namespace Cesium3DTiles {
          * @return The level that is closest to the desired geometric error.
          */
         uint32_t computeLevelFromGeometricError(double geometricError, const glm::dvec2& position) const;
-
-        /**
-         * @brief Returns the {@link TilesetExternals} of this instance.
-         */
-        const TilesetExternals& getExternals() { return *this->_pTilesetExternals; }
 
         /**
          * @brief Map raster tiles to geometry tile.
@@ -187,6 +198,13 @@ namespace Cesium3DTiles {
          * @brief Gets the number of bytes of tile data that are currently loaded.
          */
         size_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
+        
+        /**
+         * @brief Removes a no-longer-referenced tile from this provider's cache and deletes it.
+         * 
+         * @param pTile The tile, which must have no oustanding references.
+         */
+        void removeTile(RasterOverlayTile* pTile);
 
     protected:
 
@@ -201,11 +219,12 @@ namespace Cesium3DTiles {
          * @param tileID The {@link CesiumGeometry::QuadtreeTileID}
          * @return The new raster overlay tile
          */
-        virtual std::shared_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);
+        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
     private:
         RasterOverlay* _pOwner;
-        const TilesetExternals* _pTilesetExternals;
+        AsyncSystem _asyncSystem;
+        std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
         CesiumGeometry::Rectangle _coverageRectangle;
@@ -213,8 +232,8 @@ namespace Cesium3DTiles {
         uint32_t _maximumLevel;
         uint32_t _imageWidth;
         uint32_t _imageHeight;
-        std::unordered_map<CesiumGeometry::QuadtreeTileID, std::weak_ptr<RasterOverlayTile>> _tiles;
-        std::shared_ptr<RasterOverlayTile> _pPlaceholder;
+        std::unordered_map<CesiumGeometry::QuadtreeTileID, std::unique_ptr<RasterOverlayTile>> _tiles;
+        std::unique_ptr<RasterOverlayTile> _pPlaceholder;
         std::atomic<size_t> _tileDataBytes;
     };
 }

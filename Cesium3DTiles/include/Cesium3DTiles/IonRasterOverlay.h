@@ -30,14 +30,15 @@ namespace Cesium3DTiles {
         );
         virtual ~IonRasterOverlay() override;
 
-        virtual void createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) override;
+        virtual Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
+            const AsyncSystem& asyncSystem,
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            RasterOverlay* pOwner
+        ) override;
 
     private:
         uint32_t _ionAssetID;
         std::string _ionAccessToken;
-
-        std::unique_ptr<IAssetRequest> _pMetadataRequest;
-        std::unique_ptr<RasterOverlay> _aggregatedOverlay;
     };
 
 }

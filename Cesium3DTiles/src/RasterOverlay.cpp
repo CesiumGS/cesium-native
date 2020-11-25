@@ -22,18 +22,25 @@ namespace Cesium3DTiles {
         return this->_pTileProvider ? this->_pTileProvider.get() : this->_pPlaceholder.get();
     }
 
-    void RasterOverlay::createTileProvider(const TilesetExternals& externals) {
+    void RasterOverlay::createTileProvider(
+        const AsyncSystem& asyncSystem,
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
+    ) {
         if (this->_pPlaceholder) {
             return;
         }
 
         this->_pPlaceholder = std::make_unique<RasterOverlayTileProvider>(
             *this,
-            externals
+            asyncSystem
         );
 
-        this->createTileProvider(externals, this, [this](std::unique_ptr<RasterOverlayTileProvider>&& pTileProvider) {
-            this->_pTileProvider = std::move(pTileProvider);
+        this->createTileProvider(
+            asyncSystem,
+            pPrepareRendererResources,
+            this
+        ).thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
+            this->_pTileProvider = std::move(pProvider);
         });
     }
 

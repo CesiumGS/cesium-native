@@ -18,19 +18,26 @@ namespace Cesium3DTiles {
         const std::string& ionAccessToken
     ) :
         _ionAssetID(ionAssetID),
-        _ionAccessToken(ionAccessToken),
-        _aggregatedOverlay(nullptr)
+        _ionAccessToken(ionAccessToken)
     {
     }
 
     IonRasterOverlay::~IonRasterOverlay() {
     }
 
-    void IonRasterOverlay::createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) {
+    Future<std::unique_ptr<RasterOverlayTileProvider>> IonRasterOverlay::createTileProvider(
+        const AsyncSystem& asyncSystem,
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        RasterOverlay* pOwner
+    ) {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
         ionUrl = Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
-        this->_pMetadataRequest = externals.pAssetAccessor->requestAsset(ionUrl);
-        this->_pMetadataRequest->bind([this, &externals, pOwner, callback](IAssetRequest* pRequest) mutable {
+
+        pOwner = pOwner ? pOwner : this;
+
+        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([](
+            std::unique_ptr<IAssetRequest> pRequest
+        ) -> std::unique_ptr<RasterOverlay> {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
@@ -38,8 +45,7 @@ namespace Cesium3DTiles {
             json response = json::parse(pResponse->data().begin(), pResponse->data().end());
             if (response.value("type", "unknown") != "IMAGERY") {
                 // TODO: report invalid imagery type.
-                callback(nullptr);
-                return;
+                return nullptr;
             }
 
             std::string externalType = response.value("externalType", "unknown");
@@ -47,8 +53,7 @@ namespace Cesium3DTiles {
                 json::iterator optionsIt = response.find("options");
                 if (optionsIt == response.end()) {
                     // TODO: report incomplete Bing options
-                    callback(nullptr);
-                    return;
+                    return nullptr;
                 }
 
                 json options = *optionsIt;
@@ -57,7 +62,7 @@ namespace Cesium3DTiles {
                 std::string mapStyle = options.value("mapStyle", "AERIAL");
                 std::string culture = options.value("culture", "");
 
-                this->_aggregatedOverlay = std::make_unique<BingMapsRasterOverlay>(
+                return std::make_unique<BingMapsRasterOverlay>(
                     url,
                     key,
                     mapStyle,
@@ -65,15 +70,19 @@ namespace Cesium3DTiles {
                 );
             } else {
                 std::string url = response.value("url", "");
-                this->_aggregatedOverlay = std::make_unique<TileMapServiceRasterOverlay>(
+                return std::make_unique<TileMapServiceRasterOverlay>(
                     url,
                     std::vector<IAssetAccessor::THeader> {
                         std::make_pair("Authorization", "Bearer " + response.value("accessToken", ""))
                     }
                 );
             }
-
-            this->_aggregatedOverlay->createTileProvider(externals, pOwner ? pOwner : this, std::move(callback));
+        }).thenInMainThread([
+            pOwner,
+            asyncSystem,
+            pPrepareRendererResources
+        ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
+            return pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pOwner);
         });
     }
 

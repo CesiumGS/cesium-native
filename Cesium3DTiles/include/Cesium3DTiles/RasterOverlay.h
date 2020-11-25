@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/AsyncSystem.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include <memory>
 #include <functional>
 
 namespace Cesium3DTiles {
 
-    class TilesetExternals;
+    class IPrepareRendererResources;
     class RasterOverlayTileProvider;
     class RasterOverlayCollection;
 
@@ -76,22 +77,30 @@ namespace Cesium3DTiles {
          * This method does nothing if the tile provider has already been created or
          * is already in the process of being created.
          * 
-         * @param externals The external interfaces to use.
+         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          */
-        void createTileProvider(const TilesetExternals& externals);
+        void createTileProvider(
+            const AsyncSystem& asyncSystem,
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
+        );
 
         /**
-         * @brief Begins asynchronous creation of the tile provider for this overlay and eventually returns it via a callback.
+         * @brief Begins asynchronous creation of the tile provider for this overlay and eventually returns it via a Future.
          * 
-         * When the tile provider is ready, the `callback` will be invoked. The tile provider will not be returned
-         * via {@link getTileProvider}. This method is primarily useful for overlays that aggregate other
-         * overlays.
+         * The created tile provider will not be returned via {@link getTileProvider}. This method is primarily useful for
+         * overlays that aggregate other overlays.
          * 
-         * @param externals The external interfaces to use.
+         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pOwner The overlay that owns this overlay, or nullptr if this overlay is not aggregated.
          * @param callback The callback that receives the new tile provider when it is ready.
          */
-        virtual void createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) = 0;
+        virtual Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
+            const AsyncSystem& asyncSystem,
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            RasterOverlay* pOwner
+        ) = 0;
 
         /**
          * @brief Safely destroys this overlay.

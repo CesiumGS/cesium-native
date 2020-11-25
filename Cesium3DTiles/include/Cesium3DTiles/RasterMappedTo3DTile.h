@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "CesiumGeometry/Rectangle.h"
+#include "CesiumUtility/IntrusivePointer.h"
 #include <memory>
 
 namespace Cesium3DTiles {
@@ -47,7 +48,7 @@ namespace Cesium3DTiles {
          * the region that is covered by the raster overlay tile.
          */
         RasterMappedTo3DTile(
-            const std::shared_ptr<RasterOverlayTile>& pRasterTile,
+            CesiumUtility::IntrusivePointer<RasterOverlayTile> pRasterTile,
             const CesiumGeometry::Rectangle& textureCoordinateRectangle
         );
 
@@ -59,10 +60,10 @@ namespace Cesium3DTiles {
          * 
          * @return The placeholder tile while loading, or `nullptr`.
          */
-        std::shared_ptr<RasterOverlayTile>& getLoadingTile() { return this->_pLoadingTile; }
+        RasterOverlayTile* getLoadingTile() { return this->_pLoadingTile.get(); }
 
         /** @copydoc getLoadingTile */
-        const std::shared_ptr<RasterOverlayTile>& getLoadingTile() const { return this->_pLoadingTile; }
+        const RasterOverlayTile* getLoadingTile() const { return this->_pLoadingTile.get(); }
 
         /**
          * @brief Returns the {@link RasterOverlayTile} that represents the imagery data.
@@ -71,10 +72,10 @@ namespace Cesium3DTiles {
          * 
          * @return The tile, or `nullptr`.
          */
-        std::shared_ptr<RasterOverlayTile>& getReadyTile() { return this->_pReadyTile; }
+        RasterOverlayTile* getReadyTile() { return this->_pReadyTile.get(); }
 
         /** @copydoc getReadyTile */
-        const std::shared_ptr<RasterOverlayTile>& getReadyTile() const { return this->_pReadyTile; }
+        const RasterOverlayTile* getReadyTile() const { return this->_pReadyTile.get(); }
 
         /**
          * @brief Returns an identifier for the texture coordinates of this tile.
@@ -179,8 +180,8 @@ namespace Cesium3DTiles {
     private:
         void computeTranslationAndScale(Tile& tile);
 
-        std::shared_ptr<RasterOverlayTile> _pLoadingTile;
-        std::shared_ptr<RasterOverlayTile> _pReadyTile;
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
         uint32_t _textureCoordinateID;
         CesiumGeometry::Rectangle _textureCoordinateRectangle;
         glm::dvec2 _translation;
