@@ -20,12 +20,12 @@ namespace Cesium3DTiles {
          * @brief Enumeration of available log levels.
          */
         enum class Level {
-            TRACE,
-            DEBUG,
-            INFO,
-            WARN,
-            ERROR,
-            CRITICAL
+            CESIUM_LOG_LEVEL_TRACE,
+            CESIUM_LOG_LEVEL_DEBUG,
+            CESIUM_LOG_LEVEL_INFO,
+            CESIUM_LOG_LEVEL_WARN,
+            CESIUM_LOG_LEVEL_ERROR,
+            CESIUM_LOG_LEVEL_CRITICAL
         };
 
         /**

@@ -9,7 +9,7 @@ namespace Cesium3DTiles {
     namespace Logging {
 
         namespace {
-            std::unordered_map<std::shared_ptr<ILogger>, spdlog::sink_ptr> loggerSinks;
+            std::unordered_map<ILogger*, spdlog::sink_ptr> loggerSinks;
         }
         
         void initializeLogging() noexcept {
@@ -22,14 +22,14 @@ namespace Cesium3DTiles {
 
         }
 
-        void registerLogger(std::shared_ptr<ILogger> logger) noexcept {
+        void registerLogger(ILogger* logger) noexcept {
             if (logger == nullptr) {
-                LOG_WARN("Cannot register nullptr as a logger");
+                CESIUM_LOG_WARN("Cannot register nullptr as a logger");
                 return;
             }
             auto it = loggerSinks.find(logger);
             if (it != loggerSinks.end()) {
-                LOG_WARN("Logger is already registered");
+                CESIUM_LOG_WARN("Logger is already registered");
                 return;
             }
             auto loggerPtr = std::make_shared<spdlog_logger_sink_mt>(logger);
@@ -45,14 +45,14 @@ namespace Cesium3DTiles {
             loggerSinks[logger] = sinkPtr;
         }
 
-        void unregisterLogger(std::shared_ptr<ILogger> logger) noexcept {
+        void unregisterLogger(ILogger* logger) noexcept {
             if (logger == nullptr) {
-                LOG_WARN("Cannot unregister nullptr as a logger");
+                CESIUM_LOG_WARN("Cannot unregister nullptr as a logger");
                 return;
             }
             auto it = loggerSinks.find(logger);
             if (it == loggerSinks.end()) {
-                LOG_WARN("Logger is not registered");
+                CESIUM_LOG_WARN("Logger is not registered");
                 return;
             }
             auto defaultLogger = spdlog::default_logger();

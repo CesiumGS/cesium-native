@@ -273,14 +273,14 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
-            LOG_ERROR("Did not receive a valid response for {}", pRequest->url());
+            CESIUM_LOG_ERROR("Did not receive a valid response for {}", pRequest->url());
             this->notifyTileDoneLoading(nullptr);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
-            LOG_ERROR("Received status code {} for {}", pResponse->statusCode(), pRequest->url());
+            CESIUM_LOG_ERROR("Received status code {} for {}", pResponse->statusCode(), pRequest->url());
             this->notifyTileDoneLoading(nullptr);
             return;
         }
@@ -295,7 +295,7 @@ namespace Cesium3DTiles {
         }
         catch (const json::parse_error& error)
         {
-            LOG_ERROR("Error when parsing response JSON: {}", error.what());
+            CESIUM_LOG_ERROR("Error when parsing response JSON: {}", error.what());
             this->notifyTileDoneLoading(nullptr);
             return;
         }
@@ -309,7 +309,7 @@ namespace Cesium3DTiles {
             url = Uri::resolve(url, "layer.json", true);
         } else if (type != "3DTILES") {
             // TODO: report unsupported type.
-            LOG_ERROR("Layer type {} is not supported", type);
+            CESIUM_LOG_ERROR("Layer type {} is not supported", type);
             this->notifyTileDoneLoading(nullptr);
             return;
         }
@@ -336,7 +336,7 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
-            LOG_ERROR("Did not receive a valid response for tileset {}", pRequest->url());
+            CESIUM_LOG_ERROR("Did not receive a valid response for tileset {}", pRequest->url());
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);
             return;
@@ -344,7 +344,7 @@ namespace Cesium3DTiles {
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
-            LOG_ERROR("Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
+            CESIUM_LOG_ERROR("Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
             this->_pTilesetJsonRequest.reset();
             this->notifyTileDoneLoading(nullptr);
             return;
@@ -371,7 +371,7 @@ namespace Cesium3DTiles {
             }
             catch (const json::parse_error& error)
             {
-                LOG_ERROR("Error when parsing tileset JSON: {}", error.what());
+                CESIUM_LOG_ERROR("Error when parsing tileset JSON: {}", error.what());
                 this->notifyTileDoneLoading(nullptr);
                 return;
             }
@@ -637,7 +637,7 @@ namespace Cesium3DTiles {
                     }
                     catch (const json::parse_error& error)
                     {
-                        LOG_ERROR("Error when parsing ion response: {}", error.what());
+                        CESIUM_LOG_ERROR("Error when parsing ion response: {}", error.what());
                         failedParsing = true;
                     }
                     if (!failedParsing)

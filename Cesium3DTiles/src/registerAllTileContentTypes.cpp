@@ -4,14 +4,10 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Batched3DModelContent.h"
 #include "QuantizedMeshContent.h"
-#include "Cesium3DTiles/Logging.h"
 
 namespace Cesium3DTiles {
 
     void registerAllTileContentTypes() {
-
-        // TODO This should not be done here, but in a more generic "initialize3DTiles" function
-        Logging::initializeLogging();
 
         TileContentFactory::registerMagic("glTF", GltfContent::load);
         TileContentFactory::registerMagic("b3dm", Batched3DModelContent::load);
