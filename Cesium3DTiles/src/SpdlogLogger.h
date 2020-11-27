@@ -45,7 +45,7 @@ template<typename Mutex>
 class spdlog_logger_sink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
-	spdlog_logger_sink(Cesium3DTiles::ILogger* logger) 
+	spdlog_logger_sink(std::shared_ptr<Cesium3DTiles::ILogger> logger)
 		: _logger(logger) 
 	{
 	}
@@ -65,7 +65,7 @@ protected:
 	}
 
 private:
-	Cesium3DTiles::ILogger* _logger;
+	std::shared_ptr<Cesium3DTiles::ILogger> _logger;
 };
 
 using spdlog_logger_sink_mt = spdlog_logger_sink<std::mutex>;

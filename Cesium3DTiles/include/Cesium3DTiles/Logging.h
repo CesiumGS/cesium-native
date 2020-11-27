@@ -31,21 +31,16 @@ namespace Cesium3DTiles {
         /**
          * @brief Register the given logger to receive log messages. 
          * 
-         * The caller is responsible for the lifetime management of the given
-         * logger. So the caller must call {@link unregisterLogger} before
-         * deleting the logger object. If the object is deleted before 
-         * calling {@link unregisterLogger}, the behavior is undefined.
-         * 
          * @param logger The {@link ILogger}. May not be `nullptr`.
          */
-        CESIUM3DTILES_API void registerLogger(ILogger* logger) noexcept;
+        CESIUM3DTILES_API void registerLogger(std::shared_ptr<ILogger> logger) noexcept;
 
         /**
          * @brief Unregister the given logger to no longer receive log messages.
          * 
          * @param logger The {@link ILogger}. May not be `nullptr`.
          */
-        CESIUM3DTILES_API void unregisterLogger(ILogger* logger) noexcept;
+        CESIUM3DTILES_API void unregisterLogger(std::shared_ptr<ILogger> logger) noexcept;
 
     }
 

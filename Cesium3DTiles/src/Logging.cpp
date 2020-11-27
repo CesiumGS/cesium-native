@@ -9,7 +9,7 @@ namespace Cesium3DTiles {
     namespace Logging {
 
         namespace {
-            std::unordered_map<ILogger*, spdlog::sink_ptr> loggerSinks;
+            std::unordered_map<std::shared_ptr<ILogger>, spdlog::sink_ptr> loggerSinks;
         }
         
         void initializeLogging() noexcept {
@@ -22,7 +22,7 @@ namespace Cesium3DTiles {
 
         }
 
-        void registerLogger(ILogger* logger) noexcept {
+        void registerLogger(std::shared_ptr<ILogger> logger) noexcept {
             if (logger == nullptr) {
                 CESIUM_LOG_WARN("Cannot register nullptr as a logger");
                 return;
@@ -45,7 +45,7 @@ namespace Cesium3DTiles {
             loggerSinks[logger] = sinkPtr;
         }
 
-        void unregisterLogger(ILogger* logger) noexcept {
+        void unregisterLogger(std::shared_ptr<ILogger> logger) noexcept {
             if (logger == nullptr) {
                 CESIUM_LOG_WARN("Cannot unregister nullptr as a logger");
                 return;
