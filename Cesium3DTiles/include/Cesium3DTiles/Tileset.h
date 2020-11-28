@@ -384,7 +384,7 @@ namespace Cesium3DTiles {
             /**
              * @brief The relative priority of loading this tile.
              * 
-             * Lower priority values low sooner.
+             * Lower priority values load sooner.
              */
             double priority;
 

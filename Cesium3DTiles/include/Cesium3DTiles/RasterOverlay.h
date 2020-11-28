@@ -105,6 +105,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Safely destroys this overlay.
          * 
+         * This method is not supposed to be called by clients.
          * The overlay will not be truly destroyed until all in-progress tile loads complete. This may happen
          * before this function returns if no loads are in progress.
          * 
@@ -117,6 +118,7 @@ namespace Cesium3DTiles {
         std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;
         RasterOverlayCutoutCollection _cutouts;
         std::unique_ptr<RasterOverlay> _pSelf;
+        bool _isLoadingTileProvider;
     };
 
 }

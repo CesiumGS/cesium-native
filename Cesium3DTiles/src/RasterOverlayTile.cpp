@@ -122,14 +122,11 @@ namespace Cesium3DTiles {
                 }
 
                 return result;
-
-                // if (this->getOverlay().isBeingDestroyed()) {
-                //     this->getOverlay().destroySafely(nullptr);
-                // }
             }).thenInMainThread([this](LoadResult&& result) {
                 result.pRendererResources = result.pRendererResources;
                 this->_image = std::move(result.image);
                 this->setState(result.state);
+                this->_pOverlay->getTileProvider()->notifyTileLoaded(this);
                 this->releaseReference();
             });
         }
@@ -137,14 +134,14 @@ namespace Cesium3DTiles {
         RasterOverlayTile::~RasterOverlayTile() {
             RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
             if (pTileProvider) {
-                pTileProvider->notifyTileUnloading(this);
-
                 const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources = pTileProvider->getPrepareRendererResources();
 
-                void* pLoadThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? nullptr : this->_pRendererResources;
-                void* pMainThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? this->_pRendererResources : nullptr;
+                if (pPrepareRendererResources) {
+                    void* pLoadThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? nullptr : this->_pRendererResources;
+                    void* pMainThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? this->_pRendererResources : nullptr;
 
-                pPrepareRendererResources->freeRaster(*this, pLoadThreadResult, pMainThreadResult);
+                    pPrepareRendererResources->freeRaster(*this, pLoadThreadResult, pMainThreadResult);
+                }
             }
         }
 
@@ -156,8 +153,6 @@ namespace Cesium3DTiles {
             // Do the final main thread raster loading
             RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
             this->_pRendererResources = pTileProvider->getPrepareRendererResources()->prepareRasterInMainThread(*this, this->_pRendererResources);
-
-            pTileProvider->notifyTileLoaded(this);
 
             this->setState(LoadState::Done);
         }

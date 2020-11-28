@@ -140,11 +140,6 @@ namespace Cesium3DTiles {
         CesiumUtility::IntrusivePointer<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
-         * @brief Returns the number of tiles that are currently loading.
-         */
-        uint32_t getNumberOfTilesLoading() const noexcept;
-
-        /**
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near
          * a given projected position. The position is required because coordinates in many projections will
          * map to real-world meters differently in different parts of the globe.
@@ -188,19 +183,20 @@ namespace Cesium3DTiles {
         void notifyTileLoaded(RasterOverlayTile* pTile);
 
         /**
-         * @brief Notifies the tile provider that a tile is about to be unloaded.
-         * 
-         * This function is not supposed to be called by clients.
-         */
-        void notifyTileUnloading(RasterOverlayTile* pTile);
-
-        /**
          * @brief Gets the number of bytes of tile data that are currently loaded.
          */
         size_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
-        
+
+        /**
+         * @brief Returns the number of tiles that are currently loading.
+         */
+        uint32_t getNumberOfTilesLoading() const noexcept { return this->_tilesCurrentlyLoading; }
+
         /**
          * @brief Removes a no-longer-referenced tile from this provider's cache and deletes it.
+         * 
+         * This function is not supposed to be called by client. Calling this method in a tile
+         * with a reference count greater than 0 will result in undefined behavior.
          * 
          * @param pTile The tile, which must have no oustanding references.
          */
@@ -234,6 +230,7 @@ namespace Cesium3DTiles {
         uint32_t _imageHeight;
         std::unordered_map<CesiumGeometry::QuadtreeTileID, std::unique_ptr<RasterOverlayTile>> _tiles;
         std::unique_ptr<RasterOverlayTile> _pPlaceholder;
-        std::atomic<size_t> _tileDataBytes;
+        size_t _tileDataBytes;
+        uint32_t _tilesCurrentlyLoading;
     };
 }

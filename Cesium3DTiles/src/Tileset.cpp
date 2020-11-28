@@ -118,12 +118,14 @@ namespace Cesium3DTiles {
         // decremented correctly when an async load ends.
         while (this->_loadsInProgress.load(std::memory_order::memory_order_acquire) > 0) {
             this->_externals.pAssetAccessor->tick();
+            this->_asyncSystem.runMainThreadTasks();
         }
 
         // Wait for all overlays to wrap up their loading, too.
         uint32_t tilesLoading = 1;
         while (tilesLoading > 0) {
             this->_externals.pAssetAccessor->tick();
+            this->_asyncSystem.runMainThreadTasks();
 
             tilesLoading = 0;
             for (auto& pOverlay : this->_overlays) {

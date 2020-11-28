@@ -7,7 +7,8 @@ namespace Cesium3DTiles {
         _pPlaceholder(),
         _pTileProvider(),
         _cutouts(),
-        _pSelf()
+        _pSelf(),
+        _isLoadingTileProvider(false)
     {
     }
 
@@ -35,12 +36,15 @@ namespace Cesium3DTiles {
             asyncSystem
         );
 
+        this->_isLoadingTileProvider = true;
+
         this->createTileProvider(
             asyncSystem,
             pPrepareRendererResources,
             this
         ).thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
             this->_pTileProvider = std::move(pProvider);
+            this->_isLoadingTileProvider = false;
         });
     }
 
@@ -54,6 +58,11 @@ namespace Cesium3DTiles {
         }
 
         // Check if it's safe to delete this object yet.
+        if (this->_isLoadingTileProvider) {
+            // Loading, so it's not safe to unload yet.
+            return;
+        }
+
         RasterOverlayTileProvider* pTileProvider = this->getTileProvider();
         if (!pTileProvider || pTileProvider->getNumberOfTilesLoading() == 0) {
             // No tile provider or no tiles loading, so it's safe to delete!

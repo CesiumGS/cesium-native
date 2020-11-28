@@ -1,6 +1,7 @@
+#include "Cesium3DTiles/RasterOverlay.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "Cesium3DTiles/RasterOverlayTile.h"
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -22,7 +23,8 @@ namespace Cesium3DTiles {
         _imageWidth(1),
         _imageHeight(1),
         _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
-        _tileDataBytes(0)
+        _tileDataBytes(0),
+        _tilesCurrentlyLoading(0)
     {
         // Placeholders should never be removed.
         this->_pPlaceholder->addReference();
@@ -51,7 +53,8 @@ namespace Cesium3DTiles {
         _imageWidth(imageWidth),
         _imageHeight(imageHeight),
         _pPlaceholder(nullptr),
-        _tileDataBytes(0)
+        _tileDataBytes(0),
+        _tilesCurrentlyLoading(0)
     {
     }
 
@@ -61,6 +64,7 @@ namespace Cesium3DTiles {
             return pTile;
         }
 
+        ++this->_tilesCurrentlyLoading;
         std::unique_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
         CesiumUtility::IntrusivePointer<RasterOverlayTile> pResult = pNew.get();
 
@@ -75,18 +79,6 @@ namespace Cesium3DTiles {
         }
 
         return nullptr;
-    }
-
-    uint32_t RasterOverlayTileProvider::getNumberOfTilesLoading() const noexcept {
-        uint32_t count = 0;
-
-        for (auto& pair : this->_tiles) {
-            if (pair.second && pair.second->getState() == RasterOverlayTile::LoadState::Loading) {
-                ++count;
-            }
-        }
-
-        return count;
     }
 
     uint32_t RasterOverlayTileProvider::computeLevelFromGeometricError(
@@ -358,11 +350,7 @@ namespace Cesium3DTiles {
 
     void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) {
         this->_tileDataBytes += pTile->getImage().image.size();
-    }
-
-    void RasterOverlayTileProvider::notifyTileUnloading(RasterOverlayTile* pTile) {
-        this->_tileDataBytes -= pTile->getImage().image.size();
-        this->_tiles.erase(pTile->getID());
+        --this->_tilesCurrentlyLoading;
     }
 
     void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) {
@@ -372,7 +360,15 @@ namespace Cesium3DTiles {
         assert(it != this->_tiles.end());
         assert(it->second.get() == pTile);
 
+        this->_tileDataBytes -= pTile->getImage().image.size();
+
+        RasterOverlay& overlay = pTile->getOverlay();
+
         this->_tiles.erase(it);
+
+        if (overlay.isBeingDestroyed()) {
+            overlay.destroySafely(nullptr);
+        }
     }
 
     std::unique_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
