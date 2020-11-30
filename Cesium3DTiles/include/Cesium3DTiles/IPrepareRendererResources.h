@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <gsl/span>
 
@@ -10,6 +11,7 @@ namespace CesiumGeometry {
 
 namespace tinygltf {
     struct Image;
+    class Model;
 }
 
 namespace Cesium3DTiles {
@@ -38,11 +40,12 @@ namespace Cesium3DTiles {
          *
          * This method is invoked in the load thread, and it may not modify the tile.
          * 
-         * @param tile The tile to prepare.
+         * @param model The glTF model to prepare.
+         * @param transform The tile's transformation.
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareInLoadThread(const Tile& tile) = 0;
+        virtual void* prepareInLoadThread(const tinygltf::Model& model, const glm::dmat4& transform) = 0;
 
         /**
          * @brief Further prepares renderer resources. 

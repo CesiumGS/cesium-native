@@ -246,6 +246,11 @@ namespace Cesium3DTiles {
             );
         }
 
+        template <class T>
+        Future<T> createResolvedFuture(T&& value) {
+            return Future<T>(this->_pSchedulers, async::make_task<T>(std::move(value)));
+        }
+
         /**
          * @brief Runs all tasks that are currently queued for the main thread.
          * 

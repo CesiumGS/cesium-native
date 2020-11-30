@@ -271,10 +271,9 @@ namespace Cesium3DTiles {
          * This function is not supposed to be called by clients.
          * 
          * @param tile The tile for which the content is requested.
-         * @return The pointer to the {@link IAssetRequest} that will
-         * complete when the content is available.
+         * @return A future that resolves when the content response is received, or std::nullopt if this Tile has no content to load.
          */
-        std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
+        std::optional<Future<std::unique_ptr<IAssetRequest>>> requestTileContent(Tile& tile);
 
         /**
          * @brief Add the given {@link TileContext} to this tile set.

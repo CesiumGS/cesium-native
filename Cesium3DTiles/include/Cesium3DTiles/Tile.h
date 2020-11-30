@@ -128,17 +128,6 @@ namespace Cesium3DTiles {
         Tile& operator=(Tile&& rhs) noexcept;
 
         /**
-         * @brief Prepares this tile for being destroyed.
-         * 
-         * This function is not supposed to be called by clients.
-         * 
-         * It will cancel all pending requests for this tile, 
-         * and make sure that the resources that have been 
-         * allocated by this tile can be freed.
-         */
-        void prepareToDestroy() noexcept;
-
-        /**
          * @brief Returns the {@link Tileset} to which this tile belongs.
          */
         Tileset* getTileset() noexcept { return this->_pContext->pTileset; }
@@ -391,11 +380,6 @@ namespace Cesium3DTiles {
         LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
 
         /**
-         * @brief Returns the content request that is currently in flight, if any.
-         */
-        IAssetRequest* getContentRequest() { return this->_pContentRequest.get(); }
-
-        /**
          * @brief Returns the {@link TileSelectionState} of this tile.
          *
          * This function is not supposed to be called by clients.
@@ -493,19 +477,6 @@ namespace Cesium3DTiles {
         void setState(LoadState value) noexcept;
 
         /**
-         * @brief Will be called when the response for loading the tile content was received.
-         * 
-         * This will examine the response of the given {@link IAssetRequest} and
-         * create the {@link Tile::getContent} of this tile. The requests are 
-         * triggered by {@link Tile::loadContent}, and this function will be
-         * called asynchronously when the response arrives. 
-         * 
-         * @param projections The {@link CesiumGeospatial::Projection} instances.
-         * @param pRequest The {@link IAssetRequest} for which the response was received.
-         */
-        void contentResponseReceived(const std::vector<CesiumGeospatial::Projection>& projections, IAssetRequest* pRequest);
-
-        /**
          * @brief Generates texture coordiantes for the raster overlays of the content of this tile.
          *
          * This will extend the accessors of the glTF model of the content of this
@@ -514,7 +485,7 @@ namespace Cesium3DTiles {
          *
          * @return The bounding region
          */
-        std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(tinygltf::Model& model, const std::vector<CesiumGeospatial::Projection>& projections);
+        static std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(tinygltf::Model& model, const BoundingVolume& boundingVolume, const std::vector<CesiumGeospatial::Projection>& projections);
 
         /**
          * @brief Upsample the parent of this tile.
@@ -541,7 +512,6 @@ namespace Cesium3DTiles {
 
         // Load state and data.
         std::atomic<LoadState> _state;
-        std::unique_ptr<IAssetRequest> _pContentRequest;
         std::unique_ptr<TileContentLoadResult> _pContent;
         void* _pRendererResources;
 

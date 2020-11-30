@@ -105,14 +105,6 @@ namespace Cesium3DTiles {
             this->_pTilesetJsonRequest->cancel();
         }
 
-        // Tell any ContentLoading tiles that we're destroying.
-        Tile* pCurrent = this->_loadedTiles.head();
-        while (pCurrent) {
-            Tile* pNext = this->_loadedTiles.next(pCurrent);
-            pCurrent->prepareToDestroy();
-            pCurrent = pNext;
-        }
-
         // Wait for all asynchronous loading to terminate.
         // If you're hanging here, it's most likely caused by _loadsInProgress not being
         // decremented correctly when an async load ends.
@@ -249,16 +241,15 @@ namespace Cesium3DTiles {
         this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context);
     }
 
-    std::unique_ptr<IAssetRequest> Tileset::requestTileContent(Tile& tile) {
+    std::optional<Future<std::unique_ptr<IAssetRequest>>> Tileset::requestTileContent(Tile& tile) {
         std::string url = this->getResolvedContentUrl(tile);
         if (url.empty()) {
-            return nullptr;
+            return std::nullopt;
         }
 
         this->notifyTileStartLoading(&tile);
 
-        std::shared_ptr<IAssetAccessor>& pAssetAccessor = this->getExternals().pAssetAccessor;
-        return pAssetAccessor->requestAsset(url, tile.getContext()->requestHeaders);
+        return this->getAsyncSystem().requestAsset(url, tile.getContext()->requestHeaders);
     }
 
     void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
@@ -579,18 +570,12 @@ namespace Cesium3DTiles {
     }
 
     FailedTileAction Tileset::_onIonTileFailed(Tile& failedTile) {
-        IAssetRequest* pRequest = failedTile.getContentRequest();
-        if (!pRequest) {
+        TileContentLoadResult* pContent = failedTile.getContent();
+        if (!pContent) {
             return FailedTileAction::GiveUp;
         }
 
-         IAssetResponse* pResponse = pRequest->response();
-         if (!pResponse) {
-             return FailedTileAction::GiveUp;
-         }
-
-         uint16_t statusCode = pResponse->statusCode();
-         if (statusCode != 401) {
+         if (pContent->httpStatusCode != 401) {
              return FailedTileAction::GiveUp;
          }
 
@@ -653,9 +638,8 @@ namespace Cesium3DTiles {
                     if (
                         pTile->getContext() == pContext &&
                         pTile->getState() == Tile::LoadState::FailedTemporarily &&
-                        pTile->getContentRequest() &&
-                        pTile->getContentRequest()->response() &&
-                        pTile->getContentRequest()->response()->statusCode() == 401
+                        pTile->getContent() &&
+                        pTile->getContent()->httpStatusCode == 401
                     ) {
                         if (failed) {
                             pTile->markPermanentlyFailed();
