@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/AsyncSystem.h"
 #include "Cesium3DTiles/IAssetAccessor.h"
 #include "Cesium3DTiles/ITaskProcessor.h"
+#include <future>
 
 using namespace Cesium3DTiles;
 
@@ -27,8 +28,9 @@ TEST_CASE("AsyncSystem") {
         virtual ~TestTaskProcessor() = default;
 
         virtual void startTask(std::function<void()> f) {
-
+            auto x = std::async(f);
         }
+
     };
 
     Cesium3DTiles::AsyncSystem system(
@@ -36,4 +38,5 @@ TEST_CASE("AsyncSystem") {
         std::make_shared<TestTaskProcessor>()
     );
 
+    system.runMainThreadTasks();
 }

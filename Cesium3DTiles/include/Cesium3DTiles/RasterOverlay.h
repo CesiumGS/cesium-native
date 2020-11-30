@@ -37,7 +37,7 @@ namespace Cesium3DTiles {
         RasterOverlayTileProvider* getTileProvider() noexcept;
 
         /** @copydoc getTileProvider */
-        const RasterOverlayTileProvider* getTileProvider() const;
+        const RasterOverlayTileProvider* getTileProvider() const noexcept;
 
         /**
          * @brief Gets the placeholder tile provider for this overlay.

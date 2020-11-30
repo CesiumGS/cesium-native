@@ -126,7 +126,11 @@ namespace Cesium3DTiles {
                 result.pRendererResources = result.pRendererResources;
                 this->_image = std::move(result.image);
                 this->setState(result.state);
+
+                assert(this->_pOverlay != nullptr);
+                assert(this->_pOverlay->getTileProvider() != nullptr);
                 this->_pOverlay->getTileProvider()->notifyTileLoaded(this);
+
                 this->releaseReference();
             });
         }
@@ -165,6 +169,8 @@ namespace Cesium3DTiles {
             assert(this->_references > 0);
             uint32_t references = --this->_references;
             if (references == 0) {
+                assert(this->_pOverlay != nullptr);
+                assert(this->_pOverlay->getTileProvider() != nullptr);
                 this->_pOverlay->getTileProvider()->removeTile(this);
             }
         }
