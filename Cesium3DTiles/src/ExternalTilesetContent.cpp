@@ -26,6 +26,7 @@ namespace Cesium3DTiles {
         pContext->baseUrl = url;
         pContext->requestHeaders = context.requestHeaders;
         pContext->version = context.version;
+        pContext->failedTileCallback = context.failedTileCallback;
 
         using nlohmann::json;
 
