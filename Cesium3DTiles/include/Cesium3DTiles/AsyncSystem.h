@@ -221,7 +221,7 @@ namespace Cesium3DTiles {
         Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type> runInWorkerThread(Func&& f) const {
             return Future<typename Impl::RemoveFuture<typename std::invoke_result<Func>::type>::type>(
                 this->_pSchedulers,
-                async::spawn(this->_pSchedulers->workerThreadScheduler, Impl::unwrapFuture<Func>(std::forward<Func>(f)))
+                async::spawn(*this->_pSchedulers, Impl::unwrapFuture<Func>(std::forward<Func>(f)))
             );
         }
 

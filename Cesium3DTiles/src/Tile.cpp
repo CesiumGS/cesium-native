@@ -653,43 +653,59 @@ namespace Cesium3DTiles {
     }
 
     void Tile::upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections) {
-        // This method should only be called when this tile's parent is already loaded and this tile's
-        // ID is of type `SubdividedParent`.
         Tile* pParent = this->getParent();
-        if (!pParent || pParent->getState() != LoadState::Done) {
-            this->setState(LoadState::ContentLoaded);
-            return;
-        }
+        const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
+
+        assert(pParent != nullptr);
+        assert(pParent->getState() == LoadState::Done);
+        assert(pSubdividedParentID != nullptr);
 
         TileContentLoadResult* pParentContent = pParent->getContent();
-        const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
-        if (!pParentContent || !pParentContent->model || !pSubdividedParentID) {
+        if (!pParentContent || !pParentContent->model) {
             this->setState(LoadState::ContentLoaded);
             return;
         }
 
         tinygltf::Model& parentModel = pParentContent->model.value();
 
-        this->getTileset()->notifyTileStartLoading(this);
+        Tileset* pTileset = this->getTileset();
+        pTileset->notifyTileStartLoading(this);
 
-        this->getTileset()->getExternals().pTaskProcessor->startTask([this, &parentModel, projections, pSubdividedParentID]() {
+        struct LoadResult {
+            LoadState state;
+            std::unique_ptr<TileContentLoadResult> pContent;
+            void* pRendererResources;
+        };
+
+        pTileset->getAsyncSystem().runInWorkerThread([
+            &parentModel,
+            transform = this->getTransform(),
+            projections,
+            pSubdividedParentID,
+            boundingVolume = this->getBoundingVolume(),
+            pPrepareRendererResources = pTileset->getExternals().pPrepareRendererResources
+        ]() {
             std::unique_ptr<TileContentLoadResult> pContent = std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
             if (pContent->model) {
-                pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(pContent->model.value(), this->getBoundingVolume(), projections);
+                pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
             }
             
-            this->_pContent = std::move(pContent);
-
-            if (pContent->model && this->getTileset()->getExternals().pPrepareRendererResources) {
-                this->_pRendererResources = this->getTileset()->getExternals().pPrepareRendererResources->prepareInLoadThread(pContent->model.value(), this->getTransform());
-            }
-            else {
-                this->_pRendererResources = nullptr;
+            void* pRendererResources = nullptr;
+            if (pContent->model && pPrepareRendererResources) {
+                pRendererResources = pPrepareRendererResources->prepareInLoadThread(pContent->model.value(), transform);
             }
 
+            return LoadResult {
+                LoadState::ContentLoaded,
+                std::move(pContent),
+                pRendererResources
+            };
+        }).thenInMainThread([this](LoadResult&& loadResult) {
+            this->_pContent = std::move(loadResult.pContent);
+            this->_pRendererResources = loadResult.pRendererResources;
             this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::ContentLoaded);
+            this->setState(loadResult.state);
         });
     }
 
