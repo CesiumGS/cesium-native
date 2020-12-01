@@ -72,15 +72,15 @@ namespace Cesium3DTiles {
         _overlays(*this),
         _tileDataBytes(0)
     {
-        std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
+        std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
         {
-            url += "?access_token=" + ionAccessToken;
+            ionUrl += "?access_token=" + ionAccessToken;
         }
 
         ++this->_loadsInProgress;
 
-        this->_asyncSystem.requestAsset(url).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
+        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
