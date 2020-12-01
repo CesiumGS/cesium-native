@@ -38,5 +38,5 @@ TEST_CASE("AsyncSystem") {
         std::make_shared<TestTaskProcessor>()
     );
 
-    system.runMainThreadTasks();
+    system.dispatchMainThreadTasks();
 }
