@@ -33,6 +33,15 @@ namespace Cesium3DTiles {
             _references(0)
         {
             struct LoadResult {
+                LoadResult() = default;
+                LoadResult(LoadState state_) :
+                    state(state_),
+                    image(),
+                    warnings(),
+                    errors(),
+                    pRendererResources(nullptr)
+                {}
+
                 LoadState state;
                 tinygltf::Image image;
                 std::string warnings;
@@ -55,11 +64,11 @@ namespace Cesium3DTiles {
             ) {
                 IAssetResponse* pResponse = pRequest->response();
                 if (pResponse == nullptr) {
-                    return LoadResult { LoadState::Failed };
+                    return LoadResult(LoadState::Failed);
                 }
 
                 if (pResponse->data().size() == 0) {
-                    return LoadResult { LoadState::Failed };
+                    return LoadResult(LoadState::Failed);
                 }
 
                 LoadResult result;
