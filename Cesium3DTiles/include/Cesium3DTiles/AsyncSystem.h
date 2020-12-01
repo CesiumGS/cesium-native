@@ -158,6 +158,39 @@ namespace Cesium3DTiles {
             );
         }
 
+        /**
+         * @brief Registers a continuation function to be invoked in the main thread when this Future rejects, and invalidates this Future.
+         * 
+         * The supplied function will not be invoked immediately, even if this method is called from the main thread.
+         * Instead, it will be queued and invoked the next time {@link runMainThreadTasks} is called.
+         * 
+         * If the function itself returns a `Future`, the function will not be considered complete
+         * until that returned `Future` also resolves.
+         * 
+         * Any `then` continuations chained after this one will be invoked with the return value of the catch callback.
+         * 
+         * @tparam Func The type of the function.
+         * @param f The function.
+         * @return A future that resolves after the supplied function completes.
+         */
+        template <class Func>
+        Future<T> catchInMainThread(Func&& f) {
+            auto catcher = [f = std::move(f)](async::task<T>&& t) {
+                try {
+                    return t.get();
+                } catch (std::exception& e) {
+                    return f(e);
+                } catch (...) {
+                    return f(std::runtime_error("Unknown exception"));
+                }
+            };
+
+            return Future<T>(
+                this->_pSchedulers,
+                _task.then(this->_pSchedulers->mainThreadScheduler, catcher)
+            );
+        }
+
     private:
         Future(std::shared_ptr<Impl::AsyncSystemSchedulers> pSchedulers, async::task<T>&& task) :
             _pSchedulers(pSchedulers),

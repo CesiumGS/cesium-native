@@ -298,6 +298,11 @@ namespace Cesium3DTiles {
             this->_pRendererResources = loadResult.pRendererResources;
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(loadResult.state);
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pContent.reset();
+            this->_pRendererResources = nullptr;
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(LoadState::Failed);
         });
     }
 
@@ -706,6 +711,11 @@ namespace Cesium3DTiles {
             this->_pRendererResources = loadResult.pRendererResources;
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(loadResult.state);
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pContent.reset();
+            this->_pRendererResources = nullptr;
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(LoadState::Failed);
         });
     }
 

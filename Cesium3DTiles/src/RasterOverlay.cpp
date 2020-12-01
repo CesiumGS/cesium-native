@@ -45,6 +45,9 @@ namespace Cesium3DTiles {
         ).thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
             this->_pTileProvider = std::move(pProvider);
             this->_isLoadingTileProvider = false;
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pTileProvider.reset();
+            this->_isLoadingTileProvider = false;
         });
     }
 

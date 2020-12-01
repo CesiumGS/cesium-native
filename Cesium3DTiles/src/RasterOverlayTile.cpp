@@ -132,6 +132,10 @@ namespace Cesium3DTiles {
                 this->_pOverlay->getTileProvider()->notifyTileLoaded(this);
 
                 this->releaseReference();
+            }).catchInMainThread([this](const std::exception& /*e*/) {
+                this->setState(LoadState::Failed);
+                this->_pOverlay->getTileProvider()->notifyTileLoaded(this);
+                this->releaseReference();
             });
         }
 

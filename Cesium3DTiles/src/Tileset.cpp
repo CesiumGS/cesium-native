@@ -122,6 +122,8 @@ namespace Cesium3DTiles {
             };
 
             this->_loadTilesetJson(pContext->baseUrl, pContext->requestHeaders, std::move(pContext));
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->notifyTileDoneLoading(nullptr);
         });
     }
 
@@ -318,26 +320,23 @@ namespace Cesium3DTiles {
             std::unique_ptr<Tile> pRootTile;
         };
 
+        if (!pContext) {
+            pContext = std::make_unique<TileContext>();
+        }
+
         this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
             pTileset = this,
-            pExistingContext = std::move(pContext)
+            pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
-                return LoadResult { nullptr, nullptr };
+                return LoadResult { std::move(pContext), nullptr };
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
                 // TODO: report error response.
-                return LoadResult { nullptr, nullptr };
-            }
-
-            std::unique_ptr<TileContext> pContext;
-            if (pExistingContext) {
-                pContext = std::move(pExistingContext);
-            } else {
-                pContext = std::make_unique<TileContext>();
+                return LoadResult { std::move(pContext), nullptr };
             }
 
             pContext->pTileset = pTileset;
@@ -366,6 +365,9 @@ namespace Cesium3DTiles {
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
+            this->notifyTileDoneLoading(nullptr);
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pRootTile.reset();
             this->notifyTileDoneLoading(nullptr);
         });
     }
