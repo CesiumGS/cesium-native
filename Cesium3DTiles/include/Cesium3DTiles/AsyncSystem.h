@@ -202,11 +202,11 @@ namespace Cesium3DTiles {
         async::task<T> _task;
 
         friend class AsyncSystem;
-        template <class Func, class T>
+        template <class Func, class R>
         friend struct Impl::ParameterizedTaskUnwrapper;
         template <class Func>
         friend struct Impl::TaskUnwrapper;
-        template <class T>
+        template <class R>
         friend class Future;
     };
 

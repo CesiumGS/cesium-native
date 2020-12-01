@@ -1,7 +1,8 @@
 #pragma once
 
-#include <functional>
 #include "Cesium3DTiles/Library.h"
+#include <functional>
+#include <string>
 
 namespace Cesium3DTiles {
 
