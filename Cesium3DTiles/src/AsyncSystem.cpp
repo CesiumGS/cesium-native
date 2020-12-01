@@ -38,6 +38,10 @@ namespace Cesium3DTiles {
         return result;
     }
 
+    void AsyncSystem::dispatchMainThreadTasks() {
+        this->_pSchedulers->mainThreadScheduler.run_all_tasks();
+    }
+
     namespace Impl {
         AsyncSystemSchedulers::AsyncSystemSchedulers(
             std::shared_ptr<IAssetAccessor> pAssetAccessor_,

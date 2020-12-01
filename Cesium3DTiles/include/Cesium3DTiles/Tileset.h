@@ -336,10 +336,13 @@ namespace Cesium3DTiles {
             uint32_t notYetRenderableCount = 0;
         };
 
-        void _ionResponseReceived(IAssetRequest* pRequest);
-        void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
-        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
+        void _loadTilesetJson(
+            const std::string& url,
+            const std::vector<std::pair<std::string, std::string>>& headers = std::vector<std::pair<std::string, std::string>>(),
+            std::unique_ptr<TileContext>&& pContext = nullptr
+        );
+        static void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context);
+        static void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
         FailedTileAction _onIonTileFailed(Tile& failedTile);
 
         struct FrameState {

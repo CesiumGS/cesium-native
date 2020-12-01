@@ -256,9 +256,7 @@ namespace Cesium3DTiles {
          * 
          * The tasks are run in the calling thread.
          */
-        void runMainThreadTasks() {
-            this->_pSchedulers->mainThreadScheduler.run_all_tasks();
-        }
+        void dispatchMainThreadTasks();
 
     private:
         std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
