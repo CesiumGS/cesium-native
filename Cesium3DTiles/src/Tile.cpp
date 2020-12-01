@@ -241,7 +241,8 @@ namespace Cesium3DTiles {
                 pLoadResult->httpStatusCode = 0;
                 return LoadResult {
                     LoadState::FailedTemporarily,
-                    std::move(pLoadResult)
+                    std::move(pLoadResult),
+                    nullptr
                 };
             }
 
@@ -251,7 +252,8 @@ namespace Cesium3DTiles {
                 pLoadResult->httpStatusCode = pResponse->statusCode();
                 return LoadResult {
                     LoadState::FailedTemporarily,
-                    std::move(pLoadResult)
+                    std::move(pLoadResult),
+                    nullptr
                 };
             }
 
