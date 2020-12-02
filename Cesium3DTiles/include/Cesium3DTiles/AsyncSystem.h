@@ -25,6 +25,12 @@ namespace Cesium3DTiles {
 
         template <class Func>
         struct TaskUnwrapper;
+
+        template <class Func, class T>
+        auto unwrapFuture(Func&& f);
+
+        template <class Func>
+        auto unwrapFuture(Func&& f);
     }
 
     /**
