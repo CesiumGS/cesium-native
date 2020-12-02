@@ -62,7 +62,7 @@ namespace CesiumAsync {
          * @return A future that resolves after the supplied function completes.
          */
         template <class Func>
-        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func, T>::type>::type> thenInWorkerThread(Func&& f) {
+        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func, T>::type>::type> thenInWorkerThread(Func&& f) && {
             return Future<typename Impl::RemoveFuture<typename std::invoke_result<Func, T>::type>::type>(
                 this->_pSchedulers,
                 _task.then(*this->_pSchedulers, Impl::unwrapFuture<Func, T>(std::forward<Func>(f)))
@@ -83,7 +83,7 @@ namespace CesiumAsync {
          * @return A future that resolves after the supplied function completes.
          */
         template <class Func>
-        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func, T>::type>::type> thenInMainThread(Func&& f) {
+        Future<typename Impl::RemoveFuture<typename std::invoke_result<Func, T>::type>::type> thenInMainThread(Func&& f) && {
             return Future<typename Impl::RemoveFuture<typename std::invoke_result<Func, T>::type>::type>(
                 this->_pSchedulers,
                 _task.then(this->_pSchedulers->mainThreadScheduler, Impl::unwrapFuture<Func, T>(std::forward<Func>(f)))
@@ -106,7 +106,7 @@ namespace CesiumAsync {
          * @return A future that resolves after the supplied function completes.
          */
         template <class Func>
-        Future<T> catchInMainThread(Func&& f) {
+        Future<T> catchInMainThread(Func&& f) && {
             auto catcher = [f = std::move(f)](async::task<T>&& t) {
                 try {
                     return t.get();
@@ -216,7 +216,7 @@ namespace CesiumAsync {
 
         template <class T>
         Future<T> createResolvedFuture(T&& value) {
-            return Future<T>(this->_pSchedulers, async::make_task<T>(std::move(value)));
+            return Future<T>(this->_pSchedulers, async::make_task<T>(std::forward<T>(value)));
         }
 
         /**

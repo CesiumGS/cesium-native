@@ -224,7 +224,7 @@ namespace Cesium3DTiles {
             void* pRendererResources;
         };
 
-        maybeRequestFuture.value().thenInWorkerThread([
+        std::move(maybeRequestFuture.value()).thenInWorkerThread([
             pContext = this->getContext(),
             tileID = this->getTileID(),
             boundingVolume = this->getBoundingVolume(),
