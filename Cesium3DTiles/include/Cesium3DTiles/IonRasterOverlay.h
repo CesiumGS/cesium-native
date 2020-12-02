@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
 
@@ -30,14 +30,15 @@ namespace Cesium3DTiles {
         );
         virtual ~IonRasterOverlay() override;
 
-        virtual void createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) override;
+        virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            RasterOverlay* pOwner
+        ) override;
 
     private:
         uint32_t _ionAssetID;
         std::string _ionAccessToken;
-
-        std::unique_ptr<IAssetRequest> _pMetadataRequest;
-        std::unique_ptr<RasterOverlay> _aggregatedOverlay;
     };
 
 }

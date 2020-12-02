@@ -58,6 +58,11 @@ namespace Cesium3DTiles {
          */
         std::vector<CesiumGeometry::QuadtreeTileRectangularRange> availableTileRectangles;
 
+        /**
+         * @brief The HTTP status code received when accessing this content.
+         */
+        uint16_t httpStatusCode;
+
         // TODO: other forms of tile availability, like a bitfield?
     };
 

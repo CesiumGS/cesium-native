@@ -1,13 +1,14 @@
 #include "Cesium3DTiles/GltfContent.h"
-#include "Cesium3DTiles/IAssetAccessor.h"
-#include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/ITaskProcessor.h"
 #include "upsampleGltfForRasterOverlays.h"
-#include <chrono>
 
+using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace std::string_literals;
@@ -26,7 +27,6 @@ namespace Cesium3DTiles {
         _id(""s),
         _contentBoundingVolume(),
         _state(LoadState::Unloaded),
-        _pContentRequest(nullptr),
         _pContent(nullptr),
         _pRendererResources(nullptr),
         _lastSelectionState(),
@@ -35,7 +35,6 @@ namespace Cesium3DTiles {
     }
 
     Tile::~Tile() {
-        this->prepareToDestroy();
         this->unloadContent();
     }
 
@@ -51,7 +50,6 @@ namespace Cesium3DTiles {
         _id(std::move(rhs._id)),
         _contentBoundingVolume(rhs._contentBoundingVolume),
         _state(rhs.getState()),
-        _pContentRequest(std::move(rhs._pContentRequest)),
         _pContent(std::move(rhs._pContent)),
         _pRendererResources(rhs._pRendererResources),
         _lastSelectionState(rhs._lastSelectionState),
@@ -73,24 +71,12 @@ namespace Cesium3DTiles {
             this->_id = std::move(rhs._id);
             this->_contentBoundingVolume = rhs._contentBoundingVolume;
             this->setState(rhs.getState());
-            this->_pContentRequest = std::move(rhs._pContentRequest);
             this->_pContent = std::move(rhs._pContent);
             this->_pRendererResources = rhs._pRendererResources;
             this->_lastSelectionState = rhs._lastSelectionState;
         }
 
         return *this;
-    }
-
-    void Tile::prepareToDestroy() noexcept {
-        if (this->_pContentRequest) {
-            this->_pContentRequest->cancel();
-        }
-
-        // Atomically change any tile in the ContentLoading state to the Destroying state.
-        // Tiles in other states remain in those states.
-        LoadState stateToChange = LoadState::ContentLoading;
-        this->_state.compare_exchange_strong(stateToChange, LoadState::Destroying);
     }
 
     void Tile::createChildTiles(size_t count) {
@@ -209,10 +195,10 @@ namespace Cesium3DTiles {
             projections.push_back(WebMercatorProjection());
         }
 
-        this->_pContentRequest = tileset.requestTileContent(*this);
-        if (this->_pContentRequest) {
-            this->_pContentRequest->bind(std::bind(&Tile::contentResponseReceived, this, std::move(projections), std::placeholders::_1));
-        } else {
+        std::optional<Future<std::unique_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
+        if (!maybeRequestFuture) {
+            // There is no content to load. But we may need to upsample.
+
             const QuadtreeChild* pSubdivided = std::get_if<QuadtreeChild>(&this->getTileID());
             if (pSubdivided) {
                 // We can't upsample this tile until its parent tile is done loading.
@@ -228,7 +214,99 @@ namespace Cesium3DTiles {
             } else {
                 this->setState(LoadState::ContentLoaded);
             }
+
+            return;
         }
+
+        struct LoadResult {
+            LoadState state;
+            std::unique_ptr<TileContentLoadResult> pContent;
+            void* pRendererResources;
+        };
+
+        maybeRequestFuture.value().thenInWorkerThread([
+            pContext = this->getContext(),
+            tileID = this->getTileID(),
+            boundingVolume = this->getBoundingVolume(),
+            geometricError = this->getGeometricError(),
+            transform = this->getTransform(),
+            contentBoundingVolume = this->getContentBoundingVolume(),
+            refine = this->getRefine(),
+            projections = std::move(projections),
+            pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources
+        ](std::unique_ptr<IAssetRequest>&& pRequest) {
+            IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+                // TODO: report the lack of response. Network error? Can this even happen?
+                auto pLoadResult = std::make_unique<TileContentLoadResult>();
+                pLoadResult->httpStatusCode = 0;
+                return LoadResult {
+                    LoadState::FailedTemporarily,
+                    std::move(pLoadResult),
+                    nullptr
+                };
+            }
+
+            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+                // TODO: report error response.
+                auto pLoadResult = std::make_unique<TileContentLoadResult>();
+                pLoadResult->httpStatusCode = pResponse->statusCode();
+                return LoadResult {
+                    LoadState::FailedTemporarily,
+                    std::move(pLoadResult),
+                    nullptr
+                };
+            }
+
+            std::unique_ptr<TileContentLoadResult> pContent = std::move(TileContentFactory::createContent(
+                *pContext,
+                tileID,
+                boundingVolume,
+                geometricError,
+                transform,
+                contentBoundingVolume,
+                refine,
+                pRequest->url(),
+                pResponse->contentType(),
+                pResponse->data()
+            ));
+
+            if (!pContent) {
+                pContent = std::make_unique<TileContentLoadResult>();
+            }
+
+            pContent->httpStatusCode = pResponse->statusCode();
+
+            void* pRendererResources = nullptr;
+
+            if (pContent->model) {
+                Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
+
+                if (pPrepareRendererResources) {
+                    pRendererResources = pPrepareRendererResources->prepareInLoadThread(
+                        pContent->model.value(),
+                        transform
+                    );
+                }
+            }
+
+            LoadResult result;
+            result.state = LoadState::ContentLoaded;
+            result.pContent = std::move(pContent);
+            result.pRendererResources = pRendererResources;
+
+            return result;
+        }).thenInMainThread([this](LoadResult&& loadResult) {
+            this->_pContent = std::move(loadResult.pContent);
+            this->_pRendererResources = loadResult.pRendererResources;
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(loadResult.state);
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pContent.reset();
+            this->_pRendererResources = nullptr;
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(LoadState::Failed);
+        });
     }
 
     bool Tile::unloadContent() noexcept {
@@ -266,7 +344,6 @@ namespace Cesium3DTiles {
         }
 
         this->_pRendererResources = nullptr;
-        this->_pContentRequest.reset();
         this->_pContent.reset();
         this->_rasterTiles.clear();
         this->setState(LoadState::Unloaded);
@@ -433,9 +510,6 @@ namespace Cesium3DTiles {
                 }
             }
 
-            // Free the request now that it is complete.
-            this->_pContentRequest.reset();
-
             this->setState(LoadState::Done);
         }
 
@@ -480,7 +554,7 @@ namespace Cesium3DTiles {
             for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
                 RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
 
-                std::shared_ptr<RasterOverlayTile>& pLoadingTile = mappedRasterTile.getLoadingTile();
+                RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
                 if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
                     // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
@@ -547,87 +621,17 @@ namespace Cesium3DTiles {
         this->_state.store(value, std::memory_order::memory_order_release);
     }
 
-    void Tile::contentResponseReceived(const std::vector<Projection>& projections, IAssetRequest* pRequest) {
-        if (this->getState() == LoadState::Destroying) {
-            this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::Failed);
-            return;
-        }
-
-        if (this->getState() > LoadState::ContentLoading) {
-            // This is a duplicate response, ignore it.
-            return;
-        }
-
-        IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-            // TODO: report the lack of response. Network error? Can this even happen?
-            this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::FailedTemporarily);
-            return;
-        }
-
-        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            // TODO: report error response.
-            this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::FailedTemporarily);
-            return;
-        }
-
-        this->getTileset()->getExternals().pTaskProcessor->startTask([pResponse, &projections, this]() {
-            if (this->getState() == LoadState::Destroying) {
-                this->getTileset()->notifyTileDoneLoading(this);
-                this->setState(LoadState::Failed);
-                return;
-            }
-
-            std::unique_ptr<TileContentLoadResult> pContent = std::move(TileContentFactory::createContent(
-                *this->getContext(),
-                this->getTileID(),
-                this->getBoundingVolume(),
-                this->getGeometricError(),
-                this->getTransform(),
-                this->getContentBoundingVolume(),
-                this->getRefine(),
-                this->_pContentRequest->url(),
-                pResponse->contentType(),
-                pResponse->data()
-            ));
-
-            if (this->getState() == LoadState::Destroying) {
-                this->getTileset()->notifyTileDoneLoading(this);
-                this->setState(LoadState::Failed);
-                return;
-            }
-
-            if (pContent && pContent->model) {
-                this->generateTextureCoordinates(pContent->model.value(), projections);
-
-                this->_pContent = std::move(pContent);
-        
-                const TilesetExternals& externals = this->getTileset()->getExternals();
-                if (externals.pPrepareRendererResources) {
-                    this->_pRendererResources = externals.pPrepareRendererResources->prepareInLoadThread(*this);
-                }
-                else {
-                    this->_pRendererResources = nullptr;
-                }
-            } else {
-                this->_pContent = std::move(pContent);
-            }
-
-            this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::ContentLoaded);
-        });
-    }
-
-    std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates(tinygltf::Model& model, const std::vector<Projection>& projections) {
+    /*static*/ std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates(
+        tinygltf::Model& model,
+        const BoundingVolume& boundingVolume, 
+        const std::vector<Projection>& projections
+    ) {
         std::optional<CesiumGeospatial::BoundingRegion> result;
 
         // Generate texture coordinates for each projection.
         if (!projections.empty()) {
-            CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&this->_boundingVolume);
-            CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&this->_boundingVolume);
+            const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
+            const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&boundingVolume);
             
             const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
             if (pRegion) {
@@ -657,43 +661,64 @@ namespace Cesium3DTiles {
     }
 
     void Tile::upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections) {
-        // This method should only be called when this tile's parent is already loaded and this tile's
-        // ID is of type `SubdividedParent`.
         Tile* pParent = this->getParent();
-        if (!pParent || pParent->getState() != LoadState::Done) {
-            this->setState(LoadState::ContentLoaded);
-            return;
-        }
+        const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
+
+        assert(pParent != nullptr);
+        assert(pParent->getState() == LoadState::Done);
+        assert(pSubdividedParentID != nullptr);
 
         TileContentLoadResult* pParentContent = pParent->getContent();
-        const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
-        if (!pParentContent || !pParentContent->model || !pSubdividedParentID) {
+        if (!pParentContent || !pParentContent->model) {
             this->setState(LoadState::ContentLoaded);
             return;
         }
 
         tinygltf::Model& parentModel = pParentContent->model.value();
 
-        this->getTileset()->notifyTileStartLoading(this);
+        Tileset* pTileset = this->getTileset();
+        pTileset->notifyTileStartLoading(this);
 
-        this->getTileset()->getExternals().pTaskProcessor->startTask([this, &parentModel, projections, pSubdividedParentID]() {
+        struct LoadResult {
+            LoadState state;
+            std::unique_ptr<TileContentLoadResult> pContent;
+            void* pRendererResources;
+        };
+
+        pTileset->getAsyncSystem().runInWorkerThread([
+            &parentModel,
+            transform = this->getTransform(),
+            projections,
+            pSubdividedParentID,
+            boundingVolume = this->getBoundingVolume(),
+            pPrepareRendererResources = pTileset->getExternals().pPrepareRendererResources
+        ]() {
             std::unique_ptr<TileContentLoadResult> pContent = std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
             if (pContent->model) {
-                pContent->updatedBoundingVolume = this->generateTextureCoordinates(pContent->model.value(), projections);
+                pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
             }
             
-            this->_pContent = std::move(pContent);
-
-            if (this->getTileset()->getExternals().pPrepareRendererResources) {
-                this->_pRendererResources = this->getTileset()->getExternals().pPrepareRendererResources->prepareInLoadThread(*this);
-            }
-            else {
-                this->_pRendererResources = nullptr;
+            void* pRendererResources = nullptr;
+            if (pContent->model && pPrepareRendererResources) {
+                pRendererResources = pPrepareRendererResources->prepareInLoadThread(pContent->model.value(), transform);
             }
 
+            return LoadResult {
+                LoadState::ContentLoaded,
+                std::move(pContent),
+                pRendererResources
+            };
+        }).thenInMainThread([this](LoadResult&& loadResult) {
+            this->_pContent = std::move(loadResult.pContent);
+            this->_pRendererResources = loadResult.pRendererResources;
             this->getTileset()->notifyTileDoneLoading(this);
-            this->setState(LoadState::ContentLoaded);
+            this->setState(loadResult.state);
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pContent.reset();
+            this->_pRendererResources = nullptr;
+            this->getTileset()->notifyTileDoneLoading(this);
+            this->setState(LoadState::Failed);
         });
     }
 

@@ -1,18 +1,15 @@
 #pragma once
 
-#include <string>
-#include <map>
-#include <vector>
+#include "CesiumAsync/Library.h"
 #include <gsl/span>
-#include <gsl/string_span>
-#include "Cesium3DTiles/Library.h"
+#include <string>
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
 
     /**
      * @brief A completed response for a 3D Tiles asset.
      */
-    class CESIUM3DTILES_API IAssetResponse {
+    class CESIUMASYNC_API IAssetResponse {
     public:
 
         /**

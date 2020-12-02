@@ -9,10 +9,18 @@ namespace Cesium3DTiles {
     {
     }
 
+    RasterOverlayCollection::~RasterOverlayCollection() {
+        if (this->_overlays.size() > 0) {
+            for (int64_t i = this->_overlays.size(); i >= 0; --i) {
+                this->remove(this->_overlays[i].get());
+            }
+        }
+    }
+
     void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
         RasterOverlay* pOverlayRaw = pOverlay.get();
         this->_overlays.push_back(std::move(pOverlay));
-        pOverlayRaw->createTileProvider(this->_pTileset->getExternals());
+        pOverlayRaw->createTileProvider(this->_pTileset->getAsyncSystem(), this->_pTileset->getExternals().pPrepareRendererResources);
 
         // Add this overlay to existing geometry tiles.
         this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {

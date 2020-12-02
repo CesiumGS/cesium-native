@@ -1,13 +1,16 @@
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 
+using namespace CesiumAsync;
+
 namespace Cesium3DTiles {
 
     RasterOverlay::RasterOverlay() :
         _pPlaceholder(),
         _pTileProvider(),
         _cutouts(),
-        _pSelf()
+        _pSelf(),
+        _isLoadingTileProvider(false)
     {
     }
 
@@ -18,22 +21,35 @@ namespace Cesium3DTiles {
         return this->_pTileProvider ? this->_pTileProvider.get() : this->_pPlaceholder.get();
     }
 
-    const RasterOverlayTileProvider* RasterOverlay::getTileProvider() const {
+    const RasterOverlayTileProvider* RasterOverlay::getTileProvider() const noexcept {
         return this->_pTileProvider ? this->_pTileProvider.get() : this->_pPlaceholder.get();
     }
 
-    void RasterOverlay::createTileProvider(const TilesetExternals& externals) {
+    void RasterOverlay::createTileProvider(
+        const AsyncSystem& asyncSystem,
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
+    ) {
         if (this->_pPlaceholder) {
             return;
         }
 
         this->_pPlaceholder = std::make_unique<RasterOverlayTileProvider>(
             *this,
-            externals
+            asyncSystem
         );
 
-        this->createTileProvider(externals, this, [this](std::unique_ptr<RasterOverlayTileProvider>&& pTileProvider) {
-            this->_pTileProvider = std::move(pTileProvider);
+        this->_isLoadingTileProvider = true;
+
+        this->createTileProvider(
+            asyncSystem,
+            pPrepareRendererResources,
+            this
+        ).thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
+            this->_pTileProvider = std::move(pProvider);
+            this->_isLoadingTileProvider = false;
+        }).catchInMainThread([this](const std::exception& /*e*/) {
+            this->_pTileProvider.reset();
+            this->_isLoadingTileProvider = false;
         });
     }
 
@@ -47,6 +63,11 @@ namespace Cesium3DTiles {
         }
 
         // Check if it's safe to delete this object yet.
+        if (this->_isLoadingTileProvider) {
+            // Loading, so it's not safe to unload yet.
+            return;
+        }
+
         RasterOverlayTileProvider* pTileProvider = this->getTileProvider();
         if (!pTileProvider || pTileProvider->getNumberOfTilesLoading() == 0) {
             // No tile provider or no tiles loading, so it's safe to delete!

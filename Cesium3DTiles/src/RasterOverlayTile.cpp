@@ -1,9 +1,12 @@
-#include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
+#include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "Cesium3DTiles/RasterOverlay.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/ITaskProcessor.h"
+
+using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
@@ -13,100 +16,78 @@ namespace Cesium3DTiles {
             _pOverlay(&overlay),
             _tileID(0, 0, 0),
             _state(LoadState::Placeholder),
-            _pImageRequest(),
             _image(),
             _pRendererResources(nullptr),
-            _pSelf(nullptr)
+            _references(0)
         {
         }
 
         RasterOverlayTile::RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
-            std::unique_ptr<IAssetRequest>&& pImageRequest
+            Future<std::unique_ptr<IAssetRequest>>&& imageRequest
         ) :
             _pOverlay(&overlay),
             _tileID(tileID),
             _state(LoadState::Unloaded),
-            _pImageRequest(std::move(pImageRequest)),
             _image(),
             _pRendererResources(nullptr),
-            _pSelf(nullptr)
+            _references(0)
         {
-        }
+            struct LoadResult {
+                LoadResult() = default;
+                LoadResult(LoadState state_) :
+                    state(state_),
+                    image(),
+                    warnings(),
+                    errors(),
+                    pRendererResources(nullptr)
+                {}
 
-        RasterOverlayTile::~RasterOverlayTile() {
-            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
-            pTileProvider->notifyTileUnloading(this);
-
-            const TilesetExternals& externals = pTileProvider->getExternals();
-
-            void* pLoadThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? nullptr : this->_pRendererResources;
-            void* pMainThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? this->_pRendererResources : nullptr;
-
-            externals.pPrepareRendererResources->freeRaster(*this, pLoadThreadResult, pMainThreadResult);
-        }
-
-        void RasterOverlayTile::load(std::shared_ptr<RasterOverlayTile>& pThis) {
-            this->_pSelf = pThis;
-            this->setState(LoadState::Loading);
-            this->_pImageRequest->bind(std::bind(&RasterOverlayTile::requestComplete, this, std::placeholders::_1));
-        }
-
-        void RasterOverlayTile::loadInMainThread() {
-            if (this->getState() != RasterOverlayTile::LoadState::Loaded) {
-                return;
-            }
-
-            this->_pImageRequest.reset();
-
-            // Do the final main thread raster loading
-            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
-            const TilesetExternals& externals = pTileProvider->getExternals();
-            this->_pRendererResources = externals.pPrepareRendererResources->prepareRasterInMainThread(*this, this->_pRendererResources);
-
-            pTileProvider->notifyTileLoaded(this);
-
-            this->setState(LoadState::Done);
-        }
-
-        void RasterOverlayTile::requestComplete(IAssetRequest* pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
-            if (pResponse == nullptr) {
-                this->setState(LoadState::Failed);
-                return;
-            }
-
-            if (pResponse->data().size() == 0) {
-                this->setState(LoadState::Failed);
-                return;
-            }
-            
-            const TilesetExternals& externals = this->_pOverlay->getTileProvider()->getExternals();
-
-            externals.pTaskProcessor->startTask([pResponse, this]() {
-                std::string errors;
+                LoadState state;
+                tinygltf::Image image;
                 std::string warnings;
+                std::string errors;
+                void* pRendererResources;
+            };
+
+            this->addReference();
+            this->setState(LoadState::Loading);
+
+            RasterOverlayTileProvider* pTileProvider = overlay.getTileProvider();
+
+            imageRequest.thenInWorkerThread([
+                tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID()),
+                projection = pTileProvider->getProjection(),
+                cutoutsCollection = overlay.getCutouts(),
+                pPrepareRendererResources = pTileProvider->getPrepareRendererResources()
+            ](
+                std::unique_ptr<IAssetRequest> pRequest
+            ) {
+                IAssetResponse* pResponse = pRequest->response();
+                if (pResponse == nullptr) {
+                    return LoadResult(LoadState::Failed);
+                }
+
+                if (pResponse->data().size() == 0) {
+                    return LoadResult(LoadState::Failed);
+                }
+
+                LoadResult result;
 
                 gsl::span<const uint8_t> data = pResponse->data();
-                bool success = tinygltf::LoadImageData(&this->_image, 0, &errors, &warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
+                bool success = tinygltf::LoadImageData(&result.image, 0, &result.errors, &result.warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
 
                 const int bytesPerPixel = 4;
-                if (success && this->_image.image.size() >= static_cast<size_t>(this->_image.width * this->_image.height * bytesPerPixel)) {
-                    RasterOverlay& overlay = this->getOverlay();
-                    RasterOverlayTileProvider* pTileProvider = overlay.getTileProvider();
-
-                    CesiumGeometry::Rectangle tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID());
+                if (success && result.image.image.size() >= static_cast<size_t>(result.image.width * result.image.height * bytesPerPixel)) {
                     double tileWidth = tileRectangle.computeWidth();
                     double tileHeight = tileRectangle.computeHeight();
 
-                    const CesiumGeospatial::Projection& projection = pTileProvider->getProjection();
+                    gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = cutoutsCollection.getCutouts();
 
-                    gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = overlay.getCutouts().getCutouts();
-
-                    std::vector<unsigned char>& imageData = this->_image.image;
-                    int width = this->_image.width;
-                    int height = this->_image.width;
+                    std::vector<unsigned char>& imageData = result.image.image;
+                    int width = result.image.width; 
+                    int height = result.image.width;
 
                     for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
                         CesiumGeometry::Rectangle cutoutRectangle = projectRectangleSimple(projection, rectangle);
@@ -143,20 +124,70 @@ namespace Cesium3DTiles {
                         }
                     }
 
-                    this->_pRendererResources = pTileProvider->getExternals().pPrepareRendererResources->prepareRasterInLoadThread(*this);
-                    this->setState(LoadState::Loaded);
+                    result.pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(result.image);
+
+                    result.state = LoadState::Loaded;
                 } else {
-                    this->_pRendererResources = nullptr;
-                    this->setState(LoadState::Failed);
+                    result.pRendererResources = nullptr;
+                    result.state = LoadState::Failed;
                 }
 
-                if (this->getOverlay().isBeingDestroyed()) {
-                    this->getOverlay().destroySafely(nullptr);
-                }
+                return result;
+            }).thenInMainThread([this](LoadResult&& result) {
+                result.pRendererResources = result.pRendererResources;
+                this->_image = std::move(result.image);
+                this->setState(result.state);
 
-                // Now that we're done loading we can allow this tile to be destroyed.
-                this->_pSelf.reset();
+                assert(this->_pOverlay != nullptr);
+                assert(this->_pOverlay->getTileProvider() != nullptr);
+                this->_pOverlay->getTileProvider()->notifyTileLoaded(this);
+
+                this->releaseReference();
+            }).catchInMainThread([this](const std::exception& /*e*/) {
+                this->setState(LoadState::Failed);
+                this->_pOverlay->getTileProvider()->notifyTileLoaded(this);
+                this->releaseReference();
             });
+        }
+
+        RasterOverlayTile::~RasterOverlayTile() {
+            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
+            if (pTileProvider) {
+                const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources = pTileProvider->getPrepareRendererResources();
+
+                if (pPrepareRendererResources) {
+                    void* pLoadThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? nullptr : this->_pRendererResources;
+                    void* pMainThreadResult = this->getState() == RasterOverlayTile::LoadState::Done ? this->_pRendererResources : nullptr;
+
+                    pPrepareRendererResources->freeRaster(*this, pLoadThreadResult, pMainThreadResult);
+                }
+            }
+        }
+
+        void RasterOverlayTile::loadInMainThread() {
+            if (this->getState() != RasterOverlayTile::LoadState::Loaded) {
+                return;
+            }
+
+            // Do the final main thread raster loading
+            RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();
+            this->_pRendererResources = pTileProvider->getPrepareRendererResources()->prepareRasterInMainThread(*this, this->_pRendererResources);
+
+            this->setState(LoadState::Done);
+        }
+
+        void RasterOverlayTile::addReference() {
+            ++this->_references;
+        }
+
+        void RasterOverlayTile::releaseReference() {
+            assert(this->_references > 0);
+            uint32_t references = --this->_references;
+            if (references == 0) {
+                assert(this->_pOverlay != nullptr);
+                assert(this->_pOverlay->getTileProvider() != nullptr);
+                this->_pOverlay->getTileProvider()->removeTile(this);
+            }
         }
 
         void RasterOverlayTile::setState(LoadState newState) {

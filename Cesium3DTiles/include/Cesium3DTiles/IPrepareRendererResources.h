@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <gsl/span>
 
@@ -8,9 +9,13 @@ namespace CesiumGeometry {
     struct Rectangle;
 }
 
+namespace tinygltf {
+    struct Image;
+    class Model;
+}
+
 namespace Cesium3DTiles {
 
-    class IAssetAccessor;
     class Tile;
     class RasterOverlayTile;
 
@@ -34,11 +39,12 @@ namespace Cesium3DTiles {
          *
          * This method is invoked in the load thread, and it may not modify the tile.
          * 
-         * @param tile The tile to prepare.
+         * @param model The glTF model to prepare.
+         * @param transform The tile's transformation.
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareInLoadThread(const Tile& tile) = 0;
+        virtual void* prepareInLoadThread(const tinygltf::Model& model, const glm::dmat4& transform) = 0;
 
         /**
          * @brief Further prepares renderer resources. 
@@ -75,11 +81,11 @@ namespace Cesium3DTiles {
          *
          * This method is invoked in the load thread, and it may not modify the tile.
          * 
-         * @param rasterTile The raster tile to prepare.
+         * @param image The raster tile image to prepare.
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareRasterInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareRasterInLoadThread(const RasterOverlayTile& rasterTile) = 0;
+        virtual void* prepareRasterInLoadThread(const tinygltf::Image& image) = 0;
 
         /**
          * @brief Further preprares a raster overlay tile. 

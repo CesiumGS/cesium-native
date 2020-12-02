@@ -24,7 +24,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the {@link CesiumGeospatial::GlobeRectangle} objects of this collection.
          */
-        gsl::span<const CesiumGeospatial::GlobeRectangle> getCutouts() { return this->_cutouts; }
+        gsl::span<const CesiumGeospatial::GlobeRectangle> getCutouts() const { return this->_cutouts; }
 
     private:
         std::vector<CesiumGeospatial::GlobeRectangle> _cutouts;

@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Cesium3DTiles/Camera.h"
-#include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/ViewUpdateResult.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumUtility/Json.h"
 #include <atomic>
@@ -197,6 +198,9 @@ namespace Cesium3DTiles {
          */
         const TilesetExternals& getExternals() const { return this->_externals; }
 
+        CesiumAsync::AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
+        const CesiumAsync::AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+
         /** @copydoc Tileset::getOptions() */
         const TilesetOptions& getOptions() const { return this->_options; }
 
@@ -267,10 +271,9 @@ namespace Cesium3DTiles {
          * This function is not supposed to be called by clients.
          * 
          * @param tile The tile for which the content is requested.
-         * @return The pointer to the {@link IAssetRequest} that will
-         * complete when the content is available.
+         * @return A future that resolves when the content response is received, or std::nullopt if this Tile has no content to load.
          */
-        std::unique_ptr<IAssetRequest> requestTileContent(Tile& tile);
+        std::optional<CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
 
         /**
          * @brief Add the given {@link TileContext} to this tile set.
@@ -333,10 +336,13 @@ namespace Cesium3DTiles {
             uint32_t notYetRenderableCount = 0;
         };
 
-        void _ionResponseReceived(IAssetRequest* pRequest);
-        void _tilesetJsonResponseReceived(IAssetRequest* pRequest);
-        void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
-        void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
+        void _loadTilesetJson(
+            const std::string& url,
+            const std::vector<std::pair<std::string, std::string>>& headers = std::vector<std::pair<std::string, std::string>>(),
+            std::unique_ptr<TileContext>&& pContext = nullptr
+        );
+        static void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context);
+        static void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
         FailedTileAction _onIonTileFailed(Tile& failedTile);
 
         struct FrameState {
@@ -358,15 +364,14 @@ namespace Cesium3DTiles {
 
         std::vector<std::unique_ptr<TileContext>> _contexts;
         TilesetExternals _externals;
+        CesiumAsync::AsyncSystem _asyncSystem;
 
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;
         std::optional<std::string> _ionAccessToken;
+        bool _isRefreshingIonToken;
 
         TilesetOptions _options;
-
-        std::unique_ptr<IAssetRequest> _pIonRequest;
-        std::unique_ptr<IAssetRequest> _pTilesetJsonRequest;
 
         std::unique_ptr<Tile> _pRootTile;
 
@@ -379,7 +384,7 @@ namespace Cesium3DTiles {
             /**
              * @brief The relative priority of loading this tile.
              * 
-             * Lower priority values low sooner.
+             * Lower priority values load sooner.
              */
             double priority;
 
@@ -397,7 +402,7 @@ namespace Cesium3DTiles {
 
         RasterOverlayCollection _overlays;
 
-        std::atomic<size_t> _tileDataBytes;
+        size_t _tileDataBytes;
 
         static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const FrameState& frameState, Tile& tile, double distance);
         static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);
