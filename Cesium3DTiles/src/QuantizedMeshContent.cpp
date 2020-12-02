@@ -6,6 +6,7 @@
 #include "QuantizedMeshContent.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
+#include "Cesium3DTiles/Logging.h"
 #include <glm/vec3.hpp>
 #include <stdexcept>
 
@@ -465,7 +466,16 @@ namespace Cesium3DTiles {
 
     static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> metadataString, TileContentLoadResult& result) {
         using namespace nlohmann;
-        json metadata = json::parse(metadataString.begin(), metadataString.end());
+        json metadata;
+        try
+        {
+            metadata = json::parse(metadataString.begin(), metadataString.end());
+        }
+        catch (const json::parse_error& error)
+        {
+            CESIUM_LOG_ERROR("Error when parsing metadata: {}", error.what());
+            return;
+        }
 
         json::iterator availableIt = metadata.find("available");
         if (availableIt == metadata.end()) {

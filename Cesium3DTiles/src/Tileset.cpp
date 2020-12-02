@@ -10,6 +10,7 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
+#include "Cesium3DTiles/Logging.h"
 #include <glm/common.hpp>
 
 using namespace CesiumAsync;
@@ -321,11 +322,13 @@ namespace Cesium3DTiles {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
+                CESIUM_LOG_ERROR("Did not receive a valid response for tileset {}", pRequest->url());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
                 // TODO: report error response.
+                CESIUM_LOG_ERROR("Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
@@ -335,7 +338,13 @@ namespace Cesium3DTiles {
             gsl::span<const uint8_t> data = pResponse->data();
 
             using nlohmann::json;
-            json tileset = json::parse(data.begin(), data.end());
+            json tileset;
+            try {
+                tileset = json::parse(data.begin(), data.end());
+            } catch (const json::parse_error& error) {
+                CESIUM_LOG_ERROR("Error when parsing tileset JSON: {}", error.what());
+                return LoadResult { std::move(pContext), nullptr };
+            }
 
             std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
             pRootTile->setContext(pContext.get());
@@ -590,25 +599,33 @@ namespace Cesium3DTiles {
                     // Update the context with the new token.
                     gsl::span<const uint8_t> data = pIonResponse->data();
 
+                    bool failedParsing = false;
                     using nlohmann::json;
-                    json ionResponse = json::parse(data.begin(), data.end());
-
-                    std::string accessToken = ionResponse.value<std::string>("accessToken", "");
-                    
-                    auto authIt = std::find_if(
-                        pContext->requestHeaders.begin(),
-                        pContext->requestHeaders.end(),
-                        [](auto& headerPair) {
-                            return headerPair.first == "Authorization";
-                        }
-                    );
-                    if (authIt != pContext->requestHeaders.end()) {
-                        authIt->second = "Bearer " + accessToken;
-                    } else {
-                        pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                    json ionResponse;
+                    try {
+                        ionResponse = json::parse(data.begin(), data.end());
+                    } catch (const json::parse_error& error) {
+                        CESIUM_LOG_ERROR("Error when parsing ion response: {}", error.what());
+                        failedParsing = true;
                     }
+                    if (!failedParsing) {
+                        std::string accessToken = ionResponse.value<std::string>("accessToken", "");
 
-                    failed = false;
+                        auto authIt = std::find_if(
+                            pContext->requestHeaders.begin(),
+                            pContext->requestHeaders.end(),
+                            [](auto& headerPair) {
+                                return headerPair.first == "Authorization";
+                            }
+                        );
+                        if (authIt != pContext->requestHeaders.end()) {
+                            authIt->second = "Bearer " + accessToken;
+                        } else {
+                            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                        }
+
+                        failed = false;
+                    }
                 }
 
                 // Put all auth-failed tiles in this context back into the Unloaded state.
