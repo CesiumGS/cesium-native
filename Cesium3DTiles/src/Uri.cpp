@@ -44,7 +44,7 @@ std::string Uri::resolve(const std::string& base, const std::string& relative, b
 		return relative;
 	}
 
-	std::string result(charsRequired, ' ');
+	std::string result(static_cast<size_t>(charsRequired), ' ');
 
 	if (uriToStringA(const_cast<char*>(result.c_str()), &resolvedUri, charsRequired + 1, nullptr) != URI_SUCCESS) {
 		uriFreeUriMembersA(&resolvedUri);

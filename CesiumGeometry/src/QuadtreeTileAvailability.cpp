@@ -142,8 +142,8 @@ namespace CesiumGeometry {
             const std::vector<RectangleWithLevel>& rectangles = pNode->rectangles;
 
             // Rectangles are sorted by level, lowest first.
-            for (int32_t i = static_cast<int32_t>(rectangles.size()) - 1; i >= 0 && rectangles[i].level > maxLevel; --i) {
-                const RectangleWithLevel& rectangle = rectangles[i];
+            for (int32_t i = static_cast<int32_t>(rectangles.size()) - 1; i >= 0 && rectangles[static_cast<size_t>(i)].level > maxLevel; --i) {
+                const RectangleWithLevel& rectangle = rectangles[static_cast<size_t>(i)];
                 if (rectangle.rectangle.contains(position)) {
                     maxLevel = rectangle.level;
                 }

@@ -347,8 +347,8 @@ namespace Cesium3DTiles {
 
         struct FrameState {
             const Camera& camera;
-            uint32_t lastFrameNumber;
-            uint32_t currentFrameNumber;
+            int32_t lastFrameNumber;
+            int32_t currentFrameNumber;
             double fogDensity;
         };
 
@@ -375,7 +375,7 @@ namespace Cesium3DTiles {
 
         std::unique_ptr<Tile> _pRootTile;
 
-        uint32_t _previousFrameNumber;
+        int32_t _previousFrameNumber;
         ViewUpdateResult _updateResult;
 
         struct LoadRecord {

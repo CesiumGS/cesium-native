@@ -114,7 +114,7 @@ namespace Cesium3DTiles {
                         uint32_t endPixelY = static_cast<uint32_t>(std::ceil(endV * height));
 
                         for (uint32_t j = startPixelY; j < endPixelY; ++j) {
-                            uint32_t rowStart = j * width * bytesPerPixel;
+                            uint32_t rowStart = j * static_cast<uint32_t>(width) * static_cast<uint32_t>(bytesPerPixel);
                             for (uint32_t i = startPixelX; i < endPixelX; ++i) {
                                 uint32_t pixelStart = rowStart + i * bytesPerPixel;
                                 

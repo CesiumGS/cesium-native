@@ -258,7 +258,7 @@ namespace Cesium3DTiles {
                 };
             }
 
-            std::unique_ptr<TileContentLoadResult> pContent = std::move(TileContentFactory::createContent(
+            std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
                 *pContext,
                 tileID,
                 boundingVolume,
@@ -269,7 +269,7 @@ namespace Cesium3DTiles {
                 pRequest->url(),
                 pResponse->contentType(),
                 pResponse->data()
-            ));
+            );
 
             if (!pContent) {
                 pContent = std::make_unique<TileContentLoadResult>();
@@ -450,7 +450,7 @@ namespace Cesium3DTiles {
         )));
     }
 
-    void Tile::update(uint32_t /*previousFrameNumber*/, uint32_t /*currentFrameNumber*/) {
+    void Tile::update(int32_t /*previousFrameNumber*/, int32_t /*currentFrameNumber*/) {
         const TilesetExternals& externals = this->getTileset()->getExternals();
 
         if (this->getState() == LoadState::FailedTemporarily) {
@@ -559,7 +559,7 @@ namespace Cesium3DTiles {
                     // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
                     if (!pProvider->isPlaceholder()) {
-                        this->_rasterTiles.erase(this->_rasterTiles.begin() + i);
+                        this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
                         --i;
 
                         const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
@@ -609,7 +609,7 @@ namespace Cesium3DTiles {
                     continue;
                 }
 
-                bytes -= bufferViews[bufferView].byteLength;
+                bytes -= bufferViews[static_cast<size_t>(bufferView)].byteLength;
                 bytes += image.image.size();
             }
         }

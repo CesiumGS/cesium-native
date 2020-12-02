@@ -169,9 +169,9 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
 
-            uint32_t width = resource.value("imageWidth", 256);
-            uint32_t height = resource.value("imageHeight", 256);
-            uint32_t maximumLevel = resource.value("zoomMax", 30);
+            uint32_t width = resource.value("imageWidth", 256U);
+            uint32_t height = resource.value("imageHeight", 256U);
+            uint32_t maximumLevel = resource.value("zoomMax", 30U);
 
             std::vector<std::string> subdomains = resource.value("imageUrlSubdomains", std::vector<std::string>());
             std::string urlTemplate = resource.value("imageUrl", std::string());

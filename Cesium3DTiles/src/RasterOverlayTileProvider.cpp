@@ -343,7 +343,7 @@ namespace Cesium3DTiles {
                 CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
                 CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTile(QuadtreeTileID(imageryLevel, i, j));
-                outputRasterTiles.emplace(outputRasterTiles.begin() + realOutputIndex, pTile, texCoordsRectangle);
+                outputRasterTiles.emplace(outputRasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(realOutputIndex), pTile, texCoordsRectangle);
                 ++realOutputIndex;
             }
         }

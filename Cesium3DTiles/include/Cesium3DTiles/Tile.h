@@ -452,7 +452,7 @@ namespace Cesium3DTiles {
          * @param previousFrameNumber The number of the previous render frame.
          * @param currentFrameNumber The number of the current render frame.
          */
-        void update(uint32_t previousFrameNumber, uint32_t currentFrameNumber);
+        void update(int32_t previousFrameNumber, int32_t currentFrameNumber);
 
         /**
          * @brief Marks the tile as permanently failing to load.
