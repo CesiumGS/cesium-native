@@ -82,7 +82,7 @@ namespace Cesium3DTiles {
 
     template <class T>
     static T readValue(const gsl::span<const uint8_t>& data, size_t offset, T defaultValue) {
-        if (offset >= 0 && offset + sizeof(T) <= data.size()) {
+        if (offset + sizeof(T) <= data.size()) {
             return *reinterpret_cast<const T*>(data.data() + offset);
         }
         return defaultValue;

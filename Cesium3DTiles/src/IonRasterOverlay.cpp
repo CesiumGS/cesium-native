@@ -1,16 +1,16 @@
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
-#include "Cesium3DTiles/IAssetAccessor.h"
-#include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IonRasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
 #include "Cesium3DTiles/Logging.h"
+
+using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
@@ -19,40 +19,42 @@ namespace Cesium3DTiles {
         const std::string& ionAccessToken
     ) :
         _ionAssetID(ionAssetID),
-        _ionAccessToken(ionAccessToken),
-        _aggregatedOverlay(nullptr)
+        _ionAccessToken(ionAccessToken)
     {
     }
 
     IonRasterOverlay::~IonRasterOverlay() {
     }
 
-    void IonRasterOverlay::createTileProvider(const TilesetExternals& externals, RasterOverlay* pOwner, std::function<CreateTileProviderCallback>&& callback) {
+    Future<std::unique_ptr<RasterOverlayTileProvider>> IonRasterOverlay::createTileProvider(
+        const AsyncSystem& asyncSystem,
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        RasterOverlay* pOwner
+    ) {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
         ionUrl = Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
-        this->_pMetadataRequest = externals.pAssetAccessor->requestAsset(ionUrl);
-        this->_pMetadataRequest->bind([this, &externals, pOwner, callback](IAssetRequest* pRequest) mutable {
+
+        pOwner = pOwner ? pOwner : this;
+
+        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([](
+            std::unique_ptr<IAssetRequest> pRequest
+        ) -> std::unique_ptr<RasterOverlay> {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
             json response;
-            try
-            {
+            try {
                 response = json::parse(pResponse->data().begin(), pResponse->data().end());
-            }
-            catch (const json::parse_error& error)
-            {
+            } catch (const json::parse_error& error) {
                 CESIUM_LOG_ERROR("Error when parsing ion raster overlay metadata JSON: {}", error.what());
-                callback(nullptr);
-                return;
+                return nullptr;
             }
 
             std::string type = response.value("type", "unknown");
             if (type != "IMAGERY") {
                 // TODO: report invalid imagery type.
                 CESIUM_LOG_ERROR("Ion raster overlay metadata response type is not 'IMAGERY', but {}", type);
-                callback(nullptr);
-                return;
+                return nullptr;
             }
 
             std::string externalType = response.value("externalType", "unknown");
@@ -61,8 +63,7 @@ namespace Cesium3DTiles {
                 if (optionsIt == response.end()) {
                     // TODO: report incomplete Bing options
                     CESIUM_LOG_ERROR("Ion raster overlay metadata response does not contain 'options'");
-                    callback(nullptr);
-                    return;
+                    return nullptr;
                 }
 
                 json options = *optionsIt;
@@ -71,7 +72,7 @@ namespace Cesium3DTiles {
                 std::string mapStyle = options.value("mapStyle", "AERIAL");
                 std::string culture = options.value("culture", "");
 
-                this->_aggregatedOverlay = std::make_unique<BingMapsRasterOverlay>(
+                return std::make_unique<BingMapsRasterOverlay>(
                     url,
                     key,
                     mapStyle,
@@ -79,15 +80,19 @@ namespace Cesium3DTiles {
                 );
             } else {
                 std::string url = response.value("url", "");
-                this->_aggregatedOverlay = std::make_unique<TileMapServiceRasterOverlay>(
+                return std::make_unique<TileMapServiceRasterOverlay>(
                     url,
-                    std::vector<IAssetAccessor::THeader> {
+                    std::vector<CesiumAsync::IAssetAccessor::THeader> {
                         std::make_pair("Authorization", "Bearer " + response.value("accessToken", ""))
                     }
                 );
             }
-
-            this->_aggregatedOverlay->createTileProvider(externals, pOwner ? pOwner : this, std::move(callback));
+        }).thenInMainThread([
+            pOwner,
+            asyncSystem,
+            pPrepareRendererResources
+        ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
+            return pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pOwner);
         });
     }
 

@@ -31,6 +31,8 @@ namespace Cesium3DTiles {
          */
         RasterOverlayCollection(Tileset& tileset);
 
+        ~RasterOverlayCollection();
+
         /**
          * @brief Adds the given {@link RasterOverlay} to this collection.
          *
