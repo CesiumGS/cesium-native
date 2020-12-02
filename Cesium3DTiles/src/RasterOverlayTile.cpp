@@ -56,7 +56,7 @@ namespace Cesium3DTiles {
 
             RasterOverlayTileProvider* pTileProvider = overlay.getTileProvider();
 
-            imageRequest.thenInWorkerThread([
+            std::move(imageRequest).thenInWorkerThread([
                 tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID()),
                 projection = pTileProvider->getProjection(),
                 cutoutsCollection = overlay.getCutouts(),
