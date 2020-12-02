@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Cesium3DTiles/Library.h"
+#include "CesiumAsync/Library.h"
 #include <functional>
 #include <string>
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
 
     class IAssetResponse;
 
@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
      * @brief An asynchronous request for an asset, usually a file
      * downloaded via HTTP.
      */
-    class CESIUM3DTILES_API IAssetRequest {
+    class CESIUMASYNC_API IAssetRequest {
     public:
         virtual ~IAssetRequest() = default;
 

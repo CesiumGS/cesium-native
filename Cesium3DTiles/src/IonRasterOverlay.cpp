@@ -1,15 +1,15 @@
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
-#include "Cesium3DTiles/IAssetAccessor.h"
-#include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IonRasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
+
+using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
@@ -72,7 +72,7 @@ namespace Cesium3DTiles {
                 std::string url = response.value("url", "");
                 return std::make_unique<TileMapServiceRasterOverlay>(
                     url,
-                    std::vector<IAssetAccessor::THeader> {
+                    std::vector<CesiumAsync::IAssetAccessor::THeader> {
                         std::make_pair("Authorization", "Bearer " + response.value("accessToken", ""))
                     }
                 );

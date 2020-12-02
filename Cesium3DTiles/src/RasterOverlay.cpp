@@ -1,6 +1,8 @@
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 
+using namespace CesiumAsync;
+
 namespace Cesium3DTiles {
 
     RasterOverlay::RasterOverlay() :

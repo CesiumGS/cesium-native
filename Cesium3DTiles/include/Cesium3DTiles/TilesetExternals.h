@@ -3,10 +3,13 @@
 #include "Cesium3DTiles/Library.h"
 #include <memory>
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
     class IAssetAccessor;
-    class IPrepareRendererResources;
     class ITaskProcessor;
+}
+
+namespace Cesium3DTiles {
+    class IPrepareRendererResources;
 
     /**
      * @brief External interfaces used by a {@link Tileset}.
@@ -19,7 +22,7 @@ namespace Cesium3DTiles {
         /**
          * @brief An external {@link IAssetAccessor}.
          */
-        std::shared_ptr<IAssetAccessor> pAssetAccessor;
+        std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
         /**
          * @brief An external {@link IPrepareRendererResources}.
@@ -29,7 +32,7 @@ namespace Cesium3DTiles {
         /**
          * @brief An external {@link ITaskProcessor}
          */
-        std::shared_ptr<ITaskProcessor> pTaskProcessor;
+        std::shared_ptr<CesiumAsync::ITaskProcessor> pTaskProcessor;
     };
 
 }

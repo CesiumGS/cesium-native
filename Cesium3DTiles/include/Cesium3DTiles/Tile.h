@@ -2,7 +2,6 @@
 
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Gltf.h"
-#include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
@@ -10,6 +9,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TileSelectionState.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>

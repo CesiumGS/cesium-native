@@ -1,8 +1,8 @@
-#include "Cesium3DTiles/AsyncSystem.h"
-#include "Cesium3DTiles/ITaskProcessor.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/ITaskProcessor.h"
 #include <future>
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
 
     AsyncSystem::AsyncSystem(
         std::shared_ptr<IAssetAccessor> pAssetAccessor,

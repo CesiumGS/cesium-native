@@ -1,17 +1,18 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
-#include "Cesium3DTiles/IAssetAccessor.h"
-#include "Cesium3DTiles/IAssetResponse.h"
-#include "Cesium3DTiles/ITaskProcessor.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
-#include "Cesium3DTiles/AsyncSystem.h"
 #include "Uri.h"
 #include <glm/common.hpp>
 
+using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
@@ -28,9 +29,8 @@ namespace Cesium3DTiles {
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
+        _isRefreshingIonToken(false),
         _options(options),
-        _pIonRequest(),
-        _pTilesetJsonRequest(),
         _pRootTile(),
         _previousFrameNumber(0),
         _updateResult(),
@@ -58,9 +58,8 @@ namespace Cesium3DTiles {
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
+        _isRefreshingIonToken(false),
         _options(options),
-        _pIonRequest(),
-        _pTilesetJsonRequest(),
         _pRootTile(),
         _previousFrameNumber(0),
         _updateResult(),
@@ -128,15 +127,6 @@ namespace Cesium3DTiles {
     }
 
     Tileset::~Tileset() {
-        // Tell all async loads to wrap it up.
-        if (this->_pIonRequest) {
-            this->_pIonRequest->cancel();
-        }
-
-        if (this->_pTilesetJsonRequest) {
-            this->_pTilesetJsonRequest->cancel();
-        }
-
         // Wait for all asynchronous loading to terminate.
         // If you're hanging here, it's most likely caused by _loadsInProgress not being
         // decremented correctly when an async load ends.
@@ -577,7 +567,9 @@ namespace Cesium3DTiles {
             return FailedTileAction::GiveUp;
         }
 
-        if (!this->_pIonRequest) {
+        if (!this->_isRefreshingIonToken) {
+            this->_isRefreshingIonToken = true;
+
             std::string url = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID.value()) + "/endpoint";
             if (this->_ionAccessToken)
             {
@@ -585,13 +577,11 @@ namespace Cesium3DTiles {
             }
 
             ++this->_loadsInProgress;
-            this->_pIonRequest = this->_externals.pAssetAccessor->requestAsset(url);
-            this->_pIonRequest->bind([this, &failedTile](IAssetRequest* pIonRequest) {
-                TileContext* pContext = failedTile.getContext();
 
-                // TODO: Unreal Engine will always invoke this callback from the game thread, but we
-                // can't count on that in general. If it's raised asynchronously, we'll have a
-                // race condition.
+            this->_asyncSystem.requestAsset(url).thenInMainThread([
+                this,
+                pContext = failedTile.getContext()
+            ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
                 IAssetResponse* pIonResponse = pIonRequest->response();
 
                 bool failed = true;
@@ -645,12 +635,10 @@ namespace Cesium3DTiles {
                     pTile = this->_loadedTiles.next(*pTile);
                 }
 
-                // When we assign _pIonRequest, the previous request and response
-                // that we're currently handling may immediately be deleted.
-                pIonRequest = nullptr;
-                pIonResponse = nullptr;
-                this->_pIonRequest.reset();
-
+                this->_isRefreshingIonToken = false;
+                this->notifyTileDoneLoading(nullptr);
+            }).catchInMainThread([this](const std::exception& /*e*/) {
+                this->_isRefreshingIonToken = false;
                 this->notifyTileDoneLoading(nullptr);
             });
         }

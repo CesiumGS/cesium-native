@@ -1,10 +1,12 @@
-#include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
-#include "Cesium3DTiles/ITaskProcessor.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/ITaskProcessor.h"
+
+using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 

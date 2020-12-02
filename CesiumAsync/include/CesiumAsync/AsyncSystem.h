@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Cesium3DTiles/IAssetAccessor.h"
+#include "CesiumAsync/Library.h"
+#include "CesiumAsync/IAssetAccessor.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -10,7 +11,7 @@
 #include <async++.h>
 #pragma warning(pop)
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
     class IAssetAccessor;
     class ITaskProcessor;
 
@@ -149,7 +150,7 @@ namespace Cesium3DTiles {
      * 
      * Instances of this class may be safely and efficiently stored and passed around by value.
      */
-    class CESIUM3DTILES_API AsyncSystem {
+    class CESIUMASYNC_API AsyncSystem {
     public:
         /**
          * @brief Constructs a new instance.

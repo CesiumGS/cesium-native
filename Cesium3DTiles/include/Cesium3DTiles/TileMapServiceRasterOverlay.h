@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Cesium3DTiles/IAssetRequest.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include <functional>
 
 namespace Cesium3DTiles {
@@ -102,20 +102,20 @@ namespace Cesium3DTiles {
          */
         TileMapServiceRasterOverlay(
             const std::string& url,
-            const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>(),
+            const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = std::vector<CesiumAsync::IAssetAccessor::THeader>(),
             const TileMapServiceRasterOverlayOptions& options = TileMapServiceRasterOverlayOptions()
         );
         virtual ~TileMapServiceRasterOverlay() override;
 
-        virtual Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
-            const AsyncSystem& asyncSystem,
+        virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
+            const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             RasterOverlay* pOwner
         ) override;
 
     private:
         std::string _url;
-        std::vector<IAssetAccessor::THeader> _headers;
+        std::vector<CesiumAsync::IAssetAccessor::THeader> _headers;
         TileMapServiceRasterOverlayOptions _options;
     };
 

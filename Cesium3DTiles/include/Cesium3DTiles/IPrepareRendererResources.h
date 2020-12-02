@@ -16,7 +16,6 @@ namespace tinygltf {
 
 namespace Cesium3DTiles {
 
-    class IAssetAccessor;
     class Tile;
     class RasterOverlayTile;
 

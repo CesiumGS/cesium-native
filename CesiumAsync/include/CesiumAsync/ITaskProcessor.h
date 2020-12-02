@@ -1,8 +1,9 @@
 #pragma once
 
+#include "CesiumAsync/Library.h"
 #include <functional>
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
     /**
      * @brief When implemented by a rendering engine, allows a {@link Tileset} to create tasks to be asynchronously executed in background threads.
      *

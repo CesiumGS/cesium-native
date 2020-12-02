@@ -29,7 +29,7 @@ namespace Cesium3DTiles {
          */
         RasterOverlayTileProvider(
             RasterOverlay& owner,
-            const AsyncSystem& asyncSystem
+            const CesiumAsync::AsyncSystem& asyncSystem
         );
 
         /**
@@ -48,7 +48,7 @@ namespace Cesium3DTiles {
          */
         RasterOverlayTileProvider(
             RasterOverlay& owner,
-            const AsyncSystem& asyncSystem,
+            const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -78,10 +78,10 @@ namespace Cesium3DTiles {
         /**
          * @brief Get the system to use for asychronous requests and threaded work.
          */
-        AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
+        CesiumAsync::AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
 
         /** @copydoc getAsyncSystem */
-        const AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+        const CesiumAsync::AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
 
         /**
          * @brief Gets the interface used to prepare raster overlay images for rendering.
@@ -219,7 +219,7 @@ namespace Cesium3DTiles {
 
     private:
         RasterOverlay* _pOwner;
-        AsyncSystem _asyncSystem;
+        CesiumAsync::AsyncSystem _asyncSystem;
         std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;

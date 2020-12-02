@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/AsyncSystem.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
-#include <memory>
+#include "CesiumAsync/AsyncSystem.h"
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTiles {
 
@@ -81,7 +81,7 @@ namespace Cesium3DTiles {
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          */
         void createTileProvider(
-            const AsyncSystem& asyncSystem,
+            const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
         );
 
@@ -96,8 +96,8 @@ namespace Cesium3DTiles {
          * @param pOwner The overlay that owns this overlay, or nullptr if this overlay is not aggregated.
          * @param callback The callback that receives the new tile provider when it is ready.
          */
-        virtual Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
-            const AsyncSystem& asyncSystem,
+        virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
+            const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             RasterOverlay* pOwner
         ) = 0;

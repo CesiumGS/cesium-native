@@ -1,16 +1,16 @@
 #pragma once
 
-#include <string>
-#include "Cesium3DTiles/Library.h"
-#include "IAssetRequest.h"
+#include "CesiumAsync/Library.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include <memory>
+#include <string>
 
-namespace Cesium3DTiles {
+namespace CesiumAsync {
 
     /**
      * @brief Provides asynchronous access to assets, usually files downloaded via HTTP.
      */
-    class CESIUM3DTILES_API IAssetAccessor {
+    class CESIUMASYNC_API IAssetAccessor {
     public:
         /**
          * @brief An HTTP header represented as a key/value pair.

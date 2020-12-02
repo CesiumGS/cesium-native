@@ -1,14 +1,18 @@
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
-#include "Cesium3DTiles/IAssetAccessor.h"
-#include "Cesium3DTiles/IAssetResponse.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
+
+using namespace CesiumAsync;
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
 
@@ -42,12 +46,12 @@ namespace Cesium3DTiles {
                 owner,
                 asyncSystem,
                 pPrepareRendererResources,
-                CesiumGeospatial::WebMercatorProjection(),
-                CesiumGeometry::QuadtreeTilingScheme(
-                    CesiumGeospatial::WebMercatorProjection::computeMaximumProjectedRectangle(CesiumGeospatial::Ellipsoid::WGS84),
+                WebMercatorProjection(),
+                QuadtreeTilingScheme(
+                    WebMercatorProjection::computeMaximumProjectedRectangle(Ellipsoid::WGS84),
                     2, 2
                 ),
-                CesiumGeospatial::WebMercatorProjection::computeMaximumProjectedRectangle(CesiumGeospatial::Ellipsoid::WGS84),
+                WebMercatorProjection::computeMaximumProjectedRectangle(Ellipsoid::WGS84),
                 minimumLevel,
                 maximumLevel,
                 width,
@@ -78,7 +82,7 @@ namespace Cesium3DTiles {
         virtual ~BingMapsTileProvider() {}
 
     protected:
-        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
+        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const QuadtreeTileID& tileID) override {
             std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
                     return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.computeInvertedY(this->getTilingScheme()));
@@ -122,7 +126,7 @@ namespace Cesium3DTiles {
         const std::string& key,
         const std::string& mapStyle,
         const std::string& culture,
-        const CesiumGeospatial::Ellipsoid& ellipsoid
+        const Ellipsoid& ellipsoid
     ) :
         _url(url),
         _key(key),

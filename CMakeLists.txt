@@ -72,6 +72,7 @@ target_link_libraries(cesium-native-tests PUBLIC Catch2::Catch2)
 add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
+add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)
 
 include(Catch)

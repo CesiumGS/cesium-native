@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Cesium3DTiles/AsyncSystem.h"
 #include "Cesium3DTiles/Gltf.h"
-#include "Cesium3DTiles/IAssetRequest.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
-#include <memory>
 #include <atomic>
+#include <memory>
 
 namespace Cesium3DTiles {
 
@@ -89,7 +89,7 @@ namespace Cesium3DTiles {
         RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
-            Future<std::unique_ptr<IAssetRequest>>&& imageRequest
+            CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
         );
 
         /** @brief Default destructor. */
