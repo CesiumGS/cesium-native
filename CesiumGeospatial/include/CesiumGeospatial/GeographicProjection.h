@@ -3,6 +3,7 @@
 #include "CesiumGeospatial/Library.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumUtility/Math.h"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
@@ -26,7 +27,12 @@ namespace CesiumGeospatial {
          * ranging from -PI to PI radians longitude and
          * from -PI/2 to +PI/2 radians latitude.
          */
-        static const GlobeRectangle MAXIMUM_GLOBE_RECTANGLE;
+        static constexpr GlobeRectangle MAXIMUM_GLOBE_RECTANGLE = GlobeRectangle(
+            -CesiumUtility::Math::ONE_PI,
+            -CesiumUtility::Math::PI_OVER_TWO,
+            CesiumUtility::Math::ONE_PI,
+            CesiumUtility::Math::PI_OVER_TWO
+        );
 
         /**
          * @brief Computes the maximum rectangle that can be covered with this projection
@@ -34,19 +40,23 @@ namespace CesiumGeospatial {
          * @param ellipsoid The {@link Ellipsoid}. Default value: {@link Ellipsoid::WGS84}.
          * @return The rectangle
          */
-        static CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+        static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept {
+            double longitudeValue = ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
+            double latitudeValue = ellipsoid.getMaximumRadius() * CesiumUtility::Math::PI_OVER_TWO;
+            return CesiumGeometry::Rectangle(-longitudeValue, -latitudeValue, longitudeValue, latitudeValue);
+        }
 
         /**
          * @brief Constructs a new instance.
          * 
          * @param ellipsoid The {@link Ellipsoid}.
          */
-        GeographicProjection(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+        GeographicProjection(const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept;
 
         /**
          * @brief Gets the {@link Ellipsoid}.
          */
-        const Ellipsoid& getEllipsoid() const { return this->_ellipsoid; }
+        const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
         /**
          * @brief Converts geodedic ellipsoid coordinates to geographic coordinates.
@@ -57,7 +67,7 @@ namespace CesiumGeospatial {
          * @param cartographic The geodetic coordinates in radians.
          * @returns The equivalent geographic X, Y, Z coordinates, in meters.
          */
-        glm::dvec3 project(const Cartographic& cartographic) const;
+        glm::dvec3 project(const Cartographic& cartographic) const noexcept;
 
         /**
          * @brief Projects a globe rectangle to geographic coordinates.
@@ -67,7 +77,7 @@ namespace CesiumGeospatial {
          * @param rectangle The globe rectangle to project.
          * @return The projected rectangle.
          */
-        CesiumGeometry::Rectangle project(const CesiumGeospatial::GlobeRectangle& rectangle) const;
+        CesiumGeometry::Rectangle project(const CesiumGeospatial::GlobeRectangle& rectangle) const noexcept;
 
         /**
          * @brief Converts geographic coordinates to geodetic ellipsoid coordinates.
@@ -78,7 +88,7 @@ namespace CesiumGeospatial {
          * @param projectedCoordinates The geographic projected coordinates to unproject.
          * @returns The equivalent cartographic coordinates.
          */
-        Cartographic unproject(const glm::dvec2& projectedCoordinates) const;
+        Cartographic unproject(const glm::dvec2& projectedCoordinates) const noexcept;
 
         /**
          * @brief Converts geographic coordinates to geodetic ellipsoid coordinates.
@@ -90,7 +100,7 @@ namespace CesiumGeospatial {
          * @param projectedCoordinates The geographic projected coordinates to unproject, with height (z) in meters.
          * @returns The equivalent cartographic coordinates.
          */
-        Cartographic unproject(const glm::dvec3& projectedCoordinates) const;
+        Cartographic unproject(const glm::dvec3& projectedCoordinates) const noexcept;
 
         /**
          * @brief Unprojects a geographic rectangle to the globe.
@@ -100,19 +110,19 @@ namespace CesiumGeospatial {
          * @param rectangle The rectangle to unproject.
          * @returns The unprojected rectangle.
          */
-        CesiumGeospatial::GlobeRectangle unproject(const CesiumGeometry::Rectangle& rectangle) const;
+        CesiumGeospatial::GlobeRectangle unproject(const CesiumGeometry::Rectangle& rectangle) const noexcept;
 
         /**
          * @brief Returns `true` if two projections (i.e. their ellipsoids) are equal.
          */
-        bool operator==(const GeographicProjection& rhs) const {
+        bool operator==(const GeographicProjection& rhs) const noexcept {
             return this->_ellipsoid == rhs._ellipsoid;
         };
 
         /**
          * @brief Returns `true` if two projections (i.e. their ellipsoids) are *not* equal.
          */
-        bool operator!=(const GeographicProjection& rhs) const {
+        bool operator!=(const GeographicProjection& rhs) const noexcept {
             return !(*this == rhs);
         };
 

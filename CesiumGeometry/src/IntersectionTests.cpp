@@ -8,7 +8,7 @@ using namespace CesiumUtility;
 
 namespace CesiumGeometry {
 
-    /*static*/ std::optional<glm::dvec3> IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) {
+    /*static*/ std::optional<glm::dvec3> IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
         double denominator = glm::dot(plane.getNormal(), ray.getDirection());
 
         if (glm::abs(denominator) < Math::EPSILON15) {

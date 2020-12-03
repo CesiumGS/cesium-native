@@ -32,7 +32,7 @@ namespace CesiumGeospatial {
     {
     }
 
-    glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(const glm::dvec3& cartesian) {
+    glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(const glm::dvec3& cartesian) const noexcept {
         Ray ray(cartesian, this->_plane.getNormal());
 
         std::optional<glm::dvec3> intersectionPoint = IntersectionTests::rayPlane(ray, this->_plane);

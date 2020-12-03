@@ -17,12 +17,18 @@ namespace CesiumGeometry {
          * assumes that the given coordinates form a valid rectangle, meaning
          * that `minimumX <= maximumX` and `minimumY <= maximumY`.
          * 
-         * @param minimumX The minimum x-coordinate.
-         * @param minimumY The minimum y-coordinate.
-         * @param maximumX The maximum x-coordinate.
-         * @param maximumY The maximum y-coordinate.
+         * @param minimumX_ The minimum x-coordinate.
+         * @param minimumY_ The minimum y-coordinate.
+         * @param maximumX_ The maximum x-coordinate.
+         * @param maximumY_ The maximum y-coordinate.
          */
-        Rectangle(double minimumX, double minimumY, double maximumX, double maximumY);
+        constexpr Rectangle(double minimumX_, double minimumY_, double maximumX_, double maximumY_) noexcept :
+            minimumX(minimumX_),
+            minimumY(minimumY_),
+            maximumX(maximumX_),
+            maximumY(maximumY_)
+        {
+        }
 
         /**
          * @brief The minimum x-coordinate.
@@ -54,7 +60,7 @@ namespace CesiumGeometry {
          * @param position The position.
          * @returns Whether this rectangle contains the given position.
          */
-        bool contains(const glm::dvec2& position) const;
+        bool contains(const glm::dvec2& position) const noexcept;
 
         /**
          * @brief Checks whether this rectangle overlaps the given rectangle.
@@ -66,7 +72,7 @@ namespace CesiumGeometry {
          * @param other The other rectangle.
          * @returns Whether this rectangle overlaps the given rectangle.
          */
-        bool overlaps(const Rectangle& other) const;
+        bool overlaps(const Rectangle& other) const noexcept;
 
         /**
          * @brief Checks whether this rectangle fully contains the given rectangle.
@@ -77,7 +83,7 @@ namespace CesiumGeometry {
          * @param other The other rectangle.
          * @returns Whether this rectangle fully contains the given rectangle.
          */
-        bool fullyContains(const Rectangle& other) const;
+        bool fullyContains(const Rectangle& other) const noexcept;
 
         /**
          * @brief Computes the signed distance from a position to the edge of the rectangle.
@@ -88,7 +94,7 @@ namespace CesiumGeometry {
          * @param position The position.
          * @return The signed distance.
          */
-        double computeSignedDistance(const glm::dvec2& position) const;
+        double computeSignedDistance(const glm::dvec2& position) const noexcept;
 
         /**
          * @brief Returns a point at the lower left of this rectangle.
@@ -97,7 +103,7 @@ namespace CesiumGeometry {
          * 
          * @returns The lower left point.
          */
-        glm::dvec2 getLowerLeft() const { return glm::dvec2(this->minimumX, this->minimumY); }
+        constexpr glm::dvec2 getLowerLeft() const noexcept { return glm::dvec2(this->minimumX, this->minimumY); }
 
         /**
          * @brief Returns a point at the lower right of this rectangle.
@@ -106,7 +112,7 @@ namespace CesiumGeometry {
          *
          * @returns The lower right point.
          */
-        glm::dvec2 getLowerRight() const { return glm::dvec2(this->maximumX, this->minimumY); }
+        constexpr glm::dvec2 getLowerRight() const noexcept { return glm::dvec2(this->maximumX, this->minimumY); }
 
         /**
          * @brief Returns a point at the upper left of this rectangle.
@@ -115,7 +121,7 @@ namespace CesiumGeometry {
          *
          * @returns The upper left point.
          */
-        glm::dvec2 getUpperLeft() const { return glm::dvec2(this->minimumX, this->maximumY); }
+        constexpr glm::dvec2 getUpperLeft() const noexcept{ return glm::dvec2(this->minimumX, this->maximumY); }
 
         /**
          * @brief Returns a point at the upper right of this rectangle.
@@ -124,28 +130,32 @@ namespace CesiumGeometry {
          *
          * @returns The upper right point.
          */
-        glm::dvec2 getUpperRight() const { return glm::dvec2(this->maximumX, this->maximumY); }
+        constexpr glm::dvec2 getUpperRight() const noexcept { return glm::dvec2(this->maximumX, this->maximumY); }
 
         /**
          * @brief Returns a point at the center of this rectangle.
          *
          * @returns The center point.
          */
-        glm::dvec2 getCenter() const { return glm::dvec2((this->minimumX + this->maximumX) * 0.5, (this->minimumY + this->maximumY) * 0.5); }
+        constexpr glm::dvec2 getCenter() const noexcept { return glm::dvec2((this->minimumX + this->maximumX) * 0.5, (this->minimumY + this->maximumY) * 0.5); }
 
         /**
          * @brief Computes the width of this rectangle.
          * 
          * @returns The width.
          */
-        double computeWidth() const;
+        constexpr double computeWidth() const noexcept {
+            return this->maximumX - this->minimumX;
+        }
 
         /**
          * @brief Computes the height of this rectangle.
          *
          * @returns The height.
          */
-        double computeHeight() const;
+        constexpr double computeHeight() const noexcept {
+            return this->maximumY - this->minimumY;
+        }
 
         /**
          * Computes the intersection of this rectangle with another.
@@ -153,7 +163,7 @@ namespace CesiumGeometry {
          * @param other The other rectangle to intersect with this one.
          * @returns The intersection rectangle, or `std::nullopt` if there is no intersection.
          */
-        std::optional<Rectangle> intersect(const Rectangle& other) const;
+        std::optional<Rectangle> intersect(const Rectangle& other) const noexcept;
     };
 
 }

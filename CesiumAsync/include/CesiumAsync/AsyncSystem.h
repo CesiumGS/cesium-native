@@ -111,7 +111,7 @@ namespace CesiumAsync {
     template <class T>
     class Future {
     public:
-        Future(Future<T>&& rhs) :
+        Future(Future<T>&& rhs) noexcept :
             _pSchedulers(std::move(rhs._pSchedulers)),
             _task(std::move(rhs._task))
         {
@@ -193,7 +193,7 @@ namespace CesiumAsync {
         }
 
     private:
-        Future(std::shared_ptr<Impl::AsyncSystemSchedulers> pSchedulers, async::task<T>&& task) :
+        Future(std::shared_ptr<Impl::AsyncSystemSchedulers> pSchedulers, async::task<T>&& task) noexcept :
             _pSchedulers(pSchedulers),
             _task(std::move(task))
         {
@@ -230,7 +230,7 @@ namespace CesiumAsync {
         AsyncSystem(
             std::shared_ptr<IAssetAccessor> pAssetAccessor,
             std::shared_ptr<ITaskProcessor> pTaskProcessor
-        );
+        ) noexcept;
 
         /**
          * @brief Requests a new asset, returning a `Future` that resolves when the request completes.

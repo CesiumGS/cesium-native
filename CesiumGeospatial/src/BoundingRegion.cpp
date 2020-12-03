@@ -129,11 +129,11 @@ namespace CesiumGeospatial {
         ));
     }
 
-    CullingResult BoundingRegion::intersectPlane(const Plane& plane) const {
+    CullingResult BoundingRegion::intersectPlane(const Plane& plane) const noexcept {
         return this->_boundingBox.intersectPlane(plane);
     }
 
-    double BoundingRegion::computeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid) const {
+    double BoundingRegion::computeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid) const noexcept {
         std::optional<Cartographic> cartographic = ellipsoid.cartesianToCartographic(position);
         if (!cartographic) {
             return 0.0;
@@ -142,11 +142,11 @@ namespace CesiumGeospatial {
         return this->computeDistanceSquaredToPosition(cartographic.value(), position);
     }
 
-    double BoundingRegion::computeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid) const {
+    double BoundingRegion::computeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid) const noexcept {
         return this->computeDistanceSquaredToPosition(position, ellipsoid.cartographicToCartesian(position));
     }
 
-    double BoundingRegion::computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const {
+    double BoundingRegion::computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const noexcept {
         double result = 0.0;
 
         if (!this->_planesAreInvalid) {
@@ -196,7 +196,7 @@ namespace CesiumGeospatial {
         return glm::max(bboxDistanceSquared, result);
     }
 
-    BoundingRegion BoundingRegion::computeUnion(const BoundingRegion& other) const {
+    BoundingRegion BoundingRegion::computeUnion(const BoundingRegion& other) const noexcept {
         return BoundingRegion(
             this->_rectangle.computeUnion(other._rectangle),
             glm::min(this->_minimumHeight, other._minimumHeight),
@@ -215,7 +215,7 @@ namespace CesiumGeospatial {
         double maximumY,
         double minimumZ,
         double maximumZ
-    ) {
+    ) noexcept {
         glm::dmat3 halfAxes(planeXAxis, planeYAxis, planeZAxis);
 
         glm::dvec3 centerOffset(

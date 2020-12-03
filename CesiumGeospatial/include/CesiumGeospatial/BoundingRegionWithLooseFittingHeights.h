@@ -25,7 +25,7 @@ namespace CesiumGeospatial {
         /**
          * @brief Gets the bounding region that has imprecise heights.
          */
-        const BoundingRegion& getBoundingRegion() const { return this->_region; }
+        const BoundingRegion& getBoundingRegion() const noexcept { return this->_region; }
 
         /**
          * @brief Computes the conservative distance-squared from a position in ellipsoid-centered Cartesian coordinates
@@ -42,7 +42,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeConservativeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const;
+        double computeConservativeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
 
         /**
          * @brief Computes the conservative distance-squared from a longitude-latitude-height position
@@ -59,7 +59,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeConservativeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const;
+        double computeConservativeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
 
         /**
          * @brief Computes the conservative distance-squared from a position to the closest point in this bounding region, when the longitude-latitude-height
@@ -76,7 +76,7 @@ namespace CesiumGeospatial {
          * @param cartesianPosition The position as ellipsoid-centered Cartesian coordinates.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeConservativeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const;
+        double computeConservativeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const noexcept;
 
     private:
         BoundingRegion _region;
