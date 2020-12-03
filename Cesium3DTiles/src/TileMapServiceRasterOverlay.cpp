@@ -7,12 +7,8 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
+#include "tinyxml2.h"
 #include "Uri.h"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#include <tinyxml2.h>
-#pragma GCC diagnostic pop
 
 using namespace CesiumAsync;
 
