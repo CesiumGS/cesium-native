@@ -121,7 +121,7 @@ namespace Cesium3DTiles {
 		 * 
 		 * @returns The size.
 		 */
-		size_t size() const
+		size_t size() const noexcept
 		{
 			return this->_size;
 		}
@@ -137,7 +137,7 @@ namespace Cesium3DTiles {
 		/**
 		 * @brief Returns the underyling buffer view implementation.
 		 */
-		const tinygltf::BufferView& gltfBufferView() const
+		const tinygltf::BufferView& gltfBufferView() const noexcept
 		{
 			return *this->_pGltfBufferView;
 		}
@@ -145,7 +145,7 @@ namespace Cesium3DTiles {
 		/**
 		 * @brief Returns the underyling acessor implementation.
 		 */
-		const tinygltf::Accessor& gltfAccessor() const
+		const tinygltf::Accessor& gltfAccessor() const noexcept
 		{
 			return *this->_pGltfAccessor;
 		}

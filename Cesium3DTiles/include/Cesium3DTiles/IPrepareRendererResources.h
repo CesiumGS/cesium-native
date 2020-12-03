@@ -117,7 +117,7 @@ namespace Cesium3DTiles {
          * If {@link prepareRasterInMainThread} has not yet been called, this parameter will 
          * be `nullptr`.
          */
-        virtual void freeRaster(const RasterOverlayTile& rasterTile, void* pLoadThreadResult, void* pMainThreadResult) = 0;
+        virtual void freeRaster(const RasterOverlayTile& rasterTile, void* pLoadThreadResult, void* pMainThreadResult) noexcept = 0;
 
         /**
          * @brief Attaches a raster overlay tile to a geometry tile.
@@ -163,7 +163,7 @@ namespace Cesium3DTiles {
             const RasterOverlayTile& rasterTile,
             void* pMainThreadRendererResources,
             const CesiumGeometry::Rectangle& textureCoordinateRectangle
-        ) = 0;
+        ) noexcept = 0;
     };
 
 }

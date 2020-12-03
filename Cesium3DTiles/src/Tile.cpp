@@ -15,7 +15,7 @@ using namespace std::string_literals;
 
 namespace Cesium3DTiles {
 
-    Tile::Tile() :
+    Tile::Tile() noexcept :
         _pContext(nullptr),
         _pParent(nullptr),
         _children(),
@@ -93,11 +93,11 @@ namespace Cesium3DTiles {
         this->_children = std::move(children);
     }
 
-    void Tile::setTileID(const TileID& id) {
+    void Tile::setTileID(const TileID& id) noexcept {
         this->_id = id;
     }
 
-    bool Tile::isRenderable() const {
+    bool Tile::isRenderable() const noexcept {
         // A tile whose content is an external tileset has no renderable content. If
         // we select such a tile for rendering, we'll end up rendering nothing even though
         // the tile's parent and its children may both have content. End result: when the
@@ -582,13 +582,13 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tile::markPermanentlyFailed() {
+    void Tile::markPermanentlyFailed() noexcept {
         if (this->getState() == LoadState::FailedTemporarily) {
             this->setState(LoadState::Failed);
         }
     }
 
-    size_t Tile::computeByteSize() const {
+    size_t Tile::computeByteSize() const noexcept {
         size_t bytes = 0;
 
         const TileContentLoadResult* pContent = this->getContent();

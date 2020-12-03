@@ -124,7 +124,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    void RasterMappedTo3DTile::detachFromTile(Tile& tile) {
+    void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
         if (this->getState() == AttachmentState::Unattached) {
             return;
         }

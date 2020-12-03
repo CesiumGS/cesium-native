@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
 
         RasterOverlayTile::RasterOverlayTile(
             RasterOverlay& overlay
-        ) :
+        ) noexcept :
             _pOverlay(&overlay),
             _tileID(0, 0, 0),
             _state(LoadState::Placeholder),
@@ -176,11 +176,11 @@ namespace Cesium3DTiles {
             this->setState(LoadState::Done);
         }
 
-        void RasterOverlayTile::addReference() {
+        void RasterOverlayTile::addReference() noexcept {
             ++this->_references;
         }
 
-        void RasterOverlayTile::releaseReference() {
+        void RasterOverlayTile::releaseReference() noexcept {
             assert(this->_references > 0);
             uint32_t references = --this->_references;
             if (references == 0) {

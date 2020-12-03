@@ -240,11 +240,11 @@ namespace Cesium3DTiles {
         return result;
     }
 
-    void Tileset::notifyTileStartLoading(Tile* /*pTile*/) {
+    void Tileset::notifyTileStartLoading(Tile* /*pTile*/) noexcept {
         ++this->_loadsInProgress;
     }
 
-    void Tileset::notifyTileDoneLoading(Tile* pTile) {
+    void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
         assert(this->_loadsInProgress > 0);
         --this->_loadsInProgress;
 
@@ -253,7 +253,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tileset::notifyTileUnloading(Tile* pTile) {
+    void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
         if (pTile) {
             this->_tileDataBytes -= pTile->computeByteSize();
         }
@@ -287,7 +287,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    size_t Tileset::getTotalDataBytes() const {
+    size_t Tileset::getTotalDataBytes() const noexcept {
         size_t bytes = this->_tileDataBytes;
 
         for (auto& pOverlay : this->_overlays) {

@@ -2,7 +2,7 @@
 
 namespace Cesium3DTiles {
 
-    RasterOverlayCutoutCollection::RasterOverlayCutoutCollection() :
+    RasterOverlayCutoutCollection::RasterOverlayCutoutCollection() noexcept :
         _cutouts()
     {
     }
