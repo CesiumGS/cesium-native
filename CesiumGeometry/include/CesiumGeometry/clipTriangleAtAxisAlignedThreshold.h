@@ -73,5 +73,5 @@ namespace CesiumGeometry {
         double u1,
         double u2,
         std::vector<TriangleClipVertex>& result
-    );
+    ) noexcept;
 }

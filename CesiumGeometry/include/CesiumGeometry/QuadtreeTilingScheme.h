@@ -20,34 +20,34 @@ namespace CesiumGeometry {
          * @param rootTilesX The number of tiles at the root of the quadtree in the X direction.
          * @param rootTilesY The nubmer of tiles at the root of the quadtree in the Y direction.
          */
-        QuadtreeTilingScheme(const CesiumGeometry::Rectangle& rectangle, uint32_t rootTilesX, uint32_t rootTilesY);
+        QuadtreeTilingScheme(const CesiumGeometry::Rectangle& rectangle, uint32_t rootTilesX, uint32_t rootTilesY) noexcept;
 
         /**
          * @brief Return the overall rectangle that is tiled.
          *
          * The rectangle is expressed in projected coordinates.
          */
-        const CesiumGeometry::Rectangle& getRectangle() const { return this->_rectangle; }
+        const CesiumGeometry::Rectangle& getRectangle() const noexcept { return this->_rectangle; }
 
         /**
          * @brief Returns the number of root tiles, in x-direction.
          */
-        uint32_t getRootTilesX() const { return this->_rootTilesX; }
+        uint32_t getRootTilesX() const noexcept { return this->_rootTilesX; }
 
         /**
          * @brief Returns the number of root tiles, in y-direction.
          */
-        uint32_t getRootTilesY() const { return this->_rootTilesY; }
+        uint32_t getRootTilesY() const noexcept { return this->_rootTilesY; }
 
         /**
          * @brief Returns the number of tiles, in x-direction, at the given level.
          */
-        uint32_t getNumberOfXTilesAtLevel(uint32_t level) const;
+        uint32_t getNumberOfXTilesAtLevel(uint32_t level) const noexcept;
 
         /**
          * @brief Returns the number of tiles, in y-direction, at the given level.
          */
-        uint32_t getNumberOfYTilesAtLevel(uint32_t level) const;
+        uint32_t getNumberOfYTilesAtLevel(uint32_t level) const noexcept;
 
         /**
          * @brief Computes the {@link CesiumGeometry::QuadtreeTileID} for a given position and level.
@@ -61,7 +61,7 @@ namespace CesiumGeometry {
          * @param level The level
          * @return The tile ID, or `nullopt`.
          */
-        std::optional<CesiumGeometry::QuadtreeTileID> positionToTile(const glm::dvec2& position, uint32_t level) const;
+        std::optional<CesiumGeometry::QuadtreeTileID> positionToTile(const glm::dvec2& position, uint32_t level) const noexcept;
 
         /**
          * @brief Returns the {@link CesiumGeometry::Rectangle} that is covered by the specified tile.
@@ -73,7 +73,7 @@ namespace CesiumGeometry {
          * @param tileID The tile ID
          * @return The rectangle
          */
-        CesiumGeometry::Rectangle tileToRectangle(const CesiumGeometry::QuadtreeTileID& tileID) const;
+        CesiumGeometry::Rectangle tileToRectangle(const CesiumGeometry::QuadtreeTileID& tileID) const noexcept;
 
     private:
         CesiumGeometry::Rectangle _rectangle;

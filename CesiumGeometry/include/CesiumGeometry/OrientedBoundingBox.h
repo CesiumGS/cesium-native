@@ -27,10 +27,10 @@ namespace CesiumGeometry {
          * 
          * @snippet TestOrientedBoundingBox.cpp Constructor
          */
-        OrientedBoundingBox(
+        constexpr OrientedBoundingBox(
             const glm::dvec3& center,
             const glm::dmat3& halfAxes
-        ) :
+        ) noexcept :
             _center(center),
             _halfAxes(halfAxes)
         {
@@ -39,12 +39,12 @@ namespace CesiumGeometry {
         /**
          * @brief Gets the center of the box.
          */
-        const glm::dvec3& getCenter() const { return this->_center; }
+        constexpr const glm::dvec3& getCenter() const noexcept { return this->_center; }
 
         /**
          * @brief Gets the transformation matrix, to rotate and scale the box to the right position and size.
          */
-        const glm::dmat3& getHalfAxes() const { return this->_halfAxes; }
+        constexpr const glm::dmat3& getHalfAxes() const noexcept { return this->_halfAxes; }
 
         /**
          * @brief Determines on which side of a plane the bounding box is located.
@@ -55,7 +55,7 @@ namespace CesiumGeometry {
          *  * `Outside` if the entire box is on the opposite side.
          *  * `Intersecting` if the box intersects the plane.
          */
-        CullingResult intersectPlane(const Plane& plane) const;
+        CullingResult intersectPlane(const Plane& plane) const noexcept;
 
         /**
          * @brief Computes the distance squared from a given position to the closest point on this bounding volume.
@@ -66,7 +66,7 @@ namespace CesiumGeometry {
          * 
          * @snippet TestOrientedBoundingBox.cpp distanceSquaredTo
          */
-        double computeDistanceSquaredToPosition(const glm::dvec3& position) const;
+        double computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
 
     private:
         glm::dvec3 _center;

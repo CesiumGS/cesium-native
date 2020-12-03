@@ -20,7 +20,7 @@ namespace CesiumGeometry {
          * @param plane The plane.
          * @return The point of intersection, or `std::nullopt` if there is no intersection.
          */
-        static std::optional<glm::dvec3> rayPlane(const Ray& ray, const Plane& plane);
+        static std::optional<glm::dvec3> rayPlane(const Ray& ray, const Plane& plane) noexcept;
     };
 
 }

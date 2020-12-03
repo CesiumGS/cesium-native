@@ -6,7 +6,7 @@
 #include "CesiumUtility/Math.h"
 
 namespace CesiumGeometry {
-    CullingResult OrientedBoundingBox::intersectPlane(const Plane& plane) const {
+    CullingResult OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
         glm::dvec3 normal = plane.getNormal();
 
         const glm::dmat3& halfAxes = this->getHalfAxes();
@@ -44,7 +44,7 @@ namespace CesiumGeometry {
         return CullingResult::Intersecting;
     }
 
-    double OrientedBoundingBox::computeDistanceSquaredToPosition(const glm::dvec3& position) const {
+    double OrientedBoundingBox::computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept {
         glm::dvec3 offset = position - this->getCenter();
 
         const glm::dmat3& halfAxes = this->getHalfAxes();

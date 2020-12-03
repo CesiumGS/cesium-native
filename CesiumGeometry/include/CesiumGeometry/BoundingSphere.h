@@ -19,17 +19,21 @@ namespace CesiumGeometry {
          * @param center The center of the bounding sphere.
          * @param radius The radius of the bounding sphere.
          */
-        BoundingSphere(const glm::dvec3& center, double radius);
+        constexpr BoundingSphere(const glm::dvec3& center, double radius) noexcept :
+            _center(center),
+            _radius(radius)
+        {
+        }
 
         /**
          * @brief Gets the center of the bounding sphere.
          */
-        const glm::dvec3& getCenter() const { return this-> _center; }
+        constexpr const glm::dvec3& getCenter() const noexcept { return this-> _center; }
 
         /**
          * @brief Gets the radius of the bounding sphere.
          */
-        double getRadius() const { return this->_radius; }
+        constexpr double getRadius() const noexcept { return this->_radius; }
         
         /**
          * @brief Determines on which side of a plane this boundings sphere is located.
@@ -40,7 +44,7 @@ namespace CesiumGeometry {
          *  * `Outside` if the entire sphere is on the opposite side.
          *  * `Intersecting` if the sphere intersects the plane.
          */
-        CullingResult intersectPlane(const Plane& plane) const;
+        CullingResult intersectPlane(const Plane& plane) const noexcept;
 
         /**
          * @brief Computes the distance squared from a position to the closest point on this bounding sphere.
@@ -50,7 +54,7 @@ namespace CesiumGeometry {
          *
          * @snippet TestBoundingSphere.cpp distanceSquaredTo
          */
-        double computeDistanceSquaredToPosition(const glm::dvec3& position) const;
+        double computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
 
     private:
         glm::dvec3 _center;

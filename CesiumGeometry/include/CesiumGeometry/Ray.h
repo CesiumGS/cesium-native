@@ -23,17 +23,17 @@ namespace CesiumGeometry {
         /**
          * @brief Gets the origin of the ray.
          */
-        const glm::dvec3& getOrigin() const { return this->_origin; }
+        const glm::dvec3& getOrigin() const noexcept { return this->_origin; }
 
         /**
          * @brief Gets the direction of the ray.
          */
-        const glm::dvec3& getDirection() const { return this->_direction; }
+        const glm::dvec3& getDirection() const noexcept { return this->_direction; }
 
         /**
          * @brief Constructs a new ray with its direction opposite this one.
          */
-        Ray operator-() const;
+        Ray operator-() const noexcept;
 
     private:
         glm::dvec3 _origin;

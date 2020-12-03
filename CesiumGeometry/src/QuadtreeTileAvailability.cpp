@@ -4,7 +4,7 @@
 
 namespace CesiumGeometry {
 
-    QuadtreeTileAvailability::QuadtreeTileAvailability(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel) :
+    QuadtreeTileAvailability::QuadtreeTileAvailability(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel) noexcept :
         _tilingScheme(tilingScheme),
         _maximumLevel(maximumLevel),
         _rootNodes(this->_tilingScheme.getRootTilesX() * this->_tilingScheme.getRootTilesY())
@@ -19,7 +19,7 @@ namespace CesiumGeometry {
         }
     }
 
-    void QuadtreeTileAvailability::addAvailableTileRange(const QuadtreeTileRectangularRange& range) {
+    void QuadtreeTileAvailability::addAvailableTileRange(const QuadtreeTileRectangularRange& range) noexcept {
         Rectangle ll = this->_tilingScheme.tileToRectangle(QuadtreeTileID(range.level, range.minimumX, range.minimumY));
         Rectangle ur = this->_tilingScheme.tileToRectangle(QuadtreeTileID(range.level, range.maximumX, range.maximumY));
 
@@ -40,7 +40,7 @@ namespace CesiumGeometry {
         }
     }
 
-    uint32_t QuadtreeTileAvailability::computeMaximumLevelAtPosition(const glm::dvec2& position) const {
+    uint32_t QuadtreeTileAvailability::computeMaximumLevelAtPosition(const glm::dvec2& position) const noexcept {
         // Find the root node that contains this position.
         for (const std::unique_ptr<QuadtreeNode>& pNode : this->_rootNodes) {
             if (pNode->extent.contains(position)) {
@@ -51,7 +51,7 @@ namespace CesiumGeometry {
         return 0;
     }
 
-    bool QuadtreeTileAvailability::isTileAvailable(const QuadtreeTileID& id) const {
+    bool QuadtreeTileAvailability::isTileAvailable(const QuadtreeTileID& id) const noexcept {
         // Get the center of the tile and find the maximum level at that position.
         // Because availability is by tile, if the level is available at that point, it
         // is sure to be available for the whole tile.  We assume that if a tile at level n exists,
@@ -62,7 +62,7 @@ namespace CesiumGeometry {
         return this->computeMaximumLevelAtPosition(center) >= id.level;
     }
 
-    /*static*/ void QuadtreeTileAvailability::putRectangleInQuadtree(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel, QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTileAvailability::RectangleWithLevel& rectangle) {
+    /*static*/ void QuadtreeTileAvailability::putRectangleInQuadtree(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel, QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTileAvailability::RectangleWithLevel& rectangle) noexcept {
         QuadtreeNode* pNode = &node;
 
         while (pNode->id.level < maximumLevel) {
@@ -91,11 +91,11 @@ namespace CesiumGeometry {
         }
     }
 
-    /*static*/ bool QuadtreeTileAvailability::rectangleLevelComparator(const QuadtreeTileAvailability::RectangleWithLevel& a, const QuadtreeTileAvailability::RectangleWithLevel& b) {
+    /*static*/ bool QuadtreeTileAvailability::rectangleLevelComparator(const QuadtreeTileAvailability::RectangleWithLevel& a, const QuadtreeTileAvailability::RectangleWithLevel& b) noexcept {
         return a.level < b.level;
     }
 
-    /*static*/ uint32_t QuadtreeTileAvailability::findMaxLevelFromNode(QuadtreeTileAvailability::QuadtreeNode* pStopNode, QuadtreeTileAvailability::QuadtreeNode& node, const glm::dvec2& position) {
+    /*static*/ uint32_t QuadtreeTileAvailability::findMaxLevelFromNode(QuadtreeTileAvailability::QuadtreeNode* pStopNode, QuadtreeTileAvailability::QuadtreeNode& node, const glm::dvec2& position) noexcept {
         uint32_t maxLevel = 0;
         QuadtreeTileAvailability::QuadtreeNode* pNode = &node;
 
@@ -155,7 +155,7 @@ namespace CesiumGeometry {
         return maxLevel;
     }
 
-    /*static*/ void QuadtreeTileAvailability::createNodeChildrenIfNecessary(QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTilingScheme& tilingScheme) {
+    /*static*/ void QuadtreeTileAvailability::createNodeChildrenIfNecessary(QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTilingScheme& tilingScheme) noexcept {
         if (node.ll) {
             return;
         }
