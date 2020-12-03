@@ -16,11 +16,11 @@ jobs:
       os: linux
       dist: focal
       env:
-        - CC=clang
-        - CXX=clang++
+        - CC=clang-10
+        - CXX=clang++-10
       install:
         - sudo apt-get update
-        - sudo apt-get install cmake doxygen
+        - sudo apt-get install clang-10 cmake doxygen
 
 script:
   - mkdir -p build
