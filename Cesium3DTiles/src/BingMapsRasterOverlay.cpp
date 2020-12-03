@@ -100,7 +100,7 @@ namespace Cesium3DTiles {
         static std::string tileXYToQuadKey(uint32_t level, uint32_t x, uint32_t y) {
             std::string quadkey = "";
             for (int32_t i = static_cast<int32_t>(level); i >= 0; --i) {
-                uint32_t bitmask = 1 << static_cast<uint32_t>(i);
+                uint32_t bitmask = static_cast<uint32_t>(1 << i);
                 uint32_t digit = 0;
 
                 if ((x & bitmask) != 0) {
