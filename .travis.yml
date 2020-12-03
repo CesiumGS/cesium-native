@@ -8,7 +8,7 @@ jobs:
         - choco install doxygen.install
     - name: Linux + GCC
       os: linux
-      dist: bionic
+      dist: focal
       install:
         - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
         - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
@@ -17,7 +17,7 @@ jobs:
         - export PATH=/usr/bin:$PATH
     - name: Linux + Clang
       os: linux
-      dist: bionic
+      dist: focal
       env:
         - CC=clang
         - CXX=clang++
