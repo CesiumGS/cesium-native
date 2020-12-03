@@ -4,15 +4,7 @@
 
 namespace CesiumGeometry {
 
-    Rectangle::Rectangle(double minimumXIn, double minimumYIn, double maximumXIn, double maximumYIn) :
-        minimumX(minimumXIn),
-        minimumY(minimumYIn),
-        maximumX(maximumXIn),
-        maximumY(maximumYIn)
-    {
-    }
-
-    bool Rectangle::contains(const glm::dvec2& position) const {
+    bool Rectangle::contains(const glm::dvec2& position) const noexcept {
         return
             position.x >= this->minimumX &&
             position.y >= this->minimumY &&
@@ -20,7 +12,7 @@ namespace CesiumGeometry {
             position.y <= this->maximumY;
     }
 
-    bool Rectangle::overlaps(const Rectangle& other) const {
+    bool Rectangle::overlaps(const Rectangle& other) const noexcept {
         double left = glm::max(this->minimumX, other.minimumX);
         double bottom = glm::max(this->minimumY, other.minimumY);
         double right = glm::min(this->maximumX, other.maximumX);
@@ -28,7 +20,7 @@ namespace CesiumGeometry {
         return bottom < top && left < right;
     }
 
-    bool Rectangle::fullyContains(const Rectangle& other) const {
+    bool Rectangle::fullyContains(const Rectangle& other) const noexcept {
         return (
             other.minimumX >= this->minimumX &&
             other.maximumX <= this->maximumX &&
@@ -37,7 +29,7 @@ namespace CesiumGeometry {
         );
     }
 
-    double Rectangle::computeSignedDistance(const glm::dvec2& position) const {
+    double Rectangle::computeSignedDistance(const glm::dvec2& position) const noexcept {
         glm::dvec2 bottomLeftDistance = glm::dvec2(minimumX, minimumY) - position;
         glm::dvec2 topRightDistance = position - glm::dvec2(maximumX, maximumY);
         glm::dvec2 maxDistance = glm::max(bottomLeftDistance, topRightDistance);
@@ -54,15 +46,7 @@ namespace CesiumGeometry {
         }
     }
 
-    double Rectangle::computeWidth() const {
-        return this->maximumX - this->minimumX;
-    }
-
-    double Rectangle::computeHeight() const {
-        return this->maximumY - this->minimumY;
-    }
-
-    std::optional<Rectangle> Rectangle::intersect(const Rectangle& other) const {
+    std::optional<Rectangle> Rectangle::intersect(const Rectangle& other) const noexcept {
         double left = glm::max(this->minimumX, other.minimumX);
         double bottom = glm::max(this->minimumY, other.minimumY);
         double right = glm::min(this->maximumX, other.maximumX);

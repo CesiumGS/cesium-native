@@ -10,21 +10,21 @@ namespace CesiumGeospatial {
     double BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition(
         const glm::dvec3& position,
         const Ellipsoid& ellipsoid
-    ) const {
+    ) const noexcept {
         return this->_region.computeDistanceSquaredToPosition(position, ellipsoid);
     }
 
     double BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition(
         const Cartographic& position,
         const Ellipsoid& ellipsoid
-    ) const {
+    ) const noexcept {
         return this->_region.computeDistanceSquaredToPosition(position, ellipsoid);
     }
 
     double BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition(
         const Cartographic& cartographicPosition,
         const glm::dvec3& cartesianPosition
-    ) const {
+    ) const noexcept {
         return this->_region.computeDistanceSquaredToPosition(cartographicPosition, cartesianPosition);
     }
 }

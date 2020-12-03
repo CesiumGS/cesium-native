@@ -78,19 +78,19 @@ namespace CesiumUtility {
             return this->_p;
         }
 
-        bool operator==(const IntrusivePointer<T>& rhs) {
+        bool operator==(const IntrusivePointer<T>& rhs) const noexcept {
             return this->_p == rhs._p;
         }
 
-        bool operator!=(const IntrusivePointer<T>& rhs) {
+        bool operator!=(const IntrusivePointer<T>& rhs) const noexcept {
             return !(*this == rhs);
         }
 
-        bool operator==(T* pRhs) {
+        bool operator==(T* pRhs) const noexcept {
             return this->_p == pRhs;
         }
 
-        bool operator!=(T* pRhs) {
+        bool operator!=(T* pRhs) const noexcept {
             return !(*this == pRhs);
         }
 

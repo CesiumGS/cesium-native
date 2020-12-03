@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumGeospatial/Library.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Library.h"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
@@ -49,19 +49,22 @@ namespace CesiumGeospatial {
          * @param ellipsoid The {@link Ellipsoid}. Default value: {@link Ellipsoid::WGS84}.
          * @return The rectangle
          */
-        static CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+        static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept {
+            double value = ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
+            return CesiumGeometry::Rectangle(-value, -value, value, value);
+        }
 
         /**
          * @brief Constructs a new instance.
          * 
          * @param ellipsoid The {@link Ellipsoid}.
          */
-        WebMercatorProjection(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+        WebMercatorProjection(const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept;
 
         /**
          * @brief Gets the {@link Ellipsoid}.
          */
-        const Ellipsoid& getEllipsoid() const { return this->_ellipsoid; }
+        const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
         /**
          * @brief Converts geodedic ellipsoid coordinates to Web Mercator coordinates.
@@ -72,7 +75,7 @@ namespace CesiumGeospatial {
          * @param cartographic The geodetic coordinates in radians.
          * @returns The equivalent web mercator X, Y, Z coordinates, in meters.
          */
-        glm::dvec3 project(const Cartographic& cartographic) const;
+        glm::dvec3 project(const Cartographic& cartographic) const noexcept;
 
         /**
          * @brief Projects a globe rectangle to Web Mercator coordinates.
@@ -82,7 +85,7 @@ namespace CesiumGeospatial {
          * @param rectangle The globe rectangle to project.
          * @return The projected rectangle.
          */
-        CesiumGeometry::Rectangle project(const CesiumGeospatial::GlobeRectangle& rectangle) const;
+        CesiumGeometry::Rectangle project(const CesiumGeospatial::GlobeRectangle& rectangle) const noexcept;
 
         /**
          * @brief Converts Web Mercator coordinates to geodetic ellipsoid coordinates.
@@ -93,7 +96,7 @@ namespace CesiumGeospatial {
          * @param projectedCoordinates The web mercator projected coordinates to unproject.
          * @returns The equivalent cartographic coordinates.
          */
-        Cartographic unproject(const glm::dvec2& projectedCoordinates) const;
+        Cartographic unproject(const glm::dvec2& projectedCoordinates) const noexcept;
 
         /**
          * @brief Converts Web Mercator coordinates to geodetic ellipsoid coordinates.
@@ -105,7 +108,7 @@ namespace CesiumGeospatial {
          * @param projectedCoordinates The web mercator projected coordinates to unproject, with height (z) in meters.
          * @returns The equivalent cartographic coordinates.
          */
-        Cartographic unproject(const glm::dvec3& projectedCoordinates) const;
+        Cartographic unproject(const glm::dvec3& projectedCoordinates) const noexcept;
 
         /**
          * @brief Unprojects a Web Mercator rectangle to the globe.
@@ -115,7 +118,7 @@ namespace CesiumGeospatial {
          * @param rectangle The rectangle to unproject.
          * @returns The unprojected rectangle.
          */
-        CesiumGeospatial::GlobeRectangle unproject(const CesiumGeometry::Rectangle& rectangle) const;
+        CesiumGeospatial::GlobeRectangle unproject(const CesiumGeometry::Rectangle& rectangle) const noexcept;
 
         /**
          * @brief Converts a Mercator angle, in the range -PI to PI, to a geodetic latitude
@@ -124,7 +127,7 @@ namespace CesiumGeospatial {
          * @param mercatorAngle The angle to convert.
          * @returns The geodetic latitude in radians.
          */
-        static double mercatorAngleToGeodeticLatitude(double mercatorAngle);
+        static double mercatorAngleToGeodeticLatitude(double mercatorAngle) noexcept;
 
         /**
          * @brief Converts a geodetic latitude in radians, in the range -PI/2 to PI/2, to a Mercator
@@ -133,19 +136,19 @@ namespace CesiumGeospatial {
          * @param latitude The geodetic latitude in radians.
          * @returns The Mercator angle.
          */
-        static double geodeticLatitudeToMercatorAngle(double latitude);
+        static double geodeticLatitudeToMercatorAngle(double latitude) noexcept;
 
         /**
          * @brief Returns `true` if two projections (i.e. their ellipsoids) are equal.
          */
-        bool operator==(const WebMercatorProjection& rhs) const {
+        bool operator==(const WebMercatorProjection& rhs) const noexcept {
             return this->_ellipsoid == rhs._ellipsoid;
         };
 
         /**
          * @brief Returns `true` if two projections (i.e. their ellipsoids) are *not* equal.
          */
-        bool operator!=(const WebMercatorProjection& rhs) const {
+        bool operator!=(const WebMercatorProjection& rhs) const noexcept {
             return !(*this == rhs);
         };
 
