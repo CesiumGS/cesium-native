@@ -82,13 +82,13 @@ namespace Cesium3DTiles {
 
 		int meshId = node.mesh;
 		if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
-			const tinygltf::Mesh& mesh = model.meshes[meshId];
+			const tinygltf::Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
 			forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
 		}
 
 		for (int childNodeId : node.children) {
 			if (childNodeId >= 0 && childNodeId < static_cast<int>(model.nodes.size())) {
-				forEachPrimitiveInNodeObject(nodeTransform, model, model.nodes[childNodeId], callback);
+				forEachPrimitiveInNodeObject(nodeTransform, model, model.nodes[static_cast<size_t>(childNodeId)], callback);
 			}
 		}
 	}
@@ -96,7 +96,7 @@ namespace Cesium3DTiles {
 	static void forEachPrimitiveInSceneObject(const glm::dmat4x4& transform, const tinygltf::Model& model, const tinygltf::Scene& scene, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback) {
 		for (int nodeID : scene.nodes) {
 			if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
-				forEachPrimitiveInNodeObject(transform, model, model.nodes[nodeID], callback);
+				forEachPrimitiveInNodeObject(transform, model, model.nodes[static_cast<size_t>(nodeID)], callback);
 			}
 		}
 	}
@@ -107,11 +107,11 @@ namespace Cesium3DTiles {
 		if (sceneID >= 0) {
 			// Use the user-specified scene if it exists.
 			if (sceneID < static_cast<int>(gltf.scenes.size())) {
-				forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[sceneID], callback);
+				forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[static_cast<size_t>(sceneID)], callback);
 			}
 		} else if (gltf.defaultScene >= 0 && gltf.defaultScene < static_cast<int>(gltf.scenes.size())) {
 			// Use the default scene
-			forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[gltf.defaultScene], callback);
+			forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[static_cast<size_t>(gltf.defaultScene)], callback);
 		} else if (gltf.scenes.size() > 0) {
 			// There's no default, so use the first scene
 			const tinygltf::Scene& defaultScene = gltf.scenes[0];

@@ -11,8 +11,8 @@ namespace Cesium3DTiles {
 
     RasterOverlayCollection::~RasterOverlayCollection() {
         if (this->_overlays.size() > 0) {
-            for (int64_t i = this->_overlays.size(); i >= 0; --i) {
-                this->remove(this->_overlays[i].get());
+            for (int64_t i = static_cast<int64_t>(this->_overlays.size()); i >= 0; --i) {
+                this->remove(this->_overlays[static_cast<size_t>(i)].get());
             }
         }
     }
