@@ -69,7 +69,7 @@ namespace Cesium3DTiles {
          */
         RasterOverlayTile(
             RasterOverlay& overlay
-        );
+        ) noexcept;
 
         /**
          * @brief Creates a new instance.
@@ -98,12 +98,12 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the {@link RasterOverlay} of this instance.
          */
-        RasterOverlay& getOverlay() { return *this->_pOverlay; }
+        RasterOverlay& getOverlay() noexcept { return *this->_pOverlay; }
 
         /**
          * @brief Returns the {@link CesiumGeometry::QuadtreeTileID} that was given during construction.
          */
-        const CesiumGeometry::QuadtreeTileID& getID() { return this->_tileID; }
+        const CesiumGeometry::QuadtreeTileID& getID() noexcept { return this->_tileID; }
 
         /**
          * @brief Returns the current {@link LoadState}.
@@ -118,7 +118,7 @@ namespace Cesium3DTiles {
          *
          * @return The image data.
          */
-        const tinygltf::Image& getImage() const { return this->_image; }
+        const tinygltf::Image& getImage() const noexcept { return this->_image; }
 
         /**
          * @brief Create the renderer resources for the loaded image.
@@ -145,14 +145,14 @@ namespace Cesium3DTiles {
         /**
          * @brief Adds a counted reference to this instance.
          */
-        void addReference();
+        void addReference() noexcept;
 
         /**
          * @brief Removes a counted reference from this instance.
          */
-        void releaseReference();
+        void releaseReference() noexcept;
 
-        uint32_t getReferenceCount() const { return this->_references; }
+        uint32_t getReferenceCount() const noexcept { return this->_references; }
 
     private:
         void setState(LoadState newState);

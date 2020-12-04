@@ -53,7 +53,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    void RasterOverlay::destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) {
+    void RasterOverlay::destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept {
         if (pOverlay) {
             this->_pSelf = std::move(pOverlay);
         } else if (!this->isBeingDestroyed()) {

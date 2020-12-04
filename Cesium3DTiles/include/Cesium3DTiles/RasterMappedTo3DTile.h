@@ -60,10 +60,10 @@ namespace Cesium3DTiles {
          * 
          * @return The placeholder tile while loading, or `nullptr`.
          */
-        RasterOverlayTile* getLoadingTile() { return this->_pLoadingTile.get(); }
+        RasterOverlayTile* getLoadingTile() noexcept { return this->_pLoadingTile.get(); }
 
         /** @copydoc getLoadingTile */
-        const RasterOverlayTile* getLoadingTile() const { return this->_pLoadingTile.get(); }
+        const RasterOverlayTile* getLoadingTile() const noexcept { return this->_pLoadingTile.get(); }
 
         /**
          * @brief Returns the {@link RasterOverlayTile} that represents the imagery data.
@@ -72,10 +72,10 @@ namespace Cesium3DTiles {
          * 
          * @return The tile, or `nullptr`.
          */
-        RasterOverlayTile* getReadyTile() { return this->_pReadyTile.get(); }
+        RasterOverlayTile* getReadyTile() noexcept { return this->_pReadyTile.get(); }
 
         /** @copydoc getReadyTile */
-        const RasterOverlayTile* getReadyTile() const { return this->_pReadyTile.get(); }
+        const RasterOverlayTile* getReadyTile() const noexcept { return this->_pReadyTile.get(); }
 
         /**
          * @brief Returns an identifier for the texture coordinates of this tile.
@@ -86,7 +86,7 @@ namespace Cesium3DTiles {
          * 
          * @return The texture coordinate ID.
          */
-        uint32_t getTextureCoordinateID() const { return this->_textureCoordinateID; }
+        uint32_t getTextureCoordinateID() const noexcept { return this->_textureCoordinateID; }
 
         /**
          * @brief Sets the texture coordinate ID.
@@ -95,7 +95,7 @@ namespace Cesium3DTiles {
          * 
          * @param textureCoordinateID The ID.
          */
-        void setTextureCoordinateID(uint32_t textureCoordinateID) { this->_textureCoordinateID = textureCoordinateID; }
+        void setTextureCoordinateID(uint32_t textureCoordinateID) noexcept { this->_textureCoordinateID = textureCoordinateID; }
         
         /**
          * @brief The texture coordinate range in which the raster is applied.
@@ -107,7 +107,7 @@ namespace Cesium3DTiles {
          * 
          * @return The texture coordinate rectangle.
          */
-        const CesiumGeometry::Rectangle& getTextureCoordinateRectangle() const { return this->_textureCoordinateRectangle; }
+        const CesiumGeometry::Rectangle& getTextureCoordinateRectangle() const noexcept { return this->_textureCoordinateRectangle; }
         
         /**
          * @brief Returns the translation that converts between texture coordinates and world coordinates.
@@ -119,7 +119,7 @@ namespace Cesium3DTiles {
          *
          * @returns The translation.
          */
-        const glm::dvec2& getTranslation() const { return this->_translation; }
+        const glm::dvec2& getTranslation() const noexcept { return this->_translation; }
 
         /**
          * @brief Returns the scaling that converts between texture coordinates and world coordinates.
@@ -128,14 +128,14 @@ namespace Cesium3DTiles {
          *
          * @returns The scaling.
          */
-        const glm::dvec2& getScale() const { return this->_scale; }
+        const glm::dvec2& getScale() const noexcept { return this->_scale; }
         
         /**
          * @brief Returns the {@link AttachmentState}.
          * 
          * This function is not supposed to be called by clients.
          */
-        AttachmentState getState() const { return this->_state; }
+        AttachmentState getState() const noexcept { return this->_state; }
 
         /**
          * @brief Tile availability states.
@@ -173,7 +173,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Detach the raster from the given tile.
          */
-        void detachFromTile(Tile& tile);
+        void detachFromTile(Tile& tile) noexcept;
         
         // void attachToTile(Tile& tile);
 

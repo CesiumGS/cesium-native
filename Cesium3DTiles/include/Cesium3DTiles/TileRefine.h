@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
         /**
          * @brief The content of the child tiles will replace the content of the parent tile.
          */
-         Replace = 1
+        Replace = 1
     };
 
 }

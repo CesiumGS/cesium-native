@@ -128,7 +128,7 @@ namespace Cesium3DTiles {
         const Plane& rightPlane,
         const Plane& bottomPlane,
         const Plane& topPlane
-    ) {
+    ) noexcept {
         CullingResult left = boundingVolume.intersectPlane(leftPlane);
         if (left == CullingResult::Outside) {
             return false;
@@ -152,7 +152,7 @@ namespace Cesium3DTiles {
         return true;
     }
 
-    bool Camera::isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const {
+    bool Camera::isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const noexcept {
         // TODO: use plane masks
         struct Operation {
             const Camera& camera;
@@ -177,7 +177,7 @@ namespace Cesium3DTiles {
         return std::visit(Operation { *this }, boundingVolume);
     }
 
-    double Camera::computeDistanceSquaredToBoundingVolume(const BoundingVolume& boundingVolume) const {
+    double Camera::computeDistanceSquaredToBoundingVolume(const BoundingVolume& boundingVolume) const noexcept {
         struct Operation {
             const Camera& camera;
 
@@ -209,7 +209,7 @@ namespace Cesium3DTiles {
         return std::visit(Operation { *this }, boundingVolume);
     }
 
-    double Camera::computeScreenSpaceError(double geometricError, double distance) const {
+    double Camera::computeScreenSpaceError(double geometricError, double distance) const noexcept {
         // Avoid divide by zero when viewer is inside the tile
         distance = glm::max(distance, 1e-7);
         double sseDenominator = this->_sseDenominator;

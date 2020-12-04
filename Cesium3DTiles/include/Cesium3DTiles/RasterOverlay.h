@@ -44,23 +44,23 @@ namespace Cesium3DTiles {
          * 
          * Returns `nullptr` if {@link createTileProvider} has not yet been called.
          */
-        RasterOverlayTileProvider* getPlaceholder() { return this->_pPlaceholder.get(); }
+        RasterOverlayTileProvider* getPlaceholder() noexcept { return this->_pPlaceholder.get(); }
 
         /** @copydoc getPlaceholder */
-        const RasterOverlayTileProvider* getPlaceholder() const { return this->_pPlaceholder.get(); }
+        const RasterOverlayTileProvider* getPlaceholder() const noexcept { return this->_pPlaceholder.get(); }
 
         /**
          * @brief Get a collection containing the sections of this overlay and its associated tileset that are not rendered.
          */
-        RasterOverlayCutoutCollection& getCutouts() { return this->_cutouts; }
+        RasterOverlayCutoutCollection& getCutouts() noexcept { return this->_cutouts; }
 
         /** @copydoc getCutouts */
-        const RasterOverlayCutoutCollection& getCutouts() const { return this->_cutouts; }
+        const RasterOverlayCutoutCollection& getCutouts() const noexcept { return this->_cutouts; }
 
         /**
          * @brief Returns whether this overlay is in the process of being destroyed.
          */
-        bool isBeingDestroyed() const { return this->_pSelf != nullptr; }
+        bool isBeingDestroyed() const noexcept { return this->_pSelf != nullptr; }
 
         /**
          * @brief A callback that receives the tile provider when it asynchronously becomes ready.
@@ -111,7 +111,7 @@ namespace Cesium3DTiles {
          * 
          * @param pOverlay A unique pointer to this instance, allowing transfer of ownership.
          */
-        void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay);
+        void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
 
     private:
         std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;

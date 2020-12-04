@@ -3,7 +3,7 @@
 
 namespace Cesium3DTiles {
 
-    RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) :
+    RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept :
         _pTileset(&tileset),
         _overlays()
     {
@@ -33,7 +33,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    void RasterOverlayCollection::remove(RasterOverlay* pOverlay) {
+    void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
         // Remove all mappings of this overlay to geometry tiles.
         auto removeCondition = [pOverlay](RasterMappedTo3DTile& mapped) {
             return (
