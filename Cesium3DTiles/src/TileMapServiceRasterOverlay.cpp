@@ -14,7 +14,7 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
-    class TileMapServiceTileProvider : public RasterOverlayTileProvider {
+    class TileMapServiceTileProvider final : public RasterOverlayTileProvider {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,

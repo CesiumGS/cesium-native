@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
      * imagery data that is given as {@link RasterOverlayTile} instances 
      * to the 2D region that is covered by the tile geometry. 
      */
-    class RasterMappedTo3DTile {
+    class RasterMappedTo3DTile final {
     public:
 
         /**

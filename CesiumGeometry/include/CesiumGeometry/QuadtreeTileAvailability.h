@@ -13,7 +13,7 @@ namespace CesiumGeometry {
     /**
      * @brief Manages information about the availability of tiles in a quadtree.
      */
-    class CESIUMGEOMETRY_API QuadtreeTileAvailability {
+    class CESIUMGEOMETRY_API QuadtreeTileAvailability final {
     public:
 
         /**

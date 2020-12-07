@@ -11,7 +11,7 @@ namespace Cesium3DTiles {
 	 * @brief Provides write access to a {@link GltfAccessor}.
 	 */
 	template <class T>
-	class GltfWriter {
+	class GltfWriter final {
 	private:
 		GltfAccessor<T> _accessor;
 

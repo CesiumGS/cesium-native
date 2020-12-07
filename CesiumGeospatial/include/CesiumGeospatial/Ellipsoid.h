@@ -16,7 +16,7 @@ namespace CesiumGeospatial {
      * Rather than constructing this object directly, one of the provided constants 
      * is normally used.
      */
-    class CESIUMGEOSPATIAL_API Ellipsoid {
+    class CESIUMGEOSPATIAL_API Ellipsoid final {
     public:
         /**
          * @brief An Ellipsoid instance initialized to the WGS84 standard.

@@ -8,7 +8,7 @@ namespace CesiumGeospatial {
     /**
      * @brief A position defined by longitude, latitude, and height.
      */
-    class CESIUMGEOSPATIAL_API Cartographic {
+    class CESIUMGEOSPATIAL_API Cartographic final {
     public:
 
         /**
