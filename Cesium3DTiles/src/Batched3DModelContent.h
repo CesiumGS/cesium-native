@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates a {@link TileContentLoadResult} from B3DM data.
      */
-    class CESIUM3DTILES_API Batched3DModelContent {
+    class CESIUM3DTILES_API Batched3DModelContent final {
     public:
         /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(

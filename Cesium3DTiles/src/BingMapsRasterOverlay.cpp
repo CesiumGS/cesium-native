@@ -27,7 +27,7 @@ namespace Cesium3DTiles {
     const std::string BingMapsStyle::ORDNANCE_SURVEY = "OrdnanceSurvey";
     const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 
-    class BingMapsTileProvider : public RasterOverlayTileProvider {
+    class BingMapsTileProvider final : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,

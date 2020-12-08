@@ -11,7 +11,7 @@ namespace Cesium3DTiles {
     /**
      * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
      */
-    class CESIUM3DTILES_API IonRasterOverlay : public RasterOverlay {
+    class CESIUM3DTILES_API IonRasterOverlay final : public RasterOverlay {
     public:
 
         /**

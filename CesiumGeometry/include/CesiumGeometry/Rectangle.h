@@ -9,7 +9,7 @@ namespace CesiumGeometry {
     /**
      * @brief A 2D rectangle
      */
-    struct CESIUMGEOMETRY_API Rectangle {
+    struct CESIUMGEOMETRY_API Rectangle final {
         /**
          * @brief Creates a new instance.
          *

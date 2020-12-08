@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
      * instances will be passed to the {@link RasterOverlayTile} instances that
      * they create when the tiles are updated.
      */
-    class CESIUM3DTILES_API RasterOverlayCollection {
+    class CESIUM3DTILES_API RasterOverlayCollection final {
     public:
 
         /** 

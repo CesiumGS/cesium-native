@@ -22,7 +22,7 @@ namespace Cesium3DTiles {
      * raster overlay tile with texture coordinates, to map the
      * image on the geometry of a {@link Tile}.
      */
-    class RasterOverlayTile {
+    class RasterOverlayTile final {
     public:
 
         /**

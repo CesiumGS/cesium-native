@@ -13,7 +13,7 @@ namespace CesiumGeospatial {
      * has a {@link BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition} method to compute
      * the conservative distance metric.
      */
-    class CESIUMGEOSPATIAL_API BoundingRegionWithLooseFittingHeights {
+    class CESIUMGEOSPATIAL_API BoundingRegionWithLooseFittingHeights final {
     public:
         /**
          * @brief Constructs a new bounding region.
