@@ -4,6 +4,8 @@
 #include "CesiumUtility/Math.h"
 #include <stdexcept>
 
+using namespace CesiumGltf;
+
 namespace Cesium3DTiles {
 
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
@@ -22,15 +24,17 @@ namespace Cesium3DTiles {
 		std::string errors;
 		std::string warnings;
 
-		tinygltf::TinyGLTF loader;
-		pResult->model.emplace();
-		loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
+		try {
+			pResult->model = GltfModel::fromMemory(data);
+		} catch (std::exception& /*e*/) {
+			// TODO: log glTF error
+		}
 
 		return pResult;
 	}
 
 	static int generateOverlayTextureCoordinates(
-		tinygltf::Model& gltf,
+		GltfModel& gltf,
 		int positionAccessorIndex,
 		const glm::dmat4x4& transform,
 		const CesiumGeospatial::Projection& projection,
@@ -42,19 +46,22 @@ namespace Cesium3DTiles {
 		double& minimumHeight,
 		double& maximumHeight
 	) {
-        int uvBufferId = static_cast<int>(gltf.buffers.size());
-        gltf.buffers.emplace_back();
+		GltfCollection<GltfBuffer> buffers = gltf.buffers();
+		GltfCollection<GltfBufferView> bufferViews = gltf.bufferViews();
+		GltfCollection<CesiumGltf::GltfAccessor> accessors = gltf.accessors();
 
-        int uvBufferViewId = static_cast<int>(gltf.bufferViews.size());
-        gltf.bufferViews.emplace_back();
+        size_t uvBufferId = buffers.size();
+        GltfBuffer uvBuffer = buffers.emplace_back();
 
-        int uvAccessorId = static_cast<int>(gltf.accessors.size());
-        gltf.accessors.emplace_back();
+        size_t uvBufferViewId = bufferViews.size();
+        GltfBufferView uvBufferView = bufferViews.emplace_back();
+
+        size_t uvAccessorId = accessors.size();
+		CesiumGltf::GltfAccessor uvAccessor = accessors.emplace_back();
 
 		GltfAccessor<glm::vec3> positionAccessor(gltf, static_cast<size_t>(positionAccessorIndex));
 
-        tinygltf::Buffer& uvBuffer = gltf.buffers[static_cast<size_t>(uvBufferId)];
-        uvBuffer.data.resize(positionAccessor.size() * 2 * sizeof(float));
+        uvBuffer.resizeData(positionAccessor.size() * 2 * sizeof(float));
 
         tinygltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
         uvBufferView.buffer = uvBufferId;

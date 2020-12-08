@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include "CesiumGltf/GltfModel.h"
 
 namespace Cesium3DTiles {
 
@@ -30,7 +30,7 @@ namespace Cesium3DTiles {
          * If it has a value but the model is blank, the tile can 
          * be "rendered", but it is rendered as nothing.
          */
-        std::optional<tinygltf::Model> model;
+        std::optional<CesiumGltf::GltfModel> model;
 
         /**
          * @brief A new context, if any, used by the `childTiles`.
