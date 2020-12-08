@@ -204,6 +204,7 @@ namespace Cesium3DTiles {
         result.tilesToRenderThisFrame.clear();
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
+        result.creditsToShowThisFrame.clear();
         result.tilesVisited = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
@@ -234,6 +235,20 @@ namespace Cesium3DTiles {
 
         this->_unloadCachedTiles();
         this->_processLoadQueue();
+
+        // (TODO: use indices and remove redundancies) 
+        if (!result.tilesToRenderThisFrame.empty()) {
+            if (this->_options.credit) {
+                result.creditsToShowThisFrame.push_back(this->_options.credit.value());
+            }
+            result.creditsToShowThisFrame.push_back("Cesium Ion");
+            for (auto& tile : result.tilesToRenderThisFrame) {
+                const std::vector<RasterMappedTo3DTile>& tileOverlays = tile->getMappedRasterTiles();
+                for (auto tileOverlay : tileOverlays) {
+                    result.creditsToShowThisFrame.push_back(tileOverlay.getReadyTile()->getCredit());
+                }
+            }
+        }
 
         this->_previousFrameNumber = currentFrameNumber;
 

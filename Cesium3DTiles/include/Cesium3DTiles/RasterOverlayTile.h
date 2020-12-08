@@ -6,6 +6,7 @@
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include <atomic>
 #include <memory>
+#include <string>
 
 namespace Cesium3DTiles {
 
@@ -68,7 +69,8 @@ namespace Cesium3DTiles {
          * @param overlay The {@link RasterOverlay}.
          */
         RasterOverlayTile(
-            RasterOverlay& overlay
+            RasterOverlay& overlay,
+            std::string credit
         ) noexcept;
 
         /**
@@ -89,6 +91,7 @@ namespace Cesium3DTiles {
         RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
+            std::string credit,
             CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
         );
 
@@ -109,6 +112,11 @@ namespace Cesium3DTiles {
          * @brief Returns the current {@link LoadState}.
          */
         LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
+
+        /**
+         * @brief Returns the current {@link LoadState}.
+         */
+        const std::string& getCredit() const noexcept { return this->_credit; }
 
         /**
          * @brief Returns the image data for the tile.
@@ -163,5 +171,6 @@ namespace Cesium3DTiles {
         tinygltf::Image _image;
         void* _pRendererResources;
         uint32_t _references;
+        std::string _credit;
     };
 }

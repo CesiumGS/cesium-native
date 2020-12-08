@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include "Cesium3DTiles/Library.h"
 
 namespace Cesium3DTiles {
@@ -28,6 +29,11 @@ namespace Cesium3DTiles {
          * @brief The tiles that have been removed from the render list for the current frame
          */
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
+
+        /**
+         * @brief The credits for the tiles in the render list of the current frame (TODO: use indices and remove redundancies instead) 
+         */
+        std::vector<std::string> creditsToShowThisFrame;
 
         //! @cond Doxygen_Suppress
         uint32_t tilesLoadingLowPriority;

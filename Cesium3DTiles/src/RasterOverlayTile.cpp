@@ -11,10 +11,12 @@ using namespace CesiumAsync;
 namespace Cesium3DTiles {
 
         RasterOverlayTile::RasterOverlayTile(
-            RasterOverlay& overlay
+            RasterOverlay& overlay,
+            std::string credit
         ) noexcept :
             _pOverlay(&overlay),
             _tileID(0, 0, 0),
+            _credit(credit),
             _state(LoadState::Placeholder),
             _image(),
             _pRendererResources(nullptr),
@@ -25,10 +27,12 @@ namespace Cesium3DTiles {
         RasterOverlayTile::RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
+            std::string credit,
             Future<std::unique_ptr<IAssetRequest>>&& imageRequest
         ) :
             _pOverlay(&overlay),
             _tileID(tileID),
+            _credit(credit),
             _state(LoadState::Unloaded),
             _image(),
             _pRendererResources(nullptr),

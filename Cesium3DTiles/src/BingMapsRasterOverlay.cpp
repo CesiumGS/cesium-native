@@ -93,7 +93,8 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, this->getAsyncSystem().requestAsset(url));
+            // TODO: change place holder "Bing"
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, "Bing", this->getAsyncSystem().requestAsset(url));
         }
     
     private:
