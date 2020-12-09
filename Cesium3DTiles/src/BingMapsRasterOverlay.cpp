@@ -93,8 +93,9 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            // TODO: change place holder "Bing"
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, "Bing", this->getAsyncSystem().requestAsset(url));
+            // TODO: change place holder credit string
+            std::string credit = std::format("Bing: (level = {}, x = {}, y = {})", std::to_string(tileId.level), std::to_string(tileId.y), std::to_string(tileId.y));
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, credit, this->getAsyncSystem().requestAsset(url));
         }
     
     private:
