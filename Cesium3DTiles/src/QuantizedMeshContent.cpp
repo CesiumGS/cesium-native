@@ -87,6 +87,43 @@ namespace Cesium3DTiles {
         return defaultValue;
     }
 
+    template <class T>
+    static void addSkirt(
+        uint32_t currentVertexCount,
+        uint32_t currentIndicesCount,
+        glm::vec3 tileNormal, 
+		float skirtHeight,
+        const gsl::span<const T> edgeIndices,
+        gsl::span<float> &positions,
+        gsl::span<T> &indices) 
+    {
+        size_t newEdgeIndex = currentVertexCount;
+        size_t positionIdx = currentVertexCount * 3;
+        size_t indexIdx = currentIndicesCount;
+        for (size_t i = 0; i < edgeIndices.size() - 1; ++i) {
+            T edgeIdx = edgeIndices[i];
+            T nextEdgeIdx = edgeIndices[i + 1];
+            positions[positionIdx++] = positions[3 * edgeIdx] - skirtHeight * tileNormal.x;
+            positions[positionIdx++] = positions[3 * edgeIdx + 1] - skirtHeight * tileNormal.y;
+            positions[positionIdx++] = positions[3 * edgeIdx + 2] - skirtHeight * tileNormal.z;
+
+            indices[indexIdx++] = static_cast<T>(edgeIdx);
+            indices[indexIdx++] = static_cast<T>(nextEdgeIdx);
+            indices[indexIdx++] = static_cast<T>(newEdgeIndex);
+
+            indices[indexIdx++] = static_cast<T>(newEdgeIndex);
+            indices[indexIdx++] = static_cast<T>(nextEdgeIdx);
+            indices[indexIdx++] = static_cast<T>(newEdgeIndex + 1);
+
+            ++newEdgeIndex;
+        }
+
+		T edgeIdx = edgeIndices.back();
+		positions[positionIdx++] = positions[3 * edgeIdx] - skirtHeight * tileNormal.x;
+		positions[positionIdx++] = positions[3 * edgeIdx + 1] - skirtHeight * tileNormal.y;
+		positions[positionIdx++] = positions[3 * edgeIdx + 2] - skirtHeight * tileNormal.z;
+    }
+
     static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
         const uint8_t rangeMax = 255;
 
@@ -157,10 +194,6 @@ namespace Cesium3DTiles {
             return pResult;
         }
 
-        int32_t u = 0;
-        int32_t v = 0;
-        int32_t height = 0;
-
         const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
         if (!pRegion) {
             const BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<BoundingRegionWithLooseFittingHeights>(&tileBoundingVolume);
@@ -179,272 +212,406 @@ namespace Cesium3DTiles {
         double east = rectangle.getEast();
         double north = rectangle.getNorth();
 
-        pResult->model.emplace();
-        tinygltf::Model& model = pResult->model.value();
-        
-        int positionBufferId = static_cast<int>(model.buffers.size());
-        model.buffers.emplace_back();
+		gsl::span<const uint8_t> encodedIndicesBuffer;
+		uint32_t indicesCount = 0;
+		size_t indexSizeBytes = 0;
+		if (pHeader->vertexCount > 65536) {
+			// 32-bit indices
+			if ((readIndex % 4) != 0) {
+				readIndex += 2;
+				if (readIndex > data.size()) {
+					return pResult;
+				}
+			}
 
-        int positionBufferViewId = static_cast<int>(model.bufferViews.size());
-        model.bufferViews.emplace_back();
+			uint32_t triangleCount = readValue<uint32_t>(data, readIndex, 0);
+			readIndex += sizeof(uint32_t);
+			if (readIndex > data.size()) {
+				return pResult;
+			}
 
-        int positionAccessorId = static_cast<int>(model.accessors.size());
-        model.accessors.emplace_back();
+			indicesCount = triangleCount * 3;
+			encodedIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
+			readIndex += encodedIndicesBuffer.size_bytes();
+			if (readIndex > data.size()) {
+				return pResult;
+			}
 
-        tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
-        positionBuffer.data.resize(vertexCount * 3 * sizeof(float));
+			indexSizeBytes = sizeof(uint32_t);
+		}
+		else {
+			// 16-bit indices
+			uint32_t triangleCount = readValue<uint32_t>(data, readIndex, 0);
+			readIndex += sizeof(uint32_t);
+			if (readIndex > data.size()) {
+				return pResult;
+			}
 
-        tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
-        positionBufferView.buffer = positionBufferId;
-        positionBufferView.byteOffset = 0;
-        positionBufferView.byteStride = 3 * sizeof(float);
-        positionBufferView.byteLength = positionBuffer.data.size();
-        positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+			indicesCount = triangleCount * 3;
+			encodedIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
+			readIndex += encodedIndicesBuffer.size_bytes();
+			if (readIndex > data.size()) {
+				return pResult;
+			}
 
-        tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
-        positionAccessor.bufferView = positionBufferViewId;
-        positionAccessor.byteOffset = 0;
-        positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-        positionAccessor.count = vertexCount;
-        positionAccessor.type = TINYGLTF_TYPE_VEC3;
+			indexSizeBytes = sizeof(uint16_t);
+		}
 
-        int meshId = static_cast<int>(model.meshes.size());
-        model.meshes.emplace_back();
-        tinygltf::Mesh& mesh = model.meshes[meshId];
-        mesh.primitives.emplace_back();
+		// read the edge indices
+		const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
+		uint32_t westVertexCount = readValue<uint32_t>(data, readIndex, 0);
+		readIndex += sizeof(uint32_t);
+		gsl::span<const uint8_t> westEdgeIndicesBuffer(data.data() + readIndex, westVertexCount * indexSizeBytes);
+		readIndex += westVertexCount * indexSizeBytes;
 
-        tinygltf::Primitive& primitive = mesh.primitives[0];
-        primitive.mode = TINYGLTF_MODE_TRIANGLES;
-        primitive.attributes.emplace("POSITION", positionAccessorId);
-        primitive.material = 0;
+		uint32_t southVertexCount = readValue<uint32_t>(data, readIndex, 0);
+		readIndex += sizeof(uint32_t);
+		gsl::span<const uint8_t> southEdgeIndicesBuffer(data.data() + readIndex, southVertexCount * indexSizeBytes);
+		readIndex += southVertexCount * indexSizeBytes;
 
-        float* pPositions = reinterpret_cast<float*>(positionBuffer.data.data());
-        size_t positionOutputIndex = 0;
-        
-        const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
+		uint32_t eastVertexCount = readValue<uint32_t>(data, readIndex, 0);
+		readIndex += sizeof(uint32_t);
+		gsl::span<const uint8_t> eastEdgeIndicesBuffer(data.data() + readIndex, eastVertexCount * indexSizeBytes);
+		readIndex += eastVertexCount * indexSizeBytes;
 
-        double minX = std::numeric_limits<double>::max();
-        double minY = std::numeric_limits<double>::max();
-        double minZ = std::numeric_limits<double>::max();
-        double maxX = std::numeric_limits<double>::lowest();
-        double maxY = std::numeric_limits<double>::lowest();
-        double maxZ = std::numeric_limits<double>::lowest();
+		uint32_t northVertexCount = readValue<uint32_t>(data, readIndex, 0);
+		readIndex += sizeof(uint32_t);
+		gsl::span<const uint8_t> northEdgeIndicesBuffer(data.data() + readIndex, northVertexCount * indexSizeBytes);
+		readIndex += northVertexCount * indexSizeBytes;
 
-        for (size_t i = 0; i < vertexCount; ++i) {
-            u += zigZagDecode(uBuffer[i]);
-            v += zigZagDecode(vBuffer[i]);
-            height += zigZagDecode(heightBuffer[i]);
+		// estimate skirt size to batch with tile existing indices, vertices, and normals
+		size_t skirtIndicesCount = (westVertexCount - 1) * 6 + 
+								   (southVertexCount - 1) * 6 + 
+								   (eastVertexCount - 1) * 6 + 
+								   (northVertexCount - 1) * 6;
+		size_t skirtVertexCount = westVertexCount + southVertexCount + eastVertexCount + northVertexCount;
 
-            double uRatio = static_cast<double>(u) / 32767.0;
-            double vRatio = static_cast<double>(v) / 32767.0;
+		// decode position without skirt, but preallocate position buffer to include skirt as well
+		std::vector<unsigned char> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
+		gsl::span<float> outputPositions(reinterpret_cast<float*>(outputPositionsBuffer.data()), (vertexCount + skirtIndicesCount) * 3);
+		size_t positionOutputIndex = 0;
 
-            double longitude = Math::lerp(west, east, uRatio);
-            double latitude = Math::lerp(south, north, vRatio);
-            double heightMeters = Math::lerp(minimumHeight, maximumHeight, static_cast<double>(height) / 32767.0);
+		double minX = std::numeric_limits<double>::max();
+		double minY = std::numeric_limits<double>::max();
+		double minZ = std::numeric_limits<double>::max();
+		double maxX = std::numeric_limits<double>::lowest();
+		double maxY = std::numeric_limits<double>::lowest();
+		double maxZ = std::numeric_limits<double>::lowest();
 
-            glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
-            position -= center;
-            pPositions[positionOutputIndex++] = static_cast<float>(position.x);
-            pPositions[positionOutputIndex++] = static_cast<float>(position.y);
-            pPositions[positionOutputIndex++] = static_cast<float>(position.z);
+        int32_t u = 0;
+        int32_t v = 0;
+        int32_t height = 0;
+		std::vector<glm::vec2> uvs;
+		uvs.reserve(vertexCount);
+		for (size_t i = 0; i < vertexCount; ++i) {
+			u += zigZagDecode(uBuffer[i]);
+			v += zigZagDecode(vBuffer[i]);
+			height += zigZagDecode(heightBuffer[i]);
+			uvs.emplace_back(glm::vec2(u, v));
 
-            minX = glm::min(minX, position.x);
-            minY = glm::min(minY, position.y);
-            minZ = glm::min(minZ, position.z);
+			double uRatio = static_cast<double>(u) / 32767.0;
+			double vRatio = static_cast<double>(v) / 32767.0;
 
-            maxX = glm::max(maxX, position.x);
-            maxY = glm::max(maxY, position.y);
-            maxZ = glm::max(maxZ, position.z);
-        }
+			double longitude = Math::lerp(west, east, uRatio);
+			double latitude = Math::lerp(south, north, vRatio);
+			double heightMeters = Math::lerp(minimumHeight, maximumHeight, static_cast<double>(height) / 32767.0);
 
-        positionAccessor.minValues = { minX, minY, minZ };
-        positionAccessor.maxValues = { maxX, maxY, maxZ };
+			glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
+			position -= center;
+			outputPositions[positionOutputIndex++] = static_cast<float>(position.x);
+			outputPositions[positionOutputIndex++] = static_cast<float>(position.y);
+			outputPositions[positionOutputIndex++] = static_cast<float>(position.z);
 
-        int indicesBufferId = static_cast<int>(model.buffers.size());
-        model.buffers.emplace_back();
-        tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
-        
-        int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
-        model.bufferViews.emplace_back();
-        tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
-        indicesBufferView.buffer = indicesBufferId;
-        indicesBufferView.byteOffset = 0;
-        indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
+			minX = glm::min(minX, position.x);
+			minY = glm::min(minY, position.y);
+			minZ = glm::min(minZ, position.z);
 
-        int indicesAccessorId = static_cast<int>(model.accessors.size());
-        model.accessors.emplace_back();
-        tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
-        indicesAccessor.bufferView = indicesBufferViewId;
-        indicesAccessor.byteOffset = 0;
-        indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
+			maxX = glm::max(maxX, position.x);
+			maxY = glm::max(maxY, position.y);
+			maxZ = glm::max(maxZ, position.z);
+		}
 
-        primitive.indices = indicesBufferId;
+		// decode normal vertices of the tile as well as its metadata without skirt
+		if (readIndex > data.size()) {
+			return pResult;
+		}
 
-        size_t indexSizeBytes;
+		std::vector<unsigned char> outputNormalsBuffer;
+		while (readIndex < data.size()) {
+			if (readIndex + extensionHeaderLength > data.size()) {
+				break;
+			}
 
-        if (pHeader->vertexCount > 65536) {
-            // 32-bit indices
-            if ((readIndex % 4) != 0) {
-                readIndex += 2;
-                if (readIndex > data.size()) {
-                    return pResult;
-                }
-            }
+			uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+			readIndex += sizeof(uint8_t);
+			uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+			readIndex += sizeof(uint32_t);
 
-            uint32_t triangleCount = readValue<uint32_t>(data, readIndex, 0);
-            readIndex += sizeof(uint32_t);
-            if (readIndex > data.size()) {
-                return pResult;
-            }
+			if (extensionID == 1) {
+				// Oct-encoded per-vertex normals
+				if (readIndex + vertexCount * 2 > data.size()) {
+					break;
+				}
 
-            const gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t*>(data.data() + readIndex), triangleCount * 3);
-            readIndex += indices.size_bytes();
-            if (readIndex > data.size()) {
-                return pResult;
-            }
+				const uint8_t* pNormalData = reinterpret_cast<const uint8_t*>(data.data() + readIndex);
 
-            indicesBuffer.data.resize(triangleCount * 3 * sizeof(uint32_t));
-            indicesBufferView.byteLength = indicesBuffer.data.size();
-            indicesBufferView.byteStride = sizeof(uint32_t);
-            indicesAccessor.count = triangleCount * 3;
-            indicesAccessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT;
+				outputNormalsBuffer.resize((vertexCount + skirtVertexCount) * 3 * sizeof(float));
+				float* pNormals = reinterpret_cast<float*>(outputNormalsBuffer.data());
+				size_t normalOutputIndex = 0;
 
-            gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(indicesBuffer.data.data()), indicesBuffer.data.size() / sizeof(uint32_t));
-            decodeIndices(indices, outputIndices);
+				for (size_t i = 0; i < vertexCount * 2; i += 2) {
+					glm::dvec3 normal = octDecode(pNormalData[i], pNormalData[i + 1]);
+					pNormals[normalOutputIndex++] = static_cast<float>(normal.x);
+					pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
+					pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
+				}
+			} else if (extensionID == 4) {
+				// Metadata
+				if (readIndex + sizeof(uint32_t) > data.size()) {
+					break;
+				}
 
-            indexSizeBytes = 4;
-        } else {
-            // 16-bit indices
-            uint32_t triangleCount = readValue<uint32_t>(data, readIndex, 0);
-            readIndex += sizeof(uint32_t);
-            if (readIndex > data.size()) {
-                return pResult;
-            }
+				uint32_t jsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
 
-            const gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t*>(data.data() + readIndex), triangleCount * 3);
-            readIndex += indices.size_bytes();
-            if (readIndex > data.size()) {
-                return pResult;
-            }
+				if (readIndex + sizeof(uint32_t) + jsonLength > data.size()) {
+					break;
+				}
 
-            indicesBuffer.data.resize(triangleCount * 3 * sizeof(uint16_t));
-            indicesBufferView.byteLength = indicesBuffer.data.size();
-            indicesBufferView.byteStride = sizeof(uint16_t);
-            indicesAccessor.count = triangleCount * 3;
-            indicesAccessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
+				gsl::span<const char> json(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), jsonLength);
+				processMetadata(id, json, *pResult);
+			}
 
-            gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(indicesBuffer.data.data()), indicesBuffer.data.size() / sizeof(uint16_t));
-            decodeIndices(indices, outputIndices);
+			readIndex += extensionLength;
+		}
 
-            indexSizeBytes = 2;
-        }
+		// indices buffer for gltf to include tile and skirt indices
+		std::vector<unsigned char> outputIndicesBuffer(indicesCount * indexSizeBytes + skirtIndicesCount * indexSizeBytes);
+		float skirtHeight = 200.0;
+		glm::vec3 tileNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
+		if (indexSizeBytes == sizeof(uint32_t)) {
+			// decode the tile indices without skirt. 
+			gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t *>(encodedIndicesBuffer.data()), indicesCount);
+			gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesBuffer.size() / sizeof(uint32_t));
+			decodeIndices(indices, outputIndices);
 
-        // Skip edge indices (for now, TODO)
-        uint32_t westVertexCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        readIndex += westVertexCount * indexSizeBytes;
+			// allocate edge indices to be sort later
+			uint32_t maxEdgeVertexCount = westVertexCount;
+			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
+			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
+			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
+			std::vector<uint32_t> sortEdgeIndices(maxEdgeVertexCount);
 
-        uint32_t southVertexCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        readIndex += southVertexCount * indexSizeBytes;
+			// add skirt indices, vertices, and normals
+			uint32_t currentVertexCount = vertexCount;
+			uint32_t currentIndicesCount = indicesCount;
+			gsl::span<const uint32_t> westEdgeIndices(reinterpret_cast<const uint32_t*>(westEdgeIndicesBuffer.data()), westVertexCount);
+			std::partial_sort_copy(westEdgeIndices.begin(), 
+				westEdgeIndices.end(), 
+				sortEdgeIndices.begin(), 
+				sortEdgeIndices.begin() + westVertexCount, 
+				[&uvs](auto lhs, auto rhs) { return uvs[lhs].y < uvs[rhs].y;  });
+			westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
+			addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, westEdgeIndices, outputPositions, outputIndices);
 
-        uint32_t eastVertexCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        readIndex += eastVertexCount * indexSizeBytes;
+			//currentVertexCount += westVertexCount;
+			//currentIndicesCount += (westVertexCount - 1) * 6;
+			//gsl::span<const uint32_t> southEdgeIndices(reinterpret_cast<const uint32_t*>(southEdgeIndicesBuffer.data()), southVertexCount);
+			//std::partial_sort_copy(southEdgeIndices.begin(), 
+			//	southEdgeIndices.end(), 
+			//	sortEdgeIndices.begin(), 
+			//	sortEdgeIndices.begin() + southVertexCount, 
+			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x > uvs[rhs].x;  });
+			//southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
+			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, southEdgeIndices, outputPositions, outputIndices);
 
-        uint32_t northVertexCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        readIndex += northVertexCount * indexSizeBytes;
+			//currentVertexCount += southVertexCount;
+			//currentIndicesCount += (southVertexCount - 1) * 6;
+			//gsl::span<const uint32_t> eastEdgeIndices(reinterpret_cast<const uint32_t*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
+			//std::partial_sort_copy(eastEdgeIndices.begin(), 
+			//	eastEdgeIndices.end(), 
+			//	sortEdgeIndices.begin(), 
+			//	sortEdgeIndices.begin() + eastVertexCount, 
+			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].y > uvs[rhs].y;  });
+			//eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
+			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, eastEdgeIndices, outputPositions, outputIndices);
 
-        if (readIndex > data.size()) {
-            return pResult;
-        }
+			//currentVertexCount += eastVertexCount;
+			//currentIndicesCount += (eastVertexCount - 1) * 6;
+			//gsl::span<const uint32_t> northEdgeIndices(reinterpret_cast<const uint32_t*>(northEdgeIndicesBuffer.data()), northVertexCount);
+			//std::partial_sort_copy(northEdgeIndices.begin(), 
+			//	northEdgeIndices.end(), 
+			//	sortEdgeIndices.begin(), 
+			//	sortEdgeIndices.begin() + northVertexCount, 
+			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x < uvs[rhs].x;  });
+			//northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
+			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, northEdgeIndices, outputPositions, outputIndices);
+		}
+		else {
+			// decode the tile indices without skirt. 
+			gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t *>(encodedIndicesBuffer.data()), indicesCount);
+			gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(outputIndicesBuffer.data()), outputIndicesBuffer.size() / sizeof(uint16_t));
+			decodeIndices(indices, outputIndices);
 
-        while (readIndex < data.size()) {
-            if (readIndex + extensionHeaderLength > data.size()) {
-                break;
-            }
+			// allocate edge indices to be sort later
+			uint32_t maxEdgeVertexCount = westVertexCount;
+			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
+			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
+			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
+			std::vector<uint16_t> sortEdgeIndices(maxEdgeVertexCount);
 
-            uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
-            readIndex += sizeof(uint8_t);
-            uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
-            readIndex += sizeof(uint32_t);
+			// add skirt indices, vertices, and normals
+			uint32_t currentVertexCount = vertexCount;
+			uint32_t currentIndicesCount = indicesCount;
+			gsl::span<const uint16_t> westEdgeIndices(reinterpret_cast<const uint16_t*>(westEdgeIndicesBuffer.data()), westVertexCount);
+			std::partial_sort_copy(westEdgeIndices.begin(), 
+				westEdgeIndices.end(), 
+				sortEdgeIndices.begin(), 
+				sortEdgeIndices.begin() + westVertexCount, 
+				[&uvs](auto lhs, auto rhs) { return uvs[lhs].y < uvs[rhs].y;  });
+			westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
+			addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, westEdgeIndices, outputPositions, outputIndices);
 
-            if (extensionID == 1) {
-                // Oct-encoded per-vertex normals
-                if (readIndex + vertexCount * 2 > data.size()) {
-                    break;
-                }
+			//currentVertexCount += westVertexCount;
+			//currentIndicesCount += (westVertexCount - 1) * 6;
+			//gsl::span<const uint16_t> southEdgeIndices(reinterpret_cast<const uint16_t*>(southEdgeIndicesBuffer.data()), southVertexCount);
+			//std::partial_sort_copy(southEdgeIndices.begin(), 
+			//	southEdgeIndices.end(), 
+			//	sortEdgeIndices.begin(), 
+			//	sortEdgeIndices.begin() + southVertexCount, 
+			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x > uvs[rhs].x;  });
+			//southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
+			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, southEdgeIndices, outputPositions, outputIndices);
 
-                const uint8_t* pNormalData = reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+			//currentVertexCount += southVertexCount;
+			//currentIndicesCount += (southVertexCount - 1) * 6;
+			//gsl::span<const uint16_t> eastEdgeIndices(reinterpret_cast<const uint16_t*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
+			//std::partial_sort_copy(eastEdgeIndices.begin(), 
+			//	eastEdgeIndices.end(), 
+			//	sortEdgeIndices.begin(), 
+			//	sortEdgeIndices.begin() + eastVertexCount, 
+			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].y > uvs[rhs].y;  });
+			//eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
+			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, eastEdgeIndices, outputPositions, outputIndices);
 
-                int normalBufferId = static_cast<int>(model.buffers.size());
-                model.buffers.emplace_back();
+			//currentVertexCount += eastVertexCount;
+			//currentIndicesCount += (eastVertexCount - 1) * 6;
+			//gsl::span<const uint16_t> northEdgeIndices(reinterpret_cast<const uint16_t*>(northEdgeIndicesBuffer.data()), northVertexCount);
+			//std::partial_sort_copy(northEdgeIndices.begin(), 
+			//	northEdgeIndices.end(), 
+			//	sortEdgeIndices.begin(), 
+			//	sortEdgeIndices.begin() + northVertexCount, 
+			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x < uvs[rhs].x;  });
+			//northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
+			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, northEdgeIndices, outputPositions, outputIndices);
+		}
 
-                int normalBufferViewId = static_cast<int>(model.bufferViews.size());
-                model.bufferViews.emplace_back();
+		// create gltf
+		pResult->model.emplace();
+		tinygltf::Model& model = pResult->model.value();
+		
+		int meshId = static_cast<int>(model.meshes.size());
+		model.meshes.emplace_back();
+		tinygltf::Mesh& mesh = model.meshes[meshId];
+		mesh.primitives.emplace_back();
 
-                int normalAccessorId = static_cast<int>(model.accessors.size());
-                model.accessors.emplace_back();
+		tinygltf::Primitive& primitive = mesh.primitives[0];
+		primitive.mode = TINYGLTF_MODE_TRIANGLES;
+		primitive.material = 0;
 
-                tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
-                normalBuffer.data.resize(vertexCount * 3 * sizeof(float));
+		// add position buffer to gltf
+		int positionBufferId = static_cast<int>(model.buffers.size());
+		model.buffers.emplace_back();
+		tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+		positionBuffer.data = std::move(outputPositionsBuffer);
 
-                tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
-                normalBufferView.buffer = normalBufferId;
-                normalBufferView.byteOffset = 0;
-                normalBufferView.byteStride = 3 * sizeof(float);
-                normalBufferView.byteLength = normalBuffer.data.size();
-                normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+		int positionBufferViewId = static_cast<int>(model.bufferViews.size());
+		model.bufferViews.emplace_back();
+		tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
+		positionBufferView.buffer = positionBufferId;
+		positionBufferView.byteOffset = 0;
+		positionBufferView.byteStride = 3 * sizeof(float);
+		positionBufferView.byteLength = positionBuffer.data.size();
+		positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-                tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
-                normalAccessor.bufferView = normalBufferViewId;
-                normalAccessor.byteOffset = 0;
-                normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-                normalAccessor.count = vertexCount;
-                normalAccessor.type = TINYGLTF_TYPE_VEC3;
-                
-                primitive.attributes.emplace("NORMAL", normalAccessorId);
+		int positionAccessorId = static_cast<int>(model.accessors.size());
+		model.accessors.emplace_back();
+		tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
+		positionAccessor.bufferView = positionBufferViewId;
+		positionAccessor.byteOffset = 0;
+		positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+		positionAccessor.count = vertexCount + skirtVertexCount;
+		positionAccessor.type = TINYGLTF_TYPE_VEC3;
+		positionAccessor.minValues = { minX, minY, minZ };
+		positionAccessor.maxValues = { maxX, maxY, maxZ };
 
-                float* pNormals = reinterpret_cast<float*>(normalBuffer.data.data());
-                size_t normalOutputIndex = 0;
+		primitive.attributes.emplace("POSITION", positionAccessorId);
 
-                for (size_t i = 0; i < vertexCount * 2; i += 2) {
-                    glm::dvec3 normal = octDecode(pNormalData[i], pNormalData[i + 1]);
-                    pNormals[normalOutputIndex++] = static_cast<float>(normal.x);
-                    pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
-                    pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
-                }
-            } else if (extensionID == 4) {
-                // Metadata
-                if (readIndex + sizeof(uint32_t) > data.size()) {
-                    break;
-                }
+		// add normal buffer to gltf if there are any
+		if (outputNormalsBuffer.empty()) {
+			int normalBufferId = static_cast<int>(model.buffers.size());
+			model.buffers.emplace_back();
+			tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+			normalBuffer.data = std::move(outputNormalsBuffer);
 
-                uint32_t jsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+			int normalBufferViewId = static_cast<int>(model.bufferViews.size());
+			model.bufferViews.emplace_back();
+			tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
+			normalBufferView.buffer = normalBufferId;
+			normalBufferView.byteOffset = 0;
+			normalBufferView.byteStride = 3 * sizeof(float);
+			normalBufferView.byteLength = normalBuffer.data.size();
+			normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-                if (readIndex + sizeof(uint32_t) + jsonLength > data.size()) {
-                    break;
-                }
+			int normalAccessorId = static_cast<int>(model.accessors.size());
+			model.accessors.emplace_back();
+			tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
+			normalAccessor.bufferView = normalBufferViewId;
+			normalAccessor.byteOffset = 0;
+			normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+			normalAccessor.count = vertexCount + skirtVertexCount;
+			normalAccessor.type = TINYGLTF_TYPE_VEC3;
+			
+			primitive.attributes.emplace("NORMAL", normalAccessorId);
+		}
 
-                gsl::span<const char> json(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), jsonLength);
-                processMetadata(id, json, *pResult);
-            }
+		// add indices buffer to gltf
+		int indicesBufferId = static_cast<int>(model.buffers.size());
+		model.buffers.emplace_back();
+		tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
+		indicesBuffer.data = std::move(outputIndicesBuffer);
+		
+		int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
+		model.bufferViews.emplace_back();
+		tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
+		indicesBufferView.buffer = indicesBufferId;
+		indicesBufferView.byteOffset = 0;
+		indicesBufferView.byteLength = indicesBuffer.data.size();
+		indicesBufferView.byteStride = indexSizeBytes;
+		indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
-            readIndex += extensionLength;
-        }
+		int indicesAccessorId = static_cast<int>(model.accessors.size());
+		model.accessors.emplace_back();
+		tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
+		indicesAccessor.bufferView = indicesBufferViewId;
+		indicesAccessor.byteOffset = 0;
+		indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
+		indicesAccessor.count = indicesCount + skirtIndicesCount;
+		indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT : TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
 
-        model.nodes.emplace_back();
-        tinygltf::Node& node = model.nodes[0];
-        node.mesh = 0;
-        node.matrix = {
-            1.0, 0.0,  0.0, 0.0,
-            0.0, 0.0, -1.0, 0.0,
-            0.0, 1.0,  0.0, 0.0,
-            center.x, center.z, -center.y, 1.0
-        };
+		primitive.indices = indicesBufferId;
 
-        pResult->updatedBoundingVolume = BoundingRegion(rectangle, minimumHeight, maximumHeight);
+		// create node and update bounding volume
+		model.nodes.emplace_back();
+		tinygltf::Node& node = model.nodes[0];
+		node.mesh = 0;
+		node.matrix = {
+			1.0, 0.0,  0.0, 0.0,
+			0.0, 0.0, -1.0, 0.0,
+			0.0, 1.0,  0.0, 0.0,
+			center.x, center.z, -center.y, 1.0
+		};
+
+		pResult->updatedBoundingVolume = BoundingRegion(rectangle, minimumHeight, maximumHeight);
 
         return pResult;
     }
