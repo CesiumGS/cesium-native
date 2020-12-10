@@ -15,7 +15,7 @@ namespace CesiumGeospatial {
      * If the origin is not on the surface of the ellipsoid, its surface projection 
      * will be used. 
      */
-    class CESIUMGEOSPATIAL_API EllipsoidTangentPlane {
+    class CESIUMGEOSPATIAL_API EllipsoidTangentPlane final {
     public:
 
         /**
@@ -46,32 +46,32 @@ namespace CesiumGeospatial {
         /**
          * @brief Returns the {@link Ellipsoid}.
          */
-        const Ellipsoid& getEllipsoid() const { return this->_ellipsoid; }
+        const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
         /**
          * @brief Returns the origin, in cartesian coordinates.
          */
-        const glm::dvec3& getOrigin() const { return this->_origin; }
+        const glm::dvec3& getOrigin() const noexcept { return this->_origin; }
 
         /**
          * @brief Returns the x-axis of this plane.
          */
-        const glm::dvec3& getXAxis() const { return this->_xAxis; }
+        const glm::dvec3& getXAxis() const noexcept { return this->_xAxis; }
 
         /**
          * @brief Returns the y-axis of this plane.
          */
-        const glm::dvec3& getYAxis() const { return this->_yAxis; }
+        const glm::dvec3& getYAxis() const noexcept { return this->_yAxis; }
 
         /**
          * @brief Returns the z-axis (i.e. the normal) of this plane.
          */
-        const glm::dvec3& getZAxis() const { return this->_plane.getNormal(); }
+        const glm::dvec3& getZAxis() const noexcept { return this->_plane.getNormal(); }
 
         /**
          * @brief Returns a {@link CesiumGeometry::Plane} representation of this plane.
          */
-        const CesiumGeometry::Plane& getPlane() const { return this->_plane; }
+        const CesiumGeometry::Plane& getPlane() const noexcept { return this->_plane; }
 
         /**
          * @brief Computes the position of the projection of the given point on this plane.
@@ -84,7 +84,7 @@ namespace CesiumGeospatial {
          * @return The 2D representation of the point on the plane that is closest to
          * the given position.
          */
-        glm::dvec2 projectPointToNearestOnPlane(const glm::dvec3& cartesian);
+        glm::dvec2 projectPointToNearestOnPlane(const glm::dvec3& cartesian) const noexcept;
 
     private:
 

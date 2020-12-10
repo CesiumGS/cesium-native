@@ -12,9 +12,9 @@ namespace Cesium3DTiles {
     /**
      * @brief A collection of rectangular areas cut out (not shown) from a {@link Tileset} with a {@link RasterOverlay}.
      */
-    class CESIUM3DTILES_API RasterOverlayCutoutCollection {
+    class CESIUM3DTILES_API RasterOverlayCutoutCollection final {
     public:
-        RasterOverlayCutoutCollection();
+        RasterOverlayCutoutCollection() noexcept;
 
         /**
          * @brief Add the given {@link CesiumGeospatial::GlobeRectangle} to this collection.
@@ -24,7 +24,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the {@link CesiumGeospatial::GlobeRectangle} objects of this collection.
          */
-        gsl::span<const CesiumGeospatial::GlobeRectangle> getCutouts() const { return this->_cutouts; }
+        gsl::span<const CesiumGeospatial::GlobeRectangle> getCutouts() const noexcept { return this->_cutouts; }
 
     private:
         std::vector<CesiumGeospatial::GlobeRectangle> _cutouts;

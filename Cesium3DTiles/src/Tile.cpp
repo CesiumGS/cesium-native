@@ -15,7 +15,7 @@ using namespace std::string_literals;
 
 namespace Cesium3DTiles {
 
-    Tile::Tile() :
+    Tile::Tile() noexcept :
         _pContext(nullptr),
         _pParent(nullptr),
         _children(),
@@ -93,11 +93,11 @@ namespace Cesium3DTiles {
         this->_children = std::move(children);
     }
 
-    void Tile::setTileID(const TileID& id) {
+    void Tile::setTileID(const TileID& id) noexcept {
         this->_id = id;
     }
 
-    bool Tile::isRenderable() const {
+    bool Tile::isRenderable() const noexcept {
         // A tile whose content is an external tileset has no renderable content. If
         // we select such a tile for rendering, we'll end up rendering nothing even though
         // the tile's parent and its children may both have content. End result: when the
@@ -224,7 +224,7 @@ namespace Cesium3DTiles {
             void* pRendererResources;
         };
 
-        maybeRequestFuture.value().thenInWorkerThread([
+        std::move(maybeRequestFuture.value()).thenInWorkerThread([
             pContext = this->getContext(),
             tileID = this->getTileID(),
             boundingVolume = this->getBoundingVolume(),
@@ -258,7 +258,7 @@ namespace Cesium3DTiles {
                 };
             }
 
-            std::unique_ptr<TileContentLoadResult> pContent = std::move(TileContentFactory::createContent(
+            std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
                 *pContext,
                 tileID,
                 boundingVolume,
@@ -269,7 +269,7 @@ namespace Cesium3DTiles {
                 pRequest->url(),
                 pResponse->contentType(),
                 pResponse->data()
-            ));
+            );
 
             if (!pContent) {
                 pContent = std::make_unique<TileContentLoadResult>();
@@ -450,7 +450,7 @@ namespace Cesium3DTiles {
         )));
     }
 
-    void Tile::update(uint32_t /*previousFrameNumber*/, uint32_t /*currentFrameNumber*/) {
+    void Tile::update(int32_t /*previousFrameNumber*/, int32_t /*currentFrameNumber*/) {
         const TilesetExternals& externals = this->getTileset()->getExternals();
 
         if (this->getState() == LoadState::FailedTemporarily) {
@@ -559,7 +559,7 @@ namespace Cesium3DTiles {
                     // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
                     if (!pProvider->isPlaceholder()) {
-                        this->_rasterTiles.erase(this->_rasterTiles.begin() + i);
+                        this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
                         --i;
 
                         const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
@@ -582,13 +582,13 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tile::markPermanentlyFailed() {
+    void Tile::markPermanentlyFailed() noexcept {
         if (this->getState() == LoadState::FailedTemporarily) {
             this->setState(LoadState::Failed);
         }
     }
 
-    size_t Tile::computeByteSize() const {
+    size_t Tile::computeByteSize() const noexcept {
         size_t bytes = 0;
 
         const TileContentLoadResult* pContent = this->getContent();
@@ -609,7 +609,7 @@ namespace Cesium3DTiles {
                     continue;
                 }
 
-                bytes -= bufferViews[bufferView].byteLength;
+                bytes -= bufferViews[static_cast<size_t>(bufferView)].byteLength;
                 bytes += image.image.size();
             }
         }

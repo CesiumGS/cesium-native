@@ -6,7 +6,7 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
-/*static*/ glm::dmat4x4 Transforms::eastNorthUpToFixedFrame(const glm::dvec3& origin, const Ellipsoid& ellipsoid /*= Ellipsoid::WGS84*/) {
+/*static*/ glm::dmat4x4 Transforms::eastNorthUpToFixedFrame(const glm::dvec3& origin, const Ellipsoid& ellipsoid /*= Ellipsoid::WGS84*/) noexcept {
     if (Math::equalsEpsilon(origin, glm::dvec3(0.0), Math::EPSILON14)) {
         // If x, y, and z are zero, use the degenerate local frame, which is a special case
         return glm::dmat4x4(

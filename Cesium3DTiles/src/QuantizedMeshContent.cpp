@@ -192,17 +192,17 @@ namespace Cesium3DTiles {
         int positionAccessorId = static_cast<int>(model.accessors.size());
         model.accessors.emplace_back();
 
-        tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+        tinygltf::Buffer& positionBuffer = model.buffers[static_cast<size_t>(positionBufferId)];
         positionBuffer.data.resize(vertexCount * 3 * sizeof(float));
 
-        tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
+        tinygltf::BufferView& positionBufferView = model.bufferViews[static_cast<size_t>(positionBufferViewId)];
         positionBufferView.buffer = positionBufferId;
         positionBufferView.byteOffset = 0;
         positionBufferView.byteStride = 3 * sizeof(float);
         positionBufferView.byteLength = positionBuffer.data.size();
         positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-        tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
+        tinygltf::Accessor& positionAccessor = model.accessors[static_cast<size_t>(positionAccessorId)];
         positionAccessor.bufferView = positionBufferViewId;
         positionAccessor.byteOffset = 0;
         positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
@@ -211,7 +211,7 @@ namespace Cesium3DTiles {
 
         int meshId = static_cast<int>(model.meshes.size());
         model.meshes.emplace_back();
-        tinygltf::Mesh& mesh = model.meshes[meshId];
+        tinygltf::Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
         mesh.primitives.emplace_back();
 
         tinygltf::Primitive& primitive = mesh.primitives[0];
@@ -263,18 +263,18 @@ namespace Cesium3DTiles {
 
         int indicesBufferId = static_cast<int>(model.buffers.size());
         model.buffers.emplace_back();
-        tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
+        tinygltf::Buffer& indicesBuffer = model.buffers[static_cast<size_t>(indicesBufferId)];
         
         int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
         model.bufferViews.emplace_back();
-        tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
+        tinygltf::BufferView& indicesBufferView = model.bufferViews[static_cast<size_t>(indicesBufferViewId)];
         indicesBufferView.buffer = indicesBufferId;
         indicesBufferView.byteOffset = 0;
         indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
         int indicesAccessorId = static_cast<int>(model.accessors.size());
         model.accessors.emplace_back();
-        tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
+        tinygltf::Accessor& indicesAccessor = model.accessors[static_cast<size_t>(indicesAccessorId)];
         indicesAccessor.bufferView = indicesBufferViewId;
         indicesAccessor.byteOffset = 0;
         indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
@@ -388,17 +388,17 @@ namespace Cesium3DTiles {
                 int normalAccessorId = static_cast<int>(model.accessors.size());
                 model.accessors.emplace_back();
 
-                tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+                tinygltf::Buffer& normalBuffer = model.buffers[static_cast<size_t>(normalBufferId)];
                 normalBuffer.data.resize(vertexCount * 3 * sizeof(float));
 
-                tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
+                tinygltf::BufferView& normalBufferView = model.bufferViews[static_cast<size_t>(normalBufferViewId)];
                 normalBufferView.buffer = normalBufferId;
                 normalBufferView.byteOffset = 0;
                 normalBufferView.byteStride = 3 * sizeof(float);
                 normalBufferView.byteLength = normalBuffer.data.size();
                 normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-                tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
+                tinygltf::Accessor& normalAccessor = model.accessors[static_cast<size_t>(normalAccessorId)];
                 normalAccessor.bufferView = normalBufferViewId;
                 normalAccessor.byteOffset = 0;
                 normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;

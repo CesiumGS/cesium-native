@@ -28,7 +28,7 @@ namespace Cesium3DTiles {
      * header. Based on this header or the content type of the network response, 
      * the function that will be used for processing that raw data can be looked up.
      */
-    class CESIUM3DTILES_API TileContentFactory {
+    class CESIUM3DTILES_API TileContentFactory final {
     public:
         TileContentFactory() = delete;
 

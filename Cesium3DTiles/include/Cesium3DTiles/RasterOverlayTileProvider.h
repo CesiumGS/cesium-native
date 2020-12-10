@@ -30,7 +30,7 @@ namespace Cesium3DTiles {
         RasterOverlayTileProvider(
             RasterOverlay& owner,
             const CesiumAsync::AsyncSystem& asyncSystem
-        );
+        ) noexcept;
 
         /**
          * @brief Creates a new instance.
@@ -57,7 +57,7 @@ namespace Cesium3DTiles {
             uint32_t maximumLevel,
             uint32_t imageWidth,
             uint32_t imageHeight
-        );
+        ) noexcept;
 
         /** @brief Default destructor. */
         virtual ~RasterOverlayTileProvider() {}
@@ -65,63 +65,63 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns whether this is a placeholder. Like this comment.
          */
-        bool isPlaceholder() const { return this->_pPlaceholder != nullptr; }
+        bool isPlaceholder() const noexcept { return this->_pPlaceholder != nullptr; }
 
         /**
          * @brief Returns the {@link RasterOverlay} that created this instance.
          */
-        RasterOverlay& getOwner() { return *this->_pOwner; }
+        RasterOverlay& getOwner() noexcept { return *this->_pOwner; }
 
         /** @copydoc getOwner */
-        const RasterOverlay& getOwner() const { return *this->_pOwner; }
+        const RasterOverlay& getOwner() const noexcept { return *this->_pOwner; }
 
         /**
          * @brief Get the system to use for asychronous requests and threaded work.
          */
-        CesiumAsync::AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
+        CesiumAsync::AsyncSystem& getAsyncSystem() noexcept { return this->_asyncSystem; }
 
         /** @copydoc getAsyncSystem */
-        const CesiumAsync::AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+        const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept { return this->_asyncSystem; }
 
         /**
          * @brief Gets the interface used to prepare raster overlay images for rendering.
          */
-        const std::shared_ptr<IPrepareRendererResources>& getPrepareRendererResources() const { return this->_pPrepareRendererResources; }
+        const std::shared_ptr<IPrepareRendererResources>& getPrepareRendererResources() const noexcept { return this->_pPrepareRendererResources; }
 
         /**
          * @brief Returns the {@link CesiumGeospatial::Projection} of this instance.
          */
-        const CesiumGeospatial::Projection& getProjection() const { return this->_projection; }
+        const CesiumGeospatial::Projection& getProjection() const noexcept { return this->_projection; }
 
         /**
          * @brief Returns the {@link CesiumGeometry::QuadtreeTilingScheme} of this instance.
          */
-        const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const { return this->_tilingScheme; }
+        const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept { return this->_tilingScheme; }
 
         /**
          * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this instance.
          */
-        const CesiumGeometry::Rectangle& getCoverageRectangle() const { return this->_coverageRectangle; }
+        const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept { return this->_coverageRectangle; }
 
         /**
          * @brief Returns the minimum tile level of this instance.
          */
-        uint32_t getMinimumLevel() const { return this->_minimumLevel; }
+        uint32_t getMinimumLevel() const noexcept { return this->_minimumLevel; }
 
         /**
          * @brief Returns the maximum tile level of this instance.
          */
-        uint32_t getMaximumLevel() const { return this->_maximumLevel; }
+        uint32_t getMaximumLevel() const noexcept { return this->_maximumLevel; }
 
         /**
          * @brief Returns the image width of this instance.
          */
-        uint32_t getWidth() const { return this->_imageWidth; }
+        uint32_t getWidth() const noexcept { return this->_imageWidth; }
 
         /**
          * @brief Returns the image height of this instance.
          */
-        uint32_t getHeight() const { return this->_imageHeight; }
+        uint32_t getHeight() const noexcept { return this->_imageHeight; }
 
         /**
          * @brief Returns the {@link RasterOverlayTile} with the given ID, requesting it if necessary.
@@ -148,7 +148,7 @@ namespace Cesium3DTiles {
          * @param position The projected position defining the area of interest.
          * @return The level that is closest to the desired geometric error.
          */
-        uint32_t computeLevelFromGeometricError(double geometricError, const glm::dvec2& position) const;
+        uint32_t computeLevelFromGeometricError(double geometricError, const glm::dvec2& position) const noexcept;
 
         /**
          * @brief Map raster tiles to geometry tile.
@@ -180,7 +180,7 @@ namespace Cesium3DTiles {
          * 
          * This function is not supposed to be called by clients.
          */
-        void notifyTileLoaded(RasterOverlayTile* pTile);
+        void notifyTileLoaded(RasterOverlayTile* pTile) noexcept;
 
         /**
          * @brief Gets the number of bytes of tile data that are currently loaded.
@@ -200,7 +200,7 @@ namespace Cesium3DTiles {
          * 
          * @param pTile The tile, which must have no oustanding references.
          */
-        void removeTile(RasterOverlayTile* pTile);
+        void removeTile(RasterOverlayTile* pTile) noexcept;
 
     protected:
 

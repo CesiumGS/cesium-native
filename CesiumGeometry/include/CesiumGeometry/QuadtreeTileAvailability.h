@@ -13,7 +13,7 @@ namespace CesiumGeometry {
     /**
      * @brief Manages information about the availability of tiles in a quadtree.
      */
-    class CESIUMGEOMETRY_API QuadtreeTileAvailability {
+    class CESIUMGEOMETRY_API QuadtreeTileAvailability final {
     public:
 
         /**
@@ -23,7 +23,7 @@ namespace CesiumGeometry {
          * @param maximumLevel The maximum level (height of the tree) for which
          * the availability should be tracked.
          */
-        QuadtreeTileAvailability(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel);
+        QuadtreeTileAvailability(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel) noexcept;
 
         /**
          * @brief Adds the specified range to the set of available tiles.
@@ -31,7 +31,7 @@ namespace CesiumGeometry {
          * @param range The {@link QuadtreeTileRectangularRange} that describes
          * the range of available tiles.
          */
-        void addAvailableTileRange(const QuadtreeTileRectangularRange& range);
+        void addAvailableTileRange(const QuadtreeTileRectangularRange& range) noexcept;
 
         /**
          * @brief Computes the maximum level for the given 2D position.
@@ -44,7 +44,7 @@ namespace CesiumGeometry {
          * @return The maximum level at the given position. This may be 0 if
          * the position is not covered by the quadtree at all.
          */
-        uint32_t computeMaximumLevelAtPosition(const glm::dvec2& position) const;
+        uint32_t computeMaximumLevelAtPosition(const glm::dvec2& position) const noexcept;
 
         /**
          * @brief Returns whether a certain tile is available.
@@ -56,7 +56,7 @@ namespace CesiumGeometry {
          * @param id The quadtree tile ID.
          * @returns Whether the tile is available.
          */
-        bool isTileAvailable(const QuadtreeTileID& id) const;
+        bool isTileAvailable(const QuadtreeTileID& id) const noexcept;
 
     private:
         struct RectangleWithLevel {
@@ -65,7 +65,7 @@ namespace CesiumGeometry {
         };
 
         struct QuadtreeNode {
-            QuadtreeNode(const QuadtreeTileID& id_, const Rectangle& extent_, QuadtreeNode* pParent_) :
+            QuadtreeNode(const QuadtreeTileID& id_, const Rectangle& extent_, QuadtreeNode* pParent_) noexcept :
                 id(id_),
                 extent(extent_),
                 pParent(pParent_),
@@ -93,9 +93,9 @@ namespace CesiumGeometry {
         uint32_t _maximumLevel;
         std::vector<std::unique_ptr<QuadtreeNode>> _rootNodes;
 
-        static void putRectangleInQuadtree(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel, QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTileAvailability::RectangleWithLevel& rectangle);
-        static bool rectangleLevelComparator(const QuadtreeTileAvailability::RectangleWithLevel& a, const QuadtreeTileAvailability::RectangleWithLevel& b);
-        static uint32_t findMaxLevelFromNode(QuadtreeNode* pStopNode, QuadtreeNode& node, const glm::dvec2& position);
-        static void createNodeChildrenIfNecessary(QuadtreeNode& node, const QuadtreeTilingScheme& tilingScheme);
+        static void putRectangleInQuadtree(const QuadtreeTilingScheme& tilingScheme, uint32_t maximumLevel, QuadtreeTileAvailability::QuadtreeNode& node, const QuadtreeTileAvailability::RectangleWithLevel& rectangle) noexcept;
+        static bool rectangleLevelComparator(const QuadtreeTileAvailability::RectangleWithLevel& a, const QuadtreeTileAvailability::RectangleWithLevel& b) noexcept;
+        static uint32_t findMaxLevelFromNode(QuadtreeNode* pStopNode, QuadtreeNode& node, const glm::dvec2& position) noexcept;
+        static void createNodeChildrenIfNecessary(QuadtreeNode& node, const QuadtreeTilingScheme& tilingScheme) noexcept;
     };
 }

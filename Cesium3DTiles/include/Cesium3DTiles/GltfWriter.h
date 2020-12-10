@@ -11,7 +11,7 @@ namespace Cesium3DTiles {
 	 * @brief Provides write access to a {@link GltfAccessor}.
 	 */
 	template <class T>
-	class GltfWriter {
+	class GltfWriter final {
 	private:
 		GltfAccessor<T> _accessor;
 
@@ -34,40 +34,40 @@ namespace Cesium3DTiles {
 		}
 
 		/** @copydoc GltfAccessor::size */
-		size_t size() const {
+		size_t size() const noexcept {
 			return this->_accessor.size();
 		}
 
 		/** @copydoc GltfAccessor::gltfBuffer */
-		const tinygltf::Buffer& gltfBuffer() const
+		const tinygltf::Buffer& gltfBuffer() const noexcept
 		{
 			return this->_accessor.gltfBuffer();
 		}
 
 		/** @copydoc GltfAccessor::gltfBuffer */
-		tinygltf::Buffer& gltfBuffer()
+		tinygltf::Buffer& gltfBuffer() noexcept
 		{
 			return const_cast<tinygltf::Buffer&>(this->_accessor.gltfBuffer());
 		}
 
 		/** @copydoc GltfAccessor::gltfBufferView */
-		const tinygltf::BufferView& gltfBufferView() const
+		const tinygltf::BufferView& gltfBufferView() const noexcept
 		{
 			return this->_accessor.gltfBufferView();
 		}
 
 		/** @copydoc GltfAccessor::gltfBufferView */
-		tinygltf::BufferView& gltfBufferView() {
+		tinygltf::BufferView& gltfBufferView() noexcept {
 			return const_cast<tinygltf::BufferView&>(this->_accessor.gltfBufferView());
 		}
 
 		/** @copydoc GltfAccessor::gltfAccessor */
-		const tinygltf::Accessor& gltfAccessor() const {
+		const tinygltf::Accessor& gltfAccessor() const noexcept {
 			return this->_accessor.gltfAccessor();
 		}
 
 		/** @copydoc GltfAccessor::gltfAccessor */
-		tinygltf::Accessor& gltfAccessor() {
+		tinygltf::Accessor& gltfAccessor() noexcept {
 			return const_cast<tinygltf::Accessor&>(this->_accessor.gltfAccessor());
 		}
 	};

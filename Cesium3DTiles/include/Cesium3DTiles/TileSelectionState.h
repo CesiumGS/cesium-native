@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
      * process. The {@link Tileset} updates this state while traversing the tile hierarchy,
      * tracking whether a tile was rendered, culled, or refined in the last frame.
      */
-    class TileSelectionState {
+    class TileSelectionState final {
     public:
 
         /**
@@ -63,7 +63,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Initializes a new instance with {@link TileSelectionState::Result::None}
          */
-        TileSelectionState() :
+        constexpr TileSelectionState() noexcept :
             _frameNumber(0),
             _result(Result::None)
         {}
@@ -74,7 +74,7 @@ namespace Cesium3DTiles {
          * @param frameNumber The frame number in which the selection took place.
          * @param result The result of the selection.
          */
-        TileSelectionState(uint32_t frameNumber, Result result) :
+        constexpr TileSelectionState(int32_t frameNumber, Result result) noexcept :
             _frameNumber(frameNumber),
             _result(result)
         {}
@@ -82,7 +82,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the frame number in which selection took place.
          */
-        uint32_t getFrameNumber() const noexcept { return this->_frameNumber; }
+        constexpr int32_t getFrameNumber() const noexcept { return this->_frameNumber; }
 
         /**
          * @brief Gets the result of selection. 
@@ -93,7 +93,7 @@ namespace Cesium3DTiles {
          * @param frameNumber The previous frame number.
          * @return The {@link TileSelectionState::Result}
          */
-        Result getResult(uint32_t frameNumber) const {
+        constexpr Result getResult(int32_t frameNumber) const noexcept {
             if (this->_frameNumber != frameNumber) {
                 return Result::None;
             }
@@ -109,7 +109,7 @@ namespace Cesium3DTiles {
          * @param frameNumber The previous frame number.
          * @return `true` if the tile was kicked, and `false` otherwise
          */
-        bool wasKicked(uint32_t frameNumber) const {
+        constexpr bool wasKicked(int32_t frameNumber) const noexcept {
             Result result = this->getResult(frameNumber);
             return result == Result::RenderedAndKicked || result == Result::RefinedAndKicked;
         }
@@ -122,7 +122,7 @@ namespace Cesium3DTiles {
          * @param frameNumber The previous frame number.
          * @return The {@link TileSelectionState::Result} prior to being kicked.
          */
-        Result getOriginalResult(uint32_t frameNumber) const {
+        constexpr Result getOriginalResult(int32_t frameNumber) const noexcept {
             Result result = this->getResult(frameNumber);
 
             switch (result) {
@@ -138,7 +138,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Marks this tile as "kicked".
          */
-        void kick() {
+        constexpr void kick() noexcept {
             switch (this->_result) {
             case Result::Rendered:
                 this->_result = Result::RenderedAndKicked;
@@ -152,7 +152,7 @@ namespace Cesium3DTiles {
         }
 
     private:
-        uint32_t _frameNumber;
+        int32_t _frameNumber;
         Result _result;
     };
 

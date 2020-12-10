@@ -197,8 +197,8 @@ namespace Cesium3DTiles {
     const ViewUpdateResult& Tileset::updateView(const Camera& camera) {
         this->_asyncSystem.dispatchMainThreadTasks();
 
-        uint32_t previousFrameNumber = this->_previousFrameNumber; 
-        uint32_t currentFrameNumber = previousFrameNumber + 1;
+        int32_t previousFrameNumber = this->_previousFrameNumber; 
+        int32_t currentFrameNumber = previousFrameNumber + 1;
 
         ViewUpdateResult& result = this->_updateResult;
         // result.tilesLoading = 0;
@@ -241,11 +241,11 @@ namespace Cesium3DTiles {
         return result;
     }
 
-    void Tileset::notifyTileStartLoading(Tile* /*pTile*/) {
+    void Tileset::notifyTileStartLoading(Tile* /*pTile*/) noexcept {
         ++this->_loadsInProgress;
     }
 
-    void Tileset::notifyTileDoneLoading(Tile* pTile) {
+    void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
         assert(this->_loadsInProgress > 0);
         --this->_loadsInProgress;
 
@@ -254,7 +254,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tileset::notifyTileUnloading(Tile* pTile) {
+    void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
         if (pTile) {
             this->_tileDataBytes -= pTile->computeByteSize();
         }
@@ -288,7 +288,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    size_t Tileset::getTotalDataBytes() const {
+    size_t Tileset::getTotalDataBytes() const noexcept {
         size_t bytes = this->_tileDataBytes;
 
         for (auto& pOverlay : this->_overlays) {
@@ -669,7 +669,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    static void markTileNonRendered(uint32_t lastFrameNumber, Tile& tile, ViewUpdateResult& result) {
+    static void markTileNonRendered(int32_t lastFrameNumber, Tile& tile, ViewUpdateResult& result) {
         TileSelectionState::Result lastResult = tile.getLastSelectionState().getResult(lastFrameNumber);
         markTileNonRendered(lastResult, tile, result);
     }
@@ -684,7 +684,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    static void markChildrenNonRendered(uint32_t lastFrameNumber, Tile& tile, ViewUpdateResult& result) {
+    static void markChildrenNonRendered(int32_t lastFrameNumber, Tile& tile, ViewUpdateResult& result) {
         TileSelectionState::Result lastResult = tile.getLastSelectionState().getResult(lastFrameNumber);
         markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
     }
@@ -922,7 +922,7 @@ namespace Cesium3DTiles {
             }
 
             // Remove all descendants from the render list and add this tile.
-            renderList.erase(renderList.begin() + firstRenderedDescendantIndex, renderList.end());
+            renderList.erase(renderList.begin() + static_cast<std::vector<Tile*>::iterator::difference_type>(firstRenderedDescendantIndex), renderList.end());
             renderList.push_back(&tile);
             tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
 
@@ -934,9 +934,9 @@ namespace Cesium3DTiles {
 
             if (!wasReallyRenderedLastFrame && traversalDetails.notYetRenderableCount > this->_options.loadingDescendantLimit) {
                 // Remove all descendants from the load queues.
-                this->_loadQueueLow.erase(this->_loadQueueLow.begin() + loadIndexLow, this->_loadQueueLow.end());
-                this->_loadQueueMedium.erase(this->_loadQueueMedium.begin() + loadIndexMedium, this->_loadQueueMedium.end());
-                this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + loadIndexHigh, this->_loadQueueHigh.end());
+                this->_loadQueueLow.erase(this->_loadQueueLow.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexLow), this->_loadQueueLow.end());
+                this->_loadQueueMedium.erase(this->_loadQueueMedium.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexMedium), this->_loadQueueMedium.end());
+                this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexHigh), this->_loadQueueHigh.end());
 
                 if (!queuedForLoad) {
                     addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);

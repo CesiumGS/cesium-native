@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates {@link TileContentLoadResult} from glTF data.
      */
-    class CESIUM3DTILES_API GltfContent {
+    class CESIUM3DTILES_API GltfContent final {
     public:
         /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(

@@ -3,6 +3,7 @@
 #include "CesiumGeospatial/Library.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeometry/Rectangle.h"
+#include "CesiumUtility/Math.h"
 #include <optional>
 
 namespace CesiumGeospatial {
@@ -14,7 +15,7 @@ namespace CesiumGeospatial {
      * 
      * @see CesiumGeometry::Rectangle
      */
-    class CESIUMGEOSPATIAL_API GlobeRectangle {
+    class CESIUMGEOSPATIAL_API GlobeRectangle final {
     public:
         /**
          * @brief Constructs a new instance.
@@ -24,12 +25,18 @@ namespace CesiumGeospatial {
          * @param east The easternmost longitude, in radians, in the range [-Pi, Pi].
          * @param north The northernmost latitude, in radians, in the range [-Pi/2, Pi/2].
          */
-        GlobeRectangle(
+        constexpr GlobeRectangle(
             double west,
             double south,
             double east,
             double north
-        );
+        ) noexcept :
+            _west(west),
+            _south(south),
+            _east(east),
+            _north(north)
+        {
+        }
 
         /**
          * Creates a rectangle given the boundary longitude and latitude in degrees. The angles are converted to radians.
@@ -42,71 +49,89 @@ namespace CesiumGeospatial {
          *
          * @snippet TestGlobeRectangle.cpp fromDegrees
          */
-        static GlobeRectangle fromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees);
+        static constexpr GlobeRectangle fromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees) noexcept {
+            return GlobeRectangle(
+                CesiumUtility::Math::degreesToRadians(westDegrees),
+                CesiumUtility::Math::degreesToRadians(southDegrees),
+                CesiumUtility::Math::degreesToRadians(eastDegrees),
+                CesiumUtility::Math::degreesToRadians(northDegrees)
+            );
+        }
 
         /**
          * @brief Returns the westernmost longitude, in radians.
          */
-        double getWest() const { return this->_west; }
+        constexpr double getWest() const noexcept { return this->_west; }
 
         /**
          * @brief Returns the southernmost latitude, in radians.
          */
-        double getSouth() const { return this->_south; }
+        constexpr double getSouth() const noexcept { return this->_south; }
 
         /**
          * @brief Returns the easternmost longitude, in radians.
          */
-        double getEast() const { return this->_east; }
+        constexpr double getEast() const noexcept { return this->_east; }
 
         /**
          * @brief Returns the northernmost latitude, in radians.
          */
-        double getNorth() const { return this->_north; }
+        constexpr double getNorth() const noexcept { return this->_north; }
 
         /**
          * @brief Returns the {@link Cartographic} position of the south-west corner.
          */
-        Cartographic getSouthwest() const { return Cartographic(this->_west, this->_south); }
+        constexpr Cartographic getSouthwest() const noexcept { return Cartographic(this->_west, this->_south); }
 
         /**
          * @brief Returns the {@link Cartographic} position of the south-east corner.
          */
-        Cartographic getSoutheast() const { return Cartographic(this->_east, this->_south); }
+        constexpr Cartographic getSoutheast() const noexcept { return Cartographic(this->_east, this->_south); }
 
         /**
          * @brief Returns the {@link Cartographic} position of the north-west corner.
          */
-        Cartographic getNorthwest() const { return Cartographic(this->_west, this->_north); }
+        constexpr Cartographic getNorthwest() const noexcept { return Cartographic(this->_west, this->_north); }
 
         /**
          * @brief Returns the {@link Cartographic} position of the north-east corner.
          */
-        Cartographic getNortheast() const { return Cartographic(this->_east, this->_north); }
+        constexpr Cartographic getNortheast() const noexcept { return Cartographic(this->_east, this->_north); }
 
         /**
          * @brief Returns this rectangle as a {@link CesiumGemetry::Rectangle}.
          */
-        CesiumGeometry::Rectangle toSimpleRectangle() const;
+        constexpr CesiumGeometry::Rectangle toSimpleRectangle() const noexcept {
+            return CesiumGeometry::Rectangle(this->getWest(), this->getSouth(), this->getEast(), this->getNorth());
+        }
 
         /**
          * @brief Computes the width of this rectangle.
          * 
          * The result will be in radians, in the range [0, Pi*2].
          */
-        double computeWidth() const;
+        constexpr double computeWidth() const noexcept {
+            double east = this->_east;
+            double west = this->_west;
+            if (east < west) {
+                east += CesiumUtility::Math::TWO_PI;
+            }
+            return east - west;
+        }
 
         /**
          * @brief Computes the height of this rectangle.
          *
          * The result will be in radians, in the range [0, Pi*2].
          */
-        double computeHeight() const;
+        constexpr double computeHeight() const noexcept {
+            return this->_north - this->_south;
+        }
 
         /**
          * @brief Computes the {@link Cartographic} center position of this rectangle.
          */
-        Cartographic computeCenter() const;
+        Cartographic computeCenter() const noexcept;
 
         /**
          * @brief Returns `true` if this rectangle contains the given point.
@@ -115,7 +140,7 @@ namespace CesiumGeospatial {
          * and also return `true` when the longitude of the given point is within
          * a very small error margin of the longitudes of this rectangle.
          */
-        bool contains(const Cartographic& cartographic) const;
+        bool contains(const Cartographic& cartographic) const noexcept;
 
         /**
          * @brief Computes the intersection of two rectangles. 
@@ -129,7 +154,7 @@ namespace CesiumGeospatial {
          * @param other The other rectangle to intersect with this one.
          * @returns The intersection rectangle, or `std::nullopt` if there is no intersection.
          */
-        std::optional<GlobeRectangle> intersect(const GlobeRectangle& other) const;
+        std::optional<GlobeRectangle> intersect(const GlobeRectangle& other) const noexcept;
 
         /**
          * @brief Computes the union of this globe rectangle with another.
@@ -137,7 +162,7 @@ namespace CesiumGeospatial {
          * @param other The other globe rectangle.
          * @return The union.
          */
-        GlobeRectangle computeUnion(const GlobeRectangle& other) const;
+        GlobeRectangle computeUnion(const GlobeRectangle& other) const noexcept;
 
     private:
         double _west;

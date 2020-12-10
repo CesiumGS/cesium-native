@@ -142,7 +142,7 @@ namespace Cesium3DTiles {
      * @brief A <a href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D Tiles tileset</a>,
      * used for streaming massive heterogeneous 3D geospatial datasets.
      */
-    class CESIUM3DTILES_API Tileset {
+    class CESIUM3DTILES_API Tileset final {
     public:
         /**
          * @brief Constructs a new instance with a given `tileset.json` URL.
@@ -173,20 +173,20 @@ namespace Cesium3DTiles {
          * If the tileset references a Cesium ion asset,
          * this property will not have a value.
          */
-        std::optional<std::string> getUrl() const { return this->_url; }
+        std::optional<std::string> getUrl() const noexcept { return this->_url; }
 
         /**
          * @brief Gets the Cesium ion asset ID of this tileset. 
          * If the tileset references a URL, this property
          * will not have a value.
          */
-        std::optional<uint32_t> getIonAssetID() const { return this->_ionAssetID; }
+        std::optional<uint32_t> getIonAssetID() const noexcept { return this->_ionAssetID; }
 
         /**
          * @brief Gets the Cesium ion access token to use to access this tileset. 
          * If the tileset references a URL, this property will not have a value.
          */
-        std::optional<std::string> getIonAccessToken() const { return this->_ionAccessToken; }
+        std::optional<std::string> getIonAccessToken() const noexcept { return this->_ionAccessToken; }
 
         /**
          * @brief Gets the {@link TilesetExternals} that summarize the external interfaces used by this tileset.
@@ -196,36 +196,36 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the {@link TilesetExternals} that summarize the external interfaces used by this tileset.
          */
-        const TilesetExternals& getExternals() const { return this->_externals; }
+        const TilesetExternals& getExternals() const noexcept { return this->_externals; }
 
-        CesiumAsync::AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
-        const CesiumAsync::AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+        CesiumAsync::AsyncSystem& getAsyncSystem() noexcept { return this->_asyncSystem; }
+        const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept { return this->_asyncSystem; }
 
         /** @copydoc Tileset::getOptions() */
-        const TilesetOptions& getOptions() const { return this->_options; }
+        const TilesetOptions& getOptions() const noexcept { return this->_options; }
 
         /**
          * @brief Gets the {@link TilesetOptions} of this tileset.
          */
-        TilesetOptions& getOptions() { return this->_options; }
+        TilesetOptions& getOptions() noexcept { return this->_options; }
 
         /**
          * @brief Gets the root tile of this tileset.
          *
          * This may be `nullptr` if there is currently no root tile.
          */
-        Tile* getRootTile() { return this->_pRootTile.get(); }
+        Tile* getRootTile() noexcept { return this->_pRootTile.get(); }
 
         /** @copydoc Tileset::getRootTile() */
-        const Tile* getRootTile() const { return this->_pRootTile.get(); }
+        const Tile* getRootTile() const noexcept { return this->_pRootTile.get(); }
 
         /**
          * @brief Returns the {@link RasterOverlayCollection} of this tileset.
          */
-        RasterOverlayCollection& getOverlays() { return this->_overlays; }
+        RasterOverlayCollection& getOverlays() noexcept { return this->_overlays; }
 
         /** @copydoc Tileset::getOverlays() */
-        const RasterOverlayCollection& getOverlays() const { return this->_overlays; }
+        const RasterOverlayCollection& getOverlays() const noexcept { return this->_overlays; }
 
         /**
          * @brief Updates this view, returning the set of tiles to render in this view.
@@ -239,18 +239,18 @@ namespace Cesium3DTiles {
          * @brief Notifies the tileset that the given tile has started loading.
          * This method may be called from any thread.
          */
-        void notifyTileStartLoading(Tile* pTile);
+        void notifyTileStartLoading(Tile* pTile) noexcept;
 
         /**
          * @brief Notifies the tileset that the given tile has finished loading and is ready to render.
          * This method may be called from any thread.
          */
-        void notifyTileDoneLoading(Tile* pTile);
+        void notifyTileDoneLoading(Tile* pTile) noexcept;
 
         /**
          * @brief Notifies the tileset that the given tile is about to be unloaded.
          */
-        void notifyTileUnloading(Tile* pTile);
+        void notifyTileUnloading(Tile* pTile) noexcept;
 
         /**
          * @brief Loads a tile tree from a tileset.json file. 
@@ -294,7 +294,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the total number of bytes of tile and raster overlay data that are currently loaded.
          */
-        size_t getTotalDataBytes() const;
+        size_t getTotalDataBytes() const noexcept;
 
     private:
         struct TraversalDetails {
@@ -347,8 +347,8 @@ namespace Cesium3DTiles {
 
         struct FrameState {
             const Camera& camera;
-            uint32_t lastFrameNumber;
-            uint32_t currentFrameNumber;
+            int32_t lastFrameNumber;
+            int32_t currentFrameNumber;
             double fogDensity;
         };
 
@@ -375,7 +375,7 @@ namespace Cesium3DTiles {
 
         std::unique_ptr<Tile> _pRootTile;
 
-        uint32_t _previousFrameNumber;
+        int32_t _previousFrameNumber;
         ViewUpdateResult _updateResult;
 
         struct LoadRecord {

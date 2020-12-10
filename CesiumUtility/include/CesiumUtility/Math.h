@@ -8,86 +8,86 @@ namespace CesiumUtility {
     /**
      * @brief Mathematical constants and functions
      */
-    class CESIUMUTILITY_API Math {
+    class CESIUMUTILITY_API Math final {
     public:
 
         /** @brief 0.1 */
-        static const double EPSILON1;
+        static constexpr double EPSILON1 = 1e-1;
 
         /** @brief 0.01 */
-        static const double EPSILON2;
+        static constexpr double EPSILON2 = 1e-2;
 
         /** @brief 0.001 */
-        static const double EPSILON3;
+        static constexpr double EPSILON3 = 1e-3;
 
         /** @brief 0.0001 */
-        static const double EPSILON4;
+        static constexpr double EPSILON4 = 1e-4;
 
         /** @brief 0.00001 */
-        static const double EPSILON5;
+        static constexpr double EPSILON5 = 1e-5;
 
         /** @brief 0.000001 */
-        static const double EPSILON6;
+        static constexpr double EPSILON6 = 1e-6;
 
         /** @brief 0.0000001 */
-        static const double EPSILON7;
+        static constexpr double EPSILON7 = 1e-7;
 
         /** @brief 0.00000001 */
-        static const double EPSILON8;
+        static constexpr double EPSILON8 = 1e-8;
 
         /** @brief 0.000000001 */
-        static const double EPSILON9;
+        static constexpr double EPSILON9 = 1e-9;
 
         /** @brief 0.0000000001 */
-        static const double EPSILON10;
+        static constexpr double EPSILON10 = 1e-10;
 
         /** @brief 0.00000000001 */
-        static const double EPSILON11;
+        static constexpr double EPSILON11 = 1e-11;
 
         /** @brief 0.000000000001 */
-        static const double EPSILON12;
+        static constexpr double EPSILON12 = 1e-12;
 
         /** @brief 0.0000000000001 */
-        static const double EPSILON13;
+        static constexpr double EPSILON13 = 1e-13;
 
         /** @brief 0.00000000000001 */
-        static const double EPSILON14;
+        static constexpr double EPSILON14 = 1e-14;
 
         /** @brief 0.000000000000001 */
-        static const double EPSILON15;
+        static constexpr double EPSILON15 = 1e-15;
 
         /** @brief 0.0000000000000001 */
-        static const double EPSILON16;
+        static constexpr double EPSILON16 = 1e-16;
 
         /** @brief 0.00000000000000001 */
-        static const double EPSILON17;
+        static constexpr double EPSILON17 = 1e-17;
 
         /** @brief 0.000000000000000001 */
-        static const double EPSILON18;
+        static constexpr double EPSILON18 = 1e-18;
 
         /** @brief 0.0000000000000000001 */
-        static const double EPSILON19;
+        static constexpr double EPSILON19 = 1e-19;
 
         /** @brief 0.00000000000000000001 */
-        static const double EPSILON20;
+        static constexpr double EPSILON20 = 1e-20;
 
         /** @brief 0.000000000000000000001 */
-        static const double EPSILON21;
+        static constexpr double EPSILON21 = 1e-21;
 
         /**
          * @brief pi
          */
-        static const double ONE_PI;
+        static constexpr double ONE_PI = 3.14159265358979323846;
 
         /**
          * @brief two times pi
          */
-        static const double TWO_PI;
+        static constexpr double TWO_PI = Math::ONE_PI * 2.0;
 
         /**
          * @brief pi divded by two
          */
-        static const double PI_OVER_TWO;
+        static constexpr double PI_OVER_TWO = Math::ONE_PI / 2.0;
 
         /**
          * @brief Converts a relative to an absolute epsilon, for the epsilon-equality check between two values.
@@ -102,7 +102,7 @@ namespace CesiumUtility {
          * @return The absolute epsilon.
          */
         template<glm::length_t L, typename T, glm::qualifier Q>
-        static inline glm::vec<L, T, Q> relativeEpsilonToAbsolute(const glm::vec<L, T, Q>& a, const glm::vec<L, T, Q>& b, double relativeEpsilon) {
+        static constexpr glm::vec<L, T, Q> relativeEpsilonToAbsolute(const glm::vec<L, T, Q>& a, const glm::vec<L, T, Q>& b, double relativeEpsilon) noexcept {
             return relativeEpsilon * glm::max(glm::abs(a), glm::abs(b));
         }
 
@@ -114,7 +114,7 @@ namespace CesiumUtility {
          * @param relativeEpsilon The relative epsilon.
          * @return The absolute epsilon.
          */
-        static inline double relativeEpsilonToAbsolute(double a, double b, double relativeEpsilon) {
+        static constexpr double relativeEpsilonToAbsolute(double a, double b, double relativeEpsilon) noexcept {
             return relativeEpsilon * glm::max(glm::abs(a), glm::abs(b));
         }
 
@@ -131,7 +131,7 @@ namespace CesiumUtility {
          * @return Whether the values are epsilon-equal
          */
         template<glm::length_t L, typename T, glm::qualifier Q>
-        static bool equalsEpsilon(const glm::vec<L, T, Q>& left, const glm::vec<L, T, Q>& right, double relativeEpsilon) {
+        static bool constexpr equalsEpsilon(const glm::vec<L, T, Q>& left, const glm::vec<L, T, Q>& right, double relativeEpsilon) noexcept {
             return Math::equalsEpsilon(left, right, relativeEpsilon, relativeEpsilon);
         }
 
@@ -143,7 +143,7 @@ namespace CesiumUtility {
          * @param relativeEpsilon The relative epsilon.
          * @return Whether the values are epsilon-equal
          */
-        static inline bool equalsEpsilon(double left, double right, double relativeEpsilon) {
+        static constexpr bool equalsEpsilon(double left, double right, double relativeEpsilon) noexcept {
             return equalsEpsilon(left, right, relativeEpsilon, relativeEpsilon);
         }
 
@@ -162,7 +162,7 @@ namespace CesiumUtility {
          *
          * @snippet TestMath.cpp equalsEpsilon
          */
-        static inline bool equalsEpsilon(double left, double right, double relativeEpsilon, double absoluteEpsilon) {
+        static constexpr bool equalsEpsilon(double left, double right, double relativeEpsilon, double absoluteEpsilon) noexcept {
             double diff = glm::abs(left - right);
             return
                 diff <= absoluteEpsilon ||
@@ -187,7 +187,7 @@ namespace CesiumUtility {
          * @returns `true` if the values are equal within the epsilon; otherwise, `false`.
          */
         template<glm::length_t L, typename T, glm::qualifier Q>
-        static inline bool equalsEpsilon(const glm::vec<L, T, Q>& left, const glm::vec<L, T, Q>& right, double relativeEpsilon, double absoluteEpsilon) {
+        static constexpr bool equalsEpsilon(const glm::vec<L, T, Q>& left, const glm::vec<L, T, Q>& right, double relativeEpsilon, double absoluteEpsilon) noexcept {
             glm::vec<L, T, Q> diff = glm::abs(left - right);
             return
                 glm::lessThanEqual(diff, glm::vec<L, T, Q>(absoluteEpsilon)) == glm::vec<L, bool, Q>(true) ||
@@ -203,7 +203,7 @@ namespace CesiumUtility {
          * @param value The value to return the sign of.
          * @returns The sign of value.
          */
-        static inline double sign(double value) {
+        static constexpr double sign(double value) noexcept {
             if (value == 0.0 || value != value) {
                 // zero or NaN
                 return value;
@@ -220,7 +220,7 @@ namespace CesiumUtility {
          * @param value The value to return the sign of.
          * @returns The sign of value.
          */
-        static inline double signNotZero(double value) {
+        static constexpr double signNotZero(double value) noexcept {
             return value < 0.0 ? -1.0 : 1.0;
         }
 
@@ -230,7 +230,7 @@ namespace CesiumUtility {
          * @param angle The angle in radians.
          * @returns The angle in the range [`-Math::ONE_PI`, `Math::ONE_PI`].
          */
-        static inline double negativePiToPi(double angle) {
+        static double negativePiToPi(double angle) noexcept {
             return Math::zeroToTwoPi(angle + Math::ONE_PI) - Math::ONE_PI;
         }
 
@@ -240,7 +240,7 @@ namespace CesiumUtility {
          * @param angle The angle in radians.
          * @returns The angle in the range [0, `Math::TWO_PI`].
          */
-        static inline double zeroToTwoPi(double angle) {
+        static double zeroToTwoPi(double angle) noexcept {
             double mod = Math::mod(angle, Math::TWO_PI);
             if (
                 glm::abs(mod) < Math::EPSILON14 &&
@@ -258,7 +258,7 @@ namespace CesiumUtility {
          * @param n The divisor.
          * @returns The remainder.
          */
-        static inline double mod(double m, double n) {
+        static double mod(double m, double n) noexcept {
             return fmod(fmod(m, n) + n, n);
         }
 
@@ -268,7 +268,7 @@ namespace CesiumUtility {
          * @param angleDegrees The angle to convert in degrees.
          * @returns The corresponding angle in radians.
          */
-        static inline double degreesToRadians(double angleDegrees) {
+        static constexpr double degreesToRadians(double angleDegrees) noexcept {
             return angleDegrees * Math::ONE_PI / 180.0;
         }
 
@@ -278,7 +278,7 @@ namespace CesiumUtility {
          * @param angleRadians The angle to convert in radians.
          * @returns The corresponding angle in degrees.
          */
-        static inline double radiansToDegrees(double angleRadians) {
+        static constexpr double radiansToDegrees(double angleRadians) noexcept {
             return angleRadians * 180.0 / Math::ONE_PI;
         }
 
@@ -292,7 +292,7 @@ namespace CesiumUtility {
          *
          * @snippet TestMath.cpp lerp
          */
-        static inline double lerp(double p, double q, double time) {
+        static double lerp(double p, double q, double time) noexcept {
             return glm::mix(p, q, time);
         }
 
@@ -304,7 +304,7 @@ namespace CesiumUtility {
          * @param max The maximum value.
          * @returns The value clamped so that min <= value <= max.
          */
-        static inline double clamp(double value, double min, double max) {
+        static constexpr double clamp(double value, double min, double max) noexcept {
             return glm::clamp(value, min, max);
         };
 
@@ -317,7 +317,7 @@ namespace CesiumUtility {
          *
          * @see Math::fromSNorm
          */
-        static inline double toSNorm(double value, double rangeMaximum = 255.0) {
+        static double toSNorm(double value, double rangeMaximum = 255.0) noexcept {
             return glm::round(
                 (Math::clamp(value, -1.0, 1.0) * 0.5 + 0.5) * rangeMaximum
             );
@@ -331,7 +331,7 @@ namespace CesiumUtility {
          *
          * @see Math::toSNorm
          */
-        static inline double fromSNorm(double value, double rangeMaximum = 255.0) {
+        static constexpr double fromSNorm(double value, double rangeMaximum = 255.0) noexcept {
             return (Math::clamp(value, 0.0, rangeMaximum) / rangeMaximum) * 2.0 - 1.0;
         }
 
@@ -343,7 +343,7 @@ namespace CesiumUtility {
          *
          * @snippet TestMath.cpp convertLongitudeRange
          */
-        static inline double convertLongitudeRange(double angle) {
+        static double convertLongitudeRange(double angle) noexcept {
             double twoPi = Math::TWO_PI;
 
             double simplified = angle - glm::floor(angle / twoPi) * twoPi;

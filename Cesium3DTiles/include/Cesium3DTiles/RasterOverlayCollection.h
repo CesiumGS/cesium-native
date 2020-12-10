@@ -21,7 +21,7 @@ namespace Cesium3DTiles {
      * instances will be passed to the {@link RasterOverlayTile} instances that
      * they create when the tiles are updated.
      */
-    class CESIUM3DTILES_API RasterOverlayCollection {
+    class CESIUM3DTILES_API RasterOverlayCollection final {
     public:
 
         /** 
@@ -29,7 +29,7 @@ namespace Cesium3DTiles {
          * 
          * @param tileset The tileset to which this instance belongs
          */
-        RasterOverlayCollection(Tileset& tileset);
+        RasterOverlayCollection(Tileset& tileset) noexcept;
 
         ~RasterOverlayCollection();
 
@@ -43,7 +43,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Remove the given {@link RasterOverlay} from this collection.
          */
-        void remove(RasterOverlay* pOverlay);
+        void remove(RasterOverlay* pOverlay) noexcept;
 
         /**
          * @brief A constant iterator for {@link RasterOverlay} instances.
@@ -53,12 +53,12 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns an iterator at the beginning of this collection.
          */
-        const_iterator begin() const { return this->_overlays.begin(); }
+        const_iterator begin() const noexcept { return this->_overlays.begin(); }
 
         /**
          * @brief Returns an iterator at the end of this collection.
          */
-        const_iterator end() const { return this->_overlays.end(); }
+        const_iterator end() const noexcept { return this->_overlays.end(); }
 
     private:
         Tileset* _pTileset;

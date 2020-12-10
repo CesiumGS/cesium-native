@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
         const AsyncSystem& asyncSystem
-    ) :
+    ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
         _pPrepareRendererResources(nullptr),
@@ -42,7 +42,7 @@ namespace Cesium3DTiles {
         uint32_t maximumLevel,
         uint32_t imageWidth,
         uint32_t imageHeight
-    ) :
+    ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
         _pPrepareRendererResources(pPrepareRendererResources),
@@ -85,7 +85,7 @@ namespace Cesium3DTiles {
     uint32_t RasterOverlayTileProvider::computeLevelFromGeometricError(
         double geometricError,
         const glm::dvec2& position
-    ) const {
+    ) const noexcept {
         // PERFORMANCE_IDEA: factor out the stuff that doesn't change.
         const QuadtreeTilingScheme& tilingScheme = this->getTilingScheme();
         const CesiumGeometry::Rectangle& tilingSchemeRectangle = tilingScheme.getRectangle();
@@ -343,18 +343,18 @@ namespace Cesium3DTiles {
                 CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
                 CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTile(QuadtreeTileID(imageryLevel, i, j));
-                outputRasterTiles.emplace(outputRasterTiles.begin() + realOutputIndex, pTile, texCoordsRectangle);
+                outputRasterTiles.emplace(outputRasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(realOutputIndex), pTile, texCoordsRectangle);
                 ++realOutputIndex;
             }
         }
     }
 
-    void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) {
+    void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) noexcept {
         this->_tileDataBytes += pTile->getImage().image.size();
         --this->_tilesCurrentlyLoading;
     }
 
-    void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) {
+    void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
         assert(pTile->getReferenceCount() == 0);
 
         auto it = this->_tiles.find(pTile->getID());

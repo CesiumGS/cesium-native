@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
      * 
      * Not supposed to be used by clients.
      */
-    class CESIUM3DTILES_API TilesetExternals {
+    class CESIUM3DTILES_API TilesetExternals final {
     public:
 
         /**

@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
      * process, and use this structure to provide information about the state
      * changes of tiles to clients.
      */
-    class CESIUM3DTILES_API ViewUpdateResult {
+    class CESIUM3DTILES_API ViewUpdateResult final {
     public:
 
         /**

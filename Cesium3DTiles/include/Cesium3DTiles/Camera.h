@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
      *
      * A camera is defined by a position, orientation and the view frustum.
      */
-    class CESIUM3DTILES_API Camera {
+    class CESIUM3DTILES_API Camera final {
     public:
         // TODO: Add support for orthographic and off-center perspective frustums
 
@@ -46,17 +46,17 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the position of the camera in Earth-centered, Earth-fixed coordinates.
          */
-        const glm::dvec3& getPosition() const { return this->_position; }
+        const glm::dvec3& getPosition() const noexcept { return this->_position; }
 
         /**
          * @brief Gets the look direction of the camera in Earth-centered, Earth-fixed coordinates.
          */
-        const glm::dvec3& getDirection() const { return this->_direction; }
+        const glm::dvec3& getDirection() const noexcept { return this->_direction; }
 
         /**
          * @brief Gets the up direction of the camera in Earth-centered, Earth-fixed coordinates.
          */
-        const glm::dvec3& getUp() const { return this->_up; }
+        const glm::dvec3& getUp() const noexcept { return this->_up; }
 
         /**
          * @brief Gets the position of the camera as a longitude / latitude / height.
@@ -64,29 +64,29 @@ namespace Cesium3DTiles {
          * The result may be `std::nullopt` if the Cartesian position is
          * very near the center of the Ellipsoid.
          */
-        const std::optional<CesiumGeospatial::Cartographic>& getPositionCartographic() const { return this->_positionCartographic; }
+        const std::optional<CesiumGeospatial::Cartographic>& getPositionCartographic() const noexcept { return this->_positionCartographic; }
 
         /**
          * @brief Gets the size of the viewport in pixels.
          */
-        const glm::dvec2& getViewportSize() const { return this->_viewportSize; }
+        const glm::dvec2& getViewportSize() const noexcept { return this->_viewportSize; }
 
         /**
          * @brief Gets the horizontal field-of-view angle in radians.
          */
-        double getHorizontalFieldOfView() const { return this->_horizontalFieldOfView; }
+        double getHorizontalFieldOfView() const noexcept { return this->_horizontalFieldOfView; }
 
         /**
          * @brief Gets the vertical field-of-view angle in radians.
          */
-        double getVerticalFieldOfView() const { return this->_verticalFieldOfView; }
+        double getVerticalFieldOfView() const noexcept { return this->_verticalFieldOfView; }
 
         /**
          * @brief Gets the denominator used in screen-space error (SSE) computations.
          * 
          * The denominator is <code>2.0 * tan(0.5 * verticalFieldOfView)</code>
          */
-        double getScreenSpaceErrorDenominator() const { return this->_sseDenominator; }
+        double getScreenSpaceErrorDenominator() const noexcept { return this->_sseDenominator; }
 
         /**
          * @brief Updates the position and orientation of the camera.
@@ -115,7 +115,7 @@ namespace Cesium3DTiles {
          *
          * @return Whether the bounding volume is visible
          */
-        bool isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const;
+        bool isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const noexcept;
 
         /**
          * @brief Computes the squared distance to the given {@link BoundingVolume}.
@@ -126,7 +126,7 @@ namespace Cesium3DTiles {
          * @param boundingVolume The bounding volume
          * @returns The squared distance
          */
-        double computeDistanceSquaredToBoundingVolume(const BoundingVolume& boundingVolume) const;
+        double computeDistanceSquaredToBoundingVolume(const BoundingVolume& boundingVolume) const noexcept;
 
         /**
          * @brief Computes the screen space error from a given geometric error
@@ -142,7 +142,7 @@ namespace Cesium3DTiles {
          * @param distance The viewing distance
          * @return The screen space error
          */
-        double computeScreenSpaceError(double geometricError, double distance) const;
+        double computeScreenSpaceError(double geometricError, double distance) const noexcept;
 
     private:
         void _updateCullingVolume();

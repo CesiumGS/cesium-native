@@ -6,22 +6,22 @@ namespace CesiumGeometry {
         const CesiumGeometry::Rectangle& rectangle,
         uint32_t rootTilesX,
         uint32_t rootTilesY
-    ) :
+    ) noexcept :
         _rectangle(rectangle),
         _rootTilesX(rootTilesX),
         _rootTilesY(rootTilesY)
     {
     }
 
-    uint32_t QuadtreeTilingScheme::getNumberOfXTilesAtLevel(uint32_t level) const {
+    uint32_t QuadtreeTilingScheme::getNumberOfXTilesAtLevel(uint32_t level) const noexcept {
         return this->_rootTilesX << level;
     }
 
-    uint32_t QuadtreeTilingScheme::getNumberOfYTilesAtLevel(uint32_t level) const {
+    uint32_t QuadtreeTilingScheme::getNumberOfYTilesAtLevel(uint32_t level) const noexcept {
         return this->_rootTilesY << level;
     }
 
-    std::optional<CesiumGeometry::QuadtreeTileID> QuadtreeTilingScheme::positionToTile(const glm::dvec2& position, uint32_t level) const {
+    std::optional<CesiumGeometry::QuadtreeTileID> QuadtreeTilingScheme::positionToTile(const glm::dvec2& position, uint32_t level) const noexcept {
         if (!this->getRectangle().contains(position)) {
             // outside the bounds of the tiling scheme
             return std::nullopt;
@@ -50,7 +50,7 @@ namespace CesiumGeometry {
         return CesiumGeometry::QuadtreeTileID(level, xTileCoordinate, yTileCoordinate);
     }
 
-    CesiumGeometry::Rectangle QuadtreeTilingScheme::tileToRectangle(const CesiumGeometry::QuadtreeTileID& tileID) const {
+    CesiumGeometry::Rectangle QuadtreeTilingScheme::tileToRectangle(const CesiumGeometry::QuadtreeTileID& tileID) const noexcept {
         uint32_t xTiles = this->getNumberOfXTilesAtLevel(tileID.level);
         uint32_t yTiles = this->getNumberOfYTilesAtLevel(tileID.level);
 

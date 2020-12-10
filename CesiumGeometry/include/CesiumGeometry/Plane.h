@@ -8,7 +8,7 @@ namespace CesiumGeometry {
     /**
      * @brief A plane in Hessian Normal Format.
      */
-    class CESIUMGEOMETRY_API Plane {
+    class CESIUMGEOMETRY_API Plane final {
     public:
         /**
          * @brief Constructs a new plane from a normal and a distance from the origin.
@@ -51,7 +51,7 @@ namespace CesiumGeometry {
         /**
          * @brief Gets the plane's normal.
          */
-        const glm::dvec3& getNormal() const { return this->_normal; }
+        const glm::dvec3& getNormal() const noexcept { return this->_normal; }
 
         /**
          * @brief Gets the signed shortest distance from the origin to the plane.
@@ -60,7 +60,7 @@ namespace CesiumGeometry {
          * in the direction of the normal; if negative, the origin is in the half-space
          * opposite to the normal; if zero, the plane passes through the origin.
          */
-        double getDistance() const { return this->_distance; }
+        double getDistance() const noexcept { return this->_distance; }
 
         /**
          * @brief Computes the signed shortest distance of a point to this plane.
@@ -72,14 +72,14 @@ namespace CesiumGeometry {
          * @param point The point.
          * @returns The signed shortest distance of the point to the plane.
          */
-        double getPointDistance(const glm::dvec3& point) const;
+        double getPointDistance(const glm::dvec3& point) const noexcept;
 
         /**
          * @brief Projects a point onto this plane.
          * @param point The point to project onto the plane.
          * @returns The projected point.
          */
-        glm::dvec3 projectPointOntoPlane(const glm::dvec3& point) const;
+        glm::dvec3 projectPointOntoPlane(const glm::dvec3& point) const noexcept;
 
     private:
         glm::dvec3 _normal;

@@ -1,13 +1,14 @@
 #pragma once
 
 #include "CesiumGeospatial/Library.h"
+#include "CesiumUtility/Math.h"
 
 namespace CesiumGeospatial {
 
     /**
      * @brief A position defined by longitude, latitude, and height.
      */
-    class CESIUMGEOSPATIAL_API Cartographic {
+    class CESIUMGEOSPATIAL_API Cartographic final {
     public:
 
         /**
@@ -17,7 +18,12 @@ namespace CesiumGeospatial {
          * @param latitudeRadians The latitude, in radians.
          * @param heightMeters The height, in meters. Default value: 0.0.
          */
-        Cartographic(double longitudeRadians, double latitudeRadians, double heightMeters = 0.0);
+        constexpr Cartographic(double longitudeRadians, double latitudeRadians, double heightMeters = 0.0) noexcept :
+            longitude(longitudeRadians),
+            latitude(latitudeRadians),
+            height(heightMeters)
+        {
+        }
 
         /**
          * @brief Creates a new instance from a longitude and latitude specified in degrees, and a height given in meters.
@@ -28,7 +34,13 @@ namespace CesiumGeospatial {
          * @param latitudeDegrees The latitude, in degrees.
          * @param heightMeters The height, in meters. Default value: 0.0.
          */
-        static Cartographic fromDegrees(double longitudeDegrees, double latitudeDegrees, double heightMeters = 0.0);
+        static constexpr Cartographic fromDegrees(double longitudeDegrees, double latitudeDegrees, double heightMeters = 0.0) noexcept {
+            return Cartographic(
+                CesiumUtility::Math::degreesToRadians(longitudeDegrees),
+                CesiumUtility::Math::degreesToRadians(latitudeDegrees),
+                heightMeters
+            );
+        }
 
         /**
          * @brief The longitude, in radians.

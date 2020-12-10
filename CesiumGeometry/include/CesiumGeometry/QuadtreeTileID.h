@@ -40,7 +40,7 @@ namespace CesiumGeometry {
      * the x- and y-coordinate of the tile, referring to a grid coordinate system at
      * the respective level.
      */
-    struct CESIUMGEOMETRY_API QuadtreeTileID {
+    struct CESIUMGEOMETRY_API QuadtreeTileID final {
 
         /**
          * @brief Creates a new instance.
@@ -49,7 +49,7 @@ namespace CesiumGeometry {
          * @param x_ The x-coordinate of the tile 
          * @param y_ The y-coordinate of the tile
          */
-        QuadtreeTileID(uint32_t level_, uint32_t x_, uint32_t y_) :
+        constexpr QuadtreeTileID(uint32_t level_, uint32_t x_, uint32_t y_) noexcept :
             level(level_),
             x(x_),
             y(y_)
@@ -59,14 +59,14 @@ namespace CesiumGeometry {
         /**
          * @brief Returns `true` if two identifiers are equal.
          */
-        bool operator==(const QuadtreeTileID& other) const {
+        constexpr bool operator==(const QuadtreeTileID& other) const noexcept {
             return this->level == other.level && this->x == other.x && this->y == other.y;
         }
 
         /**
          * @brief Returns `true` if two identifiers are *not* equal.
          */
-        bool operator!=(const QuadtreeTileID& other) const {
+        constexpr bool operator!=(const QuadtreeTileID& other) const noexcept {
             return !(*this == other);
         }
 
@@ -80,7 +80,7 @@ namespace CesiumGeometry {
          * @param tilingScheme The {@link QuadtreeTilingScheme}.
          * @return The inverted y-coordinate.
          */
-        uint32_t computeInvertedY(const QuadtreeTilingScheme& tilingScheme) const;
+        uint32_t computeInvertedY(const QuadtreeTilingScheme& tilingScheme) const noexcept;
 
         /**
          * @brief The level of this tile ID, with 0 being the root tile.

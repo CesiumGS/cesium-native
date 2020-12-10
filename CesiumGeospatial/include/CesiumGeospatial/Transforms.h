@@ -10,7 +10,7 @@ namespace CesiumGeospatial {
     /**
      * @brief Transforms positions to various reference frames.
      */
-    class CESIUMGEOSPATIAL_API Transforms {
+    class CESIUMGEOSPATIAL_API Transforms final {
     public:
 
         /**
@@ -29,7 +29,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The {@link Ellipsoid} whose fixed frame is used in the transformation. Default value: {@link Ellipsoid::WGS84}.
          * @return The transformation matrix
          */
-        static glm::dmat4x4 eastNorthUpToFixedFrame(const glm::dvec3& origin, const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+        static glm::dmat4x4 eastNorthUpToFixedFrame(const glm::dvec3& origin, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept;
     };
 
 }

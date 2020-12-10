@@ -58,26 +58,26 @@ namespace Cesium3DTiles {
         int uvAccessorId = static_cast<int>(gltf.accessors.size());
         gltf.accessors.emplace_back();
 
-		GltfAccessor<glm::vec3> positionAccessor(gltf, positionAccessorIndex);
+		GltfAccessor<glm::vec3> positionAccessor(gltf, static_cast<size_t>(positionAccessorIndex));
 
-        tinygltf::Buffer& uvBuffer = gltf.buffers[uvBufferId];
+        tinygltf::Buffer& uvBuffer = gltf.buffers[static_cast<size_t>(uvBufferId)];
         uvBuffer.data.resize(positionAccessor.size() * 2 * sizeof(float));
 
-        tinygltf::BufferView& uvBufferView = gltf.bufferViews[uvBufferViewId];
+        tinygltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
         uvBufferView.buffer = uvBufferId;
         uvBufferView.byteOffset = 0;
         uvBufferView.byteStride = 2 * sizeof(float);
         uvBufferView.byteLength = uvBuffer.data.size();
         uvBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-        tinygltf::Accessor& uvAccessor = gltf.accessors[uvAccessorId];
+        tinygltf::Accessor& uvAccessor = gltf.accessors[static_cast<size_t>(uvAccessorId)];
         uvAccessor.bufferView = uvBufferViewId;
         uvAccessor.byteOffset = 0;
         uvAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
         uvAccessor.count = positionAccessor.size();
         uvAccessor.type = TINYGLTF_TYPE_VEC2;
 
-		GltfWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
+		GltfWriter<glm::vec2> uvWriter(gltf, static_cast<size_t>(uvAccessorId));
 
 		double width = rectangle.computeWidth();
 		double height = rectangle.computeHeight();
@@ -184,7 +184,7 @@ namespace Cesium3DTiles {
 				return;
 			}
 
-			int textureCoordinateAccessorIndex = positionAccessorsToTextureCoordinateAccessor[positionAccessorIndex];
+			int textureCoordinateAccessorIndex = positionAccessorsToTextureCoordinateAccessor[static_cast<size_t>(positionAccessorIndex)];
 			if (textureCoordinateAccessorIndex > 0) {
 				primitive.attributes[attributeName] = textureCoordinateAccessorIndex;
 				return;
@@ -198,7 +198,7 @@ namespace Cesium3DTiles {
 			// Generate new texture coordinates
 			int nextTextureCoordinateAccessorIndex = generateOverlayTextureCoordinates(gltf_, positionAccessorIndex, transform, projection, rectangle, west, south, east, north, minimumHeight, maximumHeight);
 			primitive.attributes[attributeName] = nextTextureCoordinateAccessorIndex;
-			positionAccessorsToTextureCoordinateAccessor[positionAccessorIndex] = nextTextureCoordinateAccessorIndex;
+			positionAccessorsToTextureCoordinateAccessor[static_cast<size_t>(positionAccessorIndex)] = nextTextureCoordinateAccessorIndex;
 		});
 
 		return CesiumGeospatial::BoundingRegion(

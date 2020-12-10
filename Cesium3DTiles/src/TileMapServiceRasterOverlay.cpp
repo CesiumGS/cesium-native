@@ -7,14 +7,14 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
+#include "tinyxml2.h"
 #include "Uri.h"
-#include <tinyxml2.h>
 
 using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
-    class TileMapServiceTileProvider : public RasterOverlayTileProvider {
+    class TileMapServiceTileProvider final : public RasterOverlayTileProvider {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,

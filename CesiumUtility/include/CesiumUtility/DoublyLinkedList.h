@@ -6,13 +6,13 @@ namespace CesiumUtility {
      * @brief Contains the previous and next pointers for an element in a {@link DoublyLinkedList}.
      */
     template <class T>
-    class DoublyLinkedListPointers {
+    class DoublyLinkedListPointers final {
     public:
 
         /** 
          * @brief Default constructor.
          */
-        DoublyLinkedListPointers() :
+        DoublyLinkedListPointers() noexcept :
             pNext(nullptr),
             pPrevious(nullptr)
         {}
@@ -25,14 +25,14 @@ namespace CesiumUtility {
         // Following the example of boost::instrusive::list's list_member_hook, the
         // copy constructor and assignment operator do nothing.
         // https://www.boost.org/doc/libs/1_73_0/doc/html/boost/intrusive/list_member_hook.html
-        DoublyLinkedListPointers(DoublyLinkedListPointers& rhs) :
+        DoublyLinkedListPointers(DoublyLinkedListPointers& rhs) noexcept :
             DoublyLinkedListPointers()
         {}
 
         /**
          * @brief Assignment operator.
          */
-        DoublyLinkedListPointers& operator=(const DoublyLinkedListPointers& /*rhs*/) {
+        DoublyLinkedListPointers& operator=(const DoublyLinkedListPointers& /*rhs*/) noexcept {
             return *this;
         }
 
@@ -54,13 +54,13 @@ namespace CesiumUtility {
      * @tparam (T::*Pointers) A member pointer to the field that holds the links to the previous and next nodes.
      */
     template <class T, DoublyLinkedListPointers<T> (T::*Pointers)>
-    class DoublyLinkedList {
+    class DoublyLinkedList final {
     public:
 
         /**
          * @brief Removes the given node from this list.
          */
-        void remove(T& node) {
+        void remove(T& node) noexcept {
             DoublyLinkedListPointers<T>& nodePointers = node.*Pointers;
 
             if (nodePointers.pPrevious) {
@@ -86,7 +86,7 @@ namespace CesiumUtility {
         /**
          * @brief Insert the given node after the other node.
          */
-        void insertAfter(T& after, T& node) {
+        void insertAfter(T& after, T& node) noexcept {
             this->remove(node);
             
             DoublyLinkedListPointers<T>& afterPointers = after.*Pointers;
@@ -111,7 +111,7 @@ namespace CesiumUtility {
         /**
          * @brief Insert the given node before the other node.
          */
-        void insertBefore(T& before, T& node) {
+        void insertBefore(T& before, T& node) noexcept {
             this->remove(node);
 
             DoublyLinkedListPointers<T>& beforePointers = before.*Pointers;
@@ -136,7 +136,7 @@ namespace CesiumUtility {
         /**
          * @brief Insert the given node as the new head of the list.
          */
-        void insertAtHead(T& node) {
+        void insertAtHead(T& node) noexcept {
             this->remove(node);
 
             if (this->_pHead) {
@@ -153,7 +153,7 @@ namespace CesiumUtility {
         /**
          * @brief Insert the given node as the new tail of the list.
          */
-        void insertAtTail(T& node) {
+        void insertAtTail(T& node) noexcept {
             this->remove(node);
 
             if (this->_pTail) {
@@ -170,42 +170,67 @@ namespace CesiumUtility {
         /**
          * @brief Returns the size of this list.
          */
-        size_t size() {
+        size_t size() const noexcept {
             return this->_size;
         }
 
         /**
          * @brief Returns the head node of this list, or `nullptr` if the list is empty.
          */
-        T* head() {
+        T* head() noexcept {
+            return this->_pHead;
+        }
+
+        /** @copydoc DoubleLinkedList::head() */
+        const T* head() const noexcept {
             return this->_pHead;
         }
 
         /**
          * @brief Returns the tail node of this list, or `nullptr` if the list is empty.
          */
-        T* tail() {
+        T* tail() noexcept {
+            return this->_pTail;
+        }
+
+        /** @copydoc DoubleLinkedList::tail() */
+        const T* tail() const noexcept {
             return this->_pTail;
         }
 
         /**
          * @brief Returns the next node after the given one, or `nullptr` if the given node is the tail.
          */
-        T* next(T& node) {
+        T* next(T& node) noexcept {
+            return (node.*Pointers).pNext;
+        }
+
+        /** @copydoc DoubleLinkedList::next(T&) */
+        const T* next(const T& node) const noexcept {
             return (node.*Pointers).pNext;
         }
 
         /**
          * @brief Returns the next node after the given one, or the head if the given node is `nullptr`.
          */
-        T* next(T* pNode) {
+        T* next(T* pNode) noexcept {
+            return pNode ? this->next(*pNode) : this->_pHead;
+        }
+
+        /** @copydoc DoubleLinkedList::next(T*) */
+        const T* next(const T* pNode) const noexcept {
             return pNode ? this->next(*pNode) : this->_pHead;
         }
 
         /**
          * @brief Returns the previous node before the given one, or `nullptr` if the given node is the head.
          */
-        T* previous(T& node) {
+        T* previous(T& node) noexcept {
+            return (node.*Pointers).pPrevious;
+        }
+
+        /** @copydoc DoubleLinkedList::previous(T&) */
+        const T* previous(const T& node) const noexcept {
             return (node.*Pointers).pPrevious;
         }
 
@@ -213,6 +238,11 @@ namespace CesiumUtility {
          * @brief Returns the previous node before the given one, or the tail if the given node is `nullptr`.
          */
         T* previous(T* pNode) {
+            return pNode ? this->previous(*pNode) : this->_pTail;
+        }
+
+        /** @copydoc DoubleLinkedList::previous(T*) */
+        const T* previous(const T* pNode) const noexcept {
             return pNode ? this->previous(*pNode) : this->_pTail;
         }
 

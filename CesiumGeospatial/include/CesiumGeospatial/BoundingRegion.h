@@ -16,7 +16,7 @@ namespace CesiumGeospatial {
     /**
      * @brief A bounding volume specified as a longitude/latitude bounding box and a minimum and maximum height.
      */
-    class CESIUMGEOSPATIAL_API BoundingRegion {
+    class CESIUMGEOSPATIAL_API BoundingRegion final {
     public:
         /**
          * @brief Constructs a new bounding region.
@@ -36,22 +36,22 @@ namespace CesiumGeospatial {
         /**
          * @brief Gets the bounding rectangle of the region.
          */
-        const GlobeRectangle& getRectangle() const { return this->_rectangle; }
+        const GlobeRectangle& getRectangle() const noexcept { return this->_rectangle; }
 
         /**
          * @brief Gets the minimum height of the region.
          */
-        double getMinimumHeight() const { return this->_minimumHeight; }
+        double getMinimumHeight() const noexcept { return this->_minimumHeight; }
 
         /**
          * @brief Gets the maximum height of the region.
          */
-        double getMaximumHeight() const { return this->_maximumHeight; }
+        double getMaximumHeight() const noexcept { return this->_maximumHeight; }
 
         /**
          * @brief Gets an oriented bounding box containing this region.
          */
-        const CesiumGeometry::OrientedBoundingBox& getBoundingBox() const { return this->_boundingBox; }
+        const CesiumGeometry::OrientedBoundingBox& getBoundingBox() const noexcept { return this->_boundingBox; }
 
         /**
          * @brief Determines on which side of a plane the bounding region is located.
@@ -62,7 +62,7 @@ namespace CesiumGeospatial {
          *  * `Outside` if the entire region is on the opposite side.
          *  * `Intersecting` if the region intersects the plane.
          */
-        CesiumGeometry::CullingResult intersectPlane(const CesiumGeometry::Plane& plane) const;
+        CesiumGeometry::CullingResult intersectPlane(const CesiumGeometry::Plane& plane) const noexcept;
 
         /**
          * @brief Computes the distance-squared from a position in ellipsoid-centered Cartesian coordinates
@@ -72,7 +72,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const;
+        double computeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
 
         /**
          * @brief Computes the distance-squared from a longitude-latitude-height position to the closest point in this bounding region.
@@ -81,7 +81,7 @@ namespace CesiumGeospatial {
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const;
+        double computeDistanceSquaredToPosition(const Cartographic& position, const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
 
         /**
          * @brief Computes the distance-squared from a position to the closest point in this bounding region, when the longitude-latitude-height
@@ -91,7 +91,7 @@ namespace CesiumGeospatial {
          * @param cartesianPosition The position as ellipsoid-centered Cartesian coordinates.
          * @return The distance-squared from the position to the closest point in the bounding region.
          */
-        double computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const;
+        double computeDistanceSquaredToPosition(const Cartographic& cartographicPosition, const glm::dvec3& cartesianPosition) const noexcept;
 
         /**
          * @brief Computes the union of this bounding region with another.
@@ -99,7 +99,7 @@ namespace CesiumGeospatial {
          * @param other The other bounding region.
          * @return The union.
          */
-        BoundingRegion computeUnion(const BoundingRegion& other) const;
+        BoundingRegion computeUnion(const BoundingRegion& other) const noexcept;
 
 private:
         static CesiumGeometry::OrientedBoundingBox _computeBoundingBox(

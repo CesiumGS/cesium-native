@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
 
         RasterOverlayTile::RasterOverlayTile(
             RasterOverlay& overlay
-        ) :
+        ) noexcept :
             _pOverlay(&overlay),
             _tileID(0, 0, 0),
             _state(LoadState::Placeholder),
@@ -56,7 +56,7 @@ namespace Cesium3DTiles {
 
             RasterOverlayTileProvider* pTileProvider = overlay.getTileProvider();
 
-            imageRequest.thenInWorkerThread([
+            std::move(imageRequest).thenInWorkerThread([
                 tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID()),
                 projection = pTileProvider->getProjection(),
                 cutoutsCollection = overlay.getCutouts(),
@@ -114,7 +114,7 @@ namespace Cesium3DTiles {
                         uint32_t endPixelY = static_cast<uint32_t>(std::ceil(endV * height));
 
                         for (uint32_t j = startPixelY; j < endPixelY; ++j) {
-                            uint32_t rowStart = j * width * bytesPerPixel;
+                            uint32_t rowStart = j * static_cast<uint32_t>(width) * static_cast<uint32_t>(bytesPerPixel);
                             for (uint32_t i = startPixelX; i < endPixelX; ++i) {
                                 uint32_t pixelStart = rowStart + i * bytesPerPixel;
                                 
@@ -176,11 +176,11 @@ namespace Cesium3DTiles {
             this->setState(LoadState::Done);
         }
 
-        void RasterOverlayTile::addReference() {
+        void RasterOverlayTile::addReference() noexcept {
             ++this->_references;
         }
 
-        void RasterOverlayTile::releaseReference() {
+        void RasterOverlayTile::releaseReference() noexcept {
             assert(this->_references > 0);
             uint32_t references = --this->_references;
             if (references == 0) {

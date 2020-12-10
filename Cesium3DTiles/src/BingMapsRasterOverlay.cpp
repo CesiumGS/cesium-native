@@ -28,7 +28,7 @@ namespace Cesium3DTiles {
     const std::string BingMapsStyle::ORDNANCE_SURVEY = "OrdnanceSurvey";
     const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 
-    class BingMapsTileProvider : public RasterOverlayTileProvider {
+    class BingMapsTileProvider final : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
@@ -101,7 +101,7 @@ namespace Cesium3DTiles {
         static std::string tileXYToQuadKey(uint32_t level, uint32_t x, uint32_t y) {
             std::string quadkey = "";
             for (int32_t i = static_cast<int32_t>(level); i >= 0; --i) {
-                uint32_t bitmask = 1 << i;
+                uint32_t bitmask = static_cast<uint32_t>(1 << i);
                 uint32_t digit = 0;
 
                 if ((x & bitmask) != 0) {
@@ -175,9 +175,9 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
 
-            uint32_t width = resource.value("imageWidth", 256);
-            uint32_t height = resource.value("imageHeight", 256);
-            uint32_t maximumLevel = resource.value("zoomMax", 30);
+            uint32_t width = resource.value("imageWidth", 256U);
+            uint32_t height = resource.value("imageHeight", 256U);
+            uint32_t maximumLevel = resource.value("zoomMax", 30U);
 
             std::vector<std::string> subdomains = resource.value("imageUrlSubdomains", std::vector<std::string>());
             std::string urlTemplate = resource.value("imageUrl", std::string());

@@ -23,7 +23,7 @@ namespace CesiumGeometry {
          * @param y The y-coordinate of the tile.
          * @param z The z-coordinate of the tile.
          */
-        OctreeTileID(uint32_t level, uint32_t x, uint32_t y, uint32_t z) :
+        constexpr OctreeTileID(uint32_t level, uint32_t x, uint32_t y, uint32_t z) noexcept :
             level(level),
             x(x),
             y(y),

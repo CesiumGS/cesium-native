@@ -23,11 +23,11 @@ namespace CesiumGeometry {
     {
     }
 
-    double Plane::getPointDistance(const glm::dvec3& point) const {
+    double Plane::getPointDistance(const glm::dvec3& point) const noexcept {
         return glm::dot(this->_normal, point) + this->_distance;
     }
 
-    glm::dvec3 Plane::projectPointOntoPlane(const glm::dvec3& point) const {
+    glm::dvec3 Plane::projectPointOntoPlane(const glm::dvec3& point) const noexcept {
         // projectedPoint = point - (normal.point + scale) * normal
         double pointDistance = this->getPointDistance(point);
         glm::dvec3 scaledNormal = this->_normal * pointDistance;
