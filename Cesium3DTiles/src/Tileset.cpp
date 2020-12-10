@@ -1,3 +1,5 @@
+#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
@@ -239,13 +241,18 @@ namespace Cesium3DTiles {
         // (TODO: use indices and remove redundancies) 
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
-                result.creditsToShowThisFrame.push_back(this->_options.credit.value());
+                result.creditsToShowThisFrame += this->_options.credit.value() + "\n";
             }
-            result.creditsToShowThisFrame.push_back("Cesium Ion");
+            result.creditsToShowThisFrame += "Cesium Ion\n";
             for (auto& tile : result.tilesToRenderThisFrame) {
                 const std::vector<RasterMappedTo3DTile>& tileOverlays = tile->getMappedRasterTiles();
-                for (auto tileOverlay : tileOverlays) {
-                    result.creditsToShowThisFrame.push_back(tileOverlay.getReadyTile()->getCredit());
+                for (RasterMappedTo3DTile tileOverlay : tileOverlays) {
+                    RasterOverlayTile* rot = tileOverlay.getReadyTile();
+                    result.creditsToShowThisFrame += (rot == nullptr) ? "uh\n" : rot->getCredit() + "\n";
+                    
+                    //result.creditsToShowThisFrame += tileOverlay.getReadyTile()->getCredit() + "\n";
+                    // + "\n";
+                    //rot->getCredit();
                 }
             }
         }

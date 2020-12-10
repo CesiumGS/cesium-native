@@ -33,7 +33,7 @@ namespace Cesium3DTiles {
         /**
          * @brief The credits for the tiles in the render list of the current frame (TODO: use indices and remove redundancies instead) 
          */
-        std::vector<std::string> creditsToShowThisFrame;
+        std::string creditsToShowThisFrame;
 
         //! @cond Doxygen_Suppress
         uint32_t tilesLoadingLowPriority;
