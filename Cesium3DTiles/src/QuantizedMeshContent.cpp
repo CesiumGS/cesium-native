@@ -63,8 +63,8 @@ namespace Cesium3DTiles {
         return (value >> 1) ^ (-(value & 1));
     }
 
-    template <class T>
-    void decodeIndices(const gsl::span<const T>& encoded, gsl::span<T>& decoded) {
+    template <class T, class D>
+    void decodeIndices(const gsl::span<const T>& encoded, gsl::span<D>& decoded) {
         if (decoded.size() < encoded.size()) {
             throw std::runtime_error("decoded buffer is too small.");
         }
@@ -72,7 +72,7 @@ namespace Cesium3DTiles {
         T highest = 0;
         for (size_t i = 0; i < encoded.size(); ++i) {
             T code = encoded[i];
-            decoded[i] = static_cast<T>(highest - code);
+            decoded[i] = static_cast<D>(highest - code);
             if (code == 0) {
                 ++highest;
             }
@@ -87,42 +87,224 @@ namespace Cesium3DTiles {
         return defaultValue;
     }
 
-    template <class T>
-    static void addSkirt(
-        uint32_t currentVertexCount,
-        uint32_t currentIndicesCount,
-        glm::vec3 tileNormal, 
-		float skirtHeight,
-        const gsl::span<const T> edgeIndices,
+	static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
+		static const double terrainHeightmapQuality = 0.25;
+		static const uint32_t heightmapWidth = 65;
+		double levelZeroMaximumGeometricError = ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI * terrainHeightmapQuality
+			/ (heightmapWidth * tilingScheme.getRootTilesX());
+
+		double levelMaximumGeometricError = levelZeroMaximumGeometricError / (1 << tileLevel);
+		return levelMaximumGeometricError * 5.0;
+	}
+
+    template <class E, class I>
+	static void addSkirt(
+		const CesiumGeospatial::Ellipsoid &ellipsoid,
+		glm::dvec3 center,
+		const CesiumGeospatial::GlobeRectangle &rectangle,
+		double minimumHeight,
+		double maximumHeight,
+		uint32_t currentVertexCount,
+		uint32_t currentIndicesCount,
+		double skirtHeight,
+		double longitudeOffset,
+		double latitudeOffset,
+		const std::vector<glm::dvec3>& uvsAndHeights,
+        const gsl::span<const E> &edgeIndices,
         gsl::span<float> &positions,
-        gsl::span<T> &indices) 
+		gsl::span<float> &normals,
+        gsl::span<I> &indices) 
     {
+        double west = rectangle.getWest();
+        double south = rectangle.getSouth();
+        double east = rectangle.getEast();
+        double north = rectangle.getNorth();
+
         size_t newEdgeIndex = currentVertexCount;
         size_t positionIdx = currentVertexCount * 3;
         size_t indexIdx = currentIndicesCount;
         for (size_t i = 0; i < edgeIndices.size() - 1; ++i) {
-            T edgeIdx = edgeIndices[i];
-            T nextEdgeIdx = edgeIndices[i + 1];
-            positions[positionIdx++] = positions[3 * edgeIdx] - skirtHeight * tileNormal.x;
-            positions[positionIdx++] = positions[3 * edgeIdx + 1] - skirtHeight * tileNormal.y;
-            positions[positionIdx++] = positions[3 * edgeIdx + 2] - skirtHeight * tileNormal.z;
+            E edgeIdx = edgeIndices[i];
+            E nextEdgeIdx = edgeIndices[i + 1];
 
-            indices[indexIdx++] = static_cast<T>(edgeIdx);
-            indices[indexIdx++] = static_cast<T>(nextEdgeIdx);
-            indices[indexIdx++] = static_cast<T>(newEdgeIndex);
+			double uRatio = uvsAndHeights[edgeIdx].x;
+			double vRatio = uvsAndHeights[edgeIdx].y;
+			double heightRatio = uvsAndHeights[edgeIdx].z;
+			double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
+			double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
+			double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio) - skirtHeight;
+			glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
+			position -= center;
 
-            indices[indexIdx++] = static_cast<T>(newEdgeIndex);
-            indices[indexIdx++] = static_cast<T>(nextEdgeIdx);
-            indices[indexIdx++] = static_cast<T>(newEdgeIndex + 1);
+            positions[positionIdx] = static_cast<float>(position.x);
+            positions[positionIdx + 1] = static_cast<float>(position.y);
+            positions[positionIdx + 2] = static_cast<float>(position.z);
+
+			if (!normals.empty()) {
+				normals[positionIdx] = normals[3 * edgeIdx];
+				normals[positionIdx + 1] = normals[3 * edgeIdx + 1];
+				normals[positionIdx + 2] = normals[3 * edgeIdx + 2];
+			}
+
+            indices[indexIdx++] = static_cast<I>(edgeIdx);
+            indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
+            indices[indexIdx++] = static_cast<I>(newEdgeIndex);
+
+            indices[indexIdx++] = static_cast<I>(newEdgeIndex);
+            indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
+            indices[indexIdx++] = static_cast<I>(newEdgeIndex + 1);
 
             ++newEdgeIndex;
+			positionIdx += 3;
         }
 
-		T edgeIdx = edgeIndices.back();
-		positions[positionIdx++] = positions[3 * edgeIdx] - skirtHeight * tileNormal.x;
-		positions[positionIdx++] = positions[3 * edgeIdx + 1] - skirtHeight * tileNormal.y;
-		positions[positionIdx++] = positions[3 * edgeIdx + 2] - skirtHeight * tileNormal.z;
+		E edgeIdx = edgeIndices.back();
+		double uRatio = uvsAndHeights[edgeIdx].x;
+		double vRatio = uvsAndHeights[edgeIdx].y;
+		double heightRatio = uvsAndHeights[edgeIdx].z;
+		double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
+		double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
+		double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio) - skirtHeight;
+		glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
+		position -= center;
+
+		positions[positionIdx] = static_cast<float>(position.x);
+		positions[positionIdx + 1] = static_cast<float>(position.y);
+		positions[positionIdx + 2] = static_cast<float>(position.z);
     }
+
+    template <class E, class I>
+	static void addSkirts(
+		const CesiumGeospatial::Ellipsoid &ellipsoid,
+		glm::dvec3 center,
+		const CesiumGeospatial::GlobeRectangle &rectangle,
+		double minimumHeight,
+		double maximumHeight,
+		uint32_t currentVertexCount,
+		uint32_t currentIndicesCount,
+		double skirtHeight,
+		double longitudeOffset,
+		double latitudeOffset,
+		const std::vector<glm::dvec3> &uvsAndHeights,
+		const gsl::span<const uint8_t> &westEdgeIndicesBuffer,
+		const gsl::span<const uint8_t> &southEdgeIndicesBuffer,
+		const gsl::span<const uint8_t> &eastEdgeIndicesBuffer,
+		const gsl::span<const uint8_t> &northEdgeIndicesBuffer,
+		gsl::span<float>& outputPositions,
+		gsl::span<float>& outputNormals,
+		gsl::span<I>& outputIndices) 
+	{
+		uint32_t westVertexCount = static_cast<uint32_t>(westEdgeIndicesBuffer.size() / sizeof(E));
+		uint32_t southVertexCount = static_cast<uint32_t>(southEdgeIndicesBuffer.size() / sizeof(E));
+		uint32_t eastVertexCount = static_cast<uint32_t>(eastEdgeIndicesBuffer.size() / sizeof(E));
+		uint32_t northVertexCount = static_cast<uint32_t>(northEdgeIndicesBuffer.size() / sizeof(E));
+
+		// allocate edge indices to be sort later
+		uint32_t maxEdgeVertexCount = westVertexCount;
+		maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
+		maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
+		maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
+		std::vector<E> sortEdgeIndices(maxEdgeVertexCount);
+
+		// add skirt indices, vertices, and normals
+		gsl::span<const E> westEdgeIndices(reinterpret_cast<const E*>(westEdgeIndicesBuffer.data()), westVertexCount);
+		std::partial_sort_copy(westEdgeIndices.begin(), 
+			westEdgeIndices.end(), 
+			sortEdgeIndices.begin(), 
+			sortEdgeIndices.begin() + westVertexCount, 
+			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;  });
+		westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
+		addSkirt(ellipsoid,
+			center,
+			rectangle,
+			minimumHeight,
+			maximumHeight,
+			currentVertexCount, 
+			currentIndicesCount, 
+			skirtHeight, 
+			longitudeOffset,
+			latitudeOffset,
+			uvsAndHeights,
+			westEdgeIndices, 
+			outputPositions, 
+			outputNormals, 
+			outputIndices);
+
+		currentVertexCount += westVertexCount;
+		currentIndicesCount += (westVertexCount - 1) * 6;
+		gsl::span<const E> southEdgeIndices(reinterpret_cast<const E*>(southEdgeIndicesBuffer.data()), southVertexCount);
+		std::partial_sort_copy(southEdgeIndices.begin(), 
+			southEdgeIndices.end(), 
+			sortEdgeIndices.begin(), 
+			sortEdgeIndices.begin() + southVertexCount, 
+			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;  });
+		southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
+		addSkirt(ellipsoid, 
+			center,
+			rectangle,
+			minimumHeight,
+			maximumHeight, 
+			currentVertexCount, 
+			currentIndicesCount, 
+			skirtHeight, 
+			longitudeOffset,
+			latitudeOffset,
+			uvsAndHeights,
+			southEdgeIndices, 
+			outputPositions, 
+			outputNormals, 
+			outputIndices);
+
+		currentVertexCount += southVertexCount;
+		currentIndicesCount += (southVertexCount - 1) * 6;
+		gsl::span<const E> eastEdgeIndices(reinterpret_cast<const E*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
+		std::partial_sort_copy(eastEdgeIndices.begin(), 
+			eastEdgeIndices.end(), 
+			sortEdgeIndices.begin(), 
+			sortEdgeIndices.begin() + eastVertexCount, 
+			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;  });
+		eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
+		addSkirt(ellipsoid, 
+			center, 
+			rectangle, 
+			minimumHeight, 
+			maximumHeight, 
+			currentVertexCount, 
+			currentIndicesCount, 
+			skirtHeight, 
+			longitudeOffset,
+			latitudeOffset,
+			uvsAndHeights,
+			eastEdgeIndices, 
+			outputPositions, 
+			outputNormals, 
+			outputIndices);
+
+		currentVertexCount += eastVertexCount;
+		currentIndicesCount += (eastVertexCount - 1) * 6;
+		gsl::span<const E> northEdgeIndices(reinterpret_cast<const E*>(northEdgeIndicesBuffer.data()), northVertexCount);
+		std::partial_sort_copy(northEdgeIndices.begin(), 
+			northEdgeIndices.end(), 
+			sortEdgeIndices.begin(), 
+			sortEdgeIndices.begin() + northVertexCount, 
+			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x; });
+		northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
+		addSkirt(ellipsoid,
+			center,
+			rectangle, 
+			minimumHeight, 
+			maximumHeight, 
+			currentVertexCount, 
+			currentIndicesCount, 
+			skirtHeight, 
+			longitudeOffset,
+			latitudeOffset,
+			uvsAndHeights,
+			northEdgeIndices, 
+			outputPositions, 
+			outputNormals, 
+			outputIndices);
+	}
 
     static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
         const uint8_t rangeMax = 255;
@@ -145,7 +327,7 @@ namespace Cesium3DTiles {
     static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
-        const TileContext& /*context*/,
+        const TileContext& context,
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,
         double /*tileGeometricError*/,
@@ -294,27 +476,31 @@ namespace Cesium3DTiles {
 		double minX = std::numeric_limits<double>::max();
 		double minY = std::numeric_limits<double>::max();
 		double minZ = std::numeric_limits<double>::max();
+		double minLatitude = std::numeric_limits<double>::max();
+		double minLongitude = std::numeric_limits<double>::max();
 		double maxX = std::numeric_limits<double>::lowest();
 		double maxY = std::numeric_limits<double>::lowest();
 		double maxZ = std::numeric_limits<double>::lowest();
+		double maxLatitude = std::numeric_limits<double>::lowest();
+		double maxLongitude = std::numeric_limits<double>::lowest();
 
         int32_t u = 0;
         int32_t v = 0;
         int32_t height = 0;
-		std::vector<glm::vec2> uvs;
-		uvs.reserve(vertexCount);
+		std::vector<glm::dvec3> uvsAndHeights;
+		uvsAndHeights.reserve(vertexCount);
 		for (size_t i = 0; i < vertexCount; ++i) {
 			u += zigZagDecode(uBuffer[i]);
 			v += zigZagDecode(vBuffer[i]);
 			height += zigZagDecode(heightBuffer[i]);
-			uvs.emplace_back(glm::vec2(u, v));
 
 			double uRatio = static_cast<double>(u) / 32767.0;
 			double vRatio = static_cast<double>(v) / 32767.0;
+			double heightRatio = static_cast<double>(height) / 32767.0;
 
 			double longitude = Math::lerp(west, east, uRatio);
 			double latitude = Math::lerp(south, north, vRatio);
-			double heightMeters = Math::lerp(minimumHeight, maximumHeight, static_cast<double>(height) / 32767.0);
+			double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio);
 
 			glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
 			position -= center;
@@ -325,10 +511,16 @@ namespace Cesium3DTiles {
 			minX = glm::min(minX, position.x);
 			minY = glm::min(minY, position.y);
 			minZ = glm::min(minZ, position.z);
+			minLatitude = glm::min(latitude, minLatitude);
+			minLongitude = glm::min(longitude, minLongitude);
 
 			maxX = glm::max(maxX, position.x);
 			maxY = glm::max(maxY, position.y);
 			maxZ = glm::max(maxZ, position.z);
+			maxLatitude = glm::max(latitude, maxLatitude);
+			maxLongitude = glm::max(longitude, maxLongitude);
+
+			uvsAndHeights.emplace_back(uRatio, vRatio, heightRatio);
 		}
 
 		// decode normal vertices of the tile as well as its metadata without skirt
@@ -383,126 +575,104 @@ namespace Cesium3DTiles {
 
 			readIndex += extensionLength;
 		}
+		gsl::span<float> outputNormals(reinterpret_cast<float *>(outputNormalsBuffer.data()), outputNormalsBuffer.size() / sizeof(float));
 
-		// indices buffer for gltf to include tile and skirt indices
-		std::vector<unsigned char> outputIndicesBuffer(indicesCount * indexSizeBytes + skirtIndicesCount * indexSizeBytes);
-		float skirtHeight = 200.0;
+		// indices buffer for gltf to include tile and skirt indices. Caution of indices type 
+		// since adding skirt means the number of vertices is potentially over maximum of uint16_t
+		std::vector<unsigned char> outputIndicesBuffer;
+		const std::optional<ImplicitTilingContext>& implicitContext = context.implicitContext;
+		const QuadtreeTilingScheme& tilingScheme = implicitContext->tilingScheme;
+		double skirtHeight = calculateSkirtHeight(id.level, ellipsoid, tilingScheme);
+		double longitudeOffset = (maxLongitude - minLongitude) * 0.0001;
+		double latitudeOffset = (maxLatitude - minLatitude) * 0.0001;
 		glm::vec3 tileNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
 		if (indexSizeBytes == sizeof(uint32_t)) {
 			// decode the tile indices without skirt. 
+			size_t outputIndicesCount = indicesCount + skirtIndicesCount;
+			std::vector<unsigned char> decodedOutputIndicesBuffer(outputIndicesCount * sizeof(uint32_t));
 			gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t *>(encodedIndicesBuffer.data()), indicesCount);
-			gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesBuffer.size() / sizeof(uint32_t));
+			gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(decodedOutputIndicesBuffer.data()), outputIndicesCount);
 			decodeIndices(indices, outputIndices);
 
-			// allocate edge indices to be sort later
-			uint32_t maxEdgeVertexCount = westVertexCount;
-			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
-			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
-			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
-			std::vector<uint32_t> sortEdgeIndices(maxEdgeVertexCount);
+			addSkirts<uint32_t, uint32_t>(ellipsoid, 
+				center, 
+				rectangle,
+				minimumHeight,
+				maximumHeight,
+				vertexCount, 
+				indicesCount, 
+				skirtHeight, 
+				longitudeOffset,
+				latitudeOffset,
+				uvsAndHeights,
+				westEdgeIndicesBuffer, 
+				southEdgeIndicesBuffer, 
+				eastEdgeIndicesBuffer, 
+				northEdgeIndicesBuffer, 
+				outputPositions, 
+				outputNormals, 
+				outputIndices);
 
-			// add skirt indices, vertices, and normals
-			uint32_t currentVertexCount = vertexCount;
-			uint32_t currentIndicesCount = indicesCount;
-			gsl::span<const uint32_t> westEdgeIndices(reinterpret_cast<const uint32_t*>(westEdgeIndicesBuffer.data()), westVertexCount);
-			std::partial_sort_copy(westEdgeIndices.begin(), 
-				westEdgeIndices.end(), 
-				sortEdgeIndices.begin(), 
-				sortEdgeIndices.begin() + westVertexCount, 
-				[&uvs](auto lhs, auto rhs) { return uvs[lhs].y < uvs[rhs].y;  });
-			westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
-			addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, westEdgeIndices, outputPositions, outputIndices);
-
-			//currentVertexCount += westVertexCount;
-			//currentIndicesCount += (westVertexCount - 1) * 6;
-			//gsl::span<const uint32_t> southEdgeIndices(reinterpret_cast<const uint32_t*>(southEdgeIndicesBuffer.data()), southVertexCount);
-			//std::partial_sort_copy(southEdgeIndices.begin(), 
-			//	southEdgeIndices.end(), 
-			//	sortEdgeIndices.begin(), 
-			//	sortEdgeIndices.begin() + southVertexCount, 
-			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x > uvs[rhs].x;  });
-			//southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
-			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, southEdgeIndices, outputPositions, outputIndices);
-
-			//currentVertexCount += southVertexCount;
-			//currentIndicesCount += (southVertexCount - 1) * 6;
-			//gsl::span<const uint32_t> eastEdgeIndices(reinterpret_cast<const uint32_t*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
-			//std::partial_sort_copy(eastEdgeIndices.begin(), 
-			//	eastEdgeIndices.end(), 
-			//	sortEdgeIndices.begin(), 
-			//	sortEdgeIndices.begin() + eastVertexCount, 
-			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].y > uvs[rhs].y;  });
-			//eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
-			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, eastEdgeIndices, outputPositions, outputIndices);
-
-			//currentVertexCount += eastVertexCount;
-			//currentIndicesCount += (eastVertexCount - 1) * 6;
-			//gsl::span<const uint32_t> northEdgeIndices(reinterpret_cast<const uint32_t*>(northEdgeIndicesBuffer.data()), northVertexCount);
-			//std::partial_sort_copy(northEdgeIndices.begin(), 
-			//	northEdgeIndices.end(), 
-			//	sortEdgeIndices.begin(), 
-			//	sortEdgeIndices.begin() + northVertexCount, 
-			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x < uvs[rhs].x;  });
-			//northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
-			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, northEdgeIndices, outputPositions, outputIndices);
+			outputIndicesBuffer = std::move(decodedOutputIndicesBuffer);
 		}
 		else {
 			// decode the tile indices without skirt. 
+			size_t outputIndicesCount = indicesCount + skirtIndicesCount;
 			gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t *>(encodedIndicesBuffer.data()), indicesCount);
-			gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(outputIndicesBuffer.data()), outputIndicesBuffer.size() / sizeof(uint16_t));
-			decodeIndices(indices, outputIndices);
+			if (vertexCount + skirtVertexCount < std::numeric_limits<uint16_t>::max()) {
+				std::vector<unsigned char> decodedOutputIndicesBuffer(outputIndicesCount * sizeof(uint16_t));
+				gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(decodedOutputIndicesBuffer.data()), outputIndicesCount);
+				decodeIndices(indices, outputIndices);
 
-			// allocate edge indices to be sort later
-			uint32_t maxEdgeVertexCount = westVertexCount;
-			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
-			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
-			maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
-			std::vector<uint16_t> sortEdgeIndices(maxEdgeVertexCount);
+				addSkirts<uint16_t, uint16_t>(ellipsoid, 
+					center,
+					rectangle,
+					minimumHeight,
+					maximumHeight,
+					vertexCount, 
+					indicesCount, 
+					skirtHeight, 
+					longitudeOffset,
+					latitudeOffset,
+					uvsAndHeights,
+					westEdgeIndicesBuffer, 
+					southEdgeIndicesBuffer, 
+					eastEdgeIndicesBuffer, 
+					northEdgeIndicesBuffer, 
+					outputPositions, 
+					outputNormals, 
+					outputIndices);
 
-			// add skirt indices, vertices, and normals
-			uint32_t currentVertexCount = vertexCount;
-			uint32_t currentIndicesCount = indicesCount;
-			gsl::span<const uint16_t> westEdgeIndices(reinterpret_cast<const uint16_t*>(westEdgeIndicesBuffer.data()), westVertexCount);
-			std::partial_sort_copy(westEdgeIndices.begin(), 
-				westEdgeIndices.end(), 
-				sortEdgeIndices.begin(), 
-				sortEdgeIndices.begin() + westVertexCount, 
-				[&uvs](auto lhs, auto rhs) { return uvs[lhs].y < uvs[rhs].y;  });
-			westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
-			addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, westEdgeIndices, outputPositions, outputIndices);
+				outputIndicesBuffer = std::move(decodedOutputIndicesBuffer);
+				indexSizeBytes = sizeof(uint16_t);
+			}
+			else {
+				std::vector<unsigned char> decodedOutputIndicesBuffer(outputIndicesCount * sizeof(uint32_t));
+				gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(decodedOutputIndicesBuffer.data()), outputIndicesCount);
+				decodeIndices(indices, outputIndices);
 
-			//currentVertexCount += westVertexCount;
-			//currentIndicesCount += (westVertexCount - 1) * 6;
-			//gsl::span<const uint16_t> southEdgeIndices(reinterpret_cast<const uint16_t*>(southEdgeIndicesBuffer.data()), southVertexCount);
-			//std::partial_sort_copy(southEdgeIndices.begin(), 
-			//	southEdgeIndices.end(), 
-			//	sortEdgeIndices.begin(), 
-			//	sortEdgeIndices.begin() + southVertexCount, 
-			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x > uvs[rhs].x;  });
-			//southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
-			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, southEdgeIndices, outputPositions, outputIndices);
+				addSkirts<uint16_t, uint32_t>(ellipsoid,
+					center, 
+					rectangle,
+					minimumHeight,
+					maximumHeight,
+					vertexCount, 
+					indicesCount, 
+					skirtHeight,
+					longitudeOffset,
+					latitudeOffset,
+					uvsAndHeights,
+					westEdgeIndicesBuffer, 
+					southEdgeIndicesBuffer, 
+					eastEdgeIndicesBuffer, 
+					northEdgeIndicesBuffer, 
+					outputPositions, 
+					outputNormals, 
+					outputIndices);
 
-			//currentVertexCount += southVertexCount;
-			//currentIndicesCount += (southVertexCount - 1) * 6;
-			//gsl::span<const uint16_t> eastEdgeIndices(reinterpret_cast<const uint16_t*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
-			//std::partial_sort_copy(eastEdgeIndices.begin(), 
-			//	eastEdgeIndices.end(), 
-			//	sortEdgeIndices.begin(), 
-			//	sortEdgeIndices.begin() + eastVertexCount, 
-			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].y > uvs[rhs].y;  });
-			//eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
-			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, eastEdgeIndices, outputPositions, outputIndices);
-
-			//currentVertexCount += eastVertexCount;
-			//currentIndicesCount += (eastVertexCount - 1) * 6;
-			//gsl::span<const uint16_t> northEdgeIndices(reinterpret_cast<const uint16_t*>(northEdgeIndicesBuffer.data()), northVertexCount);
-			//std::partial_sort_copy(northEdgeIndices.begin(), 
-			//	northEdgeIndices.end(), 
-			//	sortEdgeIndices.begin(), 
-			//	sortEdgeIndices.begin() + northVertexCount, 
-			//	[&uvs](auto lhs, auto rhs) { return uvs[lhs].x < uvs[rhs].x;  });
-			//northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
-			//addSkirt(currentVertexCount, currentIndicesCount, tileNormal, skirtHeight, northEdgeIndices, outputPositions, outputIndices);
+				outputIndicesBuffer = std::move(decodedOutputIndicesBuffer);
+				indexSizeBytes = sizeof(uint32_t);
+			}
 		}
 
 		// create gltf
@@ -547,7 +717,7 @@ namespace Cesium3DTiles {
 		primitive.attributes.emplace("POSITION", positionAccessorId);
 
 		// add normal buffer to gltf if there are any
-		if (outputNormalsBuffer.empty()) {
+		if (!outputNormalsBuffer.empty()) {
 			int normalBufferId = static_cast<int>(model.buffers.size());
 			model.buffers.emplace_back();
 			tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
