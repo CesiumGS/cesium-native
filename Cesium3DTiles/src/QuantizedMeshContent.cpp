@@ -63,15 +63,15 @@ namespace Cesium3DTiles {
         return (value >> 1) ^ (-(value & 1));
     }
 
-    template <class T, class D>
-    void decodeIndices(const gsl::span<const T>& encoded, gsl::span<D>& decoded) {
+    template <class E, class D>
+    void decodeIndices(const gsl::span<const E>& encoded, gsl::span<D>& decoded) {
         if (decoded.size() < encoded.size()) {
             throw std::runtime_error("decoded buffer is too small.");
         }
 
-        T highest = 0;
+        E highest = 0;
         for (size_t i = 0; i < encoded.size(); ++i) {
-            T code = encoded[i];
+            E code = encoded[i];
             decoded[i] = static_cast<D>(highest - code);
             if (code == 0) {
                 ++highest;
@@ -123,9 +123,8 @@ namespace Cesium3DTiles {
         size_t newEdgeIndex = currentVertexCount;
         size_t positionIdx = currentVertexCount * 3;
         size_t indexIdx = currentIndicesCount;
-        for (size_t i = 0; i < edgeIndices.size() - 1; ++i) {
+        for (size_t i = 0; i < edgeIndices.size(); ++i) {
             E edgeIdx = edgeIndices[i];
-            E nextEdgeIdx = edgeIndices[i + 1];
 
 			double uRatio = uvsAndHeights[edgeIdx].x;
 			double vRatio = uvsAndHeights[edgeIdx].y;
@@ -146,31 +145,20 @@ namespace Cesium3DTiles {
 				normals[positionIdx + 2] = normals[3 * edgeIdx + 2];
 			}
 
-            indices[indexIdx++] = static_cast<I>(edgeIdx);
-            indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
-            indices[indexIdx++] = static_cast<I>(newEdgeIndex);
+			if (i < edgeIndices.size() - 1) {
+				E nextEdgeIdx = edgeIndices[i + 1];
+				indices[indexIdx++] = static_cast<I>(edgeIdx);
+				indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
+				indices[indexIdx++] = static_cast<I>(newEdgeIndex);
 
-            indices[indexIdx++] = static_cast<I>(newEdgeIndex);
-            indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
-            indices[indexIdx++] = static_cast<I>(newEdgeIndex + 1);
+				indices[indexIdx++] = static_cast<I>(newEdgeIndex);
+				indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
+				indices[indexIdx++] = static_cast<I>(newEdgeIndex + 1);
+			}
 
-            ++newEdgeIndex;
+			++newEdgeIndex;
 			positionIdx += 3;
         }
-
-		E edgeIdx = edgeIndices.back();
-		double uRatio = uvsAndHeights[edgeIdx].x;
-		double vRatio = uvsAndHeights[edgeIdx].y;
-		double heightRatio = uvsAndHeights[edgeIdx].z;
-		double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
-		double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
-		double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio) - skirtHeight;
-		glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
-		position -= center;
-
-		positions[positionIdx] = static_cast<float>(position.x);
-		positions[positionIdx + 1] = static_cast<float>(position.y);
-		positions[positionIdx + 2] = static_cast<float>(position.z);
     }
 
     template <class E, class I>
@@ -440,7 +428,6 @@ namespace Cesium3DTiles {
 		}
 
 		// read the edge indices
-		const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
 		uint32_t westVertexCount = readValue<uint32_t>(data, readIndex, 0);
 		readIndex += sizeof(uint32_t);
 		gsl::span<const uint8_t> westEdgeIndicesBuffer(data.data() + readIndex, westVertexCount * indexSizeBytes);
@@ -484,6 +471,7 @@ namespace Cesium3DTiles {
 		double maxLatitude = std::numeric_limits<double>::lowest();
 		double maxLongitude = std::numeric_limits<double>::lowest();
 
+		const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
         int32_t u = 0;
         int32_t v = 0;
         int32_t height = 0;
