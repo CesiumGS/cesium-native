@@ -1,8 +1,8 @@
 
-#include "spdlog/spdlog.h"
-
 #include "Cesium3DTiles/Logging.h"
 #include "Cesium3DTiles/ILogger.h"
+
+#include "CesiumSpdlog.h"
 #include "SpdlogLogger.h"
 
 namespace Cesium3DTiles {
