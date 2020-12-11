@@ -3,15 +3,10 @@
 #include <memory>
 #include <cstdarg>
 
-#ifdef SPDLOG_ACTIVE_LEVEL
-#undef SPDLOG_ACTIVE_LEVEL
-#endif
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-
-#include "spdlog/spdlog.h"
-
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/ILogger.h"
+
+#include "../src/CesiumSpdlog.h"
 
 #define CESIUM_LOG_TRACE(...) SPDLOG_TRACE(__VA_ARGS__)
 #define CESIUM_LOG_DEBUG(...) SPDLOG_DEBUG(__VA_ARGS__)
