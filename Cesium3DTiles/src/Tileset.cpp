@@ -764,6 +764,44 @@ namespace Cesium3DTiles {
         markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
     }
 
+    /**
+     * @brief Returns whether a tile with the given bounding volume is visible for the camera.
+     * 
+     * @param camera The camera
+     * @param boundingVolume The bounding volume of the tile
+     * @param forceRenderTilesUnderCamera Whether tiles under the camera should alway be rendered (see {@link Cesium3DTiles::TilesetOptions})
+     * @return Whether the tile is visible according to the current camera configuration
+     */
+    static bool isVisibleFromCamera(const Camera& camera, const BoundingVolume& boundingVolume, bool forceRenderTilesUnderCamera) {
+        if (camera.isBoundingVolumeVisible(boundingVolume)) {
+            return true;
+        }
+        if (!forceRenderTilesUnderCamera) {
+            return false;
+        }
+        const std::optional<CesiumGeospatial::Cartographic>& position = camera.getPositionCartographic();
+        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+        if (position && pRectangle) {
+            return pRectangle->contains(position.value());
+        }
+        return false;
+    }
+
+    /**
+     * @brief Returns whether a tile at the given distance is visible in the fog.
+     * 
+     * @param distance The distance of the tile bounding volume to the camera
+     * @param fogDensity The fog density
+     * @return Whether the tile is visible in the fog
+     */
+    static bool isVisibleInFog(double distance, double fogDensity) {
+        if (fogDensity <= 0.0) {
+            return true;
+        }
+        double fogScalar = distance * fogDensity;
+        return glm::exp(-(fogScalar * fogScalar)) > 0.0;
+    }
+
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * It is not yet known whether the tile is visible.
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
@@ -780,32 +818,14 @@ namespace Cesium3DTiles {
         this->_markTileVisited(tile);
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
+        const Camera& camera = frameState.camera;
 
-        if (!isVisible && this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
-
-            const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
-            if (pRectangle) {
-                if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
-                    isVisible = true;
-                }
-            }
-        }
+        bool isVisible = isVisibleFromCamera(frameState.camera, boundingVolume, this->_options.renderTilesUnderCamera);
 
         double distance = 0.0;
-
         if (isVisible) {
-            // Is it culled by fog?
-            double distanceSquared = frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
-            distance = sqrt(distanceSquared);
-
-            if (frameState.fogDensity > 0.0) {
-                double fogScalar = distance * frameState.fogDensity;
-                double fog = 1.0 - glm::exp(-(fogScalar * fogScalar));
-                if (fog >= 1.0) {
-                    isVisible = false;
-                }
-            }
+            distance = sqrt(camera.computeDistanceSquaredToBoundingVolume(boundingVolume));
+            isVisible = isVisibleInFog(distance, frameState.fogDensity);
         }
 
         if (!isVisible) {
