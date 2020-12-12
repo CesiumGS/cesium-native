@@ -487,6 +487,57 @@ namespace Cesium3DTiles {
         }
     }
 
+    /**
+     * @brief Creates the query parameter string for the extensions in the given layer JSON.
+     * 
+     * This will check for the presence of all known extensions in the given layer JSON,
+     * and create a string that can be appended as the value of the `extensions` query
+     * parameter to the request URL. 
+     * 
+     * @param layerJson The layer JSON
+     * @return The extensions (possibly the empty string)
+     */
+    static std::string createExtensionsQueryParameter(const nlohmann::json& layerJson) noexcept {
+
+        std::vector<std::string> knownExtensions = { "octvertexnormals", "metadata" };
+        std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
+        std::string extensionsToRequest;
+        for (const std::string& extension : knownExtensions) {
+            if (std::find(extensions.begin(), extensions.end(), extension) != extensions.end()) {
+                if (!extensionsToRequest.empty()) {
+                    extensionsToRequest += "-";
+                }
+                extensionsToRequest += extension;
+            }
+        }
+        return extensionsToRequest;
+    }
+
+    /**
+     * @brief Creates a default {@link BoundingRegionWithLooseFittingHeights} for the given rectangle.
+     * 
+     * The heights of this bounding volume will have unspecified default values
+     * that are suitable for the use on earth.
+     * 
+     * @param globeRectangle The {@link CesiumGeospatial::GlobeRectangle}
+     * @return The {@link BoundingRegionWithLooseFittingHeights}
+     */
+    static BoundingVolume createDefaultLooseEarthBoundingVolume(const CesiumGeospatial::GlobeRectangle& globeRectangle) {
+        return BoundingRegionWithLooseFittingHeights(BoundingRegion(
+            globeRectangle, -1000.0, -9000.0
+        ));
+    }
+
+    /**
+     * @brief Computes the default geometric error for a given number of quadtree tiles.
+     * 
+     * @param tiles The number of tiles
+     * @return The geometric error
+     */
+    static double computeGeometricError(uint32_t tiles) noexcept {
+        return 8.0 * (Ellipsoid::WGS84.getRadii().x * 2.0 * CesiumUtility::Math::ONE_PI * 0.25) / 65 * static_cast<size_t>(tiles);
+    }
+
     /*static*/ void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context) {
         context.requestHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
         context.version = layerJson.value("version", "");
@@ -531,25 +582,9 @@ namespace Cesium3DTiles {
             CesiumGeometry::QuadtreeTileAvailability(tilingScheme, layerJson.value<uint32_t>("maxzoom", 30))
         };
 
-        std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
 
         // Request normals and metadata if they're available
-        std::string extensionsToRequest;
-
-        if (std::find(extensions.begin(), extensions.end(), "octvertexnormals") != extensions.end()) {
-            if (!extensionsToRequest.empty()) {
-                extensionsToRequest += "-";
-            }
-            extensionsToRequest += "octvertexnormals";
-        }
-
-        if (std::find(extensions.begin(), extensions.end(), "metadata") != extensions.end()) {
-            if (!extensionsToRequest.empty()) {
-                extensionsToRequest += "-";
-            }
-            extensionsToRequest += "metadata";
-        }
-
+        std::string extensionsToRequest = createExtensionsQueryParameter(layerJson);
         if (!extensionsToRequest.empty()) {
             for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
                 url = Uri::addQuery(url, "extensions", extensionsToRequest);
@@ -557,11 +592,7 @@ namespace Cesium3DTiles {
         }
 
         tile.setContext(&context);
-        tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            quadtreeRectangleGlobe,
-            -1000.0,
-            -9000.0
-        )));
+        tile.setBoundingVolume(createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe));
         tile.setGeometricError(999999999.0);
         tile.createChildTiles(quadtreeXTiles);
 
@@ -572,62 +603,61 @@ namespace Cesium3DTiles {
             childTile.setContext(&context);
             childTile.setParent(&tile);
             childTile.setTileID(id);
-            childTile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-                unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id)),
-                -1000.0,
-                -9000.0
-            )));
-            childTile.setGeometricError(
-                8.0 * (
-                    Ellipsoid::WGS84.getRadii().x *
-                    2.0 *
-                    CesiumUtility::Math::ONE_PI *
-                    0.25
-                ) / (
-                    65 * quadtreeXTiles
-                )
-            );
+
+            CesiumGeospatial::GlobeRectangle childGlobeRectangle = unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id));
+            childTile.setBoundingVolume(createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
+            childTile.setGeometricError(computeGeometricError(quadtreeXTiles));
         }
+    }
+
+    /**
+     * @brief Tries to update the context request headers with a new token.
+     * 
+     * This will try to obtain the `accessToken` from the JSON of the
+     * given response, and set it as the `Bearer ...` value of the
+     * `Authorization` header of the request headers of the given
+     * context.
+     * 
+     * @param pContext The context
+     * @param pIonResponse The response
+     * @return Whether the update succeeded
+     */
+    static bool updateContextWithNewToken(TileContext* pContext, IAssetResponse* pIonResponse) {
+        gsl::span<const uint8_t> data = pIonResponse->data();
+
+        using nlohmann::json;
+        json ionResponse;
+        try {
+            ionResponse = json::parse(data.begin(), data.end());
+        }
+        catch (const json::parse_error& error) {
+            CESIUM_LOG_ERROR("Error when parsing ion response: {}", error.what());
+            return false;
+        }
+
+        std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+        auto authIt = std::find_if(
+            pContext->requestHeaders.begin(),
+            pContext->requestHeaders.end(),
+            [](auto& headerPair) {
+                return headerPair.first == "Authorization";
+            }
+        );
+        if (authIt != pContext->requestHeaders.end()) {
+            authIt->second = "Bearer " + accessToken;
+        }
+        else {
+            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+        }
+        return true;
     }
 
     void Tileset::retryAssetRequest(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext) {
         IAssetResponse* pIonResponse = pIonRequest->response();
 
         bool failed = true;
-
         if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
-            // Update the context with the new token.
-            gsl::span<const uint8_t> data = pIonResponse->data();
-
-            bool failedParsing = false;
-            using nlohmann::json;
-            json ionResponse;
-            try {
-                ionResponse = json::parse(data.begin(), data.end());
-            }
-            catch (const json::parse_error& error) {
-                CESIUM_LOG_ERROR("Error when parsing ion response: {}", error.what());
-                failedParsing = true;
-            }
-            if (!failedParsing) {
-                std::string accessToken = ionResponse.value<std::string>("accessToken", "");
-
-                auto authIt = std::find_if(
-                    pContext->requestHeaders.begin(),
-                    pContext->requestHeaders.end(),
-                    [](auto& headerPair) {
-                        return headerPair.first == "Authorization";
-                    }
-                );
-                if (authIt != pContext->requestHeaders.end()) {
-                    authIt->second = "Bearer " + accessToken;
-                }
-                else {
-                    pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
-                }
-
-                failed = false;
-            }
+            failed = !updateContextWithNewToken(pContext, pIonResponse);
         }
 
         // Put all auth-failed tiles in this context back into the Unloaded state.
