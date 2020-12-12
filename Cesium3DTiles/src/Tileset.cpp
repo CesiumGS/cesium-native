@@ -1,6 +1,7 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/Logging.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -81,48 +82,9 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
 
         this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-                // TODO: report the lack of response. Network error? Can this even happen?
-                this->notifyTileDoneLoading(nullptr);
-                return;
-            }
-
-            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                // TODO: report error response.
-                this->notifyTileDoneLoading(nullptr);
-                return;
-            }
-
-            gsl::span<const uint8_t> data = pResponse->data();
-
-            using nlohmann::json;
-            json ionResponse = json::parse(data.begin(), data.end());
-
-            std::string url = ionResponse.value<std::string>("url", "");
-            std::string accessToken = ionResponse.value<std::string>("accessToken", "");
-            
-            std::string type = ionResponse.value<std::string>("type", "");
-            if (type == "TERRAIN") {
-                // For terrain resources, we need to append `/layer.json` to the end of the URL.
-                url = Uri::resolve(url, "layer.json", true);
-            } else if (type != "3DTILES") {
-                // TODO: report unsupported type.
-                this->notifyTileDoneLoading(nullptr);
-                return;
-            }
-
-            auto pContext = std::make_unique<TileContext>();
-
-            pContext->pTileset = this;
-            pContext->baseUrl = url;
-            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
-            pContext->failedTileCallback = [this](Tile& failedTile) {
-                return this->_onIonTileFailed(failedTile);
-            };
-
-            this->_loadTilesetJson(pContext->baseUrl, pContext->requestHeaders, std::move(pContext));
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+            handleAssetResponse(std::move(pRequest));
+        }).catchInMainThread([this, &ionAssetID](const std::exception& e) {
+            CESIUM_LOG_ERROR("Unhandled error for asset {}: {}", ionAssetID, e.what());
             this->notifyTileDoneLoading(nullptr);
         });
     }
@@ -152,6 +114,64 @@ namespace Cesium3DTiles {
     static bool operator<(const FogDensityAtHeight& fogDensity, double height) {
         return fogDensity.cameraHeight < height;
     }
+
+    void Tileset::handleAssetResponse(std::unique_ptr<IAssetRequest>&& pRequest) {
+        IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            // TODO: report the lack of response. Network error? Can this even happen?
+            CESIUM_LOG_ERROR("No response received for asset request {}", pRequest->url());
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            // TODO: report error response.
+            CESIUM_LOG_ERROR("Received status code {} for asset response {}", pResponse->statusCode(), pRequest->url());
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        gsl::span<const uint8_t> data = pResponse->data();
+
+        using nlohmann::json;
+        json ionResponse;
+        try
+        {
+            ionResponse = json::parse(data.begin(), data.end());
+        }
+        catch (const json::parse_error& error)
+        {
+            CESIUM_LOG_ERROR("Error when parsing asset response: {}", error.what());
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        std::string url = ionResponse.value<std::string>("url", "");
+        std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+
+        std::string type = ionResponse.value<std::string>("type", "");
+        if (type == "TERRAIN") {
+            // For terrain resources, we need to append `/layer.json` to the end of the URL.
+            url = Uri::resolve(url, "layer.json", true);
+        }
+        else if (type != "3DTILES") {
+            // TODO: report unsupported type.
+            CESIUM_LOG_ERROR("Received unsupported asset response type: {}", type);
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        auto pContext = std::make_unique<TileContext>();
+
+        pContext->pTileset = this;
+        pContext->baseUrl = url;
+        pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+        pContext->failedTileCallback = [this](Tile& failedTile) {
+            return this->_onIonTileFailed(failedTile);
+        };
+        this->_loadTilesetJson(pContext->baseUrl, pContext->requestHeaders, std::move(pContext));
+    }
+
 
     static double computeFogDensity(const std::vector<FogDensityAtHeight>& fogDensityTable, const Camera& camera) {
         double height = camera.getPositionCartographic().value_or(Cartographic(0.0, 0.0, 0.0)).height;
@@ -301,71 +321,75 @@ namespace Cesium3DTiles {
         return bytes;
     }
 
+    Tileset::LoadResult Tileset::handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext) {
+        IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            // TODO: report the lack of response. Network error? Can this even happen?
+            CESIUM_LOG_ERROR("Did not receive a valid response for tileset {}", pRequest->url());
+            return LoadResult{ std::move(pContext), nullptr };
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            // TODO: report error response.
+            CESIUM_LOG_ERROR("Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
+            return LoadResult{ std::move(pContext), nullptr };
+        }
+
+        pContext->pTileset = this;
+        pContext->baseUrl = pRequest->url();
+
+        gsl::span<const uint8_t> data = pResponse->data();
+
+        using nlohmann::json;
+        json tileset;
+        try {
+            tileset = json::parse(data.begin(), data.end());
+        }
+        catch (const json::parse_error& error) {
+            CESIUM_LOG_ERROR("Error when parsing tileset JSON: {}", error.what());
+            return LoadResult{ std::move(pContext), nullptr };
+        }
+
+        std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
+        pRootTile->setContext(pContext.get());
+
+        json::iterator rootIt = tileset.find("root");
+        if (rootIt != tileset.end()) {
+            json& rootJson = *rootIt;
+            Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext);
+        }
+        else if (tileset.value("format", "") == "quantized-mesh-1.0") {
+            Tileset::_createTerrainTile(*pRootTile, tileset, *pContext);
+        }
+
+        return LoadResult{
+            std::move(pContext),
+            std::move(pRootTile)
+        };
+
+    }
+
+
     void Tileset::_loadTilesetJson(
         const std::string& url,
         const std::vector<std::pair<std::string, std::string>>& headers,
         std::unique_ptr<TileContext>&& pContext
     ) {
-        struct LoadResult {
-            std::unique_ptr<TileContext> pContext;
-            std::unique_ptr<Tile> pRootTile;
-        };
-
         if (!pContext) {
             pContext = std::make_unique<TileContext>();
         }
 
         this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
-            pTileset = this,
+            this,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
-            IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-                // TODO: report the lack of response. Network error? Can this even happen?
-                CESIUM_LOG_ERROR("Did not receive a valid response for tileset {}", pRequest->url());
-                return LoadResult { std::move(pContext), nullptr };
-            }
-
-            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                // TODO: report error response.
-                CESIUM_LOG_ERROR("Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
-                return LoadResult { std::move(pContext), nullptr };
-            }
-
-            pContext->pTileset = pTileset;
-            pContext->baseUrl = pRequest->url();
-
-            gsl::span<const uint8_t> data = pResponse->data();
-
-            using nlohmann::json;
-            json tileset;
-            try {
-                tileset = json::parse(data.begin(), data.end());
-            } catch (const json::parse_error& error) {
-                CESIUM_LOG_ERROR("Error when parsing tileset JSON: {}", error.what());
-                return LoadResult { std::move(pContext), nullptr };
-            }
-
-            std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
-            pRootTile->setContext(pContext.get());
-
-            json::iterator rootIt = tileset.find("root");
-            if (rootIt != tileset.end()) {
-                json& rootJson = *rootIt;
-                Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext);
-            } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
-                Tileset::_createTerrainTile(*pRootTile, tileset, *pContext);
-            }
-
-            return LoadResult {
-                std::move(pContext),
-                std::move(pRootTile)
-            };
+            return handleTilesetResponse(std::move(pRequest), std::move(pContext));
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
             this->notifyTileDoneLoading(nullptr);
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+        }).catchInMainThread([this, &url](const std::exception& e) {
+            CESIUM_LOG_ERROR("Unhandled error for tileset {}: {}", url, e.what());
             this->_pRootTile.reset();
             this->notifyTileDoneLoading(nullptr);
         });
@@ -408,12 +432,14 @@ namespace Cesium3DTiles {
         std::optional<BoundingVolume> boundingVolume = TilesetJson::getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
             // TODO: report missing required property
+            CESIUM_LOG_ERROR("Tileset did not contain a boundingVolume");
             return;
         }
 
         std::optional<double> geometricError = TilesetJson::getScalarProperty(tileJson, "geometricError");
         if (!geometricError) {
             // TODO: report missing required property
+            CESIUM_LOG_ERROR("Tileset did not contain a geometricError");
             return;
         }
 
@@ -435,6 +461,7 @@ namespace Cesium3DTiles {
                 tile.setRefine(TileRefine::Add);
             } else {
                 // TODO: report invalid value
+                CESIUM_LOG_ERROR("Tileset contained an unknown refine value: {}", refine);
             }
         } else {
             tile.setRefine(parentRefine);
@@ -491,6 +518,7 @@ namespace Cesium3DTiles {
         } else {
             // Unsupported projection
             // TODO: report error
+            CESIUM_LOG_ERROR("Tileset contained an unknown projection value: {}", projectionString);
             return;
         }
 
@@ -562,6 +590,77 @@ namespace Cesium3DTiles {
         }
     }
 
+    void Tileset::retryAssetRequest(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext) {
+        IAssetResponse* pIonResponse = pIonRequest->response();
+
+        bool failed = true;
+
+        if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
+            // Update the context with the new token.
+            gsl::span<const uint8_t> data = pIonResponse->data();
+
+            bool failedParsing = false;
+            using nlohmann::json;
+            json ionResponse;
+            try {
+                ionResponse = json::parse(data.begin(), data.end());
+            }
+            catch (const json::parse_error& error) {
+                CESIUM_LOG_ERROR("Error when parsing ion response: {}", error.what());
+                failedParsing = true;
+            }
+            if (!failedParsing) {
+                std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+
+                auto authIt = std::find_if(
+                    pContext->requestHeaders.begin(),
+                    pContext->requestHeaders.end(),
+                    [](auto& headerPair) {
+                        return headerPair.first == "Authorization";
+                    }
+                );
+                if (authIt != pContext->requestHeaders.end()) {
+                    authIt->second = "Bearer " + accessToken;
+                }
+                else {
+                    pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                }
+
+                failed = false;
+            }
+        }
+
+        // Put all auth-failed tiles in this context back into the Unloaded state.
+        // TODO: the way this is structured, requests already in progress with the old key
+        // might complete after the key has been updated, and there's nothing here clever
+        // enough to avoid refreshing the key _again_ in that instance.
+
+        Tile* pTile = this->_loadedTiles.head();
+
+        while (pTile) {
+            if (
+                pTile->getContext() == pContext &&
+                pTile->getState() == Tile::LoadState::FailedTemporarily &&
+                pTile->getContent() &&
+                pTile->getContent()->httpStatusCode == 401
+                ) {
+                if (failed) {
+                    pTile->markPermanentlyFailed();
+                }
+                else {
+                    pTile->unloadContent();
+                }
+            }
+
+            pTile = this->_loadedTiles.next(*pTile);
+        }
+
+        this->_isRefreshingIonToken = false;
+        this->notifyTileDoneLoading(nullptr);
+
+    }
+
+
     FailedTileAction Tileset::_onIonTileFailed(Tile& failedTile) {
         TileContentLoadResult* pContent = failedTile.getContent();
         if (!pContent) {
@@ -591,70 +690,9 @@ namespace Cesium3DTiles {
                 this,
                 pContext = failedTile.getContext()
             ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
-                IAssetResponse* pIonResponse = pIonRequest->response();
-
-                bool failed = true;
-
-                if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
-                    // Update the context with the new token.
-                    gsl::span<const uint8_t> data = pIonResponse->data();
-
-                    bool failedParsing = false;
-                    using nlohmann::json;
-                    json ionResponse;
-                    try {
-                        ionResponse = json::parse(data.begin(), data.end());
-                    } catch (const json::parse_error& error) {
-                        CESIUM_LOG_ERROR("Error when parsing ion response: {}", error.what());
-                        failedParsing = true;
-                    }
-                    if (!failedParsing) {
-                        std::string accessToken = ionResponse.value<std::string>("accessToken", "");
-
-                        auto authIt = std::find_if(
-                            pContext->requestHeaders.begin(),
-                            pContext->requestHeaders.end(),
-                            [](auto& headerPair) {
-                                return headerPair.first == "Authorization";
-                            }
-                        );
-                        if (authIt != pContext->requestHeaders.end()) {
-                            authIt->second = "Bearer " + accessToken;
-                        } else {
-                            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
-                        }
-
-                        failed = false;
-                    }
-                }
-
-                // Put all auth-failed tiles in this context back into the Unloaded state.
-                // TODO: the way this is structured, requests already in progress with the old key
-                // might complete after the key has been updated, and there's nothing here clever
-                // enough to avoid refreshing the key _again_ in that instance.
-
-                Tile* pTile = this->_loadedTiles.head();
-
-                while (pTile) {
-                    if (
-                        pTile->getContext() == pContext &&
-                        pTile->getState() == Tile::LoadState::FailedTemporarily &&
-                        pTile->getContent() &&
-                        pTile->getContent()->httpStatusCode == 401
-                    ) {
-                        if (failed) {
-                            pTile->markPermanentlyFailed();
-                        } else {
-                            pTile->unloadContent();
-                        }
-                    }
-
-                    pTile = this->_loadedTiles.next(*pTile);
-                }
-
-                this->_isRefreshingIonToken = false;
-                this->notifyTileDoneLoading(nullptr);
-            }).catchInMainThread([this](const std::exception& /*e*/) {
+                retryAssetRequest(std::move(pIonRequest), pContext);
+            }).catchInMainThread([this](const std::exception& e) {
+                CESIUM_LOG_ERROR("Unhandled error when retrying request: {}", e.what());
                 this->_isRefreshingIonToken = false;
                 this->notifyTileDoneLoading(nullptr);
             });
