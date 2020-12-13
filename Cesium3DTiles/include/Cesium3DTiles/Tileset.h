@@ -348,7 +348,7 @@ namespace Cesium3DTiles {
          * 
          * @param pRequest The request for which the response was received.
          */
-        void handleAssetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+        void _handleAssetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
         struct LoadResult {
             std::unique_ptr<TileContext> pContext;
@@ -368,7 +368,7 @@ namespace Cesium3DTiles {
          * @param pRequest The request for which the response was received.
          * @return The LoadResult structure
          */
-        LoadResult handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext);
+        LoadResult _handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext);
 
         void _loadTilesetJson(
             const std::string& url,
@@ -388,7 +388,7 @@ namespace Cesium3DTiles {
          * @param pIonRequest The request
          * @param pContext The context
          */
-        void retryAssetRequest(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext);
+        void _retryAssetRequest(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext);
 
         struct FrameState {
             const Camera& camera;
@@ -397,9 +397,15 @@ namespace Cesium3DTiles {
             double fogDensity;
         };
 
+        TraversalDetails _visitLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result);
+        TraversalDetails _visitInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result);
+
         TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+
+        bool _isWaitingForChildren(const FrameState& frameState, Tile& tile, double distance);
+        bool _meetsSse(const Camera& camera, Tile& tile, double distance);
 
         void _processLoadQueue();
         void _unloadCachedTiles();

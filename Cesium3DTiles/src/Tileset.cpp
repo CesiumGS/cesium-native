@@ -83,7 +83,7 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
 
         this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
-            handleAssetResponse(std::move(pRequest));
+            _handleAssetResponse(std::move(pRequest));
         }).catchInMainThread([this, &ionAssetID](const std::exception& e) {
             CESIUM_LOG_ERROR("Unhandled error for asset {}: {}", ionAssetID, e.what());
             this->notifyTileDoneLoading(nullptr);
@@ -116,7 +116,7 @@ namespace Cesium3DTiles {
         return fogDensity.cameraHeight < height;
     }
 
-    void Tileset::handleAssetResponse(std::unique_ptr<IAssetRequest>&& pRequest) {
+    void Tileset::_handleAssetResponse(std::unique_ptr<IAssetRequest>&& pRequest) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
@@ -322,7 +322,7 @@ namespace Cesium3DTiles {
         return bytes;
     }
 
-    Tileset::LoadResult Tileset::handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext) {
+    Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
@@ -384,7 +384,7 @@ namespace Cesium3DTiles {
             this,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
-            return handleTilesetResponse(std::move(pRequest), std::move(pContext));
+            return _handleTilesetResponse(std::move(pRequest), std::move(pContext));
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
@@ -653,7 +653,7 @@ namespace Cesium3DTiles {
         return true;
     }
 
-    void Tileset::retryAssetRequest(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext) {
+    void Tileset::_retryAssetRequest(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext) {
         IAssetResponse* pIonResponse = pIonRequest->response();
 
         bool failed = true;
@@ -721,7 +721,7 @@ namespace Cesium3DTiles {
                 this,
                 pContext = failedTile.getContext()
             ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
-                retryAssetRequest(std::move(pIonRequest), pContext);
+                _retryAssetRequest(std::move(pIonRequest), pContext);
             }).catchInMainThread([this](const std::exception& e) {
                 CESIUM_LOG_ERROR("Unhandled error when retrying request: {}", e.what());
                 this->_isRefreshingIonToken = false;
@@ -769,7 +769,7 @@ namespace Cesium3DTiles {
      * 
      * @param camera The camera
      * @param boundingVolume The bounding volume of the tile
-     * @param forceRenderTilesUnderCamera Whether tiles under the camera should alway be rendered (see {@link Cesium3DTiles::TilesetOptions})
+     * @param forceRenderTilesUnderCamera Whether tiles under the camera should always be rendered (see {@link Cesium3DTiles::TilesetOptions})
      * @return Whether the tile is visible according to the current camera configuration
      */
     static bool isVisibleFromCamera(const Camera& camera, const BoundingVolume& boundingVolume, bool forceRenderTilesUnderCamera) {
@@ -845,6 +845,91 @@ namespace Cesium3DTiles {
         return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, result);
     }
 
+    static bool isLeaf(const Tile& tile) {
+        return tile.getChildren().empty();
+    }
+
+    Tileset::TraversalDetails Tileset::_visitLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
+        result.tilesToRenderThisFrame.push_back(&tile);
+        addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+
+        TraversalDetails traversalDetails;
+        traversalDetails.allAreRenderable = tile.isRenderable();
+        traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+        traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
+        return traversalDetails;
+    }
+
+    bool Tileset::_isWaitingForChildren(const FrameState& frameState, Tile& tile, double distance) {
+        if (!this->_options.forbidHoles) {
+            return false;
+        }
+        // If we're forbidding holes, don't refine if any children are still loading.
+        gsl::span<Tile> children = tile.getChildren();
+        bool waitingForChildren = false;
+        for (Tile& child : children) {
+            if (!child.isRenderable()) {
+                waitingForChildren = true;
+
+                // We're using the distance to the parent tile to compute the load priority.
+                // This is fine because the relative priority of the children is irrelevant;
+                // we can't display any of them until all are loaded, anyway.
+                addTileToLoadQueue(this->_loadQueueMedium, frameState, child, distance);
+            }
+        }
+        return waitingForChildren;
+    }
+
+    bool Tileset::_meetsSse(const Camera& camera, Tile& tile, double distance) {
+        // Does this tile meet the screen-space error?
+        double sse = camera.computeScreenSpaceError(tile.getGeometricError(), distance);
+        return sse < this->_options.maximumScreenSpaceError;
+    }
+
+    /**
+     * We can render it if _any_ of the following are true:
+     *  1. We rendered it (or kicked it) last frame.
+     *  2. This tile was culled last frame, or it wasn't even visited because an ancestor was culled.
+     *  3. The tile is done loading and ready to render.
+     *  Note that even if we decide to render a tile here, it may later get "kicked" in favor of an ancestor.
+     */
+    static bool shouldRenderThisTile(const Tile& tile, const TileSelectionState& lastFrameSelectionState, int32_t lastFrameNumber) {
+        TileSelectionState::Result originalResult = lastFrameSelectionState.getOriginalResult(lastFrameNumber);
+        if (originalResult == TileSelectionState::Result::Rendered) {
+            return true;
+        }
+        if (originalResult == TileSelectionState::Result::Culled || originalResult == TileSelectionState::Result::None) {
+            return true;
+        }
+
+        // Tile::isRenderable is actually a pretty complex operation, so only do 
+        // it when absolutely necessary
+        if (tile.isRenderable()) {
+            return true;
+        }
+        return false;
+    }
+
+    Tileset::TraversalDetails Tileset::_visitInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
+        result.tilesToRenderThisFrame.push_back(&tile);
+
+        TraversalDetails traversalDetails;
+        traversalDetails.allAreRenderable = tile.isRenderable();
+        traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+        traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
+
+        return traversalDetails;
+    }
+
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * The tile has previously been determined to be visible.
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
@@ -861,74 +946,28 @@ namespace Cesium3DTiles {
         ++result.tilesVisited;
         result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
+        // If this is a leaf tile, just render it (it's already been deemed visible).
+        if (isLeaf(tile)) {
+            return _visitLeaf(frameState, tile, distance, result);
+        }
+
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
-        // If this is a leaf tile, just render it (it's already been deemed visible).
-        gsl::span<Tile> children = tile.getChildren();
-        if (children.size() == 0) {
-            // Render this leaf tile.
-            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
-            result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
-
-            TraversalDetails traversalDetails;
-            traversalDetails.allAreRenderable = tile.isRenderable();
-            traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-            traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
-            return traversalDetails;
-        }
-
-        // Does this tile meet the screen-space error?
-        double sse = frameState.camera.computeScreenSpaceError(tile.getGeometricError(), distance);
-        bool meetsSse = sse < this->_options.maximumScreenSpaceError;
-
-        // If we're forbidding holes, don't refine if any children are still loading.
-        bool waitingForChildren = false;
-        if (this->_options.forbidHoles) {
-            for (Tile& child : children) {
-                if (!child.isRenderable()) {
-                    waitingForChildren = true;
-
-                    // We're using the distance to the parent tile to compute the load priority.
-                    // This is fine because the relative priority of the children is irrelevant;
-                    // we can't display any of them until all are loaded, anyway.
-                    addTileToLoadQueue(this->_loadQueueMedium, frameState, child, distance);
-                }
-            }
-        }
+        bool meetsSse = _meetsSse(frameState.camera, tile, distance);
+        bool waitingForChildren = _isWaitingForChildren(frameState, tile, distance);
 
         if (meetsSse || ancestorMeetsSse || waitingForChildren) {
             // This tile (or an ancestor) is the one we want to render this frame, but we'll do different things depending
             // on the state of this tile and on what we did _last_ frame.
 
-            // We can render it if _any_ of the following are true:
-            // 1. We rendered it (or kicked it) last frame.
-            // 2. This tile was culled last frame, or it wasn't even visited because an ancestor was culled.
-            // 3. The tile is done loading and ready to render.
-            //
             // Note that even if we decide to render a tile here, it may later get "kicked" in favor of an ancestor.
-            TileSelectionState::Result originalResult = lastFrameSelectionState.getOriginalResult(frameState.lastFrameNumber);
-            bool oneRenderedLastFrame = originalResult == TileSelectionState::Result::Rendered;
-            bool twoCulledOrNotVisited = originalResult == TileSelectionState::Result::Culled || originalResult == TileSelectionState::Result::None;
-            bool threeCompletelyLoaded = tile.isRenderable();
-
-            bool renderThisTile = oneRenderedLastFrame || twoCulledOrNotVisited || threeCompletelyLoaded;
+            bool renderThisTile = shouldRenderThisTile(tile, lastFrameSelectionState, frameState.lastFrameNumber);
             if (renderThisTile) {
                 // Only load this tile if it (not just an ancestor) meets the SSE.
                 if (meetsSse) {
                     addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
                 }
-
-                markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
-                tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
-                result.tilesToRenderThisFrame.push_back(&tile);
-
-                TraversalDetails traversalDetails;
-                traversalDetails.allAreRenderable = tile.isRenderable();
-                traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-                traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
-
-                return traversalDetails;
+                return _visitInnerTile(frameState, tile, result);
             }
 
             // Otherwise, we can't render this tile (or blank space where it would be) because doing so would cause detail to disappear
@@ -1167,6 +1206,13 @@ namespace Cesium3DTiles {
 
         return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
+
+    // TODO From the FrameState that is passed in here, only the Camera is needed.
+    // Maybe the Camera should be passed in instead. The camera is only needed to
+    // compute the priority from the distance. So maybe this function should 
+    // receive a priority directly and be called with 
+    // addTileToLoadQueue(queue, tile, priorityFor(tile, frameState.camera, distance))
+    // (or at least, this function could delegate to such a call...)
 
     /*static*/ void Tileset::addTileToLoadQueue(
         std::vector<Tileset::LoadRecord>& loadQueue,
