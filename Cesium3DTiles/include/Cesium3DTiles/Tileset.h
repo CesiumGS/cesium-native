@@ -399,10 +399,21 @@ namespace Cesium3DTiles {
 
         TraversalDetails _visitLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result);
         TraversalDetails _visitInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable);
+        void _kickDescendantsAndRenderTile(
+            const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
+            size_t firstRenderedDescendantIndex,
+            size_t loadIndexLow,
+            size_t loadIndexMedium,
+            size_t loadIndexHigh,
+            bool queuedForLoad,
+            double distance);
 
         TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+
+        bool _queuedForLoad(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance);
 
         bool _isWaitingForChildren(const FrameState& frameState, Tile& tile, double distance);
         bool _meetsSse(const Camera& camera, Tile& tile, double distance);

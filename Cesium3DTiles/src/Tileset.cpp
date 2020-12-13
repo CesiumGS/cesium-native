@@ -930,6 +930,92 @@ namespace Cesium3DTiles {
         return traversalDetails;
     }
 
+    Tileset::TraversalDetails Tileset::_visitRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        // Nothing else to do except mark this tile refined and return.
+        TraversalDetails noChildrenTraversalDetails;
+        if (tile.getRefine() == TileRefine::Add) {
+            noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
+            noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+            noChildrenTraversalDetails.notYetRenderableCount = areChildrenRenderable ? 0 : 1;
+        }
+        else {
+            markTileNonRendered(frameState.lastFrameNumber, tile, result);
+        }
+
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Refined));
+        return noChildrenTraversalDetails;
+    }
+
+    bool Tileset::_queuedForLoad(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance) {
+        // If this tile uses additive refinement, we need to render this tile in addition to its children.
+        if (tile.getRefine() == TileRefine::Add) {
+            result.tilesToRenderThisFrame.push_back(&tile);
+            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+            return true;
+        }
+        return false;
+    }
+
+    // TODO This function is obviously too complex. The way how the indices are used, 
+    // in order to deal with the queue elements, should be reviewed...
+    void Tileset::_kickDescendantsAndRenderTile(
+        const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
+        size_t firstRenderedDescendantIndex, 
+        size_t loadIndexLow,
+        size_t loadIndexMedium,
+        size_t loadIndexHigh, 
+        bool queuedForLoad,
+        double distance) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
+
+        // Mark the rendered descendants and their ancestors - up to this tile - as kicked.
+        for (size_t i = firstRenderedDescendantIndex; i < renderList.size(); ++i) {
+            Tile* pWorkTile = renderList[i];
+            while (
+                pWorkTile != nullptr &&
+                !pWorkTile->getLastSelectionState().wasKicked(frameState.currentFrameNumber) &&
+                pWorkTile != &tile
+                ) {
+                pWorkTile->getLastSelectionState().kick();
+                pWorkTile = pWorkTile->getParent();
+            }
+        }
+
+        // Remove all descendants from the render list and add this tile.
+        renderList.erase(renderList.begin() + static_cast<std::vector<Tile*>::iterator::difference_type>(firstRenderedDescendantIndex), renderList.end());
+        renderList.push_back(&tile);
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
+
+        // If we're waiting on heaps of descendants, the above will take too long. So in that case,
+        // load this tile INSTEAD of loading any of the descendants, and tell the up-level we're only waiting
+        // on this tile. Keep doing this until we actually manage to render this tile.
+        bool wasRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+        bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
+
+        if (!wasReallyRenderedLastFrame && traversalDetails.notYetRenderableCount > this->_options.loadingDescendantLimit) {
+            // Remove all descendants from the load queues.
+            this->_loadQueueLow.erase(this->_loadQueueLow.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexLow), this->_loadQueueLow.end());
+            this->_loadQueueMedium.erase(this->_loadQueueMedium.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexMedium), this->_loadQueueMedium.end());
+            this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexHigh), this->_loadQueueHigh.end());
+
+            if (!queuedForLoad) {
+                addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+            }
+
+            traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
+            queuedForLoad = true;
+        }
+
+        traversalDetails.allAreRenderable = tile.isRenderable();
+        traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
+    }
+
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * The tile has previously been determined to be visible.
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
@@ -938,7 +1024,7 @@ namespace Cesium3DTiles {
     Tileset::TraversalDetails Tileset::_visitTile(
         const FrameState& frameState,
         uint32_t depth,
-        bool ancestorMeetsSse,
+        bool ancestorMeetsSse, // Careful: May be modified before being passed to children!
         Tile& tile,
         double distance,
         ViewUpdateResult& result
@@ -951,7 +1037,6 @@ namespace Cesium3DTiles {
             return _visitLeaf(frameState, tile, distance, result);
         }
 
-        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
         bool meetsSse = _meetsSse(frameState.camera, tile, distance);
         bool waitingForChildren = _isWaitingForChildren(frameState, tile, distance);
@@ -961,6 +1046,7 @@ namespace Cesium3DTiles {
             // on the state of this tile and on what we did _last_ frame.
 
             // Note that even if we decide to render a tile here, it may later get "kicked" in favor of an ancestor.
+            TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
             bool renderThisTile = shouldRenderThisTile(tile, lastFrameSelectionState, frameState.lastFrameNumber);
             if (renderThisTile) {
                 // Only load this tile if it (not just an ancestor) meets the SSE.
@@ -986,14 +1072,7 @@ namespace Cesium3DTiles {
 
         // Refine!
 
-        bool queuedForLoad = false;
-
-        // If this tile uses additive refinement, we need to render this tile in addition to its children.
-        if (tile.getRefine() == TileRefine::Add) {
-            result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
-            queuedForLoad = true;
-        }
+        bool queuedForLoad = _queuedForLoad(frameState, tile, result, distance);
 
         size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
         size_t loadIndexLow = this->_loadQueueLow.size();
@@ -1002,72 +1081,23 @@ namespace Cesium3DTiles {
 
         TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(frameState, depth, ancestorMeetsSse, tile, result);
 
-        if (firstRenderedDescendantIndex == result.tilesToRenderThisFrame.size()) {
+        bool descendantTilesAdded = firstRenderedDescendantIndex != result.tilesToRenderThisFrame.size();
+        if (!descendantTilesAdded) {
             // No descendant tiles were added to the render list by the function above, meaning they were all
             // culled even though this tile was deemed visible. That's pretty common.
-            // Nothing else to do except mark this tile refined and return.
-            TraversalDetails noChildrenTraversalDetails;
-
-            if (tile.getRefine() == TileRefine::Add) {
-                noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
-                noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-                noChildrenTraversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
-            } else {
-                markTileNonRendered(frameState.lastFrameNumber, tile, result);
-            }
-
-            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Refined));
-            return noChildrenTraversalDetails;
+            return _visitRefinedTile(frameState, tile, result, traversalDetails.allAreRenderable);
         }
 
         // At least one descendant tile was added to the render list.
         // The traversalDetails tell us what happened while visiting the children.
         if (!traversalDetails.allAreRenderable && !traversalDetails.anyWereRenderedLastFrame) {
+
             // Some of our descendants aren't ready to render yet, and none were rendered last frame,
             // so kick them all out of the render list and render this tile instead. Continue to load them though!
+            _kickDescendantsAndRenderTile(frameState, tile, result, traversalDetails,
+                firstRenderedDescendantIndex, loadIndexLow, loadIndexMedium, loadIndexHigh, 
+                queuedForLoad, distance);
 
-            std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
-            
-            // Mark the rendered descendants and their ancestors - up to this tile - as kicked.
-            for (size_t i = firstRenderedDescendantIndex; i < renderList.size(); ++i) {
-                Tile* pWorkTile = renderList[i];
-                while (
-                    pWorkTile != nullptr &&
-                    !pWorkTile->getLastSelectionState().wasKicked(frameState.currentFrameNumber) &&
-                    pWorkTile != &tile
-                ) {
-                    pWorkTile->getLastSelectionState().kick();
-                    pWorkTile = pWorkTile->getParent();
-                }
-            }
-
-            // Remove all descendants from the render list and add this tile.
-            renderList.erase(renderList.begin() + static_cast<std::vector<Tile*>::iterator::difference_type>(firstRenderedDescendantIndex), renderList.end());
-            renderList.push_back(&tile);
-            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
-
-            // If we're waiting on heaps of descendants, the above will take too long. So in that case,
-            // load this tile INSTEAD of loading any of the descendants, and tell the up-level we're only waiting
-            // on this tile. Keep doing this until we actually manage to render this tile.
-            bool wasRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-            bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
-
-            if (!wasReallyRenderedLastFrame && traversalDetails.notYetRenderableCount > this->_options.loadingDescendantLimit) {
-                // Remove all descendants from the load queues.
-                this->_loadQueueLow.erase(this->_loadQueueLow.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexLow), this->_loadQueueLow.end());
-                this->_loadQueueMedium.erase(this->_loadQueueMedium.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexMedium), this->_loadQueueMedium.end());
-                this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexHigh), this->_loadQueueHigh.end());
-
-                if (!queuedForLoad) {
-                    addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
-                }
-
-                traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
-                queuedForLoad = true;
-            }
-
-            traversalDetails.allAreRenderable = tile.isRenderable();
-            traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
         } else {
             if (tile.getRefine() != TileRefine::Add) {
                 markTileNonRendered(frameState.lastFrameNumber, tile, result);
