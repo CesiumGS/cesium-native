@@ -10,7 +10,7 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
-#include "Cesium3DTiles/Logging.h"
+#include "CesiumLogging.h"
 #include <glm/common.hpp>
 
 using namespace CesiumAsync;

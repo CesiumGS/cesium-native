@@ -2,7 +2,7 @@
 #include "Cesium3DTiles/GltfWriter.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumUtility/Math.h"
-#include "Cesium3DTiles/Logging.h"
+#include "CesiumLogging.h"
 #include <stdexcept>
 
 

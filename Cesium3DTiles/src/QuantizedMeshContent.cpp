@@ -6,7 +6,7 @@
 #include "QuantizedMeshContent.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
-#include "Cesium3DTiles/Logging.h"
+#include "CesiumLogging.h"
 #include <glm/vec3.hpp>
 #include <stdexcept>
 

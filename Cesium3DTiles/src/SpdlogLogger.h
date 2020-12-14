@@ -3,11 +3,11 @@
 #include <memory>
 #include <mutex>
 
-#include "spdlog/spdlog.h"
+#include "CesiumLogging.h"
+#include "Cesium3DTiles/ILogger.h"
+
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/details/null_mutex.h>
-
-#include "Cesium3DTiles/ILogger.h"
 
 namespace {
 
