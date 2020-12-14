@@ -66,6 +66,24 @@ static int32_t zigZagDecode(int32_t value) {
     return (value >> 1) ^ (-(value & 1));
 }
 
+static void octEncode(glm::vec3 normal, uint8_t &x, uint8_t &y) {
+    float inv = 1.0f / (glm::abs(normal.x) + glm::abs(normal.y) + glm::abs(normal.z));
+    glm::vec2 p;
+    p.x = normal.x * inv;
+    p.y = normal.y * inv;
+
+    if (normal.z <= 0.0) {
+        x = static_cast<uint8_t>(
+                Math::toSNorm((1.0f - glm::abs(p.y)) * static_cast<float>(Math::signNotZero(p.x))));
+        y = static_cast<uint8_t>(
+                Math::toSNorm((1.0f - glm::abs(p.x)) * static_cast<float>(Math::signNotZero(p.y))));
+    }
+    else {
+		x = static_cast<uint8_t>(Math::toSNorm(p.x));
+		y = static_cast<uint8_t>(Math::toSNorm(p.y));
+    }
+}
+
 static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
     static const double terrainHeightmapQuality = 0.25;
     static const uint32_t heightmapWidth = 65;
@@ -213,7 +231,8 @@ static QuantizedMesh<T> createGridQuantizedMesh(const BoundingRegion &region, ui
 
     QuantizedMesh<T> quantizedMesh;
     const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
-    glm::dvec3 center = ellipsoid.cartographicToCartesian(region.getRectangle().computeCenter());
+    Cartographic cartoCenter = region.getRectangle().computeCenter();
+    glm::dvec3 center = ellipsoid.cartographicToCartesian(cartoCenter);
     glm::dvec3 corner = ellipsoid.cartographicToCartesian(region.getRectangle().getNortheast());
 
     quantizedMesh.header.centerX = center.x;
@@ -455,6 +474,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             0.0, 
             0.0);
         QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
+
+        // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
@@ -474,6 +495,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         const tinygltf::Model& model = *loadResult->model;
         const tinygltf::Mesh& mesh = model.meshes.front();
         const tinygltf::Primitive& primitive = mesh.primitives.front();
+
+        // make sure no normal written
+        REQUIRE(primitive.attributes.find("NORMAL") == primitive.attributes.end());
 
         // make sure mesh contains grid mesh and skirts at the end
         GltfAccessor<uint16_t> indices(model, primitive.indices);
@@ -492,6 +516,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             0.0, 
             0.0);
         QuantizedMesh<uint32_t> quantizedMesh = createGridQuantizedMesh<uint32_t>(boundingVolume, verticesWidth, verticesHeight);
+
+        // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
@@ -512,10 +538,78 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         const tinygltf::Mesh& mesh = model.meshes.front();
         const tinygltf::Primitive& primitive = mesh.primitives.front();
 
+        // make sure no normal written
+        REQUIRE(primitive.attributes.find("NORMAL") == primitive.attributes.end());
+
         // make sure mesh contains grid mesh and skirts at the end
         GltfAccessor<uint32_t> indices(model, primitive.indices);
         GltfAccessor<glm::vec3> positions(model, primitive.attributes.at("POSITION"));
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
+    }
+
+    SECTION("Check quantized mesh that has oct normal") {
+        // mock quantized mesh
+        uint32_t verticesWidth = 3;
+        uint32_t verticesHeight = 3;
+        QuadtreeTileID tileID(10, 0, 0);
+        Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+        BoundingRegion boundingVolume = BoundingRegion(
+            GlobeRectangle(tileRectangle.minimumX, tileRectangle.minimumY, tileRectangle.maximumX, tileRectangle.maximumY), 
+            0.0, 
+            0.0);
+        QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
+
+		// add oct-encoded normal extension. This is just a random direction and not really normal.
+        // We want to make sure the normal is written to the gltf
+		glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
+		uint8_t x = 0, y = 0;
+		octEncode(normal, x, y);
+		std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
+		for (size_t i = 0; i < octNormals.size(); i += 2) {
+			octNormals[i] = x;
+			octNormals[i+1] = y;
+		}
+		
+		Extension octNormalExtension;
+		octNormalExtension.extensionID = 1;
+		octNormalExtension.extensionData = std::move(octNormals);
+
+		quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
+
+        // convert to gltf
+        std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
+        REQUIRE(loadResult != nullptr);
+        REQUIRE(loadResult->model != std::nullopt);
+
+        // make sure the gltf has normals
+        const tinygltf::Model& model = *loadResult->model;
+        const tinygltf::Mesh& mesh = model.meshes.front();
+        const tinygltf::Primitive& primitive = mesh.primitives.front();
+
+		size_t westIndicesCount = quantizedMesh.vertexData.westIndices.size();
+		size_t southIndicesCount = quantizedMesh.vertexData.southIndices.size();
+		size_t eastIndicesCount = quantizedMesh.vertexData.eastIndices.size();
+		size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
+        size_t totalSkirtVerticesCount = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
+
+        GltfAccessor<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));
+        REQUIRE(normals.size() == (verticesWidth * verticesHeight + totalSkirtVerticesCount));
+        for (size_t i = 0; i < normals.size(); ++i) {
+            REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::EPSILON2));
+            REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::EPSILON2));
+            REQUIRE(Math::equalsEpsilon(normals[i].z, normal.z, Math::EPSILON2));
+        }
     }
 }
 

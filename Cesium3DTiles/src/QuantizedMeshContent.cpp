@@ -132,6 +132,169 @@ namespace Cesium3DTiles {
         return defaultValue;
     }
 
+    static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
+        const uint8_t rangeMax = 255;
+
+        glm::dvec3 result;
+
+        result.x = CesiumUtility::Math::fromSNorm(x, rangeMax);
+        result.y = CesiumUtility::Math::fromSNorm(y, rangeMax);
+        result.z = 1.0 - (glm::abs(result.x) + glm::abs(result.y));
+
+        if (result.z < 0.0) {
+            double oldVX = result.x;
+            result.x = (1.0 - glm::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
+            result.y = (1.0 - glm::abs(oldVX)) * CesiumUtility::Math::signNotZero(result.y);
+        }
+
+        return glm::normalize(result);
+    }
+
+    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
+
+    static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const uint8_t>& data) {
+        if (data.size() < headerLength) {
+            return std::nullopt;
+        }
+
+        size_t readIndex = 0;
+
+        // parse header
+        QuantizedMeshView meshView;
+        meshView.header = reinterpret_cast<const QuantizedMeshHeader*>(data.data());
+        readIndex += headerLength;
+
+        // parse u, v, and height buffers
+        uint32_t vertexCount = meshView.header->vertexCount;
+
+        meshView.uBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
+        readIndex += meshView.uBuffer.size_bytes();
+        if (readIndex > data.size()) {
+            return std::nullopt;
+        }
+
+        meshView.vBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
+        readIndex += meshView.vBuffer.size_bytes();
+        if (readIndex > data.size()) {
+            return std::nullopt;
+        }
+
+        meshView.heightBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
+        readIndex += meshView.heightBuffer.size_bytes();
+        if (readIndex > data.size()) {
+            return std::nullopt;
+        }
+
+        // parse the indices buffer
+        uint32_t indexSizeBytes;
+        if (vertexCount > 65536) {
+            // 32-bit indices
+            if ((readIndex % 4) != 0) {
+                readIndex += 2;
+                if (readIndex > data.size()) {
+                    return std::nullopt;
+                }
+            }
+
+            meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
+            readIndex += sizeof(uint32_t);
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
+
+            uint32_t indicesCount = meshView.triangleCount * 3;
+            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
+            readIndex += meshView.indicesBuffer.size_bytes();
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
+
+            meshView.indexType = QuantizedMeshIndexType::UnsignedInt;
+            indexSizeBytes = sizeof(uint32_t);
+        }
+        else {
+            // 16-bit indices
+            meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
+            readIndex += sizeof(uint32_t);
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
+
+            uint32_t indicesCount = meshView.triangleCount * 3;
+            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
+            readIndex += meshView.indicesBuffer.size_bytes();
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
+
+            meshView.indexType = QuantizedMeshIndexType::UnsignedShort;
+            indexSizeBytes = sizeof(uint16_t);
+        }
+
+        // read the edge indices
+        meshView.westEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.westEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.westEdgeIndicesCount * indexSizeBytes;
+
+        meshView.southEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.southEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.southEdgeIndicesCount * indexSizeBytes;
+
+        meshView.eastEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.eastEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.eastEdgeIndicesCount * indexSizeBytes;
+
+        meshView.northEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.northEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.northEdgeIndicesCount * indexSizeBytes;
+
+        // parse oct-encoded normal buffer and metadata
+        std::vector<unsigned char> outputNormalsBuffer;
+        while (readIndex < data.size()) {
+            if (readIndex + extensionHeaderLength > data.size()) {
+                break;
+            }
+
+            uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+            readIndex += sizeof(uint8_t);
+            uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+            readIndex += sizeof(uint32_t);
+
+            if (extensionID == 1) {
+                // Oct-encoded per-vertex normals
+                if (readIndex + vertexCount * 2 > data.size()) {
+                    break;
+                }
+
+                meshView.octEncodedNormalBuffer = gsl::span<const uint8_t>(data.data() + readIndex, vertexCount * 2);
+            } else if (extensionID == 4) {
+                // Metadata
+                if (readIndex + sizeof(uint32_t) > data.size()) {
+                    break;
+                }
+
+                if (readIndex + sizeof(uint32_t) + meshView.metadataJsonLength > data.size()) {
+                    break;
+                }
+
+                meshView.metadataJsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+                meshView.metadataJsonBuffer = gsl::span<const char>(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), meshView.metadataJsonLength);
+            }
+
+            readIndex += extensionLength;
+        }
+
+        return meshView;
+    }
+
     static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
         static const double terrainHeightmapQuality = 0.25;
         static const uint32_t heightmapWidth = 65;
@@ -339,168 +502,19 @@ namespace Cesium3DTiles {
             outputIndices);
     }
 
-    static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const uint8_t>& data) {
-        if (data.size() < headerLength) {
-            return std::nullopt;
+    static void decodeNormals(const gsl::span<const uint8_t>& encoded, gsl::span<float>& decoded) {
+        if (decoded.size() < encoded.size()) {
+            throw std::runtime_error("decoded buffer is too small.");
         }
 
-        size_t readIndex = 0;
-
-        // parse header
-        QuantizedMeshView meshView;
-        meshView.header = reinterpret_cast<const QuantizedMeshHeader*>(data.data());
-        readIndex += headerLength;
-
-        // parse u, v, and height buffers
-        uint32_t vertexCount = meshView.header->vertexCount;
-
-        meshView.uBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
-        readIndex += meshView.uBuffer.size_bytes();
-        if (readIndex > data.size()) {
-            return std::nullopt;
-        }
-
-        meshView.vBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
-        readIndex += meshView.vBuffer.size_bytes();
-        if (readIndex > data.size()) {
-            return std::nullopt;
-        }
-
-        meshView.heightBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
-        readIndex += meshView.heightBuffer.size_bytes();
-        if (readIndex > data.size()) {
-            return std::nullopt;
-        }
-
-        // parse the indices buffer
-        uint32_t indexSizeBytes;
-        if (vertexCount > 65536) {
-            // 32-bit indices
-            if ((readIndex % 4) != 0) {
-                readIndex += 2;
-                if (readIndex > data.size()) {
-                    return std::nullopt;
-                }
-            }
-
-            meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
-            readIndex += sizeof(uint32_t);
-            if (readIndex > data.size()) {
-                return std::nullopt;
-            }
-
-            uint32_t indicesCount = meshView.triangleCount * 3;
-            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
-            readIndex += meshView.indicesBuffer.size_bytes();
-            if (readIndex > data.size()) {
-                return std::nullopt;
-            }
-
-            meshView.indexType = QuantizedMeshIndexType::UnsignedInt;
-            indexSizeBytes = sizeof(uint32_t);
-        }
-        else {
-            // 16-bit indices
-            meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
-            readIndex += sizeof(uint32_t);
-            if (readIndex > data.size()) {
-                return std::nullopt;
-            }
-
-            uint32_t indicesCount = meshView.triangleCount * 3;
-            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
-            readIndex += meshView.indicesBuffer.size_bytes();
-            if (readIndex > data.size()) {
-                return std::nullopt;
-            }
-
-            meshView.indexType = QuantizedMeshIndexType::UnsignedShort;
-            indexSizeBytes = sizeof(uint16_t);
-        }
-
-        // read the edge indices
-        meshView.westEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.westEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.westEdgeIndicesCount * indexSizeBytes;
-
-        meshView.southEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.southEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.southEdgeIndicesCount * indexSizeBytes;
-
-        meshView.eastEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.eastEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.eastEdgeIndicesCount * indexSizeBytes;
-
-        meshView.northEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-        readIndex += sizeof(uint32_t);
-        meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.northEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.northEdgeIndicesCount * indexSizeBytes;
-
-        // parse oct-encoded normal buffer and metadata
-        std::vector<unsigned char> outputNormalsBuffer;
-        while (readIndex < data.size()) {
-            if (readIndex + extensionHeaderLength > data.size()) {
-                break;
-            }
-
-            uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
-            readIndex += sizeof(uint8_t);
-            uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
-            readIndex += sizeof(uint32_t);
-
-            if (extensionID == 1) {
-                // Oct-encoded per-vertex normals
-                if (readIndex + vertexCount * 2 > data.size()) {
-                    break;
-                }
-
-                meshView.octEncodedNormalBuffer = gsl::span<const uint8_t>(data.data() + readIndex, vertexCount * 2);
-            } else if (extensionID == 4) {
-                // Metadata
-                if (readIndex + sizeof(uint32_t) > data.size()) {
-                    break;
-                }
-
-                if (readIndex + sizeof(uint32_t) + meshView.metadataJsonLength > data.size()) {
-                    break;
-                }
-
-                meshView.metadataJsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
-                meshView.metadataJsonBuffer = gsl::span<const char>(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), meshView.metadataJsonLength);
-            }
-
-            readIndex += extensionLength;
-        }
-
-        return meshView;
+		size_t normalOutputIndex = 0;
+		for (size_t i = 0; i < encoded.size(); i += 2) {
+			glm::dvec3 normal = octDecode(encoded[i], encoded[i + 1]);
+			decoded[normalOutputIndex++] = static_cast<float>(normal.x);
+			decoded[normalOutputIndex++] = static_cast<float>(normal.y);
+			decoded[normalOutputIndex++] = static_cast<float>(normal.z);
+		}
     }
-
-    static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
-        const uint8_t rangeMax = 255;
-
-        glm::dvec3 result;
-
-        result.x = CesiumUtility::Math::fromSNorm(x, rangeMax);
-        result.y = CesiumUtility::Math::fromSNorm(y, rangeMax);
-        result.z = 1.0 - (glm::abs(result.x) + glm::abs(result.y));
-
-        if (result.z < 0.0) {
-            double oldVX = result.x;
-            result.x = (1.0 - glm::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
-            result.y = (1.0 - glm::abs(oldVX)) * CesiumUtility::Math::signNotZero(result.y);
-        }
-
-        return glm::normalize(result);
-    }
-
-    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
         const TileContext& context,
@@ -606,16 +620,10 @@ namespace Cesium3DTiles {
         // decode normal vertices of the tile as well as its metadata without skirt
         std::vector<unsigned char> outputNormalsBuffer;
         if (!meshView->octEncodedNormalBuffer.empty()) {
-            outputNormalsBuffer.resize((vertexCount + skirtVertexCount) * 3 * sizeof(float));
-            float* pNormals = reinterpret_cast<float*>(outputNormalsBuffer.data());
-
-            size_t normalOutputIndex = 0;
-            for (size_t i = 0; i < vertexCount * 2; i += 2) {
-                glm::dvec3 normal = octDecode(meshView->octEncodedNormalBuffer[i], meshView->octEncodedNormalBuffer[i + 1]);
-                pNormals[normalOutputIndex++] = static_cast<float>(normal.x);
-                pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
-                pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
-            }
+            uint32_t totalNormalFloats = (vertexCount + skirtVertexCount) * 3;
+            outputNormalsBuffer.resize(totalNormalFloats * sizeof(float));
+            gsl::span<float> outputNormals(reinterpret_cast<float*>(outputNormalsBuffer.data()), totalNormalFloats);
+            decodeNormals(meshView->octEncodedNormalBuffer, outputNormals);
         }
         gsl::span<float> outputNormals(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
             outputNormalsBuffer.size() / sizeof(float));
