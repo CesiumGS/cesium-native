@@ -55,50 +55,50 @@ namespace Cesium3DTiles {
         uint32_t extensionLength;
     };
 
-	enum class QuantizedMeshIndexType {
-		UnsignedShort,
-		UnsignedInt
-	};
+    enum class QuantizedMeshIndexType {
+        UnsignedShort,
+        UnsignedInt
+    };
 
-	struct QuantizedMeshView {
-		QuantizedMeshView() 
-			: header{nullptr}
-			, indexType{QuantizedMeshIndexType::UnsignedShort}
-			, triangleCount{0}
-			, westEdgeIndicesCount{0}
-			, southEdgeIndicesCount{0}
-			, eastEdgeIndicesCount{0}
-			, northEdgeIndicesCount{0}
-			, metadataJsonLength{0}
-		{}
+    struct QuantizedMeshView {
+        QuantizedMeshView() 
+            : header{nullptr}
+            , indexType{QuantizedMeshIndexType::UnsignedShort}
+            , triangleCount{0}
+            , westEdgeIndicesCount{0}
+            , southEdgeIndicesCount{0}
+            , eastEdgeIndicesCount{0}
+            , northEdgeIndicesCount{0}
+            , metadataJsonLength{0}
+        {}
 
-		const QuantizedMeshHeader* header;
+        const QuantizedMeshHeader* header;
 
-		gsl::span<const uint16_t> uBuffer;
-		gsl::span<const uint16_t> vBuffer;
-		gsl::span<const uint16_t> heightBuffer;
+        gsl::span<const uint16_t> uBuffer;
+        gsl::span<const uint16_t> vBuffer;
+        gsl::span<const uint16_t> heightBuffer;
 
-		QuantizedMeshIndexType indexType;
-		uint32_t triangleCount;
-		gsl::span<const uint8_t> indicesBuffer;
+        QuantizedMeshIndexType indexType;
+        uint32_t triangleCount;
+        gsl::span<const uint8_t> indicesBuffer;
 
-		uint32_t westEdgeIndicesCount;
-		gsl::span<const uint8_t> westEdgeIndicesBuffer;
+        uint32_t westEdgeIndicesCount;
+        gsl::span<const uint8_t> westEdgeIndicesBuffer;
 
-		uint32_t southEdgeIndicesCount;
-		gsl::span<const uint8_t> southEdgeIndicesBuffer;
+        uint32_t southEdgeIndicesCount;
+        gsl::span<const uint8_t> southEdgeIndicesBuffer;
 
-		uint32_t eastEdgeIndicesCount;
-		gsl::span<const uint8_t> eastEdgeIndicesBuffer;
+        uint32_t eastEdgeIndicesCount;
+        gsl::span<const uint8_t> eastEdgeIndicesBuffer;
 
-		uint32_t northEdgeIndicesCount;
-		gsl::span<const uint8_t> northEdgeIndicesBuffer;
+        uint32_t northEdgeIndicesCount;
+        gsl::span<const uint8_t> northEdgeIndicesBuffer;
 
-		gsl::span<const uint8_t> octEncodedNormalBuffer;
+        gsl::span<const uint8_t> octEncodedNormalBuffer;
 
-		uint32_t metadataJsonLength;
-		gsl::span<const char> metadataJsonBuffer;
-	};
+        uint32_t metadataJsonLength;
+        gsl::span<const char> metadataJsonBuffer;
+    };
 
     // We can't use sizeof(QuantizedMeshHeader) because it may be padded.
     const size_t headerLength = 92;
@@ -132,32 +132,32 @@ namespace Cesium3DTiles {
         return defaultValue;
     }
 
-	static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
-		static const double terrainHeightmapQuality = 0.25;
-		static const uint32_t heightmapWidth = 65;
-		double levelZeroMaximumGeometricError = ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI * terrainHeightmapQuality
-			/ (heightmapWidth * tilingScheme.getRootTilesX());
+    static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
+        static const double terrainHeightmapQuality = 0.25;
+        static const uint32_t heightmapWidth = 65;
+        double levelZeroMaximumGeometricError = ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI * terrainHeightmapQuality
+            / (heightmapWidth * tilingScheme.getRootTilesX());
 
-		double levelMaximumGeometricError = levelZeroMaximumGeometricError / (1 << tileLevel);
-		return levelMaximumGeometricError * 5.0;
-	}
+        double levelMaximumGeometricError = levelZeroMaximumGeometricError / (1 << tileLevel);
+        return levelMaximumGeometricError * 5.0;
+    }
 
     template <class E, class I>
-	static void addSkirt(
-		const CesiumGeospatial::Ellipsoid &ellipsoid,
-		glm::dvec3 center,
-		const CesiumGeospatial::GlobeRectangle &rectangle,
-		double minimumHeight,
-		double maximumHeight,
-		uint32_t currentVertexCount,
-		uint32_t currentIndicesCount,
-		double skirtHeight,
-		double longitudeOffset,
-		double latitudeOffset,
-		const std::vector<glm::dvec3>& uvsAndHeights,
+    static void addSkirt(
+        const CesiumGeospatial::Ellipsoid &ellipsoid,
+        glm::dvec3 center,
+        const CesiumGeospatial::GlobeRectangle &rectangle,
+        double minimumHeight,
+        double maximumHeight,
+        uint32_t currentVertexCount,
+        uint32_t currentIndicesCount,
+        double skirtHeight,
+        double longitudeOffset,
+        double latitudeOffset,
+        const std::vector<glm::dvec3>& uvsAndHeights,
         const gsl::span<const E> &edgeIndices,
         gsl::span<float> &positions,
-		gsl::span<float> &normals,
+        gsl::span<float> &normals,
         gsl::span<I> &indices) 
     {
         double west = rectangle.getWest();
@@ -171,188 +171,188 @@ namespace Cesium3DTiles {
         for (size_t i = 0; i < edgeIndices.size(); ++i) {
             E edgeIdx = edgeIndices[i];
 
-			double uRatio = uvsAndHeights[edgeIdx].x;
-			double vRatio = uvsAndHeights[edgeIdx].y;
-			double heightRatio = uvsAndHeights[edgeIdx].z;
-			double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
-			double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
-			double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio) - skirtHeight;
-			glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
-			position -= center;
+            double uRatio = uvsAndHeights[edgeIdx].x;
+            double vRatio = uvsAndHeights[edgeIdx].y;
+            double heightRatio = uvsAndHeights[edgeIdx].z;
+            double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
+            double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
+            double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio) - skirtHeight;
+            glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
+            position -= center;
 
             positions[positionIdx] = static_cast<float>(position.x);
             positions[positionIdx + 1] = static_cast<float>(position.y);
             positions[positionIdx + 2] = static_cast<float>(position.z);
 
-			if (!normals.empty()) {
-				normals[positionIdx] = normals[3 * edgeIdx];
-				normals[positionIdx + 1] = normals[3 * edgeIdx + 1];
-				normals[positionIdx + 2] = normals[3 * edgeIdx + 2];
-			}
+            if (!normals.empty()) {
+                normals[positionIdx] = normals[3 * edgeIdx];
+                normals[positionIdx + 1] = normals[3 * edgeIdx + 1];
+                normals[positionIdx + 2] = normals[3 * edgeIdx + 2];
+            }
 
-			if (i < edgeIndices.size() - 1) {
-				E nextEdgeIdx = edgeIndices[i + 1];
-				indices[indexIdx++] = static_cast<I>(edgeIdx);
-				indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
-				indices[indexIdx++] = static_cast<I>(newEdgeIndex);
+            if (i < edgeIndices.size() - 1) {
+                E nextEdgeIdx = edgeIndices[i + 1];
+                indices[indexIdx++] = static_cast<I>(edgeIdx);
+                indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
+                indices[indexIdx++] = static_cast<I>(newEdgeIndex);
 
-				indices[indexIdx++] = static_cast<I>(newEdgeIndex);
-				indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
-				indices[indexIdx++] = static_cast<I>(newEdgeIndex + 1);
-			}
+                indices[indexIdx++] = static_cast<I>(newEdgeIndex);
+                indices[indexIdx++] = static_cast<I>(nextEdgeIdx);
+                indices[indexIdx++] = static_cast<I>(newEdgeIndex + 1);
+            }
 
-			++newEdgeIndex;
-			positionIdx += 3;
+            ++newEdgeIndex;
+            positionIdx += 3;
         }
     }
 
     template <class E, class I>
-	static void addSkirts(
-		const CesiumGeospatial::Ellipsoid &ellipsoid,
-		glm::dvec3 center,
-		const CesiumGeospatial::GlobeRectangle &rectangle,
-		double minimumHeight,
-		double maximumHeight,
-		uint32_t currentVertexCount,
-		uint32_t currentIndicesCount,
-		double skirtHeight,
-		double longitudeOffset,
-		double latitudeOffset,
-		const std::vector<glm::dvec3> &uvsAndHeights,
-		const gsl::span<const uint8_t> &westEdgeIndicesBuffer,
-		const gsl::span<const uint8_t> &southEdgeIndicesBuffer,
-		const gsl::span<const uint8_t> &eastEdgeIndicesBuffer,
-		const gsl::span<const uint8_t> &northEdgeIndicesBuffer,
-		gsl::span<float>& outputPositions,
-		gsl::span<float>& outputNormals,
-		gsl::span<I>& outputIndices) 
-	{
-		uint32_t westVertexCount = static_cast<uint32_t>(westEdgeIndicesBuffer.size() / sizeof(E));
-		uint32_t southVertexCount = static_cast<uint32_t>(southEdgeIndicesBuffer.size() / sizeof(E));
-		uint32_t eastVertexCount = static_cast<uint32_t>(eastEdgeIndicesBuffer.size() / sizeof(E));
-		uint32_t northVertexCount = static_cast<uint32_t>(northEdgeIndicesBuffer.size() / sizeof(E));
+    static void addSkirts(
+        const CesiumGeospatial::Ellipsoid &ellipsoid,
+        glm::dvec3 center,
+        const CesiumGeospatial::GlobeRectangle &rectangle,
+        double minimumHeight,
+        double maximumHeight,
+        uint32_t currentVertexCount,
+        uint32_t currentIndicesCount,
+        double skirtHeight,
+        double longitudeOffset,
+        double latitudeOffset,
+        const std::vector<glm::dvec3> &uvsAndHeights,
+        const gsl::span<const uint8_t> &westEdgeIndicesBuffer,
+        const gsl::span<const uint8_t> &southEdgeIndicesBuffer,
+        const gsl::span<const uint8_t> &eastEdgeIndicesBuffer,
+        const gsl::span<const uint8_t> &northEdgeIndicesBuffer,
+        gsl::span<float>& outputPositions,
+        gsl::span<float>& outputNormals,
+        gsl::span<I>& outputIndices) 
+    {
+        uint32_t westVertexCount = static_cast<uint32_t>(westEdgeIndicesBuffer.size() / sizeof(E));
+        uint32_t southVertexCount = static_cast<uint32_t>(southEdgeIndicesBuffer.size() / sizeof(E));
+        uint32_t eastVertexCount = static_cast<uint32_t>(eastEdgeIndicesBuffer.size() / sizeof(E));
+        uint32_t northVertexCount = static_cast<uint32_t>(northEdgeIndicesBuffer.size() / sizeof(E));
 
-		// allocate edge indices to be sort later
-		uint32_t maxEdgeVertexCount = westVertexCount;
-		maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
-		maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
-		maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
-		std::vector<E> sortEdgeIndices(maxEdgeVertexCount);
+        // allocate edge indices to be sort later
+        uint32_t maxEdgeVertexCount = westVertexCount;
+        maxEdgeVertexCount = glm::max(maxEdgeVertexCount, southVertexCount);
+        maxEdgeVertexCount = glm::max(maxEdgeVertexCount, eastVertexCount);
+        maxEdgeVertexCount = glm::max(maxEdgeVertexCount, northVertexCount);
+        std::vector<E> sortEdgeIndices(maxEdgeVertexCount);
 
-		// add skirt indices, vertices, and normals
-		gsl::span<const E> westEdgeIndices(reinterpret_cast<const E*>(westEdgeIndicesBuffer.data()), westVertexCount);
-		std::partial_sort_copy(westEdgeIndices.begin(), 
-			westEdgeIndices.end(), 
-			sortEdgeIndices.begin(), 
-			sortEdgeIndices.begin() + westVertexCount, 
-			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;  });
-		westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
-		addSkirt(ellipsoid,
-			center,
-			rectangle,
-			minimumHeight,
-			maximumHeight,
-			currentVertexCount, 
-			currentIndicesCount, 
-			skirtHeight, 
-			-longitudeOffset,
-			0.0,
-			uvsAndHeights,
-			westEdgeIndices, 
-			outputPositions, 
-			outputNormals, 
-			outputIndices);
+        // add skirt indices, vertices, and normals
+        gsl::span<const E> westEdgeIndices(reinterpret_cast<const E*>(westEdgeIndicesBuffer.data()), westVertexCount);
+        std::partial_sort_copy(westEdgeIndices.begin(), 
+            westEdgeIndices.end(), 
+            sortEdgeIndices.begin(), 
+            sortEdgeIndices.begin() + westVertexCount, 
+            [&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;  });
+        westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
+        addSkirt(ellipsoid,
+            center,
+            rectangle,
+            minimumHeight,
+            maximumHeight,
+            currentVertexCount, 
+            currentIndicesCount, 
+            skirtHeight, 
+            -longitudeOffset,
+            0.0,
+            uvsAndHeights,
+            westEdgeIndices, 
+            outputPositions, 
+            outputNormals, 
+            outputIndices);
 
-		currentVertexCount += westVertexCount;
-		currentIndicesCount += (westVertexCount - 1) * 6;
-		gsl::span<const E> southEdgeIndices(reinterpret_cast<const E*>(southEdgeIndicesBuffer.data()), southVertexCount);
-		std::partial_sort_copy(southEdgeIndices.begin(), 
-			southEdgeIndices.end(), 
-			sortEdgeIndices.begin(), 
-			sortEdgeIndices.begin() + southVertexCount, 
-			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;  });
-		southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
-		addSkirt(ellipsoid, 
-			center,
-			rectangle,
-			minimumHeight,
-			maximumHeight, 
-			currentVertexCount, 
-			currentIndicesCount, 
-			skirtHeight, 
-			0.0,
-			-latitudeOffset,
-			uvsAndHeights,
-			southEdgeIndices, 
-			outputPositions, 
-			outputNormals, 
-			outputIndices);
+        currentVertexCount += westVertexCount;
+        currentIndicesCount += (westVertexCount - 1) * 6;
+        gsl::span<const E> southEdgeIndices(reinterpret_cast<const E*>(southEdgeIndicesBuffer.data()), southVertexCount);
+        std::partial_sort_copy(southEdgeIndices.begin(), 
+            southEdgeIndices.end(), 
+            sortEdgeIndices.begin(), 
+            sortEdgeIndices.begin() + southVertexCount, 
+            [&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;  });
+        southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
+        addSkirt(ellipsoid, 
+            center,
+            rectangle,
+            minimumHeight,
+            maximumHeight, 
+            currentVertexCount, 
+            currentIndicesCount, 
+            skirtHeight, 
+            0.0,
+            -latitudeOffset,
+            uvsAndHeights,
+            southEdgeIndices, 
+            outputPositions, 
+            outputNormals, 
+            outputIndices);
 
-		currentVertexCount += southVertexCount;
-		currentIndicesCount += (southVertexCount - 1) * 6;
-		gsl::span<const E> eastEdgeIndices(reinterpret_cast<const E*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
-		std::partial_sort_copy(eastEdgeIndices.begin(), 
-			eastEdgeIndices.end(), 
-			sortEdgeIndices.begin(), 
-			sortEdgeIndices.begin() + eastVertexCount, 
-			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;  });
-		eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
-		addSkirt(ellipsoid, 
-			center, 
-			rectangle, 
-			minimumHeight, 
-			maximumHeight, 
-			currentVertexCount, 
-			currentIndicesCount, 
-			skirtHeight, 
-			longitudeOffset,
-			0.0,
-			uvsAndHeights,
-			eastEdgeIndices, 
-			outputPositions, 
-			outputNormals, 
-			outputIndices);
+        currentVertexCount += southVertexCount;
+        currentIndicesCount += (southVertexCount - 1) * 6;
+        gsl::span<const E> eastEdgeIndices(reinterpret_cast<const E*>(eastEdgeIndicesBuffer.data()), eastVertexCount);
+        std::partial_sort_copy(eastEdgeIndices.begin(), 
+            eastEdgeIndices.end(), 
+            sortEdgeIndices.begin(), 
+            sortEdgeIndices.begin() + eastVertexCount, 
+            [&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;  });
+        eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
+        addSkirt(ellipsoid, 
+            center, 
+            rectangle, 
+            minimumHeight, 
+            maximumHeight, 
+            currentVertexCount, 
+            currentIndicesCount, 
+            skirtHeight, 
+            longitudeOffset,
+            0.0,
+            uvsAndHeights,
+            eastEdgeIndices, 
+            outputPositions, 
+            outputNormals, 
+            outputIndices);
 
-		currentVertexCount += eastVertexCount;
-		currentIndicesCount += (eastVertexCount - 1) * 6;
-		gsl::span<const E> northEdgeIndices(reinterpret_cast<const E*>(northEdgeIndicesBuffer.data()), northVertexCount);
-		std::partial_sort_copy(northEdgeIndices.begin(), 
-			northEdgeIndices.end(), 
-			sortEdgeIndices.begin(), 
-			sortEdgeIndices.begin() + northVertexCount, 
-			[&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x; });
-		northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
-		addSkirt(ellipsoid,
-			center,
-			rectangle, 
-			minimumHeight, 
-			maximumHeight, 
-			currentVertexCount, 
-			currentIndicesCount, 
-			skirtHeight, 
-			0.0,
-			latitudeOffset,
-			uvsAndHeights,
-			northEdgeIndices, 
-			outputPositions, 
-			outputNormals, 
-			outputIndices);
-	}
+        currentVertexCount += eastVertexCount;
+        currentIndicesCount += (eastVertexCount - 1) * 6;
+        gsl::span<const E> northEdgeIndices(reinterpret_cast<const E*>(northEdgeIndicesBuffer.data()), northVertexCount);
+        std::partial_sort_copy(northEdgeIndices.begin(), 
+            northEdgeIndices.end(), 
+            sortEdgeIndices.begin(), 
+            sortEdgeIndices.begin() + northVertexCount, 
+            [&uvsAndHeights](auto lhs, auto rhs) { return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x; });
+        northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
+        addSkirt(ellipsoid,
+            center,
+            rectangle, 
+            minimumHeight, 
+            maximumHeight, 
+            currentVertexCount, 
+            currentIndicesCount, 
+            skirtHeight, 
+            0.0,
+            latitudeOffset,
+            uvsAndHeights,
+            northEdgeIndices, 
+            outputPositions, 
+            outputNormals, 
+            outputIndices);
+    }
 
-	static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const uint8_t>& data) {
+    static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const uint8_t>& data) {
         if (data.size() < headerLength) {
             return std::nullopt;
         }
 
         size_t readIndex = 0;
 
-		// parse header
-		QuantizedMeshView meshView;
+        // parse header
+        QuantizedMeshView meshView;
         meshView.header = reinterpret_cast<const QuantizedMeshHeader*>(data.data());
         readIndex += headerLength;
 
-		// parse u, v, and height buffers
-		uint32_t vertexCount = meshView.header->vertexCount;
+        // parse u, v, and height buffers
+        uint32_t vertexCount = meshView.header->vertexCount;
 
         meshView.uBuffer = gsl::span<const uint16_t>(reinterpret_cast<const uint16_t*>(data.data() + readIndex), vertexCount);
         readIndex += meshView.uBuffer.size_bytes();
@@ -372,115 +372,115 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-		// parse the indices buffer
-		uint32_t indexSizeBytes;
-		if (vertexCount > 65536) {
-			// 32-bit indices
-			if ((readIndex % 4) != 0) {
-				readIndex += 2;
-				if (readIndex > data.size()) {
-					return std::nullopt;
-				}
-			}
+        // parse the indices buffer
+        uint32_t indexSizeBytes;
+        if (vertexCount > 65536) {
+            // 32-bit indices
+            if ((readIndex % 4) != 0) {
+                readIndex += 2;
+                if (readIndex > data.size()) {
+                    return std::nullopt;
+                }
+            }
 
-			meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
-			readIndex += sizeof(uint32_t);
-			if (readIndex > data.size()) {
-				return std::nullopt;
-			}
+            meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
+            readIndex += sizeof(uint32_t);
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
 
-			uint32_t indicesCount = meshView.triangleCount * 3;
-			meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
-			readIndex += meshView.indicesBuffer.size_bytes();
-			if (readIndex > data.size()) {
-				return std::nullopt;
-			}
+            uint32_t indicesCount = meshView.triangleCount * 3;
+            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
+            readIndex += meshView.indicesBuffer.size_bytes();
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
 
-			meshView.indexType = QuantizedMeshIndexType::UnsignedInt;
-			indexSizeBytes = sizeof(uint32_t);
-		}
-		else {
-			// 16-bit indices
-			meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
-			readIndex += sizeof(uint32_t);
-			if (readIndex > data.size()) {
-				return std::nullopt;
-			}
+            meshView.indexType = QuantizedMeshIndexType::UnsignedInt;
+            indexSizeBytes = sizeof(uint32_t);
+        }
+        else {
+            // 16-bit indices
+            meshView.triangleCount = readValue<uint32_t>(data, readIndex, 0);
+            readIndex += sizeof(uint32_t);
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
 
-			uint32_t indicesCount = meshView.triangleCount * 3;
-			meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
-			readIndex += meshView.indicesBuffer.size_bytes();
-			if (readIndex > data.size()) {
-				return std::nullopt;
-			}
+            uint32_t indicesCount = meshView.triangleCount * 3;
+            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
+            readIndex += meshView.indicesBuffer.size_bytes();
+            if (readIndex > data.size()) {
+                return std::nullopt;
+            }
 
-			meshView.indexType = QuantizedMeshIndexType::UnsignedShort;
-			indexSizeBytes = sizeof(uint16_t);
-		}
+            meshView.indexType = QuantizedMeshIndexType::UnsignedShort;
+            indexSizeBytes = sizeof(uint16_t);
+        }
 
-		// read the edge indices
-		meshView.westEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-		readIndex += sizeof(uint32_t);
-		meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-			meshView.westEdgeIndicesCount * indexSizeBytes);
-		readIndex += meshView.westEdgeIndicesCount * indexSizeBytes;
+        // read the edge indices
+        meshView.westEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.westEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.westEdgeIndicesCount * indexSizeBytes;
 
-		meshView.southEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-		readIndex += sizeof(uint32_t);
-		meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-			meshView.southEdgeIndicesCount * indexSizeBytes);
-		readIndex += meshView.southEdgeIndicesCount * indexSizeBytes;
+        meshView.southEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.southEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.southEdgeIndicesCount * indexSizeBytes;
 
-		meshView.eastEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-		readIndex += sizeof(uint32_t);
-		meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-			meshView.eastEdgeIndicesCount * indexSizeBytes);
-		readIndex += meshView.eastEdgeIndicesCount * indexSizeBytes;
+        meshView.eastEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.eastEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.eastEdgeIndicesCount * indexSizeBytes;
 
-		meshView.northEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
-		readIndex += sizeof(uint32_t);
-		meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-			meshView.northEdgeIndicesCount * indexSizeBytes);
-		readIndex += meshView.northEdgeIndicesCount * indexSizeBytes;
+        meshView.northEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
+        readIndex += sizeof(uint32_t);
+        meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
+            meshView.northEdgeIndicesCount * indexSizeBytes);
+        readIndex += meshView.northEdgeIndicesCount * indexSizeBytes;
 
-		// parse oct-encoded normal buffer and metadata
-		std::vector<unsigned char> outputNormalsBuffer;
-		while (readIndex < data.size()) {
-			if (readIndex + extensionHeaderLength > data.size()) {
-				break;
-			}
+        // parse oct-encoded normal buffer and metadata
+        std::vector<unsigned char> outputNormalsBuffer;
+        while (readIndex < data.size()) {
+            if (readIndex + extensionHeaderLength > data.size()) {
+                break;
+            }
 
-			uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
-			readIndex += sizeof(uint8_t);
-			uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
-			readIndex += sizeof(uint32_t);
+            uint8_t extensionID = *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
+            readIndex += sizeof(uint8_t);
+            uint32_t extensionLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+            readIndex += sizeof(uint32_t);
 
-			if (extensionID == 1) {
-				// Oct-encoded per-vertex normals
-				if (readIndex + vertexCount * 2 > data.size()) {
-					break;
-				}
+            if (extensionID == 1) {
+                // Oct-encoded per-vertex normals
+                if (readIndex + vertexCount * 2 > data.size()) {
+                    break;
+                }
 
-				meshView.octEncodedNormalBuffer = gsl::span<const uint8_t>(data.data() + readIndex, vertexCount * 2);
-			} else if (extensionID == 4) {
-				// Metadata
-				if (readIndex + sizeof(uint32_t) > data.size()) {
-					break;
-				}
+                meshView.octEncodedNormalBuffer = gsl::span<const uint8_t>(data.data() + readIndex, vertexCount * 2);
+            } else if (extensionID == 4) {
+                // Metadata
+                if (readIndex + sizeof(uint32_t) > data.size()) {
+                    break;
+                }
 
-				if (readIndex + sizeof(uint32_t) + meshView.metadataJsonLength > data.size()) {
-					break;
-				}
+                if (readIndex + sizeof(uint32_t) + meshView.metadataJsonLength > data.size()) {
+                    break;
+                }
 
-				meshView.metadataJsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
-				meshView.metadataJsonBuffer = gsl::span<const char>(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), meshView.metadataJsonLength);
-			}
+                meshView.metadataJsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+                meshView.metadataJsonBuffer = gsl::span<const char>(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), meshView.metadataJsonLength);
+            }
 
-			readIndex += extensionLength;
-		}
+            readIndex += extensionLength;
+        }
 
-		return meshView;
-	}
+        return meshView;
+    }
 
     static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
         const uint8_t rangeMax = 255;
@@ -517,10 +517,10 @@ namespace Cesium3DTiles {
         const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
-		std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data);
-		if (!meshView) {
-			return pResult;
-		}
+        std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data);
+        if (!meshView) {
+            return pResult;
+        }
 
         const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
         if (!pRegion) {
@@ -534,34 +534,34 @@ namespace Cesium3DTiles {
             return pResult;
         }
 
-		// get vertex count for this mesh
+        // get vertex count for this mesh
         const QuantizedMeshHeader* pHeader = meshView->header;
         uint32_t vertexCount = pHeader->vertexCount;
-		uint32_t indicesCount = meshView->triangleCount * 3;
-		uint32_t skirtVertexCount = meshView->westEdgeIndicesCount + 
-			meshView->southEdgeIndicesCount + 
-			meshView->eastEdgeIndicesCount + 
-			meshView->northEdgeIndicesCount;
-		uint32_t skirtIndicesCount = (skirtVertexCount - 4) * 6;
+        uint32_t indicesCount = meshView->triangleCount * 3;
+        uint32_t skirtVertexCount = meshView->westEdgeIndicesCount + 
+            meshView->southEdgeIndicesCount + 
+            meshView->eastEdgeIndicesCount + 
+            meshView->northEdgeIndicesCount;
+        uint32_t skirtIndicesCount = (skirtVertexCount - 4) * 6;
 
-		// decode position without skirt, but preallocate position buffer to include skirt as well
-		std::vector<unsigned char> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
-		gsl::span<float> outputPositions(reinterpret_cast<float*>(outputPositionsBuffer.data()), (vertexCount + skirtIndicesCount) * 3);
-		size_t positionOutputIndex = 0;
+        // decode position without skirt, but preallocate position buffer to include skirt as well
+        std::vector<unsigned char> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
+        gsl::span<float> outputPositions(reinterpret_cast<float*>(outputPositionsBuffer.data()), (vertexCount + skirtIndicesCount) * 3);
+        size_t positionOutputIndex = 0;
 
         glm::dvec3 center(pHeader->BoundingSphereCenterX, pHeader->BoundingSphereCenterY, pHeader->BoundingSphereCenterZ);
         glm::dvec3 horizonOcclusionPoint(pHeader->HorizonOcclusionPointX, pHeader->HorizonOcclusionPointY, pHeader->HorizonOcclusionPointZ);
         double minimumHeight = pHeader->MinimumHeight;
         double maximumHeight = pHeader->MaximumHeight;
 
-		double minX = std::numeric_limits<double>::max();
-		double minY = std::numeric_limits<double>::max();
-		double minZ = std::numeric_limits<double>::max();
-		double maxX = std::numeric_limits<double>::lowest();
-		double maxY = std::numeric_limits<double>::lowest();
-		double maxZ = std::numeric_limits<double>::lowest();
+        double minX = std::numeric_limits<double>::max();
+        double minY = std::numeric_limits<double>::max();
+        double minZ = std::numeric_limits<double>::max();
+        double maxX = std::numeric_limits<double>::lowest();
+        double maxY = std::numeric_limits<double>::lowest();
+        double maxZ = std::numeric_limits<double>::lowest();
 
-		const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
+        const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
         const CesiumGeospatial::GlobeRectangle& rectangle = pRegion->getRectangle();
         double west = rectangle.getWest();
         double south = rectangle.getSouth();
@@ -571,264 +571,264 @@ namespace Cesium3DTiles {
         int32_t u = 0;
         int32_t v = 0;
         int32_t height = 0;
-		std::vector<glm::dvec3> uvsAndHeights;
-		uvsAndHeights.reserve(vertexCount);
-		for (size_t i = 0; i < vertexCount; ++i) {
-			u += zigZagDecode(meshView->uBuffer[i]);
-			v += zigZagDecode(meshView->vBuffer[i]);
-			height += zigZagDecode(meshView->heightBuffer[i]);
+        std::vector<glm::dvec3> uvsAndHeights;
+        uvsAndHeights.reserve(vertexCount);
+        for (size_t i = 0; i < vertexCount; ++i) {
+            u += zigZagDecode(meshView->uBuffer[i]);
+            v += zigZagDecode(meshView->vBuffer[i]);
+            height += zigZagDecode(meshView->heightBuffer[i]);
 
-			double uRatio = static_cast<double>(u) / 32767.0;
-			double vRatio = static_cast<double>(v) / 32767.0;
-			double heightRatio = static_cast<double>(height) / 32767.0;
+            double uRatio = static_cast<double>(u) / 32767.0;
+            double vRatio = static_cast<double>(v) / 32767.0;
+            double heightRatio = static_cast<double>(height) / 32767.0;
 
-			double longitude = Math::lerp(west, east, uRatio);
-			double latitude = Math::lerp(south, north, vRatio);
-			double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio);
+            double longitude = Math::lerp(west, east, uRatio);
+            double latitude = Math::lerp(south, north, vRatio);
+            double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio);
 
-			glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
-			position -= center;
-			outputPositions[positionOutputIndex++] = static_cast<float>(position.x);
-			outputPositions[positionOutputIndex++] = static_cast<float>(position.y);
-			outputPositions[positionOutputIndex++] = static_cast<float>(position.z);
+            glm::dvec3 position = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, heightMeters));
+            position -= center;
+            outputPositions[positionOutputIndex++] = static_cast<float>(position.x);
+            outputPositions[positionOutputIndex++] = static_cast<float>(position.y);
+            outputPositions[positionOutputIndex++] = static_cast<float>(position.z);
 
-			minX = glm::min(minX, position.x);
-			minY = glm::min(minY, position.y);
-			minZ = glm::min(minZ, position.z);
+            minX = glm::min(minX, position.x);
+            minY = glm::min(minY, position.y);
+            minZ = glm::min(minZ, position.z);
 
-			maxX = glm::max(maxX, position.x);
-			maxY = glm::max(maxY, position.y);
-			maxZ = glm::max(maxZ, position.z);
+            maxX = glm::max(maxX, position.x);
+            maxY = glm::max(maxY, position.y);
+            maxZ = glm::max(maxZ, position.z);
 
-			uvsAndHeights.emplace_back(uRatio, vRatio, heightRatio);
-		}
+            uvsAndHeights.emplace_back(uRatio, vRatio, heightRatio);
+        }
 
-		// decode normal vertices of the tile as well as its metadata without skirt
-		std::vector<unsigned char> outputNormalsBuffer;
-		if (!meshView->octEncodedNormalBuffer.empty()) {
-			outputNormalsBuffer.resize((vertexCount + skirtVertexCount) * 3 * sizeof(float));
-			float* pNormals = reinterpret_cast<float*>(outputNormalsBuffer.data());
+        // decode normal vertices of the tile as well as its metadata without skirt
+        std::vector<unsigned char> outputNormalsBuffer;
+        if (!meshView->octEncodedNormalBuffer.empty()) {
+            outputNormalsBuffer.resize((vertexCount + skirtVertexCount) * 3 * sizeof(float));
+            float* pNormals = reinterpret_cast<float*>(outputNormalsBuffer.data());
 
-			size_t normalOutputIndex = 0;
-			for (size_t i = 0; i < vertexCount * 2; i += 2) {
-				glm::dvec3 normal = octDecode(meshView->octEncodedNormalBuffer[i], meshView->octEncodedNormalBuffer[i + 1]);
-				pNormals[normalOutputIndex++] = static_cast<float>(normal.x);
-				pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
-				pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
-			}
-		}
-		gsl::span<float> outputNormals(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
-			outputNormalsBuffer.size() / sizeof(float));
+            size_t normalOutputIndex = 0;
+            for (size_t i = 0; i < vertexCount * 2; i += 2) {
+                glm::dvec3 normal = octDecode(meshView->octEncodedNormalBuffer[i], meshView->octEncodedNormalBuffer[i + 1]);
+                pNormals[normalOutputIndex++] = static_cast<float>(normal.x);
+                pNormals[normalOutputIndex++] = static_cast<float>(normal.y);
+                pNormals[normalOutputIndex++] = static_cast<float>(normal.z);
+            }
+        }
+        gsl::span<float> outputNormals(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
+            outputNormalsBuffer.size() / sizeof(float));
 
-		// decode metadata
-		if (meshView->metadataJsonLength > 0) {
-			processMetadata(id, meshView->metadataJsonBuffer, *pResult);
-		}
+        // decode metadata
+        if (meshView->metadataJsonLength > 0) {
+            processMetadata(id, meshView->metadataJsonBuffer, *pResult);
+        }
 
-		// indices buffer for gltf to include tile and skirt indices. Caution of indices type 
-		// since adding skirt means the number of vertices is potentially over maximum of uint16_t
-		std::vector<unsigned char> outputIndicesBuffer;
-		uint32_t indexSizeBytes = meshView->indexType == QuantizedMeshIndexType::UnsignedInt ? sizeof(uint32_t) : sizeof(uint16_t);
-		const std::optional<ImplicitTilingContext>& implicitContext = context.implicitContext;
-		const QuadtreeTilingScheme& tilingScheme = implicitContext->tilingScheme;
-		double skirtHeight = calculateSkirtHeight(id.level, ellipsoid, tilingScheme);
-		double longitudeOffset = (east - west) * 0.0001;
-		double latitudeOffset = (north - south) * 0.0001;
-		glm::vec3 tileNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
-		if (meshView->indexType == QuantizedMeshIndexType::UnsignedInt) {
-			// decode the tile indices without skirt. 
-			size_t outputIndicesCount = indicesCount + skirtIndicesCount;
-			outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint32_t));
-			gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t *>(meshView->indicesBuffer.data()), indicesCount);
-			gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesCount);
-			decodeIndices(indices, outputIndices);
+        // indices buffer for gltf to include tile and skirt indices. Caution of indices type 
+        // since adding skirt means the number of vertices is potentially over maximum of uint16_t
+        std::vector<unsigned char> outputIndicesBuffer;
+        uint32_t indexSizeBytes = meshView->indexType == QuantizedMeshIndexType::UnsignedInt ? sizeof(uint32_t) : sizeof(uint16_t);
+        const std::optional<ImplicitTilingContext>& implicitContext = context.implicitContext;
+        const QuadtreeTilingScheme& tilingScheme = implicitContext->tilingScheme;
+        double skirtHeight = calculateSkirtHeight(id.level, ellipsoid, tilingScheme);
+        double longitudeOffset = (east - west) * 0.0001;
+        double latitudeOffset = (north - south) * 0.0001;
+        glm::vec3 tileNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
+        if (meshView->indexType == QuantizedMeshIndexType::UnsignedInt) {
+            // decode the tile indices without skirt. 
+            size_t outputIndicesCount = indicesCount + skirtIndicesCount;
+            outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint32_t));
+            gsl::span<const uint32_t> indices(reinterpret_cast<const uint32_t *>(meshView->indicesBuffer.data()), indicesCount);
+            gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesCount);
+            decodeIndices(indices, outputIndices);
 
-			addSkirts<uint32_t, uint32_t>(ellipsoid, 
-				center, 
-				rectangle,
-				minimumHeight,
-				maximumHeight,
-				vertexCount, 
-				indicesCount, 
-				skirtHeight, 
-				longitudeOffset,
-				latitudeOffset,
-				uvsAndHeights,
-				meshView->westEdgeIndicesBuffer, 
-				meshView->southEdgeIndicesBuffer, 
-				meshView->eastEdgeIndicesBuffer, 
-				meshView->northEdgeIndicesBuffer, 
-				outputPositions, 
-				outputNormals, 
-				outputIndices);
+            addSkirts<uint32_t, uint32_t>(ellipsoid, 
+                center, 
+                rectangle,
+                minimumHeight,
+                maximumHeight,
+                vertexCount, 
+                indicesCount, 
+                skirtHeight, 
+                longitudeOffset,
+                latitudeOffset,
+                uvsAndHeights,
+                meshView->westEdgeIndicesBuffer, 
+                meshView->southEdgeIndicesBuffer, 
+                meshView->eastEdgeIndicesBuffer, 
+                meshView->northEdgeIndicesBuffer, 
+                outputPositions, 
+                outputNormals, 
+                outputIndices);
 
-			indexSizeBytes = sizeof(uint32_t);
-		}
-		else {
-			size_t outputIndicesCount = indicesCount + skirtIndicesCount;
-			gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t *>(meshView->indicesBuffer.data()), indicesCount);
-			if (vertexCount + skirtVertexCount < std::numeric_limits<uint16_t>::max()) {
-				// decode the tile indices without skirt. 
-				outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint16_t));
-				gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(outputIndicesBuffer.data()), outputIndicesCount);
-				decodeIndices(indices, outputIndices);
+            indexSizeBytes = sizeof(uint32_t);
+        }
+        else {
+            size_t outputIndicesCount = indicesCount + skirtIndicesCount;
+            gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t *>(meshView->indicesBuffer.data()), indicesCount);
+            if (vertexCount + skirtVertexCount < std::numeric_limits<uint16_t>::max()) {
+                // decode the tile indices without skirt. 
+                outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint16_t));
+                gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(outputIndicesBuffer.data()), outputIndicesCount);
+                decodeIndices(indices, outputIndices);
 
-				addSkirts<uint16_t, uint16_t>(ellipsoid, 
-					center,
-					rectangle,
-					minimumHeight,
-					maximumHeight,
-					vertexCount, 
-					indicesCount, 
-					skirtHeight, 
-					longitudeOffset,
-					latitudeOffset,
-					uvsAndHeights,
-					meshView->westEdgeIndicesBuffer, 
-					meshView->southEdgeIndicesBuffer, 
-					meshView->eastEdgeIndicesBuffer, 
-					meshView->northEdgeIndicesBuffer, 
-					outputPositions, 
-					outputNormals, 
-					outputIndices);
+                addSkirts<uint16_t, uint16_t>(ellipsoid, 
+                    center,
+                    rectangle,
+                    minimumHeight,
+                    maximumHeight,
+                    vertexCount, 
+                    indicesCount, 
+                    skirtHeight, 
+                    longitudeOffset,
+                    latitudeOffset,
+                    uvsAndHeights,
+                    meshView->westEdgeIndicesBuffer, 
+                    meshView->southEdgeIndicesBuffer, 
+                    meshView->eastEdgeIndicesBuffer, 
+                    meshView->northEdgeIndicesBuffer, 
+                    outputPositions, 
+                    outputNormals, 
+                    outputIndices);
 
-				indexSizeBytes = sizeof(uint16_t);
-			}
-			else {
-				outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint32_t));
-				gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesCount);
-				decodeIndices(indices, outputIndices);
+                indexSizeBytes = sizeof(uint16_t);
+            }
+            else {
+                outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint32_t));
+                gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesCount);
+                decodeIndices(indices, outputIndices);
 
-				addSkirts<uint16_t, uint32_t>(ellipsoid,
-					center, 
-					rectangle,
-					minimumHeight,
-					maximumHeight,
-					vertexCount, 
-					indicesCount, 
-					skirtHeight,
-					longitudeOffset,
-					latitudeOffset,
-					uvsAndHeights,
-					meshView->westEdgeIndicesBuffer, 
-					meshView->southEdgeIndicesBuffer, 
-					meshView->eastEdgeIndicesBuffer, 
-					meshView->northEdgeIndicesBuffer, 
-					outputPositions, 
-					outputNormals, 
-					outputIndices);
+                addSkirts<uint16_t, uint32_t>(ellipsoid,
+                    center, 
+                    rectangle,
+                    minimumHeight,
+                    maximumHeight,
+                    vertexCount, 
+                    indicesCount, 
+                    skirtHeight,
+                    longitudeOffset,
+                    latitudeOffset,
+                    uvsAndHeights,
+                    meshView->westEdgeIndicesBuffer, 
+                    meshView->southEdgeIndicesBuffer, 
+                    meshView->eastEdgeIndicesBuffer, 
+                    meshView->northEdgeIndicesBuffer, 
+                    outputPositions, 
+                    outputNormals, 
+                    outputIndices);
 
-				indexSizeBytes = sizeof(uint32_t);
-			}
-		}
+                indexSizeBytes = sizeof(uint32_t);
+            }
+        }
 
-		// create gltf
-		pResult->model.emplace();
-		tinygltf::Model& model = pResult->model.value();
-		
-		int meshId = static_cast<int>(model.meshes.size());
-		model.meshes.emplace_back();
-		tinygltf::Mesh& mesh = model.meshes[meshId];
-		mesh.primitives.emplace_back();
+        // create gltf
+        pResult->model.emplace();
+        tinygltf::Model& model = pResult->model.value();
+        
+        int meshId = static_cast<int>(model.meshes.size());
+        model.meshes.emplace_back();
+        tinygltf::Mesh& mesh = model.meshes[meshId];
+        mesh.primitives.emplace_back();
 
-		tinygltf::Primitive& primitive = mesh.primitives[0];
-		primitive.mode = TINYGLTF_MODE_TRIANGLES;
-		primitive.material = 0;
+        tinygltf::Primitive& primitive = mesh.primitives[0];
+        primitive.mode = TINYGLTF_MODE_TRIANGLES;
+        primitive.material = 0;
 
-		// add position buffer to gltf
-		int positionBufferId = static_cast<int>(model.buffers.size());
-		model.buffers.emplace_back();
-		tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
-		positionBuffer.data = std::move(outputPositionsBuffer);
+        // add position buffer to gltf
+        int positionBufferId = static_cast<int>(model.buffers.size());
+        model.buffers.emplace_back();
+        tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+        positionBuffer.data = std::move(outputPositionsBuffer);
 
-		int positionBufferViewId = static_cast<int>(model.bufferViews.size());
-		model.bufferViews.emplace_back();
-		tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
-		positionBufferView.buffer = positionBufferId;
-		positionBufferView.byteOffset = 0;
-		positionBufferView.byteStride = 3 * sizeof(float);
-		positionBufferView.byteLength = positionBuffer.data.size();
-		positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+        int positionBufferViewId = static_cast<int>(model.bufferViews.size());
+        model.bufferViews.emplace_back();
+        tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
+        positionBufferView.buffer = positionBufferId;
+        positionBufferView.byteOffset = 0;
+        positionBufferView.byteStride = 3 * sizeof(float);
+        positionBufferView.byteLength = positionBuffer.data.size();
+        positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-		int positionAccessorId = static_cast<int>(model.accessors.size());
-		model.accessors.emplace_back();
-		tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
-		positionAccessor.bufferView = positionBufferViewId;
-		positionAccessor.byteOffset = 0;
-		positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-		positionAccessor.count = vertexCount + skirtVertexCount;
-		positionAccessor.type = TINYGLTF_TYPE_VEC3;
-		positionAccessor.minValues = { minX, minY, minZ };
-		positionAccessor.maxValues = { maxX, maxY, maxZ };
+        int positionAccessorId = static_cast<int>(model.accessors.size());
+        model.accessors.emplace_back();
+        tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
+        positionAccessor.bufferView = positionBufferViewId;
+        positionAccessor.byteOffset = 0;
+        positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+        positionAccessor.count = vertexCount + skirtVertexCount;
+        positionAccessor.type = TINYGLTF_TYPE_VEC3;
+        positionAccessor.minValues = { minX, minY, minZ };
+        positionAccessor.maxValues = { maxX, maxY, maxZ };
 
-		primitive.attributes.emplace("POSITION", positionAccessorId);
+        primitive.attributes.emplace("POSITION", positionAccessorId);
 
-		// add normal buffer to gltf if there are any
-		if (!outputNormalsBuffer.empty()) {
-			int normalBufferId = static_cast<int>(model.buffers.size());
-			model.buffers.emplace_back();
-			tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
-			normalBuffer.data = std::move(outputNormalsBuffer);
+        // add normal buffer to gltf if there are any
+        if (!outputNormalsBuffer.empty()) {
+            int normalBufferId = static_cast<int>(model.buffers.size());
+            model.buffers.emplace_back();
+            tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+            normalBuffer.data = std::move(outputNormalsBuffer);
 
-			int normalBufferViewId = static_cast<int>(model.bufferViews.size());
-			model.bufferViews.emplace_back();
-			tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
-			normalBufferView.buffer = normalBufferId;
-			normalBufferView.byteOffset = 0;
-			normalBufferView.byteStride = 3 * sizeof(float);
-			normalBufferView.byteLength = normalBuffer.data.size();
-			normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+            int normalBufferViewId = static_cast<int>(model.bufferViews.size());
+            model.bufferViews.emplace_back();
+            tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
+            normalBufferView.buffer = normalBufferId;
+            normalBufferView.byteOffset = 0;
+            normalBufferView.byteStride = 3 * sizeof(float);
+            normalBufferView.byteLength = normalBuffer.data.size();
+            normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-			int normalAccessorId = static_cast<int>(model.accessors.size());
-			model.accessors.emplace_back();
-			tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
-			normalAccessor.bufferView = normalBufferViewId;
-			normalAccessor.byteOffset = 0;
-			normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-			normalAccessor.count = vertexCount + skirtVertexCount;
-			normalAccessor.type = TINYGLTF_TYPE_VEC3;
-			
-			primitive.attributes.emplace("NORMAL", normalAccessorId);
-		}
+            int normalAccessorId = static_cast<int>(model.accessors.size());
+            model.accessors.emplace_back();
+            tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
+            normalAccessor.bufferView = normalBufferViewId;
+            normalAccessor.byteOffset = 0;
+            normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+            normalAccessor.count = vertexCount + skirtVertexCount;
+            normalAccessor.type = TINYGLTF_TYPE_VEC3;
+            
+            primitive.attributes.emplace("NORMAL", normalAccessorId);
+        }
 
-		// add indices buffer to gltf
-		int indicesBufferId = static_cast<int>(model.buffers.size());
-		model.buffers.emplace_back();
-		tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
-		indicesBuffer.data = std::move(outputIndicesBuffer);
-		
-		int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
-		model.bufferViews.emplace_back();
-		tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
-		indicesBufferView.buffer = indicesBufferId;
-		indicesBufferView.byteOffset = 0;
-		indicesBufferView.byteLength = indicesBuffer.data.size();
-		indicesBufferView.byteStride = indexSizeBytes;
-		indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
+        // add indices buffer to gltf
+        int indicesBufferId = static_cast<int>(model.buffers.size());
+        model.buffers.emplace_back();
+        tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
+        indicesBuffer.data = std::move(outputIndicesBuffer);
+        
+        int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
+        model.bufferViews.emplace_back();
+        tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
+        indicesBufferView.buffer = indicesBufferId;
+        indicesBufferView.byteOffset = 0;
+        indicesBufferView.byteLength = indicesBuffer.data.size();
+        indicesBufferView.byteStride = indexSizeBytes;
+        indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
-		int indicesAccessorId = static_cast<int>(model.accessors.size());
-		model.accessors.emplace_back();
-		tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
-		indicesAccessor.bufferView = indicesBufferViewId;
-		indicesAccessor.byteOffset = 0;
-		indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
-		indicesAccessor.count = indicesCount + skirtIndicesCount;
-		indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT : TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
+        int indicesAccessorId = static_cast<int>(model.accessors.size());
+        model.accessors.emplace_back();
+        tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
+        indicesAccessor.bufferView = indicesBufferViewId;
+        indicesAccessor.byteOffset = 0;
+        indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
+        indicesAccessor.count = indicesCount + skirtIndicesCount;
+        indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT : TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
 
-		primitive.indices = indicesBufferId;
+        primitive.indices = indicesBufferId;
 
-		// create node and update bounding volume
-		model.nodes.emplace_back();
-		tinygltf::Node& node = model.nodes[0];
-		node.mesh = 0;
-		node.matrix = {
-			1.0, 0.0,  0.0, 0.0,
-			0.0, 0.0, -1.0, 0.0,
-			0.0, 1.0,  0.0, 0.0,
-			center.x, center.z, -center.y, 1.0
-		};
+        // create node and update bounding volume
+        model.nodes.emplace_back();
+        tinygltf::Node& node = model.nodes[0];
+        node.mesh = 0;
+        node.matrix = {
+            1.0, 0.0,  0.0, 0.0,
+            0.0, 0.0, -1.0, 0.0,
+            0.0, 1.0,  0.0, 0.0,
+            center.x, center.z, -center.y, 1.0
+        };
 
-		pResult->updatedBoundingVolume = BoundingRegion(rectangle, minimumHeight, maximumHeight);
+        pResult->updatedBoundingVolume = BoundingRegion(rectangle, minimumHeight, maximumHeight);
 
         return pResult;
     }
