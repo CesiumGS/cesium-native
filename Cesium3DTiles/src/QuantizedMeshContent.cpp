@@ -255,8 +255,8 @@ namespace Cesium3DTiles {
 			currentVertexCount, 
 			currentIndicesCount, 
 			skirtHeight, 
-			longitudeOffset,
-			latitudeOffset,
+			-longitudeOffset,
+			0.0,
 			uvsAndHeights,
 			westEdgeIndices, 
 			outputPositions, 
@@ -280,8 +280,8 @@ namespace Cesium3DTiles {
 			currentVertexCount, 
 			currentIndicesCount, 
 			skirtHeight, 
-			longitudeOffset,
-			latitudeOffset,
+			0.0,
+			-latitudeOffset,
 			uvsAndHeights,
 			southEdgeIndices, 
 			outputPositions, 
@@ -306,7 +306,7 @@ namespace Cesium3DTiles {
 			currentIndicesCount, 
 			skirtHeight, 
 			longitudeOffset,
-			latitudeOffset,
+			0.0,
 			uvsAndHeights,
 			eastEdgeIndices, 
 			outputPositions, 
@@ -330,7 +330,7 @@ namespace Cesium3DTiles {
 			currentVertexCount, 
 			currentIndicesCount, 
 			skirtHeight, 
-			longitudeOffset,
+			0.0,
 			latitudeOffset,
 			uvsAndHeights,
 			northEdgeIndices, 
@@ -538,14 +538,11 @@ namespace Cesium3DTiles {
         const QuantizedMeshHeader* pHeader = meshView->header;
         uint32_t vertexCount = pHeader->vertexCount;
 		uint32_t indicesCount = meshView->triangleCount * 3;
-		uint32_t skirtIndicesCount = (meshView->westEdgeIndicesCount - 1) * 6 + 
-		   (meshView->southEdgeIndicesCount - 1) * 6 + 
-		   (meshView->eastEdgeIndicesCount - 1) * 6 + 
-		   (meshView->northEdgeIndicesCount - 1) * 6;
 		uint32_t skirtVertexCount = meshView->westEdgeIndicesCount + 
 			meshView->southEdgeIndicesCount + 
 			meshView->eastEdgeIndicesCount + 
 			meshView->northEdgeIndicesCount;
+		uint32_t skirtIndicesCount = (skirtVertexCount - 4) * 6;
 
 		// decode position without skirt, but preallocate position buffer to include skirt as well
 		std::vector<unsigned char> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
@@ -560,13 +557,9 @@ namespace Cesium3DTiles {
 		double minX = std::numeric_limits<double>::max();
 		double minY = std::numeric_limits<double>::max();
 		double minZ = std::numeric_limits<double>::max();
-		double minLatitude = std::numeric_limits<double>::max();
-		double minLongitude = std::numeric_limits<double>::max();
 		double maxX = std::numeric_limits<double>::lowest();
 		double maxY = std::numeric_limits<double>::lowest();
 		double maxZ = std::numeric_limits<double>::lowest();
-		double maxLatitude = std::numeric_limits<double>::lowest();
-		double maxLongitude = std::numeric_limits<double>::lowest();
 
 		const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
         const CesiumGeospatial::GlobeRectangle& rectangle = pRegion->getRectangle();
@@ -602,14 +595,10 @@ namespace Cesium3DTiles {
 			minX = glm::min(minX, position.x);
 			minY = glm::min(minY, position.y);
 			minZ = glm::min(minZ, position.z);
-			minLatitude = glm::min(latitude, minLatitude);
-			minLongitude = glm::min(longitude, minLongitude);
 
 			maxX = glm::max(maxX, position.x);
 			maxY = glm::max(maxY, position.y);
 			maxZ = glm::max(maxZ, position.z);
-			maxLatitude = glm::max(latitude, maxLatitude);
-			maxLongitude = glm::max(longitude, maxLongitude);
 
 			uvsAndHeights.emplace_back(uRatio, vRatio, heightRatio);
 		}
@@ -643,8 +632,8 @@ namespace Cesium3DTiles {
 		const std::optional<ImplicitTilingContext>& implicitContext = context.implicitContext;
 		const QuadtreeTilingScheme& tilingScheme = implicitContext->tilingScheme;
 		double skirtHeight = calculateSkirtHeight(id.level, ellipsoid, tilingScheme);
-		double longitudeOffset = (maxLongitude - minLongitude) * 0.0001;
-		double latitudeOffset = (maxLatitude - minLatitude) * 0.0001;
+		double longitudeOffset = (east - west) * 0.0001;
+		double latitudeOffset = (north - south) * 0.0001;
 		glm::vec3 tileNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
 		if (meshView->indexType == QuantizedMeshIndexType::UnsignedInt) {
 			// decode the tile indices without skirt. 
@@ -676,10 +665,10 @@ namespace Cesium3DTiles {
 			indexSizeBytes = sizeof(uint32_t);
 		}
 		else {
-			// decode the tile indices without skirt. 
 			size_t outputIndicesCount = indicesCount + skirtIndicesCount;
 			gsl::span<const uint16_t> indices(reinterpret_cast<const uint16_t *>(meshView->indicesBuffer.data()), indicesCount);
 			if (vertexCount + skirtVertexCount < std::numeric_limits<uint16_t>::max()) {
+				// decode the tile indices without skirt. 
 				outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint16_t));
 				gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(outputIndicesBuffer.data()), outputIndicesCount);
 				decodeIndices(indices, outputIndices);
