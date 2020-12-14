@@ -295,7 +295,7 @@ namespace Cesium3DTiles {
         return meshView;
     }
 
-    static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
+    static double calculateSkirtHeight(uint32_t tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
         static const double terrainHeightmapQuality = 0.25;
         static const uint32_t heightmapWidth = 65;
         double levelZeroMaximumGeometricError = ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI * terrainHeightmapQuality
@@ -348,9 +348,10 @@ namespace Cesium3DTiles {
             positions[positionIdx + 2] = static_cast<float>(position.z);
 
             if (!normals.empty()) {
-                normals[positionIdx] = normals[3 * edgeIdx];
-                normals[positionIdx + 1] = normals[3 * edgeIdx + 1];
-                normals[positionIdx + 2] = normals[3 * edgeIdx + 2];
+                size_t componentIndex = 3 * edgeIdx;
+                normals[positionIdx] = normals[componentIndex];
+                normals[positionIdx + 1] = normals[componentIndex + 1];
+                normals[positionIdx + 2] = normals[componentIndex + 2];
             }
 
             if (i < edgeIndices.size() - 1) {
@@ -733,7 +734,7 @@ namespace Cesium3DTiles {
         pResult->model.emplace();
         tinygltf::Model& model = pResult->model.value();
         
-        int meshId = static_cast<int>(model.meshes.size());
+        size_t meshId = model.meshes.size();
         model.meshes.emplace_back();
         tinygltf::Mesh& mesh = model.meshes[meshId];
         mesh.primitives.emplace_back();
@@ -743,24 +744,24 @@ namespace Cesium3DTiles {
         primitive.material = 0;
 
         // add position buffer to gltf
-        int positionBufferId = static_cast<int>(model.buffers.size());
+        size_t positionBufferId = model.buffers.size();
         model.buffers.emplace_back();
         tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
         positionBuffer.data = std::move(outputPositionsBuffer);
 
-        int positionBufferViewId = static_cast<int>(model.bufferViews.size());
+        size_t positionBufferViewId = model.bufferViews.size();
         model.bufferViews.emplace_back();
         tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
-        positionBufferView.buffer = positionBufferId;
+        positionBufferView.buffer = static_cast<int>(positionBufferId);
         positionBufferView.byteOffset = 0;
         positionBufferView.byteStride = 3 * sizeof(float);
         positionBufferView.byteLength = positionBuffer.data.size();
         positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-        int positionAccessorId = static_cast<int>(model.accessors.size());
+        size_t positionAccessorId = model.accessors.size();
         model.accessors.emplace_back();
         tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
-        positionAccessor.bufferView = positionBufferViewId;
+        positionAccessor.bufferView = static_cast<int>(positionBufferViewId);
         positionAccessor.byteOffset = 0;
         positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
         positionAccessor.count = vertexCount + skirtVertexCount;
@@ -768,61 +769,61 @@ namespace Cesium3DTiles {
         positionAccessor.minValues = { minX, minY, minZ };
         positionAccessor.maxValues = { maxX, maxY, maxZ };
 
-        primitive.attributes.emplace("POSITION", positionAccessorId);
+        primitive.attributes.emplace("POSITION", static_cast<int>(positionAccessorId));
 
         // add normal buffer to gltf if there are any
         if (!outputNormalsBuffer.empty()) {
-            int normalBufferId = static_cast<int>(model.buffers.size());
+            size_t normalBufferId = model.buffers.size();
             model.buffers.emplace_back();
             tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
             normalBuffer.data = std::move(outputNormalsBuffer);
 
-            int normalBufferViewId = static_cast<int>(model.bufferViews.size());
+            size_t normalBufferViewId = model.bufferViews.size();
             model.bufferViews.emplace_back();
             tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
-            normalBufferView.buffer = normalBufferId;
+            normalBufferView.buffer = static_cast<int>(normalBufferId);
             normalBufferView.byteOffset = 0;
             normalBufferView.byteStride = 3 * sizeof(float);
             normalBufferView.byteLength = normalBuffer.data.size();
             normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
 
-            int normalAccessorId = static_cast<int>(model.accessors.size());
+            size_t normalAccessorId = model.accessors.size();
             model.accessors.emplace_back();
             tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
-            normalAccessor.bufferView = normalBufferViewId;
+            normalAccessor.bufferView = static_cast<int>(normalBufferViewId);
             normalAccessor.byteOffset = 0;
             normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
             normalAccessor.count = vertexCount + skirtVertexCount;
             normalAccessor.type = TINYGLTF_TYPE_VEC3;
             
-            primitive.attributes.emplace("NORMAL", normalAccessorId);
+            primitive.attributes.emplace("NORMAL", static_cast<int>(normalAccessorId));
         }
 
         // add indices buffer to gltf
-        int indicesBufferId = static_cast<int>(model.buffers.size());
+        size_t indicesBufferId = model.buffers.size();
         model.buffers.emplace_back();
         tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
         indicesBuffer.data = std::move(outputIndicesBuffer);
         
-        int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
+        size_t indicesBufferViewId = model.bufferViews.size();
         model.bufferViews.emplace_back();
-        tinygltf::BufferView& indicesBufferView = model.bufferViews[static_cast<size_t>(indicesBufferViewId)];
-        indicesBufferView.buffer = indicesBufferId;
+        tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
+        indicesBufferView.buffer = static_cast<int>(indicesBufferId);
         indicesBufferView.byteOffset = 0;
         indicesBufferView.byteLength = indicesBuffer.data.size();
         indicesBufferView.byteStride = indexSizeBytes;
         indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 
-        int indicesAccessorId = static_cast<int>(model.accessors.size());
+        size_t indicesAccessorId = model.accessors.size();
         model.accessors.emplace_back();
-        tinygltf::Accessor& indicesAccessor = model.accessors[static_cast<size_t>(indicesAccessorId)];
-        indicesAccessor.bufferView = indicesBufferViewId;
+        tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
+        indicesAccessor.bufferView = static_cast<int>(indicesBufferViewId);
         indicesAccessor.byteOffset = 0;
         indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
         indicesAccessor.count = indicesCount + skirtIndicesCount;
         indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT : TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
 
-        primitive.indices = indicesBufferId;
+        primitive.indices = static_cast<int>(indicesBufferId);
 
         // create node and update bounding volume
         model.nodes.emplace_back();
