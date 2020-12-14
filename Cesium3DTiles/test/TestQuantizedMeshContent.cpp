@@ -240,8 +240,8 @@ static QuantizedMesh<T> createGridQuantizedMesh(const BoundingRegion &region, ui
             // encode u, v, and height buffers
             uint16_t u = static_cast<uint16_t>((static_cast<double>(x) / static_cast<double>(width - 1)) * 32767.0);
             uint16_t v = static_cast<uint16_t>(((static_cast<double>(y) / static_cast<double>(height - 1))) * 32767.0);
-            int16_t deltaU = u - lastU;
-            int16_t deltaV = v - lastV;
+            int16_t deltaU = static_cast<int16_t>(u - lastU);
+            int16_t deltaV = static_cast<int16_t>(v - lastV);
             quantizedMesh.vertexData.u.emplace_back(zigzagEncode(deltaU));
             quantizedMesh.vertexData.v.emplace_back(zigzagEncode(deltaV));
             quantizedMesh.vertexData.height.push_back(0);
@@ -281,7 +281,7 @@ static QuantizedMesh<T> createGridQuantizedMesh(const BoundingRegion &region, ui
     T hightWatermark = 0;
     for (T& index : quantizedMesh.vertexData.indices) {
         T originalIndex = index;
-        index = hightWatermark - index;
+        index = static_cast<T>(hightWatermark - index);
         if (originalIndex == hightWatermark) {
             ++hightWatermark;
         }
