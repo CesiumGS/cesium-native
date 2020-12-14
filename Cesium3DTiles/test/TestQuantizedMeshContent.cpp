@@ -325,10 +325,10 @@ void checkGridMesh(const QuantizedMesh<T> &quantizedMesh,
     double north = tileRectangle.maximumY;
 
     // check grid mesh without skirt
-    std::vector<uint16_t> uBuffer = quantizedMesh.vertexData.u;
-    std::vector<uint16_t> vBuffer = quantizedMesh.vertexData.v;
-    uint32_t u = 0;
-    uint32_t v = 0;
+    const std::vector<uint16_t> &uBuffer = quantizedMesh.vertexData.u;
+    const std::vector<uint16_t> &vBuffer = quantizedMesh.vertexData.v;
+    int32_t u = 0;
+    int32_t v = 0;
 
     std::vector<glm::dvec2> uvs;
     uvs.reserve(verticesWidth * verticesHeight);
@@ -603,7 +603,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
         size_t totalSkirtVerticesCount = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
 
-        GltfAccessor<glm::vec3> normals(model, static_cast<int>(primitive.attributes.at("NORMAL")));
+        GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
         REQUIRE(normals.size() == (verticesWidth * verticesHeight + totalSkirtVerticesCount));
         for (size_t i = 0; i < normals.size(); ++i) {
             REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::EPSILON2));
