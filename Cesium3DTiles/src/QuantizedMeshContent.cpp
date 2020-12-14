@@ -634,7 +634,6 @@ namespace Cesium3DTiles {
         double skirtHeight = calculateSkirtHeight(id.level, ellipsoid, tilingScheme);
         double longitudeOffset = (east - west) * 0.0001;
         double latitudeOffset = (north - south) * 0.0001;
-        glm::vec3 tileNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
         if (meshView->indexType == QuantizedMeshIndexType::UnsignedInt) {
             // decode the tile indices without skirt. 
             size_t outputIndicesCount = indicesCount + skirtIndicesCount;
