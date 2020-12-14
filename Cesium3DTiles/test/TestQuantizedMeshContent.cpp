@@ -79,8 +79,8 @@ static void octEncode(glm::vec3 normal, uint8_t &x, uint8_t &y) {
                 Math::toSNorm((1.0f - glm::abs(p.x)) * static_cast<float>(Math::signNotZero(p.y))));
     }
     else {
-		x = static_cast<uint8_t>(Math::toSNorm(p.x));
-		y = static_cast<uint8_t>(Math::toSNorm(p.y));
+        x = static_cast<uint8_t>(Math::toSNorm(p.x));
+        y = static_cast<uint8_t>(Math::toSNorm(p.y));
     }
 }
 
@@ -559,22 +559,22 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             0.0);
         QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
 
-		// add oct-encoded normal extension. This is just a random direction and not really normal.
+        // add oct-encoded normal extension. This is just a random direction and not really normal.
         // We want to make sure the normal is written to the gltf
-		glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
-		uint8_t x = 0, y = 0;
-		octEncode(normal, x, y);
-		std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
-		for (size_t i = 0; i < octNormals.size(); i += 2) {
-			octNormals[i] = x;
-			octNormals[i+1] = y;
-		}
-		
-		Extension octNormalExtension;
-		octNormalExtension.extensionID = 1;
-		octNormalExtension.extensionData = std::move(octNormals);
+        glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
+        uint8_t x = 0, y = 0;
+        octEncode(normal, x, y);
+        std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
+        for (size_t i = 0; i < octNormals.size(); i += 2) {
+            octNormals[i] = x;
+            octNormals[i+1] = y;
+        }
+        
+        Extension octNormalExtension;
+        octNormalExtension.extensionID = 1;
+        octNormalExtension.extensionData = std::move(octNormals);
 
-		quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
+        quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
 
         // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
@@ -597,10 +597,10 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         const tinygltf::Mesh& mesh = model.meshes.front();
         const tinygltf::Primitive& primitive = mesh.primitives.front();
 
-		size_t westIndicesCount = quantizedMesh.vertexData.westIndices.size();
-		size_t southIndicesCount = quantizedMesh.vertexData.southIndices.size();
-		size_t eastIndicesCount = quantizedMesh.vertexData.eastIndices.size();
-		size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
+        size_t westIndicesCount = quantizedMesh.vertexData.westIndices.size();
+        size_t southIndicesCount = quantizedMesh.vertexData.southIndices.size();
+        size_t eastIndicesCount = quantizedMesh.vertexData.eastIndices.size();
+        size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
         size_t totalSkirtVerticesCount = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
 
         GltfAccessor<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));

@@ -507,13 +507,13 @@ namespace Cesium3DTiles {
             throw std::runtime_error("decoded buffer is too small.");
         }
 
-		size_t normalOutputIndex = 0;
-		for (size_t i = 0; i < encoded.size(); i += 2) {
-			glm::dvec3 normal = octDecode(encoded[i], encoded[i + 1]);
-			decoded[normalOutputIndex++] = static_cast<float>(normal.x);
-			decoded[normalOutputIndex++] = static_cast<float>(normal.y);
-			decoded[normalOutputIndex++] = static_cast<float>(normal.z);
-		}
+        size_t normalOutputIndex = 0;
+        for (size_t i = 0; i < encoded.size(); i += 2) {
+            glm::dvec3 normal = octDecode(encoded[i], encoded[i + 1]);
+            decoded[normalOutputIndex++] = static_cast<float>(normal.x);
+            decoded[normalOutputIndex++] = static_cast<float>(normal.y);
+            decoded[normalOutputIndex++] = static_cast<float>(normal.z);
+        }
     }
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
