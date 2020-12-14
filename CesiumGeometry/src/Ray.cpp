@@ -18,7 +18,7 @@ namespace CesiumGeometry {
         //>>includeEnd('debug');
     }
 
-    Ray Ray::operator-() const {
+    Ray Ray::operator-() const noexcept {
         return Ray(this->_origin, -this->_direction);
     }
 

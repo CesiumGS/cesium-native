@@ -5,46 +5,7 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
-    GlobeRectangle::GlobeRectangle(
-        double west,
-        double south,
-        double east,
-        double north
-    ) :
-        _west(west),
-        _south(south),
-        _east(east),
-        _north(north)
-    {
-    }
-
-    /*static*/ GlobeRectangle GlobeRectangle::fromDegrees(double westDegrees, double southDegrees, double eastDegrees, double northDegrees) {
-        return GlobeRectangle(
-            Math::degreesToRadians(westDegrees),
-            Math::degreesToRadians(southDegrees),
-            Math::degreesToRadians(eastDegrees),
-            Math::degreesToRadians(northDegrees)
-        );
-    }
-
-    CesiumGeometry::Rectangle GlobeRectangle::toSimpleRectangle() const {
-        return CesiumGeometry::Rectangle(this->getWest(), this->getSouth(), this->getEast(), this->getNorth());
-    }
-
-    double GlobeRectangle::computeWidth() const {
-        double east = this->_east;
-        double west = this->_west;
-        if (east < west) {
-            east += Math::TWO_PI;
-        }
-        return east - west;
-    }
-
-    double GlobeRectangle::computeHeight() const {
-        return this->_north - this->_south;
-    }
-
-    Cartographic GlobeRectangle::computeCenter() const {
+    Cartographic GlobeRectangle::computeCenter() const noexcept {
         double east = this->_east;
         double west = this->_west;
 
@@ -58,7 +19,7 @@ namespace CesiumGeospatial {
         return Cartographic(longitude, latitude, 0.0);
     }
 
-    bool GlobeRectangle::contains(const Cartographic& cartographic) const {
+    bool GlobeRectangle::contains(const Cartographic& cartographic) const noexcept {
         double longitude = cartographic.longitude;
         double latitude = cartographic.latitude;
 
@@ -79,7 +40,7 @@ namespace CesiumGeospatial {
         );
     }
 
-    std::optional<GlobeRectangle> GlobeRectangle::intersect(const GlobeRectangle& other) const {
+    std::optional<GlobeRectangle> GlobeRectangle::intersect(const GlobeRectangle& other) const noexcept {
         double rectangleEast = this->_east;
         double rectangleWest = this->_west;
 
@@ -123,7 +84,7 @@ namespace CesiumGeospatial {
         return GlobeRectangle(west, south, east, north);
     }
 
-    GlobeRectangle GlobeRectangle::computeUnion(const GlobeRectangle& other) const {
+    GlobeRectangle GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
         double rectangleEast = this->_east;
         double rectangleWest = this->_west;
 

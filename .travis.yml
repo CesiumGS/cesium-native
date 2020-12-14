@@ -1,18 +1,28 @@
 language: cpp
-matrix:
+jobs:
   include:
-    - os: windows
+    - name: Windows + VS2019
+      os: windows
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install
-    - os: linux
-      dist: bionic
+    - name: Linux + GCC
+      os: linux
+      dist: focal
       install:
-        - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-        - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
         - sudo apt-get update
         - sudo apt-get install cmake doxygen
-        - export PATH=/usr/bin:$PATH
+    - name: Linux + Clang
+      os: linux
+      dist: focal
+      # We're using Clang 10 instead of the default (Clang 7) because of std::variant related failures
+      # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
+      install:
+        - sudo apt-get update
+        - sudo apt-get install clang-10 cmake doxygen
+      env:
+        - CC=clang-10
+        - CXX=clang++-10
 
 script:
   - mkdir -p build

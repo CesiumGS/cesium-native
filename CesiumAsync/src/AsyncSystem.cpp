@@ -7,7 +7,7 @@ namespace CesiumAsync {
     AsyncSystem::AsyncSystem(
         std::shared_ptr<IAssetAccessor> pAssetAccessor,
         std::shared_ptr<ITaskProcessor> pTaskProcessor
-    ) :
+    ) noexcept :
         _pSchedulers(std::make_shared<Impl::AsyncSystemSchedulers>(pAssetAccessor, pTaskProcessor))
     {
     }

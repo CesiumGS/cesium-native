@@ -4,13 +4,7 @@
 
 namespace CesiumGeometry {
 
-    BoundingSphere::BoundingSphere(const glm::dvec3& center, double radius) :
-        _center(center),
-        _radius(radius)
-    {
-    }
-
-    CullingResult BoundingSphere::intersectPlane(const Plane& plane) const {
+    CullingResult BoundingSphere::intersectPlane(const Plane& plane) const noexcept {
         double distanceToPlane = glm::dot(plane.getNormal(), this->_center) + plane.getDistance();
 
         double radius = this->_radius;
@@ -24,7 +18,7 @@ namespace CesiumGeometry {
         return CullingResult::Inside;
     }
 
-    double BoundingSphere::computeDistanceSquaredToPosition(const glm::dvec3& position) const {
+    double BoundingSphere::computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept {
         glm::dvec3 diff = position - this->_center;
         return glm::dot(diff, diff) - this->_radius * this->_radius;
     }

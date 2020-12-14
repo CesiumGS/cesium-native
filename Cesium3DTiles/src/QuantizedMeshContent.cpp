@@ -806,7 +806,7 @@ namespace Cesium3DTiles {
         
         int indicesBufferViewId = static_cast<int>(model.bufferViews.size());
         model.bufferViews.emplace_back();
-        tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
+        tinygltf::BufferView& indicesBufferView = model.bufferViews[static_cast<size_t>(indicesBufferViewId)];
         indicesBufferView.buffer = indicesBufferId;
         indicesBufferView.byteOffset = 0;
         indicesBufferView.byteLength = indicesBuffer.data.size();
@@ -815,7 +815,7 @@ namespace Cesium3DTiles {
 
         int indicesAccessorId = static_cast<int>(model.accessors.size());
         model.accessors.emplace_back();
-        tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
+        tinygltf::Accessor& indicesAccessor = model.accessors[static_cast<size_t>(indicesAccessorId)];
         indicesAccessor.bufferView = indicesBufferViewId;
         indicesAccessor.byteOffset = 0;
         indicesAccessor.type = TINYGLTF_TYPE_SCALAR;

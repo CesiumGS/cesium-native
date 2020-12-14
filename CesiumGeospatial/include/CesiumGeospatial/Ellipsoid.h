@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGeospatial/Library.h"
+#include "CesiumUtility/Math.h"
 #include <glm/vec3.hpp>
 #include <optional>
 #include "CesiumGeospatial/Cartographic.h"
@@ -15,16 +16,15 @@ namespace CesiumGeospatial {
      * Rather than constructing this object directly, one of the provided constants 
      * is normally used.
      */
-    class CESIUMGEOSPATIAL_API  Ellipsoid {
+    class CESIUMGEOSPATIAL_API Ellipsoid {
     public:
-
         /**
          * @brief An Ellipsoid instance initialized to the WGS84 standard.
          *
          * The ellipsoid is initialized to the  World Geodetic System (WGS84) standard, as defined
          * in https://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf.
          */
-        static const Ellipsoid WGS84;
+        static /*constexpr*/ const Ellipsoid WGS84;
 
         /**
          * @brief Creates a new instance.
@@ -33,19 +33,29 @@ namespace CesiumGeospatial {
          * @param y The radius in y-direction.
          * @param z The radius in z-direction.
          */
-        Ellipsoid(double x, double y, double z);
+        constexpr Ellipsoid(double x, double y, double z) noexcept :
+            Ellipsoid(glm::dvec3(x, y, z))
+        {
+        }
 
         /**
          * @brief Creates a new instance.
          *
          * @param radii The radii in x-, y-, and z-direction.
          */
-        Ellipsoid(const glm::dvec3& radii);
+        constexpr Ellipsoid(const glm::dvec3& radii) noexcept :
+            _radii(radii),
+            _radiiSquared(radii.x * radii.x, radii.y * radii.y, radii.z * radii.z),
+            _oneOverRadii(1.0 / radii.x, 1.0 / radii.y, 1.0 / radii.z),
+            _oneOverRadiiSquared(1.0 / (radii.x * radii.x), 1.0 / (radii.y * radii.y), 1.0 / (radii.z * radii.z)),
+            _centerToleranceSquared(CesiumUtility::Math::EPSILON1)
+        {
+        }
 
         /**
          * @brief Returns the radii in x-, y-, and z-direction.
          */
-        const glm::dvec3& getRadii() const { return this->_radii; }
+        constexpr const glm::dvec3& getRadii() const noexcept { return this->_radii; }
 
         /**
          * @brief Computes the normal of the plane tangent to the surface of the ellipsoid at the provided position.
@@ -53,7 +63,7 @@ namespace CesiumGeospatial {
          * @param position The cartesian position for which to to determine the surface normal.
          * @return The normal.
          */
-        glm::dvec3 geodeticSurfaceNormal(const glm::dvec3& position) const;
+        glm::dvec3 geodeticSurfaceNormal(const glm::dvec3& position) const noexcept;
 
         /**
          * @brief Computes the normal of the plane tangent to the surface of the ellipsoid at the provided position.
@@ -61,7 +71,7 @@ namespace CesiumGeospatial {
          * @param cartographic The {@link Cartographic} position for which to to determine the surface normal.
          * @return The normal.
          */
-        glm::dvec3 geodeticSurfaceNormal(const Cartographic& cartographic) const;
+        glm::dvec3 geodeticSurfaceNormal(const Cartographic& cartographic) const noexcept;
 
         /**
          * @brief Converts the provided {@link Cartographic} to cartesian representation.
@@ -69,7 +79,7 @@ namespace CesiumGeospatial {
          * @param cartographic The {@link Cartographic} position.
          * @return The cartesian representation.
          */
-        glm::dvec3 cartographicToCartesian(const Cartographic& cartographic) const;
+        glm::dvec3 cartographicToCartesian(const Cartographic& cartographic) const noexcept;
 
         /**
          * @brief Converts the provided cartesian to a {@link Cartographic} representation. 
@@ -80,7 +90,7 @@ namespace CesiumGeospatial {
          * @return The {@link Cartographic} representation, or the empty optional if
          * the cartesian is at the center of this ellipsoid.
          */
-        std::optional<Cartographic> cartesianToCartographic(const glm::dvec3& cartesian) const;
+        std::optional<Cartographic> cartesianToCartographic(const glm::dvec3& cartesian) const noexcept;
 
         /**
          * @brief Scales the given cartesian position along the geodetic surface normal so that it is on the surface of this ellipsoid. 
@@ -91,33 +101,37 @@ namespace CesiumGeospatial {
          * @return The scaled position, or the empty optional if
          * the cartesian is at the center of this ellipsoid.
          */
-        std::optional<glm::dvec3> scaleToGeodeticSurface(const glm::dvec3& cartesian) const;
+        std::optional<glm::dvec3> scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept;
 
         /**
          * @brief The maximum radius in any dimension.
          *
          * @return The maximum radius.
          */
-        double getMaximumRadius() const;
+        constexpr double getMaximumRadius() const noexcept {
+            return glm::max(this->_radii.x, glm::max(this->_radii.y, this->_radii.z));
+        }
 
         /**
          * @brief The minimum radius in any dimension.
          *
          * @return The minimum radius.
          */
-        double getMinimumRadius() const;
+        constexpr double getMinimumRadius() const noexcept {
+            return glm::min(this->_radii.x, glm::min(this->_radii.y, this->_radii.z));
+        }
 
         /**
          * @brief Returns `true` if two elliposids are equal.
          */
-        bool operator==(const Ellipsoid& rhs) const {
+        constexpr bool operator==(const Ellipsoid& rhs) const noexcept {
             return this->_radii == rhs._radii;
         };
 
         /**
          * @brief Returns `true` if two elliposids are *not* equal.
          */
-        bool operator!=(const Ellipsoid& rhs) const {
+        constexpr bool operator!=(const Ellipsoid& rhs) const noexcept {
             return !(*this == rhs);
         };
 
@@ -129,4 +143,5 @@ namespace CesiumGeospatial {
         double _centerToleranceSquared;
     };
 
+    inline constexpr Ellipsoid Ellipsoid::WGS84(6378137.0, 6378137.0, 6356752.3142451793);
 }

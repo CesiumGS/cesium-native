@@ -99,7 +99,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Default constructor for an empty, uninitialized tile.
          */
-        Tile();
+        Tile() noexcept;
 
         /**
          * @brief Default destructor, which clears all resources associated with this tile.
@@ -133,7 +133,7 @@ namespace Cesium3DTiles {
         Tileset* getTileset() noexcept { return this->_pContext->pTileset; }
 
         /** @copydoc Tile::getTileset() */
-        const Tileset* getTileset() const { return this->_pContext->pTileset; }
+        const Tileset* getTileset() const noexcept { return this->_pContext->pTileset; }
         
         /**
          * @brief Returns the {@link TileContext} of this tile.
@@ -142,10 +142,10 @@ namespace Cesium3DTiles {
          *
          * @return The tile context.
          */
-        TileContext* getContext() { return this->_pContext; }
+        TileContext* getContext() noexcept { return this->_pContext; }
 
         /** @copydoc Tile::getContext() */
-        const TileContext* getContext() const { return this->_pContext; }
+        const TileContext* getContext() const noexcept { return this->_pContext; }
 
         /**
          * @brief Set the {@link TileContext} of this tile.
@@ -154,7 +154,7 @@ namespace Cesium3DTiles {
          *
          * @param pContext The tile context.
          */
-        void setContext(TileContext* pContext) { this->_pContext = pContext; }
+        void setContext(TileContext* pContext) noexcept { this->_pContext = pContext; }
 
         /**
          * @brief Returns the parent of this tile in the tile hierarchy.
@@ -163,10 +163,10 @@ namespace Cesium3DTiles {
          * 
          * @return The parent.
          */
-        Tile* getParent() { return this->_pParent; }
+        Tile* getParent() noexcept { return this->_pParent; }
 
         /** @copydoc Tile::getParent() */
-        const Tile* getParent() const { return this->_pParent; }
+        const Tile* getParent() const noexcept { return this->_pParent; }
 
         /**
          * @brief Set the parent of this tile.
@@ -175,7 +175,7 @@ namespace Cesium3DTiles {
          *
          * @param pParent The parent tile .
          */
-        void setParent(Tile* pParent) { this->_pParent = pParent; }
+        void setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
         /**
          * @brief Returns a *view* on the children of this tile.
@@ -187,7 +187,7 @@ namespace Cesium3DTiles {
         gsl::span<Tile> getChildren() noexcept { return gsl::span<Tile>(this->_children); }
 
         /** @copydoc Tile::getChildren() */
-        gsl::span<const Tile> getChildren() const { return gsl::span<const Tile>(this->_children); }
+        gsl::span<const Tile> getChildren() const noexcept { return gsl::span<const Tile>(this->_children); }
 
         /**
          * @brief Allocates space for the given number of child tiles.
@@ -219,7 +219,7 @@ namespace Cesium3DTiles {
          * 
          * @return The bounding volume.
          */
-        const BoundingVolume& getBoundingVolume() const { return this->_boundingVolume; }
+        const BoundingVolume& getBoundingVolume() const noexcept { return this->_boundingVolume; }
 
         /**
          * @brief Set the {@link BoundingVolume} of this tile.
@@ -228,7 +228,7 @@ namespace Cesium3DTiles {
          *
          * @param value The bounding volume.
          */
-        void setBoundingVolume(const BoundingVolume& value) { this->_boundingVolume = value; }
+        void setBoundingVolume(const BoundingVolume& value) noexcept { this->_boundingVolume = value; }
 
         /**
          * @brief Returns the viewer request volume of this tile.
@@ -241,7 +241,7 @@ namespace Cesium3DTiles {
          * 
          * @return The viewer request volume, or an empty optional.
          */
-        const std::optional<BoundingVolume>& getViewerRequestVolume() const { return this->_viewerRequestVolume; }
+        const std::optional<BoundingVolume>& getViewerRequestVolume() const noexcept { return this->_viewerRequestVolume; }
 
         /**
          * @brief Set the viewer request volume of this tile.
@@ -250,7 +250,7 @@ namespace Cesium3DTiles {
          *
          * @param value The viewer request volume.
          */
-        void setViewerRequestVolume(const std::optional<BoundingVolume>& value) { this->_viewerRequestVolume = value; }
+        void setViewerRequestVolume(const std::optional<BoundingVolume>& value) noexcept { this->_viewerRequestVolume = value; }
 
         /**
          * @brief Returns the geometric error of this tile.
@@ -260,7 +260,7 @@ namespace Cesium3DTiles {
          * 
          * @return The geometric error of this tile, in meters.
          */
-        double getGeometricError() const { return this->_geometricError; }
+        double getGeometricError() const noexcept { return this->_geometricError; }
 
         /**
          * @brief Set the geometric error of the contents of this tile.
@@ -269,7 +269,7 @@ namespace Cesium3DTiles {
          *
          * @param value The geometric error, in meters.
          */
-        void setGeometricError(double value) { this->_geometricError = value; }
+        void setGeometricError(double value) noexcept { this->_geometricError = value; }
 
         /**
          * @brief The refinement strategy of this tile.
@@ -282,7 +282,7 @@ namespace Cesium3DTiles {
          * 
          * @return The refinement strategy.
          */
-        TileRefine getRefine() const { return this->_refine; }
+        TileRefine getRefine() const noexcept { return this->_refine; }
 
         /**
          * @brief Set the refinement strategy of this tile.
@@ -291,7 +291,7 @@ namespace Cesium3DTiles {
          *
          * @param value The refinement strategy.
          */
-        void setRefine(TileRefine value) { this->_refine = value; }
+        void setRefine(TileRefine value) noexcept { this->_refine = value; }
 
         /**
         * @brief Gets the transformation matrix for this tile. 
@@ -301,7 +301,7 @@ namespace Cesium3DTiles {
         * 
         * @return The transform matrix.
         */
-        const glm::dmat4x4& getTransform() const { return this->_transform; }
+        const glm::dmat4x4& getTransform() const noexcept { return this->_transform; }
 
         /**
          * @brief Set the transformation matrix for this tile.
@@ -310,7 +310,7 @@ namespace Cesium3DTiles {
          *
          * @param value The transform matrix.
          */
-        void setTransform(const glm::dmat4x4& value) { this->_transform = value; }
+        void setTransform(const glm::dmat4x4& value) noexcept { this->_transform = value; }
 
         /**
          * @brief Returns the {@link TileID} of this tile.
@@ -328,7 +328,7 @@ namespace Cesium3DTiles {
          *
          * @param id The tile ID.
          */
-        void setTileID(const TileID& id);
+        void setTileID(const TileID& id) noexcept;
 
         /**
          * @brief Returns the {@link BoundingVolume} of the renderable content of this tile.
@@ -340,7 +340,7 @@ namespace Cesium3DTiles {
          * 
          * @see Tile::getBoundingVolume
          */
-        const std::optional<BoundingVolume>& getContentBoundingVolume() const { return this->_contentBoundingVolume; }
+        const std::optional<BoundingVolume>& getContentBoundingVolume() const noexcept { return this->_contentBoundingVolume; }
 
         /**
          * @brief Set the {@link BoundingVolume} of the renderable content of this tile.
@@ -349,7 +349,7 @@ namespace Cesium3DTiles {
          *
          * @param value The content bounding volume
          */
-        void setContentBoundingVolume(const std::optional<BoundingVolume>& value) { this->_contentBoundingVolume = value; }
+        void setContentBoundingVolume(const std::optional<BoundingVolume>& value) noexcept { this->_contentBoundingVolume = value; }
 
         /**
          * @brief Returns the {@link TileContentLoadResult} for the content of this tile.
@@ -360,10 +360,10 @@ namespace Cesium3DTiles {
          * 
          * @return The tile content load result, or `nullptr` if no content is loaded
          */
-        TileContentLoadResult* getContent() { return this->_pContent.get(); }
+        TileContentLoadResult* getContent() noexcept { return this->_pContent.get(); }
 
         /** @copydoc Tile::getContent() */
-        const TileContentLoadResult* getContent() const { return this->_pContent.get(); }
+        const TileContentLoadResult* getContent() const noexcept { return this->_pContent.get(); }
 
         /** 
          * @brief Returns internal resources required for rendering this tile.
@@ -372,7 +372,7 @@ namespace Cesium3DTiles {
          *
          * @return The renderer resources.
          */
-        void* getRendererResources() const { return this->_pRendererResources; }
+        void* getRendererResources() const noexcept { return this->_pRendererResources; }
 
         /**
          * @brief Returns the {@link LoadState} of this tile.
@@ -386,10 +386,10 @@ namespace Cesium3DTiles {
          *
          * @return The last selection state
          */
-        TileSelectionState& getLastSelectionState() { return this->_lastSelectionState; }
+        TileSelectionState& getLastSelectionState() noexcept { return this->_lastSelectionState; }
 
         /** @copydoc Tile::getLastSelectionState() */
-        const TileSelectionState& getLastSelectionState() const { return this->_lastSelectionState; }
+        const TileSelectionState& getLastSelectionState() const noexcept { return this->_lastSelectionState; }
 
         /**
          * @brief Set the {@link TileSelectionState} of this tile.
@@ -398,20 +398,20 @@ namespace Cesium3DTiles {
          *
          * @param newState The new stace
          */
-        void setLastSelectionState(const TileSelectionState& newState) { this->_lastSelectionState = newState; }
+        void setLastSelectionState(const TileSelectionState& newState) noexcept { this->_lastSelectionState = newState; }
 
         /**
          * @brief Returns the raster overlay tiles that have been mapped to this tile.
          */
-        std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() { return this->_rasterTiles; }
+        std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept { return this->_rasterTiles; }
 
         /** @copydoc Tile::getMappedRasterTiles() */
-        const std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() const { return this->_rasterTiles; }
+        const std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() const noexcept { return this->_rasterTiles; }
 
         /**
          * @brief Determines if this tile is currently renderable.
          */
-        bool isRenderable() const;
+        bool isRenderable() const noexcept;
 
         /**
          * @brief Trigger the process of loading the {@link Tile::getContent}.
@@ -452,7 +452,7 @@ namespace Cesium3DTiles {
          * @param previousFrameNumber The number of the previous render frame.
          * @param currentFrameNumber The number of the current render frame.
          */
-        void update(uint32_t previousFrameNumber, uint32_t currentFrameNumber);
+        void update(int32_t previousFrameNumber, int32_t currentFrameNumber);
 
         /**
          * @brief Marks the tile as permanently failing to load.
@@ -462,12 +462,12 @@ namespace Cesium3DTiles {
          * Moves the tile from the `FailedTemporarily` state to the `Failed` state.
          * If the tile is not in the `FailedTemporarily` state, this method does nothing.
          */
-        void markPermanentlyFailed();
+        void markPermanentlyFailed() noexcept;
 
         /**
          * @brief Determines the number of bytes in this tile's geometry and texture data.
          */
-        size_t computeByteSize() const;
+        size_t computeByteSize() const noexcept;
 
     private:
 

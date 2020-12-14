@@ -7,27 +7,11 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
-    /*static*/ const Ellipsoid Ellipsoid::WGS84 = Ellipsoid(6378137.0, 6378137.0, 6356752.3142451793);
-
-    Ellipsoid::Ellipsoid(double x, double y, double z) :
-        Ellipsoid(glm::dvec3(x, y, z))
-    {
-    }
-
-    Ellipsoid::Ellipsoid(const glm::dvec3& radii) :
-        _radii(radii),
-        _radiiSquared(radii.x * radii.x, radii.y * radii.y, radii.z * radii.z),
-        _oneOverRadii(1.0 / radii.x, 1.0 / radii.y, 1.0 / radii.z),
-        _oneOverRadiiSquared(1.0 / (radii.x * radii.x), 1.0 / (radii.y * radii.y), 1.0 / (radii.z * radii.z)),
-        _centerToleranceSquared(Math::EPSILON1)
-    {
-    }
-
-    glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const glm::dvec3& position) const {
+    glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const glm::dvec3& position) const noexcept {
         return glm::normalize(position * this->_oneOverRadiiSquared);
     }
 
-    glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const Cartographic& cartographic) const {
+    glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const Cartographic& cartographic) const noexcept {
         double longitude = cartographic.longitude;
         double latitude = cartographic.latitude;
         double cosLatitude = glm::cos(latitude);
@@ -39,7 +23,7 @@ namespace CesiumGeospatial {
         ));
     }
 
-    glm::dvec3 Ellipsoid::cartographicToCartesian(const Cartographic& cartographic) const {
+    glm::dvec3 Ellipsoid::cartographicToCartesian(const Cartographic& cartographic) const noexcept {
         glm::dvec3 n = this->geodeticSurfaceNormal(cartographic);
         glm::dvec3 k = this->_radiiSquared * n;
         double gamma = sqrt(glm::dot(n, k));
@@ -48,7 +32,7 @@ namespace CesiumGeospatial {
         return k + n;
     }
 
-    std::optional<Cartographic> Ellipsoid::cartesianToCartographic(const glm::dvec3& cartesian) const {
+    std::optional<Cartographic> Ellipsoid::cartesianToCartographic(const glm::dvec3& cartesian) const noexcept {
         std::optional<glm::dvec3> p = this->scaleToGeodeticSurface(cartesian);
 
         if (!p) {
@@ -65,7 +49,7 @@ namespace CesiumGeospatial {
         return Cartographic(longitude, latitude, height);
     }
 
-    std::optional<glm::dvec3> Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const {
+    std::optional<glm::dvec3> Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept {
         double positionX = cartesian.x;
         double positionY = cartesian.y;
         double positionZ = cartesian.z;
@@ -156,14 +140,6 @@ namespace CesiumGeospatial {
             positionY * yMultiplier,
             positionZ * zMultiplier
         );
-    }
-
-    double Ellipsoid::getMaximumRadius() const {
-        return glm::max(this->_radii.x, glm::max(this->_radii.y, this->_radii.z));
-    }
-
-    double Ellipsoid::getMinimumRadius() const {
-        return glm::min(this->_radii.x, glm::min(this->_radii.y, this->_radii.z));
     }
 
 }
