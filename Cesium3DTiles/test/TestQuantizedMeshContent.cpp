@@ -547,6 +547,48 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
     }
 
+    SECTION("Check 16 bit indices turns to 32 bits when adding skirt") {
+        // mock quantized mesh
+        uint32_t verticesWidth = 255;
+        uint32_t verticesHeight = 255;
+        QuadtreeTileID tileID(10, 0, 0);
+        Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+        BoundingRegion boundingVolume = BoundingRegion(
+            GlobeRectangle(tileRectangle.minimumX, tileRectangle.minimumY, tileRectangle.maximumX, tileRectangle.maximumY), 
+            0.0, 
+            0.0);
+        QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
+
+        // convert to gltf
+        std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
+        REQUIRE(loadResult != nullptr);
+        REQUIRE(loadResult->model != std::nullopt);
+
+        // make sure the gltf is the grid
+        const tinygltf::Model& model = *loadResult->model;
+        const tinygltf::Mesh& mesh = model.meshes.front();
+        const tinygltf::Primitive& primitive = mesh.primitives.front();
+
+        // make sure no normal written
+        REQUIRE(primitive.attributes.find("NORMAL") == primitive.attributes.end());
+
+        // make sure mesh contains grid mesh and skirts at the end
+        GltfAccessor<uint32_t> indices(model, static_cast<size_t>(primitive.indices));
+        GltfAccessor<glm::vec3> positions(model, static_cast<size_t>(primitive.attributes.at("POSITION")));
+        checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
+    }
+
     SECTION("Check quantized mesh that has oct normal") {
         // mock quantized mesh
         uint32_t verticesWidth = 3;
