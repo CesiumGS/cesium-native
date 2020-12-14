@@ -348,7 +348,7 @@ namespace Cesium3DTiles {
             positions[positionIdx + 2] = static_cast<float>(position.z);
 
             if (!normals.empty()) {
-                size_t componentIndex = 3 * edgeIdx;
+                size_t componentIndex = static_cast<size_t>(3 * edgeIdx);
                 normals[positionIdx] = normals[componentIndex];
                 normals[positionIdx + 1] = normals[componentIndex + 1];
                 normals[positionIdx + 2] = normals[componentIndex + 2];
