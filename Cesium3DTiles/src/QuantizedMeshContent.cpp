@@ -117,7 +117,7 @@ namespace Cesium3DTiles {
         E highest = 0;
         for (size_t i = 0; i < encoded.size(); ++i) {
             E code = encoded[i];
-            E decodedIdx = highest - code;
+            E decodedIdx = static_cast<E>(highest - code);
             decoded[i] = static_cast<D>(decodedIdx);
             if (code == 0) {
                 ++highest;
