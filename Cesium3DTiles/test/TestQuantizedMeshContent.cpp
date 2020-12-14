@@ -327,8 +327,8 @@ void checkGridMesh(const QuantizedMesh<T> &quantizedMesh,
     // check grid mesh without skirt
     std::vector<uint16_t> uBuffer = quantizedMesh.vertexData.u;
     std::vector<uint16_t> vBuffer = quantizedMesh.vertexData.v;
-    size_t u = 0;
-    size_t v = 0;
+    uint32_t u = 0;
+    uint32_t v = 0;
 
     std::vector<glm::dvec2> uvs;
     uvs.reserve(verticesWidth * verticesHeight);
@@ -500,8 +500,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         REQUIRE(primitive.attributes.find("NORMAL") == primitive.attributes.end());
 
         // make sure mesh contains grid mesh and skirts at the end
-        GltfAccessor<uint16_t> indices(model, primitive.indices);
-        GltfAccessor<glm::vec3> positions(model, primitive.attributes.at("POSITION"));
+        GltfAccessor<uint16_t> indices(model, static_cast<size_t>(primitive.indices));
+        GltfAccessor<glm::vec3> positions(model, static_cast<size_t>(primitive.attributes.at("POSITION")));
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
     }
 
@@ -542,8 +542,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         REQUIRE(primitive.attributes.find("NORMAL") == primitive.attributes.end());
 
         // make sure mesh contains grid mesh and skirts at the end
-        GltfAccessor<uint32_t> indices(model, primitive.indices);
-        GltfAccessor<glm::vec3> positions(model, primitive.attributes.at("POSITION"));
+        GltfAccessor<uint32_t> indices(model, static_cast<size_t>(primitive.indices));
+        GltfAccessor<glm::vec3> positions(model, static_cast<size_t>(primitive.attributes.at("POSITION")));
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
     }
 
@@ -603,7 +603,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
         size_t totalSkirtVerticesCount = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
 
-        GltfAccessor<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));
+        GltfAccessor<glm::vec3> normals(model, static_cast<int>(primitive.attributes.at("NORMAL")));
         REQUIRE(normals.size() == (verticesWidth * verticesHeight + totalSkirtVerticesCount));
         for (size_t i = 0; i < normals.size(); ++i) {
             REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::EPSILON2));
