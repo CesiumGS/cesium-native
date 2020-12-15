@@ -15,21 +15,8 @@ namespace Cesium3DTiles {
          */
         struct CoverageArea final {
             CesiumGeospatial::GlobeRectangle rectangle;
-            int zoomMin;
-            int zoomMax;
-        };
-
-        /**
-         * @brief Comparator for Credit objects to use with std::set. 
-         */
-        struct Comparator final {
-            bool operator()(const int lhs, const int rhs) {
-                return lhs < rhs;
-            }
-            
-            bool operator()(const Credit& lhs, const Credit& rhs) {
-                return lhs._id < rhs._id;
-            }
+            unsigned int zoomMin;
+            unsigned int zoomMax;
         };
 
         /**
@@ -67,7 +54,7 @@ namespace Cesium3DTiles {
          * 
          * @returns A bool of whether the given rectangle and zoom is within the coverage areas.
          */
-        bool withinCoverage(CesiumGeospatial::GlobeRectangle rectangle, int zoomLevel) const;
+        bool withinCoverage(CesiumGeospatial::GlobeRectangle rectangle, unsigned int zoomLevel) const;
 
         /**
          * @brief Checks this and another Credit object for equality of id.
@@ -96,11 +83,11 @@ namespace Cesium3DTiles {
 
         // the unique identifier for the HTML string this Credit object represents 
         int _id;
-        // pointer to the html string
-        char* _html;
-        // whether to show this credit on screen
-        bool _showOnScreen;
         // the bounding boxes covered by this credit
         std::vector<CoverageArea> _coverageAreas;
+        // whether to show this credit on screen
+        bool _showOnScreen;
+        // pointer to the html string
+        char* _html;
     };
 }

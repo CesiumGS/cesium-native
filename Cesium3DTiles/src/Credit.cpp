@@ -30,7 +30,7 @@ namespace Cesium3DTiles {
     Credit::~Credit() { 
     }
 
-    bool Credit::withinCoverage(CesiumGeospatial::GlobeRectangle rectangle, int zoomLevel) const {
+    bool Credit::withinCoverage(CesiumGeospatial::GlobeRectangle rectangle, unsigned zoomLevel) const {
         for (CoverageArea coverageArea : _coverageAreas) {
             if (coverageArea.zoomMin <= zoomLevel && zoomLevel <= coverageArea.zoomMax && coverageArea.rectangle.intersect(rectangle).has_value()) {
                 return true;

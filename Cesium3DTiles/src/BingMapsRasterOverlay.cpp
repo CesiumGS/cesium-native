@@ -6,7 +6,6 @@
 #include "Cesium3DTiles/Credit.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeometry/QuadTreeTilingScheme.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
@@ -128,9 +127,9 @@ namespace Cesium3DTiles {
             return quadkey;
         }
 
+        std::vector<Credit> _credits;
         std::string _urlTemplate;
         std::vector<std::string> _subdomains;
-        std::vector<Credit> _credits;
     };
 
     BingMapsRasterOverlay::BingMapsRasterOverlay(
@@ -204,8 +203,8 @@ namespace Cesium3DTiles {
                             bbox[3],
                             bbox[2]
                         ),
-                        coverageArea.value("zoomMin", 1),
-                        coverageArea.value("zoomMax", 100)
+                        (unsigned int) coverageArea.value("zoomMin", 0),
+                        (unsigned int) coverageArea.value("zoomMax", 0)
                     };
                     coverageAreas.push_back(area);
                 }

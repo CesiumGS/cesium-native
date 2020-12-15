@@ -240,7 +240,7 @@ namespace Cesium3DTiles {
         this->_unloadCachedTiles();
         this->_processLoadQueue();
 
-        std::set<Credit> credits;//, Credit::Comparator> credits;
+        std::set<Credit> credits;
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
                 // TODO: look into this 

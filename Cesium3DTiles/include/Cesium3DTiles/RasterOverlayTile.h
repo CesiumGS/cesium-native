@@ -167,10 +167,10 @@ namespace Cesium3DTiles {
 
         RasterOverlay* _pOverlay;
         CesiumGeometry::QuadtreeTileID _tileID;
+        std::vector<Credit> _tileCredits;
         std::atomic<LoadState> _state;
         tinygltf::Image _image;
         void* _pRendererResources;
         uint32_t _references;
-        std::vector<Credit> _tileCredits;
     };
 }
