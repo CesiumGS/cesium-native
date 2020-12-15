@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/Credit.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -13,6 +14,7 @@
 #include "TilesetJson.h"
 #include "Uri.h"
 #include <glm/common.hpp>
+#include <set>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -238,23 +240,27 @@ namespace Cesium3DTiles {
         this->_unloadCachedTiles();
         this->_processLoadQueue();
 
-        // (TODO: use indices and remove redundancies) 
+        std::set<Credit> credits;//, Credit::Comparator> credits;
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
+                // TODO: look into this 
                 result.creditsToShowThisFrame += this->_options.credit.value() + "\n";
             }
             result.creditsToShowThisFrame += "Cesium Ion\n";
+            
             for (auto& tile : result.tilesToRenderThisFrame) {
-                const std::vector<RasterMappedTo3DTile>& tileOverlays = tile->getMappedRasterTiles();
-                for (RasterMappedTo3DTile tileOverlay : tileOverlays) {
-                    RasterOverlayTile* rot = tileOverlay.getReadyTile();
-                    result.creditsToShowThisFrame += (rot == nullptr) ? "uh\n" : rot->getCredit() + "\n";
-                    
-                    //result.creditsToShowThisFrame += tileOverlay.getReadyTile()->getCredit() + "\n";
-                    // + "\n";
-                    //rot->getCredit();
+                const std::vector<RasterMappedTo3DTile>& mappedRasterTiles = tile->getMappedRasterTiles();
+                for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
+                    RasterOverlayTile* rasterOverlayTile = mappedRasterTile.getReadyTile();
+                    if (rasterOverlayTile != nullptr)
+                        for (Credit credit : rasterOverlayTile->getCredits())
+                            credits.insert(credit);
+                        //result.creditsToShowThisFrame += rasterOverlayTile->getCredit();// + "\n";
                 }
             }
+
+            for (Credit credit : credits)
+                result.creditsToShowThisFrame += credit.getHTML() + "\n";
         }
 
         this->_previousFrameNumber = currentFrameNumber;

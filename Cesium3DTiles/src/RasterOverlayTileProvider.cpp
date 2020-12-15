@@ -23,7 +23,7 @@ namespace Cesium3DTiles {
         _maximumLevel(0),
         _imageWidth(1),
         _imageHeight(1),
-        _pPlaceholder(std::make_unique<RasterOverlayTile>(owner, "")),
+        _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
         _tileDataBytes(0),
         _tilesCurrentlyLoading(0)
     {

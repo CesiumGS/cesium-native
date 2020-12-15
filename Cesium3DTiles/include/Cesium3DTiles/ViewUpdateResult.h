@@ -31,7 +31,7 @@ namespace Cesium3DTiles {
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
 
         /**
-         * @brief The credits for the tiles in the render list of the current frame (TODO: use indices and remove redundancies instead) 
+         * @brief The credits for the tiles in the render list of the current frame
          */
         std::string creditsToShowThisFrame;
 

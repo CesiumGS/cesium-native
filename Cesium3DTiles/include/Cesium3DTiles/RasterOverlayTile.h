@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Cesium3DTiles/Gltf.h"
+#include "Cesium3DTiles/Credit.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include <atomic>
 #include <memory>
-#include <string>
+#include <vector>
 
 namespace Cesium3DTiles {
 
@@ -69,8 +70,7 @@ namespace Cesium3DTiles {
          * @param overlay The {@link RasterOverlay}.
          */
         RasterOverlayTile(
-            RasterOverlay& overlay,
-            std::string credit
+            RasterOverlay& overlay
         ) noexcept;
 
         /**
@@ -91,7 +91,7 @@ namespace Cesium3DTiles {
         RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
-            std::string credit,
+            const std::vector<Credit> tileCredits,
             CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
         );
 
@@ -114,9 +114,9 @@ namespace Cesium3DTiles {
         LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
 
         /**
-         * @brief Returns the current {@link LoadState}.
+         * @brief Returns the credits for this tile.
          */
-        const std::string& getCredit() const noexcept { return this->_credit; }
+        const std::vector<Credit>& getCredits() const noexcept { return this->_tileCredits; }
 
         /**
          * @brief Returns the image data for the tile.
@@ -171,6 +171,6 @@ namespace Cesium3DTiles {
         tinygltf::Image _image;
         void* _pRendererResources;
         uint32_t _references;
-        std::string _credit;
+        std::vector<Credit> _tileCredits;
     };
 }

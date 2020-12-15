@@ -3,11 +3,14 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/Credit.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumGeometry/QuadTreeTilingScheme.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
+#include "CesiumUtility/Math.h"
 #include "Uri.h"
 
 using namespace CesiumAsync;
@@ -31,6 +34,7 @@ namespace Cesium3DTiles {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
+            const std::vector<Credit>& credits,
             const AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const std::string& baseUrl,
@@ -57,14 +61,13 @@ namespace Cesium3DTiles {
                 width,
                 height
             ),
+            _credits(credits),
             _urlTemplate(urlTemplate),
             _subdomains(subdomains)
         {
             if (this->_urlTemplate.find("n=z") == std::string::npos) {
                 this->_urlTemplate = Uri::addQuery(this->_urlTemplate, "n", "z");
             }
-
-            // TODO: attribution
 
             std::string resolvedUrl = Uri::resolve(baseUrl, this->_urlTemplate);
 
@@ -93,9 +96,15 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            // TODO: change place holder credit string
-            std::string credit = "Bing: (level = " + std::to_string(tileID.level) + ", x = " + std::to_string(tileID.x) + ", y = " + std::to_string(tileID.y) + ")";
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, credit, this->getAsyncSystem().requestAsset(url));
+            CesiumGeospatial::GlobeRectangle tileRectangle = std::get<CesiumGeospatial::WebMercatorProjection>(this->getProjection()).unproject(this->getTilingScheme().tileToRectangle(tileID));
+            std::vector<Credit> tileCredits;
+            for (Credit credit : _credits) {
+                if (credit.withinCoverage(tileRectangle, tileID.level + 1)) {
+                    tileCredits.push_back(credit);
+                }
+            }
+            
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, tileCredits, this->getAsyncSystem().requestAsset(url));
         }
     
     private:
@@ -121,6 +130,7 @@ namespace Cesium3DTiles {
 
         std::string _urlTemplate;
         std::vector<std::string> _subdomains;
+        std::vector<Credit> _credits;
     };
 
     BingMapsRasterOverlay::BingMapsRasterOverlay(
@@ -180,9 +190,35 @@ namespace Cesium3DTiles {
             if (urlTemplate.empty())  {
                 return nullptr;
             }
+            
+            std::vector<Credit> credits;
+            json& attributions = resource["imageryProviders"];
+            for (json attribution : attributions) {
+                std::vector<Credit::CoverageArea> coverageAreas;
+                for (json coverageArea : attribution["coverageAreas"]) {
+                    json bbox = coverageArea["bbox"];
+                    Credit::CoverageArea area {
+                        CesiumGeospatial::GlobeRectangle::fromDegrees(
+                            bbox[1],
+                            bbox[0],
+                            bbox[3],
+                            bbox[2]
+                        ),
+                        coverageArea.value("zoomMin", 1),
+                        coverageArea.value("zoomMax", 100)
+                    };
+                    coverageAreas.push_back(area);
+                }
+                credits.push_back(Credit(
+                    attribution.value("attribution", std::string()),
+                    coverageAreas,
+                    true
+                ));
+            }
 
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
+                credits,
                 asyncSystem,
                 pPrepareRendererResources,
                 baseUrl,

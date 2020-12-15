@@ -62,8 +62,9 @@ namespace Cesium3DTiles {
                 true
             );
 
+            std::vector<Credit> tileCredits;
             // TODO: change place holder "Tile Map Service"
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, "Tile Map Service", this->getAsyncSystem().requestAsset(url, this->_headers));
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, tileCredits, this->getAsyncSystem().requestAsset(url, this->_headers));
         }
     
     private:
