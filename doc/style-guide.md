@@ -66,4 +66,4 @@ We use UTF-8 everywhere, including on Windows where UTF-16 is the more common ap
 * Use `std::string` and `char*` everywhere. Mostly forget that `std::wstring` and `wchar_t` exist; you don't need them.
 * Don't assume one element of a string or char array represents one character. The definition of a unicode "character" is ambiguous and usually doesn't matter, anyway. When we're using UTF-8, `std::string::size` and `strlen` return the number of UTF-8 code units, which is the same as the number of bytes.
 * On Windows, when using Win32 and similar APIs, we must convert UTF-8 strings to UTF-16 and then call the wide character version of the system API (e.g. CreateFileW). Do this at the call site.
-* Be careful when using the `fstream` API family on Windows. Make sure you ready and understand []How to do text on Windows](https://utf8everywhere.org/#windows).
+* Be careful when using the `fstream` API family on Windows. Make sure you read and understand [How to do text on Windows](https://utf8everywhere.org/#windows).
