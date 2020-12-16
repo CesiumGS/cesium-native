@@ -7,10 +7,21 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Projection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "CesiumUtility/Math.h"
 #include "Uri.h"
+#include <vector>
+#include <utility>
+
+namespace {
+    struct BingMapsCreditCoverageArea {
+        CesiumGeospatial::GlobeRectangle rectangle;
+        unsigned int zoomMin;
+        unsigned int zoomMax;
+    };
+}
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -33,7 +44,7 @@ namespace Cesium3DTiles {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
-            const std::vector<Credit>& credits,
+            const std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>>& credits,
             const AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const std::string& baseUrl,
@@ -95,11 +106,25 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            CesiumGeospatial::GlobeRectangle tileRectangle = std::get<CesiumGeospatial::WebMercatorProjection>(this->getProjection()).unproject(this->getTilingScheme().tileToRectangle(tileID));
+            // Cesium levels start at 0, Bing levels start at 1
+            unsigned int bingTileLevel = tileID.level + 1;
+            CesiumGeospatial::GlobeRectangle tileRectangle = CesiumGeospatial::unprojectRectangleSimple(this->getProjection(), this->getTilingScheme().tileToRectangle(tileID));
+            
             std::vector<Credit> tileCredits;
-            for (Credit credit : _credits) {
-                if (credit.withinCoverage(tileRectangle, tileID.level + 1)) {
-                    tileCredits.push_back(credit);
+            for (std::pair<Credit, std::vector<BingMapsCreditCoverageArea>> credit : _credits) {
+                
+                bool withinCoverage = false;
+                for (BingMapsCreditCoverageArea coverageArea : credit.second) {
+                    if (coverageArea.zoomMin <= bingTileLevel && bingTileLevel <= coverageArea.zoomMax &&
+                        coverageArea.rectangle.intersect(tileRectangle).has_value()
+                    ) {
+                        withinCoverage = true;
+                        break;
+                    }
+                }
+
+                if (withinCoverage) {
+                    tileCredits.push_back(credit.first);
                 }
             }
             
@@ -127,7 +152,7 @@ namespace Cesium3DTiles {
             return quadkey;
         }
 
-        std::vector<Credit> _credits;
+        std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>> _credits;
         std::string _urlTemplate;
         std::vector<std::string> _subdomains;
     };
@@ -190,28 +215,29 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
             
-            std::vector<Credit> credits;
+            std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>> credits;
             json& attributions = resource["imageryProviders"];
             for (json attribution : attributions) {
-                std::vector<Credit::CoverageArea> coverageAreas;
-                for (json coverageArea : attribution["coverageAreas"]) {
-                    json bbox = coverageArea["bbox"];
-                    Credit::CoverageArea area {
+
+                std::vector<BingMapsCreditCoverageArea> coverageAreas;
+                for (json area : attribution["coverageAreas"]) {
+                    json bbox = area["bbox"];
+                    BingMapsCreditCoverageArea coverageArea {
                         CesiumGeospatial::GlobeRectangle::fromDegrees(
                             bbox[1],
                             bbox[0],
                             bbox[3],
                             bbox[2]
                         ),
-                        (unsigned int) coverageArea.value("zoomMin", 0),
-                        (unsigned int) coverageArea.value("zoomMax", 0)
+                        (unsigned int) area.value("zoomMin", 0),
+                        (unsigned int) area.value("zoomMax", 0)
                     };
-                    coverageAreas.push_back(area);
+                    coverageAreas.push_back(coverageArea);
                 }
-                credits.push_back(Credit(
-                    attribution.value("attribution", std::string()),
-                    coverageAreas,
-                    true
+
+                credits.push_back(std::pair(
+                    Credit(attribution.value("attribution", std::string())),
+                    coverageAreas
                 ));
             }
 

@@ -91,7 +91,7 @@ namespace Cesium3DTiles {
         RasterOverlayTile(
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
-            const std::vector<Credit> tileCredits,
+            const std::vector<Credit>& tileCredits,
             CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
         );
 

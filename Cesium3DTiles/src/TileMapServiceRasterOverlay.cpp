@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/Credit.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
@@ -18,6 +19,7 @@ namespace Cesium3DTiles {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
+            const Credit& credit,
             const AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
@@ -43,6 +45,7 @@ namespace Cesium3DTiles {
                 width,
                 height
             ),
+            _credit(credit),
             _url(url),
             _headers(headers),
             _fileExtension(fileExtension)
@@ -63,11 +66,13 @@ namespace Cesium3DTiles {
             );
 
             std::vector<Credit> tileCredits;
-            // TODO: change place holder "Tile Map Service"
+            tileCredits.push_back(this->_credit);
+
             return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, tileCredits, this->getAsyncSystem().requestAsset(url, this->_headers));
         }
     
     private:
+        Credit _credit;
         std::string _url;
         std::vector<IAssetAccessor::THeader> _headers;
         std::string _fileExtension;
@@ -150,7 +155,6 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
 
-            std::string credit = options.credit.value_or("");
             // CesiumGeospatial::Ellipsoid ellipsoid = this->_options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
 
             tinyxml2::XMLElement* pTileFormat = pRoot->FirstChildElement("TileFormat");
@@ -236,6 +240,7 @@ namespace Cesium3DTiles {
 
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
+                Credit(options.credit.value_or("")),
                 asyncSystem,
                 pPrepareRendererResources,
                 projection,

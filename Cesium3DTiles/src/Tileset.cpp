@@ -244,18 +244,20 @@ namespace Cesium3DTiles {
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
                 // TODO: look into this 
-                result.creditsToShowThisFrame += this->_options.credit.value() + "\n";
+                credits.insert(Credit(this->_options.credit.value()));
             }
-            result.creditsToShowThisFrame += "Cesium Ion\n";
+
+            credits.insert(Credit("Cesium Ion"));
             
             for (auto& tile : result.tilesToRenderThisFrame) {
                 const std::vector<RasterMappedTo3DTile>& mappedRasterTiles = tile->getMappedRasterTiles();
                 for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
                     RasterOverlayTile* rasterOverlayTile = mappedRasterTile.getReadyTile();
-                    if (rasterOverlayTile != nullptr)
-                        for (Credit credit : rasterOverlayTile->getCredits())
+                    if (rasterOverlayTile != nullptr) {
+                        for (Credit credit : rasterOverlayTile->getCredits()) {
                             credits.insert(credit);
-                        //result.creditsToShowThisFrame += rasterOverlayTile->getCredit();// + "\n";
+                        }
+                    }
                 }
             }
 
