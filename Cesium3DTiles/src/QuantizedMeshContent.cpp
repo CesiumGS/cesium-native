@@ -473,7 +473,7 @@ namespace Cesium3DTiles {
         }
         catch (const json::parse_error& error)
         {
-            CESIUM_LOG_ERROR("Error when parsing metadata: {}", error.what());
+            SPDLOG_ERROR("Error when parsing metadata: {}", error.what());
             return;
         }
 

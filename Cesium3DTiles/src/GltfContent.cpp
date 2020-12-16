@@ -28,10 +28,10 @@ namespace Cesium3DTiles {
 		pResult->model.emplace();
 		bool success = loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
 		if (!success) {
-			CESIUM_LOG_ERROR("Failed to load binary glTF from memory: {}", errors);
+			SPDLOG_ERROR("Failed to load binary glTF from memory: {}", errors);
 		}
 		if (!warnings.empty()) {
-			CESIUM_LOG_WARN("Warning when loading binary glTF from memory: {}", warnings);
+			SPDLOG_WARN("Warning when loading binary glTF from memory: {}", warnings);
 		}
 		return pResult;
 	}

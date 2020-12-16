@@ -46,14 +46,14 @@ namespace Cesium3DTiles {
             try {
                 response = json::parse(pResponse->data().begin(), pResponse->data().end());
             } catch (const json::parse_error& error) {
-                CESIUM_LOG_ERROR("Error when parsing ion raster overlay metadata JSON: {}", error.what());
+                SPDLOG_ERROR("Error when parsing ion raster overlay metadata JSON: {}", error.what());
                 return nullptr;
             }
 
             std::string type = response.value("type", "unknown");
             if (type != "IMAGERY") {
                 // TODO: report invalid imagery type.
-                CESIUM_LOG_ERROR("Ion raster overlay metadata response type is not 'IMAGERY', but {}", type);
+                SPDLOG_ERROR("Ion raster overlay metadata response type is not 'IMAGERY', but {}", type);
                 return nullptr;
             }
 
@@ -62,7 +62,7 @@ namespace Cesium3DTiles {
                 json::iterator optionsIt = response.find("options");
                 if (optionsIt == response.end()) {
                     // TODO: report incomplete Bing options
-                    CESIUM_LOG_ERROR("Ion raster overlay metadata response does not contain 'options'");
+                    SPDLOG_ERROR("Ion raster overlay metadata response does not contain 'options'");
                     return nullptr;
                 }
 

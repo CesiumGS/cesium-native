@@ -6,14 +6,14 @@ namespace Cesium3DTiles {
 
     void TileContentFactory::registerMagic(const std::string& magic, TileContentFactory::FactoryFunction factoryFunction) {
 
-        CESIUM_LOG_INFO("Registering magic header {}", magic);
+        SPDLOG_INFO("Registering magic header {}", magic);
 
         TileContentFactory::_factoryFunctionsByMagic[magic] = factoryFunction;
     }
 
     void TileContentFactory::registerContentType(const std::string& contentType, TileContentFactory::FactoryFunction factoryFunction) {
 
-        CESIUM_LOG_INFO("Registering content type {}", contentType);
+        SPDLOG_INFO("Registering content type {}", contentType);
 
         std::string lowercaseContentType;
         std::transform(contentType.begin(), contentType.end(), std::back_inserter(lowercaseContentType), [](char c) { return static_cast<char>(::tolower(c)); });

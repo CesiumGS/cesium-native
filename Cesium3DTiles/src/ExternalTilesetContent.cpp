@@ -39,7 +39,7 @@ namespace Cesium3DTiles {
         }
         catch (const json::parse_error& error)
         {
-            CESIUM_LOG_ERROR("Error when parsing external tileset content: {}", error.what());
+            SPDLOG_ERROR("Error when parsing external tileset content: {}", error.what());
         }
         return pResult;
     }

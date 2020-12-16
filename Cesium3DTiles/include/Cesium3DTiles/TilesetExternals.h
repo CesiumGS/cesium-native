@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+//#include <spdlog/sinks/base_sink.h>
 #include <memory>
+#include <mutex>
 
 namespace CesiumAsync {
     class IAssetAccessor;
@@ -33,6 +35,13 @@ namespace Cesium3DTiles {
          * @brief An external {@link ITaskProcessor}
          */
         std::shared_ptr<CesiumAsync::ITaskProcessor> pTaskProcessor;
+
+        /**
+         * @brief An spdlog sink that will receive log messages.
+         * 
+         * This should be a thread-safe sink, i.e. an `spdlog_logger_sink<std::mutex>`
+         */
+        //std::shared_ptr<spdlog::sinks::sink> pLogSink;
     };
 
 }
