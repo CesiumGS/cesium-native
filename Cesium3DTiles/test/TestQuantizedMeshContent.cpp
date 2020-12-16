@@ -655,3 +655,511 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     }
 }
 
+TEST_CASE("Test converting ill-formed quantized mesh") {
+    registerAllTileContentTypes();
+
+    // mock context
+    Ellipsoid ellipsoid = Ellipsoid::WGS84;
+    Rectangle rectangle(glm::radians(-180.0), glm::radians(-90.0), glm::radians(180.0), glm::radians(90.0));
+    QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
+    TileContext context{};
+    context.implicitContext = ImplicitTilingContext{ 
+        std::vector<std::string>{}, 
+        tilingScheme, 
+        GeographicProjection(ellipsoid),
+        QuadtreeTileAvailability(tilingScheme, 23)
+    };
+
+	// mock quantized mesh
+	uint32_t verticesWidth = 3;
+	uint32_t verticesHeight = 3;
+	QuadtreeTileID tileID(10, 0, 0);
+	Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+	BoundingRegion boundingVolume = BoundingRegion(
+		GlobeRectangle(tileRectangle.minimumX, tileRectangle.minimumY, tileRectangle.maximumX, tileRectangle.maximumY), 
+		0.0, 
+		0.0);
+	QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
+
+	// add oct-encoded normal extension. This is just a random direction and not really normal.
+	// We want to make sure the normal is written to the gltf
+	glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
+	uint8_t x = 0, y = 0;
+	octEncode(normal, x, y);
+	std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
+	for (size_t i = 0; i < octNormals.size(); i += 2) {
+		octNormals[i] = x;
+		octNormals[i+1] = y;
+	}
+	
+	Extension octNormalExtension;
+	octNormalExtension.extensionID = 1;
+	octNormalExtension.extensionData = std::move(octNormals);
+
+	quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
+
+    SECTION("Quantized mesh with ill-formed header") {
+		std::vector<uint8_t> quantizedMeshBin(32);
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+
+    SECTION("Quantized mesh with ill-formed vertex data") {
+		std::vector<uint8_t> quantizedMeshBin(
+            sizeof(quantizedMesh.header) + // header 
+            sizeof(uint32_t) +  // vertex count
+            quantizedMesh.vertexData.u.size() * sizeof(uint16_t) // u buffer
+        );
+
+        // serialize header
+        size_t offset = 0;
+        size_t length = sizeof(quantizedMesh.header);
+        std::memcpy(quantizedMeshBin.data(), &quantizedMesh.header, length);
+
+        // serialize vertex count
+        offset += length;
+        uint32_t vertexCount = static_cast<uint32_t>(quantizedMesh.vertexData.u.size());
+        length = sizeof(vertexCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &vertexCount, length);
+
+        // serialize u buffer
+        offset += length;
+        length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
+
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+
+    SECTION("Quantized mesh with ill-formed indices") {
+		std::vector<uint8_t> quantizedMeshBin(
+            sizeof(quantizedMesh.header) + // header 
+            sizeof(uint32_t) +  // vertex count
+            quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
+            quantizedMesh.vertexData.v.size() * sizeof(uint16_t) +  // v buffer
+            quantizedMesh.vertexData.height.size() * sizeof(uint16_t) +  // height buffer
+            sizeof(uint32_t) // triangle count
+        );
+
+        // serialize header
+        size_t offset = 0;
+        size_t length = sizeof(quantizedMesh.header);
+        std::memcpy(quantizedMeshBin.data(), &quantizedMesh.header, length);
+
+        // serialize vertex count
+        offset += length;
+        uint32_t vertexCount = static_cast<uint32_t>(quantizedMesh.vertexData.u.size());
+        length = sizeof(vertexCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &vertexCount, length);
+
+        // serialize u buffer
+        offset += length;
+        length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
+
+        // serialize v buffer
+        offset += length;
+        length = quantizedMesh.vertexData.v.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.v.data(), length);
+
+        // serialize height buffer
+        offset += length;
+        length = quantizedMesh.vertexData.height.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.height.data(), length);
+
+        // serialize triangle count
+        offset += length;
+        uint32_t triangleCount = static_cast<uint32_t>(quantizedMesh.vertexData.indices.size() / 3);
+        length = sizeof(triangleCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
+
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+
+    SECTION("Quantized mesh with ill-formed west edge indices") {
+		std::vector<uint8_t> quantizedMeshBin(
+            sizeof(quantizedMesh.header) + // header 
+            sizeof(uint32_t) +  // vertex count
+            quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
+            quantizedMesh.vertexData.v.size() * sizeof(uint16_t) +  // v buffer
+            quantizedMesh.vertexData.height.size() * sizeof(uint16_t) +  // height buffer
+            sizeof(uint32_t) +  // triangle count
+            quantizedMesh.vertexData.indices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) // west edge
+        );
+
+        // serialize header
+        size_t offset = 0;
+        size_t length = sizeof(quantizedMesh.header);
+        std::memcpy(quantizedMeshBin.data(), &quantizedMesh.header, length);
+
+        // serialize vertex count
+        offset += length;
+        uint32_t vertexCount = static_cast<uint32_t>(quantizedMesh.vertexData.u.size());
+        length = sizeof(vertexCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &vertexCount, length);
+
+        // serialize u buffer
+        offset += length;
+        length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
+
+        // serialize v buffer
+        offset += length;
+        length = quantizedMesh.vertexData.v.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.v.data(), length);
+
+        // serialize height buffer
+        offset += length;
+        length = quantizedMesh.vertexData.height.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.height.data(), length);
+
+        // serialize triangle count
+        offset += length;
+        uint32_t triangleCount = static_cast<uint32_t>(quantizedMesh.vertexData.indices.size() / 3);
+        length = sizeof(triangleCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
+
+        // serialize indices
+        offset += length;
+        length = quantizedMesh.vertexData.indices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.indices.data(), length);
+
+        // serialize west edge
+        offset += length;
+        uint32_t westCount = static_cast<uint32_t>(quantizedMesh.vertexData.westIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
+
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+
+    SECTION("Quantized mesh with ill-formed south edge indices") {
+		std::vector<uint8_t> quantizedMeshBin(
+            sizeof(quantizedMesh.header) + // header 
+            sizeof(uint32_t) +  // vertex count
+            quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
+            quantizedMesh.vertexData.v.size() * sizeof(uint16_t) +  // v buffer
+            quantizedMesh.vertexData.height.size() * sizeof(uint16_t) +  // height buffer
+            sizeof(uint32_t) +  // triangle count
+            quantizedMesh.vertexData.indices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) +  // west edge
+            quantizedMesh.vertexData.westIndices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) // south edge
+        );
+
+        // serialize header
+        size_t offset = 0;
+        size_t length = sizeof(quantizedMesh.header);
+        std::memcpy(quantizedMeshBin.data(), &quantizedMesh.header, length);
+
+        // serialize vertex count
+        offset += length;
+        uint32_t vertexCount = static_cast<uint32_t>(quantizedMesh.vertexData.u.size());
+        length = sizeof(vertexCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &vertexCount, length);
+
+        // serialize u buffer
+        offset += length;
+        length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
+
+        // serialize v buffer
+        offset += length;
+        length = quantizedMesh.vertexData.v.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.v.data(), length);
+
+        // serialize height buffer
+        offset += length;
+        length = quantizedMesh.vertexData.height.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.height.data(), length);
+
+        // serialize triangle count
+        offset += length;
+        uint32_t triangleCount = static_cast<uint32_t>(quantizedMesh.vertexData.indices.size() / 3);
+        length = sizeof(triangleCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
+
+        // serialize indices
+        offset += length;
+        length = quantizedMesh.vertexData.indices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.indices.data(), length);
+
+        // serialize west edge
+        offset += length;
+        uint32_t westCount = static_cast<uint32_t>(quantizedMesh.vertexData.westIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
+
+        offset += length;
+        length = quantizedMesh.vertexData.westIndices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.westIndices.data(), length);
+
+        // serialize south edge
+        offset += length;
+        uint32_t southCount = static_cast<uint32_t>(quantizedMesh.vertexData.southIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
+
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+
+    SECTION("Quantized mesh with ill-formed east edge indices") {
+		std::vector<uint8_t> quantizedMeshBin(
+            sizeof(quantizedMesh.header) + // header 
+            sizeof(uint32_t) +  // vertex count
+            quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
+            quantizedMesh.vertexData.v.size() * sizeof(uint16_t) +  // v buffer
+            quantizedMesh.vertexData.height.size() * sizeof(uint16_t) +  // height buffer
+            sizeof(uint32_t) +  // triangle count
+            quantizedMesh.vertexData.indices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) +  // west edge
+            quantizedMesh.vertexData.westIndices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) + // south edge
+            quantizedMesh.vertexData.southIndices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) // east edge
+        );
+
+        // serialize header
+        size_t offset = 0;
+        size_t length = sizeof(quantizedMesh.header);
+        std::memcpy(quantizedMeshBin.data(), &quantizedMesh.header, length);
+
+        // serialize vertex count
+        offset += length;
+        uint32_t vertexCount = static_cast<uint32_t>(quantizedMesh.vertexData.u.size());
+        length = sizeof(vertexCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &vertexCount, length);
+
+        // serialize u buffer
+        offset += length;
+        length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
+
+        // serialize v buffer
+        offset += length;
+        length = quantizedMesh.vertexData.v.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.v.data(), length);
+
+        // serialize height buffer
+        offset += length;
+        length = quantizedMesh.vertexData.height.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.height.data(), length);
+
+        // serialize triangle count
+        offset += length;
+        uint32_t triangleCount = static_cast<uint32_t>(quantizedMesh.vertexData.indices.size() / 3);
+        length = sizeof(triangleCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
+
+        // serialize indices
+        offset += length;
+        length = quantizedMesh.vertexData.indices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.indices.data(), length);
+
+        // serialize west edge
+        offset += length;
+        uint32_t westCount = static_cast<uint32_t>(quantizedMesh.vertexData.westIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
+
+        offset += length;
+        length = quantizedMesh.vertexData.westIndices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.westIndices.data(), length);
+
+        // serialize south edge
+        offset += length;
+        uint32_t southCount = static_cast<uint32_t>(quantizedMesh.vertexData.southIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
+
+        offset += length;
+        length = quantizedMesh.vertexData.southIndices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.southIndices.data(), length);
+
+        // serialize east edge
+        offset += length;
+        uint32_t eastCount = static_cast<uint32_t>(quantizedMesh.vertexData.eastIndices.size());
+        length = sizeof(eastCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &eastCount, length);
+
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+
+    SECTION("Quantized mesh with ill-formed north edge indices") {
+		std::vector<uint8_t> quantizedMeshBin(
+            sizeof(quantizedMesh.header) + // header 
+            sizeof(uint32_t) +  // vertex count
+            quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
+            quantizedMesh.vertexData.v.size() * sizeof(uint16_t) +  // v buffer
+            quantizedMesh.vertexData.height.size() * sizeof(uint16_t) +  // height buffer
+            sizeof(uint32_t) +  // triangle count
+            quantizedMesh.vertexData.indices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) +  // west edge
+            quantizedMesh.vertexData.westIndices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) + // south edge
+            quantizedMesh.vertexData.southIndices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) +  // east edge
+            quantizedMesh.vertexData.eastIndices.size() * sizeof(uint16_t) + 
+            sizeof(uint32_t) // north edge
+        );
+
+        // serialize header
+        size_t offset = 0;
+        size_t length = sizeof(quantizedMesh.header);
+        std::memcpy(quantizedMeshBin.data(), &quantizedMesh.header, length);
+
+        // serialize vertex count
+        offset += length;
+        uint32_t vertexCount = static_cast<uint32_t>(quantizedMesh.vertexData.u.size());
+        length = sizeof(vertexCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &vertexCount, length);
+
+        // serialize u buffer
+        offset += length;
+        length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
+
+        // serialize v buffer
+        offset += length;
+        length = quantizedMesh.vertexData.v.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.v.data(), length);
+
+        // serialize height buffer
+        offset += length;
+        length = quantizedMesh.vertexData.height.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.height.data(), length);
+
+        // serialize triangle count
+        offset += length;
+        uint32_t triangleCount = static_cast<uint32_t>(quantizedMesh.vertexData.indices.size() / 3);
+        length = sizeof(triangleCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
+
+        // serialize indices
+        offset += length;
+        length = quantizedMesh.vertexData.indices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.indices.data(), length);
+
+        // serialize west edge
+        offset += length;
+        uint32_t westCount = static_cast<uint32_t>(quantizedMesh.vertexData.westIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
+
+        offset += length;
+        length = quantizedMesh.vertexData.westIndices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.westIndices.data(), length);
+
+        // serialize south edge
+        offset += length;
+        uint32_t southCount = static_cast<uint32_t>(quantizedMesh.vertexData.southIndices.size());
+        length = sizeof(westCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
+
+        offset += length;
+        length = quantizedMesh.vertexData.southIndices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.southIndices.data(), length);
+
+        // serialize east edge
+        offset += length;
+        uint32_t eastCount = static_cast<uint32_t>(quantizedMesh.vertexData.eastIndices.size());
+        length = sizeof(eastCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &eastCount, length);
+
+        offset += length;
+        length = quantizedMesh.vertexData.eastIndices.size() * sizeof(uint16_t);
+        std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.eastIndices.data(), length);
+
+        // serialize north edge
+        offset += length;
+        uint32_t northCount = static_cast<uint32_t>(quantizedMesh.vertexData.northIndices.size());
+        length = sizeof(northCount);
+        std::memcpy(quantizedMeshBin.data() + offset, &northCount, length);
+
+		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+			tileID, 
+			boundingVolume, 
+			0.0, 
+			glm::dmat4(1.0), 
+			std::nullopt, 
+			TileRefine::Replace, 
+			"url", 
+			"application/vnd.quantized-mesh", 
+			data);
+
+        REQUIRE(loadResult->model == std::nullopt);
+    }
+}
+
