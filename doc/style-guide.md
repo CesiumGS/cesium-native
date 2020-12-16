@@ -34,10 +34,6 @@ Our naming differs from the naming proposed in the C++ Core Guidlines, because w
 * DO prefix pure interfaces - a class with most methods virtual and no fields - with `I`.
 * DON'T use Hungarian notation, except that it's useful to prefix pointer-like variables with a `p`, e.g. `pThing`. This is justified because it's not meant to convey type information (not so useful), but rather as an easily-understood abbreviation for the descriptive name of what the variable actually is (very useful). The variable isn't a `thing`, it's a pointer to a thing, but `pointerToThing` would get annoying quickly. (see [NL.5](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#nl5-avoid-encoding-type-information-in-names))
 * DO prefix private fields with `_`, as in `_boundingVolume`.
-* DON'T use public fields, except in value-like classes where all of the following are true:
-  * The class has no class invariants. _All_ possible values for all fields are valid.
-  * All fields are public.
-  * The type is a `struct` (see [C.2](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-struct))
 
 ## 💂‍♀️ Include guards (change to [SF.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf8-use-include-guards-for-all-h-files))
 
