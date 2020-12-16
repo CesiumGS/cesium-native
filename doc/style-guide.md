@@ -43,7 +43,7 @@ Our naming differs from the naming proposed in the C++ Core Guidelines, because 
 
 A change to C++ Core Guidelines [SF.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf8-use-include-guards-for-all-h-files).
 
-Use `#pragma once` at the top of header files rather than manual inclusion guards. Even though `#pragma once` is not technically ISO Standard C++, it _is_ supported everywhere and manual inclusion guards are really tedious. If platform-specific differences in `#pragma once` behavior are changing the meaning of our program, we may need to reconsider some other life choices (like dodgy use of symlinks), but our choice to use `#praga once` likely remains sound.
+Use `#pragma once` at the top of header files rather than manual inclusion guards. Even though `#pragma once` is not technically ISO Standard C++, it _is_ supported everywhere and manual inclusion guards are really tedious. If platform-specific differences in `#pragma once` behavior are changing the meaning of our program, we may need to reconsider some other life choices (like dodgy use of symlinks), but our choice to use `#pragma once` likely remains sound.
 
 ## 🛑 Exceptions
 
