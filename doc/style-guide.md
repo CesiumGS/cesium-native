@@ -39,7 +39,7 @@ Our naming differs from the naming proposed in the C++ Core Guidelines, because 
 * DON'T use Hungarian notation, except that it's useful to prefix pointer-like variables with a `p`, e.g. `pThing`. This is justified because it's not meant to convey type information (not so useful), but rather as an easily-understood abbreviation for the descriptive name of what the variable actually is (very useful). The variable isn't a `thing`, it's a pointer to a thing, but `pointerToThing` would get annoying quickly. (see [NL.5](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#nl5-avoid-encoding-type-information-in-names))
 * DO prefix private fields with `_`, as in `_boundingVolume`.
 
-## 💂‍♀️ Include guards
+## 💂‍♀️ Include Guards
 
 A change to C++ Core Guidelines [SF.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf8-use-include-guards-for-all-h-files).
 
@@ -57,7 +57,7 @@ cesium-native may be used in environments with exceptions disabled, such as in W
 * Report improper API usage and precondition violations with `assert` rather than by throwing exceptions. In CesiumJS, these kinds of checks would throw `DeveloperError` and would be removed from release builds. `assert` is a more elegant way to do much the same. The C++ Core Guidelines ([I.6](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i6-prefer-expects-for-expressing-preconditions) and [I.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i8-prefer-ensures-for-expressing-postconditions)) suggest using the `Expects` and `Ensures` macros from the Guidelines Support Library instead of `assert`, but we suggest sticking with the more standard `assert` for the time being.
 * Don't cause buffer overruns or other memory corruption. If it's not possible to continue safely, throwing an exception can be ok. When exceptions are disabled, throwing an exception will cause immediate termination of the program, which is better than memory corruption.
 
-## 🎱 Use UTF-8 everywhere
+## 🎱 Use UTF-8 Everywhere
 
 Not covered by C++ Core Guidelines.
 
