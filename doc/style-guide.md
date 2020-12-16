@@ -67,3 +67,7 @@ We use UTF-8 everywhere, including on Windows where UTF-16 is the more common ap
 * Don't assume one element of a string or char array represents one character. The definition of a unicode "character" is ambiguous and usually doesn't matter, anyway. When we're using UTF-8, `std::string::size` and `strlen` return the number of UTF-8 code units, which is the same as the number of bytes.
 * On Windows, when using Win32 and similar APIs, we must convert UTF-8 strings to UTF-16 and then call the wide character version of the system API (e.g. CreateFileW). Do this at the call site.
 * Be careful when using the `fstream` API family on Windows. Make sure you read and understand [How to do text on Windows](https://utf8everywhere.org/#windows).
+
+## 📚 Resources
+
+* [Effective Modern C++](https://www.amazon.com/Effective-Modern-Specific-Ways-Improve/dp/1491903996) - Highly recommended reading to improve your use of the new features in C++11 and C++14.
