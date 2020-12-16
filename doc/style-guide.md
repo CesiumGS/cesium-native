@@ -39,11 +39,11 @@ Our naming differs from the naming proposed in the C++ Core Guidlines, because w
   * All fields are public.
   * The type is a `struct` (see [C.2](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-struct))
 
-### 💂‍♀️ Include guards (change to [SF.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf8-use-include-guards-for-all-h-files))
+## 💂‍♀️ Include guards (change to [SF.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#sf8-use-include-guards-for-all-h-files))
 
 Use `#pragma once` at the top of header files rather than manual inclusion guards. Even though `#pragma once` is not technically ISO Standard C++, it _is_ supported everywhere and manual inclusion guards are really tedious. If platform-specific differences in `#pragma once` behavior are changing the meaning of our program, we may need to reconsider some other life choices (like dodgy use of symlinks), but our choice to use `#praga once` likely remains sound.
 
-### 🛑 Exceptions (change to [I.10](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-except) and [NR.3](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rnr-no-exceptions))
+## 🛑 Exceptions (change to [I.10](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-except) and [NR.3](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rnr-no-exceptions))
 
 cesium-native may be used in environments with exceptions disabled, such as in Web Assembly builds. Thus, we should not rely on exceptions for correct behavior. Some guidelines:
 
@@ -52,3 +52,12 @@ cesium-native may be used in environments with exceptions disabled, such as in W
 * Don't allow third-party code to throw in expected use-cases, because that might cause immediate program termination in some contexts. In rare cases this might require changing a third-party library or selecting a different one.
 * Report improper API usage and precondition violations with `assert` rather than by throwing exceptions. In CesiumJS, these kinds of checks would throw `DeveloperError` and would be removed from release builds. `assert` is a more elegant way to do much the same. The C++ Core Guidelines ([I.6](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i6-prefer-expects-for-expressing-preconditions) and [I.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i8-prefer-ensures-for-expressing-postconditions)) suggest using the `Expects` and `Ensures` macros from the Guidelines Support Library instead of `assert`, but we suggest sticking with the more standard `assert` for the time being.
 * Don't cause buffer overruns or other memory corruption. If it's not possible to continue safely, throwing an exception can be ok. When exceptions are disabled, throwing an exception will cause immediate termination of the program, which is better than memory corruption.
+
+## 🎱 Use UTF-8 everywhere (not covered by C++ Core Guidelines)
+
+We use UTF-8 everywhere, including on Windows where UTF-16 is the more common approach to unicode. This philosophy and the practicalities of adopting it are very well described by [UTF-8 Everywhere](https://utf8everywhere.org/). In short:
+
+* Use `std::string` and `char*` everywhere. Mostly forget that `std::wstring` and `wchar_t` exist; you don't need them.
+* Don't assume one element of a string or char array represents one character. The definition of a unicode "character" is ambiguous and usually doesn't matter, anyway. When we're using UTF-8, `std::string::size` and `strlen` return the number of UTF-8 code units, which is the same as the number of bytes.
+* On Windows, when using Win32 and similar APIs, we must convert UTF-8 strings to UTF-16 and then call the wide character version of the system API (e.g. CreateFileW). Do this at the call site.
+* Be careful when using the `fstream` API family on Windows. Make sure you ready and understand []How to do text on Windows](https://utf8everywhere.org/#windows).
