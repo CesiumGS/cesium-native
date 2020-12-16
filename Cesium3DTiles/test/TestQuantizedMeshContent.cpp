@@ -670,53 +670,53 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         QuadtreeTileAvailability(tilingScheme, 23)
     };
 
-	// mock quantized mesh
-	uint32_t verticesWidth = 3;
-	uint32_t verticesHeight = 3;
-	QuadtreeTileID tileID(10, 0, 0);
-	Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
-	BoundingRegion boundingVolume = BoundingRegion(
-		GlobeRectangle(tileRectangle.minimumX, tileRectangle.minimumY, tileRectangle.maximumX, tileRectangle.maximumY), 
-		0.0, 
-		0.0);
-	QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
+    // mock quantized mesh
+    uint32_t verticesWidth = 3;
+    uint32_t verticesHeight = 3;
+    QuadtreeTileID tileID(10, 0, 0);
+    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    BoundingRegion boundingVolume = BoundingRegion(
+        GlobeRectangle(tileRectangle.minimumX, tileRectangle.minimumY, tileRectangle.maximumX, tileRectangle.maximumY), 
+        0.0, 
+        0.0);
+    QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
 
-	// add oct-encoded normal extension. This is just a random direction and not really normal.
-	// We want to make sure the normal is written to the gltf
-	glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
-	uint8_t x = 0, y = 0;
-	octEncode(normal, x, y);
-	std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
-	for (size_t i = 0; i < octNormals.size(); i += 2) {
-		octNormals[i] = x;
-		octNormals[i+1] = y;
-	}
-	
-	Extension octNormalExtension;
-	octNormalExtension.extensionID = 1;
-	octNormalExtension.extensionData = std::move(octNormals);
+    // add oct-encoded normal extension. This is just a random direction and not really normal.
+    // We want to make sure the normal is written to the gltf
+    glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
+    uint8_t x = 0, y = 0;
+    octEncode(normal, x, y);
+    std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
+    for (size_t i = 0; i < octNormals.size(); i += 2) {
+        octNormals[i] = x;
+        octNormals[i+1] = y;
+    }
+    
+    Extension octNormalExtension;
+    octNormalExtension.extensionID = 1;
+    octNormalExtension.extensionData = std::move(octNormals);
 
-	quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
+    quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
 
     SECTION("Quantized mesh with ill-formed header") {
-		std::vector<uint8_t> quantizedMeshBin(32);
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        std::vector<uint8_t> quantizedMeshBin(32);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
 
     SECTION("Quantized mesh with ill-formed vertex data") {
-		std::vector<uint8_t> quantizedMeshBin(
+        std::vector<uint8_t> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) // u buffer
@@ -738,23 +738,23 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
         std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
 
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
 
     SECTION("Quantized mesh with ill-formed indices") {
-		std::vector<uint8_t> quantizedMeshBin(
+        std::vector<uint8_t> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -795,23 +795,23 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(triangleCount);
         std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
 
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
 
     SECTION("Quantized mesh with ill-formed west edge indices") {
-		std::vector<uint8_t> quantizedMeshBin(
+        std::vector<uint8_t> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -865,23 +865,23 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(westCount);
         std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
 
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
 
     SECTION("Quantized mesh with ill-formed south edge indices") {
-		std::vector<uint8_t> quantizedMeshBin(
+        std::vector<uint8_t> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -947,23 +947,23 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(westCount);
         std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
 
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
 
     SECTION("Quantized mesh with ill-formed east edge indices") {
-		std::vector<uint8_t> quantizedMeshBin(
+        std::vector<uint8_t> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -1041,23 +1041,23 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(eastCount);
         std::memcpy(quantizedMeshBin.data() + offset, &eastCount, length);
 
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
 
     SECTION("Quantized mesh with ill-formed north edge indices") {
-		std::vector<uint8_t> quantizedMeshBin(
+        std::vector<uint8_t> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -1147,17 +1147,17 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(northCount);
         std::memcpy(quantizedMeshBin.data() + offset, &northCount, length);
 
-		gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-		std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
-			tileID, 
-			boundingVolume, 
-			0.0, 
-			glm::dmat4(1.0), 
-			std::nullopt, 
-			TileRefine::Replace, 
-			"url", 
-			"application/vnd.quantized-mesh", 
-			data);
+        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+            tileID, 
+            boundingVolume, 
+            0.0, 
+            glm::dmat4(1.0), 
+            std::nullopt, 
+            TileRefine::Replace, 
+            "url", 
+            "application/vnd.quantized-mesh", 
+            data);
 
         REQUIRE(loadResult->model == std::nullopt);
     }
