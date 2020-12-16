@@ -27,11 +27,11 @@ We believe that source code should be readable and even beautiful, but that auto
 
 A change to C++ Core Guidelines [NL.10](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rl-camel).
 
-Our naming differs from the naming proposed in the C++ Core Guidelines, because we don't like typing underscores as much as Bjarne does. Our conventions are:
+Our naming differs from the naming proposed in the C++ Core Guidelines, primarily for consistency with our JavaScript and TypeScript code bases, but also because we don't like typing underscores as much as Bjarne does. Our conventions are:
 
 * DO name classes, structs, and enums with `PascalCase`.
 * DO name methods, functions, fields, local variables, and parameters with `lowerCamelCase`.
-* DO name macros with `UPPER_SNAKE_CASE`.
+* DO name macros with `SCREAMING_SNAKE_CASE`.
 * DO name methods and functions with verb-like names. Functions should be named for the actions they perform, like `generateTextureCoordinates` or `getParent`, or named for the question they answer, like `contains`.
 * DO name classes, structs, enums, variables, fields, and parameters with noun-like names, like `Tileset`, `parent` or `boundingVolume`.
 * DON'T prefix classes with `C`.
