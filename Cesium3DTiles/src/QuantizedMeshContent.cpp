@@ -232,30 +232,52 @@ namespace Cesium3DTiles {
             indexSizeBytes = sizeof(uint16_t);
         }
 
-        // read the edge indices
+        // prepare to read edge
+        size_t edgeByteSizes = 0;
+
+        // read the west edge indices
         meshView.westEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
         readIndex += sizeof(uint32_t);
-        meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.westEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.westEdgeIndicesCount * indexSizeBytes;
+        edgeByteSizes = meshView.westEdgeIndicesCount * indexSizeBytes;
+        if (readIndex + edgeByteSizes > data.size()) {
+            return std::nullopt;
+        }
 
+        meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        readIndex += edgeByteSizes;
+
+        // read the south edge 
         meshView.southEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
         readIndex += sizeof(uint32_t);
-        meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.southEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.southEdgeIndicesCount * indexSizeBytes;
+        edgeByteSizes = meshView.southEdgeIndicesCount * indexSizeBytes;
+        if (readIndex + edgeByteSizes > data.size()) {
+            return std::nullopt;
+        }
 
+        meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        readIndex += edgeByteSizes;
+
+        // read the east edge 
         meshView.eastEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
         readIndex += sizeof(uint32_t);
-        meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.eastEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.eastEdgeIndicesCount * indexSizeBytes;
+        edgeByteSizes = meshView.eastEdgeIndicesCount * indexSizeBytes;
+        if (readIndex + edgeByteSizes > data.size()) {
+            return std::nullopt;
+        }
 
+        meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        readIndex += edgeByteSizes;
+
+        // read the north edge
         meshView.northEdgeIndicesCount = readValue<uint32_t>(data, readIndex, 0);
         readIndex += sizeof(uint32_t);
-        meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, 
-            meshView.northEdgeIndicesCount * indexSizeBytes);
-        readIndex += meshView.northEdgeIndicesCount * indexSizeBytes;
+        edgeByteSizes = meshView.northEdgeIndicesCount * indexSizeBytes;
+        if (readIndex + edgeByteSizes > data.size()) {
+            return std::nullopt;
+        }
+
+        meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        readIndex += edgeByteSizes;
 
         // parse oct-encoded normal buffer and metadata
         while (readIndex < data.size()) {
