@@ -258,7 +258,6 @@ namespace Cesium3DTiles {
         readIndex += meshView.northEdgeIndicesCount * indexSizeBytes;
 
         // parse oct-encoded normal buffer and metadata
-        std::vector<unsigned char> outputNormalsBuffer;
         while (readIndex < data.size()) {
             if (readIndex + extensionHeaderLength > data.size()) {
                 break;
@@ -282,11 +281,12 @@ namespace Cesium3DTiles {
                     break;
                 }
 
+                meshView.metadataJsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
+
                 if (readIndex + sizeof(uint32_t) + meshView.metadataJsonLength > data.size()) {
                     break;
                 }
 
-                meshView.metadataJsonLength = *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
                 meshView.metadataJsonBuffer = gsl::span<const char>(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), meshView.metadataJsonLength);
             }
 
@@ -309,7 +309,7 @@ namespace Cesium3DTiles {
     template <class E, class I>
     static void addSkirt(
         const CesiumGeospatial::Ellipsoid &ellipsoid,
-        glm::dvec3 center,
+        const glm::dvec3 &center,
         const CesiumGeospatial::GlobeRectangle &rectangle,
         double minimumHeight,
         double maximumHeight,
