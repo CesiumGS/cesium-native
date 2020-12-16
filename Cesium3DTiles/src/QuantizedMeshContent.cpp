@@ -4,6 +4,7 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/Math.h"
 #include "QuantizedMeshContent.h"
+#include "calcQuadtreeMaxGeometricError.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
 #include <glm/vec3.hpp>
@@ -319,11 +320,7 @@ namespace Cesium3DTiles {
     }
 
     static double calculateSkirtHeight(uint32_t tileLevel, const CesiumGeospatial::Ellipsoid &ellipsoid, const QuadtreeTilingScheme &tilingScheme) {
-        static const double terrainHeightmapQuality = 0.25;
-        static const uint32_t heightmapWidth = 65;
-        double levelZeroMaximumGeometricError = ellipsoid.getMaximumRadius() * CesiumUtility::Math::TWO_PI * terrainHeightmapQuality
-            / (heightmapWidth * tilingScheme.getRootTilesX());
-
+        double levelZeroMaximumGeometricError = calcQuadtreeMaxGeometricError(ellipsoid, tilingScheme);
         double levelMaximumGeometricError = levelZeroMaximumGeometricError / (1 << tileLevel);
         return levelMaximumGeometricError * 5.0;
     }
