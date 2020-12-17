@@ -21,14 +21,14 @@
 #define SPDLOG_ACTIVE_LEVEL 0
 //*/
 
-#ifndef _MSC_VER
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Werror=sign-conversion"
-#endif
+// #ifndef _MSC_VER
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wsign-conversion"
+// #pragma GCC diagnostic ignored "-Werror=sign-conversion"
+// #endif
 
 #include <spdlog/spdlog.h>
 
-#ifndef _MSC_VER
-#pragma GCC diagnostic pop
-#endif
+// #ifndef _MSC_VER
+// #pragma GCC diagnostic pop
+// #endif
