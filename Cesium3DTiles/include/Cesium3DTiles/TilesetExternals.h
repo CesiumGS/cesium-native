@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include <spdlog/spdlog.h>
+#include <spdlog/fwd.h>
 #include <memory>
 
 namespace CesiumAsync {
@@ -19,6 +19,7 @@ namespace Cesium3DTiles {
      */
     class CESIUM3DTILES_API TilesetExternals final {
     public:
+        TilesetExternals() noexcept;
 
         /**
          * @brief An external {@link IAssetAccessor}.
@@ -37,8 +38,10 @@ namespace Cesium3DTiles {
 
         /**
          * @brief A spdlog logger that will receive log messages.
+         * 
+         * If not specified, defaults to `spdlog::default_logger()`.
          */
-        std::shared_ptr<spdlog::logger> pLogger = spdlog::default_logger();
+        std::shared_ptr<spdlog::logger> pLogger;
     };
 
 }
