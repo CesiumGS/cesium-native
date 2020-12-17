@@ -545,9 +545,9 @@ namespace Cesium3DTiles {
             T id0 = indices[i];
             T id1 = indices[i + 1];
             T id2 = indices[i + 2];
-            T id0x3 = id0 * 3;
-            T id1x3 = id1 * 3;
-            T id2x3 = id2 * 3;
+            size_t id0x3 = static_cast<size_t>(id0) * 3;
+            size_t id1x3 = static_cast<size_t>(id1) * 3;
+            size_t id2x3 = static_cast<size_t>(id2) * 3;
             
             glm::vec3 p0 = glm::vec3(positions[id0x3], positions[id0x3 + 1], positions[id0x3 + 2]);
             glm::vec3 p1 = glm::vec3(positions[id1x3], positions[id1x3 + 1], positions[id1x3 + 2]);
