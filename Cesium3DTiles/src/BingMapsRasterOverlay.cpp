@@ -13,6 +13,7 @@
 #include "CesiumUtility/Math.h"
 #include "Uri.h"
 #include <vector>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -164,6 +165,7 @@ namespace Cesium3DTiles {
         const std::string& culture,
         const Ellipsoid& ellipsoid
     ) :
+        _credit(Credit("Bing Placeholder")),
         _url(url),
         _key(key),
         _mapStyle(mapStyle),

@@ -19,7 +19,6 @@ namespace Cesium3DTiles {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
-            const Credit& credit,
             const AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
@@ -45,7 +44,6 @@ namespace Cesium3DTiles {
                 width,
                 height
             ),
-            _credit(credit),
             _url(url),
             _headers(headers),
             _fileExtension(fileExtension)
@@ -65,14 +63,10 @@ namespace Cesium3DTiles {
                 true
             );
 
-            std::vector<Credit> tileCredits;
-            tileCredits.push_back(this->_credit);
-
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, tileCredits, this->getAsyncSystem().requestAsset(url, this->_headers));
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, std::vector<Credit>(), this->getAsyncSystem().requestAsset(url, this->_headers));
         }
     
     private:
-        Credit _credit;
         std::string _url;
         std::vector<IAssetAccessor::THeader> _headers;
         std::string _fileExtension;
@@ -83,6 +77,7 @@ namespace Cesium3DTiles {
         const std::vector<IAssetAccessor::THeader>& headers,
         const TileMapServiceRasterOverlayOptions& options
     ) :
+        _credit(options.credit ? std::optional<Credit>(Credit(options.credit.value())) : std::nullopt),
         _url(url),
         _headers(headers),
         _options(options)
@@ -240,7 +235,6 @@ namespace Cesium3DTiles {
 
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
-                Credit(options.credit.value_or("")),
                 asyncSystem,
                 pPrepareRendererResources,
                 projection,

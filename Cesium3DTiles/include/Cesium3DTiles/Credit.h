@@ -58,7 +58,7 @@ namespace Cesium3DTiles {
 
     private:
 
-        // indexed html string and their unique IDs to efficiently check if this is an existing credit 
+        // indexed html strings and their unique IDs to efficiently check if this is an existing credit 
         static std::map<std::string, int> creditToId;
         // the ID to assign the next new credit  
         static int nextId;

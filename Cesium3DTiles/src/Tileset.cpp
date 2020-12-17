@@ -14,6 +14,7 @@
 #include "TilesetJson.h"
 #include "Uri.h"
 #include <glm/common.hpp>
+#include <optional>
 #include <set>
 
 using namespace CesiumAsync;
@@ -240,14 +241,22 @@ namespace Cesium3DTiles {
         this->_unloadCachedTiles();
         this->_processLoadQueue();
 
+        // aggregate all the credits needed from this tileset for the current frame 
         std::set<Credit> credits;
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
-                // TODO: look into this 
                 credits.insert(Credit(this->_options.credit.value()));
             }
 
+            // TODO: change place holder Ion credit
             credits.insert(Credit("Cesium Ion"));
+            
+            for (auto& pOverlay : this->_overlays) {
+                const std::optional<Credit> overlayCredit = pOverlay->getCredit();
+                if (overlayCredit) {
+                    credits.insert(overlayCredit.value());
+                }
+            }
             
             for (auto& tile : result.tilesToRenderThisFrame) {
                 const std::vector<RasterMappedTo3DTile>& mappedRasterTiles = tile->getMappedRasterTiles();
@@ -260,7 +269,7 @@ namespace Cesium3DTiles {
                     }
                 }
             }
-
+            
             for (Credit credit : credits)
                 result.creditsToShowThisFrame += credit.getHTML() + "\n";
         }

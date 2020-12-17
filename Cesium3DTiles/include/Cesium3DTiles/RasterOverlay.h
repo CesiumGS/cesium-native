@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/Credit.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace Cesium3DTiles {
 
@@ -28,9 +30,16 @@ namespace Cesium3DTiles {
         virtual ~RasterOverlay();
 
         /**
+         * @brief Gets the Credit for this overlay.
+         *
+         * @return The Credit given for this overlay if one was given.
+         */
+         virtual const std::optional<Credit> getCredit() const noexcept { return std::nullopt; }
+
+        /**
          * @brief Gets the tile provider for this overlay.
          * 
-         * Returns `nullptr` if {@link createTileProvider} has not yet been called.
+         * @return `nullptr` if {@link createTileProvider} has not yet been called.
          * If {@link createTileProvider} has been called but the overlay is not yet ready to
          * provide tiles, a placeholder tile provider will be returned.
          */
@@ -42,7 +51,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the placeholder tile provider for this overlay.
          * 
-         * Returns `nullptr` if {@link createTileProvider} has not yet been called.
+         * @return `nullptr` if {@link createTileProvider} has not yet been called.
          */
         RasterOverlayTileProvider* getPlaceholder() noexcept { return this->_pPlaceholder.get(); }
 

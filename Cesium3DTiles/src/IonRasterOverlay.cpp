@@ -78,11 +78,13 @@ namespace Cesium3DTiles {
                 );
             }
         }).thenInMainThread([
+            this,
             pOwner,
             asyncSystem,
             pPrepareRendererResources
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
-            return pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pOwner);
+            this->_pAggregatedOverlay = std::move(pAggregatedOverlay);
+            return this->_pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pOwner);
         });
     }
 

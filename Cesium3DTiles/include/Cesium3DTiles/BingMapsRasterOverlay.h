@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
+#include "Cesium3DTiles/Credit.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
@@ -97,6 +98,8 @@ namespace Cesium3DTiles {
         );
         virtual ~BingMapsRasterOverlay() override;
 
+        virtual const std::optional<Credit> getCredit() const noexcept override { return _credit; };
+
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
@@ -104,6 +107,7 @@ namespace Cesium3DTiles {
         ) override;
 
     private:
+        Credit _credit;
         std::string _url;
         std::string _key;
         std::string _mapStyle;
