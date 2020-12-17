@@ -316,19 +316,20 @@ namespace Cesium3DTiles {
         }
 
         this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
+            pLogger = this->getExternals().pLogger,
             pTileset = this,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
-                SPDLOG_ERROR("Did not receive a valid response for tileset {}", pRequest->url());
+                SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
                 // TODO: report error response.
-                SPDLOG_ERROR("Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
+                SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
@@ -342,7 +343,7 @@ namespace Cesium3DTiles {
             try {
                 tileset = json::parse(data.begin(), data.end());
             } catch (const json::parse_error& error) {
-                SPDLOG_ERROR("Error when parsing tileset JSON: {}", error.what());
+                SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON: {}", error.what());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
@@ -605,7 +606,7 @@ namespace Cesium3DTiles {
                     try {
                         ionResponse = json::parse(data.begin(), data.end());
                     } catch (const json::parse_error& error) {
-                        SPDLOG_ERROR("Error when parsing ion response: {}", error.what());
+                        SPDLOG_LOGGER_ERROR(this->getExternals().pLogger, "Error when parsing ion response: {}", error.what());
                         failedParsing = true;
                     }
                     if (!failedParsing) {

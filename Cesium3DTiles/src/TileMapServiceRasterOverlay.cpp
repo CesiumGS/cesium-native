@@ -117,6 +117,7 @@ namespace Cesium3DTiles {
     Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");

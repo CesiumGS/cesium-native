@@ -8,6 +8,7 @@
 namespace Cesium3DTiles {
 
     /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
+        std::shared_ptr<spdlog::logger> pLogger,
         const TileContext& context,
         const TileID& /*tileID*/,
         const BoundingVolume& /*tileBoundingVolume*/,
@@ -39,7 +40,7 @@ namespace Cesium3DTiles {
         }
         catch (const json::parse_error& error)
         {
-            SPDLOG_ERROR("Error when parsing external tileset content: {}", error.what());
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing external tileset content: {}", error.what());
         }
         return pResult;
     }

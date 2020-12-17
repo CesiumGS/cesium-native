@@ -9,6 +9,7 @@
 #include <gsl/span>
 #include <memory>
 #include <optional>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
     class TileContent;
@@ -36,6 +37,7 @@ namespace Cesium3DTiles {
          * @brief The signature of a function that can create a {@link TileContentLoadResult}
          */
         typedef std::unique_ptr<TileContentLoadResult> FactoryFunctionSignature(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
@@ -108,6 +110,7 @@ namespace Cesium3DTiles {
          * data, and no factory function for the given content type.
          */
         static std::unique_ptr<TileContentLoadResult> createContent(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,

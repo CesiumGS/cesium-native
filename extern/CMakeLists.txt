@@ -17,5 +17,4 @@ add_subdirectory(tinyxml2)
 
 add_subdirectory(asyncplusplus)
 
-set(SPDLOG_BUILD_SHARED ON CACHE BOOL "Build spdlog shared" FORCE)
 add_subdirectory(spdlog)

@@ -39,6 +39,7 @@ namespace Cesium3DTiles {
 	namespace {
 
 		void parseFeatureTableJsonData(
+			const std::shared_ptr<spdlog::logger>& pLogger,
 			tinygltf::Model& gltf,
 			const gsl::span<const uint8_t>& featureTableJsonData)
 		{
@@ -50,7 +51,7 @@ namespace Cesium3DTiles {
 			}
 			catch (const json::parse_error& error)
 			{
-				SPDLOG_ERROR("Error when parsing feature table JSON: {}", error.what());
+				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing feature table JSON: {}", error.what());
 				return;
 			}
 
@@ -76,6 +77,7 @@ namespace Cesium3DTiles {
 
 
     std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
+		std::shared_ptr<spdlog::logger> pLogger,
 		const TileContext& context,
 		const TileID& tileID,
 		const BoundingVolume& tileBoundingVolume,
@@ -154,6 +156,7 @@ namespace Cesium3DTiles {
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
         std::unique_ptr<TileContentLoadResult> pResult = GltfContent::load(
+			pLogger,
 			context,
 			tileID,
 			tileBoundingVolume,
@@ -168,7 +171,7 @@ namespace Cesium3DTiles {
 		if (pResult->model && header.featureTableJsonByteLength > 0) {
 			tinygltf::Model& gltf = pResult->model.value();
 			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
-			parseFeatureTableJsonData(gltf, featureTableJsonData);
+			parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 		}
 
 		return pResult;

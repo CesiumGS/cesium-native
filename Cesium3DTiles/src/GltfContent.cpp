@@ -9,6 +9,7 @@
 namespace Cesium3DTiles {
 
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
+		std::shared_ptr<spdlog::logger> pLogger,
 		const TileContext& /*context*/,
 		const TileID& /*tileID*/,
 		const BoundingVolume& /*tileBoundingVolume*/,
@@ -28,10 +29,10 @@ namespace Cesium3DTiles {
 		pResult->model.emplace();
 		bool success = loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
 		if (!success) {
-			SPDLOG_ERROR("Failed to load binary glTF from memory: {}", errors);
+			SPDLOG_LOGGER_ERROR(pLogger, "Failed to load binary glTF from memory: {}", errors);
 		}
 		if (!warnings.empty()) {
-			SPDLOG_WARN("Warning when loading binary glTF from memory: {}", warnings);
+			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from memory: {}", warnings);
 		}
 		return pResult;
 	}
