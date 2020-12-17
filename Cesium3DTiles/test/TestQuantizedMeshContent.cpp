@@ -474,23 +474,23 @@ static void checkGeneratedGridNormal(const GltfAccessor<glm::vec3> &normals,
 	}
 
 	for (size_t i = 0; i < expectedNormals.size(); i += 3) {
-		glm::vec3 expectedNormal = expectedNormals[i];
+		glm::vec3 &expectedNormal = expectedNormals[i];
         glm::vec3 normal = normals[i];
 
-		if (!Math::equalsEpsilon(glm::dot(expectedNormals[i], expectedNormals[i]), 0.0, Math::EPSILON5)) {
+		if (!Math::equalsEpsilon(glm::dot(expectedNormals[i], expectedNormals[i]), 0.0, Math::EPSILON7)) {
 			expectedNormal = glm::normalize(expectedNormals[i]);
 
 			// make sure normal points to the direction of geodetic normal for grid only
 			REQUIRE(glm::dot(normal, geodeticNormal) >= 0.0);
 
-            REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON5));
-            REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON5));
-            REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON5));
+            REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+            REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+            REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
 		}
         else {
-            REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON5));
-            REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON5));
-            REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON5));
+            REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+            REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+            REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
         }
 	}
 }
