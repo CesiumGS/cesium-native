@@ -165,6 +165,7 @@ namespace Cesium3DTiles {
         const std::string& culture,
         const Ellipsoid& ellipsoid
     ) :
+        //TODO: change placeholder Credit
         _credit(Credit("Bing Placeholder")),
         _url(url),
         _key(key),

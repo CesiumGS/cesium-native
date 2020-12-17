@@ -242,19 +242,18 @@ namespace Cesium3DTiles {
         this->_processLoadQueue();
 
         // aggregate all the credits needed from this tileset for the current frame 
-        std::set<Credit> credits;
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
-                credits.insert(Credit(this->_options.credit.value()));
+                result.creditsToShowThisFrame.insert(Credit(this->_options.credit.value()));
             }
 
             // TODO: change place holder Ion credit
-            credits.insert(Credit("Cesium Ion"));
+            result.creditsToShowThisFrame.insert(Credit("Cesium Ion"));
             
             for (auto& pOverlay : this->_overlays) {
                 const std::optional<Credit> overlayCredit = pOverlay->getCredit();
                 if (overlayCredit) {
-                    credits.insert(overlayCredit.value());
+                    result.creditsToShowThisFrame.insert(overlayCredit.value());
                 }
             }
             
@@ -264,14 +263,11 @@ namespace Cesium3DTiles {
                     RasterOverlayTile* rasterOverlayTile = mappedRasterTile.getReadyTile();
                     if (rasterOverlayTile != nullptr) {
                         for (Credit credit : rasterOverlayTile->getCredits()) {
-                            credits.insert(credit);
+                            result.creditsToShowThisFrame.insert(credit);
                         }
                     }
                 }
             }
-            
-            for (Credit credit : credits)
-                result.creditsToShowThisFrame += credit.getHTML() + "\n";
         }
 
         this->_previousFrameNumber = currentFrameNumber;

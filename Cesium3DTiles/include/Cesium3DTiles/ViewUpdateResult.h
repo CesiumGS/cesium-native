@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vector>
-#include <string>
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/Credit.h"
+#include <vector>
+#include <set>
 
 namespace Cesium3DTiles {
     class Tile;
@@ -33,7 +34,7 @@ namespace Cesium3DTiles {
         /**
          * @brief The credits for the tiles in the render list of the current frame
          */
-        std::string creditsToShowThisFrame;
+        std::set<Credit> creditsToShowThisFrame;
 
         //! @cond Doxygen_Suppress
         uint32_t tilesLoadingLowPriority;
