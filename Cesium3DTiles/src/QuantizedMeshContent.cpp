@@ -1,3 +1,4 @@
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
@@ -6,7 +7,6 @@
 #include "QuantizedMeshContent.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
-#include "spdlog.h"
 #include <glm/vec3.hpp>
 #include <stdexcept>
 

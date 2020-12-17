@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -9,7 +10,6 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
-#include "spdlog.h"
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;

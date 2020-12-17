@@ -1,8 +1,8 @@
+#include "Cesium3DTiles/GltfAccessor.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/GltfWriter.h"
-#include "Cesium3DTiles/GltfAccessor.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumUtility/Math.h"
-#include "spdlog.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {

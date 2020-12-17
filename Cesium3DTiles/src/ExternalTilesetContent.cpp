@@ -1,9 +1,9 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
-#include "CesiumUtility/Json.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "CesiumUtility/Json.h"
 #include "Uri.h"
-#include "spdlog.h"
 
 namespace Cesium3DTiles {
 

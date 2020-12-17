@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumAsync/AsyncSystem.h"
@@ -10,7 +11,6 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
-#include "spdlog.h"
 #include <glm/common.hpp>
 
 using namespace CesiumAsync;
