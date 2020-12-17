@@ -458,42 +458,42 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     uint32_t verticesHeight) 
 {
     uint32_t totalGridIndices = (verticesWidth - 1) * (verticesHeight - 1) * 6;
-	std::vector<glm::vec3> expectedNormals(verticesWidth * verticesHeight);
-	for (uint32_t i = 0; i < totalGridIndices; i += 3) {
-		I id0 = indices[i];
-		I id1 = indices[i + 1];
-		I id2 = indices[i + 2];
-		
-		glm::vec3 p0 = positions[id0];
-		glm::vec3 p1 = positions[id1];
-		glm::vec3 p2 = positions[id2];
+    std::vector<glm::vec3> expectedNormals(verticesWidth * verticesHeight);
+    for (uint32_t i = 0; i < totalGridIndices; i += 3) {
+        I id0 = indices[i];
+        I id1 = indices[i + 1];
+        I id2 = indices[i + 2];
+        
+        glm::vec3 p0 = positions[id0];
+        glm::vec3 p1 = positions[id1];
+        glm::vec3 p2 = positions[id2];
 
-		glm::vec3 normal = glm::cross(p1 - p0, p2 - p0);
+        glm::vec3 normal = glm::cross(p1 - p0, p2 - p0);
         expectedNormals[id0] += normal;
         expectedNormals[id1] += normal;
         expectedNormals[id2] += normal;
-	}
+    }
 
-	for (size_t i = 0; i < expectedNormals.size(); ++i) {
-		glm::vec3 &expectedNormal = expectedNormals[i];
+    for (size_t i = 0; i < expectedNormals.size(); ++i) {
+        glm::vec3 &expectedNormal = expectedNormals[i];
         glm::vec3 normal = normals[i];
 
-		if (!Math::equalsEpsilon(glm::dot(expectedNormals[i], expectedNormals[i]), 0.0, Math::EPSILON7)) {
-			expectedNormal = glm::normalize(expectedNormals[i]);
+        if (!Math::equalsEpsilon(glm::dot(expectedNormals[i], expectedNormals[i]), 0.0, Math::EPSILON7)) {
+            expectedNormal = glm::normalize(expectedNormals[i]);
 
-			// make sure normal points to the direction of geodetic normal for grid only
-			REQUIRE(glm::dot(normal, geodeticNormal) >= 0.0);
+            // make sure normal points to the direction of geodetic normal for grid only
+            REQUIRE(glm::dot(normal, geodeticNormal) >= 0.0);
 
             REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
             REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
             REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
-		}
+        }
         else {
             REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
             REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
             REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
         }
-	}
+    }
 
     // make sure there are skirts in there
     size_t westIndicesCount = quantizedMesh.vertexData.westIndices.size();
@@ -512,9 +512,9 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     for (size_t i = 0; i < westIndicesCount; ++i) {
         glm::vec3 normal = normals[currentVertexCount + i];
         glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
-		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
 
         ++y;
     }
@@ -525,9 +525,9 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     for (size_t i = 0; i < southIndicesCount; ++i) {
         glm::vec3 normal = normals[currentVertexCount + i];
         glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
-		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
 
         --x;
     }
@@ -538,9 +538,9 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     for (size_t i = 0; i < eastIndicesCount; ++i) {
         glm::vec3 normal = normals[currentVertexCount + i];
         glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
-		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
 
         --y;
     }
@@ -551,9 +551,9 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     for (size_t i = 0; i < northIndicesCount; ++i) {
         glm::vec3 normal = normals[currentVertexCount + i];
         glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
-		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
-		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+        REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
 
         ++x;
     }

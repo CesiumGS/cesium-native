@@ -690,8 +690,8 @@ namespace Cesium3DTiles {
             outputNormals = gsl::span<float>(reinterpret_cast<float*>(outputNormalsBuffer.data()), totalNormalFloats);
             decodeNormals(meshView->octEncodedNormalBuffer, outputNormals);
 
-			outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
-				outputNormalsBuffer.size() / sizeof(float));
+            outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
+                outputNormalsBuffer.size() / sizeof(float));
         }
 
         // decode metadata
@@ -719,8 +719,8 @@ namespace Cesium3DTiles {
             // generate normals if no provided
             if (outputNormalsBuffer.empty()) {
                 outputNormalsBuffer = generateNormals(outputPositions, outputIndices, indicesCount);
-				outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
-					outputNormalsBuffer.size() / sizeof(float));
+                outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
+                    outputNormalsBuffer.size() / sizeof(float));
             }
 
             // add skirt
@@ -754,12 +754,12 @@ namespace Cesium3DTiles {
                 gsl::span<uint16_t> outputIndices(reinterpret_cast<uint16_t*>(outputIndicesBuffer.data()), outputIndicesCount);
                 decodeIndices(indices, outputIndices);
 
-				// generate normals if no provided
-				if (outputNormalsBuffer.empty()) {
-					outputNormalsBuffer = generateNormals(outputPositions, outputIndices, indicesCount);
-					outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
-						outputNormalsBuffer.size() / sizeof(float));
-				}
+                // generate normals if no provided
+                if (outputNormalsBuffer.empty()) {
+                    outputNormalsBuffer = generateNormals(outputPositions, outputIndices, indicesCount);
+                    outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
+                        outputNormalsBuffer.size() / sizeof(float));
+                }
 
                 addSkirts<uint16_t, uint16_t>(ellipsoid, 
                     center,
@@ -787,12 +787,12 @@ namespace Cesium3DTiles {
                 gsl::span<uint32_t> outputIndices(reinterpret_cast<uint32_t*>(outputIndicesBuffer.data()), outputIndicesCount);
                 decodeIndices(indices, outputIndices);
 
-				// generate normals if no provided
-				if (outputNormalsBuffer.empty()) {
-					outputNormalsBuffer = generateNormals(outputPositions, outputIndices, indicesCount);
-					outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
-						outputNormalsBuffer.size() / sizeof(float));
-				}
+                // generate normals if no provided
+                if (outputNormalsBuffer.empty()) {
+                    outputNormalsBuffer = generateNormals(outputPositions, outputIndices, indicesCount);
+                    outputNormals = gsl::span<float>(reinterpret_cast<float *>(outputNormalsBuffer.data()), 
+                        outputNormalsBuffer.size() / sizeof(float));
+                }
 
                 addSkirts<uint16_t, uint32_t>(ellipsoid,
                     center, 
