@@ -7,6 +7,7 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Json.h"
+#include "spdlog.h"
 #include "tinyxml2.h"
 #include "Uri.h"
 
@@ -128,6 +129,7 @@ namespace Cesium3DTiles {
             pOwner,
             asyncSystem,
             pPrepareRendererResources,
+            pLogger,
             options = this->_options,
             url = this->_url,
             headers = this->_headers
@@ -139,13 +141,13 @@ namespace Cesium3DTiles {
             tinyxml2::XMLDocument doc;
             tinyxml2::XMLError error = doc.Parse(reinterpret_cast<const char*>(data.data()), data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
-                // TODO: report error
+                SPDLOG_LOGGER_ERROR(pLogger, "Could not parse tile map service XML.");
                 return nullptr;
             }
 
             tinyxml2::XMLElement* pRoot = doc.RootElement();
             if (!pRoot) {
-                // TODO: report error
+                SPDLOG_LOGGER_ERROR(pLogger, "Tile map service XML document does not have a root element.");
                 return nullptr;
             }
 

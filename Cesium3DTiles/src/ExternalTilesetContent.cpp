@@ -3,7 +3,7 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Uri.h"
-#include "CesiumLogging.h"
+#include "spdlog.h"
 
 namespace Cesium3DTiles {
 

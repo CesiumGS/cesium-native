@@ -1,6 +1,6 @@
 #include "Cesium3DTiles/TileContentFactory.h"
 #include <algorithm>
-#include "CesiumLogging.h"
+#include "spdlog.h"
 
 namespace Cesium3DTiles {
 

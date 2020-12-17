@@ -8,7 +8,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Json.h"
 #include "Uri.h"
-#include "CesiumLogging.h"
+#include "spdlog.h"
 
 using namespace CesiumAsync;
 

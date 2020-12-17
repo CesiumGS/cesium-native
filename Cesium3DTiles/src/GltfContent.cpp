@@ -2,9 +2,8 @@
 #include "Cesium3DTiles/GltfWriter.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumUtility/Math.h"
-#include "CesiumLogging.h"
+#include "spdlog.h"
 #include <stdexcept>
-
 
 namespace Cesium3DTiles {
 

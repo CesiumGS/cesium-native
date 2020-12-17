@@ -10,7 +10,7 @@
 #include "CesiumUtility/Math.h"
 #include "TilesetJson.h"
 #include "Uri.h"
-#include "CesiumLogging.h"
+#include "spdlog.h"
 #include <glm/common.hpp>
 
 using namespace CesiumAsync;
