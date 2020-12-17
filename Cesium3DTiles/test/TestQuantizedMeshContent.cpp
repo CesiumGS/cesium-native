@@ -448,10 +448,11 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
     }
 }
 
-template<typename T>
-static void checkGeneratedGridNormal(const GltfAccessor<glm::vec3> &normals, 
+template<class T, class I>
+static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
+    const GltfAccessor<glm::vec3> &normals, 
     const GltfAccessor<glm::vec3> &positions, 
-    const GltfAccessor<T> &indices, 
+    const GltfAccessor<I> &indices, 
     const glm::vec3 &geodeticNormal,
     uint32_t verticesWidth, 
     uint32_t verticesHeight) 
@@ -459,9 +460,9 @@ static void checkGeneratedGridNormal(const GltfAccessor<glm::vec3> &normals,
     uint32_t totalGridIndices = (verticesWidth - 1) * (verticesHeight - 1) * 6;
 	std::vector<glm::vec3> expectedNormals(verticesWidth * verticesHeight);
 	for (uint32_t i = 0; i < totalGridIndices; i += 3) {
-		T id0 = indices[i];
-		T id1 = indices[i + 1];
-		T id2 = indices[i + 2];
+		I id0 = indices[i];
+		I id1 = indices[i + 1];
+		I id2 = indices[i + 2];
 		
 		glm::vec3 p0 = positions[id0];
 		glm::vec3 p1 = positions[id1];
@@ -473,7 +474,7 @@ static void checkGeneratedGridNormal(const GltfAccessor<glm::vec3> &normals,
         expectedNormals[id2] += normal;
 	}
 
-	for (size_t i = 0; i < expectedNormals.size(); i += 3) {
+	for (size_t i = 0; i < expectedNormals.size(); ++i) {
 		glm::vec3 &expectedNormal = expectedNormals[i];
         glm::vec3 normal = normals[i];
 
@@ -493,6 +494,69 @@ static void checkGeneratedGridNormal(const GltfAccessor<glm::vec3> &normals,
             REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
         }
 	}
+
+    // make sure there are skirts in there
+    size_t westIndicesCount = quantizedMesh.vertexData.westIndices.size();
+    size_t southIndicesCount = quantizedMesh.vertexData.southIndices.size();
+    size_t eastIndicesCount = quantizedMesh.vertexData.eastIndices.size();
+    size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
+
+    size_t gridVerticesCount = verticesWidth * verticesHeight;
+    size_t totalSkirtVertices = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
+
+    REQUIRE(totalSkirtVertices == normals.size() - gridVerticesCount);
+
+    size_t currentVertexCount = gridVerticesCount;
+    uint32_t x = 0;
+    uint32_t y = 0;
+    for (size_t i = 0; i < westIndicesCount; ++i) {
+        glm::vec3 normal = normals[currentVertexCount + i];
+        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+
+        ++y;
+    }
+
+    currentVertexCount += westIndicesCount;
+    x = verticesWidth - 1;
+    y = 0;
+    for (size_t i = 0; i < southIndicesCount; ++i) {
+        glm::vec3 normal = normals[currentVertexCount + i];
+        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+
+        --x;
+    }
+
+    currentVertexCount += southIndicesCount;
+    x = verticesWidth - 1;
+    y = verticesHeight - 1;
+    for (size_t i = 0; i < eastIndicesCount; ++i) {
+        glm::vec3 normal = normals[currentVertexCount + i];
+        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+
+        --y;
+    }
+
+    currentVertexCount += eastIndicesCount;
+    x = 0;
+    y = verticesHeight - 1;
+    for (size_t i = 0; i < northIndicesCount; ++i) {
+        glm::vec3 normal = normals[currentVertexCount + i];
+        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+		REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
+		REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
+
+        ++x;
+    }
 }
 
 TEST_CASE("Test converting quantized mesh to gltf with skirt") {
@@ -552,7 +616,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
         Cartographic center = boundingVolume.getRectangle().computeCenter();
         glm::vec3 geodeticNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
-        checkGeneratedGridNormal(normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
+        checkGeneratedGridNormal(quantizedMesh, normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
     }
 
     SECTION("Check quantized mesh that has uint32_t indices") {
@@ -597,7 +661,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
         Cartographic center = boundingVolume.getRectangle().computeCenter();
         glm::vec3 geodeticNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
-        checkGeneratedGridNormal(normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
+        checkGeneratedGridNormal(quantizedMesh, normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
     }
 
     SECTION("Check 16 bit indices turns to 32 bits when adding skirt") {
@@ -642,7 +706,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
         Cartographic center = boundingVolume.getRectangle().computeCenter();
         glm::vec3 geodeticNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
-        checkGeneratedGridNormal(normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
+        checkGeneratedGridNormal(quantizedMesh, normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
     }
 
     SECTION("Check quantized mesh that has oct normal") {

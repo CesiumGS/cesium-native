@@ -624,7 +624,7 @@ namespace Cesium3DTiles {
 
         // decode position without skirt, but preallocate position buffer to include skirt as well
         std::vector<unsigned char> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
-        gsl::span<float> outputPositions(reinterpret_cast<float*>(outputPositionsBuffer.data()), (vertexCount + skirtIndicesCount) * 3);
+        gsl::span<float> outputPositions(reinterpret_cast<float*>(outputPositionsBuffer.data()), (vertexCount + skirtVertexCount) * 3);
         size_t positionOutputIndex = 0;
 
         glm::dvec3 center(pHeader->BoundingSphereCenterX, pHeader->BoundingSphereCenterY, pHeader->BoundingSphereCenterZ);
