@@ -4,6 +4,7 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace CesiumAsync {
 
