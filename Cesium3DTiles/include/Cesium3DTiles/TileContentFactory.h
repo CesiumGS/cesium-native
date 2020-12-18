@@ -9,6 +9,7 @@
 #include <gsl/span>
 #include <memory>
 #include <optional>
+#include <unordered_map>
 
 namespace Cesium3DTiles {
     class TileContent;
