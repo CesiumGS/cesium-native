@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
 #include <map>
 #include <vector>
 #include <string>

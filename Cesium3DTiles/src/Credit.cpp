@@ -1,5 +1,4 @@
 #include "Cesium3DTiles/Credit.h"
-
 #include <map>
 #include <string>
 #include <utility>

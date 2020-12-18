@@ -166,7 +166,7 @@ namespace Cesium3DTiles {
         const Ellipsoid& ellipsoid
     ) :
         //TODO: change placeholder Credit
-        _credit(Credit("Bing Placeholder")),
+        _credit(Credit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>")),
         _url(url),
         _key(key),
         _mapStyle(mapStyle),
