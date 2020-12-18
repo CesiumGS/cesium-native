@@ -8,7 +8,7 @@ namespace CesiumGeometry {
     /**
      * @brief A ray that extends infinitely from the provided origin in the provided direction.
      */
-    class CESIUMGEOMETRY_API Ray {
+    class CESIUMGEOMETRY_API Ray final {
     public:
         /**
          * @brief Construct a new ray.

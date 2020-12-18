@@ -142,7 +142,7 @@ namespace Cesium3DTiles {
      * @brief A <a href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D Tiles tileset</a>,
      * used for streaming massive heterogeneous 3D geospatial datasets.
      */
-    class CESIUM3DTILES_API Tileset {
+    class CESIUM3DTILES_API Tileset final {
     public:
         /**
          * @brief Constructs a new instance with a given `tileset.json` URL.
@@ -388,7 +388,7 @@ namespace Cesium3DTiles {
              */
             double priority;
 
-            bool operator<(const LoadRecord& rhs) {
+            bool operator<(const LoadRecord& rhs) const {
                 return this->priority < rhs.priority;
             }
         };

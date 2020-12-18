@@ -18,7 +18,7 @@ namespace CesiumGeospatial {
      *
      * @see GeographicProjection
      */
-    class CESIUMGEOSPATIAL_API WebMercatorProjection {
+    class CESIUMGEOSPATIAL_API WebMercatorProjection final {
     public:
         /**
          * @brief The maximum latitude (both North and South) supported by a Web Mercator

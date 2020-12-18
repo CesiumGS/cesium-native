@@ -3,7 +3,7 @@
 #include <string>
 #include <functional>
 
-class Uri
+class Uri final
 {
 public:
 	static std::string resolve(const std::string& base, const std::string& relative, bool useBaseQuery = false);

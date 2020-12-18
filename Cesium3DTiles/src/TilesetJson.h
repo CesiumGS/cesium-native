@@ -6,7 +6,7 @@
 
 namespace Cesium3DTiles {
 
-    class TilesetJson {
+    class TilesetJson final {
     public:
         static std::optional<BoundingVolume> getBoundingVolumeProperty(const nlohmann::json& tileJson, const std::string& key);
         static std::optional<double> getScalarProperty(const nlohmann::json& tileJson, const std::string& key);

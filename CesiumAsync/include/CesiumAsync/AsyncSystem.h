@@ -7,8 +7,15 @@
 #include <memory>
 
 #pragma warning(push)
+
 #pragma warning(disable:4458 4324)
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 #include <async++.h>
+
 #pragma warning(pop)
 
 namespace CesiumAsync {
@@ -109,7 +116,7 @@ namespace CesiumAsync {
      * @tparam T The type of the value.
      */
     template <class T>
-    class Future {
+    class Future final {
     public:
         Future(Future<T>&& rhs) noexcept :
             _pSchedulers(std::move(rhs._pSchedulers)),
@@ -219,7 +226,7 @@ namespace CesiumAsync {
      * 
      * Instances of this class may be safely and efficiently stored and passed around by value.
      */
-    class CESIUMASYNC_API AsyncSystem {
+    class CESIUMASYNC_API AsyncSystem final {
     public:
         /**
          * @brief Constructs a new instance.

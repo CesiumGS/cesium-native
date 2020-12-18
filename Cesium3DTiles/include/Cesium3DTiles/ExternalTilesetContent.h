@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates a {@link TileContentLoadResult} from 3D Tiles external tileset.json data.
      */
-    class CESIUM3DTILES_API ExternalTilesetContent {
+    class CESIUM3DTILES_API ExternalTilesetContent final {
     public:
 
         /**

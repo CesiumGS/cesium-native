@@ -89,7 +89,7 @@ namespace Cesium3DTiles {
     /**
      * @brief A {@link RasterOverlay} based on tile map service imagery.
      */
-    class CESIUM3DTILES_API TileMapServiceRasterOverlay : public RasterOverlay {
+    class CESIUM3DTILES_API TileMapServiceRasterOverlay final : public RasterOverlay {
     public:
 
         /**

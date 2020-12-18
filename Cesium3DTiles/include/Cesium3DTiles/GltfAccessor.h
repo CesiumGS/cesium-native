@@ -23,7 +23,7 @@ namespace Cesium3DTiles {
 	 * @tparam T The type of the elements in the accessor.
 	 */
 	template <class T>
-	class GltfAccessor {
+	class GltfAccessor final {
 	private:
 		const tinygltf::Buffer* _pGltfBuffer;
 		const tinygltf::BufferView* _pGltfBufferView;
