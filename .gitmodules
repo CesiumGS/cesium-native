@@ -25,3 +25,6 @@
 [submodule "extern/cgltf"]
 	path = extern/cgltf
 	url = https://github.com/jkuhlmann/cgltf.git
+[submodule "extern/simdjson"]
+	path = extern/simdjson
+	url = https://github.com/simdjson/simdjson.git

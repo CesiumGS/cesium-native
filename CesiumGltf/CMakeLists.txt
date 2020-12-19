@@ -23,4 +23,4 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/cgltf
 )
 
-target_link_libraries(CesiumGltf PUBLIC CesiumGeometry CesiumUtility)
+target_link_libraries(CesiumGltf PUBLIC CesiumGeometry CesiumUtility simdjson)
