@@ -2,7 +2,7 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
@@ -92,6 +92,7 @@ namespace Cesium3DTiles {
         BingMapsRasterOverlay(
             const std::string& url,
             const std::string& key,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             const std::string& mapStyle = BingMapsStyle::AERIAL,
             const std::string& culture = "",
             const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84

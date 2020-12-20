@@ -4,30 +4,17 @@
 #include <utility>
 
 namespace {
-    bool operator==(const aCesium3DTiles::Credit& lhs, const aCesium3DTiles::Credit& rhs) { return lhs.first == rhs.first };
+    bool operator==(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.first == rhs.first; }
 
-    bool operator<(const aCesium3DTiles::Credit& lhs, const aCesium3DTiles::Credit& rhs) { return lhs.first < rhs.first };
+    bool operator<(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.first < rhs.first; }
 }
 
-namespace aCesium3DTiles {
-
-    std::map<std::string, int> CreditSystem::creditToId = {};
-    int CreditSystem::nextId = 0;
+namespace Cesium3DTiles {
 
     Credit CreditSystem::createCredit(const std::string& html) {
         std::pair<std::map<std::string, int>::iterator, bool> insertionResult;
         insertionResult = creditToId.insert(std::pair<std::string, int>(html, nextId));
         
-        /*
-        int id;
-        if (insertionResult.second) {
-            // this is a new credit
-            id = nextId++;
-        } else {
-            // this is an existing credit, so assign it the old id  
-            id = insertionResult.first->second;
-        }
-        */
         return Credit(
 
             // the id
@@ -42,14 +29,14 @@ namespace aCesium3DTiles {
         ); 
     }
 
-    void addCreditToFrame(const Credit credit) {
-        creditsToNoLongerShowThisFrame.remove(credit);
+    void CreditSystem::addCreditToFrame(const Credit credit) {
+        creditsToNoLongerShowThisFrame.erase(credit);
         creditsToShowThisFrame.insert(credit).second;
     }
 
-    void startNextFrame() {
+    void CreditSystem::startNextFrame() {
         creditsToNoLongerShowThisFrame.clear();
-        creditsToNoLongerShowThisFrame(creditsToShowThisFrame);
+        creditsToNoLongerShowThisFrame = std::set(creditsToShowThisFrame);
         creditsToShowThisFrame.clear();
     }
 }

@@ -5,7 +5,8 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
-    RasterOverlay::RasterOverlay() :
+    RasterOverlay::RasterOverlay(const std::shared_ptr<CreditSystem>& pCreditSystem) :
+        _pCreditSystem(pCreditSystem),
         _pPlaceholder(),
         _pTileProvider(),
         _cutouts(),

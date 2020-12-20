@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-//#include "Cesium3DTiles/Credit.h"
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 
-namespace aCesium3DTiles {
+namespace Cesium3DTiles {
 
     typedef std::pair<int, const std::string&> Credit;
 

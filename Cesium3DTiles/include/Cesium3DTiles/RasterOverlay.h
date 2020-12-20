@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include <functional>
@@ -26,7 +26,7 @@ namespace Cesium3DTiles {
      */
     class RasterOverlay {
     public:
-        RasterOverlay();
+        RasterOverlay(const std::shared_ptr<CreditSystem>& pCreditSystem);
         virtual ~RasterOverlay();
 
         /**
@@ -121,6 +121,9 @@ namespace Cesium3DTiles {
          * @param pOverlay A unique pointer to this instance, allowing transfer of ownership.
          */
         void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
+    
+    protected:
+        std::shared_ptr<CreditSystem> _pCreditSystem;
 
     private:
         std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;

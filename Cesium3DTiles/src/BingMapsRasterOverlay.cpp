@@ -3,7 +3,7 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
@@ -112,10 +112,10 @@ namespace Cesium3DTiles {
             CesiumGeospatial::GlobeRectangle tileRectangle = CesiumGeospatial::unprojectRectangleSimple(this->getProjection(), this->getTilingScheme().tileToRectangle(tileID));
             
             std::vector<Credit> tileCredits;
-            for (std::pair<Credit, std::vector<BingMapsCreditCoverageArea>> credit : _credits) {
+            for (std::pair<Credit, std::vector<BingMapsCreditCoverageArea>> creditAndCoverage : _credits) {
                 
                 bool withinCoverage = false;
-                for (BingMapsCreditCoverageArea coverageArea : credit.second) {
+                for (BingMapsCreditCoverageArea coverageArea : creditAndCoverage.second) {
                     if (coverageArea.zoomMin <= bingTileLevel && bingTileLevel <= coverageArea.zoomMax &&
                         coverageArea.rectangle.intersect(tileRectangle).has_value()
                     ) {
@@ -125,7 +125,7 @@ namespace Cesium3DTiles {
                 }
 
                 if (withinCoverage) {
-                    tileCredits.push_back(credit.first);
+                    tileCredits.push_back(creditAndCoverage.first);
                 }
             }
             
@@ -161,12 +161,14 @@ namespace Cesium3DTiles {
     BingMapsRasterOverlay::BingMapsRasterOverlay(
         const std::string& url,
         const std::string& key,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         const std::string& mapStyle,
         const std::string& culture,
         const Ellipsoid& ellipsoid
     ) :
-        //TODO: change placeholder Credit
-        _credit(Credit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>")),
+        RasterOverlay(pCreditSystem),
+        // double check whether this should be hardcoded 
+        _credit(pCreditSystem->createCredit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>")),
         _url(url),
         _key(key),
         _mapStyle(mapStyle),
@@ -195,7 +197,8 @@ namespace Cesium3DTiles {
             asyncSystem,
             pPrepareRendererResources,
             baseUrl = this->_url,
-            culture = this->_culture
+            culture = this->_culture,
+            pCreditSystem = this->_pCreditSystem
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
@@ -238,10 +241,12 @@ namespace Cesium3DTiles {
                     coverageAreas.push_back(coverageArea);
                 }
 
-                credits.push_back(std::pair(
-                    Credit(attribution.value("attribution", std::string())),
-                    coverageAreas
-                ));
+                credits.push_back(
+                    std::pair(
+                        pCreditSystem->createCredit(attribution.value("attribution", std::string())),
+                        coverageAreas
+                    )
+                );
             }
 
             return std::make_unique<BingMapsTileProvider>(

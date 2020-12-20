@@ -38,7 +38,7 @@ namespace Cesium3DTiles {
      */
     struct CESIUM3DTILES_API TilesetOptions {
         /**
-         * @brief A credit text for this tileset, if needed. (TODO: use indices and remove redundancies instead)  
+         * @brief A credit text for this tileset, if needed. 
          */
         std::optional<std::string> credit;
 
@@ -370,6 +370,8 @@ namespace Cesium3DTiles {
         std::vector<std::unique_ptr<TileContext>> _contexts;
         TilesetExternals _externals;
         CesiumAsync::AsyncSystem _asyncSystem;
+
+        std::shared_ptr<CreditSystem> _pCreditSystem;
 
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;

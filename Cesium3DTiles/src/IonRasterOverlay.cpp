@@ -15,8 +15,10 @@ namespace Cesium3DTiles {
 
     IonRasterOverlay::IonRasterOverlay(
         uint32_t ionAssetID,
-        const std::string& ionAccessToken
+        const std::string& ionAccessToken,
+        const std::shared_ptr<CreditSystem>& pCreditSystem
     ) :
+        RasterOverlay(pCreditSystem),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken)
     {
@@ -35,7 +37,7 @@ namespace Cesium3DTiles {
 
         pOwner = pOwner ? pOwner : this;
 
-        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([](
+        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([pCreditSystem = this->_pCreditSystem](
             std::unique_ptr<IAssetRequest> pRequest
         ) -> std::unique_ptr<RasterOverlay> {
             IAssetResponse* pResponse = pRequest->response();
@@ -65,6 +67,7 @@ namespace Cesium3DTiles {
                 return std::make_unique<BingMapsRasterOverlay>(
                     url,
                     key,
+                    pCreditSystem,
                     mapStyle,
                     culture
                 );
@@ -72,6 +75,7 @@ namespace Cesium3DTiles {
                 std::string url = response.value("url", "");
                 return std::make_unique<TileMapServiceRasterOverlay>(
                     url,
+                    pCreditSystem,
                     std::vector<CesiumAsync::IAssetAccessor::THeader> {
                         std::make_pair("Authorization", "Bearer " + response.value("accessToken", ""))
                     }

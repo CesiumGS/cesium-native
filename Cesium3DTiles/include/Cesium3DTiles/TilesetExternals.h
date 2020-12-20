@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include <memory>
 
 namespace CesiumAsync {
@@ -33,6 +34,11 @@ namespace Cesium3DTiles {
          * @brief An external {@link ITaskProcessor}
          */
         std::shared_ptr<CesiumAsync::ITaskProcessor> pTaskProcessor;
+
+        /**
+         * @brief An external {@link CreditSystem}
+         */
+         std::shared_ptr<CreditSystem> pCreditSystem;
     };
 
 }

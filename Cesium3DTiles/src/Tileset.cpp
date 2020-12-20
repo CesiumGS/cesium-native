@@ -3,7 +3,7 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -31,6 +31,7 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _pCreditSystem(externals.pCreditSystem),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -60,6 +61,7 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _pCreditSystem(externals.pCreditSystem),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -244,11 +246,11 @@ namespace Cesium3DTiles {
         // aggregate all the credits needed from this tileset for the current frame 
         if (!result.tilesToRenderThisFrame.empty()) {
             if (this->_options.credit) {
-                result.creditsToShowThisFrame.insert(Credit(this->_options.credit.value()));
+                result.creditsToShowThisFrame.insert(this->_pCreditSystem->createCredit(this->_options.credit.value()));
             }
 
             // TODO: change place holder Ion credit
-            result.creditsToShowThisFrame.insert(Credit("Cesium Ion"));
+            result.creditsToShowThisFrame.insert(this->_pCreditSystem->createCredit("Cesium Ion"));
             
             for (auto& pOverlay : this->_overlays) {
                 const std::optional<Credit> overlayCredit = pOverlay->getCredit();

@@ -2,10 +2,11 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTiles {
 
@@ -27,7 +28,8 @@ namespace Cesium3DTiles {
          */
         IonRasterOverlay(
             uint32_t ionAssetID,
-            const std::string& ionAccessToken
+            const std::string& ionAccessToken,
+            const std::shared_ptr<CreditSystem>& pCreditSystem
         );
         virtual ~IonRasterOverlay() override;
         

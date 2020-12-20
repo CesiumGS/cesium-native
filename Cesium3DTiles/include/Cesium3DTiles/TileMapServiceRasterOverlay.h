@@ -2,12 +2,13 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include <functional>
+#include <memory>
 #include <optional>
 
 namespace Cesium3DTiles {
@@ -104,6 +105,7 @@ namespace Cesium3DTiles {
          */
         TileMapServiceRasterOverlay(
             const std::string& url,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = std::vector<CesiumAsync::IAssetAccessor::THeader>(),
             const TileMapServiceRasterOverlayOptions& options = TileMapServiceRasterOverlayOptions()
         );

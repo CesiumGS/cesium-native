@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/Credit.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include <vector>
 #include <set>
 
