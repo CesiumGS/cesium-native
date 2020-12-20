@@ -11,11 +11,11 @@ namespace Cesium3DTiles {
     struct Credit final {
         const int id;
         const std::string& html;
+
+        bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
+
+        bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
     };
-
-    bool operator==(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.id == rhs.id; }
-
-    bool operator<(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.id < rhs.id; }
 
     class CESIUM3DTILES_API CreditSystem final {
     public:
