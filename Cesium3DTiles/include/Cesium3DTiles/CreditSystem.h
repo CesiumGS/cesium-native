@@ -8,6 +8,9 @@
 
 namespace Cesium3DTiles {
 
+    /**
+     * @brief Handle into a {@link CreditSystem} representing a html credit string.
+     */
     struct Credit final {
         const int id;
         const std::string& html;
@@ -17,6 +20,10 @@ namespace Cesium3DTiles {
         bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
     };
 
+    /**
+     * @brief Creates and manages {@link Credit} objects. Avoids repetitions and
+     * tracks which credits should be shown and which credits should be removed this frame.
+     */
     class CESIUM3DTILES_API CreditSystem final {
     public:
 
