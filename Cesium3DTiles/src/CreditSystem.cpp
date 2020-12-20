@@ -26,7 +26,7 @@ namespace Cesium3DTiles {
 
     void CreditSystem::addCreditToFrame(const Credit credit) {
         creditsToNoLongerShowThisFrame.erase(credit);
-        creditsToShowThisFrame.insert(credit).second;
+        creditsToShowThisFrame.insert(credit);
     }
 
     void CreditSystem::startNextFrame() {
