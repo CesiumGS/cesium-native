@@ -1,13 +1,8 @@
 #include "Cesium3DTiles/CreditSystem.h"
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
-
-namespace {
-    bool operator==(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.first == rhs.first; }
-
-    bool operator<(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.first < rhs.first; }
-}
 
 namespace Cesium3DTiles {
 
@@ -15,7 +10,7 @@ namespace Cesium3DTiles {
         std::pair<std::map<std::string, int>::iterator, bool> insertionResult;
         insertionResult = creditToId.insert(std::pair<std::string, int>(html, nextId));
         
-        return Credit(
+        return Credit {
 
             // the id
             insertionResult.second ?
@@ -26,7 +21,7 @@ namespace Cesium3DTiles {
 
             // the html string
             insertionResult.first->first
-        ); 
+        }; 
     }
 
     void CreditSystem::addCreditToFrame(const Credit credit) {

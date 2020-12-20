@@ -8,7 +8,14 @@
 
 namespace Cesium3DTiles {
 
-    typedef std::pair<int, const std::string&> Credit;
+    struct Credit final {
+        const int id;
+        const std::string& html;
+    };
+
+    bool operator==(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.id == rhs.id; }
+
+    bool operator<(const Cesium3DTiles::Credit& lhs, const Cesium3DTiles::Credit& rhs) { return lhs.id < rhs.id; }
 
     class CESIUM3DTILES_API CreditSystem final {
     public:
