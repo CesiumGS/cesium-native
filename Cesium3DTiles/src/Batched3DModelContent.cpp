@@ -1,7 +1,7 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
-#include "CesiumUtility/Json.h"
+#include <rapidjson/document.h>
 #include <stdexcept>
 
 namespace Cesium3DTiles {
@@ -43,30 +43,33 @@ namespace Cesium3DTiles {
 			tinygltf::Model& gltf,
 			const gsl::span<const uint8_t>& featureTableJsonData)
 		{
-			using nlohmann::json;
-			json response;
-			try
-			{
-				response = json::parse(featureTableJsonData.begin(), featureTableJsonData.end());
-			}
-			catch (const json::parse_error& error)
-			{
-				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing feature table JSON: {}", error.what());
+			rapidjson::Document document;
+			document.Parse(reinterpret_cast<const char*>(featureTableJsonData.data()), featureTableJsonData.size());
+			if (document.HasParseError()) {
+				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing feature table JSON, error code {} at byte offset {}", document.GetParseError(), document.GetErrorOffset());
 				return;
 			}
 
-			std::vector<double> rtcCenter = response.value("RTC_CENTER", std::vector<double>());
-			if (rtcCenter.size() == 3) {
+			auto rtcIt = document.FindMember("RTC_CENTER");
+			if (
+				rtcIt != document.MemberEnd() &&
+				rtcIt->value.IsArray() &&
+				rtcIt->value.Size() == 3 && 
+				rtcIt->value[0].IsDouble() &&
+				rtcIt->value[1].IsDouble() &&
+				rtcIt->value[2].IsDouble()
+			) {
 				// Add the RTC_CENTER value to the glTF itself.
 				tinygltf::Value::Object extras;
 				if (gltf.extras.IsObject()) {
 					extras = gltf.extras.Get<tinygltf::Value::Object>();
 				}
 
+				rapidjson::Value& rtcValue = rtcIt->value;
 				extras["RTC_CENTER"] = tinygltf::Value(tinygltf::Value::Array{
-					tinygltf::Value(rtcCenter[0]),
-					tinygltf::Value(rtcCenter[1]),
-					tinygltf::Value(rtcCenter[2])
+					tinygltf::Value(rtcValue[0].GetDouble()),
+					tinygltf::Value(rtcValue[1].GetDouble()),
+					tinygltf::Value(rtcValue[2].GetDouble())
 					});
 
 				gltf.extras = tinygltf::Value(extras);
