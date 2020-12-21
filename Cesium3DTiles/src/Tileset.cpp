@@ -345,12 +345,7 @@ namespace Cesium3DTiles {
             gsl::span<const uint8_t> data = pResponse->data();
 
             rapidjson::Document tileset;
-
-            auto startTime = std::chrono::high_resolution_clock::now();
             tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-            auto endTime = std::chrono::high_resolution_clock::now();
-            double t = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
-            SPDLOG_LOGGER_WARN(pLogger, "tileset.json parsed in {} seconds", t);
 
 			if (tileset.HasParseError()) {
 				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
@@ -364,12 +359,8 @@ namespace Cesium3DTiles {
             auto formatIt = tileset.FindMember("format");
 
             if (rootIt != tileset.MemberEnd()) {
-                auto startTime2 = std::chrono::high_resolution_clock::now();
                 rapidjson::Value& rootJson = rootIt->value;
                 Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext);
-                auto endTime2 = std::chrono::high_resolution_clock::now();
-                double t2 = std::chrono::duration_cast<std::chrono::duration<double>>(endTime2 - startTime2).count();
-                SPDLOG_LOGGER_WARN(pLogger, "tiles created in {} seconds", t2);
             } else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
                Tileset::_createTerrainTile(*pRootTile, tileset, *pContext);
             }
