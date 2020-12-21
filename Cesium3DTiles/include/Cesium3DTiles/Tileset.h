@@ -263,7 +263,7 @@ namespace Cesium3DTiles {
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
          * @param context The context of the new tiles.
          */
-        void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
+        void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, std::shared_ptr<spdlog::logger> pLogger) const;
 
         /**
          * @brief Request to load the content for the given tile.
@@ -336,14 +336,59 @@ namespace Cesium3DTiles {
             uint32_t notYetRenderableCount = 0;
         };
 
+        /**
+          * @brief Handles the response that was received for an asset request.
+          *
+          * This function is supposed to be called on the main thread.
+          *
+          * It the response for the given request consists of a valid JSON,
+          * then {@link _loadTilesetJson} will be called. Otherwise, and error
+          * message will be printed and {@link notifyTileDoneLoading} will be
+          * called with a `nullptr`.
+          *
+          * @param pRequest The request for which the response was received.
+          */
+        void _handleAssetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+
+        struct LoadResult {
+            std::unique_ptr<TileContext> pContext;
+            std::unique_ptr<Tile> pRootTile;
+        };
+
+        /**
+         * @brief Handles the response that was received for an tileset.json request.
+         *
+         * This function is supposed to be called on the main thread.
+         *
+         * It the response for the given request consists of a valid tileset JSON,
+         * then {@link createTile} or {@link _createTerrainTile} will be called.
+         * Otherwise, and error message will be printed and the root tile of the
+         * return value will be `nullptr`.
+         *
+         * @param pRequest The request for which the response was received.
+         * @return The LoadResult structure
+         */
+        LoadResult _handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, std::shared_ptr<spdlog::logger> pLogger);
+
         void _loadTilesetJson(
             const std::string& url,
             const std::vector<std::pair<std::string, std::string>>& headers = std::vector<std::pair<std::string, std::string>>(),
             std::unique_ptr<TileContext>&& pContext = nullptr
         );
-        static void _createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context);
-        static void _createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context);
+
+        static void _createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, std::shared_ptr<spdlog::logger> pLogger);
+        static void _createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, std::shared_ptr<spdlog::logger> pLogger);
         FailedTileAction _onIonTileFailed(Tile& failedTile);
+
+        /**
+         * @brief Retries the given asset request with a fresh token.
+         *
+         * TODO Add details here.
+         *
+         * @param pIonRequest The request
+         * @param pContext The context
+         */
+        void _retryAssetRequest(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, std::shared_ptr<spdlog::logger> pLogger);
 
         struct FrameState {
             const Camera& camera;
@@ -352,9 +397,26 @@ namespace Cesium3DTiles {
             double fogDensity;
         };
 
+        TraversalDetails _visitLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result);
+        TraversalDetails _visitInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable);
+        void _kickDescendantsAndRenderTile(
+            const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
+            size_t firstRenderedDescendantIndex,
+            size_t loadIndexLow,
+            size_t loadIndexMedium,
+            size_t loadIndexHigh,
+            bool queuedForLoad,
+            double distance);
+
         TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+
+        bool _queuedForLoad(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance);
+
+        bool _isWaitingForChildren(const FrameState& frameState, Tile& tile, double distance);
+        bool _meetsSse(const Camera& camera, Tile& tile, double distance);
 
         void _processLoadQueue();
         void _unloadCachedTiles();
