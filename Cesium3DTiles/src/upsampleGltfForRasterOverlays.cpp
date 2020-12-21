@@ -489,7 +489,13 @@ namespace Cesium3DTiles {
 
         int noSkirtIndicesCount = static_cast<int>(indices.size());
         if (hasSkirts) {
-            addSkirts(newVertexFloats, indices, edgeIndices, noSkirtCenter, vertexSizeFloats, positionAttributeIndex, attributes);
+            addSkirts(newVertexFloats, 
+                indices, 
+                edgeIndices, 
+                noSkirtCenter, 
+                vertexSizeFloats, 
+                static_cast<uint32_t>(positionAttributeIndex), 
+                attributes);
         }
 
         // Update the accessor vertex counts and min/max values
@@ -696,7 +702,7 @@ namespace Cesium3DTiles {
                     }
                 }
 
-                offset += attribute.numberOfFloatsPerVertex;
+                offset += static_cast<uint32_t>(attribute.numberOfFloatsPerVertex);
             }
 
             if (i < edgeIndices.size() - 1) {
