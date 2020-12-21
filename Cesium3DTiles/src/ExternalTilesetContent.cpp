@@ -1,12 +1,14 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
-#include "CesiumUtility/Json.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "CesiumUtility/Json.h"
 #include "Uri.h"
 
 namespace Cesium3DTiles {
 
     /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
+        std::shared_ptr<spdlog::logger> pLogger,
         const TileContext& context,
         const TileID& /*tileID*/,
         const BoundingVolume& /*tileBoundingVolume*/,
@@ -30,9 +32,16 @@ namespace Cesium3DTiles {
 
         using nlohmann::json;
 
-        json tilesetJson = json::parse(data.begin(), data.end());
-        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
-
+        json tilesetJson;
+        try
+        {
+            tilesetJson = json::parse(data.begin(), data.end());
+            context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
+        }
+        catch (const json::parse_error& error)
+        {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing external tileset content: {}", error.what());
+        }
         return pResult;
     }
 

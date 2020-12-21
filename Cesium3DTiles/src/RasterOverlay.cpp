@@ -27,7 +27,8 @@ namespace Cesium3DTiles {
 
     void RasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
+        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger
     ) {
         if (this->_pPlaceholder) {
             return;
@@ -43,6 +44,7 @@ namespace Cesium3DTiles {
         this->createTileProvider(
             asyncSystem,
             pPrepareRendererResources,
+            pLogger,
             this
         ).thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
             this->_pTileProvider = std::move(pProvider);

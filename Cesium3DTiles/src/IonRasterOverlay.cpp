@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/IonRasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetAccessor.h"
@@ -28,6 +29,7 @@ namespace Cesium3DTiles {
     Future<std::unique_ptr<RasterOverlayTileProvider>> IonRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
@@ -35,16 +37,26 @@ namespace Cesium3DTiles {
 
         pOwner = pOwner ? pOwner : this;
 
-        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([](
+        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([
+            pLogger
+        ](
             std::unique_ptr<IAssetRequest> pRequest
         ) -> std::unique_ptr<RasterOverlay> {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
-            
-            json response = json::parse(pResponse->data().begin(), pResponse->data().end());
-            if (response.value("type", "unknown") != "IMAGERY") {
+            json response;
+            try {
+                response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            } catch (const json::parse_error& error) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing ion raster overlay metadata JSON: {}", error.what());
+                return nullptr;
+            }
+
+            std::string type = response.value("type", "unknown");
+            if (type != "IMAGERY") {
                 // TODO: report invalid imagery type.
+                SPDLOG_LOGGER_ERROR(pLogger, "Ion raster overlay metadata response type is not 'IMAGERY', but {}", type);
                 return nullptr;
             }
 
@@ -53,6 +65,7 @@ namespace Cesium3DTiles {
                 json::iterator optionsIt = response.find("options");
                 if (optionsIt == response.end()) {
                     // TODO: report incomplete Bing options
+                    SPDLOG_LOGGER_ERROR(pLogger, "Ion raster overlay metadata response does not contain 'options'");
                     return nullptr;
                 }
 
@@ -80,9 +93,10 @@ namespace Cesium3DTiles {
         }).thenInMainThread([
             pOwner,
             asyncSystem,
-            pPrepareRendererResources
+            pPrepareRendererResources,
+            pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
-            return pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pOwner);
+            return pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pLogger, pOwner);
         });
     }
 

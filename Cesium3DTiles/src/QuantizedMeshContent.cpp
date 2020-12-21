@@ -1,3 +1,4 @@
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
@@ -105,9 +106,15 @@ namespace Cesium3DTiles {
         return glm::normalize(result);
     }
 
-    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
+    static void processMetadata(
+        const std::shared_ptr<spdlog::logger>& pLogger,
+        const QuadtreeTileID& tileID,
+        gsl::span<const char> json,
+        TileContentLoadResult& result
+    );
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
+        std::shared_ptr<spdlog::logger> pLogger,
         const TileContext& /*context*/,
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,
@@ -428,7 +435,7 @@ namespace Cesium3DTiles {
                 }
 
                 gsl::span<const char> json(reinterpret_cast<const char*>(data.data() + sizeof(uint32_t) + readIndex), jsonLength);
-                processMetadata(id, json, *pResult);
+                processMetadata(pLogger, id, json, *pResult);
             }
 
             readIndex += extensionLength;
@@ -463,9 +470,23 @@ namespace Cesium3DTiles {
         json.at("endY").get_to(range.maximumY);
     }
 
-    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> metadataString, TileContentLoadResult& result) {
+    static void processMetadata(
+        const std::shared_ptr<spdlog::logger>& pLogger,
+        const QuadtreeTileID& tileID,
+        gsl::span<const char> metadataString,
+        TileContentLoadResult& result
+    ) {
         using namespace nlohmann;
-        json metadata = json::parse(metadataString.begin(), metadataString.end());
+        json metadata;
+        try
+        {
+            metadata = json::parse(metadataString.begin(), metadataString.end());
+        }
+        catch (const json::parse_error& error)
+        {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing metadata: {}", error.what());
+            return;
+        }
 
         json::iterator availableIt = metadata.find("available");
         if (availableIt == metadata.end()) {

@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -142,6 +143,7 @@ namespace Cesium3DTiles {
     Future<std::unique_ptr<RasterOverlayTileProvider>> BingMapsRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
@@ -155,14 +157,20 @@ namespace Cesium3DTiles {
             pOwner,
             asyncSystem,
             pPrepareRendererResources,
+            pLogger,
             baseUrl = this->_url,
             culture = this->_culture
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
             using namespace nlohmann;
-            
-            json response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            json response;
+            try {
+                response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            } catch (const json::parse_error& error) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing Bing maps raster overlay metadata: {}", error.what());
+                return nullptr;
+            }
 
             json& resource = response["/resourceSets/0/resources/0"_json_pointer];
             if (!resource.is_object()) {

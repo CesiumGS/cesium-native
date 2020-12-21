@@ -1,5 +1,6 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumUtility/Json.h"
 #include <stdexcept>
 
@@ -35,7 +36,48 @@ namespace Cesium3DTiles {
 		uint32_t batchLength;
 	};
 
+	namespace {
+
+		void parseFeatureTableJsonData(
+			const std::shared_ptr<spdlog::logger>& pLogger,
+			tinygltf::Model& gltf,
+			const gsl::span<const uint8_t>& featureTableJsonData)
+		{
+			using nlohmann::json;
+			json response;
+			try
+			{
+				response = json::parse(featureTableJsonData.begin(), featureTableJsonData.end());
+			}
+			catch (const json::parse_error& error)
+			{
+				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing feature table JSON: {}", error.what());
+				return;
+			}
+
+			std::vector<double> rtcCenter = response.value("RTC_CENTER", std::vector<double>());
+			if (rtcCenter.size() == 3) {
+				// Add the RTC_CENTER value to the glTF itself.
+				tinygltf::Value::Object extras;
+				if (gltf.extras.IsObject()) {
+					extras = gltf.extras.Get<tinygltf::Value::Object>();
+				}
+
+				extras["RTC_CENTER"] = tinygltf::Value(tinygltf::Value::Array{
+					tinygltf::Value(rtcCenter[0]),
+					tinygltf::Value(rtcCenter[1]),
+					tinygltf::Value(rtcCenter[2])
+					});
+
+				gltf.extras = tinygltf::Value(extras);
+			}
+		}
+
+	}
+
+
     std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
+		std::shared_ptr<spdlog::logger> pLogger,
 		const TileContext& context,
 		const TileID& tileID,
 		const BoundingVolume& tileBoundingVolume,
@@ -114,6 +156,7 @@ namespace Cesium3DTiles {
 
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
         std::unique_ptr<TileContentLoadResult> pResult = GltfContent::load(
+			pLogger,
 			context,
 			tileID,
 			tileBoundingVolume,
@@ -126,28 +169,9 @@ namespace Cesium3DTiles {
 		);
 
 		if (pResult->model && header.featureTableJsonByteLength > 0) {
+			tinygltf::Model& gltf = pResult->model.value();
 			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
-		
-			using nlohmann::json;
-			json response = json::parse(featureTableJsonData.begin(), featureTableJsonData.end());
-			std::vector<double> rtcCenter = response.value("RTC_CENTER", std::vector<double>());
-			if (rtcCenter.size() == 3) {
-				// Add the RTC_CENTER value to the glTF itself.
-				tinygltf::Model& gltf = pResult->model.value();
-
-				tinygltf::Value::Object extras;
-				if (gltf.extras.IsObject()) {
-					extras = gltf.extras.Get<tinygltf::Value::Object>();
-				}
-				
-				extras["RTC_CENTER"] = tinygltf::Value(tinygltf::Value::Array {
-					tinygltf::Value(rtcCenter[0]),
-					tinygltf::Value(rtcCenter[1]),
-					tinygltf::Value(rtcCenter[2])
-				});
-
-				gltf.extras = tinygltf::Value(extras);
-			}
+			parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 		}
 
 		return pResult;

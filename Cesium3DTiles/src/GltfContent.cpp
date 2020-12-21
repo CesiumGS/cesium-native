@@ -1,12 +1,14 @@
+#include "Cesium3DTiles/GltfAccessor.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/GltfWriter.h"
-#include "Cesium3DTiles/GltfAccessor.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumUtility/Math.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {
 
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
+		std::shared_ptr<spdlog::logger> pLogger,
 		const TileContext& /*context*/,
 		const TileID& /*tileID*/,
 		const BoundingVolume& /*tileBoundingVolume*/,
@@ -24,8 +26,13 @@ namespace Cesium3DTiles {
 
 		tinygltf::TinyGLTF loader;
 		pResult->model.emplace();
-		loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
-
+		bool success = loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
+		if (!success) {
+			SPDLOG_LOGGER_ERROR(pLogger, "Failed to load binary glTF from memory: {}", errors);
+		}
+		if (!warnings.empty()) {
+			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from memory: {}", warnings);
+		}
 		return pResult;
 	}
 
