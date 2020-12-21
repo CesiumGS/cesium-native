@@ -388,7 +388,7 @@ namespace Cesium3DTiles {
              */
             double priority;
 
-            bool operator<(const LoadRecord& rhs) {
+            bool operator<(const LoadRecord& rhs) const {
                 return this->priority < rhs.priority;
             }
         };
