@@ -9,7 +9,7 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
-#include "TilesetJson.h"
+#include "JsonHelpers.h"
 #include "Uri.h"
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
@@ -97,13 +97,18 @@ namespace Cesium3DTiles {
 
             gsl::span<const uint8_t> data = pResponse->data();
 
-            using nlohmann::json;
-            json ionResponse = json::parse(data.begin(), data.end());
+            rapidjson::Document ionResponse;
+            ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
-            std::string url = ionResponse.value<std::string>("url", "");
-            std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+			if (ionResponse.HasParseError()) {
+				SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response JSON, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
+				return;
+			}
+
+            std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
+            std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
             
-            std::string type = ionResponse.value<std::string>("type", "");
+            std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
             if (type == "TERRAIN") {
                 // For terrain resources, we need to append `/layer.json` to the end of the URL.
                 url = Uri::resolve(url, "layer.json", true);
@@ -391,7 +396,7 @@ namespace Cesium3DTiles {
 
         tile.setContext(const_cast<TileContext*>(&context));
 
-        std::optional<glm::dmat4x4> tileTransform = TilesetJson::getTransformProperty(tileJson, "transform");
+        std::optional<glm::dmat4x4> tileTransform = JsonHelpers::getTransformProperty(tileJson, "transform");
         glm::dmat4x4 transform = parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
         tile.setTransform(transform);
 
@@ -409,19 +414,19 @@ namespace Cesium3DTiles {
                 tile.setTileID(Uri::resolve(context.baseUrl, uriIt->value.GetString()));
             }
 
-            std::optional<BoundingVolume> contentBoundingVolume = TilesetJson::getBoundingVolumeProperty(contentIt->value, "boundingVolume");
+            std::optional<BoundingVolume> contentBoundingVolume = JsonHelpers::getBoundingVolumeProperty(contentIt->value, "boundingVolume");
             if (contentBoundingVolume) {
                 tile.setContentBoundingVolume(transformBoundingVolume(transform, contentBoundingVolume.value()));
             }
         }
 
-        std::optional<BoundingVolume> boundingVolume = TilesetJson::getBoundingVolumeProperty(tileJson, "boundingVolume");
+        std::optional<BoundingVolume> boundingVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
             // TODO: report missing required property
             return;
         }
 
-        std::optional<double> geometricError = TilesetJson::getScalarProperty(tileJson, "geometricError");
+        std::optional<double> geometricError = JsonHelpers::getScalarProperty(tileJson, "geometricError");
         if (!geometricError) {
             // TODO: report missing required property
             return;
@@ -431,7 +436,7 @@ namespace Cesium3DTiles {
         //tile->setBoundingVolume(boundingVolume.value());
         tile.setGeometricError(geometricError.value());
 
-        std::optional<BoundingVolume> viewerRequestVolume = TilesetJson::getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
+        std::optional<BoundingVolume> viewerRequestVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
         if (viewerRequestVolume) {
             tile.setViewerRequestVolume(transformBoundingVolume(transform, viewerRequestVolume.value()));
         }
@@ -529,7 +534,7 @@ namespace Cesium3DTiles {
 
         CesiumGeometry::QuadtreeTilingScheme tilingScheme(quadtreeRectangleProjected, quadtreeXTiles, 1);
 
-        std::vector<std::string> urls = TilesetJson::getStrings(layerJson, "tiles");
+        std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
         
         uint32_t maxZoom = 30;
 
@@ -545,7 +550,7 @@ namespace Cesium3DTiles {
             CesiumGeometry::QuadtreeTileAvailability(tilingScheme, maxZoom)
         };
 
-        std::vector<std::string> extensions = TilesetJson::getStrings(layerJson, "extensions");
+        std::vector<std::string> extensions = JsonHelpers::getStrings(layerJson, "extensions");
 
         // Request normals and metadata if they're available
         std::string extensionsToRequest;
@@ -641,17 +646,13 @@ namespace Cesium3DTiles {
                     // Update the context with the new token.
                     gsl::span<const uint8_t> data = pIonResponse->data();
 
-                    bool failedParsing = false;
-                    using nlohmann::json;
-                    json ionResponse;
-                    try {
-                        ionResponse = json::parse(data.begin(), data.end());
-                    } catch (const json::parse_error& error) {
-                        SPDLOG_LOGGER_ERROR(this->getExternals().pLogger, "Error when parsing ion response: {}", error.what());
-                        failedParsing = true;
-                    }
-                    if (!failedParsing) {
-                        std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+                    rapidjson::Document ionResponse;
+                    ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+
+                    if (ionResponse.HasParseError()) {
+                        SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
+                    } else {
+                        std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
 
                         auto authIt = std::find_if(
                             pContext->requestHeaders.begin(),

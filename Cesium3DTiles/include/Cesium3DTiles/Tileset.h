@@ -10,7 +10,6 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include "CesiumUtility/Json.h"
 #include <atomic>
 #include <memory>
 #include <optional>

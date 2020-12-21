@@ -7,7 +7,9 @@
 #include "QuantizedMeshContent.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
+#include "JsonHelpers.h"
 #include <glm/vec3.hpp>
+#include <rapidjson/document.h>
 #include <stdexcept>
 
 using namespace CesiumUtility;
@@ -463,52 +465,49 @@ namespace Cesium3DTiles {
         uint32_t maximumY;
     };
 
-    static void from_json(const nlohmann::json& json, TileRange& range) {
-        json.at("startX").get_to(range.minimumX);
-        json.at("startY").get_to(range.minimumY);
-        json.at("endX").get_to(range.maximumX);
-        json.at("endY").get_to(range.maximumY);
-    }
-
     static void processMetadata(
         const std::shared_ptr<spdlog::logger>& pLogger,
         const QuadtreeTileID& tileID,
         gsl::span<const char> metadataString,
         TileContentLoadResult& result
     ) {
-        using namespace nlohmann;
-        json metadata;
-        try
-        {
-            metadata = json::parse(metadataString.begin(), metadataString.end());
-        }
-        catch (const json::parse_error& error)
-        {
-            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing metadata: {}", error.what());
+        rapidjson::Document metadata;
+        metadata.Parse(reinterpret_cast<const char*>(metadataString.data()), metadataString.size());
+
+        if (metadata.HasParseError()) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing metadata, error code {} at byte offset {}", metadata.GetParseError(), metadata.GetErrorOffset());
             return;
         }
 
-        json::iterator availableIt = metadata.find("available");
-        if (availableIt == metadata.end()) {
+        auto availableIt = metadata.FindMember("available");
+        if (availableIt == metadata.MemberEnd() || !availableIt->value.IsArray()) {
             return;
         }
 
-        json& available = *availableIt;
-        if (available.size() == 0) {
+        const auto& available = availableIt->value;
+        if (available.Size() == 0) {
             return;
         }
 
         uint32_t level = tileID.level + 1;
-        for (size_t i = 0; i < available.size(); ++i) {
-            std::vector<TileRange> rangesAtLevel = available[i].get<std::vector<TileRange>>();
+        for (rapidjson::SizeType i = 0; i < available.Size(); ++i) {
+            const auto& rangesAtLevelJson = available[i];
+            if (!rangesAtLevelJson.IsArray()) {
+                continue;
+            }
 
-            for (const TileRange& range : rangesAtLevel) {
+            for (rapidjson::SizeType j = 0; j < rangesAtLevelJson.Size(); ++j) {
+                const auto& rangeJson = rangesAtLevelJson[j];
+                if (!rangeJson.IsObject()) {
+                    continue;
+                }
+
                 result.availableTileRectangles.push_back(CesiumGeometry::QuadtreeTileRectangularRange {
                     level,
-                    range.minimumX,
-                    range.minimumY,
-                    range.maximumX,
-                    range.maximumY
+                    JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
+                    JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
+                    JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
+                    JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)
                 });
             }
 

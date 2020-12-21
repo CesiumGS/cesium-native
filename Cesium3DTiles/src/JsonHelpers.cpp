@@ -1,4 +1,4 @@
-#include "TilesetJson.h"
+#include "JsonHelpers.h"
 #include <rapidjson/document.h>
 
 using namespace CesiumGeometry;
@@ -6,7 +6,7 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
 
-	std::optional<BoundingVolume> TilesetJson::getBoundingVolumeProperty(const rapidjson::Value& tileJson, const std::string& key) {
+	std::optional<BoundingVolume> JsonHelpers::getBoundingVolumeProperty(const rapidjson::Value& tileJson, const std::string& key) {
 		auto bvIt = tileJson.FindMember(key.c_str());
 		if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
 			return std::nullopt;
@@ -55,7 +55,7 @@ namespace Cesium3DTiles {
 		return std::nullopt;
 	}
 
-	std::optional<double> TilesetJson::getScalarProperty(const rapidjson::Value& tileJson, const std::string& key) {
+	std::optional<double> JsonHelpers::getScalarProperty(const rapidjson::Value& tileJson, const std::string& key) {
 		auto it = tileJson.FindMember(key.c_str());
 		if (it == tileJson.MemberEnd() || !it->value.IsNumber()) {
 			return std::nullopt;
@@ -64,7 +64,7 @@ namespace Cesium3DTiles {
 		return it->value.GetDouble();
 	}
 
-	std::optional<glm::dmat4x4> TilesetJson::getTransformProperty(const rapidjson::Value& tileJson, const std::string& key) {
+	std::optional<glm::dmat4x4> JsonHelpers::getTransformProperty(const rapidjson::Value& tileJson, const std::string& key) {
 		auto it = tileJson.FindMember(key.c_str());
 		if (it == tileJson.MemberEnd() || !it->value.IsArray() || it->value.Size() < 16) {
 			return std::nullopt;
@@ -86,7 +86,46 @@ namespace Cesium3DTiles {
 		);
 	}
 
-	std::vector<std::string> TilesetJson::getStrings(const rapidjson::Value& json, const std::string& key) {
+	std::string JsonHelpers::getStringOrDefault(const rapidjson::Value& json, const std::string& key, const std::string& defaultValue) {
+		auto it = json.FindMember(key.c_str());
+		return it == json.MemberEnd() ? defaultValue : JsonHelpers::getStringOrDefault(it->value, defaultValue);
+	}
+
+	std::string JsonHelpers::getStringOrDefault(const rapidjson::Value& json, const std::string& defaultValue) {
+		if (json.IsString()) {
+			return json.GetString();
+		} else {
+			return defaultValue;
+		}
+	}
+
+	double JsonHelpers::getDoubleOrDefault(const rapidjson::Value& json, const std::string& key, double defaultValue) {
+		auto it = json.FindMember(key.c_str());
+		return it == json.MemberEnd() ? defaultValue : JsonHelpers::getDoubleOrDefault(it->value, defaultValue);
+	}
+
+	double JsonHelpers::getDoubleOrDefault(const rapidjson::Value& json, double defaultValue) {
+		if (json.IsDouble()) {
+			return json.GetDouble();
+		} else {
+			return defaultValue;
+		}
+	}
+
+	uint32_t JsonHelpers::getUint32OrDefault(const rapidjson::Value& json, const std::string& key, uint32_t defaultValue) {
+		auto it = json.FindMember(key.c_str());
+		return it == json.MemberEnd() ? defaultValue : JsonHelpers::getUint32OrDefault(it->value, defaultValue);
+	}
+
+	uint32_t JsonHelpers::getUint32OrDefault(const rapidjson::Value& json, uint32_t defaultValue) {
+		if (json.IsUint()) {
+			return json.GetUint();
+		} else {
+			return defaultValue;
+		}
+	}
+
+	std::vector<std::string> JsonHelpers::getStrings(const rapidjson::Value& json, const std::string& key) {
 		std::vector<std::string> result;
 
         auto it = json.FindMember(key.c_str());
