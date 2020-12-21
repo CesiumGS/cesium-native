@@ -31,11 +31,6 @@ namespace Cesium3DTiles {
          */
         std::vector<Tile*> tilesToNoLongerRenderThisFrame;
 
-        /**
-         * @brief The credits for the tiles in the render list of the current frame
-         */
-        std::set<Credit> creditsToShowThisFrame;
-
         //! @cond Doxygen_Suppress
         uint32_t tilesLoadingLowPriority;
         uint32_t tilesLoadingMediumPriority;

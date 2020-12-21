@@ -57,6 +57,16 @@ namespace Cesium3DTiles {
          */
         void startNextFrame();
 
+        /**
+         * @brief Get the credits to show this frame.
+         */
+         const std::set<Credit>& getCreditsToShowThisFrame() const { return creditsToShowThisFrame; }
+
+         /**
+          * @brief Get the credits that were shown last frame but should no longer be shown.
+          */
+         const std::set<Credit>& getCreditsToNoLongerShowThisFrame() const { return creditsToNoLongerShowThisFrame; }
+
     private:
 
         // indexed html strings and their unique IDs to efficiently check if this is an existing credit 

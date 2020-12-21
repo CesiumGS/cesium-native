@@ -32,6 +32,11 @@ namespace Cesium3DTiles {
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
         _pCreditSystem(externals.pCreditSystem),
+        _credit(
+                (options.credit && externals.pCreditSystem) ? 
+                std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
+                std::nullopt
+        ),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -62,6 +67,11 @@ namespace Cesium3DTiles {
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
         _pCreditSystem(externals.pCreditSystem),
+        _credit(
+                (options.credit && externals.pCreditSystem) ? 
+                std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
+                std::nullopt
+        ),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -211,7 +221,6 @@ namespace Cesium3DTiles {
         result.tilesToRenderThisFrame.clear();
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
-        result.creditsToShowThisFrame.clear();
         result.tilesVisited = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
@@ -244,18 +253,15 @@ namespace Cesium3DTiles {
         this->_processLoadQueue();
 
         // aggregate all the credits needed from this tileset for the current frame 
-        if (!result.tilesToRenderThisFrame.empty()) {
-            if (this->_options.credit) {
-                result.creditsToShowThisFrame.insert(this->_pCreditSystem->createCredit(this->_options.credit.value()));
+        if (this->_pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
+            if (this->_credit) {
+                this->_pCreditSystem->addCreditToFrame(this->_credit.value());
             }
 
-            // TODO: change place holder Ion credit
-            result.creditsToShowThisFrame.insert(this->_pCreditSystem->createCredit("Cesium Ion"));
-            
             for (auto& pOverlay : this->_overlays) {
                 const std::optional<Credit> overlayCredit = pOverlay->getCredit();
                 if (overlayCredit) {
-                    result.creditsToShowThisFrame.insert(overlayCredit.value());
+                    this->_pCreditSystem->addCreditToFrame(overlayCredit.value());
                 }
             }
             
@@ -265,13 +271,13 @@ namespace Cesium3DTiles {
                     RasterOverlayTile* rasterOverlayTile = mappedRasterTile.getReadyTile();
                     if (rasterOverlayTile != nullptr) {
                         for (Credit credit : rasterOverlayTile->getCredits()) {
-                            result.creditsToShowThisFrame.insert(credit);
+                            this->_pCreditSystem->addCreditToFrame(credit);
                         }
                     }
                 }
             }
         }
-
+       
         this->_previousFrameNumber = currentFrameNumber;
 
         return result;
