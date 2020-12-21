@@ -912,6 +912,15 @@ namespace Cesium3DTiles {
 
         primitive.indices = static_cast<int>(indicesBufferId);
 
+        // add skirts info to primitive extra in case we need to upsample from it
+        tinygltf::Value::Object skirts;
+        skirts.insert({ "noSkirtRange", tinygltf::Value(tinygltf::Value::Array({
+            tinygltf::Value(0), tinygltf::Value(static_cast<int>(indicesCount))})) });
+        skirts.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
+            tinygltf::Value(center.x), tinygltf::Value(center.y), tinygltf::Value(center.z)})) });
+        primitive.extras = tinygltf::Value(
+            tinygltf::Value::Object{ {"skirts", tinygltf::Value(skirts)} });
+
         // create node and update bounding volume
         model.nodes.emplace_back();
         tinygltf::Node& node = model.nodes[0];

@@ -1,9 +1,18 @@
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
 #include "CesiumUtility/Math.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/Cartographic.h"
 #include "upsampleGltfForRasterOverlays.h"
+#include <algorithm>
 
 namespace Cesium3DTiles {
+    struct EdgeIndices {
+        std::vector<std::pair<uint32_t, glm::vec2>> west;
+        std::vector<std::pair<uint32_t, glm::vec2>> south;
+        std::vector<std::pair<uint32_t, glm::vec2>> east;
+        std::vector<std::pair<uint32_t, glm::vec2>> north;
+    };
 
     static void upsamplePrimitiveForRasterOverlays(
         const tinygltf::Model& parentModel,
@@ -28,9 +37,39 @@ namespace Cesium3DTiles {
         std::vector<uint32_t>& indices,
         std::vector<FloatVertexAttribute>& attributes,
         std::vector<uint32_t>& vertexMap,
+        std::vector<uint32_t>& clipVertexToIndices,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult
     );
+
+    static void addEdge(EdgeIndices& edgeIndices,
+        double thresholdU,
+        double thresholdV,
+        bool keepAboveU,
+        bool keepAboveV,
+        const GltfAccessor<glm::vec2>& uvs,
+        const std::vector<uint32_t>& clipVertexToIndices,
+        const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
+        const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult);
+
+    static void addSkirt(std::vector<float>& output,
+        std::vector<uint32_t>& indices,
+        const std::vector<uint32_t>& edgeIndices,
+        const glm::dvec3& center,
+        double longitudeOffset,
+        double latitudeOffset,
+        double skirtHeight,
+        size_t vertexSizeFloats,
+        uint32_t positionAttributeIndex,
+        const std::vector<FloatVertexAttribute>& attributes);
+
+    static void addSkirts(std::vector<float>& output,
+        std::vector<uint32_t>& indices,
+        EdgeIndices edgeIndices,
+        const glm::dvec3& center,
+        size_t vertexSizeFloats,
+        uint32_t positionAttributeIndex,
+        const std::vector<FloatVertexAttribute>& attributes);
 
     tinygltf::Model upsampleGltfForRasterOverlays(const tinygltf::Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
         tinygltf::Model result;
@@ -190,6 +229,47 @@ namespace Cesium3DTiles {
         return std::visit(Operation { accessor }, vertex);
     }
 
+    template <class T>
+    static T getVertexValue(const GltfAccessor<T>& accessor, 
+        const std::vector<CesiumGeometry::TriangleClipVertex> &complements, 
+        const CesiumGeometry::TriangleClipVertex& vertex) 
+    {
+        struct Operation {
+            const Cesium3DTiles::GltfAccessor<T>& accessor;
+            const std::vector<CesiumGeometry::TriangleClipVertex>& complements;
+
+            T operator()(int vertexIndex) {
+                if (vertexIndex < 0) {
+                    return getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertexIndex)]);
+                }
+
+                return accessor[static_cast<size_t>(vertexIndex)];
+            }
+
+            T operator()(const CesiumGeometry::InterpolatedVertex& vertex) {
+                T v0{};
+                if (vertex.first < 0) {
+                    v0 = getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertex.first)]);
+                }
+                else {
+					v0 = accessor[static_cast<size_t>(vertex.first)];
+                }
+
+                T v1{};
+                if (vertex.second < 0) {
+                    v1 = getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertex.second)]);
+                }
+                else {
+					v1 = accessor[static_cast<size_t>(vertex.second)];
+                }
+
+                return glm::mix(v0, v1, vertex.t);
+            }
+        };
+
+        return std::visit(Operation { accessor, complements }, vertex);
+    }
+
     template <class TIndex>
     static void upsamplePrimitiveForRasterOverlays(
         const tinygltf::Model& parentModel,
@@ -224,6 +304,7 @@ namespace Cesium3DTiles {
 
         uint32_t vertexSizeFloats = 0;
         int uvAccessorIndex = -1;
+        int positionAttributeIndex = -1;
 
         std::vector<std::string> toRemove;
 
@@ -288,6 +369,10 @@ namespace Cesium3DTiles {
                 std::vector<double>(static_cast<size_t>(accessorComponentElements), std::numeric_limits<double>::lowest()),
             });
 
+            // get position to be used to create for skirts later
+            if (attribute.first == "POSITION") {
+                positionAttributeIndex = static_cast<int>(attributes.size() - 1);
+            }
         }
 
         if (uvAccessorIndex == -1) {
@@ -306,6 +391,27 @@ namespace Cesium3DTiles {
         GltfAccessor<glm::vec2> uvAccessor(parentModel, static_cast<size_t>(uvAccessorIndex));
         GltfAccessor<TIndex> indicesAccessor(parentModel, static_cast<size_t>(primitive.indices));
 
+        // check if the primitive has skirts
+        size_t indicesBegin = 0;
+        size_t indicesCount = indicesAccessor.size();
+        glm::dvec3 noSkirtCenter{ 0.0 };
+        bool hasSkirts = false;
+        const tinygltf::Value extras = primitive.extras;
+        if (extras.IsObject() && extras.Has("skirts")) {
+            tinygltf::Value skirts = extras.Get("skirts");
+            tinygltf::Value noSkirtRange = skirts.Get("noSkirtRange");
+            indicesBegin = static_cast<size_t>(noSkirtRange.Get(0).GetNumberAsInt());
+            indicesCount = static_cast<size_t>(noSkirtRange.Get(1).GetNumberAsInt());
+
+            tinygltf::Value meshCenter = skirts.Get("meshCenter");
+            noSkirtCenter.x = meshCenter.Get(0).GetNumberAsDouble();
+            noSkirtCenter.y = meshCenter.Get(1).GetNumberAsDouble();
+            noSkirtCenter.z = meshCenter.Get(2).GetNumberAsDouble();
+
+            hasSkirts = true && positionAttributeIndex != -1;
+        }
+
+        std::vector<uint32_t> clipVertexToIndices;
         std::vector<CesiumGeometry::TriangleClipVertex> clippedA;
         std::vector<CesiumGeometry::TriangleClipVertex> clippedB;
 
@@ -316,8 +422,9 @@ namespace Cesium3DTiles {
         // gsl::span<float> newVertexFloats(reinterpret_cast<float*>(newVertexBuffer.data()), newVertexBuffer.size() / sizeof(float));
         std::vector<float> newVertexFloats;
         std::vector<uint32_t> indices;
+        EdgeIndices edgeIndices;
 
-        for (size_t i = 0; i < indicesAccessor.size(); i += 3) {
+        for (size_t i = indicesBegin; i < indicesBegin + indicesCount; i += 3) {
             TIndex i0 = indicesAccessor[i];
             TIndex i1 = indicesAccessor[i + 1];
             TIndex i2 = indicesAccessor[i + 2];
@@ -336,6 +443,7 @@ namespace Cesium3DTiles {
             }
 
             // Clip the first clipped triange against the North-South boundary
+            clipVertexToIndices.clear();
             clippedB.clear();
             clipTriangleAtAxisAlignedThreshold(
                 0.5,
@@ -350,10 +458,14 @@ namespace Cesium3DTiles {
             );
 
             // Add the clipped triangle or quad, if any
-            addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clippedA, clippedB);
+            addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clipVertexToIndices, clippedA, clippedB);
+            if (hasSkirts) {
+				addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
+            }
 
             // If the East-West clip yielded a quad (rather than a triangle), clip the second triangle of the quad, too.
             if (clippedA.size() > 3) {
+				clipVertexToIndices.clear();
                 clippedB.clear();
                 clipTriangleAtAxisAlignedThreshold(
                     0.5,
@@ -368,8 +480,16 @@ namespace Cesium3DTiles {
                 );
 
                 // Add the clipped triangle or quad, if any
-                addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clippedA, clippedB);
+                addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clipVertexToIndices, clippedA, clippedB);
+                if (hasSkirts) {
+					addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
+                }
             }
+        }
+
+        int noSkirtIndicesCount = static_cast<int>(indices.size());
+        if (hasSkirts) {
+            addSkirts(newVertexFloats, indices, edgeIndices, noSkirtCenter, vertexSizeFloats, positionAttributeIndex, attributes);
         }
 
         // Update the accessor vertex counts and min/max values
@@ -404,6 +524,17 @@ namespace Cesium3DTiles {
         uint32_t* pAsUint32s = reinterpret_cast<uint32_t*>(indexBuffer.data.data());
         std::copy(indices.begin(), indices.end(), pAsUint32s);
         indexBufferView.byteLength = indexBuffer.data.size();
+
+        // add skirts to extras
+        if (hasSkirts) {
+			tinygltf::Value::Object skirts;
+			skirts.insert({ "noSkirtRange", tinygltf::Value(tinygltf::Value::Array({
+				tinygltf::Value(0), tinygltf::Value(noSkirtIndicesCount)})) });
+			skirts.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
+				tinygltf::Value(noSkirtCenter.x), tinygltf::Value(noSkirtCenter.y), tinygltf::Value(noSkirtCenter.z)})) });
+			primitive.extras = tinygltf::Value(
+				tinygltf::Value::Object{ {"skirts", tinygltf::Value(skirts)} });
+        }
 
         primitive.indices = static_cast<int>(indexAccessorIndex);
     }
@@ -443,6 +574,7 @@ namespace Cesium3DTiles {
         std::vector<uint32_t>& indices,
         std::vector<FloatVertexAttribute>& attributes,
         std::vector<uint32_t>& vertexMap,
+        std::vector<uint32_t>& clipVertexToIndices,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult
     ) {
@@ -458,13 +590,191 @@ namespace Cesium3DTiles {
         indices.push_back(i1);
         indices.push_back(i2);
 
+        clipVertexToIndices.push_back(i0);
+        clipVertexToIndices.push_back(i1);
+        clipVertexToIndices.push_back(i2);
+
         if (clipResult.size() > 3) {
             uint32_t i3 = getOrCreateVertex(output, attributes, vertexMap, complements, clipResult[3]);
 
             indices.push_back(i0);
             indices.push_back(i2);
             indices.push_back(i3);
+
+			clipVertexToIndices.push_back(i3);
         }
+    }
+
+    static void addEdge(EdgeIndices& edgeIndices,
+        double thresholdU,
+        double thresholdV,
+        bool keepAboveU,
+        bool keepAboveV,
+        const GltfAccessor<glm::vec2>& uvs,
+        const std::vector<uint32_t>& clipVertexToIndices,
+        const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
+        const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult)
+    {
+        for (uint32_t i = 0; i < clipVertexToIndices.size(); ++i) {
+            glm::vec2 uv = getVertexValue(uvs, complements, clipResult[i]);
+
+            if (CesiumUtility::Math::equalsEpsilon(uv.x, 0.0, CesiumUtility::Math::EPSILON4)) {
+                edgeIndices.west.emplace_back(clipVertexToIndices[i], uv);
+            }
+
+            if (CesiumUtility::Math::equalsEpsilon(uv.x, 1.0, CesiumUtility::Math::EPSILON4)) {
+                edgeIndices.east.emplace_back(clipVertexToIndices[i], uv);
+            }
+
+            if (CesiumUtility::Math::equalsEpsilon(uv.x, thresholdU, CesiumUtility::Math::EPSILON4)) {
+                if (keepAboveU) {
+					edgeIndices.west.emplace_back(clipVertexToIndices[i], uv);
+                }
+                else {
+					edgeIndices.east.emplace_back(clipVertexToIndices[i], uv);
+                }
+            }
+
+            if (CesiumUtility::Math::equalsEpsilon(uv.y, 0.0, CesiumUtility::Math::EPSILON4)) {
+                edgeIndices.south.emplace_back(clipVertexToIndices[i], uv);
+            }
+
+            if (CesiumUtility::Math::equalsEpsilon(uv.y, 1.0, CesiumUtility::Math::EPSILON4)) {
+                edgeIndices.north.emplace_back(clipVertexToIndices[i], uv);
+            }
+
+            if (CesiumUtility::Math::equalsEpsilon(uv.y, thresholdV, CesiumUtility::Math::EPSILON4)) {
+                if (keepAboveV) {
+					edgeIndices.south.emplace_back(clipVertexToIndices[i], uv);
+                }
+                else {
+					edgeIndices.north.emplace_back(clipVertexToIndices[i], uv);
+                }
+            }
+        }
+    }
+
+    static void addSkirt(std::vector<float>& output,
+        std::vector<uint32_t>& indices,
+        const std::vector<uint32_t>& edgeIndices,
+        const glm::dvec3& center,
+        double longitudeOffset,
+        double latitudeOffset,
+        double skirtHeight,
+        size_t vertexSizeFloats,
+        uint32_t positionAttributeIndex,
+        const std::vector<FloatVertexAttribute>& attributes) 
+    {
+        uint32_t newEdgeIndex = static_cast<uint32_t>(output.size() / vertexSizeFloats);
+        const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
+        for (uint32_t i = 0; i < edgeIndices.size(); ++i) {
+            uint32_t edgeIdx = edgeIndices[i];
+            uint32_t offset = 0;
+            for (uint32_t j = 0; j < attributes.size(); ++j) {
+                const FloatVertexAttribute& attribute = attributes[j];
+				uint32_t valueIndex = offset + static_cast<uint32_t>(vertexSizeFloats) * edgeIdx;
+
+                if (j == positionAttributeIndex) {
+                    glm::dvec3 position{ output[valueIndex], output[valueIndex + 1], output[valueIndex + 2] };
+                    position += center;
+
+                    CesiumGeospatial::Cartographic cartographic = *ellipsoid.cartesianToCartographic(position);
+                    cartographic.longitude += longitudeOffset;
+                    cartographic.latitude += latitudeOffset;
+                    cartographic.height -= skirtHeight;
+
+                    position = ellipsoid.cartographicToCartesian(cartographic);
+                    position -= center;
+
+                    output.push_back(static_cast<float>(position.x));
+                    output.push_back(static_cast<float>(position.y));
+                    output.push_back(static_cast<float>(position.z));
+                }
+                else {
+                    for (uint32_t c = 0; c < static_cast<uint32_t>(attribute.numberOfFloatsPerVertex); ++c) {
+                        output.push_back(output[valueIndex + c]);
+                    }
+                }
+
+                offset += attribute.numberOfFloatsPerVertex;
+            }
+
+            if (i < edgeIndices.size() - 1) {
+                uint32_t nextEdgeIdx = edgeIndices[i + 1];
+                indices.push_back(edgeIdx);
+                indices.push_back(nextEdgeIdx);
+                indices.push_back(newEdgeIndex);
+
+                indices.push_back(newEdgeIndex);
+                indices.push_back(nextEdgeIdx);
+                indices.push_back(newEdgeIndex + 1);
+            }
+
+            ++newEdgeIndex;
+        }
+    }
+
+    static void addSkirts(std::vector<float>& output,
+        std::vector<uint32_t>& indices,
+        EdgeIndices edgeIndices,
+        const glm::dvec3& center,
+        size_t vertexSizeFloats,
+        uint32_t positionAttributeIndex,
+        const std::vector<FloatVertexAttribute>& attributes) 
+    {
+        double skirtHeight = 20.0;
+
+        // west
+        std::vector<uint32_t> sortEdgeIndices(edgeIndices.west.size());
+        std::sort(edgeIndices.west.begin(), 
+            edgeIndices.west.end(), 
+            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
+                return lhs.second.y < rhs.second.y;
+            });
+        std::transform(edgeIndices.west.begin(),
+            edgeIndices.west.end(),
+            sortEdgeIndices.begin(),
+            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, skirtHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+
+        // south
+        sortEdgeIndices.resize(edgeIndices.south.size());
+        std::sort(edgeIndices.south.begin(), 
+            edgeIndices.south.end(), 
+            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
+                return lhs.second.x > rhs.second.x;
+            });
+        std::transform(edgeIndices.south.begin(),
+            edgeIndices.south.end(),
+            sortEdgeIndices.begin(),
+            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, skirtHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+
+        // east
+        sortEdgeIndices.resize(edgeIndices.east.size());
+        std::sort(edgeIndices.east.begin(), 
+            edgeIndices.east.end(), 
+            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
+                return lhs.second.y > rhs.second.y;
+            });
+        std::transform(edgeIndices.east.begin(),
+            edgeIndices.east.end(),
+            sortEdgeIndices.begin(),
+            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, skirtHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+
+        // north
+        sortEdgeIndices.resize(edgeIndices.north.size());
+        std::sort(edgeIndices.north.begin(), 
+            edgeIndices.north.end(), 
+            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
+                return lhs.second.x < rhs.second.x;
+            });
+        std::transform(edgeIndices.north.begin(),
+            edgeIndices.north.end(),
+            sortEdgeIndices.begin(),
+            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, skirtHeight, vertexSizeFloats, positionAttributeIndex, attributes);
     }
 
     static void upsamplePrimitiveForRasterOverlays(
