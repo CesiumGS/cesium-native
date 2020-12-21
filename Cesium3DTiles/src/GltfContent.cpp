@@ -4,11 +4,8 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumUtility/Math.h"
 #include <stdexcept>
-#include <chrono>
 
 namespace Cesium3DTiles {
-
-	static std::atomic<double> maxTime;
 
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
 		std::shared_ptr<spdlog::logger> pLogger,
@@ -24,8 +21,6 @@ namespace Cesium3DTiles {
 	) {
 		std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
 
-		// auto startTime = std::chrono::high_resolution_clock::now();
-
 		std::string errors;
 		std::string warnings;
 
@@ -38,15 +33,6 @@ namespace Cesium3DTiles {
 		if (!warnings.empty()) {
 			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from memory: {}", warnings);
 		}
-
-		// auto endTime = std::chrono::high_resolution_clock::now();
-		// double t = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
-		// double m = std::max(maxTime.load(), t);
-		// while (maxTime.exchange(m) > m) {
-		// 	m = std::max(maxTime.load(), t);
-		// }
-
-		// SPDLOG_LOGGER_WARN(pLogger, "{} loaded in {} seconds, max seen {}", url, t, m);
 
 		return pResult;
 	}
