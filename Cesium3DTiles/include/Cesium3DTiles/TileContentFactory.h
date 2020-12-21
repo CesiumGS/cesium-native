@@ -10,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <spdlog/fwd.h>
+#include <unordered_map>
 
 namespace Cesium3DTiles {
     class TileContent;
