@@ -33,6 +33,7 @@ namespace Cesium3DTiles {
 		if (!warnings.empty()) {
 			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from memory: {}", warnings);
 		}
+
 		return pResult;
 	}
 

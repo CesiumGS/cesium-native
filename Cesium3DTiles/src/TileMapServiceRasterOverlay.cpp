@@ -7,7 +7,6 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Json.h"
 #include "tinyxml2.h"
 #include "Uri.h"
 
