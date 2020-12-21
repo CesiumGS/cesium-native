@@ -10,7 +10,6 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Json.h"
 #include "CesiumUtility/Math.h"
 #include "Uri.h"
 #include "JsonHelpers.h"
@@ -23,8 +22,8 @@
 namespace {
     struct BingMapsCreditCoverageArea {
         CesiumGeospatial::GlobeRectangle rectangle;
-        unsigned int zoomMin;
-        unsigned int zoomMax;
+        uint32_t zoomMin;
+        uint32_t zoomMax;
     };
 }
 
@@ -233,29 +232,28 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
             
+            const rapidjson::Value& attributions = (*pResource)["imageryProviders"];
             std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>> credits;
-            json& attributions = resource["imageryProviders"];
-            for (json attribution : attributions) {
-
+            for (const rapidjson::Value& attribution : attributions.GetArray()) {
                 std::vector<BingMapsCreditCoverageArea> coverageAreas;
-                for (json area : attribution["coverageAreas"]) {
-                    json bbox = area["bbox"];
+                for (const rapidjson::Value& area : attribution["coverageAreas"].GetArray()) {
+                    const rapidjson::Value& bbox = area["bbox"];
                     BingMapsCreditCoverageArea coverageArea {
                         CesiumGeospatial::GlobeRectangle::fromDegrees(
-                            bbox[1],
-                            bbox[0],
-                            bbox[3],
-                            bbox[2]
+                            bbox[1].GetDouble(),
+                            bbox[0].GetDouble(),
+                            bbox[3].GetDouble(),
+                            bbox[2].GetDouble()
                         ),
-                        (unsigned int) area.value("zoomMin", 0),
-                        (unsigned int) area.value("zoomMax", 0)
+                        area["zoomMin"].GetUint(),
+                        area["zoomMax"].GetUint()
                     };
                     coverageAreas.push_back(coverageArea);
                 }
 
                 credits.push_back(
                     std::pair(
-                        pCreditSystem->createCredit(attribution.value("attribution", std::string())),
+                        pCreditSystem->createCredit(attribution["attribution"].GetString()),
                         coverageAreas
                     )
                 );
