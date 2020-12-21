@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include <spdlog/fwd.h>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -91,7 +92,8 @@ namespace Cesium3DTiles {
          */
         void createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
-            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger
         );
 
         /**
@@ -108,6 +110,7 @@ namespace Cesium3DTiles {
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
         ) = 0;
 
