@@ -521,7 +521,7 @@ namespace Cesium3DTiles {
      * @return The geometric error
      */
     static double computeGeometricError(uint32_t tiles) noexcept {
-        return 8.0 * (Ellipsoid::WGS84.getRadii().x * 2.0 * CesiumUtility::Math::ONE_PI * 0.25) / 65 * static_cast<size_t>(tiles);
+        return 8.0 * (Ellipsoid::WGS84.getRadii().x * 2.0 * CesiumUtility::Math::ONE_PI * 0.25) / 65 * tiles;
     }
 
     /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, std::shared_ptr<spdlog::logger> pLogger) {
