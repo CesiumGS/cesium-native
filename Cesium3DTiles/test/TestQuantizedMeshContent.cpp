@@ -1,12 +1,12 @@
 #include "catch2/catch.hpp"
-#include "glm/glm.hpp"
-#include "CesiumUtility/Math.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "Cesium3DTiles/registerAllTileContentTypes.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/Rectangle.h"
-#include <spdlog/spdlog.h>
+#include "CesiumUtility/Math.h"
+#include "glm/glm.hpp"
 
 using namespace Cesium3DTiles;
 using namespace CesiumGeometry;
