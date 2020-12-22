@@ -20,6 +20,7 @@ namespace Cesium3DTiles {
         TileMapServiceTileProvider(
             RasterOverlay& owner,
             const AsyncSystem& asyncSystem,
+            std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -35,6 +36,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                credit,
                 pPrepareRendererResources,
                 projection,
                 tilingScheme,
@@ -74,15 +76,9 @@ namespace Cesium3DTiles {
 
     TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
         const std::string& url,
-        const std::shared_ptr<CreditSystem>& creditSystem,
         const std::vector<IAssetAccessor::THeader>& headers,
         const TileMapServiceRasterOverlayOptions& options
     ) :
-        RasterOverlay(creditSystem),
-        _credit(options.credit ? 
-            std::optional<Credit>(creditSystem->createCredit(options.credit.value())) : 
-            std::nullopt
-        ),
         _url(url),
         _headers(headers),
         _options(options)
@@ -123,6 +119,7 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
@@ -131,9 +128,15 @@ namespace Cesium3DTiles {
 
         pOwner = pOwner ? pOwner : this;
 
+        
+        std::optional<Credit> credit = this->_options.credit ?
+            std::make_optional(pCreditSystem->createCredit(this->_options.credit.value())) :
+            std::nullopt;
+
         return asyncSystem.requestAsset(xmlUrl, this->_headers).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            credit,
             pPrepareRendererResources,
             pLogger,
             options = this->_options,
@@ -243,6 +246,7 @@ namespace Cesium3DTiles {
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
                 asyncSystem,
+                credit,
                 pPrepareRendererResources,
                 projection,
                 tilingScheme,

@@ -48,8 +48,9 @@ namespace Cesium3DTiles {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
-            const std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>>& credits,
             const AsyncSystem& asyncSystem,
+            Credit bingCredit,
+            const std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>>& perTileCredits,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const std::string& baseUrl,
             const std::string& urlTemplate,
@@ -63,6 +64,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                std::make_optional(bingCredit),
                 pPrepareRendererResources,
                 WebMercatorProjection(),
                 QuadtreeTilingScheme(
@@ -75,7 +77,7 @@ namespace Cesium3DTiles {
                 width,
                 height
             ),
-            _credits(credits),
+            _credits(perTileCredits),
             _urlTemplate(urlTemplate),
             _subdomains(subdomains)
         {
@@ -164,14 +166,10 @@ namespace Cesium3DTiles {
     BingMapsRasterOverlay::BingMapsRasterOverlay(
         const std::string& url,
         const std::string& key,
-        const std::shared_ptr<CreditSystem>& pCreditSystem,
         const std::string& mapStyle,
         const std::string& culture,
         const Ellipsoid& ellipsoid
     ) :
-        RasterOverlay(pCreditSystem),
-        // double check whether this should be hardcoded 
-        _credit(pCreditSystem->createCredit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>")),
         _url(url),
         _key(key),
         _mapStyle(mapStyle),
@@ -185,6 +183,7 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> BingMapsRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
@@ -199,11 +198,11 @@ namespace Cesium3DTiles {
         return asyncSystem.requestAsset(metadataUrl).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            pCreditSystem,
             pPrepareRendererResources,
             pLogger,
             baseUrl = this->_url,
-            culture = this->_culture,
-            pCreditSystem = this->_pCreditSystem
+            culture = this->_culture
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
@@ -259,10 +258,15 @@ namespace Cesium3DTiles {
                 );
             }
 
+            // TODO: check what exactly should be hardcoded here 
+            Credit bingCredit = pCreditSystem->createCredit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>");
+
+
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
-                credits,
                 asyncSystem,
+                bingCredit,
+                credits,
                 pPrepareRendererResources,
                 baseUrl,
                 urlTemplate,

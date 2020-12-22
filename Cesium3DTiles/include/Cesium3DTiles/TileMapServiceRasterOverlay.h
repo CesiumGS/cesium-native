@@ -105,23 +105,20 @@ namespace Cesium3DTiles {
          */
         TileMapServiceRasterOverlay(
             const std::string& url,
-            const std::shared_ptr<CreditSystem>& pCreditSystem,
             const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = std::vector<CesiumAsync::IAssetAccessor::THeader>(),
             const TileMapServiceRasterOverlayOptions& options = TileMapServiceRasterOverlayOptions()
         );
         virtual ~TileMapServiceRasterOverlay() override;
 
-        virtual const std::optional<Credit> getCredit() const noexcept override { return _credit; };
-
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
         ) override;
 
     private:
-        std::optional<Credit> _credit;
         std::string _url;
         std::vector<CesiumAsync::IAssetAccessor::THeader> _headers;
         TileMapServiceRasterOverlayOptions _options;

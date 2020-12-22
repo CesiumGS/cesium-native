@@ -17,10 +17,8 @@ namespace Cesium3DTiles {
 
     IonRasterOverlay::IonRasterOverlay(
         uint32_t ionAssetID,
-        const std::string& ionAccessToken,
-        const std::shared_ptr<CreditSystem>& pCreditSystem
+        const std::string& ionAccessToken
     ) :
-        RasterOverlay(pCreditSystem),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken)
     {
@@ -31,6 +29,7 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> IonRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
@@ -41,7 +40,6 @@ namespace Cesium3DTiles {
         pOwner = pOwner ? pOwner : this;
 
         return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([
-            pCreditSystem = this->_pCreditSystem,
             pLogger
         ](
             std::unique_ptr<IAssetRequest> pRequest
@@ -81,7 +79,6 @@ namespace Cesium3DTiles {
                 return std::make_unique<BingMapsRasterOverlay>(
                     url,
                     key,
-                    pCreditSystem,
                     mapStyle,
                     culture
                 );
@@ -89,7 +86,6 @@ namespace Cesium3DTiles {
                 std::string url = JsonHelpers::getStringOrDefault(response, "url", "");
                 return std::make_unique<TileMapServiceRasterOverlay>(
                     url,
-                    pCreditSystem,
                     std::vector<CesiumAsync::IAssetAccessor::THeader> {
                         std::make_pair("Authorization", "Bearer " + JsonHelpers::getStringOrDefault(response, "accessToken", ""))
                     }
@@ -99,11 +95,11 @@ namespace Cesium3DTiles {
             this,
             pOwner,
             asyncSystem,
+            pCreditSystem,
             pPrepareRendererResources,
             pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
-            this->_pAggregatedOverlay = std::move(pAggregatedOverlay);
-            return this->_pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pLogger, pOwner);
+            return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
         });
     }
 

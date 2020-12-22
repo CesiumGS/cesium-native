@@ -258,7 +258,7 @@ namespace Cesium3DTiles {
         this->_processLoadQueue();
 
         // aggregate all the credits needed from this tileset for the current frame 
-        std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
+        const std::shared_ptr<CreditSystem>& pCreditSystem = this->getCreditSystem();
         if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
             // per-tileset specific credit
             if (this->_credit) {
@@ -267,7 +267,7 @@ namespace Cesium3DTiles {
             
             // per-raster overlay credit
             for (auto& pOverlay : this->_overlays) {
-                const std::optional<Credit> overlayCredit = pOverlay->getCredit();
+                const std::optional<Credit> overlayCredit = pOverlay->getTileProvider()->getCredit();
                 if (overlayCredit) {
                     pCreditSystem->addCreditToFrame(overlayCredit.value());
                 }

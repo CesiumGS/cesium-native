@@ -27,15 +27,8 @@ namespace Cesium3DTiles {
      */
     class RasterOverlay {
     public:
-        RasterOverlay(const std::shared_ptr<CreditSystem>& pCreditSystem);
+        RasterOverlay();
         virtual ~RasterOverlay();
-
-        /**
-         * @brief Gets the Credit for this overlay.
-         *
-         * @return The Credit given for this overlay if one was given.
-         */
-         virtual const std::optional<Credit> getCredit() const noexcept { return std::nullopt; }
 
         /**
          * @brief Gets the tile provider for this overlay.
@@ -88,10 +81,12 @@ namespace Cesium3DTiles {
          * is already in the process of being created.
          * 
          * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          */
         void createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger
         );
@@ -103,12 +98,14 @@ namespace Cesium3DTiles {
          * overlays that aggregate other overlays.
          * 
          * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pOwner The overlay that owns this overlay, or nullptr if this overlay is not aggregated.
          * @param callback The callback that receives the new tile provider when it is ready.
          */
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
@@ -125,9 +122,6 @@ namespace Cesium3DTiles {
          */
         void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
     
-    protected:
-        std::shared_ptr<CreditSystem> _pCreditSystem;
-
     private:
         std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
         std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;

@@ -86,6 +86,7 @@ namespace Cesium3DTiles {
          *
          * @param overlay The {@link RasterOverlay}.
          * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for this tile.
+         * @param tileCredits The list of {@link Credit}s needed for this tile.
          * @param imageRequest The pending request for the image data.
          */
         RasterOverlayTile(
@@ -114,7 +115,7 @@ namespace Cesium3DTiles {
         LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
 
         /**
-         * @brief Returns the credits for this tile.
+         * @brief Returns the list of {@link Credit}s needed for this tile.
          */
         const std::vector<Credit>& getCredits() const noexcept { return this->_tileCredits; }
 

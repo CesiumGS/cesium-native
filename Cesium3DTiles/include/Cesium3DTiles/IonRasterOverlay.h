@@ -28,17 +28,13 @@ namespace Cesium3DTiles {
          */
         IonRasterOverlay(
             uint32_t ionAssetID,
-            const std::string& ionAccessToken,
-            const std::shared_ptr<CreditSystem>& pCreditSystem
+            const std::string& ionAccessToken
         );
         virtual ~IonRasterOverlay() override;
         
-        virtual const std::optional<Credit> getCredit() const noexcept override { 
-            return _pAggregatedOverlay ? _pAggregatedOverlay->getCredit() : std::nullopt;
-        };
-
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
@@ -47,7 +43,6 @@ namespace Cesium3DTiles {
     private:
         uint32_t _ionAssetID;
         std::string _ionAccessToken;
-        std::unique_ptr<RasterOverlay> _pAggregatedOverlay;
     };
 
 }

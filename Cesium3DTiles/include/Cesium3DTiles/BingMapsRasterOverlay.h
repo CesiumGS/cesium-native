@@ -6,6 +6,7 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTiles {
 
@@ -92,24 +93,21 @@ namespace Cesium3DTiles {
         BingMapsRasterOverlay(
             const std::string& url,
             const std::string& key,
-            const std::shared_ptr<CreditSystem>& pCreditSystem,
             const std::string& mapStyle = BingMapsStyle::AERIAL,
             const std::string& culture = "",
             const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84
         );
         virtual ~BingMapsRasterOverlay() override;
 
-        virtual const std::optional<Credit> getCredit() const noexcept override { return _credit; };
-
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
         ) override;
 
     private:
-        Credit _credit;
         std::string _url;
         std::string _key;
         std::string _mapStyle;
