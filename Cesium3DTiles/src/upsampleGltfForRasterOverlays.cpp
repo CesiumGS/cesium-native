@@ -57,8 +57,6 @@ namespace Cesium3DTiles {
         std::vector<uint32_t>& indices,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
-        double longitudeOffset,
-        double latitudeOffset,
         double skirtHeight,
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex,
