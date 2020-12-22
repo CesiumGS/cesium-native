@@ -13,11 +13,12 @@ namespace Cesium3DTiles {
         // this is a new credit so add it to _credits
         _credits.push_back(std::make_pair(html, -1));
 
-        return Credit(_credits.size() - 1);
+        // return a Credit handle to the newly created entry
+        return _credits.size() - 1;
     }
 
     std::string CreditSystem::getHTML(Credit credit) const {
-        if(0 <= credit && credit < _credits.size()) {
+        if(credit < _credits.size()) {
             return std::string(_credits[credit].first);
         }
         return "Error: Invalid Credit object, cannot get HTML string.";
@@ -34,9 +35,9 @@ namespace Cesium3DTiles {
 
         // if the credit was shown last frame, remove it from _creditsToNoLongerShowThisFrame since it will still be shown
         if (_credits[credit].second == _currentFrameNumber - 1) {
-            for (int32_t i = 0; i < _creditsToNoLongerShowThisFrame.size(); i++) {
+            for (size_t i = 0; i < _creditsToNoLongerShowThisFrame.size(); i++) {
                 if (_creditsToNoLongerShowThisFrame[i] == credit) {
-                    _creditsToNoLongerShowThisFrame.erase(_creditsToNoLongerShowThisFrame.begin() + i);
+                    _creditsToNoLongerShowThisFrame.erase(_creditsToNoLongerShowThisFrame.begin() + int32_t(i));
                     break;
                 }
             }

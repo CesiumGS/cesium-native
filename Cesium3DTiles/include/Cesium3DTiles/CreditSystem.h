@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
      * @brief Represents an HTML string that should be shown on screen to attribute third parties for used data, imagery, etc.  
      * Acts as a handle into a {@link CreditSystem} object that actually holds the credit string. 
      */
-    typedef int32_t Credit;
+    typedef size_t Credit;
 
     /**
      * @brief Creates and manages {@link Credit} objects. Avoids repetitions and
