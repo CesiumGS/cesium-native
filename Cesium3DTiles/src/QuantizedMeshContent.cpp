@@ -401,7 +401,7 @@ namespace Cesium3DTiles {
     template <class E, class I>
     static void addSkirts(
         const CesiumGeospatial::Ellipsoid &ellipsoid,
-        glm::dvec3 center,
+        const glm::dvec3& center,
         const CesiumGeospatial::GlobeRectangle &rectangle,
         double minimumHeight,
         double maximumHeight,
@@ -597,7 +597,7 @@ namespace Cesium3DTiles {
         const glm::dmat4& /*tileTransform*/,
         const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
         TileRefine /*tileRefine*/,
-        const std::string& /*url*/,
+        const std::string& url,
         const gsl::span<const uint8_t>& data
     ) {
         // TODO: use context plus tileID to compute the tile's rectangle, rather than inferring it from the parent tile.
@@ -606,6 +606,7 @@ namespace Cesium3DTiles {
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
         std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data);
         if (!meshView) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Unable to parse quantized-mesh-1.0 tile {}.", url);
             return pResult;
         }
 
@@ -618,6 +619,7 @@ namespace Cesium3DTiles {
         }
 
         if (!pRegion) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Unable to create quantized-mesh-1.0 tile {} because the tile's bounding volume is not a bounding region.", url);
             return pResult;
         }
 
