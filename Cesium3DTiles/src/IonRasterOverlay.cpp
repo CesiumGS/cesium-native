@@ -92,7 +92,6 @@ namespace Cesium3DTiles {
                 );
             }
         }).thenInMainThread([
-            this,
             pOwner,
             asyncSystem,
             pCreditSystem,
