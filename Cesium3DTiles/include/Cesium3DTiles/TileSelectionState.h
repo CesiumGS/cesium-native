@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
      * process. The {@link Tileset} updates this state while traversing the tile hierarchy,
      * tracking whether a tile was rendered, culled, or refined in the last frame.
      */
-    class TileSelectionState {
+    class TileSelectionState final {
     public:
 
         /**

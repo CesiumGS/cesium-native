@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumAsync/AsyncSystem.h"
@@ -8,10 +9,11 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
-#include "TilesetJson.h"
 #include "calcQuadtreeMaxGeometricError.h"
+#include "JsonHelpers.h"
 #include "Uri.h"
 #include <glm/common.hpp>
+#include <rapidjson/document.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -96,13 +98,18 @@ namespace Cesium3DTiles {
 
             gsl::span<const uint8_t> data = pResponse->data();
 
-            using nlohmann::json;
-            json ionResponse = json::parse(data.begin(), data.end());
+            rapidjson::Document ionResponse;
+            ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
-            std::string url = ionResponse.value<std::string>("url", "");
-            std::string accessToken = ionResponse.value<std::string>("accessToken", "");
+			if (ionResponse.HasParseError()) {
+				SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response JSON, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
+				return;
+			}
+
+            std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
+            std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
             
-            std::string type = ionResponse.value<std::string>("type", "");
+            std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
             if (type == "TERRAIN") {
                 // For terrain resources, we need to append `/layer.json` to the end of the URL.
                 url = Uri::resolve(url, "layer.json", true);
@@ -260,7 +267,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tileset::loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
+    void Tileset::loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
         this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context);
     }
 
@@ -316,17 +323,20 @@ namespace Cesium3DTiles {
         }
 
         this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
+            pLogger = this->getExternals().pLogger,
             pTileset = this,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
+                SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
                 // TODO: report error response.
+                SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
                 return LoadResult { std::move(pContext), nullptr };
             }
 
@@ -335,18 +345,25 @@ namespace Cesium3DTiles {
 
             gsl::span<const uint8_t> data = pResponse->data();
 
-            using nlohmann::json;
-            json tileset = json::parse(data.begin(), data.end());
+            rapidjson::Document tileset;
+            tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+
+			if (tileset.HasParseError()) {
+				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
+				return LoadResult { std::move(pContext), nullptr };
+			}
 
             std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
             pRootTile->setContext(pContext.get());
 
-            json::iterator rootIt = tileset.find("root");
-            if (rootIt != tileset.end()) {
-                json& rootJson = *rootIt;
+            auto rootIt = tileset.FindMember("root");
+            auto formatIt = tileset.FindMember("format");
+
+            if (rootIt != tileset.MemberEnd()) {
+                rapidjson::Value& rootJson = rootIt->value;
                 Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext);
-            } else if (tileset.value("format", "") == "quantized-mesh-1.0") {
-                Tileset::_createTerrainTile(*pRootTile, tileset, *pContext);
+            } else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
+               Tileset::_createTerrainTile(*pRootTile, tileset, *pContext);
             }
 
             return LoadResult {
@@ -363,47 +380,45 @@ namespace Cesium3DTiles {
         });
     }
 
-    /*static*/ void Tileset::_createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) {
-        using nlohmann::json;
-
-        if (!tileJson.is_object())
+    /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) {
+        if (!tileJson.IsObject())
         {
             return;
         }
 
         tile.setContext(const_cast<TileContext*>(&context));
 
-        std::optional<glm::dmat4x4> tileTransform = TilesetJson::getTransformProperty(tileJson, "transform");
+        std::optional<glm::dmat4x4> tileTransform = JsonHelpers::getTransformProperty(tileJson, "transform");
         glm::dmat4x4 transform = parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
         tile.setTransform(transform);
 
-        json::const_iterator contentIt = tileJson.find("content");
-        json::const_iterator childrenIt = tileJson.find("children");
+        auto contentIt = tileJson.FindMember("content");
+        auto childrenIt = tileJson.FindMember("children");
 
-        if (contentIt != tileJson.end())
+        if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject())
         {
-            json::const_iterator uriIt = contentIt->find("uri");
-            if (uriIt == contentIt->end()) {
-                uriIt = contentIt->find("url");
+            auto uriIt = contentIt->value.FindMember("uri");
+            if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
+                uriIt = contentIt->value.FindMember("url");
             }
 
-            if (uriIt != contentIt->end()) {
-                tile.setTileID(Uri::resolve(context.baseUrl, *uriIt));
+            if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
+                tile.setTileID(Uri::resolve(context.baseUrl, uriIt->value.GetString()));
             }
 
-            std::optional<BoundingVolume> contentBoundingVolume = TilesetJson::getBoundingVolumeProperty(*contentIt, "boundingVolume");
+            std::optional<BoundingVolume> contentBoundingVolume = JsonHelpers::getBoundingVolumeProperty(contentIt->value, "boundingVolume");
             if (contentBoundingVolume) {
                 tile.setContentBoundingVolume(transformBoundingVolume(transform, contentBoundingVolume.value()));
             }
         }
 
-        std::optional<BoundingVolume> boundingVolume = TilesetJson::getBoundingVolumeProperty(tileJson, "boundingVolume");
+        std::optional<BoundingVolume> boundingVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
             // TODO: report missing required property
             return;
         }
 
-        std::optional<double> geometricError = TilesetJson::getScalarProperty(tileJson, "geometricError");
+        std::optional<double> geometricError = JsonHelpers::getScalarProperty(tileJson, "geometricError");
         if (!geometricError) {
             // TODO: report missing required property
             return;
@@ -413,14 +428,14 @@ namespace Cesium3DTiles {
         //tile->setBoundingVolume(boundingVolume.value());
         tile.setGeometricError(geometricError.value());
 
-        std::optional<BoundingVolume> viewerRequestVolume = TilesetJson::getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
+        std::optional<BoundingVolume> viewerRequestVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
         if (viewerRequestVolume) {
             tile.setViewerRequestVolume(transformBoundingVolume(transform, viewerRequestVolume.value()));
         }
         
-        json::const_iterator refineIt = tileJson.find("refine");
-        if (refineIt != tileJson.end()) {
-            const std::string& refine = *refineIt;
+        auto refineIt = tileJson.FindMember("refine");
+        if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
+            std::string refine = refineIt->value.GetString();
             if (refine == "REPLACE") {
                 tile.setRefine(TileRefine::Replace);
             } else if (refine == "ADD") {
@@ -432,19 +447,14 @@ namespace Cesium3DTiles {
             tile.setRefine(parentRefine);
         }
 
-        if (childrenIt != tileJson.end())
+        if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray())
         {
-            const json& childrenJson = *childrenIt;
-            if (!childrenJson.is_array())
-            {
-                return;
-            }
-
-            tile.createChildTiles(childrenJson.size());
+            const auto& childrenJson = childrenIt->value;
+            tile.createChildTiles(childrenJson.Size());
             gsl::span<Tile> childTiles = tile.getChildren();
 
-            for (size_t i = 0; i < childrenJson.size(); ++i) {
-                const json& childJson = childrenJson[i];
+            for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
+                const auto& childJson = childrenJson[i];
                 Tile& child = childTiles[i];
                 child.setParent(&tile);
                 Tileset::_createTile(child, childJson, transform, tile.getRefine(), context);
@@ -452,13 +462,41 @@ namespace Cesium3DTiles {
         }
     }
 
-    /*static*/ void Tileset::_createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context) {
+    /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context) {
         context.requestHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
-        context.version = layerJson.value("version", "");
+        
+        auto tilesetVersionIt = layerJson.FindMember("tilesetVersion");
+        if (tilesetVersionIt != layerJson.MemberEnd() && tilesetVersionIt->value.IsString()) {
+            context.version = tilesetVersionIt->value.GetString();
+        }
 
-        std::vector<double> bounds = layerJson.value<std::vector<double>>("bounds", std::vector<double>());
+        std::vector<double> bounds;
+        auto boundsIt = layerJson.FindMember("bounds");
+        if (boundsIt != layerJson.MemberEnd() && boundsIt->value.IsArray()) {
+            const auto& boundsJson = boundsIt->value.GetArray();
+            bounds.resize(boundsJson.Size());
 
-        std::string projectionString = layerJson.value<std::string>("projection", "EPSG:4326");
+            for (rapidjson::SizeType i = 0; i < boundsJson.Size(); ++i) {
+                const auto& element = boundsJson[i];
+                if (!element.IsNumber()) {
+                    // Unexpected element, give up interpreting this bounds
+                    // TODO: add a warning
+                    bounds.clear();
+                    break;
+                }
+
+                bounds[i] = element.GetDouble();
+            }
+        }
+
+        std::string projectionString;
+        auto projectionIt = layerJson.FindMember("projection");
+        if (projectionIt != layerJson.MemberEnd() && projectionIt->value.IsString()) {
+            projectionString = projectionIt->value.GetString();
+        } else {
+            projectionString = "EPSG:4326";
+        }
+
         CesiumGeospatial::Projection projection;
         CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
         CesiumGeometry::Rectangle quadtreeRectangleProjected(0.0, 0.0, 0.0, 0.0);
@@ -488,14 +526,23 @@ namespace Cesium3DTiles {
 
         CesiumGeometry::QuadtreeTilingScheme tilingScheme(quadtreeRectangleProjected, quadtreeXTiles, 1);
 
+        std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
+        
+        uint32_t maxZoom = 30;
+
+        auto maxZoomIt = layerJson.FindMember("maxzoom");
+        if (maxZoomIt != layerJson.MemberEnd() && maxZoomIt->value.IsUint()) {
+            maxZoom = maxZoomIt->value.GetUint();
+        }
+
         context.implicitContext = {
-            layerJson.value<std::vector<std::string>>("tiles", std::vector<std::string>()),
+            urls,
             tilingScheme,
             projection,
-            CesiumGeometry::QuadtreeTileAvailability(tilingScheme, layerJson.value<uint32_t>("maxzoom", 30))
+            CesiumGeometry::QuadtreeTileAvailability(tilingScheme, maxZoom)
         };
 
-        std::vector<std::string> extensions = layerJson.value<std::vector<std::string>>("extensions", std::vector<std::string>());
+        std::vector<std::string> extensions = JsonHelpers::getStrings(layerJson, "extensions");
 
         // Request normals and metadata if they're available
         std::string extensionsToRequest;
@@ -582,25 +629,29 @@ namespace Cesium3DTiles {
                     // Update the context with the new token.
                     gsl::span<const uint8_t> data = pIonResponse->data();
 
-                    using nlohmann::json;
-                    json ionResponse = json::parse(data.begin(), data.end());
+                    rapidjson::Document ionResponse;
+                    ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
-                    std::string accessToken = ionResponse.value<std::string>("accessToken", "");
-                    
-                    auto authIt = std::find_if(
-                        pContext->requestHeaders.begin(),
-                        pContext->requestHeaders.end(),
-                        [](auto& headerPair) {
-                            return headerPair.first == "Authorization";
-                        }
-                    );
-                    if (authIt != pContext->requestHeaders.end()) {
-                        authIt->second = "Bearer " + accessToken;
+                    if (ionResponse.HasParseError()) {
+                        SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
                     } else {
-                        pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
-                    }
+                        std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
 
-                    failed = false;
+                        auto authIt = std::find_if(
+                            pContext->requestHeaders.begin(),
+                            pContext->requestHeaders.end(),
+                            [](auto& headerPair) {
+                                return headerPair.first == "Authorization";
+                            }
+                        );
+                        if (authIt != pContext->requestHeaders.end()) {
+                            authIt->second = "Bearer " + accessToken;
+                        } else {
+                            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+                        }
+
+                        failed = false;
+                    }
                 }
 
                 // Put all auth-failed tiles in this context back into the Unloaded state.

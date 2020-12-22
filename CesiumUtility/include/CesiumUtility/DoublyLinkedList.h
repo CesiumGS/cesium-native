@@ -6,7 +6,7 @@ namespace CesiumUtility {
      * @brief Contains the previous and next pointers for an element in a {@link DoublyLinkedList}.
      */
     template <class T>
-    class DoublyLinkedListPointers {
+    class DoublyLinkedListPointers final {
     public:
 
         /** 
@@ -54,7 +54,7 @@ namespace CesiumUtility {
      * @tparam (T::*Pointers) A member pointer to the field that holds the links to the previous and next nodes.
      */
     template <class T, DoublyLinkedListPointers<T> (T::*Pointers)>
-    class DoublyLinkedList {
+    class DoublyLinkedList final {
     public:
 
         /**

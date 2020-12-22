@@ -40,7 +40,7 @@ namespace CesiumGeometry {
      * the x- and y-coordinate of the tile, referring to a grid coordinate system at
      * the respective level.
      */
-    struct CESIUMGEOMETRY_API QuadtreeTileID {
+    struct CESIUMGEOMETRY_API QuadtreeTileID final {
 
         /**
          * @brief Creates a new instance.

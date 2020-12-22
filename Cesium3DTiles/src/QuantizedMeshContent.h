@@ -9,12 +9,13 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates a {@link TileContentLoadResult} from `quantized-mesh-1.0` data.
      */
-    class CESIUM3DTILES_API QuantizedMeshContent {
+    class CESIUM3DTILES_API QuantizedMeshContent final {
     public:
         static std::string CONTENT_TYPE;
 
         /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,

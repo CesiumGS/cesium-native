@@ -1,12 +1,12 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Json.h"
 #include "tinyxml2.h"
 #include "Uri.h"
 
@@ -14,7 +14,7 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
-    class TileMapServiceTileProvider : public RasterOverlayTileProvider {
+    class TileMapServiceTileProvider final : public RasterOverlayTileProvider {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
@@ -117,6 +117,7 @@ namespace Cesium3DTiles {
     Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
@@ -127,6 +128,7 @@ namespace Cesium3DTiles {
             pOwner,
             asyncSystem,
             pPrepareRendererResources,
+            pLogger,
             options = this->_options,
             url = this->_url,
             headers = this->_headers
@@ -138,13 +140,13 @@ namespace Cesium3DTiles {
             tinyxml2::XMLDocument doc;
             tinyxml2::XMLError error = doc.Parse(reinterpret_cast<const char*>(data.data()), data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
-                // TODO: report error
+                SPDLOG_LOGGER_ERROR(pLogger, "Could not parse tile map service XML.");
                 return nullptr;
             }
 
             tinyxml2::XMLElement* pRoot = doc.RootElement();
             if (!pRoot) {
-                // TODO: report error
+                SPDLOG_LOGGER_ERROR(pLogger, "Tile map service XML document does not have a root element.");
                 return nullptr;
             }
 

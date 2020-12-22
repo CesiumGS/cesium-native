@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
      * Constants that can be passed to a {@link BingMapsRasterOverlay} to
      * indicate the overlays that should be painted.
      */
-    struct BingMapsStyle {
+    struct BingMapsStyle final {
         /**
          * @brief Aerial imagery.
          */
@@ -75,7 +75,7 @@ namespace Cesium3DTiles {
     /**
      * @brief A {@link RasterOverlay} that uses Bing Maps as the source for the imagery data.
      */
-    class CESIUM3DTILES_API BingMapsRasterOverlay : public RasterOverlay {
+    class CESIUM3DTILES_API BingMapsRasterOverlay final : public RasterOverlay {
     public:
 
         /**
@@ -100,6 +100,7 @@ namespace Cesium3DTiles {
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
         ) override;
 

@@ -11,7 +11,7 @@ namespace CesiumGeometry {
     /**
      * @brief A bounding sphere with a center and a radius.
      */
-    class CESIUMGEOMETRY_API BoundingSphere {
+    class CESIUMGEOMETRY_API BoundingSphere final {
     public:
         /**
          * @brief Construct a new instance.

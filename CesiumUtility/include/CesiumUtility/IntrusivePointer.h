@@ -8,7 +8,7 @@ namespace CesiumUtility {
      * @tparam T The type of object controlled.
      */
     template <class T>
-    class IntrusivePointer {
+    class IntrusivePointer final {
     public:
         IntrusivePointer(T* p = nullptr) noexcept :
             _p(p)

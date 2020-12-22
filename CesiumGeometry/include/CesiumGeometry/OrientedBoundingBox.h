@@ -15,7 +15,7 @@ namespace CesiumGeometry {
      * @see BoundingSphere
      * @see BoundingRegion
      */
-    class CESIUMGEOMETRY_API OrientedBoundingBox {
+    class CESIUMGEOMETRY_API OrientedBoundingBox final {
     public:
         /**
          * @brief Constructs a new instance.

@@ -2,13 +2,16 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Json.h"
 #include "Uri.h"
+#include "JsonHelpers.h"
+#include <rapidjson/document.h>
+#include <rapidjson/pointer.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -27,7 +30,7 @@ namespace Cesium3DTiles {
     const std::string BingMapsStyle::ORDNANCE_SURVEY = "OrdnanceSurvey";
     const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 
-    class BingMapsTileProvider : public RasterOverlayTileProvider {
+    class BingMapsTileProvider final : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
@@ -142,6 +145,7 @@ namespace Cesium3DTiles {
     Future<std::unique_ptr<RasterOverlayTileProvider>> BingMapsRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
@@ -155,27 +159,34 @@ namespace Cesium3DTiles {
             pOwner,
             asyncSystem,
             pPrepareRendererResources,
+            pLogger,
             baseUrl = this->_url,
             culture = this->_culture
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
-            using namespace nlohmann;
-            
-            json response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            rapidjson::Document response;
+            response.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
 
-            json& resource = response["/resourceSets/0/resources/0"_json_pointer];
-            if (!resource.is_object()) {
+            if (response.HasParseError()) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing Bing Maps imagery metadata, error code {} at byte offset {}", response.GetParseError(), response.GetErrorOffset());
                 return nullptr;
             }
 
-            uint32_t width = resource.value("imageWidth", 256U);
-            uint32_t height = resource.value("imageHeight", 256U);
-            uint32_t maximumLevel = resource.value("zoomMax", 30U);
+            rapidjson::Value* pResource = rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
+            if (!pResource) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Resources were not found in the Bing Maps imagery metadata response.");
+                return nullptr;
+            }
 
-            std::vector<std::string> subdomains = resource.value("imageUrlSubdomains", std::vector<std::string>());
-            std::string urlTemplate = resource.value("imageUrl", std::string());
+            uint32_t width = JsonHelpers::getUint32OrDefault(*pResource, "imageWidth", 256U);
+            uint32_t height = JsonHelpers::getUint32OrDefault(*pResource, "imageHeight", 256U);
+            uint32_t maximumLevel = JsonHelpers::getUint32OrDefault(*pResource, "zoomMax", 30U);
+
+            std::vector<std::string> subdomains = JsonHelpers::getStrings(*pResource, "imageUrlSubdomains");
+            std::string urlTemplate = JsonHelpers::getStringOrDefault(*pResource, "imageUrl", std::string());
             if (urlTemplate.empty())  {
+                SPDLOG_LOGGER_ERROR(pLogger, "Bing Maps tile imageUrl is missing or empty.");
                 return nullptr;
             }
 

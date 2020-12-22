@@ -1,3 +1,4 @@
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
@@ -7,7 +8,9 @@
 #include "calcQuadtreeMaxGeometricError.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
+#include "JsonHelpers.h"
 #include <glm/vec3.hpp>
+#include <rapidjson/document.h>
 #include <stdexcept>
 
 using namespace CesiumUtility;
@@ -152,7 +155,12 @@ namespace Cesium3DTiles {
         return glm::normalize(result);
     }
 
-    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> json, TileContentLoadResult& result);
+    static void processMetadata(
+        const std::shared_ptr<spdlog::logger>& pLogger,
+        const QuadtreeTileID& tileID,
+        gsl::span<const char> json,
+        TileContentLoadResult& result
+    );
 
     static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const uint8_t>& data) {
         if (data.size() < headerLength) {
@@ -581,6 +589,7 @@ namespace Cesium3DTiles {
     }
 
     /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
+        std::shared_ptr<spdlog::logger> pLogger,
         const TileContext& context,
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,
@@ -696,7 +705,7 @@ namespace Cesium3DTiles {
 
         // decode metadata
         if (meshView->metadataJsonLength > 0) {
-            processMetadata(id, meshView->metadataJsonBuffer, *pResult);
+            processMetadata(pLogger, id, meshView->metadataJsonBuffer, *pResult);
         }
 
         // indices buffer for gltf to include tile and skirt indices. Caution of indices type 
@@ -935,38 +944,49 @@ namespace Cesium3DTiles {
         uint32_t maximumY;
     };
 
-    static void from_json(const nlohmann::json& json, TileRange& range) {
-        json.at("startX").get_to(range.minimumX);
-        json.at("startY").get_to(range.minimumY);
-        json.at("endX").get_to(range.maximumX);
-        json.at("endY").get_to(range.maximumY);
-    }
+    static void processMetadata(
+        const std::shared_ptr<spdlog::logger>& pLogger,
+        const QuadtreeTileID& tileID,
+        gsl::span<const char> metadataString,
+        TileContentLoadResult& result
+    ) {
+        rapidjson::Document metadata;
+        metadata.Parse(reinterpret_cast<const char*>(metadataString.data()), metadataString.size());
 
-    static void processMetadata(const QuadtreeTileID& tileID, gsl::span<const char> metadataString, TileContentLoadResult& result) {
-        using namespace nlohmann;
-        json metadata = json::parse(metadataString.begin(), metadataString.end());
-
-        json::iterator availableIt = metadata.find("available");
-        if (availableIt == metadata.end()) {
+        if (metadata.HasParseError()) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing metadata, error code {} at byte offset {}", metadata.GetParseError(), metadata.GetErrorOffset());
             return;
         }
 
-        json& available = *availableIt;
-        if (available.size() == 0) {
+        auto availableIt = metadata.FindMember("available");
+        if (availableIt == metadata.MemberEnd() || !availableIt->value.IsArray()) {
+            return;
+        }
+
+        const auto& available = availableIt->value;
+        if (available.Size() == 0) {
             return;
         }
 
         uint32_t level = tileID.level + 1;
-        for (size_t i = 0; i < available.size(); ++i) {
-            std::vector<TileRange> rangesAtLevel = available[i].get<std::vector<TileRange>>();
+        for (rapidjson::SizeType i = 0; i < available.Size(); ++i) {
+            const auto& rangesAtLevelJson = available[i];
+            if (!rangesAtLevelJson.IsArray()) {
+                continue;
+            }
 
-            for (const TileRange& range : rangesAtLevel) {
+            for (rapidjson::SizeType j = 0; j < rangesAtLevelJson.Size(); ++j) {
+                const auto& rangeJson = rangesAtLevelJson[j];
+                if (!rangeJson.IsObject()) {
+                    continue;
+                }
+
                 result.availableTileRectangles.push_back(CesiumGeometry::QuadtreeTileRectangularRange {
                     level,
-                    range.minimumX,
-                    range.minimumY,
-                    range.maximumX,
-                    range.maximumY
+                    JsonHelpers::getUint32OrDefault(rangeJson, "startX", 0),
+                    JsonHelpers::getUint32OrDefault(rangeJson, "startY", 0),
+                    JsonHelpers::getUint32OrDefault(rangeJson, "endX", 0),
+                    JsonHelpers::getUint32OrDefault(rangeJson, "endY", 0)
                 });
             }
 

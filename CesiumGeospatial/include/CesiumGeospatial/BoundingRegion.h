@@ -16,7 +16,7 @@ namespace CesiumGeospatial {
     /**
      * @brief A bounding volume specified as a longitude/latitude bounding box and a minimum and maximum height.
      */
-    class CESIUMGEOSPATIAL_API BoundingRegion {
+    class CESIUMGEOSPATIAL_API BoundingRegion final {
     public:
         /**
          * @brief Constructs a new bounding region.

@@ -5,6 +5,7 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include <functional>
 #include <memory>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -82,7 +83,8 @@ namespace Cesium3DTiles {
          */
         void createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
-            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources
+            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger
         );
 
         /**
@@ -99,6 +101,7 @@ namespace Cesium3DTiles {
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
         ) = 0;
 

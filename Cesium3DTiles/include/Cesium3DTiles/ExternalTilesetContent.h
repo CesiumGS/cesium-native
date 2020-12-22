@@ -7,6 +7,7 @@
 #include <gsl/span>
 #include <memory>
 #include <vector>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -15,12 +16,13 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates a {@link TileContentLoadResult} from 3D Tiles external tileset.json data.
      */
-    class CESIUM3DTILES_API ExternalTilesetContent {
+    class CESIUM3DTILES_API ExternalTilesetContent final {
     public:
 
         /**
          * @brief Create the {@link TileContentLoadResult} from the given input data.
          * 
+         * @param pLogger The logger that receives details of loading errors and warnings.
          * @param context The {@link TileContext}.
          * @param tileID The {@link TileID}
          * @param tileBoundingVolume The tile {@link BoundingVolume}
@@ -33,6 +35,7 @@ namespace Cesium3DTiles {
          * @return The {@link TileContentLoadResult}
          */
         static std::unique_ptr<TileContentLoadResult> load(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,
