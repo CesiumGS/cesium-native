@@ -532,32 +532,13 @@ namespace Cesium3DTiles {
             context.version = tilesetVersionIt->value.GetString();
         }
 
+        std::optional<std::vector<double>> optionalBounds = JsonHelpers::getDoubles(layerJson, -1, "bounds");
         std::vector<double> bounds;
-        auto boundsIt = layerJson.FindMember("bounds");
-        if (boundsIt != layerJson.MemberEnd() && boundsIt->value.IsArray()) {
-            const auto& boundsJson = boundsIt->value.GetArray();
-            bounds.resize(boundsJson.Size());
-
-            for (rapidjson::SizeType i = 0; i < boundsJson.Size(); ++i) {
-                const auto& element = boundsJson[i];
-                if (!element.IsNumber()) {
-                    // Unexpected element, give up interpreting this bounds
-                    // TODO: add a warning
-                    bounds.clear();
-                    break;
-                }
-
-                bounds[i] = element.GetDouble();
-            }
+        if (optionalBounds) {
+            bounds = optionalBounds.value();
         }
 
-        std::string projectionString;
-        auto projectionIt = layerJson.FindMember("projection");
-        if (projectionIt != layerJson.MemberEnd() && projectionIt->value.IsString()) {
-            projectionString = projectionIt->value.GetString();
-        } else {
-            projectionString = "EPSG:4326";
-        }
+        std::string projectionString = JsonHelpers::getStringOrDefault(layerJson, "projection", "EPSG:4326");
 
         CesiumGeospatial::Projection projection;
         CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
@@ -590,13 +571,7 @@ namespace Cesium3DTiles {
         CesiumGeometry::QuadtreeTilingScheme tilingScheme(quadtreeRectangleProjected, quadtreeXTiles, 1);
 
         std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
-        
-        uint32_t maxZoom = 30;
-
-        auto maxZoomIt = layerJson.FindMember("maxzoom");
-        if (maxZoomIt != layerJson.MemberEnd() && maxZoomIt->value.IsUint()) {
-            maxZoom = maxZoomIt->value.GetUint();
-        }
+        uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
 
         context.implicitContext = {
             urls,
