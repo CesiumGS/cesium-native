@@ -37,7 +37,8 @@ namespace Cesium3DTiles {
         std::shared_ptr<CesiumAsync::ITaskProcessor> pTaskProcessor;
 
         /**
-         * @brief An external {@link CreditSystem}
+         * @brief An external {@link CreditSystem} that can be used to manage credit strings and track which
+         * which credits to show and remove from the screen each frame.
          */
          std::shared_ptr<CreditSystem> pCreditSystem;
       

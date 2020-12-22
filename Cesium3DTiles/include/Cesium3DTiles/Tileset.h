@@ -371,7 +371,6 @@ namespace Cesium3DTiles {
         TilesetExternals _externals;
         CesiumAsync::AsyncSystem _asyncSystem;
 
-        std::shared_ptr<CreditSystem> _pCreditSystem;
         std::optional<Credit> _credit;
 
         std::optional<std::string> _url;

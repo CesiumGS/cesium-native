@@ -3,7 +3,6 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include <vector>
-#include <set>
 
 namespace Cesium3DTiles {
     class Tile;

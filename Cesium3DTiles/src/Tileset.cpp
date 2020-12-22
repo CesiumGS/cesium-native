@@ -33,7 +33,6 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _pCreditSystem(externals.pCreditSystem),
         _credit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
@@ -68,7 +67,6 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _pCreditSystem(externals.pCreditSystem),
         _credit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
@@ -260,17 +258,18 @@ namespace Cesium3DTiles {
         this->_processLoadQueue();
 
         // aggregate all the credits needed from this tileset for the current frame 
-        if (this->_pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
+        std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
+        if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
             // per-tileset specific credit
             if (this->_credit) {
-                this->_pCreditSystem->addCreditToFrame(this->_credit.value());
+                pCreditSystem->addCreditToFrame(this->_credit.value());
             }
             
             // per-raster overlay credit
             for (auto& pOverlay : this->_overlays) {
                 const std::optional<Credit> overlayCredit = pOverlay->getCredit();
                 if (overlayCredit) {
-                    this->_pCreditSystem->addCreditToFrame(overlayCredit.value());
+                    pCreditSystem->addCreditToFrame(overlayCredit.value());
                 }
             }
             
@@ -281,7 +280,7 @@ namespace Cesium3DTiles {
                     RasterOverlayTile* rasterOverlayTile = mappedRasterTile.getReadyTile();
                     if (rasterOverlayTile != nullptr) {
                         for (Credit credit : rasterOverlayTile->getCredits()) {
-                            this->_pCreditSystem->addCreditToFrame(credit);
+                            pCreditSystem->addCreditToFrame(credit);
                         }
                     }
                 }
