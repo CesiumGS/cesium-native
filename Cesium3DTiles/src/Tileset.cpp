@@ -9,6 +9,7 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
+#include "calcQuadtreeMaxGeometricError.h"
 #include "JsonHelpers.h"
 #include "TileUtilities.h"
 #include "Uri.h"
@@ -606,7 +607,7 @@ namespace Cesium3DTiles {
             CesiumGeospatial::GlobeRectangle childGlobeRectangle = 
                 unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id));
             childTile.setBoundingVolume(createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
-            childTile.setGeometricError(computeGeometricError(quadtreeXTiles));
+            childTile.setGeometricError(8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84, tilingScheme));
         }
     }
 
