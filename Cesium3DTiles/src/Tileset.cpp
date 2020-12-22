@@ -9,6 +9,7 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
+#include "calcQuadtreeMaxGeometricError.h"
 #include "JsonHelpers.h"
 #include "Uri.h"
 #include <glm/common.hpp>
@@ -587,16 +588,7 @@ namespace Cesium3DTiles {
                 -1000.0,
                 -9000.0
             )));
-            childTile.setGeometricError(
-                8.0 * (
-                    Ellipsoid::WGS84.getRadii().x *
-                    2.0 *
-                    CesiumUtility::Math::ONE_PI *
-                    0.25
-                ) / (
-                    65 * quadtreeXTiles
-                )
-            );
+            childTile.setGeometricError(8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84, tilingScheme));
         }
     }
 
