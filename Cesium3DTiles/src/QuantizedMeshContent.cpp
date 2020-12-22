@@ -5,6 +5,7 @@
 #include "CesiumUtility/Math.h"
 #include "QuantizedMeshContent.h"
 #include "calcQuadtreeMaxGeometricError.h"
+#include "SkirtMeshMetadata.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
 #include <glm/vec3.hpp>
@@ -913,17 +914,16 @@ namespace Cesium3DTiles {
         primitive.indices = static_cast<int>(indicesBufferId);
 
         // add skirts info to primitive extra in case we need to upsample from it
-        tinygltf::Value::Object skirts;
-        skirts.insert({ "noSkirtRange", tinygltf::Value(tinygltf::Value::Array({
-            tinygltf::Value(0), tinygltf::Value(static_cast<int>(indicesCount))})) });
-        skirts.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
-            tinygltf::Value(center.x), tinygltf::Value(center.y), tinygltf::Value(center.z)})) });
-        skirts.insert({ "skirtWestHeight", tinygltf::Value(skirtHeight) });
-        skirts.insert({ "skirtSouthHeight", tinygltf::Value(skirtHeight) });
-        skirts.insert({ "skirtEastHeight", tinygltf::Value(skirtHeight) });
-        skirts.insert({ "skirtNorthHeight", tinygltf::Value(skirtHeight) });
-        primitive.extras = tinygltf::Value(
-            tinygltf::Value::Object{ {"skirts", tinygltf::Value(skirts)} });
+        SkirtMeshMetadata skirtMeshMetadata;
+        skirtMeshMetadata.noSkirtIndicesBegin = 0;
+        skirtMeshMetadata.noSkirtIndicesCount = indicesCount;
+        skirtMeshMetadata.meshCenter = center;
+        skirtMeshMetadata.skirtWestHeight = skirtHeight;
+        skirtMeshMetadata.skirtSouthHeight = skirtHeight;
+        skirtMeshMetadata.skirtEastHeight = skirtHeight;
+        skirtMeshMetadata.skirtNorthHeight = skirtHeight;
+
+        primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
         // create node and update bounding volume
         model.nodes.emplace_back();
