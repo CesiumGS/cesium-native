@@ -658,8 +658,6 @@ namespace Cesium3DTiles {
         std::vector<uint32_t>& indices,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
-        double longitudeOffset,
-        double latitudeOffset,
         double skirtHeight,
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex,
@@ -679,8 +677,6 @@ namespace Cesium3DTiles {
                     position += center;
 
                     CesiumGeospatial::Cartographic cartographic = *ellipsoid.cartesianToCartographic(position);
-                    cartographic.longitude += longitudeOffset;
-                    cartographic.latitude += latitudeOffset;
                     cartographic.height -= skirtHeight;
 
                     position = ellipsoid.cartographicToCartesian(cartographic);
@@ -747,7 +743,14 @@ namespace Cesium3DTiles {
             edgeIndices.west.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, currentSkirt.skirtWestHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+		addSkirt(output, 
+            indices, 
+            sortEdgeIndices, 
+            center, 
+            currentSkirt.skirtWestHeight, 
+            vertexSizeFloats, 
+            positionAttributeIndex, 
+            attributes);
 
         // south
         if (childID == CesiumGeometry::QuadtreeChild::LowerLeft || childID == CesiumGeometry::QuadtreeChild::LowerRight) {
@@ -767,7 +770,14 @@ namespace Cesium3DTiles {
             edgeIndices.south.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, currentSkirt.skirtSouthHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+		addSkirt(output, 
+            indices, 
+            sortEdgeIndices, 
+            center, 
+            currentSkirt.skirtSouthHeight, 
+            vertexSizeFloats, 
+            positionAttributeIndex, 
+            attributes);
 
         // east
         if (childID == CesiumGeometry::QuadtreeChild::LowerRight || childID == CesiumGeometry::QuadtreeChild::UpperRight) {
@@ -787,7 +797,14 @@ namespace Cesium3DTiles {
             edgeIndices.east.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, currentSkirt.skirtEastHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+		addSkirt(output, 
+            indices, 
+            sortEdgeIndices, 
+            center, 
+            currentSkirt.skirtEastHeight, 
+            vertexSizeFloats, 
+            positionAttributeIndex, 
+            attributes);
 
         // north
         if (childID == CesiumGeometry::QuadtreeChild::UpperLeft || childID == CesiumGeometry::QuadtreeChild::UpperRight) {
@@ -807,7 +824,14 @@ namespace Cesium3DTiles {
             edgeIndices.north.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, indices, sortEdgeIndices, center, 0.0, 0.0, currentSkirt.skirtNorthHeight, vertexSizeFloats, positionAttributeIndex, attributes);
+		addSkirt(output, 
+            indices, 
+            sortEdgeIndices, 
+            center, 
+            currentSkirt.skirtNorthHeight, 
+            vertexSizeFloats, 
+            positionAttributeIndex, 
+            attributes);
     }
 
     static void upsamplePrimitiveForRasterOverlays(
