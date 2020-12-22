@@ -24,8 +24,7 @@ target_include_directories(
         ${CMAKE_BINARY_DIR}
     PUBLIC
         include
-    PRIVATE
-        src
+        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:Cesium3DTiles_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
 target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumUtility uriparser draco tinyxml2)
