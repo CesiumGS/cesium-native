@@ -2,23 +2,17 @@
 
 #include "Cesium3DTiles/Library.h"
 #include <map>
-#include <set>
+#include <vector>
 #include <string>
 #include <utility>
 
 namespace Cesium3DTiles {
 
     /**
-     * @brief Handle into a {@link CreditSystem} representing a html credit string.
+     * @brief Represents an HTML string that should be shown on screen to attribute third parties for used data, imagery, etc.  
+     * Acts as a handle into a {@link CreditSystem} object that actually holds the credit string. 
      */
-    struct Credit final {
-        const int id;
-        const std::string& html;
-
-        bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
-
-        bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
-    };
+    typedef int32_t Credit;
 
     /**
      * @brief Creates and manages {@link Credit} objects. Avoids repetitions and
@@ -26,19 +20,6 @@ namespace Cesium3DTiles {
      */
     class CESIUM3DTILES_API CreditSystem final {
     public:
-
-        /**
-         * @brief Constructs a new instance.
-         */
-        CreditSystem()
-        {}
-
-        /**
-         * @brief Destroys this instance.
-         */
-        ~CreditSystem()
-        {}
-
         /**
          * @brief Inserts a credit string
          *
@@ -48,9 +29,14 @@ namespace Cesium3DTiles {
         Credit createCredit(const std::string& html); 
 
         /**
+         * @brief Get the HTML string for this credit
+         */
+        std::string getHTML(Credit credit) const;
+
+        /**
          * @brief Adds the Credit to the set of credits to show this frame
          */
-        void addCreditToFrame(const Credit credit);
+        void addCreditToFrame(Credit credit);
 
         /**
          * @brief Notifies this CreditSystem to start tracking the credits to show for the next frame.
@@ -60,21 +46,19 @@ namespace Cesium3DTiles {
         /**
          * @brief Get the credits to show this frame.
          */
-         const std::set<Credit>& getCreditsToShowThisFrame() const { return creditsToShowThisFrame; }
+         const std::vector<Credit>& getCreditsToShowThisFrame() const { return _creditsToShowThisFrame; }
 
          /**
           * @brief Get the credits that were shown last frame but should no longer be shown.
           */
-         const std::set<Credit>& getCreditsToNoLongerShowThisFrame() const { return creditsToNoLongerShowThisFrame; }
+         const std::vector<Credit>& getCreditsToNoLongerShowThisFrame() const { return _creditsToNoLongerShowThisFrame; }
 
     private:
+        // pairs of html strings and the frames they were last shown representing unique credits
+        std::vector<std::pair<std::string, int32_t>> _credits;
 
-        // indexed html strings and their unique IDs to efficiently check if this is an existing credit 
-        std::map<std::string, int> creditToId;
-        // the ID to assign the next new credit  
-        int nextId;
-
-        std::set<Credit> creditsToShowThisFrame;
-        std::set<Credit> creditsToNoLongerShowThisFrame;
+        int32_t _currentFrameNumber = 0;
+        std::vector<Credit> _creditsToShowThisFrame;
+        std::vector<Credit> _creditsToNoLongerShowThisFrame;
     };
 }

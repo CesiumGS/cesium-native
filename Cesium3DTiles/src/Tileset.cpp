@@ -261,10 +261,12 @@ namespace Cesium3DTiles {
 
         // aggregate all the credits needed from this tileset for the current frame 
         if (this->_pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
+            // per-tileset specific credit
             if (this->_credit) {
                 this->_pCreditSystem->addCreditToFrame(this->_credit.value());
             }
-
+            
+            // per-raster overlay credit
             for (auto& pOverlay : this->_overlays) {
                 const std::optional<Credit> overlayCredit = pOverlay->getCredit();
                 if (overlayCredit) {
@@ -272,6 +274,7 @@ namespace Cesium3DTiles {
                 }
             }
             
+            // per-tile credits
             for (auto& tile : result.tilesToRenderThisFrame) {
                 const std::vector<RasterMappedTo3DTile>& mappedRasterTiles = tile->getMappedRasterTiles();
                 for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
