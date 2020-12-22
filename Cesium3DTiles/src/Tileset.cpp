@@ -515,16 +515,6 @@ namespace Cesium3DTiles {
         ));
     }
 
-    /**
-     * @brief Computes the default geometric error for a given number of quadtree tiles.
-     *
-     * @param tiles The number of tiles
-     * @return The geometric error
-     */
-    static double computeGeometricError(uint32_t tiles) noexcept {
-        return 8.0 * (Ellipsoid::WGS84.getRadii().x * 2.0 * CesiumUtility::Math::ONE_PI * 0.25) / 65 * tiles;
-    }
-
     /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, std::shared_ptr<spdlog::logger> pLogger) {
         context.requestHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
         
