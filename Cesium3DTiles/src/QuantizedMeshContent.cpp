@@ -918,6 +918,10 @@ namespace Cesium3DTiles {
             tinygltf::Value(0), tinygltf::Value(static_cast<int>(indicesCount))})) });
         skirts.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
             tinygltf::Value(center.x), tinygltf::Value(center.y), tinygltf::Value(center.z)})) });
+        skirts.insert({ "skirtWestHeight", tinygltf::Value(skirtHeight) });
+        skirts.insert({ "skirtSouthHeight", tinygltf::Value(skirtHeight) });
+        skirts.insert({ "skirtEastHeight", tinygltf::Value(skirtHeight) });
+        skirts.insert({ "skirtNorthHeight", tinygltf::Value(skirtHeight) });
         primitive.extras = tinygltf::Value(
             tinygltf::Value::Object{ {"skirts", tinygltf::Value(skirts)} });
 
