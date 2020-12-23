@@ -263,12 +263,15 @@ namespace Cesium3DTiles {
                         }
                     }
 
-                    credits.push_back(
-                        std::pair(
-                            pCreditSystem->createCredit(attribution["attribution"].GetString()),
-                            coverageAreas
-                        )
-                    );
+                    auto creditString = attribution.FindMember("attribution");
+                    if (creditString->value.IsString()) {
+                        credits.push_back(
+                            std::make_pair(
+                                pCreditSystem->createCredit(creditString->value.GetString()),
+                                coverageAreas
+                            )
+                        );
+                    }
                 }
             }
 
