@@ -233,7 +233,8 @@ namespace Cesium3DTiles {
             contentBoundingVolume = this->getContentBoundingVolume(),
             refine = this->getRefine(),
             projections = std::move(projections),
-            pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources
+            pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
+            pLogger = tileset.getExternals().pLogger
         ](std::unique_ptr<IAssetRequest>&& pRequest) {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -259,6 +260,7 @@ namespace Cesium3DTiles {
             }
 
             std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
+                pLogger,
                 *pContext,
                 tileID,
                 boundingVolume,

@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/TileContentLoadResult.h"
 #include <memory>
 #include <string>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -19,6 +20,7 @@ namespace Cesium3DTiles {
     public:
         /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,

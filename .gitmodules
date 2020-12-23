@@ -22,9 +22,9 @@
 [submodule "extern/asyncplusplus"]
 	path = extern/asyncplusplus
 	url = https://github.com/Amanieu/asyncplusplus.git
-[submodule "extern/cgltf"]
-	path = extern/cgltf
-	url = https://github.com/jkuhlmann/cgltf.git
-[submodule "extern/simdjson"]
-	path = extern/simdjson
-	url = https://github.com/simdjson/simdjson.git
+[submodule "extern/spdlog"]
+	path = extern/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "extern/rapidjson"]
+	path = extern/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
