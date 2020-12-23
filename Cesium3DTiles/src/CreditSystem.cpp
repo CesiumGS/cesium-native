@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/CreditSystem.h"
+#include <algorithm>
 
 namespace Cesium3DTiles {
 
