@@ -5,13 +5,20 @@
 #include <string>
 #include <utility>
 
+namespace {
+    struct HtmlAndLastFrameNumber {
+        std::string html;
+        int32_t lastFrameNumber;
+    };
+}
+
 namespace Cesium3DTiles {
 
     /**
      * @brief Represents an HTML string that should be shown on screen to attribute third parties for used data, imagery, etc.  
      * Acts as a handle into a {@link CreditSystem} object that actually holds the credit string. 
      */
-    struct Credit {
+    struct CESIUM3DTILES_API Credit {
         public:
             bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
 
@@ -44,7 +51,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Get the HTML string for this credit
          */
-        std::string getHTML(Credit credit) const;
+        const std::string& getHtml(Credit credit) const;
 
         /**
          * @brief Adds the Credit to the set of credits to show this frame
@@ -67,8 +74,9 @@ namespace Cesium3DTiles {
          const std::vector<Credit>& getCreditsToNoLongerShowThisFrame() const { return _creditsToNoLongerShowThisFrame; }
 
     private:
-        // pairs of html strings and the frames they were last shown representing unique credits
-        std::vector<std::pair<std::string, int32_t>> _credits;
+        const std::string INVALID_CREDIT_MESSAGE = "Error: Invalid Credit, cannot get HTML string.";
+
+        std::vector<HtmlAndLastFrameNumber> _credits;
 
         int32_t _currentFrameNumber = 0;
         std::vector<Credit> _creditsToShowThisFrame;

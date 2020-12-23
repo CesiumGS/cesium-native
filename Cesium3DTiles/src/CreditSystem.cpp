@@ -4,29 +4,29 @@ namespace Cesium3DTiles {
 
     Credit CreditSystem::createCredit(const std::string& html) {   
         // if this credit already exists, return a Credit handle to it
-        for (size_t id = 0; id < _credits.size(); id++) {
-            if(_credits[id].first == html) {
+        for (size_t id = 0; id < _credits.size(); ++id) {
+            if(_credits[id].html == html) {
                 return Credit(id);
             }
         }
 
         // this is a new credit so add it to _credits
-        _credits.push_back(std::make_pair(html, -1));
+        _credits.push_back({html, -1});
 
         // return a Credit handle to the newly created entry
         return Credit(_credits.size() - 1);
     }
 
-    std::string CreditSystem::getHTML(Credit credit) const {
+    const std::string& CreditSystem::getHtml(Credit credit) const {
         if(credit.id < _credits.size()) {
-            return std::string(_credits[credit.id].first);
+            return _credits[credit.id].html;
         }
-        return "Error: Invalid Credit object, cannot get HTML string.";
+        return INVALID_CREDIT_MESSAGE;
     }
 
     void CreditSystem::addCreditToFrame(Credit credit) {
         // if this credit has already been added to the current frame, there's nothing to do
-        if (_credits[credit.id].second == _currentFrameNumber) {
+        if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
             return;
         }
 
@@ -34,17 +34,19 @@ namespace Cesium3DTiles {
         _creditsToShowThisFrame.push_back(credit);
 
         // if the credit was shown last frame, remove it from _creditsToNoLongerShowThisFrame since it will still be shown
-        if (_credits[credit.id].second == _currentFrameNumber - 1) {
-            for (size_t i = 0; i < _creditsToNoLongerShowThisFrame.size(); i++) {
-                if (_creditsToNoLongerShowThisFrame[i] == credit) {
-                    _creditsToNoLongerShowThisFrame.erase(_creditsToNoLongerShowThisFrame.begin() + int32_t(i));
-                    break;
-                }
-            }
+        if (_credits[credit.id].lastFrameNumber == _currentFrameNumber - 1) {
+            _creditsToNoLongerShowThisFrame.erase(
+                std::remove(
+                    _creditsToNoLongerShowThisFrame.begin(),
+                    _creditsToNoLongerShowThisFrame.end(),
+                    credit
+                ),
+                _creditsToNoLongerShowThisFrame.end()
+            );
         }
 
         // update the last frame this credit was shown
-        _credits[credit.id].second = _currentFrameNumber;
+        _credits[credit.id].lastFrameNumber = _currentFrameNumber;
     }
 
     void CreditSystem::startNextFrame() {
