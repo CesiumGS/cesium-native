@@ -231,36 +231,49 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
             
-            const rapidjson::Value& attributions = (*pResource)["imageryProviders"];
             std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>> credits;
-            for (const rapidjson::Value& attribution : attributions.GetArray()) {
-                std::vector<BingMapsCreditCoverageArea> coverageAreas;
-                for (const rapidjson::Value& area : attribution["coverageAreas"].GetArray()) {
-                    const rapidjson::Value& bbox = area["bbox"];
-                    BingMapsCreditCoverageArea coverageArea {
-                        CesiumGeospatial::GlobeRectangle::fromDegrees(
-                            bbox[1].GetDouble(),
-                            bbox[0].GetDouble(),
-                            bbox[3].GetDouble(),
-                            bbox[2].GetDouble()
-                        ),
-                        area["zoomMin"].GetUint(),
-                        area["zoomMax"].GetUint()
-                    };
-                    coverageAreas.push_back(coverageArea);
-                }
+            auto attributionsJson = (*pResource).FindMember("imageryProviders");
+            if (attributionsJson->value.IsArray()) {
+                for (const rapidjson::Value& attribution : attributionsJson->value.GetArray()) {
+                    std::vector<BingMapsCreditCoverageArea> coverageAreas;
+                    auto coverageAreasJson = attribution.FindMember("coverageAreas");
+                    if ( coverageAreasJson->value.IsArray()) {
+                        for (const rapidjson::Value& area : coverageAreasJson->value.GetArray()) {
+                            auto bbox = area.FindMember("bbox");
+                            if (bbox->value.IsArray() && bbox->value.Size() == 4) {
+                                auto zoomMin = area.FindMember("zoomMin");
+                                auto zoomMax = area.FindMember("zoomMax");
+                                auto bboxArray = bbox->value.GetArray();
+                                if (zoomMin->value.IsUint() && zoomMax->value.IsUint() &&
+                                    bboxArray[0].IsNumber() && bboxArray[1].IsNumber() &&
+                                    bboxArray[2].IsNumber() && bboxArray[3].IsNumber()) {
+                                    BingMapsCreditCoverageArea coverageArea {
+                                        CesiumGeospatial::GlobeRectangle::fromDegrees(
+                                            bboxArray[1].GetDouble(),
+                                            bboxArray[0].GetDouble(),
+                                            bboxArray[3].GetDouble(),
+                                            bboxArray[2].GetDouble()
+                                        ),
+                                        zoomMin->value.GetUint(),
+                                        zoomMax->value.GetUint()
+                                    };
+                                    coverageAreas.push_back(coverageArea);
+                                }
+                            }
+                        }
+                    }
 
-                credits.push_back(
-                    std::pair(
-                        pCreditSystem->createCredit(attribution["attribution"].GetString()),
-                        coverageAreas
-                    )
-                );
+                    credits.push_back(
+                        std::pair(
+                            pCreditSystem->createCredit(attribution["attribution"].GetString()),
+                            coverageAreas
+                        )
+                    );
+                }
             }
 
             // TODO: check what exactly should be hardcoded here 
             Credit bingCredit = pCreditSystem->createCredit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>");
-
 
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
