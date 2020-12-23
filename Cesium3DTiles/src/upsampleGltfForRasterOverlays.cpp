@@ -55,22 +55,22 @@ namespace Cesium3DTiles {
 
     static void addSkirt(std::vector<float>& output,
         std::vector<uint32_t>& indices,
+		std::vector<FloatVertexAttribute>& attributes,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
         double skirtHeight,
         size_t vertexSizeFloats,
-        uint32_t positionAttributeIndex,
-        const std::vector<FloatVertexAttribute>& attributes);
+        uint32_t positionAttributeIndex);
 
     static void addSkirts(std::vector<float>& output,
         std::vector<uint32_t>& indices,
+		std::vector<FloatVertexAttribute>& attributes,
         CesiumGeometry::QuadtreeChild childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
         EdgeIndices edgeIndices,
         size_t vertexSizeFloats,
-        uint32_t positionAttributeIndex,
-        const std::vector<FloatVertexAttribute>& attributes);
+        uint32_t positionAttributeIndex);
 
     tinygltf::Model upsampleGltfForRasterOverlays(const tinygltf::Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
         tinygltf::Model result;
@@ -680,7 +680,7 @@ namespace Cesium3DTiles {
                     position = ellipsoid.cartographicToCartesian(cartographic);
                     position -= center;
 
-                    for (uint32_t c = 0; c < 3; ++c) {
+                    for (uint32_t c = 0; c < 3u; ++c) {
 						output.push_back(static_cast<float>(position[c]));
 						attribute.minimums[c] = glm::min(attribute.minimums[c], position[c]);
 						attribute.maximums[c] = glm::max(attribute.maximums[c], position[c]);
