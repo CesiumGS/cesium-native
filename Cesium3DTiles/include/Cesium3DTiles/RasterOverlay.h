@@ -1,16 +1,15 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include <spdlog/fwd.h>
 #include <functional>
 #include <memory>
-#include <optional>
 
 namespace Cesium3DTiles {
 
+    class CreditSystem;
     class IPrepareRendererResources;
     class RasterOverlayTileProvider;
     class RasterOverlayCollection;

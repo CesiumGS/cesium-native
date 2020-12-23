@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/Gltf.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
@@ -11,6 +10,7 @@
 
 namespace Cesium3DTiles {
 
+    struct Credit;
     class RasterOverlay;
     
     /**

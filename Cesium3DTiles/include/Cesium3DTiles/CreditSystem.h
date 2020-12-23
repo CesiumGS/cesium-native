@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include <map>
 #include <vector>
 #include <string>
 #include <utility>
@@ -12,7 +11,21 @@ namespace Cesium3DTiles {
      * @brief Represents an HTML string that should be shown on screen to attribute third parties for used data, imagery, etc.  
      * Acts as a handle into a {@link CreditSystem} object that actually holds the credit string. 
      */
-    typedef size_t Credit;
+    struct Credit {
+        public:
+            bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
+
+            bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
+
+        private:
+            size_t id;
+
+            Credit(size_t id_) {
+                id = id_;
+            }
+            
+            friend class CreditSystem;
+    };
 
     /**
      * @brief Creates and manages {@link Credit} objects. Avoids repetitions and

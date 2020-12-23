@@ -2,16 +2,16 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include <functional>
 #include <memory>
-#include <optional>
 
 namespace Cesium3DTiles {
+
+    class CreditSystem;
 
     /**
      * @brief Options for tile map service accesses.

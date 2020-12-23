@@ -2,13 +2,14 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
 #include <memory>
 
 namespace Cesium3DTiles {
+
+    class CreditSystem;
 
     /**
      * @brief Styles of Bing Maps overlays.

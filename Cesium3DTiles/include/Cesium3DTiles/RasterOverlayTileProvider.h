@@ -209,7 +209,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Get the per-TileProvider {@link Credit} if one exists.
          */
-        std::optional<Credit> getCredit() const noexcept { return _credit; }
+        const std::optional<Credit> getCredit() const noexcept { return _credit; }
 
     protected:
 

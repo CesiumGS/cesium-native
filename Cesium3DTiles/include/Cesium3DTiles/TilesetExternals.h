@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include <memory>
 
@@ -11,6 +10,7 @@ namespace CesiumAsync {
 }
 
 namespace Cesium3DTiles {
+    class CreditSystem;
     class IPrepareRendererResources;
 
     /**

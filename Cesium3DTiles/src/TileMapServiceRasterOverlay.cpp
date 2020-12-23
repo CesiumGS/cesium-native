@@ -127,7 +127,6 @@ namespace Cesium3DTiles {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
 
         pOwner = pOwner ? pOwner : this;
-
         
         std::optional<Credit> credit = this->_options.credit ?
             std::make_optional(pCreditSystem->createCredit(this->_options.credit.value())) :

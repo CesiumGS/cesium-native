@@ -17,7 +17,6 @@
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
 #include <optional>
-#include <set>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -267,7 +266,7 @@ namespace Cesium3DTiles {
             
             // per-raster overlay credit
             for (auto& pOverlay : this->_overlays) {
-                const std::optional<Credit> overlayCredit = pOverlay->getTileProvider()->getCredit();
+                const std::optional<Credit>& overlayCredit = pOverlay->getTileProvider()->getCredit();
                 if (overlayCredit) {
                     pCreditSystem->addCreditToFrame(overlayCredit.value());
                 }

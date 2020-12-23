@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include <vector>
 
 namespace Cesium3DTiles {
