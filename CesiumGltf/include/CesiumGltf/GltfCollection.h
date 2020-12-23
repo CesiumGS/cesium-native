@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/CgltfMapping.h"
+#include "CesiumGltf/TinyGltfMapping.h"
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace CesiumGltf {
     template <typename T>
@@ -16,7 +17,7 @@ namespace CesiumGltf {
             using pointer = T*;
             using reference = const value_type&;
 
-            const_iterator(typename Impl::CesiumToCgltf<T>::cgltf_type* pElements, size_t numberOfElements, size_t currentElement) noexcept :
+            const_iterator(typename Impl::CesiumToTinyGltf<T>::tinygltf_type* pElements, size_t numberOfElements, size_t currentElement) noexcept :
                 _pElements(pElements),
                 _numberOfElements(numberOfElements),
                 _currentElement(currentElement),
@@ -65,70 +66,55 @@ namespace CesiumGltf {
                 }
             }
 
-            typename Impl::CesiumToCgltf<T>::cgltf_type* _pElements;
-            size_t _numberOfElements;
+            std::vector<typename Impl::CesiumToTinyGltf<T>::tinygltf_type>* _pElements;
             size_t _currentElement;
             mutable std::optional<T> _temporary;
         };
 
-        GltfCollection(typename Impl::CesiumToCgltf<T>::cgltf_type** ppElements, size_t* pNumberOfElements) :
-            _ppElements(ppElements),
-            _pNumberOfElements(pNumberOfElements)
+        GltfCollection(std::vector<typename Impl::CesiumToTinyGltf<T>::tinygltf_type>* pElements) :
+            _pElements(ppElements)
         {
         }
 
         using value_type = T;
 
         size_t size() const noexcept {
-            return *this->_pNumberOfElements;
+            return this->_pElements->size();
         }
 
         const_iterator begin() noexcept {
             return {
-                *this->_ppElements,
-                *this->_pNumberOfElements,
+                this->_pElements,
                 0
             };
         }
 
         const_iterator end() noexcept {
             return {
-                *this->_ppElements,
-                *this->_pNumberOfElements,
-                *this->_pNumberOfElements
+                this->_pElements,
+                this->_pElements->size()
             };
         }
 
         T operator[](size_t index) const noexcept {
-            return Impl::CesiumGltfObjectFactory<T>::createFromCollectionElement(*this->_ppElements, index);
+            return Impl::CesiumGltfObjectFactory<T>::createFromCollectionElement(&this->_pElements[index]);
         }
 
         void push_back(const T& item) {
-            size_t newNumberOfElements = *this->_pNumberOfElements + 1;
-            *this->_ppElements = realloc(*this->_ppElements, newNumberOfElements * sizeof(Impl::CesiumToCgltf<T>::cgltf_type));
-            (*this->_ppElements)[*this->_pNumberOfElements] = item;
-            *this->_pNumberOfElements = newNumberOfElements;
+            this->_pElements->push_back(*item._p);
         }
 
         void push_back(T&& item) {
-            size_t newNumberOfElements = *this->_pNumberOfElements + 1;
-            *this->_ppElements = realloc(*this->_ppElements, newNumberOfElements * sizeof(Impl::CesiumToCgltf<T>::cgltf_type));
-            (*this->_ppElements)[*this->_pNumberOfElements] = std::move(item);
-            *this->_pNumberOfElements = newNumberOfElements;
+            this->_pElements->push_back(std::move(*item._p));
         }
 
         T emplace_back() {
-            size_t oldNumberOfElements = *this->_pNumberOfElements;
-            size_t newNumberOfElements = oldNumberOfElements + 1;
-            *this->_ppElements = realloc(*this->_ppElements, newNumberOfElements * sizeof(Impl::CesiumToCgltf<T>::cgltf_type));
-            (*this->_ppElements)[oldNumberOfElements] = Impl::CesiumToCgltf<T>::cgltf_type();
-            *this->_pNumberOfElements = newNumberOfElements;
-            return this->operator[](oldNumberOfElements);
+            return T(&this->_pElements->emplace_back());
         }        
 
     private:
-        typename Impl::CesiumToCgltf<T>::cgltf_type** _ppElements;
-        size_t* _pNumberOfElements;
+        using tinygltf_type = typename Impl::CesiumToTinyGltf<T>::tinygltf_type;
+        std::vector<tinygltf_type>* _pElements;
     };
 
 }

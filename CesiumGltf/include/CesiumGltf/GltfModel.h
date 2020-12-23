@@ -15,13 +15,14 @@
 #include <gsl/span>
 #include <memory>
 #include <string>
-
-struct cgltf_data;
+#include <tiny_gltf.h>
 
 namespace CesiumGltf {
     class GltfModel {
     public:
         static GltfModel fromMemory(gsl::span<const uint8_t> pData);
+
+        GltfModel();
 
         GltfCollection<std::string> extensionsUsed() const noexcept;
         GltfCollection<std::string> extensionsRequired() const noexcept;
@@ -42,9 +43,9 @@ namespace CesiumGltf {
         GltfCollection<GltfTexture> textures() const noexcept;
 
     private:
-        GltfModel(cgltf_data* pData);
+        GltfModel(tinygltf::Model&& model);
 
-        std::unique_ptr<cgltf_data, void (*)(cgltf_data*)> _pData;
+        tinygltf::Model _model;
     };
 
 }

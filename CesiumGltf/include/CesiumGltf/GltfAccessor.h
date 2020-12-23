@@ -1,15 +1,27 @@
 #pragma once
 
-struct cgltf_accessor;
+namespace tinygltf {
+    struct Accessor;
+}
 
 namespace CesiumGltf {
-    class GltfAccessor {
+    template <typename T>
+    class GltfCollection;
+
+    class GltfAccessor final {
     public:
-        static GltfAccessor createFromCollectionElement(cgltf_accessor* array, size_t arrayIndex);
+        GltfAccessor();
+        ~GltfAccessor();
 
     private:
-        GltfAccessor(cgltf_accessor* p);
+        using tinygltf_type = tinygltf::Accessor;
 
-        cgltf_accessor* _p;
+        GltfAccessor(tinygltf::Accessor* p);
+
+        tinygltf::Accessor* _p;
+        bool _owns;
+
+        template <typename TElement>
+        friend class GltfCollection;
     };
 }

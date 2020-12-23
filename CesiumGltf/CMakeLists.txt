@@ -15,6 +15,9 @@ target_sources(
 
 target_include_directories(
     CesiumGltf
+    SYSTEM PUBLIC
+        # We're not using CMake for tinygltf at all, but it's header only. Add its headers here.
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/tinygltf
     PUBLIC
         include
     PRIVATE

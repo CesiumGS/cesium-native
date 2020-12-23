@@ -1,40 +1,45 @@
 #include "CesiumGltf/GltfModel.h"
 #include "CesiumGltf/GltfMesh.h"
-#include <cgltf.h>
 #include <stdexcept>
 
 namespace CesiumGltf {
 
     /*static*/ GltfModel GltfModel::fromMemory(gsl::span<const uint8_t> data) {
-        cgltf_options options{};
-        cgltf_data* pResult = nullptr;
-        cgltf_result resultCode = cgltf_parse(&options, data.data(), data.size(), &pResult);
-        if (resultCode == cgltf_result_success) {
-            return GltfModel(pResult);
-        } else {
-            switch (resultCode) {
-                case cgltf_result_data_too_short:
-                    throw std::runtime_error("glTF data is too short.");
-                case cgltf_result_unknown_format:
-                    throw std::runtime_error("glTF is in an unknown format.");
-                case cgltf_result_invalid_json:
-                    throw std::runtime_error("glTF JSON is invalid.");
-                case cgltf_result_invalid_gltf:
-                    throw std::runtime_error("glTF is invalid.");
-                case cgltf_result_invalid_options:
-                    throw std::runtime_error("glTF parsed with invalid options.");
-                case cgltf_result_file_not_found:
-                    throw std::runtime_error("glTF file was not found.");
-                case cgltf_result_io_error:
-                    throw std::runtime_error("I/O error while parsing glTF.");
-                case cgltf_result_out_of_memory:
-                    throw std::runtime_error("Out of memory while parsing glTF.");
-                case cgltf_result_legacy_gltf:
-                    throw std::runtime_error("glTF uses an unsupported legacy format.");
-                default:
-                    throw std::runtime_error("An unknown error occurred while parsing a glTF.");
-            }
-        }
+        GltfModel result;
+        std::string warnings;
+        std::string errors;
+        tinygltf::TinyGLTF loader;
+        bool success = loader.LoadBinaryFromMemory(&result._model, &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
+        return result;
+        // cgltf_options options{};
+        // cgltf_data* pResult = nullptr;
+        // cgltf_result resultCode = cgltf_parse(&options, data.data(), data.size(), &pResult);
+        // if (resultCode == cgltf_result_success) {
+        //     return GltfModel(pResult);
+        // } else {
+        //     switch (resultCode) {
+        //         case cgltf_result_data_too_short:
+        //             throw std::runtime_error("glTF data is too short.");
+        //         case cgltf_result_unknown_format:
+        //             throw std::runtime_error("glTF is in an unknown format.");
+        //         case cgltf_result_invalid_json:
+        //             throw std::runtime_error("glTF JSON is invalid.");
+        //         case cgltf_result_invalid_gltf:
+        //             throw std::runtime_error("glTF is invalid.");
+        //         case cgltf_result_invalid_options:
+        //             throw std::runtime_error("glTF parsed with invalid options.");
+        //         case cgltf_result_file_not_found:
+        //             throw std::runtime_error("glTF file was not found.");
+        //         case cgltf_result_io_error:
+        //             throw std::runtime_error("I/O error while parsing glTF.");
+        //         case cgltf_result_out_of_memory:
+        //             throw std::runtime_error("Out of memory while parsing glTF.");
+        //         case cgltf_result_legacy_gltf:
+        //             throw std::runtime_error("glTF uses an unsupported legacy format.");
+        //         default:
+        //             throw std::runtime_error("An unknown error occurred while parsing a glTF.");
+        //     }
+        // }
     }
 
 	// cgltf_asset asset;
