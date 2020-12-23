@@ -20,10 +20,15 @@
 #include <utility>
 
 namespace {
-    struct BingMapsCreditCoverageArea {
+    struct CoverageArea {
         CesiumGeospatial::GlobeRectangle rectangle;
         uint32_t zoomMin;
         uint32_t zoomMax;
+    };
+
+    struct CreditAndCoverageAreas {
+        Cesium3DTiles::Credit credit;
+        std::vector<CoverageArea> coverageAreas;
     };
 }
 
@@ -50,7 +55,7 @@ namespace Cesium3DTiles {
             RasterOverlay& owner,
             const AsyncSystem& asyncSystem,
             Credit bingCredit,
-            const std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>>& perTileCredits,
+            const std::vector<CreditAndCoverageAreas>& perTileCredits,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const std::string& baseUrl,
             const std::string& urlTemplate,
@@ -64,7 +69,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
-                std::make_optional(bingCredit),
+                bingCredit,
                 pPrepareRendererResources,
                 WebMercatorProjection(),
                 QuadtreeTilingScheme(
@@ -117,20 +122,14 @@ namespace Cesium3DTiles {
             CesiumGeospatial::GlobeRectangle tileRectangle = CesiumGeospatial::unprojectRectangleSimple(this->getProjection(), this->getTilingScheme().tileToRectangle(tileID));
             
             std::vector<Credit> tileCredits;
-            for (std::pair<Credit, std::vector<BingMapsCreditCoverageArea>> creditAndCoverage : _credits) {
-                
-                bool withinCoverage = false;
-                for (BingMapsCreditCoverageArea coverageArea : creditAndCoverage.second) {
+            for (CreditAndCoverageAreas creditAndCoverageAreas : _credits) {
+                for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
                     if (coverageArea.zoomMin <= bingTileLevel && bingTileLevel <= coverageArea.zoomMax &&
                         coverageArea.rectangle.intersect(tileRectangle).has_value()
                     ) {
-                        withinCoverage = true;
+                        tileCredits.push_back(creditAndCoverageAreas.credit);
                         break;
                     }
-                }
-
-                if (withinCoverage) {
-                    tileCredits.push_back(creditAndCoverage.first);
                 }
             }
             
@@ -158,7 +157,7 @@ namespace Cesium3DTiles {
             return quadkey;
         }
 
-        std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>> _credits;
+        std::vector<CreditAndCoverageAreas> _credits;
         std::string _urlTemplate;
         std::vector<std::string> _subdomains;
     };
@@ -231,32 +230,40 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
             
-            std::vector<std::pair<Credit, std::vector<BingMapsCreditCoverageArea>>> credits;
-            auto attributionsJson = (*pResource).FindMember("imageryProviders");
-            if (attributionsJson->value.IsArray()) {
-                for (const rapidjson::Value& attribution : attributionsJson->value.GetArray()) {
-                    std::vector<BingMapsCreditCoverageArea> coverageAreas;
-                    auto coverageAreasJson = attribution.FindMember("coverageAreas");
-                    if ( coverageAreasJson->value.IsArray()) {
-                        for (const rapidjson::Value& area : coverageAreasJson->value.GetArray()) {
-                            auto bbox = area.FindMember("bbox");
-                            if (bbox->value.IsArray() && bbox->value.Size() == 4) {
-                                auto zoomMin = area.FindMember("zoomMin");
-                                auto zoomMax = area.FindMember("zoomMax");
-                                auto bboxArray = bbox->value.GetArray();
-                                if (zoomMin->value.IsUint() && zoomMax->value.IsUint() &&
-                                    bboxArray[0].IsNumber() && bboxArray[1].IsNumber() &&
-                                    bboxArray[2].IsNumber() && bboxArray[3].IsNumber()) {
-                                    BingMapsCreditCoverageArea coverageArea {
+            std::vector<CreditAndCoverageAreas> credits;
+            auto attributionsIt = pResource->FindMember("imageryProviders");
+            if (attributionsIt != pResource->MemberEnd() && attributionsIt->value.IsArray()) {
+
+                for (const rapidjson::Value& attribution : attributionsIt->value.GetArray()) {
+
+                    std::vector<CoverageArea> coverageAreas;
+                    auto coverageAreasIt = attribution.FindMember("coverageAreas");
+                    if (coverageAreasIt != attribution.MemberEnd() && coverageAreasIt->value.IsArray()) {
+
+                        for (const rapidjson::Value& area : coverageAreasIt->value.GetArray()) {
+
+                            auto bboxIt = area.FindMember("bbox");
+                            if (bboxIt != area.MemberEnd() &&  bboxIt->value.IsArray() && bboxIt->value.Size() == 4) {
+
+                                auto zoomMinIt = area.FindMember("zoomMin");
+                                auto zoomMaxIt = area.FindMember("zoomMax");
+                                auto bboxArrayIt = bboxIt->value.GetArray();
+                                if (zoomMinIt != area.MemberEnd() && zoomMaxIt != area.MemberEnd() &&
+                                    zoomMinIt->value.IsUint() && zoomMaxIt->value.IsUint() &&
+                                    bboxArrayIt[0].IsNumber() && bboxArrayIt[1].IsNumber() &&
+                                    bboxArrayIt[2].IsNumber() && bboxArrayIt[3].IsNumber()) {
+                                    CoverageArea coverageArea {
+
                                         CesiumGeospatial::GlobeRectangle::fromDegrees(
-                                            bboxArray[1].GetDouble(),
-                                            bboxArray[0].GetDouble(),
-                                            bboxArray[3].GetDouble(),
-                                            bboxArray[2].GetDouble()
+                                            bboxArrayIt[1].GetDouble(),
+                                            bboxArrayIt[0].GetDouble(),
+                                            bboxArrayIt[3].GetDouble(),
+                                            bboxArrayIt[2].GetDouble()
                                         ),
-                                        zoomMin->value.GetUint(),
-                                        zoomMax->value.GetUint()
+                                        zoomMinIt->value.GetUint(),
+                                        zoomMaxIt->value.GetUint()
                                     };
+
                                     coverageAreas.push_back(coverageArea);
                                 }
                             }
@@ -264,13 +271,11 @@ namespace Cesium3DTiles {
                     }
 
                     auto creditString = attribution.FindMember("attribution");
-                    if (creditString->value.IsString()) {
-                        credits.push_back(
-                            std::make_pair(
-                                pCreditSystem->createCredit(creditString->value.GetString()),
-                                coverageAreas
-                            )
-                        );
+                    if (creditString != attribution.MemberEnd() && creditString->value.IsString()) {
+                        credits.push_back({
+                            pCreditSystem->createCredit(creditString->value.GetString()),
+                            coverageAreas
+                        });
                     }
                 }
             }
