@@ -109,6 +109,8 @@ namespace Cesium3DTiles {
         ) override;
 
     private:
+        static const std::string BING_LOGO_HTML;
+
         std::string _url;
         std::string _key;
         std::string _mapStyle;

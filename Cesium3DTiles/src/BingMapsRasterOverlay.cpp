@@ -49,6 +49,8 @@ namespace Cesium3DTiles {
     const std::string BingMapsStyle::ORDNANCE_SURVEY = "OrdnanceSurvey";
     const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 
+    const std::string BingMapsRasterOverlay::BING_LOGO_HTML = "<a href=\"http://www.bing.com\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAbCAMAAABm83BQAAAASFBMVEVHcEz///////////////////////////////////////////////////////////////////////////////////////////8FevL4AAAAF3RSTlMAkOregA8v82/RHwZAxGBLn6q3ViY5GFKj09UAAAKPSURBVHja7dXZbqswEAZg77vBCzDv/6bH9oi4CVHUKGp7c/4L7IDxp4xHgnChyN8FAKw4yB8Fegy55L/+hzpNLXSRfW60+WVdwwgLbZ4h/7qunKoRmCTEGfeDun+q96J7ButPn3tM4aneEu91p/w5leqxIHLf+1Ovdnne2oIiZ7wKbq48broBYFQ90z2H9obQpl9q5QBa4LYFAPhe9LmhDYJFxhWpzFpc5AXjkdmtTZUmhtmoo8MublN66scYudgedU8hkQZD0ylkyCYBLB1nEIWwmsNNL9m3lXzlqmGsV6yWNvXJDl3ktlJmLtt91iC53rouA8YaN/WSC9PCT30cgoG+WwHarj7D1LnvA9d7H0Tu9cUqg2o6FKy+FU0T9z0f4Japj9g69Tze1+DJBmhJPXXcMtkxrGPA2Nr1gD+MbTq914l9ojt5KKFhuemG9HCQxADFVXbq2J0ijSHws9OqYEvXPd7YdXuol3vd19N/6PkV2E1fkAGJN3ri1APq9Iu+RG0L5cvoOoyDvim3deoj4qrj6K46/Zae4ir7mq/6zkZJDI/ui+4yXHU85uOiz8qzF7rSEo/qa+UXi6Ms8aZLoeG5vgAnV10B83guL/SK0AZDX3FZFASj4NQXBmfo1JXbAgVYrnq/FNnLqF/oAf97wa6z40fVByF+rGCop9nwZXv8xmlDnukbAx0tpJfnHst+hCjw3AWvxyZ0L0EW6li5IXAXu16+7+YYBU7tSU077p987xNqedvWwnGuV2OoyxhU6mdLOYsrEWF0XY2M5W1sVxhr797pzHjydrQm38jQr4EZKsn7qVA+0Fc+D/ytOIedA+EDnXjD8MDfDIWYercK8oE+WuPtA8fGAWA5kA/0fwpdN1P/sv/SAAAAAElFTkSuQmCC\" title=\"Bing Imagery\"/></a>";
+
     class BingMapsTileProvider final : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
@@ -280,8 +282,7 @@ namespace Cesium3DTiles {
                 }
             }
 
-            // TODO: check what exactly should be hardcoded here 
-            Credit bingCredit = pCreditSystem->createCredit("a href=\"http://www.bing.com\"><img src=\"Assets/Images/bing_maps_credit.png\" title=\"Bing Imagery\"/></a>");
+            Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
 
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
