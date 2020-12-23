@@ -680,7 +680,7 @@ namespace Cesium3DTiles {
                     position = ellipsoid.cartographicToCartesian(cartographic);
                     position -= center;
 
-                    for (uint32_t c = 0; c < 3u; ++c) {
+                    for (int32_t c = 0; c < 3; ++c) {
 						output.push_back(static_cast<float>(position[c]));
 						attribute.minimums[c] = glm::min(attribute.minimums[c], position[c]);
 						attribute.maximums[c] = glm::max(attribute.maximums[c], position[c]);
