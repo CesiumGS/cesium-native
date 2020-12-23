@@ -13,9 +13,9 @@ namespace Cesium3DTiles {
             skirtNorthHeight{0.0}
         {}
 
-		static std::optional<SkirtMeshMetadata> parseFromGltfExtras(const tinygltf::Value &extras);
+        static std::optional<SkirtMeshMetadata> parseFromGltfExtras(const tinygltf::Value &extras);
 
-		static tinygltf::Value createGltfExtras(const SkirtMeshMetadata &skirt);
+        static tinygltf::Value createGltfExtras(const SkirtMeshMetadata &skirt);
 
         uint32_t noSkirtIndicesBegin;
         uint32_t noSkirtIndicesCount;

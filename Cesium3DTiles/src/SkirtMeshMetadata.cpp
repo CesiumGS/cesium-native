@@ -11,13 +11,13 @@ namespace Cesium3DTiles {
             }
 
             if (gltfSkirtMeshMetadata.Has("noSkirtRange")) {
-				tinygltf::Value noSkirtRange = gltfSkirtMeshMetadata.Get("noSkirtRange");
+                tinygltf::Value noSkirtRange = gltfSkirtMeshMetadata.Get("noSkirtRange");
                 if (noSkirtRange.IsArray() && noSkirtRange.ArrayLen() == 2) {
                     tinygltf::Value noSkirtIndicesBegin = noSkirtRange.Get(0);
                     tinygltf::Value noSkirtIndicesCount = noSkirtRange.Get(1);
                     if (noSkirtIndicesBegin.IsInt() && noSkirtIndicesCount.IsInt()) {
-						skirtMeshMetadata.noSkirtIndicesBegin = static_cast<uint32_t>(noSkirtRange.Get(0).GetNumberAsInt());
-						skirtMeshMetadata.noSkirtIndicesCount = static_cast<uint32_t>(noSkirtRange.Get(1).GetNumberAsInt());
+                        skirtMeshMetadata.noSkirtIndicesBegin = static_cast<uint32_t>(noSkirtRange.Get(0).GetNumberAsInt());
+                        skirtMeshMetadata.noSkirtIndicesCount = static_cast<uint32_t>(noSkirtRange.Get(1).GetNumberAsInt());
                     }
                     else {
                         return std::nullopt;
@@ -32,15 +32,15 @@ namespace Cesium3DTiles {
             }
 
             if (gltfSkirtMeshMetadata.Has("meshCenter")) {
-				tinygltf::Value meshCenter = gltfSkirtMeshMetadata.Get("meshCenter");
+                tinygltf::Value meshCenter = gltfSkirtMeshMetadata.Get("meshCenter");
                 if (meshCenter.IsArray() && meshCenter.ArrayLen() == 3) {
                     tinygltf::Value x = meshCenter.Get(0);
                     tinygltf::Value y = meshCenter.Get(1);
                     tinygltf::Value z = meshCenter.Get(2);
                     if ((x.IsInt() || x.IsReal()) && (y.IsInt() || y.IsReal()) && (z.IsInt() || z.IsReal())) {
-						skirtMeshMetadata.meshCenter.x = x.GetNumberAsDouble();
-						skirtMeshMetadata.meshCenter.y = y.GetNumberAsDouble();
-						skirtMeshMetadata.meshCenter.z = z.GetNumberAsDouble();
+                        skirtMeshMetadata.meshCenter.x = x.GetNumberAsDouble();
+                        skirtMeshMetadata.meshCenter.y = y.GetNumberAsDouble();
+                        skirtMeshMetadata.meshCenter.z = z.GetNumberAsDouble();
                     }
                     else {
                         return std::nullopt;
@@ -55,9 +55,9 @@ namespace Cesium3DTiles {
             }
 
             if (gltfSkirtMeshMetadata.Has("skirtWestHeight")) {
-				tinygltf::Value skirtWestHeight = gltfSkirtMeshMetadata.Get("skirtWestHeight");
+                tinygltf::Value skirtWestHeight = gltfSkirtMeshMetadata.Get("skirtWestHeight");
                 if (skirtWestHeight.IsInt() || skirtWestHeight.IsReal()) {
-					skirtMeshMetadata.skirtWestHeight = skirtWestHeight.GetNumberAsDouble();
+                    skirtMeshMetadata.skirtWestHeight = skirtWestHeight.GetNumberAsDouble();
                 }
                 else {
                     return std::nullopt;
@@ -68,9 +68,9 @@ namespace Cesium3DTiles {
             }
 
             if (gltfSkirtMeshMetadata.Has("skirtSouthHeight")) {
-				tinygltf::Value skirtSouthHeight = gltfSkirtMeshMetadata.Get("skirtSouthHeight");
+                tinygltf::Value skirtSouthHeight = gltfSkirtMeshMetadata.Get("skirtSouthHeight");
                 if (skirtSouthHeight.IsInt() || skirtSouthHeight.IsReal()) {
-					skirtMeshMetadata.skirtSouthHeight = skirtSouthHeight.GetNumberAsDouble();
+                    skirtMeshMetadata.skirtSouthHeight = skirtSouthHeight.GetNumberAsDouble();
                 }
                 else {
                     return std::nullopt;
@@ -81,9 +81,9 @@ namespace Cesium3DTiles {
             }
 
             if (gltfSkirtMeshMetadata.Has("skirtEastHeight")) {
-				tinygltf::Value skirtEastHeight = gltfSkirtMeshMetadata.Get("skirtEastHeight");
+                tinygltf::Value skirtEastHeight = gltfSkirtMeshMetadata.Get("skirtEastHeight");
                 if (skirtEastHeight.IsInt() || skirtEastHeight.IsReal()) {
-					skirtMeshMetadata.skirtEastHeight = skirtEastHeight.GetNumberAsDouble();
+                    skirtMeshMetadata.skirtEastHeight = skirtEastHeight.GetNumberAsDouble();
                 }
                 else {
                     return std::nullopt;
@@ -94,9 +94,9 @@ namespace Cesium3DTiles {
             }
 
             if (gltfSkirtMeshMetadata.Has("skirtNorthHeight")) {
-				tinygltf::Value skirtNorthHeight = gltfSkirtMeshMetadata.Get("skirtNorthHeight");
+                tinygltf::Value skirtNorthHeight = gltfSkirtMeshMetadata.Get("skirtNorthHeight");
                 if (skirtNorthHeight.IsInt() || skirtNorthHeight.IsReal()) {
-					skirtMeshMetadata.skirtNorthHeight = skirtNorthHeight.GetNumberAsDouble();
+                    skirtMeshMetadata.skirtNorthHeight = skirtNorthHeight.GetNumberAsDouble();
                 }
                 else {
                     return std::nullopt;
@@ -113,19 +113,19 @@ namespace Cesium3DTiles {
     }
 
     tinygltf::Value SkirtMeshMetadata::createGltfExtras(const SkirtMeshMetadata& skirtMeshMetadata) {
-		tinygltf::Value::Object gltfSkirtMeshMetadata;
-		gltfSkirtMeshMetadata.insert({ "noSkirtRange", tinygltf::Value(tinygltf::Value::Array({
-			tinygltf::Value(static_cast<int>(skirtMeshMetadata.noSkirtIndicesBegin)), tinygltf::Value(static_cast<int>(skirtMeshMetadata.noSkirtIndicesCount))})) });
+        tinygltf::Value::Object gltfSkirtMeshMetadata;
+        gltfSkirtMeshMetadata.insert({ "noSkirtRange", tinygltf::Value(tinygltf::Value::Array({
+            tinygltf::Value(static_cast<int>(skirtMeshMetadata.noSkirtIndicesBegin)), tinygltf::Value(static_cast<int>(skirtMeshMetadata.noSkirtIndicesCount))})) });
 
-		gltfSkirtMeshMetadata.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
-			tinygltf::Value(skirtMeshMetadata.meshCenter.x), tinygltf::Value(skirtMeshMetadata.meshCenter.y), tinygltf::Value(skirtMeshMetadata.meshCenter.z)})) });
+        gltfSkirtMeshMetadata.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
+            tinygltf::Value(skirtMeshMetadata.meshCenter.x), tinygltf::Value(skirtMeshMetadata.meshCenter.y), tinygltf::Value(skirtMeshMetadata.meshCenter.z)})) });
 
-		gltfSkirtMeshMetadata.insert({ "skirtWestHeight", tinygltf::Value(skirtMeshMetadata.skirtWestHeight) });
-		gltfSkirtMeshMetadata.insert({ "skirtSouthHeight", tinygltf::Value(skirtMeshMetadata.skirtSouthHeight) });
-		gltfSkirtMeshMetadata.insert({ "skirtEastHeight", tinygltf::Value(skirtMeshMetadata.skirtEastHeight) });
-		gltfSkirtMeshMetadata.insert({ "skirtNorthHeight", tinygltf::Value(skirtMeshMetadata.skirtNorthHeight) });
+        gltfSkirtMeshMetadata.insert({ "skirtWestHeight", tinygltf::Value(skirtMeshMetadata.skirtWestHeight) });
+        gltfSkirtMeshMetadata.insert({ "skirtSouthHeight", tinygltf::Value(skirtMeshMetadata.skirtSouthHeight) });
+        gltfSkirtMeshMetadata.insert({ "skirtEastHeight", tinygltf::Value(skirtMeshMetadata.skirtEastHeight) });
+        gltfSkirtMeshMetadata.insert({ "skirtNorthHeight", tinygltf::Value(skirtMeshMetadata.skirtNorthHeight) });
 
-		return tinygltf::Value(
-			tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+        return tinygltf::Value(
+            tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
     }
 }

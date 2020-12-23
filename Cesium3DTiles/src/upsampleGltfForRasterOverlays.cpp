@@ -253,7 +253,7 @@ namespace Cesium3DTiles {
                     v0 = getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertex.first)]);
                 }
                 else {
-					v0 = accessor[static_cast<size_t>(vertex.first)];
+                    v0 = accessor[static_cast<size_t>(vertex.first)];
                 }
 
                 T v1{};
@@ -261,7 +261,7 @@ namespace Cesium3DTiles {
                     v1 = getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertex.second)]);
                 }
                 else {
-					v1 = accessor[static_cast<size_t>(vertex.second)];
+                    v1 = accessor[static_cast<size_t>(vertex.second)];
                 }
 
                 return glm::mix(v0, v1, vertex.t);
@@ -344,7 +344,7 @@ namespace Cesium3DTiles {
             const tinygltf::Buffer& buffer = parentModel.buffers[static_cast<size_t>(bufferView.buffer)];
 
             int32_t accessorByteStride = accessor.ByteStride(bufferView);
-			int32_t accessorComponentElements = tinygltf::GetNumComponentsInType(static_cast<uint32_t>(accessor.type));
+            int32_t accessorComponentElements = tinygltf::GetNumComponentsInType(static_cast<uint32_t>(accessor.type));
             if (accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
                 // Can only interpolate floating point vertex attributes
                 return;
@@ -451,12 +451,12 @@ namespace Cesium3DTiles {
             // Add the clipped triangle or quad, if any
             addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clipVertexToIndices, clippedA, clippedB);
             if (hasSkirt) {
-				addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
+                addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
             }
 
             // If the East-West clip yielded a quad (rather than a triangle), clip the second triangle of the quad, too.
             if (clippedA.size() > 3) {
-				clipVertexToIndices.clear();
+                clipVertexToIndices.clear();
                 clippedB.clear();
                 clipTriangleAtAxisAlignedThreshold(
                     0.5,
@@ -473,7 +473,7 @@ namespace Cesium3DTiles {
                 // Add the clipped triangle or quad, if any
                 addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clipVertexToIndices, clippedA, clippedB);
                 if (hasSkirt) {
-					addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
+                    addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
                 }
             }
         }
@@ -599,7 +599,7 @@ namespace Cesium3DTiles {
             indices.push_back(i2);
             indices.push_back(i3);
 
-			clipVertexToIndices.push_back(i3);
+            clipVertexToIndices.push_back(i3);
         }
     }
 
@@ -626,10 +626,10 @@ namespace Cesium3DTiles {
 
             if (CesiumUtility::Math::equalsEpsilon(uv.x, thresholdU, CesiumUtility::Math::EPSILON4)) {
                 if (keepAboveU) {
-					edgeIndices.west.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.west.emplace_back(clipVertexToIndices[i], uv);
                 }
                 else {
-					edgeIndices.east.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.east.emplace_back(clipVertexToIndices[i], uv);
                 }
             }
 
@@ -643,10 +643,10 @@ namespace Cesium3DTiles {
 
             if (CesiumUtility::Math::equalsEpsilon(uv.y, thresholdV, CesiumUtility::Math::EPSILON4)) {
                 if (keepAboveV) {
-					edgeIndices.south.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.south.emplace_back(clipVertexToIndices[i], uv);
                 }
                 else {
-					edgeIndices.north.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.north.emplace_back(clipVertexToIndices[i], uv);
                 }
             }
         }
@@ -668,7 +668,7 @@ namespace Cesium3DTiles {
             uint32_t offset = 0;
             for (uint32_t j = 0; j < attributes.size(); ++j) {
                 const FloatVertexAttribute& attribute = attributes[j];
-				uint32_t valueIndex = offset + static_cast<uint32_t>(vertexSizeFloats) * edgeIdx;
+                uint32_t valueIndex = offset + static_cast<uint32_t>(vertexSizeFloats) * edgeIdx;
 
                 if (j == positionAttributeIndex) {
                     glm::dvec3 position{ output[valueIndex], output[valueIndex + 1], output[valueIndex + 2] };
@@ -741,7 +741,7 @@ namespace Cesium3DTiles {
             edgeIndices.west.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, 
+        addSkirt(output, 
             indices, 
             sortEdgeIndices, 
             center, 
@@ -768,7 +768,7 @@ namespace Cesium3DTiles {
             edgeIndices.south.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, 
+        addSkirt(output, 
             indices, 
             sortEdgeIndices, 
             center, 
@@ -795,7 +795,7 @@ namespace Cesium3DTiles {
             edgeIndices.east.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, 
+        addSkirt(output, 
             indices, 
             sortEdgeIndices, 
             center, 
@@ -822,7 +822,7 @@ namespace Cesium3DTiles {
             edgeIndices.north.end(),
             sortEdgeIndices.begin(),
             [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
-		addSkirt(output, 
+        addSkirt(output, 
             indices, 
             sortEdgeIndices, 
             center, 
