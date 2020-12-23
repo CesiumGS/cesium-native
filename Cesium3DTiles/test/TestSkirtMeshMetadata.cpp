@@ -100,7 +100,7 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
 
         SECTION("noSkirtRange field has two elements array but not integer") {
             gltfSkirtMeshMetadata["noSkirtRange"] = tinygltf::Value(
-                tinygltf::Value::Array({tinygltf::Value("first"), tinygltf::Value("second")}));
+                tinygltf::Value::Array({tinygltf::Value(std::string("first")), tinygltf::Value(std::string("second"))}));
             tinygltf::Value extras = tinygltf::Value(
                 tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
 
@@ -139,7 +139,7 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
 
         SECTION("meshCenter field is 3 elements array but wrong type") {
             gltfSkirtMeshMetadata["meshCenter"] = tinygltf::Value(
-                tinygltf::Value::Array({tinygltf::Value(1.0), tinygltf::Value(2.0), tinygltf::Value("third")}));
+                tinygltf::Value::Array({tinygltf::Value(1.0), tinygltf::Value(2.0), tinygltf::Value(std::string("third"))}));
 
             tinygltf::Value extras = tinygltf::Value(
                 tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
@@ -159,7 +159,7 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         }
 
         SECTION("skirtWestHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtWestHeight"] = tinygltf::Value("string");
+            gltfSkirtMeshMetadata["skirtWestHeight"] = tinygltf::Value(std::string("string"));
 
             tinygltf::Value extras = tinygltf::Value(
                 tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
@@ -179,7 +179,7 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         }
 
         SECTION("skirtSouthHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtSouthHeight"] = tinygltf::Value("string");
+            gltfSkirtMeshMetadata["skirtSouthHeight"] = tinygltf::Value(std::string("string"));
 
             tinygltf::Value extras = tinygltf::Value(
                 tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
@@ -199,7 +199,7 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         }
 
         SECTION("skirtEastHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtEastHeight"] = tinygltf::Value("string");
+            gltfSkirtMeshMetadata["skirtEastHeight"] = tinygltf::Value(std::string("string"));
 
             tinygltf::Value extras = tinygltf::Value(
                 tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
@@ -219,7 +219,7 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         }
 
         SECTION("skirtNorthHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtNorthHeight"] = tinygltf::Value("string");
+            gltfSkirtMeshMetadata["skirtNorthHeight"] = tinygltf::Value(std::string("string"));
 
             tinygltf::Value extras = tinygltf::Value(
                 tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
