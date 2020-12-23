@@ -681,7 +681,7 @@ namespace Cesium3DTiles {
                     position -= center;
 
                     for (uint32_t c = 0; c < 3; ++c) {
-						output.push_back(static_cast<float>(position[c]));
+						output.push_back(static_cast<float>(position[static_cast<int32_t>(c)]));
 						attribute.minimums[c] = glm::min(attribute.minimums[c], position[static_cast<int32_t>(c)]);
 						attribute.maximums[c] = glm::max(attribute.maximums[c], position[static_cast<int32_t>(c)]);
                     }
