@@ -326,12 +326,13 @@ namespace Cesium3DTiles {
         if (!pContext) {
             pContext = std::make_unique<TileContext>();
         }
+        pContext->pTileset = this;
 
         this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
-            this,
+            pLogger = this->_externals.pLogger,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
-            return _handleTilesetResponse(std::move(pRequest), std::move(pContext), this->_externals.pLogger);
+            return _handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
@@ -343,21 +344,20 @@ namespace Cesium3DTiles {
         });
     }
 
-    Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, std::shared_ptr<spdlog::logger> pLogger) {
+    /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, std::shared_ptr<spdlog::logger> pLogger) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
-            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
+            SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
             return LoadResult{ std::move(pContext), nullptr };
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             // TODO: report error response.
-            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
+            SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
             return LoadResult{ std::move(pContext), nullptr };
         }
 
-        pContext->pTileset = this;
         pContext->baseUrl = pRequest->url();
 
         gsl::span<const uint8_t> data = pResponse->data();
@@ -366,7 +366,7 @@ namespace Cesium3DTiles {
         tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
         if (tileset.HasParseError()) {
-            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
             return LoadResult{ std::move(pContext), nullptr };
         }
 

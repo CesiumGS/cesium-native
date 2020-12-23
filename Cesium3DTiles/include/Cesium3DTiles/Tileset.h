@@ -368,7 +368,7 @@ namespace Cesium3DTiles {
          * @param pRequest The request for which the response was received.
          * @return The LoadResult structure
          */
-        LoadResult _handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, std::shared_ptr<spdlog::logger> pLogger);
+        static LoadResult _handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, std::shared_ptr<spdlog::logger> pLogger);
 
         void _loadTilesetJson(
             const std::string& url,
