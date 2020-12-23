@@ -257,7 +257,7 @@ namespace Cesium3DTiles {
         this->_processLoadQueue();
 
         // aggregate all the credits needed from this tileset for the current frame 
-        const std::shared_ptr<CreditSystem>& pCreditSystem = this->getCreditSystem();
+        const std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
         if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
             // per-tileset specific credit
             if (this->_credit) {
@@ -276,9 +276,9 @@ namespace Cesium3DTiles {
             for (auto& tile : result.tilesToRenderThisFrame) {
                 const std::vector<RasterMappedTo3DTile>& mappedRasterTiles = tile->getMappedRasterTiles();
                 for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
-                    RasterOverlayTile* rasterOverlayTile = mappedRasterTile.getReadyTile();
-                    if (rasterOverlayTile != nullptr) {
-                        for (Credit credit : rasterOverlayTile->getCredits()) {
+                    RasterOverlayTile* pRasterOverlayTile = mappedRasterTile.getReadyTile();
+                    if (pRasterOverlayTile != nullptr) {
+                        for (Credit credit : pRasterOverlayTile->getCredits()) {
                             pCreditSystem->addCreditToFrame(credit);
                         }
                     }

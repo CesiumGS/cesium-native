@@ -206,11 +206,6 @@ namespace Cesium3DTiles {
         CesiumAsync::AsyncSystem& getAsyncSystem() noexcept { return this->_asyncSystem; }
         const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept { return this->_asyncSystem; }
 
-        /**
-         * @brief Gets the {@link CreditSystem} to be used by this tileset.
-         */
-        const std::shared_ptr<CreditSystem>& getCreditSystem() const noexcept { return this->_externals.pCreditSystem; }
-
         /** @copydoc Tileset::getOptions() */
         const TilesetOptions& getOptions() const noexcept { return this->_options; }
 

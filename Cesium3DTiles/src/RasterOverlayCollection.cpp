@@ -22,7 +22,7 @@ namespace Cesium3DTiles {
         this->_overlays.push_back(std::move(pOverlay));
         pOverlayRaw->createTileProvider(
             this->_pTileset->getAsyncSystem(),
-            this->_pTileset->getCreditSystem(),
+            this->_pTileset->getExternals().pCreditSystem,
             this->_pTileset->getExternals().pPrepareRendererResources,
             this->_pTileset->getExternals().pLogger
         );
