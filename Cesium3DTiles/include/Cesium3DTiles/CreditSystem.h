@@ -5,13 +5,6 @@
 #include <string>
 #include <utility>
 
-namespace {
-    struct HtmlAndLastFrameNumber {
-        std::string html;
-        int32_t lastFrameNumber;
-    };
-}
-
 namespace Cesium3DTiles {
 
     /**
@@ -75,6 +68,11 @@ namespace Cesium3DTiles {
 
     private:
         const std::string INVALID_CREDIT_MESSAGE = "Error: Invalid Credit, cannot get HTML string.";
+
+        struct HtmlAndLastFrameNumber {
+            std::string html;
+            int32_t lastFrameNumber;
+        };
 
         std::vector<HtmlAndLastFrameNumber> _credits;
 
