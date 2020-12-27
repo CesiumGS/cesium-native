@@ -9,7 +9,7 @@ namespace CesiumGltf {
         std::string warnings;
         std::string errors;
         tinygltf::TinyGLTF loader;
-        bool success = loader.LoadBinaryFromMemory(&result._model, &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
+        /*bool success =*/ loader.LoadBinaryFromMemory(&result._model, &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
         return result;
         // cgltf_options options{};
         // cgltf_data* pResult = nullptr;
@@ -60,12 +60,12 @@ namespace CesiumGltf {
 	// cgltf_scene* scene;
 	// cgltf_animation* animations;
 
-    GltfCollection<std::string> GltfModel::extensionsUsed() const noexcept {
-        return { &this->_pData->extensions_used, &this->_pData->extensions_used_count };
+    GltfCollection<const std::string> GltfModel::extensionsUsed() const noexcept {
+        return GltfCollection<const std::string>(&this->_model.extensionsUsed);
     }
 
     GltfCollection<std::string> GltfModel::extensionsRequired() const noexcept {
-        return { &this->_pData->extensions_required, &this->_pData->extensions_required_count };
+        return { &this->_model.extensionsRequired };
     }
 
     GltfCollection<GltfMesh> GltfModel::meshes() const noexcept {
@@ -76,8 +76,8 @@ namespace CesiumGltf {
         return { &this->_pData->accessors, &this->_pData->accessors_count };
     }
 
-    GltfModel::GltfModel(cgltf_data* pData) :
-        _pData(pData, cgltf_free)
+    GltfModel::GltfModel(tinygltf::Model&& model) :
+        _model(std::move(model))
     {
     }
 }

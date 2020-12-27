@@ -41,6 +41,11 @@ namespace CesiumGltf {
             using tinygltf_type = std::string;
         };
 
+        template <>
+        struct CesiumToTinyGltf<const std::string> {
+            using tinygltf_type = const std::string;
+        };
+
         // template <> struct CesiumToTinyGltf<GltfAccessor> { using tinygltf_type = tinygltf::Accessor; };
         // template <> struct CesiumToTinyGltf<GltfAnimation> { using tinygltf_type = tinygltf::Animation; };
         // template <> struct CesiumToTinyGltf<GltfBuffer> { using tinygltf_type = tinygltf::Buffer; };

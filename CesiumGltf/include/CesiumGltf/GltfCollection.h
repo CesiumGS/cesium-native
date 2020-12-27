@@ -9,6 +9,7 @@ namespace CesiumGltf {
     template <typename T>
     class GltfCollection {
     public:
+
         class const_iterator {
         public:
             using iterator_category = std::random_access_iterator_tag;
@@ -71,7 +72,13 @@ namespace CesiumGltf {
             mutable std::optional<T> _temporary;
         };
 
-        GltfCollection(std::vector<typename Impl::CesiumToTinyGltf<T>::tinygltf_type>* pElements) :
+        using vector_type = std::conditional_t<
+            std::is_const<T>::value,
+            std::vector<typename Impl::CesiumToTinyGltf<std::remove_const_t<T>>::tinygltf_type>,
+            std::vector<typename Impl::CesiumToTinyGltf<std::remove_const_t<T>>::tinygltf_type>
+        >;
+        
+        GltfCollection(vector_type* pElements) :
             _pElements(ppElements)
         {
         }

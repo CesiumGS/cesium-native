@@ -24,7 +24,9 @@ namespace CesiumGltf {
 
         GltfModel();
 
-        GltfCollection<std::string> extensionsUsed() const noexcept;
+        GltfCollection<const std::string> extensionsUsed() const noexcept;
+        GltfCollection<std::string> extensionsUsed() noexcept;
+
         GltfCollection<std::string> extensionsRequired() const noexcept;
         GltfCollection<GltfAccessor> accessors() const noexcept;
         GltfCollection<GltfAnimation> animations() const noexcept;
