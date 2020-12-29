@@ -29,6 +29,7 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> IonRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
@@ -93,10 +94,11 @@ namespace Cesium3DTiles {
         }).thenInMainThread([
             pOwner,
             asyncSystem,
+            pCreditSystem,
             pPrepareRendererResources,
             pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
-            return pAggregatedOverlay->createTileProvider(asyncSystem, pPrepareRendererResources, pLogger, pOwner);
+            return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
         });
     }
 

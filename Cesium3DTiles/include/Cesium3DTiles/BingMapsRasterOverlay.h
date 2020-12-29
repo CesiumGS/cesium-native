@@ -5,8 +5,11 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTiles {
+
+    class CreditSystem;
 
     /**
      * @brief Styles of Bing Maps overlays.
@@ -99,12 +102,15 @@ namespace Cesium3DTiles {
 
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
         ) override;
 
     private:
+        static const std::string BING_LOGO_HTML;
+
         std::string _url;
         std::string _key;
         std::string _mapStyle;

@@ -38,6 +38,11 @@ namespace Cesium3DTiles {
      */
     struct CESIUM3DTILES_API TilesetOptions {
         /**
+         * @brief A credit text for this tileset, if needed. 
+         */
+        std::optional<std::string> credit;
+
+        /**
          * @brief The maximum number of pixels of error when rendering this tileset.
          * This is used to select an appropriate level-of-detail.
          */
@@ -365,6 +370,8 @@ namespace Cesium3DTiles {
         std::vector<std::unique_ptr<TileContext>> _contexts;
         TilesetExternals _externals;
         CesiumAsync::AsyncSystem _asyncSystem;
+
+        std::optional<Credit> _credit;
 
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;

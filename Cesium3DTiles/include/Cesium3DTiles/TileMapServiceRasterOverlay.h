@@ -7,8 +7,11 @@
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTiles {
+
+    class CreditSystem;
 
     /**
      * @brief Options for tile map service accesses.
@@ -109,6 +112,7 @@ namespace Cesium3DTiles {
 
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
