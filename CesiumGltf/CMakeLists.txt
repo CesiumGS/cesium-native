@@ -18,6 +18,7 @@ target_include_directories(
     SYSTEM PUBLIC
         # We're not using CMake for tinygltf at all, but it's header only. Add its headers here.
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/tinygltf
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
     PUBLIC
         include
     PRIVATE
@@ -26,4 +27,4 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/cgltf
 )
 
-target_link_libraries(CesiumGltf PUBLIC CesiumGeometry CesiumUtility simdjson)
+target_link_libraries(CesiumGltf PUBLIC CesiumGeometry CesiumUtility)

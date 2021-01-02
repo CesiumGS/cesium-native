@@ -3,12 +3,12 @@
 #include <string>
 #include <gsl/span>
 
-struct cgltf_buffer;
+// struct cgltf_buffer;
 
 namespace CesiumGltf {
     class GltfBuffer {
     public:
-        static GltfBuffer createFromCollectionElement(cgltf_buffer* array, size_t arrayIndex);
+        // static GltfBuffer createFromCollectionElement(cgltf_buffer* array, size_t arrayIndex);
 
         std::string getUri() const noexcept;
         void setUri(const std::string& value) noexcept;
@@ -19,8 +19,8 @@ namespace CesiumGltf {
         void resizeData(size_t newSize) noexcept;
 
     private:
-        GltfBuffer(cgltf_buffer* p);
+        // GltfBuffer(cgltf_buffer* p);
 
-        cgltf_buffer* _p;
+        // cgltf_buffer* _p;
     };
 }

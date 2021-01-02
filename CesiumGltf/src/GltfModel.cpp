@@ -60,24 +60,24 @@ namespace CesiumGltf {
 	// cgltf_scene* scene;
 	// cgltf_animation* animations;
 
-    GltfCollection<const std::string> GltfModel::extensionsUsed() const noexcept {
-        return GltfCollection<const std::string>(&this->_model.extensionsUsed);
-    }
+    // GltfCollection<const std::string> GltfModel::extensionsUsed() const noexcept {
+    //     return GltfCollection<const std::string>(&this->_model.extensionsUsed);
+    // }
 
-    GltfCollection<std::string> GltfModel::extensionsRequired() const noexcept {
-        return { &this->_model.extensionsRequired };
-    }
+    // GltfCollection<std::string> GltfModel::extensionsRequired() const noexcept {
+    //     return { &this->_model.extensionsRequired };
+    // }
 
-    GltfCollection<GltfMesh> GltfModel::meshes() const noexcept {
-        return { &this->_pData->meshes, &this->_pData->meshes_count };
-    }
+    // GltfCollection<GltfMesh> GltfModel::meshes() const noexcept {
+    //     return { &this->_pData->meshes, &this->_pData->meshes_count };
+    // }
 
-    GltfCollection<GltfAccessor> GltfModel::accessors() const noexcept {
-        return { &this->_pData->accessors, &this->_pData->accessors_count };
-    }
+    // GltfCollection<GltfAccessor> GltfModel::accessors() const noexcept {
+    //     return { &this->_pData->accessors, &this->_pData->accessors_count };
+    // }
 
-    GltfModel::GltfModel(tinygltf::Model&& model) :
-        _model(std::move(model))
-    {
-    }
+    // GltfModel::GltfModel(tinygltf::Model&& model) :
+    //     _model(std::move(model))
+    // {
+    // }
 }

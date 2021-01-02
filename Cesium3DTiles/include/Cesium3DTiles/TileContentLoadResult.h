@@ -30,7 +30,7 @@ namespace Cesium3DTiles {
          * If it has a value but the model is blank, the tile can 
          * be "rendered", but it is rendered as nothing.
          */
-        std::optional<CesiumGltf::GltfModel> model;
+        std::optional<tinygltf::Model> model;
 
         /**
          * @brief A new context, if any, used by the `childTiles`.

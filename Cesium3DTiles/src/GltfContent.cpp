@@ -40,7 +40,7 @@ namespace Cesium3DTiles {
 	}
 
 	static int generateOverlayTextureCoordinates(
-		GltfModel& gltf,
+		tinygltf::Model& gltf,
 		int positionAccessorIndex,
 		const glm::dmat4x4& transform,
 		const CesiumGeospatial::Projection& projection,
@@ -52,22 +52,22 @@ namespace Cesium3DTiles {
 		double& minimumHeight,
 		double& maximumHeight
 	) {
-		GltfCollection<GltfBuffer> buffers = gltf.buffers();
-		GltfCollection<GltfBufferView> bufferViews = gltf.bufferViews();
-		GltfCollection<CesiumGltf::GltfAccessor> accessors = gltf.accessors();
+		std::vector<tinygltf::Buffer>& buffers = gltf.buffers;
+		std::vector<tinygltf::BufferView>& bufferViews = gltf.bufferViews;
+		std::vector<tinygltf::Accessor>& accessors = gltf.accessors;
 
-        size_t uvBufferId = buffers.size();
-        GltfBuffer uvBuffer = buffers.emplace_back();
+        int uvBufferId = static_cast<int>(buffers.size());
+        tinygltf::Buffer uvBuffer = buffers.emplace_back();
 
-        size_t uvBufferViewId = bufferViews.size();
-        GltfBufferView uvBufferView = bufferViews.emplace_back();
+        int uvBufferViewId = static_cast<int>(bufferViews.size());
+        bufferViews.emplace_back();
 
-        size_t uvAccessorId = accessors.size();
-		CesiumGltf::GltfAccessor uvAccessor = accessors.emplace_back();
+        int uvAccessorId = static_cast<int>(accessors.size());
+		accessors.emplace_back();
 
 		GltfAccessor<glm::vec3> positionAccessor(gltf, static_cast<size_t>(positionAccessorIndex));
 
-        uvBuffer.resizeData(positionAccessor.size() * 2 * sizeof(float));
+        uvBuffer.data.resize(positionAccessor.size() * 2 * sizeof(float));
 
         tinygltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
         uvBufferView.buffer = uvBufferId;
