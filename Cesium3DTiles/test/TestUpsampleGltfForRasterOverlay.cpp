@@ -1,24 +1,33 @@
 #include "catch2/catch.hpp"
-#include "CesiumUtility/Math.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Ellipsoid.h"
+#include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include "glm/trigonometric.hpp"
 #include <vector>
 
 using namespace Cesium3DTiles;
 using namespace CesiumUtility;
+using namespace CesiumGeospatial;
+
+static void checkSkirt(const Ellipsoid &ellipsoid, const glm::vec3 &edgeUpsampledPosition, const glm::vec3 &skirtUpsampledPosition, glm::dvec3 center, double skirtHeight) {
+	glm::dvec3 edgePosition = static_cast<glm::dvec3>(edgeUpsampledPosition) + center;
+	Cartographic edgeCart = *ellipsoid.cartesianToCartographic(edgePosition);
+	glm::dvec3 skirtPosition = static_cast<glm::dvec3>(skirtUpsampledPosition) + center;
+	Cartographic skirtCart = *ellipsoid.cartesianToCartographic(skirtPosition);
+	REQUIRE(Math::equalsEpsilon(edgeCart.height - skirtCart.height, skirtHeight, Math::EPSILON3));
+}
 
 TEST_CASE("Test upsample tile without skirts") {
-	const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
-	CesiumGeospatial::Cartographic bottomLeftCart{ glm::radians(110.0), glm::radians(32.0), 0.0 };
-	CesiumGeospatial::Cartographic topLeftCart{ bottomLeftCart.longitude, bottomLeftCart.latitude + glm::radians(1.0), 0.0 };
-	CesiumGeospatial::Cartographic topRightCart{ bottomLeftCart.longitude + glm::radians(1.0), bottomLeftCart.latitude + glm::radians(1.0), 0.0 };
-	CesiumGeospatial::Cartographic bottomRightCart{ bottomLeftCart.longitude + glm::radians(1.0), bottomLeftCart.latitude, 0.0 };
-	CesiumGeospatial::Cartographic centerCart{ (bottomLeftCart.longitude + topRightCart.longitude) / 2.0, (bottomLeftCart.latitude + topRightCart.latitude) / 2.0, 0.0 };
+	const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
+	Cartographic bottomLeftCart{ glm::radians(110.0), glm::radians(32.0), 0.0 };
+	Cartographic topLeftCart{ bottomLeftCart.longitude, bottomLeftCart.latitude + glm::radians(1.0), 0.0 };
+	Cartographic topRightCart{ bottomLeftCart.longitude + glm::radians(1.0), bottomLeftCart.latitude + glm::radians(1.0), 0.0 };
+	Cartographic bottomRightCart{ bottomLeftCart.longitude + glm::radians(1.0), bottomLeftCart.latitude, 0.0 };
+	Cartographic centerCart{ (bottomLeftCart.longitude + topRightCart.longitude) / 2.0, (bottomLeftCart.latitude + topRightCart.latitude) / 2.0, 0.0 };
 	glm::dvec3 center = ellipsoid.cartographicToCartesian(centerCart);
 	std::vector<glm::vec3> positions{
 		static_cast<glm::vec3>(ellipsoid.cartographicToCartesian(bottomLeftCart) - center),
@@ -195,6 +204,42 @@ TEST_CASE("Test upsample tile without skirts") {
 		REQUIRE(glm::epsilonEqual(p6, (positions[1] + positions[3]) * 0.5f, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
 	}
 
+	SECTION("Upsample upper right child") {
+		tinygltf::Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperRight);
+
+		REQUIRE(upsampledModel.meshes.size() == 1);
+		const tinygltf::Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+		REQUIRE(upsampledMesh.primitives.size() == 1);
+		const tinygltf::Primitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+		REQUIRE(upsampledPrimitive.indices >= 0);
+		REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
+		GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
+		GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+
+		glm::vec3 p0 = upsampledPosition[0];
+		REQUIRE(glm::epsilonEqual(p0, positions[3], glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+
+		glm::vec3 p1 = upsampledPosition[1];
+		REQUIRE(glm::epsilonEqual(p1, (positions[1] + positions[3]) * 0.5f, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+
+		glm::vec3 p2 = upsampledPosition[2];
+		REQUIRE(glm::epsilonEqual(p2, (positions[2] + 0.5f * (positions[1] + positions[3])) * 0.5f, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+
+		glm::vec3 p3 = upsampledPosition[3];
+		REQUIRE(glm::epsilonEqual(p3, (positions[3] + positions[2]) * 0.5f, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+
+		glm::vec3 p4 = upsampledPosition[4];
+		REQUIRE(glm::epsilonEqual(p4, (positions[1] + positions[3]) * 0.5f, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+
+		glm::vec3 p5 = upsampledPosition[5];
+		REQUIRE(glm::epsilonEqual(p5, (positions[1] + positions[2]) * 0.5f, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+
+		glm::vec3 p6 = upsampledPosition[6];
+		REQUIRE(glm::epsilonEqual(p6, p2, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+	}
+
 	SECTION("Upsample bottom right child") {
 		tinygltf::Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerRight);
 
@@ -229,6 +274,169 @@ TEST_CASE("Test upsample tile without skirts") {
 
 		glm::vec3 p6 = upsampledPosition[6];
 		REQUIRE(glm::epsilonEqual(p6, p4, glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
+	}
+
+	SECTION("Check skirt") {
+        // add skirts info to primitive extra in case we need to upsample from it
+		double skirtHeight = 12.0;
+        SkirtMeshMetadata skirtMeshMetadata;
+        skirtMeshMetadata.noSkirtIndicesBegin = 0;
+        skirtMeshMetadata.noSkirtIndicesCount = static_cast<uint32_t>(indices.size());
+        skirtMeshMetadata.meshCenter = center;
+        skirtMeshMetadata.skirtWestHeight = skirtHeight;
+        skirtMeshMetadata.skirtSouthHeight = skirtHeight;
+        skirtMeshMetadata.skirtEastHeight = skirtHeight;
+        skirtMeshMetadata.skirtNorthHeight = skirtHeight;
+
+        primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+
+		SECTION("Check bottom left skirt") {
+			tinygltf::Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerLeft);
+
+			REQUIRE(upsampledModel.meshes.size() == 1);
+			const tinygltf::Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+			REQUIRE(upsampledMesh.primitives.size() == 1);
+			const tinygltf::Primitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+			REQUIRE(upsampledPrimitive.indices >= 0);
+			REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
+			GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
+			GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+
+			// check west edge
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[7], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[8], center, skirtHeight);
+
+			// check south edge
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[9], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[4], upsampledPosition[10], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[11], center, skirtHeight);
+
+			// check east edge
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[12], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[13], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[4], upsampledPosition[14], center, skirtHeight * 0.5);
+
+			// check north edge
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[15], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[2], upsampledPosition[16], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[6], upsampledPosition[17], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[18], center, skirtHeight * 0.5);
+		}
+
+		SECTION("Check upper left skirt") {
+			tinygltf::Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperLeft);
+
+			REQUIRE(upsampledModel.meshes.size() == 1);
+			const tinygltf::Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+			REQUIRE(upsampledMesh.primitives.size() == 1);
+			const tinygltf::Primitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+			REQUIRE(upsampledPrimitive.indices >= 0);
+			REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
+			GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
+			GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+
+			// check west edge
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[7], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[8], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[9], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[10], center, skirtHeight);
+
+			// check south edge
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[11], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[12], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[2], upsampledPosition[13], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[4], upsampledPosition[14], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[15], center, skirtHeight * 0.5);
+
+			// check east edge
+			checkSkirt(ellipsoid, upsampledPosition[6], upsampledPosition[16], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[17], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[18], center, skirtHeight * 0.5);
+
+			// check north edge
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[19], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[20], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[21], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[6], upsampledPosition[22], center, skirtHeight);
+		}
+
+		SECTION("Check upper right skirt") {
+			tinygltf::Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperRight);
+
+			REQUIRE(upsampledModel.meshes.size() == 1);
+			const tinygltf::Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+			REQUIRE(upsampledMesh.primitives.size() == 1);
+			const tinygltf::Primitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+			REQUIRE(upsampledPrimitive.indices >= 0);
+			REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
+			GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
+			GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+
+			// check west edge
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[7], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[8], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[4], upsampledPosition[9], center, skirtHeight * 0.5);
+
+			// check south edge
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[10], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[2], upsampledPosition[11], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[6], upsampledPosition[12], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[13], center, skirtHeight * 0.5);
+
+			// check east edge
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[14], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[15], center, skirtHeight);
+
+			// check north edge
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[16], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[4], upsampledPosition[17], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[18], center, skirtHeight);
+		}
+
+		SECTION("Check bottom right skirt") {
+			tinygltf::Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerRight);
+
+			REQUIRE(upsampledModel.meshes.size() == 1);
+			const tinygltf::Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+			REQUIRE(upsampledMesh.primitives.size() == 1);
+			const tinygltf::Primitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+			REQUIRE(upsampledPrimitive.indices >= 0);
+			REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
+			GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
+			GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+
+			// check west edge
+			checkSkirt(ellipsoid, upsampledPosition[2], upsampledPosition[7], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[8], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[9], center, skirtHeight * 0.5);
+
+			// check south edge
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[10], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[11], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[12], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[2], upsampledPosition[13], center, skirtHeight);
+
+			// check east edge
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[14], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[15], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[16], center, skirtHeight);
+			checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[17], center, skirtHeight);
+
+			// check north edge
+			checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[18], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[19], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[4], upsampledPosition[20], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[6], upsampledPosition[21], center, skirtHeight * 0.5);
+			checkSkirt(ellipsoid, upsampledPosition[3], upsampledPosition[22], center, skirtHeight * 0.5);
+		}
 	}
 }
 
