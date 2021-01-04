@@ -23,7 +23,6 @@ JsonHandler* AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /
     if ("type"s == str) return property(this->_type, this->_pAccessor->type);
     if ("max"s == str) return property(this->_max, this->_pAccessor->max);
     if ("min"s == str) return property(this->_min, this->_pAccessor->min);
-    if ("name"s == str) return property(this->_name, this->_pAccessor->name);
 
     return this->NamedObjectKey(str, *this->_pAccessor);
 }

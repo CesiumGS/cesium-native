@@ -8,8 +8,8 @@ namespace CesiumGltf {
     struct PbrMetallicRoughness : public ExtensibleObject {
         std::vector<double> baseColorFactor;
         TextureInfo baseColorTexture;
-        std::vector<double> metallicFactor;
-        std::vector<double> roughnessFactor;
+        double metallicFactor;
+        double roughnessFactor;
         TextureInfo metallicRoughnessTexture;
     };
 }

@@ -6,7 +6,6 @@
 #include "DoubleArrayJsonHandler.h"
 #include "IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
-#include "StringJsonHandler.h"
 #include <string>
 
 namespace CesiumGltf {
@@ -28,6 +27,5 @@ namespace CesiumGltf {
         AttributeTypeJsonHandler _type;
         DoubleArrayJsonHandler _max;
         DoubleArrayJsonHandler _min;
-        StringJsonHandler _name;
     };
 }
