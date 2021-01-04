@@ -73,6 +73,7 @@ add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
 add_subdirectory(CesiumGltf)
+add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)
 

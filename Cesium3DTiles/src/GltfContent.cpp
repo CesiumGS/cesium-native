@@ -5,8 +5,6 @@
 #include "CesiumUtility/Math.h"
 #include <stdexcept>
 
-using namespace CesiumGltf;
-
 namespace Cesium3DTiles {
 
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(

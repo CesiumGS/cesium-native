@@ -3,7 +3,6 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
-#include "CesiumGltf/GltfModel.h"
 
 namespace Cesium3DTiles {
 
