@@ -4,6 +4,7 @@
 #include "CesiumGltf/PrimitiveMode.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include "ObjectArrayJsonHandler.h"
 
 namespace CesiumGltf {
     struct Primitive;
@@ -20,6 +21,6 @@ namespace CesiumGltf {
         IntegerJsonHandler<int32_t> _indices;
         IntegerJsonHandler<int32_t> _material;
         IntegerJsonHandler<PrimitiveMode> _mode;
-        // std::vector<std::unordered_map<std::string, size_t>> targets;
+        ObjectArrayJsonHandler<std::unordered_map<std::string, int32_t>, AttributeJsonHandler> _targets;
     };
 }

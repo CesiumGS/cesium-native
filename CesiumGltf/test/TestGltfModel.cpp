@@ -25,7 +25,10 @@ TEST_CASE("GltfModel") {
         "      \"attributes\": {"s +
         "        \"POSITION\": 0,"s +
         "        \"NORMAL\": 1"s +
-        "      }"s +
+        "      },"s +
+        "      \"targets\": ["s +
+        "        {\"POSITION\": 10, \"NORMAL\": 11}"s +
+        "      ]"s +
         "    }]"s +
         "  }],"s +
         "  \"surprise\":{\"foo\":true}"s +
@@ -48,6 +51,10 @@ TEST_CASE("GltfModel") {
     REQUIRE(model.meshes[0].primitives.size() == 1);
     CHECK(model.meshes[0].primitives[0].attributes["POSITION"] == 0);
     CHECK(model.meshes[0].primitives[0].attributes["NORMAL"] == 1);
+
+    REQUIRE(model.meshes[0].primitives[0].targets.size() == 1);
+    CHECK(model.meshes[0].primitives[0].targets[0]["POSITION"] == 10);
+    CHECK(model.meshes[0].primitives[0].targets[0]["NORMAL"] == 11);
     // std::vector<uint8_t> v;
     // GltfModel model = GltfModel::fromMemory(v);
     // GltfCollection<GltfMesh> meshes = model.meshes();
