@@ -1,4 +1,5 @@
 #include "AccessorJsonHandler.h"
+#include "CesiumGltf/Accessor.h"
 #include <cassert>
 #include <string>
 
@@ -13,6 +14,7 @@ JsonHandler* AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /
     using namespace std::string_literals;
 
     assert(this->_pAccessor);
+
     if ("bufferView"s == str) return property(this->_bufferView, this->_pAccessor->bufferView);
     if ("byteOffset"s == str) return property(this->_byteOffset, this->_pAccessor->byteOffset);
     if ("componentType"s == str) return property(this->_componentType, this->_pAccessor->componentType);
@@ -21,6 +23,7 @@ JsonHandler* AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /
     if ("type"s == str) return property(this->_type, this->_pAccessor->type);
     if ("max"s == str) return property(this->_max, this->_pAccessor->max);
     if ("min"s == str) return property(this->_min, this->_pAccessor->min);
+    if ("name"s == str) return property(this->_name, this->_pAccessor->name);
 
-    return this->ignore();
+    return this->NamedObjectKey(str, *this->_pAccessor);
 }

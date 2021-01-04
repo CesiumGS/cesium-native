@@ -2,18 +2,21 @@
 
 #include "AttributeTypeJsonHandler.h"
 #include "BoolJsonHandler.h"
-#include "CesiumGltf/Accessor.h"
+#include "CesiumGltf/ComponentType.h"
 #include "DoubleArrayJsonHandler.h"
 #include "IntegerJsonHandler.h"
-#include "ObjectJsonHandler.h"
+#include "NamedObjectJsonHandler.h"
+#include "StringJsonHandler.h"
 #include <string>
 
 namespace CesiumGltf {
-    class AccessorJsonHandler : public ObjectJsonHandler {
+    struct Accessor;
+
+    class AccessorJsonHandler : public NamedObjectJsonHandler {
     public:
         void reset(JsonHandler* pParent, Accessor* pAccessor);
 
-        virtual JsonHandler* Key(const char* str, size_t /*length*/, bool /*copy*/) override;
+        virtual JsonHandler* Key(const char* str, size_t length, bool copy) override;
 
     private:
         Accessor* _pAccessor = nullptr;
@@ -25,5 +28,6 @@ namespace CesiumGltf {
         AttributeTypeJsonHandler _type;
         DoubleArrayJsonHandler _max;
         DoubleArrayJsonHandler _min;
+        StringJsonHandler _name;
     };
 }

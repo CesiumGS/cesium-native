@@ -6,20 +6,17 @@
 namespace CesiumGltf {
     class ObjectJsonHandler : public JsonHandler {
     public:
-        virtual JsonHandler* StartObject() override {
-            return this;
-        }
+        virtual JsonHandler* StartObject() override final;
+        virtual JsonHandler* EndObject(size_t memberCount) override final;
 
-        virtual JsonHandler* EndObject(size_t /*memberCount*/) override {
-            return this->parent();
-        }
+    protected:
+        virtual JsonHandler* StartSubObject();
+        virtual JsonHandler* EndSubObject(size_t memberCount);
 
-        JsonHandler* ignore() {
-            this->_ignoreHandler.reset(this);
-            return &this->_ignoreHandler;
-        }
+        JsonHandler* ignore();
 
     private:
         IgnoreValueJsonHandler _ignoreHandler;
+        int32_t _depth = 0;
     };
 }

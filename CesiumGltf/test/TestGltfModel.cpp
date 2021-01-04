@@ -7,7 +7,29 @@
 using namespace CesiumGltf;
 
 TEST_CASE("GltfModel") {
-    std::string s = "{\"accessors\": [{\"count\": 4,\"componentType\":5121,\"type\":\"VEC2\",\"max\":[1.0, 2.2, 3.3],\"min\":[0.0, -1.2]}],\"surprise\":{\"foo\":true}}";
+    using namespace std::string_literals;
+
+    std::string s =
+        "{"s +
+        "  \"accessors\": ["s +
+        "    {"s +
+        "      \"count\": 4,"s +
+        "      \"componentType\":5121,"s +
+        "      \"type\":\"VEC2\","s +
+        "      \"max\":[1.0, 2.2, 3.3],"s +
+        "      \"min\":[0.0, -1.2]"s +
+        "    }"s +
+        "  ],"s +
+        "  \"meshes\": [{"s +
+        "    \"primitives\": [{"s +
+        "      \"attributes\": {"s +
+        "        \"POSITION\": 0,"s +
+        "        \"NORMAL\": 1"s +
+        "      }"s +
+        "    }]"s +
+        "  }],"s +
+        "  \"surprise\":{\"foo\":true}"s +
+        "}"s;
     ModelReaderResult result = CesiumGltf::readModel(gsl::span(reinterpret_cast<const uint8_t*>(s.c_str()), s.size()));
     Model& model = result.model;
     REQUIRE(model.accessors.size() == 1);
@@ -21,6 +43,11 @@ TEST_CASE("GltfModel") {
     CHECK(model.accessors[0].max[0] == 1.0);
     CHECK(model.accessors[0].max[1] == 2.2);
     CHECK(model.accessors[0].max[2] == 3.3);
+
+    REQUIRE(model.meshes.size() == 1);
+    REQUIRE(model.meshes[0].primitives.size() == 1);
+    CHECK(model.meshes[0].primitives[0].attributes["POSITION"] == 0);
+    CHECK(model.meshes[0].primitives[0].attributes["NORMAL"] == 1);
     // std::vector<uint8_t> v;
     // GltfModel model = GltfModel::fromMemory(v);
     // GltfCollection<GltfMesh> meshes = model.meshes();

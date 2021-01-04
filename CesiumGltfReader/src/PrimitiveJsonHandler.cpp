@@ -14,9 +14,10 @@ JsonHandler* PrimitiveJsonHandler::Key(const char* str, size_t /*length*/, bool 
     using namespace std::string_literals;
 
     assert(this->_pPrimitive);
+    if ("attributes"s == str) return property(this->_attributes, this->_pPrimitive->attributes);
     if ("indices"s == str) return property(this->_indices, this->_pPrimitive->indices);
     if ("material"s == str) return property(this->_material, this->_pPrimitive->material);
     if ("mode"s == str) return property(this->_mode, this->_pPrimitive->mode);
 
-    return this->ignore();
+    return this->ExtensibleObjectKey(str, *this->_pPrimitive);
 }

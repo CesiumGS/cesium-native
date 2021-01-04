@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/PrimitiveMode.h"
 #include <cstdint>
 #include <string>
@@ -7,7 +8,10 @@
 #include <vector>
 
 namespace CesiumGltf {
-    struct Primitive {
+    /**
+     * @brief Geometry to be rendered with the given material.
+     */
+    struct Primitive : public ExtensibleObject {
         /**
          * @brief A dictionary object, where each key corresponds to mesh attribute semantic and each value is the index of the accessor containing attribute's data.
          */
@@ -46,6 +50,6 @@ namespace CesiumGltf {
          * @brief An array of Morph Targets, each Morph Target is a dictionary mapping attributes
          * (only `POSITION`, `NORMAL`, and `TANGENT` supported) to their deviations in the Morph Target.
          */
-        std::vector<std::unordered_map<std::string, size_t>> targets;
+        std::vector<std::unordered_map<std::string, int32_t>> targets;
     };
 }

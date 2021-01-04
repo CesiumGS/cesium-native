@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/Accessor.h"
+#include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Mesh.h"
 #include <vector>
 
@@ -8,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief A glTF model.
      */
-    struct Model {
+    struct Model : public ExtensibleObject {
         /**
          * @brief An array of accessors.
          * 

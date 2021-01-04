@@ -1,8 +1,10 @@
 #pragma once
 
+#include "CesiumGltf/NamedObject.h"
 #include "AttributeType.h"
 #include "ComponentType.h"
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace CesiumGltf {
@@ -13,7 +15,7 @@ namespace CesiumGltf {
      * `BufferView` or a subset of a `BufferView` similar to how WebGL's `vertexAttribPointer()`
      * defines an attribute in a buffer.
      */
-    struct Accessor {
+    struct Accessor : public NamedObject {
         /**
          * @brief The index of the `BufferView` in {@link Model::bufferViews}.
          * 
@@ -77,5 +79,7 @@ namespace CesiumGltf {
          * When accessor is sparse, this property must contain min values of accessor data with sparse substitution applied.
          */
         std::vector<double> min;
+
+        // TODO: sparse 
     };
 }

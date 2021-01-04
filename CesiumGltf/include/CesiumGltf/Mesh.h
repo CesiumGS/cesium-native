@@ -1,7 +1,9 @@
 #pragma once
 
+#include "CesiumGltf/NamedObject.h"
 #include "CesiumGltf/Primitive.h"
 #include <vector>
+#include <string>
 
 namespace CesiumGltf {
     /**
@@ -9,7 +11,7 @@ namespace CesiumGltf {
      * 
      * A {@link Node} can contain one mesh. A node's transform places the mesh in the scene.
      */
-    struct Mesh {
+    struct Mesh : public NamedObject {
         /**
          * @brief An array of primitives, each defining geometry to be rendered with a material.
          */
