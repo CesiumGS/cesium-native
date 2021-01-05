@@ -20,7 +20,7 @@ function generate(options, schema) {
 
   const properties = Object.keys(schema.properties)
     .map((key) =>
-      resolveProperty(schemaCache, nameMapping, key, schema.properties[key])
+      resolveProperty(schemaCache, nameMapping, name, key, schema.properties[key])
     )
     .filter((property) => property !== undefined);
 
@@ -63,7 +63,11 @@ function generate(options, schema) {
   const readerHeaders = lodash.uniq(
     lodash.flatten(properties.map((property) => property.readerHeaders))
   );
-  headers.sort();
+  readerHeaders.sort();
+
+  const readerLocalTypes = lodash.uniq(
+    lodash.flatten(properties.map((property) => property.readerLocalTypes))
+  );
 
   const readerHeader = `
         #pragma once
@@ -71,12 +75,16 @@ function generate(options, schema) {
         ${readerHeaders.map((header) => `#include ${header}`).join("\n")}
 
         namespace CesiumGltf {
+          struct ${name};
+
           class ${name}JsonHandler final : public ${base}ObjectJsonHandler {
           public:
             void reset(JsonHandler* pHandler, ${name}* pObject);
             virtual JsonHandler* Key(const char* str, size_t length, bool copy) override;
 
           private:
+            ${indent(readerLocalTypes.join("\n\n"), 12)}
+
             ${name}* _pObject;
             ${indent(
               properties
@@ -93,9 +101,14 @@ function generate(options, schema) {
   const readerHeaderOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.h");
   fs.writeFileSync(readerHeaderOutputPath, unindent(readerHeader), "utf-8");
 
+  const readerLocalTypesImpl = lodash.uniq(
+    lodash.flatten(properties.map((property) => property.readerLocalTypesImpl))
+  );
+
   const readerImpl = `
         #include "${name}JsonHandler.h"
         #include <cassert>
+        #include <string>
 
         using namespace CesiumGltf;
 
@@ -118,6 +131,8 @@ function generate(options, schema) {
 
           return this->${base}ObjectKey(str, *this->_pTextureInfo);
         }
+
+        ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
   `;
 
   const readerSourceOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.cpp");

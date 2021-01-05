@@ -6,6 +6,7 @@ const { result } = require("lodash");
 function resolveProperty(
   schemaCache,
   nameMapping,
+  parentName,
   propertyName,
   propertyDetails
 ) {
@@ -18,6 +19,7 @@ function resolveProperty(
     return resolveArray(
       schemaCache,
       nameMapping,
+      parentName,
       propertyName,
       propertyDetails
     );
@@ -58,6 +60,7 @@ function resolveProperty(
     return resolveDictionary(
       schemaCache,
       nameMapping,
+      parentName,
       propertyName,
       propertyDetails
     );
@@ -69,6 +72,7 @@ function resolveProperty(
     return resolveEnum(
       schemaCache,
       nameMapping,
+      parentName,
       propertyName,
       propertyDetails
     );
@@ -97,6 +101,7 @@ function resolveProperty(
     const nested = resolveProperty(
       schemaCache,
       nameMapping,
+      parentName,
       propertyName,
       propertyDetails.allOf[0]
     );
@@ -117,18 +122,6 @@ function toPascalCase(name) {
   return name[0].toUpperCase() + name.substr(1);
 }
 
-function createEnum(enumDetails) {
-  if (!enumDetails.enum || enumDetails.enum.length === 0) {
-    return undefined;
-  }
-
-  if (typeof enumDetails.enum[0] === "string") {
-    return enumDetails.enum[0];
-  } else {
-    return `${enumDetails.description} = ${enumDetails.enum[0]}`;
-  }
-}
-
 function propertyDefaults(propertyName, propertyDetails) {
   return {
     name: propertyName,
@@ -139,15 +132,17 @@ function propertyDefaults(propertyName, propertyDetails) {
     schemas: [],
     localTypes: [],
     readerLocalTypes: [],
+    readerLocalTypesImpl: [],
     briefDoc: propertyDetails.description,
     fullDoc: propertyDetails.gltf_detailedDescription,
   };
 }
 
-function resolveArray(schemaCache, nameMapping, propertyName, propertyDetails) {
+function resolveArray(schemaCache, nameMapping, parentName, propertyName, propertyDetails) {
   const itemProperty = resolveProperty(
     schemaCache,
     nameMapping,
+    parentName,
     propertyName + ".items",
     propertyDetails.items
   );
@@ -168,10 +163,11 @@ function resolveArray(schemaCache, nameMapping, propertyName, propertyDetails) {
   };
 }
 
-function resolveDictionary(schemaCache, nameMapping, propertyName, propertyDetails) {
+function resolveDictionary(schemaCache, nameMapping, parentName, propertyName, propertyDetails) {
   const additional = resolveProperty(
     schemaCache,
     nameMapping,
+    parentName,
     propertyName + ".additionalProperties",
     propertyDetails.additionalProperties
   );
@@ -192,8 +188,14 @@ function resolveDictionary(schemaCache, nameMapping, propertyName, propertyDetai
   };
 }
 
-function resolveEnum(schemaCache, nameMapping, propertyName, propertyDetails) {
+function resolveEnum(schemaCache, nameMapping, parentName, propertyName, propertyDetails) {
+  if (!propertyDetails.anyOf || propertyDetails.anyOf.length === 0 || !propertyDetails.anyOf[0].enum || propertyDetails.anyOf[0].enum.length === 0) {
+    return undefined;
+  }
+
   const enumName = toPascalCase(propertyName);
+
+  const readerTypes = createEnumReaderType(enumName, propertyName, propertyDetails);
 
   return {
     ...propertyDefaults(propertyName, propertyDetails),
@@ -211,10 +213,71 @@ function resolveEnum(schemaCache, nameMapping, propertyName, propertyDetails) {
       `)
     ],
     type: enumName,
-    readerLocalTypes: [
-      "// TODO: enum handler"
-    ],
-    readerType: `${enumName}JsonHandler`
+    readerLocalTypes: readerTypes,
+    readerLocalTypesImpl: createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDetails),
+    readerType: readerTypes.length > 0 ? `${enumName}JsonHandler` : "IntegerJsonHandler<int32_t>"
   };
 }
+
+function createEnum(enumDetails) {
+  if (!enumDetails.enum || enumDetails.enum.length === 0) {
+    return undefined;
+  }
+
+  if (enumDetails.type === "integer") {
+    return `${enumDetails.description} = ${enumDetails.enum[0]}`;
+  } else {
+    return enumDetails.enum[0];
+  }
+}
+
+function createEnumReaderType(enumName, propertyName, propertyDetails) {
+  if (propertyDetails.anyOf[0].type === "integer") {
+    // No special reader needed for integer enums.
+    return [];
+  }
+
+  return unindent(`
+    class ${enumName}JsonHandler : public JsonHandler {
+    public:
+      void reset(JsonHandler* pParent, ${enumName}* pEnum);
+      virtual JsonHandler* String(const char* str, size_t length, bool copy) override;
+
+    private:
+      ${enumName}* _pEnum = nullptr;
+    };
+  `);
+}
+
+function createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDetails) {
+  if (propertyDetails.anyOf[0].type === "integer") {
+    // No special reader needed for integer enums.
+    return [];
+  }
+
+  return unindent(`
+    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(JsonHandler* pParent, ${enumName}* pEnum) {
+      JsonHandler::reset(pParent);
+      this->_pEnum = pEnum;
+    }
+
+    JsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::String(const char* str, size_t length, bool copy) {
+      using namespace std::string_literals;
+
+      assert(this->_pEnum);
+
+      ${indent(
+        propertyDetails.anyOf
+          .map((e) => e.enum && e.enum[0] !== undefined ? `if ("${e.enum[0]}"s == str) *this->_pEnum = ${enumName}::${e.enum[0]};` : undefined)
+          .filter(s => s !== undefined)
+          .join("\nelse "),
+        6
+      )}
+      else return nullptr;
+
+      return this->parent();
+    }
+  `);
+}
+
 module.exports = resolveProperty;
