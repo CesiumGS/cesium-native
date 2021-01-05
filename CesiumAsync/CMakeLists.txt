@@ -16,10 +16,12 @@ target_sources(
 target_include_directories(
     CesiumAsync
     SYSTEM PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/sqlite3
+
     PUBLIC
         include
     PRIVATE
         src
 )
 
-target_link_libraries(CesiumAsync PUBLIC Async++)
+target_link_libraries(CesiumAsync PUBLIC Async++ sqlite3)
