@@ -1,107 +1,220 @@
 const getNameFromSchema = require("./getNameFromSchema");
 const unindent = require("./unindent");
 const indent = require("./indent");
+const { result } = require("lodash");
 
-function resolveProperty(schemaCache, nameMapping, propertyName, propertyDetails) {
-    if (Object.keys(propertyDetails).length === 0) {
-        // Ignore totally empty properties.
-        return undefined;
-    }
+function resolveProperty(
+  schemaCache,
+  nameMapping,
+  propertyName,
+  propertyDetails
+) {
+  if (Object.keys(propertyDetails).length === 0) {
+    // Ignore totally empty properties.
+    return undefined;
+  }
 
-    const result = {
-        headers: [],
-        type: "",
-        name: propertyName,
-        handlerType: "",
-        schemas: [],
-        localTypes: [],
-        briefDoc: propertyDetails.description,
-        fullDoc: propertyDetails.gltf_detailedDescription
+  if (propertyDetails.type == "array") {
+    return resolveArray(
+      schemaCache,
+      nameMapping,
+      propertyName,
+      propertyDetails
+    );
+  } else if (propertyDetails.type == "integer") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      headers: ["<cstdint>"],
+      type: "int64_t",
+      readerHeaders: [`"IntegerJsonHandler.h"`],
+      readerType: "IntegerJsonHandler<int64_t>"
     };
-
-    if (propertyDetails.type == "array") {
-        result.headers.push("<vector>");
-        
-        const itemProperty = resolveProperty(schemaCache, nameMapping, propertyName + ".items", propertyDetails.items);
-        if (!itemProperty) {
-            return undefined;
-        }
-
-        result.headers.push(...itemProperty.headers);
-        result.schemas.push(...itemProperty.schemas);
-        result.localTypes.push(...itemProperty.localTypes);
-        result.type = `std::vector<${itemProperty.type}>`;
-    } else if (propertyDetails.type == "integer") {
-        result.headers.push("<cstdint>");
-        result.type = "int64_t";
-    } else if (propertyDetails.type == "number") {
-        result.type = "double";
-    } else if (propertyDetails.type == "boolean") {
-        result.type = "bool";
-    } else if (propertyDetails.type == "string") {
-        result.headers.push("<string>");
-        result.type = "std::string";
-    } else if  (propertyDetails.type == "object" && propertyDetails.additionalProperties) {
-        const additionalPropertiesProperty = resolveProperty(schemaCache, nameMapping, propertyName + ".additionalProperties", propertyDetails.additionalProperties);
-        if (!additionalPropertiesProperty) {
-            return undefined;
-        }
-
-        result.headers.push(...additionalPropertiesProperty.headers);
-        result.schemas.push(...additionalPropertiesProperty.schemas);
-        result.localTypes.push(...additionalPropertiesProperty.localTypes);
-
-        result.headers.push("<unordered_map>");
-        result.type = `std::unordered_map<std::string, ${additionalPropertiesProperty.type}>`;
-    } else if (propertyDetails.anyOf && propertyDetails.anyOf.length > 0 && propertyDetails.anyOf[0].enum) {
-        const enumName = toPascalCase(propertyName);
-        result.localTypes.push(unindent(`
-            enum class ${toPascalCase(propertyName)} {
-                ${indent(propertyDetails.anyOf.map(e => createEnum(e)).filter(e => e !== undefined).join(",\n\n"), 16)}
-            };`
-        ));
-        result.type = enumName;
-    } else if (propertyDetails.$ref) {
-        const itemSchema = schemaCache.load(propertyDetails.$ref);
-        if (itemSchema.title === "glTF Id") {
-            result.headers.push("<cstdint>");
-            result.type = "int32_t";
-        } else {
-            result.type = getNameFromSchema(nameMapping, itemSchema);
-            result.headers.push(`"CesiumGltf/${result.type}.h"`);
-            result.schemas.push(itemSchema);
-        }
-    } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
-        const nested = resolveProperty(schemaCache, nameMapping, propertyName, propertyDetails.allOf[0]);
-        nested.briefDoc = propertyDetails.description;
-        nested.fullDoc = propertyDetails.gltf_detailedDescription;
-        return nested;
+  } else if (propertyDetails.type == "number") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: "double",
+      readerHeaders: [`"DoubleJsonHandler.h"`],
+      readerType: "DoubleJsonHandler",
+    };
+  } else if (propertyDetails.type == "boolean") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: "bool",
+      readerHeaders: `"BoolJsonHandler.h"`,
+      readerType: "BoolJsonHandler",
+    };
+  } else if (propertyDetails.type == "string") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: "bool",
+      headers: ["<string>"],
+      readerHeaders: [`"StringJsonHandler.h"`],
+      readerType: "StringJsonHandler",
+    };
+  } else if (
+    propertyDetails.type == "object" &&
+    propertyDetails.additionalProperties
+  ) {
+    return resolveDictionary(
+      schemaCache,
+      nameMapping,
+      propertyName,
+      propertyDetails
+    );
+  } else if (
+    propertyDetails.anyOf &&
+    propertyDetails.anyOf.length > 0 &&
+    propertyDetails.anyOf[0].enum
+  ) {
+    return resolveEnum(
+      schemaCache,
+      nameMapping,
+      propertyName,
+      propertyDetails
+    );
+  } else if (propertyDetails.$ref) {
+    const itemSchema = schemaCache.load(propertyDetails.$ref);
+    if (itemSchema.title === "glTF Id") {
+      return {
+        ...propertyDefaults(propertyName, propertyDetails),
+        type: "bool",
+        headers: ["<cstdint>"],
+        readerHeaders: [`"IntegerJsonHandler.h"`],
+        readerType: "IntegerJsonHandler<int32_t>",
+      };
     } else {
-        console.warn(`Skipping unhandled property ${propertyName}.`);
-        return undefined;    
+      const type = getNameFromSchema(nameMapping, itemSchema);
+      return {
+        ...propertyDefaults(propertyName, propertyDetails),
+        type: getNameFromSchema(nameMapping, itemSchema),
+        headers: [`"CesiumGltf/${type}.h"`],
+        readerType: `${type}JsonHandler`,
+        readerHeaders: [`"${type}JsonHandler.h"`],
+        schemas: [itemSchema]
+      };
     }
-
-    return result;
+  } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
+    const nested = resolveProperty(
+      schemaCache,
+      nameMapping,
+      propertyName,
+      propertyDetails.allOf[0]
+    );
+    nested.briefDoc = propertyDetails.description;
+    nested.fullDoc = propertyDetails.gltf_detailedDescription;
+    return nested;
+  } else {
+    console.warn(`Skipping unhandled property ${propertyName}.`);
+    return undefined;
+  }
 }
 
 function toPascalCase(name) {
-    if (name.length === 0) {
-        return name;
-    }
+  if (name.length === 0) {
+    return name;
+  }
 
-    return name[0].toUpperCase() + name.substr(1);
+  return name[0].toUpperCase() + name.substr(1);
 }
 
 function createEnum(enumDetails) {
-    if (!enumDetails.enum || enumDetails.enum.length === 0) {
-        return undefined;
-    }
+  if (!enumDetails.enum || enumDetails.enum.length === 0) {
+    return undefined;
+  }
 
-    if (typeof enumDetails.enum[0] === 'string') {
-        return enumDetails.enum[0];
-    } else {
-        return `${enumDetails.description} = ${enumDetails.enum[0]}`;
-    }
+  if (typeof enumDetails.enum[0] === "string") {
+    return enumDetails.enum[0];
+  } else {
+    return `${enumDetails.description} = ${enumDetails.enum[0]}`;
+  }
 }
 
+function propertyDefaults(propertyName, propertyDetails) {
+  return {
+    name: propertyName,
+    headers: [],
+    readerHeaders: [],
+    type: "",
+    readerType: "",
+    schemas: [],
+    localTypes: [],
+    readerLocalTypes: [],
+    briefDoc: propertyDetails.description,
+    fullDoc: propertyDetails.gltf_detailedDescription,
+  };
+}
+
+function resolveArray(schemaCache, nameMapping, propertyName, propertyDetails) {
+  const itemProperty = resolveProperty(
+    schemaCache,
+    nameMapping,
+    propertyName + ".items",
+    propertyDetails.items
+  );
+
+  if (!itemProperty) {
+    return undefined;
+  }
+
+  return {
+    ...propertyDefaults(propertyName, propertyDetails),
+    name: propertyName,
+    headers: ["<vector>", ...itemProperty.headers],
+    schemas: itemProperty.schemas,
+    localTypes: itemProperty.localTypes,
+    type: `std::vector<${itemProperty.type}>`,
+    readerHeaders: [`"ArrayJsonHandler.h"`, ...itemProperty.readerHeaders],
+    readerType: `ArrayJsonHandler<${itemProperty.type}>`
+  };
+}
+
+function resolveDictionary(schemaCache, nameMapping, propertyName, propertyDetails) {
+  const additional = resolveProperty(
+    schemaCache,
+    nameMapping,
+    propertyName + ".additionalProperties",
+    propertyDetails.additionalProperties
+  );
+
+  if (!additional) {
+    return undefined;
+  }
+
+  return {
+    ...propertyDefaults(propertyName, propertyDetails),
+    name: propertyName,
+    headers: ["<unordered_map>", ...additional.headers],
+    schema: additional.schemas,
+    localTypes: additional.localTypes,
+    type: `std::unordered_map<std::string, ${additional.type}>`,
+    readerHeaders: [`"DictionaryJsonHandler.h"`, ...additional.readerHeaders],
+    readerType: `DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`
+  };
+}
+
+function resolveEnum(schemaCache, nameMapping, propertyName, propertyDetails) {
+  const enumName = toPascalCase(propertyName);
+
+  return {
+    ...propertyDefaults(propertyName, propertyDetails),
+    localTypes: [
+      unindent(`
+        enum class ${toPascalCase(propertyName)} {
+            ${indent(
+              propertyDetails.anyOf
+                .map((e) => createEnum(e))
+                .filter((e) => e !== undefined)
+                .join(",\n\n"),
+              8
+            )}
+        };
+      `)
+    ],
+    type: enumName,
+    readerLocalTypes: [
+      "// TODO: enum handler"
+    ],
+    readerType: `${enumName}JsonHandler`
+  };
+}
 module.exports = resolveProperty;

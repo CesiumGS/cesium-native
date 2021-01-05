@@ -12,7 +12,13 @@ const argv = yargs.options({
   },
   output: {
     alias: "o",
-    description: "The output directory for the generated files.",
+    description: "The output directory for the generated glTF class files.",
+    demandOption: true,
+    type: "string"
+  },
+  readerOutput: {
+    alias: "r",
+    description: "The output directory for the generated reader files.",
     demandOption: true,
     type: "string"
   }
@@ -27,6 +33,13 @@ const nameMapping = {
 const schemaCache = new SchemaCache(argv.schema);
 const modelSchema = schemaCache.load("glTF.schema.json");
 
+const options = {
+  schemaCache,
+  nameMapping,
+  outputDir: argv.output,
+  readerOutputDir: argv.readerOutput
+};
+
 const processed = {};
 
 let schemas = [modelSchema];
@@ -36,5 +49,5 @@ while (schemas.length > 0) {
     continue;
   }
   processed[schema.title] = true;
-  schemas.push(...generate(schemaCache, nameMapping, argv.output, schema));
+  schemas.push(...generate(options, schema));
 }
