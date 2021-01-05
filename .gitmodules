@@ -28,3 +28,6 @@
 [submodule "extern/rapidjson"]
 	path = extern/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
+[submodule "extern/glTF"]
+	path = extern/glTF
+	url = https://github.com/KhronosGroup/glTF.git
