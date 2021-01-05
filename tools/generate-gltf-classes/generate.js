@@ -42,7 +42,7 @@ function generate(schemaCache, nameMapping, outputDir, schema) {
             struct ${name} {
                 ${indent(localTypes.join("\n\n"), 16)}
 
-                ${properties.map(property => `${property.type} ${property.name};`).join("\n\n                ")}
+                ${indent(properties.map(property => formatProperty(property)).join("\n\n"), 16)}
             };
         }
     `;
@@ -55,41 +55,19 @@ function generate(schemaCache, nameMapping, outputDir, schema) {
   return lodash.uniq(lodash.flatten(properties.map(property => property.schemas)));
 }
 
-function generateProperty(
-  schemaCache,
-  nameMapping,
-  propertyName,
-  propertyDetails
-) {
-  if (Object.keys(propertyDetails).length === 0) {
-    return undefined;
+function formatProperty(property) {
+  let result = "";
+
+  result += `/**\n * @brief ${property.briefDoc || property.name}\n`;
+  if (property.fullDoc) {
+    result += ` *\n * ${property.fullDoc.split("\n").join("\n * ")}`;
   }
 
-  const type = getPropertyType(schemaCache, nameMapping, propertyDetails);
+  result += ` */\n`;
 
-  return type + " " + propertyName + ";";
-}
+  result += `${property.type} ${property.name};`;
 
-function getPropertyType(schemaCache, nameMapping, propertyDetails) {
-  if (propertyDetails.type == "array") {
-    return `std::vector<${getPropertyType(
-      schemaCache,
-      nameMapping,
-      propertyDetails.items
-    )}>`;
-  } else if (propertyDetails.type == "string") {
-    return "std::string";
-  } else if (propertyDetails.$ref) {
-    const itemSchema = schemaCache.load(propertyDetails.$ref);
-    if (itemSchema.title === "glTF Id") {
-      return "int32_t";
-    }
-    return getNameFromSchema(nameMapping, itemSchema);
-  } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
-    return getPropertyType(schemaCache, nameMapping, propertyDetails.allOf[0]);
-  }
-
-  return "unknown";
+  return result;
 }
 
 module.exports = generate;

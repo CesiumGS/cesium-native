@@ -14,7 +14,9 @@ function resolveProperty(schemaCache, nameMapping, propertyName, propertyDetails
         name: propertyName,
         handlerType: "",
         schemas: [],
-        localTypes: []
+        localTypes: [],
+        briefDoc: propertyDetails.description,
+        fullDoc: propertyDetails.gltf_detailedDescription
     };
 
     if (propertyDetails.type == "array") {
@@ -70,7 +72,10 @@ function resolveProperty(schemaCache, nameMapping, propertyName, propertyDetails
             result.schemas.push(itemSchema);
         }
     } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
-        return resolveProperty(schemaCache, nameMapping, propertyName, propertyDetails.allOf[0]);
+        const nested = resolveProperty(schemaCache, nameMapping, propertyName, propertyDetails.allOf[0]);
+        nested.briefDoc = propertyDetails.description;
+        nested.fullDoc = propertyDetails.gltf_detailedDescription;
+        return nested;
     } else {
         console.warn(`Skipping unhandled property ${propertyName}.`);
         return undefined;    

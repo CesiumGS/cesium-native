@@ -14,7 +14,7 @@
             "program": "${workspaceFolder}\\index.js",
             "args": [
                 "--schema", "../../extern/glTF/specification/2.0/schema/",
-                "--output", "test"
+                "--output", "test_output"
             ]
         }
     ]

@@ -15,9 +15,9 @@ function unindent(indentedText) {
     }
   
     const regex = new RegExp("^(" + spaces + ")", "gm");
-    const unindented = indentedText.substr(skip).replace(regex, "");
+    const lastLine = new RegExp("^\\s+$", "gm");
+    const unindented = indentedText.substr(skip).replace(regex, "").replace(lastLine, "");
     return unindented;
   }
   
   module.exports = unindent;
-  
