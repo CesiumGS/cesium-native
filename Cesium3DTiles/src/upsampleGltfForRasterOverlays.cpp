@@ -236,7 +236,7 @@ namespace Cesium3DTiles {
                 continue;
             }
 
-            if (attribute.first.find("_CESIUM_OVERLAY_") == 0) {
+            if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
                 // Do not include _CESIUMOVERLAY_*, it will be generated later.
                 toRemove.push_back(attribute.first);
                 continue;
