@@ -1,7 +1,7 @@
 const getNameFromSchema = require("./getNameFromSchema");
 const unindent = require("./unindent");
 const indent = require("./indent");
-const { result } = require("lodash");
+const makeIdentifier = require("./makeIdentifier");
 
 function resolveProperty(
   schemaCache,
@@ -48,7 +48,7 @@ function resolveProperty(
   } else if (propertyDetails.type == "string") {
     return {
       ...propertyDefaults(propertyName, propertyDetails),
-      type: "bool",
+      type: "std::string",
       headers: ["<string>"],
       readerHeaders: [`"StringJsonHandler.h"`],
       readerType: "StringJsonHandler",
@@ -81,7 +81,7 @@ function resolveProperty(
     if (itemSchema.title === "glTF Id") {
       return {
         ...propertyDefaults(propertyName, propertyDetails),
-        type: "bool",
+        type: "int32_t",
         headers: ["<cstdint>"],
         readerHeaders: [`"IntegerJsonHandler.h"`],
         readerType: "IntegerJsonHandler<int32_t>",
@@ -207,7 +207,7 @@ function resolveEnum(schemaCache, nameMapping, parentName, propertyName, propert
                 .map((e) => createEnum(e))
                 .filter((e) => e !== undefined)
                 .join(",\n\n"),
-              8
+              12
             )}
         };
       `)
@@ -225,9 +225,9 @@ function createEnum(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return `${enumDetails.description} = ${enumDetails.enum[0]}`;
+    return `${makeIdentifier(enumDetails.description)} = ${enumDetails.enum[0]}`;
   } else {
-    return enumDetails.enum[0];
+    return makeIdentifier(enumDetails.enum[0]);
   }
 }
 
@@ -268,7 +268,7 @@ function createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDe
 
       ${indent(
         propertyDetails.anyOf
-          .map((e) => e.enum && e.enum[0] !== undefined ? `if ("${e.enum[0]}"s == str) *this->_pEnum = ${enumName}::${e.enum[0]};` : undefined)
+          .map((e) => e.enum && e.enum[0] !== undefined ? `if ("${e.enum[0]}"s == str) *this->_pEnum = ${enumName}::${makeIdentifier(e.enum[0])};` : undefined)
           .filter(s => s !== undefined)
           .join("\nelse "),
         6

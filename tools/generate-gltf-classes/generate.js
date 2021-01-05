@@ -29,7 +29,7 @@ function generate(options, schema) {
   );
 
   const headers = lodash.uniq(
-    lodash.flatten(properties.map((property) => property.headers))
+    [`"CesiumGltf/${base}Object.h"`, ...lodash.flatten(properties.map((property) => property.headers))]
   );
   headers.sort();
 
@@ -61,7 +61,7 @@ function generate(options, schema) {
   fs.writeFileSync(headerOutputPath, unindent(header), "utf-8");
 
   const readerHeaders = lodash.uniq(
-    lodash.flatten(properties.map((property) => property.readerHeaders))
+    [`"${base}ObjectJsonHandler.h"`, ...lodash.flatten(properties.map((property) => property.readerHeaders))]
   );
   readerHeaders.sort();
 
@@ -107,13 +107,14 @@ function generate(options, schema) {
 
   const readerImpl = `
         #include "${name}JsonHandler.h"
+        #include "CesiumGltf/${name}.h"
         #include <cassert>
         #include <string>
 
         using namespace CesiumGltf;
 
         void ${name}JsonHandler::reset(JsonHandler* pParent, ${name}* pObject) {
-          ${base}JsonHandler::reset(pParent);
+          ${base}ObjectJsonHandler::reset(pParent);
           this->_pObject = pObject;
         }
 
@@ -129,7 +130,7 @@ function generate(options, schema) {
             10
           )}
 
-          return this->${base}ObjectKey(str, *this->_pTextureInfo);
+          return this->${base}ObjectKey(str, *this->_pObject);
         }
 
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
