@@ -12,12 +12,11 @@ function generate(options, schema) {
   const name = getNameFromSchema(nameMapping, schema);
 
   console.log(`Generating ${name}`);
-  // let baseSpecifier = "";
-  // if (modelSchema.allOf && modelSchema.allOf.length > 0 && modelSchema.allOf[0].$ref) {
-  //     switch (modelSchema.allOf[0].$ref) {
-  //         case ""
-  //     }
-  // }
+
+  let base = "Extensible";
+  if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref && schema.allOf[0].$ref === "glTFChildOfRootProperty.schema.json") {
+    base = "Named";
+  }
 
   const properties = Object.keys(schema.properties)
     .map((key) =>
@@ -43,7 +42,7 @@ function generate(options, schema) {
             /**
              * @brief ${schema.description}
              */
-            struct ${name} {
+            struct ${name} final : public ${base}Object {
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
@@ -72,7 +71,7 @@ function generate(options, schema) {
         ${readerHeaders.map((header) => `#include ${header}`).join("\n")}
 
         namespace CesiumGltf {
-          class ${name}JsonHandler : public ObjectJsonHandler {
+          class ${name}JsonHandler final : public ${base}ObjectJsonHandler {
           public:
             void reset(JsonHandler* pHandler, ${name}* pObject);
             virtual JsonHandler* Key(const char* str, size_t length, bool copy) override;
@@ -93,6 +92,36 @@ function generate(options, schema) {
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
   const readerHeaderOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.h");
   fs.writeFileSync(readerHeaderOutputPath, unindent(readerHeader), "utf-8");
+
+  const readerImpl = `
+        #include "${name}JsonHandler.h"
+        #include <cassert>
+
+        using namespace CesiumGltf;
+
+        void ${name}JsonHandler::reset(JsonHandler* pParent, ${name}* pObject) {
+          ${base}JsonHandler::reset(pParent);
+          this->_pObject = pObject;
+        }
+
+        JsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+          using namespace std::string_literals;
+
+          assert(this->_pObject);
+
+          ${indent(
+            properties
+              .map((property) => formatReaderPropertyImpl(property))
+              .join("\n"),
+            10
+          )}
+
+          return this->${base}ObjectKey(str, *this->_pTextureInfo);
+        }
+  `;
+
+  const readerSourceOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.cpp");
+  fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
 
   return lodash.uniq(
     lodash.flatten(properties.map((property) => property.schemas))
@@ -116,6 +145,10 @@ function formatProperty(property) {
 
 function formatReaderProperty(property) {
   return `${property.readerType} _${property.name};`
+}
+
+function formatReaderPropertyImpl(property) {
+  return `if ("${property.name}"s == str) return property(this->_${property.name}, this->_pObject->${property.name});`;
 }
 
 module.exports = generate;
