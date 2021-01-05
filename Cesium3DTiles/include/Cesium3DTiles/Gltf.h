@@ -15,7 +15,7 @@ namespace Cesium3DTiles {
      * instances, and for processing the mesh primitives that appear in the resulting 
      * models.
      */
-    class CESIUM3DTILES_API Gltf {
+    class CESIUM3DTILES_API Gltf final {
 
     public:
 

@@ -15,7 +15,7 @@ namespace CesiumGeospatial {
      * 
      * @see CesiumGeometry::Rectangle
      */
-    class CESIUMGEOSPATIAL_API GlobeRectangle {
+    class CESIUMGEOSPATIAL_API GlobeRectangle final {
     public:
         /**
          * @brief Constructs a new instance.

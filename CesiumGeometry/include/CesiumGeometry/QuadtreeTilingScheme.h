@@ -11,7 +11,7 @@ namespace CesiumGeometry {
     /**
      * @brief Defines how a rectangular region is divided into quadtree tiles.
      */
-    class CESIUMGEOMETRY_API QuadtreeTilingScheme {
+    class CESIUMGEOMETRY_API QuadtreeTilingScheme final {
     public:
         /**
          * @brief Constructs a new instance.

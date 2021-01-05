@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
     /**
      * @brief A collection of rectangular areas cut out (not shown) from a {@link Tileset} with a {@link RasterOverlay}.
      */
-    class CESIUM3DTILES_API RasterOverlayCutoutCollection {
+    class CESIUM3DTILES_API RasterOverlayCutoutCollection final {
     public:
         RasterOverlayCutoutCollection() noexcept;
 

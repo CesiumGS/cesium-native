@@ -48,7 +48,7 @@ namespace Cesium3DTiles {
      * by the {@link Tile::getContentBoundingVolume} function.
      * 
      */
-    class CESIUM3DTILES_API Tile {
+    class CESIUM3DTILES_API Tile final {
     public:
         /**
          * The current state of this tile in the loading process.

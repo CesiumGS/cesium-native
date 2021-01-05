@@ -1,12 +1,13 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Json.h"
 #include "tinyxml2.h"
 #include "Uri.h"
 
@@ -14,11 +15,12 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
-    class TileMapServiceTileProvider : public RasterOverlayTileProvider {
+    class TileMapServiceTileProvider final : public RasterOverlayTileProvider {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
             const AsyncSystem& asyncSystem,
+            std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -34,6 +36,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                credit,
                 pPrepareRendererResources,
                 projection,
                 tilingScheme,
@@ -62,7 +65,7 @@ namespace Cesium3DTiles {
                 true
             );
 
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, this->getAsyncSystem().requestAsset(url, this->_headers));
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, std::vector<Credit>(), this->getAsyncSystem().requestAsset(url, this->_headers));
         }
     
     private:
@@ -116,17 +119,25 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
 
         pOwner = pOwner ? pOwner : this;
+        
+        std::optional<Credit> credit = this->_options.credit ?
+            std::make_optional(pCreditSystem->createCredit(this->_options.credit.value())) :
+            std::nullopt;
 
         return asyncSystem.requestAsset(xmlUrl, this->_headers).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            credit,
             pPrepareRendererResources,
+            pLogger,
             options = this->_options,
             url = this->_url,
             headers = this->_headers
@@ -138,17 +149,16 @@ namespace Cesium3DTiles {
             tinyxml2::XMLDocument doc;
             tinyxml2::XMLError error = doc.Parse(reinterpret_cast<const char*>(data.data()), data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
-                // TODO: report error
+                SPDLOG_LOGGER_ERROR(pLogger, "Could not parse tile map service XML.");
                 return nullptr;
             }
 
             tinyxml2::XMLElement* pRoot = doc.RootElement();
             if (!pRoot) {
-                // TODO: report error
+                SPDLOG_LOGGER_ERROR(pLogger, "Tile map service XML document does not have a root element.");
                 return nullptr;
             }
 
-            std::string credit = options.credit.value_or("");
             // CesiumGeospatial::Ellipsoid ellipsoid = this->_options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
 
             tinyxml2::XMLElement* pTileFormat = pRoot->FirstChildElement("TileFormat");
@@ -235,6 +245,7 @@ namespace Cesium3DTiles {
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
                 asyncSystem,
+                credit,
                 pPrepareRendererResources,
                 projection,
                 tilingScheme,

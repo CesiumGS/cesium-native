@@ -8,6 +8,7 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -16,10 +17,11 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates {@link TileContentLoadResult} from glTF data.
      */
-    class CESIUM3DTILES_API GltfContent {
+    class CESIUM3DTILES_API GltfContent final {
     public:
         /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,

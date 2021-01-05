@@ -10,12 +10,12 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include "CesiumUtility/Json.h"
 #include <atomic>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
+#include <rapidjson/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -37,6 +37,11 @@ namespace Cesium3DTiles {
      * @brief Additional options for configuring a {@link Tileset}.
      */
     struct CESIUM3DTILES_API TilesetOptions {
+        /**
+         * @brief A credit text for this tileset, if needed. 
+         */
+        std::optional<std::string> credit;
+
         /**
          * @brief The maximum number of pixels of error when rendering this tileset.
          * This is used to select an appropriate level-of-detail.
@@ -142,7 +147,7 @@ namespace Cesium3DTiles {
      * @brief A <a href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D Tiles tileset</a>,
      * used for streaming massive heterogeneous 3D geospatial datasets.
      */
-    class CESIUM3DTILES_API Tileset {
+    class CESIUM3DTILES_API Tileset final {
     public:
         /**
          * @brief Constructs a new instance with a given `tileset.json` URL.
@@ -263,7 +268,7 @@ namespace Cesium3DTiles {
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
          * @param context The context of the new tiles.
          */
-        void loadTilesFromJson(Tile& rootTile, const nlohmann::json& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
+        void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
 
         /**
          * @brief Request to load the content for the given tile.
@@ -341,8 +346,8 @@ namespace Cesium3DTiles {
             const std::vector<std::pair<std::string, std::string>>& headers = std::vector<std::pair<std::string, std::string>>(),
             std::unique_ptr<TileContext>&& pContext = nullptr
         );
-        static void _createTile(Tile& tile, const nlohmann::json& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context);
-        static void _createTerrainTile(Tile& tile, const nlohmann::json& layerJson, TileContext& context);
+        static void _createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context);
+        static void _createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context);
         FailedTileAction _onIonTileFailed(Tile& failedTile);
 
         struct FrameState {
@@ -366,6 +371,8 @@ namespace Cesium3DTiles {
         TilesetExternals _externals;
         CesiumAsync::AsyncSystem _asyncSystem;
 
+        std::optional<Credit> _credit;
+
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;
         std::optional<std::string> _ionAccessToken;
@@ -388,7 +395,7 @@ namespace Cesium3DTiles {
              */
             double priority;
 
-            bool operator<(const LoadRecord& rhs) {
+            bool operator<(const LoadRecord& rhs) const {
                 return this->priority < rhs.priority;
             }
         };

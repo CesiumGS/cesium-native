@@ -8,7 +8,7 @@ namespace CesiumUtility {
     /**
      * @brief Mathematical constants and functions
      */
-    class CESIUMUTILITY_API Math {
+    class CESIUMUTILITY_API Math final {
     public:
 
         /** @brief 0.1 */

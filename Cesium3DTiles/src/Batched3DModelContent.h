@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/TileContentLoadResult.h"
 #include <memory>
 #include <string>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -15,10 +16,11 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates a {@link TileContentLoadResult} from B3DM data.
      */
-    class CESIUM3DTILES_API Batched3DModelContent {
+    class CESIUM3DTILES_API Batched3DModelContent final {
     public:
         /** @copydoc ExternalTilesetContent::load */
         static std::unique_ptr<TileContentLoadResult> load(
+            std::shared_ptr<spdlog::logger> pLogger,
             const TileContext& context,
             const TileID& tileID,
             const BoundingVolume& tileBoundingVolume,

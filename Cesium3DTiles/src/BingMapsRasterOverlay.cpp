@@ -2,13 +2,35 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Projection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Json.h"
+#include "CesiumUtility/Math.h"
 #include "Uri.h"
+#include "JsonHelpers.h"
+#include <rapidjson/document.h>
+#include <rapidjson/pointer.h>
+#include <vector>
+#include <optional>
+#include <utility>
+
+namespace {
+    struct CoverageArea {
+        CesiumGeospatial::GlobeRectangle rectangle;
+        uint32_t zoomMin;
+        uint32_t zoomMax;
+    };
+
+    struct CreditAndCoverageAreas {
+        Cesium3DTiles::Credit credit;
+        std::vector<CoverageArea> coverageAreas;
+    };
+}
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -27,11 +49,15 @@ namespace Cesium3DTiles {
     const std::string BingMapsStyle::ORDNANCE_SURVEY = "OrdnanceSurvey";
     const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 
-    class BingMapsTileProvider : public RasterOverlayTileProvider {
+    const std::string BingMapsRasterOverlay::BING_LOGO_HTML = "<a href=\"http://www.bing.com\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAAbCAMAAABm83BQAAAASFBMVEVHcEz///////////////////////////////////////////////////////////////////////////////////////////8FevL4AAAAF3RSTlMAkOregA8v82/RHwZAxGBLn6q3ViY5GFKj09UAAAKPSURBVHja7dXZbqswEAZg77vBCzDv/6bH9oi4CVHUKGp7c/4L7IDxp4xHgnChyN8FAKw4yB8Fegy55L/+hzpNLXSRfW60+WVdwwgLbZ4h/7qunKoRmCTEGfeDun+q96J7ButPn3tM4aneEu91p/w5leqxIHLf+1Ovdnne2oIiZ7wKbq48broBYFQ90z2H9obQpl9q5QBa4LYFAPhe9LmhDYJFxhWpzFpc5AXjkdmtTZUmhtmoo8MublN66scYudgedU8hkQZD0ylkyCYBLB1nEIWwmsNNL9m3lXzlqmGsV6yWNvXJDl3ktlJmLtt91iC53rouA8YaN/WSC9PCT30cgoG+WwHarj7D1LnvA9d7H0Tu9cUqg2o6FKy+FU0T9z0f4Japj9g69Tze1+DJBmhJPXXcMtkxrGPA2Nr1gD+MbTq914l9ojt5KKFhuemG9HCQxADFVXbq2J0ijSHws9OqYEvXPd7YdXuol3vd19N/6PkV2E1fkAGJN3ri1APq9Iu+RG0L5cvoOoyDvim3deoj4qrj6K46/Zae4ir7mq/6zkZJDI/ui+4yXHU85uOiz8qzF7rSEo/qa+UXi6Ms8aZLoeG5vgAnV10B83guL/SK0AZDX3FZFASj4NQXBmfo1JXbAgVYrnq/FNnLqF/oAf97wa6z40fVByF+rGCop9nwZXv8xmlDnukbAx0tpJfnHst+hCjw3AWvxyZ0L0EW6li5IXAXu16+7+YYBU7tSU077p987xNqedvWwnGuV2OoyxhU6mdLOYsrEWF0XY2M5W1sVxhr797pzHjydrQm38jQr4EZKsn7qVA+0Fc+D/ytOIedA+EDnXjD8MDfDIWYercK8oE+WuPtA8fGAWA5kA/0fwpdN1P/sv/SAAAAAElFTkSuQmCC\" title=\"Bing Imagery\"/></a>";
+
+    class BingMapsTileProvider final : public RasterOverlayTileProvider {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
             const AsyncSystem& asyncSystem,
+            Credit bingCredit,
+            const std::vector<CreditAndCoverageAreas>& perTileCredits,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const std::string& baseUrl,
             const std::string& urlTemplate,
@@ -45,6 +71,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                bingCredit,
                 pPrepareRendererResources,
                 WebMercatorProjection(),
                 QuadtreeTilingScheme(
@@ -57,14 +84,13 @@ namespace Cesium3DTiles {
                 width,
                 height
             ),
+            _credits(perTileCredits),
             _urlTemplate(urlTemplate),
             _subdomains(subdomains)
         {
             if (this->_urlTemplate.find("n=z") == std::string::npos) {
                 this->_urlTemplate = Uri::addQuery(this->_urlTemplate, "n", "z");
             }
-
-            // TODO: attribution
 
             std::string resolvedUrl = Uri::resolve(baseUrl, this->_urlTemplate);
 
@@ -93,7 +119,23 @@ namespace Cesium3DTiles {
                 return key;
             });
 
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, this->getAsyncSystem().requestAsset(url));
+            // Cesium levels start at 0, Bing levels start at 1
+            unsigned int bingTileLevel = tileID.level + 1;
+            CesiumGeospatial::GlobeRectangle tileRectangle = CesiumGeospatial::unprojectRectangleSimple(this->getProjection(), this->getTilingScheme().tileToRectangle(tileID));
+            
+            std::vector<Credit> tileCredits;
+            for (CreditAndCoverageAreas creditAndCoverageAreas : _credits) {
+                for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
+                    if (coverageArea.zoomMin <= bingTileLevel && bingTileLevel <= coverageArea.zoomMax &&
+                        coverageArea.rectangle.intersect(tileRectangle).has_value()
+                    ) {
+                        tileCredits.push_back(creditAndCoverageAreas.credit);
+                        break;
+                    }
+                }
+            }
+            
+            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, tileCredits, this->getAsyncSystem().requestAsset(url));
         }
     
     private:
@@ -117,6 +159,7 @@ namespace Cesium3DTiles {
             return quadkey;
         }
 
+        std::vector<CreditAndCoverageAreas> _credits;
         std::string _urlTemplate;
         std::vector<std::string> _subdomains;
     };
@@ -141,7 +184,9 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> BingMapsRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<CreditSystem>& pCreditSystem,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
@@ -154,34 +199,96 @@ namespace Cesium3DTiles {
         return asyncSystem.requestAsset(metadataUrl).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            pCreditSystem,
             pPrepareRendererResources,
+            pLogger,
             baseUrl = this->_url,
             culture = this->_culture
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
-            using namespace nlohmann;
-            
-            json response = json::parse(pResponse->data().begin(), pResponse->data().end());
+            rapidjson::Document response;
+            response.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
 
-            json& resource = response["/resourceSets/0/resources/0"_json_pointer];
-            if (!resource.is_object()) {
+            if (response.HasParseError()) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing Bing Maps imagery metadata, error code {} at byte offset {}", response.GetParseError(), response.GetErrorOffset());
                 return nullptr;
             }
 
-            uint32_t width = resource.value("imageWidth", 256U);
-            uint32_t height = resource.value("imageHeight", 256U);
-            uint32_t maximumLevel = resource.value("zoomMax", 30U);
+            rapidjson::Value* pResource = rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
+            if (!pResource) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Resources were not found in the Bing Maps imagery metadata response.");
+                return nullptr;
+            }
 
-            std::vector<std::string> subdomains = resource.value("imageUrlSubdomains", std::vector<std::string>());
-            std::string urlTemplate = resource.value("imageUrl", std::string());
+            uint32_t width = JsonHelpers::getUint32OrDefault(*pResource, "imageWidth", 256U);
+            uint32_t height = JsonHelpers::getUint32OrDefault(*pResource, "imageHeight", 256U);
+            uint32_t maximumLevel = JsonHelpers::getUint32OrDefault(*pResource, "zoomMax", 30U);
+
+            std::vector<std::string> subdomains = JsonHelpers::getStrings(*pResource, "imageUrlSubdomains");
+            std::string urlTemplate = JsonHelpers::getStringOrDefault(*pResource, "imageUrl", std::string());
             if (urlTemplate.empty())  {
+                SPDLOG_LOGGER_ERROR(pLogger, "Bing Maps tile imageUrl is missing or empty.");
                 return nullptr;
             }
+            
+            std::vector<CreditAndCoverageAreas> credits;
+            auto attributionsIt = pResource->FindMember("imageryProviders");
+            if (attributionsIt != pResource->MemberEnd() && attributionsIt->value.IsArray()) {
+
+                for (const rapidjson::Value& attribution : attributionsIt->value.GetArray()) {
+
+                    std::vector<CoverageArea> coverageAreas;
+                    auto coverageAreasIt = attribution.FindMember("coverageAreas");
+                    if (coverageAreasIt != attribution.MemberEnd() && coverageAreasIt->value.IsArray()) {
+
+                        for (const rapidjson::Value& area : coverageAreasIt->value.GetArray()) {
+
+                            auto bboxIt = area.FindMember("bbox");
+                            if (bboxIt != area.MemberEnd() &&  bboxIt->value.IsArray() && bboxIt->value.Size() == 4) {
+
+                                auto zoomMinIt = area.FindMember("zoomMin");
+                                auto zoomMaxIt = area.FindMember("zoomMax");
+                                auto bboxArrayIt = bboxIt->value.GetArray();
+                                if (zoomMinIt != area.MemberEnd() && zoomMaxIt != area.MemberEnd() &&
+                                    zoomMinIt->value.IsUint() && zoomMaxIt->value.IsUint() &&
+                                    bboxArrayIt[0].IsNumber() && bboxArrayIt[1].IsNumber() &&
+                                    bboxArrayIt[2].IsNumber() && bboxArrayIt[3].IsNumber()) {
+                                    CoverageArea coverageArea {
+
+                                        CesiumGeospatial::GlobeRectangle::fromDegrees(
+                                            bboxArrayIt[1].GetDouble(),
+                                            bboxArrayIt[0].GetDouble(),
+                                            bboxArrayIt[3].GetDouble(),
+                                            bboxArrayIt[2].GetDouble()
+                                        ),
+                                        zoomMinIt->value.GetUint(),
+                                        zoomMaxIt->value.GetUint()
+                                    };
+
+                                    coverageAreas.push_back(coverageArea);
+                                }
+                            }
+                        }
+                    }
+
+                    auto creditString = attribution.FindMember("attribution");
+                    if (creditString != attribution.MemberEnd() && creditString->value.IsString()) {
+                        credits.push_back({
+                            pCreditSystem->createCredit(creditString->value.GetString()),
+                            coverageAreas
+                        });
+                    }
+                }
+            }
+
+            Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
 
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
                 asyncSystem,
+                bingCredit,
+                credits,
                 pPrepareRendererResources,
                 baseUrl,
                 urlTemplate,
