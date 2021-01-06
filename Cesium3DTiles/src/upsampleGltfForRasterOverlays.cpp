@@ -8,11 +8,21 @@
 #include <algorithm>
 
 namespace Cesium3DTiles {
+    struct EdgeVertex {
+        EdgeVertex(uint32_t index, const glm::vec2 &uv) 
+            : index{index}
+            , uv{uv}
+        {}
+
+        uint32_t index;
+        glm::vec2 uv;
+    };
+
     struct EdgeIndices {
-        std::vector<std::pair<uint32_t, glm::vec2>> west;
-        std::vector<std::pair<uint32_t, glm::vec2>> south;
-        std::vector<std::pair<uint32_t, glm::vec2>> east;
-        std::vector<std::pair<uint32_t, glm::vec2>> north;
+        std::vector<EdgeVertex> west;
+        std::vector<EdgeVertex> south;
+        std::vector<EdgeVertex> east;
+        std::vector<EdgeVertex> north;
     };
 
     static void upsamplePrimitiveForRasterOverlays(
@@ -58,6 +68,7 @@ namespace Cesium3DTiles {
 		std::vector<FloatVertexAttribute>& attributes,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
+        const glm::dvec3& geodeticNormal,
         double skirtHeight,
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex);
@@ -738,13 +749,13 @@ namespace Cesium3DTiles {
         std::vector<uint32_t> sortEdgeIndices(edgeIndices.west.size());
         std::sort(edgeIndices.west.begin(), 
             edgeIndices.west.end(), 
-            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
-                return lhs.second.y < rhs.second.y;
+            [](const EdgeVertex &lhs, const EdgeVertex &rhs) {
+                return lhs.uv.y < rhs.uv.y;
             });
         std::transform(edgeIndices.west.begin(),
             edgeIndices.west.end(),
             sortEdgeIndices.begin(),
-            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+            [](const EdgeVertex& v) { return v.index; });
         addSkirt(output, 
             indices, 
             attributes,
@@ -766,13 +777,13 @@ namespace Cesium3DTiles {
         sortEdgeIndices.resize(edgeIndices.south.size());
         std::sort(edgeIndices.south.begin(), 
             edgeIndices.south.end(), 
-            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
-                return lhs.second.x > rhs.second.x;
+            [](const EdgeVertex &lhs, const EdgeVertex &rhs) {
+                return lhs.uv.x > rhs.uv.x;
             });
         std::transform(edgeIndices.south.begin(),
             edgeIndices.south.end(),
             sortEdgeIndices.begin(),
-            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+            [](const EdgeVertex& v) { return v.index; });
         addSkirt(output, 
             indices, 
             attributes,
@@ -794,13 +805,13 @@ namespace Cesium3DTiles {
         sortEdgeIndices.resize(edgeIndices.east.size());
         std::sort(edgeIndices.east.begin(), 
             edgeIndices.east.end(), 
-            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
-                return lhs.second.y > rhs.second.y;
+            [](const EdgeVertex &lhs, const EdgeVertex &rhs) {
+                return lhs.uv.y > rhs.uv.y;
             });
         std::transform(edgeIndices.east.begin(),
             edgeIndices.east.end(),
             sortEdgeIndices.begin(),
-            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+            [](const EdgeVertex& v) { return v.index; });
         addSkirt(output, 
             indices, 
             attributes,
@@ -822,13 +833,13 @@ namespace Cesium3DTiles {
         sortEdgeIndices.resize(edgeIndices.north.size());
         std::sort(edgeIndices.north.begin(), 
             edgeIndices.north.end(), 
-            [](const std::pair<uint32_t, glm::vec2> &lhs, const std::pair<uint32_t, glm::vec2> &rhs) {
-                return lhs.second.x < rhs.second.x;
+            [](const EdgeVertex &lhs, const EdgeVertex &rhs) {
+                return lhs.uv.x < rhs.uv.x;
             });
         std::transform(edgeIndices.north.begin(),
             edgeIndices.north.end(),
             sortEdgeIndices.begin(),
-            [](const std::pair<uint32_t, glm::vec2>& v) { return v.first; });
+            [](const EdgeVertex& v) { return v.index; });
         addSkirt(output, 
             indices, 
             attributes,
