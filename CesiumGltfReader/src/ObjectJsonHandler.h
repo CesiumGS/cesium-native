@@ -1,22 +1,28 @@
 #pragma once
 
 #include "JsonHandler.h"
-#include "IgnoreValueJsonHandler.h"
 
 namespace CesiumGltf {
     class ObjectJsonHandler : public JsonHandler {
     public:
-        virtual JsonHandler* StartObject() override final;
-        virtual JsonHandler* EndObject(size_t memberCount) override final;
+        virtual IJsonHandler* StartObject() override final;
+        virtual IJsonHandler* EndObject(size_t memberCount) override final;
 
     protected:
-        virtual JsonHandler* StartSubObject();
-        virtual JsonHandler* EndSubObject(size_t memberCount);
+        virtual IJsonHandler* StartSubObject();
+        virtual IJsonHandler* EndSubObject(size_t memberCount);
 
-        JsonHandler* ignore();
+        template <typename TAccessor, typename TProperty>
+        IJsonHandler* property(const char* currentKey, TAccessor& accessor, TProperty& value) {
+            this->_currentKey = currentKey;
+            accessor.reset(this, &value);
+            return &accessor;
+        }
+
+        const char* getCurrentKey() const;
 
     private:
-        IgnoreValueJsonHandler _ignoreHandler;
         int32_t _depth = 0;
-    };
+        const char* _currentKey;
+   };
 }

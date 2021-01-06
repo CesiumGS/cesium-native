@@ -1,7 +1,6 @@
 #include "CesiumGltf/Reader.h"
 #include "JsonHandler.h"
 #include "ModelJsonHandler.h"
-#include "RejectAllJsonHandler.h"
 #include <rapidjson/reader.h>
 #include <string>
 
@@ -9,9 +8,9 @@ using namespace CesiumGltf;
 
 namespace {
     struct Dispatcher {
-        JsonHandler* pCurrent;
+        IJsonHandler* pCurrent;
 
-        bool update(JsonHandler* pNext) {
+        bool update(IJsonHandler* pNext) {
             if (pNext == nullptr) {
                 return false;
             }
@@ -35,6 +34,35 @@ namespace {
         bool StartArray() { return update(pCurrent->StartArray()); }
         bool EndArray(size_t elementCount) { return update(pCurrent->EndArray(elementCount)); }
     };
+
+    class FinalJsonHandler : public ObjectJsonHandler {
+    public:
+        FinalJsonHandler(ModelReaderResult& result, rapidjson::MemoryStream& inputStream) :
+            _result(result),
+            _inputStream(inputStream)
+        {
+            reset(this);
+        }
+
+        virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context) override {
+            if (!this->_result.warnings.empty()) {
+                this->_result.warnings.push_back('\n');
+            }
+
+            this->_result.warnings += warning;
+            this->_result.warnings += "\n  While parsing: ";
+            for (auto it = context.rbegin(); it != context.rend(); ++it) {
+                this->_result.warnings += *it;
+            }
+
+            this->_result.warnings += "\n  From byte offset: ";
+            this->_result.warnings += std::to_string(this->_inputStream.Tell());
+        }
+
+    private:
+        ModelReaderResult& _result;
+        rapidjson::MemoryStream& _inputStream;
+    };
 }
 
 ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data) {
@@ -43,11 +71,11 @@ ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data) {
 
     ModelReaderResult result;
     ModelJsonHandler modelHandler;
-    RejectAllJsonHandler rejectHandler;
+    FinalJsonHandler finalHandler(result, inputStream);
     Dispatcher dispatcher { &modelHandler };
 
     result.model.emplace();
-    modelHandler.reset(&rejectHandler, &result.model.value());
+    modelHandler.reset(&finalHandler, &result.model.value());
 
     reader.IterativeParseInit();
 

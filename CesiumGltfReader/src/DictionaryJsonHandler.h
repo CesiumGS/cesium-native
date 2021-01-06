@@ -8,17 +8,22 @@ namespace CesiumGltf {
     template <typename T, typename THandler>
     class DictionaryJsonHandler : public ObjectJsonHandler {
     public:
-        void reset(JsonHandler* pParent, std::unordered_map<std::string, T>* pDictionary) {
+        void reset(IJsonHandler* pParent, std::unordered_map<std::string, T>* pDictionary) {
             ObjectJsonHandler::reset(pParent);
             this->_pDictionary = pDictionary;
         }
 
-        virtual JsonHandler* Key(const char* str, size_t /*length*/, bool /*copy*/) override {
+        std::unordered_map<std::string, T>* getObject() { return this->_pDictionary; }
+
+        virtual IJsonHandler* Key(const char* str, size_t /*length*/, bool /*copy*/) override {
             assert(this->_pDictionary);
 
+            auto it = this->_pDictionary->emplace(str, -1).first;
+
             return this->property(
+                it->first.c_str(),
                 this->_item,
-                this->_pDictionary->emplace(str, -1).first->second
+                it->second
             );
         }
 

@@ -2,7 +2,7 @@ add_library(CesiumGltfReader "")
 
 configure_cesium_library(CesiumGltfReader)
 
-file(GLOB SOURCES include/CesiumGltf/*.h src/*.cpp src/*.h)
+file(GLOB SOURCES include/CesiumGltf/*.h src/*.cpp src/*.h generated/*.cpp generated/*.h)
 file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
 
 target_sources(
@@ -21,6 +21,7 @@ target_include_directories(
         include
     PRIVATE
         src
+        generated
 )
 
 target_link_libraries(CesiumGltfReader PUBLIC CesiumGltf)

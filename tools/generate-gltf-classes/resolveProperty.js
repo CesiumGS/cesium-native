@@ -249,8 +249,8 @@ function createEnumReaderType(parentName, enumName, propertyName, propertyDetail
   return unindent(`
     class ${enumName}JsonHandler : public JsonHandler {
     public:
-      void reset(JsonHandler* pParent, ${parentName}::${enumName}* pEnum);
-      virtual JsonHandler* String(const char* str, size_t length, bool copy) override;
+      void reset(IJsonHandler* pParent, ${parentName}::${enumName}* pEnum);
+      virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
 
     private:
       ${parentName}::${enumName}* _pEnum = nullptr;
@@ -265,12 +265,12 @@ function createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDe
   }
 
   return unindent(`
-    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(JsonHandler* pParent, ${parentName}::${enumName}* pEnum) {
+    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(IJsonHandler* pParent, ${parentName}::${enumName}* pEnum) {
       JsonHandler::reset(pParent);
       this->_pEnum = pEnum;
     }
 
-    JsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::String(const char* str, size_t /*length*/, bool /*copy*/) {
+    IJsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::String(const char* str, size_t /*length*/, bool /*copy*/) {
       using namespace std::string_literals;
 
       assert(this->_pEnum);

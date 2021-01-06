@@ -7,6 +7,6 @@ namespace CesiumGltf {
 
     class ExtensibleObjectJsonHandler : public ObjectJsonHandler {
     protected:
-        JsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);
+        IJsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);
     };
 }

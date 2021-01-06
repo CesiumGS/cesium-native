@@ -83,8 +83,11 @@ function generate(options, schema) {
 
           class ${name}JsonHandler final : public ${base}ObjectJsonHandler {
           public:
-            void reset(JsonHandler* pHandler, ${name}* pObject);
-            virtual JsonHandler* Key(const char* str, size_t length, bool copy) override;
+            void reset(IJsonHandler* pHandler, ${name}* pObject);
+            ${name}* getObject();
+            virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+            virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
@@ -100,7 +103,7 @@ function generate(options, schema) {
         }
   `;
 
-  const readerHeaderOutputDir = path.join(readerOutputDir, "src");
+  const readerHeaderOutputDir = path.join(readerOutputDir, "generated");
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
   const readerHeaderOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.h");
   fs.writeFileSync(readerHeaderOutputPath, unindent(readerHeader), "utf-8");
@@ -119,12 +122,23 @@ function generate(options, schema) {
 
         using namespace CesiumGltf;
 
-        void ${name}JsonHandler::reset(JsonHandler* pParent, ${name}* pObject) {
+        void ${name}JsonHandler::reset(IJsonHandler* pParent, ${name}* pObject) {
           ${base}ObjectJsonHandler::reset(pParent);
           this->_pObject = pObject;
         }
 
-        JsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+        ${name}* ${name}JsonHandler::getObject() {
+          return this->_pObject;
+        }
+
+        void ${name}JsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+          if (this->getCurrentKey()) {
+            context.emplace_back(std::string(".") + this->getCurrentKey());
+          }
+          this->parent()->reportWarning(warning, std::move(context));
+        }
+
+        IJsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
           using namespace std::string_literals;
 
           assert(this->_pObject);
@@ -170,7 +184,7 @@ function formatReaderProperty(property) {
 }
 
 function formatReaderPropertyImpl(property) {
-  return `if ("${property.name}"s == str) return property(this->_${property.name}, this->_pObject->${property.name});`;
+  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, this->_pObject->${property.name});`;
 }
 
 module.exports = generate;

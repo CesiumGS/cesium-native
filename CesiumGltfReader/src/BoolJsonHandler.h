@@ -5,9 +5,9 @@
 namespace CesiumGltf {
     class BoolJsonHandler : public JsonHandler {
     public:
-        void reset(JsonHandler* pParent, bool* pBool);
+        void reset(IJsonHandler* pParent, bool* pBool);
 
-        virtual JsonHandler* Bool(bool b) override;
+        virtual IJsonHandler* Bool(bool b) override;
 
     private:
         bool* _pBool = nullptr;

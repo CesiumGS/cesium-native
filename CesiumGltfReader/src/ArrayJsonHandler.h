@@ -9,13 +9,13 @@ namespace CesiumGltf {
     template <typename T, typename THandler>
     class ArrayJsonHandler : public JsonHandler {
     public:
-        void reset(JsonHandler* pParent, std::vector<T>* pArray) {
+        void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
             JsonHandler::reset(pParent);
             this->_pArray = pArray;
             this->_arrayIsOpen = false;
         }
 
-        virtual JsonHandler* StartArray() override {
+        virtual IJsonHandler* StartArray() override {
             if (this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -24,11 +24,11 @@ namespace CesiumGltf {
             return this;
         }
 
-        virtual JsonHandler* EndArray(size_t) override {
+        virtual IJsonHandler* EndArray(size_t) override {
             return this->parent();
         }
 
-        virtual JsonHandler* StartObject() override {
+        virtual IJsonHandler* StartObject() override {
             if (!this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -37,6 +37,13 @@ namespace CesiumGltf {
             T& o = this->_pArray->emplace_back();
             this->_objectHandler.reset(this, &o);
             return this->_objectHandler.StartObject();
+        }
+
+        virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override {
+            T* pObject = this->_objectHandler.getObject();
+            int64_t index = pObject - this->_pArray->data();
+            context.push_back(std::string("[") + std::to_string(index) + "]");
+            this->parent()->reportWarning(warning, std::move(context));
         }
 
     private:
@@ -48,13 +55,13 @@ namespace CesiumGltf {
     template <>
     class ArrayJsonHandler<double, DoubleJsonHandler> : public JsonHandler {
     public:
-        void reset(JsonHandler* pParent, std::vector<double>* pArray) {
+        void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
             JsonHandler::reset(pParent);
             this->_pArray = pArray;
             this->_arrayIsOpen = false;
         }
 
-        virtual JsonHandler* StartArray() override {
+        virtual IJsonHandler* StartArray() override {
             if (this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -63,11 +70,11 @@ namespace CesiumGltf {
             return this;
         }
 
-        virtual JsonHandler* EndArray(size_t) override {
+        virtual IJsonHandler* EndArray(size_t) override {
             return this->parent();
         }
 
-        virtual JsonHandler* Int(int i) override {
+        virtual IJsonHandler* Int(int i) override {
             if (!this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -77,7 +84,7 @@ namespace CesiumGltf {
             return this;
         }
         
-        virtual JsonHandler* Uint(unsigned i) override {
+        virtual IJsonHandler* Uint(unsigned i) override {
             if (!this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -87,7 +94,7 @@ namespace CesiumGltf {
             return this;
         }
 
-        virtual JsonHandler* Int64(int64_t i) override {
+        virtual IJsonHandler* Int64(int64_t i) override {
             if (!this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -97,7 +104,7 @@ namespace CesiumGltf {
             return this;
         }
 
-        virtual JsonHandler* Uint64(uint64_t i) override {
+        virtual IJsonHandler* Uint64(uint64_t i) override {
             if (!this->_arrayIsOpen) {
                 return nullptr;
             }
@@ -107,7 +114,7 @@ namespace CesiumGltf {
             return this;
         }
 
-        virtual JsonHandler* Double(double d) override {
+        virtual IJsonHandler* Double(double d) override {
             if (!this->_arrayIsOpen) {
                 return nullptr;
             }

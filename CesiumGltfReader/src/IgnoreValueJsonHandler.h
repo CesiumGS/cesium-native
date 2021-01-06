@@ -1,29 +1,34 @@
 #pragma once
 
-#include "JsonHandler.h"
+#include "IJsonHandler.h"
 #include <cstdint>
 
 namespace CesiumGltf {
-    class IgnoreValueJsonHandler : public JsonHandler {
+    class IgnoreValueJsonHandler : public IJsonHandler {
     public:
-        void reset(JsonHandler* pParent);
+        void reset(IJsonHandler* pParent);
 
-        virtual JsonHandler* Null() override;
-        virtual JsonHandler* Bool(bool /*b*/) override;
-        virtual JsonHandler* Int(int /*i*/) override;
-        virtual JsonHandler* Uint(unsigned /*i*/) override;
-        virtual JsonHandler* Int64(int64_t /*i*/) override;
-        virtual JsonHandler* Uint64(uint64_t /*i*/) override;
-        virtual JsonHandler* Double(double /*d*/) override;
-        virtual JsonHandler* RawNumber(const char* /*str*/, size_t /*length*/, bool /*copy*/) override;
-        virtual JsonHandler* String(const char* /*str*/, size_t /*length*/, bool /*copy*/) override;
-        virtual JsonHandler* StartObject() override;
-        virtual JsonHandler* Key(const char* /*str*/, size_t /*length*/, bool /*copy*/) override;
-        virtual JsonHandler* EndObject(size_t /*memberCount*/) override;
-        virtual JsonHandler* StartArray() override;
-        virtual JsonHandler* EndArray(size_t /*elementCount*/) override;
+        virtual IJsonHandler* Null() override;
+        virtual IJsonHandler* Bool(bool b) override;
+        virtual IJsonHandler* Int(int i) override;
+        virtual IJsonHandler* Uint(unsigned i) override;
+        virtual IJsonHandler* Int64(int64_t i) override;
+        virtual IJsonHandler* Uint64(uint64_t i) override;
+        virtual IJsonHandler* Double(double d) override;
+        virtual IJsonHandler* RawNumber(const char* str, size_t length, bool copy) override;
+        virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
+        virtual IJsonHandler* StartObject() override;
+        virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+        virtual IJsonHandler* EndObject(size_t memberCount) override;
+        virtual IJsonHandler* StartArray() override;
+        virtual IJsonHandler* EndArray(size_t elementCount) override;
+
+        virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+        IJsonHandler* parent();
 
     private:
-        size_t _depth = 0;
+        IJsonHandler* _pParent = nullptr;
+        int32_t _depth = 0;
     };
 }

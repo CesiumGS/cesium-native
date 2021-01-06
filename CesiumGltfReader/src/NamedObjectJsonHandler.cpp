@@ -4,8 +4,8 @@
 
 using namespace CesiumGltf;
 
-JsonHandler* NamedObjectJsonHandler::NamedObjectKey(const char* str, NamedObject& o) {
+IJsonHandler* NamedObjectJsonHandler::NamedObjectKey(const char* str, NamedObject& o) {
     using namespace std::string_literals;
-    if ("name"s == str) return property(this->_name, o.name);
+    if ("name"s == str) return property("name", this->_name, o.name);
     return this->ExtensibleObjectKey(str, o);
 }
