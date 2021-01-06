@@ -68,7 +68,7 @@ namespace Cesium3DTiles {
         CesiumGeometry::QuadtreeChild childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
-        EdgeIndices edgeIndices,
+        EdgeIndices &edgeIndices,
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex);
 
@@ -491,7 +491,7 @@ namespace Cesium3DTiles {
                 childID,
                 *skirtMeshMetadata,
                 *parentSkirtMeshMetadata,
-                std::move(edgeIndices), 
+                edgeIndices, 
                 vertexSizeFloats, 
                 static_cast<uint32_t>(positionAttributeIndex));
         }
@@ -715,7 +715,7 @@ namespace Cesium3DTiles {
         CesiumGeometry::QuadtreeChild childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
-        EdgeIndices edgeIndices,
+        EdgeIndices &edgeIndices,
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex) 
     {
