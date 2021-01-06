@@ -34,7 +34,10 @@ TEST_CASE("GltfModel") {
         "  \"surprise\":{\"foo\":true}"s +
         "}"s;
     ModelReaderResult result = CesiumGltf::readModel(gsl::span(reinterpret_cast<const uint8_t*>(s.c_str()), s.size()));
-    Model& model = result.model;
+    CHECK(result.errors.empty());
+    REQUIRE(result.model.has_value());
+
+    Model& model = result.model.value();
     REQUIRE(model.accessors.size() == 1);
     CHECK(model.accessors[0].count == 4);
     CHECK(model.accessors[0].componentType == Accessor::ComponentType::UNSIGNED_BYTE);

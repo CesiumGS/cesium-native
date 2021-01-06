@@ -2,10 +2,11 @@
 
 #include "CesiumGltf/Model.h"
 #include <gsl/span>
+#include <optional>
 
 namespace CesiumGltf {
     struct ModelReaderResult {
-        Model model;
+        std::optional<Model> model;
         std::string errors;
         std::string warnings;
     };

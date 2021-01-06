@@ -3,6 +3,7 @@
 #include "ModelJsonHandler.h"
 #include "RejectAllJsonHandler.h"
 #include <rapidjson/reader.h>
+#include <string>
 
 using namespace CesiumGltf;
 
@@ -45,13 +46,82 @@ ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data) {
     RejectAllJsonHandler rejectHandler;
     Dispatcher dispatcher { &modelHandler };
 
-    modelHandler.reset(&rejectHandler, &result.model);
+    result.model.emplace();
+    modelHandler.reset(&rejectHandler, &result.model.value());
 
     reader.IterativeParseInit();
 
     bool success = true;
     while (success && !reader.IterativeParseComplete()) {
         success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(inputStream, dispatcher);
+    }
+
+    if (reader.HasParseError()) {
+        result.model.reset();
+
+        std::string s("glTF JSON parsing error at byte offset ");
+        s += std::to_string(reader.GetErrorOffset());
+        s += ": ";
+
+        switch (reader.GetParseErrorCode()) {
+            case rapidjson::ParseErrorCode::kParseErrorDocumentEmpty:
+                s += "The document is empty.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular:
+                s += "The document root must not be followed by other values.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorValueInvalid:
+                s += "Invalid value.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorObjectMissName:
+                s += "Missing a name for object member.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorObjectMissColon:
+                s += "Missing a colon after a name of object member.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket:
+                s += "Missing a comma or '}' after an object member.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket:
+                s += "Missing a comma or ']' after an array element.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex:
+                s += "Incorrect hex digit after \\u escape in string.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid:
+                s += "The surrogate pair in string is invalid.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid:
+                s += "Invalid escape character in string.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark:
+                s += "Missing a closing quotation mark in string.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding:
+                s += "Invalid encoding in string.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorNumberTooBig:
+                s += "Number too big to be stored in double.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorNumberMissFraction:
+                s += "Missing fraction part in number.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorNumberMissExponent:
+                s += "Missing exponent in number.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorTermination:
+                s += "Parsing was terminated.";
+                break;
+            case rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError:
+            default:
+                s += "Unspecific syntax error.";
+                break;
+        }
+
+        if (!result.errors.empty()) {
+            result.errors.push_back('\n');
+        }
+        result.errors += s;
     }
 
     return result;
