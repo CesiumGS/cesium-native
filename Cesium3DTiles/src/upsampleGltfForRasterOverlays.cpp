@@ -9,11 +9,6 @@
 
 namespace Cesium3DTiles {
     struct EdgeVertex {
-        EdgeVertex(uint32_t index, const glm::vec2 &uv) 
-            : index{index}
-            , uv{uv}
-        {}
-
         uint32_t index;
         glm::vec2 uv;
     };
@@ -628,36 +623,36 @@ namespace Cesium3DTiles {
             glm::vec2 uv = getVertexValue(uvs, complements, clipResult[i]);
 
             if (CesiumUtility::Math::equalsEpsilon(uv.x, 0.0, CesiumUtility::Math::EPSILON4)) {
-                edgeIndices.west.emplace_back(clipVertexToIndices[i], uv);
+                edgeIndices.west.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
             }
 
             if (CesiumUtility::Math::equalsEpsilon(uv.x, 1.0, CesiumUtility::Math::EPSILON4)) {
-                edgeIndices.east.emplace_back(clipVertexToIndices[i], uv);
+                edgeIndices.east.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
             }
 
             if (CesiumUtility::Math::equalsEpsilon(uv.x, thresholdU, CesiumUtility::Math::EPSILON4)) {
                 if (keepAboveU) {
-                    edgeIndices.west.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.west.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
                 }
                 else {
-                    edgeIndices.east.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.east.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
                 }
             }
 
             if (CesiumUtility::Math::equalsEpsilon(uv.y, 0.0, CesiumUtility::Math::EPSILON4)) {
-                edgeIndices.south.emplace_back(clipVertexToIndices[i], uv);
+                edgeIndices.south.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
             }
 
             if (CesiumUtility::Math::equalsEpsilon(uv.y, 1.0, CesiumUtility::Math::EPSILON4)) {
-                edgeIndices.north.emplace_back(clipVertexToIndices[i], uv);
+                edgeIndices.north.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
             }
 
             if (CesiumUtility::Math::equalsEpsilon(uv.y, thresholdV, CesiumUtility::Math::EPSILON4)) {
                 if (keepAboveV) {
-                    edgeIndices.south.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.south.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
                 }
                 else {
-                    edgeIndices.north.emplace_back(clipVertexToIndices[i], uv);
+                    edgeIndices.north.emplace_back(EdgeVertex{ clipVertexToIndices[i], uv });
                 }
             }
         }
