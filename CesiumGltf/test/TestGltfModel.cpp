@@ -13,7 +13,7 @@ TEST_CASE("GltfModel") {
         "{"s +
         "  \"accessors\": ["s +
         "    {"s +
-        "      \"count\": 4.0,"s + //{\"test\":true},"s +
+        "      \"count\": 4,"s + //{\"test\":true},"s +
         "      \"componentType\":5121,"s +
         "      \"type\":\"VEC2\","s +
         "      \"max\":[1.0, 2.2, 3.3],"s +
