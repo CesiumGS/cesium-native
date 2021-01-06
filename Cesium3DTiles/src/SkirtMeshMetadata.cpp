@@ -37,7 +37,7 @@ namespace Cesium3DTiles {
                     tinygltf::Value x = meshCenter.Get(0);
                     tinygltf::Value y = meshCenter.Get(1);
                     tinygltf::Value z = meshCenter.Get(2);
-                    if ((x.IsInt() || x.IsReal()) && (y.IsInt() || y.IsReal()) && (z.IsInt() || z.IsReal())) {
+                    if (x.IsNumber() && y.IsNumber() && z.IsNumber()) {
                         skirtMeshMetadata.meshCenter.x = x.GetNumberAsDouble();
                         skirtMeshMetadata.meshCenter.y = y.GetNumberAsDouble();
                         skirtMeshMetadata.meshCenter.z = z.GetNumberAsDouble();
@@ -56,7 +56,7 @@ namespace Cesium3DTiles {
 
             if (gltfSkirtMeshMetadata.Has("skirtWestHeight")) {
                 tinygltf::Value skirtWestHeight = gltfSkirtMeshMetadata.Get("skirtWestHeight");
-                if (skirtWestHeight.IsInt() || skirtWestHeight.IsReal()) {
+                if (skirtWestHeight.IsNumber()) {
                     skirtMeshMetadata.skirtWestHeight = skirtWestHeight.GetNumberAsDouble();
                 }
                 else {
@@ -69,7 +69,7 @@ namespace Cesium3DTiles {
 
             if (gltfSkirtMeshMetadata.Has("skirtSouthHeight")) {
                 tinygltf::Value skirtSouthHeight = gltfSkirtMeshMetadata.Get("skirtSouthHeight");
-                if (skirtSouthHeight.IsInt() || skirtSouthHeight.IsReal()) {
+                if (skirtSouthHeight.IsNumber()) {
                     skirtMeshMetadata.skirtSouthHeight = skirtSouthHeight.GetNumberAsDouble();
                 }
                 else {
@@ -82,7 +82,7 @@ namespace Cesium3DTiles {
 
             if (gltfSkirtMeshMetadata.Has("skirtEastHeight")) {
                 tinygltf::Value skirtEastHeight = gltfSkirtMeshMetadata.Get("skirtEastHeight");
-                if (skirtEastHeight.IsInt() || skirtEastHeight.IsReal()) {
+                if (skirtEastHeight.IsNumber()) {
                     skirtMeshMetadata.skirtEastHeight = skirtEastHeight.GetNumberAsDouble();
                 }
                 else {
@@ -95,7 +95,7 @@ namespace Cesium3DTiles {
 
             if (gltfSkirtMeshMetadata.Has("skirtNorthHeight")) {
                 tinygltf::Value skirtNorthHeight = gltfSkirtMeshMetadata.Get("skirtNorthHeight");
-                if (skirtNorthHeight.IsInt() || skirtNorthHeight.IsReal()) {
+                if (skirtNorthHeight.IsNumber()) {
                     skirtMeshMetadata.skirtNorthHeight = skirtNorthHeight.GetNumberAsDouble();
                 }
                 else {
