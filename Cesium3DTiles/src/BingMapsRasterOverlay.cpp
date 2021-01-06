@@ -205,7 +205,7 @@ namespace Cesium3DTiles {
             baseUrl = this->_url,
             culture = this->_culture
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
-            IAssetResponse* pResponse = pRequest->response();
+            const IAssetResponse* pResponse = pRequest->response();
 
             rapidjson::Document response;
             response.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());

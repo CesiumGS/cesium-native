@@ -236,7 +236,7 @@ namespace Cesium3DTiles {
             pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
             pLogger = tileset.getExternals().pLogger
         ](std::unique_ptr<IAssetRequest>&& pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
+            const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
                 auto pLoadResult = std::make_unique<TileContentLoadResult>();

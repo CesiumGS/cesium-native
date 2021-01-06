@@ -8,9 +8,9 @@
 namespace CesiumAsync {
 	class CachedAssetAccessor : public IAssetAccessor {
 	public:
-        CachedAssetAccessor(std::shared_ptr<IAssetAccessor> pAssetAccessor);
+        CachedAssetAccessor(std::shared_ptr<IAssetAccessor> assetAccessor);
 
-        ~CachedAssetAccessor() override;
+        ~CachedAssetAccessor() noexcept override;
 
         std::unique_ptr<IAssetRequest> requestAsset(
             const std::string& url,

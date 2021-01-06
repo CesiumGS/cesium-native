@@ -1,23 +1,26 @@
 #include "CesiumAsync/CachedAssetAccessor.h"
-#include "sqlite3.h"
+#include "DiskCache.h"
+#include <optional>
 
 namespace CesiumAsync {
 	struct CachedAssetAccessor::Impl {
-		std::shared_ptr<IAssetAccessor> pAssetAccessor;
+		std::shared_ptr<IAssetAccessor> assetAccessor;
+		std::optional<DiskCache> cacheStorage;
 	};
 
-	CachedAssetAccessor::CachedAssetAccessor(std::shared_ptr<IAssetAccessor> pAssetAccessor) {
+	CachedAssetAccessor::CachedAssetAccessor(std::shared_ptr<IAssetAccessor> assetAccessor) {
 		_impl = std::make_unique<Impl>();
-		_impl->pAssetAccessor = pAssetAccessor;
+		_impl->assetAccessor = assetAccessor;
+		_impl->cacheStorage = std::make_optional<DiskCache>("C:/Users/bao/Documents/test.db");
 	}
 
-	CachedAssetAccessor::~CachedAssetAccessor() {}
+	CachedAssetAccessor::~CachedAssetAccessor() noexcept {}
 
 	std::unique_ptr<IAssetRequest> CachedAssetAccessor::requestAsset(const std::string& url, const std::vector<THeader>& headers) {
-		return _impl->pAssetAccessor->requestAsset(url, headers);
+		return _impl->assetAccessor->requestAsset(url, headers);
 	}
 
 	void CachedAssetAccessor::tick() noexcept {
-		_impl->pAssetAccessor->tick();
+		_impl->assetAccessor->tick();
 	}
 }

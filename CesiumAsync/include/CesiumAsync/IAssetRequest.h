@@ -20,7 +20,7 @@ namespace CesiumAsync {
          * @brief Gets the response, or nullptr if the request is still in progress.
          * This method may be called from any thread.
          */
-        virtual IAssetResponse* response() = 0;
+        virtual const IAssetResponse* response() const = 0;
 
         /**
          * @brief Binds a callback function that will be invoked when the request's response is

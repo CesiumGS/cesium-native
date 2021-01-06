@@ -44,7 +44,7 @@ namespace Cesium3DTiles {
         ](
             std::unique_ptr<IAssetRequest> pRequest
         ) -> std::unique_ptr<RasterOverlay> {
-            IAssetResponse* pResponse = pRequest->response();
+            const IAssetResponse* pResponse = pRequest->response();
 
             rapidjson::Document response;
             response.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());

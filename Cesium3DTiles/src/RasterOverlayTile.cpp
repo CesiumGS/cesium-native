@@ -67,7 +67,7 @@ namespace Cesium3DTiles {
             ](
                 std::unique_ptr<IAssetRequest> pRequest
             ) {
-                IAssetResponse* pResponse = pRequest->response();
+                const IAssetResponse* pResponse = pRequest->response();
                 if (pResponse == nullptr) {
                     return LoadResult(LoadState::Failed);
                 }

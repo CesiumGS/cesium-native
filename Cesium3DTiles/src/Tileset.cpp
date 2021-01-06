@@ -97,7 +97,7 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
 
         this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
+            const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
                 this->notifyTileDoneLoading(nullptr);
@@ -371,7 +371,7 @@ namespace Cesium3DTiles {
             pTileset = this,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
-            IAssetResponse* pResponse = pRequest->response();
+            const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
                 SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
@@ -665,7 +665,7 @@ namespace Cesium3DTiles {
                 this,
                 pContext = failedTile.getContext()
             ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
-                IAssetResponse* pIonResponse = pIonRequest->response();
+                const IAssetResponse* pIonResponse = pIonRequest->response();
 
                 bool failed = true;
 
