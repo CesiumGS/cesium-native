@@ -37,8 +37,8 @@ TEST_CASE("GltfModel") {
     Model& model = result.model;
     REQUIRE(model.accessors.size() == 1);
     CHECK(model.accessors[0].count == 4);
-    CHECK(model.accessors[0].componentType == ComponentType::UNSIGNED_BYTE);
-    CHECK(model.accessors[0].type == AttributeType::VEC2);
+    CHECK(model.accessors[0].componentType == Accessor::ComponentType::UNSIGNED_BYTE);
+    CHECK(model.accessors[0].type == Accessor::Type::VEC2);
     REQUIRE(model.accessors[0].min.size() == 2);
     CHECK(model.accessors[0].min[0] == 0.0);
     CHECK(model.accessors[0].min[1] == -1.2);

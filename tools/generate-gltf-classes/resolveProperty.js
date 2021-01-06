@@ -159,7 +159,7 @@ function resolveArray(schemaCache, nameMapping, parentName, propertyName, proper
     localTypes: itemProperty.localTypes,
     type: `std::vector<${itemProperty.type}>`,
     readerHeaders: [`"ArrayJsonHandler.h"`, ...itemProperty.readerHeaders],
-    readerType: `ArrayJsonHandler<${itemProperty.type}>`
+    readerType: `ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`
   };
 }
 
@@ -195,9 +195,9 @@ function resolveEnum(schemaCache, nameMapping, parentName, propertyName, propert
 
   const enumName = toPascalCase(propertyName);
 
-  const readerTypes = createEnumReaderType(enumName, propertyName, propertyDetails);
+  const readerTypes = createEnumReaderType(parentName, enumName, propertyName, propertyDetails);
 
-  return {
+  const result = {
     ...propertyDefaults(propertyName, propertyDetails),
     localTypes: [
       unindent(`
@@ -213,10 +213,19 @@ function resolveEnum(schemaCache, nameMapping, parentName, propertyName, propert
       `)
     ],
     type: enumName,
+    readerHeaders: [`"CesiumGltf/${parentName}.h"`],
     readerLocalTypes: readerTypes,
-    readerLocalTypesImpl: createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDetails),
-    readerType: readerTypes.length > 0 ? `${enumName}JsonHandler` : "IntegerJsonHandler<int32_t>"
+    readerLocalTypesImpl: createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDetails)
   };
+
+  if (readerTypes.length > 0) {
+    result.readerType = `${enumName}JsonHandler`;
+  } else {
+    result.readerType = `IntegerJsonHandler<${parentName}::${enumName}>`;
+    result.readerHeaders.push(`"IntegerJsonHandler.h"`);
+  }
+
+  return result;
 }
 
 function createEnum(enumDetails) {
@@ -231,7 +240,7 @@ function createEnum(enumDetails) {
   }
 }
 
-function createEnumReaderType(enumName, propertyName, propertyDetails) {
+function createEnumReaderType(parentName, enumName, propertyName, propertyDetails) {
   if (propertyDetails.anyOf[0].type === "integer") {
     // No special reader needed for integer enums.
     return [];
@@ -240,11 +249,11 @@ function createEnumReaderType(enumName, propertyName, propertyDetails) {
   return unindent(`
     class ${enumName}JsonHandler : public JsonHandler {
     public:
-      void reset(JsonHandler* pParent, ${enumName}* pEnum);
+      void reset(JsonHandler* pParent, ${parentName}::${enumName}* pEnum);
       virtual JsonHandler* String(const char* str, size_t length, bool copy) override;
 
     private:
-      ${enumName}* _pEnum = nullptr;
+      ${parentName}::${enumName}* _pEnum = nullptr;
     };
   `);
 }
@@ -256,19 +265,19 @@ function createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDe
   }
 
   return unindent(`
-    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(JsonHandler* pParent, ${enumName}* pEnum) {
+    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(JsonHandler* pParent, ${parentName}::${enumName}* pEnum) {
       JsonHandler::reset(pParent);
       this->_pEnum = pEnum;
     }
 
-    JsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::String(const char* str, size_t length, bool copy) {
+    JsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::String(const char* str, size_t /*length*/, bool /*copy*/) {
       using namespace std::string_literals;
 
       assert(this->_pEnum);
 
       ${indent(
         propertyDetails.anyOf
-          .map((e) => e.enum && e.enum[0] !== undefined ? `if ("${e.enum[0]}"s == str) *this->_pEnum = ${enumName}::${makeIdentifier(e.enum[0])};` : undefined)
+          .map((e) => e.enum && e.enum[0] !== undefined ? `if ("${e.enum[0]}"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(e.enum[0])};` : undefined)
           .filter(s => s !== undefined)
           .join("\nelse "),
         6
