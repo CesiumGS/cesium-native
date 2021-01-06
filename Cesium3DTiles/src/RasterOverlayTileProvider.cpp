@@ -15,6 +15,7 @@ namespace Cesium3DTiles {
     ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
+        _credit(std::nullopt),
         _pPrepareRendererResources(nullptr),
         _projection(CesiumGeospatial::GeographicProjection()),
         _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
@@ -34,6 +35,7 @@ namespace Cesium3DTiles {
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
         const AsyncSystem& asyncSystem,
+        std::optional<Credit> credit,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -45,6 +47,7 @@ namespace Cesium3DTiles {
     ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
+        _credit(credit),
         _pPrepareRendererResources(pPrepareRendererResources),
         _projection(projection),
         _tilingScheme(tilingScheme),

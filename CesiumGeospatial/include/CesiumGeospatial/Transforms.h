@@ -10,7 +10,7 @@ namespace CesiumGeospatial {
     /**
      * @brief Transforms positions to various reference frames.
      */
-    class CESIUMGEOSPATIAL_API Transforms {
+    class CESIUMGEOSPATIAL_API Transforms final {
     public:
 
         /**

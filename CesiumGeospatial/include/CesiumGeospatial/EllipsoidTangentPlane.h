@@ -15,7 +15,7 @@ namespace CesiumGeospatial {
      * If the origin is not on the surface of the ellipsoid, its surface projection 
      * will be used. 
      */
-    class CESIUMGEOSPATIAL_API EllipsoidTangentPlane {
+    class CESIUMGEOSPATIAL_API EllipsoidTangentPlane final {
     public:
 
         /**

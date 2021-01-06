@@ -8,7 +8,7 @@ namespace CesiumGeometry {
     /**
      * @brief A plane in Hessian Normal Format.
      */
-    class CESIUMGEOMETRY_API Plane {
+    class CESIUMGEOMETRY_API Plane final {
     public:
         /**
          * @brief Constructs a new plane from a normal and a distance from the origin.

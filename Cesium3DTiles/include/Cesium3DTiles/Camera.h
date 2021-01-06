@@ -16,7 +16,7 @@ namespace Cesium3DTiles {
      *
      * A camera is defined by a position, orientation and the view frustum.
      */
-    class CESIUM3DTILES_API Camera {
+    class CESIUM3DTILES_API Camera final {
     public:
         // TODO: Add support for orthographic and off-center perspective frustums
 

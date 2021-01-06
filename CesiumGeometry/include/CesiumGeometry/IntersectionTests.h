@@ -11,7 +11,7 @@ namespace CesiumGeometry {
     /**
      * @brief Functions for computing the intersection between geometries such as rays, planes, triangles, and ellipsoids.
      */
-    class CESIUMGEOMETRY_API IntersectionTests {
+    class CESIUMGEOMETRY_API IntersectionTests final {
     public:
         /**
          * @brief Computes the intersection of a ray and a plane.

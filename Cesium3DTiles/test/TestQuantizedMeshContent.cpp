@@ -1,11 +1,12 @@
 #include "catch2/catch.hpp"
-#include "glm/glm.hpp"
-#include "CesiumUtility/Math.h"
 #include "Cesium3DTiles/GltfAccessor.h"
 #include "Cesium3DTiles/registerAllTileContentTypes.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/Rectangle.h"
+#include "CesiumUtility/Math.h"
+#include "glm/glm.hpp"
 
 using namespace Cesium3DTiles;
 using namespace CesiumGeometry;
@@ -589,7 +590,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -634,7 +637,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -679,7 +684,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(\
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -741,7 +748,9 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         // convert to gltf
         std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -821,7 +830,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     SECTION("Quantized mesh with ill-formed header") {
         std::vector<uint8_t> quantizedMeshBin(32);
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -859,7 +870,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
 
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -916,7 +929,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
 
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -986,7 +1001,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
 
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -1068,7 +1085,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
 
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -1162,7 +1181,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         std::memcpy(quantizedMeshBin.data() + offset, &eastCount, length);
 
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 
@@ -1268,7 +1289,9 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         std::memcpy(quantizedMeshBin.data() + offset, &northCount, length);
 
         gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
-        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(context, 
+        std::unique_ptr<TileContentLoadResult> loadResult = TileContentFactory::createContent(
+            spdlog::default_logger(),
+            context, 
             tileID, 
             boundingVolume, 
             0.0, 

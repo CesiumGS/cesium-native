@@ -20,7 +20,7 @@ namespace CesiumGeospatial {
      * 
      * @see WebMercatorProjection
      */
-    class CESIUMGEOSPATIAL_API GeographicProjection {
+    class CESIUMGEOSPATIAL_API GeographicProjection final {
     public:
         /**
          * @brief The maximum bounding rectangle of the geographic projection,

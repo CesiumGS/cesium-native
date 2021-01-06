@@ -18,7 +18,7 @@ namespace Cesium3DTiles {
      * specification. The URLs for the individual tiles are computed from the base URL of
      * the tileset. 
      */
-    class ImplicitTilingContext {
+    class ImplicitTilingContext final {
     public:
 
         /**
@@ -99,7 +99,7 @@ namespace Cesium3DTiles {
      * Tilesets that contain terrain tiles may additionally create
      * an {@link ImplicitTilingContext}.
      */
-    class TileContext {
+    class TileContext final {
     public:
 
         /**
