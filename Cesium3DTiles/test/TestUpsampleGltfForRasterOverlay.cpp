@@ -18,7 +18,7 @@ static void checkSkirt(const Ellipsoid &ellipsoid, const glm::vec3 &edgeUpsample
 	Cartographic edgeCart = *ellipsoid.cartesianToCartographic(edgePosition);
 	glm::dvec3 skirtPosition = static_cast<glm::dvec3>(skirtUpsampledPosition) + center;
 	Cartographic skirtCart = *ellipsoid.cartesianToCartographic(skirtPosition);
-	REQUIRE(Math::equalsEpsilon(edgeCart.height - skirtCart.height, skirtHeight, Math::EPSILON3));
+	REQUIRE(Math::equalsEpsilon(edgeCart.height - skirtCart.height, skirtHeight, Math::EPSILON4));
 }
 
 TEST_CASE("Test upsample tile without skirts") {

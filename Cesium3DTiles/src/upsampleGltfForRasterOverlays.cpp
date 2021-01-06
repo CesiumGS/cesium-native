@@ -657,12 +657,12 @@ namespace Cesium3DTiles {
 		std::vector<FloatVertexAttribute>& attributes,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
+        const glm::dvec3& geodeticNormal,
         double skirtHeight,
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex) 
     {
         uint32_t newEdgeIndex = static_cast<uint32_t>(output.size() / vertexSizeFloats);
-        const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
         for (uint32_t i = 0; i < edgeIndices.size(); ++i) {
             uint32_t edgeIdx = edgeIndices[i];
             uint32_t offset = 0;
@@ -674,10 +674,7 @@ namespace Cesium3DTiles {
                     glm::dvec3 position{ output[valueIndex], output[valueIndex + 1], output[valueIndex + 2] };
                     position += center;
 
-                    CesiumGeospatial::Cartographic cartographic = *ellipsoid.cartesianToCartographic(position);
-                    cartographic.height -= skirtHeight;
-
-                    position = ellipsoid.cartographicToCartesian(cartographic);
+                    position -= skirtHeight * geodeticNormal;
                     position -= center;
 
                     for (uint32_t c = 0; c < 3; ++c) {
@@ -722,7 +719,10 @@ namespace Cesium3DTiles {
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex) 
     {
+        const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
         glm::dvec3 center = currentSkirt.meshCenter;
+        glm::dvec3 geodeticNormal = ellipsoid.geodeticSurfaceNormal(center);
+
         double shortestSkirtHeight = glm::min(parentSkirt.skirtWestHeight, parentSkirt.skirtEastHeight);
         shortestSkirtHeight = glm::min(shortestSkirtHeight, parentSkirt.skirtSouthHeight);
         shortestSkirtHeight = glm::min(shortestSkirtHeight, parentSkirt.skirtNorthHeight);
@@ -750,6 +750,7 @@ namespace Cesium3DTiles {
             attributes,
             sortEdgeIndices, 
             center, 
+            geodeticNormal,
             currentSkirt.skirtWestHeight, 
             vertexSizeFloats, 
             positionAttributeIndex);
@@ -777,6 +778,7 @@ namespace Cesium3DTiles {
             attributes,
             sortEdgeIndices, 
             center, 
+            geodeticNormal,
             currentSkirt.skirtSouthHeight, 
             vertexSizeFloats, 
             positionAttributeIndex);
@@ -804,6 +806,7 @@ namespace Cesium3DTiles {
             attributes,
             sortEdgeIndices, 
             center, 
+            geodeticNormal,
             currentSkirt.skirtEastHeight, 
             vertexSizeFloats, 
             positionAttributeIndex);
@@ -831,6 +834,7 @@ namespace Cesium3DTiles {
             attributes,
             sortEdgeIndices, 
             center, 
+            geodeticNormal,
             currentSkirt.skirtNorthHeight, 
             vertexSizeFloats, 
             positionAttributeIndex);
