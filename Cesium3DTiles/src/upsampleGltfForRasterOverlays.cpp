@@ -65,7 +65,7 @@ namespace Cesium3DTiles {
 
     static void addSkirt(std::vector<float>& output,
         std::vector<uint32_t>& indices,
-		std::vector<FloatVertexAttribute>& attributes,
+        std::vector<FloatVertexAttribute>& attributes,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
         const glm::dvec3& geodeticNormal,
@@ -75,7 +75,7 @@ namespace Cesium3DTiles {
 
     static void addSkirts(std::vector<float>& output,
         std::vector<uint32_t>& indices,
-		std::vector<FloatVertexAttribute>& attributes,
+        std::vector<FloatVertexAttribute>& attributes,
         CesiumGeometry::QuadtreeChild childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
@@ -665,7 +665,7 @@ namespace Cesium3DTiles {
 
     static void addSkirt(std::vector<float>& output,
         std::vector<uint32_t>& indices,
-		std::vector<FloatVertexAttribute>& attributes,
+        std::vector<FloatVertexAttribute>& attributes,
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
         const glm::dvec3& geodeticNormal,
@@ -689,9 +689,9 @@ namespace Cesium3DTiles {
                     position -= center;
 
                     for (uint32_t c = 0; c < 3; ++c) {
-						output.push_back(static_cast<float>(position[static_cast<int32_t>(c)]));
-						attribute.minimums[c] = glm::min(attribute.minimums[c], position[static_cast<int32_t>(c)]);
-						attribute.maximums[c] = glm::max(attribute.maximums[c], position[static_cast<int32_t>(c)]);
+                        output.push_back(static_cast<float>(position[static_cast<int32_t>(c)]));
+                        attribute.minimums[c] = glm::min(attribute.minimums[c], position[static_cast<int32_t>(c)]);
+                        attribute.maximums[c] = glm::max(attribute.maximums[c], position[static_cast<int32_t>(c)]);
                     }
                 }
                 else {
@@ -722,7 +722,7 @@ namespace Cesium3DTiles {
 
     static void addSkirts(std::vector<float>& output,
         std::vector<uint32_t>& indices,
-		std::vector<FloatVertexAttribute>& attributes,
+        std::vector<FloatVertexAttribute>& attributes,
         CesiumGeometry::QuadtreeChild childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
