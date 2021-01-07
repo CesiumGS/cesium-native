@@ -3,6 +3,7 @@
 #include "CesiumAsync/Library.h"
 #include <gsl/span>
 #include <string>
+#include <map>
 
 namespace CesiumAsync {
 
@@ -11,6 +12,17 @@ namespace CesiumAsync {
      */
     class CESIUMASYNC_API IAssetResponse {
     public:
+        struct CacheControl {
+            bool mustRevalidate;
+            bool noCache;
+            bool noStore;
+            bool noTransform;
+            bool accessControlPublic;
+            bool accessControlPrivate;
+            bool proxyRevalidate;
+            int maxAge;
+            int sharedMaxAge;
+        };
 
         /**
          * @brief Default destructor
@@ -26,7 +38,16 @@ namespace CesiumAsync {
          * @brief Returns the HTTP content type
          */
         virtual std::string contentType() const = 0;
-        //virtual const std::map<std::string, std::string>& headers() = 0;
+
+        /**
+         * @brief Returns the HTTP headers of the response
+         */
+        virtual const std::map<std::string, std::string> &headers() const = 0;
+
+        /**
+         * @brief Returns the HTTP cache control of the response
+         */
+        virtual const CacheControl &cacheControl() const = 0;
 
         /**
          * @brief Returns the data of this response
