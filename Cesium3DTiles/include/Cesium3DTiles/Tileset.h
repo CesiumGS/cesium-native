@@ -98,7 +98,7 @@ namespace Cesium3DTiles {
          * rendered tiles, it will increase the number of loaded tiles. Screen-space error computations will be 
          * disabled for tiles that fall outside the frustum.
          */
-        bool disableFrustumCull = true; //TODO: this should be false by default
+        bool disableFrustumCull = true;
 
         /**
          * @brief The maximum number of bytes that may be cached.
