@@ -6,6 +6,7 @@
 #include "CesiumUtility/Math.h"
 #include "QuantizedMeshContent.h"
 #include "calcQuadtreeMaxGeometricError.h"
+#include "SkirtMeshMetadata.h"
 #include "tiny_gltf.h"
 #include "Uri.h"
 #include "JsonHelpers.h"
@@ -922,6 +923,18 @@ namespace Cesium3DTiles {
         indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT : TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
 
         primitive.indices = static_cast<int>(indicesBufferId);
+
+        // add skirts info to primitive extra in case we need to upsample from it
+        SkirtMeshMetadata skirtMeshMetadata;
+        skirtMeshMetadata.noSkirtIndicesBegin = 0;
+        skirtMeshMetadata.noSkirtIndicesCount = indicesCount;
+        skirtMeshMetadata.meshCenter = center;
+        skirtMeshMetadata.skirtWestHeight = skirtHeight;
+        skirtMeshMetadata.skirtSouthHeight = skirtHeight;
+        skirtMeshMetadata.skirtEastHeight = skirtHeight;
+        skirtMeshMetadata.skirtNorthHeight = skirtHeight;
+
+        primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
         // create node and update bounding volume
         model.nodes.emplace_back();

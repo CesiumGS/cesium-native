@@ -27,6 +27,10 @@ function(configure_cesium_library targetName)
         CXX_EXTENSIONS NO
     )
 
+    set_property(TARGET ${targetName}
+        PROPERTY
+            ${targetName}_PRIVATE_SRC 1)
+
     if (BUILD_SHARED_LIBS)
         target_compile_definitions(
             ${targetName}
@@ -37,6 +41,10 @@ function(configure_cesium_library targetName)
 
     if (NOT ${targetName} MATCHES "cesium-native-tests")
         if (TARGET cesium-native-tests)
+            set_property(TARGET cesium-native-tests
+                PROPERTY
+                    ${targetName}_PRIVATE_SRC 1)
+
             target_link_libraries(cesium-native-tests PUBLIC ${targetName})
 
             file(GLOB TEST_SOURCES test/*.cpp test/*.h)
