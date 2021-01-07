@@ -33,5 +33,6 @@ namespace CesiumGltf {
          * @brief The floating-point distance to the near clipping plane.
          */
         double znear;
+
     };
 }

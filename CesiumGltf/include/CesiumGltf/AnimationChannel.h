@@ -23,5 +23,6 @@ namespace CesiumGltf {
          * @brief The index of the node and TRS property to target.
          */
         AnimationChannelTarget target;
+
     };
 }

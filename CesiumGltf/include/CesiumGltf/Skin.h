@@ -30,5 +30,6 @@ namespace CesiumGltf {
          * The array length must be the same as the `count` property of the `inverseBindMatrices` accessor (when defined).
          */
         std::vector<int32_t> joints;
+
     };
 }

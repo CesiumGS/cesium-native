@@ -16,5 +16,6 @@ namespace CesiumGltf {
          * @brief The indices of each root node.
          */
         std::vector<int32_t> nodes;
+
     };
 }

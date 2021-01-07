@@ -75,5 +75,6 @@ namespace CesiumGltf {
          * When this value is false, back-face culling is enabled. When this value is true, back-face culling is disabled and double sided lighting is enabled. The back-face must have its normals reversed before the lighting equation is evaluated.
          */
         bool doubleSided;
+
     };
 }

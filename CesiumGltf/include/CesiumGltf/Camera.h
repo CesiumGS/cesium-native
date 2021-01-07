@@ -33,5 +33,6 @@ namespace CesiumGltf {
          * Based on this, either the camera's `perspective` or `orthographic` property will be defined.
          */
         Type type;
+
     };
 }

@@ -30,5 +30,6 @@ namespace CesiumGltf {
          * @brief The minimum glTF version that this asset targets.
          */
         std::string minVersion;
+
     };
 }

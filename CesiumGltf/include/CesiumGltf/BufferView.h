@@ -42,5 +42,6 @@ namespace CesiumGltf {
          * @brief The target that the GPU buffer should be bound to.
          */
         Target target;
+
     };
 }

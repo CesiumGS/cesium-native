@@ -58,5 +58,6 @@ namespace CesiumGltf {
          * @brief The weights of the instantiated Morph Target. Number of elements must match number of Morph Targets of used mesh.
          */
         std::vector<double> weights;
+
     };
 }

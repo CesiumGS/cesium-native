@@ -46,5 +46,6 @@ namespace CesiumGltf {
          * The metalness values are sampled from the B channel. The roughness values are sampled from the G channel. These values are linear. If other channels are present (R or A), they are ignored for metallic-roughness calculations.
          */
         TextureInfo metallicRoughnessTexture;
+
     };
 }

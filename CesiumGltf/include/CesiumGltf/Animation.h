@@ -22,5 +22,6 @@ namespace CesiumGltf {
          * @brief An array of samplers that combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
          */
         std::vector<AnimationSampler> samplers;
+
     };
 }

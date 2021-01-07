@@ -30,12 +30,20 @@ const nameMapping = {
   "glTFRootProperty": "NamedObject"
 };
 
+// Custom `cesium` properties will be added to these objects.
+// e.g. Buffer will gain `BufferCesium cesium;`
+const cesiumProperties = {
+  "Buffer": true,
+  "Image": true
+};
+
 const schemaCache = new SchemaCache(argv.schema);
 const modelSchema = schemaCache.load("glTF.schema.json");
 
 const options = {
   schemaCache,
   nameMapping,
+  cesiumProperties,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput
 };

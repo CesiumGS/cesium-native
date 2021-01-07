@@ -129,5 +129,6 @@ namespace CesiumGltf {
          * @brief An array of textures.
          */
         std::vector<Texture> textures;
+
     };
 }

@@ -104,5 +104,6 @@ namespace CesiumGltf {
          * @brief Sparse storage of attributes that deviate from their initialization value.
          */
         AccessorSparse sparse;
+
     };
 }

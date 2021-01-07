@@ -72,5 +72,6 @@ namespace CesiumGltf {
          * T (V) wrapping mode.  All valid values correspond to WebGL enums.
          */
         WrapT wrapT;
+
     };
 }

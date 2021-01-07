@@ -7,7 +7,7 @@ const unindent = require("./unindent");
 const indent = require("./indent");
 
 function generate(options, schema) {
-  const { schemaCache, nameMapping, outputDir, readerOutputDir } = options;
+  const { schemaCache, nameMapping, outputDir, readerOutputDir, cesiumProperties } = options;
 
   const name = getNameFromSchema(nameMapping, schema);
 
@@ -31,6 +31,11 @@ function generate(options, schema) {
   const headers = lodash.uniq(
     [`"CesiumGltf/${base}Object.h"`, ...lodash.flatten(properties.map((property) => property.headers))]
   );
+
+  if (cesiumProperties[name]) {
+    headers.push(`"CesiumGltf/${name}Cesium.h"`);
+  }
+
   headers.sort();
 
   const header = `
@@ -53,6 +58,8 @@ function generate(options, schema) {
                     .join("\n\n"),
                   16
                 )}
+
+                ${indent(getCesiumProperty(cesiumProperties, name, schema), 16)}
             };
         }
     `;
@@ -185,6 +192,19 @@ function formatReaderProperty(property) {
 
 function formatReaderPropertyImpl(property) {
   return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, this->_pObject->${property.name});`;
+}
+
+function getCesiumProperty(cesiumProperties, name, schema) {
+  if (!cesiumProperties[name]) {
+    return "";
+  }
+
+  return unindent(`
+    /**
+     * @brief Holds properties that are specific to the glTF loader rather than part of the glTF spec.
+     */
+    ${name}Cesium cesium;
+  `);
 }
 
 module.exports = generate;

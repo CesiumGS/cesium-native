@@ -21,5 +21,6 @@ namespace CesiumGltf {
          * @brief Array of weights to be applied to the Morph Targets.
          */
         std::vector<double> weights;
+
     };
 }

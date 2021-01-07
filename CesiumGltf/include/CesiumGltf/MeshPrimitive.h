@@ -56,5 +56,6 @@ namespace CesiumGltf {
          * @brief An array of Morph Targets, each  Morph Target is a dictionary mapping attributes (only `POSITION`, `NORMAL`, and `TANGENT` supported) to their deviations in the Morph Target.
          */
         std::vector<std::unordered_map<std::string, int32_t>> targets;
+
     };
 }

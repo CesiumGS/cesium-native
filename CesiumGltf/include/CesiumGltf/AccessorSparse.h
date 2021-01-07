@@ -29,5 +29,6 @@ namespace CesiumGltf {
          * @brief Array of size `count` times number of components, storing the displaced accessor attributes pointed by `indices`. Substituted values must have the same `componentType` and number of components as the base accessor.
          */
         AccessorSparseValues values;
+
     };
 }

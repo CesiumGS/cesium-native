@@ -34,5 +34,6 @@ namespace CesiumGltf {
          * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123` (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
          */
         ComponentType componentType;
+
     };
 }

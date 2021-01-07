@@ -63,94 +63,220 @@ namespace {
         ModelReaderResult& _result;
         rapidjson::MemoryStream& _inputStream;
     };
+
+    std::string getMessageFromRapidJsonError(rapidjson::ParseErrorCode code) {
+        switch (code) {
+            case rapidjson::ParseErrorCode::kParseErrorDocumentEmpty:
+                return "The document is empty.";
+            case rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular:
+                return "The document root must not be followed by other values.";
+            case rapidjson::ParseErrorCode::kParseErrorValueInvalid:
+                return "Invalid value.";
+            case rapidjson::ParseErrorCode::kParseErrorObjectMissName:
+                return "Missing a name for object member.";
+            case rapidjson::ParseErrorCode::kParseErrorObjectMissColon:
+                return "Missing a colon after a name of object member.";
+            case rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket:
+                return "Missing a comma or '}' after an object member.";
+            case rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket:
+                return "Missing a comma or ']' after an array element.";
+            case rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex:
+                return "Incorrect hex digit after \\u escape in string.";
+            case rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid:
+                return "The surrogate pair in string is invalid.";
+            case rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid:
+                return "Invalid escape character in string.";
+            case rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark:
+                return "Missing a closing quotation mark in string.";
+            case rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding:
+                return "Invalid encoding in string.";
+            case rapidjson::ParseErrorCode::kParseErrorNumberTooBig:
+                return "Number too big to be stored in double.";
+            case rapidjson::ParseErrorCode::kParseErrorNumberMissFraction:
+                return "Missing fraction part in number.";
+            case rapidjson::ParseErrorCode::kParseErrorNumberMissExponent:
+                return "Missing exponent in number.";
+            case rapidjson::ParseErrorCode::kParseErrorTermination:
+                return "Parsing was terminated.";
+            case rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError:
+            default:
+                return "Unspecific syntax error.";
+        }
+    }
+
+    #pragma pack(push, 1)
+    struct GlbHeader {
+        uint32_t magic;
+        uint32_t version;
+        uint32_t length;
+    };
+
+    struct ChunkHeader {
+        uint32_t chunkLength;
+        uint32_t chunkType;
+    };
+    #pragma pack(pop)
+
+    bool isBinaryGltf(const gsl::span<const uint8_t>& data) {
+        if (data.size() < sizeof(GlbHeader)) {
+            return false;
+        }
+
+        return reinterpret_cast<const GlbHeader*>(data.data())->magic == 0x46546C67;
+    }
+
+    ModelReaderResult readJsonModel(const gsl::span<const uint8_t>& data) {
+        rapidjson::Reader reader;
+        rapidjson::MemoryStream inputStream(reinterpret_cast<const char*>(data.data()), data.size());
+
+        ModelReaderResult result;
+        ModelJsonHandler modelHandler;
+        FinalJsonHandler finalHandler(result, inputStream);
+        Dispatcher dispatcher { &modelHandler };
+
+        result.model.emplace();
+        modelHandler.reset(&finalHandler, &result.model.value());
+
+        reader.IterativeParseInit();
+
+        bool success = true;
+        while (success && !reader.IterativeParseComplete()) {
+            success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(inputStream, dispatcher);
+        }
+
+        if (reader.HasParseError()) {
+            result.model.reset();
+
+            std::string s("glTF JSON parsing error at byte offset ");
+            s += std::to_string(reader.GetErrorOffset());
+            s += ": ";
+            s += getMessageFromRapidJsonError(reader.GetParseErrorCode());
+
+            if (!result.errors.empty()) {
+                result.errors.push_back('\n');
+            }
+            result.errors += s;
+        }
+
+        return result;
+    }
+
+    ModelReaderResult readBinaryModel(const gsl::span<const uint8_t>& data) {
+        if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
+            return {
+                std::nullopt,
+                "Too short to be a valid GLB.",
+                ""
+            };
+        }
+
+        const GlbHeader* pHeader = reinterpret_cast<const GlbHeader*>(data.data());
+        if (pHeader->magic != 0x46546C67) {
+            return {
+                std::nullopt,
+                "GLB does not start with the expected magic value 'glTF'.",
+                ""
+            };
+        }
+
+        if (pHeader->version != 2) {
+            return {
+                std::nullopt,
+                "Only binary glTF version 2 is supported.",
+                ""
+            };
+        }
+
+        if (pHeader->length > data.size()) {
+            return {
+                std::nullopt,
+                "GLB extends past the end of the buffer.",
+                ""
+            };
+        }
+
+        gsl::span<const uint8_t> glbData = data.subspan(0, pHeader->length);
+
+        const ChunkHeader* pJsonChunkHeader = reinterpret_cast<const ChunkHeader*>(glbData.data() + sizeof(GlbHeader));
+        if (pJsonChunkHeader->chunkType != 0x4E4F534A) {
+            return {
+                std::nullopt,
+                "GLB JSON chunk does not have the expected chunkType.",
+                ""
+            };
+        }
+        
+        size_t jsonStart = sizeof(GlbHeader) + sizeof(ChunkHeader);
+        size_t jsonEnd = jsonStart + pJsonChunkHeader->chunkLength;
+
+        if (jsonEnd > glbData.size()) {
+            return {
+                std::nullopt,
+                "GLB JSON chunk extends past the end of the buffer.",
+                ""
+            };
+        }
+
+        gsl::span<const uint8_t> jsonChunk = glbData.subspan(jsonStart, pJsonChunkHeader->chunkLength);
+        gsl::span<const uint8_t> binaryChunk;
+
+        if (jsonEnd + sizeof(ChunkHeader) <= data.size()) {
+            const ChunkHeader* pBinaryChunkHeader = reinterpret_cast<const ChunkHeader*>(glbData.data() + jsonEnd);
+            if (pJsonChunkHeader->chunkType != 0x004E4942) {
+                return {
+                    std::nullopt,
+                    "GLB binary chunk does not have the expected chunkType.",
+                    ""
+                };
+            }
+
+            size_t binaryStart = jsonEnd + sizeof(ChunkHeader);
+            size_t binaryEnd = binaryStart + pBinaryChunkHeader->chunkLength;
+
+            if (binaryEnd > glbData.size()) {
+                return {
+                    std::nullopt,
+                    "GLB binary chunk extends past the end of the buffer.",
+                    ""
+                };
+            }
+
+            binaryChunk = glbData.subspan(binaryStart, pBinaryChunkHeader->chunkLength);
+        }
+
+        ModelReaderResult result = readJsonModel(jsonChunk);
+        
+        if (result.model && !binaryChunk.empty()) {
+            Model& model = result.model.value();
+
+            if (model.buffers.size() == 0) {
+                result.errors = "GLB has a binary chunk but the JSON does not define any buffers.";
+                return result;
+            }
+
+            Buffer& buffer = model.buffers[0];
+            if (!buffer.uri.empty()) {
+                result.errors = "GLB has a binary chunk but the first buffer in the JSON chunk also has a 'uri'.";
+                return result;
+            }
+
+            int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
+            if (buffer.byteLength > binaryChunkSize || buffer.byteLength + 3 < binaryChunkSize) {
+                result.errors = "GLB binary chunk size does not match the size of the first buffer in the JSON chunk.";
+                return result;
+            }
+
+            buffer.cesium.data = std::vector<uint8_t>(binaryChunk.begin(), binaryChunk.begin() + buffer.byteLength);
+        }
+
+        return result;
+    }
 }
 
 ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data) {
-    rapidjson::Reader reader;
-    rapidjson::MemoryStream inputStream(reinterpret_cast<const char*>(data.data()), data.size());
-
-    ModelReaderResult result;
-    ModelJsonHandler modelHandler;
-    FinalJsonHandler finalHandler(result, inputStream);
-    Dispatcher dispatcher { &modelHandler };
-
-    result.model.emplace();
-    modelHandler.reset(&finalHandler, &result.model.value());
-
-    reader.IterativeParseInit();
-
-    bool success = true;
-    while (success && !reader.IterativeParseComplete()) {
-        success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(inputStream, dispatcher);
+    if (isBinaryGltf(data)) {
+        return readBinaryModel(data);
+    } else {
+        return readJsonModel(data);
     }
-
-    if (reader.HasParseError()) {
-        result.model.reset();
-
-        std::string s("glTF JSON parsing error at byte offset ");
-        s += std::to_string(reader.GetErrorOffset());
-        s += ": ";
-
-        switch (reader.GetParseErrorCode()) {
-            case rapidjson::ParseErrorCode::kParseErrorDocumentEmpty:
-                s += "The document is empty.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular:
-                s += "The document root must not be followed by other values.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorValueInvalid:
-                s += "Invalid value.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorObjectMissName:
-                s += "Missing a name for object member.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorObjectMissColon:
-                s += "Missing a colon after a name of object member.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket:
-                s += "Missing a comma or '}' after an object member.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket:
-                s += "Missing a comma or ']' after an array element.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex:
-                s += "Incorrect hex digit after \\u escape in string.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid:
-                s += "The surrogate pair in string is invalid.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid:
-                s += "Invalid escape character in string.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark:
-                s += "Missing a closing quotation mark in string.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding:
-                s += "Invalid encoding in string.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorNumberTooBig:
-                s += "Number too big to be stored in double.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorNumberMissFraction:
-                s += "Missing fraction part in number.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorNumberMissExponent:
-                s += "Missing exponent in number.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorTermination:
-                s += "Parsing was terminated.";
-                break;
-            case rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError:
-            default:
-                s += "Unspecific syntax error.";
-                break;
-        }
-
-        if (!result.errors.empty()) {
-            result.errors.push_back('\n');
-        }
-        result.errors += s;
-    }
-
-    return result;
 }

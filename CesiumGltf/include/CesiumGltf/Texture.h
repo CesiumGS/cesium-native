@@ -20,5 +20,6 @@ namespace CesiumGltf {
          * @brief The index of the image used by this texture. When undefined, it is expected that an extension or other mechanism will supply an alternate texture source, otherwise behavior is undefined.
          */
         int32_t source;
+
     };
 }
