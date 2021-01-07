@@ -15,10 +15,13 @@ using namespace CesiumGeospatial;
 
 static void checkSkirt(const Ellipsoid &ellipsoid, const glm::vec3 &edgeUpsampledPosition, const glm::vec3 &skirtUpsampledPosition, glm::dvec3 center, double skirtHeight) {
     glm::dvec3 edgePosition = static_cast<glm::dvec3>(edgeUpsampledPosition) + center;
-    Cartographic edgeCart = *ellipsoid.cartesianToCartographic(edgePosition);
+    glm::dvec3 geodeticNormal = ellipsoid.geodeticSurfaceNormal(edgePosition);
+    glm::dvec3 expectedPosition = edgePosition - skirtHeight * geodeticNormal;
+
     glm::dvec3 skirtPosition = static_cast<glm::dvec3>(skirtUpsampledPosition) + center;
-    Cartographic skirtCart = *ellipsoid.cartesianToCartographic(skirtPosition);
-    REQUIRE(Math::equalsEpsilon(edgeCart.height - skirtCart.height, skirtHeight, Math::EPSILON4));
+    REQUIRE(Math::equalsEpsilon(expectedPosition.x, skirtPosition.x, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(expectedPosition.y, skirtPosition.y, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon(expectedPosition.z, skirtPosition.z, Math::EPSILON7));
 }
 
 TEST_CASE("Test upsample tile without skirts") {
