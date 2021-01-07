@@ -37,7 +37,7 @@ namespace CesiumGltf {
         /**
          * @brief The occlusion map texture.
          *
-         * The occlusion map texture. The occlusion values are sampled from the R channel. Higher values indicate areas that should receive full indirect lighting and lower values indicate no indirect lighting. These values are linear. If other channels are present (GBA), they are ignored for occlusion calculations.
+         * The occlusion values are sampled from the R channel. Higher values indicate areas that should receive full indirect lighting and lower values indicate no indirect lighting. These values are linear. If other channels are present (GBA), they are ignored for occlusion calculations.
          */
         MaterialOcclusionTextureInfo occlusionTexture;
 
@@ -72,7 +72,7 @@ namespace CesiumGltf {
         /**
          * @brief Specifies whether the material is double sided.
          *
-         * Specifies whether the material is double sided. When this value is false, back-face culling is enabled. When this value is true, back-face culling is disabled and double sided lighting is enabled. The back-face must have its normals reversed before the lighting equation is evaluated.
+         * When this value is false, back-face culling is enabled. When this value is true, back-face culling is disabled and double sided lighting is enabled. The back-face must have its normals reversed before the lighting equation is evaluated.
          */
         bool doubleSided;
     };

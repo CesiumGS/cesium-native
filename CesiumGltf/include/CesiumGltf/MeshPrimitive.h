@@ -48,7 +48,7 @@ namespace CesiumGltf {
         /**
          * @brief The type of primitives to render.
          *
-         * The type of primitives to render. All valid values correspond to WebGL enums.
+         * All valid values correspond to WebGL enums.
          */
         Mode mode;
 

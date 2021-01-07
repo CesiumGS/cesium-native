@@ -40,7 +40,7 @@ namespace CesiumGltf {
         /**
          * @brief An array of accessors.
          *
-         * An array of accessors.  An accessor is a typed view into a bufferView.
+         * An accessor is a typed view into a bufferView.
          */
         std::vector<Accessor> accessors;
 
@@ -57,42 +57,42 @@ namespace CesiumGltf {
         /**
          * @brief An array of buffers.
          *
-         * An array of buffers.  A buffer points to binary geometry, animation, or skins.
+         * A buffer points to binary geometry, animation, or skins.
          */
         std::vector<Buffer> buffers;
 
         /**
          * @brief An array of bufferViews.
          *
-         * An array of bufferViews.  A bufferView is a view into a buffer generally representing a subset of the buffer.
+         * A bufferView is a view into a buffer generally representing a subset of the buffer.
          */
         std::vector<BufferView> bufferViews;
 
         /**
          * @brief An array of cameras.
          *
-         * An array of cameras.  A camera defines a projection matrix.
+         * A camera defines a projection matrix.
          */
         std::vector<Camera> cameras;
 
         /**
          * @brief An array of images.
          *
-         * An array of images.  An image defines data used to create a texture.
+         * An image defines data used to create a texture.
          */
         std::vector<Image> images;
 
         /**
          * @brief An array of materials.
          *
-         * An array of materials.  A material defines the appearance of a primitive.
+         * A material defines the appearance of a primitive.
          */
         std::vector<Material> materials;
 
         /**
          * @brief An array of meshes.
          *
-         * An array of meshes.  A mesh is a set of primitives to be rendered.
+         * A mesh is a set of primitives to be rendered.
          */
         std::vector<Mesh> meshes;
 
@@ -104,7 +104,7 @@ namespace CesiumGltf {
         /**
          * @brief An array of samplers.
          *
-         * An array of samplers.  A sampler contains properties for texture filtering and wrapping modes.
+         * A sampler contains properties for texture filtering and wrapping modes.
          */
         std::vector<Sampler> samplers;
 
@@ -121,7 +121,7 @@ namespace CesiumGltf {
         /**
          * @brief An array of skins.
          *
-         * An array of skins.  A skin is defined by joints and matrices.
+         * A skin is defined by joints and matrices.
          */
         std::vector<Skin> skins;
 

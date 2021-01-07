@@ -15,7 +15,7 @@ namespace CesiumGltf {
         /**
          * @brief The uri of the buffer.
          *
-         * The uri of the buffer.  Relative paths are relative to the .gltf file.  Instead of referencing an external file, the uri can also be a data-uri.
+         * Relative paths are relative to the .gltf file.  Instead of referencing an external file, the uri can also be a data-uri.
          */
         std::string uri;
 

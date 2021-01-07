@@ -25,14 +25,12 @@ namespace CesiumGltf {
         /**
          * @brief The index of the skin referenced by this node.
          *
-         * The index of the skin referenced by this node. When a skin is referenced by a node within a scene, all joints used by the skin must belong to the same scene.
+         * When a skin is referenced by a node within a scene, all joints used by the skin must belong to the same scene.
          */
         int32_t skin;
 
         /**
          * @brief A floating-point 4x4 transformation matrix stored in column-major order.
-         *
-         * A floating-point 4x4 transformation matrix stored in column-major order.
          */
         std::vector<double> matrix;
 

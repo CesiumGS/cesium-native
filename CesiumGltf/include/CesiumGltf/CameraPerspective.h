@@ -13,7 +13,7 @@ namespace CesiumGltf {
         /**
          * @brief The floating-point aspect ratio of the field of view.
          *
-         * The floating-point aspect ratio of the field of view. When this is undefined, the aspect ratio of the canvas is used.
+         * When this is undefined, the aspect ratio of the canvas is used.
          */
         double aspectRatio;
 
@@ -25,14 +25,12 @@ namespace CesiumGltf {
         /**
          * @brief The floating-point distance to the far clipping plane.
          *
-         * The floating-point distance to the far clipping plane. When defined, `zfar` must be greater than `znear`. If `zfar` is undefined, runtime must use infinite projection matrix.
+         * When defined, `zfar` must be greater than `znear`. If `zfar` is undefined, runtime must use infinite projection matrix.
          */
         double zfar;
 
         /**
          * @brief The floating-point distance to the near clipping plane.
-         *
-         * The floating-point distance to the near clipping plane.
          */
         double znear;
     };

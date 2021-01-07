@@ -45,21 +45,21 @@ namespace CesiumGltf {
         /**
          * @brief The index of the bufferView.
          *
-         * The index of the bufferView. When not defined, accessor must be initialized with zeros; `sparse` property or extensions could override zeros with actual values.
+         * When not defined, accessor must be initialized with zeros; `sparse` property or extensions could override zeros with actual values.
          */
         int32_t bufferView;
 
         /**
          * @brief The offset relative to the start of the bufferView in bytes.
          *
-         * The offset relative to the start of the bufferView in bytes.  This must be a multiple of the size of the component datatype.
+         * This must be a multiple of the size of the component datatype.
          */
         int64_t byteOffset;
 
         /**
          * @brief The datatype of components in the attribute.
          *
-         * The datatype of components in the attribute.  All valid values correspond to WebGL enums.  The corresponding typed arrays are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when the accessor contains indices, i.e., the accessor is only referenced by `primitive.indices`.
+         * All valid values correspond to WebGL enums.  The corresponding typed arrays are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when the accessor contains indices, i.e., the accessor is only referenced by `primitive.indices`.
          */
         ComponentType componentType;
 
@@ -85,7 +85,7 @@ namespace CesiumGltf {
         /**
          * @brief Maximum value of each component in this attribute.
          *
-         * Maximum value of each component in this attribute.  Array elements must be treated as having the same data type as accessor's `componentType`. Both min and max arrays have the same length.  The length is determined by the value of the type property; it can be 1, 2, 3, 4, 9, or 16.
+         * Array elements must be treated as having the same data type as accessor's `componentType`. Both min and max arrays have the same length.  The length is determined by the value of the type property; it can be 1, 2, 3, 4, 9, or 16.
          * 
          * `normalized` property has no effect on array values: they always correspond to the actual values stored in the buffer. When accessor is sparse, this property must contain max values of accessor data with sparse substitution applied.
          */
@@ -94,7 +94,7 @@ namespace CesiumGltf {
         /**
          * @brief Minimum value of each component in this attribute.
          *
-         * Minimum value of each component in this attribute.  Array elements must be treated as having the same data type as accessor's `componentType`. Both min and max arrays have the same length.  The length is determined by the value of the type property; it can be 1, 2, 3, 4, 9, or 16.
+         * Array elements must be treated as having the same data type as accessor's `componentType`. Both min and max arrays have the same length.  The length is determined by the value of the type property; it can be 1, 2, 3, 4, 9, or 16.
          * 
          * `normalized` property has no effect on array values: they always correspond to the actual values stored in the buffer. When accessor is sparse, this property must contain min values of accessor data with sparse substitution applied.
          */

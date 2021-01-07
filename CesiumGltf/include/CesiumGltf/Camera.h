@@ -30,7 +30,7 @@ namespace CesiumGltf {
         /**
          * @brief Specifies if the camera uses a perspective or orthographic projection.
          *
-         * Specifies if the camera uses a perspective or orthographic projection.  Based on this, either the camera's `perspective` or `orthographic` property will be defined.
+         * Based on this, either the camera's `perspective` or `orthographic` property will be defined.
          */
         Type type;
     };

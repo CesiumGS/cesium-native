@@ -29,7 +29,7 @@ function resolveProperty(
       headers: ["<cstdint>"],
       type: "int64_t",
       readerHeaders: [`"IntegerJsonHandler.h"`],
-      readerType: "IntegerJsonHandler<int64_t>"
+      readerType: "IntegerJsonHandler<int64_t>",
     };
   } else if (propertyDetails.type == "number") {
     return {
@@ -94,7 +94,7 @@ function resolveProperty(
         headers: [`"CesiumGltf/${type}.h"`],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${type}JsonHandler.h"`],
-        schemas: [itemSchema]
+        schemas: [itemSchema],
       };
     }
   } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
@@ -105,9 +105,12 @@ function resolveProperty(
       propertyName,
       propertyDetails.allOf[0]
     );
-    nested.briefDoc = propertyDetails.description;
-    nested.fullDoc = propertyDetails.gltf_detailedDescription;
-    return nested;
+
+    return {
+      ...nested,
+      briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
+      fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
+    };
   } else {
     console.warn(`Skipping unhandled property ${propertyName}.`);
     return undefined;
@@ -123,6 +126,15 @@ function toPascalCase(name) {
 }
 
 function propertyDefaults(propertyName, propertyDetails) {
+  const fullDoc =
+    propertyDetails.gltf_detailedDescription &&
+    propertyDetails.gltf_detailedDescription.indexOf(
+      propertyDetails.description
+    ) === 0
+      ? propertyDetails.gltf_detailedDescription
+          .substr(propertyDetails.description.length)
+          .trim()
+      : propertyDetails.gltf_detailedDescription;
   return {
     name: propertyName,
     headers: [],
@@ -134,11 +146,17 @@ function propertyDefaults(propertyName, propertyDetails) {
     readerLocalTypes: [],
     readerLocalTypesImpl: [],
     briefDoc: propertyDetails.description,
-    fullDoc: propertyDetails.gltf_detailedDescription,
+    fullDoc: fullDoc,
   };
 }
 
-function resolveArray(schemaCache, nameMapping, parentName, propertyName, propertyDetails) {
+function resolveArray(
+  schemaCache,
+  nameMapping,
+  parentName,
+  propertyName,
+  propertyDetails
+) {
   const itemProperty = resolveProperty(
     schemaCache,
     nameMapping,
@@ -159,11 +177,17 @@ function resolveArray(schemaCache, nameMapping, parentName, propertyName, proper
     localTypes: itemProperty.localTypes,
     type: `std::vector<${itemProperty.type}>`,
     readerHeaders: [`"ArrayJsonHandler.h"`, ...itemProperty.readerHeaders],
-    readerType: `ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`
+    readerType: `ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
   };
 }
 
-function resolveDictionary(schemaCache, nameMapping, parentName, propertyName, propertyDetails) {
+function resolveDictionary(
+  schemaCache,
+  nameMapping,
+  parentName,
+  propertyName,
+  propertyDetails
+) {
   const additional = resolveProperty(
     schemaCache,
     nameMapping,
@@ -184,18 +208,34 @@ function resolveDictionary(schemaCache, nameMapping, parentName, propertyName, p
     localTypes: additional.localTypes,
     type: `std::unordered_map<std::string, ${additional.type}>`,
     readerHeaders: [`"DictionaryJsonHandler.h"`, ...additional.readerHeaders],
-    readerType: `DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`
+    readerType: `DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
   };
 }
 
-function resolveEnum(schemaCache, nameMapping, parentName, propertyName, propertyDetails) {
-  if (!propertyDetails.anyOf || propertyDetails.anyOf.length === 0 || !propertyDetails.anyOf[0].enum || propertyDetails.anyOf[0].enum.length === 0) {
+function resolveEnum(
+  schemaCache,
+  nameMapping,
+  parentName,
+  propertyName,
+  propertyDetails
+) {
+  if (
+    !propertyDetails.anyOf ||
+    propertyDetails.anyOf.length === 0 ||
+    !propertyDetails.anyOf[0].enum ||
+    propertyDetails.anyOf[0].enum.length === 0
+  ) {
     return undefined;
   }
 
   const enumName = toPascalCase(propertyName);
 
-  const readerTypes = createEnumReaderType(parentName, enumName, propertyName, propertyDetails);
+  const readerTypes = createEnumReaderType(
+    parentName,
+    enumName,
+    propertyName,
+    propertyDetails
+  );
 
   const result = {
     ...propertyDefaults(propertyName, propertyDetails),
@@ -210,12 +250,17 @@ function resolveEnum(schemaCache, nameMapping, parentName, propertyName, propert
               12
             )}
         };
-      `)
+      `),
     ],
     type: enumName,
     readerHeaders: [`"CesiumGltf/${parentName}.h"`],
     readerLocalTypes: readerTypes,
-    readerLocalTypesImpl: createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDetails)
+    readerLocalTypesImpl: createEnumReaderTypeImpl(
+      parentName,
+      enumName,
+      propertyName,
+      propertyDetails
+    ),
   };
 
   if (readerTypes.length > 0) {
@@ -234,13 +279,20 @@ function createEnum(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return `${makeIdentifier(enumDetails.description)} = ${enumDetails.enum[0]}`;
+    return `${makeIdentifier(enumDetails.description)} = ${
+      enumDetails.enum[0]
+    }`;
   } else {
     return makeIdentifier(enumDetails.enum[0]);
   }
 }
 
-function createEnumReaderType(parentName, enumName, propertyName, propertyDetails) {
+function createEnumReaderType(
+  parentName,
+  enumName,
+  propertyName,
+  propertyDetails
+) {
   if (propertyDetails.anyOf[0].type === "integer") {
     // No special reader needed for integer enums.
     return [];
@@ -258,7 +310,12 @@ function createEnumReaderType(parentName, enumName, propertyName, propertyDetail
   `);
 }
 
-function createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDetails) {
+function createEnumReaderTypeImpl(
+  parentName,
+  enumName,
+  propertyName,
+  propertyDetails
+) {
   if (propertyDetails.anyOf[0].type === "integer") {
     // No special reader needed for integer enums.
     return [];
@@ -277,8 +334,16 @@ function createEnumReaderTypeImpl(parentName, enumName, propertyName, propertyDe
 
       ${indent(
         propertyDetails.anyOf
-          .map((e) => e.enum && e.enum[0] !== undefined ? `if ("${e.enum[0]}"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(e.enum[0])};` : undefined)
-          .filter(s => s !== undefined)
+          .map((e) =>
+            e.enum && e.enum[0] !== undefined
+              ? `if ("${
+                  e.enum[0]
+                }"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(
+                  e.enum[0]
+                )};`
+              : undefined
+          )
+          .filter((s) => s !== undefined)
           .join("\nelse "),
         6
       )}

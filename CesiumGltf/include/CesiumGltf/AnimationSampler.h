@@ -21,14 +21,12 @@ namespace CesiumGltf {
         /**
          * @brief The index of an accessor containing keyframe input values, e.g., time.
          *
-         * The index of an accessor containing keyframe input values, e.g., time. That accessor must have componentType `FLOAT`. The values represent time in seconds with `time[0] >= 0.0`, and strictly increasing values, i.e., `time[n + 1] > time[n]`.
+         * That accessor must have componentType `FLOAT`. The values represent time in seconds with `time[0] >= 0.0`, and strictly increasing values, i.e., `time[n + 1] > time[n]`.
          */
         int32_t input;
 
         /**
          * @brief Interpolation algorithm.
-         *
-         * Interpolation algorithm.
          */
         Interpolation interpolation;
 

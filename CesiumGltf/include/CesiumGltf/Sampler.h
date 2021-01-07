@@ -48,14 +48,14 @@ namespace CesiumGltf {
         /**
          * @brief Magnification filter.
          *
-         * Magnification filter.  Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729` (LINEAR).
+         * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729` (LINEAR).
          */
         MagFilter magFilter;
 
         /**
          * @brief Minification filter.
          *
-         * Minification filter.  All valid values correspond to WebGL enums.
+         * All valid values correspond to WebGL enums.
          */
         MinFilter minFilter;
 

@@ -20,7 +20,7 @@ namespace CesiumGltf {
         /**
          * @brief The uri of the image.
          *
-         * The uri of the image.  Relative paths are relative to the .gltf file.  Instead of referencing an external file, the uri can also be a data-uri.  The image format must be jpg or png.
+         * Relative paths are relative to the .gltf file.  Instead of referencing an external file, the uri can also be a data-uri.  The image format must be jpg or png.
          */
         std::string uri;
 
