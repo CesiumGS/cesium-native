@@ -781,22 +781,28 @@ namespace Cesium3DTiles {
         this->_markTileVisited(tile);
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
+        bool insideFrustum = frameState.camera.isBoundingVolumeVisible(boundingVolume);
+        bool isVisible = insideFrustum;
 
-        if (!isVisible && this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
-            const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
-            const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
-            
-            const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-            if (pRegion) {
-                pRectangle = &pRegion->getRectangle();
-            } else if (pLooseRegion) {
-                pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+        if (!insideFrustum) {
+            if (this->_options.disableFrustumCull) {
+                isVisible = true;
             }
+            else if (this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
+                const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
+                const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+                
+                const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+                if (pRegion) {
+                    pRectangle = &pRegion->getRectangle();
+                } else if (pLooseRegion) {
+                    pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+                }
 
-            if (pRectangle) {
-                if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
-                    isVisible = true;
+                if (pRectangle) {
+                    if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
+                        isVisible = true;
+                    }
                 }
             }
         }
@@ -831,7 +837,7 @@ namespace Cesium3DTiles {
             return TraversalDetails();
         }
     
-        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, result);
+        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, insideFrustum, result);
     }
 
     // Visits a tile for possible rendering. When we call this function with a tile:
@@ -845,6 +851,7 @@ namespace Cesium3DTiles {
         bool ancestorMeetsSse,
         Tile& tile,
         double distance,
+        bool insideFrustum,
         ViewUpdateResult& result
     ) {
         ++result.tilesVisited;
@@ -869,7 +876,7 @@ namespace Cesium3DTiles {
 
         // Does this tile meet the screen-space error?
         double sse = frameState.camera.computeScreenSpaceError(tile.getGeometricError(), distance);
-        bool meetsSse = sse < this->_options.maximumScreenSpaceError;
+        bool meetsSse = !insideFrustum || sse < this->_options.maximumScreenSpaceError;
 
         // If we're forbidding holes, don't refine if any children are still loading.
         bool waitingForChildren = false;

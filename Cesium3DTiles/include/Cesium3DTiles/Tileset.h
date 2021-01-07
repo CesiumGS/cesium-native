@@ -92,6 +92,15 @@ namespace Cesium3DTiles {
         bool forbidHoles = false;
 
         /**
+         * @brief Disable culling of tiles against the frustum.
+         *
+         * When true, the tileset will not cull tiles against the frustum. While this will not increase the number
+         * rendered tiles, it will increase the number of loaded tiles. Screen-space error computations will be 
+         * disabled for tiles that fall outside the frustum.
+         */
+        bool disableFrustumCull = true; //TODO: this should be false by default
+
+        /**
          * @brief The maximum number of bytes that may be cached.
          * 
          * Note that this value, even if 0, will never
@@ -357,7 +366,7 @@ namespace Cesium3DTiles {
             double fogDensity;
         };
 
-        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
+        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, bool insideFrustum, ViewUpdateResult& result);
         TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
 
