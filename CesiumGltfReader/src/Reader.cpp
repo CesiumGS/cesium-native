@@ -4,6 +4,10 @@
 #include <rapidjson/reader.h>
 #include <string>
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG
+#include <stb_image.h>
+
 using namespace CesiumGltf;
 
 namespace {
@@ -271,12 +275,65 @@ namespace {
 
         return result;
     }
+
+    // template <typename T>
+    // const T& getSafe(const std::vector<T>& items, int64_t index) {
+    //     static T default;
+    //     if (index < 0 || index >= static_cast<int64_t>(items.size())) {
+    //         return default;
+    //     } else {
+    //         return items[index];
+    //     }
+    // }
+
+    // gsl::span<const uint8_t> safeSubspan(const gsl::span<const uint8_t>& s, int64_t offset, int64_t count) {
+
+    // }
+
+    // void postprocess(Model& model, const ReadModelOptions& options) {
+    //     if (options.decodeEmbeddedImages) {
+    //         for (Image& image : model.images) {
+    //             const BufferView& bufferView = getSafe(model.bufferViews, image.bufferView);
+    //             const Buffer& buffer = getSafe(model.buffers, bufferView.buffer);
+    //             if (buffer.cesium.data.size() == 0) {
+    //                 continue;
+    //             }
+                
+    //             gsl::span<const uint8_t> bufferSpan(buffer.cesium.data);
+    //             bufferSpan.subspan()
+    //         }
+    //     }
+    // }
 }
 
-ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data) {
-    if (isBinaryGltf(data)) {
-        return readBinaryModel(data);
+ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& /* options */) {
+    ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(data) : readJsonModel(data);
+
+    // if (result.model) {
+    //     postprocess(result.model.value(), options);
+    // }
+
+    return result;
+}
+
+ImageReaderResult CesiumGltf::readImage(const gsl::span<const uint8_t>& data) {
+    ImageReaderResult result;
+
+    result.image.emplace();
+    ImageCesium& image = result.image.value();
+    
+    image.bytesPerChannel = 1;
+    image.channels = 4;
+
+    int channelsInFile;
+    stbi_uc* pImage = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &image.width, &image.height, &channelsInFile, image.channels);
+    if (pImage) {
+        image.pixelData.assign(pImage, pImage + image.width * image.height * image.channels * image.bytesPerChannel);
+        stbi_image_free(pImage);
     } else {
-        return readJsonModel(data);
+        result.image.reset();
+        result.errors = stbi_failure_reason();
     }
+
+    return result;
 }

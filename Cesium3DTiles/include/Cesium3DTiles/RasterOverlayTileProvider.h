@@ -10,6 +10,7 @@
 #include "CesiumUtility/IntrusivePointer.h"
 #include <unordered_map>
 #include <optional>
+#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
@@ -41,6 +42,7 @@ namespace Cesium3DTiles {
          * @param asyncSystem The async system used to request assets and do work in threads.
          * @param credit The {@link Credit} for this tile provider, if it exists.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
+         * @param pLogger The logger to which to send messages about the tile provider and tiles.
          * @param projection The {@link CesiumGeospatial::Projection}.
          * @param tilingScheme The {@link CesiumGeometry::QuadtreeTilingScheme}.
          * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
@@ -54,6 +56,7 @@ namespace Cesium3DTiles {
             const CesiumAsync::AsyncSystem& asyncSystem,
             std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
             const CesiumGeometry::Rectangle& coverageRectangle,
@@ -91,6 +94,11 @@ namespace Cesium3DTiles {
          * @brief Gets the interface used to prepare raster overlay images for rendering.
          */
         const std::shared_ptr<IPrepareRendererResources>& getPrepareRendererResources() const noexcept { return this->_pPrepareRendererResources; }
+
+        /**
+         * @brief Gets the logger to which to send messages about the tile provider and tiles.
+         */
+        const std::shared_ptr<spdlog::logger>& getLogger() const noexcept { return this->_pLogger; }
 
         /**
          * @brief Returns the {@link CesiumGeospatial::Projection} of this instance.
@@ -231,6 +239,7 @@ namespace Cesium3DTiles {
         CesiumAsync::AsyncSystem _asyncSystem;
         std::optional<Credit> _credit;
         std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
+        std::shared_ptr<spdlog::logger> _pLogger;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
         CesiumGeometry::Rectangle _coverageRectangle;

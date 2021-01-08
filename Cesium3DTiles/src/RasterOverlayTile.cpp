@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGltf/Reader.h"
 
 using namespace CesiumAsync;
 
@@ -48,7 +49,7 @@ namespace Cesium3DTiles {
                 {}
 
                 LoadState state;
-                CesiumGltf::Image image;
+                CesiumGltf::ImageCesium image;
                 std::string warnings;
                 std::string errors;
                 void* pRendererResources;
@@ -63,7 +64,8 @@ namespace Cesium3DTiles {
                 tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID()),
                 projection = pTileProvider->getProjection(),
                 cutoutsCollection = overlay.getCutouts(),
-                pPrepareRendererResources = pTileProvider->getPrepareRendererResources()
+                pPrepareRendererResources = pTileProvider->getPrepareRendererResources(),
+                pLogger = pTileProvider->getLogger()
             ](
                 std::unique_ptr<IAssetRequest> pRequest
             ) {
@@ -76,22 +78,35 @@ namespace Cesium3DTiles {
                     return LoadResult(LoadState::Failed);
                 }
 
-                LoadResult result;
-
                 gsl::span<const uint8_t> data = pResponse->data();
-                // bool success = CesiumGltf::LoadImageData(&result.image, 0, &result.errors, &result.warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
-                bool success = false;
+                CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
-                const int bytesPerPixel = 4;
-                if (success && result.image.cesium.pixelData.size() >= static_cast<size_t>(result.image.cesium.width * result.image.cesium.height * bytesPerPixel)) {
+                if (!loadedImage.image.has_value()) {
+                    SPDLOG_LOGGER_ERROR(pLogger, "Failed to load image: {}", loadedImage.errors);
+
+                    LoadResult result;
+                    result.pRendererResources = nullptr;
+                    result.state = LoadState::Failed;
+                    return result;
+                }
+
+                if (!loadedImage.warnings.empty()) {
+                    SPDLOG_LOGGER_WARN(pLogger, "Warnings while loading image: {}", loadedImage.warnings);
+                }
+
+                CesiumGltf::ImageCesium& image = loadedImage.image.value();
+
+                int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+
+                if (image.pixelData.size() >= static_cast<size_t>(image.width * image.height * bytesPerPixel)) {
                     double tileWidth = tileRectangle.computeWidth();
                     double tileHeight = tileRectangle.computeHeight();
 
                     gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = cutoutsCollection.getCutouts();
 
-                    std::vector<unsigned char>& imageData = result.image.cesium.pixelData;
-                    int width = result.image.cesium.width; 
-                    int height = result.image.cesium.height;
+                    std::vector<uint8_t>& imageData = image.pixelData;
+                    int width = image.width; 
+                    int height = image.height;
 
                     for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
                         CesiumGeometry::Rectangle cutoutRectangle = projectRectangleSimple(projection, rectangle);
@@ -128,15 +143,21 @@ namespace Cesium3DTiles {
                         }
                     }
 
-                    result.pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(result.image);
+                    void* pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(image);
 
+                    LoadResult result;
                     result.state = LoadState::Loaded;
+                    result.image = std::move(image);
+                    result.pRendererResources = pRendererResources;
+                    result.errors = std::move(loadedImage.errors);
+                    result.warnings = std::move(loadedImage.warnings);
+                    return result;
                 } else {
+                    LoadResult result;
                     result.pRendererResources = nullptr;
                     result.state = LoadState::Failed;
+                    return result;
                 }
-
-                return result;
             }).thenInMainThread([this](LoadResult&& result) {
                 result.pRendererResources = result.pRendererResources;
                 this->_image = std::move(result.image);

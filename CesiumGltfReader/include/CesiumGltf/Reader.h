@@ -11,5 +11,18 @@ namespace CesiumGltf {
         std::string warnings;
     };
 
-    ModelReaderResult readModel(const gsl::span<const uint8_t>& data);
+    struct ReadModelOptions {
+        bool decodeDataUris = true;
+        bool decodeEmbeddedImages = true;
+    };
+
+    ModelReaderResult readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options = ReadModelOptions());
+
+    struct ImageReaderResult {
+        std::optional<ImageCesium> image;
+        std::string errors;
+        std::string warnings;
+    };
+
+    ImageReaderResult readImage(const gsl::span<const uint8_t>& data);
 }

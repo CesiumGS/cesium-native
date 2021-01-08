@@ -59,6 +59,7 @@ namespace Cesium3DTiles {
             Credit bingCredit,
             const std::vector<CreditAndCoverageAreas>& perTileCredits,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger,
             const std::string& baseUrl,
             const std::string& urlTemplate,
             const std::vector<std::string>& subdomains,
@@ -73,6 +74,7 @@ namespace Cesium3DTiles {
                 asyncSystem,
                 bingCredit,
                 pPrepareRendererResources,
+                pLogger,
                 WebMercatorProjection(),
                 QuadtreeTilingScheme(
                     WebMercatorProjection::computeMaximumProjectedRectangle(Ellipsoid::WGS84),
@@ -295,6 +297,7 @@ namespace Cesium3DTiles {
                 bingCredit,
                 credits,
                 pPrepareRendererResources,
+                pLogger,
                 baseUrl,
                 urlTemplate,
                 subdomains,

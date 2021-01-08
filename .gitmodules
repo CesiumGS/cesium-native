@@ -31,3 +31,6 @@
 [submodule "extern/glTF"]
 	path = extern/glTF
 	url = https://github.com/KhronosGroup/glTF.git
+[submodule "extern/stb"]
+	path = extern/stb
+	url = https://github.com/nothings/stb.git

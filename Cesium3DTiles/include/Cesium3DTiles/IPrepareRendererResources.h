@@ -10,7 +10,7 @@ namespace CesiumGeometry {
 }
 
 namespace CesiumGltf {
-    struct Image;
+    struct ImageCesium;
     struct Model;
 }
 
@@ -85,7 +85,7 @@ namespace Cesium3DTiles {
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareRasterInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareRasterInLoadThread(const CesiumGltf::Image& image) = 0;
+        virtual void* prepareRasterInLoadThread(const CesiumGltf::ImageCesium& image) = 0;
 
         /**
          * @brief Further preprares a raster overlay tile. 
