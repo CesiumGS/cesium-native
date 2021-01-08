@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumAsync/Library.h"
+#include "CesiumAsync/ResponseCacheControl.h"
 #include <gsl/span>
 #include <string>
 #include <map>
@@ -12,18 +13,6 @@ namespace CesiumAsync {
      */
     class CESIUMASYNC_API IAssetResponse {
     public:
-        struct CacheControl {
-            bool mustRevalidate;
-            bool noCache;
-            bool noStore;
-            bool noTransform;
-            bool accessControlPublic;
-            bool accessControlPrivate;
-            bool proxyRevalidate;
-            int maxAge;
-            int sharedMaxAge;
-        };
-
         /**
          * @brief Default destructor
          */
@@ -47,7 +36,7 @@ namespace CesiumAsync {
         /**
          * @brief Returns the HTTP cache control of the response
          */
-        virtual const CacheControl &cacheControl() const = 0;
+        virtual const ResponseCacheControl *cacheControl() const = 0;
 
         /**
          * @brief Returns the data of this response

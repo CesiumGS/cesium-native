@@ -1,5 +1,5 @@
 #include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/ICacheDatabase.h"
 #include "sqlite3.h"
 #include <memory>
 #include <optional>
@@ -7,7 +7,7 @@
 #include <map>
 
 namespace CesiumAsync {
-	class DiskCache {
+	class DiskCache : public ICacheDatabase {
 	public:
 		DiskCache(const std::string &databaseName);
 
@@ -19,36 +19,22 @@ namespace CesiumAsync {
 
 		DiskCache& operator=(DiskCache&&) noexcept;
 
-		~DiskCache() noexcept;
+		~DiskCache() noexcept override;
 
-		std::unique_ptr<IAssetRequest> getEntry(const std::string& url) const;
+		virtual std::optional<CacheItem> getEntry(const std::string& url) const override;
 
-		void insertEntry(const IAssetRequest& entry);
+		virtual void storeResponse(const std::string& key, 
+			std::time_t expiryTime,
+			const IAssetRequest& request,
+			std::function<void(std::string)> onError) override;
 
-		void removeEntry(const std::string& url);
+		virtual void removeEntry(const std::string& url) override;
 
-		void prune();
+		virtual void prune() override;
 
-		void clearAll();
+		virtual void clearAll() override;
 
 	private:
-		struct Sqlite3StmtWrapper {
-			Sqlite3StmtWrapper(const std::string& statement, sqlite3* connection);
-
-			Sqlite3StmtWrapper(const Sqlite3StmtWrapper &) = delete;
-
-			Sqlite3StmtWrapper(Sqlite3StmtWrapper &&) noexcept;
-
-			Sqlite3StmtWrapper &operator=(const Sqlite3StmtWrapper &) = delete;
-
-			Sqlite3StmtWrapper &operator=(Sqlite3StmtWrapper &&) noexcept;
-
-			~Sqlite3StmtWrapper() noexcept;
-
-			sqlite3_stmt* pStmt;
-		};
-
 		sqlite3* _pConnection;
-		std::optional<Sqlite3StmtWrapper> _insertStmt;
 	};
 }
