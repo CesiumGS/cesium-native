@@ -655,7 +655,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         // make sure the gltf is the grid
         const CesiumGltf::Model& model = *loadResult->model;
         const CesiumGltf::Mesh& mesh = model.meshes.front();
-        const CesiumGltf::Primitive& primitive = mesh.primitives.front();
+        const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
         // make sure mesh contains grid mesh and skirts at the end
         GltfAccessor<uint32_t> indices(model, static_cast<size_t>(primitive.indices));
