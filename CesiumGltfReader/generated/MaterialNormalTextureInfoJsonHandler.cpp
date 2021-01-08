@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void MaterialNormalTextureInfoJsonHandler::reset(IJsonHandler* pParent, MaterialNormalTextureInfo* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  TextureInfoJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,11 +24,14 @@ void MaterialNormalTextureInfoJsonHandler::reportWarning(const std::string& warn
 }
 
 IJsonHandler* MaterialNormalTextureInfoJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->MaterialNormalTextureInfoKey(str, *this->_pObject);
+}
+
+IJsonHandler* MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoKey(const char* str, MaterialNormalTextureInfo& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
+  if ("scale"s == str) return property("scale", this->_scale, o.scale);
 
-  if ("scale"s == str) return property("scale", this->_scale, this->_pObject->scale);
-
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->TextureInfoKey(str, *this->_pObject);
 }

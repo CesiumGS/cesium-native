@@ -24,13 +24,16 @@
 namespace CesiumGltf {
   struct Model;
 
-  class ModelJsonHandler final : public ExtensibleObjectJsonHandler {
+  class ModelJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Model* pObject);
     Model* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* ModelKey(const char* str, Model& o);
 
   private:
 

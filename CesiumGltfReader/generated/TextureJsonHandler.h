@@ -8,13 +8,16 @@
 namespace CesiumGltf {
   struct Texture;
 
-  class TextureJsonHandler final : public NamedObjectJsonHandler {
+  class TextureJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Texture* pObject);
     Texture* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* TextureKey(const char* str, Texture& o);
 
   private:
 

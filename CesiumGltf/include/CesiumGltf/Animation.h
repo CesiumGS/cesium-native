@@ -11,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief A keyframe animation.
      */
-    struct Animation final : public NamedObject {
+    struct Animation : public NamedObject {
 
         /**
          * @brief An array of channels, each of which targets an animation's sampler at a node's property. Different channels of the same animation can't have equal targets.

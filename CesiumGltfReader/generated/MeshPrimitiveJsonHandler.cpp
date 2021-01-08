@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void MeshPrimitiveJsonHandler::reset(IJsonHandler* pParent, MeshPrimitive* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,15 +24,18 @@ void MeshPrimitiveJsonHandler::reportWarning(const std::string& warning, std::ve
 }
 
 IJsonHandler* MeshPrimitiveJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->MeshPrimitiveKey(str, *this->_pObject);
+}
+
+IJsonHandler* MeshPrimitiveJsonHandler::MeshPrimitiveKey(const char* str, MeshPrimitive& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("attributes"s == str) return property("attributes", this->_attributes, this->_pObject->attributes);
-  if ("indices"s == str) return property("indices", this->_indices, this->_pObject->indices);
-  if ("material"s == str) return property("material", this->_material, this->_pObject->material);
-  if ("mode"s == str) return property("mode", this->_mode, this->_pObject->mode);
-  if ("targets"s == str) return property("targets", this->_targets, this->_pObject->targets);
+  if ("attributes"s == str) return property("attributes", this->_attributes, o.attributes);
+  if ("indices"s == str) return property("indices", this->_indices, o.indices);
+  if ("material"s == str) return property("material", this->_material, o.material);
+  if ("mode"s == str) return property("mode", this->_mode, o.mode);
+  if ("targets"s == str) return property("targets", this->_targets, o.targets);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

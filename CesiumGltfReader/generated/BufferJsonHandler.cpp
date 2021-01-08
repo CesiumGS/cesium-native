@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void BufferJsonHandler::reset(IJsonHandler* pParent, Buffer* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,12 +24,15 @@ void BufferJsonHandler::reportWarning(const std::string& warning, std::vector<st
 }
 
 IJsonHandler* BufferJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->BufferKey(str, *this->_pObject);
+}
+
+IJsonHandler* BufferJsonHandler::BufferKey(const char* str, Buffer& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("uri"s == str) return property("uri", this->_uri, this->_pObject->uri);
-  if ("byteLength"s == str) return property("byteLength", this->_byteLength, this->_pObject->byteLength);
+  if ("uri"s == str) return property("uri", this->_uri, o.uri);
+  if ("byteLength"s == str) return property("byteLength", this->_byteLength, o.byteLength);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

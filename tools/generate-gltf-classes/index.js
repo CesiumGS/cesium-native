@@ -27,7 +27,9 @@ const argv = yargs.options({
 const nameMapping = {
   "glTF": "Model",
   "glTF Id": "ExtensibleObject",
-  "glTFRootProperty": "NamedObject"
+  "glTFRootProperty": "NamedObject",
+  "glTF Property": "ExtensibleObject",
+  "glTF Child of Root Property": "NamedObject"
 };
 
 // Custom `cesium` properties will be added to these objects.

@@ -10,13 +10,16 @@
 namespace CesiumGltf {
   struct Mesh;
 
-  class MeshJsonHandler final : public NamedObjectJsonHandler {
+  class MeshJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Mesh* pObject);
     Mesh* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* MeshKey(const char* str, Mesh& o);
 
   private:
 

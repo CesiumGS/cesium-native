@@ -8,13 +8,16 @@
 namespace CesiumGltf {
   struct Asset;
 
-  class AssetJsonHandler final : public ExtensibleObjectJsonHandler {
+  class AssetJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Asset* pObject);
     Asset* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* AssetKey(const char* str, Asset& o);
 
   private:
 

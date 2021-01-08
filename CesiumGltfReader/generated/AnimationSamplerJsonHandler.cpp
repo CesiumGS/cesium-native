@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void AnimationSamplerJsonHandler::reset(IJsonHandler* pParent, AnimationSampler* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,13 +24,16 @@ void AnimationSamplerJsonHandler::reportWarning(const std::string& warning, std:
 }
 
 IJsonHandler* AnimationSamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->AnimationSamplerKey(str, *this->_pObject);
+}
+
+IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(const char* str, AnimationSampler& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("input"s == str) return property("input", this->_input, this->_pObject->input);
-  if ("interpolation"s == str) return property("interpolation", this->_interpolation, this->_pObject->interpolation);
-  if ("output"s == str) return property("output", this->_output, this->_pObject->output);
+  if ("input"s == str) return property("input", this->_input, o.input);
+  if ("interpolation"s == str) return property("interpolation", this->_interpolation, o.interpolation);
+  if ("output"s == str) return property("output", this->_output, o.output);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

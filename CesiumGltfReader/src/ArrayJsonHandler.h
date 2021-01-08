@@ -2,6 +2,8 @@
 
 #include "JsonHandler.h"
 #include "DoubleJsonHandler.h"
+#include "IntegerJsonHandler.h"
+#include "StringJsonHandler.h"
 #include <cassert>
 #include <vector>
 
@@ -126,6 +128,110 @@ namespace CesiumGltf {
 
     private:
         std::vector<double>* _pArray = nullptr;
+        bool _arrayIsOpen = false;
+    };
+
+    template <typename T>
+    class ArrayJsonHandler<T, IntegerJsonHandler<T>> : public JsonHandler {
+    public:
+        void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
+            JsonHandler::reset(pParent);
+            this->_pArray = pArray;
+            this->_arrayIsOpen = false;
+        }
+
+        virtual IJsonHandler* StartArray() override {
+            if (this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            this->_arrayIsOpen = true;
+            return this;
+        }
+
+        virtual IJsonHandler* EndArray(size_t) override {
+            return this->parent();
+        }
+
+        virtual IJsonHandler* Int(int i) override {
+            if (!this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            assert(this->_pArray);
+            this->_pArray->emplace_back(static_cast<T>(i));
+            return this;
+        }
+        
+        virtual IJsonHandler* Uint(unsigned i) override {
+            if (!this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            assert(this->_pArray);
+            this->_pArray->emplace_back(static_cast<T>(i));
+            return this;
+        }
+
+        virtual IJsonHandler* Int64(int64_t i) override {
+            if (!this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            assert(this->_pArray);
+            this->_pArray->emplace_back(static_cast<T>(i));
+            return this;
+        }
+
+        virtual IJsonHandler* Uint64(uint64_t i) override {
+            if (!this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            assert(this->_pArray);
+            this->_pArray->emplace_back(static_cast<T>(i));
+            return this;
+        }
+
+    private:
+        std::vector<T>* _pArray = nullptr;
+        bool _arrayIsOpen = false;
+    };
+
+    template <>
+    class ArrayJsonHandler<std::string, StringJsonHandler> : public JsonHandler {
+    public:
+        void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
+            JsonHandler::reset(pParent);
+            this->_pArray = pArray;
+            this->_arrayIsOpen = false;
+        }
+
+        virtual IJsonHandler* StartArray() override {
+            if (this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            this->_arrayIsOpen = true;
+            return this;
+        }
+
+        virtual IJsonHandler* EndArray(size_t) override {
+            return this->parent();
+        }
+
+        virtual IJsonHandler* String(const char* str, size_t length, bool /*copy*/) override {
+            if (!this->_arrayIsOpen) {
+                return nullptr;
+            }
+
+            assert(this->_pArray);
+            this->_pArray->emplace_back(std::string(str, length));
+            return this;
+        }
+
+    private:
+        std::vector<std::string>* _pArray = nullptr;
         bool _arrayIsOpen = false;
     };
 }

@@ -9,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief Metadata about the glTF asset.
      */
-    struct Asset final : public ExtensibleObject {
+    struct Asset : public ExtensibleObject {
 
         /**
          * @brief A copyright message suitable for display to credit the content creator.

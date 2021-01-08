@@ -10,7 +10,7 @@ namespace CesiumGltf {
     /**
      * @brief A set of primitives to be rendered.  A node can contain one mesh.  A node's transform places the mesh in the scene.
      */
-    struct Mesh final : public NamedObject {
+    struct Mesh : public NamedObject {
 
         /**
          * @brief An array of primitives, each defining geometry to be rendered with a material.

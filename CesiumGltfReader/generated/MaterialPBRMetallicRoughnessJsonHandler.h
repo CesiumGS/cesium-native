@@ -10,13 +10,16 @@
 namespace CesiumGltf {
   struct MaterialPBRMetallicRoughness;
 
-  class MaterialPBRMetallicRoughnessJsonHandler final : public ExtensibleObjectJsonHandler {
+  class MaterialPBRMetallicRoughnessJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
     MaterialPBRMetallicRoughness* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* MaterialPBRMetallicRoughnessKey(const char* str, MaterialPBRMetallicRoughness& o);
 
   private:
 

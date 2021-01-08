@@ -9,13 +9,16 @@
 namespace CesiumGltf {
   struct BufferView;
 
-  class BufferViewJsonHandler final : public NamedObjectJsonHandler {
+  class BufferViewJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, BufferView* pObject);
     BufferView* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* BufferViewKey(const char* str, BufferView& o);
 
   private:
 

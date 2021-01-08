@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void NodeJsonHandler::reset(IJsonHandler* pParent, Node* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,19 +24,22 @@ void NodeJsonHandler::reportWarning(const std::string& warning, std::vector<std:
 }
 
 IJsonHandler* NodeJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->NodeKey(str, *this->_pObject);
+}
+
+IJsonHandler* NodeJsonHandler::NodeKey(const char* str, Node& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("camera"s == str) return property("camera", this->_camera, this->_pObject->camera);
-  if ("children"s == str) return property("children", this->_children, this->_pObject->children);
-  if ("skin"s == str) return property("skin", this->_skin, this->_pObject->skin);
-  if ("matrix"s == str) return property("matrix", this->_matrix, this->_pObject->matrix);
-  if ("mesh"s == str) return property("mesh", this->_mesh, this->_pObject->mesh);
-  if ("rotation"s == str) return property("rotation", this->_rotation, this->_pObject->rotation);
-  if ("scale"s == str) return property("scale", this->_scale, this->_pObject->scale);
-  if ("translation"s == str) return property("translation", this->_translation, this->_pObject->translation);
-  if ("weights"s == str) return property("weights", this->_weights, this->_pObject->weights);
+  if ("camera"s == str) return property("camera", this->_camera, o.camera);
+  if ("children"s == str) return property("children", this->_children, o.children);
+  if ("skin"s == str) return property("skin", this->_skin, o.skin);
+  if ("matrix"s == str) return property("matrix", this->_matrix, o.matrix);
+  if ("mesh"s == str) return property("mesh", this->_mesh, o.mesh);
+  if ("rotation"s == str) return property("rotation", this->_rotation, o.rotation);
+  if ("scale"s == str) return property("scale", this->_scale, o.scale);
+  if ("translation"s == str) return property("translation", this->_translation, o.translation);
+  if ("weights"s == str) return property("weights", this->_weights, o.weights);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

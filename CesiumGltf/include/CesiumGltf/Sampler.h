@@ -8,7 +8,7 @@ namespace CesiumGltf {
     /**
      * @brief Texture sampler properties for filtering and wrapping modes.
      */
-    struct Sampler final : public NamedObject {
+    struct Sampler : public NamedObject {
         enum class MagFilter {
             NEAREST = 9728,
 

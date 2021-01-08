@@ -222,7 +222,7 @@ namespace {
 
         if (jsonEnd + sizeof(ChunkHeader) <= data.size()) {
             const ChunkHeader* pBinaryChunkHeader = reinterpret_cast<const ChunkHeader*>(glbData.data() + jsonEnd);
-            if (pJsonChunkHeader->chunkType != 0x004E4942) {
+            if (pBinaryChunkHeader->chunkType != 0x004E4942) {
                 return {
                     std::nullopt,
                     "GLB binary chunk does not have the expected chunkType.",

@@ -13,7 +13,7 @@ namespace CesiumGltf {
     /**
      * @brief The material appearance of a primitive.
      */
-    struct Material final : public NamedObject {
+    struct Material : public NamedObject {
         enum class AlphaMode {
             OPAQUE,
 

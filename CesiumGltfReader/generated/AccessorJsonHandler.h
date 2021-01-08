@@ -13,13 +13,16 @@
 namespace CesiumGltf {
   struct Accessor;
 
-  class AccessorJsonHandler final : public NamedObjectJsonHandler {
+  class AccessorJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Accessor* pObject);
     Accessor* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* AccessorKey(const char* str, Accessor& o);
 
   private:
     class TypeJsonHandler : public JsonHandler {

@@ -127,7 +127,7 @@ namespace Cesium3DTiles {
          *
          * @return The image data.
          */
-        const tinygltf::Image& getImage() const noexcept { return this->_image; }
+        const CesiumGltf::Image& getImage() const noexcept { return this->_image; }
 
         /**
          * @brief Create the renderer resources for the loaded image.
@@ -170,7 +170,7 @@ namespace Cesium3DTiles {
         CesiumGeometry::QuadtreeTileID _tileID;
         std::vector<Credit> _tileCredits;
         std::atomic<LoadState> _state;
-        tinygltf::Image _image;
+        CesiumGltf::Image _image;
         void* _pRendererResources;
         uint32_t _references;
     };

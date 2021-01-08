@@ -10,7 +10,7 @@ namespace CesiumGltf {
     /**
      * @brief The root nodes of a scene.
      */
-    struct Scene final : public NamedObject {
+    struct Scene : public NamedObject {
 
         /**
          * @brief The indices of each root node.

@@ -9,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief A view into a buffer generally representing a subset of the buffer.
      */
-    struct BufferView final : public NamedObject {
+    struct BufferView : public NamedObject {
         enum class Target {
             ARRAY_BUFFER = 34962,
 

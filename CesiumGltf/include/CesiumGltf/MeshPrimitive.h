@@ -11,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief Geometry to be rendered with the given material.
      */
-    struct MeshPrimitive final : public ExtensibleObject {
+    struct MeshPrimitive : public ExtensibleObject {
         enum class Mode {
             POINTS = 0,
 

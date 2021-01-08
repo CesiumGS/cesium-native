@@ -9,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
      */
-    struct AnimationSampler final : public ExtensibleObject {
+    struct AnimationSampler : public ExtensibleObject {
         enum class Interpolation {
             LINEAR,
 

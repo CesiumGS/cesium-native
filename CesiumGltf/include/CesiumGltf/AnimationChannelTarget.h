@@ -9,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief The index of the node and TRS property that an animation channel targets.
      */
-    struct AnimationChannelTarget final : public ExtensibleObject {
+    struct AnimationChannelTarget : public ExtensibleObject {
         enum class Path {
             translation,
 

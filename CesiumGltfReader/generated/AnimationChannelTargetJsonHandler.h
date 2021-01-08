@@ -9,13 +9,16 @@
 namespace CesiumGltf {
   struct AnimationChannelTarget;
 
-  class AnimationChannelTargetJsonHandler final : public ExtensibleObjectJsonHandler {
+  class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, AnimationChannelTarget* pObject);
     AnimationChannelTarget* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* AnimationChannelTargetKey(const char* str, AnimationChannelTarget& o);
 
   private:
     class PathJsonHandler : public JsonHandler {

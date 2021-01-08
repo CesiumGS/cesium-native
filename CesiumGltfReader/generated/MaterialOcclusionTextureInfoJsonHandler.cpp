@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void MaterialOcclusionTextureInfoJsonHandler::reset(IJsonHandler* pParent, MaterialOcclusionTextureInfo* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  TextureInfoJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,11 +24,14 @@ void MaterialOcclusionTextureInfoJsonHandler::reportWarning(const std::string& w
 }
 
 IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->MaterialOcclusionTextureInfoKey(str, *this->_pObject);
+}
+
+IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoKey(const char* str, MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
+  if ("strength"s == str) return property("strength", this->_strength, o.strength);
 
-  if ("strength"s == str) return property("strength", this->_strength, this->_pObject->strength);
-
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->TextureInfoKey(str, *this->_pObject);
 }

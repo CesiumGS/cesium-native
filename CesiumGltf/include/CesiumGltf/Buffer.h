@@ -11,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief A buffer points to binary geometry, animation, or skins.
      */
-    struct Buffer final : public NamedObject {
+    struct Buffer : public NamedObject {
 
         /**
          * @brief The uri of the buffer.

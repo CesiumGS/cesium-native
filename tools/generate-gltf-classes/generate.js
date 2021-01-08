@@ -13,9 +13,10 @@ function generate(options, schema) {
 
   console.log(`Generating ${name}`);
 
-  let base = "Extensible";
-  if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref && schema.allOf[0].$ref === "glTFChildOfRootProperty.schema.json") {
-    base = "Named";
+  let base = "ExtensibleObject";
+  if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
+    const baseSchema = schemaCache.load(schema.allOf[0].$ref);
+    base = getNameFromSchema(nameMapping, baseSchema);
   }
 
   const properties = Object.keys(schema.properties)
@@ -29,7 +30,7 @@ function generate(options, schema) {
   );
 
   const headers = lodash.uniq(
-    [`"CesiumGltf/${base}Object.h"`, ...lodash.flatten(properties.map((property) => property.headers))]
+    [`"CesiumGltf/${base}.h"`, ...lodash.flatten(properties.map((property) => property.headers))]
   );
 
   if (cesiumProperties[name]) {
@@ -49,7 +50,7 @@ function generate(options, schema) {
             /**
              * @brief ${schema.description}
              */
-            struct ${name} final : public ${base}Object {
+            struct ${name} : public ${base} {
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
@@ -70,7 +71,7 @@ function generate(options, schema) {
   fs.writeFileSync(headerOutputPath, unindent(header), "utf-8");
 
   const readerHeaders = lodash.uniq(
-    [`"${base}ObjectJsonHandler.h"`, ...lodash.flatten(properties.map((property) => property.readerHeaders))]
+    [`"${base}JsonHandler.h"`, ...lodash.flatten(properties.map((property) => property.readerHeaders))]
   );
   readerHeaders.sort();
 
@@ -88,7 +89,7 @@ function generate(options, schema) {
         namespace CesiumGltf {
           struct ${name};
 
-          class ${name}JsonHandler final : public ${base}ObjectJsonHandler {
+          class ${name}JsonHandler : public ${base}JsonHandler {
           public:
             void reset(IJsonHandler* pHandler, ${name}* pObject);
             ${name}* getObject();
@@ -96,6 +97,9 @@ function generate(options, schema) {
 
             virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
+          protected:
+            IJsonHandler* ${name}Key(const char* str, ${name}& o);
+    
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
 
@@ -130,7 +134,7 @@ function generate(options, schema) {
         using namespace CesiumGltf;
 
         void ${name}JsonHandler::reset(IJsonHandler* pParent, ${name}* pObject) {
-          ${base}ObjectJsonHandler::reset(pParent);
+          ${base}JsonHandler::reset(pParent, pObject);
           this->_pObject = pObject;
         }
 
@@ -146,9 +150,12 @@ function generate(options, schema) {
         }
 
         IJsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
-          using namespace std::string_literals;
-
           assert(this->_pObject);
+          return this->${name}Key(str, *this->_pObject);
+        }
+
+        IJsonHandler* ${name}JsonHandler::${name}Key(const char* str, ${name}& o) {
+          using namespace std::string_literals;
 
           ${indent(
             properties
@@ -157,7 +164,7 @@ function generate(options, schema) {
             10
           )}
 
-          return this->${base}ObjectKey(str, *this->_pObject);
+          return this->${base}Key(str, *this->_pObject);
         }
 
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
@@ -191,7 +198,7 @@ function formatReaderProperty(property) {
 }
 
 function formatReaderPropertyImpl(property) {
-  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, this->_pObject->${property.name});`;
+  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
 }
 
 function getCesiumProperty(cesiumProperties, name, schema) {

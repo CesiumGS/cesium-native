@@ -18,7 +18,7 @@ namespace Cesium3DTiles {
 	public:
 
 		/** @copydoc GltfAccessor::GltfAccessor */
-		GltfWriter(tinygltf::Model& model, size_t accessorID) :
+		GltfWriter(CesiumGltf::Model& model, size_t accessorID) :
 			_accessor(model, accessorID)
 		{
 		}
@@ -39,36 +39,36 @@ namespace Cesium3DTiles {
 		}
 
 		/** @copydoc GltfAccessor::gltfBuffer */
-		const tinygltf::Buffer& gltfBuffer() const noexcept
+		const CesiumGltf::Buffer& gltfBuffer() const noexcept
 		{
 			return this->_accessor.gltfBuffer();
 		}
 
 		/** @copydoc GltfAccessor::gltfBuffer */
-		tinygltf::Buffer& gltfBuffer() noexcept
+		CesiumGltf::Buffer& gltfBuffer() noexcept
 		{
-			return const_cast<tinygltf::Buffer&>(this->_accessor.gltfBuffer());
+			return const_cast<CesiumGltf::Buffer&>(this->_accessor.gltfBuffer());
 		}
 
 		/** @copydoc GltfAccessor::gltfBufferView */
-		const tinygltf::BufferView& gltfBufferView() const noexcept
+		const CesiumGltf::BufferView& gltfBufferView() const noexcept
 		{
 			return this->_accessor.gltfBufferView();
 		}
 
 		/** @copydoc GltfAccessor::gltfBufferView */
-		tinygltf::BufferView& gltfBufferView() noexcept {
-			return const_cast<tinygltf::BufferView&>(this->_accessor.gltfBufferView());
+		CesiumGltf::BufferView& gltfBufferView() noexcept {
+			return const_cast<CesiumGltf::BufferView&>(this->_accessor.gltfBufferView());
 		}
 
 		/** @copydoc GltfAccessor::gltfAccessor */
-		const tinygltf::Accessor& gltfAccessor() const noexcept {
+		const CesiumGltf::Accessor& gltfAccessor() const noexcept {
 			return this->_accessor.gltfAccessor();
 		}
 
 		/** @copydoc GltfAccessor::gltfAccessor */
-		tinygltf::Accessor& gltfAccessor() noexcept {
-			return const_cast<tinygltf::Accessor&>(this->_accessor.gltfAccessor());
+		CesiumGltf::Accessor& gltfAccessor() noexcept {
+			return const_cast<CesiumGltf::Accessor&>(this->_accessor.gltfAccessor());
 		}
 	};
 

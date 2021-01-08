@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void BufferViewJsonHandler::reset(IJsonHandler* pParent, BufferView* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,15 +24,18 @@ void BufferViewJsonHandler::reportWarning(const std::string& warning, std::vecto
 }
 
 IJsonHandler* BufferViewJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->BufferViewKey(str, *this->_pObject);
+}
+
+IJsonHandler* BufferViewJsonHandler::BufferViewKey(const char* str, BufferView& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("buffer"s == str) return property("buffer", this->_buffer, this->_pObject->buffer);
-  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, this->_pObject->byteOffset);
-  if ("byteLength"s == str) return property("byteLength", this->_byteLength, this->_pObject->byteLength);
-  if ("byteStride"s == str) return property("byteStride", this->_byteStride, this->_pObject->byteStride);
-  if ("target"s == str) return property("target", this->_target, this->_pObject->target);
+  if ("buffer"s == str) return property("buffer", this->_buffer, o.buffer);
+  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("byteLength"s == str) return property("byteLength", this->_byteLength, o.byteLength);
+  if ("byteStride"s == str) return property("byteStride", this->_byteStride, o.byteStride);
+  if ("target"s == str) return property("target", this->_target, o.target);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

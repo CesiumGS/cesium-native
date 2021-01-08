@@ -48,7 +48,7 @@ namespace Cesium3DTiles {
                 {}
 
                 LoadState state;
-                tinygltf::Image image;
+                CesiumGltf::Image image;
                 std::string warnings;
                 std::string errors;
                 void* pRendererResources;
@@ -79,18 +79,19 @@ namespace Cesium3DTiles {
                 LoadResult result;
 
                 gsl::span<const uint8_t> data = pResponse->data();
-                bool success = tinygltf::LoadImageData(&result.image, 0, &result.errors, &result.warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
+                // bool success = CesiumGltf::LoadImageData(&result.image, 0, &result.errors, &result.warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
+                bool success = false;
 
                 const int bytesPerPixel = 4;
-                if (success && result.image.image.size() >= static_cast<size_t>(result.image.width * result.image.height * bytesPerPixel)) {
+                if (success && result.image.cesium.pixelData.size() >= static_cast<size_t>(result.image.cesium.width * result.image.cesium.height * bytesPerPixel)) {
                     double tileWidth = tileRectangle.computeWidth();
                     double tileHeight = tileRectangle.computeHeight();
 
                     gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = cutoutsCollection.getCutouts();
 
-                    std::vector<unsigned char>& imageData = result.image.image;
-                    int width = result.image.width; 
-                    int height = result.image.width;
+                    std::vector<unsigned char>& imageData = result.image.cesium.pixelData;
+                    int width = result.image.cesium.width; 
+                    int height = result.image.cesium.height;
 
                     for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
                         CesiumGeometry::Rectangle cutoutRectangle = projectRectangleSimple(projection, rectangle);

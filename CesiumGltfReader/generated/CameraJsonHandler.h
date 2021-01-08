@@ -10,13 +10,16 @@
 namespace CesiumGltf {
   struct Camera;
 
-  class CameraJsonHandler final : public NamedObjectJsonHandler {
+  class CameraJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Camera* pObject);
     Camera* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* CameraKey(const char* str, Camera& o);
 
   private:
     class TypeJsonHandler : public JsonHandler {

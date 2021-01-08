@@ -9,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief Indices of those attributes that deviate from their initialization value.
      */
-    struct AccessorSparseIndices final : public ExtensibleObject {
+    struct AccessorSparseIndices : public ExtensibleObject {
         enum class ComponentType {
             UNSIGNED_BYTE = 5121,
 

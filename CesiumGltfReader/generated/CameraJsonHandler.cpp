@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void CameraJsonHandler::reset(IJsonHandler* pParent, Camera* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,13 +24,16 @@ void CameraJsonHandler::reportWarning(const std::string& warning, std::vector<st
 }
 
 IJsonHandler* CameraJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->CameraKey(str, *this->_pObject);
+}
+
+IJsonHandler* CameraJsonHandler::CameraKey(const char* str, Camera& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("orthographic"s == str) return property("orthographic", this->_orthographic, this->_pObject->orthographic);
-  if ("perspective"s == str) return property("perspective", this->_perspective, this->_pObject->perspective);
-  if ("type"s == str) return property("type", this->_type, this->_pObject->type);
+  if ("orthographic"s == str) return property("orthographic", this->_orthographic, o.orthographic);
+  if ("perspective"s == str) return property("perspective", this->_perspective, o.perspective);
+  if ("type"s == str) return property("type", this->_type, o.type);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

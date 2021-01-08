@@ -8,13 +8,16 @@
 namespace CesiumGltf {
   struct CameraPerspective;
 
-  class CameraPerspectiveJsonHandler final : public ExtensibleObjectJsonHandler {
+  class CameraPerspectiveJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, CameraPerspective* pObject);
     CameraPerspective* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* CameraPerspectiveKey(const char* str, CameraPerspective& o);
 
   private:
 

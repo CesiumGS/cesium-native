@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void AccessorJsonHandler::reset(IJsonHandler* pParent, Accessor* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,19 +24,22 @@ void AccessorJsonHandler::reportWarning(const std::string& warning, std::vector<
 }
 
 IJsonHandler* AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->AccessorKey(str, *this->_pObject);
+}
+
+IJsonHandler* AccessorJsonHandler::AccessorKey(const char* str, Accessor& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, this->_pObject->bufferView);
-  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, this->_pObject->byteOffset);
-  if ("componentType"s == str) return property("componentType", this->_componentType, this->_pObject->componentType);
-  if ("normalized"s == str) return property("normalized", this->_normalized, this->_pObject->normalized);
-  if ("count"s == str) return property("count", this->_count, this->_pObject->count);
-  if ("type"s == str) return property("type", this->_type, this->_pObject->type);
-  if ("max"s == str) return property("max", this->_max, this->_pObject->max);
-  if ("min"s == str) return property("min", this->_min, this->_pObject->min);
-  if ("sparse"s == str) return property("sparse", this->_sparse, this->_pObject->sparse);
+  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("componentType"s == str) return property("componentType", this->_componentType, o.componentType);
+  if ("normalized"s == str) return property("normalized", this->_normalized, o.normalized);
+  if ("count"s == str) return property("count", this->_count, o.count);
+  if ("type"s == str) return property("type", this->_type, o.type);
+  if ("max"s == str) return property("max", this->_max, o.max);
+  if ("min"s == str) return property("min", this->_min, o.min);
+  if ("sparse"s == str) return property("sparse", this->_sparse, o.sparse);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

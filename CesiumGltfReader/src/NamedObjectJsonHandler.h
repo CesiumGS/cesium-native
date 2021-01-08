@@ -8,6 +8,7 @@ namespace CesiumGltf {
 
     class NamedObjectJsonHandler : public ExtensibleObjectJsonHandler {
     protected:
+        void reset(IJsonHandler* pParent, NamedObject* pObject);
         IJsonHandler* NamedObjectKey(const char* str, NamedObject& o);
 
     private:

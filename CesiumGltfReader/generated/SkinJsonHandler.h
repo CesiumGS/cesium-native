@@ -9,13 +9,16 @@
 namespace CesiumGltf {
   struct Skin;
 
-  class SkinJsonHandler final : public NamedObjectJsonHandler {
+  class SkinJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Skin* pObject);
     Skin* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* SkinKey(const char* str, Skin& o);
 
   private:
 

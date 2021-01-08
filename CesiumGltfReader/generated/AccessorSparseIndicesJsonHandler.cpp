@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void AccessorSparseIndicesJsonHandler::reset(IJsonHandler* pParent, AccessorSparseIndices* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,13 +24,16 @@ void AccessorSparseIndicesJsonHandler::reportWarning(const std::string& warning,
 }
 
 IJsonHandler* AccessorSparseIndicesJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->AccessorSparseIndicesKey(str, *this->_pObject);
+}
+
+IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(const char* str, AccessorSparseIndices& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, this->_pObject->bufferView);
-  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, this->_pObject->byteOffset);
-  if ("componentType"s == str) return property("componentType", this->_componentType, this->_pObject->componentType);
+  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("componentType"s == str) return property("componentType", this->_componentType, o.componentType);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

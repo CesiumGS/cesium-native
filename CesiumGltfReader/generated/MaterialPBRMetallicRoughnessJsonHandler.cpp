@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void MaterialPBRMetallicRoughnessJsonHandler::reset(IJsonHandler* pParent, MaterialPBRMetallicRoughness* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,15 +24,18 @@ void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(const std::string& w
 }
 
 IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->MaterialPBRMetallicRoughnessKey(str, *this->_pObject);
+}
+
+IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(const char* str, MaterialPBRMetallicRoughness& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("baseColorFactor"s == str) return property("baseColorFactor", this->_baseColorFactor, this->_pObject->baseColorFactor);
-  if ("baseColorTexture"s == str) return property("baseColorTexture", this->_baseColorTexture, this->_pObject->baseColorTexture);
-  if ("metallicFactor"s == str) return property("metallicFactor", this->_metallicFactor, this->_pObject->metallicFactor);
-  if ("roughnessFactor"s == str) return property("roughnessFactor", this->_roughnessFactor, this->_pObject->roughnessFactor);
-  if ("metallicRoughnessTexture"s == str) return property("metallicRoughnessTexture", this->_metallicRoughnessTexture, this->_pObject->metallicRoughnessTexture);
+  if ("baseColorFactor"s == str) return property("baseColorFactor", this->_baseColorFactor, o.baseColorFactor);
+  if ("baseColorTexture"s == str) return property("baseColorTexture", this->_baseColorTexture, o.baseColorTexture);
+  if ("metallicFactor"s == str) return property("metallicFactor", this->_metallicFactor, o.metallicFactor);
+  if ("roughnessFactor"s == str) return property("roughnessFactor", this->_roughnessFactor, o.roughnessFactor);
+  if ("metallicRoughnessTexture"s == str) return property("metallicRoughnessTexture", this->_metallicRoughnessTexture, o.metallicRoughnessTexture);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

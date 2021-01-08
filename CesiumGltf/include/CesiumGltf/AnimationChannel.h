@@ -10,7 +10,7 @@ namespace CesiumGltf {
     /**
      * @brief Targets an animation's sampler at a node's property.
      */
-    struct AnimationChannel final : public ExtensibleObject {
+    struct AnimationChannel : public ExtensibleObject {
 
         /**
          * @brief The index of a sampler in this animation used to compute the value for the target.

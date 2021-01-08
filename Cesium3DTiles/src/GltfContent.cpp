@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/GltfWriter.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumGltf/Reader.h"
 #include "CesiumUtility/Math.h"
 #include <stdexcept>
 
@@ -16,29 +17,26 @@ namespace Cesium3DTiles {
 		const glm::dmat4& /*tileTransform*/,
 		const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
 		TileRefine /*tileRefine*/,
-		const std::string& /*url*/,
+		const std::string& url,
 		const gsl::span<const uint8_t>& data
 	) {
 		std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
 
-		std::string errors;
-		std::string warnings;
+		CesiumGltf::ModelReaderResult loadedModel = CesiumGltf::readModel(data);
+		if (!loadedModel.errors.empty()) {
+			SPDLOG_LOGGER_ERROR(pLogger, "Failed to load binary glTF from {}: {}", url, loadedModel.errors);
+		}
+		if (!loadedModel.warnings.empty()) {
+			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from {}: {}", url, loadedModel.warnings);
+		}
 
-		tinygltf::TinyGLTF loader;
-		pResult->model.emplace();
-		bool success = loader.LoadBinaryFromMemory(&pResult->model.value(), &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
-		if (!success) {
-			SPDLOG_LOGGER_ERROR(pLogger, "Failed to load binary glTF from memory: {}", errors);
-		}
-		if (!warnings.empty()) {
-			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from memory: {}", warnings);
-		}
+		pResult->model = std::move(loadedModel.model);
 
 		return pResult;
 	}
 
 	static int generateOverlayTextureCoordinates(
-		tinygltf::Model& gltf,
+		CesiumGltf::Model& gltf,
 		int positionAccessorIndex,
 		const glm::dmat4x4& transform,
 		const CesiumGeospatial::Projection& projection,
@@ -50,12 +48,12 @@ namespace Cesium3DTiles {
 		double& minimumHeight,
 		double& maximumHeight
 	) {
-		std::vector<tinygltf::Buffer>& buffers = gltf.buffers;
-		std::vector<tinygltf::BufferView>& bufferViews = gltf.bufferViews;
-		std::vector<tinygltf::Accessor>& accessors = gltf.accessors;
+		std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
+		std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
+		std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
 
         int uvBufferId = static_cast<int>(buffers.size());
-        tinygltf::Buffer uvBuffer = buffers.emplace_back();
+        CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
 
         int uvBufferViewId = static_cast<int>(bufferViews.size());
         bufferViews.emplace_back();
@@ -65,21 +63,21 @@ namespace Cesium3DTiles {
 
 		GltfAccessor<glm::vec3> positionAccessor(gltf, static_cast<size_t>(positionAccessorIndex));
 
-        uvBuffer.data.resize(positionAccessor.size() * 2 * sizeof(float));
+        uvBuffer.cesium.data.resize(positionAccessor.size() * 2 * sizeof(float));
 
-        tinygltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
+        CesiumGltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
         uvBufferView.buffer = uvBufferId;
         uvBufferView.byteOffset = 0;
         uvBufferView.byteStride = 2 * sizeof(float);
-        uvBufferView.byteLength = uvBuffer.data.size();
-        uvBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+        uvBufferView.byteLength = uvBuffer.cesium.data.size();
+        uvBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-        tinygltf::Accessor& uvAccessor = gltf.accessors[static_cast<size_t>(uvAccessorId)];
+        CesiumGltf::Accessor& uvAccessor = gltf.accessors[static_cast<size_t>(uvAccessorId)];
         uvAccessor.bufferView = uvBufferViewId;
         uvAccessor.byteOffset = 0;
-        uvAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+        uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
         uvAccessor.count = positionAccessor.size();
-        uvAccessor.type = TINYGLTF_TYPE_VEC2;
+        uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
 
 		GltfWriter<glm::vec2> uvWriter(gltf, static_cast<size_t>(uvAccessorId));
 
@@ -154,7 +152,7 @@ namespace Cesium3DTiles {
 	}
 
 	/*static*/ CesiumGeospatial::BoundingRegion GltfContent::createRasterOverlayTextureCoordinates(
-		tinygltf::Model& gltf,
+		CesiumGltf::Model& gltf,
 		uint32_t textureCoordinateID,
 		const CesiumGeospatial::Projection& projection,
 		const CesiumGeometry::Rectangle& rectangle
@@ -172,10 +170,10 @@ namespace Cesium3DTiles {
 		double maximumHeight = std::numeric_limits<double>::lowest();
 
 		Gltf::forEachPrimitiveInScene(gltf, -1, [&positionAccessorsToTextureCoordinateAccessor, &attributeName, &projection, &rectangle, &west, &south, &east, &north, &minimumHeight, &maximumHeight](
-            tinygltf::Model& gltf_,
-            tinygltf::Node& /*node*/,
-            tinygltf::Mesh& /*mesh*/,
-            tinygltf::Primitive& primitive,
+            CesiumGltf::Model& gltf_,
+            CesiumGltf::Node& /*node*/,
+            CesiumGltf::Mesh& /*mesh*/,
+            CesiumGltf::MeshPrimitive& primitive,
             const glm::dmat4& transform
 		) {
 			auto positionIt = primitive.attributes.find("POSITION");

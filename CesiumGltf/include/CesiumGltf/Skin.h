@@ -10,7 +10,7 @@ namespace CesiumGltf {
     /**
      * @brief Joints and matrices defining a skin.
      */
-    struct Skin final : public NamedObject {
+    struct Skin : public NamedObject {
 
         /**
          * @brief The index of the accessor containing the floating-point 4x4 inverse-bind matrices.  The default is that each matrix is a 4x4 identity matrix, which implies that inverse-bind matrices were pre-applied.

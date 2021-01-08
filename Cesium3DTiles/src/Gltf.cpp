@@ -1,35 +1,19 @@
 #include "Cesium3DTiles/Gltf.h"
 
 namespace Cesium3DTiles {
-    Gltf::LoadResult Gltf::load(const gsl::span<const uint8_t>& data)
-    {
-        tinygltf::TinyGLTF loader;
-        tinygltf::Model model;
-        std::string errors;
-        std::string warnings;
-
-        loader.LoadBinaryFromMemory(&model, &errors, &warnings, data.data(), static_cast<unsigned int>(data.size()));
-
-        return LoadResult{
-            model,
-            warnings,
-            errors
-        };
-    }
-
-	/*static*/ void Gltf::forEachPrimitiveInScene(tinygltf::Model& gltf, int sceneID, std::function<ForEachPrimitiveInSceneCallback>&& callback) {
-		return Gltf::forEachPrimitiveInScene(const_cast<const tinygltf::Model&>(gltf), sceneID, [&callback](
-            const tinygltf::Model& gltf_,
-			const tinygltf::Node& node,
-            const tinygltf::Mesh& mesh,
-            const tinygltf::Primitive& primitive,
+	/*static*/ void Gltf::forEachPrimitiveInScene(CesiumGltf::Model& gltf, int sceneID, std::function<ForEachPrimitiveInSceneCallback>&& callback) {
+		return Gltf::forEachPrimitiveInScene(const_cast<const CesiumGltf::Model&>(gltf), sceneID, [&callback](
+            const CesiumGltf::Model& gltf_,
+			const CesiumGltf::Node& node,
+            const CesiumGltf::Mesh& mesh,
+            const CesiumGltf::MeshPrimitive& primitive,
             const glm::dmat4& transform
 		) {
 			callback(
-				const_cast<tinygltf::Model&>(gltf_),
-				const_cast<tinygltf::Node&>(node),
-				const_cast<tinygltf::Mesh&>(mesh),
-				const_cast<tinygltf::Primitive&>(primitive),
+				const_cast<CesiumGltf::Model&>(gltf_),
+				const_cast<CesiumGltf::Node&>(node),
+				const_cast<CesiumGltf::Mesh&>(mesh),
+				const_cast<CesiumGltf::MeshPrimitive&>(primitive),
 				transform
 			);
 		});
@@ -51,17 +35,17 @@ namespace Cesium3DTiles {
 
 	static void forEachPrimitiveInMeshObject(
 		const glm::dmat4x4& transform,
-		const tinygltf::Model& model,
-		const tinygltf::Node& node,
-		const tinygltf::Mesh& mesh,
+		const CesiumGltf::Model& model,
+		const CesiumGltf::Node& node,
+		const CesiumGltf::Mesh& mesh,
 		std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback
 	) {
-		for (const tinygltf::Primitive& primitive : mesh.primitives) {
+		for (const CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
 			callback(model, node, mesh, primitive, transform);
 		}
 	}
 
-	static void forEachPrimitiveInNodeObject(const glm::dmat4x4& transform, const tinygltf::Model& model, const tinygltf::Node& node, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback) {
+	static void forEachPrimitiveInNodeObject(const glm::dmat4x4& transform, const CesiumGltf::Model& model, const CesiumGltf::Node& node, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback) {
 		glm::dmat4x4 nodeTransform = transform;
 
 		if (node.matrix.size() > 0) {
@@ -82,7 +66,7 @@ namespace Cesium3DTiles {
 
 		int meshId = node.mesh;
 		if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
-			const tinygltf::Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
+			const CesiumGltf::Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
 			forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
 		}
 
@@ -93,7 +77,7 @@ namespace Cesium3DTiles {
 		}
 	}
 
-	static void forEachPrimitiveInSceneObject(const glm::dmat4x4& transform, const tinygltf::Model& model, const tinygltf::Scene& scene, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback) {
+	static void forEachPrimitiveInSceneObject(const glm::dmat4x4& transform, const CesiumGltf::Model& model, const CesiumGltf::Scene& scene, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback) {
 		for (int nodeID : scene.nodes) {
 			if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
 				forEachPrimitiveInNodeObject(transform, model, model.nodes[static_cast<size_t>(nodeID)], callback);
@@ -101,7 +85,7 @@ namespace Cesium3DTiles {
 		}
 	}
 
-	/*static*/ void Gltf::forEachPrimitiveInScene(const tinygltf::Model& gltf, int sceneID, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>&& callback) {
+	/*static*/ void Gltf::forEachPrimitiveInScene(const CesiumGltf::Model& gltf, int sceneID, std::function<Gltf::ForEachPrimitiveInSceneConstCallback>&& callback) {
 		glm::dmat4x4 rootTransform = gltfAxesToCesiumAxes;
 
 		if (sceneID >= 0) {
@@ -109,20 +93,20 @@ namespace Cesium3DTiles {
 			if (sceneID < static_cast<int>(gltf.scenes.size())) {
 				forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[static_cast<size_t>(sceneID)], callback);
 			}
-		} else if (gltf.defaultScene >= 0 && gltf.defaultScene < static_cast<int>(gltf.scenes.size())) {
+		} else if (gltf.scene >= 0 && gltf.scene < static_cast<int32_t>(gltf.scenes.size())) {
 			// Use the default scene
-			forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[static_cast<size_t>(gltf.defaultScene)], callback);
+			forEachPrimitiveInSceneObject(rootTransform, gltf, gltf.scenes[static_cast<size_t>(gltf.scene)], callback);
 		} else if (gltf.scenes.size() > 0) {
 			// There's no default, so use the first scene
-			const tinygltf::Scene& defaultScene = gltf.scenes[0];
+			const CesiumGltf::Scene& defaultScene = gltf.scenes[0];
 			forEachPrimitiveInSceneObject(rootTransform, gltf, defaultScene, callback);
 		} else if (gltf.nodes.size() > 0) {
 			// No scenes at all, use the first node as the root node.
 			forEachPrimitiveInNodeObject(rootTransform, gltf, gltf.nodes[0], callback);
 		} else if (gltf.meshes.size() > 0) {
 			// No nodes either, show all the meshes.
-			for (const tinygltf::Mesh& mesh : gltf.meshes) {
-				forEachPrimitiveInMeshObject(rootTransform, gltf, tinygltf::Node(), mesh, callback);
+			for (const CesiumGltf::Mesh& mesh : gltf.meshes) {
+				forEachPrimitiveInMeshObject(rootTransform, gltf, CesiumGltf::Node(), mesh, callback);
 			}
 		}
 	}

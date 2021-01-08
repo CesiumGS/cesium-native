@@ -11,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief A typed view into a bufferView.  A bufferView contains raw binary data.  An accessor provides a typed view into a bufferView or a subset of a bufferView similar to how WebGL's `vertexAttribPointer()` defines an attribute in a buffer.
      */
-    struct Accessor final : public NamedObject {
+    struct Accessor : public NamedObject {
         enum class ComponentType {
             BYTE = 5120,
 

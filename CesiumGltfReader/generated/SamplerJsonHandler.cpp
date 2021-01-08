@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void SamplerJsonHandler::reset(IJsonHandler* pParent, Sampler* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,14 +24,17 @@ void SamplerJsonHandler::reportWarning(const std::string& warning, std::vector<s
 }
 
 IJsonHandler* SamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->SamplerKey(str, *this->_pObject);
+}
+
+IJsonHandler* SamplerJsonHandler::SamplerKey(const char* str, Sampler& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("magFilter"s == str) return property("magFilter", this->_magFilter, this->_pObject->magFilter);
-  if ("minFilter"s == str) return property("minFilter", this->_minFilter, this->_pObject->minFilter);
-  if ("wrapS"s == str) return property("wrapS", this->_wrapS, this->_pObject->wrapS);
-  if ("wrapT"s == str) return property("wrapT", this->_wrapT, this->_pObject->wrapT);
+  if ("magFilter"s == str) return property("magFilter", this->_magFilter, o.magFilter);
+  if ("minFilter"s == str) return property("minFilter", this->_minFilter, o.minFilter);
+  if ("wrapS"s == str) return property("wrapS", this->_wrapS, o.wrapS);
+  if ("wrapT"s == str) return property("wrapT", this->_wrapT, o.wrapT);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

@@ -207,6 +207,11 @@ namespace Cesium3DTiles {
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
 
+            if (pResponse == nullptr) {
+                SPDLOG_LOGGER_ERROR(pLogger, "No response received from Bing Maps imagery metadata service.");
+                return nullptr;
+            }
+
             rapidjson::Document response;
             response.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
 

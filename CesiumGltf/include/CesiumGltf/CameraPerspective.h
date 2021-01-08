@@ -8,7 +8,7 @@ namespace CesiumGltf {
     /**
      * @brief A perspective camera containing properties to create a perspective projection matrix.
      */
-    struct CameraPerspective final : public ExtensibleObject {
+    struct CameraPerspective : public ExtensibleObject {
 
         /**
          * @brief The floating-point aspect ratio of the field of view.

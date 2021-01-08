@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void ModelJsonHandler::reset(IJsonHandler* pParent, Model* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,27 +24,30 @@ void ModelJsonHandler::reportWarning(const std::string& warning, std::vector<std
 }
 
 IJsonHandler* ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->ModelKey(str, *this->_pObject);
+}
+
+IJsonHandler* ModelJsonHandler::ModelKey(const char* str, Model& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("extensionsUsed"s == str) return property("extensionsUsed", this->_extensionsUsed, this->_pObject->extensionsUsed);
-  if ("extensionsRequired"s == str) return property("extensionsRequired", this->_extensionsRequired, this->_pObject->extensionsRequired);
-  if ("accessors"s == str) return property("accessors", this->_accessors, this->_pObject->accessors);
-  if ("animations"s == str) return property("animations", this->_animations, this->_pObject->animations);
-  if ("asset"s == str) return property("asset", this->_asset, this->_pObject->asset);
-  if ("buffers"s == str) return property("buffers", this->_buffers, this->_pObject->buffers);
-  if ("bufferViews"s == str) return property("bufferViews", this->_bufferViews, this->_pObject->bufferViews);
-  if ("cameras"s == str) return property("cameras", this->_cameras, this->_pObject->cameras);
-  if ("images"s == str) return property("images", this->_images, this->_pObject->images);
-  if ("materials"s == str) return property("materials", this->_materials, this->_pObject->materials);
-  if ("meshes"s == str) return property("meshes", this->_meshes, this->_pObject->meshes);
-  if ("nodes"s == str) return property("nodes", this->_nodes, this->_pObject->nodes);
-  if ("samplers"s == str) return property("samplers", this->_samplers, this->_pObject->samplers);
-  if ("scene"s == str) return property("scene", this->_scene, this->_pObject->scene);
-  if ("scenes"s == str) return property("scenes", this->_scenes, this->_pObject->scenes);
-  if ("skins"s == str) return property("skins", this->_skins, this->_pObject->skins);
-  if ("textures"s == str) return property("textures", this->_textures, this->_pObject->textures);
+  if ("extensionsUsed"s == str) return property("extensionsUsed", this->_extensionsUsed, o.extensionsUsed);
+  if ("extensionsRequired"s == str) return property("extensionsRequired", this->_extensionsRequired, o.extensionsRequired);
+  if ("accessors"s == str) return property("accessors", this->_accessors, o.accessors);
+  if ("animations"s == str) return property("animations", this->_animations, o.animations);
+  if ("asset"s == str) return property("asset", this->_asset, o.asset);
+  if ("buffers"s == str) return property("buffers", this->_buffers, o.buffers);
+  if ("bufferViews"s == str) return property("bufferViews", this->_bufferViews, o.bufferViews);
+  if ("cameras"s == str) return property("cameras", this->_cameras, o.cameras);
+  if ("images"s == str) return property("images", this->_images, o.images);
+  if ("materials"s == str) return property("materials", this->_materials, o.materials);
+  if ("meshes"s == str) return property("meshes", this->_meshes, o.meshes);
+  if ("nodes"s == str) return property("nodes", this->_nodes, o.nodes);
+  if ("samplers"s == str) return property("samplers", this->_samplers, o.samplers);
+  if ("scene"s == str) return property("scene", this->_scene, o.scene);
+  if ("scenes"s == str) return property("scenes", this->_scenes, o.scenes);
+  if ("skins"s == str) return property("skins", this->_skins, o.skins);
+  if ("textures"s == str) return property("textures", this->_textures, o.textures);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

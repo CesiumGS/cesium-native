@@ -9,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief Reference to a texture.
      */
-    struct TextureInfo final : public ExtensibleObject {
+    struct TextureInfo : public ExtensibleObject {
 
         /**
          * @brief The index of the texture.

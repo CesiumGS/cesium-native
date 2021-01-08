@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void SkinJsonHandler::reset(IJsonHandler* pParent, Skin* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,13 +24,16 @@ void SkinJsonHandler::reportWarning(const std::string& warning, std::vector<std:
 }
 
 IJsonHandler* SkinJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->SkinKey(str, *this->_pObject);
+}
+
+IJsonHandler* SkinJsonHandler::SkinKey(const char* str, Skin& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("inverseBindMatrices"s == str) return property("inverseBindMatrices", this->_inverseBindMatrices, this->_pObject->inverseBindMatrices);
-  if ("skeleton"s == str) return property("skeleton", this->_skeleton, this->_pObject->skeleton);
-  if ("joints"s == str) return property("joints", this->_joints, this->_pObject->joints);
+  if ("inverseBindMatrices"s == str) return property("inverseBindMatrices", this->_inverseBindMatrices, o.inverseBindMatrices);
+  if ("skeleton"s == str) return property("skeleton", this->_skeleton, o.skeleton);
+  if ("joints"s == str) return property("joints", this->_joints, o.joints);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

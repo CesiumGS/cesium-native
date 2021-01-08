@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void ImageJsonHandler::reset(IJsonHandler* pParent, Image* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,13 +24,16 @@ void ImageJsonHandler::reportWarning(const std::string& warning, std::vector<std
 }
 
 IJsonHandler* ImageJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->ImageKey(str, *this->_pObject);
+}
+
+IJsonHandler* ImageJsonHandler::ImageKey(const char* str, Image& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("uri"s == str) return property("uri", this->_uri, this->_pObject->uri);
-  if ("mimeType"s == str) return property("mimeType", this->_mimeType, this->_pObject->mimeType);
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, this->_pObject->bufferView);
+  if ("uri"s == str) return property("uri", this->_uri, o.uri);
+  if ("mimeType"s == str) return property("mimeType", this->_mimeType, o.mimeType);
+  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

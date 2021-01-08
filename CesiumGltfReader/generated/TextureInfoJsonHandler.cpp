@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void TextureInfoJsonHandler::reset(IJsonHandler* pParent, TextureInfo* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,12 +24,15 @@ void TextureInfoJsonHandler::reportWarning(const std::string& warning, std::vect
 }
 
 IJsonHandler* TextureInfoJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->TextureInfoKey(str, *this->_pObject);
+}
+
+IJsonHandler* TextureInfoJsonHandler::TextureInfoKey(const char* str, TextureInfo& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("index"s == str) return property("index", this->_index, this->_pObject->index);
-  if ("texCoord"s == str) return property("texCoord", this->_texCoord, this->_pObject->texCoord);
+  if ("index"s == str) return property("index", this->_index, o.index);
+  if ("texCoord"s == str) return property("texCoord", this->_texCoord, o.texCoord);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

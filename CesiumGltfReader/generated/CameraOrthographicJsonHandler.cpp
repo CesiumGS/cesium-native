@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void CameraOrthographicJsonHandler::reset(IJsonHandler* pParent, CameraOrthographic* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,14 +24,17 @@ void CameraOrthographicJsonHandler::reportWarning(const std::string& warning, st
 }
 
 IJsonHandler* CameraOrthographicJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->CameraOrthographicKey(str, *this->_pObject);
+}
+
+IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(const char* str, CameraOrthographic& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("xmag"s == str) return property("xmag", this->_xmag, this->_pObject->xmag);
-  if ("ymag"s == str) return property("ymag", this->_ymag, this->_pObject->ymag);
-  if ("zfar"s == str) return property("zfar", this->_zfar, this->_pObject->zfar);
-  if ("znear"s == str) return property("znear", this->_znear, this->_pObject->znear);
+  if ("xmag"s == str) return property("xmag", this->_xmag, o.xmag);
+  if ("ymag"s == str) return property("ymag", this->_ymag, o.ymag);
+  if ("zfar"s == str) return property("zfar", this->_zfar, o.zfar);
+  if ("znear"s == str) return property("znear", this->_znear, o.znear);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

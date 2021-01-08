@@ -15,13 +15,16 @@
 namespace CesiumGltf {
   struct Material;
 
-  class MaterialJsonHandler final : public NamedObjectJsonHandler {
+  class MaterialJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Material* pObject);
     Material* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* MaterialKey(const char* str, Material& o);
 
   private:
     class AlphaModeJsonHandler : public JsonHandler {

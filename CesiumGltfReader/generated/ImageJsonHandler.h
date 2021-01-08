@@ -10,13 +10,16 @@
 namespace CesiumGltf {
   struct Image;
 
-  class ImageJsonHandler final : public NamedObjectJsonHandler {
+  class ImageJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Image* pObject);
     Image* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* ImageKey(const char* str, Image& o);
 
   private:
     class MimeTypeJsonHandler : public JsonHandler {

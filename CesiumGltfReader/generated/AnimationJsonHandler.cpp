@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void AnimationJsonHandler::reset(IJsonHandler* pParent, Animation* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,12 +24,15 @@ void AnimationJsonHandler::reportWarning(const std::string& warning, std::vector
 }
 
 IJsonHandler* AnimationJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->AnimationKey(str, *this->_pObject);
+}
+
+IJsonHandler* AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("channels"s == str) return property("channels", this->_channels, this->_pObject->channels);
-  if ("samplers"s == str) return property("samplers", this->_samplers, this->_pObject->samplers);
+  if ("channels"s == str) return property("channels", this->_channels, o.channels);
+  if ("samplers"s == str) return property("samplers", this->_samplers, o.samplers);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

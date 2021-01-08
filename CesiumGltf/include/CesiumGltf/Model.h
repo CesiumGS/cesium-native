@@ -25,7 +25,7 @@ namespace CesiumGltf {
     /**
      * @brief The root object for a glTF asset.
      */
-    struct Model final : public ExtensibleObject {
+    struct Model : public ExtensibleObject {
 
         /**
          * @brief Names of glTF extensions used somewhere in this asset.

@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void AnimationChannelTargetJsonHandler::reset(IJsonHandler* pParent, AnimationChannelTarget* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,12 +24,15 @@ void AnimationChannelTargetJsonHandler::reportWarning(const std::string& warning
 }
 
 IJsonHandler* AnimationChannelTargetJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->AnimationChannelTargetKey(str, *this->_pObject);
+}
+
+IJsonHandler* AnimationChannelTargetJsonHandler::AnimationChannelTargetKey(const char* str, AnimationChannelTarget& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("node"s == str) return property("node", this->_node, this->_pObject->node);
-  if ("path"s == str) return property("path", this->_path, this->_pObject->path);
+  if ("node"s == str) return property("node", this->_node, o.node);
+  if ("path"s == str) return property("path", this->_path, o.path);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

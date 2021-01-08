@@ -10,13 +10,16 @@
 namespace CesiumGltf {
   struct AccessorSparse;
 
-  class AccessorSparseJsonHandler final : public ExtensibleObjectJsonHandler {
+  class AccessorSparseJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, AccessorSparse* pObject);
     AccessorSparse* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* AccessorSparseKey(const char* str, AccessorSparse& o);
 
   private:
 

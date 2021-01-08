@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void SceneJsonHandler::reset(IJsonHandler* pParent, Scene* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,11 +24,14 @@ void SceneJsonHandler::reportWarning(const std::string& warning, std::vector<std
 }
 
 IJsonHandler* SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->SceneKey(str, *this->_pObject);
+}
+
+IJsonHandler* SceneJsonHandler::SceneKey(const char* str, Scene& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("nodes"s == str) return property("nodes", this->_nodes, this->_pObject->nodes);
+  if ("nodes"s == str) return property("nodes", this->_nodes, o.nodes);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

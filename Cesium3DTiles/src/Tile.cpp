@@ -303,11 +303,13 @@ namespace Cesium3DTiles {
             this->_pRendererResources = loadResult.pRendererResources;
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(loadResult.state);
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+        }).catchInMainThread([this](const std::exception& e) {
             this->_pContent.reset();
             this->_pRendererResources = nullptr;
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::Failed);
+
+            SPDLOG_LOGGER_ERROR(this->getTileset()->getExternals().pLogger, "An exception occurred while loading tile: {}", e.what());
         });
     }
 
@@ -595,24 +597,24 @@ namespace Cesium3DTiles {
 
         const TileContentLoadResult* pContent = this->getContent();
         if (pContent && pContent->model) {
-            const tinygltf::Model& model = pContent->model.value();
+            const CesiumGltf::Model& model = pContent->model.value();
 
             // Add up the glTF buffers
-            for (const tinygltf::Buffer& buffer : model.buffers) {
-                bytes += buffer.data.size();
+            for (const CesiumGltf::Buffer& buffer : model.buffers) {
+                bytes += buffer.cesium.data.size();
             }
 
             // For images loaded from buffers, subtract the buffer size and add
             // the decoded image size instead.
-            const std::vector<tinygltf::BufferView>& bufferViews = model.bufferViews;
-            for (const tinygltf::Image& image : model.images) {
+            const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
+            for (const CesiumGltf::Image& image : model.images) {
                 int bufferView = image.bufferView;
                 if (bufferView < 0 || bufferView >= static_cast<int>(bufferViews.size())) {
                     continue;
                 }
 
                 bytes -= bufferViews[static_cast<size_t>(bufferView)].byteLength;
-                bytes += image.image.size();
+                bytes += image.cesium.pixelData.size();
             }
         }
 
@@ -624,7 +626,7 @@ namespace Cesium3DTiles {
     }
 
     /*static*/ std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates(
-        tinygltf::Model& model,
+        CesiumGltf::Model& model,
         const BoundingVolume& boundingVolume, 
         const std::vector<Projection>& projections
     ) {
@@ -676,7 +678,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        tinygltf::Model& parentModel = pParentContent->model.value();
+        CesiumGltf::Model& parentModel = pParentContent->model.value();
 
         Tileset* pTileset = this->getTileset();
         pTileset->notifyTileStartLoading(this);

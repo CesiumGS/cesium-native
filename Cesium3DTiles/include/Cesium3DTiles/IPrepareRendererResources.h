@@ -9,9 +9,9 @@ namespace CesiumGeometry {
     struct Rectangle;
 }
 
-namespace tinygltf {
+namespace CesiumGltf {
     struct Image;
-    class Model;
+    struct Model;
 }
 
 namespace Cesium3DTiles {
@@ -44,7 +44,7 @@ namespace Cesium3DTiles {
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareInLoadThread(const tinygltf::Model& model, const glm::dmat4& transform) = 0;
+        virtual void* prepareInLoadThread(const CesiumGltf::Model& model, const glm::dmat4& transform) = 0;
 
         /**
          * @brief Further prepares renderer resources. 
@@ -85,7 +85,7 @@ namespace Cesium3DTiles {
          * @returns Arbitrary data representing the result of the load process. This data is
          * passed to {@link prepareRasterInMainThread} as the `pLoadThreadResult` parameter.
          */
-        virtual void* prepareRasterInLoadThread(const tinygltf::Image& image) = 0;
+        virtual void* prepareRasterInLoadThread(const CesiumGltf::Image& image) = 0;
 
         /**
          * @brief Further preprares a raster overlay tile. 

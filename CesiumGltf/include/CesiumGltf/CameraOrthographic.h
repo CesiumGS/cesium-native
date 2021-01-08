@@ -8,7 +8,7 @@ namespace CesiumGltf {
     /**
      * @brief An orthographic camera containing properties to create an orthographic projection matrix.
      */
-    struct CameraOrthographic final : public ExtensibleObject {
+    struct CameraOrthographic : public ExtensibleObject {
 
         /**
          * @brief The floating-point horizontal magnification of the view. Must not be zero.

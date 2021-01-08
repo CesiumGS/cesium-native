@@ -9,13 +9,16 @@
 namespace CesiumGltf {
   struct Sampler;
 
-  class SamplerJsonHandler final : public NamedObjectJsonHandler {
+  class SamplerJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Sampler* pObject);
     Sampler* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* SamplerKey(const char* str, Sampler& o);
 
   private:
 

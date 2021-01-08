@@ -10,13 +10,16 @@
 namespace CesiumGltf {
   struct Animation;
 
-  class AnimationJsonHandler final : public NamedObjectJsonHandler {
+  class AnimationJsonHandler : public NamedObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, Animation* pObject);
     Animation* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* AnimationKey(const char* str, Animation& o);
 
   private:
 

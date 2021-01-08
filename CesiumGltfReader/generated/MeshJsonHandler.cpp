@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void MeshJsonHandler::reset(IJsonHandler* pParent, Mesh* pObject) {
-  NamedObjectJsonHandler::reset(pParent);
+  NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,12 +24,15 @@ void MeshJsonHandler::reportWarning(const std::string& warning, std::vector<std:
 }
 
 IJsonHandler* MeshJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->MeshKey(str, *this->_pObject);
+}
+
+IJsonHandler* MeshJsonHandler::MeshKey(const char* str, Mesh& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("primitives"s == str) return property("primitives", this->_primitives, this->_pObject->primitives);
-  if ("weights"s == str) return property("weights", this->_weights, this->_pObject->weights);
+  if ("primitives"s == str) return property("primitives", this->_primitives, o.primitives);
+  if ("weights"s == str) return property("weights", this->_weights, o.weights);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

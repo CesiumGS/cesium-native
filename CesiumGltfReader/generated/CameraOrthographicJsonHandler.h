@@ -8,13 +8,16 @@
 namespace CesiumGltf {
   struct CameraOrthographic;
 
-  class CameraOrthographicJsonHandler final : public ExtensibleObjectJsonHandler {
+  class CameraOrthographicJsonHandler : public ExtensibleObjectJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, CameraOrthographic* pObject);
     CameraOrthographic* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* CameraOrthographicKey(const char* str, CameraOrthographic& o);
 
   private:
 

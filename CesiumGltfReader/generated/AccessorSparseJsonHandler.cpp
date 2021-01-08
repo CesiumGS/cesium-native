@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void AccessorSparseJsonHandler::reset(IJsonHandler* pParent, AccessorSparse* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,13 +24,16 @@ void AccessorSparseJsonHandler::reportWarning(const std::string& warning, std::v
 }
 
 IJsonHandler* AccessorSparseJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->AccessorSparseKey(str, *this->_pObject);
+}
+
+IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(const char* str, AccessorSparse& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("count"s == str) return property("count", this->_count, this->_pObject->count);
-  if ("indices"s == str) return property("indices", this->_indices, this->_pObject->indices);
-  if ("values"s == str) return property("values", this->_values, this->_pObject->values);
+  if ("count"s == str) return property("count", this->_count, o.count);
+  if ("indices"s == str) return property("indices", this->_indices, o.indices);
+  if ("values"s == str) return property("values", this->_values, o.values);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

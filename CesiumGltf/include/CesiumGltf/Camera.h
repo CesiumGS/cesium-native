@@ -10,7 +10,7 @@ namespace CesiumGltf {
     /**
      * @brief A camera's projection.  A node can reference a camera to apply a transform to place the camera in the scene.
      */
-    struct Camera final : public NamedObject {
+    struct Camera : public NamedObject {
         enum class Type {
             perspective,
 

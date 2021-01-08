@@ -11,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief Sparse storage of attributes that deviate from their initialization value.
      */
-    struct AccessorSparse final : public ExtensibleObject {
+    struct AccessorSparse : public ExtensibleObject {
 
         /**
          * @brief Number of entries stored in the sparse array.

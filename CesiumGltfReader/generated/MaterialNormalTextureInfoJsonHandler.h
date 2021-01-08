@@ -3,18 +3,21 @@
 #pragma once
 
 #include "DoubleJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+#include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
   struct MaterialNormalTextureInfo;
 
-  class MaterialNormalTextureInfoJsonHandler final : public ExtensibleObjectJsonHandler {
+  class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
   public:
     void reset(IJsonHandler* pHandler, MaterialNormalTextureInfo* pObject);
     MaterialNormalTextureInfo* getObject();
     virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
     virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+  protected:
+    IJsonHandler* MaterialNormalTextureInfoKey(const char* str, MaterialNormalTextureInfo& o);
 
   private:
 

@@ -8,7 +8,7 @@
 using namespace CesiumGltf;
 
 void CameraPerspectiveJsonHandler::reset(IJsonHandler* pParent, CameraPerspective* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent);
+  ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
@@ -24,14 +24,17 @@ void CameraPerspectiveJsonHandler::reportWarning(const std::string& warning, std
 }
 
 IJsonHandler* CameraPerspectiveJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+  assert(this->_pObject);
+  return this->CameraPerspectiveKey(str, *this->_pObject);
+}
+
+IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(const char* str, CameraPerspective& o) {
   using namespace std::string_literals;
 
-  assert(this->_pObject);
-
-  if ("aspectRatio"s == str) return property("aspectRatio", this->_aspectRatio, this->_pObject->aspectRatio);
-  if ("yfov"s == str) return property("yfov", this->_yfov, this->_pObject->yfov);
-  if ("zfar"s == str) return property("zfar", this->_zfar, this->_pObject->zfar);
-  if ("znear"s == str) return property("znear", this->_znear, this->_pObject->znear);
+  if ("aspectRatio"s == str) return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
+  if ("yfov"s == str) return property("yfov", this->_yfov, o.yfov);
+  if ("zfar"s == str) return property("zfar", this->_zfar, o.zfar);
+  if ("znear"s == str) return property("znear", this->_znear, o.znear);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }
