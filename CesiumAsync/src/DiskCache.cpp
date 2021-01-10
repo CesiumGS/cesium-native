@@ -321,11 +321,7 @@ namespace CesiumAsync {
 			return false;
 		}
 
-		status = sqlite3_finalize(stmt);
-		if (status != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(status));
-			return false;
-		}
+		sqlite3_finalize(stmt);
 
 		return true;
 	}
@@ -354,6 +350,8 @@ namespace CesiumAsync {
 			return false;
 		}
 
+		sqlite3_finalize(stmt);
+
 		return true;
 	}
 
@@ -362,9 +360,26 @@ namespace CesiumAsync {
 		return false;
 	}
 
-	bool DiskCache::clearAll(std::string& /*error*/)
+	bool DiskCache::clearAll(std::string& error)
 	{
-		return false;
+		std::string sqlStr = "DELETE FROM " + CACHE_TABLE + ";";
+
+		sqlite3_stmt* stmt = nullptr;
+		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &stmt, nullptr);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		status = sqlite3_step(stmt);
+		if (status != SQLITE_DONE) {
+			sqlite3_finalize(stmt);
+			return false;
+		}
+
+		sqlite3_finalize(stmt);
+
+		return true;
 	}
 
 	std::string convertHeadersToString(const std::map<std::string, std::string>& headers) {
