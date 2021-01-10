@@ -86,7 +86,7 @@ namespace CesiumAsync {
 	}
 
 	bool DiskCache::getEntry(const std::string& key, std::optional<CacheItem>& item, std::string& error) const {
-		sqlite3_stmt* stmt;
+		sqlite3_stmt* stmt = nullptr;
 		std::string sqlStr = "SELECT " +
 				EXPIRY_TIME_COLUMN + ", " +
 				LAST_ACCESSED_TIME_COLUMN + ", " +
@@ -211,7 +211,7 @@ namespace CesiumAsync {
 
 		gsl::span<const uint8_t> responseData = response->data();
 
-		sqlite3_stmt* stmt;
+		sqlite3_stmt* stmt = nullptr;
 		std::string sqlStr = "REPLACE INTO " + CACHE_TABLE + " (" +
 			KEY_COLUMN + ", " +
 			EXPIRY_TIME_COLUMN + ", " +
