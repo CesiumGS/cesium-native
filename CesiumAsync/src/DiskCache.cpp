@@ -330,9 +330,31 @@ namespace CesiumAsync {
 		return true;
 	}
 
-	bool DiskCache::removeEntry(const std::string& /*key*/, std::string& /*error*/) 
+	bool DiskCache::removeEntry(const std::string& key, std::string& error) 
 	{
-		return false;
+		std::string sqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + "=?;";
+
+		sqlite3_stmt* stmt = nullptr;
+		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &stmt, nullptr);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		status = sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
+		if (status != SQLITE_OK) {
+			sqlite3_finalize(stmt);
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		status = sqlite3_step(stmt);
+		if (status != SQLITE_DONE) {
+			sqlite3_finalize(stmt);
+			return false;
+		}
+
+		return true;
 	}
 
 	bool DiskCache::prune(std::string& /*error*/)
