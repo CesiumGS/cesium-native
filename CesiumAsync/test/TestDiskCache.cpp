@@ -125,8 +125,11 @@ TEST_CASE("Test disk cache with Sqlite") {
 
 		// retrieve it
 		error.clear();
-		std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey", error);
+		std::optional<CacheItem> cacheItem; 
+		REQUIRE(diskCache.getEntry("TestKey", cacheItem, error));
 		REQUIRE(cacheItem != std::nullopt);
+
+		// TODO: check the content of item
 	}
 
 	SECTION("Test remove cache") {

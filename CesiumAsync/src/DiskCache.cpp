@@ -85,7 +85,7 @@ namespace CesiumAsync {
 		return *this;
 	}
 
-	std::optional<CacheItem> DiskCache::getEntry(const std::string& key, std::string& error) const {
+	bool DiskCache::getEntry(const std::string& key, std::optional<CacheItem>& item, std::string& error) const {
 		sqlite3_stmt* stmt;
 		std::string sqlStr = "SELECT " +
 				EXPIRY_TIME_COLUMN + ", " +
@@ -103,21 +103,25 @@ namespace CesiumAsync {
 		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
-			return std::nullopt;
+			return false;
 		}
 
 		status = sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			sqlite3_finalize(stmt);
 			error = std::string(sqlite3_errstr(status));
-			return std::nullopt;
+			return false;
 		}
 
 		status = sqlite3_step(stmt);
-		if (status != SQLITE_ROW) {
+		if (status == SQLITE_DONE) {
+			sqlite3_finalize(stmt);
+			return true;
+		}
+		else if (status != SQLITE_ROW) {
 			sqlite3_finalize(stmt);
 			error = std::string(sqlite3_errstr(status));
-			return std::nullopt;
+			return false;
 		}
 
 		// parse response cache 
@@ -167,30 +171,31 @@ namespace CesiumAsync {
 		status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
-			return std::nullopt;
+			return false;
 		}
 
 		status = sqlite3_bind_text(stmt, 1, key.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			sqlite3_finalize(stmt);
 			error = std::string(sqlite3_errstr(status));
-			return std::nullopt;
+			return false;
 		}
 
 		status = sqlite3_step(stmt);
 		if (status != SQLITE_DONE) {
 			sqlite3_finalize(stmt);
 			error = std::string(sqlite3_errstr(status));
-			return std::nullopt;
+			return false;
 		}
 
 		sqlite3_finalize(stmt);
 
-		return CacheItem(expiryTime, 
+		item = std::make_optional<CacheItem>(expiryTime, 
 			lastAccessedTime, 
 			std::move(cacheRequest), 
 			std::move(cacheResponse));
 ;
+		return true;
 	}
 
 	bool DiskCache::storeResponse(const std::string& key, 

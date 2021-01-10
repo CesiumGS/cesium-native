@@ -21,7 +21,9 @@ namespace CesiumAsync {
 
 		~DiskCache() noexcept override;
 
-		virtual std::optional<CacheItem> getEntry(const std::string& url, std::string& error) const override;
+		virtual bool getEntry(const std::string& url, 
+			std::optional<CacheItem> &item, 
+			std::string& error) const override;
 
 		virtual bool storeResponse(const std::string& key, 
 			std::time_t expiryTime,

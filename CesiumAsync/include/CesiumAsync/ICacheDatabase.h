@@ -9,7 +9,9 @@ namespace CesiumAsync {
 	public:
 		virtual ~ICacheDatabase() noexcept = default;
 
-		virtual std::optional<CacheItem> getEntry(const std::string& key, std::string& error) const = 0;
+		virtual bool getEntry(const std::string& url, 
+			std::optional<CacheItem> &item, 
+			std::string& error) const = 0;
 
 		virtual bool storeResponse(const std::string& key, 
 			std::time_t expiryTime,
