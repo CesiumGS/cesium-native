@@ -12,12 +12,12 @@ namespace CesiumAsync {
 		CacheResponse(uint16_t statusCode, 
 			std::string contentType, 
 			std::map<std::string, std::string> headers, 
-			ResponseCacheControl cacheControl,
+			std::optional<ResponseCacheControl> cacheControl,
 			std::vector<uint8_t> data)
 			: _statusCode{statusCode}
 			, _contentType{std::move(contentType)}
 			, _headers{std::move(headers)}
-			, _cacheControl{cacheControl}
+			, _cacheControl{std::move(cacheControl)}
 			, _data{std::move(data)}
 		{}
 
@@ -27,7 +27,7 @@ namespace CesiumAsync {
 
 		inline const std::map<std::string, std::string>& headers() const { return _headers; }
 
-		inline const ResponseCacheControl& cacheControl() const { return *_cacheControl; }
+		inline const ResponseCacheControl* cacheControl() const { return _cacheControl ? &*_cacheControl : nullptr; }
 
 		inline gsl::span<const uint8_t> data() const { return gsl::span<const uint8_t>(_data.data(), _data.size()); }
 
@@ -65,12 +65,10 @@ namespace CesiumAsync {
 	public:
 		CacheItem(std::time_t expiryTime, 
 			std::time_t lastAccessedTime, 
-			bool valid,
 			CacheRequest cacheRequest,
 			CacheResponse cacheResponse) 
 			: _expiryTime{expiryTime}
 			, _lastAccessedTime{lastAccessedTime}
-			, _valid{valid}
 			, _cacheRequest{std::move(cacheRequest)}
 			, _cacheResponse{std::move(cacheResponse)}
 		{}
@@ -79,8 +77,6 @@ namespace CesiumAsync {
 
 		inline std::time_t lastAccessedTime() const { return this->_lastAccessedTime; }
 
-		inline bool valid() const { return this->_valid; }
-
 		inline const CacheRequest& cacheRequest() const { return *this->_cacheRequest; }
 
 		inline const CacheResponse& cacheResponse() const { return *this->_cacheResponse; }
@@ -88,7 +84,6 @@ namespace CesiumAsync {
 	private:
 		std::time_t _expiryTime;
 		std::time_t _lastAccessedTime;
-		bool _valid;
 		std::optional<CacheRequest> _cacheRequest;
 		std::optional<CacheResponse> _cacheResponse;
 	};

@@ -20,12 +20,12 @@ namespace CesiumAsync {
         /**
          * @brief Gets the request's method. This method may be called from any thread.
          */
-        virtual std::string method() const = 0;
+        virtual const std::string& method() const = 0;
 
         /**
          * @brief Gets the requested URL. This method may be called from any thread.
          */
-        virtual std::string url() const = 0;
+        virtual const std::string& url() const = 0;
 
         /**
          * @brief Gets the request's header. This method may be called from any thread.

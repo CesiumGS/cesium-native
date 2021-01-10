@@ -11,8 +11,7 @@ namespace CesiumAsync {
 		bool accessControlPrivate, 
 		bool proxyRevalidate, 
 		int maxAge, 
-		int sharedMaxAge,
-		std::string expiries)
+		int sharedMaxAge)
 		: _mustRevalidate{mustRevalidate}
 		, _noCache{noCache}
 		, _noStore{noStore}
@@ -22,16 +21,16 @@ namespace CesiumAsync {
 		, _proxyRevalidate{proxyRevalidate}
 		, _maxAge{maxAge}
 		, _sharedMaxAge{sharedMaxAge}
-		, _expiries{std::move(expiries)}
 	{}
 
-	/*static*/ std::optional<ResponseCacheControl> ResponseCacheControl::parseFromResponseHeader(const std::map<std::string, std::string> &headers) 
+	/*static*/ std::optional<ResponseCacheControl> ResponseCacheControl::parseFromResponseHeaders(const std::map<std::string, std::string> &headers) 
 	{
 		std::map<std::string, std::string>::const_iterator cacheControlIter = headers.find("Cache-Control");
 		if (cacheControlIter == headers.end()) {
 			return std::nullopt;
 		}
 
+		const std::string& headerValue = cacheControlIter->second;
 		std::map<std::string, std::string> parameterizedDirectives;
 		std::set<std::string> directives;
 		size_t last = 0;

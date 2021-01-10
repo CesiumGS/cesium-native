@@ -9,17 +9,17 @@ namespace CesiumAsync {
 	public:
 		virtual ~ICacheDatabase() noexcept = default;
 
-		virtual std::optional<CacheItem> getEntry(const std::string& key) const = 0;
+		virtual std::optional<CacheItem> getEntry(const std::string& key, std::string& error) const = 0;
 
-		virtual void storeResponse(const std::string& key, 
+		virtual bool storeResponse(const std::string& key, 
 			std::time_t expiryTime,
 			const IAssetRequest& request,
-			std::function<void(std::string)> onError) = 0;
+			std::string& error) = 0;
 
-		virtual void removeEntry(const std::string& key) = 0;
+		virtual bool removeEntry(const std::string& key, std::string& error) = 0;
 
-		virtual void prune() = 0;
+		virtual bool prune(std::string& error) = 0;
 
-		virtual void clearAll() = 0;
+		virtual bool clearAll(std::string& error) = 0;
 	};
 }

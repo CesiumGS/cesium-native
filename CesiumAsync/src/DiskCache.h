@@ -21,18 +21,18 @@ namespace CesiumAsync {
 
 		~DiskCache() noexcept override;
 
-		virtual std::optional<CacheItem> getEntry(const std::string& url) const override;
+		virtual std::optional<CacheItem> getEntry(const std::string& url, std::string& error) const override;
 
-		virtual void storeResponse(const std::string& key, 
+		virtual bool storeResponse(const std::string& key, 
 			std::time_t expiryTime,
 			const IAssetRequest& request,
-			std::function<void(std::string)> onError) override;
+			std::string& error) override;
 
-		virtual void removeEntry(const std::string& url) override;
+		virtual bool removeEntry(const std::string& key, std::string& error) override;
 
-		virtual void prune() override;
+		virtual bool prune(std::string& error) override;
 
-		virtual void clearAll() override;
+		virtual bool clearAll(std::string& error) override;
 
 	private:
 		sqlite3* _pConnection;

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <optional>
+#include <map>
 
 namespace CesiumAsync {
 	class ResponseCacheControl {
