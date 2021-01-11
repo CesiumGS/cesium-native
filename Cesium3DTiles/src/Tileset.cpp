@@ -785,7 +785,7 @@ namespace Cesium3DTiles {
         bool isVisible = insideFrustum;
 
         if (!insideFrustum) {
-            if (this->_options.disableFrustumCull) {
+            if (this->_options.disableFrustumCulling) {
                 isVisible = true;
             }
             else if (this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {

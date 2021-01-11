@@ -94,11 +94,11 @@ namespace Cesium3DTiles {
         /**
          * @brief Disable culling of tiles against the frustum.
          *
-         * When true, the tileset will not cull tiles against the frustum. While this will not increase the number
-         * rendered tiles, it will increase the number of loaded tiles. Screen-space error computations will be 
-         * disabled for tiles that fall outside the frustum.
+         * When true, the tileset will not cull tiles against the frustum. This will increase the number of loaded tiles and may also increase 
+         * the number of rendered tiles if they're not culled later in the pipeline. Screen-space error computations will be disabled for tiles 
+         * that fall outside the frustum.
          */
-        bool disableFrustumCull = true;
+        bool disableFrustumCulling = false;
 
         /**
          * @brief The maximum number of bytes that may be cached.
