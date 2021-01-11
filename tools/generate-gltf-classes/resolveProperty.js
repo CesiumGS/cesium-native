@@ -139,6 +139,7 @@ function propertyDefaults(propertyName, propertyDetails) {
     name: propertyName,
     headers: [],
     readerHeaders: [],
+    readerHeadersImpl: [],
     type: "",
     readerType: "",
     schemas: [],

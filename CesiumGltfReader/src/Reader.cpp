@@ -290,7 +290,7 @@ namespace {
 
     // }
 
-    // void postprocess(Model& model, const ReadModelOptions& options) {
+    void postprocess(Model& /* model */, const ReadModelOptions& /* options */) {
     //     if (options.decodeEmbeddedImages) {
     //         for (Image& image : model.images) {
     //             const BufferView& bufferView = getSafe(model.bufferViews, image.bufferView);
@@ -303,15 +303,15 @@ namespace {
     //             bufferSpan.subspan()
     //         }
     //     }
-    // }
+    }
 }
 
-ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& /* options */) {
+ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options) {
     ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(data) : readJsonModel(data);
 
-    // if (result.model) {
-    //     postprocess(result.model.value(), options);
-    // }
+    if (result.model) {
+        postprocess(result.model.value(), options);
+    }
 
     return result;
 }

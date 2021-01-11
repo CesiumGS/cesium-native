@@ -21,6 +21,12 @@ const argv = yargs.options({
     description: "The output directory for the generated reader files.",
     demandOption: true,
     type: "string"
+  },
+  extensions: {
+    alias: "e",
+    description: "The extensions directory.",
+    demandOption: true,
+    type: "string"
   }
 }).argv;
 
@@ -39,7 +45,7 @@ const cesiumProperties = {
   "Image": true
 };
 
-const schemaCache = new SchemaCache(argv.schema);
+const schemaCache = new SchemaCache(argv.schema, argv.extensions);
 const modelSchema = schemaCache.load("glTF.schema.json");
 
 const options = {
@@ -47,12 +53,55 @@ const options = {
   nameMapping,
   cesiumProperties,
   outputDir: argv.output,
-  readerOutputDir: argv.readerOutput
+  readerOutputDir: argv.readerOutput,
+  // key: Title of the element name that is extended (e.g. "Mesh Primitive")
+  // value: Array of extension type names.
+  extensions: {}
 };
+
+let schemas = [modelSchema];
+
+const extensionInfo = {
+  "KHR_draco_mesh_compression": {
+    extensionName: "KHR_draco_mesh_compression",
+    schema: "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
+    attachTo: [
+      "mesh.primitive"
+    ]
+  }
+};
+
+for (const extensionClassName of Object.keys(extensionInfo)) {
+  const extension = extensionInfo[extensionClassName];
+  const extensionSchema = schemaCache.loadExtension(extension.schema);
+  if (!extensionSchema) {
+    console.warn(`Could not load schema ${inExtensions[extensionClassName]} for extension class ${extensionClassName}.`);
+    continue;
+  }
+
+  nameMapping[extensionSchema.title] = extensionClassName;
+  schemas.push(...generate(options, extensionSchema));
+
+  for (const objectToExtend of extension.attachTo) {
+    const objectToExtendSchema = schemaCache.load(`${objectToExtend}.schema.json`);
+    if (!objectToExtendSchema) {
+      console.warn("Could not load schema for ${objectToExtend}.");
+      continue;
+    }
+
+    if (!options.extensions[objectToExtend]) {
+      options.extensions[objectToExtendSchema.title] = [];
+    }
+
+    options.extensions[objectToExtendSchema.title].push({
+      name: extension.extensionName,
+      className: extensionClassName
+    });
+  }
+}
 
 const processed = {};
 
-let schemas = [modelSchema];
 while (schemas.length > 0) {
   const schema = schemas.pop();
   if (processed[schema.title]) {

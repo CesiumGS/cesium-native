@@ -7,6 +7,7 @@
 #include "DictionaryJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include "KHR_draco_mesh_compressionJsonHandler.h"
 
 namespace CesiumGltf {
   struct MeshPrimitive;
@@ -23,6 +24,15 @@ namespace CesiumGltf {
     IJsonHandler* MeshPrimitiveKey(const char* str, MeshPrimitive& o);
 
   private:
+    class ExtensionsJsonHandler : public ObjectJsonHandler {
+    public:
+      void reset(IJsonHandler* pParent, std::vector<std::any>* pExtensions);
+      virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+    private:
+      std::vector<std::any>* _pExtensions = nullptr;
+      KHR_draco_mesh_compressionJsonHandler _KHR_draco_mesh_compression;
+    };
 
     MeshPrimitive* _pObject;
     DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _attributes;
@@ -30,5 +40,6 @@ namespace CesiumGltf {
     IntegerJsonHandler<int32_t> _material;
     IntegerJsonHandler<MeshPrimitive::Mode> _mode;
     ArrayJsonHandler<std::unordered_map<std::string, int32_t>, DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>>> _targets;
+    ExtensionsJsonHandler _extensions;
   };
 }
