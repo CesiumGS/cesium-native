@@ -9,7 +9,7 @@
 namespace CesiumAsync {
 	class DiskCache : public ICacheDatabase {
 	public:
-		DiskCache(const std::string &databaseName);
+		DiskCache(const std::string &databaseName, uint64_t maxSize = 512 * 1024 * 1024);
 
 		DiskCache(const DiskCache&) = delete;
 
@@ -38,5 +38,6 @@ namespace CesiumAsync {
 
 	private:
 		sqlite3* _pConnection;
+		uint64_t _maxSize;
 	};
 }

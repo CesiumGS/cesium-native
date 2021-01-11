@@ -19,6 +19,7 @@ namespace CesiumAsync {
 	static const std::string REQUEST_HEADER_COLUMN = "requestHeader";
 	static const std::string REQUEST_METHOD_COLUMN = "requestMethod";
 	static const std::string REQUEST_URL_COLUMN = "requestUrl";
+	static const std::string VIRTUAL_RESPONSE_DATA_SIZE = "responseDataTotalSize";
 
 	static std::string convertHeadersToString(const std::map<std::string, std::string>& headers);
 
@@ -28,7 +29,8 @@ namespace CesiumAsync {
 
 	static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const std::string& serializedResponseCacheControl);
 
-	DiskCache::DiskCache(const std::string &databaseName)
+	DiskCache::DiskCache(const std::string &databaseName, uint64_t maxSize)
+		: _maxSize{maxSize}
 	{
 		int status = sqlite3_open(databaseName.c_str(), &this->_pConnection);
 		if (status != SQLITE_OK) {
@@ -347,6 +349,7 @@ namespace CesiumAsync {
 		status = sqlite3_step(stmt);
 		if (status != SQLITE_DONE) {
 			sqlite3_finalize(stmt);
+			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
@@ -355,9 +358,98 @@ namespace CesiumAsync {
 		return true;
 	}
 
-	bool DiskCache::prune(std::string& /*error*/)
+	bool DiskCache::prune(std::string& error)
 	{
-		return false;
+		// query total size of response's data
+		sqlite3_stmt* stmt = nullptr;
+		std::string sqlStr = "SELECT SUM(LENGTH(" + RESPONSE_DATA_COLUMN + ")) AS " + 
+			VIRTUAL_RESPONSE_DATA_SIZE + 
+			" FROM " + 
+			CACHE_TABLE + 
+			";";
+		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &stmt, nullptr);
+		if (status != SQLITE_OK) {
+			sqlite3_finalize(stmt);
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		status = sqlite3_step(stmt);
+		if (status == SQLITE_DONE) {
+			sqlite3_finalize(stmt);
+			return true;
+		}
+		else if (status != SQLITE_ROW) {
+			sqlite3_finalize(stmt);
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		// prune the row if over maximum
+		int64_t totalDataSize = sqlite3_column_int64(stmt, 0);
+		if (totalDataSize > 0 && totalDataSize <= static_cast<int64_t>(_maxSize)) {
+			return true;
+		}
+
+		// sort by expiry time first
+		stmt = nullptr;
+		sqlStr = "SELECT " + KEY_COLUMN + ", LENGTH(" + RESPONSE_DATA_COLUMN + ") FROM " +
+			CACHE_TABLE + " ORDER BY " + EXPIRY_TIME_COLUMN + " ASC;";
+		status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &stmt, nullptr);
+		if (status != SQLITE_OK) {
+			sqlite3_finalize(stmt);
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		// prepare delete sqlite command
+		sqlite3_stmt* delStmt = nullptr;
+		std::string sqlDelStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + "=?;";
+		int delStatus = sqlite3_prepare_v2(this->_pConnection, sqlDelStr.c_str(), -1, &delStmt, nullptr);
+		if (delStatus != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(delStatus));
+			return false;
+		}
+
+		while (totalDataSize > static_cast<int64_t>(_maxSize) && ((status = sqlite3_step(stmt)) == SQLITE_ROW)) {
+			const char *key = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+			int64_t size = sqlite3_column_int64(stmt, 1);
+			totalDataSize -= size;
+
+			delStatus = sqlite3_bind_text(delStmt, 1, key, -1, SQLITE_STATIC);
+			if (delStatus != SQLITE_OK) {
+				sqlite3_finalize(delStmt);
+				error = std::string(sqlite3_errstr(delStatus));
+				return false;
+			}
+
+			delStatus = sqlite3_step(delStmt);
+			if (delStatus != SQLITE_DONE) {
+				sqlite3_finalize(delStmt);
+				error = std::string(sqlite3_errstr(delStatus));
+				return false;
+			}
+
+			delStatus = sqlite3_reset(delStmt);
+			if (delStatus != SQLITE_OK) {
+				sqlite3_finalize(delStmt);
+				error = std::string(sqlite3_errstr(delStatus));
+				return false;
+			}
+		}
+
+		sqlite3_finalize(delStmt);
+
+		// check final status
+		if (status != SQLITE_DONE && status != SQLITE_ROW) {
+			sqlite3_finalize(stmt);
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		sqlite3_finalize(stmt);
+
+		return true;
 	}
 
 	bool DiskCache::clearAll(std::string& error)

@@ -189,5 +189,35 @@ TEST_CASE("Test disk cache with Sqlite") {
 		error.clear();
 		REQUIRE(diskCache.clearAll(error));
 	}
+
+	SECTION("Test prune") {
+		DiskCache diskCache("test.db", 3);
+
+		// store data in the cache first
+		std::map<std::string, std::string> responseHeaders;
+		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
+		responseHeaders["Response-Test-Header-1"] = "Response-Header-Entry-Value-1";
+		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
+		std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
+		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
+			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
+
+		std::map<std::string, std::string> requestHeaders;
+		requestHeaders["Request-Test-Header-0"] = "Request-Header-Entry-Value-0";
+		requestHeaders["Request-Test-Header-1"] = "Request-Header-Entry-Value-1";
+		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
+			"test.com", requestHeaders, std::move(response));
+
+		std::string error;
+		REQUIRE(diskCache.storeResponse("TestKey", std::time(0), *request, error));
+		REQUIRE(diskCache.storeResponse("TestKey1", std::time(0), *request, error));
+		REQUIRE(diskCache.storeResponse("TestKey2", std::time(0), *request, error));
+		REQUIRE(diskCache.storeResponse("TestKey3", std::time(0), *request, error));
+		REQUIRE(diskCache.storeResponse("TestKey4", std::time(0), *request, error));
+
+		// clear all
+		error.clear();
+		REQUIRE(diskCache.prune(error));
+	}
 }
 
