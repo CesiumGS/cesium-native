@@ -227,6 +227,7 @@ namespace Cesium3DTiles {
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
         result.tilesVisited = 0;
+        result.tilesVisitedOutsideFrustum = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
 
@@ -856,6 +857,10 @@ namespace Cesium3DTiles {
     ) {
         ++result.tilesVisited;
         result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
+
+        if (!insideFrustum) {
+            ++result.tilesVisitedOutsideFrustum;
+        }
 
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
