@@ -1,5 +1,5 @@
 #include "CesiumAsync/CachedAssetAccessor.h"
-#include "DiskCache.h"
+#include "CesiumAsync/DiskCache.h"
 #include <optional>
 
 namespace CesiumAsync {
