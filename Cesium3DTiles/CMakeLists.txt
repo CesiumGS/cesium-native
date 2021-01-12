@@ -16,11 +16,11 @@ target_sources(
 target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
-        # Same with RapidJSON
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
 
         # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
+
         ${CMAKE_BINARY_DIR}
     PUBLIC
         include

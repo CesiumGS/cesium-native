@@ -1,6 +1,7 @@
 #include "CesiumGltf/Reader.h"
 #include "JsonHandler.h"
 #include "ModelJsonHandler.h"
+#include "decodeDraco.h"
 #include <rapidjson/reader.h>
 #include <string>
 
@@ -290,7 +291,10 @@ namespace {
 
     // }
 
-    void postprocess(Model& /* model */, const ReadModelOptions& /* options */) {
+    void postprocess(ModelReaderResult& readModel, const ReadModelOptions& options) {
+        if (options.decodeDraco) {
+            decodeDraco(readModel);
+        }
     //     if (options.decodeEmbeddedImages) {
     //         for (Image& image : model.images) {
     //             const BufferView& bufferView = getSafe(model.bufferViews, image.bufferView);
@@ -310,7 +314,7 @@ ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data, co
     ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(data) : readJsonModel(data);
 
     if (result.model) {
-        postprocess(result.model.value(), options);
+        postprocess(result, options);
     }
 
     return result;

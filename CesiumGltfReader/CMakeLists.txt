@@ -17,6 +17,10 @@ target_include_directories(
     CesiumGltfReader
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
+
+        # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
+        ${CMAKE_BINARY_DIR}
     PUBLIC
         include
     PRIVATE
@@ -25,4 +29,4 @@ target_include_directories(
         generated
 )
 
-target_link_libraries(CesiumGltfReader PUBLIC CesiumGltf GSL)
+target_link_libraries(CesiumGltfReader PUBLIC CesiumGltf GSL draco)

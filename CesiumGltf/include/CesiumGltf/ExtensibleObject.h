@@ -30,7 +30,7 @@ namespace CesiumGltf {
         /** @copydoc ExtensionObject::getExtension */
         template <typename T>
         T* getExtension() noexcept {
-            return const_cast<T*>(this->getExtension<T>());
+            return const_cast<T*>(const_cast<const ExtensibleObject*>(this)->getExtension<T>());
         }
 
         /**
