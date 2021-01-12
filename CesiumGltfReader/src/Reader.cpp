@@ -1,3 +1,4 @@
+#include "CesiumGltf/Helpers.h"
 #include "CesiumGltf/Reader.h"
 #include "JsonHandler.h"
 #include "ModelJsonHandler.h"
@@ -277,36 +278,32 @@ namespace {
         return result;
     }
 
-    // template <typename T>
-    // const T& getSafe(const std::vector<T>& items, int64_t index) {
-    //     static T default;
-    //     if (index < 0 || index >= static_cast<int64_t>(items.size())) {
-    //         return default;
-    //     } else {
-    //         return items[index];
-    //     }
-    // }
-
-    // gsl::span<const uint8_t> safeSubspan(const gsl::span<const uint8_t>& s, int64_t offset, int64_t count) {
-
-    // }
-
     void postprocess(ModelReaderResult& readModel, const ReadModelOptions& options) {
+        Model& model = readModel.model.value();
+
+        if (options.decodeEmbeddedImages) {
+            for (Image& image : model.images) {
+                const BufferView& bufferView = getSafe(model.bufferViews, image.bufferView);
+                const Buffer& buffer = getSafe(model.buffers, bufferView.buffer);
+
+                if (bufferView.byteOffset + bufferView.byteLength > static_cast<int64_t>(buffer.cesium.data.size())) {
+                    if (!readModel.warnings.empty()) readModel.warnings += "\n";
+                    readModel.warnings += "Image bufferView's byteLength is more than the available bytes.";
+                    continue;
+                }
+               
+                gsl::span<const uint8_t> bufferSpan(buffer.cesium.data);
+                gsl::span<const uint8_t> bufferViewSpan = bufferSpan.subspan(bufferView.byteOffset, bufferView.byteLength);
+                ImageReaderResult imageResult = readImage(bufferViewSpan);
+                if (imageResult.image) {
+                    image.cesium = std::move(imageResult.image.value());
+                }
+            }
+        }
+
         if (options.decodeDraco) {
             decodeDraco(readModel);
         }
-    //     if (options.decodeEmbeddedImages) {
-    //         for (Image& image : model.images) {
-    //             const BufferView& bufferView = getSafe(model.bufferViews, image.bufferView);
-    //             const Buffer& buffer = getSafe(model.buffers, bufferView.buffer);
-    //             if (buffer.cesium.data.size() == 0) {
-    //                 continue;
-    //             }
-                
-    //             gsl::span<const uint8_t> bufferSpan(buffer.cesium.data);
-    //             bufferSpan.subspan()
-    //         }
-    //     }
     }
 }
 

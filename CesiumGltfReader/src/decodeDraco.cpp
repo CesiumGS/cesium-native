@@ -230,9 +230,7 @@ namespace {
         auto doCopy = [pMesh, pAttribute](auto pOut) {
             for (draco::PointIndex i(0); i < pMesh->num_points(); ++i) {
                 draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
-                if (!pAttribute->ConvertValue(valueIndex, pOut)) {
-                }
-
+                pAttribute->ConvertValue(valueIndex, pOut);
                 pOut += pAttribute->num_components();
             }
         };
