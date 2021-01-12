@@ -227,7 +227,7 @@ namespace Cesium3DTiles {
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
         result.tilesVisited = 0;
-        result.tilesVisitedOutsideFrustum = 0;
+        result.tilesVisitedWithoutSse = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
 
@@ -782,12 +782,13 @@ namespace Cesium3DTiles {
         this->_markTileVisited(tile);
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        bool insideFrustum = frameState.camera.isBoundingVolumeVisible(boundingVolume);
-        bool isVisible = insideFrustum;
+        bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
+        bool enforceSse = true;
 
-        if (!insideFrustum) {
+        if (!isVisible) {
             if (this->_options.disableFrustumCulling) {
                 isVisible = true;
+                enforceSse = false;
             }
             else if (this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
                 const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
@@ -803,6 +804,7 @@ namespace Cesium3DTiles {
                 if (pRectangle) {
                     if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
                         isVisible = true;
+                        enforceSse = false;
                     }
                 }
             }
@@ -819,7 +821,12 @@ namespace Cesium3DTiles {
                 double fogScalar = distance * frameState.fogDensity;
                 double fog = 1.0 - glm::exp(-(fogScalar * fogScalar));
                 if (fog >= 1.0) {
-                    isVisible = false;
+                    if (this->_options.disableFogCulling) {
+                        enforceSse = false;
+                    }
+                    else {
+                        isVisible = false;
+                    }
                 }
             }
         }
@@ -838,7 +845,7 @@ namespace Cesium3DTiles {
             return TraversalDetails();
         }
     
-        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, insideFrustum, result);
+        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, enforceSse, result);
     }
 
     // Visits a tile for possible rendering. When we call this function with a tile:
@@ -852,14 +859,15 @@ namespace Cesium3DTiles {
         bool ancestorMeetsSse,
         Tile& tile,
         double distance,
-        bool insideFrustum,
+        bool enforceSse,
         ViewUpdateResult& result
     ) {
         ++result.tilesVisited;
         result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
-        if (!insideFrustum) {
-            ++result.tilesVisitedOutsideFrustum;
+        if (!enforceSse) {
+            // TODO: change the wording of this variable
+            ++result.tilesVisitedWithoutSse;
         }
 
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
@@ -881,7 +889,7 @@ namespace Cesium3DTiles {
 
         // Does this tile meet the screen-space error?
         double sse = frameState.camera.computeScreenSpaceError(tile.getGeometricError(), distance);
-        bool meetsSse = !insideFrustum || sse < this->_options.maximumScreenSpaceError;
+        bool meetsSse = !enforceSse || sse < this->_options.maximumScreenSpaceError;
 
         // If we're forbidding holes, don't refine if any children are still loading.
         bool waitingForChildren = false;

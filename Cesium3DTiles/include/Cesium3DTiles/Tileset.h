@@ -101,6 +101,14 @@ namespace Cesium3DTiles {
         bool disableFrustumCulling = false;
 
         /**
+         * @brief Disable culling tiles that are too far away to be seen through atmospheric fog.
+         *
+         * When true, the tileset will not cull tiles due to atmospheric fog. Screen-space error computations will be disabled for tiles that
+         * would have otherwise been culled.
+         */
+        bool disableFogCulling = false;
+
+        /**
          * @brief The maximum number of bytes that may be cached.
          * 
          * Note that this value, even if 0, will never
