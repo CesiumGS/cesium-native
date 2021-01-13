@@ -50,7 +50,7 @@ namespace CesiumGltf {
          *
          * All valid values correspond to WebGL enums.
          */
-        Mode mode;
+        Mode mode = Mode(4);
 
         /**
          * @brief An array of Morph Targets, each  Morph Target is a dictionary mapping attributes (only `POSITION`, `NORMAL`, and `TANGENT` supported) to their deviations in the Morph Target.

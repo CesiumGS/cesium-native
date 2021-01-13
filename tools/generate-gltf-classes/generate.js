@@ -207,7 +207,7 @@ function formatProperty(property) {
 
   result += `${property.type} ${property.name}`;
 
-  if (property.defaultValue && property.defaultValue.length > 0) {
+  if (property.defaultValue !== undefined) {
     result += " = " + property.defaultValue;
   }
 

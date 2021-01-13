@@ -32,7 +32,7 @@ namespace CesiumGltf {
         /**
          * @brief A floating-point 4x4 transformation matrix stored in column-major order.
          */
-        std::vector<double> matrix;
+        std::vector<double> matrix = { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
 
         /**
          * @brief The index of the mesh in this node.
@@ -42,17 +42,17 @@ namespace CesiumGltf {
         /**
          * @brief The node's unit quaternion rotation in the order (x, y, z, w), where w is the scalar.
          */
-        std::vector<double> rotation;
+        std::vector<double> rotation = { 0,0,0,1 };
 
         /**
          * @brief The node's non-uniform scale, given as the scaling factors along the x, y, and z axes.
          */
-        std::vector<double> scale;
+        std::vector<double> scale = { 1,1,1 };
 
         /**
          * @brief The node's translation along the x, y, and z axes.
          */
-        std::vector<double> translation;
+        std::vector<double> translation = { 0,0,0 };
 
         /**
          * @brief The weights of the instantiated Morph Target. Number of elements must match number of Morph Targets of used mesh.

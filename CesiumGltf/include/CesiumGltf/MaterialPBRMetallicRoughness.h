@@ -17,7 +17,7 @@ namespace CesiumGltf {
          *
          * The RGBA components of the base color of the material. The fourth component (A) is the alpha coverage of the material. The `alphaMode` property specifies how alpha is interpreted. These values are linear. If a baseColorTexture is specified, this value is multiplied with the texel values.
          */
-        std::vector<double> baseColorFactor;
+        std::vector<double> baseColorFactor = { 1,1,1,1 };
 
         /**
          * @brief The base color texture.
@@ -31,14 +31,14 @@ namespace CesiumGltf {
          *
          * A value of 1.0 means the material is a metal. A value of 0.0 means the material is a dielectric. Values in between are for blending between metals and dielectrics such as dirty metallic surfaces. This value is linear. If a metallicRoughnessTexture is specified, this value is multiplied with the metallic texel values.
          */
-        double metallicFactor;
+        double metallicFactor = 1;
 
         /**
          * @brief The roughness of the material.
          *
          * A value of 1.0 means the material is completely rough. A value of 0.0 means the material is completely smooth. This value is linear. If a metallicRoughnessTexture is specified, this value is multiplied with the roughness texel values.
          */
-        double roughnessFactor;
+        double roughnessFactor = 1;
 
         /**
          * @brief The metallic-roughness texture.

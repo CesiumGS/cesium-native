@@ -82,7 +82,7 @@ function resolveProperty(
       return {
         ...propertyDefaults(propertyName, propertyDetails),
         type: "int32_t",
-        defaultValue: "-1",
+        defaultValue: -1,
         headers: ["<cstdint>"],
         readerHeaders: [`"IntegerJsonHandler.h"`],
         readerType: "IntegerJsonHandler<int32_t>",
@@ -142,7 +142,7 @@ function propertyDefaults(propertyName, propertyDetails) {
     readerHeaders: [],
     readerHeadersImpl: [],
     type: "",
-    defaultValue: "",
+    defaultValue: propertyDetails.default ? propertyDetails.default.toString() : undefined,
     readerType: "",
     schemas: [],
     localTypes: [],
@@ -179,6 +179,7 @@ function resolveArray(
     schemas: itemProperty.schemas,
     localTypes: itemProperty.localTypes,
     type: `std::vector<${itemProperty.type}>`,
+    defaultValue: propertyDetails.default ? `{ ${propertyDetails.default} }` : undefined,
     readerHeaders: [`"ArrayJsonHandler.h"`, ...itemProperty.readerHeaders],
     readerType: `ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
   };
@@ -256,6 +257,7 @@ function resolveEnum(
       `),
     ],
     type: enumName,
+    defaultValue: createEnumDefault(enumName, propertyDetails),
     readerHeaders: [`"CesiumGltf/${parentName}.h"`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
@@ -274,6 +276,18 @@ function resolveEnum(
   }
 
   return result;
+}
+
+function createEnumDefault(enumName, propertyDetails) {
+  if (propertyDetails.default === undefined) {
+    return undefined;
+  }
+
+  if (propertyDetails.anyOf[0].type === "integer") {
+    return `${enumName}(${propertyDetails.default})`;
+  } else {
+    return `${enumName}::${propertyDetails.default}`;
+  }
 }
 
 function createEnum(enumDetails) {

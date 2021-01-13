@@ -53,21 +53,21 @@ namespace CesiumGltf {
          *
          * The RGB components of the emissive color of the material. These values are linear. If an emissiveTexture is specified, this value is multiplied with the texel values.
          */
-        std::vector<double> emissiveFactor;
+        std::vector<double> emissiveFactor = { 0,0,0 };
 
         /**
          * @brief The alpha rendering mode of the material.
          *
          * The material's alpha rendering mode enumeration specifying the interpretation of the alpha value of the main factor and texture.
          */
-        AlphaMode alphaMode;
+        AlphaMode alphaMode = AlphaMode::OPAQUE;
 
         /**
          * @brief The alpha cutoff value of the material.
          *
          * Specifies the cutoff threshold when in `MASK` mode. If the alpha value is greater than or equal to this value then it is rendered as fully opaque, otherwise, it is rendered as fully transparent. A value greater than 1.0 will render the entire material as fully transparent. This value is ignored for other modes.
          */
-        double alphaCutoff;
+        double alphaCutoff = 0.5;
 
         /**
          * @brief Specifies whether the material is double sided.

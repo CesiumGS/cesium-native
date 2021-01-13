@@ -28,7 +28,7 @@ namespace CesiumGltf {
         /**
          * @brief Interpolation algorithm.
          */
-        Interpolation interpolation;
+        Interpolation interpolation = Interpolation::LINEAR;
 
         /**
          * @brief The index of an accessor, containing keyframe output values.
