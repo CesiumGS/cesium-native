@@ -249,7 +249,7 @@ namespace Cesium3DTiles {
             fogDensity
         };
 
-        this->_visitTileIfVisible(frameState, 0, false, *pRootTile, result);
+        this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
 
         result.tilesLoadingLowPriority = static_cast<uint32_t>(this->_loadQueueLow.size());
         result.tilesLoadingMediumPriority = static_cast<uint32_t>(this->_loadQueueMedium.size());
@@ -771,7 +771,7 @@ namespace Cesium3DTiles {
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
     //   * The tile may or may not be renderable.
     //   * The tile has not yet been added to a load queue.
-    Tileset::TraversalDetails Tileset::_visitTileIfVisible(
+    Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         const FrameState& frameState,
         uint32_t depth,
         bool ancestorMeetsSse,
@@ -781,57 +781,62 @@ namespace Cesium3DTiles {
         tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
         this->_markTileVisited(tile);
 
+        // whether we should visit this tile
+        bool shouldVisit = true;
+        // whether this tile was culled (Note: we might still want to visit it)
+        bool culled = false;
+
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
         bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
-        bool enforceSse = true;
 
         if (!isVisible) {
-            if (this->_options.disableFrustumCulling) {
-                isVisible = true;
-                enforceSse = false;
-            }
-            else if (this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
-                const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
-                const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
-                
-                const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-                if (pRegion) {
-                    pRectangle = &pRegion->getRectangle();
-                } else if (pLooseRegion) {
-                    pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-                }
+            // this tile is off-screen so it is a culled tile
+            culled = true;
+            if (!this->_options.disableFrustumCulling) {
+                // if frustum culling is enabled, we shouldn't visit this off-screen tile...
+                shouldVisit = false;
+                // ...unless the tile is directly under the camera
+                if (this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
+                    const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
+                    const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
+                    
+                    const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
+                    if (pRegion) {
+                        pRectangle = &pRegion->getRectangle();
+                    } else if (pLooseRegion) {
+                        pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
+                    }
 
-                if (pRectangle) {
-                    if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
-                        isVisible = true;
-                        enforceSse = false;
+                    if (pRectangle) {
+                        if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
+                            // the tile is off-screen, but under the camera so we should visit it 
+                            shouldVisit = true;
+                        }
                     }
                 }
             }
         }
 
-        double distance = 0.0;
+        double distanceSquared = frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
+        double distance = sqrt(distanceSquared);
 
-        if (isVisible) {
-            // Is it culled by fog?
-            double distanceSquared = frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
-            distance = sqrt(distanceSquared);
-
+        if (shouldVisit) {
+            // so far we plan on visiting this tile, so check to see if it is fog culled
             if (frameState.fogDensity > 0.0) {
                 double fogScalar = distance * frameState.fogDensity;
                 double fog = 1.0 - glm::exp(-(fogScalar * fogScalar));
                 if (fog >= 1.0) {
-                    if (this->_options.disableFogCulling) {
-                        enforceSse = false;
-                    }
-                    else {
-                        isVisible = false;
+                    // this tile is occluded by fog so it is a culled tile
+                    culled = true;
+                    if (!this->_options.disableFogCulling) {
+                        // if fog culling is enabled, we shouldn't visit this tile
+                        shouldVisit = false;
                     }
                 }
             }
         }
 
-        if (!isVisible) {
+        if (!shouldVisit) {
             markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
             tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Culled));
 
@@ -845,7 +850,7 @@ namespace Cesium3DTiles {
             return TraversalDetails();
         }
     
-        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, enforceSse, result);
+        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, culled, result);
     }
 
     // Visits a tile for possible rendering. When we call this function with a tile:
@@ -859,14 +864,14 @@ namespace Cesium3DTiles {
         bool ancestorMeetsSse,
         Tile& tile,
         double distance,
-        bool enforceSse,
+        bool culled,
         ViewUpdateResult& result
     ) {
         ++result.tilesVisited;
         result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
-        if (!enforceSse) {
-            // TODO: change the wording of this variable
+        if (culled) {
+            // TODO: change the wording of this variable (culledTilesVisited?)
             ++result.tilesVisitedWithoutSse;
         }
 
@@ -889,7 +894,9 @@ namespace Cesium3DTiles {
 
         // Does this tile meet the screen-space error?
         double sse = frameState.camera.computeScreenSpaceError(tile.getGeometricError(), distance);
-        bool meetsSse = !enforceSse || sse < this->_options.maximumScreenSpaceError;
+        bool meetsSse = culled ? 
+                        !this->_options.enforceCulledScreenSpaceError || sse < this->_options.culledScreenSpaceError :
+                        sse < this->_options.maximumScreenSpaceError;
 
         // If we're forbidding holes, don't refine if any children are still loading.
         bool waitingForChildren = false;
@@ -1064,7 +1071,7 @@ namespace Cesium3DTiles {
         // TODO: actually visit near-to-far, rather than in order of occurrence.
         gsl::span<Tile> children = tile.getChildren();
         for (Tile& child : children) {
-            TraversalDetails childTraversal = this->_visitTileIfVisible(
+            TraversalDetails childTraversal = this->_visitTileIfNeeded(
                 frameState,
                 depth + 1,
                 ancestorMeetsSse,

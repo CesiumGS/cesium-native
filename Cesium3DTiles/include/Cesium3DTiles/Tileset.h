@@ -122,7 +122,7 @@ namespace Cesium3DTiles {
          * When enforceCulledScreenSpaceError is true, culled tiles from disabled culling stages will be refined until
          * they meet this screen-space error value. 
          */
-         double culledScreenSpaceError = 128.0; 
+         double culledScreenSpaceError = 64.0; 
 
         /**
          * @brief The maximum number of bytes that may be cached.
@@ -391,7 +391,7 @@ namespace Cesium3DTiles {
         };
 
         TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, bool insideFrustum, ViewUpdateResult& result);
-        TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitTileIfNeeded(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
 
         void _processLoadQueue();
