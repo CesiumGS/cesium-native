@@ -328,8 +328,6 @@ void decodeDraco(CesiumGltf::ModelReaderResult& readModel) {
 
     Model& model = readModel.model.value();
 
-    std::unordered_map<int32_t, std::unique_ptr<draco::Mesh>> bufferViewToMesh;
-
     for (Mesh& mesh : model.meshes) {
         for (MeshPrimitive& primitive : mesh.primitives) {
             KHR_draco_mesh_compression* pDraco = primitive.getExtension<KHR_draco_mesh_compression>();
