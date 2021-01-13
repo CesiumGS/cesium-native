@@ -17,13 +17,22 @@ namespace CesiumAsync {
 
         ~CacheAssetAccessor() noexcept override;
 
-        std::unique_ptr<IAssetRequest> requestAsset(const AsyncSystem* asyncSystem, 
-            const std::string& url, 
-            const std::vector<THeader>& headers = std::vector<THeader>()) override;
+        void requestAsset(const AsyncSystem* pAsyncSystem, 
+			const std::string& url, 
+			const std::vector<THeader>& headers,
+			std::function<void(std::unique_ptr<IAssetRequest>)> callback) override;
 
         void tick() noexcept override;
 
     private:
+        static bool isCacheValid(const CacheItem& cacheItem);
+
+        static bool shouldCacheRequest(const IAssetRequest& request);
+
+        static std::time_t calculateExpiryTime(const IAssetRequest& request);
+
+        static std::string hashRequest(const IAssetRequest& request);
+
 		std::unique_ptr<IAssetAccessor> _pAssetAccessor;
 		std::unique_ptr<ICacheDatabase> _pCacheDatabase;
 	};

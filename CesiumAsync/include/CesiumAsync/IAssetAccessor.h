@@ -29,10 +29,11 @@ namespace CesiumAsync {
          * @param headers The headers to include in the request.
          * @return The in-progress asset request.
          */
-        virtual std::unique_ptr<IAssetRequest> requestAsset(
+        virtual void requestAsset(
             const AsyncSystem* asyncSystem,
             const std::string& url,
-            const std::vector<THeader>& headers = std::vector<THeader>()
+            const std::vector<THeader>& headers,
+            std::function<void(std::unique_ptr<IAssetRequest>)> callback
         ) = 0;
 
         /**

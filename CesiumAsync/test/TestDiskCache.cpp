@@ -69,10 +69,6 @@ public:
 		return this->_pResponse.get();
 	}
 
-	virtual void bind(std::function<void(IAssetRequest*)> callback) override {}
-
-	virtual void cancel() noexcept override {}
-
 private:
 	std::string _method;
 	std::string _url;

@@ -37,20 +37,6 @@ namespace CesiumAsync {
          * This method may be called from any thread.
          */
         virtual const IAssetResponse* response() const = 0;
-
-        /**
-         * @brief Binds a callback function that will be invoked when the request's response is
-         * received. This method may only be called from the thread that created the request.
-         * 
-         * @param callback The callback.
-         */
-        virtual void bind(std::function<void(IAssetRequest*)> callback) = 0;
-
-        /**
-         * @brief Cancels the request.
-         * This method may only be called from the thread that created the request.
-         */
-        virtual void cancel() noexcept = 0;
     };
 
 }
