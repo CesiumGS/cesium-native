@@ -31,8 +31,6 @@ namespace CesiumAsync {
 
         static std::time_t calculateExpiryTime(const IAssetRequest& request);
 
-        static std::string hashRequest(const IAssetRequest& request);
-
 		std::unique_ptr<IAssetAccessor> _pAssetAccessor;
 		std::unique_ptr<ICacheDatabase> _pCacheDatabase;
 	};

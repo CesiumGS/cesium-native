@@ -105,7 +105,7 @@ namespace CesiumAsync {
 					pReceiver->pCompletedRequest = std::move(pCompletedRequest);
 					pAsyncSystem->runInWorkerThread([pCacheDatabase, pReceiver]() -> std::shared_ptr<Receiver> {
 						std::string error;
-						if(!pCacheDatabase->storeResponse(hashRequest(*pReceiver->pCompletedRequest), 
+						if(!pCacheDatabase->storeResponse(pReceiver->pCompletedRequest->url(), 
 								calculateExpiryTime(*pReceiver->pCompletedRequest), 
 								*pReceiver->pCompletedRequest, 
 								error)) 
@@ -140,9 +140,5 @@ namespace CesiumAsync {
 
 	/*static*/ std::time_t CacheAssetAccessor::calculateExpiryTime(const IAssetRequest& /*request*/) {
 		return std::time(0);
-	}
-
-	/*static*/ std::string CacheAssetAccessor::hashRequest(const IAssetRequest& request) {
-		return request.url();
 	}
 }
