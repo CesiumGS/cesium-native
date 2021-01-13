@@ -33,7 +33,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the bufferView that contains the image. Use this instead of the image's uri property.
          */
-        int32_t bufferView;
+        int32_t bufferView = -1;
 
         /**
          * @brief Holds properties that are specific to the glTF loader rather than part of the glTF spec.

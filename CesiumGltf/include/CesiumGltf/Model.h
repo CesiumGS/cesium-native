@@ -111,7 +111,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the default scene.
          */
-        int32_t scene;
+        int32_t scene = -1;
 
         /**
          * @brief An array of scenes.

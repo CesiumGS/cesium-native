@@ -17,7 +17,7 @@ namespace CesiumGltf {
          *
          * The index of a sampler in this animation used to compute the value for the target, e.g., a node's translation, rotation, or scale (TRS).
          */
-        int32_t sampler;
+        int32_t sampler = -1;
 
         /**
          * @brief The index of the node and TRS property to target.

@@ -47,7 +47,7 @@ namespace CesiumGltf {
          *
          * When not defined, accessor must be initialized with zeros; `sparse` property or extensions could override zeros with actual values.
          */
-        int32_t bufferView;
+        int32_t bufferView = -1;
 
         /**
          * @brief The offset relative to the start of the bufferView in bytes.

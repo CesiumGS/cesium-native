@@ -15,7 +15,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the bufferView.
          */
-        int32_t bufferView;
+        int32_t bufferView = -1;
 
         /**
          * @brief A dictionary object, where each key corresponds to an attribute and its unique attribute id stored in the compressed geometry.

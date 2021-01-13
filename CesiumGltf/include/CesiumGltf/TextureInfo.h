@@ -14,7 +14,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the texture.
          */
-        int32_t index;
+        int32_t index = -1;
 
         /**
          * @brief The set index of texture's TEXCOORD attribute used for texture coordinate mapping.

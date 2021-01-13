@@ -19,7 +19,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the buffer.
          */
-        int32_t buffer;
+        int32_t buffer = -1;
 
         /**
          * @brief The offset into the buffer in bytes.

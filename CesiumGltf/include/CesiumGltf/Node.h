@@ -15,7 +15,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the camera referenced by this node.
          */
-        int32_t camera;
+        int32_t camera = -1;
 
         /**
          * @brief The indices of this node's children.
@@ -27,7 +27,7 @@ namespace CesiumGltf {
          *
          * When a skin is referenced by a node within a scene, all joints used by the skin must belong to the same scene.
          */
-        int32_t skin;
+        int32_t skin = -1;
 
         /**
          * @brief A floating-point 4x4 transformation matrix stored in column-major order.
@@ -37,7 +37,7 @@ namespace CesiumGltf {
         /**
          * @brief The index of the mesh in this node.
          */
-        int32_t mesh;
+        int32_t mesh = -1;
 
         /**
          * @brief The node's unit quaternion rotation in the order (x, y, z, w), where w is the scalar.

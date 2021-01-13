@@ -23,7 +23,7 @@ namespace CesiumGltf {
          *
          * That accessor must have componentType `FLOAT`. The values represent time in seconds with `time[0] >= 0.0`, and strictly increasing values, i.e., `time[n + 1] > time[n]`.
          */
-        int32_t input;
+        int32_t input = -1;
 
         /**
          * @brief Interpolation algorithm.
@@ -35,7 +35,7 @@ namespace CesiumGltf {
          *
          * The index of an accessor containing keyframe output values. When targeting translation or scale paths, the `accessor.componentType` of the output values must be `FLOAT`. When targeting rotation or morph weights, the `accessor.componentType` of the output values must be `FLOAT` or normalized integer. For weights, each output element stores `SCALAR` values with a count equal to the number of morph targets.
          */
-        int32_t output;
+        int32_t output = -1;
 
     };
 }

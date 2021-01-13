@@ -205,7 +205,13 @@ function formatProperty(property) {
 
   result += ` */\n`;
 
-  result += `${property.type} ${property.name};`;
+  result += `${property.type} ${property.name}`;
+
+  if (property.defaultValue && property.defaultValue.length > 0) {
+    result += " = " + property.defaultValue;
+  }
+
+  result += ";";
 
   return result;
 }

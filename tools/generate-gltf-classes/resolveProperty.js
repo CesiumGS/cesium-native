@@ -82,6 +82,7 @@ function resolveProperty(
       return {
         ...propertyDefaults(propertyName, propertyDetails),
         type: "int32_t",
+        defaultValue: "-1",
         headers: ["<cstdint>"],
         readerHeaders: [`"IntegerJsonHandler.h"`],
         readerType: "IntegerJsonHandler<int32_t>",
@@ -141,6 +142,7 @@ function propertyDefaults(propertyName, propertyDetails) {
     readerHeaders: [],
     readerHeadersImpl: [],
     type: "",
+    defaultValue: "",
     readerType: "",
     schemas: [],
     localTypes: [],
