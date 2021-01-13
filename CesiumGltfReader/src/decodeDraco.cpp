@@ -149,61 +149,6 @@ namespace {
     ) {
         Model& model = readModel.model.value();
 
-        switch (pAttribute->data_type()) {
-            case draco::DataType::DT_INT8:
-                pAccessor->componentType = Accessor::ComponentType::BYTE;
-                break;
-            case draco::DataType::DT_UINT8:
-                pAccessor->componentType = Accessor::ComponentType::UNSIGNED_BYTE;
-                break;
-            case draco::DataType::DT_INT16:
-                pAccessor->componentType = Accessor::ComponentType::SHORT;
-                break;
-            case draco::DataType::DT_UINT16:
-                pAccessor->componentType = Accessor::ComponentType::UNSIGNED_SHORT;
-                break;
-            case draco::DataType::DT_UINT32:
-                pAccessor->componentType = Accessor::ComponentType::UNSIGNED_INT;
-                break;
-            case draco::DataType::DT_FLOAT32:
-                pAccessor->componentType = Accessor::ComponentType::FLOAT;
-                break;
-            default:
-                if (!readModel.warnings.empty()) readModel.warnings += "\n";
-                readModel.warnings += "Unsupported Draco data type: " + std::to_string(pAttribute->data_type());
-                return;
-        }
-
-        switch (pAttribute->num_components()) {
-            case 1:
-                pAccessor->type = Accessor::Type::SCALAR;
-                break;
-            case 2:
-                pAccessor->type = Accessor::Type::VEC2;
-                break;
-            case 3:
-                pAccessor->type = Accessor::Type::VEC3;
-                break;
-            case 4:
-                // Could be a vector or a matrix. If the accessor is already one of those, keep it.
-                // Otherwise go with VEC4.
-                pAccessor->type =
-                    pAccessor->type == Accessor::Type::VEC4 || pAccessor->type == Accessor::Type::MAT2
-                        ? pAccessor->type
-                        : Accessor::Type::VEC4;
-                break;
-            case 9:
-                pAccessor->type = Accessor::Type::MAT3;
-                break;
-            case 16:
-                pAccessor->type = Accessor::Type::MAT4;
-                break;
-            default:
-                if (!readModel.warnings.empty()) readModel.warnings += "\n";
-                readModel.warnings += "Unsupported number of components for Draco attribute: " + std::to_string(pAttribute->num_components());
-                return;
-        }
-
         if (pAccessor->count > pMesh->num_points()) {
             if (!readModel.warnings.empty()) readModel.warnings += "\n";
             readModel.warnings += "There are fewer decoded Draco indices than are expected by the accessor.";
@@ -217,7 +162,8 @@ namespace {
         bufferView.buffer = static_cast<int32_t>(model.buffers.size());
         Buffer& buffer = model.buffers.emplace_back();
 
-        int64_t stride = computeNumberOfComponents(pAccessor->type) * computeByteSizeOfComponent(pAccessor->componentType);
+        int8_t numberOfComponents = computeNumberOfComponents(pAccessor->type);
+        int64_t stride = numberOfComponents * computeByteSizeOfComponent(pAccessor->componentType);
         int64_t sizeBytes = pAccessor->count * stride;
 
         buffer.cesium.data.resize(sizeBytes);
@@ -227,10 +173,10 @@ namespace {
         bufferView.byteOffset = 0;
         pAccessor->byteOffset = 0;
 
-        auto doCopy = [pMesh, pAttribute](auto pOut) {
+        auto doCopy = [pMesh, pAttribute, numberOfComponents](auto pOut) {
             for (draco::PointIndex i(0); i < pMesh->num_points(); ++i) {
                 draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
-                pAttribute->ConvertValue(valueIndex, pOut);
+                pAttribute->ConvertValue(valueIndex, numberOfComponents, pOut);
                 pOut += pAttribute->num_components();
             }
         };
@@ -254,33 +200,26 @@ namespace {
             case Accessor::ComponentType::FLOAT:
                 doCopy(reinterpret_cast<float*>(buffer.cesium.data.data()));
                 break;
+            default:
+                if (!readModel.warnings.empty()) readModel.warnings += "\n";
+                readModel.warnings += "Accessor uses an unknown componentType: " + std::to_string(int32_t(pAccessor->componentType));
+                break;
         }
     }
 
     void decodePrimitive(
         ModelReaderResult& readModel,
         MeshPrimitive& primitive,
-        KHR_draco_mesh_compression& draco,
-        std::unordered_map<int32_t, std::unique_ptr<draco::Mesh>>& bufferViewToMesh
+        KHR_draco_mesh_compression& draco
     ) {
         Model& model = readModel.model.value();
 
-        draco::Mesh* pMesh;
-
-        auto cachedIt = bufferViewToMesh.find(draco.bufferView);
-        if (cachedIt != bufferViewToMesh.end()) {
-            pMesh = cachedIt->second.get();
-        } else {
-            std::unique_ptr<draco::Mesh> pNewMesh = decodeBufferViewToDracoMesh(readModel, primitive, draco);
-            if (!pNewMesh) {
-                return;
-            }
-
-            pMesh = pNewMesh.get();
-            bufferViewToMesh.emplace(draco.bufferView, std::move(pNewMesh));
+        std::unique_ptr<draco::Mesh> pMesh = decodeBufferViewToDracoMesh(readModel, primitive, draco);
+        if (!pMesh) {
+            return;
         }
 
-        copyDecodedIndices(readModel, primitive, pMesh);
+        copyDecodedIndices(readModel, primitive, pMesh.get());
 
         for (const std::pair<std::string, int32_t>& attribute : draco.attributes) {
             auto primitiveAttrIt = primitive.attributes.find(attribute.first);
@@ -314,7 +253,7 @@ namespace {
                 continue;
             }
 
-            copyDecodedAttribute(readModel, primitive, pAccessor, pMesh, pAttribute);
+            copyDecodedAttribute(readModel, primitive, pAccessor, pMesh.get(), pAttribute);
        }
     }
 }
@@ -335,7 +274,7 @@ void decodeDraco(CesiumGltf::ModelReaderResult& readModel) {
                 continue;
             }
 
-            decodePrimitive(readModel, primitive, *pDraco, bufferViewToMesh);
+            decodePrimitive(readModel, primitive, *pDraco);
         }
     }
 }
