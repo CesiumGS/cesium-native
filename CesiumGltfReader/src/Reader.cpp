@@ -303,6 +303,10 @@ namespace {
 
         if (options.decodeDraco) {
             decodeDraco(readModel);
+
+            if (options.removeDracoExtensionsAndClearBuffersAfterDecode) {
+                removeDracoExtensionsAndClearBuffers(model);
+            }
         }
     }
 }

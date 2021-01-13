@@ -15,6 +15,7 @@ namespace CesiumGltf {
         bool decodeDataUris = true;
         bool decodeEmbeddedImages = true;
         bool decodeDraco = true;
+        bool removeDracoExtensionsAndClearBuffersAfterDecode = true;
     };
 
     ModelReaderResult readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options = ReadModelOptions());

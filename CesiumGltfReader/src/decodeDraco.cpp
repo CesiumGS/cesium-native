@@ -149,61 +149,6 @@ namespace {
     ) {
         Model& model = readModel.model.value();
 
-        switch (pAttribute->data_type()) {
-            case draco::DataType::DT_INT8:
-                pAccessor->componentType = Accessor::ComponentType::BYTE;
-                break;
-            case draco::DataType::DT_UINT8:
-                pAccessor->componentType = Accessor::ComponentType::UNSIGNED_BYTE;
-                break;
-            case draco::DataType::DT_INT16:
-                pAccessor->componentType = Accessor::ComponentType::SHORT;
-                break;
-            case draco::DataType::DT_UINT16:
-                pAccessor->componentType = Accessor::ComponentType::UNSIGNED_SHORT;
-                break;
-            case draco::DataType::DT_UINT32:
-                pAccessor->componentType = Accessor::ComponentType::UNSIGNED_INT;
-                break;
-            case draco::DataType::DT_FLOAT32:
-                pAccessor->componentType = Accessor::ComponentType::FLOAT;
-                break;
-            default:
-                if (!readModel.warnings.empty()) readModel.warnings += "\n";
-                readModel.warnings += "Unsupported Draco data type: " + std::to_string(pAttribute->data_type());
-                return;
-        }
-
-        switch (pAttribute->num_components()) {
-            case 1:
-                pAccessor->type = Accessor::Type::SCALAR;
-                break;
-            case 2:
-                pAccessor->type = Accessor::Type::VEC2;
-                break;
-            case 3:
-                pAccessor->type = Accessor::Type::VEC3;
-                break;
-            case 4:
-                // Could be a vector or a matrix. If the accessor is already one of those, keep it.
-                // Otherwise go with VEC4.
-                pAccessor->type =
-                    pAccessor->type == Accessor::Type::VEC4 || pAccessor->type == Accessor::Type::MAT2
-                        ? pAccessor->type
-                        : Accessor::Type::VEC4;
-                break;
-            case 9:
-                pAccessor->type = Accessor::Type::MAT3;
-                break;
-            case 16:
-                pAccessor->type = Accessor::Type::MAT4;
-                break;
-            default:
-                if (!readModel.warnings.empty()) readModel.warnings += "\n";
-                readModel.warnings += "Unsupported number of components for Draco attribute: " + std::to_string(pAttribute->num_components());
-                return;
-        }
-
         if (pAccessor->count > pMesh->num_points()) {
             if (!readModel.warnings.empty()) readModel.warnings += "\n";
             readModel.warnings += "There are fewer decoded Draco indices than are expected by the accessor.";
@@ -217,7 +162,8 @@ namespace {
         bufferView.buffer = static_cast<int32_t>(model.buffers.size());
         Buffer& buffer = model.buffers.emplace_back();
 
-        int64_t stride = computeNumberOfComponents(pAccessor->type) * computeByteSizeOfComponent(pAccessor->componentType);
+        int8_t numberOfComponents = computeNumberOfComponents(pAccessor->type);
+        int64_t stride = numberOfComponents * computeByteSizeOfComponent(pAccessor->componentType);
         int64_t sizeBytes = pAccessor->count * stride;
 
         buffer.cesium.data.resize(sizeBytes);
@@ -227,10 +173,10 @@ namespace {
         bufferView.byteOffset = 0;
         pAccessor->byteOffset = 0;
 
-        auto doCopy = [pMesh, pAttribute](auto pOut) {
+        auto doCopy = [pMesh, pAttribute, numberOfComponents](auto pOut) {
             for (draco::PointIndex i(0); i < pMesh->num_points(); ++i) {
                 draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
-                pAttribute->ConvertValue(valueIndex, pOut);
+                pAttribute->ConvertValue(valueIndex, numberOfComponents, pOut);
                 pOut += pAttribute->num_components();
             }
         };
@@ -254,33 +200,26 @@ namespace {
             case Accessor::ComponentType::FLOAT:
                 doCopy(reinterpret_cast<float*>(buffer.cesium.data.data()));
                 break;
+            default:
+                if (!readModel.warnings.empty()) readModel.warnings += "\n";
+                readModel.warnings += "Accessor uses an unknown componentType: " + std::to_string(int32_t(pAccessor->componentType));
+                break;
         }
     }
 
     void decodePrimitive(
         ModelReaderResult& readModel,
         MeshPrimitive& primitive,
-        KHR_draco_mesh_compression& draco,
-        std::unordered_map<int32_t, std::unique_ptr<draco::Mesh>>& bufferViewToMesh
+        KHR_draco_mesh_compression& draco
     ) {
         Model& model = readModel.model.value();
 
-        draco::Mesh* pMesh;
-
-        auto cachedIt = bufferViewToMesh.find(draco.bufferView);
-        if (cachedIt != bufferViewToMesh.end()) {
-            pMesh = cachedIt->second.get();
-        } else {
-            std::unique_ptr<draco::Mesh> pNewMesh = decodeBufferViewToDracoMesh(readModel, primitive, draco);
-            if (!pNewMesh) {
-                return;
-            }
-
-            pMesh = pNewMesh.get();
-            bufferViewToMesh.emplace(draco.bufferView, std::move(pNewMesh));
+        std::unique_ptr<draco::Mesh> pMesh = decodeBufferViewToDracoMesh(readModel, primitive, draco);
+        if (!pMesh) {
+            return;
         }
 
-        copyDecodedIndices(readModel, primitive, pMesh);
+        copyDecodedIndices(readModel, primitive, pMesh.get());
 
         for (const std::pair<std::string, int32_t>& attribute : draco.attributes) {
             auto primitiveAttrIt = primitive.attributes.find(attribute.first);
@@ -314,8 +253,70 @@ namespace {
                 continue;
             }
 
-            copyDecodedAttribute(readModel, primitive, pAccessor, pMesh, pAttribute);
+            copyDecodedAttribute(readModel, primitive, pAccessor, pMesh.get(), pAttribute);
        }
+    }
+
+    void removeBufferView(Model& model, int32_t bufferViewID) {
+        BufferView* pBufferView = getSafe(&model.bufferViews, bufferViewID);
+        if (!pBufferView) {
+            return;
+        }
+
+        int32_t bufferID = pBufferView->buffer;
+        if (bufferID < 0 || bufferID >= model.buffers.size()) {
+            return;
+        }
+
+        // Do any other bufferViews reference this section of the buffer?
+        // If so, we can't remove these bytes from the buffer.
+        int64_t count = std::count_if(model.bufferViews.begin(), model.bufferViews.end(), [pBufferView](const BufferView& check) {
+            if (&check == pBufferView || check.buffer != pBufferView->buffer) {
+                return false;
+            }
+
+            int64_t thisStart = pBufferView->byteOffset;
+            int64_t thisEnd = thisStart + pBufferView->byteLength;
+            int64_t checkStart = check.byteOffset;
+            int64_t checkEnd = checkStart + check.byteLength;
+
+            return checkStart < thisEnd && checkEnd > thisStart;
+        });
+
+        int64_t start = pBufferView->byteOffset;
+        int64_t length = pBufferView->byteLength;
+        int64_t end = start + length;
+
+        pBufferView->buffer = -1;
+        pBufferView->byteOffset = 0;
+        pBufferView->byteLength = 0;
+
+        if (count != 0) {
+            // Cannot remove the data in the buffer because other bufferViews still reference it.
+            return;
+        }
+
+        Buffer& buffer = model.buffers[bufferID];
+        std::vector<uint8_t>& data = buffer.cesium.data;
+        if (static_cast<int64_t>(data.size()) < end) {
+            // Data is probably not loaded.
+            return;
+        }
+
+        data.erase(data.begin() + start, data.begin() + end);
+
+        // Update byteOffsets of other bufferViews that reference this buffer.
+        for (BufferView& bufferView : model.bufferViews) {
+            if (bufferView.buffer != bufferID) {
+                continue;
+            }
+
+            if (bufferView.byteOffset >= start) {
+                bufferView.byteOffset -= length;
+            }
+        }
+
+        data.shrink_to_fit();
     }
 }
 
@@ -335,7 +336,32 @@ void decodeDraco(CesiumGltf::ModelReaderResult& readModel) {
                 continue;
             }
 
-            decodePrimitive(readModel, primitive, *pDraco, bufferViewToMesh);
+            decodePrimitive(readModel, primitive, *pDraco);
+        }
+    }
+}
+
+void removeDracoExtensionsAndClearBuffers(Model& model) {
+    // Remove Draco extensions and note buffer ranges that can be removed.
+    for (Mesh& mesh : model.meshes) {
+        for (MeshPrimitive& primitive : mesh.primitives) {
+            auto extensionIt = std::remove_if(
+                primitive.extensions.begin(),
+                primitive.extensions.end(),
+                [](const std::any& extension) {
+                    return extension.type() == typeid(KHR_draco_mesh_compression);
+                }
+            );
+
+            for (; extensionIt != primitive.extensions.end(); ++extensionIt) {
+                const KHR_draco_mesh_compression& extension = std::any_cast<const KHR_draco_mesh_compression&>(*extensionIt);
+                removeBufferView(model, extension.bufferView);
+            }
+
+            primitive.extensions.erase(
+                extensionIt,
+                primitive.extensions.end()
+            );
         }
     }
 }
