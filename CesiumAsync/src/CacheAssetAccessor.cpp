@@ -83,8 +83,14 @@ namespace CesiumAsync {
 			std::unique_ptr<IAssetRequest> pCompletedRequest;
 		};
 
-		pAsyncSystem->runInWorkerThread([]() -> std::optional<CacheItem> {
-			return std::nullopt;
+		pAsyncSystem->runInWorkerThread([this, url]() -> std::optional<CacheItem> {
+			std::string error;
+			std::optional<CacheItem> cacheItem;
+			if (!this->_pCacheDatabase->getEntry(url, cacheItem, error)) {
+				return std::nullopt;
+			}
+
+			return cacheItem;
 		}).thenInMainThread([this, pAsyncSystem, url, headers, callback](std::optional<CacheItem> cacheItem) {
 			if (cacheItem) {
 				callback(std::make_unique<CacheAssetRequest>(cacheItem.value()));
