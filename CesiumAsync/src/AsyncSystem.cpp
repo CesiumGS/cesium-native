@@ -16,24 +16,29 @@ namespace CesiumAsync {
         const std::string& url,
         const std::vector<IAssetAccessor::THeader>& headers
     ) const {
-        struct Receiver {
-            std::unique_ptr<IAssetRequest> pRequest;
-            async::event_task<std::unique_ptr<IAssetRequest>> event;
-        };
+        //struct Receiver {
+        //    std::unique_ptr<IAssetRequest> pRequest;
+        //    async::event_task<std::unique_ptr<IAssetRequest>> event;
+        //};
 
-        std::shared_ptr<Receiver> pReceiver = std::make_shared<Receiver>();
-        pReceiver->pRequest = this->_pSchedulers->pAssetAccessor->requestAsset(url, headers);
+        std::shared_ptr<async::event_task<std::unique_ptr<IAssetRequest>>> pEvent = std::make_shared<async::event_task<std::unique_ptr<IAssetRequest>>>();
+        this->_pSchedulers->pAssetAccessor->requestAsset(this, 
+            url, 
+            headers, 
+            [pEvent](std::unique_ptr<IAssetRequest> pRequest) {
+				pEvent->set(std::move(pRequest));
+			});
 
-        Future<std::unique_ptr<IAssetRequest>> result(this->_pSchedulers, pReceiver->event.get_task());
+        Future<std::unique_ptr<IAssetRequest>> result(this->_pSchedulers, pEvent->get_task());
 
-        pReceiver->pRequest->bind([pReceiver](IAssetRequest*) {
-            // With the unique_ptr in the Receiver, the request and the receiver
-            // circularly reference each other, so neither can ever be destroyed.
-            // So here we move the unique_ptr to the request into a local so that
-            // when it goes out of scope, both can be destroyed.
-            std::unique_ptr<IAssetRequest> pRequest = std::move(pReceiver->pRequest);
-            pReceiver->event.set(std::move(pRequest));
-        });
+        //pReceiver->pRequest->bind([pReceiver](IAssetRequest*) {
+        //    // With the unique_ptr in the Receiver, the request and the receiver
+        //    // circularly reference each other, so neither can ever be destroyed.
+        //    // So here we move the unique_ptr to the request into a local so that
+        //    // when it goes out of scope, both can be destroyed.
+        //    std::unique_ptr<IAssetRequest> pRequest = std::move(pReceiver->pRequest);
+        //    pReceiver->event.set(std::move(pRequest));
+        //});
 
         return result;
     }

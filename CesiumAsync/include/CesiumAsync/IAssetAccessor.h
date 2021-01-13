@@ -7,6 +7,7 @@
 #include <vector>
 
 namespace CesiumAsync {
+    class AsyncSystem;
 
     /**
      * @brief Provides asynchronous access to assets, usually files downloaded via HTTP.
@@ -29,6 +30,7 @@ namespace CesiumAsync {
          * @return The in-progress asset request.
          */
         virtual std::unique_ptr<IAssetRequest> requestAsset(
+            const AsyncSystem* asyncSystem,
             const std::string& url,
             const std::vector<THeader>& headers = std::vector<THeader>()
         ) = 0;
