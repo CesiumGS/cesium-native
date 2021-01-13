@@ -94,19 +94,35 @@ namespace Cesium3DTiles {
         /**
          * @brief Disable culling of tiles against the frustum.
          *
-         * When true, the tileset will not cull tiles against the frustum. This will increase the number of loaded tiles and may also increase 
-         * the number of rendered tiles if they're not culled later in the pipeline. Screen-space error computations will be disabled for tiles 
-         * that fall outside the frustum.
+         * When true, the tileset will not cull tiles against the frustum. This will increase the number of loaded 
+         * tiles and may also increase the number of rendered tiles if they're not culled later in the pipeline. 
          */
         bool disableFrustumCulling = false;
 
         /**
          * @brief Disable culling tiles that are too far away to be seen through atmospheric fog.
          *
-         * When true, the tileset will not cull tiles due to atmospheric fog. Screen-space error computations will be disabled for tiles that
-         * would have otherwise been culled.
+         * When true, the tileset will not cull tiles due to atmospheric fog. This will increase the number of 
+         * loaded tiles and may also increase the number of rendered tiles if they're not culled later in the pipeline.
          */
         bool disableFogCulling = false;
+
+        /**
+         * @brief Whether culled tiles should be refined until they meet culledScreenSpaceError. 
+         *
+         * When true, any culled tile from a disabled culling stage will be refined until it meets the specified
+         * culledScreenSpaceError. Otherwise, its screen-space error check will be disabled altogether and it will 
+         * not bother to refine any futher.
+         */
+        bool enforceCulledScreenSpaceError = true;
+
+        /**
+         * @brief The screen-space error to refine until for culled tiles from disabled culling stages.
+         *
+         * When enforceCulledScreenSpaceError is true, culled tiles from disabled culling stages will be refined until
+         * they meet this screen-space error value. 
+         */
+         double culledScreenSpaceError = 128.0; 
 
         /**
          * @brief The maximum number of bytes that may be cached.
