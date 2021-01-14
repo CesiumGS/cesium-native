@@ -84,6 +84,7 @@ namespace CesiumAsync {
 			std::optional<CacheItem> cacheItem;
 			if (!this->_pCacheDatabase->getEntry(url, cacheItem, error)) {
 				// TODO: log error
+				printf("lock\n");
 			}
 
 			if (!cacheItem) {
@@ -102,6 +103,7 @@ namespace CesiumAsync {
 									error))
 								{
 									// TODO: log error here
+									printf("lock\n");
 								}
 							});
 						}

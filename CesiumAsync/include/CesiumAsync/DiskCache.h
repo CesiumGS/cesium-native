@@ -12,8 +12,6 @@ namespace CesiumAsync {
 	public:
 		DiskCache(const std::string &databaseName, uint64_t maxSize = 512 * 1024 * 1024);
 
-		~DiskCache() noexcept;
-
 		virtual bool getEntry(const std::string& url, 
 			std::optional<CacheItem> &item, 
 			std::string& error) const override;
@@ -30,6 +28,7 @@ namespace CesiumAsync {
 		virtual bool clearAll(std::string& error) override;
 
 	private:
+		mutable std::mutex _mutex;
 		uint64_t _maxSize;
 		std::string _databaseName;
 	};
