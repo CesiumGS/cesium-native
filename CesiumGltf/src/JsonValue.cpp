@@ -28,3 +28,55 @@ std::string JsonValue::getString(const std::string& default) const {
         return default;
     }
 }
+
+const JsonValue* JsonValue::getValueForKey(const std::string& key) const {
+    const Object* pObject = std::get_if<Object>(&this->value);
+    if (!pObject) {
+        return nullptr;
+    }
+
+    auto it = pObject->find(key);
+    if (it == pObject->end()) {
+        return nullptr;
+    }
+
+    return &it->second;
+}
+
+JsonValue* JsonValue::getValueForKey(const std::string& key) {
+    Object* pObject = std::get_if<Object>(&this->value);
+    if (!pObject) {
+        return nullptr;
+    }
+
+    auto it = pObject->find(key);
+    if (it == pObject->end()) {
+        return nullptr;
+    }
+
+    return &it->second;
+}
+
+bool JsonValue::isNull() const {
+    return std::holds_alternative<Null>(this->value);
+}
+
+bool JsonValue::isNumber() const {
+    return std::holds_alternative<Number>(this->value);
+}
+
+bool JsonValue::isBool() const {
+    return std::holds_alternative<Bool>(this->value);
+}
+
+bool JsonValue::isString() const {
+    return std::holds_alternative<String>(this->value);
+}
+
+bool JsonValue::isObject() const {
+    return std::holds_alternative<Object>(this->value);
+}
+
+bool JsonValue::isArray() const {
+    return std::holds_alternative<Array>(this->value);
+}

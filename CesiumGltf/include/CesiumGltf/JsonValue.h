@@ -17,6 +17,14 @@ namespace CesiumGltf {
         JsonValue() : value() {}
         JsonValue(nullptr_t) : value(nullptr) {}
         JsonValue(double v) : value(v) {}
+        JsonValue(int8_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(uint8_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(int16_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(uint16_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(int32_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(uint32_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(int64_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(uint64_t v) : JsonValue(static_cast<double>(v)) {}
         JsonValue(bool v) : value(v) {}
         JsonValue(const std::string& v) : value(v) {}
         JsonValue(std::string&& v) : value(std::move(v)) {}
@@ -54,6 +62,75 @@ namespace CesiumGltf {
          * @return The string.
          */
         std::string getString(const std::string& default) const;
+
+        /**
+         * @brief Gets a typed value corresponding to the given key in the object represented by this instance.
+         * 
+         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
+         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
+         * 
+         * @tparam T The expected type of the value.
+         * @param key The key for which to retrieve the value from this object.
+         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         */
+        template <typename T>
+        const T* getValueForKey(const std::string& key) const {
+            const JsonValue* pValue = this->getValueForKey(key);
+            if (!pValue) {
+                return nullptr;
+            }
+
+            return std::get_if<T>(&pValue->value);
+        }
+
+        /**
+         * @brief Gets a typed value corresponding to the given key in the object represented by this instance.
+         * 
+         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
+         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
+         * 
+         * @tparam T The expected type of the value.
+         * @param key The key for which to retrieve the value from this object.
+         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         */
+        template <typename T>
+        T* getValueForKey(const std::string& key) {
+            JsonValue* pValue = this->getValueForKey(key);
+            if (!pValue) {
+                return nullptr;
+            }
+
+            return std::get_if<T>(&pValue->value);
+        }
+
+        /**
+         * @brief Gets the value corresponding to the given key in the object represented by this instance.
+         * 
+         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
+         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
+         * 
+         * @param key The key for which to retrieve the value from this object.
+         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         */
+        const JsonValue* getValueForKey(const std::string& key) const;
+
+        /**
+         * @brief Gets the value corresponding to the given key in the object represented by this instance.
+         * 
+         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
+         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
+         * 
+         * @param key The key for which to retrieve the value from this object.
+         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         */
+        JsonValue* getValueForKey(const std::string& key);
+
+        bool isNull() const;
+        bool isNumber() const;
+        bool isBool() const;
+        bool isString() const;
+        bool isObject() const;
+        bool isArray() const;
 
         std::variant<
             Null,
