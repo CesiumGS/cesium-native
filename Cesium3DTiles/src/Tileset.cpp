@@ -98,7 +98,7 @@ namespace Cesium3DTiles {
         ++this->_loadsInProgress;
 
         this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
-            _handleAssetResponse(std::move(pRequest));
+            this->_handleAssetResponse(std::move(pRequest));
         }).catchInMainThread([this, &ionAssetID](const std::exception& e) {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error for asset {}: {}", ionAssetID, e.what());
             this->notifyTileDoneLoading(nullptr);
@@ -321,7 +321,7 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tileset::loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, std::shared_ptr<spdlog::logger> pLogger) const {
+    void Tileset::loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) const {
         this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context, pLogger);
     }
 
@@ -376,7 +376,7 @@ namespace Cesium3DTiles {
             pLogger = this->_externals.pLogger,
             pContext = std::move(pContext)
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
-            return _handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
+            return Tileset::_handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
@@ -388,7 +388,7 @@ namespace Cesium3DTiles {
         });
     }
 
-    /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, std::shared_ptr<spdlog::logger> pLogger) {
+    /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             // TODO: report the lack of response. Network error? Can this even happen?
@@ -434,9 +434,8 @@ namespace Cesium3DTiles {
         };
     }
 
-    /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, std::shared_ptr<spdlog::logger> pLogger) {
-        if (!tileJson.IsObject())
-        {
+    /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) {
+        if (!tileJson.IsObject()) {
             return;
         }
 
@@ -449,8 +448,7 @@ namespace Cesium3DTiles {
         auto contentIt = tileJson.FindMember("content");
         auto childrenIt = tileJson.FindMember("children");
 
-        if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject())
-        {
+        if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject()) {
             auto uriIt = contentIt->value.FindMember("uri");
             if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
                 uriIt = contentIt->value.FindMember("url");
@@ -559,7 +557,7 @@ namespace Cesium3DTiles {
         ));
     }
 
-    /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, std::shared_ptr<spdlog::logger> pLogger) {
+    /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) {
         context.requestHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
         
         auto tilesetVersionIt = layerJson.FindMember("tilesetVersion");
@@ -658,7 +656,7 @@ namespace Cesium3DTiles {
      * @param pIonResponse The response
      * @return Whether the update succeeded
      */
-    static bool updateContextWithNewToken(TileContext* pContext, IAssetResponse* pIonResponse, std::shared_ptr<spdlog::logger> pLogger) {
+    static bool updateContextWithNewToken(TileContext* pContext, IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
         gsl::span<const uint8_t> data = pIonResponse->data();
 
         rapidjson::Document ionResponse;
@@ -685,7 +683,7 @@ namespace Cesium3DTiles {
         return true;
     }
 
-    void Tileset::_retryAssetRequest(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext, std::shared_ptr<spdlog::logger> pLogger) {
+    void Tileset::_handleTokenRefreshResponse(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
         IAssetResponse* pIonResponse = pIonRequest->response();
 
         bool failed = true;
@@ -706,7 +704,7 @@ namespace Cesium3DTiles {
                 pTile->getState() == Tile::LoadState::FailedTemporarily &&
                 pTile->getContent() &&
                 pTile->getContent()->httpStatusCode == 401
-                ) {
+            ) {
                 if (failed) {
                     pTile->markPermanentlyFailed();
                 }
@@ -752,7 +750,7 @@ namespace Cesium3DTiles {
                 this,
                 pContext = failedTile.getContext()
             ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
-                _retryAssetRequest(std::move(pIonRequest), pContext, this->_externals.pLogger);
+                this->_handleTokenRefreshResponse(std::move(pIonRequest), pContext, this->_externals.pLogger);
             }).catchInMainThread([this](const std::exception& e) {
                 SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error when retrying request: {}", e.what());
                 this->_isRefreshingIonToken = false;
@@ -881,7 +879,7 @@ namespace Cesium3DTiles {
         return tile.getChildren().empty();
     }
 
-    Tileset::TraversalDetails Tileset::_visitLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result) {
+    Tileset::TraversalDetails Tileset::_renderLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result) {
 
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
@@ -946,7 +944,7 @@ namespace Cesium3DTiles {
         return false;
     }
 
-    Tileset::TraversalDetails Tileset::_visitInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result) {
+    Tileset::TraversalDetails Tileset::_renderInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result) {
 
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
@@ -981,7 +979,7 @@ namespace Cesium3DTiles {
         return noChildrenTraversalDetails;
     }
 
-    bool Tileset::_queuedForLoad(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance) {
+    bool Tileset::_loadAndRenderAdditiveRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance) {
         // If this tile uses additive refinement, we need to render this tile in addition to its children.
         if (tile.getRefine() == TileRefine::Add) {
             result.tilesToRenderThisFrame.push_back(&tile);
@@ -1067,7 +1065,7 @@ namespace Cesium3DTiles {
 
         // If this is a leaf tile, just render it (it's already been deemed visible).
         if (isLeaf(tile)) {
-            return _visitLeaf(frameState, tile, distance, result);
+            return _renderLeaf(frameState, tile, distance, result);
         }
 
         bool meetsSse = _meetsSse(frameState.camera, tile, distance);
@@ -1090,7 +1088,7 @@ namespace Cesium3DTiles {
                 if (meetsSse) {
                     addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
                 }
-                return _visitInnerTile(frameState, tile, result);
+                return _renderInnerTile(frameState, tile, result);
             }
 
             // Otherwise, we can't render this tile (or blank space where it would be) because doing so would cause detail to disappear
@@ -1109,7 +1107,7 @@ namespace Cesium3DTiles {
 
         // Refine!
 
-        bool queuedForLoad = _queuedForLoad(frameState, tile, result, distance);
+        bool queuedForLoad = _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distance);
 
         size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
         size_t loadIndexLow = this->_loadQueueLow.size();
