@@ -92,20 +92,14 @@ namespace Cesium3DTiles {
         bool forbidHoles = false;
 
         /**
-         * @brief Disable culling of tiles against the frustum.
-         *
-         * When true, the tileset will not cull tiles against the frustum. This will increase the number of loaded 
-         * tiles and may also increase the number of rendered tiles if they're not culled later in the pipeline. 
+         * @brief Enable culling of tiles against the frustum.
          */
-        bool disableFrustumCulling = false;
+        bool enableFrustumCulling = true;
 
         /**
-         * @brief Disable culling tiles that are too far away to be seen through atmospheric fog.
-         *
-         * When true, the tileset will not cull tiles due to atmospheric fog. This will increase the number of 
-         * loaded tiles and may also increase the number of rendered tiles if they're not culled later in the pipeline.
+         * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
          */
-        bool disableFogCulling = false;
+        bool enableFogCulling = true;
 
         /**
          * @brief Whether culled tiles should be refined until they meet culledScreenSpaceError. 

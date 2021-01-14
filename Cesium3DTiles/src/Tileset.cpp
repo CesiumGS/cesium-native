@@ -858,7 +858,7 @@ namespace Cesium3DTiles {
         if (!isVisibleFromCamera(frameState.camera, boundingVolume, this->_options.renderTilesUnderCamera)) {
             // this tile is off-screen so it is a culled tile
             culled = true;
-            if (!this->_options.disableFrustumCulling) {
+            if (this->_options.enableFrustumCulling) {
                 // frustum culling is enabled so we shouldn't visit this off-screen tile
                 shouldVisit = false;
             }
@@ -870,7 +870,7 @@ namespace Cesium3DTiles {
         if (shouldVisit && !isVisibleInFog(distance, frameState.fogDensity)) {
             // this tile is occluded by fog so it is a culled tile
             culled = true;
-            if (!this->_options.disableFogCulling) {
+            if (this->_options.enableFogCulling) {
                 // fog culling is enabled so we shouldn't visit this tile 
                 shouldVisit = false;
             }
