@@ -105,7 +105,7 @@ namespace Cesium3DTiles {
         /**
          * @brief The {@link Tileset} that this context belongs to.
          */
-        Tileset* pTileset;
+        Tileset* pTileset = nullptr;
 
         /**
          * @brief The base URL that the tileset was loaded from.
