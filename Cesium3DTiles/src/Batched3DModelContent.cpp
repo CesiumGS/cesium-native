@@ -40,7 +40,7 @@ namespace Cesium3DTiles {
 
 		void parseFeatureTableJsonData(
 			const std::shared_ptr<spdlog::logger>& pLogger,
-			CesiumGltf::Model& /*gltf*/,
+			CesiumGltf::Model& gltf,
 			const gsl::span<const uint8_t>& featureTableJsonData)
 		{
 			rapidjson::Document document;
@@ -50,30 +50,23 @@ namespace Cesium3DTiles {
 				return;
 			}
 
-			// auto rtcIt = document.FindMember("RTC_CENTER");
-			// if (
-			// 	rtcIt != document.MemberEnd() &&
-			// 	rtcIt->value.IsArray() &&
-			// 	rtcIt->value.Size() == 3 && 
-			// 	rtcIt->value[0].IsDouble() &&
-			// 	rtcIt->value[1].IsDouble() &&
-			// 	rtcIt->value[2].IsDouble()
-			// ) {
-			// 	// Add the RTC_CENTER value to the glTF itself.
-			// 	CesiumGltf::Value::Object extras;
-			// 	if (gltf.extras.IsObject()) {
-			// 		extras = gltf.extras.Get<CesiumGltf::Value::Object>();
-			// 	}
-
-			// 	rapidjson::Value& rtcValue = rtcIt->value;
-			// 	extras["RTC_CENTER"] = CesiumGltf::Value(CesiumGltf::Value::Array{
-			// 		CesiumGltf::Value(rtcValue[0].GetDouble()),
-			// 		CesiumGltf::Value(rtcValue[1].GetDouble()),
-			// 		CesiumGltf::Value(rtcValue[2].GetDouble())
-			// 		});
-
-			// 	gltf.extras = CesiumGltf::Value(extras);
-			// }
+			auto rtcIt = document.FindMember("RTC_CENTER");
+			if (
+				rtcIt != document.MemberEnd() &&
+				rtcIt->value.IsArray() &&
+				rtcIt->value.Size() == 3 && 
+				rtcIt->value[0].IsDouble() &&
+				rtcIt->value[1].IsDouble() &&
+				rtcIt->value[2].IsDouble()
+			) {
+				// Add the RTC_CENTER value to the glTF itself.
+				rapidjson::Value& rtcValue = rtcIt->value;
+				gltf.extras["RTC_CENTER"] = {
+					rtcValue[0].GetDouble(),
+					rtcValue[1].GetDouble(),
+					rtcValue[2].GetDouble()
+				};
+			}
 		}
 
 	}

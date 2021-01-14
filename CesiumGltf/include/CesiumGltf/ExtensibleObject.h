@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltf/JsonValue.h"
 #include <any>
 #include <vector>
 
@@ -39,5 +40,12 @@ namespace CesiumGltf {
          * Use {@link getExtension} to get the extension with a particular static type.
          */
         std::vector<std::any> extensions;
+
+        /**
+         * @brief Application-specific data.
+         * 
+         * **Implementation Note:** Although extras may have any type, it is common for applications to store and access custom data as key/value pairs. As best practice, extras should be an Object rather than a primitive value for best portability.
+         */
+        JsonValue::Object extras;
     };
 }

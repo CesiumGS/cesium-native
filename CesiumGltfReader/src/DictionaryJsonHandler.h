@@ -18,7 +18,7 @@ namespace CesiumGltf {
         virtual IJsonHandler* Key(const char* str, size_t /*length*/, bool /*copy*/) override {
             assert(this->_pDictionary);
 
-            auto it = this->_pDictionary->emplace(str, -1).first;
+            auto it = this->_pDictionary->emplace(str, T()).first;
 
             return this->property(
                 it->first.c_str(),

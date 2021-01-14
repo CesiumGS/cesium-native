@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ObjectJsonHandler.h"
+#include "DictionaryJsonHandler.h"
+#include "JsonObjectJsonHandler.h"
 
 namespace CesiumGltf {
     struct ExtensibleObject;
@@ -9,5 +11,8 @@ namespace CesiumGltf {
     protected:
         void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
         IJsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);
+
+    private:
+        DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extras;
     };
 }
