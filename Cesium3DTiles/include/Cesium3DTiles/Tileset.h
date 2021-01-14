@@ -406,7 +406,7 @@ namespace Cesium3DTiles {
 
         TraversalDetails _renderLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result);
         TraversalDetails _renderInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result);
-        TraversalDetails _visitRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable);
+        TraversalDetails _refineToNothing(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable);
         void _kickDescendantsAndRenderTile(
             const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
             size_t firstRenderedDescendantIndex,
@@ -434,8 +434,23 @@ namespace Cesium3DTiles {
          */
         bool _loadAndRenderAdditiveRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance);
 
-        bool _isWaitingForChildren(const FrameState& frameState, Tile& tile, double distance);
-        bool _meetsSse(const Camera& camera, Tile& tile, double distance);
+        /**
+         * @brief Queues load of tiles that are _required_ to be loaded before the given tile can be refined.
+         * 
+         * If {@link TilesetOptions::forbidHoles} is false (the default), any tile can be refined, regardless
+         * of whether its children are loaded or not. So in that case, this method immediately returns `false`.
+         * 
+         * When `forbidHoles` is true, however, and some of this tile's children are not yet renderable,
+         * this method returns `true`. It also adds those not-yet-renderable tiles to the load queue.
+         * 
+         * @param frameState The state of the current frame.
+         * @param tile The tile that is potentially being refined.
+         * @param distance The distance to the tile.
+         * @return true Some of the required children are not yet loaded, so this tile _cannot_ yet be refined.
+         * @return false All of the required children (if there are any) are loaded, so this tile _can_ be refined.
+         */
+        bool _queueLoadOfChildrenRequiredForRefinement(const FrameState& frameState, Tile& tile, double distance);
+        bool _meetsSse(const Camera& camera, const Tile& tile, double distance) const;
 
         void _processLoadQueue();
         void _unloadCachedTiles();

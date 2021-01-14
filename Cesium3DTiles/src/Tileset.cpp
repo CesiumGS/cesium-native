@@ -894,7 +894,7 @@ namespace Cesium3DTiles {
         return traversalDetails;
     }
 
-    bool Tileset::_isWaitingForChildren(const FrameState& frameState, Tile& tile, double distance) {
+    bool Tileset::_queueLoadOfChildrenRequiredForRefinement(const FrameState& frameState, Tile& tile, double distance) {
         if (!this->_options.forbidHoles) {
             return false;
         }
@@ -914,7 +914,7 @@ namespace Cesium3DTiles {
         return waitingForChildren;
     }
 
-    bool Tileset::_meetsSse(const Camera& camera, Tile& tile, double distance) {
+    bool Tileset::_meetsSse(const Camera& camera, const Tile& tile, double distance) const {
         // Does this tile meet the screen-space error?
         double sse = camera.computeScreenSpaceError(tile.getGeometricError(), distance);
         return sse < this->_options.maximumScreenSpaceError;
@@ -960,7 +960,7 @@ namespace Cesium3DTiles {
         return traversalDetails;
     }
 
-    Tileset::TraversalDetails Tileset::_visitRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable) {
+    Tileset::TraversalDetails Tileset::_refineToNothing(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable) {
 
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
@@ -1069,7 +1069,7 @@ namespace Cesium3DTiles {
         }
 
         bool meetsSse = _meetsSse(frameState.camera, tile, distance);
-        bool waitingForChildren = _isWaitingForChildren(frameState, tile, distance);
+        bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distance);
 
         if (meetsSse || ancestorMeetsSse || waitingForChildren) {
             // This tile (or an ancestor) is the one we want to render this frame, but we'll do different things depending
@@ -1120,7 +1120,7 @@ namespace Cesium3DTiles {
         if (!descendantTilesAdded) {
             // No descendant tiles were added to the render list by the function above, meaning they were all
             // culled even though this tile was deemed visible. That's pretty common.
-            return _visitRefinedTile(frameState, tile, result, traversalDetails.allAreRenderable);
+            return _refineToNothing(frameState, tile, result, traversalDetails.allAreRenderable);
         }
 
         // At least one descendant tile was added to the render list.
