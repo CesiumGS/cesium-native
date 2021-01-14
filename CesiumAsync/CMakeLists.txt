@@ -18,8 +18,10 @@ target_include_directories(
     SYSTEM PUBLIC
     PUBLIC
         include
-    PRIVATE
-        src
+
+        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
+        # This should only be set by the target itself and test target, and used for testing purpose only
+        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumAsync_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
 target_link_libraries(CesiumAsync PUBLIC Async++)

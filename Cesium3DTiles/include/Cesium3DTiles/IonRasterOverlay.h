@@ -5,8 +5,11 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include <functional>
+#include <memory>
 
 namespace Cesium3DTiles {
+
+    class CreditSystem;
 
     /**
      * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
@@ -29,9 +32,10 @@ namespace Cesium3DTiles {
             const std::string& ionAccessToken
         );
         virtual ~IonRasterOverlay() override;
-
+        
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner

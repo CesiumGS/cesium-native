@@ -1,7 +1,10 @@
+#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -15,6 +18,7 @@
 #include "Uri.h"
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
+#include <optional>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -30,6 +34,11 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _credit(
+                (options.credit && externals.pCreditSystem) ? 
+                std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
+                std::nullopt
+        ),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -59,6 +68,11 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _credit(
+                (options.credit && externals.pCreditSystem) ? 
+                std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
+                std::nullopt
+        ),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -253,6 +267,36 @@ namespace Cesium3DTiles {
         this->_unloadCachedTiles();
         this->_processLoadQueue();
 
+        // aggregate all the credits needed from this tileset for the current frame 
+        const std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
+        if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
+            // per-tileset specific credit
+            if (this->_credit) {
+                pCreditSystem->addCreditToFrame(this->_credit.value());
+            }
+            
+            // per-raster overlay credit
+            for (auto& pOverlay : this->_overlays) {
+                const std::optional<Credit>& overlayCredit = pOverlay->getTileProvider()->getCredit();
+                if (overlayCredit) {
+                    pCreditSystem->addCreditToFrame(overlayCredit.value());
+                }
+            }
+            
+            // per-tile credits
+            for (auto& tile : result.tilesToRenderThisFrame) {
+                const std::vector<RasterMappedTo3DTile>& mappedRasterTiles = tile->getMappedRasterTiles();
+                for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
+                    RasterOverlayTile* pRasterOverlayTile = mappedRasterTile.getReadyTile();
+                    if (pRasterOverlayTile != nullptr) {
+                        for (Credit credit : pRasterOverlayTile->getCredits()) {
+                            pCreditSystem->addCreditToFrame(credit);
+                        }
+                    }
+                }
+            }
+        }
+       
         this->_previousFrameNumber = currentFrameNumber;
 
         return result;

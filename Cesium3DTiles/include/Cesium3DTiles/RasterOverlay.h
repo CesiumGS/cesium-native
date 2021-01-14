@@ -3,12 +3,13 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include <spdlog/fwd.h>
 #include <functional>
 #include <memory>
-#include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
 
+    class CreditSystem;
     class IPrepareRendererResources;
     class RasterOverlayTileProvider;
     class RasterOverlayCollection;
@@ -31,7 +32,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the tile provider for this overlay.
          * 
-         * Returns `nullptr` if {@link createTileProvider} has not yet been called.
+         * @return `nullptr` if {@link createTileProvider} has not yet been called.
          * If {@link createTileProvider} has been called but the overlay is not yet ready to
          * provide tiles, a placeholder tile provider will be returned.
          */
@@ -43,7 +44,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the placeholder tile provider for this overlay.
          * 
-         * Returns `nullptr` if {@link createTileProvider} has not yet been called.
+         * @return `nullptr` if {@link createTileProvider} has not yet been called.
          */
         RasterOverlayTileProvider* getPlaceholder() noexcept { return this->_pPlaceholder.get(); }
 
@@ -79,10 +80,12 @@ namespace Cesium3DTiles {
          * is already in the process of being created.
          * 
          * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          */
         void createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger
         );
@@ -94,12 +97,14 @@ namespace Cesium3DTiles {
          * overlays that aggregate other overlays.
          * 
          * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pOwner The overlay that owns this overlay, or nullptr if this overlay is not aggregated.
          * @param callback The callback that receives the new tile provider when it is ready.
          */
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CreditSystem>& pCreditSystem,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
             RasterOverlay* pOwner
@@ -115,7 +120,7 @@ namespace Cesium3DTiles {
          * @param pOverlay A unique pointer to this instance, allowing transfer of ownership.
          */
         void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
-
+    
     private:
         std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
         std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include "Cesium3DTiles/Library.h"
+#include <vector>
 
 namespace Cesium3DTiles {
     class Tile;

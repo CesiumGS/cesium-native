@@ -3,11 +3,13 @@
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include <unordered_map>
+#include <optional>
 
 namespace Cesium3DTiles {
 
@@ -37,6 +39,7 @@ namespace Cesium3DTiles {
          *
          * @param owner The {@link RasterOverlay}. May not be `nullptr`.
          * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param credit The {@link Credit} for this tile provider, if it exists.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param projection The {@link CesiumGeospatial::Projection}.
          * @param tilingScheme The {@link CesiumGeometry::QuadtreeTilingScheme}.
@@ -49,6 +52,7 @@ namespace Cesium3DTiles {
         RasterOverlayTileProvider(
             RasterOverlay& owner,
             const CesiumAsync::AsyncSystem& asyncSystem,
+            std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -202,6 +206,11 @@ namespace Cesium3DTiles {
          */
         void removeTile(RasterOverlayTile* pTile) noexcept;
 
+        /**
+         * @brief Get the per-TileProvider {@link Credit} if one exists.
+         */
+        const std::optional<Credit> getCredit() const noexcept { return _credit; }
+
     protected:
 
         /**
@@ -220,6 +229,7 @@ namespace Cesium3DTiles {
     private:
         RasterOverlay* _pOwner;
         CesiumAsync::AsyncSystem _asyncSystem;
+        std::optional<Credit> _credit;
         std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
         CesiumGeospatial::Projection _projection;
         CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
