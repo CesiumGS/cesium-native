@@ -141,7 +141,7 @@ namespace Cesium3DTiles {
             options = this->_options,
             url = this->_url,
             headers = this->_headers
-        ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
+        ](std::shared_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 
             gsl::span<const uint8_t> data = pResponse->data();

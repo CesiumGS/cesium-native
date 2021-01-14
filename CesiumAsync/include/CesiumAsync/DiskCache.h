@@ -12,15 +12,7 @@ namespace CesiumAsync {
 	public:
 		DiskCache(const std::string &databaseName, uint64_t maxSize = 512 * 1024 * 1024);
 
-		DiskCache(const DiskCache&) = delete;
-
-		DiskCache(DiskCache&& other) noexcept;
-
-		DiskCache& operator=(const DiskCache&) = delete;
-
-		DiskCache& operator=(DiskCache&&) noexcept;
-
-		~DiskCache() noexcept override;
+		~DiskCache() noexcept;
 
 		virtual bool getEntry(const std::string& url, 
 			std::optional<CacheItem> &item, 
@@ -38,7 +30,7 @@ namespace CesiumAsync {
 		virtual bool clearAll(std::string& error) override;
 
 	private:
-		sqlite3* _pConnection;
 		uint64_t _maxSize;
+		std::string _databaseName;
 	};
 }

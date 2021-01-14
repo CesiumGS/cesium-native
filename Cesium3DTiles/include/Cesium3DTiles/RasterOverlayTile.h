@@ -93,7 +93,7 @@ namespace Cesium3DTiles {
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
             const std::vector<Credit>& tileCredits,
-            CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
+            CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
         );
 
         /** @brief Default destructor. */

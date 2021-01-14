@@ -20,7 +20,7 @@ namespace CesiumAsync {
         void requestAsset(const AsyncSystem* pAsyncSystem, 
 			const std::string& url, 
 			const std::vector<THeader>& headers,
-			std::function<void(std::unique_ptr<IAssetRequest>)> callback) override;
+			std::function<void(std::shared_ptr<IAssetRequest>)> callback) override;
 
         void tick() noexcept override;
 

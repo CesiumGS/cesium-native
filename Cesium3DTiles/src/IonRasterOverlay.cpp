@@ -42,7 +42,7 @@ namespace Cesium3DTiles {
         return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([
             pLogger
         ](
-            std::unique_ptr<IAssetRequest> pRequest
+            std::shared_ptr<IAssetRequest> pRequest
         ) -> std::unique_ptr<RasterOverlay> {
             const IAssetResponse* pResponse = pRequest->response();
 

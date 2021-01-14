@@ -33,7 +33,7 @@ namespace CesiumAsync {
             const AsyncSystem* asyncSystem,
             const std::string& url,
             const std::vector<THeader>& headers,
-            std::function<void(std::unique_ptr<IAssetRequest>)> callback
+            std::function<void(std::shared_ptr<IAssetRequest>)> callback
         ) = 0;
 
         /**

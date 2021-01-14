@@ -77,52 +77,44 @@ namespace CesiumAsync {
 	void CacheAssetAccessor::requestAsset(const AsyncSystem* pAsyncSystem, 
 		const std::string& url, 
 		const std::vector<THeader>& headers,
-		std::function<void(std::unique_ptr<IAssetRequest>)> callback) 
+		std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
 	{
-		struct Receiver {
-			std::unique_ptr<IAssetRequest> pCompletedRequest;
-		};
-
-		pAsyncSystem->runInWorkerThread([this, url]() -> std::optional<CacheItem> {
+		pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() -> std::optional<CacheItem> {
 			std::string error;
 			std::optional<CacheItem> cacheItem;
 			if (!this->_pCacheDatabase->getEntry(url, cacheItem, error)) {
-				return std::nullopt;
+				// TODO: log error
+			}
+
+			if (!cacheItem) {
+				ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
+				this->_pAssetAccessor->requestAsset(pAsyncSystem, 
+					url, 
+					headers, 
+					[pAsyncSystem, pCacheDatabase, callback](std::shared_ptr<IAssetRequest> pCompletedRequest) {
+						// cache doesn't have it or the cache item is stale, so request it
+						if (shouldCacheRequest(*pCompletedRequest)) {
+							pAsyncSystem->runInWorkerThread([pCacheDatabase, pCompletedRequest]() {
+								std::string error;
+								if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
+									calculateExpiryTime(*pCompletedRequest),
+									*pCompletedRequest,
+									error))
+								{
+									// TODO: log error here
+								}
+							});
+						}
+
+						callback(pCompletedRequest);
+					});
 			}
 
 			return cacheItem;
-		}).thenInMainThread([this, pAsyncSystem, url, headers, callback](std::optional<CacheItem> cacheItem) {
+		}).thenInMainThread([callback](std::optional<CacheItem> &&cacheItem) {
 			if (cacheItem) {
-				callback(std::make_unique<CacheAssetRequest>(cacheItem.value()));
-				return;
+				callback(std::make_unique<CacheAssetRequest>(std::move(cacheItem.value())));
 			}
-
-			ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
-			this->_pAssetAccessor->requestAsset(pAsyncSystem, url, headers, [pAsyncSystem, pCacheDatabase, callback](std::unique_ptr<IAssetRequest> pCompletedRequest) {
-				// cache doesn't have it or the cache item is stale, so request it
-				if (shouldCacheRequest(*pCompletedRequest)) {
-					std::shared_ptr<Receiver> pReceiver = std::make_shared<Receiver>();
-					pReceiver->pCompletedRequest = std::move(pCompletedRequest);
-					pAsyncSystem->runInWorkerThread([pCacheDatabase, pReceiver]() -> std::shared_ptr<Receiver> {
-						std::string error;
-						if(!pCacheDatabase->storeResponse(pReceiver->pCompletedRequest->url(), 
-								calculateExpiryTime(*pReceiver->pCompletedRequest), 
-								*pReceiver->pCompletedRequest, 
-								error)) 
-						{ 
-							// TODO: log error here
-						}
-
-						return pReceiver;
-					}).thenInMainThread([callback](std::shared_ptr<Receiver> pReceiver) {
-						callback(std::move(pReceiver->pCompletedRequest));
-					});
-
-					return;
-				}
-
-				callback(std::move(pCompletedRequest));
-			});
 		});
 	}
 

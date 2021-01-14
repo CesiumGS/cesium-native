@@ -21,6 +21,21 @@ namespace CesiumAsync {
 		sqlite3_stmt *stmt;
 	};
 
+	struct Sqlite3ConnectionWrapper {
+		Sqlite3ConnectionWrapper() 
+			: pConnection{nullptr}
+		{
+		}
+
+		~Sqlite3ConnectionWrapper() {
+			if (pConnection) {
+				sqlite3_close(pConnection);
+			}
+		}
+
+		sqlite3 *pConnection;
+	};
+
 	static const std::string CACHE_TABLE = "CacheItem";
 	static const std::string KEY_COLUMN = "key";
 	static const std::string EXPIRY_TIME_COLUMN = "expiryTime";
@@ -45,12 +60,28 @@ namespace CesiumAsync {
 
 	DiskCache::DiskCache(const std::string &databaseName, uint64_t maxSize)
 		: _maxSize{maxSize}
+		, _databaseName{databaseName}
 	{
-		int openFlags = SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
-		int status = sqlite3_open_v2(databaseName.c_str(), &this->_pConnection, openFlags, nullptr);
+		int status = sqlite3_shutdown();
 		if (status != SQLITE_OK) {
-			if (this->_pConnection) {
-				throw std::runtime_error(sqlite3_errmsg(this->_pConnection));
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		status = sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		status = sqlite3_initialize();
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		Sqlite3ConnectionWrapper connectionWrapper;
+		status = sqlite3_open(databaseName.c_str(), &connectionWrapper.pConnection);
+		if (status != SQLITE_OK) {
+			if (connectionWrapper.pConnection) {
+				throw std::runtime_error(sqlite3_errmsg(connectionWrapper.pConnection));
 			}
 			else {
 				throw std::runtime_error(std::string("Cannot open database connection for ") + databaseName);
@@ -72,7 +103,7 @@ namespace CesiumAsync {
 			REQUEST_URL_COLUMN + " TEXT NOT NULL" +
 			");";
 		char* error;
-		status = sqlite3_exec(this->_pConnection, sqlStr.c_str(), nullptr, nullptr, &error);
+		status = sqlite3_exec(connectionWrapper.pConnection, sqlStr.c_str(), nullptr, nullptr, &error);
 		if (status != SQLITE_OK) {
 			std::string errorStr(error);
 			sqlite3_free(error);
@@ -80,29 +111,18 @@ namespace CesiumAsync {
 		}
 	}
 
-	DiskCache::~DiskCache() noexcept
-	{
-		sqlite3_close(this->_pConnection);
-	}
-
-	DiskCache::DiskCache(DiskCache&& other) noexcept
-	{
-		this->_pConnection = other._pConnection;
-		this->_maxSize = other._maxSize;
-		other._pConnection = nullptr;
-	}
-
-	DiskCache& DiskCache::operator=(DiskCache&& other) noexcept
-	{
-		if (this != &other) {
-			std::swap(this->_pConnection, other._pConnection);
-			std::swap(this->_maxSize, other._maxSize);
-		}
-
-		return *this;
+	DiskCache::~DiskCache() noexcept {
+		sqlite3_shutdown();
 	}
 
 	bool DiskCache::getEntry(const std::string& key, std::optional<CacheItem>& item, std::string& error) const {
+		Sqlite3ConnectionWrapper connectionWrapper;
+		int status = sqlite3_open(_databaseName.c_str(), &connectionWrapper.pConnection);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
 		// get entry based on key
 		std::string selectSqlStr = "SELECT " +
 				EXPIRY_TIME_COLUMN + ", " +
@@ -118,7 +138,7 @@ namespace CesiumAsync {
 			" FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + "=?;";
 
 		Sqlite3StmtWrapper selectStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, selectSqlStr.c_str(), -1, &selectStmtWrapper.stmt, nullptr);
+		status = sqlite3_prepare_v2(connectionWrapper.pConnection, selectSqlStr.c_str(), -1, &selectStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
@@ -181,7 +201,7 @@ namespace CesiumAsync {
 		// update the last accessed time
 		std::string updateSqlStr = "UPDATE " + CACHE_TABLE + " SET " + LAST_ACCESSED_TIME_COLUMN + " = strftime('%s','now') WHERE " + KEY_COLUMN + " =?;";
 		Sqlite3StmtWrapper updateStmtWrapper;
-		status = sqlite3_prepare_v2(this->_pConnection, updateSqlStr.c_str(), -1, &updateStmtWrapper.stmt, nullptr);
+		status = sqlite3_prepare_v2(connectionWrapper.pConnection, updateSqlStr.c_str(), -1, &updateStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
@@ -212,6 +232,13 @@ namespace CesiumAsync {
 		const IAssetRequest& request,
 		std::string& error) 
 	{
+		Sqlite3ConnectionWrapper connectionWrapper;
+		int status = sqlite3_open(_databaseName.c_str(), &connectionWrapper.pConnection);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
 		const IAssetResponse* response = request.response();
 		if (response == nullptr) {
 			error = std::string("Request needs to have a response");
@@ -234,7 +261,7 @@ namespace CesiumAsync {
 			REQUEST_METHOD_COLUMN + ", " +
 			REQUEST_URL_COLUMN + ") " +
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &replaceStmtWrapper.stmt, nullptr);
+		status = sqlite3_prepare_v2(connectionWrapper.pConnection, sqlStr.c_str(), -1, &replaceStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
@@ -323,10 +350,17 @@ namespace CesiumAsync {
 
 	bool DiskCache::removeEntry(const std::string& key, std::string& error) 
 	{
+		Sqlite3ConnectionWrapper connectionWrapper;
+		int status = sqlite3_open(_databaseName.c_str(), &connectionWrapper.pConnection);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
 		std::string sqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + "=?;";
 
 		Sqlite3StmtWrapper removeStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &removeStmtWrapper.stmt, nullptr);
+		status = sqlite3_prepare_v2(connectionWrapper.pConnection, sqlStr.c_str(), -1, &removeStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
@@ -349,6 +383,13 @@ namespace CesiumAsync {
 
 	bool DiskCache::prune(std::string& error)
 	{
+		Sqlite3ConnectionWrapper connectionWrapper;
+		int status = sqlite3_open(_databaseName.c_str(), &connectionWrapper.pConnection);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
 		// query total size of response's data
 		std::string totalSizeQuerySqlStr = "SELECT SUM(LENGTH(" + RESPONSE_DATA_COLUMN + ")) AS " + 
 			VIRTUAL_RESPONSE_DATA_SIZE + 
@@ -356,7 +397,7 @@ namespace CesiumAsync {
 			CACHE_TABLE + 
 			";";
 		Sqlite3StmtWrapper totalSizeQueryStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, totalSizeQuerySqlStr.c_str(), -1, &totalSizeQueryStmtWrapper.stmt, nullptr);
+		status = sqlite3_prepare_v2(connectionWrapper.pConnection, totalSizeQuerySqlStr.c_str(), -1, &totalSizeQueryStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
@@ -381,7 +422,7 @@ namespace CesiumAsync {
 		Sqlite3StmtWrapper expiryTimeQueryByOrderStmtWrapper;
 		std::string expiryTimeQueryByOrderSqlStr = "SELECT " + KEY_COLUMN + ", LENGTH(" + RESPONSE_DATA_COLUMN + ") FROM " +
 			CACHE_TABLE + " ORDER BY " + EXPIRY_TIME_COLUMN + " ASC;";
-		int expiryTimeQueryByOrderStatus = sqlite3_prepare_v2(this->_pConnection, expiryTimeQueryByOrderSqlStr.c_str(), -1, &expiryTimeQueryByOrderStmtWrapper.stmt, nullptr);
+		int expiryTimeQueryByOrderStatus = sqlite3_prepare_v2(connectionWrapper.pConnection, expiryTimeQueryByOrderSqlStr.c_str(), -1, &expiryTimeQueryByOrderStmtWrapper.stmt, nullptr);
 		if (expiryTimeQueryByOrderStatus != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(expiryTimeQueryByOrderStatus));
 			return false;
@@ -390,7 +431,7 @@ namespace CesiumAsync {
 		// prepare delete sqlite command
 		Sqlite3StmtWrapper deleteStmtWrapper;
 		std::string deleteSqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + "=?;";
-		int deleteStatus = sqlite3_prepare_v2(this->_pConnection, deleteSqlStr.c_str(), -1, &deleteStmtWrapper.stmt, nullptr);
+		int deleteStatus = sqlite3_prepare_v2(connectionWrapper.pConnection, deleteSqlStr.c_str(), -1, &deleteStmtWrapper.stmt, nullptr);
 		if (deleteStatus != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(deleteStatus));
 			return false;
@@ -431,10 +472,17 @@ namespace CesiumAsync {
 
 	bool DiskCache::clearAll(std::string& error)
 	{
+		Sqlite3ConnectionWrapper connectionWrapper;
+		int status = sqlite3_open(_databaseName.c_str(), &connectionWrapper.pConnection);
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
 		std::string sqlStr = "DELETE FROM " + CACHE_TABLE + ";";
 
 		Sqlite3StmtWrapper deleteStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &deleteStmtWrapper.stmt, nullptr);
+		status = sqlite3_prepare_v2(connectionWrapper.pConnection, sqlStr.c_str(), -1, &deleteStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;

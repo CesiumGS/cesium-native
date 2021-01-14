@@ -278,7 +278,7 @@ namespace Cesium3DTiles {
          * @param tile The tile for which the content is requested.
          * @return A future that resolves when the content response is received, or std::nullopt if this Tile has no content to load.
          */
-        std::optional<CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
+        std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
 
         /**
          * @brief Add the given {@link TileContext} to this tile set.

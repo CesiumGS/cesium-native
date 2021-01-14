@@ -27,7 +27,7 @@ namespace Cesium3DTiles {
             RasterOverlay& overlay,
             const CesiumGeometry::QuadtreeTileID& tileID,
             const std::vector<Credit>& tileCredits,
-            Future<std::unique_ptr<IAssetRequest>>&& imageRequest
+            Future<std::shared_ptr<IAssetRequest>>&& imageRequest
         ) :
             _pOverlay(&overlay),
             _tileID(tileID),
@@ -65,7 +65,7 @@ namespace Cesium3DTiles {
                 cutoutsCollection = overlay.getCutouts(),
                 pPrepareRendererResources = pTileProvider->getPrepareRendererResources()
             ](
-                std::unique_ptr<IAssetRequest> pRequest
+                std::shared_ptr<IAssetRequest> pRequest
             ) {
                 const IAssetResponse* pResponse = pRequest->response();
                 if (pResponse == nullptr) {

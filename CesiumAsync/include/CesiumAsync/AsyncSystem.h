@@ -246,7 +246,7 @@ namespace CesiumAsync {
          * @param headers The HTTP headers to include in the request.
          * @return A Future that resolves when the request completes.
          */
-        Future<std::unique_ptr<IAssetRequest>> requestAsset(
+        Future<std::shared_ptr<IAssetRequest>> requestAsset(
             const std::string& url,
             const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>()
         ) const;

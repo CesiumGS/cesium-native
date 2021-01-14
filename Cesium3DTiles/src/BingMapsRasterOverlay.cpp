@@ -204,7 +204,7 @@ namespace Cesium3DTiles {
             pLogger,
             baseUrl = this->_url,
             culture = this->_culture
-        ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
+        ](std::shared_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 
             rapidjson::Document response;

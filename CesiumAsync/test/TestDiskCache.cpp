@@ -77,9 +77,10 @@ private:
 };
 
 TEST_CASE("Test disk cache with Sqlite") {
-	DiskCache diskCache("test.db", 3);
 
 	SECTION("Test store cache") {
+		DiskCache diskCache("test.db", 3);
+
 		std::map<std::string, std::string> responseHeaders;
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
 		std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
@@ -97,6 +98,8 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test retrieve cache") {
+		DiskCache diskCache("test.db", 3);
+
 		// store data in the cache first
 		std::map<std::string, std::string> responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
@@ -125,6 +128,8 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test remove cache") {
+		DiskCache diskCache("test.db", 3);
+
 		// store data in the cache first
 		std::map<std::string, std::string> responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
@@ -151,6 +156,8 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test prune") {
+		DiskCache diskCache("test.db", 3);
+
 		// store data in the cache first
 		std::map<std::string, std::string> responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
@@ -179,6 +186,8 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test clear all") {
+		DiskCache diskCache("test.db", 3);
+
 		// store data in the cache first
 		std::map<std::string, std::string> responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";

@@ -96,7 +96,7 @@ namespace Cesium3DTiles {
 
         ++this->_loadsInProgress;
 
-        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
+        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
@@ -315,7 +315,7 @@ namespace Cesium3DTiles {
         this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context);
     }
 
-    std::optional<Future<std::unique_ptr<IAssetRequest>>> Tileset::requestTileContent(Tile& tile) {
+    std::optional<Future<std::shared_ptr<IAssetRequest>>> Tileset::requestTileContent(Tile& tile) {
         std::string url = this->getResolvedContentUrl(tile);
         if (url.empty()) {
             return std::nullopt;
@@ -370,7 +370,7 @@ namespace Cesium3DTiles {
             pLogger = this->getExternals().pLogger,
             pTileset = this,
             pContext = std::move(pContext)
-        ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
+        ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
@@ -664,7 +664,7 @@ namespace Cesium3DTiles {
             this->_asyncSystem.requestAsset(url).thenInMainThread([
                 this,
                 pContext = failedTile.getContext()
-            ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
+            ](std::shared_ptr<IAssetRequest>&& pIonRequest) {
                 const IAssetResponse* pIonResponse = pIonRequest->response();
 
                 bool failed = true;

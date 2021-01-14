@@ -195,7 +195,7 @@ namespace Cesium3DTiles {
             projections.push_back(WebMercatorProjection());
         }
 
-        std::optional<Future<std::unique_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
+        std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
         if (!maybeRequestFuture) {
             // There is no content to load. But we may need to upsample.
 
@@ -235,7 +235,7 @@ namespace Cesium3DTiles {
             projections = std::move(projections),
             pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
             pLogger = tileset.getExternals().pLogger
-        ](std::unique_ptr<IAssetRequest>&& pRequest) {
+        ](std::shared_ptr<IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 // TODO: report the lack of response. Network error? Can this even happen?
