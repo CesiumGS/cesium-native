@@ -20,10 +20,10 @@ namespace Cesium3DTiles {
          *
          * Otherwise, `nullptr` will be returned.
          *
-         * @param boundingVolume The {@link Cesium3DTiles::BoundingVolume}.
+         * @param pBoundingVolume A pointer to the {@link Cesium3DTiles::BoundingVolume}.
          * @return The {@link CesiumGeospatial::GlobeRectangle}, or `nullptr`
          */
-        const CesiumGeospatial::GlobeRectangle* obtainGlobeRectangle(const Cesium3DTiles::BoundingVolume* boundingVolume) noexcept;
+        const CesiumGeospatial::GlobeRectangle* obtainGlobeRectangle(const Cesium3DTiles::BoundingVolume* pBoundingVolume) noexcept;
     }
 
 }

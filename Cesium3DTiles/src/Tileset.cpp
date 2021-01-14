@@ -991,15 +991,18 @@ namespace Cesium3DTiles {
 
     // TODO This function is obviously too complex. The way how the indices are used, 
     // in order to deal with the queue elements, should be reviewed...
-    void Tileset::_kickDescendantsAndRenderTile(
-        const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
+    bool Tileset::_kickDescendantsAndRenderTile(
+        const FrameState& frameState,
+        Tile& tile,
+        ViewUpdateResult& result,
+        TraversalDetails& traversalDetails,
         size_t firstRenderedDescendantIndex,
         size_t loadIndexLow,
         size_t loadIndexMedium,
         size_t loadIndexHigh,
         bool queuedForLoad,
-        double distance) {
-
+        double distance
+    ) {
         TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
         std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
@@ -1044,6 +1047,8 @@ namespace Cesium3DTiles {
 
         traversalDetails.allAreRenderable = tile.isRenderable();
         traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
+
+        return queuedForLoad;
     }
 
 
@@ -1128,7 +1133,7 @@ namespace Cesium3DTiles {
         if (!traversalDetails.allAreRenderable && !traversalDetails.anyWereRenderedLastFrame) {
             // Some of our descendants aren't ready to render yet, and none were rendered last frame,
             // so kick them all out of the render list and render this tile instead. Continue to load them though!
-            _kickDescendantsAndRenderTile(frameState, tile, result, traversalDetails,
+            queuedForLoad = _kickDescendantsAndRenderTile(frameState, tile, result, traversalDetails,
                 firstRenderedDescendantIndex, loadIndexLow, loadIndexMedium, loadIndexHigh,
                 queuedForLoad, distance);
         } else {

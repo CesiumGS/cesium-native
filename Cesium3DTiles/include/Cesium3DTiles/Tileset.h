@@ -407,7 +407,7 @@ namespace Cesium3DTiles {
         TraversalDetails _renderLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result);
         TraversalDetails _renderInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _refineToNothing(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable);
-        void _kickDescendantsAndRenderTile(
+        bool _kickDescendantsAndRenderTile(
             const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
             size_t firstRenderedDescendantIndex,
             size_t loadIndexLow,

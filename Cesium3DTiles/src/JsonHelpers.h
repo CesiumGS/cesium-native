@@ -18,7 +18,7 @@ namespace Cesium3DTiles {
          * @brief Obtains an array of numbers from the given JSON.
          * 
          * If the property is not found, or is not an array, or does contain 
-         * elements that are not numbers, then `nullopt` is returned.
+         * elements that are not numbers, then `std::nullopt` is returned.
          * 
          * If the given expected size is not negative, and the actual size of the 
          * array does not match the expected size, then `nullopt` is returned.

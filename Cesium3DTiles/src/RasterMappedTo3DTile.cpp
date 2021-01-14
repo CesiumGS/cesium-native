@@ -152,6 +152,9 @@ namespace Cesium3DTiles {
         }
 
         const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+        if (!pRectangle) {
+            return;
+        }
 
         RasterOverlayTileProvider& tileProvider = *this->_pReadyTile->getOverlay().getTileProvider();
         CesiumGeometry::Rectangle geometryRectangle = projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
