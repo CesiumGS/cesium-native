@@ -817,8 +817,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        double distanceSquared = frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
-        double distance = sqrt(distanceSquared);
+        double distance = sqrt(frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume));
 
         if (shouldVisit) {
             // so far we plan on visiting this tile, so check to see if it is fog culled
