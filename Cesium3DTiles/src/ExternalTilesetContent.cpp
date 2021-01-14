@@ -36,7 +36,7 @@ namespace Cesium3DTiles {
         if (tilesetJson.HasParseError()) {
             SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tilesetJson.GetParseError(), tilesetJson.GetErrorOffset());
         } else {
-            context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext);
+            context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext, pLogger);
         }
 
         return pResult;

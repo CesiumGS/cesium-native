@@ -7,6 +7,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "upsampleGltfForRasterOverlays.h"
+#include "TileUtilities.h"
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -113,20 +114,6 @@ namespace Cesium3DTiles {
             });
     }
 
-    static const CesiumGeospatial::GlobeRectangle* getTileRectangleForOverlays(const Tile& tile) {
-        const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
-        const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
-        
-        const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-        if (pRegion) {
-            pRectangle = &pRegion->getRectangle();
-        } else if (pLooseRegion) {
-            pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-        }
-
-        return pRectangle;
-    }
-
     void Tile::loadContent() {
         if (this->getState() != LoadState::Unloaded) {
             return;
@@ -144,7 +131,7 @@ namespace Cesium3DTiles {
 
         std::vector<Projection> projections;
 
-        const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
+        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
         if (pRectangle) {
             // Map overlays to this tile.
             RasterOverlayCollection& overlays = tileset.getOverlays();
@@ -564,7 +551,7 @@ namespace Cesium3DTiles {
                         this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
                         --i;
 
-                        const CesiumGeospatial::GlobeRectangle* pRectangle = getTileRectangleForOverlays(*this);
+                        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
                         pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
                     }
 
@@ -632,15 +619,7 @@ namespace Cesium3DTiles {
 
         // Generate texture coordinates for each projection.
         if (!projections.empty()) {
-            const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
-            const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&boundingVolume);
-            
-            const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-            if (pRegion) {
-                pRectangle = &pRegion->getRectangle();
-            } else if (pLooseRegion) {
-                pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-            }
+            const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
 
             if (pRectangle) {
                 for (size_t i = 0; i < projections.size(); ++i) {

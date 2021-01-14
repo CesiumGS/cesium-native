@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "TileUtilities.h"
 
 namespace Cesium3DTiles {
 
@@ -150,16 +151,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
-        const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
-        
-        const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-        if (pRegion) {
-            pRectangle = &pRegion->getRectangle();
-        } else if (pLooseRegion) {
-            pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-        }
-
+        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
         if (!pRectangle) {
             return;
         }
