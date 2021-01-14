@@ -56,7 +56,6 @@ namespace Cesium3DTiles {
 
             std::string type = JsonHelpers::getStringOrDefault(response, "type", "unknown");
             if (type != "IMAGERY") {
-                // TODO: report invalid imagery type.
                 SPDLOG_LOGGER_ERROR(pLogger, "Ion raster overlay metadata response type is not 'IMAGERY', but {}", type);
                 return nullptr;
             }
@@ -65,7 +64,6 @@ namespace Cesium3DTiles {
             if (externalType == "BING") {
                 auto optionsIt = response.FindMember("options");
                 if (optionsIt == response.MemberEnd() || !optionsIt->value.IsObject()) {
-                    // TODO: report incomplete Bing options
                     SPDLOG_LOGGER_ERROR(pLogger, "Cesium ion Bing Maps raster overlay metadata response does not contain 'options' or it is not an object.");
                     return nullptr;
                 }
@@ -98,7 +96,11 @@ namespace Cesium3DTiles {
             pPrepareRendererResources,
             pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
-            return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
+            // Handle the case that the code above bails out with an error, returning a nullptr.
+            // TODO Is there a non-ugly way to handle this?
+            return !pAggregatedOverlay ? 
+                asyncSystem.createResolvedFuture(std::make_unique<RasterOverlayTileProvider>(nullptr)) :
+                pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
         });
     }
 
