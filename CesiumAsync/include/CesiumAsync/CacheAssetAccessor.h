@@ -5,6 +5,7 @@
 #include "CesiumAsync/ICacheDatabase.h"
 #include <string>
 #include <memory>
+#include <mutex>
 
 namespace CesiumAsync {
     class AsyncSystem;

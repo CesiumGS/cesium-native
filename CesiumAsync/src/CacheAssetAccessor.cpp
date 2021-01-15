@@ -80,11 +80,12 @@ namespace CesiumAsync {
 		std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
 	{
 		pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() -> std::optional<CacheItem> {
+			bool readError = false;
 			std::string error;
 			std::optional<CacheItem> cacheItem;
 			if (!this->_pCacheDatabase->getEntry(url, cacheItem, error)) {
 				// TODO: log error
-				printf("lock\n");
+				readError = true;
 			}
 
 			if (!cacheItem) {
@@ -92,9 +93,9 @@ namespace CesiumAsync {
 				this->_pAssetAccessor->requestAsset(pAsyncSystem, 
 					url, 
 					headers, 
-					[pAsyncSystem, pCacheDatabase, callback](std::shared_ptr<IAssetRequest> pCompletedRequest) {
+					[pAsyncSystem, pCacheDatabase, callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
 						// cache doesn't have it or the cache item is stale, so request it
-						if (shouldCacheRequest(*pCompletedRequest)) {
+						if (!readError && shouldCacheRequest(*pCompletedRequest)) {
 							pAsyncSystem->runInWorkerThread([pCacheDatabase, pCompletedRequest]() {
 								std::string error;
 								if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
@@ -103,7 +104,6 @@ namespace CesiumAsync {
 									error))
 								{
 									// TODO: log error here
-									printf("lock\n");
 								}
 							});
 						}
