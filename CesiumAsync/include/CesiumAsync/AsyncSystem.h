@@ -291,7 +291,7 @@ namespace CesiumAsync {
         }
 
         template <class T>
-        Future<T> createResolvedFuture(T&& value) const {
+        Future<T> createResolvedFuture(T&& value) {
             return Future<T>(this->_pSchedulers, async::make_task<T>(std::forward<T>(value)));
         }
 
