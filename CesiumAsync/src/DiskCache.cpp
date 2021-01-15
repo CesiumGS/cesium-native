@@ -71,6 +71,26 @@ namespace CesiumAsync {
 		sqlite3_busy_timeout(this->_pConnection, 5000);
 	}
 
+	DiskCache::DiskCache(DiskCache&& other) noexcept {
+		this->_pConnection = other._pConnection;
+		this->_maxSize = other._maxSize;
+
+		other._pConnection = nullptr;
+		other._maxSize = 0;
+	}
+
+	DiskCache& DiskCache::operator=(DiskCache&& other) noexcept {
+		if (&other != this) {
+			this->_pConnection = other._pConnection;
+			this->_maxSize = other._maxSize;
+
+			other._pConnection = nullptr;
+			other._maxSize = 0;
+		}
+
+		return *this;
+	}
+
 	DiskCache::~DiskCache() noexcept {
 		if (this->_pConnection) {
 			sqlite3_close(this->_pConnection);

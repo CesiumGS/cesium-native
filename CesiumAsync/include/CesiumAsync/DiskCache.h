@@ -14,6 +14,14 @@ namespace CesiumAsync {
 
 		~DiskCache() noexcept;
 
+		DiskCache(const DiskCache&) = delete;
+
+		DiskCache(DiskCache&&) noexcept;
+
+		DiskCache& operator=(const DiskCache&) = delete;
+
+		DiskCache& operator=(DiskCache&&) noexcept;
+
 		virtual bool getEntry(const std::string& url, 
 			std::optional<CacheItem> &item, 
 			std::string& error) const override;
