@@ -107,7 +107,7 @@ namespace Cesium3DTiles {
         } else if (innerTiles.size() == 1) {
             return std::move(innerTiles[0]);
         } else {
-            // TODO: combine into one glTF instead of making multiple tiles.
+            // TODO: combine all inner tiles into one glTF instead of return only the first.
             SPDLOG_LOGGER_WARN(pLogger, "Composite tile contains multiple loadable inner tiles. Due to a temporary limitation, only the first will be used.");
             return std::move(innerTiles[0]);
         }
