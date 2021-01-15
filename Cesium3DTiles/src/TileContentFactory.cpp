@@ -47,7 +47,16 @@ namespace Cesium3DTiles {
             return itContentType->second(pLogger, context, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
-        if (data.size() > 0 && data[0] == '{') {
+        // Determine if this is plausibly a JSON external tileset.
+        size_t i;
+        for (i = 0; i < data.size(); ++i) {
+            if (!std::isspace(data[i])) {
+                break;
+            }
+        }
+
+        if (i < data.size() && data[i] == '{') {
+            // Might be an external tileset, try loading it that way.
             itMagic = TileContentFactory::_factoryFunctionsByMagic.find("json");
             if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
                 return itMagic->second(pLogger, context, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
