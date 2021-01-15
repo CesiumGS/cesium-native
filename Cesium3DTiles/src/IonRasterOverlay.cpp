@@ -98,7 +98,11 @@ namespace Cesium3DTiles {
             pPrepareRendererResources,
             pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
-            return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
+            if (pAggregatedOverlay) {
+                return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
+            } else {
+                return asyncSystem.createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(nullptr);
+            }
         });
     }
 
