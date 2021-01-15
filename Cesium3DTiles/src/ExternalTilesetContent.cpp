@@ -30,6 +30,8 @@ namespace Cesium3DTiles {
         pContext->version = context.version;
         pContext->failedTileCallback = context.failedTileCallback;
 
+        pResult->childTiles.value()[0].setContext(pContext);
+
         rapidjson::Document tilesetJson;
         tilesetJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
