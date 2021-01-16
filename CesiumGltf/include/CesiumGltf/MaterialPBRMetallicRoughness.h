@@ -4,6 +4,7 @@
 
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/TextureInfo.h"
+#include <optional>
 #include <vector>
 
 namespace CesiumGltf {
@@ -24,7 +25,7 @@ namespace CesiumGltf {
          *
          * The first three components (RGB) are encoded with the sRGB transfer function. They specify the base color of the material. If the fourth component (A) is present, it represents the linear alpha coverage of the material. Otherwise, an alpha of 1.0 is assumed. The `alphaMode` property specifies how alpha is interpreted. The stored texels must not be premultiplied.
          */
-        TextureInfo baseColorTexture;
+        std::optional<TextureInfo> baseColorTexture;
 
         /**
          * @brief The metalness of the material.
@@ -45,7 +46,7 @@ namespace CesiumGltf {
          *
          * The metalness values are sampled from the B channel. The roughness values are sampled from the G channel. These values are linear. If other channels are present (R or A), they are ignored for metallic-roughness calculations.
          */
-        TextureInfo metallicRoughnessTexture;
+        std::optional<TextureInfo> metallicRoughnessTexture;
 
     };
 }

@@ -4,6 +4,7 @@
 
 #include "CesiumGltf/NamedObject.h"
 #include <cstdint>
+#include <optional>
 
 namespace CesiumGltf {
     /**
@@ -24,24 +25,24 @@ namespace CesiumGltf {
         /**
          * @brief The offset into the buffer in bytes.
          */
-        int64_t byteOffset;
+        int64_t byteOffset = 0;
 
         /**
          * @brief The length of the bufferView in bytes.
          */
-        int64_t byteLength;
+        int64_t byteLength = int64_t();
 
         /**
          * @brief The stride, in bytes.
          *
          * The stride, in bytes, between vertex attributes.  When this is not defined, data is tightly packed. When two or more accessors use the same bufferView, this field must be defined.
          */
-        int64_t byteStride;
+        std::optional<int64_t> byteStride;
 
         /**
          * @brief The target that the GPU buffer should be bound to.
          */
-        Target target;
+        std::optional<Target> target;
 
     };
 }

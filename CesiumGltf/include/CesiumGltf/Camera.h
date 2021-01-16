@@ -5,6 +5,7 @@
 #include "CesiumGltf/CameraOrthographic.h"
 #include "CesiumGltf/CameraPerspective.h"
 #include "CesiumGltf/NamedObject.h"
+#include <optional>
 
 namespace CesiumGltf {
     /**
@@ -20,19 +21,19 @@ namespace CesiumGltf {
         /**
          * @brief An orthographic camera containing properties to create an orthographic projection matrix.
          */
-        CameraOrthographic orthographic;
+        std::optional<CameraOrthographic> orthographic;
 
         /**
          * @brief A perspective camera containing properties to create a perspective projection matrix.
          */
-        CameraPerspective perspective;
+        std::optional<CameraPerspective> perspective;
 
         /**
          * @brief Specifies if the camera uses a perspective or orthographic projection.
          *
          * Based on this, either the camera's `perspective` or `orthographic` property will be defined.
          */
-        Type type;
+        Type type = Type();
 
     };
 }

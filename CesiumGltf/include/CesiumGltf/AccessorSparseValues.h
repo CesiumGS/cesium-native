@@ -19,7 +19,7 @@ namespace CesiumGltf {
         /**
          * @brief The offset relative to the start of the bufferView in bytes. Must be aligned.
          */
-        int64_t byteOffset;
+        int64_t byteOffset = 0;
 
     };
 }

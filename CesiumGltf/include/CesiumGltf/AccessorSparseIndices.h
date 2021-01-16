@@ -26,14 +26,14 @@ namespace CesiumGltf {
         /**
          * @brief The offset relative to the start of the bufferView in bytes. Must be aligned.
          */
-        int64_t byteOffset;
+        int64_t byteOffset = 0;
 
         /**
          * @brief The indices data type.
          *
          * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123` (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
          */
-        ComponentType componentType;
+        ComponentType componentType = ComponentType();
 
     };
 }

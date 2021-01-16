@@ -8,12 +8,18 @@ function resolveProperty(
   nameMapping,
   parentName,
   propertyName,
-  propertyDetails
+  propertyDetails,
+  required
 ) {
   if (Object.keys(propertyDetails).length === 0) {
     // Ignore totally empty properties.
     return undefined;
   }
+
+  // If we don't know what's required, act as if everything is.
+  // Specifically this means we _don't_ make it optional.
+  const isRequired = required === undefined || required.includes(propertyName);
+  const makeOptional = !isRequired && propertyDetails.default === undefined;
 
   if (propertyDetails.type == "array") {
     return resolveArray(
@@ -21,35 +27,41 @@ function resolveProperty(
       nameMapping,
       parentName,
       propertyName,
-      propertyDetails
+      propertyDetails,
+      required
     );
   } else if (propertyDetails.type == "integer") {
     return {
       ...propertyDefaults(propertyName, propertyDetails),
-      headers: ["<cstdint>"],
-      type: "int64_t",
+      headers: ["<cstdint>", ...(makeOptional ? ["<optional>"] : [])],
+      type: makeOptional ? "std::optional<int64_t>" : "int64_t",
       readerHeaders: [`"IntegerJsonHandler.h"`],
       readerType: "IntegerJsonHandler<int64_t>",
+      needsInitialization: !makeOptional
     };
   } else if (propertyDetails.type == "number") {
     return {
       ...propertyDefaults(propertyName, propertyDetails),
-      type: "double",
+      headers: makeOptional ? ["<optional>"] : [],
+      type: makeOptional ? "std::optional<double>" : "double",
       readerHeaders: [`"DoubleJsonHandler.h"`],
       readerType: "DoubleJsonHandler",
+      needsInitialization: !makeOptional
     };
   } else if (propertyDetails.type == "boolean") {
     return {
       ...propertyDefaults(propertyName, propertyDetails),
-      type: "bool",
+      headers: makeOptional ? ["<optional>"] : [],
+      type: makeOptional ? "std::optional<bool>" : "bool",
       readerHeaders: `"BoolJsonHandler.h"`,
       readerType: "BoolJsonHandler",
+      needsInitialization: ~makeOptional
     };
   } else if (propertyDetails.type == "string") {
     return {
       ...propertyDefaults(propertyName, propertyDetails),
-      type: "std::string",
-      headers: ["<string>"],
+      type: makeOptional ? "std::optional<std::string>" : "std::string",
+      headers: ["<string>", ...(makeOptional ? ["<optional>"] : [])],
       readerHeaders: [`"StringJsonHandler.h"`],
       readerType: "StringJsonHandler",
     };
@@ -62,7 +74,8 @@ function resolveProperty(
       nameMapping,
       parentName,
       propertyName,
-      propertyDetails
+      propertyDetails,
+      required
     );
   } else if (
     propertyDetails.anyOf &&
@@ -74,7 +87,8 @@ function resolveProperty(
       nameMapping,
       parentName,
       propertyName,
-      propertyDetails
+      propertyDetails,
+      makeOptional
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -89,10 +103,12 @@ function resolveProperty(
       };
     } else {
       const type = getNameFromSchema(nameMapping, itemSchema);
+      const typeName = getNameFromSchema(nameMapping, itemSchema);
+
       return {
         ...propertyDefaults(propertyName, propertyDetails),
-        type: getNameFromSchema(nameMapping, itemSchema),
-        headers: [`"CesiumGltf/${type}.h"`],
+        type: makeOptional ? `std::optional<${typeName}>` : typeName,
+        headers: [`"CesiumGltf/${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${type}JsonHandler.h"`],
         schemas: [itemSchema],
@@ -104,7 +120,8 @@ function resolveProperty(
       nameMapping,
       parentName,
       propertyName,
-      propertyDetails.allOf[0]
+      propertyDetails.allOf[0],
+      required,
     );
 
     return {
@@ -142,7 +159,7 @@ function propertyDefaults(propertyName, propertyDetails) {
     readerHeaders: [],
     readerHeadersImpl: [],
     type: "",
-    defaultValue: propertyDetails.default ? propertyDetails.default.toString() : undefined,
+    defaultValue: propertyDetails.default !== undefined ? propertyDetails.default.toString() : undefined,
     readerType: "",
     schemas: [],
     localTypes: [],
@@ -158,14 +175,16 @@ function resolveArray(
   nameMapping,
   parentName,
   propertyName,
-  propertyDetails
+  propertyDetails,
+  required
 ) {
   const itemProperty = resolveProperty(
     schemaCache,
     nameMapping,
     parentName,
     propertyName + ".items",
-    propertyDetails.items
+    propertyDetails.items,
+    undefined
   );
 
   if (!itemProperty) {
@@ -190,14 +209,16 @@ function resolveDictionary(
   nameMapping,
   parentName,
   propertyName,
-  propertyDetails
+  propertyDetails,
+  required
 ) {
   const additional = resolveProperty(
     schemaCache,
     nameMapping,
     parentName,
     propertyName + ".additionalProperties",
-    propertyDetails.additionalProperties
+    propertyDetails.additionalProperties,
+    required
   );
 
   if (!additional) {
@@ -221,7 +242,8 @@ function resolveEnum(
   nameMapping,
   parentName,
   propertyName,
-  propertyDetails
+  propertyDetails,
+  makeOptional
 ) {
   if (
     !propertyDetails.anyOf ||
@@ -256,7 +278,8 @@ function resolveEnum(
         };
       `),
     ],
-    type: enumName,
+    type: makeOptional ? `std::optional<${enumName}>` : enumName,
+    headers: makeOptional ? ["<optional>"] : [],
     defaultValue: createEnumDefault(enumName, propertyDetails),
     readerHeaders: [`"CesiumGltf/${parentName}.h"`],
     readerLocalTypes: readerTypes,
@@ -266,6 +289,7 @@ function resolveEnum(
       propertyName,
       propertyDetails
     ),
+    needsInitialization: !makeOptional
   };
 
   if (readerTypes.length > 0) {

@@ -5,6 +5,7 @@
 #include "CesiumGltf/AccessorSparse.h"
 #include "CesiumGltf/NamedObject.h"
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace CesiumGltf {
@@ -54,33 +55,33 @@ namespace CesiumGltf {
          *
          * This must be a multiple of the size of the component datatype.
          */
-        int64_t byteOffset;
+        int64_t byteOffset = 0;
 
         /**
          * @brief The datatype of components in the attribute.
          *
          * All valid values correspond to WebGL enums.  The corresponding typed arrays are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when the accessor contains indices, i.e., the accessor is only referenced by `primitive.indices`.
          */
-        ComponentType componentType;
+        ComponentType componentType = ComponentType();
 
         /**
          * @brief Specifies whether integer data values should be normalized.
          *
          * Specifies whether integer data values should be normalized (`true`) to [0, 1] (for unsigned types) or [-1, 1] (for signed types), or converted directly (`false`) when they are accessed. This property is defined only for accessors that contain vertex attributes or animation output data.
          */
-        bool normalized;
+        bool normalized = false;
 
         /**
          * @brief The number of attributes referenced by this accessor.
          *
          * The number of attributes referenced by this accessor, not to be confused with the number of bytes or number of components.
          */
-        int64_t count;
+        int64_t count = int64_t();
 
         /**
          * @brief Specifies if the attribute is a scalar, vector, or matrix.
          */
-        Type type;
+        Type type = Type();
 
         /**
          * @brief Maximum value of each component in this attribute.
@@ -103,7 +104,7 @@ namespace CesiumGltf {
         /**
          * @brief Sparse storage of attributes that deviate from their initialization value.
          */
-        AccessorSparse sparse;
+        std::optional<AccessorSparse> sparse;
 
     };
 }

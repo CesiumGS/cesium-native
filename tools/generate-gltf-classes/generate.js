@@ -20,9 +20,11 @@ function generate(options, schema) {
     base = getNameFromSchema(nameMapping, baseSchema);
   }
 
+  const required = schema.required || [];
+
   const properties = Object.keys(schema.properties)
     .map((key) =>
-      resolveProperty(schemaCache, nameMapping, name, key, schema.properties[key])
+      resolveProperty(schemaCache, nameMapping, name, key, schema.properties[key], required)
     )
     .filter((property) => property !== undefined);
 
@@ -209,6 +211,8 @@ function formatProperty(property) {
 
   if (property.defaultValue !== undefined) {
     result += " = " + property.defaultValue;
+  } else if (property.needsInitialization) {
+    result += " = " + property.type + "()";
   }
 
   result += ";";

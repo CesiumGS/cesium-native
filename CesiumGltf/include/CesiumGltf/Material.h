@@ -7,6 +7,7 @@
 #include "CesiumGltf/MaterialPBRMetallicRoughness.h"
 #include "CesiumGltf/NamedObject.h"
 #include "CesiumGltf/TextureInfo.h"
+#include <optional>
 #include <vector>
 
 namespace CesiumGltf {
@@ -25,28 +26,28 @@ namespace CesiumGltf {
         /**
          * @brief A set of parameter values that are used to define the metallic-roughness material model from Physically-Based Rendering (PBR) methodology. When not specified, all the default values of `pbrMetallicRoughness` apply.
          */
-        MaterialPBRMetallicRoughness pbrMetallicRoughness;
+        std::optional<MaterialPBRMetallicRoughness> pbrMetallicRoughness;
 
         /**
          * @brief The normal map texture.
          *
          * A tangent space normal map. The texture contains RGB components in linear space. Each texel represents the XYZ components of a normal vector in tangent space. Red [0 to 255] maps to X [-1 to 1]. Green [0 to 255] maps to Y [-1 to 1]. Blue [128 to 255] maps to Z [1/255 to 1]. The normal vectors use the convention +X is right and +Y is up. +Z points toward the viewer. In GLSL, this vector would be unpacked like so: `vec3 normalVector = tex2D(<sampled normal map texture value>, texCoord) * 2 - 1`. Client implementations should normalize the normal vectors before using them in lighting equations.
          */
-        MaterialNormalTextureInfo normalTexture;
+        std::optional<MaterialNormalTextureInfo> normalTexture;
 
         /**
          * @brief The occlusion map texture.
          *
          * The occlusion values are sampled from the R channel. Higher values indicate areas that should receive full indirect lighting and lower values indicate no indirect lighting. These values are linear. If other channels are present (GBA), they are ignored for occlusion calculations.
          */
-        MaterialOcclusionTextureInfo occlusionTexture;
+        std::optional<MaterialOcclusionTextureInfo> occlusionTexture;
 
         /**
          * @brief The emissive map texture.
          *
          * The emissive map controls the color and intensity of the light being emitted by the material. This texture contains RGB components encoded with the sRGB transfer function. If a fourth component (A) is present, it is ignored.
          */
-        TextureInfo emissiveTexture;
+        std::optional<TextureInfo> emissiveTexture;
 
         /**
          * @brief The emissive color of the material.
@@ -74,7 +75,7 @@ namespace CesiumGltf {
          *
          * When this value is false, back-face culling is enabled. When this value is true, back-face culling is disabled and double sided lighting is enabled. The back-face must have its normals reversed before the lighting equation is evaluated.
          */
-        bool doubleSided;
+        bool doubleSided = false;
 
     };
 }

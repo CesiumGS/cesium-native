@@ -5,6 +5,7 @@
 #include "CesiumGltf/BufferCesium.h"
 #include "CesiumGltf/NamedObject.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace CesiumGltf {
@@ -18,12 +19,12 @@ namespace CesiumGltf {
          *
          * Relative paths are relative to the .gltf file.  Instead of referencing an external file, the uri can also be a data-uri.
          */
-        std::string uri;
+        std::optional<std::string> uri;
 
         /**
          * @brief The length of the buffer in bytes.
          */
-        int64_t byteLength;
+        int64_t byteLength = int64_t();
 
         /**
          * @brief Holds properties that are specific to the glTF loader rather than part of the glTF spec.

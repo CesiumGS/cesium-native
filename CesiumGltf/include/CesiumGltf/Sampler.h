@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/NamedObject.h"
+#include <optional>
 
 namespace CesiumGltf {
     /**
@@ -50,14 +51,14 @@ namespace CesiumGltf {
          *
          * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729` (LINEAR).
          */
-        MagFilter magFilter;
+        std::optional<MagFilter> magFilter;
 
         /**
          * @brief Minification filter.
          *
          * All valid values correspond to WebGL enums.
          */
-        MinFilter minFilter;
+        std::optional<MinFilter> minFilter;
 
         /**
          * @brief s wrapping mode.

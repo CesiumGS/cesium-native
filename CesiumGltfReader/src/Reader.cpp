@@ -261,7 +261,7 @@ namespace {
             }
 
             Buffer& buffer = model.buffers[0];
-            if (!buffer.uri.empty()) {
+            if (buffer.uri) {
                 result.errors = "GLB has a binary chunk but the first buffer in the JSON chunk also has a 'uri'.";
                 return result;
             }

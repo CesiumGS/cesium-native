@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include <optional>
 #include <string>
 
 namespace CesiumGltf {
@@ -14,12 +15,12 @@ namespace CesiumGltf {
         /**
          * @brief A copyright message suitable for display to credit the content creator.
          */
-        std::string copyright;
+        std::optional<std::string> copyright;
 
         /**
          * @brief Tool that generated this glTF model.  Useful for debugging.
          */
-        std::string generator;
+        std::optional<std::string> generator;
 
         /**
          * @brief The glTF version that this asset targets.
@@ -29,7 +30,7 @@ namespace CesiumGltf {
         /**
          * @brief The minimum glTF version that this asset targets.
          */
-        std::string minVersion;
+        std::optional<std::string> minVersion;
 
     };
 }

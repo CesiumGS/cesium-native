@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include <optional>
 
 namespace CesiumGltf {
     /**
@@ -15,24 +16,24 @@ namespace CesiumGltf {
          *
          * When this is undefined, the aspect ratio of the canvas is used.
          */
-        double aspectRatio;
+        std::optional<double> aspectRatio;
 
         /**
          * @brief The floating-point vertical field of view in radians.
          */
-        double yfov;
+        double yfov = double();
 
         /**
          * @brief The floating-point distance to the far clipping plane.
          *
          * When defined, `zfar` must be greater than `znear`. If `zfar` is undefined, runtime must use infinite projection matrix.
          */
-        double zfar;
+        std::optional<double> zfar;
 
         /**
          * @brief The floating-point distance to the near clipping plane.
          */
-        double znear;
+        double znear = double();
 
     };
 }

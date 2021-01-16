@@ -41,10 +41,10 @@ int8_t computeByteSizeOfComponent(CesiumGltf::Accessor::ComponentType componentT
 }
 
 int64_t computeByteStride(const CesiumGltf::Accessor& accessor, const CesiumGltf::BufferView& bufferView) {
-	if (bufferView.byteStride <= 0) {
-		return computeNumberOfComponents(accessor.type) * computeByteSizeOfComponent(accessor.componentType);
+	if (bufferView.byteStride) {
+		return bufferView.byteStride.value();
 	} else {
-		return bufferView.byteStride;
+		return computeNumberOfComponents(accessor.type) * computeByteSizeOfComponent(accessor.componentType);
 	}
 }
 

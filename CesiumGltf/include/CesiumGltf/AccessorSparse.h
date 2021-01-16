@@ -18,7 +18,7 @@ namespace CesiumGltf {
          *
          * The number of attributes encoded in this sparse accessor.
          */
-        int64_t count;
+        int64_t count = int64_t();
 
         /**
          * @brief Index array of size `count` that points to those accessor attributes that deviate from their initialization value. Indices must strictly increase.

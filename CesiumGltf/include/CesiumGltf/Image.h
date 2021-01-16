@@ -5,6 +5,7 @@
 #include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltf/NamedObject.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace CesiumGltf {
@@ -23,12 +24,12 @@ namespace CesiumGltf {
          *
          * Relative paths are relative to the .gltf file.  Instead of referencing an external file, the uri can also be a data-uri.  The image format must be jpg or png.
          */
-        std::string uri;
+        std::optional<std::string> uri;
 
         /**
          * @brief The image's MIME type. Required if `bufferView` is defined.
          */
-        MimeType mimeType;
+        std::optional<MimeType> mimeType;
 
         /**
          * @brief The index of the bufferView that contains the image. Use this instead of the image's uri property.
