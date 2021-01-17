@@ -97,10 +97,11 @@ namespace Cesium3DTiles {
             pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
             // Handle the case that the code above bails out with an error, returning a nullptr.
-            // TODO Is there a non-ugly way to handle this?
-            return !pAggregatedOverlay ? 
-                asyncSystem.createResolvedFuture(std::make_unique<RasterOverlayTileProvider>(nullptr)) :
-                pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
+            if (pAggregatedOverlay) {
+                return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
+            }
+            return asyncSystem.createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(nullptr);
+
         });
     }
 
