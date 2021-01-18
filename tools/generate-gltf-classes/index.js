@@ -1,7 +1,8 @@
 const yargs = require("yargs");
 const path = require("path");
+const fs = require("fs");
 const SchemaCache = require("./SchemaCache");
-const generate = require("./generate")
+const generate = require("./generate");
 
 const argv = yargs.options({
   schema: {
@@ -27,33 +28,25 @@ const argv = yargs.options({
     description: "The extensions directory.",
     demandOption: true,
     type: "string"
+  },
+  config: {
+    alias: "c",
+    description: "The path to the configuration options controlling code generation, expressed in a JSON file.",
+    demandOption: true,
+    type: "string"
   }
 }).argv;
-
-const nameMapping = {
-  "glTF": "Model",
-  "glTF Id": "ExtensibleObject",
-  "glTFRootProperty": "NamedObject",
-  "glTF Property": "ExtensibleObject",
-  "glTF Child of Root Property": "NamedObject"
-};
-
-// Custom `cesium` properties will be added to these objects.
-// e.g. Buffer will gain `BufferCesium cesium;`
-const cesiumProperties = {
-  "Buffer": true,
-  "Image": true
-};
 
 const schemaCache = new SchemaCache(argv.schema, argv.extensions);
 const modelSchema = schemaCache.load("glTF.schema.json");
 
+const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
+
 const options = {
   schemaCache,
-  nameMapping,
-  cesiumProperties,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
+  config: config,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {}
@@ -61,25 +54,18 @@ const options = {
 
 let schemas = [modelSchema];
 
-const extensionInfo = {
-  "KHR_draco_mesh_compression": {
-    extensionName: "KHR_draco_mesh_compression",
-    schema: "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
-    attachTo: [
-      "mesh.primitive"
-    ]
-  }
-};
-
-for (const extensionClassName of Object.keys(extensionInfo)) {
-  const extension = extensionInfo[extensionClassName];
+for (const extension of config.extensions) {
   const extensionSchema = schemaCache.loadExtension(extension.schema);
   if (!extensionSchema) {
-    console.warn(`Could not load schema ${inExtensions[extensionClassName]} for extension class ${extensionClassName}.`);
+    console.warn(`Could not load schema ${extension.schema} for extension class ${extension.className}.`);
     continue;
   }
 
-  nameMapping[extensionSchema.title] = extensionClassName;
+  if (!config.classes[extensionSchema.title]) {
+    config.classes[extensionSchema.title] = {};
+  }
+  config.classes[extensionSchema.title].overrideName = extension.className;
+
   schemas.push(...generate(options, extensionSchema));
 
   for (const objectToExtend of extension.attachTo) {
@@ -95,7 +81,7 @@ for (const extensionClassName of Object.keys(extensionInfo)) {
 
     options.extensions[objectToExtendSchema.title].push({
       name: extension.extensionName,
-      className: extensionClassName
+      className: extension.className
     });
   }
 }

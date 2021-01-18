@@ -5,7 +5,7 @@ const makeIdentifier = require("./makeIdentifier");
 
 function resolveProperty(
   schemaCache,
-  nameMapping,
+  config,
   parentName,
   propertyName,
   propertyDetails,
@@ -24,7 +24,7 @@ function resolveProperty(
   if (propertyDetails.type == "array") {
     return resolveArray(
       schemaCache,
-      nameMapping,
+      config,
       parentName,
       propertyName,
       propertyDetails,
@@ -71,7 +71,7 @@ function resolveProperty(
   ) {
     return resolveDictionary(
       schemaCache,
-      nameMapping,
+      config,
       parentName,
       propertyName,
       propertyDetails,
@@ -84,7 +84,7 @@ function resolveProperty(
   ) {
     return resolveEnum(
       schemaCache,
-      nameMapping,
+      config,
       parentName,
       propertyName,
       propertyDetails,
@@ -102,8 +102,8 @@ function resolveProperty(
         readerType: "IntegerJsonHandler<int32_t>",
       };
     } else {
-      const type = getNameFromSchema(nameMapping, itemSchema);
-      const typeName = getNameFromSchema(nameMapping, itemSchema);
+      const type = getNameFromSchema(config, itemSchema);
+      const typeName = getNameFromSchema(config, itemSchema);
 
       return {
         ...propertyDefaults(propertyName, propertyDetails),
@@ -117,7 +117,7 @@ function resolveProperty(
   } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
     const nested = resolveProperty(
       schemaCache,
-      nameMapping,
+      config,
       parentName,
       propertyName,
       propertyDetails.allOf[0],
@@ -172,7 +172,7 @@ function propertyDefaults(propertyName, propertyDetails) {
 
 function resolveArray(
   schemaCache,
-  nameMapping,
+  config,
   parentName,
   propertyName,
   propertyDetails,
@@ -180,7 +180,7 @@ function resolveArray(
 ) {
   const itemProperty = resolveProperty(
     schemaCache,
-    nameMapping,
+    config,
     parentName,
     propertyName + ".items",
     propertyDetails.items,
@@ -206,7 +206,7 @@ function resolveArray(
 
 function resolveDictionary(
   schemaCache,
-  nameMapping,
+  config,
   parentName,
   propertyName,
   propertyDetails,
@@ -214,7 +214,7 @@ function resolveDictionary(
 ) {
   const additional = resolveProperty(
     schemaCache,
-    nameMapping,
+    config,
     parentName,
     propertyName + ".additionalProperties",
     propertyDetails.additionalProperties,
@@ -239,7 +239,7 @@ function resolveDictionary(
 
 function resolveEnum(
   schemaCache,
-  nameMapping,
+  config,
   parentName,
   propertyName,
   propertyDetails,

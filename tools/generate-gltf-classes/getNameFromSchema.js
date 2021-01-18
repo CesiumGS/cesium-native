@@ -1,6 +1,6 @@
-function getNameFromSchema(nameMapping, schema) {
+function getNameFromSchema(config, schema) {
   const title = schema.title;
-  return nameMapping[title] ? nameMapping[title] : title.replace(/\s/g, "");
+  return config.classes[title] && config.classes[title].overrideName ? config.classes[title].overrideName : title.replace(/\s/g, "");
 }
 
 module.exports = getNameFromSchema;

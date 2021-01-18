@@ -8,23 +8,24 @@ const resolveProperty = require("./resolveProperty");
 const unindent = require("./unindent");
 
 function generate(options, schema) {
-  const { schemaCache, nameMapping, outputDir, readerOutputDir, cesiumProperties } = options;
+  const { schemaCache, config, outputDir, readerOutputDir } = options;
 
-  const name = getNameFromSchema(nameMapping, schema);
+  const name = getNameFromSchema(config, schema);
+  const thisConfig = config.classes[schema.title] || {};
 
   console.log(`Generating ${name}`);
 
   let base = "ExtensibleObject";
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
     const baseSchema = schemaCache.load(schema.allOf[0].$ref);
-    base = getNameFromSchema(nameMapping, baseSchema);
+    base = getNameFromSchema(config, baseSchema);
   }
 
   const required = schema.required || [];
 
   const properties = Object.keys(schema.properties)
     .map((key) =>
-      resolveProperty(schemaCache, nameMapping, name, key, schema.properties[key], required)
+      resolveProperty(schemaCache, config, name, key, schema.properties[key], required)
     )
     .filter((property) => property !== undefined);
 
@@ -41,10 +42,6 @@ function generate(options, schema) {
     [`"CesiumGltf/${base}.h"`, ...lodash.flatten(properties.map((property) => property.headers))]
   );
 
-  if (cesiumProperties[name]) {
-    headers.push(`"CesiumGltf/${name}Cesium.h"`);
-  }
-
   headers.sort();
 
   const header = `
@@ -58,7 +55,7 @@ function generate(options, schema) {
             /**
              * @brief ${schema.description}
              */
-            struct ${name} : public ${base} {
+            struct ${name}${thisConfig.toBeInherited ? "Spec" : ""} : public ${base} {
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
@@ -69,14 +66,13 @@ function generate(options, schema) {
                   16
                 )}
 
-                ${indent(getCesiumProperty(cesiumProperties, name, schema), 16)}
             };
         }
     `;
 
   const headerOutputDir = path.join(outputDir, "include", "CesiumGltf");
   fs.mkdirSync(headerOutputDir, { recursive: true });
-  const headerOutputPath = path.join(headerOutputDir, name + ".h");
+  const headerOutputPath = path.join(headerOutputDir, `${name}${thisConfig.toBeInherited ? "Spec" : ""}.h`);
   fs.writeFileSync(headerOutputPath, unindent(header), "utf-8");
 
   const readerHeaders = lodash.uniq(
@@ -226,19 +222,6 @@ function formatReaderProperty(property) {
 
 function formatReaderPropertyImpl(property) {
   return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
-}
-
-function getCesiumProperty(cesiumProperties, name, schema) {
-  if (!cesiumProperties[name]) {
-    return "";
-  }
-
-  return unindent(`
-    /**
-     * @brief Holds properties that are specific to the glTF loader rather than part of the glTF spec.
-     */
-    ${name}Cesium cesium;
-  `);
 }
 
 module.exports = generate;
