@@ -2,7 +2,6 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "CesiumGltf/Reader.h"
-#include "CesiumGltf/Helpers.h"
 #include <string>
 
 #pragma warning(push)
@@ -83,7 +82,7 @@ namespace {
             return;
         }
 
-        Accessor* pIndicesAccessor = getSafe(&model.accessors, primitive.indices);
+        Accessor* pIndicesAccessor = Model::getSafe(&model.accessors, primitive.indices);
         if (!pIndicesAccessor) {
             if (!readModel.warnings.empty()) readModel.warnings += "\n";
             readModel.warnings += "Primitive indices accessor ID is invalid.";
@@ -103,7 +102,7 @@ namespace {
         indicesBufferView.buffer = static_cast<int32_t>(model.buffers.size());
         Buffer& indicesBuffer = model.buffers.emplace_back();
 
-        int64_t indexBytes = computeByteSizeOfComponent(pIndicesAccessor->componentType);
+        int64_t indexBytes = pIndicesAccessor->computeByteSizeOfComponent();
         int64_t indicesBytes = pIndicesAccessor->count * indexBytes;
         
         indicesBuffer.cesium.data.resize(indicesBytes);
@@ -162,8 +161,8 @@ namespace {
         bufferView.buffer = static_cast<int32_t>(model.buffers.size());
         Buffer& buffer = model.buffers.emplace_back();
 
-        int8_t numberOfComponents = computeNumberOfComponents(pAccessor->type);
-        int64_t stride = numberOfComponents * computeByteSizeOfComponent(pAccessor->componentType);
+        int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
+        int64_t stride = numberOfComponents * pAccessor->computeByteSizeOfComponent();
         int64_t sizeBytes = pAccessor->count * stride;
 
         buffer.cesium.data.resize(sizeBytes);
@@ -234,7 +233,7 @@ namespace {
             }
 
             int32_t primitiveAttrIndex = primitiveAttrIt->second;
-            Accessor* pAccessor = getSafe(&model.accessors, primitiveAttrIndex);
+            Accessor* pAccessor = Model::getSafe(&model.accessors, primitiveAttrIndex);
             if (!pAccessor) {
                 if (!readModel.warnings.empty()) {
                     readModel.warnings += "\n";

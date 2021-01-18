@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CesiumGltf/Model.h"
-#include "CesiumGltf/Helpers.h"
 #include <stdexcept>
 
 namespace CesiumGltf {

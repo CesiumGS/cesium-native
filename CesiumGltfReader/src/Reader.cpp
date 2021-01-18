@@ -1,4 +1,3 @@
-#include "CesiumGltf/Helpers.h"
 #include "CesiumGltf/Reader.h"
 #include "JsonHandler.h"
 #include "ModelJsonHandler.h"
@@ -283,8 +282,8 @@ namespace {
 
         if (options.decodeEmbeddedImages) {
             for (Image& image : model.images) {
-                const BufferView& bufferView = getSafe(model.bufferViews, image.bufferView);
-                const Buffer& buffer = getSafe(model.buffers, bufferView.buffer);
+                const BufferView& bufferView = Model::getSafe(model.bufferViews, image.bufferView);
+                const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
 
                 if (bufferView.byteOffset + bufferView.byteLength > static_cast<int64_t>(buffer.cesium.data.size())) {
                     if (!readModel.warnings.empty()) readModel.warnings += "\n";
