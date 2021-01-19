@@ -121,7 +121,7 @@ namespace Cesium3DTiles {
 			SPDLOG_LOGGER_WARN(pLogger, 
 				"This b3dm header is using the legacy format[batchLength][batchTableByteLength]. "
 				"The new format is[featureTableJsonByteLength][featureTableBinaryByteLength][batchTableJsonByteLength][batchTableBinaryByteLength] "
-				"from https ://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel.");
+				"from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel.");
 		}
 		else if (pHeader->batchTableBinaryByteLength >= 570425344) {
 			// Second legacy check
