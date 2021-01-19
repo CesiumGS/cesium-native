@@ -52,7 +52,7 @@ namespace Cesium3DTiles {
             return itMagic->second(pLogger, context, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
-        // No content type registered for this magic or content type
+        SPDLOG_LOGGER_WARN(pLogger, "No factory found for magic \"{}\" or content type \"{}\"", magic, baseContentType);
         return nullptr;
     }
 

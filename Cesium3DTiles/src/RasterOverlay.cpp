@@ -1,5 +1,6 @@
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 
 using namespace CesiumAsync;
 
@@ -51,7 +52,8 @@ namespace Cesium3DTiles {
         ).thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
             this->_pTileProvider = std::move(pProvider);
             this->_isLoadingTileProvider = false;
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+        }).catchInMainThread([this, pLogger](const std::exception& e) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Exception while creating tile provider: {0}", e.what());
             this->_pTileProvider.reset();
             this->_isLoadingTileProvider = false;
         });
