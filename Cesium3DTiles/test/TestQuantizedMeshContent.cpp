@@ -1,16 +1,17 @@
 #include "catch2/catch.hpp"
-#include "Cesium3DTiles/GltfAccessor.h"
 #include "Cesium3DTiles/registerAllTileContentTypes.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/Rectangle.h"
+#include "CesiumGltf/AccessorView.h"
 #include "CesiumUtility/Math.h"
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 using namespace Cesium3DTiles;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumGltf;
 using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {
@@ -312,8 +313,8 @@ static QuantizedMesh<T> createGridQuantizedMesh(const BoundingRegion &region, ui
 
 template<class T, class I>
 void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
-    const GltfAccessor<I>& indices,
-    const GltfAccessor<glm::vec3>& positions,
+    const AccessorView<I>& indices,
+    const AccessorView<glm::vec3>& positions,
     const QuadtreeTilingScheme &tilingScheme,
     const Ellipsoid &ellipsoid,
     const Rectangle &tileRectangle,
@@ -451,9 +452,9 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
 
 template<class T, class I>
 static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
-    const GltfAccessor<glm::vec3> &normals, 
-    const GltfAccessor<glm::vec3> &positions, 
-    const GltfAccessor<I> &indices, 
+    const AccessorView<glm::vec3> &normals, 
+    const AccessorView<glm::vec3> &positions, 
+    const AccessorView<I> &indices, 
     const glm::vec3 &geodeticNormal,
     uint32_t verticesWidth, 
     uint32_t verticesHeight) 
@@ -611,12 +612,17 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
         // make sure mesh contains grid mesh and skirts at the end
-        GltfAccessor<uint16_t> indices(model, static_cast<size_t>(primitive.indices));
-        GltfAccessor<glm::vec3> positions(model, static_cast<size_t>(primitive.attributes.at("POSITION")));
+        AccessorView<uint16_t> indices(model, primitive.indices);
+        CHECK(indices.status() == AccessorViewStatus::Valid);
+        AccessorView<glm::vec3> positions(model, primitive.attributes.at("POSITION"));
+        CHECK(positions.status() == AccessorViewStatus::Valid);
+
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
 
         // check normal
-        GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
+        AccessorView<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));
+        CHECK(normals.status() == AccessorViewStatus::Valid);
+
         Cartographic center = boundingVolume.getRectangle().computeCenter();
         glm::vec3 geodeticNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
         checkGeneratedGridNormal(quantizedMesh, normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
@@ -658,12 +664,17 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
         // make sure mesh contains grid mesh and skirts at the end
-        GltfAccessor<uint32_t> indices(model, static_cast<size_t>(primitive.indices));
-        GltfAccessor<glm::vec3> positions(model, static_cast<size_t>(primitive.attributes.at("POSITION")));
+        AccessorView<uint32_t> indices(model, primitive.indices);
+        CHECK(indices.status() == AccessorViewStatus::Valid);
+        AccessorView<glm::vec3> positions(model, primitive.attributes.at("POSITION"));
+        CHECK(positions.status() == AccessorViewStatus::Valid);
+
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
 
         // check normal
-        GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
+        AccessorView<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));
+        CHECK(normals.status() == AccessorViewStatus::Valid);
+
         Cartographic center = boundingVolume.getRectangle().computeCenter();
         glm::vec3 geodeticNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
         checkGeneratedGridNormal(quantizedMesh, normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
@@ -705,12 +716,17 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         const CesiumGltf::MeshPrimitive& primitive = mesh.primitives.front();
 
         // make sure mesh contains grid mesh and skirts at the end
-        GltfAccessor<uint32_t> indices(model, static_cast<size_t>(primitive.indices));
-        GltfAccessor<glm::vec3> positions(model, static_cast<size_t>(primitive.attributes.at("POSITION")));
+        AccessorView<uint32_t> indices(model, primitive.indices);
+        CHECK(indices.status() == AccessorViewStatus::Valid);
+        AccessorView<glm::vec3> positions(model, primitive.attributes.at("POSITION"));
+        CHECK(positions.status() == AccessorViewStatus::Valid);
+
         checkGridMesh(quantizedMesh, indices, positions, tilingScheme, ellipsoid, tileRectangle, verticesWidth, verticesHeight);
 
         // check normal
-        GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
+        AccessorView<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));
+        CHECK(normals.status() == AccessorViewStatus::Valid);
+
         Cartographic center = boundingVolume.getRectangle().computeCenter();
         glm::vec3 geodeticNormal = static_cast<glm::vec3>(ellipsoid.geodeticSurfaceNormal(center));
         checkGeneratedGridNormal(quantizedMesh, normals, positions, indices, geodeticNormal, verticesWidth, verticesHeight);
@@ -774,9 +790,11 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
         size_t totalSkirtVerticesCount = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
 
-        GltfAccessor<glm::vec3> normals(model, static_cast<size_t>(primitive.attributes.at("NORMAL")));
-        REQUIRE(normals.size() == (verticesWidth * verticesHeight + totalSkirtVerticesCount));
-        for (size_t i = 0; i < normals.size(); ++i) {
+        AccessorView<glm::vec3> normals(model, primitive.attributes.at("NORMAL"));
+        CHECK(normals.status() == AccessorViewStatus::Valid);
+
+        REQUIRE(static_cast<size_t>(normals.size()) == (verticesWidth * verticesHeight + totalSkirtVerticesCount));
+        for (int64_t i = 0; i < normals.size(); ++i) {
             REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::EPSILON2));
             REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::EPSILON2));
             REQUIRE(Math::equalsEpsilon(normals[i].z, normal.z, Math::EPSILON2));

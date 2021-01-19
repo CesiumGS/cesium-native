@@ -1,12 +1,12 @@
 #include "catch2/catch.hpp"
 #include "Cesium3DTiles/Gltf.h"
-#include "Cesium3DTiles/GltfAccessor.h"
-#include "CesiumUtility/Math.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGltf/AccessorView.h"
+#include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
-#include "glm/trigonometric.hpp"
+#include <glm/trigonometric.hpp>
 #include <vector>
 
 using namespace Cesium3DTiles;
@@ -147,8 +147,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
         REQUIRE(upsampledPrimitive.indices >= 0);
         REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-        GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-        GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+        AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+        AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
         glm::vec3 p0 = upsampledPosition[0];
         REQUIRE(glm::epsilonEqual(p0, positions[0], glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
@@ -183,8 +183,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
         REQUIRE(upsampledPrimitive.indices >= 0);
         REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-        GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-        GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+        AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+        AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
         glm::vec3 p0 = upsampledPosition[0];
         REQUIRE(glm::epsilonEqual(p0, positions[1], glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
@@ -219,8 +219,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
         REQUIRE(upsampledPrimitive.indices >= 0);
         REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-        GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-        GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+        AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+        AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
         glm::vec3 p0 = upsampledPosition[0];
         REQUIRE(glm::epsilonEqual(p0, positions[3], glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
@@ -255,8 +255,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
         REQUIRE(upsampledPrimitive.indices >= 0);
         REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-        GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-        GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+        AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+        AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
         glm::vec3 p0 = upsampledPosition[0];
         REQUIRE(glm::epsilonEqual(p0, positions[2], glm::vec3(static_cast<float>(Math::EPSILON7))) == glm::bvec3(true));
@@ -305,8 +305,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
             REQUIRE(upsampledPrimitive.indices >= 0);
             REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-            GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-            GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+            AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+            AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
             // check west edge
             checkSkirt(ellipsoid, upsampledPosition[0], upsampledPosition[7], center, skirtHeight);
@@ -340,8 +340,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
             REQUIRE(upsampledPrimitive.indices >= 0);
             REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-            GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-            GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+            AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+            AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
             // check west edge
             checkSkirt(ellipsoid, upsampledPosition[1], upsampledPosition[7], center, skirtHeight);
@@ -379,8 +379,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
             REQUIRE(upsampledPrimitive.indices >= 0);
             REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-            GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-            GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+            AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+            AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
             // check west edge
             checkSkirt(ellipsoid, upsampledPosition[5], upsampledPosition[7], center, skirtHeight * 0.5);
@@ -414,8 +414,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
             REQUIRE(upsampledPrimitive.indices >= 0);
             REQUIRE(upsampledPrimitive.attributes.find("POSITION") != upsampledPrimitive.attributes.end());
-            GltfAccessor<glm::vec3> upsampledPosition(upsampledModel, static_cast<size_t>(upsampledPrimitive.attributes.at("POSITION")));
-            GltfAccessor<uint32_t> upsampledIndices(upsampledModel, static_cast<size_t>(upsampledPrimitive.indices));
+            AccessorView<glm::vec3> upsampledPosition(upsampledModel, upsampledPrimitive.attributes.at("POSITION"));
+            AccessorView<uint32_t> upsampledIndices(upsampledModel, upsampledPrimitive.indices);
 
             // check west edge
             checkSkirt(ellipsoid, upsampledPosition[2], upsampledPosition[7], center, skirtHeight * 0.5);

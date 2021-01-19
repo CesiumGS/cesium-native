@@ -1,9 +1,6 @@
 #pragma once
 
-#include "Gltf.h"
-#include "GltfAccessor.h"
-
-#include <stdexcept>
+#include "CesiumGltf/AccessorView.h"
 
 namespace CesiumGltf {
 
@@ -16,26 +13,50 @@ namespace CesiumGltf {
 		AccessorView<T> _accessor;
 
 	public:
+		AccessorWriter() :
+			_accessor()
+		{
+		}
 
 		/** @copydoc AccessorView::AccessorView */
-		AccessorWriter(CesiumGltf::Model& model, int32_t accessorID) :
-			_accessor(model, accessorID)
+		AccessorWriter(uint8_t* pData, int64_t stride, int64_t offset, int64_t size) :
+			_accessor(pData, stride, offset, size)
+		{
+		}
+
+		AccessorWriter(Model& model, const Accessor& accessor) :
+			_accessor(model, accessor)
+		{
+		}
+
+		AccessorWriter(Model& model, int32_t accessorIndex) :
+			_accessor(model, accessorIndex)
 		{
 		}
 
 		/** @copydoc AccessorView::operator[]() */
-		const T& operator[](size_t i) const {
+		const T& operator[](int64_t i) const {
 			return this->_accessor[i];
 		}
 
 		/** @copydoc AccessorView::operator[]() */
-		T& operator[](size_t i) {
+		T& operator[](int64_t i) {
 			return const_cast<T&>(this->_accessor[i]);
 		}
 
 		/** @copydoc AccessorView::size */
-		size_t size() const noexcept {
+		int64_t size() const noexcept {
 			return this->_accessor.size();
+		}
+
+		/**
+		 * @brief Gets the status of this accessor writer.
+		 * 
+		 * Indicates whether the writer accurately reflects the accessor's data, or whether
+		 * an error occurred.
+		 */
+		AccessorViewStatus status() const noexcept {
+			return this->_accessor.status();
 		}
 	};
 

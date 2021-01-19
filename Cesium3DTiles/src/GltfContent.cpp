@@ -1,7 +1,7 @@
-#include "Cesium3DTiles/GltfAccessor.h"
 #include "Cesium3DTiles/GltfContent.h"
-#include "Cesium3DTiles/GltfWriter.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/AccessorWriter.h"
 #include "CesiumGltf/Reader.h"
 #include "CesiumUtility/Math.h"
 #include <stdexcept>
@@ -61,9 +61,12 @@ namespace Cesium3DTiles {
         int uvAccessorId = static_cast<int>(accessors.size());
 		accessors.emplace_back();
 
-		GltfAccessor<glm::vec3> positionAccessor(gltf, static_cast<size_t>(positionAccessorIndex));
+		CesiumGltf::AccessorView<glm::vec3> positionView(gltf, positionAccessorIndex);
+		if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
+			return -1;
+		}
 
-        uvBuffer.cesium.data.resize(positionAccessor.size() * 2 * sizeof(float));
+        uvBuffer.cesium.data.resize(positionView.size() * 2 * sizeof(float));
 
         CesiumGltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
         uvBufferView.buffer = uvBufferId;
@@ -76,17 +79,18 @@ namespace Cesium3DTiles {
         uvAccessor.bufferView = uvBufferViewId;
         uvAccessor.byteOffset = 0;
         uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-        uvAccessor.count = positionAccessor.size();
+        uvAccessor.count = positionView.size();
         uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
 
-		GltfWriter<glm::vec2> uvWriter(gltf, static_cast<size_t>(uvAccessorId));
+		CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
+		assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
 		double width = rectangle.computeWidth();
 		double height = rectangle.computeHeight();
 
-		for (size_t i = 0; i < positionAccessor.size(); ++i) {
+		for (int64_t i = 0; i < positionView.size(); ++i) {
 			// Get the ECEF position
-			glm::vec3 position = positionAccessor[i];
+			glm::vec3 position = positionView[i];
 			glm::dvec3 positionEcef = transform * glm::dvec4(position, 1.0);
 			
 			// Convert it to cartographic
@@ -199,6 +203,10 @@ namespace Cesium3DTiles {
 
 			// Generate new texture coordinates
 			int nextTextureCoordinateAccessorIndex = generateOverlayTextureCoordinates(gltf_, positionAccessorIndex, transform, projection, rectangle, west, south, east, north, minimumHeight, maximumHeight);
+			if (nextTextureCoordinateAccessorIndex < 0) {
+				return;
+			}
+
 			primitive.attributes[attributeName] = nextTextureCoordinateAccessorIndex;
 			positionAccessorsToTextureCoordinateAccessor[static_cast<size_t>(positionAccessorIndex)] = nextTextureCoordinateAccessorIndex;
 		});

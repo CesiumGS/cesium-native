@@ -1,11 +1,13 @@
-#include "Cesium3DTiles/GltfAccessor.h"
 #include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/Cartographic.h"
-#include "upsampleGltfForRasterOverlays.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGltf/AccessorView.h"
+#include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
+#include "upsampleGltfForRasterOverlays.h"
 #include <algorithm>
+
+using namespace CesiumGltf;
 
 namespace Cesium3DTiles {
     struct EdgeVertex {
@@ -21,10 +23,10 @@ namespace Cesium3DTiles {
     };
 
     static void upsamplePrimitiveForRasterOverlays(
-        const CesiumGltf::Model& parentModel,
-        CesiumGltf::Model& model,
-        CesiumGltf::Mesh& mesh,
-        CesiumGltf::MeshPrimitive& primitive,
+        const Model& parentModel,
+        Model& model,
+        Mesh& mesh,
+        MeshPrimitive& primitive,
         CesiumGeometry::QuadtreeChild childID
     );
 
@@ -53,7 +55,7 @@ namespace Cesium3DTiles {
         double thresholdV,
         bool keepAboveU,
         bool keepAboveV,
-        const GltfAccessor<glm::vec2>& uvs,
+        const AccessorView<glm::vec2>& uvs,
         const std::vector<uint32_t>& clipVertexToIndices,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult);
@@ -77,8 +79,8 @@ namespace Cesium3DTiles {
         size_t vertexSizeFloats,
         uint32_t positionAttributeIndex);
 
-    CesiumGltf::Model upsampleGltfForRasterOverlays(const CesiumGltf::Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
-        CesiumGltf::Model result;
+    Model upsampleGltfForRasterOverlays(const Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
+        Model result;
 
         // Copy the entire parent model except for the buffers, bufferViews, and accessors, which we'll be rewriting.
         result.animations = parentModel.animations;
@@ -100,8 +102,8 @@ namespace Cesium3DTiles {
         // result.extras_json_string = parentModel.extras_json_string;
         // result.extensions_json_string = parentModel.extensions_json_string;
 
-        for (CesiumGltf::Mesh& mesh : result.meshes) {
-            for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
+        for (Mesh& mesh : result.meshes) {
+            for (MeshPrimitive& primitive : mesh.primitives) {
                 upsamplePrimitiveForRasterOverlays(parentModel, result, mesh, primitive, childID);
             }
         }
@@ -216,9 +218,9 @@ namespace Cesium3DTiles {
     }
 
     template <class T>
-    static T getVertexValue(const GltfAccessor<T>& accessor, const CesiumGeometry::TriangleClipVertex& vertex) {
+    static T getVertexValue(const AccessorView<T>& accessor, const CesiumGeometry::TriangleClipVertex& vertex) {
         struct Operation {
-            const Cesium3DTiles::GltfAccessor<T>& accessor;
+            const AccessorView<T>& accessor;
 
             T operator()(int vertexIndex) {
                 return accessor[static_cast<size_t>(vertexIndex)];
@@ -235,12 +237,12 @@ namespace Cesium3DTiles {
     }
 
     template <class T>
-    static T getVertexValue(const GltfAccessor<T>& accessor, 
+    static T getVertexValue(const AccessorView<T>& accessor, 
         const std::vector<CesiumGeometry::TriangleClipVertex> &complements, 
         const CesiumGeometry::TriangleClipVertex& vertex) 
     {
         struct Operation {
-            const Cesium3DTiles::GltfAccessor<T>& accessor;
+            const AccessorView<T>& accessor;
             const std::vector<CesiumGeometry::TriangleClipVertex>& complements;
 
             T operator()(int vertexIndex) {
@@ -277,10 +279,10 @@ namespace Cesium3DTiles {
 
     template <class TIndex>
     static void upsamplePrimitiveForRasterOverlays(
-        const CesiumGltf::Model& parentModel,
-        CesiumGltf::Model& model,
-        CesiumGltf::Mesh& /*mesh*/,
-        CesiumGltf::MeshPrimitive& primitive,
+        const Model& parentModel,
+        Model& model,
+        Mesh& /*mesh*/,
+        MeshPrimitive& primitive,
         CesiumGeometry::QuadtreeChild childID
     ) {
         // Add up the per-vertex size of all attributes and create buffers, bufferViews, and accessors
@@ -299,13 +301,13 @@ namespace Cesium3DTiles {
         size_t indexBufferViewIndex = model.bufferViews.size();
         model.bufferViews.emplace_back();
 
-        CesiumGltf::BufferView& vertexBufferView = model.bufferViews[vertexBufferViewIndex];
+        BufferView& vertexBufferView = model.bufferViews[vertexBufferViewIndex];
         vertexBufferView.buffer = static_cast<int>(vertexBufferIndex);
-        vertexBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+        vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
-        CesiumGltf::BufferView& indexBufferView = model.bufferViews[indexBufferViewIndex];
+        BufferView& indexBufferView = model.bufferViews[indexBufferViewIndex];
         indexBufferView.buffer = static_cast<int>(indexBufferIndex);
-        indexBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+        indexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
         uint32_t vertexSizeFloats = 0;
         int uvAccessorIndex = -1;
@@ -333,33 +335,33 @@ namespace Cesium3DTiles {
                 continue;
             }
 
-            const CesiumGltf::Accessor& accessor = parentModel.accessors[static_cast<size_t>(attribute.second)];
+            const Accessor& accessor = parentModel.accessors[static_cast<size_t>(attribute.second)];
             if (accessor.bufferView < 0 || accessor.bufferView >= static_cast<int>(parentModel.bufferViews.size())) {
                 toRemove.push_back(attribute.first);
                 continue;
             }
 
-            const CesiumGltf::BufferView& bufferView = parentModel.bufferViews[static_cast<size_t>(accessor.bufferView)];
+            const BufferView& bufferView = parentModel.bufferViews[static_cast<size_t>(accessor.bufferView)];
             if (bufferView.buffer < 0 || bufferView.buffer >= static_cast<int>(parentModel.buffers.size())) {
                 toRemove.push_back(attribute.first);
                 continue;
             }
 
-            const CesiumGltf::Buffer& buffer = parentModel.buffers[static_cast<size_t>(bufferView.buffer)];
+            const Buffer& buffer = parentModel.buffers[static_cast<size_t>(bufferView.buffer)];
 
-            int64_t accessorByteStride = Cesium3DTiles::GltfAccessor<uint16_t>::computeByteStride(accessor, bufferView);
-			int64_t accessorComponentElements = Cesium3DTiles::GltfAccessor<uint16_t>::computeNumberOfComponents(accessor.type);
-            if (accessor.componentType != CesiumGltf::Accessor::ComponentType::FLOAT) {
+            int64_t accessorByteStride = accessor.computeByteStride(parentModel);
+			int64_t accessorComponentElements = accessor.computeNumberOfComponents();
+            if (accessor.componentType != Accessor::ComponentType::FLOAT) {
                 // Can only interpolate floating point vertex attributes
                 return;
             }
 
             attribute.second = static_cast<int>(model.accessors.size());
             model.accessors.emplace_back();
-            CesiumGltf::Accessor& newAccessor = model.accessors.back();
+            Accessor& newAccessor = model.accessors.back();
             newAccessor.bufferView = static_cast<int>(vertexBufferIndex);
             newAccessor.byteOffset = vertexSizeFloats * sizeof(float);
-            newAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+            newAccessor.componentType = Accessor::ComponentType::FLOAT;
             newAccessor.type = accessor.type;
 
             vertexSizeFloats += static_cast<uint32_t>(accessorComponentElements);
@@ -393,12 +395,16 @@ namespace Cesium3DTiles {
         bool keepAboveU = childID == CesiumGeometry::QuadtreeChild::LowerRight || childID == CesiumGeometry::QuadtreeChild::UpperRight;
         bool keepAboveV = childID == CesiumGeometry::QuadtreeChild::UpperLeft || childID == CesiumGeometry::QuadtreeChild::UpperRight;
 
-        GltfAccessor<glm::vec2> uvAccessor(parentModel, static_cast<size_t>(uvAccessorIndex));
-        GltfAccessor<TIndex> indicesAccessor(parentModel, static_cast<size_t>(primitive.indices));
+        AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
+        AccessorView<TIndex> indicesView(parentModel, primitive.indices);
+
+        if (uvView.status() != AccessorViewStatus::Valid || indicesView.status() != AccessorViewStatus::Valid) {
+            return;
+        }
 
         // check if the primitive has skirts
         size_t indicesBegin = 0;
-        size_t indicesCount = indicesAccessor.size();
+        size_t indicesCount = indicesView.size();
         std::optional<SkirtMeshMetadata> parentSkirtMeshMetadata = SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
         bool hasSkirt = (parentSkirtMeshMetadata != std::nullopt) && (positionAttributeIndex != -1);
         if (hasSkirt) {
@@ -411,7 +417,7 @@ namespace Cesium3DTiles {
         std::vector<CesiumGeometry::TriangleClipVertex> clippedB;
 
         // Maps old (parentModel) vertex indices to new (model) vertex indices.
-        std::vector<uint32_t> vertexMap(uvAccessor.size(), std::numeric_limits<uint32_t>::max());
+        std::vector<uint32_t> vertexMap(uvView.size(), std::numeric_limits<uint32_t>::max());
 
         // std::vector<unsigned char> newVertexBuffer(vertexSizeFloats * sizeof(float));
         // gsl::span<float> newVertexFloats(reinterpret_cast<float*>(newVertexBuffer.data()), newVertexBuffer.size() / sizeof(float));
@@ -420,13 +426,13 @@ namespace Cesium3DTiles {
         EdgeIndices edgeIndices;
 
         for (size_t i = indicesBegin; i < indicesBegin + indicesCount; i += 3) {
-            TIndex i0 = indicesAccessor[i];
-            TIndex i1 = indicesAccessor[i + 1];
-            TIndex i2 = indicesAccessor[i + 2];
+            TIndex i0 = indicesView[i];
+            TIndex i1 = indicesView[i + 1];
+            TIndex i2 = indicesView[i + 2];
 
-            glm::vec2 uv0 = uvAccessor[i0];
-            glm::vec2 uv1 = uvAccessor[i1];
-            glm::vec2 uv2 = uvAccessor[i2];
+            glm::vec2 uv0 = uvView[i0];
+            glm::vec2 uv1 = uvView[i1];
+            glm::vec2 uv2 = uvView[i2];
 
             // Clip this triangle against the East-West boundary
             clippedA.clear();
@@ -446,16 +452,16 @@ namespace Cesium3DTiles {
                 ~0,
                 ~1,
                 ~2,
-                getVertexValue(uvAccessor, clippedA[0]).y,
-                getVertexValue(uvAccessor, clippedA[1]).y,
-                getVertexValue(uvAccessor, clippedA[2]).y,
+                getVertexValue(uvView, clippedA[0]).y,
+                getVertexValue(uvView, clippedA[1]).y,
+                getVertexValue(uvView, clippedA[2]).y,
                 clippedB
             );
 
             // Add the clipped triangle or quad, if any
             addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clipVertexToIndices, clippedA, clippedB);
             if (hasSkirt) {
-                addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
+                addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvView, clipVertexToIndices, clippedA, clippedB);
             }
 
             // If the East-West clip yielded a quad (rather than a triangle), clip the second triangle of the quad, too.
@@ -468,16 +474,16 @@ namespace Cesium3DTiles {
                     ~0,
                     ~2,
                     ~3,
-                    getVertexValue(uvAccessor, clippedA[0]).y,
-                    getVertexValue(uvAccessor, clippedA[2]).y,
-                    getVertexValue(uvAccessor, clippedA[3]).y,
+                    getVertexValue(uvView, clippedA[0]).y,
+                    getVertexValue(uvView, clippedA[2]).y,
+                    getVertexValue(uvView, clippedA[3]).y,
                     clippedB
                 );
 
                 // Add the clipped triangle or quad, if any
                 addClippedPolygon(newVertexFloats, indices, attributes, vertexMap, clipVertexToIndices, clippedA, clippedB);
                 if (hasSkirt) {
-                    addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvAccessor, clipVertexToIndices, clippedA, clippedB);
+                    addEdge(edgeIndices, 0.5, 0.5, keepAboveU, keepAboveV, uvView, clipVertexToIndices, clippedA, clippedB);
                 }
             }
         }
@@ -503,7 +509,7 @@ namespace Cesium3DTiles {
         // Update the accessor vertex counts and min/max values
         size_t numberOfVertices = newVertexFloats.size() / vertexSizeFloats;
         for (const FloatVertexAttribute& attribute : attributes) {
-            CesiumGltf::Accessor& accessor = model.accessors[static_cast<size_t>(attribute.accessorIndex)];
+            Accessor& accessor = model.accessors[static_cast<size_t>(attribute.accessorIndex)];
             accessor.count = numberOfVertices;
             accessor.min = std::move(attribute.minimums);
             accessor.max = std::move(attribute.maximums);
@@ -512,22 +518,22 @@ namespace Cesium3DTiles {
         // Add an accessor for the indices
         size_t indexAccessorIndex = model.accessors.size();
         model.accessors.emplace_back();
-        CesiumGltf::Accessor& newIndicesAccessor = model.accessors.back();
+        Accessor& newIndicesAccessor = model.accessors.back();
         newIndicesAccessor.bufferView = static_cast<int>(indexBufferViewIndex);
         newIndicesAccessor.byteOffset = 0;
         newIndicesAccessor.count = indices.size();
-        newIndicesAccessor.componentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
-        newIndicesAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
+        newIndicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+        newIndicesAccessor.type = Accessor::Type::SCALAR;
 
         // Populate the buffers
-        CesiumGltf::Buffer& vertexBuffer = model.buffers[vertexBufferIndex];
+        Buffer& vertexBuffer = model.buffers[vertexBufferIndex];
         vertexBuffer.cesium.data.resize(newVertexFloats.size() * sizeof(float));
         float* pAsFloats = reinterpret_cast<float*>(vertexBuffer.cesium.data.data());
         std::copy(newVertexFloats.begin(), newVertexFloats.end(), pAsFloats);
         vertexBufferView.byteLength = vertexBuffer.cesium.data.size();
         vertexBufferView.byteStride = vertexSizeFloats * sizeof(float);
 
-        CesiumGltf::Buffer& indexBuffer = model.buffers[indexBufferIndex];
+        Buffer& indexBuffer = model.buffers[indexBufferIndex];
         indexBuffer.cesium.data.resize(indices.size() * sizeof(uint32_t));
         uint32_t* pAsUint32s = reinterpret_cast<uint32_t*>(indexBuffer.cesium.data.data());
         std::copy(indices.begin(), indices.end(), pAsUint32s);
@@ -612,7 +618,7 @@ namespace Cesium3DTiles {
         double thresholdV,
         bool keepAboveU,
         bool keepAboveV,
-        const GltfAccessor<glm::vec2>& uvs,
+        const AccessorView<glm::vec2>& uvs,
         const std::vector<uint32_t>& clipVertexToIndices,
         const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
         const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult)
@@ -839,14 +845,14 @@ namespace Cesium3DTiles {
     }
 
     static void upsamplePrimitiveForRasterOverlays(
-        const CesiumGltf::Model& parentModel,
-        CesiumGltf::Model& model,
-        CesiumGltf::Mesh& mesh,
-        CesiumGltf::MeshPrimitive& primitive,
+        const Model& parentModel,
+        Model& model,
+        Mesh& mesh,
+        MeshPrimitive& primitive,
         CesiumGeometry::QuadtreeChild childID
     ) {
         if (
-            primitive.mode != CesiumGltf::MeshPrimitive::Mode::TRIANGLES ||
+            primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
             primitive.indices < 0 ||
             primitive.indices >= static_cast<int>(parentModel.accessors.size())
         ) {
@@ -856,10 +862,10 @@ namespace Cesium3DTiles {
             return;
         }
 
-        const CesiumGltf::Accessor& indicesAccessorGltf = parentModel.accessors[static_cast<size_t>(primitive.indices)];
-        if (indicesAccessorGltf.componentType == CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT) {
+        const Accessor& indicesAccessorGltf = parentModel.accessors[static_cast<size_t>(primitive.indices)];
+        if (indicesAccessorGltf.componentType == Accessor::ComponentType::UNSIGNED_SHORT) {
             upsamplePrimitiveForRasterOverlays<uint16_t>(parentModel, model, mesh, primitive, childID);
-        } else if (indicesAccessorGltf.componentType == CesiumGltf::Accessor::ComponentType::UNSIGNED_INT) {
+        } else if (indicesAccessorGltf.componentType == Accessor::ComponentType::UNSIGNED_INT) {
             upsamplePrimitiveForRasterOverlays<uint32_t>(parentModel, model, mesh, primitive, childID);
         }
     }
