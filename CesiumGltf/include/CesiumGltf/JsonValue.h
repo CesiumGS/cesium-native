@@ -42,26 +42,26 @@ namespace CesiumGltf {
         /**
          * @brief Gets the number from the value, or a default if the value does not contain a number.
          * 
-         * @param default The default value to return if the value is not a number.
+         * @param defaultValue The default value to return if the value is not a number.
          * @return The number.
          */
-        double getNumber(double default) const;
+        double getNumber(double defaultValue) const;
 
         /**
          * @brief Gets the bool from the value, or a default if the value does not contain a bool.
          * 
-         * @param default The default value to return if the value is not a bool.
+         * @param defaultValue The default value to return if the value is not a bool.
          * @return The bool.
          */
-        bool getBool(bool default) const;
+        bool getBool(bool defaultValue) const;
 
         /**
          * @brief Gets the string from the value, or a default if the value does not contain a string.
          * 
-         * @param default The default value to return if the value is not a string.
+         * @param defaultValue The default value to return if the value is not a string.
          * @return The string.
          */
-        std::string getString(const std::string& default) const;
+        std::string getString(const std::string& defaultValue) const;
 
         /**
          * @brief Gets a typed value corresponding to the given key in the object represented by this instance.
