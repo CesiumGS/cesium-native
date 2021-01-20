@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
 #include "CesiumAsync/ResponseCacheControl.h"
 #include <gsl/span>
@@ -31,7 +32,7 @@ namespace CesiumAsync {
         /**
          * @brief Returns the HTTP headers of the response
          */
-        virtual const std::map<std::string, std::string>& headers() const = 0;
+        virtual const HttpHeaders& headers() const = 0;
 
         /**
          * @brief Returns the HTTP cache control of the response

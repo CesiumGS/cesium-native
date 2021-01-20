@@ -23,7 +23,7 @@ namespace CesiumAsync {
 		, _sharedMaxAge{sharedMaxAge}
 	{}
 
-	/*static*/ std::optional<ResponseCacheControl> ResponseCacheControl::parseFromResponseHeaders(const std::map<std::string, std::string> &headers) 
+	/*static*/ std::optional<ResponseCacheControl> ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) 
 	{
 		std::map<std::string, std::string>::const_iterator cacheControlIter = headers.find("Cache-Control");
 		if (cacheControlIter == headers.end()) {

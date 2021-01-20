@@ -38,35 +38,6 @@ namespace CesiumAsync {
 		virtual bool clearAll(std::string& error) override;
 
 	private:
-		struct Sqlite3StmtWrapper {
-			Sqlite3StmtWrapper() 
-				: stmt{nullptr}
-			{}
-
-			~Sqlite3StmtWrapper() {
-				if (stmt) {
-					sqlite3_finalize(stmt);
-				}
-			}
-
-			sqlite3_stmt *stmt;
-		};
-
-		struct Sqlite3ConnectionWrapper {
-			Sqlite3ConnectionWrapper() 
-				: pConnection{nullptr}
-			{
-			}
-
-			~Sqlite3ConnectionWrapper() {
-				if (pConnection) {
-					sqlite3_close(pConnection);
-				}
-			}
-
-			sqlite3 *pConnection;
-		};
-
 		sqlite3* _pConnection;
 		uint64_t _maxSize;
 	};

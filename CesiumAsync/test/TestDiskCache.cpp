@@ -9,7 +9,7 @@ class MockAssetResponse : public IAssetResponse {
 public:
 	MockAssetResponse(uint16_t statusCode, 
 		const std::string& contentType, 
-		const std::map<std::string, std::string>& headers, 
+		const HttpHeaders& headers, 
 		std::optional<ResponseCacheControl> cacheControl,
 		const std::vector<uint8_t>& data)
 		: _statusCode{statusCode}
@@ -23,7 +23,7 @@ public:
 
 	virtual const std::string& contentType() const override { return this->_contentType; }
 
-	virtual const std::map<std::string, std::string>& headers() const override { return this->_headers; }
+	virtual const HttpHeaders& headers() const override { return this->_headers; }
 
 	virtual const ResponseCacheControl* cacheControl() const override { 
 		return this->_cacheControl ? &this->_cacheControl.value() : nullptr; 
@@ -36,7 +36,7 @@ public:
 private:
 	uint16_t _statusCode;
 	std::string _contentType;
-	std::map<std::string, std::string> _headers;
+	HttpHeaders _headers;
 	std::optional<ResponseCacheControl> _cacheControl;
 	std::vector<uint8_t> _data;
 };
@@ -45,7 +45,7 @@ class MockAssetRequest : public IAssetRequest {
 public:
 	MockAssetRequest(const std::string& method, 
 		const std::string& url, 
-		const std::map<std::string, std::string>& headers, 
+		const HttpHeaders& headers, 
 		std::unique_ptr<IAssetResponse> response) 
 		: _method{method}
 		, _url{url}
@@ -61,7 +61,7 @@ public:
 		return this->_url;
 	}
 
-	virtual const std::map<std::string, std::string>& headers() const override {
+	virtual const HttpHeaders& headers() const override {
 		return this->_headers;
 	}
 
@@ -72,7 +72,7 @@ public:
 private:
 	std::string _method;
 	std::string _url;
-	std::map<std::string, std::string> _headers;
+	HttpHeaders _headers;
 	std::unique_ptr<IAssetResponse> _pResponse;
 };
 
@@ -81,13 +81,13 @@ TEST_CASE("Test disk cache with Sqlite") {
 	SECTION("Test store cache") {
 		DiskCache diskCache("test.db", 3);
 
-		std::map<std::string, std::string> responseHeaders;
+		HttpHeaders responseHeaders;
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
 		std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
 		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
 			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
 
-		std::map<std::string, std::string> requestHeaders;
+		HttpHeaders requestHeaders;
 		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
 			"test.com", requestHeaders, std::move(response));
 
@@ -101,7 +101,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		DiskCache diskCache("test.db", 3);
 
 		// store data in the cache first
-		std::map<std::string, std::string> responseHeaders;
+		HttpHeaders responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
 		responseHeaders["Response-Test-Header-1"] = "Response-Header-Entry-Value-1";
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
@@ -109,7 +109,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
 			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
 
-		std::map<std::string, std::string> requestHeaders;
+		HttpHeaders requestHeaders;
 		requestHeaders["Request-Test-Header-0"] = "Request-Header-Entry-Value-0";
 		requestHeaders["Request-Test-Header-1"] = "Request-Header-Entry-Value-1";
 		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
@@ -131,7 +131,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		DiskCache diskCache("test.db", 3);
 
 		// store data in the cache first
-		std::map<std::string, std::string> responseHeaders;
+		HttpHeaders responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
 		responseHeaders["Response-Test-Header-1"] = "Response-Header-Entry-Value-1";
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
@@ -139,7 +139,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
 			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
 
-		std::map<std::string, std::string> requestHeaders;
+		HttpHeaders requestHeaders;
 		requestHeaders["Request-Test-Header-0"] = "Request-Header-Entry-Value-0";
 		requestHeaders["Request-Test-Header-1"] = "Request-Header-Entry-Value-1";
 		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
@@ -159,7 +159,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		DiskCache diskCache("test.db", 3);
 
 		// store data in the cache first
-		std::map<std::string, std::string> responseHeaders;
+		HttpHeaders responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
 		responseHeaders["Response-Test-Header-1"] = "Response-Header-Entry-Value-1";
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
@@ -167,7 +167,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
 			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
 
-		std::map<std::string, std::string> requestHeaders;
+		HttpHeaders requestHeaders;
 		requestHeaders["Request-Test-Header-0"] = "Request-Header-Entry-Value-0";
 		requestHeaders["Request-Test-Header-1"] = "Request-Header-Entry-Value-1";
 		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
@@ -189,7 +189,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		DiskCache diskCache("test.db", 3);
 
 		// store data in the cache first
-		std::map<std::string, std::string> responseHeaders;
+		HttpHeaders responseHeaders;
 		responseHeaders["Response-Test-Header-0"] = "Response-Header-Entry-Value-0";
 		responseHeaders["Response-Test-Header-1"] = "Response-Header-Entry-Value-1";
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
@@ -197,7 +197,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
 			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
 
-		std::map<std::string, std::string> requestHeaders;
+		HttpHeaders requestHeaders;
 		requestHeaders["Request-Test-Header-0"] = "Request-Header-Entry-Value-0";
 		requestHeaders["Request-Test-Header-1"] = "Request-Header-Entry-Value-1";
 		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 

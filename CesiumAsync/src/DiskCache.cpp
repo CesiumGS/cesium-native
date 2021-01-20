@@ -7,6 +7,20 @@
 #include <stdexcept>
 
 namespace CesiumAsync {
+	struct Sqlite3StmtWrapper {
+		Sqlite3StmtWrapper() 
+			: stmt{nullptr}
+		{}
+
+		~Sqlite3StmtWrapper() {
+			if (stmt) {
+				sqlite3_finalize(stmt);
+			}
+		}
+
+		sqlite3_stmt *stmt;
+	};
+
 	static const std::string CACHE_TABLE = "CacheItem";
 	static const std::string KEY_COLUMN = "key";
 	static const std::string EXPIRY_TIME_COLUMN = "expiryTime";
@@ -21,11 +35,11 @@ namespace CesiumAsync {
 	static const std::string REQUEST_URL_COLUMN = "requestUrl";
 	static const std::string VIRTUAL_RESPONSE_DATA_SIZE = "responseDataTotalSize";
 
-	static std::string convertHeadersToString(const std::map<std::string, std::string>& headers);
+	static std::string convertHeadersToString(const HttpHeaders& headers);
 
 	static std::string convertCacheControlToString(const ResponseCacheControl* cacheControl);
 
-	static std::map<std::string, std::string> convertStringToHeaders(const std::string& serializedHeaders);
+	static HttpHeaders convertStringToHeaders(const std::string& serializedHeaders);
 
 	static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const std::string& serializedResponseCacheControl);
 
@@ -162,7 +176,7 @@ namespace CesiumAsync {
 
 		// parse response cache 
 		std::string serializedResponseHeaders = reinterpret_cast<const char*>(sqlite3_column_text(selectStmtWrapper.stmt, 2));
-		std::map<std::string, std::string> responseHeaders = convertStringToHeaders(serializedResponseHeaders);
+		HttpHeaders responseHeaders = convertStringToHeaders(serializedResponseHeaders);
 
 		std::string responseContentType = reinterpret_cast<const char*>(sqlite3_column_text(selectStmtWrapper.stmt, 3));
 
@@ -186,7 +200,7 @@ namespace CesiumAsync {
 		
 		// parse request
 		std::string serializedRequestHeaders = reinterpret_cast<const char*>(sqlite3_column_text(selectStmtWrapper.stmt, 7));
-		std::map<std::string, std::string> requestHeaders = convertStringToHeaders(serializedRequestHeaders);
+		HttpHeaders requestHeaders = convertStringToHeaders(serializedRequestHeaders);
 
 		std::string requestMethod = reinterpret_cast<const char*>(sqlite3_column_text(selectStmtWrapper.stmt, 8));
 
@@ -200,7 +214,7 @@ namespace CesiumAsync {
 			lastAccessedTime, 
 			std::move(cacheRequest), 
 			std::move(cacheResponse));
-;
+
 		return true;
 	}
 
@@ -445,7 +459,7 @@ namespace CesiumAsync {
 		return true;
 	}
 
-	std::string convertHeadersToString(const std::map<std::string, std::string>& headers) {
+	std::string convertHeadersToString(const HttpHeaders& headers) {
 		rapidjson::Document document;
 		rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 		rapidjson::Value root(rapidjson::kObjectType);
@@ -488,11 +502,11 @@ namespace CesiumAsync {
 		return buffer.GetString();
 	}
 
-	std::map<std::string, std::string> convertStringToHeaders(const std::string& serializedHeaders) {
+	HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
 		rapidjson::Document document;
 		document.Parse(serializedHeaders.c_str());
 
-		std::map<std::string, std::string> headers;
+		HttpHeaders headers;
 		for (rapidjson::Document::ConstMemberIterator it = document.MemberBegin(); it != document.MemberEnd(); ++it) {
 			headers.insert({ it->name.GetString(), it->value.GetString() });
 		}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/HttpHeaders.h"
 #include <string>
 #include <optional>
 #include <map>
@@ -35,7 +36,7 @@ namespace CesiumAsync {
 
 		int sharedMaxAge() const { return _sharedMaxAge; }
 
-		static std::optional<ResponseCacheControl> parseFromResponseHeaders(const std::map<std::string, std::string> &headers);
+		static std::optional<ResponseCacheControl> parseFromResponseHeaders(const HttpHeaders& headers);
 
 	private:
 		bool _mustRevalidate;

@@ -26,12 +26,6 @@ namespace CesiumAsync {
         void tick() noexcept override;
 
     private:
-        static bool isCacheValid(const CacheItem& cacheItem);
-
-        static bool shouldCacheRequest(const IAssetRequest& request);
-
-        static std::time_t calculateExpiryTime(const IAssetRequest& request);
-
 		std::unique_ptr<IAssetAccessor> _pAssetAccessor;
 		std::unique_ptr<ICacheDatabase> _pCacheDatabase;
 	};

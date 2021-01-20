@@ -1,7 +1,7 @@
 #pragma once
 
+#include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
-#include <map>
 #include <functional>
 #include <string>
 
@@ -30,7 +30,7 @@ namespace CesiumAsync {
         /**
          * @brief Gets the request's header. This method may be called from any thread.
          */
-        virtual const std::map<std::string, std::string> &headers() const = 0;
+        virtual const HttpHeaders& headers() const = 0;
 
         /**
          * @brief Gets the response, or nullptr if the request is still in progress.
