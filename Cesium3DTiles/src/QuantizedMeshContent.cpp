@@ -850,10 +850,10 @@ namespace Cesium3DTiles {
         size_t positionBufferViewId = model.bufferViews.size();
         model.bufferViews.emplace_back();
         CesiumGltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
-        positionBufferView.buffer = static_cast<int>(positionBufferId);
+        positionBufferView.buffer = int32_t(positionBufferId);
         positionBufferView.byteOffset = 0;
         positionBufferView.byteStride = 3 * sizeof(float);
-        positionBufferView.byteLength = positionBuffer.cesium.data.size();
+        positionBufferView.byteLength = int64_t(positionBuffer.cesium.data.size());
         positionBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
         size_t positionAccessorId = model.accessors.size();
@@ -867,7 +867,7 @@ namespace Cesium3DTiles {
         positionAccessor.min = { minX, minY, minZ };
         positionAccessor.max = { maxX, maxY, maxZ };
 
-        primitive.attributes.emplace("POSITION", static_cast<int>(positionAccessorId));
+        primitive.attributes.emplace("POSITION", int32_t(positionAccessorId));
 
         // add normal buffer to gltf if there are any
         if (!outputNormalsBuffer.empty()) {
@@ -879,16 +879,16 @@ namespace Cesium3DTiles {
             size_t normalBufferViewId = model.bufferViews.size();
             model.bufferViews.emplace_back();
             CesiumGltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
-            normalBufferView.buffer = static_cast<int>(normalBufferId);
+            normalBufferView.buffer = int32_t(normalBufferId);
             normalBufferView.byteOffset = 0;
             normalBufferView.byteStride = 3 * sizeof(float);
-            normalBufferView.byteLength = normalBuffer.cesium.data.size();
+            normalBufferView.byteLength = int64_t(normalBuffer.cesium.data.size());
             normalBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
             size_t normalAccessorId = model.accessors.size();
             model.accessors.emplace_back();
             CesiumGltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
-            normalAccessor.bufferView = static_cast<int>(normalBufferViewId);
+            normalAccessor.bufferView = int32_t(normalBufferViewId);
             normalAccessor.byteOffset = 0;
             normalAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
             normalAccessor.count = vertexCount + skirtVertexCount;
@@ -906,22 +906,22 @@ namespace Cesium3DTiles {
         size_t indicesBufferViewId = model.bufferViews.size();
         model.bufferViews.emplace_back();
         CesiumGltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
-        indicesBufferView.buffer = static_cast<int>(indicesBufferId);
+        indicesBufferView.buffer = int32_t(indicesBufferId);
         indicesBufferView.byteOffset = 0;
-        indicesBufferView.byteLength = indicesBuffer.cesium.data.size();
+        indicesBufferView.byteLength = int64_t(indicesBuffer.cesium.data.size());
         indicesBufferView.byteStride = indexSizeBytes;
         indicesBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
         size_t indicesAccessorId = model.accessors.size();
         model.accessors.emplace_back();
         CesiumGltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
-        indicesAccessor.bufferView = static_cast<int>(indicesBufferViewId);
+        indicesAccessor.bufferView = int32_t(indicesBufferViewId);
         indicesAccessor.byteOffset = 0;
         indicesAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
         indicesAccessor.count = indicesCount + skirtIndicesCount;
         indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? CesiumGltf::Accessor::ComponentType::UNSIGNED_INT : CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT;
 
-        primitive.indices = static_cast<int>(indicesBufferId);
+        primitive.indices = int32_t(indicesBufferId);
 
         // add skirts info to primitive extra in case we need to upsample from it
         SkirtMeshMetadata skirtMeshMetadata;

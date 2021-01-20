@@ -7,6 +7,7 @@
 #include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include <glm/trigonometric.hpp>
+#include <cstring>
 #include <vector>
 
 using namespace Cesium3DTiles;
@@ -70,30 +71,30 @@ TEST_CASE("Test upsample tile without skirts") {
 
     model.accessors.emplace_back();
     Accessor &positionAccessor = model.accessors.back();
-    positionAccessor.bufferView = static_cast<int>(model.bufferViews.size() - 1);
+    positionAccessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
     positionAccessor.byteOffset = 0;
-    positionAccessor.count = positions.size();
+    positionAccessor.count = static_cast<int64_t>(positions.size());
     positionAccessor.componentType = Accessor::ComponentType::FLOAT;
     positionAccessor.type = Accessor::Type::VEC3;
 
-    int positionAccessorIdx = static_cast<int>(model.accessors.size() - 1);
+    int32_t positionAccessorIdx = static_cast<int32_t>(model.accessors.size() - 1);
 
     // create uv
     model.bufferViews.emplace_back();
     BufferView &uvBufferView = model.bufferViews.emplace_back();
-    uvBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+    uvBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
     uvBufferView.byteOffset = positionsBufferSize;
     uvBufferView.byteLength = uvsBufferSize;
 
     model.accessors.emplace_back();
     Accessor &uvAccessor = model.accessors.back();
-    uvAccessor.bufferView = static_cast<int>(model.bufferViews.size() - 1);
+    uvAccessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
     uvAccessor.byteOffset = 0;
-    uvAccessor.count = uvs.size();
+    uvAccessor.count = static_cast<int64_t>(uvs.size());
     uvAccessor.componentType = Accessor::ComponentType::FLOAT;
     uvAccessor.type = Accessor::Type::VEC2;
 
-    int uvAccessorIdx = static_cast<int>(model.accessors.size() - 1);
+    int32_t uvAccessorIdx = static_cast<int32_t>(model.accessors.size() - 1);
 
     // create indices
     model.bufferViews.emplace_back();
@@ -106,7 +107,7 @@ TEST_CASE("Test upsample tile without skirts") {
     Accessor &indicesAccessor = model.accessors.back();
     indicesAccessor.bufferView = static_cast<int>(model.bufferViews.size() - 1);
     indicesAccessor.byteOffset = 0;
-    indicesAccessor.count = indices.size();
+    indicesAccessor.count = static_cast<int64_t>(indices.size());
     indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
     indicesAccessor.type = Accessor::Type::SCALAR;
 

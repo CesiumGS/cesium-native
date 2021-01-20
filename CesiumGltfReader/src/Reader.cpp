@@ -292,7 +292,7 @@ namespace {
                 }
                
                 gsl::span<const uint8_t> bufferSpan(buffer.cesium.data);
-                gsl::span<const uint8_t> bufferViewSpan = bufferSpan.subspan(bufferView.byteOffset, bufferView.byteLength);
+                gsl::span<const uint8_t> bufferViewSpan = bufferSpan.subspan(static_cast<size_t>(bufferView.byteOffset), static_cast<size_t>(bufferView.byteLength));
                 ImageReaderResult imageResult = readImage(bufferViewSpan);
                 if (imageResult.image) {
                     image.cesium = std::move(imageResult.image.value());

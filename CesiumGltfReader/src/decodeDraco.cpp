@@ -4,12 +4,17 @@
 #include "CesiumGltf/Reader.h"
 #include <string>
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4127)
+#endif
+
 #include <draco/core/decoder_buffer.h>
 #include <draco/compression/decode.h>
-#pragma warning(pop)
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 namespace {
     using namespace CesiumGltf;
@@ -21,21 +26,23 @@ namespace {
     ) {
         Model& model = readModel.model.value();
 
-        if (draco.bufferView < 0 || draco.bufferView >= model.bufferViews.size()) {
+        BufferView* pBufferView = Model::getSafe(&model.bufferViews, draco.bufferView);
+        if (!pBufferView) {
             if (!readModel.warnings.empty()) readModel.warnings += "\n";
             readModel.warnings += "Draco bufferView index is invalid.";
             return nullptr;
         }
 
-        BufferView& bufferView = model.bufferViews[draco.bufferView];
+        BufferView& bufferView = *pBufferView;
 
-        if (bufferView.buffer < 0 || bufferView.buffer >= model.buffers.size()) {
+        Buffer* pBuffer = Model::getSafe(&model.buffers, bufferView.buffer);
+        if (!pBuffer) {
             if (!readModel.warnings.empty()) readModel.warnings += "\n";
             readModel.warnings += "Draco bufferView has an invalid buffer index.";
             return nullptr;
         }
 
-        Buffer& buffer = model.buffers[bufferView.buffer];
+        Buffer& buffer = *pBuffer;
 
         if (bufferView.byteOffset < 0 || bufferView.byteLength < 0 || bufferView.byteOffset + bufferView.byteLength > static_cast<int64_t>(buffer.cesium.data.size())) {
             if (!readModel.warnings.empty()) readModel.warnings += "\n";
@@ -43,7 +50,7 @@ namespace {
             return nullptr;
         }
 
-        gsl::span<const uint8_t> data(buffer.cesium.data.data() + bufferView.byteOffset, bufferView.byteLength);
+        gsl::span<const uint8_t> data(buffer.cesium.data.data() + bufferView.byteOffset, static_cast<uint64_t>(bufferView.byteLength));
 
         draco::DecoderBuffer decodeBuffer;
         decodeBuffer.Init(reinterpret_cast<const char*>(data.data()), data.size());
@@ -105,7 +112,7 @@ namespace {
         int64_t indexBytes = pIndicesAccessor->computeByteSizeOfComponent();
         int64_t indicesBytes = pIndicesAccessor->count * indexBytes;
         
-        indicesBuffer.cesium.data.resize(indicesBytes);
+        indicesBuffer.cesium.data.resize(static_cast<size_t>(indicesBytes));
         indicesBuffer.byteLength = indicesBytes;
         indicesBufferView.byteLength = indicesBytes;
         indicesBufferView.byteStride = indexBytes;
@@ -165,7 +172,7 @@ namespace {
         int64_t stride = numberOfComponents * pAccessor->computeByteSizeOfComponent();
         int64_t sizeBytes = pAccessor->count * stride;
 
-        buffer.cesium.data.resize(sizeBytes);
+        buffer.cesium.data.resize(static_cast<size_t>(sizeBytes));
         buffer.byteLength = sizeBytes;
         bufferView.byteLength = sizeBytes;
         bufferView.byteStride = stride;
@@ -220,7 +227,7 @@ namespace {
 
         copyDecodedIndices(readModel, primitive, pMesh.get());
 
-        for (const std::pair<std::string, int32_t>& attribute : draco.attributes) {
+        for (const std::pair<const std::string, int32_t>& attribute : draco.attributes) {
             auto primitiveAttrIt = primitive.attributes.find(attribute.first);
             if (primitiveAttrIt == primitive.attributes.end()) {
                 // The primitive does not use this attribute. The KHR_draco_mesh_compression spec
@@ -243,7 +250,7 @@ namespace {
             }
 
             int32_t dracoAttrIndex = attribute.second;
-            const draco::PointAttribute* pAttribute = pMesh->GetAttributeByUniqueId(dracoAttrIndex);
+            const draco::PointAttribute* pAttribute = pMesh->GetAttributeByUniqueId(static_cast<uint32_t>(dracoAttrIndex));
             if (pAttribute == nullptr) {
                 if (!readModel.warnings.empty()) {
                     readModel.warnings += "\n";

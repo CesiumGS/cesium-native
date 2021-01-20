@@ -66,20 +66,20 @@ namespace Cesium3DTiles {
 			return -1;
 		}
 
-        uvBuffer.cesium.data.resize(positionView.size() * 2 * sizeof(float));
+        uvBuffer.cesium.data.resize(size_t(positionView.size()) * 2 * sizeof(float));
 
         CesiumGltf::BufferView& uvBufferView = gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
         uvBufferView.buffer = uvBufferId;
         uvBufferView.byteOffset = 0;
         uvBufferView.byteStride = 2 * sizeof(float);
-        uvBufferView.byteLength = uvBuffer.cesium.data.size();
+        uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
         uvBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
         CesiumGltf::Accessor& uvAccessor = gltf.accessors[static_cast<size_t>(uvAccessorId)];
         uvAccessor.bufferView = uvBufferViewId;
         uvAccessor.byteOffset = 0;
         uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-        uvAccessor.count = positionView.size();
+        uvAccessor.count = int64_t(positionView.size());
         uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
 
 		CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);

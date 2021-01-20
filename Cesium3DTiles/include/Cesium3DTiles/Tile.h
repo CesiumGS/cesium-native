@@ -467,7 +467,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Determines the number of bytes in this tile's geometry and texture data.
          */
-        size_t computeByteSize() const noexcept;
+        int64_t computeByteSize() const noexcept;
 
     private:
 

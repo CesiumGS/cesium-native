@@ -579,8 +579,8 @@ namespace Cesium3DTiles {
         }
     }
 
-    size_t Tile::computeByteSize() const noexcept {
-        size_t bytes = 0;
+    int64_t Tile::computeByteSize() const noexcept {
+        int64_t bytes = 0;
 
         const TileContentLoadResult* pContent = this->getContent();
         if (pContent && pContent->model) {

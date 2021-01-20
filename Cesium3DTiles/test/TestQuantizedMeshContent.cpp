@@ -390,8 +390,8 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
     double longitudeOffset = (west - east) * 0.0001;
     double latitudeOffset = (north - south) * 0.0001;
 
-    REQUIRE(totalSkirtIndices == indices.size() - gridIndicesCount);
-    REQUIRE(totalSkirtVertices == positions.size() - gridVerticesCount);
+    REQUIRE(totalSkirtIndices == size_t(indices.size()) - gridIndicesCount);
+    REQUIRE(totalSkirtVertices == size_t(positions.size()) - gridVerticesCount);
 
     size_t currentVertexCount = gridVerticesCount;
     for (size_t i = 0; i < westIndicesCount; ++i) {
@@ -400,7 +400,7 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
         double latitude = Math::lerp(south, north, uvs[westIndex].y);
         glm::dvec3 expectPosition = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, -skirtHeight));
 
-        glm::dvec3 position = static_cast<glm::dvec3>(positions[currentVertexCount + i]);
+        glm::dvec3 position = static_cast<glm::dvec3>(positions[int64_t(currentVertexCount + i)]);
         position += glm::dvec3(quantizedMesh.header.boundingSphereCenterX, quantizedMesh.header.boundingSphereCenterY, quantizedMesh.header.boundingSphereCenterZ);
         REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
         REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
@@ -414,7 +414,7 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
         double latitude = south - latitudeOffset;
         glm::dvec3 expectPosition = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, -skirtHeight));
 
-        glm::dvec3 position = static_cast<glm::dvec3>(positions[currentVertexCount + i]);
+        glm::dvec3 position = static_cast<glm::dvec3>(positions[int64_t(currentVertexCount + i)]);
         position += glm::dvec3(quantizedMesh.header.boundingSphereCenterX, quantizedMesh.header.boundingSphereCenterY, quantizedMesh.header.boundingSphereCenterZ);
         REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
         REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
@@ -428,7 +428,7 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
         double latitude = Math::lerp(south, north, uvs[eastIndex].y);
         glm::dvec3 expectPosition = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, -skirtHeight));
 
-        glm::dvec3 position = static_cast<glm::dvec3>(positions[currentVertexCount + i]);
+        glm::dvec3 position = static_cast<glm::dvec3>(positions[int64_t(currentVertexCount + i)]);
         position += glm::dvec3(quantizedMesh.header.boundingSphereCenterX, quantizedMesh.header.boundingSphereCenterY, quantizedMesh.header.boundingSphereCenterZ);
         REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
         REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON2));
@@ -442,7 +442,7 @@ void checkGridMesh(const QuantizedMesh<T>& quantizedMesh,
         double latitude = north + latitudeOffset;
         glm::dvec3 expectPosition = ellipsoid.cartographicToCartesian(Cartographic(longitude, latitude, -skirtHeight));
 
-        glm::dvec3 position = static_cast<glm::dvec3>(positions[currentVertexCount + i]);
+        glm::dvec3 position = static_cast<glm::dvec3>(positions[int64_t(currentVertexCount + i)]);
         position += glm::dvec3(quantizedMesh.header.boundingSphereCenterX, quantizedMesh.header.boundingSphereCenterY, quantizedMesh.header.boundingSphereCenterZ);
         REQUIRE(Math::equalsEpsilon(position.x, expectPosition.x, Math::EPSILON3));
         REQUIRE(Math::equalsEpsilon(position.y, expectPosition.y, Math::EPSILON3));
@@ -478,7 +478,7 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
 
     for (size_t i = 0; i < expectedNormals.size(); ++i) {
         glm::vec3 &expectedNormal = expectedNormals[i];
-        glm::vec3 normal = normals[i];
+        glm::vec3 normal = normals[int64_t(i)];
 
         if (!Math::equalsEpsilon(glm::dot(expectedNormals[i], expectedNormals[i]), 0.0, Math::EPSILON7)) {
             expectedNormal = glm::normalize(expectedNormals[i]);
@@ -506,14 +506,14 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     size_t gridVerticesCount = verticesWidth * verticesHeight;
     size_t totalSkirtVertices = westIndicesCount + southIndicesCount + eastIndicesCount + northIndicesCount;
 
-    REQUIRE(totalSkirtVertices == normals.size() - gridVerticesCount);
+    REQUIRE(totalSkirtVertices == size_t(normals.size()) - gridVerticesCount);
 
     size_t currentVertexCount = gridVerticesCount;
     uint32_t x = 0;
     uint32_t y = 0;
     for (size_t i = 0; i < westIndicesCount; ++i) {
-        glm::vec3 normal = normals[currentVertexCount + i];
-        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+        glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
+        glm::vec3 expectedNormal = expectedNormals[index2DTo1D(x, y, verticesWidth)];
         REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
@@ -525,8 +525,8 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     x = verticesWidth - 1;
     y = 0;
     for (size_t i = 0; i < southIndicesCount; ++i) {
-        glm::vec3 normal = normals[currentVertexCount + i];
-        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+        glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
+        glm::vec3 expectedNormal = expectedNormals[index2DTo1D(x, y, verticesWidth)];
         REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
@@ -538,8 +538,8 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     x = verticesWidth - 1;
     y = verticesHeight - 1;
     for (size_t i = 0; i < eastIndicesCount; ++i) {
-        glm::vec3 normal = normals[currentVertexCount + i];
-        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+        glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
+        glm::vec3 expectedNormal = expectedNormals[index2DTo1D(x, y, verticesWidth)];
         REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));
@@ -551,8 +551,8 @@ static void checkGeneratedGridNormal(const QuantizedMesh<T>& quantizedMesh,
     x = 0;
     y = verticesHeight - 1;
     for (size_t i = 0; i < northIndicesCount; ++i) {
-        glm::vec3 normal = normals[currentVertexCount + i];
-        glm::vec3 expectedNormal = expectedNormals[static_cast<size_t>(index2DTo1D(x, y, verticesWidth))];
+        glm::vec3 normal = normals[int64_t(currentVertexCount + i)];
+        glm::vec3 expectedNormal = expectedNormals[index2DTo1D(x, y, verticesWidth)];
         REQUIRE(Math::equalsEpsilon(normal.x, expectedNormal.x, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.y, expectedNormal.y, Math::EPSILON7));
         REQUIRE(Math::equalsEpsilon(normal.z, expectedNormal.z, Math::EPSILON7));

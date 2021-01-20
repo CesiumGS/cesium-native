@@ -127,18 +127,18 @@ namespace Cesium3DTiles {
 
                         std::swap(startV, endV);
 
-                        uint32_t startPixelX = static_cast<uint32_t>(std::floor(startU * width));
-                        uint32_t endPixelX = static_cast<uint32_t>(std::ceil(endU * width));
-                        uint32_t startPixelY = static_cast<uint32_t>(std::floor(startV * height));
-                        uint32_t endPixelY = static_cast<uint32_t>(std::ceil(endV * height));
+                        int32_t startPixelX = static_cast<int32_t>(std::floor(startU * width));
+                        int32_t endPixelX = static_cast<int32_t>(std::ceil(endU * width));
+                        int32_t startPixelY = static_cast<int32_t>(std::floor(startV * height));
+                        int32_t endPixelY = static_cast<int32_t>(std::ceil(endV * height));
 
-                        for (uint32_t j = startPixelY; j < endPixelY; ++j) {
-                            uint32_t rowStart = j * static_cast<uint32_t>(width) * static_cast<uint32_t>(bytesPerPixel);
-                            for (uint32_t i = startPixelX; i < endPixelX; ++i) {
-                                uint32_t pixelStart = rowStart + i * bytesPerPixel;
+                        for (int32_t j = startPixelY; j < endPixelY; ++j) {
+                            int32_t rowStart = j * width * bytesPerPixel;
+                            for (int32_t i = startPixelX; i < endPixelX; ++i) {
+                                int32_t pixelStart = rowStart + i * bytesPerPixel;
                                 
                                 // Set alpha to 0
-                                imageData[pixelStart + 3] = 0;
+                                imageData[size_t(pixelStart + 3)] = 0;
                             }
                         }
                     }

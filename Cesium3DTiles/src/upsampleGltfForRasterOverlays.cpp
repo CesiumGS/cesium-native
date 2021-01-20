@@ -223,12 +223,12 @@ namespace Cesium3DTiles {
             const AccessorView<T>& accessor;
 
             T operator()(int vertexIndex) {
-                return accessor[static_cast<size_t>(vertexIndex)];
+                return accessor[vertexIndex];
             }
 
             T operator()(const CesiumGeometry::InterpolatedVertex& vertex) {
-                const T& v0 = accessor[static_cast<size_t>(vertex.first)];
-                const T& v1 = accessor[static_cast<size_t>(vertex.second)];
+                const T& v0 = accessor[vertex.first];
+                const T& v1 = accessor[vertex.second];
                 return glm::mix(v0, v1, vertex.t);
             }
         };
@@ -250,7 +250,7 @@ namespace Cesium3DTiles {
                     return getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertexIndex)]);
                 }
 
-                return accessor[static_cast<size_t>(vertexIndex)];
+                return accessor[vertexIndex];
             }
 
             T operator()(const CesiumGeometry::InterpolatedVertex& vertex) {
@@ -259,7 +259,7 @@ namespace Cesium3DTiles {
                     v0 = getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertex.first)]);
                 }
                 else {
-                    v0 = accessor[static_cast<size_t>(vertex.first)];
+                    v0 = accessor[vertex.first];
                 }
 
                 T v1{};
@@ -267,7 +267,7 @@ namespace Cesium3DTiles {
                     v1 = getVertexValue(accessor, complements, complements[static_cast<size_t>(~vertex.second)]);
                 }
                 else {
-                    v1 = accessor[static_cast<size_t>(vertex.second)];
+                    v1 = accessor[vertex.second];
                 }
 
                 return glm::mix(v0, v1, vertex.t);
@@ -403,8 +403,8 @@ namespace Cesium3DTiles {
         }
 
         // check if the primitive has skirts
-        size_t indicesBegin = 0;
-        size_t indicesCount = indicesView.size();
+        int64_t indicesBegin = 0;
+        int64_t indicesCount = indicesView.size();
         std::optional<SkirtMeshMetadata> parentSkirtMeshMetadata = SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
         bool hasSkirt = (parentSkirtMeshMetadata != std::nullopt) && (positionAttributeIndex != -1);
         if (hasSkirt) {
@@ -417,7 +417,7 @@ namespace Cesium3DTiles {
         std::vector<CesiumGeometry::TriangleClipVertex> clippedB;
 
         // Maps old (parentModel) vertex indices to new (model) vertex indices.
-        std::vector<uint32_t> vertexMap(uvView.size(), std::numeric_limits<uint32_t>::max());
+        std::vector<uint32_t> vertexMap(size_t(uvView.size()), std::numeric_limits<uint32_t>::max());
 
         // std::vector<unsigned char> newVertexBuffer(vertexSizeFloats * sizeof(float));
         // gsl::span<float> newVertexFloats(reinterpret_cast<float*>(newVertexBuffer.data()), newVertexBuffer.size() / sizeof(float));
@@ -425,7 +425,7 @@ namespace Cesium3DTiles {
         std::vector<uint32_t> indices;
         EdgeIndices edgeIndices;
 
-        for (size_t i = indicesBegin; i < indicesBegin + indicesCount; i += 3) {
+        for (int64_t i = indicesBegin; i < indicesBegin + indicesCount; i += 3) {
             TIndex i0 = indicesView[i];
             TIndex i1 = indicesView[i + 1];
             TIndex i2 = indicesView[i + 2];
@@ -507,7 +507,7 @@ namespace Cesium3DTiles {
         }
 
         // Update the accessor vertex counts and min/max values
-        size_t numberOfVertices = newVertexFloats.size() / vertexSizeFloats;
+        int64_t numberOfVertices = int64_t(newVertexFloats.size()) / vertexSizeFloats;
         for (const FloatVertexAttribute& attribute : attributes) {
             Accessor& accessor = model.accessors[static_cast<size_t>(attribute.accessorIndex)];
             accessor.count = numberOfVertices;
@@ -521,7 +521,7 @@ namespace Cesium3DTiles {
         Accessor& newIndicesAccessor = model.accessors.back();
         newIndicesAccessor.bufferView = static_cast<int>(indexBufferViewIndex);
         newIndicesAccessor.byteOffset = 0;
-        newIndicesAccessor.count = indices.size();
+        newIndicesAccessor.count = int64_t(indices.size());
         newIndicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
         newIndicesAccessor.type = Accessor::Type::SCALAR;
 
@@ -530,14 +530,14 @@ namespace Cesium3DTiles {
         vertexBuffer.cesium.data.resize(newVertexFloats.size() * sizeof(float));
         float* pAsFloats = reinterpret_cast<float*>(vertexBuffer.cesium.data.data());
         std::copy(newVertexFloats.begin(), newVertexFloats.end(), pAsFloats);
-        vertexBufferView.byteLength = vertexBuffer.cesium.data.size();
+        vertexBufferView.byteLength = int64_t(vertexBuffer.cesium.data.size());
         vertexBufferView.byteStride = vertexSizeFloats * sizeof(float);
 
         Buffer& indexBuffer = model.buffers[indexBufferIndex];
         indexBuffer.cesium.data.resize(indices.size() * sizeof(uint32_t));
         uint32_t* pAsUint32s = reinterpret_cast<uint32_t*>(indexBuffer.cesium.data.data());
         std::copy(indices.begin(), indices.end(), pAsUint32s);
-        indexBufferView.byteLength = indexBuffer.cesium.data.size();
+        indexBufferView.byteLength = int64_t(indexBuffer.cesium.data.size());
 
         // add skirts to extras to be upsampled later if needed
         if (hasSkirt) {
