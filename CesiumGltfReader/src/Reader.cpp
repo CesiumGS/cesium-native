@@ -50,18 +50,16 @@ namespace {
         }
 
         virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context) override {
-            if (!this->_result.warnings.empty()) {
-                this->_result.warnings.push_back('\n');
-            }
-
-            this->_result.warnings += warning;
-            this->_result.warnings += "\n  While parsing: ";
+            std::string fullWarning = warning;
+            fullWarning += "\n  While parsing: ";
             for (auto it = context.rbegin(); it != context.rend(); ++it) {
-                this->_result.warnings += *it;
+                fullWarning += *it;
             }
 
-            this->_result.warnings += "\n  From byte offset: ";
-            this->_result.warnings += std::to_string(this->_inputStream.Tell());
+            fullWarning += "\n  From byte offset: ";
+            fullWarning += std::to_string(this->_inputStream.Tell());
+
+            this->_result.warnings.emplace_back(std::move(fullWarning));
         }
 
     private:
@@ -156,11 +154,7 @@ namespace {
             s += std::to_string(reader.GetErrorOffset());
             s += ": ";
             s += getMessageFromRapidJsonError(reader.GetParseErrorCode());
-
-            if (!result.errors.empty()) {
-                result.errors.push_back('\n');
-            }
-            result.errors += s;
+            result.errors.emplace_back(std::move(s));
         }
 
         return result;
@@ -170,8 +164,8 @@ namespace {
         if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
             return {
                 std::nullopt,
-                "Too short to be a valid GLB.",
-                ""
+                {"Too short to be a valid GLB."},
+                {}
             };
         }
 
@@ -179,24 +173,24 @@ namespace {
         if (pHeader->magic != 0x46546C67) {
             return {
                 std::nullopt,
-                "GLB does not start with the expected magic value 'glTF'.",
-                ""
+                { "GLB does not start with the expected magic value 'glTF'." },
+                {}
             };
         }
 
         if (pHeader->version != 2) {
             return {
                 std::nullopt,
-                "Only binary glTF version 2 is supported.",
-                ""
+                { "Only binary glTF version 2 is supported." },
+                {}
             };
         }
 
         if (pHeader->length > data.size()) {
             return {
                 std::nullopt,
-                "GLB extends past the end of the buffer.",
-                ""
+                { "GLB extends past the end of the buffer." },
+                {}
             };
         }
 
@@ -206,8 +200,8 @@ namespace {
         if (pJsonChunkHeader->chunkType != 0x4E4F534A) {
             return {
                 std::nullopt,
-                "GLB JSON chunk does not have the expected chunkType.",
-                ""
+                { "GLB JSON chunk does not have the expected chunkType." },
+                {}
             };
         }
         
@@ -217,8 +211,8 @@ namespace {
         if (jsonEnd > glbData.size()) {
             return {
                 std::nullopt,
-                "GLB JSON chunk extends past the end of the buffer.",
-                ""
+                { "GLB JSON chunk extends past the end of the buffer." },
+                {}
             };
         }
 
@@ -230,8 +224,8 @@ namespace {
             if (pBinaryChunkHeader->chunkType != 0x004E4942) {
                 return {
                     std::nullopt,
-                    "GLB binary chunk does not have the expected chunkType.",
-                    ""
+                    { "GLB binary chunk does not have the expected chunkType." },
+                    {}
                 };
             }
 
@@ -241,8 +235,8 @@ namespace {
             if (binaryEnd > glbData.size()) {
                 return {
                     std::nullopt,
-                    "GLB binary chunk extends past the end of the buffer.",
-                    ""
+                    { "GLB binary chunk extends past the end of the buffer." },
+                    {}
                 };
             }
 
@@ -255,19 +249,19 @@ namespace {
             Model& model = result.model.value();
 
             if (model.buffers.size() == 0) {
-                result.errors = "GLB has a binary chunk but the JSON does not define any buffers.";
+                result.errors.emplace_back("GLB has a binary chunk but the JSON does not define any buffers.");
                 return result;
             }
 
             Buffer& buffer = model.buffers[0];
             if (buffer.uri) {
-                result.errors = "GLB has a binary chunk but the first buffer in the JSON chunk also has a 'uri'.";
+                result.errors.emplace_back("GLB has a binary chunk but the first buffer in the JSON chunk also has a 'uri'.");
                 return result;
             }
 
             int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
             if (buffer.byteLength > binaryChunkSize || buffer.byteLength + 3 < binaryChunkSize) {
-                result.errors = "GLB binary chunk size does not match the size of the first buffer in the JSON chunk.";
+                result.errors.emplace_back("GLB binary chunk size does not match the size of the first buffer in the JSON chunk.");
                 return result;
             }
 
@@ -286,8 +280,7 @@ namespace {
                 const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
 
                 if (bufferView.byteOffset + bufferView.byteLength > static_cast<int64_t>(buffer.cesium.data.size())) {
-                    if (!readModel.warnings.empty()) readModel.warnings += "\n";
-                    readModel.warnings += "Image bufferView's byteLength is more than the available bytes.";
+                    readModel.warnings.emplace_back("Image bufferView's byteLength is more than the available bytes.");
                     continue;
                 }
                
@@ -332,7 +325,7 @@ ImageReaderResult CesiumGltf::readImage(const gsl::span<const uint8_t>& data) {
         stbi_image_free(pImage);
     } else {
         result.image.reset();
-        result.errors = stbi_failure_reason();
+        result.errors.emplace_back(stbi_failure_reason());
     }
 
     return result;

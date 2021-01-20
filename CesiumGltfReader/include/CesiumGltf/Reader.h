@@ -3,12 +3,14 @@
 #include "CesiumGltf/Model.h"
 #include <gsl/span>
 #include <optional>
+#include <string>
+#include <vector>
 
 namespace CesiumGltf {
     struct ModelReaderResult {
         std::optional<Model> model;
-        std::string errors;
-        std::string warnings;
+        std::vector<std::string> errors;
+        std::vector<std::string> warnings;
     };
 
     struct ReadModelOptions {
@@ -21,8 +23,8 @@ namespace CesiumGltf {
 
     struct ImageReaderResult {
         std::optional<ImageCesium> image;
-        std::string errors;
-        std::string warnings;
+        std::vector<std::string> errors;
+        std::vector<std::string> warnings;
     };
 
     ImageReaderResult readImage(const gsl::span<const uint8_t>& data);

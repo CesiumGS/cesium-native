@@ -4,6 +4,7 @@
 #include "CesiumGltf/AccessorWriter.h"
 #include "CesiumGltf/Reader.h"
 #include "CesiumUtility/Math.h"
+#include "CesiumUtility/joinToString.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {
@@ -24,10 +25,10 @@ namespace Cesium3DTiles {
 
 		CesiumGltf::ModelReaderResult loadedModel = CesiumGltf::readModel(data);
 		if (!loadedModel.errors.empty()) {
-			SPDLOG_LOGGER_ERROR(pLogger, "Failed to load binary glTF from {}: {}", url, loadedModel.errors);
+			SPDLOG_LOGGER_ERROR(pLogger, "Failed to load binary glTF from {}:\n- {}", url, CesiumUtility::joinToString(loadedModel.errors, "\n- "));
 		}
 		if (!loadedModel.warnings.empty()) {
-			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from {}: {}", url, loadedModel.warnings);
+			SPDLOG_LOGGER_WARN(pLogger, "Warning when loading binary glTF from {}:\n- {}", url, CesiumUtility::joinToString(loadedModel.warnings, "\n- "));
 		}
 
 		pResult->model = std::move(loadedModel.model);

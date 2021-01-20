@@ -28,8 +28,7 @@ namespace {
 
         BufferView* pBufferView = Model::getSafe(&model.bufferViews, draco.bufferView);
         if (!pBufferView) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "Draco bufferView index is invalid.";
+            readModel.warnings.emplace_back("Draco bufferView index is invalid.");
             return nullptr;
         }
 
@@ -37,16 +36,14 @@ namespace {
 
         Buffer* pBuffer = Model::getSafe(&model.buffers, bufferView.buffer);
         if (!pBuffer) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "Draco bufferView has an invalid buffer index.";
+            readModel.warnings.emplace_back("Draco bufferView has an invalid buffer index.");
             return nullptr;
         }
 
         Buffer& buffer = *pBuffer;
 
         if (bufferView.byteOffset < 0 || bufferView.byteLength < 0 || bufferView.byteOffset + bufferView.byteLength > static_cast<int64_t>(buffer.cesium.data.size())) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "Draco bufferView extends beyond its buffer.";
+            readModel.warnings.emplace_back("Draco bufferView extends beyond its buffer.");
             return nullptr;
         }
 
@@ -59,9 +56,7 @@ namespace {
         draco::Mesh mesh;
         draco::StatusOr<std::unique_ptr<draco::Mesh>> result = decoder.DecodeMeshFromBuffer(&decodeBuffer);
         if (!result.ok()) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "Draco decoding failed: ";
-            readModel.warnings += result.status().error_msg_string();
+            readModel.warnings.emplace_back(std::string("Draco decoding failed: ") + result.status().error_msg_string());
             return nullptr;
         }
 
@@ -91,14 +86,12 @@ namespace {
 
         Accessor* pIndicesAccessor = Model::getSafe(&model.accessors, primitive.indices);
         if (!pIndicesAccessor) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "Primitive indices accessor ID is invalid.";
+            readModel.warnings.emplace_back("Primitive indices accessor ID is invalid.");
             return;
         }
 
         if (pIndicesAccessor->count > pMesh->num_faces() * 3) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "There are fewer decoded Draco indices than are expected by the accessor.";
+            readModel.warnings.emplace_back("There are fewer decoded Draco indices than are expected by the accessor.");
 
             pIndicesAccessor->count = pMesh->num_faces() * 3;
         }
@@ -156,8 +149,7 @@ namespace {
         Model& model = readModel.model.value();
 
         if (pAccessor->count > pMesh->num_points()) {
-            if (!readModel.warnings.empty()) readModel.warnings += "\n";
-            readModel.warnings += "There are fewer decoded Draco indices than are expected by the accessor.";
+            readModel.warnings.emplace_back("There are fewer decoded Draco indices than are expected by the accessor.");
 
             pAccessor->count = pMesh->num_points();
         }
@@ -207,8 +199,7 @@ namespace {
                 doCopy(reinterpret_cast<float*>(buffer.cesium.data.data()));
                 break;
             default:
-                if (!readModel.warnings.empty()) readModel.warnings += "\n";
-                readModel.warnings += "Accessor uses an unknown componentType: " + std::to_string(int32_t(pAccessor->componentType));
+                readModel.warnings.emplace_back("Accessor uses an unknown componentType: " + std::to_string(int32_t(pAccessor->componentType)));
                 break;
         }
     }
@@ -232,30 +223,21 @@ namespace {
             if (primitiveAttrIt == primitive.attributes.end()) {
                 // The primitive does not use this attribute. The KHR_draco_mesh_compression spec
                 // says this shouldn't happen, so warn.
-                if (!readModel.warnings.empty()) {
-                    readModel.warnings += "\n";
-                }
-                readModel.warnings += "Draco extension has the " + attribute.first + " attribute, but the primitive does not have that attribute.";
+                readModel.warnings.emplace_back("Draco extension has the " + attribute.first + " attribute, but the primitive does not have that attribute.");
                 continue;
             }
 
             int32_t primitiveAttrIndex = primitiveAttrIt->second;
             Accessor* pAccessor = Model::getSafe(&model.accessors, primitiveAttrIndex);
             if (!pAccessor) {
-                if (!readModel.warnings.empty()) {
-                    readModel.warnings += "\n";
-                }
-                readModel.warnings += "Primitive attribute's accessor index is invalid.";
+                readModel.warnings.emplace_back("Primitive attribute's accessor index is invalid.");
                 continue;
             }
 
             int32_t dracoAttrIndex = attribute.second;
             const draco::PointAttribute* pAttribute = pMesh->GetAttributeByUniqueId(static_cast<uint32_t>(dracoAttrIndex));
             if (pAttribute == nullptr) {
-                if (!readModel.warnings.empty()) {
-                    readModel.warnings += "\n";
-                }
-                readModel.warnings += "Draco attribute with unique ID " + std::to_string(dracoAttrIndex) + " does not exist.";
+                readModel.warnings.emplace_back("Draco attribute with unique ID " + std::to_string(dracoAttrIndex) + " does not exist.");
                 continue;
             }
 

@@ -6,6 +6,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGltf/Reader.h"
+#include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
 
@@ -50,8 +51,8 @@ namespace Cesium3DTiles {
 
                 LoadState state;
                 CesiumGltf::ImageCesium image;
-                std::string warnings;
-                std::string errors;
+                std::vector<std::string> warnings;
+                std::vector<std::string> errors;
                 void* pRendererResources;
             };
 
@@ -82,7 +83,7 @@ namespace Cesium3DTiles {
                 CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
                 if (!loadedImage.image.has_value()) {
-                    SPDLOG_LOGGER_ERROR(pLogger, "Failed to load image: {}", loadedImage.errors);
+                    SPDLOG_LOGGER_ERROR(pLogger, "Failed to load image:\n- {}", CesiumUtility::joinToString(loadedImage.errors, "\n- "));
 
                     LoadResult result;
                     result.pRendererResources = nullptr;
@@ -91,7 +92,7 @@ namespace Cesium3DTiles {
                 }
 
                 if (!loadedImage.warnings.empty()) {
-                    SPDLOG_LOGGER_WARN(pLogger, "Warnings while loading image: {}", loadedImage.warnings);
+                    SPDLOG_LOGGER_WARN(pLogger, "Warnings while loading image:\n- {}", CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
                 }
 
                 CesiumGltf::ImageCesium& image = loadedImage.image.value();
