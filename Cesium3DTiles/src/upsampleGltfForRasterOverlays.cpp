@@ -66,8 +66,8 @@ namespace Cesium3DTiles {
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
         double skirtHeight,
-        size_t vertexSizeFloats,
-        uint32_t positionAttributeIndex);
+        int64_t vertexSizeFloats,
+        int32_t positionAttributeIndex);
 
     static void addSkirts(std::vector<float>& output,
         std::vector<uint32_t>& indices,
@@ -76,8 +76,8 @@ namespace Cesium3DTiles {
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
         EdgeIndices &edgeIndices,
-        size_t vertexSizeFloats,
-        uint32_t positionAttributeIndex);
+        int64_t vertexSizeFloats,
+        int32_t positionAttributeIndex);
 
     Model upsampleGltfForRasterOverlays(const Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
         Model result;
@@ -309,9 +309,9 @@ namespace Cesium3DTiles {
         indexBufferView.buffer = static_cast<int>(indexBufferIndex);
         indexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
-        uint32_t vertexSizeFloats = 0;
-        int uvAccessorIndex = -1;
-        int positionAttributeIndex = -1;
+        int64_t vertexSizeFloats = 0;
+        int32_t uvAccessorIndex = -1;
+        int32_t positionAttributeIndex = -1;
 
         std::vector<std::string> toRemove;
 
@@ -360,11 +360,11 @@ namespace Cesium3DTiles {
             model.accessors.emplace_back();
             Accessor& newAccessor = model.accessors.back();
             newAccessor.bufferView = static_cast<int>(vertexBufferIndex);
-            newAccessor.byteOffset = vertexSizeFloats * sizeof(float);
+            newAccessor.byteOffset = vertexSizeFloats * int64_t(sizeof(float));
             newAccessor.componentType = Accessor::ComponentType::FLOAT;
             newAccessor.type = accessor.type;
 
-            vertexSizeFloats += static_cast<uint32_t>(accessorComponentElements);
+            vertexSizeFloats += accessorComponentElements;
 
             attributes.push_back(FloatVertexAttribute {
                 buffer.cesium.data,
@@ -378,7 +378,7 @@ namespace Cesium3DTiles {
 
             // get position to be used to create for skirts later
             if (attribute.first == "POSITION") {
-                positionAttributeIndex = static_cast<int>(attributes.size() - 1);
+                positionAttributeIndex = int32_t(attributes.size() - 1);
             }
         }
 
@@ -503,7 +503,7 @@ namespace Cesium3DTiles {
                 *parentSkirtMeshMetadata,
                 edgeIndices, 
                 vertexSizeFloats, 
-                static_cast<uint32_t>(positionAttributeIndex));
+                positionAttributeIndex);
         }
 
         // Update the accessor vertex counts and min/max values
@@ -531,7 +531,7 @@ namespace Cesium3DTiles {
         float* pAsFloats = reinterpret_cast<float*>(vertexBuffer.cesium.data.data());
         std::copy(newVertexFloats.begin(), newVertexFloats.end(), pAsFloats);
         vertexBufferView.byteLength = int64_t(vertexBuffer.cesium.data.size());
-        vertexBufferView.byteStride = vertexSizeFloats * sizeof(float);
+        vertexBufferView.byteStride = vertexSizeFloats * int64_t(sizeof(float));
 
         Buffer& indexBuffer = model.buffers[indexBufferIndex];
         indexBuffer.cesium.data.resize(indices.size() * sizeof(uint32_t));
@@ -668,20 +668,20 @@ namespace Cesium3DTiles {
         const std::vector<uint32_t>& edgeIndices,
         const glm::dvec3& center,
         double skirtHeight,
-        size_t vertexSizeFloats,
-        uint32_t positionAttributeIndex) 
+        int64_t vertexSizeFloats,
+        int32_t positionAttributeIndex) 
     {
         const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
 
-        uint32_t newEdgeIndex = static_cast<uint32_t>(output.size() / vertexSizeFloats);
-        for (uint32_t i = 0; i < edgeIndices.size(); ++i) {
+        uint32_t newEdgeIndex = uint32_t(output.size() / size_t(vertexSizeFloats));
+        for (size_t i = 0; i < edgeIndices.size(); ++i) {
             uint32_t edgeIdx = edgeIndices[i];
             uint32_t offset = 0;
-            for (uint32_t j = 0; j < attributes.size(); ++j) {
+            for (size_t j = 0; j < attributes.size(); ++j) {
                 FloatVertexAttribute& attribute = attributes[j];
-                uint32_t valueIndex = offset + static_cast<uint32_t>(vertexSizeFloats) * edgeIdx;
+                uint32_t valueIndex = offset + uint32_t(vertexSizeFloats) * edgeIdx;
 
-                if (j == positionAttributeIndex) {
+                if (int32_t(j) == positionAttributeIndex) {
                     glm::dvec3 position{ output[valueIndex], output[valueIndex + 1], output[valueIndex + 2] };
                     position += center;
 
@@ -727,8 +727,8 @@ namespace Cesium3DTiles {
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
         EdgeIndices &edgeIndices,
-        size_t vertexSizeFloats,
-        uint32_t positionAttributeIndex) 
+        int64_t vertexSizeFloats,
+        int32_t positionAttributeIndex) 
     {
         glm::dvec3 center = currentSkirt.meshCenter;
         double shortestSkirtHeight = glm::min(parentSkirt.skirtWestHeight, parentSkirt.skirtEastHeight);
