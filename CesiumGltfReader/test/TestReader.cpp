@@ -6,7 +6,7 @@
 
 using namespace CesiumGltf;
 
-TEST_CASE("GltfModel") {
+TEST_CASE("CesiumGltf::Reader") {
     using namespace std::string_literals;
 
     std::string s =
@@ -58,14 +58,4 @@ TEST_CASE("GltfModel") {
     REQUIRE(model.meshes[0].primitives[0].targets.size() == 1);
     CHECK(model.meshes[0].primitives[0].targets[0]["POSITION"] == 10);
     CHECK(model.meshes[0].primitives[0].targets[0]["NORMAL"] == 11);
-    // std::vector<uint8_t> v;
-    // GltfModel model = GltfModel::fromMemory(v);
-    // GltfCollection<GltfMesh> meshes = model.meshes();
-    // for (const GltfMesh& mesh : meshes) {
-    //     mesh;
-    // }
-
-    // for (const std::string& s : model.extensionsUsed()) {
-    //     s;
-    // }
 }
