@@ -111,11 +111,10 @@ namespace Cesium3DTiles {
 			header.featureTableJsonByteLength = 0;
 			header.featureTableBinaryByteLength = 0;
 
-			// TODO
-			//Batched3DModel3DTileContent._deprecationWarning(
-			//	"b3dm-legacy-header",
-			//	"This b3dm header is using the legacy format [batchLength] [batchTableByteLength]. The new format is [featureTableJsonByteLength] [featureTableBinaryByteLength] [batchTableJsonByteLength] [batchTableBinaryByteLength] from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel."
-			//);
+			SPDLOG_LOGGER_WARN(pLogger, 
+				"This b3dm header is using the legacy format[batchLength][batchTableByteLength]. "
+				"The new format is[featureTableJsonByteLength][featureTableBinaryByteLength][batchTableJsonByteLength][batchTableBinaryByteLength] "
+				"from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel.");
 		}
 		else if (pHeader->batchTableBinaryByteLength >= 570425344) {
 			// Second legacy check
@@ -127,11 +126,11 @@ namespace Cesium3DTiles {
 			header.featureTableJsonByteLength = 0;
 			header.featureTableBinaryByteLength = 0;
 
-			// TODO
-			//Batched3DModel3DTileContent._deprecationWarning(
-			//	"b3dm-legacy-header",
-			//	"This b3dm header is using the legacy format [batchTableJsonByteLength] [batchTableBinaryByteLength] [batchLength]. The new format is [featureTableJsonByteLength] [featureTableBinaryByteLength] [batchTableJsonByteLength] [batchTableBinaryByteLength] from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel."
-			//);
+			SPDLOG_LOGGER_WARN(pLogger, 
+				"This b3dm header is using the legacy format [batchTableJsonByteLength] [batchTableBinaryByteLength] [batchLength]. "
+				"The new format is [featureTableJsonByteLength] [featureTableBinaryByteLength] [batchTableJsonByteLength] [batchTableBinaryByteLength] "
+				"from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel."
+			);
 		}
 
 		if (static_cast<uint32_t>(data.size()) < pHeader->byteLength) {
