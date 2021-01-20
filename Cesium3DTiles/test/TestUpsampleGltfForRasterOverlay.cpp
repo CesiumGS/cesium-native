@@ -67,7 +67,6 @@ TEST_CASE("Test upsample tile without skirts") {
     positionBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
     positionBufferView.byteOffset = 0;
     positionBufferView.byteLength = positionsBufferSize;
-    positionBufferView.byteStride = 0;
 
     model.accessors.emplace_back();
     Accessor &positionAccessor = model.accessors.back();
@@ -85,7 +84,6 @@ TEST_CASE("Test upsample tile without skirts") {
     uvBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
     uvBufferView.byteOffset = positionsBufferSize;
     uvBufferView.byteLength = uvsBufferSize;
-    uvBufferView.byteStride = 0;
 
     model.accessors.emplace_back();
     Accessor &uvAccessor = model.accessors.back();
@@ -103,7 +101,6 @@ TEST_CASE("Test upsample tile without skirts") {
     indicesBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
     indicesBufferView.byteOffset = positionsBufferSize + uvsBufferSize;
     indicesBufferView.byteLength = indicesBufferSize;
-    indicesBufferView.byteStride = 0;
 
     model.accessors.emplace_back();
     Accessor &indicesAccessor = model.accessors.back();
