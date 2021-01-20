@@ -74,6 +74,7 @@ namespace CesiumGltf {
             }
 
             this->_arrayIsOpen = true;
+            this->_pArray->clear();
             return this;
         }
 
@@ -184,6 +185,7 @@ namespace CesiumGltf {
             }
 
             this->_arrayIsOpen = true;
+            this->_pArray->clear();
             return this;
         }
 
@@ -287,6 +289,7 @@ namespace CesiumGltf {
             }
 
             this->_arrayIsOpen = true;
+            this->_pArray->clear();
             return this;
         }
 
@@ -362,6 +365,7 @@ namespace CesiumGltf {
             }
 
             this->_arrayIsOpen = true;
+            this->_pArray->clear();
             return this;
         }
 
