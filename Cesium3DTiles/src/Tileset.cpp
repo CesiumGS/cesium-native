@@ -130,14 +130,12 @@ namespace Cesium3DTiles {
     void Tileset::_handleAssetResponse(std::unique_ptr<IAssetRequest>&& pRequest) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
-            // TODO: report the lack of response. Network error? Can this even happen?
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "No response received for asset request {}", pRequest->url());
             this->notifyTileDoneLoading(nullptr);
             return;
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            // TODO: report error response.
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received status code {} for asset response {}", pResponse->statusCode(), pRequest->url());
             this->notifyTileDoneLoading(nullptr);
             return;
@@ -162,7 +160,6 @@ namespace Cesium3DTiles {
             url = Uri::resolve(url, "layer.json", true);
         }
         else if (type != "3DTILES") {
-            // TODO: report unsupported type.
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received unsupported asset response type: {}", type);
             this->notifyTileDoneLoading(nullptr);
             return;
@@ -391,13 +388,11 @@ namespace Cesium3DTiles {
     /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
-            // TODO: report the lack of response. Network error? Can this even happen?
             SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
             return LoadResult{ std::move(pContext), nullptr };
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            // TODO: report error response.
             SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
             return LoadResult{ std::move(pContext), nullptr };
         }
@@ -466,14 +461,12 @@ namespace Cesium3DTiles {
 
         std::optional<BoundingVolume> boundingVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
-            // TODO: report missing required property
             SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
             return;
         }
 
         std::optional<double> geometricError = JsonHelpers::getScalarProperty(tileJson, "geometricError");
         if (!geometricError) {
-            // TODO: report missing required property
             SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a geometricError");
             return;
         }
@@ -495,7 +488,6 @@ namespace Cesium3DTiles {
             } else if (refine == "ADD") {
                 tile.setRefine(TileRefine::Add);
             } else {
-                // TODO: report invalid value
                 SPDLOG_LOGGER_ERROR(pLogger, "Tileset contained an unknown refine value: {}", refine);
             }
         } else {
@@ -595,8 +587,6 @@ namespace Cesium3DTiles {
             quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
             quadtreeXTiles = 1;
         } else {
-            // Unsupported projection
-            // TODO: report error
             SPDLOG_LOGGER_ERROR(pLogger, "Tileset contained an unknown projection value: {}", projectionString);
             return;
         }
