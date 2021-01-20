@@ -15,9 +15,9 @@ namespace CesiumGltf {
          */
         template <typename T>
         static const T& getSafe(const std::vector<T>& items, int32_t index) {
-            static T default;
+            static T defaultObject;
             if (index < 0 || static_cast<size_t>(index) >= items.size()) {
-                return default;
+                return defaultObject;
             } else {
                 return items[index];
             }
