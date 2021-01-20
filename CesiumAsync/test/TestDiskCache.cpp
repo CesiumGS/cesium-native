@@ -1,83 +1,11 @@
 #include "catch2/catch.hpp"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
+#include "MockAssetRequest.h"
+#include "MockAssetResponse.h"
 #include "CesiumAsync/DiskCache.h"
 
 using namespace CesiumAsync;
 
-class MockAssetResponse : public IAssetResponse {
-public:
-	MockAssetResponse(uint16_t statusCode, 
-		const std::string& contentType, 
-		const HttpHeaders& headers, 
-		std::optional<ResponseCacheControl> cacheControl,
-		const std::vector<uint8_t>& data)
-		: _statusCode{statusCode}
-		, _contentType{contentType}
-		, _headers{headers}
-		, _cacheControl{std::move(cacheControl)}
-		, _data{data}
-	{}
-
-	virtual uint16_t statusCode() const override { return this->_statusCode; }
-
-	virtual const std::string& contentType() const override { return this->_contentType; }
-
-	virtual const HttpHeaders& headers() const override { return this->_headers; }
-
-	virtual const ResponseCacheControl* cacheControl() const override { 
-		return this->_cacheControl ? &this->_cacheControl.value() : nullptr; 
-	}
-
-	virtual gsl::span<const uint8_t> data() const override {
-		return gsl::span<const uint8_t>(_data.data(), _data.size());
-	}
-
-private:
-	uint16_t _statusCode;
-	std::string _contentType;
-	HttpHeaders _headers;
-	std::optional<ResponseCacheControl> _cacheControl;
-	std::vector<uint8_t> _data;
-};
-
-class MockAssetRequest : public IAssetRequest {
-public:
-	MockAssetRequest(const std::string& method, 
-		const std::string& url, 
-		const HttpHeaders& headers, 
-		std::unique_ptr<IAssetResponse> response) 
-		: _method{method}
-		, _url{url}
-		, _headers{headers}
-		, _pResponse{std::move(response)}
-	{}
-
-	virtual const std::string& method() const override {
-		return this->_method;
-	}
-
-	virtual const std::string& url() const override {
-		return this->_url;
-	}
-
-	virtual const HttpHeaders& headers() const override {
-		return this->_headers;
-	}
-
-	virtual const IAssetResponse* response() const override {
-		return this->_pResponse.get();
-	}
-
-private:
-	std::string _method;
-	std::string _url;
-	HttpHeaders _headers;
-	std::unique_ptr<IAssetResponse> _pResponse;
-};
-
 TEST_CASE("Test disk cache with Sqlite") {
-
 	SECTION("Test store cache") {
 		DiskCache diskCache("test.db", 3);
 

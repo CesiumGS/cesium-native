@@ -44,8 +44,8 @@ namespace CesiumAsync {
 	static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const std::string& serializedResponseCacheControl);
 
 	DiskCache::DiskCache(const std::string &databaseName, uint64_t maxSize)
-		: _maxSize{maxSize}
-		, _pConnection{nullptr}
+		: _pConnection{nullptr}
+		, _maxSize{maxSize}
 	{
 		int status = sqlite3_open(databaseName.c_str(), &this->_pConnection);
 		if (status != SQLITE_OK) {
@@ -66,7 +66,7 @@ namespace CesiumAsync {
 			REQUEST_METHOD_COLUMN + " TEXT NOT NULL," +
 			REQUEST_URL_COLUMN + " TEXT NOT NULL" +
 			")";
-		char* createTableError;
+		char* createTableError = nullptr;
 		status = sqlite3_exec(this->_pConnection, sqlStr.c_str(), nullptr, nullptr, &createTableError);
 		if (status != SQLITE_OK) {
 			std::string errorStr(createTableError);
