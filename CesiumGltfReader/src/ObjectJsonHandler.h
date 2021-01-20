@@ -17,7 +17,7 @@ namespace CesiumGltf {
         IJsonHandler* property(const char* currentKey, TAccessor& accessor, TProperty& value) {
             this->_currentKey = currentKey;
 
-            if constexpr (isOptional<TProperty>) {
+            if constexpr (isOptional<TProperty>::value) {
                 value.emplace();
                 accessor.reset(this, &value.value());
             } else {
@@ -31,10 +31,14 @@ namespace CesiumGltf {
 
     private:
         template <typename T>
-        static constexpr bool isOptional = false;
+        struct isOptional {
+            static constexpr bool value = false;
+        };
 
         template <typename T>
-        static constexpr bool isOptional<std::optional<T>> = true;
+        struct isOptional<std::optional<T>> {
+            static constexpr bool value = true;
+        };
 
         int32_t _depth = 0;
         const char* _currentKey;

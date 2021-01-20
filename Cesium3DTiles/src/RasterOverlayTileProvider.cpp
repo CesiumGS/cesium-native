@@ -356,7 +356,7 @@ namespace Cesium3DTiles {
     }
 
     void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) noexcept {
-        this->_tileDataBytes += pTile->getImage().pixelData.size();
+        this->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
         --this->_tilesCurrentlyLoading;
     }
 
@@ -367,7 +367,7 @@ namespace Cesium3DTiles {
         assert(it != this->_tiles.end());
         assert(it->second.get() == pTile);
 
-        this->_tileDataBytes -= pTile->getImage().pixelData.size();
+        this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 
         RasterOverlay& overlay = pTile->getOverlay();
 

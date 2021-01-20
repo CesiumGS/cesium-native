@@ -588,20 +588,20 @@ namespace Cesium3DTiles {
 
             // Add up the glTF buffers
             for (const CesiumGltf::Buffer& buffer : model.buffers) {
-                bytes += buffer.cesium.data.size();
+                bytes += int64_t(buffer.cesium.data.size());
             }
 
             // For images loaded from buffers, subtract the buffer size and add
             // the decoded image size instead.
             const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
             for (const CesiumGltf::Image& image : model.images) {
-                int bufferView = image.bufferView;
-                if (bufferView < 0 || bufferView >= static_cast<int>(bufferViews.size())) {
+                int32_t bufferView = image.bufferView;
+                if (bufferView < 0 || bufferView >= static_cast<int32_t>(bufferViews.size())) {
                     continue;
                 }
 
-                bytes -= bufferViews[static_cast<size_t>(bufferView)].byteLength;
-                bytes += image.cesium.pixelData.size();
+                bytes -= bufferViews[size_t(bufferView)].byteLength;
+                bytes += int64_t(image.cesium.pixelData.size());
             }
         }
 

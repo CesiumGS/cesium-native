@@ -197,7 +197,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the number of bytes of tile data that are currently loaded.
          */
-        size_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
+        int64_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
 
         /**
          * @brief Returns the number of tiles that are currently loading.
@@ -249,7 +249,7 @@ namespace Cesium3DTiles {
         uint32_t _imageHeight;
         std::unordered_map<CesiumGeometry::QuadtreeTileID, std::unique_ptr<RasterOverlayTile>> _tiles;
         std::unique_ptr<RasterOverlayTile> _pPlaceholder;
-        size_t _tileDataBytes;
+        int64_t _tileDataBytes;
         uint32_t _tilesCurrentlyLoading;
     };
 }
