@@ -107,9 +107,21 @@ namespace Cesium3DTiles {
         } else if (innerTiles.size() == 1) {
             return std::move(innerTiles[0]);
         } else {
-            // TODO: combine all inner tiles into one glTF instead of return only the first.
-            SPDLOG_LOGGER_WARN(pLogger, "Composite tile contains multiple loadable inner tiles. Due to a temporary limitation, only the first will be used.");
-            return std::move(innerTiles[0]);
+            std::unique_ptr<TileContentLoadResult> pResult = std::move(innerTiles[0]);
+
+            for (size_t i = 1; i < innerTiles.size(); ++i) {
+                if (!innerTiles[i]->model) {
+                    continue;
+                }
+
+                if (pResult->model) {
+                    pResult->model.value().merge(std::move(innerTiles[i]->model.value()));
+                } else {
+                    pResult->model = std::move(innerTiles[i]->model);
+                }
+            }
+
+            return pResult;
         }
     }
 
