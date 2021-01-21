@@ -35,7 +35,7 @@ namespace Cesium3DTiles {
         uint32_t tilesLoadingHighPriority = 0;
 
         uint32_t tilesVisited = 0;
-        uint32_t tilesVisitedWithoutSse = 0;
+        uint32_t culledTilesVisited = 0;
         uint32_t tilesCulled = 0;
         uint32_t maxDepthVisited = 0;
         //! @endcond

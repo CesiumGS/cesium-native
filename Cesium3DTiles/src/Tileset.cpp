@@ -237,7 +237,7 @@ namespace Cesium3DTiles {
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
         result.tilesVisited = 0;
-        result.tilesVisitedWithoutSse = 0;
+        result.culledTilesVisited = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
 
@@ -1090,8 +1090,7 @@ namespace Cesium3DTiles {
         result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
         if (culled) {
-            // TODO: change the wording of this variable (culledTilesVisited?)
-            ++result.tilesVisitedWithoutSse;
+            ++result.culledTilesVisited;
         }
 
         // If this is a leaf tile, just render it (it's already been deemed visible).
