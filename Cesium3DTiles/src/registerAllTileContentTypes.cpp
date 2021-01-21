@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Batched3DModelContent.h"
 #include "QuantizedMeshContent.h"
+#include "CompositeContent.h"
 
 namespace Cesium3DTiles {
 
@@ -11,6 +12,7 @@ namespace Cesium3DTiles {
 
         TileContentFactory::registerMagic("glTF", GltfContent::load);
         TileContentFactory::registerMagic("b3dm", Batched3DModelContent::load);
+        TileContentFactory::registerMagic("cmpt", CompositeContent::load);
         TileContentFactory::registerMagic("json", ExternalTilesetContent::load);
 
         TileContentFactory::registerContentType(QuantizedMeshContent::CONTENT_TYPE, QuantizedMeshContent::load);
