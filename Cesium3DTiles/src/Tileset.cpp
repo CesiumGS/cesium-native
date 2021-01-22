@@ -1252,7 +1252,7 @@ namespace Cesium3DTiles {
                 });
             }
 
-            std::string operator()(QuadtreeChild /*subdividedParent*/) {
+            std::string operator()(UpsampledQuadtreeNode /*subdividedParent*/) {
                 return std::string();
             }
         };
