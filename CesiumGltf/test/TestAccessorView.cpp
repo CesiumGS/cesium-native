@@ -15,11 +15,11 @@ TEST_CASE("AccessorView construct and read example") {
 
         CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
         bufferView.buffer = 0;
-        bufferView.byteLength = accessor.count * sizeof(float) * 3;
+        bufferView.byteLength = accessor.count * int64_t(sizeof(float)) * 3;
 
         CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
         buffer.byteLength = bufferView.byteLength;
-        buffer.cesium.data.resize(buffer.byteLength);
+        buffer.cesium.data.resize(size_t(buffer.byteLength));
 
         float* p = reinterpret_cast<float*>(buffer.cesium.data.data());
         p[0] = 1.0f;
