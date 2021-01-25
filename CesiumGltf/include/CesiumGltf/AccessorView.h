@@ -122,7 +122,6 @@ namespace CesiumGltf {
 			this->create(model, accessor);
 		}
 
-
 		/**
 		 * @brief Creates a new instance from a given model and accessor index.
 		 * 
