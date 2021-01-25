@@ -96,6 +96,35 @@ namespace {
             pIndicesAccessor->count = pMesh->num_faces() * 3;
         }
 
+        draco::PointIndex::ValueType numPoint = pMesh->num_points();
+        Accessor::ComponentType supposedComponentType = Accessor::ComponentType::BYTE;
+        if (numPoint <= 
+            static_cast<draco::PointIndex::ValueType>(std::numeric_limits<int8_t>::max())) 
+        {
+		    supposedComponentType = Accessor::ComponentType::BYTE;
+        } else if (numPoint <= 
+            static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint8_t>::max())) 
+        {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
+        } else if (numPoint <= 
+            static_cast<draco::PointIndex::ValueType>(std::numeric_limits<int16_t>::max())) 
+        {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_SHORT;
+        } else if (numPoint <= 
+            static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint16_t>::max())) 
+        {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_SHORT;
+        } else if (numPoint <= 
+            static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint32_t>::max())) {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_INT;
+        } else {
+		    supposedComponentType = Accessor::ComponentType::FLOAT;
+        }
+
+        if (static_cast<uint32_t>(supposedComponentType) > static_cast<uint32_t>(pIndicesAccessor->componentType)) {
+			pIndicesAccessor->componentType = supposedComponentType;
+        }
+
         pIndicesAccessor->bufferView = static_cast<int32_t>(model.bufferViews.size());
         BufferView& indicesBufferView = model.bufferViews.emplace_back();
 
