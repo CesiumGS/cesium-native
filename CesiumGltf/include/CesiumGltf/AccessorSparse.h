@@ -5,13 +5,14 @@
 #include "CesiumGltf/AccessorSparseIndices.h"
 #include "CesiumGltf/AccessorSparseValues.h"
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief Sparse storage of attributes that deviate from their initialization value.
      */
-    struct AccessorSparse : public ExtensibleObject {
+    struct CESIUMGLTF_API AccessorSparse final : public ExtensibleObject {
 
         /**
          * @brief Number of entries stored in the sparse array.

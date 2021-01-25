@@ -83,12 +83,8 @@ IJsonHandler* JsonObjectJsonHandler::Key(const char* str, size_t /* length */, b
     
     auto it = pObject->emplace(str, JsonValue()).first;
     this->_stack.push_back(&it->second);
-
-    return property(
-        it->first.c_str(),
-        *this,
-        it->second
-    ); 
+    this->_currentKey = str;
+    return this;
 }
 
 IJsonHandler* JsonObjectJsonHandler::EndObject(size_t /* memberCount */) {

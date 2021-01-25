@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
@@ -11,7 +12,7 @@ namespace CesiumGltf {
     /**
      * @brief Geometry to be rendered with the given material.
      */
-    struct MeshPrimitive : public ExtensibleObject {
+    struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
         enum class Mode {
             POINTS = 0,
 

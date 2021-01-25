@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltf/ReaderLibrary.h"
 #include "CesiumGltf/Model.h"
 #include <gsl/span>
 #include <optional>
@@ -7,25 +8,25 @@
 #include <vector>
 
 namespace CesiumGltf {
-    struct ModelReaderResult {
+    struct CESIUMGLTFREADER_API ModelReaderResult {
         std::optional<Model> model;
         std::vector<std::string> errors;
         std::vector<std::string> warnings;
     };
 
-    struct ReadModelOptions {
+    struct CESIUMGLTFREADER_API ReadModelOptions {
         bool decodeDataUris = true;
         bool decodeEmbeddedImages = true;
         bool decodeDraco = true;
     };
 
-    ModelReaderResult readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options = ReadModelOptions());
+    CESIUMGLTFREADER_API ModelReaderResult readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options = ReadModelOptions());
 
-    struct ImageReaderResult {
+    struct CESIUMGLTFREADER_API ImageReaderResult {
         std::optional<ImageCesium> image;
         std::vector<std::string> errors;
         std::vector<std::string> warnings;
     };
 
-    ImageReaderResult readImage(const gsl::span<const uint8_t>& data);
+    CESIUMGLTFREADER_API ImageReaderResult readImage(const gsl::span<const uint8_t>& data);
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/AccessorSparse.h"
+#include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
 #include <cstdint>
 #include <optional>
@@ -12,7 +13,7 @@ namespace CesiumGltf {
     /**
      * @brief A typed view into a bufferView.  A bufferView contains raw binary data.  An accessor provides a typed view into a bufferView or a subset of a bufferView similar to how WebGL's `vertexAttribPointer()` defines an attribute in a buffer.
      */
-    struct AccessorSpec : public NamedObject {
+    struct CESIUMGLTF_API AccessorSpec : public NamedObject {
         enum class ComponentType {
             BYTE = 5120,
 
@@ -105,6 +106,13 @@ namespace CesiumGltf {
          * @brief Sparse storage of attributes that deviate from their initialization value.
          */
         std::optional<AccessorSparse> sparse;
+
+    private:
+      /**
+       * @brief This class is not mean to be instantiated directly. Use {@link Accessor} instead.
+       */
+      AccessorSpec() = default;
+      friend struct Accessor;
 
     };
 }

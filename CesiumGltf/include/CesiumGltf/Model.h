@@ -1,10 +1,24 @@
 #pragma once
 
+#include "CesiumGltf/Library.h"
 #include "CesiumGltf/ModelSpec.h"
 
 namespace CesiumGltf {
     /** @copydoc ModelSpec */
-    struct Model : public ModelSpec {
+    struct CESIUMGLTF_API Model : public ModelSpec {
+        /**
+         * @brief Merges another model into this one.
+         * 
+         * After this method returns, this `Model` contains all of the
+         * elements that were originally in it _plus_ all of the elements
+         * that were in `rhs`. Element indices are updated accordingly.
+         * However, element indices in {@ExtensibleObject::extras}, if any,
+         * are _not_ updated.
+         * 
+         * @param rhs The model to merge into this one.
+         */
+        void merge(Model&& rhs);
+
         /**
          * @brief Safely gets the element with a given index, returning a default instance if the index is outside the range.
          * 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <optional>
 #include <string>
 
@@ -10,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief Metadata about the glTF asset.
      */
-    struct Asset : public ExtensibleObject {
+    struct CESIUMGLTF_API Asset final : public ExtensibleObject {
 
         /**
          * @brief A copyright message suitable for display to credit the content creator.

@@ -25,13 +25,6 @@ namespace CesiumGltf {
         virtual IJsonHandler* EndArray(size_t elementCount) override;
 
     private:
-        template <typename TAccessor, typename TProperty>
-        IJsonHandler* property(const char* currentKey, TAccessor& accessor, TProperty& value) {
-            this->_currentKey = currentKey;
-            accessor.reset(this, &value);
-            return &accessor;
-        }
-
         IJsonHandler* doneElement();
 
         std::vector<JsonValue*> _stack;

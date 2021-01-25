@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 
 namespace CesiumGltf {
     /**
      * @brief An orthographic camera containing properties to create an orthographic projection matrix.
      */
-    struct CameraOrthographic : public ExtensibleObject {
+    struct CESIUMGLTF_API CameraOrthographic final : public ExtensibleObject {
 
         /**
          * @brief The floating-point horizontal magnification of the view. Must not be zero.
