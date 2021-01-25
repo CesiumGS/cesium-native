@@ -227,4 +227,127 @@ namespace CesiumGltf {
 		}
 	};
 
+	namespace Impl {
+		template <typename TCallback, typename TElement>
+		std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(const Model& model, const Accessor& accessor, TCallback&& callback) {
+            switch (accessor.type) {
+            case Accessor::Type::SCALAR:
+				return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(model, accessor));
+            case Accessor::Type::VEC2:
+				return callback(AccessorView<AccessorTypes::VEC2<TElement>>(model, accessor));
+            case Accessor::Type::VEC3:
+				return callback(AccessorView<AccessorTypes::VEC3<TElement>>(model, accessor));
+            case Accessor::Type::VEC4:
+				return callback(AccessorView<AccessorTypes::VEC4<TElement>>(model, accessor));
+            case Accessor::Type::MAT2:
+				return callback(AccessorView<AccessorTypes::MAT2<TElement>>(model, accessor));
+            case Accessor::Type::MAT3:
+				return callback(AccessorView<AccessorTypes::MAT3<TElement>>(model, accessor));
+            case Accessor::Type::MAT4:
+				return callback(AccessorView<AccessorTypes::MAT4<TElement>>(model, accessor));
+			default:
+				return callback(AccessorView<nullptr_t>());
+            }
+		}
+	}
+
+	/**
+	 * @brief Contains types that may optionally be used with {@link AccessorView} for various {@link Accessor::componentType} values.
+	 */
+    struct AccessorTypes {
+        #pragma pack(push, 1)
+
+        template <typename T>
+        struct SCALAR {
+            T value[1];
+        };
+
+        template <typename T>
+        struct VEC2 {
+            T value[2];
+        };
+
+        template <typename T>
+        struct VEC3 {
+            T value[3];
+        };
+
+        template <typename T>
+        struct VEC4 {
+            T value[4];
+        };
+
+        template <typename T>
+        struct MAT2 {
+            T value[4];
+        };
+
+        template <typename T>
+        struct MAT3 {
+            T value[9];
+        };
+
+        template <typename T>
+        struct MAT4 {
+            T value[9];
+        };
+
+        #pragma pack(pop)
+    };
+
+	/**
+	 * @brief Creates an appropriate {@link AccessorView} for a given accessor.
+	 * 
+	 * The created accessor is provided via a callback, which is a function that can be
+	 * invoked with all possible {@link AccessorView} types. If an accessor cannot be
+	 * created, the callback will be invoked with `AccessorView<std::nullptr_t>`.
+	 * 
+	 * @tparam TCallback The callback.
+	 * @param model The model to access.
+ 	 * @param accessor The accessor to view.
+	 * @param callback The callback that receives the created accessor.
+	 * @return The value returned by the callback.
+	 */
+	template <typename TCallback>
+	std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(const Model& model, const Accessor& accessor, TCallback&& callback) {
+		switch (accessor.componentType) {
+		case Accessor::ComponentType::BYTE:
+			return ::CesiumGltf::Impl::createAccessorView<TCallback, int8_t>(model, accessor, std::forward<TCallback>(callback));
+		case Accessor::ComponentType::UNSIGNED_BYTE:
+			return ::CesiumGltf::Impl::createAccessorView<TCallback, uint8_t>(model, accessor, std::forward<TCallback>(callback));
+		case Accessor::ComponentType::SHORT:
+			return ::CesiumGltf::Impl::createAccessorView<TCallback, int16_t>(model, accessor, std::forward<TCallback>(callback));
+		case Accessor::ComponentType::UNSIGNED_SHORT:
+			return ::CesiumGltf::Impl::createAccessorView<TCallback, uint16_t>(model, accessor, std::forward<TCallback>(callback));
+		case Accessor::ComponentType::UNSIGNED_INT:
+			return ::CesiumGltf::Impl::createAccessorView<TCallback, uint32_t>(model, accessor, std::forward<TCallback>(callback));
+		case Accessor::ComponentType::FLOAT:
+			return ::CesiumGltf::Impl::createAccessorView<TCallback, float>(model, accessor, std::forward<TCallback>(callback));
+		default:
+			return callback(AccessorView<nullptr_t>());
+		}
+	}
+
+	/**
+	 * @brief Creates an appropriate {@link AccessorView} for a given accessor.
+	 * 
+	 * The created accessor is provided via a callback, which is a function that can be
+	 * invoked with all possible {@link AccessorView} types. If an accessor cannot be
+	 * created, the callback will be invoked with `AccessorView<std::nullptr_t>`.
+	 * 
+	 * @tparam TCallback The callback.
+	 * @param model The model to access.
+ 	 * @param accessorIndex The index of the accessor to view in {@link Model::accessors}.
+	 * @param callback The callback that receives the created accessor.
+	 * @return The value returned by the callback.
+	 */
+	template <typename TCallback>
+	std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(const Model& model, int32_t accessorIndex, TCallback&& callback) {
+		const Accessor* pAccessor = Model::getSafe(&model.accessors, accessorIndex);
+		if (!pAccessor) {
+			return callback(AccessorView<nullptr_t>());
+		}
+
+		return createAccessorView(model, *pAccessor, callback);
+	}
 }
