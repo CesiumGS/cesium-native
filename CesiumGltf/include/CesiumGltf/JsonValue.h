@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 #include <initializer_list>
 #include <string>
@@ -8,7 +9,7 @@
 #include <vector>
 
 namespace CesiumGltf {
-    class JsonValue final {
+    class CESIUMGLTF_API JsonValue final {
     public:
         using Null = std::nullptr_t;
         using Number = double;

@@ -171,7 +171,7 @@ void Model::merge(Model&& rhs) {
     }
 
     Scene* pThisDefaultScene = Model::getSafe(&this->scenes, this->scene);
-    Scene* pRhsDefaultScene = Model::getSafe(&this->scenes, int32_t(rhs.scene + firstScene));
+    Scene* pRhsDefaultScene = Model::getSafe(&this->scenes, rhs.scene + int32_t(firstScene));
 
     if (!pThisDefaultScene) {
         this->scene = rhs.scene;
@@ -183,12 +183,12 @@ void Model::merge(Model&& rhs) {
 
         // Refresh the scene pointers potentially invalidated by the above.
         pThisDefaultScene = Model::getSafe(&this->scenes, this->scene);
-        pRhsDefaultScene = Model::getSafe(&this->scenes, int32_t(rhs.scene + firstScene));
+        pRhsDefaultScene = Model::getSafe(&this->scenes, rhs.scene + int32_t(firstScene));
 
         newScene.nodes = pThisDefaultScene->nodes;
         size_t originalNodeCount = newScene.nodes.size();
         newScene.nodes.resize(originalNodeCount + pRhsDefaultScene->nodes.size());
-        std::copy(pRhsDefaultScene->nodes.begin(), pRhsDefaultScene->nodes.end(), newScene.nodes.begin() + originalNodeCount);
+        std::copy(pRhsDefaultScene->nodes.begin(), pRhsDefaultScene->nodes.end(), newScene.nodes.begin() + int64_t(originalNodeCount));
 
         // No need to update indices because they've already been updated when
         // we copied them from rhs to this.

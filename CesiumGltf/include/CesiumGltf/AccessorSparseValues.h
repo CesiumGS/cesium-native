@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief Array of size `accessor.sparse.count` times number of components storing the displaced accessor attributes pointed by `accessor.sparse.indices`.
      */
-    struct AccessorSparseValues : public ExtensibleObject {
+    struct CESIUMGLTF_API AccessorSparseValues final : public ExtensibleObject {
 
         /**
          * @brief The index of the bufferView with sparse values. Referenced bufferView can't have ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER target.

@@ -10,6 +10,7 @@
 #include "CesiumGltf/Camera.h"
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Image.h"
+#include "CesiumGltf/Library.h"
 #include "CesiumGltf/Material.h"
 #include "CesiumGltf/Mesh.h"
 #include "CesiumGltf/Node.h"
@@ -25,7 +26,7 @@ namespace CesiumGltf {
     /**
      * @brief The root object for a glTF asset.
      */
-    struct ModelSpec : public ExtensibleObject {
+    struct CESIUMGLTF_API ModelSpec : public ExtensibleObject {
 
         /**
          * @brief Names of glTF extensions used somewhere in this asset.
@@ -129,6 +130,13 @@ namespace CesiumGltf {
          * @brief An array of textures.
          */
         std::vector<Texture> textures;
+
+    private:
+      /**
+       * @brief This class is not mean to be instantiated directly. Use {@link Model} instead.
+       */
+      ModelSpec() = default;
+      friend struct Model;
 
     };
 }

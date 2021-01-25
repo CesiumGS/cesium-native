@@ -18,6 +18,9 @@
         },
         "Accessor": {
             "toBeInherited": true
+        },
+        "Texture Info": {
+            "isBaseClass": true
         }
     },
     "extensions": [

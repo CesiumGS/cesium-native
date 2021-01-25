@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
      */
-    struct AnimationSampler : public ExtensibleObject {
+    struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
         enum class Interpolation {
             LINEAR,
 

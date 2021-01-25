@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/JsonValue.h"
+#include "CesiumGltf/Library.h"
 #include <any>
 #include <vector>
 
@@ -8,7 +9,7 @@ namespace CesiumGltf {
     /**
      * @brief The base class for objects in a glTF that have extensions and extras.
      */
-    struct ExtensibleObject {
+    struct CESIUMGLTF_API ExtensibleObject {
         // TODO: extras
 
         /**

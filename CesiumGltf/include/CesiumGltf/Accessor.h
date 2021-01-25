@@ -1,13 +1,14 @@
 #pragma once
 
 #include "CesiumGltf/AccessorSpec.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     struct Model;
 
     /** @copydoc AccessorSpec */
-    struct Accessor : public AccessorSpec {
+    struct CESIUMGLTF_API Accessor final : public AccessorSpec {
         /**
          * @brief Computes the number of components for a given accessor type.
          * 

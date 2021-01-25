@@ -4,13 +4,14 @@
 
 #include "CesiumGltf/AnimationChannelTarget.h"
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief Targets an animation's sampler at a node's property.
      */
-    struct AnimationChannel : public ExtensibleObject {
+    struct CESIUMGLTF_API AnimationChannel final : public ExtensibleObject {
 
         /**
          * @brief The index of a sampler in this animation used to compute the value for the target.

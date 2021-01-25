@@ -4,6 +4,7 @@
 
 #include "CesiumGltf/CameraOrthographic.h"
 #include "CesiumGltf/CameraPerspective.h"
+#include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
 #include <optional>
 
@@ -11,7 +12,7 @@ namespace CesiumGltf {
     /**
      * @brief A camera's projection.  A node can reference a camera to apply a transform to place the camera in the scene.
      */
-    struct Camera : public NamedObject {
+    struct CESIUMGLTF_API Camera final : public NamedObject {
         enum class Type {
             perspective,
 

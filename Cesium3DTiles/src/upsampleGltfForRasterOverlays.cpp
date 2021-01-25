@@ -27,7 +27,7 @@ namespace Cesium3DTiles {
         Model& model,
         Mesh& mesh,
         MeshPrimitive& primitive,
-        CesiumGeometry::QuadtreeChild childID
+        CesiumGeometry::UpsampledQuadtreeNode childID
     );
 
     struct FloatVertexAttribute {
@@ -72,14 +72,22 @@ namespace Cesium3DTiles {
     static void addSkirts(std::vector<float>& output,
         std::vector<uint32_t>& indices,
         std::vector<FloatVertexAttribute>& attributes,
-        CesiumGeometry::QuadtreeChild childID,
+        CesiumGeometry::UpsampledQuadtreeNode childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
         EdgeIndices &edgeIndices,
         int64_t vertexSizeFloats,
         int32_t positionAttributeIndex);
 
-    Model upsampleGltfForRasterOverlays(const Model& parentModel, CesiumGeometry::QuadtreeChild childID) {
+    static bool isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
+        return (childID.tileID.x % 2) == 0;
+    }
+
+    static bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
+        return (childID.tileID.y % 2) == 0;
+    }
+
+    Model upsampleGltfForRasterOverlays(const Model& parentModel, CesiumGeometry::UpsampledQuadtreeNode childID) {
         Model result;
 
         // Copy the entire parent model except for the buffers, bufferViews, and accessors, which we'll be rewriting.
@@ -283,7 +291,7 @@ namespace Cesium3DTiles {
         Model& model,
         Mesh& /*mesh*/,
         MeshPrimitive& primitive,
-        CesiumGeometry::QuadtreeChild childID
+        CesiumGeometry::UpsampledQuadtreeNode childID
     ) {
         // Add up the per-vertex size of all attributes and create buffers, bufferViews, and accessors
         std::vector<FloatVertexAttribute> attributes;
@@ -392,8 +400,8 @@ namespace Cesium3DTiles {
             primitive.attributes.erase(attribute);
         }
 
-        bool keepAboveU = childID == CesiumGeometry::QuadtreeChild::LowerRight || childID == CesiumGeometry::QuadtreeChild::UpperRight;
-        bool keepAboveV = childID == CesiumGeometry::QuadtreeChild::UpperLeft || childID == CesiumGeometry::QuadtreeChild::UpperRight;
+        bool keepAboveU = !isWestChild(childID);
+        bool keepAboveV = !isSouthChild(childID);
 
         AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
         AccessorView<TIndex> indicesView(parentModel, primitive.indices);
@@ -723,7 +731,7 @@ namespace Cesium3DTiles {
     static void addSkirts(std::vector<float>& output,
         std::vector<uint32_t>& indices,
         std::vector<FloatVertexAttribute>& attributes,
-        CesiumGeometry::QuadtreeChild childID,
+        CesiumGeometry::UpsampledQuadtreeNode childID,
         SkirtMeshMetadata &currentSkirt,
         const SkirtMeshMetadata &parentSkirt,
         EdgeIndices &edgeIndices,
@@ -736,7 +744,7 @@ namespace Cesium3DTiles {
         shortestSkirtHeight = glm::min(shortestSkirtHeight, parentSkirt.skirtNorthHeight);
 
         // west
-        if (childID == CesiumGeometry::QuadtreeChild::LowerLeft || childID == CesiumGeometry::QuadtreeChild::UpperLeft) {
+        if (isWestChild(childID)) {
             currentSkirt.skirtWestHeight = parentSkirt.skirtWestHeight;
         }
         else {
@@ -763,7 +771,7 @@ namespace Cesium3DTiles {
             positionAttributeIndex);
 
         // south
-        if (childID == CesiumGeometry::QuadtreeChild::LowerLeft || childID == CesiumGeometry::QuadtreeChild::LowerRight) {
+        if (isSouthChild(childID)) {
             currentSkirt.skirtSouthHeight = parentSkirt.skirtSouthHeight;
         }
         else {
@@ -790,7 +798,7 @@ namespace Cesium3DTiles {
             positionAttributeIndex);
 
         // east
-        if (childID == CesiumGeometry::QuadtreeChild::LowerRight || childID == CesiumGeometry::QuadtreeChild::UpperRight) {
+        if (!isWestChild(childID)) {
             currentSkirt.skirtEastHeight = parentSkirt.skirtEastHeight;
         }
         else {
@@ -817,7 +825,7 @@ namespace Cesium3DTiles {
             positionAttributeIndex);
 
         // north
-        if (childID == CesiumGeometry::QuadtreeChild::UpperLeft || childID == CesiumGeometry::QuadtreeChild::UpperRight) {
+        if (!isSouthChild(childID)) {
             currentSkirt.skirtNorthHeight = parentSkirt.skirtNorthHeight;
         }
         else {
@@ -849,7 +857,7 @@ namespace Cesium3DTiles {
         Model& model,
         Mesh& mesh,
         MeshPrimitive& primitive,
-        CesiumGeometry::QuadtreeChild childID
+        CesiumGeometry::UpsampledQuadtreeNode childID
     ) {
         if (
             primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
