@@ -5,11 +5,18 @@
 #include "CesiumAsync/ICacheDatabase.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include <optional>
 
 using namespace CesiumAsync;
 
 class MockStoreCacheDatabase : public ICacheDatabase {
 public:
+	struct StoreRequestParameters {
+		std::string key;
+		std::time_t expiryTime;
+		const IAssetRequest* assetRequest;
+	};
+
 	MockStoreCacheDatabase() 
 		: getEntryCall{false}
 		, storeResponseCall{false}
@@ -26,11 +33,12 @@ public:
 		return true;
 	}
 
-	virtual bool storeResponse(const std::string& /*key*/,
-		std::time_t /*expiryTime*/,
-		const IAssetRequest& /*request*/,
+	virtual bool storeResponse(const std::string& key,
+		std::time_t expiryTime,
+		const IAssetRequest& request,
 		std::string& /*error*/) override
 	{
+		this->storeRequestParam = StoreRequestParameters{ key, expiryTime, &request };
 		this->storeResponseCall = true;
 		return true;
 	}
@@ -58,6 +66,8 @@ public:
 	bool removeEntryCall;
 	bool pruneCall;
 	bool clearAllCall;
+
+	std::optional<StoreRequestParameters> storeRequestParam;
 };
 
 class MockAssetAccessor : public IAssetAccessor {
@@ -125,7 +135,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
 				static_cast<uint16_t>(statusCode), 
 				"app/json",
-				HttpHeaders{ {"Expires", "Wed, 21 Oct 2015 07:28:00 GMT"} }, 
+				HttpHeaders{ {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"} }, 
 				std::nullopt,
 				std::vector<uint8_t>());
 
@@ -290,16 +300,94 @@ TEST_CASE("Test the condition of caching the request") {
 			asyncSystem.requestAsset("test.com", std::vector<IAssetAccessor::THeader>{});
 			REQUIRE(mockCacheDatabase->storeResponseCall == false);
 		}
+
+		SECTION("No store if Expires header is less than the current") {
+			std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
+				static_cast<uint16_t>(200),
+				"app/json",
+				HttpHeaders{ {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"} },
+				std::nullopt,
+				std::vector<uint8_t>());
+
+			std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
+				"GET",
+				"test.com",
+				HttpHeaders{},
+				std::move(mockResponse)
+			);
+
+			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
+			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
+			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				std::make_unique<MockAssetAccessor>(mockRequest),
+				std::move(ownedMockCacheDatabase)
+			);
+			std::shared_ptr<MockTaskProcessor> mockTaskProcessor = std::make_shared<MockTaskProcessor>();
+
+			AsyncSystem asyncSystem(cacheAssetAccessor, mockTaskProcessor);
+			asyncSystem.requestAsset("test.com", std::vector<IAssetAccessor::THeader>{});
+			REQUIRE(mockCacheDatabase->storeResponseCall == false);
+		}
 	}
 }
 
 TEST_CASE("Test expiry time of the cached response") {
 	SECTION("Response has max-age cache control") {
-		
+		std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
+			static_cast<uint16_t>(200),
+			"app/json",
+			HttpHeaders{},
+			ResponseCacheControl{ true, false, false, false, false, true, false, 400, 0 },
+			std::vector<uint8_t>());
+
+		std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
+			"GET",
+			"test.com",
+			HttpHeaders{},
+			std::move(mockResponse)
+		);
+
+		std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
+		MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
+		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			std::make_unique<MockAssetAccessor>(mockRequest),
+			std::move(ownedMockCacheDatabase)
+		);
+		std::shared_ptr<MockTaskProcessor> mockTaskProcessor = std::make_shared<MockTaskProcessor>();
+
+		AsyncSystem asyncSystem(cacheAssetAccessor, mockTaskProcessor);
+		asyncSystem.requestAsset("test.com", std::vector<IAssetAccessor::THeader>{});
+		REQUIRE(mockCacheDatabase->storeResponseCall == true);
+		REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime - std::time(0) == 400);
 	}
 
 	SECTION("Response has Expires header") {
+		std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
+			static_cast<uint16_t>(200),
+			"app/json",
+			HttpHeaders{ {"Expires", "Wed, 21 Oct 2021 07:28:00 GMT"} },
+			ResponseCacheControl{ true, false, false, false, false, true, false, 0, 0 },
+			std::vector<uint8_t>());
 
+		std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
+			"GET",
+			"test.com",
+			HttpHeaders{},
+			std::move(mockResponse)
+		);
+
+		std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
+		MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
+		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			std::make_unique<MockAssetAccessor>(mockRequest),
+			std::move(ownedMockCacheDatabase)
+		);
+		std::shared_ptr<MockTaskProcessor> mockTaskProcessor = std::make_shared<MockTaskProcessor>();
+
+		AsyncSystem asyncSystem(cacheAssetAccessor, mockTaskProcessor);
+		asyncSystem.requestAsset("test.com", std::vector<IAssetAccessor::THeader>{});
+		REQUIRE(mockCacheDatabase->storeResponseCall == true);
+		REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime == 1634801280);
 	}
 }
 

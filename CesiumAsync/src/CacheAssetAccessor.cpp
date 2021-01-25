@@ -274,8 +274,13 @@ namespace CesiumAsync {
 
 		// check response header contains expires if maxAge is not specified 
 		const HttpHeaders& responseHeaders = response->headers();
-		if (maxAge == 0 && responseHeaders.find("Expires") == responseHeaders.end()) {
-			return false;
+		if (maxAge == 0) {
+			HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
+			if (expiresHeader == responseHeaders.end()) {
+				return false;
+			}
+
+			return std::difftime(convertHttpDateToTime(expiresHeader->second), std::time(0)) > 0.0;
 		}
 
 		return true;
