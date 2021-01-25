@@ -3,7 +3,11 @@
 
 namespace Cesium3DTiles {
 
-    Credit CreditSystem::createCredit(const std::string& html) {   
+    Credit CreditSystem::createCredit(const std::string& creditString, bool wrapStringInHtml) {   
+        std::string html = wrapStringInHtml ? 
+            "<div style=\"color:white\">" + creditString + "</div>" :
+            creditString;
+
         // if this credit already exists, return a Credit handle to it
         for (size_t id = 0; id < _credits.size(); ++id) {
             if(_credits[id].html == html) {

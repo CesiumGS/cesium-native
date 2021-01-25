@@ -36,10 +36,13 @@ namespace Cesium3DTiles {
         /**
          * @brief Inserts a credit string
          *
+         * @param creditString the string representing this credit.
+         * @param wrapStringInHtml whether to wrap the credit string into an html element. 
+         *
          * @return If this string already exists, returns a Credit handle to the existing entry. 
          * Otherwise returns a Credit handle to a new entry.
          */
-        Credit createCredit(const std::string& html); 
+        Credit createCredit(const std::string& creditString, bool wrapStringInHtml = true); 
 
         /**
          * @brief Get the HTML string for this credit

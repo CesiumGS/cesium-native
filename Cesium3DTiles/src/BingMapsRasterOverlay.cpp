@@ -282,7 +282,7 @@ namespace Cesium3DTiles {
                 }
             }
 
-            Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
+            Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML, false);
 
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
