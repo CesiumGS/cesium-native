@@ -3,7 +3,7 @@
 
 namespace CesiumGltf {
 
-void CesiumGltf::decodeDataUris(ModelReaderResult& /* readModel */) {
+void decodeDataUris(ModelReaderResult& /* readModel */) {
 }
 
 }
