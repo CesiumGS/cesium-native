@@ -4,7 +4,13 @@
 #include <stdexcept>
 
 namespace CesiumGltf {
-
+	/**
+	 * @brief Indicates the status of an {@link AccessorView}.
+	 * 
+	 * The {@link AccessorView} constructor always completes successfully. However, it may not
+	 * always reflect the actual content of the {@link Accessor}, but instead indicate that
+	 * its {@link AccessorView::size} is 0. This enumeration provides the reason.
+	 */
 	enum class AccessorViewStatus {
 		/**
 		 * @brief This accessor is valid and ready to use.
@@ -47,14 +53,10 @@ namespace CesiumGltf {
 	 * 
 	 * It provides the actual accessor data like an array of elements.
 	 * The type of the accessor elements is determined by the template 
-	 * parameter. Instances are usually created by {@link Accessor::createView},
+	 * parameter. Instances are usually from an {@link Accessor},
 	 * and the {@link operator[]()} can be used to access the elements:
 	 * 
-	 * ```
-	 * CesiumGltf::Model model;
-	 * AccessorView<glm::vec3> positions = model.accessors[0].createView<glm::vec3)(model);
-	 * glm::vec3 position = positions[i];
-	 * ```
+	 * @snippet TestAccessorView.cpp createFromAccessorAndRead
 	 *
 	 * @tparam T The type of the elements in the accessor.
 	 */
@@ -70,6 +72,11 @@ namespace CesiumGltf {
 	public:
 		typedef T value_type;
 
+		/**
+		 * @brief Construct a new instance not pointing to any data.
+		 * 
+		 * The new instance will have a {@link size} of 0 and a {@link status} of `AccessorViewStatus::InvalidAccessorIndex`.
+		 */
 		AccessorView() :
 			_pData(nullptr),
 			_stride(0),
@@ -99,13 +106,34 @@ namespace CesiumGltf {
 		{
 		}
 
-		AccessorView(const Model& model, const Accessor& accessor) :
+		/**
+		 * @brief Creates a new instance from a given model and {@link Accessor}.
+		 * 
+		 * If the accessor cannot be viewed, the construct will still complete successfully
+		 * without throwing an exception. However, {@link size} will return 0 and
+		 * {@link status} will indicate what went wrong.
+		 * 
+		 * @param model The model to access.
+		 * @param accessor The accessor to view.
+		 */
+		AccessorView(const Model& model, const Accessor& accessor) noexcept :
 			AccessorView()
 		{
 			this->create(model, accessor);
 		}
 
-		AccessorView(const Model& model, int32_t accessorIndex) :
+
+		/**
+		 * @brief Creates a new instance from a given model and accessor index.
+		 * 
+		 * If the accessor cannot be viewed, the construct will still complete successfully
+		 * without throwing an exception. However, {@link size} will return 0 and
+		 * {@link status} will indicate what went wrong.
+		 * 
+		 * @param model The model to access.
+		 * @param accessorIndex The index of the accessor to view in the model's {@link Model::accessors} list.
+		 */
+		AccessorView(const Model& model, int32_t accessorIndex) noexcept :
 			AccessorView()
 		{
 			const Accessor* pAccessor = Model::getSafe(&model.accessors, accessorIndex);

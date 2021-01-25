@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief Reference to a texture.
      */
-    struct TextureInfo : public ExtensibleObject {
+    struct CESIUMGLTF_API TextureInfo : public ExtensibleObject {
 
         /**
          * @brief The index of the texture.

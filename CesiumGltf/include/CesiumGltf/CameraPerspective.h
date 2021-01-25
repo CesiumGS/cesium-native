@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <optional>
 
 namespace CesiumGltf {
     /**
      * @brief A perspective camera containing properties to create a perspective projection matrix.
      */
-    struct CameraPerspective : public ExtensibleObject {
+    struct CESIUMGLTF_API CameraPerspective final : public ExtensibleObject {
 
         /**
          * @brief The floating-point aspect ratio of the field of view.

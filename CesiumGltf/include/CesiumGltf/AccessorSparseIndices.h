@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief Indices of those attributes that deviate from their initialization value.
      */
-    struct AccessorSparseIndices : public ExtensibleObject {
+    struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
         enum class ComponentType {
             UNSIGNED_BYTE = 5121,
 

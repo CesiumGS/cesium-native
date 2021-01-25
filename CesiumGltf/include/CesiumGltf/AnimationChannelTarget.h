@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 
 namespace CesiumGltf {
     /**
      * @brief The index of the node and TRS property that an animation channel targets.
      */
-    struct AnimationChannelTarget : public ExtensibleObject {
+    struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
         enum class Path {
             translation,
 

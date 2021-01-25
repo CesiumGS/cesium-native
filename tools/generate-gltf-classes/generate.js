@@ -38,9 +38,11 @@ function generate(options, schema) {
     lodash.flatten(properties.map((property) => property.localTypes))
   );
 
-  const headers = lodash.uniq(
-    [`"CesiumGltf/${base}.h"`, ...lodash.flatten(properties.map((property) => property.headers))]
-  );
+  const headers = lodash.uniq([
+      `"CesiumGltf/Library.h"`,
+      `"CesiumGltf/${base}.h"`,
+      ...lodash.flatten(properties.map((property) => property.headers))
+  ]);
 
   headers.sort();
 
@@ -55,7 +57,7 @@ function generate(options, schema) {
             /**
              * @brief ${schema.description}
              */
-            struct ${name}${thisConfig.toBeInherited ? "Spec" : ""} : public ${base} {
+            struct CESIUMGLTF_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
@@ -65,7 +67,7 @@ function generate(options, schema) {
                     .join("\n\n"),
                   16
                 )}
-
+                ${thisConfig.toBeInherited ? privateSpecConstructor(name) : ""}
             };
         }
     `;
@@ -222,6 +224,17 @@ function formatReaderProperty(property) {
 
 function formatReaderPropertyImpl(property) {
   return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
+}
+
+function privateSpecConstructor(name) {
+  return `
+    private:
+      /**
+       * @brief This class is not mean to be instantiated directly. Use {@link ${name}} instead.
+       */
+      ${name}Spec() = default;
+      friend struct ${name};
+  `;
 }
 
 module.exports = generate;

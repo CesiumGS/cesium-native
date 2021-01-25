@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include <cstdint>
 #include <unordered_map>
 
@@ -10,7 +11,7 @@ namespace CesiumGltf {
     /**
      * @brief undefined
      */
-    struct KHR_draco_mesh_compression : public ExtensibleObject {
+    struct CESIUMGLTF_API KHR_draco_mesh_compression final : public ExtensibleObject {
 
         /**
          * @brief The index of the bufferView.

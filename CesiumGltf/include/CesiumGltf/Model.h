@@ -1,10 +1,11 @@
 #pragma once
 
+#include "CesiumGltf/Library.h"
 #include "CesiumGltf/ModelSpec.h"
 
 namespace CesiumGltf {
     /** @copydoc ModelSpec */
-    struct Model : public ModelSpec {
+    struct CESIUMGLTF_API Model : public ModelSpec {
         /**
          * @brief Merges another model into this one.
          * 

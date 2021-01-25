@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/Library.h"
 #include "CesiumGltf/TextureInfo.h"
 #include <optional>
 #include <vector>
@@ -11,7 +12,7 @@ namespace CesiumGltf {
     /**
      * @brief A set of parameter values that are used to define the metallic-roughness material model from Physically-Based Rendering (PBR) methodology.
      */
-    struct MaterialPBRMetallicRoughness : public ExtensibleObject {
+    struct CESIUMGLTF_API MaterialPBRMetallicRoughness final : public ExtensibleObject {
 
         /**
          * @brief The material's base color factor.
