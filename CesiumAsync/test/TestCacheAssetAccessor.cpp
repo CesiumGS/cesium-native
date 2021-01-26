@@ -437,17 +437,16 @@ TEST_CASE("Test serving cache item") {
 			std::move(mockResponse)
 		);
 
-		// mock cache item
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::make_unique<MockStoreCacheDatabase>()
 		);
 		std::shared_ptr<MockTaskProcessor> mockTaskProcessor = std::make_shared<MockTaskProcessor>();
 
+		// test that the response is from the server
 		AsyncSystem asyncSystem(cacheAssetAccessor, mockTaskProcessor);
 		asyncSystem.requestAsset("test.com", std::vector<IAssetAccessor::THeader>{})
 			.thenInMainThread([](std::shared_ptr<IAssetRequest> completedRequest) {
-				// test that the response is from the cache
 				REQUIRE(completedRequest != nullptr);
 				REQUIRE(completedRequest->url() == "test.com");
 				REQUIRE(completedRequest->headers() == HttpHeaders{ {"Request-Header", "Request-Value"} });
@@ -481,7 +480,7 @@ TEST_CASE("Test serving cache item") {
 			std::move(mockResponse)
 		);
 
-		// mock cache item
+		// mock fresh cache item
 		std::unique_ptr<MockStoreCacheDatabase> mockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 		std::time_t currentTime = std::time(0);
 		CacheRequest cacheRequest(
