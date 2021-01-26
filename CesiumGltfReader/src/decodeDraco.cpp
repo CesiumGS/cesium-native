@@ -102,12 +102,9 @@ namespace {
 		    supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
         } else if (numPoint < static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint16_t>::max())) {
 		    supposedComponentType = Accessor::ComponentType::UNSIGNED_SHORT;
-        } else if (numPoint < static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint32_t>::max())) {
-		    supposedComponentType = Accessor::ComponentType::UNSIGNED_INT;
         } else {
-            readModel.warnings.emplace_back("Primitive indices accessor's required component type is over the maximum of UNSIGNED_INT.");
-            return;
-        }
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_INT;
+        } 
 
         if (static_cast<uint32_t>(supposedComponentType) > static_cast<uint32_t>(pIndicesAccessor->componentType)) {
 			pIndicesAccessor->componentType = supposedComponentType;
