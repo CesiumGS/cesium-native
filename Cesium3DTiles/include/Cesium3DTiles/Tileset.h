@@ -329,6 +329,15 @@ namespace Cesium3DTiles {
         size_t getTotalDataBytes() const noexcept;
 
     private:
+
+        /**
+         * @brief The result of traversing one branch of the tile hierarchy.
+         * 
+         * Instances of this structure are created by the `_visit...` functions,
+         * and summarize the information that was gathered during the traversal
+         * of the respective branch, so that this information can be used by
+         * the parent to decide on the further traversal process.
+         */
         struct TraversalDetails {
             /**
              * @brief Whether all selected tiles in this tile's subtree are renderable.
@@ -424,6 +433,13 @@ namespace Cesium3DTiles {
          */
         void _handleTokenRefreshResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
+        /**
+         * @brief Input information that is constant throughout the traversal.
+         * 
+         * An instance of this structure is created upon entry of the top-level
+         * `_visitTile` function, for the traversal for a certain frame, and 
+         * passed on through the traversal. 
+         */
         struct FrameState {
             const Camera& camera;
             int32_t lastFrameNumber;
