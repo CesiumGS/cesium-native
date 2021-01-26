@@ -97,7 +97,7 @@ namespace {
         }
 
         draco::PointIndex::ValueType numPoint = pMesh->num_points();
-        Accessor::ComponentType supposedComponentType = Accessor::ComponentType::BYTE;
+        Accessor::ComponentType supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
         if (numPoint <  static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint8_t>::max())) {
 		    supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
         } else if (numPoint < static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint16_t>::max())) {
