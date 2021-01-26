@@ -83,7 +83,7 @@ namespace CesiumAsync {
 
 	static std::time_t calculateExpiryTime(const IAssetRequest& request);
 
-	static std::unique_ptr<IAssetRequest> modifyCacheItem(CacheItem& cacheItem, const IAssetRequest& request);
+	static std::unique_ptr<IAssetRequest> updateCacheItem(CacheItem& cacheItem, const IAssetRequest& request);
 
 	CacheAssetAccessor::CacheAssetAccessor(
 		std::unique_ptr<IAssetAccessor> assetAccessor,
@@ -133,7 +133,7 @@ namespace CesiumAsync {
 				return;
 			}
 
-			// cache is either stale or cache-control requires to revalidate everytime cache is used
+			// cache is stale and need revalidation 
 			if (shouldRevalidateCache(*cacheItem)) {
 				std::vector<THeader> newHeaders = headers;
 				const CacheResponse& cacheResponse = cacheItem->cacheResponse;
@@ -154,15 +154,15 @@ namespace CesiumAsync {
 							return;
 						}
 
-						if (shouldCacheRequest(*pCompletedRequest)) {
-							std::shared_ptr<IAssetRequest> pRequestToStore;
-							if (pCompletedRequest->response()->statusCode() == 304) { // status Not-Modified
-								pRequestToStore = modifyCacheItem(*cacheItem, *pCompletedRequest);
-							}
-							else {
-								pRequestToStore = pCompletedRequest;
-							}
+						std::shared_ptr<IAssetRequest> pRequestToStore;
+						if (pCompletedRequest->response()->statusCode() == 304) { // status Not-Modified
+							pRequestToStore = updateCacheItem(*cacheItem, *pCompletedRequest);
+						}
+						else {
+							pRequestToStore = pCompletedRequest;
+						}
 
+						if (shouldCacheRequest(*pRequestToStore)) {
 							pAsyncSystem->runInWorkerThread([pCacheDatabase, pRequestToStore]() {
 								std::string error;
 								if (!pCacheDatabase->storeResponse(pRequestToStore->url(),
@@ -173,12 +173,9 @@ namespace CesiumAsync {
 									// TODO: log error here
 								}
 							});
+						}
 
-							callback(pRequestToStore);
-						}
-						else {
-							callback(pCompletedRequest);
-						}
+						callback(pRequestToStore);
 					});
 
 				return;
@@ -201,10 +198,6 @@ namespace CesiumAsync {
 			if (isCacheStale(cacheItem) && cacheControl->mustRevalidate()) {
 				return true;
 			}
-
-			if (cacheControl->noCache()) {
-				return true;
-			}
 		}
 
 		return isCacheStale(cacheItem);
@@ -215,13 +208,13 @@ namespace CesiumAsync {
 		const std::optional<ResponseCacheControl> &cacheControl = cacheResponse.cacheControl;
 		std::time_t currentTime = std::time(0);
 		if (cacheControl) {
-			return std::difftime(cacheItem.expiryTime, currentTime) > 0.0;
+			return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
 		}
 
 		const HttpHeaders& responseHeaders = cacheResponse.headers;
 		HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
 		if (expiresHeader != responseHeaders.end()) {
-			return std::difftime(convertHttpDateToTime(expiresHeader->second), currentTime) > 0.0;
+			return std::difftime(convertHttpDateToTime(expiresHeader->second), currentTime) < 0.0;
 		}
 
 		// Without "Cache-Control" or "Expires" headers, we don't know if the cache is stale or not, so make it stale.
@@ -265,7 +258,7 @@ namespace CesiumAsync {
 		const ResponseCacheControl* cacheControl = response->cacheControl();
 		int maxAge = 0;
 		if (cacheControl) {
-			if (cacheControl->noStore()) {
+			if (cacheControl->noStore() || cacheControl->noCache()) {
 				return false;
 			}
 
@@ -304,14 +297,20 @@ namespace CesiumAsync {
 		return std::time(0);
 	}
 
-	std::unique_ptr<IAssetRequest> modifyCacheItem(CacheItem& cacheItem, const IAssetRequest& request) {
+	std::unique_ptr<IAssetRequest> updateCacheItem(CacheItem& cacheItem, const IAssetRequest& request) {
 		for (const std::pair<const std::string, std::string>& header : request.headers()) {
 			cacheItem.cacheRequest.headers[header.first] = header.second;
 		}
 
 		const IAssetResponse* response = request.response();
-		for (const std::pair<const std::string, std::string>& header : response->headers()) {
-			cacheItem.cacheResponse.headers[header.first] = header.second;
+		if (response) {
+			for (const std::pair<const std::string, std::string>& header : response->headers()) {
+				cacheItem.cacheResponse.headers[header.first] = header.second;
+			}
+
+			if (response->cacheControl()) {
+				cacheItem.cacheResponse.cacheControl = *response->cacheControl();
+			}
 		}
 
 		return std::make_unique<CacheAssetRequest>(std::move(cacheItem));
