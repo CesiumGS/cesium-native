@@ -92,6 +92,33 @@ namespace Cesium3DTiles {
         bool forbidHoles = false;
 
         /**
+         * @brief Enable culling of tiles against the frustum.
+         */
+        bool enableFrustumCulling = true;
+
+        /**
+         * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
+         */
+        bool enableFogCulling = true;
+
+        /**
+         * @brief Whether culled tiles should be refined until they meet culledScreenSpaceError. 
+         *
+         * When true, any culled tile from a disabled culling stage will be refined until it meets the specified
+         * culledScreenSpaceError. Otherwise, its screen-space error check will be disabled altogether and it will 
+         * not bother to refine any futher.
+         */
+        bool enforceCulledScreenSpaceError = true;
+
+        /**
+         * @brief The screen-space error to refine until for culled tiles from disabled culling stages.
+         *
+         * When enforceCulledScreenSpaceError is true, culled tiles from disabled culling stages will be refined until
+         * they meet this screen-space error value. 
+         */
+         double culledScreenSpaceError = 64.0; 
+
+        /**
          * @brief The maximum number of bytes that may be cached.
          * 
          * Note that this value, even if 0, will never
@@ -416,8 +443,8 @@ namespace Cesium3DTiles {
             bool queuedForLoad,
             double distance);
 
-        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
-        TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, bool culled, ViewUpdateResult& result);
+        TraversalDetails _visitTileIfNeeded(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
 
         /**
@@ -450,7 +477,7 @@ namespace Cesium3DTiles {
          * @return false All of the required children (if there are any) are loaded, so this tile _can_ be refined.
          */
         bool _queueLoadOfChildrenRequiredForRefinement(const FrameState& frameState, Tile& tile, double distance);
-        bool _meetsSse(const Camera& camera, const Tile& tile, double distance) const;
+        bool _meetsSse(const Camera& camera, const Tile& tile, double distance, bool culled) const;
 
         void _processLoadQueue();
         void _unloadCachedTiles();
