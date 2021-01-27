@@ -9,7 +9,7 @@ namespace CesiumAsync {
 		}
 	};
 
-	bool HeaderCaseInsensitive::operator() (const std::string& s1, const std::string& s2) const {
+	bool CaseInsensitiveCompare::operator() (const std::string& s1, const std::string& s2) const {
 		return std::lexicographical_compare(s1.begin(), s1.end(), s2.begin(), s2.end(), NocaseCompare());  
 	}
 }
