@@ -6,9 +6,12 @@
 using namespace CesiumAsync;
 
 TEST_CASE("Test disk cache with Sqlite") {
-	SECTION("Test store and retrive cache") {
-		DiskCache diskCache("test.db", 3);
+	DiskCache diskCache("test.db", 3);
 
+	std::string error;
+	REQUIRE(diskCache.clearAll(error));
+
+	SECTION("Test store and retrive cache") {
 		HttpHeaders responseHeaders = { { "Response-Header", "Response-Value" } };
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
 		std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
@@ -20,7 +23,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 			"test.com", requestHeaders, std::move(response));
 
 		std::time_t currentTime = std::time(0);
-		std::string error;
 		REQUIRE(diskCache.storeResponse("TestKey", std::time(0), *request, error));
 
 		std::optional<CacheItem> cacheItem;
@@ -50,7 +52,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test remove cache") {
-		DiskCache diskCache("test.db", 3);
 		std::time_t currentTime = std::time(0);
 
 		// store the first item
@@ -65,7 +66,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
 				"test.com", requestHeaders, std::move(response));
 
-			std::string error;
 			REQUIRE(diskCache.storeResponse("TestKey-1", currentTime + 100, *request, error));
 		}
 
@@ -81,12 +81,10 @@ TEST_CASE("Test disk cache with Sqlite") {
 			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
 				"test.com", requestHeaders, std::move(response));
 
-			std::string error;
 			REQUIRE(diskCache.storeResponse("TestKey-2", currentTime, *request, error));
 		}
 
 		// remove second item
-		std::string error;
 		REQUIRE(diskCache.removeEntry("TestKey-2", error));
 
 		std::optional<CacheItem> testKey2;
@@ -121,33 +119,62 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test prune") {
-		DiskCache diskCache("test.db", 3);
+		std::time_t currentTime = std::time(0);
 
 		// store data in the cache first
-		HttpHeaders responseHeaders{ {"Response-Header", "Response-Value"} };
-		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
-		std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
-		std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
-			static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
+		for (size_t i = 0; i < 10; ++i) {
+			HttpHeaders responseHeaders{ {"Response-Header-" + std::to_string(i), "Response-Value-" + std::to_string(i)} };
+			ResponseCacheControl responseCacheControl(true, false, true, false, true, false, true, 0, 0);
+			std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
+			std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
+				static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
 
-		HttpHeaders requestHeaders{ {"Request-Header", "Request-Value"} };
-		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
-			"test.com", requestHeaders, std::move(response));
+			HttpHeaders requestHeaders{ {"Request-Header-" + std::to_string(i), "Request-Value-" + std::to_string(i)} };
+			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>(
+				"GET", "test.com", requestHeaders, std::move(response));
 
-		std::string error;
-		REQUIRE(diskCache.storeResponse("TestKey", std::time(0), *request, error));
-		REQUIRE(diskCache.storeResponse("TestKey1", std::time(0), *request, error));
-		REQUIRE(diskCache.storeResponse("TestKey2", std::time(0), *request, error));
-		REQUIRE(diskCache.storeResponse("TestKey3", std::time(0), *request, error));
-		REQUIRE(diskCache.storeResponse("TestKey4", std::time(0), *request, error));
+			REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), currentTime, *request, error));
+		}
 
-		// clear all
 		REQUIRE(diskCache.prune(error));
+		for (size_t i = 0; i < 7; ++i) {
+			std::optional<CacheItem> cacheItem;
+			REQUIRE(diskCache.getEntry("TestKey" + std::to_string(i), cacheItem, error));
+			REQUIRE(cacheItem == std::nullopt);
+		}
+
+		for (size_t i = 7; i < 10; ++i) {
+			std::optional<CacheItem> cacheItem;
+			REQUIRE(diskCache.getEntry("TestKey" + std::to_string(i), cacheItem, error));
+			REQUIRE(cacheItem != std::nullopt);
+
+			// make sure the item is still in there
+			REQUIRE(cacheItem->expiryTime == currentTime);
+			REQUIRE(cacheItem->lastAccessedTime == currentTime);
+
+			const CacheRequest& cacheRequest = cacheItem->cacheRequest;
+			REQUIRE(cacheRequest.headers == HttpHeaders{ {"Request-Header-" + std::to_string(i), "Request-Value-" + std::to_string(i)} });
+			REQUIRE(cacheRequest.method == "GET");
+			REQUIRE(cacheRequest.url == "test.com");
+
+			const CacheResponse& cacheResponse = cacheItem->cacheResponse;
+			REQUIRE(cacheResponse.contentType == "text/html");
+			REQUIRE(cacheResponse.statusCode == 200);
+			REQUIRE(cacheResponse.headers == HttpHeaders{ {"Response-Header-" + std::to_string(i), "Response-Value-" + std::to_string(i)} });
+			REQUIRE(cacheResponse.data == std::vector<uint8_t>{ 0, 1, 2, 3, 4 });
+			REQUIRE(cacheResponse.cacheControl->mustRevalidate() == true);
+			REQUIRE(cacheResponse.cacheControl->noCache() == false);
+			REQUIRE(cacheResponse.cacheControl->noStore() == true);
+			REQUIRE(cacheResponse.cacheControl->noTransform() == false);
+			REQUIRE(cacheResponse.cacheControl->accessControlPublic() == true);
+			REQUIRE(cacheResponse.cacheControl->accessControlPrivate() == false);
+			REQUIRE(cacheResponse.cacheControl->proxyRevalidate() == true);
+			REQUIRE(cacheResponse.cacheControl->maxAge() == 0);
+			REQUIRE(cacheResponse.cacheControl->sharedMaxAge() == 0);
+		}
 	}
 
 	SECTION("Test clear all") {
-		DiskCache diskCache("test.db");
-
 		// store data in the cache first
 		HttpHeaders responseHeaders{ {"Response-Header", "Response-Value"} };
 		ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
@@ -159,7 +186,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 		std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
 			"test.com", requestHeaders, std::move(response));
 
-		std::string error;
 		for (size_t i = 0; i < 10; ++i) {
 			REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), std::time(0), *request, error));
 		}

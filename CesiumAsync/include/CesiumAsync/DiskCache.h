@@ -39,6 +39,6 @@ namespace CesiumAsync {
 
 	private:
 		sqlite3* _pConnection;
-		uint64_t _maxSize;
+		uint64_t _maxItems;
 	};
 }

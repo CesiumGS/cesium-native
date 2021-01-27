@@ -33,7 +33,7 @@ namespace CesiumAsync {
 	static const std::string REQUEST_HEADER_COLUMN = "requestHeader";
 	static const std::string REQUEST_METHOD_COLUMN = "requestMethod";
 	static const std::string REQUEST_URL_COLUMN = "requestUrl";
-	static const std::string VIRTUAL_RESPONSE_DATA_SIZE = "responseDataTotalSize";
+	static const std::string VIRTUAL_TOTAL_ITEMS_COLUMN = "responseDataTotalSize";
 
 	static std::string convertHeadersToString(const HttpHeaders& headers);
 
@@ -43,9 +43,9 @@ namespace CesiumAsync {
 
 	static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const std::string& serializedResponseCacheControl);
 
-	DiskCache::DiskCache(const std::string &databaseName, uint64_t maxSize)
+	DiskCache::DiskCache(const std::string &databaseName, uint64_t maxItems)
 		: _pConnection{nullptr}
-		, _maxSize{maxSize}
+		, _maxItems{maxItems}
 	{
 		int status = sqlite3_open(databaseName.c_str(), &this->_pConnection);
 		if (status != SQLITE_OK) {
@@ -87,19 +87,19 @@ namespace CesiumAsync {
 
 	DiskCache::DiskCache(DiskCache&& other) noexcept {
 		this->_pConnection = other._pConnection;
-		this->_maxSize = other._maxSize;
+		this->_maxItems = other._maxItems;
 
 		other._pConnection = nullptr;
-		other._maxSize = 0;
+		other._maxItems = 0;
 	}
 
 	DiskCache& DiskCache::operator=(DiskCache&& other) noexcept {
 		if (&other != this) {
 			this->_pConnection = other._pConnection;
-			this->_maxSize = other._maxSize;
+			this->_maxItems = other._maxItems;
 
 			other._pConnection = nullptr;
-			other._maxSize = 0;
+			other._maxItems = 0;
 		}
 
 		return *this;
@@ -361,18 +361,15 @@ namespace CesiumAsync {
 	bool DiskCache::prune(std::string& error)
 	{
 		// query total size of response's data
-		std::string totalSizeQuerySqlStr = "SELECT SUM(LENGTH(" + RESPONSE_DATA_COLUMN + ")) AS " + 
-			VIRTUAL_RESPONSE_DATA_SIZE + 
-			" FROM " + 
-			CACHE_TABLE;
-		Sqlite3StmtWrapper totalSizeQueryStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, totalSizeQuerySqlStr.c_str(), -1, &totalSizeQueryStmtWrapper.stmt, nullptr);
+		std::string totalItemsQuerySqlStr = "SELECT COUNT(*) " + VIRTUAL_TOTAL_ITEMS_COLUMN + " FROM " + CACHE_TABLE;
+		Sqlite3StmtWrapper totalItemsQueryStmtWrapper;
+		int status = sqlite3_prepare_v2(this->_pConnection, totalItemsQuerySqlStr.c_str(), -1, &totalItemsQueryStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_step(totalSizeQueryStmtWrapper.stmt);
+		status = sqlite3_step(totalItemsQueryStmtWrapper.stmt);
 		if (status == SQLITE_DONE) {
 			return true;
 		}
@@ -382,15 +379,14 @@ namespace CesiumAsync {
 		}
 
 		// prune the row if over maximum
-		int64_t totalDataSize = sqlite3_column_int64(totalSizeQueryStmtWrapper.stmt, 0);
-		if (totalDataSize > 0 && totalDataSize <= static_cast<int64_t>(_maxSize)) {
+		int64_t totalItems = sqlite3_column_int64(totalItemsQueryStmtWrapper.stmt, 0);
+		if (totalItems > 0 && totalItems <= static_cast<int64_t>(_maxItems)) {
 			return true;
 		}
 
 		// sort by expiry time first
 		Sqlite3StmtWrapper expiryTimeQueryByOrderStmtWrapper;
-		std::string expiryTimeQueryByOrderSqlStr = "SELECT " + KEY_COLUMN + ", LENGTH(" + RESPONSE_DATA_COLUMN + ") FROM " +
-			CACHE_TABLE + " ORDER BY " + EXPIRY_TIME_COLUMN + " ASC";
+		std::string expiryTimeQueryByOrderSqlStr = "SELECT " + KEY_COLUMN + " FROM " + CACHE_TABLE + " ORDER BY " + EXPIRY_TIME_COLUMN + " ASC";
 		int expiryTimeQueryByOrderStatus = sqlite3_prepare_v2(this->_pConnection, expiryTimeQueryByOrderSqlStr.c_str(), -1, &expiryTimeQueryByOrderStmtWrapper.stmt, nullptr);
 		if (expiryTimeQueryByOrderStatus != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(expiryTimeQueryByOrderStatus));
@@ -406,10 +402,9 @@ namespace CesiumAsync {
 			return false;
 		}
 
-		while (totalDataSize > static_cast<int64_t>(_maxSize) && ((expiryTimeQueryByOrderStatus = sqlite3_step(expiryTimeQueryByOrderStmtWrapper.stmt)) == SQLITE_ROW)) {
+		while (totalItems > static_cast<int64_t>(_maxItems) && ((expiryTimeQueryByOrderStatus = sqlite3_step(expiryTimeQueryByOrderStmtWrapper.stmt)) == SQLITE_ROW)) {
 			const char *key = reinterpret_cast<const char *>(sqlite3_column_text(expiryTimeQueryByOrderStmtWrapper.stmt, 0));
-			int64_t size = sqlite3_column_int64(expiryTimeQueryByOrderStmtWrapper.stmt, 1);
-			totalDataSize -= size;
+			--totalItems;
 
 			deleteStatus = sqlite3_bind_text(deleteStmtWrapper.stmt, 1, key, -1, SQLITE_STATIC);
 			if (deleteStatus != SQLITE_OK) {
