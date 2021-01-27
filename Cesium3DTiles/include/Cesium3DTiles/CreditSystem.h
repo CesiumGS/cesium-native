@@ -60,6 +60,11 @@ namespace Cesium3DTiles {
         void startNextFrame();
 
         /**
+         * @brief Get the html page representing the credits to render this frame. 
+         */
+        std::string getHtmlPageToShowThisFrame() const;
+
+        /**
          * @brief Get the credits to show this frame.
          */
          const std::vector<Credit>& getCreditsToShowThisFrame() const { return _creditsToShowThisFrame; }

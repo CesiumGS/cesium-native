@@ -59,4 +59,13 @@ namespace Cesium3DTiles {
         _creditsToShowThisFrame.clear();
         _currentFrameNumber++;
     }
+
+    std::string CreditSystem::getHtmlPageToShowThisFrame() const {
+        std::string htmlPage = "<body>\n";
+        for (size_t i = 0; i < _creditsToShowThisFrame.size(); ++i) {
+            htmlPage += this->getHtml(_creditsToShowThisFrame[i]) + "\n";
+        }
+        htmlPage += "</body>";
+        return htmlPage;
+    }
 }
