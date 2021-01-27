@@ -491,7 +491,7 @@ namespace CesiumAsync {
 		root.AddMember("noStore", rapidjson::Value(cacheControl->noStore()), allocator);
 		root.AddMember("noTransform", rapidjson::Value(cacheControl->noTransform()), allocator);
 		root.AddMember("accessControlPublic", rapidjson::Value(cacheControl->accessControlPublic()), allocator);
-		root.AddMember("accessControlPrivate", rapidjson::Value(cacheControl->accessControlPublic()), allocator);
+		root.AddMember("accessControlPrivate", rapidjson::Value(cacheControl->accessControlPrivate()), allocator);
 		root.AddMember("proxyRevalidate", rapidjson::Value(cacheControl->proxyRevalidate()), allocator);
 		root.AddMember("maxAge", rapidjson::Value(cacheControl->maxAge()), allocator);
 		root.AddMember("sharedMaxAge", rapidjson::Value(cacheControl->sharedMaxAge()), allocator);
