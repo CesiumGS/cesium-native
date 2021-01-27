@@ -1,6 +1,6 @@
 
 #include "Cesium3DTiles/ViewState.h"
-#include "Cesium3DTiles/Frustum.h"
+#include "Cesium3DTiles/CullingVolume.h"
 
 #include <glm/trigonometric.hpp>
 
@@ -26,30 +26,30 @@ namespace Cesium3DTiles {
         _verticalFieldOfView(verticalFieldOfView),
         _sseDenominator(2.0 * glm::tan(0.5 * verticalFieldOfView)),
         _positionCartographic(positionCartographic),
-        _frustum(createFrustum(position, direction, up, horizontalFieldOfView, verticalFieldOfView))
+        _cullingVolume(createCullingVolume(position, direction, up, horizontalFieldOfView, verticalFieldOfView))
     {}
 
     template <class T>
     static bool isBoundingVolumeVisible(
         const T& boundingVolume,
-        const Frustum& frustum
+        const CullingVolume& cullingVolume
     ) noexcept {
-        CullingResult left = boundingVolume.intersectPlane(frustum._leftPlane);
+        CullingResult left = boundingVolume.intersectPlane(cullingVolume._leftPlane);
         if (left == CullingResult::Outside) {
             return false;
         }
 
-        CullingResult right = boundingVolume.intersectPlane(frustum._rightPlane);
+        CullingResult right = boundingVolume.intersectPlane(cullingVolume._rightPlane);
         if (right == CullingResult::Outside) {
             return false;
         }
 
-        CullingResult top = boundingVolume.intersectPlane(frustum._topPlane);
+        CullingResult top = boundingVolume.intersectPlane(cullingVolume._topPlane);
         if (top == CullingResult::Outside) {
             return false;
         }
 
-        CullingResult bottom = boundingVolume.intersectPlane(frustum._bottomPlane);
+        CullingResult bottom = boundingVolume.intersectPlane(cullingVolume._bottomPlane);
         if (bottom == CullingResult::Outside) {
             return false;
         }
@@ -63,19 +63,19 @@ namespace Cesium3DTiles {
             const ViewState& viewState;
 
             bool operator()(const OrientedBoundingBox& boundingBox) {
-                return Cesium3DTiles::isBoundingVolumeVisible(boundingBox, viewState._frustum);
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingBox, viewState._cullingVolume);
             }
 
             bool operator()(const BoundingRegion& boundingRegion) {
-                return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion, viewState._frustum);
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion, viewState._cullingVolume);
             }
 
             bool operator()(const BoundingSphere& boundingSphere) {
-                return Cesium3DTiles::isBoundingVolumeVisible(boundingSphere, viewState._frustum);
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingSphere, viewState._cullingVolume);
             }
 
             bool operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
-                return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion.getBoundingRegion(), viewState._frustum);
+                return Cesium3DTiles::isBoundingVolumeVisible(boundingRegion.getBoundingRegion(), viewState._cullingVolume);
             }
         };
 

@@ -4,7 +4,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "CesiumGeometry/Plane.h"
 #include "CesiumGeospatial/Cartographic.h"
-#include "Frustum.h"
+#include "CullingVolume.h"
 
 #include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>
@@ -138,7 +138,7 @@ namespace Cesium3DTiles {
         const double _sseDenominator;
         const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-        const Frustum _frustum;
+        const CullingVolume _cullingVolume;
     };
 
 }

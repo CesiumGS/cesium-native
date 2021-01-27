@@ -1,4 +1,4 @@
-#include "Frustum.h"
+#include "Cesium3DTiles/CullingVolume.h"
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -6,16 +6,16 @@
 
 namespace Cesium3DTiles {
 
-    Frustum createFrustum(
+    CullingVolume createCullingVolume(
         const glm::dvec3& position,
         const glm::dvec3& direction,
         const glm::dvec3& up,
-        const double fovx, 
-        const double fovy
+        const double fovxRad,
+        const double fovyRad
     ) {
-        double t = glm::tan(0.5 * fovy);
+        double t = glm::tan(0.5 * fovyRad);
         double b = -t;
-        double r = glm::tan(0.5 * fovx);
+        double r = glm::tan(0.5 * fovxRad);
         double l = -r;
 
         double n = 1.0;
