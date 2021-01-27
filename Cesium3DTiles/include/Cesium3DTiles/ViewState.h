@@ -54,39 +54,12 @@ namespace Cesium3DTiles {
         const glm::dvec3& getDirection() const noexcept { return this->_direction; }
 
         /**
-         * @brief Gets the up direction of the camera in Earth-centered, Earth-fixed coordinates.
-         */
-        const glm::dvec3& getUp() const noexcept { return this->_up; }
-
-        /**
          * @brief Gets the position of the camera as a longitude / latitude / height.
          * 
          * The result may be `std::nullopt` if the Cartesian position is
          * very near the center of the Ellipsoid.
          */
         const std::optional<CesiumGeospatial::Cartographic>& getPositionCartographic() const noexcept { return this->_positionCartographic; }
-
-        /**
-         * @brief Gets the size of the viewport in pixels.
-         */
-        const glm::dvec2& getViewportSize() const noexcept { return this->_viewportSize; }
-
-        /**
-         * @brief Gets the horizontal field-of-view angle in radians.
-         */
-        double getHorizontalFieldOfView() const noexcept { return this->_horizontalFieldOfView; }
-
-        /**
-         * @brief Gets the vertical field-of-view angle in radians.
-         */
-        double getVerticalFieldOfView() const noexcept { return this->_verticalFieldOfView; }
-
-        /**
-         * @brief Gets the denominator used in screen-space error (SSE) computations.
-         * 
-         * The denominator is <code>2.0 * tan(0.5 * verticalFieldOfView)</code>
-         */
-        double getScreenSpaceErrorDenominator() const noexcept { return this->_sseDenominator; }
 
         /**
          * @brief Returns whether the given {@link BoundingVolume} is visible for this camera
