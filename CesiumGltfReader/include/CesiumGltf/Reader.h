@@ -33,16 +33,16 @@ namespace CesiumGltf {
      */
     struct CESIUMGLTFREADER_API ReadModelOptions {
         /**
-         * @brief Whether data URIs should be automatically decoded as part of the load process.
+         * @brief Whether data URLs in buffers and images should be automatically decoded as part of the load process.
          */
-        bool decodeDataUris = true;
+        bool decodeDataUrls = true;
 
         /**
-         * @brief Whether data URIs should be cleared after they are successfully decoded.
+         * @brief Whether data URLs should be cleared after they are successfully decoded.
          * 
          * This reduces the memory usage of the model.
          */
-        bool clearDecodedDataUris = true;
+        bool clearDecodedDataUrls = true;
 
         /**
          * @brief Whether embedded images in {@link Model:buffers} should be automatically decoded as part of the load process.

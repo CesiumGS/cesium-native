@@ -18,3 +18,5 @@ add_subdirectory(tinyxml2)
 add_subdirectory(asyncplusplus)
 
 add_subdirectory(spdlog)
+
+add_subdirectory(modp_b64)

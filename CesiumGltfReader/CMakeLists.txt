@@ -29,4 +29,4 @@ target_include_directories(
         generated
 )
 
-target_link_libraries(CesiumGltfReader PUBLIC CesiumGltf GSL draco)
+target_link_libraries(CesiumGltfReader PUBLIC CesiumGltf GSL PRIVATE draco modp_b64)
