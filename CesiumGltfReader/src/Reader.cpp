@@ -1,5 +1,5 @@
 #include "CesiumGltf/Reader.h"
-#include "decodeDataUris.h"
+#include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "JsonHandler.h"
 #include "ModelJsonHandler.h"
@@ -275,8 +275,8 @@ namespace {
     void postprocess(ModelReaderResult& readModel, const ReadModelOptions& options) {
         Model& model = readModel.model.value();
 
-        if (options.decodeDataUris) {
-            decodeDataUris(readModel);
+        if (options.decodeDataUrls) {
+            decodeDataUrls(readModel, options.clearDecodedDataUrls);
         }
 
         if (options.decodeEmbeddedImages) {
