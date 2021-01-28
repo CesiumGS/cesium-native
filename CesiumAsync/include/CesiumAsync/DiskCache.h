@@ -10,7 +10,7 @@
 namespace CesiumAsync {
 	class DiskCache : public ICacheDatabase {
 	public:
-		DiskCache(const std::string &databaseName, uint64_t maxSize = 512 * 1024 * 1024);
+		DiskCache(const std::string &databaseName, uint64_t maxItems = 512);
 
 		~DiskCache() noexcept;
 
