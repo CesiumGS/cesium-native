@@ -34,22 +34,22 @@ namespace Cesium3DTiles {
         const T& boundingVolume,
         const CullingVolume& cullingVolume
     ) noexcept {
-        CullingResult left = boundingVolume.intersectPlane(cullingVolume._leftPlane);
+        CullingResult left = boundingVolume.intersectPlane(cullingVolume.leftPlane);
         if (left == CullingResult::Outside) {
             return false;
         }
 
-        CullingResult right = boundingVolume.intersectPlane(cullingVolume._rightPlane);
+        CullingResult right = boundingVolume.intersectPlane(cullingVolume.rightPlane);
         if (right == CullingResult::Outside) {
             return false;
         }
 
-        CullingResult top = boundingVolume.intersectPlane(cullingVolume._topPlane);
+        CullingResult top = boundingVolume.intersectPlane(cullingVolume.topPlane);
         if (top == CullingResult::Outside) {
             return false;
         }
 
-        CullingResult bottom = boundingVolume.intersectPlane(cullingVolume._bottomPlane);
+        CullingResult bottom = boundingVolume.intersectPlane(cullingVolume.bottomPlane);
         if (bottom == CullingResult::Outside) {
             return false;
         }

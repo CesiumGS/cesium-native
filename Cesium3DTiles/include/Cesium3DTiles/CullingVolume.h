@@ -12,10 +12,10 @@ namespace Cesium3DTiles {
      * point inwards.
      */
     struct CullingVolume final {
-        const CesiumGeometry::Plane _leftPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
-        const CesiumGeometry::Plane _rightPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
-        const CesiumGeometry::Plane _topPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
-        const CesiumGeometry::Plane _bottomPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+        const CesiumGeometry::Plane leftPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+        const CesiumGeometry::Plane rightPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+        const CesiumGeometry::Plane topPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+        const CesiumGeometry::Plane bottomPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
     };
 
     /**
