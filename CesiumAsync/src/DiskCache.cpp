@@ -378,56 +378,48 @@ namespace CesiumAsync {
 			return false;
 		}
 
-		// prune the row if over maximum
+		// prune the rows if over maximum
 		int64_t totalItems = sqlite3_column_int64(totalItemsQueryStmtWrapper.stmt, 0);
 		if (totalItems > 0 && totalItems <= static_cast<int64_t>(_maxItems)) {
 			return true;
 		}
 
-		// sort by expiry time first
-		Sqlite3StmtWrapper expiryTimeQueryByOrderStmtWrapper;
-		std::string expiryTimeQueryByOrderSqlStr = "SELECT " + KEY_COLUMN + " FROM " + CACHE_TABLE + " ORDER BY " + EXPIRY_TIME_COLUMN + " ASC";
-		int expiryTimeQueryByOrderStatus = sqlite3_prepare_v2(this->_pConnection, expiryTimeQueryByOrderSqlStr.c_str(), -1, &expiryTimeQueryByOrderStmtWrapper.stmt, nullptr);
-		if (expiryTimeQueryByOrderStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(expiryTimeQueryByOrderStatus));
+		// delete expired rows first
+		Sqlite3StmtWrapper deleteExpiredStmtWrapper;
+		std::string deleteExpiredSqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + EXPIRY_TIME_COLUMN + " < strftime('%s','now')";
+		int deleteExpiredStatus = sqlite3_prepare_v2(this->_pConnection, deleteExpiredSqlStr.c_str(), -1, &deleteExpiredStmtWrapper.stmt, nullptr);
+		if (deleteExpiredStatus != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(deleteExpiredStatus));
 			return false;
 		}
 
-		// prepare delete sqlite command
-		Sqlite3StmtWrapper deleteStmtWrapper;
-		std::string deleteSqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + "=?";
-		int deleteStatus = sqlite3_prepare_v2(this->_pConnection, deleteSqlStr.c_str(), -1, &deleteStmtWrapper.stmt, nullptr);
-		if (deleteStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(deleteStatus));
+		deleteExpiredStatus = sqlite3_step(deleteExpiredStmtWrapper.stmt);
+		if (deleteExpiredStatus != SQLITE_DONE) {
+			error = std::string(sqlite3_errstr(deleteExpiredStatus));
 			return false;
 		}
 
-		while (totalItems > static_cast<int64_t>(_maxItems) && ((expiryTimeQueryByOrderStatus = sqlite3_step(expiryTimeQueryByOrderStmtWrapper.stmt)) == SQLITE_ROW)) {
-			const char *key = reinterpret_cast<const char *>(sqlite3_column_text(expiryTimeQueryByOrderStmtWrapper.stmt, 0));
-			--totalItems;
-
-			deleteStatus = sqlite3_bind_text(deleteStmtWrapper.stmt, 1, key, -1, SQLITE_STATIC);
-			if (deleteStatus != SQLITE_OK) {
-				error = std::string(sqlite3_errstr(deleteStatus));
-				return false;
-			}
-
-			deleteStatus = sqlite3_step(deleteStmtWrapper.stmt);
-			if (deleteStatus != SQLITE_DONE) {
-				error = std::string(sqlite3_errstr(deleteStatus));
-				return false;
-			}
-
-			deleteStatus = sqlite3_reset(deleteStmtWrapper.stmt);
-			if (deleteStatus != SQLITE_OK) {
-				error = std::string(sqlite3_errstr(deleteStatus));
-				return false;
-			}
+		// check if we should delete more
+		int deletedRows = sqlite3_changes(this->_pConnection);
+		if (totalItems - deletedRows < static_cast<int>(this->_maxItems)) {
+			return true;
 		}
 
-		// check final status
-		if (expiryTimeQueryByOrderStatus != SQLITE_DONE && expiryTimeQueryByOrderStatus != SQLITE_ROW) {
-			error = std::string(sqlite3_errstr(expiryTimeQueryByOrderStatus));
+		totalItems -= deletedRows;
+
+		// delete rows LRU if we are still over maximum
+		Sqlite3StmtWrapper LRUDeleteStmtWrapper;
+		std::string LRUDeleteSqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + KEY_COLUMN + 
+			" IN (SELECT " + KEY_COLUMN + " FROM " + CACHE_TABLE + " ORDER BY " + LAST_ACCESSED_TIME_COLUMN + " ASC " + " LIMIT " + std::to_string(totalItems - this->_maxItems)  + ")";
+		int LRUDeleteStatus = sqlite3_prepare_v2(this->_pConnection, LRUDeleteSqlStr.c_str(), -1, &LRUDeleteStmtWrapper.stmt, nullptr);
+		if (LRUDeleteStatus != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(LRUDeleteStatus));
+			return false;
+		}
+
+		LRUDeleteStatus = sqlite3_step(LRUDeleteStmtWrapper.stmt);
+		if (LRUDeleteStatus != SQLITE_DONE) {
+			error = std::string(sqlite3_errstr(LRUDeleteStatus));
 			return false;
 		}
 

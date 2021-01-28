@@ -119,10 +119,10 @@ TEST_CASE("Test disk cache with Sqlite") {
 	}
 
 	SECTION("Test prune") {
-		std::time_t currentTime = std::time(0);
-
 		// store data in the cache first
-		for (size_t i = 0; i < 10; ++i) {
+		std::time_t currentTime = std::time(0);
+		std::time_t interval = -10;
+		for (size_t i = 0; i < 20; ++i) {
 			HttpHeaders responseHeaders{ {"Response-Header-" + std::to_string(i), "Response-Value-" + std::to_string(i)} };
 			ResponseCacheControl responseCacheControl(true, false, true, false, true, false, true, 0, 0);
 			std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
@@ -133,23 +133,23 @@ TEST_CASE("Test disk cache with Sqlite") {
 			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>(
 				"GET", "test.com", requestHeaders, std::move(response));
 
-			REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), currentTime, *request, error));
+			REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), currentTime + interval + i, *request, error));
 		}
 
 		REQUIRE(diskCache.prune(error));
-		for (size_t i = 0; i < 7; ++i) {
+		for (int i = 0; i <= 16; ++i) {
 			std::optional<CacheItem> cacheItem;
 			REQUIRE(diskCache.getEntry("TestKey" + std::to_string(i), cacheItem, error));
 			REQUIRE(cacheItem == std::nullopt);
 		}
 
-		for (size_t i = 7; i < 10; ++i) {
+		for (int i = 17; i < 20; ++i) {
 			std::optional<CacheItem> cacheItem;
 			REQUIRE(diskCache.getEntry("TestKey" + std::to_string(i), cacheItem, error));
 			REQUIRE(cacheItem != std::nullopt);
 
 			// make sure the item is still in there
-			REQUIRE(cacheItem->expiryTime == currentTime);
+			REQUIRE(cacheItem->expiryTime == currentTime + interval + i);
 			REQUIRE(cacheItem->lastAccessedTime == currentTime);
 
 			const CacheRequest& cacheRequest = cacheItem->cacheRequest;
