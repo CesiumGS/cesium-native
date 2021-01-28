@@ -12,6 +12,8 @@ namespace {
         if (resultLength == size_t(-1)) {
             result.clear();
             result.shrink_to_fit();
+        } else {
+            result.resize(resultLength);
         }
 
         return result;
