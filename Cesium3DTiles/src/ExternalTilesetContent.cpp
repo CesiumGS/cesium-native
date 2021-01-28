@@ -20,6 +20,15 @@ namespace Cesium3DTiles {
         const gsl::span<const uint8_t>& data
     ) {
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
+
+        rapidjson::Document tilesetJson;
+        tilesetJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+
+        if (tilesetJson.HasParseError()) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tilesetJson.GetParseError(), tilesetJson.GetErrorOffset());
+            return pResult;
+        }
+
         pResult->childTiles.emplace(1);
 
         pResult->pNewTileContext = std::make_unique<TileContext>();
@@ -30,14 +39,9 @@ namespace Cesium3DTiles {
         pContext->version = context.version;
         pContext->failedTileCallback = context.failedTileCallback;
 
-        rapidjson::Document tilesetJson;
-        tilesetJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+        pResult->childTiles.value()[0].setContext(pContext);
 
-        if (tilesetJson.HasParseError()) {
-            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tilesetJson.GetParseError(), tilesetJson.GetErrorOffset());
-        } else {
-            context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext, pLogger);
-        }
+        context.pTileset->loadTilesFromJson(pResult->childTiles.value()[0], tilesetJson, tileTransform, tileRefine, *pContext, pLogger);
 
         return pResult;
     }
