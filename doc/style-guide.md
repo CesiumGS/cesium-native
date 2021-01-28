@@ -57,6 +57,10 @@ cesium-native may be used in environments with exceptions disabled, such as in W
 * Report improper API usage and precondition violations with `assert` rather than by throwing exceptions. In CesiumJS, these kinds of checks would throw `DeveloperError` and would be removed from release builds. `assert` is a more elegant way to do much the same. The C++ Core Guidelines ([I.6](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i6-prefer-expects-for-expressing-preconditions) and [I.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i8-prefer-ensures-for-expressing-postconditions)) suggest using the `Expects` and `Ensures` macros from the Guidelines Support Library instead of `assert`, but we suggest sticking with the more standard `assert` for the time being.
 * Don't cause buffer overruns or other memory corruption. If it's not possible to continue safely, throwing an exception can be ok. When exceptions are disabled, throwing an exception will cause immediate termination of the program, which is better than memory corruption.
 
+## Const by-value parameters
+
+The C++ Core Guidelines
+
 ## 🎱 Use UTF-8 Everywhere
 
 Not covered by C++ Core Guidelines.
