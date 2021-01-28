@@ -33,7 +33,7 @@ namespace CesiumAsync {
 	static const std::string REQUEST_HEADER_COLUMN = "requestHeader";
 	static const std::string REQUEST_METHOD_COLUMN = "requestMethod";
 	static const std::string REQUEST_URL_COLUMN = "requestUrl";
-	static const std::string VIRTUAL_TOTAL_ITEMS_COLUMN = "responseDataTotalSize";
+	static const std::string VIRTUAL_TOTAL_ITEMS_COLUMN = "totalItems";
 
 	static std::string convertHeadersToString(const HttpHeaders& headers);
 
