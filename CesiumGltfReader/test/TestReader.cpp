@@ -12,20 +12,26 @@ using namespace CesiumGltf;
 namespace {
     std::vector<uint8_t> readFile(const std::string& path) {
         FILE* fp = std::fopen(path.c_str(), "rb");
-        if (!fp) {
-            return {};
+        REQUIRE(fp);
+
+        try {
+            std::fseek(fp, 0, SEEK_END);
+            long pos = std::ftell(fp);
+            std::fseek(fp, 0, SEEK_SET);
+
+            std::vector<uint8_t> result(static_cast<size_t>(pos));
+            size_t itemsRead = std::fread(result.data(), 1, result.size(), fp);
+            REQUIRE(itemsRead == result.size());
+
+            std::fclose(fp);
+
+            return result;
+        } catch(...) {
+            if (fp) {
+                std::fclose(fp);
+            }
+            throw;
         }
-
-        std::fseek(fp, 0, SEEK_END);
-        long pos = std::ftell(fp);
-        std::fseek(fp, 0, SEEK_SET);
-
-        std::vector<uint8_t> result(static_cast<size_t>(pos));
-        std::fread(result.data(), 1, result.size(), fp);
-
-        std::fclose(fp);
-
-        return result;
     }
 }
 
