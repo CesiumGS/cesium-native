@@ -20,7 +20,7 @@ namespace {
         long pos = std::ftell(fp);
         std::fseek(fp, 0, SEEK_SET);
 
-        std::vector<uint8_t> result(pos);
+        std::vector<uint8_t> result(static_cast<size_t>(pos));
         std::fread(result.data(), 1, result.size(), fp);
 
         std::fclose(fp);
