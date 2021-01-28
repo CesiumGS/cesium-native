@@ -3,10 +3,16 @@
 
 namespace Cesium3DTiles {
 
-    Credit CreditSystem::createCredit(const std::string& creditString, bool wrapStringInHtml) {   
-        std::string html = wrapStringInHtml ? 
-            "<div style=\"color:white\">" + creditString + "</div>" :
+    Credit CreditSystem::createCredit(const std::string& creditString, bool /*htmlEncode*/) {   
+        std::string html = creditString;
+            
+        /*
+        TODO: implement proper html encoding here...
+
+            htmlEncode ? 
+            htmlEncodeText(creditString) :
             creditString;
+        */
 
         // if this credit already exists, return a Credit handle to it
         for (size_t id = 0; id < _credits.size(); ++id) {
@@ -58,14 +64,5 @@ namespace Cesium3DTiles {
         _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
         _creditsToShowThisFrame.clear();
         _currentFrameNumber++;
-    }
-
-    std::string CreditSystem::getHtmlPageToShowThisFrame() const {
-        std::string htmlPage = "<body>\n";
-        for (size_t i = 0; i < _creditsToShowThisFrame.size(); ++i) {
-            htmlPage += this->getHtml(_creditsToShowThisFrame[i]) + "\n";
-        }
-        htmlPage += "</body>";
-        return htmlPage;
     }
 }

@@ -42,7 +42,7 @@ namespace Cesium3DTiles {
          * @return If this string already exists, returns a Credit handle to the existing entry. 
          * Otherwise returns a Credit handle to a new entry.
          */
-        Credit createCredit(const std::string& creditString, bool wrapStringInHtml = true); 
+        Credit createCredit(const std::string& creditString, bool htmlEncode = true); 
 
         /**
          * @brief Get the HTML string for this credit
@@ -58,11 +58,6 @@ namespace Cesium3DTiles {
          * @brief Notifies this CreditSystem to start tracking the credits to show for the next frame.
          */
         void startNextFrame();
-
-        /**
-         * @brief Get the html page representing the credits to render this frame. 
-         */
-        std::string getHtmlPageToShowThisFrame() const;
 
         /**
          * @brief Get the credits to show this frame.
