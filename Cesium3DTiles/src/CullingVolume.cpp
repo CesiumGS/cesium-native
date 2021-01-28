@@ -10,12 +10,12 @@ namespace Cesium3DTiles {
         const glm::dvec3& position,
         const glm::dvec3& direction,
         const glm::dvec3& up,
-        const double fovxRad,
-        const double fovyRad
+        const double fovx,
+        const double fovy
     ) {
-        double t = glm::tan(0.5 * fovyRad);
+        double t = glm::tan(0.5 * fovy);
         double b = -t;
-        double r = glm::tan(0.5 * fovxRad);
+        double r = glm::tan(0.5 * fovx);
         double l = -r;
 
         double n = 1.0;

@@ -24,14 +24,14 @@ namespace Cesium3DTiles {
      * @param position The eye position
      * @param direction The viewing direction
      * @param up The up-vector of the frustum
-     * @param fovxRad The horizontal Field-Of-View angle, in radians
-     * @param fovyRad The vertical Field-Of-View angle, in radians
+     * @param fovx The horizontal Field-Of-View angle, in radians
+     * @param fovy The vertical Field-Of-View angle, in radians
      * @return The {@ling CullingVolume}
      */
     CullingVolume createCullingVolume(
         const glm::dvec3& position,
         const glm::dvec3& direction,
         const glm::dvec3& up,
-        const double fovxRad,
-        const double fovyRad);
+        double fovx,
+        double fovy);
 }
