@@ -22,7 +22,7 @@ namespace CesiumAsync {
 
 		DiskCache& operator=(DiskCache&&) noexcept;
 
-		virtual bool getEntry(const std::string& url, 
+		virtual bool getEntry(const std::string& key, 
 			std::optional<CacheItem> &item, 
 			std::string& error) const override;
 
