@@ -59,7 +59,12 @@ cesium-native may be used in environments with exceptions disabled, such as in W
 
 ## Const by-value parameters
 
-The C++ Core Guidelines
+Not covered by the C++ Core Guidelines.
+
+Whether a by-value parameter is `const`, e.g. `void someFunction(int foo)` versus `void someFunction(const int foo)` does not affect how that function is called in any way. From the standpoint of overload resolution, overriding, and linking, these two functions are _identical_. In fact, it is perfectly valid to _declare_ a function with a non-const value parameter and _define_ it with a const value parameter. Therefore we follow the advice suggested in https://abseil.io/tips/109:
+
+> 1. Never use top-level const on function parameters in declarations that are not definitions (and be careful not to copy/paste a meaningless const). It is meaningless and ignored by the compiler, it is visual noise, and it could mislead readers.
+> 2. Do use top-level const on function parameters in definitions at your (or your team’s) discretion. You might follow the same rationale as you would for when to declare a function-local variable const.
 
 ## 🎱 Use UTF-8 Everywhere
 
