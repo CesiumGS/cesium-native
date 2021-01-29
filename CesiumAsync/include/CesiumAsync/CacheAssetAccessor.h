@@ -14,7 +14,8 @@ namespace CesiumAsync {
 	public:
         CacheAssetAccessor(
             std::unique_ptr<IAssetAccessor> assetAccessor,
-            std::unique_ptr<ICacheDatabase> cacheDatabase);
+            std::unique_ptr<ICacheDatabase> cacheDatabase,
+			uint32_t databaseCleanCheckpoint = 50000);
 
         ~CacheAssetAccessor() noexcept override;
 
@@ -26,6 +27,9 @@ namespace CesiumAsync {
         void tick() noexcept override;
 
     private:
+		std::mutex _requestCountMutex;
+		uint32_t _databaseCleanCheckpoint;
+		uint32_t _requestCount;
 		std::unique_ptr<IAssetAccessor> _pAssetAccessor;
 		std::unique_ptr<ICacheDatabase> _pCacheDatabase;
 	};

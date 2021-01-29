@@ -81,14 +81,19 @@ namespace CesiumAsync {
 
 	static bool shouldCacheRequest(const IAssetRequest& request);
 
+	static bool shouldDeleteCache(const IAssetRequest& request);
+
 	static std::time_t calculateExpiryTime(const IAssetRequest& request);
 
 	static std::unique_ptr<IAssetRequest> updateCacheItem(CacheItem& cacheItem, const IAssetRequest& request);
 
 	CacheAssetAccessor::CacheAssetAccessor(
 		std::unique_ptr<IAssetAccessor> assetAccessor,
-		std::unique_ptr<ICacheDatabase> cacheDatabase) 
-		: _pAssetAccessor{ std::move(assetAccessor) }
+		std::unique_ptr<ICacheDatabase> cacheDatabase,
+		uint32_t databaseCleanCheckpoint) 
+		: _databaseCleanCheckpoint{databaseCleanCheckpoint}
+		, _requestCount{}
+		, _pAssetAccessor{ std::move(assetAccessor) }
 		, _pCacheDatabase{std::move(cacheDatabase)}
 	{
 	}
@@ -100,6 +105,20 @@ namespace CesiumAsync {
 		const std::vector<THeader>& headers,
 		std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
 	{
+		{
+			std::lock_guard<std::mutex> guard(this->_requestCountMutex);
+			++this->_requestCount;
+			if (this->_requestCount > 10000) {
+				this->_requestCount = 0;
+				pAsyncSystem->runInWorkerThread([this]() {
+					std::string error;
+					if (!this->_pCacheDatabase->prune(error)) {
+						// TODO: log error
+					}
+				});
+			}
+		}
+
 		pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() {
 			bool readError = false;
 			std::string error;
@@ -175,6 +194,14 @@ namespace CesiumAsync {
 								}
 							});
 						}
+						else if (shouldDeleteCache(*pRequestToStore)) {
+							pAsyncSystem->runInWorkerThread([pCacheDatabase, pRequestToStore]() {
+								std::string error;
+								if (!pCacheDatabase->removeEntry(pRequestToStore->url(), error)) {
+									// TODO: log error here
+								}
+							});
+						}
 
 						callback(pRequestToStore);
 					});
@@ -220,7 +247,7 @@ namespace CesiumAsync {
 
 		// Without "Cache-Control" or "Expires" headers, we don't know if the cache is stale or not, so make it stale.
 		// This code shouldn't execute given the condition to store a completed request being that the request should have "Cache-Control"
-		// header or "Expires" header at the very beginning
+		// header or "Expires" header at the very begining
 		return true;
 	}
 
@@ -278,6 +305,15 @@ namespace CesiumAsync {
 		}
 
 		return true;
+	}
+
+	bool shouldDeleteCache(const IAssetRequest& request) {
+		const IAssetResponse* response = request.response();
+		if (!response || !response->cacheControl()) {
+			return false;
+		}
+
+		return response->cacheControl()->noStore();
 	}
 
 	std::time_t calculateExpiryTime(const IAssetRequest& request) {
