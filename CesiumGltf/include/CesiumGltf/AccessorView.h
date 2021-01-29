@@ -227,30 +227,6 @@ namespace CesiumGltf {
 		}
 	};
 
-	namespace Impl {
-		template <typename TCallback, typename TElement>
-		std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(const Model& model, const Accessor& accessor, TCallback&& callback) {
-            switch (accessor.type) {
-            case Accessor::Type::SCALAR:
-				return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(model, accessor));
-            case Accessor::Type::VEC2:
-				return callback(AccessorView<AccessorTypes::VEC2<TElement>>(model, accessor));
-            case Accessor::Type::VEC3:
-				return callback(AccessorView<AccessorTypes::VEC3<TElement>>(model, accessor));
-            case Accessor::Type::VEC4:
-				return callback(AccessorView<AccessorTypes::VEC4<TElement>>(model, accessor));
-            case Accessor::Type::MAT2:
-				return callback(AccessorView<AccessorTypes::MAT2<TElement>>(model, accessor));
-            case Accessor::Type::MAT3:
-				return callback(AccessorView<AccessorTypes::MAT3<TElement>>(model, accessor));
-            case Accessor::Type::MAT4:
-				return callback(AccessorView<AccessorTypes::MAT4<TElement>>(model, accessor));
-			default:
-				return callback(AccessorView<nullptr_t>());
-            }
-		}
-	}
-
 	/**
 	 * @brief Contains types that may optionally be used with {@link AccessorView} for various {@link Accessor::componentType} values.
 	 */
@@ -295,6 +271,30 @@ namespace CesiumGltf {
         #pragma pack(pop)
     };
 
+	namespace Impl {
+		template <typename TCallback, typename TElement>
+		std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(const Model& model, const Accessor& accessor, TCallback&& callback) {
+            switch (accessor.type) {
+            case Accessor::Type::SCALAR:
+				return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(model, accessor));
+            case Accessor::Type::VEC2:
+				return callback(AccessorView<AccessorTypes::VEC2<TElement>>(model, accessor));
+            case Accessor::Type::VEC3:
+				return callback(AccessorView<AccessorTypes::VEC3<TElement>>(model, accessor));
+            case Accessor::Type::VEC4:
+				return callback(AccessorView<AccessorTypes::VEC4<TElement>>(model, accessor));
+            case Accessor::Type::MAT2:
+				return callback(AccessorView<AccessorTypes::MAT2<TElement>>(model, accessor));
+            case Accessor::Type::MAT3:
+				return callback(AccessorView<AccessorTypes::MAT3<TElement>>(model, accessor));
+            case Accessor::Type::MAT4:
+				return callback(AccessorView<AccessorTypes::MAT4<TElement>>(model, accessor));
+			default:
+				return callback(AccessorView<std::nullptr_t>());
+            }
+		}
+	}
+
 	/**
 	 * @brief Creates an appropriate {@link AccessorView} for a given accessor.
 	 * 
@@ -324,7 +324,7 @@ namespace CesiumGltf {
 		case Accessor::ComponentType::FLOAT:
 			return ::CesiumGltf::Impl::createAccessorView<TCallback, float>(model, accessor, std::forward<TCallback>(callback));
 		default:
-			return callback(AccessorView<nullptr_t>());
+			return callback(AccessorView<std::nullptr_t>());
 		}
 	}
 
@@ -345,7 +345,7 @@ namespace CesiumGltf {
 	std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(const Model& model, int32_t accessorIndex, TCallback&& callback) {
 		const Accessor* pAccessor = Model::getSafe(&model.accessors, accessorIndex);
 		if (!pAccessor) {
-			return callback(AccessorView<nullptr_t>());
+			return callback(AccessorView<std::nullptr_t>());
 		}
 
 		return createAccessorView(model, *pAccessor, callback);
