@@ -104,7 +104,8 @@ namespace CesiumAsync {
 			bool readError = false;
 			std::string error;
 			std::optional<CacheItem> cacheItem;
-			if (!this->_pCacheDatabase->getEntry(url, cacheItem, error)) {
+			auto getEntryCallback = [&cacheItem](CacheItem item) mutable -> bool { cacheItem = std::move(item); return true; };
+			if (!this->_pCacheDatabase->getEntry(url, getEntryCallback, error)) {
 				// TODO: log error
 				readError = true;
 			}
