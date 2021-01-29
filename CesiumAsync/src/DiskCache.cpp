@@ -79,6 +79,17 @@ namespace CesiumAsync {
 	// Sql commands for deleting entry
 	static const std::string DELETE_ENTRY_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_KEY_COLUMN + "=?";
 
+	// Sql commands for prunning the database
+	static const std::string TOTAL_ITEMS_QUERY_SQL = "SELECT COUNT(*) " + CACHE_TABLE_VIRTUAL_TOTAL_ITEMS_COLUMN + " FROM " + CACHE_TABLE;
+
+	static const std::string DELETE_EXPIRED_ITEMS_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_EXPIRY_TIME_COLUMN + " < strftime('%s','now')";
+
+	static const std::string DELETE_LRU_ITEMS_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_ID_COLUMN + 
+		" IN (SELECT " + CACHE_TABLE_ID_COLUMN + " FROM " + CACHE_TABLE + " ORDER BY " + CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + " ASC " + " LIMIT ?)";
+
+	// Sql commands for clean all items
+	static const std::string CLEAR_ALL_SQL = "DELETE FROM " + CACHE_TABLE;
+
 	struct Sqlite3StmtWrapper {
 		Sqlite3StmtWrapper() 
 			: stmt{nullptr}
@@ -396,20 +407,19 @@ namespace CesiumAsync {
 	bool DiskCache::prune(std::string& error)
 	{
 		// query total size of response's data
-		std::string totalItemsQuerySqlStr = "SELECT COUNT(*) " + CACHE_TABLE_VIRTUAL_TOTAL_ITEMS_COLUMN + " FROM " + CACHE_TABLE;
 		Sqlite3StmtWrapper totalItemsQueryStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, totalItemsQuerySqlStr.c_str(), -1, &totalItemsQueryStmtWrapper.stmt, nullptr);
-		if (status != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(status));
+		int totalItemsQueryStatus = sqlite3_prepare_v2(this->_pConnection, TOTAL_ITEMS_QUERY_SQL.c_str(), -1, &totalItemsQueryStmtWrapper.stmt, nullptr);
+		if (totalItemsQueryStatus != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(totalItemsQueryStatus));
 			return false;
 		}
 
-		status = sqlite3_step(totalItemsQueryStmtWrapper.stmt);
-		if (status == SQLITE_DONE) {
+		totalItemsQueryStatus = sqlite3_step(totalItemsQueryStmtWrapper.stmt);
+		if (totalItemsQueryStatus == SQLITE_DONE) {
 			return true;
 		}
-		else if (status != SQLITE_ROW) {
-			error = std::string(sqlite3_errstr(status));
+		else if (totalItemsQueryStatus != SQLITE_ROW) {
+			error = std::string(sqlite3_errstr(totalItemsQueryStatus));
 			return false;
 		}
 
@@ -421,8 +431,7 @@ namespace CesiumAsync {
 
 		// delete expired rows first
 		Sqlite3StmtWrapper deleteExpiredStmtWrapper;
-		std::string deleteExpiredSqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_EXPIRY_TIME_COLUMN + " < strftime('%s','now')";
-		int deleteExpiredStatus = sqlite3_prepare_v2(this->_pConnection, deleteExpiredSqlStr.c_str(), -1, &deleteExpiredStmtWrapper.stmt, nullptr);
+		int deleteExpiredStatus = sqlite3_prepare_v2(this->_pConnection, DELETE_EXPIRED_ITEMS_SQL.c_str(), -1, &deleteExpiredStmtWrapper.stmt, nullptr);
 		if (deleteExpiredStatus != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(deleteExpiredStatus));
 			return false;
@@ -443,18 +452,22 @@ namespace CesiumAsync {
 		totalItems -= deletedRows;
 
 		// delete rows LRU if we are still over maximum
-		Sqlite3StmtWrapper LRUDeleteStmtWrapper;
-		std::string LRUDeleteSqlStr = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_ID_COLUMN + 
-			" IN (SELECT " + CACHE_TABLE_ID_COLUMN + " FROM " + CACHE_TABLE + " ORDER BY " + CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + " ASC " + " LIMIT " + std::to_string(totalItems - this->_maxItems)  + ")";
-		int LRUDeleteStatus = sqlite3_prepare_v2(this->_pConnection, LRUDeleteSqlStr.c_str(), -1, &LRUDeleteStmtWrapper.stmt, nullptr);
-		if (LRUDeleteStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(LRUDeleteStatus));
+		Sqlite3StmtWrapper deleteLRUStmtWrapper;
+		int deleteLLRUStatus = sqlite3_prepare_v2(this->_pConnection, DELETE_LRU_ITEMS_SQL.c_str(), -1, &deleteLRUStmtWrapper.stmt, nullptr);
+		if (deleteLLRUStatus != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(deleteLLRUStatus));
 			return false;
 		}
 
-		LRUDeleteStatus = sqlite3_step(LRUDeleteStmtWrapper.stmt);
-		if (LRUDeleteStatus != SQLITE_DONE) {
-			error = std::string(sqlite3_errstr(LRUDeleteStatus));
+		deleteLLRUStatus = sqlite3_bind_int64(deleteLRUStmtWrapper.stmt, 1, static_cast<int64_t>(totalItems - this->_maxItems));
+		if (deleteLLRUStatus != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(deleteLLRUStatus));
+			return false;
+		}
+
+		deleteLLRUStatus = sqlite3_step(deleteLRUStmtWrapper.stmt);
+		if (deleteLLRUStatus != SQLITE_DONE) {
+			error = std::string(sqlite3_errstr(deleteLLRUStatus));
 			return false;
 		}
 
@@ -463,16 +476,14 @@ namespace CesiumAsync {
 
 	bool DiskCache::clearAll(std::string& error)
 	{
-		std::string sqlStr = "DELETE FROM " + CACHE_TABLE;
-
-		Sqlite3StmtWrapper deleteStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, sqlStr.c_str(), -1, &deleteStmtWrapper.stmt, nullptr);
+		Sqlite3StmtWrapper clearAllStmtWrapper;
+		int status = sqlite3_prepare_v2(this->_pConnection, CLEAR_ALL_SQL.c_str(), -1, &clearAllStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_step(deleteStmtWrapper.stmt);
+		status = sqlite3_step(clearAllStmtWrapper.stmt);
 		if (status != SQLITE_DONE) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
