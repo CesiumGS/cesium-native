@@ -9,6 +9,20 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
 
+
+    /* static */ ViewState ViewState::create(
+        const glm::dvec3& position,
+        const glm::dvec3& direction,
+        const glm::dvec3& up,
+        const glm::dvec2& viewportSize,
+        double horizontalFieldOfView,
+        double verticalFieldOfView,
+        const CesiumGeospatial::Ellipsoid& ellipsoid)
+    {
+        return ViewState(position, direction, up, viewportSize, horizontalFieldOfView, verticalFieldOfView, 
+            ellipsoid.cartesianToCartographic(position));
+    }
+
     ViewState::ViewState(
         const glm::dvec3& position,
         const glm::dvec3& direction,

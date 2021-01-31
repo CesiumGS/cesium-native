@@ -16,13 +16,16 @@ namespace Cesium3DTiles {
 
     /**
      * @brief The state of the view that is used during the traversal of a tileset.
+     * 
+     * An instance of a view state can be created with the {@link create} function.
      */
     class CESIUM3DTILES_API ViewState final {
-    public:
+
         // TODO: Add support for orthographic and off-center perspective frustums
+    public:
 
         /**
-         * @brief Creates a new instance.
+         * @brief Creates a new instance of a view state.
          * 
          * @param position The position of the eye point of the camera.
          * @param direction The view direction vector of the camera.
@@ -32,16 +35,19 @@ namespace Cesium3DTiles {
          * angle of the camera, in radians.
          * @param verticalFieldOfView The vertical field-of-view (opening)
          * angle of the camera, in radians.
+         * @param ellipsoid The ellipsoid that will be used to compute the 
+         * {@link ViewState#getPositionCartographic cartographic position} 
+         * from the cartesian position.
+         * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
          */
-        ViewState(
-            const glm::dvec3& position,
+        static ViewState create(const glm::dvec3& position,
             const glm::dvec3& direction,
             const glm::dvec3& up,
             const glm::dvec2& viewportSize,
             double horizontalFieldOfView,
             double verticalFieldOfView,
-            const std::optional<CesiumGeospatial::Cartographic>& positionCartographic
-        );
+            const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
+
 
         /**
          * @brief Gets the position of the camera in Earth-centered, Earth-fixed coordinates.
@@ -120,6 +126,29 @@ namespace Cesium3DTiles {
         double computeScreenSpaceError(double geometricError, double distance) const noexcept;
 
     private:
+
+
+        /**
+         * @brief Creates a new instance.
+         * 
+         * @param position The position of the eye point of the camera.
+         * @param direction The view direction vector of the camera.
+         * @param up The up vector of the camera.
+         * @param viewportSize The size of the viewport, in pixels.
+         * @param horizontalFieldOfView The horizontal field-of-view (opening)
+         * angle of the camera, in radians.
+         * @param verticalFieldOfView The vertical field-of-view (opening)
+         * angle of the camera, in radians.
+         */
+        ViewState(
+            const glm::dvec3& position,
+            const glm::dvec3& direction,
+            const glm::dvec3& up,
+            const glm::dvec2& viewportSize,
+            double horizontalFieldOfView,
+            double verticalFieldOfView,
+            const std::optional<CesiumGeospatial::Cartographic>& positionCartographic
+        );
 
         const glm::dvec3 _position;
         const glm::dvec3 _direction;
