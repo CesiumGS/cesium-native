@@ -17,7 +17,7 @@ namespace CesiumAsync {
 			std::shared_ptr<spdlog::logger> logger,
             std::unique_ptr<IAssetAccessor> assetAccessor,
             std::unique_ptr<ICacheDatabase> cacheDatabase,
-			uint32_t databaseCleanCheckpoint = 10000);
+			uint32_t maxRequestsForCacheClean = 10000);
 
         ~CacheAssetAccessor() noexcept override;
 
@@ -30,7 +30,7 @@ namespace CesiumAsync {
 
     private:
 		std::mutex _requestCountMutex;
-		uint32_t _databaseCleanCheckpoint;
+		uint32_t _maxRequestsForCacheClean;
 		uint32_t _requestCount;
 		std::shared_ptr<spdlog::logger> _pLogger;
 		std::unique_ptr<IAssetAccessor> _pAssetAccessor;

@@ -92,8 +92,8 @@ namespace CesiumAsync {
 		std::shared_ptr<spdlog::logger> pLogger,
 		std::unique_ptr<IAssetAccessor> pAssetAccessor,
 		std::unique_ptr<ICacheDatabase> pCacheDatabase,
-		uint32_t databaseCleanCheckpoint) 
-		: _databaseCleanCheckpoint{databaseCleanCheckpoint}
+		uint32_t maxRequestsForCacheClean) 
+		: _maxRequestsForCacheClean{maxRequestsForCacheClean}
 		, _requestCount{}
 		, _pLogger{pLogger}
 		, _pAssetAccessor{ std::move(pAssetAccessor) }
@@ -208,12 +208,12 @@ namespace CesiumAsync {
 		{
 			std::lock_guard<std::mutex> guard(this->_requestCountMutex);
 			++this->_requestCount;
-			if (this->_requestCount > this->_databaseCleanCheckpoint) {
+			if (this->_requestCount > this->_maxRequestsForCacheClean) {
 				this->_requestCount = 0;
 				pAsyncSystem->runInWorkerThread([this]() {
 					std::string error;
 					if (!this->_pCacheDatabase->prune(error)) {
-						// TODO: log error
+						SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot prune the cache database: {}", error);
 					}
 				});
 			}
