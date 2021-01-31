@@ -215,7 +215,7 @@ namespace CesiumAsync {
 			std::optional<ResponseCacheControl> responseCacheControl = convertStringToResponseCacheControl(serializedResponseCacheControl);
 
 			const void* rawResponseData = sqlite3_column_blob(getEntryStmtWrapper.stmt, 7);
-			int responseDataSize = sqlite3_column_bytes(getEntryStmtWrapper.stmt, 7);
+			size_t responseDataSize = static_cast<size_t>(sqlite3_column_bytes(getEntryStmtWrapper.stmt, 7));
 			std::vector<uint8_t> responseData(responseDataSize);
 			if (responseDataSize != 0) {
 				std::memcpy(responseData.data(), rawResponseData, responseDataSize);
@@ -498,7 +498,7 @@ namespace CesiumAsync {
 		rapidjson::Value root(rapidjson::kObjectType);
 		rapidjson::Value key(rapidjson::kStringType);
 		rapidjson::Value value(rapidjson::kStringType);
-		for (const std::pair<std::string, std::string>& header : headers) 
+		for (const std::pair<const std::string, std::string>& header : headers) 
 		{
 			key.SetString(header.first.c_str(), allocator);
 			value.SetString(header.second.c_str(), allocator);
