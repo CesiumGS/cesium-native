@@ -148,7 +148,7 @@ namespace CesiumAsync {
 			throw std::runtime_error(errorStr);
 		}
 
-		sqlite3_busy_timeout(this->_pConnection, 5000);
+		sqlite3_busy_timeout(this->_pConnection, 100);
 	}
 
 	DiskCache::DiskCache(DiskCache&& other) noexcept {
