@@ -459,7 +459,7 @@ namespace CesiumAsync {
 			return false;
 		}
 
-		deleteLLRUStatus = sqlite3_bind_int64(deleteLRUStmtWrapper.stmt, 1, static_cast<int64_t>(totalItems - this->_maxItems));
+		deleteLLRUStatus = sqlite3_bind_int64(deleteLRUStmtWrapper.stmt, 1, totalItems - static_cast<int64_t>(this->_maxItems));
 		if (deleteLLRUStatus != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(deleteLLRUStatus));
 			return false;
