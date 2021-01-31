@@ -3,6 +3,7 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/ICacheDatabase.h"
+#include <spdlog/fwd.h>
 #include <string>
 #include <memory>
 #include <mutex>
@@ -13,9 +14,10 @@ namespace CesiumAsync {
 	class CacheAssetAccessor : public IAssetAccessor {
 	public:
         CacheAssetAccessor(
+			std::shared_ptr<spdlog::logger> logger,
             std::unique_ptr<IAssetAccessor> assetAccessor,
             std::unique_ptr<ICacheDatabase> cacheDatabase,
-			uint32_t databaseCleanCheckpoint = 50000);
+			uint32_t databaseCleanCheckpoint = 10000);
 
         ~CacheAssetAccessor() noexcept override;
 
@@ -30,6 +32,7 @@ namespace CesiumAsync {
 		std::mutex _requestCountMutex;
 		uint32_t _databaseCleanCheckpoint;
 		uint32_t _requestCount;
+		std::shared_ptr<spdlog::logger> _pLogger;
 		std::unique_ptr<IAssetAccessor> _pAssetAccessor;
 		std::unique_ptr<ICacheDatabase> _pCacheDatabase;
 	};

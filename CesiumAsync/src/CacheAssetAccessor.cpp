@@ -3,6 +3,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/CacheItem.h"
 #include "InternalTimegm.h"
+#include <spdlog/spdlog.h>
 #include <iomanip>
 #include <sstream>
 #include <ctype.h>
@@ -88,13 +89,15 @@ namespace CesiumAsync {
 	static std::unique_ptr<IAssetRequest> updateCacheItem(CacheItem& cacheItem, const IAssetRequest& request);
 
 	CacheAssetAccessor::CacheAssetAccessor(
-		std::unique_ptr<IAssetAccessor> assetAccessor,
-		std::unique_ptr<ICacheDatabase> cacheDatabase,
+		std::shared_ptr<spdlog::logger> pLogger,
+		std::unique_ptr<IAssetAccessor> pAssetAccessor,
+		std::unique_ptr<ICacheDatabase> pCacheDatabase,
 		uint32_t databaseCleanCheckpoint) 
 		: _databaseCleanCheckpoint{databaseCleanCheckpoint}
 		, _requestCount{}
-		, _pAssetAccessor{ std::move(assetAccessor) }
-		, _pCacheDatabase{std::move(cacheDatabase)}
+		, _pLogger{pLogger}
+		, _pAssetAccessor{ std::move(pAssetAccessor) }
+		, _pCacheDatabase{std::move(pCacheDatabase)}
 	{
 	}
 
@@ -105,44 +108,31 @@ namespace CesiumAsync {
 		const std::vector<THeader>& headers,
 		std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
 	{
-		{
-			std::lock_guard<std::mutex> guard(this->_requestCountMutex);
-			++this->_requestCount;
-			if (this->_requestCount > 10000) {
-				this->_requestCount = 0;
-				pAsyncSystem->runInWorkerThread([this]() {
-					std::string error;
-					if (!this->_pCacheDatabase->prune(error)) {
-						// TODO: log error
-					}
-				});
-			}
-		}
-
 		pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() {
 			bool readError = false;
 			std::string error;
 			std::optional<CacheItem> cacheItem;
 			auto getEntryCallback = [&cacheItem](CacheItem item) mutable -> bool { cacheItem = std::move(item); return true; };
 			if (!this->_pCacheDatabase->getEntry(url, getEntryCallback, error)) {
-				// TODO: log error
+				SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot accessing cache database: {}. Request directly from the server instead", error);
 				readError = true;
 			}
 			
 			// if no cache found, then request directly to the server
 			if (!cacheItem) { 
+				spdlog::logger* pLogger = this->_pLogger.get();
 				ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
 				this->_pAssetAccessor->requestAsset(pAsyncSystem, url, headers, 
-					[pAsyncSystem, pCacheDatabase, callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
+					[pAsyncSystem, pCacheDatabase, pLogger , callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
 						if (!readError && shouldCacheRequest(*pCompletedRequest)) {
-							pAsyncSystem->runInWorkerThread([pCacheDatabase, pCompletedRequest]() {
+							pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pCompletedRequest]() {
 								std::string error;
 								if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
 									calculateExpiryTime(*pCompletedRequest),
 									*pCompletedRequest,
 									error))
 								{
-									// TODO: log error here
+									SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
 								}
 							});
 						}
@@ -167,9 +157,10 @@ namespace CesiumAsync {
 					newHeaders.emplace_back("If-Modified-Since", lastModifiedHeader->second);
 				}
 
+				spdlog::logger* pLogger = this->_pLogger.get();
 				ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
 				this->_pAssetAccessor->requestAsset(pAsyncSystem, url, newHeaders,
-					[pCacheDatabase, pAsyncSystem, callback, cacheItem = std::move(cacheItem)](std::shared_ptr<IAssetRequest> pCompletedRequest) mutable {
+					[pLogger, pCacheDatabase, pAsyncSystem, callback, cacheItem = std::move(cacheItem)](std::shared_ptr<IAssetRequest> pCompletedRequest) mutable {
 						if (!pCompletedRequest) {
 							return;
 						}
@@ -183,22 +174,22 @@ namespace CesiumAsync {
 						}
 
 						if (shouldCacheRequest(*pRequestToStore)) {
-							pAsyncSystem->runInWorkerThread([pCacheDatabase, pRequestToStore]() {
+							pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pRequestToStore]() {
 								std::string error;
 								if (!pCacheDatabase->storeResponse(pRequestToStore->url(),
 									calculateExpiryTime(*pRequestToStore),
 									*pRequestToStore,
 									error))
 								{
-									// TODO: log error here
+									SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
 								}
 							});
 						}
 						else if (shouldDeleteCache(*pRequestToStore)) {
-							pAsyncSystem->runInWorkerThread([pCacheDatabase, pRequestToStore]() {
+							pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pRequestToStore]() {
 								std::string error;
 								if (!pCacheDatabase->removeEntry(pRequestToStore->url(), error)) {
-									// TODO: log error here
+									SPDLOG_LOGGER_WARN(pLogger, "Cannot remove response from the cache database: {}", error);
 								}
 							});
 						}
@@ -213,6 +204,20 @@ namespace CesiumAsync {
 				callback(std::make_unique<CacheAssetRequest>(std::move(cacheItem.value())));
 			});
 		});
+
+		{
+			std::lock_guard<std::mutex> guard(this->_requestCountMutex);
+			++this->_requestCount;
+			if (this->_requestCount > this->_databaseCleanCheckpoint) {
+				this->_requestCount = 0;
+				pAsyncSystem->runInWorkerThread([this]() {
+					std::string error;
+					if (!this->_pCacheDatabase->prune(error)) {
+						// TODO: log error
+					}
+				});
+			}
+		}
 	}
 
 	void CacheAssetAccessor::tick() noexcept {

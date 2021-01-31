@@ -5,6 +5,7 @@
 #include "CesiumAsync/ICacheDatabase.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include <spdlog/spdlog.h>
 #include <optional>
 
 using namespace CesiumAsync;
@@ -124,6 +125,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -154,6 +156,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -184,6 +187,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -212,6 +216,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -240,6 +245,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -268,6 +274,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -296,6 +303,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -324,6 +332,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -352,6 +361,7 @@ TEST_CASE("Test the condition of caching the request") {
 			std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 			MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 			std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+				spdlog::default_logger(),
 				std::make_unique<MockAssetAccessor>(mockRequest),
 				std::move(ownedMockCacheDatabase)
 			);
@@ -383,6 +393,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
 		std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 		MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			spdlog::default_logger(),
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::move(ownedMockCacheDatabase)
 		);
@@ -412,6 +423,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
 		std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
 		MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			spdlog::default_logger(),
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::move(ownedMockCacheDatabase)
 		);
@@ -441,6 +453,7 @@ TEST_CASE("Test serving cache item") {
 		);
 
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			spdlog::default_logger(),
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::make_unique<MockStoreCacheDatabase>()
 		);
@@ -500,6 +513,7 @@ TEST_CASE("Test serving cache item") {
 		mockCacheDatabase->cacheItem = cacheItem;
 
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			spdlog::default_logger(),
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::move(mockCacheDatabase)
 		);
@@ -567,6 +581,7 @@ TEST_CASE("Test serving cache item") {
 		mockCacheDatabase->cacheItem = cacheItem;
 
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			spdlog::default_logger(),
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::move(mockCacheDatabase)
 		);
@@ -639,6 +654,7 @@ TEST_CASE("Test serving cache item") {
 		mockCacheDatabase->cacheItem = cacheItem;
 
 		std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
+			spdlog::default_logger(),
 			std::make_unique<MockAssetAccessor>(mockRequest),
 			std::move(mockCacheDatabase)
 		);

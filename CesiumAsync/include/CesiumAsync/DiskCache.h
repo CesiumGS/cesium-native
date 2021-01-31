@@ -1,6 +1,6 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/ICacheDatabase.h"
-#include "sqlite3.h"
+#include <sqlite3.h>
 #include <mutex>
 #include <memory>
 #include <optional>
