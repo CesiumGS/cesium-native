@@ -17,6 +17,7 @@ namespace Cesium3DTiles {
         _asyncSystem(asyncSystem),
         _credit(std::nullopt),
         _pPrepareRendererResources(nullptr),
+        _pLogger(nullptr),
         _projection(CesiumGeospatial::GeographicProjection()),
         _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0), 1, 1)),
         _coverageRectangle(0.0, 0.0, 0.0, 0.0),
@@ -37,6 +38,7 @@ namespace Cesium3DTiles {
         const AsyncSystem& asyncSystem,
         std::optional<Credit> credit,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+        std::shared_ptr<spdlog::logger> pLogger,
         const CesiumGeospatial::Projection& projection,
         const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
         const CesiumGeometry::Rectangle& coverageRectangle,
@@ -49,6 +51,7 @@ namespace Cesium3DTiles {
         _asyncSystem(asyncSystem),
         _credit(credit),
         _pPrepareRendererResources(pPrepareRendererResources),
+        _pLogger(pLogger),
         _projection(projection),
         _tilingScheme(tilingScheme),
         _coverageRectangle(coverageRectangle),
@@ -353,7 +356,7 @@ namespace Cesium3DTiles {
     }
 
     void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) noexcept {
-        this->_tileDataBytes += pTile->getImage().image.size();
+        this->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
         --this->_tilesCurrentlyLoading;
     }
 
@@ -364,7 +367,7 @@ namespace Cesium3DTiles {
         assert(it != this->_tiles.end());
         assert(it->second.get() == pTile);
 
-        this->_tileDataBytes -= pTile->getImage().image.size();
+        this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 
         RasterOverlay& overlay = pTile->getOverlay();
 

@@ -4,6 +4,7 @@
 
 using namespace Cesium3DTiles;
 using namespace CesiumUtility;
+using namespace CesiumGltf;
 
 TEST_CASE("Test converting skirt mesh metadata to gltf extras") {
     SkirtMeshMetadata skirtMeshMetadata;
@@ -15,48 +16,48 @@ TEST_CASE("Test converting skirt mesh metadata to gltf extras") {
     skirtMeshMetadata.skirtEastHeight = 24.2;
     skirtMeshMetadata.skirtNorthHeight = 10.0;
 
-    tinygltf::Value extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
-    REQUIRE(extras.IsObject());
-    REQUIRE(extras.Has("skirtMeshMetadata"));
+    JsonValue::Object extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+    REQUIRE(extras.find("skirtMeshMetadata") != extras.end());
 
-    tinygltf::Value gltfSkirt = extras.Get("skirtMeshMetadata");
-    tinygltf::Value noSkirtRange = gltfSkirt.Get("noSkirtRange");
-    REQUIRE(noSkirtRange.Get(0).GetNumberAsInt() == 0);
-    REQUIRE(noSkirtRange.Get(1).GetNumberAsInt() == 12);
+    JsonValue& gltfSkirt = extras["skirtMeshMetadata"];
+    JsonValue::Array* pNoSkirtRange = gltfSkirt.getValueForKey<JsonValue::Array>("noSkirtRange");
+    REQUIRE(pNoSkirtRange != nullptr);
+    REQUIRE((*pNoSkirtRange)[0].getNumber(-1.0) == 0.0);
+    REQUIRE((*pNoSkirtRange)[1].getNumber(-1.0) == 12.0);
 
-    tinygltf::Value meshCenter = gltfSkirt.Get("meshCenter");
-    REQUIRE(Math::equalsEpsilon(meshCenter.Get(0).GetNumberAsDouble(), skirtMeshMetadata.meshCenter.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(meshCenter.Get(1).GetNumberAsDouble(), skirtMeshMetadata.meshCenter.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon(meshCenter.Get(2).GetNumberAsDouble(), skirtMeshMetadata.meshCenter.z, Math::EPSILON7));
+    JsonValue::Array* pMeshCenter = gltfSkirt.getValueForKey<JsonValue::Array>("meshCenter");
+    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[0].getNumber(0.0), skirtMeshMetadata.meshCenter.x, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[1].getNumber(0.0), skirtMeshMetadata.meshCenter.y, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[2].getNumber(0.0), skirtMeshMetadata.meshCenter.z, Math::EPSILON7));
 
-    tinygltf::Value skirtWestHeight = gltfSkirt.Get("skirtWestHeight");
-    REQUIRE(Math::equalsEpsilon(skirtWestHeight.GetNumberAsDouble(), skirtMeshMetadata.skirtWestHeight, Math::EPSILON7));
+    double* pSkirtWestHeight = gltfSkirt.getValueForKey<JsonValue::Number>("skirtWestHeight");
+    REQUIRE(Math::equalsEpsilon(*pSkirtWestHeight, skirtMeshMetadata.skirtWestHeight, Math::EPSILON7));
 
-    tinygltf::Value skirtSouthHeight = gltfSkirt.Get("skirtSouthHeight");
-    REQUIRE(Math::equalsEpsilon(skirtSouthHeight.GetNumberAsDouble(), skirtMeshMetadata.skirtSouthHeight, Math::EPSILON7));
+    double* pSkirtSouthHeight = gltfSkirt.getValueForKey<JsonValue::Number>("skirtSouthHeight");
+    REQUIRE(Math::equalsEpsilon(*pSkirtSouthHeight, skirtMeshMetadata.skirtSouthHeight, Math::EPSILON7));
 
-    tinygltf::Value skirtEastHeight = gltfSkirt.Get("skirtEastHeight");
-    REQUIRE(Math::equalsEpsilon(skirtEastHeight.GetNumberAsDouble(), skirtMeshMetadata.skirtEastHeight, Math::EPSILON7));
+    double* pSkirtEastHeight = gltfSkirt.getValueForKey<JsonValue::Number>("skirtEastHeight");
+    REQUIRE(Math::equalsEpsilon(*pSkirtEastHeight, skirtMeshMetadata.skirtEastHeight, Math::EPSILON7));
 
-    tinygltf::Value skirtNorthHeight = gltfSkirt.Get("skirtNorthHeight");
-    REQUIRE(Math::equalsEpsilon(skirtNorthHeight.GetNumberAsDouble(), skirtMeshMetadata.skirtNorthHeight, Math::EPSILON7));
+    double* pSkirtNorthHeight = gltfSkirt.getValueForKey<JsonValue::Number>("skirtNorthHeight");
+    REQUIRE(Math::equalsEpsilon(*pSkirtNorthHeight, skirtMeshMetadata.skirtNorthHeight, Math::EPSILON7));
 }
 
 TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
     // mock gltf extras for skirt mesh metadata
-    tinygltf::Value::Object gltfSkirtMeshMetadata;
-    gltfSkirtMeshMetadata.insert({ "noSkirtRange", tinygltf::Value(tinygltf::Value::Array({
-        tinygltf::Value(0), tinygltf::Value(12)})) });
-    gltfSkirtMeshMetadata.insert({ "meshCenter", tinygltf::Value(tinygltf::Value::Array({
-        tinygltf::Value(1.0), tinygltf::Value(2.0), tinygltf::Value(3.0)})) });
-    gltfSkirtMeshMetadata.insert({ "skirtWestHeight", tinygltf::Value(12.4) });
-    gltfSkirtMeshMetadata.insert({ "skirtSouthHeight", tinygltf::Value(10.0) });
-    gltfSkirtMeshMetadata.insert({ "skirtEastHeight", tinygltf::Value(2.4) });
-    gltfSkirtMeshMetadata.insert({ "skirtNorthHeight", tinygltf::Value(1.4) });
+    JsonValue::Object gltfSkirtMeshMetadata = {
+        { "noSkirtRange", JsonValue::Array { 0, 12 } },
+        { "meshCenter", JsonValue::Array { 1.0, 2.0, 3.0 } },
+        { "skirtWestHeight", 12.4 },
+        { "skirtSouthHeight", 10.0 },
+        { "skirtEastHeight", 2.4 },
+        { "skirtNorthHeight", 1.4 }
+    };
 
     SECTION("Gltf Extras has correct format") {
-        tinygltf::Value extras = tinygltf::Value(
-            tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+        JsonValue::Object extras = {
+            { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+        };
 
         SkirtMeshMetadata skirtMeshMetadata = *SkirtMeshMetadata::parseFromGltfExtras(extras);
 
@@ -75,34 +76,39 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         SECTION("missing noSkirtRange field") {
             gltfSkirtMeshMetadata.erase("noSkirtRange");
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("noSkirtRange field has wrong type") {
-            gltfSkirtMeshMetadata["noSkirtRange"] = tinygltf::Value(12);
+            gltfSkirtMeshMetadata["noSkirtRange"] = 12;
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("noSkirtRange field has only one element array") {
-            gltfSkirtMeshMetadata["noSkirtRange"] = tinygltf::Value(tinygltf::Value::Array({tinygltf::Value(0)}));
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            gltfSkirtMeshMetadata["noSkirtRange"] = JsonValue::Array { 0 };
+
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("noSkirtRange field has two elements array but not integer") {
-            gltfSkirtMeshMetadata["noSkirtRange"] = tinygltf::Value(
-                tinygltf::Value::Array({tinygltf::Value(std::string("first")), tinygltf::Value(std::string("second"))}));
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            gltfSkirtMeshMetadata["noSkirtRange"] = JsonValue::Array { "first", "second" };
+
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
@@ -112,37 +118,39 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         SECTION("missing meshCenter field") {
             gltfSkirtMeshMetadata.erase("meshCenter");
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("meshCenter field has wrong type") {
-            gltfSkirtMeshMetadata["meshCenter"] = tinygltf::Value(12);
+            gltfSkirtMeshMetadata["meshCenter"] = 12;
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("meshCenter field is 2 elements array") {
-            gltfSkirtMeshMetadata["meshCenter"] = tinygltf::Value(
-                tinygltf::Value::Array({tinygltf::Value(1.0), tinygltf::Value(2.0)}));
+            gltfSkirtMeshMetadata["meshCenter"] = JsonValue::Array { 1.0, 2.0 };
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("meshCenter field is 3 elements array but wrong type") {
-            gltfSkirtMeshMetadata["meshCenter"] = tinygltf::Value(
-                tinygltf::Value::Array({tinygltf::Value(1.0), tinygltf::Value(2.0), tinygltf::Value(std::string("third"))}));
+            gltfSkirtMeshMetadata["meshCenter"] = JsonValue::Array { 1.0, 2.0, "third" };
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
@@ -152,17 +160,19 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         SECTION("missing skirtWestHeight field") {
             gltfSkirtMeshMetadata.erase("skirtWestHeight");
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("skirtWestHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtWestHeight"] = tinygltf::Value(std::string("string"));
+            gltfSkirtMeshMetadata["skirtWestHeight"] = "string";
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
@@ -172,17 +182,19 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         SECTION("missing skirtSouthHeight field") {
             gltfSkirtMeshMetadata.erase("skirtSouthHeight");
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("skirtSouthHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtSouthHeight"] = tinygltf::Value(std::string("string"));
+            gltfSkirtMeshMetadata["skirtSouthHeight"] = "string";
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
@@ -192,17 +204,19 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         SECTION("missing skirtEastHeight field") {
             gltfSkirtMeshMetadata.erase("skirtEastHeight");
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("skirtEastHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtEastHeight"] = tinygltf::Value(std::string("string"));
+            gltfSkirtMeshMetadata["skirtEastHeight"] = "string";
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
@@ -212,17 +226,19 @@ TEST_CASE("Test converting gltf extras to skirt mesh metadata") {
         SECTION("missing skirtNorthHeight field") {
             gltfSkirtMeshMetadata.erase("skirtNorthHeight");
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }
 
         SECTION("skirtNorthHeight field has wrong type") {
-            gltfSkirtMeshMetadata["skirtNorthHeight"] = tinygltf::Value(std::string("string"));
+            gltfSkirtMeshMetadata["skirtNorthHeight"] = "string";
 
-            tinygltf::Value extras = tinygltf::Value(
-                tinygltf::Value::Object{ {"skirtMeshMetadata", tinygltf::Value(gltfSkirtMeshMetadata)} });
+            JsonValue::Object extras = {
+                { "skirtMeshMetadata", gltfSkirtMeshMetadata }
+            };
 
             REQUIRE(SkirtMeshMetadata::parseFromGltfExtras(extras) == std::nullopt);
         }

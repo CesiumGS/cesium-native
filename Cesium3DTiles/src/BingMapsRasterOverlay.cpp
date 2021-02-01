@@ -59,6 +59,7 @@ namespace Cesium3DTiles {
             Credit bingCredit,
             const std::vector<CreditAndCoverageAreas>& perTileCredits,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
+            std::shared_ptr<spdlog::logger> pLogger,
             const std::string& baseUrl,
             const std::string& urlTemplate,
             const std::vector<std::string>& subdomains,
@@ -73,6 +74,7 @@ namespace Cesium3DTiles {
                 asyncSystem,
                 bingCredit,
                 pPrepareRendererResources,
+                pLogger,
                 WebMercatorProjection(),
                 QuadtreeTilingScheme(
                     WebMercatorProjection::computeMaximumProjectedRectangle(Ellipsoid::WGS84),
@@ -207,6 +209,11 @@ namespace Cesium3DTiles {
         ](std::shared_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 
+            if (pResponse == nullptr) {
+                SPDLOG_LOGGER_ERROR(pLogger, "No response received from Bing Maps imagery metadata service.");
+                return nullptr;
+            }
+
             rapidjson::Document response;
             response.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
 
@@ -290,6 +297,7 @@ namespace Cesium3DTiles {
                 bingCredit,
                 credits,
                 pPrepareRendererResources,
+                pLogger,
                 baseUrl,
                 urlTemplate,
                 subdomains,

@@ -16,14 +16,11 @@ target_sources(
 target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
-        # We're not using CMake for tinygltf at all, but it's header only. Add its headers here.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/tinygltf
-
-        # Same with RapidJSON
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
 
         # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
+
         ${CMAKE_BINARY_DIR}
     PUBLIC
         include
@@ -33,4 +30,4 @@ target_include_directories(
         "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:Cesium3DTiles_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
-target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumUtility uriparser draco tinyxml2 spdlog)
+target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumGltf CesiumGltfReader CesiumUtility uriparser draco tinyxml2 spdlog)

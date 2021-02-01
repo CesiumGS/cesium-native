@@ -7,7 +7,6 @@
 #include "QuantizedMeshContent.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include "SkirtMeshMetadata.h"
-#include "tiny_gltf.h"
 #include "Uri.h"
 #include "JsonHelpers.h"
 #include <glm/vec3.hpp>
@@ -831,69 +830,69 @@ namespace Cesium3DTiles {
 
         // create gltf
         pResult->model.emplace();
-        tinygltf::Model& model = pResult->model.value();
+        CesiumGltf::Model& model = pResult->model.value();
         
         size_t meshId = model.meshes.size();
         model.meshes.emplace_back();
-        tinygltf::Mesh& mesh = model.meshes[meshId];
+        CesiumGltf::Mesh& mesh = model.meshes[meshId];
         mesh.primitives.emplace_back();
 
-        tinygltf::Primitive& primitive = mesh.primitives[0];
-        primitive.mode = TINYGLTF_MODE_TRIANGLES;
+        CesiumGltf::MeshPrimitive& primitive = mesh.primitives[0];
+        primitive.mode = CesiumGltf::MeshPrimitive::Mode::TRIANGLES;
         primitive.material = 0;
 
         // add position buffer to gltf
         size_t positionBufferId = model.buffers.size();
         model.buffers.emplace_back();
-        tinygltf::Buffer& positionBuffer = model.buffers[positionBufferId];
-        positionBuffer.data = std::move(outputPositionsBuffer);
+        CesiumGltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+        positionBuffer.cesium.data = std::move(outputPositionsBuffer);
 
         size_t positionBufferViewId = model.bufferViews.size();
         model.bufferViews.emplace_back();
-        tinygltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
-        positionBufferView.buffer = static_cast<int>(positionBufferId);
+        CesiumGltf::BufferView& positionBufferView = model.bufferViews[positionBufferViewId];
+        positionBufferView.buffer = int32_t(positionBufferId);
         positionBufferView.byteOffset = 0;
         positionBufferView.byteStride = 3 * sizeof(float);
-        positionBufferView.byteLength = positionBuffer.data.size();
-        positionBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+        positionBufferView.byteLength = int64_t(positionBuffer.cesium.data.size());
+        positionBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
         size_t positionAccessorId = model.accessors.size();
         model.accessors.emplace_back();
-        tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
+        CesiumGltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
         positionAccessor.bufferView = static_cast<int>(positionBufferViewId);
         positionAccessor.byteOffset = 0;
-        positionAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+        positionAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
         positionAccessor.count = vertexCount + skirtVertexCount;
-        positionAccessor.type = TINYGLTF_TYPE_VEC3;
-        positionAccessor.minValues = { minX, minY, minZ };
-        positionAccessor.maxValues = { maxX, maxY, maxZ };
+        positionAccessor.type = CesiumGltf::Accessor::Type::VEC3;
+        positionAccessor.min = { minX, minY, minZ };
+        positionAccessor.max = { maxX, maxY, maxZ };
 
-        primitive.attributes.emplace("POSITION", static_cast<int>(positionAccessorId));
+        primitive.attributes.emplace("POSITION", int32_t(positionAccessorId));
 
         // add normal buffer to gltf if there are any
         if (!outputNormalsBuffer.empty()) {
             size_t normalBufferId = model.buffers.size();
             model.buffers.emplace_back();
-            tinygltf::Buffer& normalBuffer = model.buffers[normalBufferId];
-            normalBuffer.data = std::move(outputNormalsBuffer);
+            CesiumGltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+            normalBuffer.cesium.data = std::move(outputNormalsBuffer);
 
             size_t normalBufferViewId = model.bufferViews.size();
             model.bufferViews.emplace_back();
-            tinygltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
-            normalBufferView.buffer = static_cast<int>(normalBufferId);
+            CesiumGltf::BufferView& normalBufferView = model.bufferViews[normalBufferViewId];
+            normalBufferView.buffer = int32_t(normalBufferId);
             normalBufferView.byteOffset = 0;
             normalBufferView.byteStride = 3 * sizeof(float);
-            normalBufferView.byteLength = normalBuffer.data.size();
-            normalBufferView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+            normalBufferView.byteLength = int64_t(normalBuffer.cesium.data.size());
+            normalBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
             size_t normalAccessorId = model.accessors.size();
             model.accessors.emplace_back();
-            tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
-            normalAccessor.bufferView = static_cast<int>(normalBufferViewId);
+            CesiumGltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
+            normalAccessor.bufferView = int32_t(normalBufferViewId);
             normalAccessor.byteOffset = 0;
-            normalAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+            normalAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
             normalAccessor.count = vertexCount + skirtVertexCount;
-            normalAccessor.type = TINYGLTF_TYPE_VEC3;
+            normalAccessor.type = CesiumGltf::Accessor::Type::VEC3;
             
             primitive.attributes.emplace("NORMAL", static_cast<int>(normalAccessorId));
         }
@@ -901,28 +900,28 @@ namespace Cesium3DTiles {
         // add indices buffer to gltf
         size_t indicesBufferId = model.buffers.size();
         model.buffers.emplace_back();
-        tinygltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
-        indicesBuffer.data = std::move(outputIndicesBuffer);
+        CesiumGltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
+        indicesBuffer.cesium.data = std::move(outputIndicesBuffer);
         
         size_t indicesBufferViewId = model.bufferViews.size();
         model.bufferViews.emplace_back();
-        tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
-        indicesBufferView.buffer = static_cast<int>(indicesBufferId);
+        CesiumGltf::BufferView& indicesBufferView = model.bufferViews[indicesBufferViewId];
+        indicesBufferView.buffer = int32_t(indicesBufferId);
         indicesBufferView.byteOffset = 0;
-        indicesBufferView.byteLength = indicesBuffer.data.size();
+        indicesBufferView.byteLength = int64_t(indicesBuffer.cesium.data.size());
         indicesBufferView.byteStride = indexSizeBytes;
-        indicesBufferView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
+        indicesBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
         size_t indicesAccessorId = model.accessors.size();
         model.accessors.emplace_back();
-        tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
-        indicesAccessor.bufferView = static_cast<int>(indicesBufferViewId);
+        CesiumGltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
+        indicesAccessor.bufferView = int32_t(indicesBufferViewId);
         indicesAccessor.byteOffset = 0;
-        indicesAccessor.type = TINYGLTF_TYPE_SCALAR;
+        indicesAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
         indicesAccessor.count = indicesCount + skirtIndicesCount;
-        indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT : TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
+        indicesAccessor.componentType = indexSizeBytes == sizeof(uint32_t) ? CesiumGltf::Accessor::ComponentType::UNSIGNED_INT : CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT;
 
-        primitive.indices = static_cast<int>(indicesBufferId);
+        primitive.indices = int32_t(indicesBufferId);
 
         // add skirts info to primitive extra in case we need to upsample from it
         SkirtMeshMetadata skirtMeshMetadata;
@@ -938,7 +937,7 @@ namespace Cesium3DTiles {
 
         // create node and update bounding volume
         model.nodes.emplace_back();
-        tinygltf::Node& node = model.nodes[0];
+        CesiumGltf::Node& node = model.nodes[0];
         node.mesh = 0;
         node.matrix = {
             1.0, 0.0,  0.0, 0.0,

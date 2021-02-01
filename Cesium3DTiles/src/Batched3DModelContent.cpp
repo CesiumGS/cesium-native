@@ -40,7 +40,7 @@ namespace Cesium3DTiles {
 
 		void parseFeatureTableJsonData(
 			const std::shared_ptr<spdlog::logger>& pLogger,
-			tinygltf::Model& gltf,
+			CesiumGltf::Model& gltf,
 			const gsl::span<const uint8_t>& featureTableJsonData)
 		{
 			rapidjson::Document document;
@@ -60,19 +60,12 @@ namespace Cesium3DTiles {
 				rtcIt->value[2].IsDouble()
 			) {
 				// Add the RTC_CENTER value to the glTF itself.
-				tinygltf::Value::Object extras;
-				if (gltf.extras.IsObject()) {
-					extras = gltf.extras.Get<tinygltf::Value::Object>();
-				}
-
 				rapidjson::Value& rtcValue = rtcIt->value;
-				extras["RTC_CENTER"] = tinygltf::Value(tinygltf::Value::Array{
-					tinygltf::Value(rtcValue[0].GetDouble()),
-					tinygltf::Value(rtcValue[1].GetDouble()),
-					tinygltf::Value(rtcValue[2].GetDouble())
-					});
-
-				gltf.extras = tinygltf::Value(extras);
+				gltf.extras["RTC_CENTER"] = {
+					rtcValue[0].GetDouble(),
+					rtcValue[1].GetDouble(),
+					rtcValue[2].GetDouble()
+				};
 			}
 		}
 
@@ -171,7 +164,7 @@ namespace Cesium3DTiles {
 		);
 
 		if (pResult->model && header.featureTableJsonByteLength > 0) {
-			tinygltf::Model& gltf = pResult->model.value();
+			CesiumGltf::Model& gltf = pResult->model.value();
 			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
 			parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 		}
