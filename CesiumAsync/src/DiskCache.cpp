@@ -45,6 +45,8 @@ namespace CesiumAsync {
 
 	static const std::string PRAGMA_SYNC_SQL = "PRAGMA synchronous=OFF";
 
+	static const std::string PRAGMA_PAGE_SIZE_SQL = "PRAGMA page_size=4096";
+
 	// Sql commands for getting entry from database
 	static const std::string GET_ENTRY_SQL = "SELECT " +
 		CACHE_TABLE_ID_COLUMN + ", " +
@@ -142,6 +144,15 @@ namespace CesiumAsync {
 			throw std::runtime_error(errorStr);
 		}
 
+		// increase page size
+		char* pageSizeError = nullptr;
+		status = sqlite3_exec(this->_pConnection, PRAGMA_PAGE_SIZE_SQL.c_str(), nullptr, nullptr, &pageSizeError);
+		if (status != SQLITE_OK) {
+			std::string errorStr(pageSizeError);
+			sqlite3_free(pageSizeError);
+			throw std::runtime_error(errorStr);
+		}
+
 		// get entry based on key
 		status = sqlite3_prepare_v2(_pConnection, GET_ENTRY_SQL.c_str(), -1, &this->_getEntryStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
@@ -157,6 +168,30 @@ namespace CesiumAsync {
 
 		// store response 
 		status = sqlite3_prepare_v2(this->_pConnection, STORE_RESPONSE_SQL.c_str(), -1, &this->_storeResponseStmtWrapper.stmt, nullptr);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		// query total items
+		status = sqlite3_prepare_v2(this->_pConnection, TOTAL_ITEMS_QUERY_SQL.c_str(), -1, &this->_totalItemsQueryStmtWrapper.stmt, nullptr);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		// delete expired items
+		status = sqlite3_prepare_v2(this->_pConnection, DELETE_EXPIRED_ITEMS_SQL.c_str(), -1, &this->_deleteExpiredStmtWrapper.stmt, nullptr);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		// delete expired items
+		status = sqlite3_prepare_v2(this->_pConnection, DELETE_LRU_ITEMS_SQL.c_str(), -1, &this->_deleteLRUStmtWrapper.stmt, nullptr);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		// clear all items
+		status = sqlite3_prepare_v2(this->_pConnection, CLEAR_ALL_SQL.c_str(), -1, &this->_clearAllStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {
 			throw std::runtime_error(std::string(sqlite3_errstr(status)));
 		}
@@ -192,6 +227,8 @@ namespace CesiumAsync {
 			std::function<bool(CacheItem)> predicate, 
 			std::string& error) const 
 	{
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
 		// get entry based on key
 		int status = sqlite3_reset(this->_getEntryStmtWrapper.stmt);
 		if (status != SQLITE_OK) {
@@ -276,13 +313,13 @@ namespace CesiumAsync {
 
 				updateStatus = sqlite3_bind_int64(this->_updateLastAccessedTimeStmtWrapper.stmt, 1, itemIndex);
 				if (updateStatus != SQLITE_OK) {
-					error = std::string(sqlite3_errstr(status));
+					error = std::string(sqlite3_errstr(updateStatus));
 					return false;
 				}
 
 				updateStatus = sqlite3_step(this->_updateLastAccessedTimeStmtWrapper.stmt);
 				if (updateStatus != SQLITE_DONE) {
-					error = std::string(sqlite3_errstr(status));
+					error = std::string(sqlite3_errstr(updateStatus));
 					return false;
 				}
 
@@ -310,6 +347,8 @@ namespace CesiumAsync {
 		}
 
 		gsl::span<const uint8_t> responseData = response->data();
+
+		std::lock_guard<std::mutex> guard(this->_mutex);
 
 		// cache the request with the key
 		int status = sqlite3_reset(this->_storeResponseStmtWrapper.stmt);
@@ -407,41 +446,59 @@ namespace CesiumAsync {
 
 	bool DiskCache::prune(std::string& error)
 	{
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
+		int64_t totalItems = 0;
+
 		// query total size of response's data
-		Sqlite3StmtWrapper totalItemsQueryStmtWrapper;
-		int totalItemsQueryStatus = sqlite3_prepare_v2(this->_pConnection, TOTAL_ITEMS_QUERY_SQL.c_str(), -1, &totalItemsQueryStmtWrapper.stmt, nullptr);
-		if (totalItemsQueryStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(totalItemsQueryStatus));
-			return false;
-		}
+		{
+			int totalItemsQueryStatus = sqlite3_reset(this->_totalItemsQueryStmtWrapper.stmt);
+			if (totalItemsQueryStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(totalItemsQueryStatus));
+				return false;
+			}
 
-		totalItemsQueryStatus = sqlite3_step(totalItemsQueryStmtWrapper.stmt);
-		if (totalItemsQueryStatus == SQLITE_DONE) {
-			return true;
-		}
-		else if (totalItemsQueryStatus != SQLITE_ROW) {
-			error = std::string(sqlite3_errstr(totalItemsQueryStatus));
-			return false;
-		}
+			totalItemsQueryStatus = sqlite3_clear_bindings(this->_totalItemsQueryStmtWrapper.stmt);
+			if (totalItemsQueryStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(totalItemsQueryStatus));
+				return false;
+			}
 
-		// prune the rows if over maximum
-		int64_t totalItems = sqlite3_column_int64(totalItemsQueryStmtWrapper.stmt, 0);
-		if (totalItems > 0 && totalItems <= static_cast<int64_t>(_maxItems)) {
-			return true;
+			totalItemsQueryStatus = sqlite3_step(this->_totalItemsQueryStmtWrapper.stmt);
+			if (totalItemsQueryStatus == SQLITE_DONE) {
+				return true;
+			}
+			else if (totalItemsQueryStatus != SQLITE_ROW) {
+				error = std::string(sqlite3_errstr(totalItemsQueryStatus));
+				return false;
+			}
+
+			// prune the rows if over maximum
+			totalItems = sqlite3_column_int64(this->_totalItemsQueryStmtWrapper.stmt, 0);
+			if (totalItems > 0 && totalItems <= static_cast<int64_t>(_maxItems)) {
+				return true;
+			}
 		}
 
 		// delete expired rows first
-		Sqlite3StmtWrapper deleteExpiredStmtWrapper;
-		int deleteExpiredStatus = sqlite3_prepare_v2(this->_pConnection, DELETE_EXPIRED_ITEMS_SQL.c_str(), -1, &deleteExpiredStmtWrapper.stmt, nullptr);
-		if (deleteExpiredStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(deleteExpiredStatus));
-			return false;
-		}
+		{
+			int deleteExpiredStatus = sqlite3_reset(this->_deleteExpiredStmtWrapper.stmt);
+			if (deleteExpiredStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(deleteExpiredStatus));
+				return false;
+			}
 
-		deleteExpiredStatus = sqlite3_step(deleteExpiredStmtWrapper.stmt);
-		if (deleteExpiredStatus != SQLITE_DONE) {
-			error = std::string(sqlite3_errstr(deleteExpiredStatus));
-			return false;
+			deleteExpiredStatus = sqlite3_clear_bindings(this->_deleteExpiredStmtWrapper.stmt);
+			if (deleteExpiredStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(deleteExpiredStatus));
+				return false;
+			}
+
+			deleteExpiredStatus = sqlite3_step(this->_deleteExpiredStmtWrapper.stmt);
+			if (deleteExpiredStatus != SQLITE_DONE) {
+				error = std::string(sqlite3_errstr(deleteExpiredStatus));
+				return false;
+			}
 		}
 
 		// check if we should delete more
@@ -453,23 +510,30 @@ namespace CesiumAsync {
 		totalItems -= deletedRows;
 
 		// delete rows LRU if we are still over maximum
-		Sqlite3StmtWrapper deleteLRUStmtWrapper;
-		int deleteLLRUStatus = sqlite3_prepare_v2(this->_pConnection, DELETE_LRU_ITEMS_SQL.c_str(), -1, &deleteLRUStmtWrapper.stmt, nullptr);
-		if (deleteLLRUStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(deleteLLRUStatus));
-			return false;
-		}
+		{
+			int deleteLLRUStatus = sqlite3_reset(this->_deleteLRUStmtWrapper.stmt);
+			if (deleteLLRUStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(deleteLLRUStatus));
+				return false;
+			}
 
-		deleteLLRUStatus = sqlite3_bind_int64(deleteLRUStmtWrapper.stmt, 1, totalItems - static_cast<int64_t>(this->_maxItems));
-		if (deleteLLRUStatus != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(deleteLLRUStatus));
-			return false;
-		}
+			deleteLLRUStatus = sqlite3_clear_bindings(this->_deleteLRUStmtWrapper.stmt);
+			if (deleteLLRUStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(deleteLLRUStatus));
+				return false;
+			}
 
-		deleteLLRUStatus = sqlite3_step(deleteLRUStmtWrapper.stmt);
-		if (deleteLLRUStatus != SQLITE_DONE) {
-			error = std::string(sqlite3_errstr(deleteLLRUStatus));
-			return false;
+			deleteLLRUStatus = sqlite3_bind_int64(this->_deleteLRUStmtWrapper.stmt, 1, totalItems - static_cast<int64_t>(this->_maxItems));
+			if (deleteLLRUStatus != SQLITE_OK) {
+				error = std::string(sqlite3_errstr(deleteLLRUStatus));
+				return false;
+			}
+
+			deleteLLRUStatus = sqlite3_step(this->_deleteLRUStmtWrapper.stmt);
+			if (deleteLLRUStatus != SQLITE_DONE) {
+				error = std::string(sqlite3_errstr(deleteLLRUStatus));
+				return false;
+			}
 		}
 
 		return true;
@@ -477,14 +541,15 @@ namespace CesiumAsync {
 
 	bool DiskCache::clearAll(std::string& error)
 	{
-		Sqlite3StmtWrapper clearAllStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, CLEAR_ALL_SQL.c_str(), -1, &clearAllStmtWrapper.stmt, nullptr);
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
+		int status = sqlite3_reset(this->_clearAllStmtWrapper.stmt);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_step(clearAllStmtWrapper.stmt);
+		status = sqlite3_step(this->_clearAllStmtWrapper.stmt);
 		if (status != SQLITE_DONE) {
 			error = std::string(sqlite3_errstr(status));
 			return false;

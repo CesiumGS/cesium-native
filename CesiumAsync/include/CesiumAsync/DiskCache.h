@@ -84,8 +84,13 @@ namespace CesiumAsync {
 
 		sqlite3* _pConnection;
 		uint64_t _maxItems;
+		mutable std::mutex _mutex;
 		Sqlite3StmtWrapper _getEntryStmtWrapper;
 		Sqlite3StmtWrapper _updateLastAccessedTimeStmtWrapper;
 		Sqlite3StmtWrapper _storeResponseStmtWrapper;
+		Sqlite3StmtWrapper _totalItemsQueryStmtWrapper;
+		Sqlite3StmtWrapper _deleteExpiredStmtWrapper;
+		Sqlite3StmtWrapper _deleteLRUStmtWrapper;
+		Sqlite3StmtWrapper _clearAllStmtWrapper;
 	};
 }
