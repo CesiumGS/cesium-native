@@ -1,4 +1,4 @@
-#include "Cesium3DTiles/CullingVolume.h"
+#include "CesiumGeometry/CullingVolume.h"
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -12,7 +12,7 @@ namespace Cesium3DTiles {
         const glm::dvec3& up,
         const double fovx,
         const double fovy
-    ) {
+    ) noexcept {
         double t = glm::tan(0.5 * fovy);
         double b = -t;
         double r = glm::tan(0.5 * fovx);

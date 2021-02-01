@@ -1,6 +1,6 @@
 
 #include "Cesium3DTiles/ViewState.h"
-#include "Cesium3DTiles/CullingVolume.h"
+#include "CesiumGeometry/CullingVolume.h"
 
 #include <glm/trigonometric.hpp>
 

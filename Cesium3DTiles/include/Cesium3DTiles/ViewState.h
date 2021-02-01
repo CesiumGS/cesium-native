@@ -3,8 +3,8 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Library.h"
 #include "CesiumGeometry/Plane.h"
+#include "CesiumGeometry/CullingVolume.h"
 #include "CesiumGeospatial/Cartographic.h"
-#include "Cesium3DTiles/CullingVolume.h"
 
 #include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>
