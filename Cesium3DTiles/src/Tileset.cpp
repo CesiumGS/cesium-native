@@ -14,6 +14,7 @@
 #include "CesiumUtility/Math.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include "JsonHelpers.h"
+#include "TileUtilities.h"
 #include "Uri.h"
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
@@ -96,54 +97,10 @@ namespace Cesium3DTiles {
 
         ++this->_loadsInProgress;
 
-        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-                // TODO: report the lack of response. Network error? Can this even happen?
-                this->notifyTileDoneLoading(nullptr);
-                return;
-            }
-
-            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                // TODO: report error response.
-                this->notifyTileDoneLoading(nullptr);
-                return;
-            }
-
-            gsl::span<const uint8_t> data = pResponse->data();
-
-            rapidjson::Document ionResponse;
-            ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-
-			if (ionResponse.HasParseError()) {
-				SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response JSON, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
-				return;
-			}
-
-            std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
-            std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
-            
-            std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
-            if (type == "TERRAIN") {
-                // For terrain resources, we need to append `/layer.json` to the end of the URL.
-                url = Uri::resolve(url, "layer.json", true);
-            } else if (type != "3DTILES") {
-                // TODO: report unsupported type.
-                this->notifyTileDoneLoading(nullptr);
-                return;
-            }
-
-            auto pContext = std::make_unique<TileContext>();
-
-            pContext->pTileset = this;
-            pContext->baseUrl = url;
-            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
-            pContext->failedTileCallback = [this](Tile& failedTile) {
-                return this->_onIonTileFailed(failedTile);
-            };
-
-            this->_loadTilesetJson(pContext->baseUrl, pContext->requestHeaders, std::move(pContext));
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
+            this->_handleAssetResponse(std::move(pRequest));
+        }).catchInMainThread([this, &ionAssetID](const std::exception& e) {
+            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error for asset {}: {}", ionAssetID, e.what());
             this->notifyTileDoneLoading(nullptr);
         });
     }
@@ -169,6 +126,56 @@ namespace Cesium3DTiles {
             }
         }
     }
+
+    void Tileset::_handleAssetResponse(std::unique_ptr<IAssetRequest>&& pRequest) {
+        IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "No response received for asset request {}", pRequest->url());
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received status code {} for asset response {}", pResponse->statusCode(), pRequest->url());
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        gsl::span<const uint8_t> data = pResponse->data();
+
+        rapidjson::Document ionResponse;
+        ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+
+        if (ionResponse.HasParseError()) {
+            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response JSON, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
+            return;
+        }
+
+        std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
+        std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
+
+        std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
+        if (type == "TERRAIN") {
+            // For terrain resources, we need to append `/layer.json` to the end of the URL.
+            url = Uri::resolve(url, "layer.json", true);
+        }
+        else if (type != "3DTILES") {
+            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received unsupported asset response type: {}", type);
+            this->notifyTileDoneLoading(nullptr);
+            return;
+        }
+
+        auto pContext = std::make_unique<TileContext>();
+
+        pContext->pTileset = this;
+        pContext->baseUrl = url;
+        pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+        pContext->failedTileCallback = [this](Tile& failedTile) {
+            return this->_onIonTileFailed(failedTile);
+        };
+        this->_loadTilesetJson(pContext->baseUrl, pContext->requestHeaders, std::move(pContext));
+    }
+
 
     static bool operator<(const FogDensityAtHeight& fogDensity, double height) {
         return fogDensity.cameraHeight < height;
@@ -227,6 +234,7 @@ namespace Cesium3DTiles {
         // result.newTilesToRenderThisFrame.clear();
         result.tilesToNoLongerRenderThisFrame.clear();
         result.tilesVisited = 0;
+        result.culledTilesVisited = 0;
         result.tilesCulled = 0;
         result.maxDepthVisited = 0;
 
@@ -248,7 +256,7 @@ namespace Cesium3DTiles {
             fogDensity
         };
 
-        this->_visitTileIfVisible(frameState, 0, false, *pRootTile, result);
+        this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
 
         result.tilesLoadingLowPriority = static_cast<uint32_t>(this->_loadQueueLow.size());
         result.tilesLoadingMediumPriority = static_cast<uint32_t>(this->_loadQueueMedium.size());
@@ -311,8 +319,8 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tileset::loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const {
-        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context);
+    void Tileset::loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) const {
+        this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context, pLogger);
     }
 
     std::optional<Future<std::shared_ptr<IAssetRequest>>> Tileset::requestTileContent(Tile& tile) {
@@ -357,76 +365,73 @@ namespace Cesium3DTiles {
         const std::vector<std::pair<std::string, std::string>>& headers,
         std::unique_ptr<TileContext>&& pContext
     ) {
-        struct LoadResult {
-            std::unique_ptr<TileContext> pContext;
-            std::unique_ptr<Tile> pRootTile;
-        };
-
         if (!pContext) {
             pContext = std::make_unique<TileContext>();
         }
+        pContext->pTileset = this;
 
         this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
-            pLogger = this->getExternals().pLogger,
-            pTileset = this,
+            pLogger = this->_externals.pLogger,
             pContext = std::move(pContext)
-        ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-                // TODO: report the lack of response. Network error? Can this even happen?
-                SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
-                return LoadResult { std::move(pContext), nullptr };
-            }
-
-            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                // TODO: report error response.
-                SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
-                return LoadResult { std::move(pContext), nullptr };
-            }
-
-            pContext->pTileset = pTileset;
-            pContext->baseUrl = pRequest->url();
-
-            gsl::span<const uint8_t> data = pResponse->data();
-
-            rapidjson::Document tileset;
-            tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-
-			if (tileset.HasParseError()) {
-				SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
-				return LoadResult { std::move(pContext), nullptr };
-			}
-
-            std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
-            pRootTile->setContext(pContext.get());
-
-            auto rootIt = tileset.FindMember("root");
-            auto formatIt = tileset.FindMember("format");
-
-            if (rootIt != tileset.MemberEnd()) {
-                rapidjson::Value& rootJson = rootIt->value;
-                Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext);
-            } else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
-               Tileset::_createTerrainTile(*pRootTile, tileset, *pContext);
-            }
-
-            return LoadResult {
-                std::move(pContext),
-                std::move(pRootTile)
-            };
+        ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
+            return Tileset::_handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
             this->notifyTileDoneLoading(nullptr);
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+        }).catchInMainThread([this, &url](const std::exception& e) {
+            SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error for tileset {}: {}", url, e.what());
             this->_pRootTile.reset();
             this->notifyTileDoneLoading(nullptr);
         });
     }
 
-    /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) {
-        if (!tileJson.IsObject())
-        {
+    /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
+        IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
+            return LoadResult{ std::move(pContext), nullptr };
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
+            return LoadResult{ std::move(pContext), nullptr };
+        }
+
+        pContext->baseUrl = pRequest->url();
+
+        gsl::span<const uint8_t> data = pResponse->data();
+
+        rapidjson::Document tileset;
+        tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+
+        if (tileset.HasParseError()) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
+            return LoadResult{ std::move(pContext), nullptr };
+        }
+
+        std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
+        pRootTile->setContext(pContext.get());
+
+        auto rootIt = tileset.FindMember("root");
+        auto formatIt = tileset.FindMember("format");
+
+        if (rootIt != tileset.MemberEnd()) {
+            rapidjson::Value& rootJson = rootIt->value;
+            Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext, pLogger);
+        }
+        else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
+            Tileset::_createTerrainTile(*pRootTile, tileset, *pContext, pLogger);
+        }
+
+        return LoadResult{
+            std::move(pContext),
+            std::move(pRootTile)
+        };
+    }
+
+    /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) {
+        if (!tileJson.IsObject()) {
             return;
         }
 
@@ -439,8 +444,7 @@ namespace Cesium3DTiles {
         auto contentIt = tileJson.FindMember("content");
         auto childrenIt = tileJson.FindMember("children");
 
-        if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject())
-        {
+        if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject()) {
             auto uriIt = contentIt->value.FindMember("uri");
             if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
                 uriIt = contentIt->value.FindMember("url");
@@ -458,13 +462,13 @@ namespace Cesium3DTiles {
 
         std::optional<BoundingVolume> boundingVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
-            // TODO: report missing required property
+            SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
             return;
         }
 
         std::optional<double> geometricError = JsonHelpers::getScalarProperty(tileJson, "geometricError");
         if (!geometricError) {
-            // TODO: report missing required property
+            SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a geometricError");
             return;
         }
 
@@ -485,7 +489,7 @@ namespace Cesium3DTiles {
             } else if (refine == "ADD") {
                 tile.setRefine(TileRefine::Add);
             } else {
-                // TODO: report invalid value
+                SPDLOG_LOGGER_ERROR(pLogger, "Tileset contained an unknown refine value: {}", refine);
             }
         } else {
             tile.setRefine(parentRefine);
@@ -501,12 +505,52 @@ namespace Cesium3DTiles {
                 const auto& childJson = childrenJson[i];
                 Tile& child = childTiles[i];
                 child.setParent(&tile);
-                Tileset::_createTile(child, childJson, transform, tile.getRefine(), context);
+                Tileset::_createTile(child, childJson, transform, tile.getRefine(), context, pLogger);
             }
         }
     }
 
-    /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context) {
+    /**
+     * @brief Creates the query parameter string for the extensions in the given list.
+     *
+     * This will check for the presence of all known extensions in the given list,
+     * and create a string that can be appended as the value of the `extensions` query
+     * parameter to the request URL.
+     *
+     * @param extensions The layer JSON
+     * @return The extensions (possibly the empty string)
+     */
+    static std::string createExtensionsQueryParameter(const std::vector<std::string>& extensions) noexcept {
+
+        std::vector<std::string> knownExtensions = { "octvertexnormals", "metadata" };
+        std::string extensionsToRequest;
+        for (const std::string& extension : knownExtensions) {
+            if (std::find(extensions.begin(), extensions.end(), extension) != extensions.end()) {
+                if (!extensionsToRequest.empty()) {
+                    extensionsToRequest += "-";
+                }
+                extensionsToRequest += extension;
+            }
+        }
+        return extensionsToRequest;
+    }
+
+    /**
+     * @brief Creates a default {@link BoundingRegionWithLooseFittingHeights} for the given rectangle.
+     *
+     * The heights of this bounding volume will have unspecified default values
+     * that are suitable for the use on earth.
+     *
+     * @param globeRectangle The {@link CesiumGeospatial::GlobeRectangle}
+     * @return The {@link BoundingRegionWithLooseFittingHeights}
+     */
+    static BoundingVolume createDefaultLooseEarthBoundingVolume(const CesiumGeospatial::GlobeRectangle& globeRectangle) {
+        return BoundingRegionWithLooseFittingHeights(BoundingRegion(
+            globeRectangle, -1000.0, -9000.0
+        ));
+    }
+
+    /*static*/ void Tileset::_createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) {
         context.requestHeaders.push_back(std::make_pair("Accept", "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01"));
         
         auto tilesetVersionIt = layerJson.FindMember("tilesetVersion");
@@ -514,32 +558,13 @@ namespace Cesium3DTiles {
             context.version = tilesetVersionIt->value.GetString();
         }
 
+        std::optional<std::vector<double>> optionalBounds = JsonHelpers::getDoubles(layerJson, -1, "bounds");
         std::vector<double> bounds;
-        auto boundsIt = layerJson.FindMember("bounds");
-        if (boundsIt != layerJson.MemberEnd() && boundsIt->value.IsArray()) {
-            const auto& boundsJson = boundsIt->value.GetArray();
-            bounds.resize(boundsJson.Size());
-
-            for (rapidjson::SizeType i = 0; i < boundsJson.Size(); ++i) {
-                const auto& element = boundsJson[i];
-                if (!element.IsNumber()) {
-                    // Unexpected element, give up interpreting this bounds
-                    // TODO: add a warning
-                    bounds.clear();
-                    break;
-                }
-
-                bounds[i] = element.GetDouble();
-            }
+        if (optionalBounds) {
+            bounds = optionalBounds.value();
         }
 
-        std::string projectionString;
-        auto projectionIt = layerJson.FindMember("projection");
-        if (projectionIt != layerJson.MemberEnd() && projectionIt->value.IsString()) {
-            projectionString = projectionIt->value.GetString();
-        } else {
-            projectionString = "EPSG:4326";
-        }
+        std::string projectionString = JsonHelpers::getStringOrDefault(layerJson, "projection", "EPSG:4326");
 
         CesiumGeospatial::Projection projection;
         CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
@@ -563,21 +588,14 @@ namespace Cesium3DTiles {
             quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
             quadtreeXTiles = 1;
         } else {
-            // Unsupported projection
-            // TODO: report error
+            SPDLOG_LOGGER_ERROR(pLogger, "Tileset contained an unknown projection value: {}", projectionString);
             return;
         }
 
         CesiumGeometry::QuadtreeTilingScheme tilingScheme(quadtreeRectangleProjected, quadtreeXTiles, 1);
 
         std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
-        
-        uint32_t maxZoom = 30;
-
-        auto maxZoomIt = layerJson.FindMember("maxzoom");
-        if (maxZoomIt != layerJson.MemberEnd() && maxZoomIt->value.IsUint()) {
-            maxZoom = maxZoomIt->value.GetUint();
-        }
+        uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
 
         context.implicitContext = {
             urls,
@@ -589,21 +607,7 @@ namespace Cesium3DTiles {
         std::vector<std::string> extensions = JsonHelpers::getStrings(layerJson, "extensions");
 
         // Request normals and metadata if they're available
-        std::string extensionsToRequest;
-
-        if (std::find(extensions.begin(), extensions.end(), "octvertexnormals") != extensions.end()) {
-            if (!extensionsToRequest.empty()) {
-                extensionsToRequest += "-";
-            }
-            extensionsToRequest += "octvertexnormals";
-        }
-
-        if (std::find(extensions.begin(), extensions.end(), "metadata") != extensions.end()) {
-            if (!extensionsToRequest.empty()) {
-                extensionsToRequest += "-";
-            }
-            extensionsToRequest += "metadata";
-        }
+        std::string extensionsToRequest = createExtensionsQueryParameter(extensions);
 
         if (!extensionsToRequest.empty()) {
             for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
@@ -612,11 +616,7 @@ namespace Cesium3DTiles {
         }
 
         tile.setContext(&context);
-        tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            quadtreeRectangleGlobe,
-            -1000.0,
-            -9000.0
-        )));
+        tile.setBoundingVolume(createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe));
         tile.setGeometricError(999999999.0);
         tile.createChildTiles(quadtreeXTiles);
 
@@ -627,14 +627,90 @@ namespace Cesium3DTiles {
             childTile.setContext(&context);
             childTile.setParent(&tile);
             childTile.setTileID(id);
-            childTile.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-                unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id)),
-                -1000.0,
-                -9000.0
-            )));
+            CesiumGeospatial::GlobeRectangle childGlobeRectangle = 
+                unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id));
+            childTile.setBoundingVolume(createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
             childTile.setGeometricError(8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84, tilingScheme));
         }
     }
+
+
+    /**
+     * @brief Tries to update the context request headers with a new token.
+     *
+     * This will try to obtain the `accessToken` from the JSON of the
+     * given response, and set it as the `Bearer ...` value of the
+     * `Authorization` header of the request headers of the given
+     * context.
+     *
+     * @param pContext The context
+     * @param pIonResponse The response
+     * @return Whether the update succeeded
+     */
+    static bool updateContextWithNewToken(TileContext* pContext, IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
+        gsl::span<const uint8_t> data = pIonResponse->data();
+
+        rapidjson::Document ionResponse;
+        ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+        if (ionResponse.HasParseError()) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing Cesium ion response, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
+            return false;
+        }
+        std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
+
+        auto authIt = std::find_if(
+            pContext->requestHeaders.begin(),
+            pContext->requestHeaders.end(),
+            [](auto& headerPair) {
+                return headerPair.first == "Authorization";
+            }
+        );
+        if (authIt != pContext->requestHeaders.end()) {
+            authIt->second = "Bearer " + accessToken;
+        }
+        else {
+            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
+        }
+        return true;
+    }
+
+    void Tileset::_handleTokenRefreshResponse(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
+        IAssetResponse* pIonResponse = pIonRequest->response();
+
+        bool failed = true;
+        if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
+            failed = !updateContextWithNewToken(pContext, pIonResponse, pLogger);
+        }
+
+        // Put all auth-failed tiles in this context back into the Unloaded state.
+        // TODO: the way this is structured, requests already in progress with the old key
+        // might complete after the key has been updated, and there's nothing here clever
+        // enough to avoid refreshing the key _again_ in that instance.
+
+        Tile* pTile = this->_loadedTiles.head();
+
+        while (pTile) {
+            if (
+                pTile->getContext() == pContext &&
+                pTile->getState() == Tile::LoadState::FailedTemporarily &&
+                pTile->getContent() &&
+                pTile->getContent()->httpStatusCode == 401
+            ) {
+                if (failed) {
+                    pTile->markPermanentlyFailed();
+                }
+                else {
+                    pTile->unloadContent();
+                }
+            }
+
+            pTile = this->_loadedTiles.next(*pTile);
+        }
+
+        this->_isRefreshingIonToken = false;
+        this->notifyTileDoneLoading(nullptr);
+    }
+
 
     FailedTileAction Tileset::_onIonTileFailed(Tile& failedTile) {
         TileContentLoadResult* pContent = failedTile.getContent();
@@ -664,67 +740,10 @@ namespace Cesium3DTiles {
             this->_asyncSystem.requestAsset(url).thenInMainThread([
                 this,
                 pContext = failedTile.getContext()
-            ](std::shared_ptr<IAssetRequest>&& pIonRequest) {
-                const IAssetResponse* pIonResponse = pIonRequest->response();
-
-                bool failed = true;
-
-                if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
-                    // Update the context with the new token.
-                    gsl::span<const uint8_t> data = pIonResponse->data();
-
-                    rapidjson::Document ionResponse;
-                    ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-
-                    if (ionResponse.HasParseError()) {
-                        SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
-                    } else {
-                        std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
-
-                        auto authIt = std::find_if(
-                            pContext->requestHeaders.begin(),
-                            pContext->requestHeaders.end(),
-                            [](auto& headerPair) {
-                                return headerPair.first == "Authorization";
-                            }
-                        );
-                        if (authIt != pContext->requestHeaders.end()) {
-                            authIt->second = "Bearer " + accessToken;
-                        } else {
-                            pContext->requestHeaders.push_back(std::make_pair("Authorization", "Bearer " + accessToken));
-                        }
-
-                        failed = false;
-                    }
-                }
-
-                // Put all auth-failed tiles in this context back into the Unloaded state.
-                // TODO: the way this is structured, requests already in progress with the old key
-                // might complete after the key has been updated, and there's nothing here clever
-                // enough to avoid refreshing the key _again_ in that instance.
-
-                Tile* pTile = this->_loadedTiles.head();
-
-                while (pTile) {
-                    if (
-                        pTile->getContext() == pContext &&
-                        pTile->getState() == Tile::LoadState::FailedTemporarily &&
-                        pTile->getContent() &&
-                        pTile->getContent()->httpStatusCode == 401
-                    ) {
-                        if (failed) {
-                            pTile->markPermanentlyFailed();
-                        } else {
-                            pTile->unloadContent();
-                        }
-                    }
-
-                    pTile = this->_loadedTiles.next(*pTile);
-                }
-
-                this->_isRefreshingIonToken = false;
-                this->notifyTileDoneLoading(nullptr);
-            }).catchInMainThread([this](const std::exception& /*e*/) {
+            ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
+                this->_handleTokenRefreshResponse(std::move(pIonRequest), pContext, this->_externals.pLogger);
+            }).catchInMainThread([this](const std::exception& e) {
+                SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error when retrying request: {}", e.what());
                 this->_isRefreshingIonToken = false;
                 this->notifyTileDoneLoading(nullptr);
             });
@@ -765,12 +784,50 @@ namespace Cesium3DTiles {
         markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
     }
 
+    /**
+     * @brief Returns whether a tile with the given bounding volume is visible for the camera.
+     *
+     * @param camera The camera
+     * @param boundingVolume The bounding volume of the tile
+     * @param forceRenderTilesUnderCamera Whether tiles under the camera should always be rendered (see {@link Cesium3DTiles::TilesetOptions})
+     * @return Whether the tile is visible according to the current camera configuration
+     */
+    static bool isVisibleFromCamera(const Camera& camera, const BoundingVolume& boundingVolume, bool forceRenderTilesUnderCamera) {
+        if (camera.isBoundingVolumeVisible(boundingVolume)) {
+            return true;
+        }
+        if (!forceRenderTilesUnderCamera) {
+            return false;
+        }
+        const std::optional<CesiumGeospatial::Cartographic>& position = camera.getPositionCartographic();
+        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+        if (position && pRectangle) {
+            return pRectangle->contains(position.value());
+        }
+        return false;
+    }
+
+    /**
+     * @brief Returns whether a tile at the given distance is visible in the fog.
+     *
+     * @param distance The distance of the tile bounding volume to the camera
+     * @param fogDensity The fog density
+     * @return Whether the tile is visible in the fog
+     */
+    static bool isVisibleInFog(double distance, double fogDensity) {
+        if (fogDensity <= 0.0) {
+            return true;
+        }
+        double fogScalar = distance * fogDensity;
+        return glm::exp(-(fogScalar * fogScalar)) > 0.0;
+    }
+
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * It is not yet known whether the tile is visible.
     //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true, see comments below).
     //   * The tile may or may not be renderable.
     //   * The tile has not yet been added to a load queue.
-    Tileset::TraversalDetails Tileset::_visitTileIfVisible(
+    Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         const FrameState& frameState,
         uint32_t depth,
         bool ancestorMeetsSse,
@@ -780,44 +837,36 @@ namespace Cesium3DTiles {
         tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
         this->_markTileVisited(tile);
 
+        // whether we should visit this tile
+        bool shouldVisit = true;
+        // whether this tile was culled (Note: we might still want to visit it)
+        bool culled = false;
+
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        bool isVisible = frameState.camera.isBoundingVolumeVisible(boundingVolume);
+        const Camera& camera = frameState.camera;
 
-        if (!isVisible && this->_options.renderTilesUnderCamera && frameState.camera.getPositionCartographic()) {
-            const CesiumGeospatial::BoundingRegion* pRegion = std::get_if<CesiumGeospatial::BoundingRegion>(&tile.getBoundingVolume());
-            const CesiumGeospatial::BoundingRegionWithLooseFittingHeights* pLooseRegion = std::get_if<CesiumGeospatial::BoundingRegionWithLooseFittingHeights>(&tile.getBoundingVolume());
-            
-            const CesiumGeospatial::GlobeRectangle* pRectangle = nullptr;
-            if (pRegion) {
-                pRectangle = &pRegion->getRectangle();
-            } else if (pLooseRegion) {
-                pRectangle = &pLooseRegion->getBoundingRegion().getRectangle();
-            }
-
-            if (pRectangle) {
-                if (pRectangle->contains(frameState.camera.getPositionCartographic().value())) {
-                    isVisible = true;
-                }
+        if (!isVisibleFromCamera(frameState.camera, boundingVolume, this->_options.renderTilesUnderCamera)) {
+            // this tile is off-screen so it is a culled tile
+            culled = true;
+            if (this->_options.enableFrustumCulling) {
+                // frustum culling is enabled so we shouldn't visit this off-screen tile
+                shouldVisit = false;
             }
         }
 
-        double distance = 0.0;
+        double distance = sqrt(camera.computeDistanceSquaredToBoundingVolume(boundingVolume));
 
-        if (isVisible) {
-            // Is it culled by fog?
-            double distanceSquared = frameState.camera.computeDistanceSquaredToBoundingVolume(boundingVolume);
-            distance = sqrt(distanceSquared);
-
-            if (frameState.fogDensity > 0.0) {
-                double fogScalar = distance * frameState.fogDensity;
-                double fog = 1.0 - glm::exp(-(fogScalar * fogScalar));
-                if (fog >= 1.0) {
-                    isVisible = false;
-                }
+        // if we are still considering visiting this tile, check for fog occlusion
+        if (shouldVisit && !isVisibleInFog(distance, frameState.fogDensity)) {
+            // this tile is occluded by fog so it is a culled tile
+            culled = true;
+            if (this->_options.enableFogCulling) {
+                // fog culling is enabled so we shouldn't visit this tile 
+                shouldVisit = false;
             }
         }
 
-        if (!isVisible) {
+        if (!shouldVisit) {
             markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
             tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Culled));
 
@@ -831,8 +880,187 @@ namespace Cesium3DTiles {
             return TraversalDetails();
         }
     
-        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, result);
+        return this->_visitTile(frameState, depth, ancestorMeetsSse, tile, distance, culled, result);
     }
+
+    static bool isLeaf(const Tile& tile) {
+        return tile.getChildren().empty();
+    }
+
+    Tileset::TraversalDetails Tileset::_renderLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
+        result.tilesToRenderThisFrame.push_back(&tile);
+        addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+
+        TraversalDetails traversalDetails;
+        traversalDetails.allAreRenderable = tile.isRenderable();
+        traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+        traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
+        return traversalDetails;
+    }
+
+    bool Tileset::_queueLoadOfChildrenRequiredForRefinement(const FrameState& frameState, Tile& tile, double distance) {
+        if (!this->_options.forbidHoles) {
+            return false;
+        }
+        // If we're forbidding holes, don't refine if any children are still loading.
+        gsl::span<Tile> children = tile.getChildren();
+        bool waitingForChildren = false;
+        for (Tile& child : children) {
+            if (!child.isRenderable()) {
+                waitingForChildren = true;
+
+                // We're using the distance to the parent tile to compute the load priority.
+                // This is fine because the relative priority of the children is irrelevant;
+                // we can't display any of them until all are loaded, anyway.
+                addTileToLoadQueue(this->_loadQueueMedium, frameState, child, distance);
+            }
+        }
+        return waitingForChildren;
+    }
+
+    bool Tileset::_meetsSse(const Camera& camera, const Tile& tile, double distance, bool culled) const {
+        // Does this tile meet the screen-space error?
+        double sse = camera.computeScreenSpaceError(tile.getGeometricError(), distance);
+        return culled ? 
+               !this->_options.enforceCulledScreenSpaceError || sse < this->_options.culledScreenSpaceError :
+               sse < this->_options.maximumScreenSpaceError;
+    }
+
+    /**
+     * We can render it if _any_ of the following are true:
+     *  1. We rendered it (or kicked it) last frame.
+     *  2. This tile was culled last frame, or it wasn't even visited because an ancestor was culled.
+     *  3. The tile is done loading and ready to render.
+     *  Note that even if we decide to render a tile here, it may later get "kicked" in favor of an ancestor.
+     */
+    static bool shouldRenderThisTile(const Tile& tile, const TileSelectionState& lastFrameSelectionState, int32_t lastFrameNumber) {
+        TileSelectionState::Result originalResult = lastFrameSelectionState.getOriginalResult(lastFrameNumber);
+        if (originalResult == TileSelectionState::Result::Rendered) {
+            return true;
+        }
+        if (originalResult == TileSelectionState::Result::Culled || originalResult == TileSelectionState::Result::None) {
+            return true;
+        }
+
+        // Tile::isRenderable is actually a pretty complex operation, so only do 
+        // it when absolutely necessary
+        if (tile.isRenderable()) {
+            return true;
+        }
+        return false;
+    }
+
+    Tileset::TraversalDetails Tileset::_renderInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
+        result.tilesToRenderThisFrame.push_back(&tile);
+
+        TraversalDetails traversalDetails;
+        traversalDetails.allAreRenderable = tile.isRenderable();
+        traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+        traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
+
+        return traversalDetails;
+    }
+
+    Tileset::TraversalDetails Tileset::_refineToNothing(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable) {
+
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        // Nothing else to do except mark this tile refined and return.
+        TraversalDetails noChildrenTraversalDetails;
+        if (tile.getRefine() == TileRefine::Add) {
+            noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
+            noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+            noChildrenTraversalDetails.notYetRenderableCount = areChildrenRenderable ? 0 : 1;
+        }
+        else {
+            markTileNonRendered(frameState.lastFrameNumber, tile, result);
+        }
+
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Refined));
+        return noChildrenTraversalDetails;
+    }
+
+    bool Tileset::_loadAndRenderAdditiveRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance) {
+        // If this tile uses additive refinement, we need to render this tile in addition to its children.
+        if (tile.getRefine() == TileRefine::Add) {
+            result.tilesToRenderThisFrame.push_back(&tile);
+            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+            return true;
+        }
+        return false;
+    }
+
+    // TODO This function is obviously too complex. The way how the indices are used, 
+    // in order to deal with the queue elements, should be reviewed...
+    bool Tileset::_kickDescendantsAndRenderTile(
+        const FrameState& frameState,
+        Tile& tile,
+        ViewUpdateResult& result,
+        TraversalDetails& traversalDetails,
+        size_t firstRenderedDescendantIndex,
+        size_t loadIndexLow,
+        size_t loadIndexMedium,
+        size_t loadIndexHigh,
+        bool queuedForLoad,
+        double distance
+    ) {
+        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+
+        std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
+
+        // Mark the rendered descendants and their ancestors - up to this tile - as kicked.
+        for (size_t i = firstRenderedDescendantIndex; i < renderList.size(); ++i) {
+            Tile* pWorkTile = renderList[i];
+            while (
+                pWorkTile != nullptr &&
+                !pWorkTile->getLastSelectionState().wasKicked(frameState.currentFrameNumber) &&
+                pWorkTile != &tile
+                ) {
+                pWorkTile->getLastSelectionState().kick();
+                pWorkTile = pWorkTile->getParent();
+            }
+        }
+
+        // Remove all descendants from the render list and add this tile.
+        renderList.erase(renderList.begin() + static_cast<std::vector<Tile*>::iterator::difference_type>(firstRenderedDescendantIndex), renderList.end());
+        renderList.push_back(&tile);
+        tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
+
+        // If we're waiting on heaps of descendants, the above will take too long. So in that case,
+        // load this tile INSTEAD of loading any of the descendants, and tell the up-level we're only waiting
+        // on this tile. Keep doing this until we actually manage to render this tile.
+        bool wasRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
+        bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
+
+        if (!wasReallyRenderedLastFrame && traversalDetails.notYetRenderableCount > this->_options.loadingDescendantLimit) {
+            // Remove all descendants from the load queues.
+            this->_loadQueueLow.erase(this->_loadQueueLow.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexLow), this->_loadQueueLow.end());
+            this->_loadQueueMedium.erase(this->_loadQueueMedium.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexMedium), this->_loadQueueMedium.end());
+            this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexHigh), this->_loadQueueHigh.end());
+
+            if (!queuedForLoad) {
+                addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+            }
+
+            traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
+            queuedForLoad = true;
+        }
+
+        traversalDetails.allAreRenderable = tile.isRenderable();
+        traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
+
+        return queuedForLoad;
+    }
+
 
     // Visits a tile for possible rendering. When we call this function with a tile:
     //   * The tile has previously been determined to be visible.
@@ -842,49 +1070,26 @@ namespace Cesium3DTiles {
     Tileset::TraversalDetails Tileset::_visitTile(
         const FrameState& frameState,
         uint32_t depth,
-        bool ancestorMeetsSse,
+        bool ancestorMeetsSse, // Careful: May be modified before being passed to children!
         Tile& tile,
         double distance,
+        bool culled,
         ViewUpdateResult& result
     ) {
         ++result.tilesVisited;
         result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
-        TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+        if (culled) {
+            ++result.culledTilesVisited;
+        }
 
         // If this is a leaf tile, just render it (it's already been deemed visible).
-        gsl::span<Tile> children = tile.getChildren();
-        if (children.size() == 0) {
-            // Render this leaf tile.
-            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
-            result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
-
-            TraversalDetails traversalDetails;
-            traversalDetails.allAreRenderable = tile.isRenderable();
-            traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-            traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
-            return traversalDetails;
+        if (isLeaf(tile)) {
+            return _renderLeaf(frameState, tile, distance, result);
         }
 
-        // Does this tile meet the screen-space error?
-        double sse = frameState.camera.computeScreenSpaceError(tile.getGeometricError(), distance);
-        bool meetsSse = sse < this->_options.maximumScreenSpaceError;
-
-        // If we're forbidding holes, don't refine if any children are still loading.
-        bool waitingForChildren = false;
-        if (this->_options.forbidHoles) {
-            for (Tile& child : children) {
-                if (!child.isRenderable()) {
-                    waitingForChildren = true;
-
-                    // We're using the distance to the parent tile to compute the load priority.
-                    // This is fine because the relative priority of the children is irrelevant;
-                    // we can't display any of them until all are loaded, anyway.
-                    addTileToLoadQueue(this->_loadQueueMedium, frameState, child, distance);
-                }
-            }
-        }
+        bool meetsSse = _meetsSse(frameState.camera, tile, distance, culled);
+        bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distance);
 
         if (meetsSse || ancestorMeetsSse || waitingForChildren) {
             // This tile (or an ancestor) is the one we want to render this frame, but we'll do different things depending
@@ -896,28 +1101,14 @@ namespace Cesium3DTiles {
             // 3. The tile is done loading and ready to render.
             //
             // Note that even if we decide to render a tile here, it may later get "kicked" in favor of an ancestor.
-            TileSelectionState::Result originalResult = lastFrameSelectionState.getOriginalResult(frameState.lastFrameNumber);
-            bool oneRenderedLastFrame = originalResult == TileSelectionState::Result::Rendered;
-            bool twoCulledOrNotVisited = originalResult == TileSelectionState::Result::Culled || originalResult == TileSelectionState::Result::None;
-            bool threeCompletelyLoaded = tile.isRenderable();
-
-            bool renderThisTile = oneRenderedLastFrame || twoCulledOrNotVisited || threeCompletelyLoaded;
+            TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+            bool renderThisTile = shouldRenderThisTile(tile, lastFrameSelectionState, frameState.lastFrameNumber);
             if (renderThisTile) {
                 // Only load this tile if it (not just an ancestor) meets the SSE.
                 if (meetsSse) {
                     addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
                 }
-
-                markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
-                tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
-                result.tilesToRenderThisFrame.push_back(&tile);
-
-                TraversalDetails traversalDetails;
-                traversalDetails.allAreRenderable = tile.isRenderable();
-                traversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-                traversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
-
-                return traversalDetails;
+                return _renderInnerTile(frameState, tile, result);
             }
 
             // Otherwise, we can't render this tile (or blank space where it would be) because doing so would cause detail to disappear
@@ -936,14 +1127,7 @@ namespace Cesium3DTiles {
 
         // Refine!
 
-        bool queuedForLoad = false;
-
-        // If this tile uses additive refinement, we need to render this tile in addition to its children.
-        if (tile.getRefine() == TileRefine::Add) {
-            result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
-            queuedForLoad = true;
-        }
+        bool queuedForLoad = _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distance);
 
         size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
         size_t loadIndexLow = this->_loadQueueLow.size();
@@ -952,22 +1136,11 @@ namespace Cesium3DTiles {
 
         TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(frameState, depth, ancestorMeetsSse, tile, result);
 
-        if (firstRenderedDescendantIndex == result.tilesToRenderThisFrame.size()) {
+        bool descendantTilesAdded = firstRenderedDescendantIndex != result.tilesToRenderThisFrame.size();
+        if (!descendantTilesAdded) {
             // No descendant tiles were added to the render list by the function above, meaning they were all
             // culled even though this tile was deemed visible. That's pretty common.
-            // Nothing else to do except mark this tile refined and return.
-            TraversalDetails noChildrenTraversalDetails;
-
-            if (tile.getRefine() == TileRefine::Add) {
-                noChildrenTraversalDetails.allAreRenderable = tile.isRenderable();
-                noChildrenTraversalDetails.anyWereRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-                noChildrenTraversalDetails.notYetRenderableCount = traversalDetails.allAreRenderable ? 0 : 1;
-            } else {
-                markTileNonRendered(frameState.lastFrameNumber, tile, result);
-            }
-
-            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Refined));
-            return noChildrenTraversalDetails;
+            return _refineToNothing(frameState, tile, result, traversalDetails.allAreRenderable);
         }
 
         // At least one descendant tile was added to the render list.
@@ -975,49 +1148,9 @@ namespace Cesium3DTiles {
         if (!traversalDetails.allAreRenderable && !traversalDetails.anyWereRenderedLastFrame) {
             // Some of our descendants aren't ready to render yet, and none were rendered last frame,
             // so kick them all out of the render list and render this tile instead. Continue to load them though!
-
-            std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
-            
-            // Mark the rendered descendants and their ancestors - up to this tile - as kicked.
-            for (size_t i = firstRenderedDescendantIndex; i < renderList.size(); ++i) {
-                Tile* pWorkTile = renderList[i];
-                while (
-                    pWorkTile != nullptr &&
-                    !pWorkTile->getLastSelectionState().wasKicked(frameState.currentFrameNumber) &&
-                    pWorkTile != &tile
-                ) {
-                    pWorkTile->getLastSelectionState().kick();
-                    pWorkTile = pWorkTile->getParent();
-                }
-            }
-
-            // Remove all descendants from the render list and add this tile.
-            renderList.erase(renderList.begin() + static_cast<std::vector<Tile*>::iterator::difference_type>(firstRenderedDescendantIndex), renderList.end());
-            renderList.push_back(&tile);
-            tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
-
-            // If we're waiting on heaps of descendants, the above will take too long. So in that case,
-            // load this tile INSTEAD of loading any of the descendants, and tell the up-level we're only waiting
-            // on this tile. Keep doing this until we actually manage to render this tile.
-            bool wasRenderedLastFrame = lastFrameSelectionState.getResult(frameState.lastFrameNumber) == TileSelectionState::Result::Rendered;
-            bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
-
-            if (!wasReallyRenderedLastFrame && traversalDetails.notYetRenderableCount > this->_options.loadingDescendantLimit) {
-                // Remove all descendants from the load queues.
-                this->_loadQueueLow.erase(this->_loadQueueLow.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexLow), this->_loadQueueLow.end());
-                this->_loadQueueMedium.erase(this->_loadQueueMedium.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexMedium), this->_loadQueueMedium.end());
-                this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexHigh), this->_loadQueueHigh.end());
-
-                if (!queuedForLoad) {
-                    addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
-                }
-
-                traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
-                queuedForLoad = true;
-            }
-
-            traversalDetails.allAreRenderable = tile.isRenderable();
-            traversalDetails.anyWereRenderedLastFrame = wasRenderedLastFrame;
+            queuedForLoad = _kickDescendantsAndRenderTile(frameState, tile, result, traversalDetails,
+                firstRenderedDescendantIndex, loadIndexLow, loadIndexMedium, loadIndexHigh,
+                queuedForLoad, distance);
         } else {
             if (tile.getRefine() != TileRefine::Add) {
                 markTileNonRendered(frameState.lastFrameNumber, tile, result);
@@ -1044,7 +1177,7 @@ namespace Cesium3DTiles {
         // TODO: actually visit near-to-far, rather than in order of occurrence.
         gsl::span<Tile> children = tile.getChildren();
         for (Tile& child : children) {
-            TraversalDetails childTraversal = this->_visitTileIfVisible(
+            TraversalDetails childTraversal = this->_visitTileIfNeeded(
                 frameState,
                 depth + 1,
                 ancestorMeetsSse,
@@ -1156,6 +1289,13 @@ namespace Cesium3DTiles {
 
         return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
+
+    // TODO From the FrameState that is passed in here, only the Camera is needed.
+    // Maybe the Camera should be passed in instead. The camera is only needed to
+    // compute the priority from the distance. So maybe this function should 
+    // receive a priority directly and be called with 
+    // addTileToLoadQueue(queue, tile, priorityFor(tile, frameState.camera, distance))
+    // (or at least, this function could delegate to such a call...)
 
     /*static*/ void Tileset::addTileToLoadQueue(
         std::vector<Tileset::LoadRecord>& loadQueue,

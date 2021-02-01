@@ -32,7 +32,8 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the tile provider for this overlay.
          * 
-         * @return `nullptr` if {@link createTileProvider} has not yet been called.
+         * @return `nullptr` if {@link createTileProvider} has not yet been called or caused
+         * an error.
          * If {@link createTileProvider} has been called but the overlay is not yet ready to
          * provide tiles, a placeholder tile provider will be returned.
          */
@@ -44,7 +45,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the placeholder tile provider for this overlay.
          * 
-         * @return `nullptr` if {@link createTileProvider} has not yet been called.
+         * @return `nullptr` if {@link createTileProvider} has not yet been called or caused an error
          */
         RasterOverlayTileProvider* getPlaceholder() noexcept { return this->_pPlaceholder.get(); }
 
@@ -63,13 +64,6 @@ namespace Cesium3DTiles {
          * @brief Returns whether this overlay is in the process of being destroyed.
          */
         bool isBeingDestroyed() const noexcept { return this->_pSelf != nullptr; }
-
-        /**
-         * @brief A callback that receives the tile provider when it asynchronously becomes ready.
-         * 
-         * @param pTileProvider The newly-created tile provider.
-         */
-        typedef void CreateTileProviderCallback(std::unique_ptr<RasterOverlayTileProvider>&& pTileProvider);
 
         /**
          * @brief Begins asynchronous creation of the tile provider for this overlay and eventually makes it available directly from this instance.
@@ -100,7 +94,8 @@ namespace Cesium3DTiles {
          * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pOwner The overlay that owns this overlay, or nullptr if this overlay is not aggregated.
-         * @param callback The callback that receives the new tile provider when it is ready.
+         * @return The future that contains the tile provider when it is ready, or the `nullptr` in case
+         * of an error.
          */
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
