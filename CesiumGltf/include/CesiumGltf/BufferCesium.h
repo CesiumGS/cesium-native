@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/Library.h"
 #include <vector>
+#include <cstdint>
 
 namespace CesiumGltf {
     /**
@@ -11,6 +12,6 @@ namespace CesiumGltf {
         /**
          * @brief The buffer's data.
          */
-        std::vector<uint8_t> data;
+        std::vector<std::uint8_t> data;
     };
 }

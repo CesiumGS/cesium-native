@@ -10,6 +10,7 @@ set(SOURCES
     src/AccessorWriter.cpp
     src/AnimationWriter.cpp
     src/AssetWriter.cpp
+    src/BufferWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
