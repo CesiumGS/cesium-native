@@ -2,6 +2,8 @@
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
+#include <BufferViewWriter.h>
+#include <BufferWriter.h>
 #include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
@@ -26,10 +28,14 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeAccessor(model.accessors, writer);
     CesiumGltf::writeAnimation(model.animations, writer);
     CesiumGltf::writeAsset(model.asset, writer);
+    CesiumGltf::writeBuffer(model.buffers, writer);
+    CesiumGltf::writeBufferView(model.bufferViews, writer);
     // writeMesh
     // writePrimitive
     // writeBuffer...
 
+    // TODO: remove this after debugging
     writer.EndObject();
+    std::cout << strBuffer.GetString() << std::endl;
     return result;
 }
