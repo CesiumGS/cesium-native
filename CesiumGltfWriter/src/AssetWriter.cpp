@@ -6,6 +6,7 @@ void CesiumGltf::writeAsset(
     rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
 ) {
     auto& j = jsonWriter;
+    j.Key("asset");
     j.StartObject();
 
     if (asset.copyright) {
@@ -25,6 +26,7 @@ void CesiumGltf::writeAsset(
         j.Key("minVersion");
         j.String(asset.minVersion->c_str());
     }
+    j.EndObject();
 
     // TODO: extensions, extras
 }
