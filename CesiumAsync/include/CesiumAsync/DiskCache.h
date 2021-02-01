@@ -69,6 +69,7 @@ namespace CesiumAsync {
 		virtual bool clearAll(std::string& error) override;
 
 	private:
+        mutable std::mutex _mutex;
 		sqlite3* _pConnection;
 		uint64_t _maxItems;
 	};

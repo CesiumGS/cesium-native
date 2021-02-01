@@ -181,6 +181,8 @@ namespace CesiumAsync {
 			std::function<bool(CacheItem)> predicate, 
 			std::string& error) const 
 	{
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
 		// get entry based on key
 		Sqlite3StmtWrapper getEntryStmtWrapper;
 		int status = sqlite3_prepare_v2(_pConnection, GET_ENTRY_SQL.c_str(), -1, &getEntryStmtWrapper.stmt, nullptr);
@@ -283,6 +285,8 @@ namespace CesiumAsync {
 		const IAssetRequest& request,
 		std::string& error) 
 	{
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
 		const IAssetResponse* response = request.response();
 		if (response == nullptr) {
 			error = std::string("Request needs to have a response");
@@ -406,6 +410,8 @@ namespace CesiumAsync {
 
 	bool DiskCache::prune(std::string& error)
 	{
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
 		// query total size of response's data
 		Sqlite3StmtWrapper totalItemsQueryStmtWrapper;
 		int totalItemsQueryStatus = sqlite3_prepare_v2(this->_pConnection, TOTAL_ITEMS_QUERY_SQL.c_str(), -1, &totalItemsQueryStmtWrapper.stmt, nullptr);
@@ -476,6 +482,8 @@ namespace CesiumAsync {
 
 	bool DiskCache::clearAll(std::string& error)
 	{
+		std::lock_guard<std::mutex> guard(this->_mutex);
+
 		Sqlite3StmtWrapper clearAllStmtWrapper;
 		int status = sqlite3_prepare_v2(this->_pConnection, CLEAR_ALL_SQL.c_str(), -1, &clearAllStmtWrapper.stmt, nullptr);
 		if (status != SQLITE_OK) {

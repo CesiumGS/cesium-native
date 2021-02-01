@@ -139,7 +139,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>(
 				"GET", "test.com", requestHeaders, std::move(response));
 
-			REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), currentTime + interval + i, *request, error));
+			REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), currentTime + interval + static_cast<std::time_t>(i), *request, error));
 		}
 
 		REQUIRE(diskCache.prune(error));
