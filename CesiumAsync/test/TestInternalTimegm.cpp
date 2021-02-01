@@ -4,10 +4,10 @@
 using namespace CesiumAsync;
 
 TEST_CASE("Test custom timegm() method") {
-	SECTION("test current time") {
-		std::time_t currentTime = std::time(0);
-		std::tm* gmt = std::gmtime(&currentTime);
-		REQUIRE(internalTimegm(gmt) == currentTime);
-	}
+    SECTION("test current time") {
+        std::time_t currentTime = std::time(0);
+        std::tm* gmt = std::gmtime(&currentTime);
+        REQUIRE(internalTimegm(gmt) == currentTime);
+    }
 }
 

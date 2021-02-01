@@ -21,7 +21,7 @@ namespace CesiumAsync {
             url, 
             headers, 
             [pEvent](std::shared_ptr<IAssetRequest> pRequest) {
-				pEvent->set(std::move(pRequest));
+                pEvent->set(std::move(pRequest));
             });
 
         Future<std::shared_ptr<IAssetRequest>> result(this->_pSchedulers, pEvent->get_task());
