@@ -14,83 +14,83 @@ namespace CesiumAsync {
     /**
      * @brief Cache storage using SQLITE to store completed response.
      */
-	class CESIUMASYNC_API DiskCache : public ICacheDatabase {
-	public:
+    class CESIUMASYNC_API DiskCache : public ICacheDatabase {
+    public:
         /**
          * @brief Constructs a new instance with a given `databaseName` pointing to a database.
-		 * The instance will connect to the existing database or create a new one if it doesn't exist 
+         * The instance will connect to the existing database or create a new one if it doesn't exist 
          * @param databaseName the database path.
          * @param maxItems the maximum number of items should be kept in the database after prunning.
          */
-		DiskCache(const std::string &databaseName, uint64_t maxItems = 512);
+        DiskCache(const std::string &databaseName, uint64_t maxItems = 512);
 
         /**
          * @brief Destroys this instance. 
          * This will close the database connection
          */
-		~DiskCache() noexcept;
+        ~DiskCache() noexcept;
 
         /**
          * @brief Deleted copy constructor. 
          */
-		DiskCache(const DiskCache&) = delete;
+        DiskCache(const DiskCache&) = delete;
 
         /**
          * @brief Move constructor. 
          */
-		DiskCache(DiskCache&&) noexcept;
+        DiskCache(DiskCache&&) noexcept;
 
         /**
          * @brief Deleted copy assignment. 
          */
-		DiskCache& operator=(const DiskCache&) = delete;
+        DiskCache& operator=(const DiskCache&) = delete;
 
         /**
          * @brief Move assignment. 
          */
-		DiskCache& operator=(DiskCache&&) noexcept;
+        DiskCache& operator=(DiskCache&&) noexcept;
 
         /** @copydoc ICacheDatabase::getEntry(const std::string&, std::function<bool(CacheItem)>, std::string&)*/
-		virtual bool getEntry(const std::string& key, 
-			std::function<bool(CacheItem)> predicate, 
-			std::string& error) const override;
+        virtual bool getEntry(const std::string& key, 
+            std::function<bool(CacheItem)> predicate, 
+            std::string& error) const override;
 
         /** @copydoc ICacheDatabase::storeResponse(const std::string&, std::time_t, const IAssetRequest&, std::string&)*/
-		virtual bool storeResponse(const std::string& key, 
-			std::time_t expiryTime,
-			const IAssetRequest& request,
-			std::string& error) override;
+        virtual bool storeResponse(const std::string& key, 
+            std::time_t expiryTime,
+            const IAssetRequest& request,
+            std::string& error) override;
 
         /** @copydoc ICacheDatabase::prune(std::string&)*/
-		virtual bool prune(std::string& error) override;
+        virtual bool prune(std::string& error) override;
 
         /** @copydoc ICacheDatabase::clearAll(std::string&)*/
-		virtual bool clearAll(std::string& error) override;
+        virtual bool clearAll(std::string& error) override;
 
-	private:
-		struct Sqlite3StmtWrapper {
-			Sqlite3StmtWrapper() 
-				: stmt{nullptr}
-			{}
+    private:
+        struct Sqlite3StmtWrapper {
+            Sqlite3StmtWrapper() 
+                : stmt{nullptr}
+            {}
 
-			~Sqlite3StmtWrapper() {
-				if (stmt) {
-					sqlite3_finalize(stmt);
-				}
-			}
+            ~Sqlite3StmtWrapper() {
+                if (stmt) {
+                    sqlite3_finalize(stmt);
+                }
+            }
 
-			sqlite3_stmt *stmt;
-		};
+            sqlite3_stmt *stmt;
+        };
 
-		sqlite3* _pConnection;
-		uint64_t _maxItems;
-		mutable std::mutex _mutex;
-		Sqlite3StmtWrapper _getEntryStmtWrapper;
-		Sqlite3StmtWrapper _updateLastAccessedTimeStmtWrapper;
-		Sqlite3StmtWrapper _storeResponseStmtWrapper;
-		Sqlite3StmtWrapper _totalItemsQueryStmtWrapper;
-		Sqlite3StmtWrapper _deleteExpiredStmtWrapper;
-		Sqlite3StmtWrapper _deleteLRUStmtWrapper;
-		Sqlite3StmtWrapper _clearAllStmtWrapper;
-	};
+        sqlite3* _pConnection;
+        uint64_t _maxItems;
+        mutable std::mutex _mutex;
+        Sqlite3StmtWrapper _getEntryStmtWrapper;
+        Sqlite3StmtWrapper _updateLastAccessedTimeStmtWrapper;
+        Sqlite3StmtWrapper _storeResponseStmtWrapper;
+        Sqlite3StmtWrapper _totalItemsQueryStmtWrapper;
+        Sqlite3StmtWrapper _deleteExpiredStmtWrapper;
+        Sqlite3StmtWrapper _deleteLRUStmtWrapper;
+        Sqlite3StmtWrapper _clearAllStmtWrapper;
+    };
 }

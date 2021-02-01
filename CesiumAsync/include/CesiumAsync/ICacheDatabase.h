@@ -10,13 +10,13 @@ namespace CesiumAsync {
     /**
      * @brief Provides database storage interface to cache completed request.
      */
-	class CESIUMASYNC_API ICacheDatabase {
-	public:
-		virtual ~ICacheDatabase() noexcept = default;
+    class CESIUMASYNC_API ICacheDatabase {
+    public:
+        virtual ~ICacheDatabase() noexcept = default;
 
         /**
          * @brief Get cache entry from the database. 
-		 * predicate callback will be invoked if there are any existing cache 
+         * predicate callback will be invoked if there are any existing cache 
          * entries in the database. The predicate should return true to stop the database
          * from searching more entries associated with the key.
          * @param key the unique key associated with the cache entries 
@@ -24,9 +24,9 @@ namespace CesiumAsync {
          * @param error the error message when there are problems happening when retrieving cache entry
          * @return A boolean true if there are no errors when calling this function
          */
-		virtual bool getEntry(const std::string& key, 
-			std::function<bool(CacheItem)> predicate, 
-			std::string& error) const = 0;
+        virtual bool getEntry(const std::string& key, 
+            std::function<bool(CacheItem)> predicate, 
+            std::string& error) const = 0;
 
         /**
          * @brief Store response into the database. 
@@ -36,23 +36,23 @@ namespace CesiumAsync {
          * @param error the error message when there are problems happening when storing the response
          * @return A boolean true if there are no errors when calling this function
          */
-		virtual bool storeResponse(const std::string& key, 
-			std::time_t expiryTime,
-			const IAssetRequest& request,
-			std::string& error) = 0;
+        virtual bool storeResponse(const std::string& key, 
+            std::time_t expiryTime,
+            const IAssetRequest& request,
+            std::string& error) = 0;
 
         /**
          * @brief Remove cache entries from the database to satisfy the database invariant condition (.e.g exired response or LRU). 
          * @param error the error message when there are problems happening when deleting entries
          * @return A boolean true if there are no errors when calling this function
          */
-		virtual bool prune(std::string& error) = 0;
+        virtual bool prune(std::string& error) = 0;
 
         /**
          * @brief Remove all cache entries from the database. 
          * @param error the error message when there are problems happening when deleting entries
          * @return A boolean true if there are no errors when calling this function
          */
-		virtual bool clearAll(std::string& error) = 0;
-	};
+        virtual bool clearAll(std::string& error) = 0;
+    };
 }

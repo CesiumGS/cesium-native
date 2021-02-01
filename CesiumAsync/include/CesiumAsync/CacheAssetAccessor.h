@@ -11,30 +11,30 @@
 namespace CesiumAsync {
     class AsyncSystem;
 
-	class CacheAssetAccessor : public IAssetAccessor {
-	public:
+    class CacheAssetAccessor : public IAssetAccessor {
+    public:
         CacheAssetAccessor(
-			std::shared_ptr<spdlog::logger> logger,
+            std::shared_ptr<spdlog::logger> logger,
             std::unique_ptr<IAssetAccessor> assetAccessor,
             std::unique_ptr<ICacheDatabase> cacheDatabase,
-			uint32_t maxRequestsForCacheClean = 10000);
+            uint32_t maxRequestsForCacheClean = 10000);
 
         ~CacheAssetAccessor() noexcept override;
 
         void requestAsset(const AsyncSystem* pAsyncSystem, 
-			const std::string& url, 
-			const std::vector<THeader>& headers,
-			std::function<void(std::shared_ptr<IAssetRequest>)> callback) override;
+            const std::string& url, 
+            const std::vector<THeader>& headers,
+            std::function<void(std::shared_ptr<IAssetRequest>)> callback) override;
 
         void tick() noexcept override;
 
     private:
-		std::mutex _requestCountMutex;
-		uint32_t _maxRequestsForCacheClean;
-		uint32_t _requestCount;
-		std::shared_ptr<spdlog::logger> _pLogger;
-		std::unique_ptr<IAssetAccessor> _pAssetAccessor;
-		std::unique_ptr<ICacheDatabase> _pCacheDatabase;
-	};
+        std::mutex _requestCountMutex;
+        uint32_t _maxRequestsForCacheClean;
+        uint32_t _requestCount;
+        std::shared_ptr<spdlog::logger> _pLogger;
+        std::unique_ptr<IAssetAccessor> _pAssetAccessor;
+        std::unique_ptr<ICacheDatabase> _pCacheDatabase;
+    };
 }
 
