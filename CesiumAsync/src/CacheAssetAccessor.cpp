@@ -227,23 +227,8 @@ namespace CesiumAsync {
 	}
 
 	bool isCacheStale(const CacheItem& cacheItem) {
-		const CacheResponse& cacheResponse = cacheItem.cacheResponse;
-		const std::optional<ResponseCacheControl> &cacheControl = cacheResponse.cacheControl;
 		std::time_t currentTime = std::time(0);
-		if (cacheControl) {
-			return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
-		}
-
-		const HttpHeaders& responseHeaders = cacheResponse.headers;
-		HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
-		if (expiresHeader != responseHeaders.end()) {
-			return std::difftime(convertHttpDateToTime(expiresHeader->second), currentTime) < 0.0;
-		}
-
-		// Without "Cache-Control" or "Expires" headers, we don't know if the cache is stale or not, so make it stale.
-		// This code shouldn't execute given the condition to store a completed request being that the request should have "Cache-Control"
-		// header or "Expires" header at the very begining
-		return true;
+		return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
 	}
 
 	bool shouldCacheRequest(const IAssetRequest& request) {
