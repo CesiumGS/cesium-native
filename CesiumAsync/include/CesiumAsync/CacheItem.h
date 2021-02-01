@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/Library.h"
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/ResponseCacheControl.h"
 #include "gsl/span"
@@ -12,7 +13,7 @@ namespace CesiumAsync {
     /**
      * @brief Cache response retrieved from the cache database.
      */
-	class CacheResponse {
+	class CESIUMASYNC_API CacheResponse {
 	public:
         /**
          * @brief Constructor. 
@@ -63,7 +64,7 @@ namespace CesiumAsync {
     /**
      * @brief Cache request retrieved from the cache database.
      */
-	class CacheRequest {
+	class CESIUMASYNC_API CacheRequest {
 	public:
         /**
          * @brief Constructor. 
@@ -99,7 +100,7 @@ namespace CesiumAsync {
      * @brief Cache item retrieved from the cache database.
 	 * Cache item consists of {@link CacheRequest} and {@link CacheResponse} and other metadata.
      */
-	class CacheItem {
+	class CESIUMASYNC_API CacheItem {
 	public:
         /**
          * @brief Constructor. 

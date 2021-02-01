@@ -13,6 +13,9 @@ target_sources(
         ${PUBLIC_INCLUDES}
 )
 
+set(sqlite3_dir "${CMAKE_CURRENT_SOURCE_DIR}/../extern/sqlite3")
+message("${sqlite3_dir}")
+
 target_include_directories(
     CesiumAsync
     SYSTEM PUBLIC

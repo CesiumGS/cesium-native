@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/ICacheDatabase.h"
 #include <sqlite3.h>
@@ -12,7 +14,7 @@ namespace CesiumAsync {
     /**
      * @brief Cache storage using SQLITE to store completed response.
      */
-	class DiskCache : public ICacheDatabase {
+	class CESIUMASYNC_API DiskCache : public ICacheDatabase {
 	public:
         /**
          * @brief Constructs a new instance with a given `databaseName` pointing to a database.

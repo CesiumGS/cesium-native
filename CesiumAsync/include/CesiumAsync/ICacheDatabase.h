@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/Library.h"
 #include "CesiumAsync/CacheItem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include <optional>
@@ -9,7 +10,7 @@ namespace CesiumAsync {
     /**
      * @brief Provides database storage interface to cache completed request.
      */
-	class ICacheDatabase {
+	class CESIUMASYNC_API ICacheDatabase {
 	public:
 		virtual ~ICacheDatabase() noexcept = default;
 

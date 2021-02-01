@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/Library.h"
 #include "CesiumAsync/HttpHeaders.h"
 #include <string>
 #include <optional>
@@ -9,7 +10,7 @@ namespace CesiumAsync {
     /**
      * @brief Response cache control directives parsed from the response header.
      */
-	class ResponseCacheControl {
+	class CESIUMASYNC_API ResponseCacheControl {
 	public:
 		/**
 		 * @brief Constructor.
