@@ -20,3 +20,5 @@ add_subdirectory(asyncplusplus)
 add_subdirectory(spdlog)
 
 add_subdirectory(modp_b64)
+
+set(MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/magic_enum/" CACHE INTERNAL "")
