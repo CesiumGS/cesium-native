@@ -8,6 +8,7 @@ file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
 set(SOURCES 
     src/AccessorSparseWriter.cpp
     src/AccessorWriter.cpp
+    src/AnimationWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
@@ -28,6 +29,7 @@ target_include_directories(
     PUBLIC
         include
     PRIVATE
+        ${MAGIC_ENUM_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
         src
         generated

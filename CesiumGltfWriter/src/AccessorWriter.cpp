@@ -6,14 +6,14 @@
 void CesiumGltf::writeAccessor(
     const std::vector<Accessor>& accessors,
     rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+
+    if (accessors.empty()) {
+        return;
+    }
+
     auto& j = jsonWriter;
 
     j.Key("accessors");
-
-    if (accessors.empty()) {
-        throw std::runtime_error("Must have at least one glTF accessor");
-    }
-
     j.StartArray();
     for (const auto& accessor : accessors) {
         j.StartObject();

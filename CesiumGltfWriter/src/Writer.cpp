@@ -1,5 +1,6 @@
 #include "CesiumGltf/Writer.h"
 #include "AccessorWriter.h"
+#include "AnimationWriter.h"
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -23,6 +24,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
   Writer<StringBuffer> writer(strBuffer);
   writer.StartObject();
   CesiumGltf::writeAccessor(model.accessors, writer);
+  CesiumGltf::writeAnimation(model.animations, writer);
   // writeMesh
   // writePrimitive
   // writeBuffer...
