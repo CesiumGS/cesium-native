@@ -11,6 +11,7 @@ set(SOURCES
     src/AnimationWriter.cpp
     src/AssetWriter.cpp
     src/BufferWriter.cpp
+    src/BufferViewWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
