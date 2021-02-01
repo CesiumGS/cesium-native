@@ -44,6 +44,19 @@ namespace CesiumGltf {
             MAT4
         };
 
+        static std::string typeToString(const Type& t) {
+            switch (t) {
+                case Type::SCALAR: return "SCALAR"; 
+                case Type::VEC2: return "VEC2"; 
+                case Type::VEC3: return "VEC3"; 
+                case Type::VEC4: return "VEC4"; 
+                case Type::MAT2: return "MAT2"; 
+                case Type::MAT3: return "MAT3"; 
+                case Type::MAT4: return "MAT4"; 
+            }
+            return "INVALID";
+        }
+
         /**
          * @brief The index of the bufferView.
          *
