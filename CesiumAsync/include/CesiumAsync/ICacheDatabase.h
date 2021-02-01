@@ -41,14 +41,6 @@ namespace CesiumAsync {
 			std::string& error) = 0;
 
         /**
-         * @brief Remove cache entry from the database. 
-         * @param key the unique key associated with the entries that will be removed
-         * @param error the error message when there are problems happening when deleting entries
-         * @return A boolean true if there are no errors when calling this function
-         */
-		virtual bool removeEntry(const std::string& key, std::string& error) = 0;
-
-        /**
          * @brief Remove cache entries from the database to satisfy the database invariant condition (.e.g exired response or LRU). 
          * @param error the error message when there are problems happening when deleting entries
          * @return A boolean true if there are no errors when calling this function

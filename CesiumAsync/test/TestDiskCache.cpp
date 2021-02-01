@@ -34,7 +34,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 		std::optional<CacheItem> cacheItem;
 		getFirstCacheItem(diskCache, "TestKey", cacheItem);
 		REQUIRE(cacheItem->expiryTime == currentTime);
-		REQUIRE(cacheItem->lastAccessedTime == currentTime);
 
 		const CacheRequest& cacheRequest = cacheItem->cacheRequest;
 		REQUIRE(cacheRequest.headers == HttpHeaders{ {"Request-Header", "Request-Value"} });
@@ -55,73 +54,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 		REQUIRE(cacheResponse.cacheControl->proxyRevalidate() == false);
 		REQUIRE(cacheResponse.cacheControl->maxAge() == 0);
 		REQUIRE(cacheResponse.cacheControl->sharedMaxAge() == 0);
-	}
-
-	SECTION("Test remove cache") {
-		std::time_t currentTime = std::time(0);
-
-		// store the first item
-		{
-			HttpHeaders responseHeaders{ { "Response-Header-1", "Response-Value-1" } };
-			ResponseCacheControl responseCacheControl(true, false, true, false, true, false, true, 200, 10);
-			std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
-			std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
-				static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
-
-			HttpHeaders requestHeaders{ { "Request-Header-1", "Request-Value-1" } };
-			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
-				"test.com", requestHeaders, std::move(response));
-
-			REQUIRE(diskCache.storeResponse("TestKey-1", currentTime + 100, *request, error));
-		}
-
-		// store the second item
-		{
-			HttpHeaders responseHeaders{ { "Response-Header-2", "Response-Value-2" } };
-			ResponseCacheControl responseCacheControl(true, false, false, false, false, true, false, 200, 10);
-			std::vector<uint8_t> responseData = {0, 1, 2, 3, 4, 7, 10};
-			std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
-				static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
-
-			HttpHeaders requestHeaders{ { "Request-Header", "Request-Value" } };
-			std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
-				"test.com", requestHeaders, std::move(response));
-
-			REQUIRE(diskCache.storeResponse("TestKey-2", currentTime, *request, error));
-		}
-
-		// remove second item
-		REQUIRE(diskCache.removeEntry("TestKey-2", error));
-
-		std::optional<CacheItem> testKey2;
-		getFirstCacheItem(diskCache, "TestKey-2", testKey2);
-		REQUIRE(testKey2 == std::nullopt);
-
-		// make sure the first item is still in there
-		std::optional<CacheItem> testKey1;
-		getFirstCacheItem(diskCache, "TestKey-1", testKey1);
-		REQUIRE(testKey1->expiryTime == currentTime + 100);
-		REQUIRE(testKey1->lastAccessedTime == currentTime);
-
-		const CacheRequest& cacheRequest = testKey1->cacheRequest;
-		REQUIRE(cacheRequest.headers == HttpHeaders{ {"Request-Header-1", "Request-Value-1"} });
-		REQUIRE(cacheRequest.method == "GET");
-		REQUIRE(cacheRequest.url == "test.com");
-
-		const CacheResponse& cacheResponse = testKey1->cacheResponse;
-		REQUIRE(cacheResponse.contentType == "text/html");
-		REQUIRE(cacheResponse.statusCode == 200);
-		REQUIRE(cacheResponse.headers == HttpHeaders{ {"Response-Header-1", "Response-Value-1"} });
-		REQUIRE(cacheResponse.data == std::vector<uint8_t>{ 0, 1, 2, 3, 4 });
-		REQUIRE(cacheResponse.cacheControl->mustRevalidate() == true);
-		REQUIRE(cacheResponse.cacheControl->noCache() == false);
-		REQUIRE(cacheResponse.cacheControl->noStore() == true);
-		REQUIRE(cacheResponse.cacheControl->noTransform() == false);
-		REQUIRE(cacheResponse.cacheControl->accessControlPublic() == true);
-		REQUIRE(cacheResponse.cacheControl->accessControlPrivate() == false);
-		REQUIRE(cacheResponse.cacheControl->proxyRevalidate() == true);
-		REQUIRE(cacheResponse.cacheControl->maxAge() == 200);
-		REQUIRE(cacheResponse.cacheControl->sharedMaxAge() == 10);
 	}
 
 	SECTION("Test prune") {
@@ -156,7 +88,6 @@ TEST_CASE("Test disk cache with Sqlite") {
 
 			// make sure the item is still in there
 			REQUIRE(cacheItem->expiryTime == currentTime + interval + i);
-			REQUIRE(cacheItem->lastAccessedTime == currentTime);
 
 			const CacheRequest& cacheRequest = cacheItem->cacheRequest;
 			REQUIRE(cacheRequest.headers == HttpHeaders{ {"Request-Header-" + std::to_string(i), "Request-Value-" + std::to_string(i)} });

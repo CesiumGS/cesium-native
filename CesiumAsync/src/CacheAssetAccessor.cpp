@@ -82,8 +82,6 @@ namespace CesiumAsync {
 
 	static bool shouldCacheRequest(const IAssetRequest& request);
 
-	static bool shouldDeleteCache(const IAssetRequest& request);
-
 	static std::time_t calculateExpiryTime(const IAssetRequest& request);
 
 	static std::unique_ptr<IAssetRequest> updateCacheItem(CacheItem& cacheItem, const IAssetRequest& request);
@@ -182,14 +180,6 @@ namespace CesiumAsync {
 									error))
 								{
 									SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
-								}
-							});
-						}
-						else if (shouldDeleteCache(*pRequestToStore)) {
-							pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pRequestToStore]() {
-								std::string error;
-								if (!pCacheDatabase->removeEntry(pRequestToStore->url(), error)) {
-									SPDLOG_LOGGER_WARN(pLogger, "Cannot remove response from the cache database: {}", error);
 								}
 							});
 						}
@@ -310,15 +300,6 @@ namespace CesiumAsync {
 		}
 
 		return true;
-	}
-
-	bool shouldDeleteCache(const IAssetRequest& request) {
-		const IAssetResponse* response = request.response();
-		if (!response || !response->cacheControl()) {
-			return false;
-		}
-
-		return response->cacheControl()->noStore();
 	}
 
 	std::time_t calculateExpiryTime(const IAssetRequest& request) {

@@ -384,30 +384,6 @@ namespace CesiumAsync {
 		return true;
 	}
 
-	bool DiskCache::removeEntry(const std::string& key, std::string& error) 
-	{
-		Sqlite3StmtWrapper removeStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, DELETE_ENTRY_SQL.c_str(), -1, &removeStmtWrapper.stmt, nullptr);
-		if (status != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(status));
-			return false;
-		}
-
-		status = sqlite3_bind_text(removeStmtWrapper.stmt, 1, key.c_str(), -1, SQLITE_STATIC);
-		if (status != SQLITE_OK) {
-			error = std::string(sqlite3_errstr(status));
-			return false;
-		}
-
-		status = sqlite3_step(removeStmtWrapper.stmt);
-		if (status != SQLITE_DONE) {
-			error = std::string(sqlite3_errstr(status));
-			return false;
-		}
-
-		return true;
-	}
-
 	bool DiskCache::prune(std::string& error)
 	{
 		std::lock_guard<std::mutex> guard(this->_mutex);

@@ -59,9 +59,6 @@ namespace CesiumAsync {
 			const IAssetRequest& request,
 			std::string& error) override;
 
-        /** @copydoc ICacheDatabase::removeEntry(const std::string&, std::string&)*/
-		virtual bool removeEntry(const std::string& key, std::string& error) override;
-
         /** @copydoc ICacheDatabase::prune(std::string&)*/
 		virtual bool prune(std::string& error) override;
 

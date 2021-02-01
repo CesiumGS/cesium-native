@@ -21,7 +21,6 @@ public:
 	MockStoreCacheDatabase() 
 		: getEntryCall{false}
 		, storeResponseCall{false}
-		, removeEntryCall{false}
 		, pruneCall{false}
 		, clearAllCall{false}
 	{}
@@ -48,12 +47,6 @@ public:
 		return true;
 	}
 
-	virtual bool removeEntry(const std::string& /*key*/, std::string& /*error*/) override
-	{
-		this->removeEntryCall = true;
-		return true;
-	}
-
 	virtual bool prune(std::string& /*error*/) override
 	{
 		this->pruneCall = true;
@@ -68,7 +61,6 @@ public:
 
 	mutable bool getEntryCall;
 	bool storeResponseCall;
-	bool removeEntryCall;
 	bool pruneCall;
 	bool clearAllCall;
 
