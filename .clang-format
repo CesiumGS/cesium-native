@@ -6,3 +6,7 @@ PointerAlignment: Left
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowAllArgumentsOnNextLine: false
+FixNamespaceComments: false
+IndentWidth: 4
+NamespaceIndentation: All
+AccessModifierOffset: -4
