@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cesium3DTiles/Camera.h"
+#include "Cesium3DTiles/ViewState.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/Tile.h"
@@ -261,11 +261,11 @@ namespace Cesium3DTiles {
 
         /**
          * @brief Updates this view, returning the set of tiles to render in this view.
-         * @param camera The updated camera.
-         * @returns The set of tiles to render in the updated camera view. This value is only valid until
+         * @param viewState The {@link ViewState} that the view should be updated for
+         * @returns The set of tiles to render in the updated view. This value is only valid until
          *          the next call to `updateView` or until the tileset is destroyed, whichever comes first.
          */
-        const ViewUpdateResult& updateView(const Camera& camera);
+        const ViewUpdateResult& updateView(const ViewState& viewState);
 
         /**
          * @brief Notifies the tileset that the given tile has started loading.
@@ -329,6 +329,15 @@ namespace Cesium3DTiles {
         int64_t getTotalDataBytes() const noexcept;
 
     private:
+
+        /**
+         * @brief The result of traversing one branch of the tile hierarchy.
+         * 
+         * Instances of this structure are created by the `_visit...` functions,
+         * and summarize the information that was gathered during the traversal
+         * of the respective branch, so that this information can be used by
+         * the parent to decide on the further traversal process.
+         */
         struct TraversalDetails {
             /**
              * @brief Whether all selected tiles in this tile's subtree are renderable.
@@ -424,8 +433,15 @@ namespace Cesium3DTiles {
          */
         void _handleTokenRefreshResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
+        /**
+         * @brief Input information that is constant throughout the traversal.
+         * 
+         * An instance of this structure is created upon entry of the top-level
+         * `_visitTile` function, for the traversal for a certain frame, and 
+         * passed on through the traversal. 
+         */
         struct FrameState {
-            const Camera& camera;
+            const ViewState& viewState;
             int32_t lastFrameNumber;
             int32_t currentFrameNumber;
             double fogDensity;
@@ -477,7 +493,7 @@ namespace Cesium3DTiles {
          * @return false All of the required children (if there are any) are loaded, so this tile _can_ be refined.
          */
         bool _queueLoadOfChildrenRequiredForRefinement(const FrameState& frameState, Tile& tile, double distance);
-        bool _meetsSse(const Camera& camera, const Tile& tile, double distance, bool culled) const;
+        bool _meetsSse(const ViewState& viewState, const Tile& tile, double distance, bool culled) const;
 
         void _processLoadQueue();
         void _unloadCachedTiles();
@@ -529,7 +545,7 @@ namespace Cesium3DTiles {
 
         int64_t _tileDataBytes;
 
-        static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const FrameState& frameState, Tile& tile, double distance);
+        static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const ViewState& viewState, Tile& tile, double distance);
         static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);
 
         Tileset(const Tileset& rhs) = delete;
