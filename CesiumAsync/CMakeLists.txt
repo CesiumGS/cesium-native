@@ -13,13 +13,10 @@ target_sources(
         ${PUBLIC_INCLUDES}
 )
 
-set(sqlite3_dir "${CMAKE_CURRENT_SOURCE_DIR}/../extern/sqlite3")
-message("${sqlite3_dir}")
-
 target_include_directories(
     CesiumAsync
     SYSTEM PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/sqlite3
+        ${CMAKE_CURRENT_LIST_DIR}/../extern/sqlite3
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/GSL/include
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
 
