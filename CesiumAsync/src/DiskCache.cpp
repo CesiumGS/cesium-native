@@ -147,6 +147,19 @@ namespace CesiumAsync {
 		if (status != SQLITE_OK) {
 			throw std::runtime_error(std::string(sqlite3_errstr(status)));
 		}
+
+		// update last accessed for entry
+		status = sqlite3_prepare_v2(
+			this->_pConnection, UPDATE_LAST_ACCESSED_TIME_SQL.c_str(), -1, &this->_updateLastAccessedTimeStmtWrapper.stmt, nullptr);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
+
+		// store response 
+		status = sqlite3_prepare_v2(this->_pConnection, STORE_RESPONSE_SQL.c_str(), -1, &this->_storeResponseStmtWrapper.stmt, nullptr);
+		if (status != SQLITE_OK) {
+			throw std::runtime_error(std::string(sqlite3_errstr(status)));
+		}
 	}
 
 	DiskCache::DiskCache(DiskCache&& other) noexcept {
@@ -180,13 +193,13 @@ namespace CesiumAsync {
 			std::string& error) const 
 	{
 		// get entry based on key
-		int status = sqlite3_clear_bindings(this->_getEntryStmtWrapper.stmt);
+		int status = sqlite3_reset(this->_getEntryStmtWrapper.stmt);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_reset(this->_getEntryStmtWrapper.stmt);
+		status = sqlite3_clear_bindings(this->_getEntryStmtWrapper.stmt);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
@@ -249,21 +262,25 @@ namespace CesiumAsync {
 
 			if (predicate(std::move(item))) {
 				// update the last accessed time
-				Sqlite3StmtWrapper updateLastAccessedTimeStmtWrapper;
-				int updateStatus = sqlite3_prepare_v2(
-					this->_pConnection, UPDATE_LAST_ACCESSED_TIME_SQL.c_str(), -1, &updateLastAccessedTimeStmtWrapper.stmt, nullptr);
+				int updateStatus = sqlite3_reset(this->_updateLastAccessedTimeStmtWrapper.stmt);
+				if (updateStatus != SQLITE_OK) {
+					error = std::string(sqlite3_errstr(updateStatus));
+					return false;
+				}
+
+				updateStatus = sqlite3_clear_bindings(this->_updateLastAccessedTimeStmtWrapper.stmt);
+				if (updateStatus != SQLITE_OK) {
+					error = std::string(sqlite3_errstr(updateStatus));
+					return false;
+				}
+
+				updateStatus = sqlite3_bind_int64(this->_updateLastAccessedTimeStmtWrapper.stmt, 1, itemIndex);
 				if (updateStatus != SQLITE_OK) {
 					error = std::string(sqlite3_errstr(status));
 					return false;
 				}
 
-				updateStatus = sqlite3_bind_int64(updateLastAccessedTimeStmtWrapper.stmt, 1, itemIndex);
-				if (updateStatus != SQLITE_OK) {
-					error = std::string(sqlite3_errstr(status));
-					return false;
-				}
-
-				updateStatus = sqlite3_step(updateLastAccessedTimeStmtWrapper.stmt);
+				updateStatus = sqlite3_step(this->_updateLastAccessedTimeStmtWrapper.stmt);
 				if (updateStatus != SQLITE_DONE) {
 					error = std::string(sqlite3_errstr(status));
 					return false;
@@ -295,86 +312,91 @@ namespace CesiumAsync {
 		gsl::span<const uint8_t> responseData = response->data();
 
 		// cache the request with the key
-		Sqlite3StmtWrapper storeResponseStmtWrapper;
-		int status = sqlite3_prepare_v2(this->_pConnection, STORE_RESPONSE_SQL.c_str(), -1, &storeResponseStmtWrapper.stmt, nullptr);
+		int status = sqlite3_reset(this->_storeResponseStmtWrapper.stmt);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_bind_int64(storeResponseStmtWrapper.stmt, 1, static_cast<int64_t>(expiryTime));
+		status = sqlite3_clear_bindings(this->_storeResponseStmtWrapper.stmt);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_bind_int64(storeResponseStmtWrapper.stmt, 2, static_cast<int64_t>(std::time(0)));
+		status = sqlite3_bind_int64(this->_storeResponseStmtWrapper.stmt, 1, static_cast<int64_t>(expiryTime));
+		if (status != SQLITE_OK) {
+			error = std::string(sqlite3_errstr(status));
+			return false;
+		}
+
+		status = sqlite3_bind_int64(this->_storeResponseStmtWrapper.stmt, 2, static_cast<int64_t>(std::time(0)));
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
 		std::string responseHeader = convertHeadersToString(response->headers());
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 3, responseHeader.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 3, responseHeader.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 		
 		const std::string& responseContentType = response->contentType();
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 4, responseContentType.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 4, responseContentType.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_bind_int(storeResponseStmtWrapper.stmt, 5, static_cast<int>(response->statusCode()));
+		status = sqlite3_bind_int(this->_storeResponseStmtWrapper.stmt, 5, static_cast<int>(response->statusCode()));
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
 		std::string responseCacheControl = convertCacheControlToString(response->cacheControl());
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 6, responseCacheControl.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 6, responseCacheControl.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_bind_blob(storeResponseStmtWrapper.stmt, 7, responseData.data(), static_cast<int>(responseData.size()), SQLITE_STATIC);
+		status = sqlite3_bind_blob(this->_storeResponseStmtWrapper.stmt, 7, responseData.data(), static_cast<int>(responseData.size()), SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
 		std::string requestHeader = convertHeadersToString(request.headers());
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 8, requestHeader.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 8, requestHeader.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
 		const std::string& requestMethod = request.method();
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 9, requestMethod.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 9, requestMethod.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
 		const std::string& requestUrl = request.url();
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 10, requestUrl.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 10, requestUrl.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_bind_text(storeResponseStmtWrapper.stmt, 11, key.c_str(), -1, SQLITE_STATIC);
+		status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 11, key.c_str(), -1, SQLITE_STATIC);
 		if (status != SQLITE_OK) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
 		}
 
-		status = sqlite3_step(storeResponseStmtWrapper.stmt);
+		status = sqlite3_step(this->_storeResponseStmtWrapper.stmt);
 		if (status != SQLITE_DONE) {
 			error = std::string(sqlite3_errstr(status));
 			return false;
