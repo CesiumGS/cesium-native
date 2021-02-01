@@ -76,9 +76,6 @@ namespace CesiumAsync {
 		CACHE_TABLE_KEY_COLUMN +
 		") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-	// Sql commands for deleting entry
-	static const std::string DELETE_ENTRY_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_KEY_COLUMN + "=?";
-
 	// Sql commands for prunning the database
 	static const std::string TOTAL_ITEMS_QUERY_SQL = "SELECT COUNT(*) " + CACHE_TABLE_VIRTUAL_TOTAL_ITEMS_COLUMN + " FROM " + CACHE_TABLE;
 
