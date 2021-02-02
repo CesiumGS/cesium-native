@@ -134,8 +134,13 @@ TEST_CASE("Test upsample tile without skirts") {
         center.x, center.z, -center.y, 1.0
     };
 
+    CesiumGeometry::UpsampledQuadtreeNode lowerLeft { CesiumGeometry::QuadtreeTileID(1, 0, 0) };
+    CesiumGeometry::UpsampledQuadtreeNode upperLeft { CesiumGeometry::QuadtreeTileID(1, 0, 1) };
+    CesiumGeometry::UpsampledQuadtreeNode lowerRight { CesiumGeometry::QuadtreeTileID(1, 1, 0) };
+    CesiumGeometry::UpsampledQuadtreeNode upperRight { CesiumGeometry::QuadtreeTileID(1, 1, 1) };
+
     SECTION("Upsample bottom left child") {
-        Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerLeft);
+        Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerLeft);
 
         REQUIRE(upsampledModel.meshes.size() == 1);
         const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -171,7 +176,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Upsample upper left child") {
-        Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperLeft);
+        Model upsampledModel = upsampleGltfForRasterOverlays(model, upperLeft);
 
         REQUIRE(upsampledModel.meshes.size() == 1);
         const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -207,7 +212,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Upsample upper right child") {
-        Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperRight);
+        Model upsampledModel = upsampleGltfForRasterOverlays(model, upperRight);
 
         REQUIRE(upsampledModel.meshes.size() == 1);
         const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -243,7 +248,7 @@ TEST_CASE("Test upsample tile without skirts") {
     }
 
     SECTION("Upsample bottom right child") {
-        Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerRight);
+        Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerRight);
 
         REQUIRE(upsampledModel.meshes.size() == 1);
         const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -293,7 +298,7 @@ TEST_CASE("Test upsample tile without skirts") {
         primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
         SECTION("Check bottom left skirt") {
-            Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerLeft);
+            Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerLeft);
 
             REQUIRE(upsampledModel.meshes.size() == 1);
             const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -328,7 +333,7 @@ TEST_CASE("Test upsample tile without skirts") {
         }
 
         SECTION("Check upper left skirt") {
-            Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperLeft);
+            Model upsampledModel = upsampleGltfForRasterOverlays(model, upperLeft);
 
             REQUIRE(upsampledModel.meshes.size() == 1);
             const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -367,7 +372,7 @@ TEST_CASE("Test upsample tile without skirts") {
         }
 
         SECTION("Check upper right skirt") {
-            Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::UpperRight);
+            Model upsampledModel = upsampleGltfForRasterOverlays(model, upperRight);
 
             REQUIRE(upsampledModel.meshes.size() == 1);
             const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -402,7 +407,7 @@ TEST_CASE("Test upsample tile without skirts") {
         }
 
         SECTION("Check bottom right skirt") {
-            Model upsampledModel = upsampleGltfForRasterOverlays(model, CesiumGeometry::QuadtreeChild::LowerRight);
+            Model upsampledModel = upsampleGltfForRasterOverlays(model, lowerRight);
 
             REQUIRE(upsampledModel.meshes.size() == 1);
             const Mesh& upsampledMesh = upsampledModel.meshes.back();

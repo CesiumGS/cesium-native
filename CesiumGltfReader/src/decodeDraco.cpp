@@ -96,6 +96,20 @@ namespace {
             pIndicesAccessor->count = pMesh->num_faces() * 3;
         }
 
+        draco::PointIndex::ValueType numPoint = pMesh->num_points();
+        Accessor::ComponentType supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
+        if (numPoint <  static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint8_t>::max())) {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
+        } else if (numPoint < static_cast<draco::PointIndex::ValueType>(std::numeric_limits<uint16_t>::max())) {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_SHORT;
+        } else {
+		    supposedComponentType = Accessor::ComponentType::UNSIGNED_INT;
+        } 
+
+        if (static_cast<uint32_t>(supposedComponentType) > static_cast<uint32_t>(pIndicesAccessor->componentType)) {
+			pIndicesAccessor->componentType = supposedComponentType;
+        }
+
         pIndicesAccessor->bufferView = static_cast<int32_t>(model.bufferViews.size());
         BufferView& indicesBufferView = model.bufferViews.emplace_back();
 

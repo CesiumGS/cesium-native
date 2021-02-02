@@ -948,6 +948,10 @@ namespace Cesium3DTiles {
 
         pResult->updatedBoundingVolume = BoundingRegion(rectangle, minimumHeight, maximumHeight);
 
+		if (pResult->model) {
+			pResult->model.value().extras["Cesium3DTiles_TileUrl"] = url;
+		}
+
         return pResult;
     }
 

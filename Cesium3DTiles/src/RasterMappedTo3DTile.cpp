@@ -19,19 +19,24 @@ namespace Cesium3DTiles {
         _textureCoordinateRectangle(textureCoordinateRectangle),
         _translation(0.0, 0.0),
         _scale(1.0, 1.0),
-        _state(AttachmentState::Unattached)
+        _state(AttachmentState::Unattached),
+        _originalFailed(false)
     {
     }
 
     RasterMappedTo3DTile::MoreDetailAvailable RasterMappedTo3DTile::update(Tile& tile) {
         if (this->getState() == AttachmentState::Attached) {
-            return this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getOverlay().getTileProvider()->getMaximumLevel()
+            return !this->_originalFailed && this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getOverlay().getTileProvider()->getMaximumLevel()
                 ? MoreDetailAvailable::Yes
                 : MoreDetailAvailable::No;
         }
 
         // If the loading tile has failed, try its parent.
         while (this->_pLoadingTile && this->_pLoadingTile->getState() == RasterOverlayTile::LoadState::Failed && this->_pLoadingTile->getID().level > 0) {
+            // Note when our original tile fails to load so that we don't report more data available.
+            // This means - by design - we won't refine past a failed tile.
+            this->_originalFailed = true;
+
             CesiumGeometry::QuadtreeTileID thisID = this->_pLoadingTile->getID();
             CesiumGeometry::QuadtreeTileID parentID(thisID.level - 1, thisID.x >> 1, thisID.y >> 1);
             this->_pLoadingTile = this->_pLoadingTile->getOverlay().getTileProvider()->getTile(parentID);
@@ -52,7 +57,7 @@ namespace Cesium3DTiles {
                 this->_state = AttachmentState::Unattached;
             }
 
-            // Mark the loading tile read.
+            // Mark the loading tile ready.
             this->_pReadyTile = this->_pLoadingTile;
             this->_pLoadingTile = nullptr;
 
@@ -119,7 +124,7 @@ namespace Cesium3DTiles {
         if (this->_pLoadingTile) {
             return MoreDetailAvailable::Unknown;
         } else {
-            return this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getOverlay().getTileProvider()->getMaximumLevel()
+            return !this->_originalFailed && this->_pReadyTile && this->_pReadyTile->getID().level < this->_pReadyTile->getOverlay().getTileProvider()->getMaximumLevel()
                 ? MoreDetailAvailable::Yes
                 : MoreDetailAvailable::No;
         }
