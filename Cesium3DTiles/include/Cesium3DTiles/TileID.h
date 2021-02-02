@@ -25,16 +25,15 @@ namespace Cesium3DTiles {
      * * A {@link CesiumGeometry::OctreeTileID}: This is an implicit
      *   tile in the octree. The URL of the tile's content is formed
      *   by instantiating the context's template URL with this ID.
-     * * A {@link CesiumGeometry::QuadtreeChild}: This tile doesn't 
+     * * A {@link CesiumGeometry::UpsampledQuadtreeNode}: This tile doesn't 
      *   have any content, but content for it can be created by subdividing 
-     *   the parent tile's content into four equal tiles and taking the 
-     *   quadrant identified.
+     *   the parent tile's content.
      */
     typedef std::variant<
         std::string,
         CesiumGeometry::QuadtreeTileID,
         CesiumGeometry::OctreeTileID,
-        CesiumGeometry::QuadtreeChild
+        CesiumGeometry::UpsampledQuadtreeNode
     > TileID;
 
 }

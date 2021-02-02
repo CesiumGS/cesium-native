@@ -34,11 +34,12 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _credit(
+        _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
+        _tilesetCredits(),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -68,11 +69,12 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _credit(
+        _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
+        _tilesetCredits(),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -149,6 +151,24 @@ namespace Cesium3DTiles {
         if (ionResponse.HasParseError()) {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response JSON, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
             return;
+        }
+
+        if (this->_externals.pCreditSystem) {
+
+            auto attributionsIt = ionResponse.FindMember("attributions");
+            if (attributionsIt != ionResponse.MemberEnd() && attributionsIt->value.IsArray()) {
+
+                for (const rapidjson::Value& attribution : attributionsIt->value.GetArray()) {
+
+                    auto html = attribution.FindMember("html");
+                    if (html != attribution.MemberEnd() && html->value.IsString()) {
+                        this->_tilesetCredits.push_back(this->_externals.pCreditSystem->createCredit(html->value.GetString()));
+                    }
+                    // TODO: mandate the user show certain credits on screen, as opposed to an expandable panel
+                    // auto showOnScreen = attribution.FindMember("collapsible");
+                    // ...
+                }
+            }
         }
 
         std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
@@ -268,9 +288,14 @@ namespace Cesium3DTiles {
         // aggregate all the credits needed from this tileset for the current frame 
         const std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
         if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
-            // per-tileset specific credit
-            if (this->_credit) {
-                pCreditSystem->addCreditToFrame(this->_credit.value());
+            // per-tileset user-specified credit
+            if (this->_userCredit) {
+                pCreditSystem->addCreditToFrame(this->_userCredit.value());
+            }
+
+            // per-tileset ion-specified credit
+            for (Credit& credit : this->_tilesetCredits) {
+                pCreditSystem->addCreditToFrame(credit);
             }
             
             // per-raster overlay credit
@@ -347,8 +372,8 @@ namespace Cesium3DTiles {
         }
     }
 
-    size_t Tileset::getTotalDataBytes() const noexcept {
-        size_t bytes = this->_tileDataBytes;
+    int64_t Tileset::getTotalDataBytes() const noexcept {
+        int64_t bytes = this->_tileDataBytes;
 
         for (auto& pOverlay : this->_overlays) {
             const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
@@ -1200,7 +1225,7 @@ namespace Cesium3DTiles {
     }
 
     void Tileset::_unloadCachedTiles() {
-        const size_t maxBytes = this->getOptions().maximumCachedBytes;
+        const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
         Tile* pTile = this->_loadedTiles.head();
 
@@ -1277,7 +1302,7 @@ namespace Cesium3DTiles {
                 });
             }
 
-            std::string operator()(QuadtreeChild /*subdividedParent*/) {
+            std::string operator()(UpsampledQuadtreeNode /*subdividedParent*/) {
                 return std::string();
             }
         };

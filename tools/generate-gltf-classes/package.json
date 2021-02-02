@@ -1,0 +1,19 @@
+{
+  "name": "generate-gltf-classes",
+  "version": "1.0.0",
+  "description": "Generate CesiumGltf C++ classes from the glTF spec.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js --schema ../../extern/glTF/specification/2.0/schema/ --output test_output/model --readerOutput test_output/reader --extensions ../../extern/glTF/extensions/2.0 --config glTF.json",
+    "generate": "node index.js --schema ../../extern/glTF/specification/2.0/schema/ --output ../../CesiumGltf --readerOutput ../../CesiumGltfReader --extensions ../../extern/glTF/extensions/2.0 --config glTF.json"
+  },
+  "author": "CesiumGS, Inc.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "lodash": "^4.17.20",
+    "yargs": "^16.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1"
+  }
+}

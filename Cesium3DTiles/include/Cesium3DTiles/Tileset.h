@@ -126,7 +126,7 @@ namespace Cesium3DTiles {
          * loaded bytes is greater than this value, tiles will be unloaded until the total is under
          * this number or until only required tiles remain, whichever comes first.
          */
-        size_t maximumCachedBytes = 512 * 1024 * 1024;
+        int64_t maximumCachedBytes = 512 * 1024 * 1024;
 
         /**
          * @brief A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
@@ -326,7 +326,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the total number of bytes of tile and raster overlay data that are currently loaded.
          */
-        size_t getTotalDataBytes() const noexcept;
+        int64_t getTotalDataBytes() const noexcept;
 
     private:
 
@@ -505,7 +505,10 @@ namespace Cesium3DTiles {
         TilesetExternals _externals;
         CesiumAsync::AsyncSystem _asyncSystem;
 
-        std::optional<Credit> _credit;
+        // per-tileset credit passed in explicitly by the user through `TilesetOptions`
+        std::optional<Credit> _userCredit;
+        //  credits provided with the tileset from Cesium Ion
+        std::vector<Credit> _tilesetCredits;
 
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;
@@ -543,7 +546,7 @@ namespace Cesium3DTiles {
 
         RasterOverlayCollection _overlays;
 
-        size_t _tileDataBytes;
+        int64_t _tileDataBytes;
 
         static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const ViewState& viewState, Tile& tile, double distance);
         static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);

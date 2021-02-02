@@ -186,7 +186,7 @@ namespace Cesium3DTiles {
         if (!maybeRequestFuture) {
             // There is no content to load. But we may need to upsample.
 
-            const QuadtreeChild* pSubdivided = std::get_if<QuadtreeChild>(&this->getTileID());
+            const UpsampledQuadtreeNode* pSubdivided = std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
             if (pSubdivided) {
                 // We can't upsample this tile until its parent tile is done loading.
                 if (this->getParent() && this->getParent()->getState() == LoadState::Done) {
@@ -290,11 +290,13 @@ namespace Cesium3DTiles {
             this->_pRendererResources = loadResult.pRendererResources;
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(loadResult.state);
-        }).catchInMainThread([this](const std::exception& /*e*/) {
+        }).catchInMainThread([this](const std::exception& e) {
             this->_pContent.reset();
             this->_pRendererResources = nullptr;
             this->getTileset()->notifyTileDoneLoading(this);
             this->setState(LoadState::Failed);
+
+            SPDLOG_LOGGER_ERROR(this->getTileset()->getExternals().pLogger, "An exception occurred while loading tile: {}", e.what());
         });
     }
 
@@ -314,7 +316,7 @@ namespace Cesium3DTiles {
             for (const Tile& child : this->getChildren()) {
                 if (
                     child.getState() == Tile::LoadState::ContentLoading &&
-                    std::get_if<CesiumGeometry::QuadtreeChild>(&child.getTileID()) != nullptr
+                    std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&child.getTileID()) != nullptr
                 ) {
                     return false;
                 }
@@ -383,6 +385,32 @@ namespace Cesium3DTiles {
             return;
         }
 
+        // TODO: support upsampling non-quadtrees.
+        const QuadtreeTileID* pParentTileID = std::get_if<QuadtreeTileID>(&parent.getTileID());
+        if (!pParentTileID) {
+            const UpsampledQuadtreeNode* pUpsampledID = std::get_if<UpsampledQuadtreeNode>(&parent.getTileID());
+            if (pUpsampledID) {
+                pParentTileID = &pUpsampledID->tileID;
+            }
+        }
+
+        if (!pParentTileID) {
+            return;
+        }
+
+        // TODO: support upsampling non-implicit tiles.
+        if (!parent.getContext()->implicitContext) {
+            return;
+        }
+
+        QuadtreeTileID swID(pParentTileID->level + 1, pParentTileID->x * 2, pParentTileID->y * 2);
+        QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+        QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+        QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+
+        QuadtreeTilingScheme& tilingScheme = parent.getContext()->implicitContext.value().tilingScheme;
+        Projection& projection = parent.getContext()->implicitContext.value().projection;
+
         parent.createChildTiles(4);
 
         gsl::span<Tile> children = parent.getChildren();
@@ -407,33 +435,31 @@ namespace Cesium3DTiles {
         nw.setParent(&parent);
         ne.setParent(&parent);
 
-        sw.setTileID(QuadtreeChild::LowerLeft);
-        se.setTileID(QuadtreeChild::LowerRight);
-        nw.setTileID(QuadtreeChild::UpperLeft);
-        ne.setTileID(QuadtreeChild::UpperRight);
+        sw.setTileID(UpsampledQuadtreeNode { swID });
+        se.setTileID(UpsampledQuadtreeNode { seID });
+        nw.setTileID(UpsampledQuadtreeNode { nwID });
+        ne.setTileID(UpsampledQuadtreeNode { neID });
 
-        const GlobeRectangle& rectangle = pRegion->getRectangle();
-        CesiumGeospatial::Cartographic center = rectangle.computeCenter();
         double minimumHeight = pRegion->getMinimumHeight();
         double maximumHeight = pRegion->getMaximumHeight();
 
         sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            GlobeRectangle(rectangle.getWest(), rectangle.getSouth(), center.longitude, center.latitude),
+            unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(swID)),
             minimumHeight,
             maximumHeight
         )));
         se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            GlobeRectangle(center.longitude, rectangle.getSouth(), rectangle.getEast(), center.latitude),
+            unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(seID)),
             minimumHeight,
             maximumHeight
         )));
         nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            GlobeRectangle(rectangle.getWest(), center.latitude, center.longitude, rectangle.getNorth()),
+            unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(nwID)),
             minimumHeight,
             maximumHeight
         )));
         ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            GlobeRectangle(center.longitude, center.latitude, rectangle.getEast(), rectangle.getNorth()),
+            unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(neID)),
             minimumHeight,
             maximumHeight
         )));
@@ -577,29 +603,29 @@ namespace Cesium3DTiles {
         }
     }
 
-    size_t Tile::computeByteSize() const noexcept {
-        size_t bytes = 0;
+    int64_t Tile::computeByteSize() const noexcept {
+        int64_t bytes = 0;
 
         const TileContentLoadResult* pContent = this->getContent();
         if (pContent && pContent->model) {
-            const tinygltf::Model& model = pContent->model.value();
+            const CesiumGltf::Model& model = pContent->model.value();
 
             // Add up the glTF buffers
-            for (const tinygltf::Buffer& buffer : model.buffers) {
-                bytes += buffer.data.size();
+            for (const CesiumGltf::Buffer& buffer : model.buffers) {
+                bytes += int64_t(buffer.cesium.data.size());
             }
 
             // For images loaded from buffers, subtract the buffer size and add
             // the decoded image size instead.
-            const std::vector<tinygltf::BufferView>& bufferViews = model.bufferViews;
-            for (const tinygltf::Image& image : model.images) {
-                int bufferView = image.bufferView;
-                if (bufferView < 0 || bufferView >= static_cast<int>(bufferViews.size())) {
+            const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
+            for (const CesiumGltf::Image& image : model.images) {
+                int32_t bufferView = image.bufferView;
+                if (bufferView < 0 || bufferView >= static_cast<int32_t>(bufferViews.size())) {
                     continue;
                 }
 
-                bytes -= bufferViews[static_cast<size_t>(bufferView)].byteLength;
-                bytes += image.image.size();
+                bytes -= bufferViews[size_t(bufferView)].byteLength;
+                bytes += int64_t(image.cesium.pixelData.size());
             }
         }
 
@@ -611,7 +637,7 @@ namespace Cesium3DTiles {
     }
 
     /*static*/ std::optional<CesiumGeospatial::BoundingRegion> Tile::generateTextureCoordinates(
-        tinygltf::Model& model,
+        CesiumGltf::Model& model,
         const BoundingVolume& boundingVolume, 
         const std::vector<Projection>& projections
     ) {
@@ -643,7 +669,7 @@ namespace Cesium3DTiles {
 
     void Tile::upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections) {
         Tile* pParent = this->getParent();
-        const QuadtreeChild* pSubdividedParentID = std::get_if<QuadtreeChild>(&this->getTileID());
+        const UpsampledQuadtreeNode* pSubdividedParentID = std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
 
         assert(pParent != nullptr);
         assert(pParent->getState() == LoadState::Done);
@@ -655,7 +681,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        tinygltf::Model& parentModel = pParentContent->model.value();
+        CesiumGltf::Model& parentModel = pParentContent->model.value();
 
         Tileset* pTileset = this->getTileset();
         pTileset->notifyTileStartLoading(this);

@@ -50,7 +50,7 @@ namespace Cesium3DTiles {
          * @return The bounding region.
          */
         static CesiumGeospatial::BoundingRegion createRasterOverlayTextureCoordinates(
-            tinygltf::Model& gltf,
+            CesiumGltf::Model& gltf,
             uint32_t textureCoordinateID,
             const CesiumGeospatial::Projection& projection,
             const CesiumGeometry::Rectangle& rectangle

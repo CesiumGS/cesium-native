@@ -4,8 +4,11 @@ if (DOXYGEN_FOUND)
     set(
         LIB_DIRS
         ../Cesium3DTiles/include
-        ../CesiumGeospatial/include
+        ../CesiumAsync/include
         ../CesiumGeometry/include
+        ../CesiumGeospatial/include
+        ../CesiumGltf/include
+        ../CesiumGltfReader/include
         ../CesiumUtility/include
     )
 
@@ -13,8 +16,11 @@ if (DOXYGEN_FOUND)
     set(
         DOXYGEN_EXAMPLE_PATH
         ../Cesium3DTiles/test
-        ../CesiumGeospatial/test
+        ../CesiumAsync/test
         ../CesiumGeometry/test
+        ../CesiumGeospatial/test
+        ../CesiumGltf/test
+        ../CesiumGltfReader/test
         ../CesiumUtility/test
     )
 
