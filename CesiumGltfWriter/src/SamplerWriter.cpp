@@ -12,6 +12,7 @@ void CesiumGltf::writeSampler(
 
     auto& j = jsonWriter;
 
+    j.Key("samplers");
     j.StartArray();
     for (const auto& sampler : samplers) {
         j.StartObject();
