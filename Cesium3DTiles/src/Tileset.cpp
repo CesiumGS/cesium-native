@@ -39,7 +39,7 @@ namespace Cesium3DTiles {
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
-        _tilesetCredit(),
+        _tilesetCredits(),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -74,7 +74,7 @@ namespace Cesium3DTiles {
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
-        _tilesetCredit(),
+        _tilesetCredits(),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -154,9 +154,20 @@ namespace Cesium3DTiles {
         }
 
         if (this->_externals.pCreditSystem) {
-            auto creditString = ionResponse.FindMember("attribution");
-            if (creditString != ionResponse.MemberEnd() && creditString->value.IsString()) {
-                this->_tilesetCredit = this->_externals.pCreditSystem->createCredit(creditString->value.GetString());
+
+            auto attributionsIt = ionResponse.FindMember("attributions");
+            if (attributionsIt != ionResponse.MemberEnd() && attributionsIt->value.IsArray()) {
+
+                for (const rapidjson::Value& attribution : attributionsIt->value.GetArray()) {
+
+                    auto html = attribution.FindMember("html");
+                    if (html != attribution.MemberEnd() && html->value.IsString()) {
+                        this->_tilesetCredits.push_back(this->_externals.pCreditSystem->createCredit(html->value.GetString()));
+                    }
+                    // TODO: mandate the user show certain credits on screen, as opposed to an expandable panel
+                    // auto showOnScreen = attribution.FindMember("collapsible");
+                    // ...
+                }
             }
         }
 
@@ -283,8 +294,8 @@ namespace Cesium3DTiles {
             }
 
             // per-tileset ion-specified credit
-            if (this->_tilesetCredit) {
-                pCreditSystem->addCreditToFrame(this->_tilesetCredit.value());
+            for (Credit& credit : this->_tilesetCredits) {
+                pCreditSystem->addCreditToFrame(credit);
             }
             
             // per-raster overlay credit

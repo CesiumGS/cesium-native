@@ -491,8 +491,8 @@ namespace Cesium3DTiles {
 
         // per-tileset credit passed in explicitly by the user through `TilesetOptions`
         std::optional<Credit> _userCredit;
-        //  credit provided with the tileset from Cesium Ion
-        std::optional<Credit> _tilesetCredit;
+        //  credits provided with the tileset from Cesium Ion
+        std::vector<Credit> _tilesetCredits;
 
         std::optional<std::string> _url;
         std::optional<uint32_t> _ionAssetID;
