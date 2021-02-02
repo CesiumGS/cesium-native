@@ -95,7 +95,11 @@
         "shared_mutex": "cpp",
         "gsl_assert": "cpp",
         "compare": "cpp",
-        "resumable": "cpp"
+        "resumable": "cpp",
+        "codecvt": "cpp",
+        "ranges": "cpp",
+        "scoped_allocator": "cpp",
+        "typeindex": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

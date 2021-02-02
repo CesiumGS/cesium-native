@@ -76,6 +76,7 @@ namespace Cesium3DTiles {
          * @param asyncSystem The async system used to request assets and do work in threads.
          * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
+         * @param pLogger The logger to which to send messages about the tile provider and tiles.
          */
         void createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
@@ -93,6 +94,7 @@ namespace Cesium3DTiles {
          * @param asyncSystem The async system used to request assets and do work in threads.
          * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
+         * @param pLogger The logger to which to send messages about the tile provider and tiles.
          * @param pOwner The overlay that owns this overlay, or nullptr if this overlay is not aggregated.
          * @return The future that contains the tile provider when it is ready, or the `nullptr` in case
          * of an error.

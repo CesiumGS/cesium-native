@@ -347,8 +347,8 @@ namespace Cesium3DTiles {
         }
     }
 
-    size_t Tileset::getTotalDataBytes() const noexcept {
-        size_t bytes = this->_tileDataBytes;
+    int64_t Tileset::getTotalDataBytes() const noexcept {
+        int64_t bytes = this->_tileDataBytes;
 
         for (auto& pOverlay : this->_overlays) {
             const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
@@ -1200,7 +1200,7 @@ namespace Cesium3DTiles {
     }
 
     void Tileset::_unloadCachedTiles() {
-        const size_t maxBytes = this->getOptions().maximumCachedBytes;
+        const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
         Tile* pTile = this->_loadedTiles.head();
 
