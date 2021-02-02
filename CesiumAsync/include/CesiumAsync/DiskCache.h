@@ -22,7 +22,7 @@ namespace CesiumAsync {
          * @param databaseName the database path.
          * @param maxItems the maximum number of items should be kept in the database after prunning.
          */
-        DiskCache(const std::string &databaseName, uint64_t maxItems = 512);
+        DiskCache(const std::string& databaseName, uint64_t maxItems = 4096);
 
         /**
          * @brief Destroys this instance. 

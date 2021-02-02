@@ -97,7 +97,7 @@ namespace CesiumAsync {
 
     static HttpHeaders convertStringToHeaders(const std::string& serializedHeaders);
 
-    static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const std::string& serializedResponseCacheControl);
+    static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const char* serializedResponseCacheControl);
 
     DiskCache::DiskCache(const std::string &databaseName, uint64_t maxItems)
         : _pConnection{nullptr}
@@ -264,7 +264,7 @@ namespace CesiumAsync {
 
             uint16_t statusCode = static_cast<uint16_t>(sqlite3_column_int(this->_getEntryStmtWrapper.stmt, 5));
 
-            std::string serializedResponseCacheControl = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 6));
+            const char* serializedResponseCacheControl = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 6));
             std::optional<ResponseCacheControl> responseCacheControl = convertStringToResponseCacheControl(serializedResponseCacheControl);
 
             const void* rawResponseData = sqlite3_column_blob(this->_getEntryStmtWrapper.stmt, 7);
@@ -585,15 +585,15 @@ namespace CesiumAsync {
         rapidjson::Document document;
         rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
         rapidjson::Value root(rapidjson::kObjectType);
-        root.AddMember("mustRevalidate", rapidjson::Value(cacheControl->mustRevalidate()), allocator);
-        root.AddMember("noCache", rapidjson::Value(cacheControl->noCache()), allocator);
-        root.AddMember("noStore", rapidjson::Value(cacheControl->noStore()), allocator);
-        root.AddMember("noTransform", rapidjson::Value(cacheControl->noTransform()), allocator);
-        root.AddMember("accessControlPublic", rapidjson::Value(cacheControl->accessControlPublic()), allocator);
-        root.AddMember("accessControlPrivate", rapidjson::Value(cacheControl->accessControlPrivate()), allocator);
-        root.AddMember("proxyRevalidate", rapidjson::Value(cacheControl->proxyRevalidate()), allocator);
-        root.AddMember("maxAge", rapidjson::Value(cacheControl->maxAge()), allocator);
-        root.AddMember("sharedMaxAge", rapidjson::Value(cacheControl->sharedMaxAge()), allocator);
+        root.AddMember("mustRevalidate", cacheControl->mustRevalidate(), allocator);
+        root.AddMember("noCache", cacheControl->noCache(), allocator);
+        root.AddMember("noStore", cacheControl->noStore(), allocator);
+        root.AddMember("noTransform", cacheControl->noTransform(), allocator);
+        root.AddMember("accessControlPublic", cacheControl->accessControlPublic(), allocator);
+        root.AddMember("accessControlPrivate", cacheControl->accessControlPrivate(), allocator);
+        root.AddMember("proxyRevalidate", cacheControl->proxyRevalidate(), allocator);
+        root.AddMember("maxAge", cacheControl->maxAge(), allocator);
+        root.AddMember("sharedMaxAge", cacheControl->sharedMaxAge(), allocator);
 
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -613,13 +613,13 @@ namespace CesiumAsync {
         return headers;
     }
 
-    std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const std::string& serializedResponseCacheControl) {
-        if (serializedResponseCacheControl.empty()) {
+    std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const char* serializedResponseCacheControl) {
+        if (serializedResponseCacheControl == nullptr) {
             return std::nullopt;
         }
 
         rapidjson::Document document;
-        document.Parse(serializedResponseCacheControl.c_str());
+        document.Parse(serializedResponseCacheControl);
         return ResponseCacheControl{
             document["mustRevalidate"].GetBool(),
             document["noCache"].GetBool(),
