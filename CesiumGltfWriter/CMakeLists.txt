@@ -13,6 +13,7 @@ set(SOURCES
     src/BufferWriter.cpp
     src/BufferViewWriter.cpp
     src/CameraWriter.cpp
+    src/ImageWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
