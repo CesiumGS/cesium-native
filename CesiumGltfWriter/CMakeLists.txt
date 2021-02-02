@@ -19,6 +19,7 @@ set(SOURCES
     src/SamplerWriter.cpp
     src/SceneWriter.cpp
     src/SkinWriter.cpp
+    src/TextureWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
