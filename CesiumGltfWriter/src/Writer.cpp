@@ -6,6 +6,7 @@
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
+#include <MaterialWriter.h>
 #include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
@@ -30,12 +31,11 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeAccessor(model.accessors, writer);
     CesiumGltf::writeAnimation(model.animations, writer);
     CesiumGltf::writeAsset(model.asset, writer);
-    CesiumGltf::writeBuffer(model.buffers, writer);
+    auto buffers = CesiumGltf::writeBuffer(model.buffers, writer);
     CesiumGltf::writeBufferView(model.bufferViews, writer);
     CesiumGltf::writeCamera(model.cameras, writer);
     CesiumGltf::writeImage(model.images, writer);
-    // Material
-    // Mesh
+    CesiumGltf::writeMaterial(model.materials, writer);
     // Node
     // Sampler
     // Scene
