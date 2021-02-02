@@ -40,7 +40,7 @@ namespace Cesium3DTiles {
 
 		void parseFeatureTableJsonData(
 			const std::shared_ptr<spdlog::logger>& pLogger,
-			tinygltf::Model& gltf,
+			CesiumGltf::Model& gltf,
 			const gsl::span<const uint8_t>& featureTableJsonData)
 		{
 			rapidjson::Document document;
@@ -60,19 +60,12 @@ namespace Cesium3DTiles {
 				rtcIt->value[2].IsDouble()
 			) {
 				// Add the RTC_CENTER value to the glTF itself.
-				tinygltf::Value::Object extras;
-				if (gltf.extras.IsObject()) {
-					extras = gltf.extras.Get<tinygltf::Value::Object>();
-				}
-
 				rapidjson::Value& rtcValue = rtcIt->value;
-				extras["RTC_CENTER"] = tinygltf::Value(tinygltf::Value::Array{
-					tinygltf::Value(rtcValue[0].GetDouble()),
-					tinygltf::Value(rtcValue[1].GetDouble()),
-					tinygltf::Value(rtcValue[2].GetDouble())
-					});
-
-				gltf.extras = tinygltf::Value(extras);
+				gltf.extras["RTC_CENTER"] = {
+					rtcValue[0].GetDouble(),
+					rtcValue[1].GetDouble(),
+					rtcValue[2].GetDouble()
+				};
 			}
 		}
 
@@ -118,11 +111,10 @@ namespace Cesium3DTiles {
 			header.featureTableJsonByteLength = 0;
 			header.featureTableBinaryByteLength = 0;
 
-			// TODO
-			//Batched3DModel3DTileContent._deprecationWarning(
-			//	"b3dm-legacy-header",
-			//	"This b3dm header is using the legacy format [batchLength] [batchTableByteLength]. The new format is [featureTableJsonByteLength] [featureTableBinaryByteLength] [batchTableJsonByteLength] [batchTableBinaryByteLength] from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel."
-			//);
+			SPDLOG_LOGGER_WARN(pLogger, 
+				"This b3dm header is using the legacy format[batchLength][batchTableByteLength]. "
+				"The new format is[featureTableJsonByteLength][featureTableBinaryByteLength][batchTableJsonByteLength][batchTableBinaryByteLength] "
+				"from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel.");
 		}
 		else if (pHeader->batchTableBinaryByteLength >= 570425344) {
 			// Second legacy check
@@ -134,11 +126,11 @@ namespace Cesium3DTiles {
 			header.featureTableJsonByteLength = 0;
 			header.featureTableBinaryByteLength = 0;
 
-			// TODO
-			//Batched3DModel3DTileContent._deprecationWarning(
-			//	"b3dm-legacy-header",
-			//	"This b3dm header is using the legacy format [batchTableJsonByteLength] [batchTableBinaryByteLength] [batchLength]. The new format is [featureTableJsonByteLength] [featureTableBinaryByteLength] [batchTableJsonByteLength] [batchTableBinaryByteLength] from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel."
-			//);
+			SPDLOG_LOGGER_WARN(pLogger, 
+				"This b3dm header is using the legacy format [batchTableJsonByteLength] [batchTableBinaryByteLength] [batchLength]. "
+				"The new format is [featureTableJsonByteLength] [featureTableBinaryByteLength] [batchTableJsonByteLength] [batchTableBinaryByteLength] "
+				"from https://github.com/CesiumGS/3d-tiles/tree/master/specification/TileFormats/Batched3DModel."
+			);
 		}
 
 		if (static_cast<uint32_t>(data.size()) < pHeader->byteLength) {
@@ -172,7 +164,7 @@ namespace Cesium3DTiles {
 		);
 
 		if (pResult->model && header.featureTableJsonByteLength > 0) {
-			tinygltf::Model& gltf = pResult->model.value();
+			CesiumGltf::Model& gltf = pResult->model.value();
 			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
 			parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 		}

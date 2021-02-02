@@ -86,6 +86,30 @@ namespace Cesium3DTiles {
 		);
 	}
 
+	std::optional<std::vector<double>> JsonHelpers::getDoubles(const rapidjson::Value& json, int32_t expectedSize, const std::string& key) {
+		auto it = json.FindMember(key.c_str());
+		if (it == json.MemberEnd()) {
+			return std::nullopt;
+		}
+		const auto& value = it->value;
+		if (!value.IsArray()) {
+			return std::nullopt;
+		}
+		if (expectedSize >= 0 && value.Size() != static_cast<rapidjson::SizeType>(expectedSize)) {
+			return std::nullopt;
+		}
+		const auto& a = value.GetArray();
+		std::vector<double> result;
+		result.reserve(value.Size());
+		for (rapidjson::SizeType i = 0; i < value.Size(); ++i) {
+			if (!a[i].IsNumber()) {
+				return std::nullopt;
+			}
+			result.emplace_back(a[i].GetDouble());
+		}
+		return result;
+	}
+
 	std::string JsonHelpers::getStringOrDefault(const rapidjson::Value& json, const std::string& key, const std::string& defaultValue) {
 		auto it = json.FindMember(key.c_str());
 		return it == json.MemberEnd() ? defaultValue : JsonHelpers::getStringOrDefault(it->value, defaultValue);

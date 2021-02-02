@@ -47,12 +47,24 @@ namespace Cesium3DTiles {
             return itContentType->second(pLogger, context, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
         }
 
-        itMagic = TileContentFactory::_factoryFunctionsByMagic.find("json");
-        if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
-            return itMagic->second(pLogger, context, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
+        // Determine if this is plausibly a JSON external tileset.
+        size_t i;
+        for (i = 0; i < data.size(); ++i) {
+            if (!std::isspace(data[i])) {
+                break;
+            }
+        }
+
+        if (i < data.size() && data[i] == '{') {
+            // Might be an external tileset, try loading it that way.
+            itMagic = TileContentFactory::_factoryFunctionsByMagic.find("json");
+            if (itMagic != TileContentFactory::_factoryFunctionsByMagic.end()) {
+                return itMagic->second(pLogger, context, tileID, tileBoundingVolume, tileGeometricError, tileTransform, tileContentBoundingVolume, tileRefine, url, data);
+            }
         }
 
         // No content type registered for this magic or content type
+        SPDLOG_LOGGER_WARN(pLogger, "No loader registered for tile with content type '{}' and magic value '{}'.", baseContentType, magic);
         return nullptr;
     }
 

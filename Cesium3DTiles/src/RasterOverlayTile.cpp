@@ -5,6 +5,8 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
 
@@ -48,9 +50,9 @@ namespace Cesium3DTiles {
                 {}
 
                 LoadState state;
-                tinygltf::Image image;
-                std::string warnings;
-                std::string errors;
+                CesiumGltf::ImageCesium image;
+                std::vector<std::string> warnings;
+                std::vector<std::string> errors;
                 void* pRendererResources;
             };
 
@@ -63,7 +65,8 @@ namespace Cesium3DTiles {
                 tileRectangle = pTileProvider->getTilingScheme().tileToRectangle(this->getID()),
                 projection = pTileProvider->getProjection(),
                 cutoutsCollection = overlay.getCutouts(),
-                pPrepareRendererResources = pTileProvider->getPrepareRendererResources()
+                pPrepareRendererResources = pTileProvider->getPrepareRendererResources(),
+                pLogger = pTileProvider->getLogger()
             ](
                 std::shared_ptr<IAssetRequest> pRequest
             ) {
@@ -76,21 +79,35 @@ namespace Cesium3DTiles {
                     return LoadResult(LoadState::Failed);
                 }
 
-                LoadResult result;
-
                 gsl::span<const uint8_t> data = pResponse->data();
-                bool success = tinygltf::LoadImageData(&result.image, 0, &result.errors, &result.warnings, 0, 0, data.data(), static_cast<int>(data.size()), nullptr);
+                CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
-                const int bytesPerPixel = 4;
-                if (success && result.image.image.size() >= static_cast<size_t>(result.image.width * result.image.height * bytesPerPixel)) {
+                if (!loadedImage.image.has_value()) {
+                    SPDLOG_LOGGER_ERROR(pLogger, "Failed to load image:\n- {}", CesiumUtility::joinToString(loadedImage.errors, "\n- "));
+
+                    LoadResult result;
+                    result.pRendererResources = nullptr;
+                    result.state = LoadState::Failed;
+                    return result;
+                }
+
+                if (!loadedImage.warnings.empty()) {
+                    SPDLOG_LOGGER_WARN(pLogger, "Warnings while loading image:\n- {}", CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+                }
+
+                CesiumGltf::ImageCesium& image = loadedImage.image.value();
+
+                int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+
+                if (image.pixelData.size() >= static_cast<size_t>(image.width * image.height * bytesPerPixel)) {
                     double tileWidth = tileRectangle.computeWidth();
                     double tileHeight = tileRectangle.computeHeight();
 
                     gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = cutoutsCollection.getCutouts();
 
-                    std::vector<unsigned char>& imageData = result.image.image;
-                    int width = result.image.width; 
-                    int height = result.image.width;
+                    std::vector<uint8_t>& imageData = image.pixelData;
+                    int width = image.width; 
+                    int height = image.height;
 
                     for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
                         CesiumGeometry::Rectangle cutoutRectangle = projectRectangleSimple(projection, rectangle);
@@ -111,31 +128,37 @@ namespace Cesium3DTiles {
 
                         std::swap(startV, endV);
 
-                        uint32_t startPixelX = static_cast<uint32_t>(std::floor(startU * width));
-                        uint32_t endPixelX = static_cast<uint32_t>(std::ceil(endU * width));
-                        uint32_t startPixelY = static_cast<uint32_t>(std::floor(startV * height));
-                        uint32_t endPixelY = static_cast<uint32_t>(std::ceil(endV * height));
+                        int32_t startPixelX = static_cast<int32_t>(std::floor(startU * width));
+                        int32_t endPixelX = static_cast<int32_t>(std::ceil(endU * width));
+                        int32_t startPixelY = static_cast<int32_t>(std::floor(startV * height));
+                        int32_t endPixelY = static_cast<int32_t>(std::ceil(endV * height));
 
-                        for (uint32_t j = startPixelY; j < endPixelY; ++j) {
-                            uint32_t rowStart = j * static_cast<uint32_t>(width) * static_cast<uint32_t>(bytesPerPixel);
-                            for (uint32_t i = startPixelX; i < endPixelX; ++i) {
-                                uint32_t pixelStart = rowStart + i * bytesPerPixel;
+                        for (int32_t j = startPixelY; j < endPixelY; ++j) {
+                            int32_t rowStart = j * width * bytesPerPixel;
+                            for (int32_t i = startPixelX; i < endPixelX; ++i) {
+                                int32_t pixelStart = rowStart + i * bytesPerPixel;
                                 
                                 // Set alpha to 0
-                                imageData[pixelStart + 3] = 0;
+                                imageData[size_t(pixelStart + 3)] = 0;
                             }
                         }
                     }
 
-                    result.pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(result.image);
+                    void* pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(image);
 
+                    LoadResult result;
                     result.state = LoadState::Loaded;
+                    result.image = std::move(image);
+                    result.pRendererResources = pRendererResources;
+                    result.errors = std::move(loadedImage.errors);
+                    result.warnings = std::move(loadedImage.warnings);
+                    return result;
                 } else {
+                    LoadResult result;
                     result.pRendererResources = nullptr;
                     result.state = LoadState::Failed;
+                    return result;
                 }
-
-                return result;
             }).thenInMainThread([this](LoadResult&& result) {
                 result.pRendererResources = result.pRendererResources;
                 this->_image = std::move(result.image);

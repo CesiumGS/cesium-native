@@ -1,0 +1,36 @@
+{
+    "classes": {
+        "glTF": {
+            "overrideName": "Model",
+            "toBeInherited": true
+        },
+        "glTF Property": {
+            "overrideName": "ExtensibleObject"
+        },
+        "glTF Child of Root Property": {
+            "overrideName": "NamedObject"
+        },
+        "Buffer": {
+            "toBeInherited": true
+        },
+        "Image": {
+            "toBeInherited": true
+        },
+        "Accessor": {
+            "toBeInherited": true
+        },
+        "Texture Info": {
+            "isBaseClass": true
+        }
+    },
+    "extensions": [
+        {
+            "className": "KHR_draco_mesh_compression",
+            "extensionName": "KHR_draco_mesh_compression",
+            "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
+            "attachTo": [
+                "mesh.primitive"
+            ]
+        }
+    ]
+}
