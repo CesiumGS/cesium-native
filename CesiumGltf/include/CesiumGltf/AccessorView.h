@@ -265,7 +265,7 @@ namespace CesiumGltf {
 
         template <typename T>
         struct MAT4 {
-            T value[9];
+            T value[16];
         };
 
         #pragma pack(pop)
