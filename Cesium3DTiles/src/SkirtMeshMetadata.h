@@ -1,4 +1,5 @@
-#include "Cesium3DTiles/Gltf.h"
+#include "CesiumGltf/JsonValue.h"
+#include <glm/vec3.hpp>
 #include <optional>
 
 namespace Cesium3DTiles {
@@ -13,9 +14,9 @@ namespace Cesium3DTiles {
             skirtNorthHeight{0.0}
         {}
 
-        static std::optional<SkirtMeshMetadata> parseFromGltfExtras(const tinygltf::Value &extras);
+        static std::optional<SkirtMeshMetadata> parseFromGltfExtras(const CesiumGltf::JsonValue::Object& extras);
 
-        static tinygltf::Value createGltfExtras(const SkirtMeshMetadata &skirt);
+        static CesiumGltf::JsonValue::Object createGltfExtras(const SkirtMeshMetadata &skirt);
 
         uint32_t noSkirtIndicesBegin;
         uint32_t noSkirtIndicesCount;

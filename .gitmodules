@@ -1,6 +1,3 @@
-[submodule "extern/tinygltf"]
-	path = extern/tinygltf
-	url = https://github.com/syoyo/tinygltf
 [submodule "extern/glm"]
 	path = extern/glm
 	url = https://github.com/g-truc/glm.git
@@ -28,3 +25,9 @@
 [submodule "extern/rapidjson"]
 	path = extern/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
+[submodule "extern/glTF"]
+	path = extern/glTF
+	url = https://github.com/KhronosGroup/glTF.git
+[submodule "extern/stb"]
+	path = extern/stb
+	url = https://github.com/nothings/stb.git
