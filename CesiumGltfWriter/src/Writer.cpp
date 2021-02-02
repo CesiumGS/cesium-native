@@ -3,9 +3,11 @@
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
 #include "ImageWriter.h"
+#include "NodeWriter.h"
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
+#include <CesiumGltf/JsonValue.h>
 #include <MaterialWriter.h>
 #include <iostream>
 #include <rapidjson/prettywriter.h>
@@ -36,7 +38,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeCamera(model.cameras, writer);
     CesiumGltf::writeImage(model.images, writer);
     CesiumGltf::writeMaterial(model.materials, writer);
-    // Node
+    CesiumGltf::writeNode(model.nodes, writer);
     // Sampler
     // Scene
     // Skin
