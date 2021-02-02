@@ -14,6 +14,7 @@ set(SOURCES
     src/BufferViewWriter.cpp
     src/CameraWriter.cpp
     src/ImageWriter.cpp
+    src/MaterialWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
