@@ -9,6 +9,7 @@
 #include <CameraWriter.h>
 #include <CesiumGltf/JsonValue.h>
 #include <MaterialWriter.h>
+#include <SamplerWriter.h>
 #include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
@@ -39,7 +40,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeImage(model.images, writer);
     CesiumGltf::writeMaterial(model.materials, writer);
     CesiumGltf::writeNode(model.nodes, writer);
-    // Sampler
+    CesiumGltf::writeSampler(model.samplers, writer);
     // Scene
     // Skin
     // Texture

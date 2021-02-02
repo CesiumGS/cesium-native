@@ -16,6 +16,7 @@ set(SOURCES
     src/ImageWriter.cpp
     src/MaterialWriter.cpp
     src/NodeWriter.cpp
+    src/SamplerWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
