@@ -18,6 +18,7 @@ set(SOURCES
     src/NodeWriter.cpp
     src/SamplerWriter.cpp
     src/SceneWriter.cpp
+    src/SkinWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
