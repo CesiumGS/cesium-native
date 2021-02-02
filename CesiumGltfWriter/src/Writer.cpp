@@ -2,6 +2,7 @@
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
+#include "ImageWriter.h"
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
@@ -32,9 +33,15 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeBuffer(model.buffers, writer);
     CesiumGltf::writeBufferView(model.bufferViews, writer);
     CesiumGltf::writeCamera(model.cameras, writer);
-    // writeMesh
-    // writePrimitive
-    // writeBuffer...
+    CesiumGltf::writeImage(model.images, writer);
+    // Material
+    // Mesh
+    // Node
+    // Sampler
+    // Scene
+    // Skin
+    // Texture
+    // TextureInfo
 
     // TODO: remove this after debugging
     writer.EndObject();
