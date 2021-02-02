@@ -34,11 +34,12 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _credit(
+        _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
+        _tilesetCredit(),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -68,11 +69,12 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _credit(
+        _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
+        _tilesetCredit(),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -149,6 +151,13 @@ namespace Cesium3DTiles {
         if (ionResponse.HasParseError()) {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Error when parsing Cesium ion response JSON, error code {} at byte offset {}", ionResponse.GetParseError(), ionResponse.GetErrorOffset());
             return;
+        }
+
+        if (this->_externals.pCreditSystem) {
+            auto creditString = ionResponse.FindMember("attribution");
+            if (creditString != ionResponse.MemberEnd() && creditString->value.IsString()) {
+                this->_tilesetCredit = this->_externals.pCreditSystem->createCredit(creditString->value.GetString());
+            }
         }
 
         std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
@@ -268,9 +277,14 @@ namespace Cesium3DTiles {
         // aggregate all the credits needed from this tileset for the current frame 
         const std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
         if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
-            // per-tileset specific credit
-            if (this->_credit) {
-                pCreditSystem->addCreditToFrame(this->_credit.value());
+            // per-tileset user-specified credit
+            if (this->_userCredit) {
+                pCreditSystem->addCreditToFrame(this->_userCredit.value());
+            }
+
+            // per-tileset ion-specified credit
+            if (this->_tilesetCredit) {
+                pCreditSystem->addCreditToFrame(this->_tilesetCredit.value());
             }
             
             // per-raster overlay credit
