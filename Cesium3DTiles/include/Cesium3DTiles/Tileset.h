@@ -92,6 +92,33 @@ namespace Cesium3DTiles {
         bool forbidHoles = false;
 
         /**
+         * @brief Enable culling of tiles against the frustum.
+         */
+        bool enableFrustumCulling = true;
+
+        /**
+         * @brief Enable culling of tiles that cannot be seen through atmospheric fog.
+         */
+        bool enableFogCulling = true;
+
+        /**
+         * @brief Whether culled tiles should be refined until they meet culledScreenSpaceError. 
+         *
+         * When true, any culled tile from a disabled culling stage will be refined until it meets the specified
+         * culledScreenSpaceError. Otherwise, its screen-space error check will be disabled altogether and it will 
+         * not bother to refine any futher.
+         */
+        bool enforceCulledScreenSpaceError = true;
+
+        /**
+         * @brief The screen-space error to refine until for culled tiles from disabled culling stages.
+         *
+         * When enforceCulledScreenSpaceError is true, culled tiles from disabled culling stages will be refined until
+         * they meet this screen-space error value. 
+         */
+         double culledScreenSpaceError = 64.0; 
+
+        /**
          * @brief The maximum number of bytes that may be cached.
          * 
          * Note that this value, even if 0, will never
@@ -99,7 +126,7 @@ namespace Cesium3DTiles {
          * loaded bytes is greater than this value, tiles will be unloaded until the total is under
          * this number or until only required tiles remain, whichever comes first.
          */
-        size_t maximumCachedBytes = 512 * 1024 * 1024;
+        int64_t maximumCachedBytes = 512 * 1024 * 1024;
 
         /**
          * @brief A table that maps the camera height above the ellipsoid to a fog density. Tiles that are in full fog are culled.
@@ -268,7 +295,7 @@ namespace Cesium3DTiles {
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
          * @param context The context of the new tiles.
          */
-        void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context) const;
+        void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) const;
 
         /**
          * @brief Request to load the content for the given tile.
@@ -299,7 +326,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Gets the total number of bytes of tile and raster overlay data that are currently loaded.
          */
-        size_t getTotalDataBytes() const noexcept;
+        int64_t getTotalDataBytes() const noexcept;
 
     private:
         struct TraversalDetails {
@@ -341,14 +368,61 @@ namespace Cesium3DTiles {
             uint32_t notYetRenderableCount = 0;
         };
 
+        /**
+          * @brief Handles the response that was received for an asset request.
+          *
+          * This function is supposed to be called on the main thread.
+          *
+          * It the response for the given request consists of a valid JSON,
+          * then {@link _loadTilesetJson} will be called. Otherwise, an error
+          * message will be printed and {@link notifyTileDoneLoading} will be
+          * called with a `nullptr`.
+          *
+          * @param pRequest The request for which the response was received.
+          */
+        void _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+
+        struct LoadResult {
+            std::unique_ptr<TileContext> pContext;
+            std::unique_ptr<Tile> pRootTile;
+        };
+
+        /**
+         * @brief Handles the response that was received for an tileset.json request.
+         *
+         * This function is supposed to be called on the main thread.
+         *
+         * It the response for the given request consists of a valid tileset JSON,
+         * then {@link createTile} or {@link _createTerrainTile} will be called.
+         * Otherwise, and error message will be printed and the root tile of the
+         * return value will be `nullptr`.
+         *
+         * @param pRequest The request for which the response was received.
+         * @return The LoadResult structure
+         */
+        static LoadResult _handleTilesetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger);
+
         void _loadTilesetJson(
             const std::string& url,
             const std::vector<std::pair<std::string, std::string>>& headers = std::vector<std::pair<std::string, std::string>>(),
             std::unique_ptr<TileContext>&& pContext = nullptr
         );
-        static void _createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context);
-        static void _createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context);
+
+        static void _createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger);
+        static void _createTerrainTile(Tile& tile, const rapidjson::Value& layerJson, TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger);
         FailedTileAction _onIonTileFailed(Tile& failedTile);
+
+        /**
+         * @brief Handles a Cesium ion response to refreshing a token, retrying tiles that previously failed due to token expiration.
+         *
+         * If the token refresh request succeeded, tiles that are in the `FailedTemporarily` {@link Tile::LoadState} with an
+         * `httpStatusCode` of 401 will be returned to the `Unloaded` state so that they can be retried with the new token.
+         * If the token refresh request failed, these tiles will be marked `Failed` permanently.
+         *
+         * @param pIonRequest The request.
+         * @param pContext The context.
+         */
+        void _handleTokenRefreshResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
         struct FrameState {
             const Camera& camera;
@@ -357,9 +431,53 @@ namespace Cesium3DTiles {
             double fogDensity;
         };
 
-        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, ViewUpdateResult& result);
-        TraversalDetails _visitTileIfVisible(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _renderLeaf(const FrameState& frameState, Tile& tile, double distance, ViewUpdateResult& result);
+        TraversalDetails _renderInnerTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result);
+        TraversalDetails _refineToNothing(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, bool areChildrenRenderable);
+        bool _kickDescendantsAndRenderTile(
+            const FrameState& frameState, Tile& tile, ViewUpdateResult& result, TraversalDetails& traversalDetails,
+            size_t firstRenderedDescendantIndex,
+            size_t loadIndexLow,
+            size_t loadIndexMedium,
+            size_t loadIndexHigh,
+            bool queuedForLoad,
+            double distance);
+
+        TraversalDetails _visitTile(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, double distance, bool culled, ViewUpdateResult& result);
+        TraversalDetails _visitTileIfNeeded(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
         TraversalDetails _visitVisibleChildrenNearToFar(const FrameState& frameState, uint32_t depth, bool ancestorMeetsSse, Tile& tile, ViewUpdateResult& result);
+
+        /**
+         * @brief When called on an additive-refined tile, queues it for load and adds it to the render list.
+         * 
+         * For replacement-refined tiles, this method does nothing and returns false.
+         * 
+         * @param frameState The state of the current frame.
+         * @param tile The tile to potentially load and render.
+         * @param result The current view update result.
+         * @param distance The distance to this tile, used to compute the load priority.
+         * @return true The additive-refined tile was queued for load and added to the render list.
+         * @return false The non-additive-refined tile was ignored.
+         */
+        bool _loadAndRenderAdditiveRefinedTile(const FrameState& frameState, Tile& tile, ViewUpdateResult& result, double distance);
+
+        /**
+         * @brief Queues load of tiles that are _required_ to be loaded before the given tile can be refined.
+         * 
+         * If {@link TilesetOptions::forbidHoles} is false (the default), any tile can be refined, regardless
+         * of whether its children are loaded or not. So in that case, this method immediately returns `false`.
+         * 
+         * When `forbidHoles` is true, however, and some of this tile's children are not yet renderable,
+         * this method returns `true`. It also adds those not-yet-renderable tiles to the load queue.
+         * 
+         * @param frameState The state of the current frame.
+         * @param tile The tile that is potentially being refined.
+         * @param distance The distance to the tile.
+         * @return true Some of the required children are not yet loaded, so this tile _cannot_ yet be refined.
+         * @return false All of the required children (if there are any) are loaded, so this tile _can_ be refined.
+         */
+        bool _queueLoadOfChildrenRequiredForRefinement(const FrameState& frameState, Tile& tile, double distance);
+        bool _meetsSse(const Camera& camera, const Tile& tile, double distance, bool culled) const;
 
         void _processLoadQueue();
         void _unloadCachedTiles();
@@ -409,7 +527,7 @@ namespace Cesium3DTiles {
 
         RasterOverlayCollection _overlays;
 
-        size_t _tileDataBytes;
+        int64_t _tileDataBytes;
 
         static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const FrameState& frameState, Tile& tile, double distance);
         static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);

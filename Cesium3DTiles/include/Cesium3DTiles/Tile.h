@@ -467,7 +467,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Determines the number of bytes in this tile's geometry and texture data.
          */
-        size_t computeByteSize() const noexcept;
+        int64_t computeByteSize() const noexcept;
 
     private:
 
@@ -485,7 +485,7 @@ namespace Cesium3DTiles {
          *
          * @return The bounding region
          */
-        static std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(tinygltf::Model& model, const BoundingVolume& boundingVolume, const std::vector<CesiumGeospatial::Projection>& projections);
+        static std::optional<CesiumGeospatial::BoundingRegion> generateTextureCoordinates(CesiumGltf::Model& model, const BoundingVolume& boundingVolume, const std::vector<CesiumGeospatial::Projection>& projections);
 
         /**
          * @brief Upsample the parent of this tile.
