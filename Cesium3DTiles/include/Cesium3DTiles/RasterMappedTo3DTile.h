@@ -187,6 +187,7 @@ namespace Cesium3DTiles {
         glm::dvec2 _translation;
         glm::dvec2 _scale;
         AttachmentState _state;
+        bool _originalFailed;
     };
 
 }

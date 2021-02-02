@@ -33,6 +33,10 @@ namespace Cesium3DTiles {
 
 		pResult->model = std::move(loadedModel.model);
 
+		if (pResult->model) {
+			pResult->model.value().extras["Cesium3DTiles_TileUrl"] = url;
+		}
+
 		return pResult;
 	}
 

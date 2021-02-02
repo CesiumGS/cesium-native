@@ -6,32 +6,6 @@ namespace CesiumGeometry {
     class QuadtreeTilingScheme;
 
     /**
-     * @brief Identifies one of the four children of a quadtree node.
-     */
-    enum class QuadtreeChild {
-
-        /**
-         * @brief The lower left child node.
-         */
-        LowerLeft = 0,
-
-        /**
-         * @brief The lower right child node.
-         */
-        LowerRight = 1,
-
-        /**
-         * @brief The upper left child node.
-         */
-        UpperLeft = 2,
-
-        /**
-         * @brief The upper right child node.
-         */
-        UpperRight = 3
-    };
-
-    /**
      * @brief Uniquely identifies a node in a quadtree.
      * 
      * This is one form of a {@link Cesium3DTiles::TileID}.
@@ -98,6 +72,9 @@ namespace CesiumGeometry {
         uint32_t y;
     };
 
+    struct CESIUMGEOMETRY_API UpsampledQuadtreeNode final {
+        QuadtreeTileID tileID;
+    };
 }
 
 namespace std {
