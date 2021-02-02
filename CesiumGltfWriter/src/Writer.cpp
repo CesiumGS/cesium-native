@@ -4,6 +4,7 @@
 #include "AssetWriter.h"
 #include "ImageWriter.h"
 #include "NodeWriter.h"
+#include "SceneWriter.h"
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
@@ -41,7 +42,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeMaterial(model.materials, writer);
     CesiumGltf::writeNode(model.nodes, writer);
     CesiumGltf::writeSampler(model.samplers, writer);
-    // Scene
+    CesiumGltf::writeScene(model.scenes, writer);
     // Skin
     // Texture
     // TextureInfo

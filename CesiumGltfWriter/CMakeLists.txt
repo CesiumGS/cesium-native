@@ -17,6 +17,7 @@ set(SOURCES
     src/MaterialWriter.cpp
     src/NodeWriter.cpp
     src/SamplerWriter.cpp
+    src/SceneWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
