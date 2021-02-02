@@ -3,15 +3,16 @@
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
 #include "ImageWriter.h"
+#include "MaterialWriter.h"
 #include "NodeWriter.h"
+#include "SamplerWriter.h"
 #include "SceneWriter.h"
 #include "SkinWriter.h"
+#include "TextureWriter.h"
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
 #include <CesiumGltf/JsonValue.h>
-#include <MaterialWriter.h>
-#include <SamplerWriter.h>
 #include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
@@ -33,6 +34,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     rapidjson::StringBuffer strBuffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strBuffer);
     writer.StartObject();
+    // extensionsUsed, extensionsRequired, extensions, extras
     CesiumGltf::writeAccessor(model.accessors, writer);
     CesiumGltf::writeAnimation(model.animations, writer);
     CesiumGltf::writeAsset(model.asset, writer);
@@ -45,8 +47,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeSampler(model.samplers, writer);
     CesiumGltf::writeScene(model.scenes, writer);
     CesiumGltf::writeSkin(model.skins, writer);
-    // Texture
-    // TextureInfo
+    CesiumGltf::writeTexture(model.textures, writer);
 
     // TODO: remove this after debugging
     writer.EndObject();
