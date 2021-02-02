@@ -2,6 +2,7 @@
 #include "AccessorSparseWriter.h"
 #include <stdexcept>
 #include <type_traits>
+#include <magic_enum.hpp>
 
 void CesiumGltf::writeAccessor(
     const std::vector<Accessor>& accessors,
@@ -28,8 +29,7 @@ void CesiumGltf::writeAccessor(
         }
 
         j.Key("componentType");
-        j.Int(static_cast<std::underlying_type<Accessor::ComponentType>::type>(
-            accessor.componentType));
+        j.Int(magic_enum::enum_integer(accessor.componentType));
 
         if (accessor.normalized) {
             j.Key("normalized");
