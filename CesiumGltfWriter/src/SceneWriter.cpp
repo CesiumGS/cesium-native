@@ -10,7 +10,7 @@ void CesiumGltf::writeScene(
 
     auto& j = jsonWriter;
 
-    j.Key("scene");
+    j.Key("scenes");
     j.StartArray();
     for (const auto& scene : scenes) {
         j.StartObject();
