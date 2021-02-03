@@ -15,6 +15,7 @@ set(SOURCES
     src/CameraWriter.cpp
     src/ImageWriter.cpp
     src/MaterialWriter.cpp
+    src/MeshWriter.cpp
     src/NodeWriter.cpp
     src/SamplerWriter.cpp
     src/SceneWriter.cpp
