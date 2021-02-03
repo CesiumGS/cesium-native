@@ -101,12 +101,16 @@ namespace CesiumAsync {
 
     CacheAssetAccessor::~CacheAssetAccessor() noexcept {}
 
+    static std::atomic<double> maxTime = 0.0;
+
     void CacheAssetAccessor::requestAsset(const AsyncSystem* pAsyncSystem, 
         const std::string& url, 
         const std::vector<THeader>& headers,
         std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
     {
         pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() {
+            auto startGet = std::chrono::high_resolution_clock::now();
+
             bool readError = false;
             std::string error;
             std::optional<CacheItem> cacheItem;
@@ -115,6 +119,9 @@ namespace CesiumAsync {
                 SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot accessing cache database: {}. Request directly from the server instead", error);
                 readError = true;
             }
+
+            auto stopGet = std::chrono::high_resolution_clock::now();
+            SPDLOG_LOGGER_WARN(this->_pLogger, "Cache retrieve time {}, {}", std::chrono::duration<double>(stopGet - startGet).count(), cacheItem ? "HIT" : "MISS");
             
             // if no cache found, then request directly to the server
             if (!cacheItem) { 
@@ -125,6 +132,8 @@ namespace CesiumAsync {
                         if (!readError && shouldCacheRequest(*pCompletedRequest)) {
                             pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pCompletedRequest]() {
                                 std::string error;
+
+                                auto start = std::chrono::high_resolution_clock::now();
                                 if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
                                     calculateExpiryTime(*pCompletedRequest),
                                     *pCompletedRequest,
@@ -132,7 +141,15 @@ namespace CesiumAsync {
                                 {
                                     SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
                                 }
+                                auto stop = std::chrono::high_resolution_clock::now();
+                                double t = std::chrono::duration<double>(stop - start).count();
+                                if (t > maxTime) {
+                                    maxTime.store(t);
+                                }
+                                SPDLOG_LOGGER_WARN(pLogger, "Store time {} max time {}", t, maxTime.load());
                             });
+                        } else {
+                            SPDLOG_LOGGER_WARN(pLogger, "Decided not to cache {}", pCompletedRequest->url());
                         }
 
                         callback(pCompletedRequest);
