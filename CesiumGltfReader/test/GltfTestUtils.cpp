@@ -15,7 +15,7 @@ namespace CesiumGltfTest
 		file.seekg(0, std::ios::end);
 		std::ifstream::pos_type size = file.tellg();
 		file.seekg(0, std::ios::beg);
-		vec.resize(size);
+		vec.resize(size_t(size));
 		file.read(&vec[0], size);
 		return vec;
 	}
