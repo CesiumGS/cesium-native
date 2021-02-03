@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "AccessorWriter.h"
 #include "AccessorSparseWriter.h"
 #include <stdexcept>
@@ -69,11 +70,12 @@ void CesiumGltf::writeAccessor(
             j.String(accessor.name.c_str());
         }
 
-        if (!accessor.extensions.empty()) {
-            throw std::runtime_error("Not implemented.");
+        if (!accessor.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(accessor.extras, j);
         }
 
-        if (!accessor.extras.empty()) {
+        if (!accessor.extensions.empty()) {
             throw std::runtime_error("Not implemented.");
         }
         j.EndObject();

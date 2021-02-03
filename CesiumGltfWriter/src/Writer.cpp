@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "CesiumGltf/Writer.h"
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
@@ -48,6 +49,10 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeScene(model.scenes, writer);
     CesiumGltf::writeSkin(model.skins, writer);
     CesiumGltf::writeTexture(model.textures, writer);
+
+    if (!model.extras.empty()) {
+        writeJsonObject(model.extras, writer);
+    }
 
     // TODO: remove this after debugging
     writer.EndObject();

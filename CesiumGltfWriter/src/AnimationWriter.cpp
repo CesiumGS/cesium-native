@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "AnimationWriter.h"
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
@@ -26,9 +27,9 @@ void writeAnimationChannel(
         }
 
         if (!animationChannel.target.extras.empty()) {
-            throw std::runtime_error("Not implemented");
+            j.Key("extras");
+            CesiumGltf::writeJsonObject(animationChannel.target.extras, j);
         }
-
     }
     j.EndObject();
 }
@@ -50,7 +51,11 @@ void writeAnimationSampler(
     j.Key("output");
     j.Int(animationSampler.output);
 
-    // TODO: extensions / extras
+    if (!animationSampler.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(animationSampler.extras, j);
+    }
+    // TODO extensions
 
     j.EndObject();
 }
@@ -83,6 +88,15 @@ void CesiumGltf::writeAnimation(
             writeAnimationSampler(animationSampler, j);
         }
         j.EndArray();
+
+        if (!animation.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(animation.extras, j);
+        }
+
+        // TODO extensions
+
+        j.EndObject();
     }
     j.EndArray();
 }

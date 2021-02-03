@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "BufferWriter.h"
 #include <stdexcept>
 
@@ -49,7 +50,12 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
             j.String(buffer.name.c_str());
         }
 
-        // TODO extensions / extras
+        if (!buffer.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(buffer.extras, j);
+        }
+
+        // TODO extensions
         j.EndObject();
     }
 

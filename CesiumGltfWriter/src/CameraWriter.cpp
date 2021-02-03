@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "CameraWriter.h"
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
@@ -24,8 +25,14 @@ void writeOrthographicCamera(
     j.Double(cameraOrthographic.zfar);
     j.Key("znear");
     j.Double(cameraOrthographic.znear);
+
+    if (!cameraOrthographic.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(cameraOrthographic.extras, j);
+    }
+
     j.EndObject();
-    // todo: extensions / extras
+    // todo: extras
 }
 
 void writePerspectiveCamera(
@@ -47,7 +54,13 @@ void writePerspectiveCamera(
     }
     j.Key("znear");
     j.Double(cameraPerspective.znear);
-    // todo: extensions / extras
+
+    if (!cameraPerspective.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(cameraPerspective.extras, j);
+    }
+
+    // TODO: extensions
     j.EndObject();
 }
 
@@ -82,6 +95,14 @@ void CesiumGltf::writeCamera(
             j.Key("name");
             j.String(camera.name.c_str());
         }
+
+        if (!camera.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(camera.extras, j);
+        }
+
+        // TODO: extensions
+
         j.EndObject();
     }
     j.EndArray();

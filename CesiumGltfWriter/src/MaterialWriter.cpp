@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "MaterialWriter.h"
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
@@ -34,8 +35,21 @@ void writePbrMetallicRoughness(const CesiumGltf::MaterialPBRMetallicRoughness& p
             j.Key("texCoord");
             j.Int64(pbr.baseColorTexture->texCoord);
         }
+        if (!pbr.baseColorTexture->extras.empty()) {
+            j.Key("extras");
+            CesiumGltf::writeJsonObject(pbr.baseColorTexture->extras, j);
+        }
+        // todo: extensions
         j.EndObject();
     }
+
+    if (!pbr.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(pbr.extras, j);
+        // todo: extensions
+    }
+    // todo: extensions
+
     j.EndObject();
 }
 
@@ -57,7 +71,12 @@ void writeNormalTexture(const CesiumGltf::MaterialNormalTextureInfo& normalTextu
         j.Double(normalTexture.scale);
     }
 
-    // TODO: extensions / extras
+    if (!normalTexture.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(normalTexture.extras, j);
+    }
+
+    // TODO: extensions
     j.EndObject();
 }
 
@@ -79,8 +98,11 @@ void writeOcclusionTexture(const CesiumGltf::MaterialOcclusionTextureInfo& occlu
         j.Double(occlusionTexture.strength);
     }
 
-    // todo extensions / extras
-
+    if (!occlusionTexture.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(occlusionTexture.extras, j);
+    }
+    // todo extensions
     j.EndObject();
 }
 
@@ -95,7 +117,12 @@ void writeEmissiveTexture(const CesiumGltf::TextureInfo& emissiveTexture, rapidj
         j.Int64(emissiveTexture.texCoord);
     }
 
-    // todo extensions / extras
+    if (!emissiveTexture.extras.empty()) {
+        j.Key("extras");
+        CesiumGltf::writeJsonObject(emissiveTexture.extras, j);
+    }
+
+    // todo extensions 
     // todo additional properties
     j.EndObject();
 }
@@ -118,8 +145,6 @@ void CesiumGltf::writeMaterial(
             j.Key("name");
             j.String(material.name.c_str());
         }
-
-        // TODO: extensions / extras
 
         if (material.pbrMetallicRoughness) {
             writePbrMetallicRoughness(*material.pbrMetallicRoughness, jsonWriter);
@@ -161,6 +186,11 @@ void CesiumGltf::writeMaterial(
         if (material.doubleSided) {
             j.Key("doubleSided");
             j.Bool(material.doubleSided);
+        }
+
+        if (!material.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(material.extras, j);
         }
 
         // TODO: additional properties are allowed

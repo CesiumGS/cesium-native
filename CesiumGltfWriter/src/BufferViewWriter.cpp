@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "BufferViewWriter.h"
 #include <magic_enum.hpp>
 #include <stdexcept>
@@ -41,6 +42,11 @@ void CesiumGltf::writeBufferView(
         if (!buffer.name.empty()) {
             j.Key("name");
             j.String(buffer.name.c_str());
+        }
+
+        if (!buffer.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(buffer.extras, j);
         }
 
         j.EndObject();
