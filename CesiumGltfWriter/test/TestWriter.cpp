@@ -20,6 +20,7 @@ Model generateTriangleModel() {
     BufferView indicesBufferView;
     indicesBufferView.buffer = 0;
     indicesBufferView.byteOffset = 0;
+    indicesBufferView.byteLength = 6;
     indicesBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
     BufferView vertexBufferView;
