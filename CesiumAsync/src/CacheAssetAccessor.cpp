@@ -278,6 +278,7 @@ namespace CesiumAsync {
             return std::difftime(convertHttpDateToTime(expiresHeader->second), std::time(0)) > 0.0;
         }
 
+
         return true;
     }
 
