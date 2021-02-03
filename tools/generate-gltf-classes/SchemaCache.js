@@ -1,5 +1,21 @@
 const path = require("path");
 const fs = require("fs");
+const request = require('sync-request');
+
+function readJsonStringFromFile(basePath, name) {
+    const result = fs.readFileSync(path.join(basePath, name));
+    return result;
+}
+function readJsonStringFromUrl(baseUrl, name) {
+    var res = request('GET', new URL(name, baseUrl).href);
+    return res.getBody();
+}
+function readJsonString(base, name) {
+    if (base.startsWith("http")) {
+        return readJsonStringFromUrl(base, name);
+    }
+    return readJsonStringFromFile(base, name);
+}
 
 class SchemaCache {
     constructor(schemaPath, extensionPath) {
@@ -14,7 +30,8 @@ class SchemaCache {
             return existing;
         }
 
-        const result = JSON.parse(fs.readFileSync(path.join(this.schemaPath, name), "utf-8"));
+        const jsonString = readJsonString(this.schemaPath, name);
+        const result = JSON.parse(jsonString, "utf-8");
         this.cache[name] = result;
         return result;
     }
@@ -25,7 +42,8 @@ class SchemaCache {
             return existing;
         }
 
-        const result = JSON.parse(fs.readFileSync(path.join(this.extensionPath, name), "utf-8"));
+        const jsonString = readJsonString(this.extensionPath, name);
+        const result = JSON.parse(jsonString, "utf-8");
         this.cache[name] = result;
         return result;
     }
