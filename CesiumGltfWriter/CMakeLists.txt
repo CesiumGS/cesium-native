@@ -20,6 +20,7 @@ set(SOURCES
     src/SceneWriter.cpp
     src/SkinWriter.cpp
     src/TextureWriter.cpp
+    src/JsonObjectWriter.cpp
     src/GLBWriter.cpp
     src/Writer.cpp
 )
