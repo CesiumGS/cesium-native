@@ -97,7 +97,7 @@ public:
 
 TEST_CASE("Test the condition of caching the request") {
     SECTION("Cache request") {
-        SECTION("Request with GET method, has max-age, cacheable status code, no Authorization header") {
+        SECTION("Request with GET method, has max-age, cacheable status code") {
             int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
 
             std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
@@ -128,7 +128,7 @@ TEST_CASE("Test the condition of caching the request") {
             REQUIRE(mockCacheDatabase->storeResponseCall == true);
         }
 
-        SECTION("Request with GET method, has Expires header, cacheable status code, no Authorization header") {
+        SECTION("Request with GET method, has Expires header, cacheable status code") {
             int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
 
             std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
@@ -173,35 +173,6 @@ TEST_CASE("Test the condition of caching the request") {
                 "POST",
                 "test.com",
                 HttpHeaders{},
-                std::move(mockResponse)
-            );
-
-            std::unique_ptr<MockStoreCacheDatabase> ownedMockCacheDatabase = std::make_unique<MockStoreCacheDatabase>();
-            MockStoreCacheDatabase* mockCacheDatabase = ownedMockCacheDatabase.get();
-            std::shared_ptr<CacheAssetAccessor> cacheAssetAccessor = std::make_shared<CacheAssetAccessor>(
-                spdlog::default_logger(),
-                std::make_unique<MockAssetAccessor>(mockRequest),
-                std::move(ownedMockCacheDatabase)
-            );
-            std::shared_ptr<MockTaskProcessor> mockTaskProcessor = std::make_shared<MockTaskProcessor>();
-
-            AsyncSystem asyncSystem(cacheAssetAccessor, mockTaskProcessor);
-            asyncSystem.requestAsset("test.com", std::vector<IAssetAccessor::THeader>{});
-            REQUIRE(mockCacheDatabase->storeResponseCall == false);
-        }
-
-        SECTION("No store for requests that has Authorization header") {
-            std::unique_ptr<IAssetResponse> mockResponse = std::make_unique<MockAssetResponse>(
-                static_cast<uint16_t>(200), 
-                "app/json",
-                HttpHeaders{}, 
-                ResponseCacheControl{ true, false, false, false, true, true, false, 100, 0 },
-                std::vector<uint8_t>());
-
-            std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
-                "GET",
-                "test.com",
-                HttpHeaders{ {"Authorization", "Basic YWxhZGRpbjpvcGVuc2VzYW1l"} },
                 std::move(mockResponse)
             );
 
