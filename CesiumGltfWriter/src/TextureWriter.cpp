@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "TextureWriter.h"
 
 void CesiumGltf::writeTexture(
@@ -30,7 +31,12 @@ void CesiumGltf::writeTexture(
             j.String(texture.name.c_str());
         }
 
-        // todo extras / extensions
+        if (!texture.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(texture.extras, j);
+        }
+
+        // todo extensions
         j.EndObject();
 
     }

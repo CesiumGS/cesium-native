@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "SkinWriter.h"
 void CesiumGltf::writeSkin(
     const std::vector<Skin>& skins,
@@ -36,7 +37,12 @@ void CesiumGltf::writeSkin(
             j.String(skin.name.c_str());
         }
 
-        // todo: extensions / extras
+        if (!skin.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(skin.extras, j);
+        }
+
+        // todo: extensions
         j.EndObject();
     }
 

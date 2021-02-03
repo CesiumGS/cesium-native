@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "SamplerWriter.h"
 #include <magic_enum.hpp>
 
@@ -42,7 +43,12 @@ void CesiumGltf::writeSampler(
             j.String(sampler.name.c_str());
         }
 
-        // todo extras / extensions
+        if (!sampler.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(sampler.extras, j);
+        }
+
+        // todo extensions
         j.EndObject();
 
     }

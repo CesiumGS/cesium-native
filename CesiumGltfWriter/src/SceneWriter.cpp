@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "SceneWriter.h"
 void CesiumGltf::writeScene(
     const std::vector<Scene>& scenes,
@@ -27,7 +28,12 @@ void CesiumGltf::writeScene(
             j.String(scene.name.c_str());
         }
 
-        // todo: extensions / extras
+        if (!scene.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(scene.extras, j);
+        }
+
+        // todo: extensions
 
         j.EndObject();
     }

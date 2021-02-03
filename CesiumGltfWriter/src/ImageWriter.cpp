@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "ImageWriter.h"
 #include <magic_enum.hpp>
 #include <algorithm>
@@ -40,6 +41,11 @@ void CesiumGltf::writeImage(
         if (!image.name.empty()) {
             j.Key("name");
             j.String(image.name.c_str());
+        }
+
+        if (!image.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(image.extras, j);
         }
 
         // todo: extensions / extras

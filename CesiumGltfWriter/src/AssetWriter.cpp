@@ -1,4 +1,5 @@
 #include "AssetWriter.h"
+#include "JsonObjectWriter.h"
 #include <CesiumGltf/Asset.h>
 
 void CesiumGltf::writeAsset(
@@ -26,6 +27,12 @@ void CesiumGltf::writeAsset(
         j.Key("minVersion");
         j.String(asset.minVersion->c_str());
     }
+
+    if (!asset.extras.empty()) {
+        j.Key("extras");
+        writeJsonObject(asset.extras, j);
+    }
+
     j.EndObject();
 
     // TODO: extensions, extras

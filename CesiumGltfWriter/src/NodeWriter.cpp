@@ -1,3 +1,4 @@
+#include "JsonObjectWriter.h"
 #include "NodeWriter.h"
 #include <CesiumGltf/Image.h>
 #include <rapidjson/writer.h>
@@ -26,6 +27,11 @@ void CesiumGltf::writeNode(
         if (node.camera >= 0) {
             j.Key("camera");
             j.Int(node.camera);
+        }
+
+        if (node.mesh >= 0) {
+            j.Key("mesh");
+            j.Int(node.mesh);
         }
 
         if (!node.children.empty()) {
@@ -96,7 +102,12 @@ void CesiumGltf::writeNode(
             j.String(node.name.c_str());
         }
 
-        // TODO: extensions / extras
+        if (!node.extras.empty()) {
+            j.Key("extras");
+            writeJsonObject(node.extras, j);
+        }
+
+        // TODO: extensions
 
         j.EndObject();
     }
