@@ -116,6 +116,17 @@ namespace Cesium3DTiles {
 
     void Tile::loadContent() {
         if (this->getState() != LoadState::Unloaded) {
+            // No need to load geometry, but give previously-throttled
+            // raster overlay tiles a chance to load.
+            for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+                RasterOverlayTile* pLoading = mapped.getLoadingTile();
+                if (pLoading && pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+                    RasterOverlayTileProvider* pProvider = pLoading->getOverlay().getTileProvider();
+                    if (pProvider) {
+                        pProvider->loadTileThrottled(*pLoading);
+                    }
+                }
+            }
             return;
         }
 
@@ -570,28 +581,19 @@ namespace Cesium3DTiles {
                 RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
 
                 RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-                if (pLoadingTile) {
+                if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
 
-                    switch (pLoadingTile->getState()) {
-                    case RasterOverlayTile::LoadState::Placeholder:
-                        // Try to replace this placeholder with real tiles.
-                        if (!pProvider->isPlaceholder()) {
-                            this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
-                            --i;
+                    // Try to replace this placeholder with real tiles.
+                    if (!pProvider->isPlaceholder()) {
+                        this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
+                        --i;
 
-                            const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
-                            pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
-                        }
-
-                        continue;
-    
-                    case RasterOverlayTile::LoadState::Unloaded:
-                        // This tile hasn't started loading yet, probably because it was throttled.
-                        // Try loading it now.
-                        pProvider->loadTileThrottled(*pLoadingTile);
-                        break;
+                        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+                        pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
                     }
+
+                    continue;
                 }
 
                 RasterMappedTo3DTile::MoreDetailAvailable moreDetailAvailable = mappedRasterTile.update(*this);

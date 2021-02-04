@@ -1315,6 +1315,17 @@ namespace Cesium3DTiles {
         return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
+    static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
+        for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+            const RasterOverlayTile* pLoading = mapped.getLoadingTile();
+            if (pLoading && pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // TODO The viewState is only needed to
     // compute the priority from the distance. So maybe this function should 
     // receive a priority directly and be called with 
@@ -1327,7 +1338,10 @@ namespace Cesium3DTiles {
         Tile& tile,
         double distance
     ) {
-        if (tile.getState() == Tile::LoadState::Unloaded) {
+        if (
+            tile.getState() == Tile::LoadState::Unloaded ||
+            anyRasterOverlaysNeedLoading(tile)
+        ) {
             double loadPriority = 0.0;
 
             glm::dvec3 tileDirection = getBoundingVolumeCenter(tile.getBoundingVolume()) - viewState.getPosition();
@@ -1352,12 +1366,10 @@ namespace Cesium3DTiles {
         std::sort(queue.begin(), queue.end());
 
         for (LoadRecord& record : queue) {
-            if (record.pTile->getState() == Tile::LoadState::Unloaded) {
-                record.pTile->loadContent();
+            record.pTile->loadContent();
 
-                if (loadsInProgress >= maximumLoadsInProgress) {
-                    break;
-                }
+            if (loadsInProgress >= maximumLoadsInProgress) {
+                break;
             }
         }
     }
