@@ -3,25 +3,29 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Library.h"
 #include "CesiumGeometry/Plane.h"
+#include "CesiumGeometry/CullingVolume.h"
 #include "CesiumGeospatial/Cartographic.h"
+
 #include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+
 #include <vector>
 
 namespace Cesium3DTiles {
 
     /**
-     * @brief A camera in 3D space.
-     *
-     * A camera is defined by a position, orientation and the view frustum.
+     * @brief The state of the view that is used during the traversal of a tileset.
+     * 
+     * An instance of a view state can be created with the {@link create} function.
      */
-    class CESIUM3DTILES_API Camera final {
-    public:
+    class CESIUM3DTILES_API ViewState final {
+
         // TODO: Add support for orthographic and off-center perspective frustums
+    public:
 
         /**
-         * @brief Creates a new instance.
+         * @brief Creates a new instance of a view state.
          * 
          * @param position The position of the eye point of the camera.
          * @param direction The view direction vector of the camera.
@@ -31,17 +35,19 @@ namespace Cesium3DTiles {
          * angle of the camera, in radians.
          * @param verticalFieldOfView The vertical field-of-view (opening)
          * angle of the camera, in radians.
-         * @param ellipsoid The ellipsoid. Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+         * @param ellipsoid The ellipsoid that will be used to compute the 
+         * {@link ViewState#getPositionCartographic cartographic position} 
+         * from the cartesian position.
+         * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
          */
-        Camera(
-            const glm::dvec3& position,
+        static ViewState create(const glm::dvec3& position,
             const glm::dvec3& direction,
             const glm::dvec3& up,
             const glm::dvec2& viewportSize,
             double horizontalFieldOfView,
             double verticalFieldOfView,
-            const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84
-        );
+            const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
+
 
         /**
          * @brief Gets the position of the camera in Earth-centered, Earth-fixed coordinates.
@@ -66,7 +72,7 @@ namespace Cesium3DTiles {
          */
         const std::optional<CesiumGeospatial::Cartographic>& getPositionCartographic() const noexcept { return this->_positionCartographic; }
 
-        /**
+       /**
          * @brief Gets the size of the viewport in pixels.
          */
         const glm::dvec2& getViewportSize() const noexcept { return this->_viewportSize; }
@@ -80,31 +86,6 @@ namespace Cesium3DTiles {
          * @brief Gets the vertical field-of-view angle in radians.
          */
         double getVerticalFieldOfView() const noexcept { return this->_verticalFieldOfView; }
-
-        /**
-         * @brief Gets the denominator used in screen-space error (SSE) computations.
-         * 
-         * The denominator is <code>2.0 * tan(0.5 * verticalFieldOfView)</code>
-         */
-        double getScreenSpaceErrorDenominator() const noexcept { return this->_sseDenominator; }
-
-        /**
-         * @brief Updates the position and orientation of the camera.
-         * 
-         * @param position The new position
-         * @param direction The new look direction vector
-         * @param up The new up vector
-         */
-        void updatePositionAndOrientation(const glm::dvec3& position, const glm::dvec3& direction, const glm::dvec3& up);
-
-        /**
-         * @brief Updates the camera's view parameters.
-         *
-         * @param viewportSize The new size of the viewport, in pixels.
-         * @param horizontalFieldOfView The horizontal field of view angle in radians.
-         * @param verticalFieldOfView The vertical field of view angle in radians.
-         */
-        void updateViewParameters(const glm::dvec2& viewportSize, double horizontalFieldOfView, double verticalFieldOfView);
 
         /**
          * @brief Returns whether the given {@link BoundingVolume} is visible for this camera
@@ -145,26 +126,41 @@ namespace Cesium3DTiles {
         double computeScreenSpaceError(double geometricError, double distance) const noexcept;
 
     private:
-        void _updateCullingVolume();
 
-        glm::dvec3 _position;
-        glm::dvec3 _direction;
-        glm::dvec3 _up;
-        glm::dvec2 _viewportSize;
-        double _horizontalFieldOfView;
-        double _verticalFieldOfView;
-        CesiumGeospatial::Ellipsoid _ellipsoid;
 
-        double _sseDenominator;
-        std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
+        /**
+         * @brief Creates a new instance.
+         * 
+         * @param position The position of the eye point of the camera.
+         * @param direction The view direction vector of the camera.
+         * @param up The up vector of the camera.
+         * @param viewportSize The size of the viewport, in pixels.
+         * @param horizontalFieldOfView The horizontal field-of-view (opening)
+         * angle of the camera, in radians.
+         * @param verticalFieldOfView The vertical field-of-view (opening)
+         * angle of the camera, in radians.
+         */
+        ViewState(
+            const glm::dvec3& position,
+            const glm::dvec3& direction,
+            const glm::dvec3& up,
+            const glm::dvec2& viewportSize,
+            double horizontalFieldOfView,
+            double verticalFieldOfView,
+            const std::optional<CesiumGeospatial::Cartographic>& positionCartographic
+        );
 
-        // The planes that describe the view frustum of this camera,
-        // as computed in _updateCullingVolume. The normals of these
-        // planes will point inwards.
-        CesiumGeometry::Plane _leftPlane;
-        CesiumGeometry::Plane _rightPlane;
-        CesiumGeometry::Plane _topPlane;
-        CesiumGeometry::Plane _bottomPlane;
+        const glm::dvec3 _position;
+        const glm::dvec3 _direction;
+        const glm::dvec3 _up;
+        const glm::dvec2 _viewportSize;
+        const double _horizontalFieldOfView;
+        const double _verticalFieldOfView;
+
+        const double _sseDenominator;
+        const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
+
+        const CullingVolume _cullingVolume;
     };
 
 }

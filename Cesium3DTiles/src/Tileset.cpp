@@ -34,11 +34,12 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _credit(
+        _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
+        _tilesetCredits(),
         _url(url),
         _ionAssetID(),
         _ionAccessToken(),
@@ -68,11 +69,12 @@ namespace Cesium3DTiles {
         _contexts(),
         _externals(externals),
         _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
-        _credit(
+        _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
                 std::nullopt
         ),
+        _tilesetCredits(),
         _url(),
         _ionAssetID(ionAssetID),
         _ionAccessToken(ionAccessToken),
@@ -151,6 +153,24 @@ namespace Cesium3DTiles {
             return;
         }
 
+        if (this->_externals.pCreditSystem) {
+
+            auto attributionsIt = ionResponse.FindMember("attributions");
+            if (attributionsIt != ionResponse.MemberEnd() && attributionsIt->value.IsArray()) {
+
+                for (const rapidjson::Value& attribution : attributionsIt->value.GetArray()) {
+
+                    auto html = attribution.FindMember("html");
+                    if (html != attribution.MemberEnd() && html->value.IsString()) {
+                        this->_tilesetCredits.push_back(this->_externals.pCreditSystem->createCredit(html->value.GetString()));
+                    }
+                    // TODO: mandate the user show certain credits on screen, as opposed to an expandable panel
+                    // auto showOnScreen = attribution.FindMember("collapsible");
+                    // ...
+                }
+            }
+        }
+
         std::string url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
         std::string accessToken = JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
 
@@ -181,8 +201,8 @@ namespace Cesium3DTiles {
         return fogDensity.cameraHeight < height;
     }
 
-    static double computeFogDensity(const std::vector<FogDensityAtHeight>& fogDensityTable, const Camera& camera) {
-        double height = camera.getPositionCartographic().value_or(Cartographic(0.0, 0.0, 0.0)).height;
+    static double computeFogDensity(const std::vector<FogDensityAtHeight>& fogDensityTable, const ViewState& viewState) {
+        double height = viewState.getPositionCartographic().value_or(Cartographic(0.0, 0.0, 0.0)).height;
 
         // Find the entry that is for >= this camera height.
         auto nextIt = std::lower_bound(fogDensityTable.begin(), fogDensityTable.end(), height);
@@ -222,7 +242,7 @@ namespace Cesium3DTiles {
         return density;
     }
 
-    const ViewUpdateResult& Tileset::updateView(const Camera& camera) {
+    const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
         this->_asyncSystem.dispatchMainThreadTasks();
 
         int32_t previousFrameNumber = this->_previousFrameNumber; 
@@ -243,14 +263,14 @@ namespace Cesium3DTiles {
             return result;
         }
 
-        double fogDensity = computeFogDensity(this->_options.fogDensityTable, camera);
+        double fogDensity = computeFogDensity(this->_options.fogDensityTable, viewState);
 
         this->_loadQueueHigh.clear();
         this->_loadQueueMedium.clear();
         this->_loadQueueLow.clear();
 
         FrameState frameState {
-            camera,
+            viewState,
             previousFrameNumber,
             currentFrameNumber,
             fogDensity
@@ -268,9 +288,14 @@ namespace Cesium3DTiles {
         // aggregate all the credits needed from this tileset for the current frame 
         const std::shared_ptr<CreditSystem>& pCreditSystem = this->_externals.pCreditSystem;
         if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
-            // per-tileset specific credit
-            if (this->_credit) {
-                pCreditSystem->addCreditToFrame(this->_credit.value());
+            // per-tileset user-specified credit
+            if (this->_userCredit) {
+                pCreditSystem->addCreditToFrame(this->_userCredit.value());
+            }
+
+            // per-tileset ion-specified credit
+            for (Credit& credit : this->_tilesetCredits) {
+                pCreditSystem->addCreditToFrame(credit);
             }
             
             // per-raster overlay credit
@@ -787,19 +812,19 @@ namespace Cesium3DTiles {
     /**
      * @brief Returns whether a tile with the given bounding volume is visible for the camera.
      *
-     * @param camera The camera
+     * @param viewState The {@link ViewState}
      * @param boundingVolume The bounding volume of the tile
      * @param forceRenderTilesUnderCamera Whether tiles under the camera should always be rendered (see {@link Cesium3DTiles::TilesetOptions})
      * @return Whether the tile is visible according to the current camera configuration
      */
-    static bool isVisibleFromCamera(const Camera& camera, const BoundingVolume& boundingVolume, bool forceRenderTilesUnderCamera) {
-        if (camera.isBoundingVolumeVisible(boundingVolume)) {
+    static bool isVisibleFromCamera(const ViewState& viewState, const BoundingVolume& boundingVolume, bool forceRenderTilesUnderCamera) {
+        if (viewState.isBoundingVolumeVisible(boundingVolume)) {
             return true;
         }
         if (!forceRenderTilesUnderCamera) {
             return false;
         }
-        const std::optional<CesiumGeospatial::Cartographic>& position = camera.getPositionCartographic();
+        const std::optional<CesiumGeospatial::Cartographic>& position = viewState.getPositionCartographic();
         const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
         if (position && pRectangle) {
             return pRectangle->contains(position.value());
@@ -843,9 +868,9 @@ namespace Cesium3DTiles {
         bool culled = false;
 
         const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-        const Camera& camera = frameState.camera;
+        const ViewState& viewState = frameState.viewState;
 
-        if (!isVisibleFromCamera(frameState.camera, boundingVolume, this->_options.renderTilesUnderCamera)) {
+        if (!isVisibleFromCamera(frameState.viewState, boundingVolume, this->_options.renderTilesUnderCamera)) {
             // this tile is off-screen so it is a culled tile
             culled = true;
             if (this->_options.enableFrustumCulling) {
@@ -854,7 +879,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        double distance = sqrt(camera.computeDistanceSquaredToBoundingVolume(boundingVolume));
+        double distance = sqrt(viewState.computeDistanceSquaredToBoundingVolume(boundingVolume));
 
         // if we are still considering visiting this tile, check for fog occlusion
         if (shouldVisit && !isVisibleInFog(distance, frameState.fogDensity)) {
@@ -872,7 +897,7 @@ namespace Cesium3DTiles {
 
             // Preload this culled sibling if requested.
             if (this->_options.preloadSiblings) {
-                addTileToLoadQueue(this->_loadQueueLow, frameState, tile, distance);
+                addTileToLoadQueue(this->_loadQueueLow, frameState.viewState, tile, distance);
             }
 
             ++result.tilesCulled;
@@ -893,7 +918,7 @@ namespace Cesium3DTiles {
 
         tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
         result.tilesToRenderThisFrame.push_back(&tile);
-        addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+        addTileToLoadQueue(this->_loadQueueMedium, frameState.viewState, tile, distance);
 
         TraversalDetails traversalDetails;
         traversalDetails.allAreRenderable = tile.isRenderable();
@@ -916,15 +941,15 @@ namespace Cesium3DTiles {
                 // We're using the distance to the parent tile to compute the load priority.
                 // This is fine because the relative priority of the children is irrelevant;
                 // we can't display any of them until all are loaded, anyway.
-                addTileToLoadQueue(this->_loadQueueMedium, frameState, child, distance);
+                addTileToLoadQueue(this->_loadQueueMedium, frameState.viewState, child, distance);
             }
         }
         return waitingForChildren;
     }
 
-    bool Tileset::_meetsSse(const Camera& camera, const Tile& tile, double distance, bool culled) const {
+    bool Tileset::_meetsSse(const ViewState& viewState, const Tile& tile, double distance, bool culled) const {
         // Does this tile meet the screen-space error?
-        double sse = camera.computeScreenSpaceError(tile.getGeometricError(), distance);
+        double sse = viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
         return culled ? 
                !this->_options.enforceCulledScreenSpaceError || sse < this->_options.culledScreenSpaceError :
                sse < this->_options.maximumScreenSpaceError;
@@ -993,7 +1018,7 @@ namespace Cesium3DTiles {
         // If this tile uses additive refinement, we need to render this tile in addition to its children.
         if (tile.getRefine() == TileRefine::Add) {
             result.tilesToRenderThisFrame.push_back(&tile);
-            addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+            addTileToLoadQueue(this->_loadQueueMedium, frameState.viewState, tile, distance);
             return true;
         }
         return false;
@@ -1048,7 +1073,7 @@ namespace Cesium3DTiles {
             this->_loadQueueHigh.erase(this->_loadQueueHigh.begin() + static_cast<std::vector<LoadRecord>::iterator::difference_type>(loadIndexHigh), this->_loadQueueHigh.end());
 
             if (!queuedForLoad) {
-                addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+                addTileToLoadQueue(this->_loadQueueMedium, frameState.viewState, tile, distance);
             }
 
             traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -1088,7 +1113,7 @@ namespace Cesium3DTiles {
             return _renderLeaf(frameState, tile, distance, result);
         }
 
-        bool meetsSse = _meetsSse(frameState.camera, tile, distance, culled);
+        bool meetsSse = _meetsSse(frameState.viewState, tile, distance, culled);
         bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distance);
 
         if (meetsSse || ancestorMeetsSse || waitingForChildren) {
@@ -1106,7 +1131,7 @@ namespace Cesium3DTiles {
             if (renderThisTile) {
                 // Only load this tile if it (not just an ancestor) meets the SSE.
                 if (meetsSse) {
-                    addTileToLoadQueue(this->_loadQueueMedium, frameState, tile, distance);
+                    addTileToLoadQueue(this->_loadQueueMedium, frameState.viewState, tile, distance);
                 }
                 return _renderInnerTile(frameState, tile, result);
             }
@@ -1121,7 +1146,7 @@ namespace Cesium3DTiles {
 
             // Load this blocker tile with high priority, but only if this tile (not just an ancestor) meets the SSE.
             if (meetsSse) {
-                addTileToLoadQueue(this->_loadQueueHigh, frameState, tile, distance);
+                addTileToLoadQueue(this->_loadQueueHigh, frameState.viewState, tile, distance);
             }
         }
 
@@ -1159,7 +1184,7 @@ namespace Cesium3DTiles {
         }
 
         if (this->_options.preloadAncestors && !queuedForLoad) {
-            addTileToLoadQueue(this->_loadQueueLow, frameState, tile, distance);
+            addTileToLoadQueue(this->_loadQueueLow, frameState.viewState, tile, distance);
         }
 
         return traversalDetails;
@@ -1290,27 +1315,26 @@ namespace Cesium3DTiles {
         return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
-    // TODO From the FrameState that is passed in here, only the Camera is needed.
-    // Maybe the Camera should be passed in instead. The camera is only needed to
+    // TODO The viewState is only needed to
     // compute the priority from the distance. So maybe this function should 
     // receive a priority directly and be called with 
-    // addTileToLoadQueue(queue, tile, priorityFor(tile, frameState.camera, distance))
+    // addTileToLoadQueue(queue, tile, priorityFor(tile, viewState, distance))
     // (or at least, this function could delegate to such a call...)
 
     /*static*/ void Tileset::addTileToLoadQueue(
         std::vector<Tileset::LoadRecord>& loadQueue,
-        const FrameState& frameState,
+        const ViewState& viewState,
         Tile& tile,
         double distance
     ) {
         if (tile.getState() == Tile::LoadState::Unloaded) {
             double loadPriority = 0.0;
 
-            glm::dvec3 tileDirection = getBoundingVolumeCenter(tile.getBoundingVolume()) - frameState.camera.getPosition();
+            glm::dvec3 tileDirection = getBoundingVolumeCenter(tile.getBoundingVolume()) - viewState.getPosition();
             double magnitude = glm::length(tileDirection);
             if (magnitude >= CesiumUtility::Math::EPSILON5) {
                 tileDirection /= magnitude;
-                loadPriority = (1.0 - glm::dot(tileDirection, frameState.camera.getDirection())) * distance;
+                loadPriority = (1.0 - glm::dot(tileDirection, viewState.getDirection())) * distance;
             }
 
             loadQueue.push_back({

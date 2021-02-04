@@ -68,6 +68,12 @@ namespace CesiumGeospatial {
          * @brief Computes the distance-squared from a position in ellipsoid-centered Cartesian coordinates
          * to the closest point in this bounding region.
          * 
+         * If the position cannot be converted into cartograpic coordinates for the
+         * given ellipsoid (because it is close to the center of the ellisoid),
+         * then this function will return the squared distance between the given 
+         * position and the closest point of the bounding box that is enclosed in 
+         * this region.
+         * 
          * @param position The position.
          * @param ellipsoid The ellipsoid on which this region is defined.
          * @return The distance-squared from the position to the closest point in the bounding region.

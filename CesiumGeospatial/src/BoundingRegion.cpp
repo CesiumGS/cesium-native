@@ -136,7 +136,7 @@ namespace CesiumGeospatial {
     double BoundingRegion::computeDistanceSquaredToPosition(const glm::dvec3& position, const Ellipsoid& ellipsoid) const noexcept {
         std::optional<Cartographic> cartographic = ellipsoid.cartesianToCartographic(position);
         if (!cartographic) {
-            return 0.0;
+            return this->_boundingBox.computeDistanceSquaredToPosition(position);
         }
 
         return this->computeDistanceSquaredToPosition(cartographic.value(), position);
