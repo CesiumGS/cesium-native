@@ -14,6 +14,14 @@ namespace Cesium3DTiles {
     class RasterOverlayTileProvider;
     class RasterOverlayCollection;
 
+    struct CESIUM3DTILES_API RasterOverlayOptions {
+        /**
+         * @brief The maximum number of overlay tiles that may simultaneously be in the process
+         * of loading.
+         */
+        int32_t maximumSimultaneousTileLoads = 20;
+    };
+
     /**
      * @brief The base class for a quadtree-tiled raster image that can be draped over a {@link Tileset}.
      * 
@@ -26,8 +34,16 @@ namespace Cesium3DTiles {
      */
     class RasterOverlay {
     public:
-        RasterOverlay();
+        RasterOverlay(const RasterOverlayOptions& options = RasterOverlayOptions());
         virtual ~RasterOverlay();
+
+        /**
+         * @brief Gets options for this overlay.
+         */
+        RasterOverlayOptions& getOptions() { return this->_options; }
+
+        /** @copydoc getOptions */
+        const RasterOverlayOptions& getOptions() const { return this->_options; }
 
         /**
          * @brief Gets the tile provider for this overlay.
@@ -124,6 +140,7 @@ namespace Cesium3DTiles {
         RasterOverlayCutoutCollection _cutouts;
         std::unique_ptr<RasterOverlay> _pSelf;
         bool _isLoadingTileProvider;
+        RasterOverlayOptions _options;
     };
 
 }

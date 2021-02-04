@@ -76,7 +76,7 @@ namespace Cesium3DTiles {
                 id.x >>= 1;
                 id.y >>= 1;
 
-                pCandidate = tileProvider.getTileWithoutRequesting(id);
+                pCandidate = tileProvider.getTileWithoutCreating(id);
                 if (pCandidate && pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
                     break;
                 }

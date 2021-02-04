@@ -570,18 +570,28 @@ namespace Cesium3DTiles {
                 RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
 
                 RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-                if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
-                    // Try to replace this placeholder with real tiles.
+                if (pLoadingTile) {
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
-                    if (!pProvider->isPlaceholder()) {
-                        this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
-                        --i;
 
-                        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
-                        pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
+                    switch (pLoadingTile->getState()) {
+                    case RasterOverlayTile::LoadState::Placeholder:
+                        // Try to replace this placeholder with real tiles.
+                        if (!pProvider->isPlaceholder()) {
+                            this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
+                            --i;
+
+                            const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+                            pProvider->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), this->_rasterTiles);
+                        }
+
+                        continue;
+    
+                    case RasterOverlayTile::LoadState::Unloaded:
+                        // This tile hasn't started loading yet, probably because it was throttled.
+                        // Try loading it now.
+                        pProvider->loadTileThrottled(*pLoadingTile);
+                        break;
                     }
-
-                    continue;
                 }
 
                 RasterMappedTo3DTile::MoreDetailAvailable moreDetailAvailable = mappedRasterTile.update(*this);
