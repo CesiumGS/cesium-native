@@ -20,14 +20,6 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
 
     for (const auto& buffer : buffers) {
         j.StartObject();
-
-/*
-        if (buffer.cesium.data.empty()) {
-            throw std::runtime_error("External binary / embedded base64 uri "
-                                     "currently not supported");
-        }
-*/
-
         if (buffer.uri) {
             // TODO: Check to see if the URI is a reference to an
             // external file. We need to return a struct of some sort

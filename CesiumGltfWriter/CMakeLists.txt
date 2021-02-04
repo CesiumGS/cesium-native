@@ -22,7 +22,7 @@ set(SOURCES
     src/SkinWriter.cpp
     src/TextureWriter.cpp
     src/JsonObjectWriter.cpp
-    src/GLBWriter.cpp
+    src/WriteBinaryGLB.cpp
     src/Writer.cpp
 )
 

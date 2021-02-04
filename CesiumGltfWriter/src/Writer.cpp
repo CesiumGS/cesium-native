@@ -11,32 +11,32 @@
 #include "MeshWriter.h"
 #include "SkinWriter.h"
 #include "TextureWriter.h"
+#include "WriteBinaryGLB.h"
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
 #include <CesiumGltf/JsonValue.h>
-#include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <stdexcept>
+#include <string_view>
 
-std::vector<std::byte>
-CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
-
-    std::vector<std::byte> result;
-    if (options != (WriteOptions::GLB | WriteOptions::EmbedBuffers |
-                    WriteOptions::EmbedImages)) {
-        throw std::runtime_error(
-            "Unsupported configuration. Only (GLB + "
-            "EmbedBuffers + EmbedImages) supported for now.");
+void validateFlags(CesiumGltf::WriteFlags options) {
+    if (options & CesiumGltf::WriteFlags::GLB && options & CesiumGltf::WriteFlags::GLTF) {
+        throw std::runtime_error("GLB and GLTF flags are mutually exclusive.");
     }
+}
+
+std::vector<std::uint8_t>
+CesiumGltf::writeModelToByteArray(const Model& model, WriteFlags flags) {
+    validateFlags(flags);
+    std::vector<std::uint8_t> result;
 
     rapidjson::StringBuffer strBuffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strBuffer);
     writer.StartObject();
-    // extensionsUsed, extensionsRequired, extensions, extras
     CesiumGltf::writeAccessor(model.accessors, writer);
     CesiumGltf::writeAnimation(model.animations, writer);
     CesiumGltf::writeAsset(model.asset, writer);
@@ -52,12 +52,20 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteOptions options) {
     CesiumGltf::writeSkin(model.skins, writer);
     CesiumGltf::writeTexture(model.textures, writer);
 
+    // TODO: extensions
+    // TODO: extensionsUsed
+    // TODO: extensionsRequired
+
     if (!model.extras.empty()) {
         writeJsonObject(model.extras, writer);
     }
 
-    // TODO: remove this after debugging
     writer.EndObject();
-    std::cout << strBuffer.GetString() << std::endl;
+    std::string_view view(strBuffer.GetString());
+
+    if (flags & WriteFlags::GLB) {
+        return writeBinaryGLB(std::move(buffers), view);
+    }
+
     return result;
 }
