@@ -2,7 +2,7 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/CacheItem.h"
-#include "CesiumUtility/PerformanceCheckpoint.h"
+// #include "CesiumUtility/PerformanceCheckpoint.h"
 #include "InternalTimegm.h"
 #include <spdlog/spdlog.h>
 #include <iomanip>
@@ -109,24 +109,24 @@ namespace CesiumAsync {
         const std::vector<THeader>& headers,
         std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
     {
-        static std::atomic<int64_t> waitingToStart(0);
+        // static std::atomic<int64_t> waitingToStart(0);
 
-        static CesiumUtility::PerformanceCheckpoint measureStartWorker("Start asset worker");
-        auto startWorker = measureStartWorker.start();
+        // static CesiumUtility::PerformanceCheckpoint measureStartWorker("Start asset worker");
+        // auto startWorker = measureStartWorker.start();
 
-        CesiumUtility::PerformanceCheckpoint& foo = measureStartWorker;
+        // CesiumUtility::PerformanceCheckpoint& foo = measureStartWorker;
 
-        int64_t before = ++waitingToStart;
-        SPDLOG_LOGGER_WARN(this->_pLogger, "Starting, waiting to start: {}", before);
+        // int64_t before = ++waitingToStart;
+        // SPDLOG_LOGGER_WARN(this->_pLogger, "Starting, waiting to start: {}", before);
 
-        pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback, &foo, startWorker]() {
-            foo.stop(startWorker, this->_pLogger);
+        pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback /*, &foo, startWorker*/]() {
+            // foo.stop(startWorker, this->_pLogger);
 
-            int64_t after = --waitingToStart;
-            SPDLOG_LOGGER_WARN(this->_pLogger, "Started, waiting to start: {}", after);
+            // int64_t after = --waitingToStart;
+            // SPDLOG_LOGGER_WARN(this->_pLogger, "Started, waiting to start: {}", after);
 
-            static CesiumUtility::PerformanceCheckpoint measureCacheRetrieve("Cache retrieve");
-            auto cacheRetrieve = measureCacheRetrieve.start();
+            // static CesiumUtility::PerformanceCheckpoint measureCacheRetrieve("Cache retrieve");
+            // auto cacheRetrieve = measureCacheRetrieve.start();
 
             bool readError = false;
             std::string error;
@@ -137,8 +137,8 @@ namespace CesiumAsync {
                 readError = true;
             }
 
-            measureCacheRetrieve.stop(cacheRetrieve, this->_pLogger);
-            SPDLOG_LOGGER_WARN(this->_pLogger, "Cache retrieve result: {}", cacheItem ? "HIT" : "MISS");
+            // measureCacheRetrieve.stop(cacheRetrieve, this->_pLogger);
+            // SPDLOG_LOGGER_WARN(this->_pLogger, "Cache retrieve result: {}", cacheItem ? "HIT" : "MISS");
             
             // if no cache found, then request directly to the server
             if (!cacheItem) { 
@@ -149,8 +149,8 @@ namespace CesiumAsync {
                             pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pCompletedRequest]() {
                                 std::string error;
 
-                                static CesiumUtility::PerformanceCheckpoint measureCacheStore("Cache store");
-                                auto cacheStore = measureCacheStore.start();
+                                // static CesiumUtility::PerformanceCheckpoint measureCacheStore("Cache store");
+                                // auto cacheStore = measureCacheStore.start();
                                 
                                 if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
                                     calculateExpiryTime(*pCompletedRequest),
@@ -160,7 +160,7 @@ namespace CesiumAsync {
                                     SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
                                 }
 
-                                measureCacheStore.stop(cacheStore, pLogger);
+                                // measureCacheStore.stop(cacheStore, pLogger);
                             });
                         } else {
                             SPDLOG_LOGGER_WARN(pLogger, "Decided not to cache {}", pCompletedRequest->url());
