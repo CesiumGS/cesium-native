@@ -2,6 +2,7 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/CacheItem.h"
+#include "CesiumUtility/PerformanceCheckpoint.h"
 #include "InternalTimegm.h"
 #include <spdlog/spdlog.h>
 #include <iomanip>
@@ -108,8 +109,24 @@ namespace CesiumAsync {
         const std::vector<THeader>& headers,
         std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
     {
-        pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() {
-            auto startGet = std::chrono::high_resolution_clock::now();
+        static std::atomic<int64_t> waitingToStart(0);
+
+        static CesiumUtility::PerformanceCheckpoint measureStartWorker("Start asset worker");
+        auto startWorker = measureStartWorker.start();
+
+        CesiumUtility::PerformanceCheckpoint& foo = measureStartWorker;
+
+        int64_t before = ++waitingToStart;
+        SPDLOG_LOGGER_WARN(this->_pLogger, "Starting, waiting to start: {}", before);
+
+        pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback, &foo, startWorker]() {
+            foo.stop(startWorker, this->_pLogger);
+
+            int64_t after = --waitingToStart;
+            SPDLOG_LOGGER_WARN(this->_pLogger, "Started, waiting to start: {}", after);
+
+            static CesiumUtility::PerformanceCheckpoint measureCacheRetrieve("Cache retrieve");
+            auto cacheRetrieve = measureCacheRetrieve.start();
 
             bool readError = false;
             std::string error;
@@ -120,20 +137,21 @@ namespace CesiumAsync {
                 readError = true;
             }
 
-            auto stopGet = std::chrono::high_resolution_clock::now();
-            SPDLOG_LOGGER_WARN(this->_pLogger, "Cache retrieve time {}, {}", std::chrono::duration<double>(stopGet - startGet).count(), cacheItem ? "HIT" : "MISS");
+            measureCacheRetrieve.stop(cacheRetrieve, this->_pLogger);
+            SPDLOG_LOGGER_WARN(this->_pLogger, "Cache retrieve result: {}", cacheItem ? "HIT" : "MISS");
             
             // if no cache found, then request directly to the server
             if (!cacheItem) { 
-                spdlog::logger* pLogger = this->_pLogger.get();
                 ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
                 this->_pAssetAccessor->requestAsset(pAsyncSystem, url, headers, 
-                    [pAsyncSystem, pCacheDatabase, pLogger , callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
+                    [pAsyncSystem, pCacheDatabase, pLogger = _pLogger, callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
                         if (!readError && shouldCacheRequest(*pCompletedRequest)) {
                             pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pCompletedRequest]() {
                                 std::string error;
 
-                                auto start = std::chrono::high_resolution_clock::now();
+                                static CesiumUtility::PerformanceCheckpoint measureCacheStore("Cache store");
+                                auto cacheStore = measureCacheStore.start();
+                                
                                 if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
                                     calculateExpiryTime(*pCompletedRequest),
                                     *pCompletedRequest,
@@ -141,12 +159,8 @@ namespace CesiumAsync {
                                 {
                                     SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
                                 }
-                                auto stop = std::chrono::high_resolution_clock::now();
-                                double t = std::chrono::duration<double>(stop - start).count();
-                                if (t > maxTime) {
-                                    maxTime.store(t);
-                                }
-                                SPDLOG_LOGGER_WARN(pLogger, "Store time {} max time {}", t, maxTime.load());
+
+                                measureCacheStore.stop(cacheStore, pLogger);
                             });
                         } else {
                             SPDLOG_LOGGER_WARN(pLogger, "Decided not to cache {}", pCompletedRequest->url());
@@ -256,10 +270,10 @@ namespace CesiumAsync {
         }
 
         // check if request is Authorization request, then no cache
-        const HttpHeaders& requestHeaders = request.headers();
-        if (requestHeaders.find("Authorization") != requestHeaders.end()) {
-            return false;
-        }
+        // const HttpHeaders& requestHeaders = request.headers();
+        // if (requestHeaders.find("Authorization") != requestHeaders.end()) {
+        //     return false;
+        // }
 
         // only cache GET method
         if (request.method() != "GET") {
