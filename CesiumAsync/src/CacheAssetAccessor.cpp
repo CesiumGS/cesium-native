@@ -269,12 +269,6 @@ namespace CesiumAsync {
             return false;
         }
 
-        // check if request is Authorization request, then no cache
-        // const HttpHeaders& requestHeaders = request.headers();
-        // if (requestHeaders.find("Authorization") != requestHeaders.end()) {
-        //     return false;
-        // }
-
         // only cache GET method
         if (request.method() != "GET") {
             return false;
@@ -314,6 +308,7 @@ namespace CesiumAsync {
 
             return std::difftime(convertHttpDateToTime(expiresHeader->second), std::time(0)) > 0.0;
         }
+
 
         return true;
     }
