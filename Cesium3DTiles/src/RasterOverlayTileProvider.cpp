@@ -2,11 +2,11 @@
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGltf/Reader.h"
 #include "CesiumUtility/joinToString.h"
-#include <spdlog/spdlog.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
