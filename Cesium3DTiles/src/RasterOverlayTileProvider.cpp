@@ -454,9 +454,9 @@ namespace Cesium3DTiles {
         this->beginTileLoad(tile, isThrottledLoad);
 
         struct LoadResult {
-            RasterOverlayTile::LoadState state;
-            CesiumGltf::ImageCesium image;
-            void* pRendererResources;
+            RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+            CesiumGltf::ImageCesium image = {};
+            void* pRendererResources = nullptr;
         };
 
         this->loadTileImage(tile.getID()).thenInWorkerThread([
