@@ -30,4 +30,4 @@ target_include_directories(
         "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumUtility_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
-target_link_libraries(CesiumUtility PUBLIC GSL glm spdlog)
+target_link_libraries(CesiumUtility PUBLIC GSL glm)

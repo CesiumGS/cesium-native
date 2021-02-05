@@ -101,8 +101,6 @@ namespace CesiumAsync {
 
     CacheAssetAccessor::~CacheAssetAccessor() noexcept {}
 
-    static std::atomic<double> maxTime = 0.0;
-
     void CacheAssetAccessor::requestAsset(const AsyncSystem* pAsyncSystem, 
         const std::string& url, 
         const std::vector<THeader>& headers,
@@ -135,8 +133,6 @@ namespace CesiumAsync {
                                     SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", error);
                                 }
                             });
-                        } else {
-                            SPDLOG_LOGGER_WARN(pLogger, "Decided not to cache {}", pCompletedRequest->url());
                         }
 
                         callback(pCompletedRequest);
