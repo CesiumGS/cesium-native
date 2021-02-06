@@ -116,6 +116,17 @@ namespace Cesium3DTiles {
 
     void Tile::loadContent() {
         if (this->getState() != LoadState::Unloaded) {
+            // No need to load geometry, but give previously-throttled
+            // raster overlay tiles a chance to load.
+            for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+                RasterOverlayTile* pLoading = mapped.getLoadingTile();
+                if (pLoading && pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+                    RasterOverlayTileProvider* pProvider = pLoading->getOverlay().getTileProvider();
+                    if (pProvider) {
+                        pProvider->loadTileThrottled(*pLoading);
+                    }
+                }
+            }
             return;
         }
 
@@ -571,8 +582,9 @@ namespace Cesium3DTiles {
 
                 RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
                 if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
-                    // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
+
+                    // Try to replace this placeholder with real tiles.
                     if (!pProvider->isPlaceholder()) {
                         this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
                         --i;

@@ -18,6 +18,13 @@ namespace Cesium3DTiles {
     class RasterOverlayTile;
     class IPrepareRendererResources;
 
+    struct CESIUM3DTILES_API LoadedRasterOverlayImage {
+        std::optional<CesiumGltf::ImageCesium> image;
+        std::vector<Credit> credits;
+        std::vector<std::string> errors;
+        std::vector<std::string> warnings;
+    };
+
     /**
      * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
      * 
@@ -136,7 +143,7 @@ namespace Cesium3DTiles {
         uint32_t getHeight() const noexcept { return this->_imageHeight; }
 
         /**
-         * @brief Returns the {@link RasterOverlayTile} with the given ID, requesting it if necessary.
+         * @brief Returns the {@link RasterOverlayTile} with the given ID, creating it if necessary.
          *
          * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
          * @return The tile.
@@ -149,7 +156,7 @@ namespace Cesium3DTiles {
          * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
          * @return The tile, or `nullptr`.
          */
-        CesiumUtility::IntrusivePointer<RasterOverlayTile> getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id);
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> getTileWithoutCreating(const CesiumGeometry::QuadtreeTileID& id);
 
         /**
          * Computes the appropriate tile level of detail (zoom level) for a given geometric error near
@@ -188,13 +195,6 @@ namespace Cesium3DTiles {
         );
 
         /**
-         * @brief Notifies the tile provider that a tile has finished loading.
-         * 
-         * This function is not supposed to be called by clients.
-         */
-        void notifyTileLoaded(RasterOverlayTile* pTile) noexcept;
-
-        /**
          * @brief Gets the number of bytes of tile data that are currently loaded.
          */
         int64_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
@@ -202,7 +202,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the number of tiles that are currently loading.
          */
-        uint32_t getNumberOfTilesLoading() const noexcept { return this->_tilesCurrentlyLoading; }
+        uint32_t getNumberOfTilesLoading() const noexcept { return this->_totalTilesCurrentlyLoading; }
 
         /**
          * @brief Removes a no-longer-referenced tile from this provider's cache and deletes it.
@@ -219,22 +219,89 @@ namespace Cesium3DTiles {
          */
         const std::optional<Credit> getCredit() const noexcept { return _credit; }
 
-    protected:
+        /**
+         * @brief Loads a tile immediately, without throttling requests.
+         * 
+         * If the tile is not in the `Tile::LoadState::Unloading` state, this method
+         * returns without doing anything. Otherwise, it puts the tile into the
+         * `Tile::LoadState::Loading` state and begins the asynchronous process
+         * to load the tile. When the process completes, the tile will be in the
+         * `Tile::LoadState::Loaded` or `Tile::LoadState::Failed` state.
+         * 
+         * Calling this method on many tiles at once can result in very slow
+         * performance. Consider using {@link loadTileThrottled} instead.
+         * 
+         * @param tile The tile to load.
+         */
+        void loadTile(RasterOverlayTile& tile);
 
         /**
-         * @brief Returns a new {@link RasterOverlayTile}.
-         *
-         * Concrete implementations of this class will create the raster overlay tile
-         * for the given ID, usually by issuing a network request to a URL that is
-         * created by generating a relative URL from the given tile ID and resolving
-         * it against a base URL.
-         *
-         * @param tileID The {@link CesiumGeometry::QuadtreeTileID}
-         * @return The new raster overlay tile
+         * @brief Loads a tile, unless there are too many tile loads already in progress.
+         * 
+         * If the tile is not in the `Tile::LoadState::Unloading` state, this method
+         * returns true without doing anything. If too many tile loads are
+         * already in flight, it returns false without doing anything. Otherwise, it
+         * puts the tile into the `Tile::LoadState::Loading` state, begins the asynchronous process
+         * to load the tile, and returns true. When the process completes, the tile will be in the
+         * `Tile::LoadState::Loaded` or `Tile::LoadState::Failed` state.
+         * 
+         * The number of allowable simultaneous tile requests is provided in the
+         * {@link RasterOverlayOptions::maximumSimultaneousTileLoads} property of {@link RasterOverlay::getOptions}.
+         * 
+         * @param tile The tile to load.
+         * @returns True if the tile load process is started or is already complete, false if the load
+         *          could not be started because too many loads are already in progress.
          */
-        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID);
+        bool loadTileThrottled(RasterOverlayTile& tile);
+
+    protected:
+        /**
+         * @brief Loads the image for a tile.
+         * 
+         * @param tileID The ID of the tile to load.
+         * @return A future that resolves to the image or error information.
+         */
+        virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
+
+        /**
+         * @brief Loads an image from a URL and optionally some request headers.
+         * 
+         * This is a useful helper function for implementing {@link loadTileImage}.
+         * 
+         * @param url The URL.
+         * @param headers The request headers.
+         * @return A future that resolves to the image or error information.
+         */
+        CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
+            const std::string& url,
+            const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
+            const std::vector<Credit>& credits = {}
+        ) const;
 
     private:
+        void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+
+        /**
+         * @brief Begins the process of loading of a tile.
+         * 
+         * This method should be called at the beginning of the tile load process.
+         * 
+         * @param tile The tile that is starting to load.
+         * @param isThrottledLoad True if the load was originally throttled.
+         */
+        void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+
+        /**
+         * @brief Finalizes loading of a tile.
+         * 
+         * This method should be called at the end of the tile load process,
+         * no matter whether the load succeeded or failed.
+         * 
+         * @param tile The tile that finished loading.
+         * @param isThrottledLoad True if the load was originally throttled.
+         */
+        void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+
         RasterOverlay* _pOwner;
         CesiumAsync::AsyncSystem _asyncSystem;
         std::optional<Credit> _credit;
@@ -250,6 +317,7 @@ namespace Cesium3DTiles {
         std::unordered_map<CesiumGeometry::QuadtreeTileID, std::unique_ptr<RasterOverlayTile>> _tiles;
         std::unique_ptr<RasterOverlayTile> _pPlaceholder;
         int64_t _tileDataBytes;
-        uint32_t _tilesCurrentlyLoading;
+        int32_t _totalTilesCurrentlyLoading;
+        int32_t _throttledTilesCurrentlyLoading;
     };
 }

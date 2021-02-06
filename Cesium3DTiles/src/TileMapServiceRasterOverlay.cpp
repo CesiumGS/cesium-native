@@ -57,7 +57,7 @@ namespace Cesium3DTiles {
         virtual ~TileMapServiceTileProvider() {}
 
     protected:
-        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
+        virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
             std::string url = Uri::resolve(
                 this->_url,
                 std::to_string(tileID.level) + "/" +
@@ -67,7 +67,7 @@ namespace Cesium3DTiles {
                 true
             );
 
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, std::vector<Credit>(), this->getAsyncSystem().requestAsset(url, this->_headers));
+            return this->loadTileImageFromUrl(url, this->_headers, {});
         }
     
     private:

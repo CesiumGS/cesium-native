@@ -115,16 +115,16 @@ namespace CesiumAsync {
                 SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot accessing cache database: {}. Request directly from the server instead", error);
                 readError = true;
             }
-            
+
             // if no cache found, then request directly to the server
             if (!cacheItem) { 
-                spdlog::logger* pLogger = this->_pLogger.get();
                 ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
                 this->_pAssetAccessor->requestAsset(pAsyncSystem, url, headers, 
-                    [pAsyncSystem, pCacheDatabase, pLogger , callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
+                    [pAsyncSystem, pCacheDatabase, pLogger = _pLogger, callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
                         if (!readError && shouldCacheRequest(*pCompletedRequest)) {
                             pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pCompletedRequest]() {
                                 std::string error;
+
                                 if (!pCacheDatabase->storeResponse(pCompletedRequest->url(),
                                     calculateExpiryTime(*pCompletedRequest),
                                     *pCompletedRequest,

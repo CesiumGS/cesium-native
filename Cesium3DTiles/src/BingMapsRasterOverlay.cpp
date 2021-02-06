@@ -110,7 +110,7 @@ namespace Cesium3DTiles {
         virtual ~BingMapsTileProvider() {}
 
     protected:
-        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const QuadtreeTileID& tileID) override {
+        virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
             std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
                     return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.computeInvertedY(this->getTilingScheme()));
@@ -137,7 +137,7 @@ namespace Cesium3DTiles {
                 }
             }
             
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, tileCredits, this->getAsyncSystem().requestAsset(url));
+            return this->loadTileImageFromUrl(url, {}, tileCredits);
         }
     
     private:

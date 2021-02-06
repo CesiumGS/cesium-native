@@ -1,17 +1,16 @@
 #pragma once
 
-#include "Cesium3DTiles/Gltf.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
-#include <atomic>
-#include <memory>
 #include <vector>
 
 namespace Cesium3DTiles {
 
     struct Credit;
     class RasterOverlay;
+    class RasterOverlayTileProvider;
     
     /**
      * @brief Raster image data for a tile in a quadtree.
@@ -91,9 +90,7 @@ namespace Cesium3DTiles {
          */
         RasterOverlayTile(
             RasterOverlay& overlay,
-            const CesiumGeometry::QuadtreeTileID& tileID,
-            const std::vector<Credit>& tileCredits,
-            CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>&& imageRequest
+            const CesiumGeometry::QuadtreeTileID& tileID
         );
 
         /** @brief Default destructor. */
@@ -112,7 +109,7 @@ namespace Cesium3DTiles {
         /**
          * @brief Returns the current {@link LoadState}.
          */
-        LoadState getState() const noexcept { return this->_state.load(std::memory_order::memory_order_acquire); }
+        LoadState getState() const noexcept { return this->_state; }
 
         /**
          * @brief Returns the list of {@link Credit}s needed for this tile.
@@ -164,12 +161,14 @@ namespace Cesium3DTiles {
         uint32_t getReferenceCount() const noexcept { return this->_references; }
 
     private:
+        friend class RasterOverlayTileProvider;
+
         void setState(LoadState newState);
 
         RasterOverlay* _pOverlay;
         CesiumGeometry::QuadtreeTileID _tileID;
         std::vector<Credit> _tileCredits;
-        std::atomic<LoadState> _state;
+        LoadState _state;
         CesiumGltf::ImageCesium _image;
         void* _pRendererResources;
         uint32_t _references;
