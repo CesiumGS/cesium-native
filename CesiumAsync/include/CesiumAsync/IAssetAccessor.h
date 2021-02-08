@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <gsl/span>
 
 namespace CesiumAsync {
 
@@ -31,6 +32,12 @@ namespace CesiumAsync {
         virtual std::unique_ptr<IAssetRequest> requestAsset(
             const std::string& url,
             const std::vector<THeader>& headers = std::vector<THeader>()
+        ) = 0;
+
+        virtual std::unique_ptr<IAssetRequest> post(
+            const std::string& url,
+            const std::vector<THeader>& headers = std::vector<THeader>(),
+            const gsl::span<const uint8_t>& contentPayload = {}
         ) = 0;
 
         /**

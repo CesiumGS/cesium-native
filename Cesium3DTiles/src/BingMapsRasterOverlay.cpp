@@ -11,7 +11,7 @@
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Math.h"
-#include "Uri.h"
+#include "CesiumUtility/Uri.h"
 #include "JsonHelpers.h"
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
@@ -91,12 +91,12 @@ namespace Cesium3DTiles {
             _subdomains(subdomains)
         {
             if (this->_urlTemplate.find("n=z") == std::string::npos) {
-                this->_urlTemplate = Uri::addQuery(this->_urlTemplate, "n", "z");
+                this->_urlTemplate = CesiumUtility::Uri::addQuery(this->_urlTemplate, "n", "z");
             }
 
-            std::string resolvedUrl = Uri::resolve(baseUrl, this->_urlTemplate);
+            std::string resolvedUrl = CesiumUtility::Uri::resolve(baseUrl, this->_urlTemplate);
 
-            resolvedUrl = Uri::substituteTemplateParameters(resolvedUrl, [&culture](const std::string& templateKey) {
+            resolvedUrl = CesiumUtility::Uri::substituteTemplateParameters(resolvedUrl, [&culture](const std::string& templateKey) {
                 if (templateKey == "culture") {
                     return culture;
                 }
@@ -111,7 +111,7 @@ namespace Cesium3DTiles {
 
     protected:
         virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const QuadtreeTileID& tileID) override {
-            std::string url = Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
+            std::string url = CesiumUtility::Uri::substituteTemplateParameters(this->_urlTemplate, [this, &tileID](const std::string& key) {
                 if (key == "quadkey") {
                     return BingMapsTileProvider::tileXYToQuadKey(tileID.level, tileID.x, tileID.computeInvertedY(this->getTilingScheme()));
                 } else if (key == "subdomain") {
@@ -191,10 +191,10 @@ namespace Cesium3DTiles {
         std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
-        std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
-        metadataUrl = Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
-        metadataUrl = Uri::addQuery(metadataUrl, "key", this->_key);
-        metadataUrl = Uri::addQuery(metadataUrl, "uriScheme", "https");
+        std::string metadataUrl = CesiumUtility::Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
+        metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
+        metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "key", this->_key);
+        metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "uriScheme", "https");
 
         pOwner = pOwner ? pOwner : this;
 

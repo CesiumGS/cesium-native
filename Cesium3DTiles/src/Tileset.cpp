@@ -15,7 +15,7 @@
 #include "calcQuadtreeMaxGeometricError.h"
 #include "JsonHelpers.h"
 #include "TileUtilities.h"
-#include "Uri.h"
+#include "CesiumUtility/Uri.h"
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
 #include <optional>
@@ -177,7 +177,7 @@ namespace Cesium3DTiles {
         std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
         if (type == "TERRAIN") {
             // For terrain resources, we need to append `/layer.json` to the end of the URL.
-            url = Uri::resolve(url, "layer.json", true);
+            url = CesiumUtility::Uri::resolve(url, "layer.json", true);
         }
         else if (type != "3DTILES") {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received unsupported asset response type: {}", type);
@@ -476,7 +476,7 @@ namespace Cesium3DTiles {
             }
 
             if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-                tile.setTileID(Uri::resolve(context.baseUrl, uriIt->value.GetString()));
+                tile.setTileID(CesiumUtility::Uri::resolve(context.baseUrl, uriIt->value.GetString()));
             }
 
             std::optional<BoundingVolume> contentBoundingVolume = JsonHelpers::getBoundingVolumeProperty(contentIt->value, "boundingVolume");
@@ -636,7 +636,7 @@ namespace Cesium3DTiles {
 
         if (!extensionsToRequest.empty()) {
             for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
-                url = Uri::addQuery(url, "extensions", extensionsToRequest);
+                url = CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
             }
         }
 
@@ -1265,7 +1265,7 @@ namespace Cesium3DTiles {
                     return std::string();
                 }
 
-                return Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
+                return CesiumUtility::Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level" || placeholder == "z") {
                         return std::to_string(quadtreeID.level);
                     } else if (placeholder == "x") {
@@ -1285,7 +1285,7 @@ namespace Cesium3DTiles {
                     return std::string();
                 }
 
-                return Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
+                return CesiumUtility::Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level") {
                         return std::to_string(octreeID.level);
                     } else if (placeholder == "x") {
@@ -1312,7 +1312,7 @@ namespace Cesium3DTiles {
             return url;
         }
 
-        return Uri::resolve(tile.getContext()->baseUrl, url, true);
+        return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
     // TODO The viewState is only needed to

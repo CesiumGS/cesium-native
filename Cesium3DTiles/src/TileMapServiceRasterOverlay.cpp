@@ -9,7 +9,7 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "tinyxml2.h"
-#include "Uri.h"
+#include "CesiumUtility/Uri.h"
 
 using namespace CesiumAsync;
 
@@ -58,7 +58,7 @@ namespace Cesium3DTiles {
 
     protected:
         virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
-            std::string url = Uri::resolve(
+            std::string url = CesiumUtility::Uri::resolve(
                 this->_url,
                 std::to_string(tileID.level) + "/" +
                     std::to_string(tileID.x) + "/" +
@@ -126,7 +126,7 @@ namespace Cesium3DTiles {
         std::shared_ptr<spdlog::logger> pLogger,
         RasterOverlay* pOwner
     ) {
-        std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
+        std::string xmlUrl = CesiumUtility::Uri::resolve(this->_url, "tilemapresource.xml");
 
         pOwner = pOwner ? pOwner : this;
         

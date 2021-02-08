@@ -7,7 +7,7 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "Uri.h"
+#include "CesiumUtility/Uri.h"
 #include "JsonHelpers.h"
 #include <rapidjson/document.h>
 
@@ -35,7 +35,7 @@ namespace Cesium3DTiles {
         RasterOverlay* pOwner
     ) {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
-        ionUrl = Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
+        ionUrl = CesiumUtility::Uri::addQuery(ionUrl, "access_token", this->_ionAccessToken);
 
         pOwner = pOwner ? pOwner : this;
 

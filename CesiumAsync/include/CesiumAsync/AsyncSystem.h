@@ -252,6 +252,19 @@ namespace CesiumAsync {
         ) const;
 
         /**
+         * @brief Requests a new asset, returning a `Future` that resolves when the request completes.
+         * 
+         * @param url The URL of the asset to request.
+         * @param headers The HTTP headers to include in the request.
+         * @return A Future that resolves when the request completes.
+         */
+        Future<std::unique_ptr<IAssetRequest>> post(
+            const std::string& url,
+            const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>(),
+            const gsl::span<const uint8_t>& contentPayload = {}
+        ) const;
+
+        /**
          * @brief Runs a function in a worker thread, returning a promise that resolves when the function completes.
          * 
          * If the function itself returns a `Future`, the function will not be considered complete

@@ -30,4 +30,4 @@ target_include_directories(
         "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:Cesium3DTiles_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
-target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumGltf CesiumGltfReader CesiumUtility uriparser draco tinyxml2 spdlog)
+target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumGltf CesiumGltfReader CesiumUtility draco tinyxml2 spdlog)
