@@ -281,6 +281,7 @@ TEST_CASE("Test replace refinement for render") {
 		"lr.b3dm",
 		"ul.b3dm",
 		"ur.b3dm",
+		"ll_ll.b3dm",
 	};
 
 	std::map<std::string, std::unique_ptr<MockAssetRequest>> mockCompletedRequests;
@@ -352,7 +353,7 @@ TEST_CASE("Test replace refinement for render") {
 	}
 
 	SECTION("Test root doesn't meet sse but has to be rendered because children cannot be rendered") {
-		// we should forbit hole first to let the checks below happen
+		// we should forbid hole first to let the checks below happen
 		tileset->getOptions().forbidHoles = true;
 
 		SECTION("Children cannot be rendered because of no response") {
@@ -419,7 +420,9 @@ TEST_CASE("Test replace refinement for render") {
 			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
 
 			REQUIRE(result.tilesVisited == 1);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
 			REQUIRE(result.tilesLoadingMediumPriority == 0);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
 			REQUIRE(result.tilesCulled == 0);
 			REQUIRE(result.culledTilesVisited == 0);
 		}
@@ -428,8 +431,141 @@ TEST_CASE("Test replace refinement for render") {
 	SECTION("Test parent meets sse but not renderable") {
 		// Zoom to tileset. Expect the root will not meet sse in this configure
 		ViewState viewState = zoomToTileset(*tileset);
+		glm::dvec3 zoomInPosition = viewState.getPosition() + viewState.getDirection() * 200.0;
+		ViewState zoomInViewState = ViewState::create(zoomInPosition,
+			viewState.getDirection(),
+			viewState.getUp(),
+			viewState.getViewportSize(),
+			viewState.getHorizontalFieldOfView(),
+			viewState.getVerticalFieldOfView());
 
-		ViewUpdateResult result = tileset->updateView(viewState);
+		// remove the ll.b3dm (one of the root's children) request to replicate network failure
+		mockAssetAccessor->mockCompletedRequests["ll.b3dm"]->pResponse = nullptr;
+
+		// 1st frame. Root doesn't meet sse, but none of the children finish loading. So we will render root
+		{
+			ViewUpdateResult result = tileset->updateView(zoomInViewState);
+
+			// check tiles status. All the children should have loading status
+			REQUIRE(root->getState() == Tile::LoadState::Done);
+			REQUIRE(!isTileMeetSSE(zoomInViewState, *root, *tileset));
+			for (const auto& child : root->getChildren()) {
+				REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+			}
+
+			const Tile& ll = root->getChildren().front();
+			REQUIRE(!isTileMeetSSE(zoomInViewState, ll, *tileset));
+
+			const Tile& ll_ll = ll.getChildren().front();
+			REQUIRE(ll_ll.getState() == Tile::LoadState::ContentLoading);
+			REQUIRE(isTileMeetSSE(zoomInViewState, ll_ll, *tileset));
+
+			// check result
+			REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+			REQUIRE(result.tilesToRenderThisFrame.front() == root);
+
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+
+			REQUIRE(result.tilesVisited == 6);
+			REQUIRE(result.tilesLoadingLowPriority == 1);
+			REQUIRE(result.tilesLoadingMediumPriority == 4);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
+			REQUIRE(result.tilesCulled == 0);
+			REQUIRE(result.culledTilesVisited == 0);
+		}
+		 
+		// 2nd frame. All the children finish loading, so they are ready to be rendered (except ll.b3dm tile since it doesn't meet sse) 
+		{
+			ViewUpdateResult result = tileset->updateView(zoomInViewState);
+
+			// check tiles status. All the children should have loading status
+			REQUIRE(root->getState() == Tile::LoadState::Done);
+			REQUIRE(!isTileMeetSSE(zoomInViewState, *root, *tileset));
+
+			// the first child of root isn't rendered because it doesn't meet sse. It will be refined to its child
+			// which is ready to be rendered
+			const Tile& ll = root->getChildren().front();
+			REQUIRE(ll.getState() == Tile::LoadState::Failed);
+			REQUIRE(!isTileMeetSSE(zoomInViewState, ll, *tileset));
+
+			const Tile& ll_ll = ll.getChildren().front();
+			REQUIRE(ll_ll.getState() == Tile::LoadState::Done);
+			REQUIRE(isTileMeetSSE(zoomInViewState, ll_ll, *tileset));
+
+			// the rest of the root's children are ready to be rendered since they all meet sse
+			for (size_t i = 1; i < root->getChildren().size(); ++i) {
+				const Tile& child = root->getChildren()[i];
+				REQUIRE(child.getState() == Tile::LoadState::Done);
+				REQUIRE(isTileMeetSSE(zoomInViewState, child, *tileset));
+			}
+
+			// check result
+			REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+			REQUIRE(result.tilesToRenderThisFrame[0] == &ll_ll);
+			REQUIRE(result.tilesToRenderThisFrame[1] == &root->getChildren()[1]);
+			REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
+			REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
+
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+
+			REQUIRE(result.tilesVisited == 6);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
+			REQUIRE(result.tilesLoadingMediumPriority == 0);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
+			REQUIRE(result.tilesCulled == 0);
+			REQUIRE(result.culledTilesVisited == 0);
+		}
+
+		// 3d frame. Zoom out the camera so that ll.b3dm tile will meet sse. However, since its content is failed 
+		// to load and in the last frame it is refined, its child will be rendered instead to prevent loss of detail
+		{
+			glm::dvec3 zoomOutPosition = viewState.getPosition() - viewState.getDirection() * 100.0;
+			ViewState zoomOutViewState = ViewState::create(zoomOutPosition,
+				viewState.getDirection(),
+				viewState.getUp(),
+				viewState.getViewportSize(),
+				viewState.getHorizontalFieldOfView(),
+				viewState.getVerticalFieldOfView());
+
+			ViewUpdateResult result = tileset->updateView(zoomOutViewState);
+
+			// check tiles status. All the children should have loading status
+			REQUIRE(root->getState() == Tile::LoadState::Done);
+			REQUIRE(!isTileMeetSSE(zoomOutViewState, *root, *tileset));
+
+			// The first child of root isn't rendered because it is failed to load even though it meets sse. 
+			// Use its child instead since the child is rendered last frame
+			const Tile& ll = root->getChildren().front();
+			REQUIRE(ll.getState() == Tile::LoadState::Failed);
+			REQUIRE(isTileMeetSSE(zoomOutViewState, ll, *tileset));
+
+			const Tile& ll_ll = ll.getChildren().front();
+			REQUIRE(ll_ll.getState() == Tile::LoadState::Done);
+
+			// the rest of the root's children are ready to be rendered since they all meet sse
+			for (size_t i = 1; i < root->getChildren().size(); ++i) {
+				const Tile& child = root->getChildren()[i];
+				REQUIRE(child.getState() == Tile::LoadState::Done);
+				REQUIRE(isTileMeetSSE(zoomOutViewState, child, *tileset));
+			}
+
+			// check result
+			REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+			REQUIRE(result.tilesToRenderThisFrame[0] == &ll_ll);
+			REQUIRE(result.tilesToRenderThisFrame[1] == &root->getChildren()[1]);
+			REQUIRE(result.tilesToRenderThisFrame[2] == &root->getChildren()[2]);
+			REQUIRE(result.tilesToRenderThisFrame[3] == &root->getChildren()[3]);
+
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+
+			REQUIRE(result.tilesVisited == 6);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
+			REQUIRE(result.tilesLoadingMediumPriority == 0);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
+			REQUIRE(result.tilesCulled == 0);
+			REQUIRE(result.culledTilesVisited == 0);
+		}
 	}
 
 	SECTION("Test child refinement when parent doesn't meet SSE") {
@@ -456,7 +592,9 @@ TEST_CASE("Test replace refinement for render") {
 			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
 
 			REQUIRE(result.tilesVisited == 5);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
 			REQUIRE(result.tilesLoadingMediumPriority == 4);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
 			REQUIRE(result.tilesCulled == 0);
 			REQUIRE(result.culledTilesVisited == 0);
 		}
@@ -484,7 +622,9 @@ TEST_CASE("Test replace refinement for render") {
 			REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
 
 			REQUIRE(result.tilesVisited == 5);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
 			REQUIRE(result.tilesLoadingMediumPriority == 0);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
 			REQUIRE(result.tilesCulled == 0);
 			REQUIRE(result.culledTilesVisited == 0);
 		}

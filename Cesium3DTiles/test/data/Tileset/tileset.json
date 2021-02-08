@@ -63,10 +63,28 @@
             20
           ]
         },
-        "geometricError": 0,
+        "geometricError": 5,
         "content": {
           "uri": "ll.b3dm"
-        }
+        },
+        "children": [
+          {
+            "boundingVolume": {
+              "region": [
+                -1.3197209591796106,
+                0.6988424218,
+                -1.31968,
+                0.698874,
+                0,
+                20
+              ]
+            },
+            "geometricError": 0,
+            "content": {
+              "uri": "ll_ll.b3dm"
+            }
+          }
+        ]
       },
       {
         "boundingVolume": {
