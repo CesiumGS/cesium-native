@@ -247,17 +247,19 @@ namespace Cesium3DTiles {
             }
 
             std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
-                pLogger,
-                *pContext,
-                tileID,
-                boundingVolume,
-                geometricError,
-                transform,
-                contentBoundingVolume,
-                refine,
-                pRequest->url(),
-                pResponse->contentType(),
-                pResponse->data()
+                TileContentLoadInput(
+                    pLogger,
+                    *pContext,
+                    tileID,
+                    boundingVolume,
+                    geometricError,
+                    transform,
+                    contentBoundingVolume,
+                    refine,
+                    pRequest->url(),
+                    pResponse->contentType(),
+                    pResponse->data()
+                )
             );
 
             if (!pContent) {
