@@ -272,7 +272,7 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 
 TEST_CASE("Test replace refinement for render") {
 	// initialize tileset
-	std::filesystem::path testDataPath = "C:\\Users\\bao\\Documents\\Projects\\cesium-unreal-demo\\Plugins\\cesium-unreal\\extern\\cesium-native\\Cesium3DTiles\\test\\data";
+	std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
 	testDataPath = testDataPath / "Tileset";
 	std::vector<std::string> files{
 		"tileset.json",
@@ -630,3 +630,10 @@ TEST_CASE("Test replace refinement for render") {
 		}
 	}
 }
+
+TEST_CASE("Test additive refinement") {
+	SECTION("") {
+
+	}
+}
+

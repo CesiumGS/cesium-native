@@ -54,6 +54,12 @@ function(configure_cesium_library targetName)
                 PRIVATE
                     ${TEST_SOURCES}
             )
+
+            target_compile_definitions(
+                cesium-native-tests
+                PRIVATE
+                    ${targetName}_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data"
+            )
         endif()
 
         string(TOUPPER ${targetName} capitalizedTargetName)
