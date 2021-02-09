@@ -219,7 +219,7 @@ namespace CesiumAsync {
 
     DiskCache::~DiskCache() noexcept {
         if (this->_pConnection) {
-            sqlite3_close(this->_pConnection);
+            sqlite3_close_v2(this->_pConnection);
         }
     }
 
