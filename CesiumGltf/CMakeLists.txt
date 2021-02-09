@@ -15,8 +15,6 @@ target_sources(
 
 target_include_directories(
     CesiumGltf
-    SYSTEM PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
     PUBLIC
         include
     PRIVATE

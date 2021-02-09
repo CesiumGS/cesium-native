@@ -1,16 +1,15 @@
 #pragma once
 
 #include <optional>
-#include "Cesium3DTiles/BoundingVolume.h"
-#include <rapidjson/fwd.h>
 #include <string>
 #include <vector>
+#include <glm/mat4x4.hpp>
+#include <rapidjson/fwd.h>
 
-namespace Cesium3DTiles {
+namespace CesiumUtility {
 
     class JsonHelpers final {
     public:
-        static std::optional<BoundingVolume> getBoundingVolumeProperty(const rapidjson::Value& tileJson, const std::string& key);
         static std::optional<double> getScalarProperty(const rapidjson::Value& tileJson, const std::string& key);
         static std::optional<glm::dmat4x4> getTransformProperty(const rapidjson::Value& tileJson, const std::string& key);
 
@@ -38,6 +37,18 @@ namespace Cesium3DTiles {
 
         static uint32_t getUint32OrDefault(const rapidjson::Value& json, const std::string& key, uint32_t defaultValue);
         static uint32_t getUint32OrDefault(const rapidjson::Value& json, uint32_t defaultValue);
+
+        static int32_t getInt32OrDefault(const rapidjson::Value& json, const std::string& key, int32_t defaultValue);
+        static int32_t getInt32OrDefault(const rapidjson::Value& json, int32_t defaultValue);
+
+        static uint64_t getUint64OrDefault(const rapidjson::Value& json, const std::string& key, uint64_t defaultValue);
+        static uint64_t getUint64OrDefault(const rapidjson::Value& json, uint64_t defaultValue);
+
+        static int64_t getInt64OrDefault(const rapidjson::Value& json, const std::string& key, int64_t defaultValue);
+        static int64_t getInt64OrDefault(const rapidjson::Value& json, int64_t defaultValue);
+
+        static bool getBoolOrDefault(const rapidjson::Value& json, const std::string& key, bool defaultValue);
+        static bool getBoolOrDefault(const rapidjson::Value& json, bool defaultValue);
 
         static std::vector<std::string> getStrings(const rapidjson::Value& json, const std::string& key);
     };

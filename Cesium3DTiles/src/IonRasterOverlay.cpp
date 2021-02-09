@@ -8,10 +8,11 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Uri.h"
-#include "JsonHelpers.h"
+#include "CesiumUtility/JsonHelpers.h"
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 

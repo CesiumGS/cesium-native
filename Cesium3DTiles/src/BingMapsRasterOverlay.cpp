@@ -10,9 +10,9 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
+#include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Uri.h"
-#include "JsonHelpers.h"
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
 #include <vector>
@@ -35,6 +35,7 @@ namespace {
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 

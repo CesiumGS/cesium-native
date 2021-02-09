@@ -13,7 +13,7 @@
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
 #include "calcQuadtreeMaxGeometricError.h"
-#include "JsonHelpers.h"
+#include "CesiumUtility/JsonHelpers.h"
 #include "TileUtilities.h"
 #include "CesiumUtility/Uri.h"
 #include <glm/common.hpp>
@@ -23,6 +23,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 
@@ -455,6 +456,55 @@ namespace Cesium3DTiles {
         };
     }
 
+	static std::optional<BoundingVolume> getBoundingVolumeProperty(const rapidjson::Value& tileJson, const std::string& key) {
+		auto bvIt = tileJson.FindMember(key.c_str());
+		if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
+			return std::nullopt;
+		}
+
+		auto boxIt = bvIt->value.FindMember("box");
+		if (boxIt != bvIt->value.MemberEnd() && boxIt->value.IsArray() && boxIt->value.Size() >= 12) {
+			const auto& a = boxIt->value.GetArray();
+			for (rapidjson::SizeType i = 0; i < 12; ++i) {
+				if (!a[i].IsNumber()) {
+					return std::nullopt;
+				}
+			}
+			return OrientedBoundingBox(
+				glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
+				glm::dmat3(
+					a[3].GetDouble(), a[4].GetDouble(), a[5].GetDouble(),
+					a[6].GetDouble(), a[7].GetDouble(), a[8].GetDouble(),
+					a[9].GetDouble(), a[10].GetDouble(), a[11].GetDouble()
+				)
+			);
+		}
+
+		auto regionIt = bvIt->value.FindMember("region");
+		if (regionIt != bvIt->value.MemberEnd() && regionIt->value.IsArray() && regionIt->value.Size() >= 6) {
+			const auto& a = regionIt->value;
+			for (rapidjson::SizeType i = 0; i < 6; ++i) {
+				if (!a[i].IsNumber()) {
+					return std::nullopt;
+				}
+			}
+			return BoundingRegion(GlobeRectangle(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble(), a[3].GetDouble()), a[4].GetDouble(), a[5].GetDouble());
+		}
+
+		auto sphereIt = bvIt->value.FindMember("sphere");
+		if (sphereIt != bvIt->value.MemberEnd() && sphereIt->value.IsArray() && sphereIt->value.Size() >= 4) {
+			const auto& a = sphereIt->value;
+			for (rapidjson::SizeType i = 0; i < 4; ++i) {
+				if (!a[i].IsNumber()) {
+					return std::nullopt;
+				}
+			}
+			return BoundingSphere(glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()), a[3].GetDouble());
+		}
+
+		return std::nullopt;
+	}
+
     /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) {
         if (!tileJson.IsObject()) {
             return;
@@ -479,13 +529,13 @@ namespace Cesium3DTiles {
                 tile.setTileID(CesiumUtility::Uri::resolve(context.baseUrl, uriIt->value.GetString()));
             }
 
-            std::optional<BoundingVolume> contentBoundingVolume = JsonHelpers::getBoundingVolumeProperty(contentIt->value, "boundingVolume");
+            std::optional<BoundingVolume> contentBoundingVolume = getBoundingVolumeProperty(contentIt->value, "boundingVolume");
             if (contentBoundingVolume) {
                 tile.setContentBoundingVolume(transformBoundingVolume(transform, contentBoundingVolume.value()));
             }
         }
 
-        std::optional<BoundingVolume> boundingVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "boundingVolume");
+        std::optional<BoundingVolume> boundingVolume = getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
             SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
             return;
@@ -501,7 +551,7 @@ namespace Cesium3DTiles {
         //tile->setBoundingVolume(boundingVolume.value());
         tile.setGeometricError(geometricError.value());
 
-        std::optional<BoundingVolume> viewerRequestVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
+        std::optional<BoundingVolume> viewerRequestVolume = getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
         if (viewerRequestVolume) {
             tile.setViewerRequestVolume(transformBoundingVolume(transform, viewerRequestVolume.value()));
         }
