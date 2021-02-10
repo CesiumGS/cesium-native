@@ -10,3 +10,5 @@ FixNamespaceComments: false
 IndentWidth: 4
 NamespaceIndentation: All
 AccessModifierOffset: -4
+AllowShortCaseLabelsOnASingleLine: true
+IndentCaseLabels: true
