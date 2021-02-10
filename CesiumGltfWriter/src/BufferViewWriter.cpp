@@ -50,7 +50,7 @@ void CesiumGltf::writeBufferView(
         }
 
         j.EndObject();
-        // TODO: extensions / extras
+        // TODO: extensions
     }
     j.EndArray();
 }
