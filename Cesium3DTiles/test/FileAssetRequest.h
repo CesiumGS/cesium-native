@@ -21,21 +21,19 @@ namespace Cesium3DTilesTests
 		 * @param url The URL (file path)
 		 * @param headers The headers
 		 */
-		FileAssetRequest(const std::string& url, const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers);
+		FileAssetRequest(const std::string& url, const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) noexcept;
 
-		~FileAssetRequest() override;
+		std::string url() const noexcept override;
 
-		std::string url() const override;
+		CesiumAsync::IAssetResponse* response() noexcept override;
 
-		CesiumAsync::IAssetResponse* response() override;
-
-		void bind(std::function<void(CesiumAsync::IAssetRequest*)> callback) override;
+		void bind(std::function<void(CesiumAsync::IAssetRequest*)> callback) noexcept override;
 
 		void cancel() noexcept override;
 
 	private:
 		std::string _url;
-		CesiumAsync::IAssetResponse* _pResponse;
+		std::unique_ptr<CesiumAsync::IAssetResponse> _pResponse;
 		std::function<void(CesiumAsync::IAssetRequest*)> _callback;
 	};
 }

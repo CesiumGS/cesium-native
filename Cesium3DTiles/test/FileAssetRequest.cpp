@@ -15,52 +15,47 @@
 
 namespace Cesium3DTilesTests
 {
-	FileAssetRequest::FileAssetRequest(const std::string& url, const std::vector<CesiumAsync::IAssetAccessor::THeader>& /*headers*/) :
+	FileAssetRequest::FileAssetRequest(const std::string& url, const std::vector<CesiumAsync::IAssetAccessor::THeader>& /*headers*/) noexcept :
 		_url(url),
 		_pResponse(nullptr),
-		_callback()
+		_callback() 
 	{
 		SPDLOG_TRACE("Created FileAssetRequest with {0}", url);
 
+		uint16_t statusCode = 200;
+		std::vector<uint8_t> contents;
 		std::ifstream stream(url, std::ios::in | std::ios::binary);
 		if (!stream.is_open()) {
 			SPDLOG_ERROR("Failed to open file {0}", url);
-			return;
+			statusCode = 404;
+		} else {
+			contents = std::vector<uint8_t>((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 		}
-		std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 
-		// XXX NOTE: The content type is ONLY determined to be JSON or B3DM
-		// by using the file extension here! This should examine the contents!
-
-		if (endsWith(url, "json")) {
-			std::string contentType = "json";
-			_pResponse = new FileAssetResponse(url, contentType, contents);
+		// TODO: The content type is ONLY determined by the file extension here! 
+		// This may be sufficient for now, but in the future, it may have to 
+		// examine the contents.
+		std::vector<std::string> fileExtensions{ "json", "b3dm", "cmpt", "glTF" };
+		for (const std::string& fileExtension : fileExtensions) {
+			if (endsWith(url, fileExtension)) {
+				std::string contentType = fileExtension;
+				_pResponse = std::make_unique<FileAssetResponse>(url, statusCode, contentType, contents);
+			}
 		}
-		else if (endsWith(url, "b3dm")) {
-			std::string contentType = "b3dm";
-			_pResponse = new FileAssetResponse(url, contentType, contents);
-		}
-		else {
+		if (!_pResponse) {
 			SPDLOG_ERROR("Unkonwn content type for {0}", url);
 		}
 	}
 
-	FileAssetRequest::~FileAssetRequest() {
-		delete _pResponse;
-	}
-
-	std::string FileAssetRequest::url() const {
+	std::string FileAssetRequest::url() const noexcept {
 		return _url;
 	}
 
-	CesiumAsync::IAssetResponse* FileAssetRequest::response() {
-		if (this->_pResponse) {
-			return this->_pResponse;
-		}
-		return this->_pResponse;
+	CesiumAsync::IAssetResponse* FileAssetRequest::response() noexcept {
+		return this->_pResponse.get();
 	}
 
-	void FileAssetRequest::bind(std::function<void(IAssetRequest*)> callback) {
+	void FileAssetRequest::bind(std::function<void(IAssetRequest*)> callback) noexcept {
 		this->_callback = callback;
 		if (callback) {
 			callback(this);
