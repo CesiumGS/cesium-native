@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iomanip>
 #include <functional>
+#include <filesystem>
 
 namespace Cesium3DTilesTests
 {
@@ -35,10 +36,11 @@ namespace Cesium3DTilesTests
 		// TODO: The content type is ONLY determined by the file extension here! 
 		// This may be sufficient for now, but in the future, it may have to 
 		// examine the contents.
-		std::vector<std::string> fileExtensions{ "json", "b3dm", "cmpt", "glTF" };
-		for (const std::string& fileExtension : fileExtensions) {
-			if (endsWith(url, fileExtension)) {
-				std::string contentType = fileExtension;
+		std::string actualExtension = std::filesystem::path(url).extension().string();
+		std::vector<std::string> extensions{ "json", "b3dm", "cmpt", "glTF" };
+		for (const std::string& extension : extensions) {
+			if (actualExtension == extension) {
+				std::string contentType = extension;
 				_pResponse = std::make_unique<FileAssetResponse>(url, statusCode, contentType, contents);
 			}
 		}

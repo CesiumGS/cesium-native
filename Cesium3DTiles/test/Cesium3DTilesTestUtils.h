@@ -30,16 +30,6 @@ namespace Cesium3DTilesTests
     Cesium3DTiles::ViewState createViewState();
 
     /**
-     * @brief Returns whether the given string ends with the given suffix.
-     * 
-     * If the string is shorter than the suffix, then `false` is returned.
-     * @param s The string
-     * @param s The suffix
-     * @return The result
-     */
-    bool endsWith(const std::string& s, const std::string& suffix);
-
-    /**
      * @brief Sleeps (blocks the calling thread) for the given number of milliseconds.
      * 
      * If the given number is not positive, then this call will not block.
