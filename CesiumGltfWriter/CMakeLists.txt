@@ -3,7 +3,7 @@ add_library(CesiumGltfWriter "")
 configure_cesium_library(CesiumGltfWriter)
 
 #file(GLOB SOURCES include/CesiumGltf/*.h src/*.cpp src/*.h generated/*.cpp generated/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
+#file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
 
 set(SOURCES 
     src/AccessorSparseWriter.cpp
@@ -22,9 +22,12 @@ set(SOURCES
     src/SkinWriter.cpp
     src/TextureWriter.cpp
     src/JsonObjectWriter.cpp
+    src/JsonWriter.cpp
+    src/ExtensionWriter.cpp
     src/WriteBinaryGLB.cpp
     src/Writer.cpp
 )
+
 
 target_sources(
     CesiumGltfWriter
@@ -40,8 +43,9 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
         ${CMAKE_BINARY_DIR}
     PUBLIC
-        include
+        "include"
     PRIVATE
+        "${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltf"
         ${MAGIC_ENUM_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
         src
