@@ -4,7 +4,7 @@
 
 void CesiumGltf::writeAsset(
     const Asset& asset,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     auto& j = jsonWriter;
     j.Key("asset");

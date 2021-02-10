@@ -7,7 +7,7 @@
 //       into the amalgamated one instead of performing extra copies.
 std::vector<std::uint8_t> CesiumGltf::writeBuffer(
     const std::vector<Buffer>& buffers,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     std::vector<std::uint8_t> amalgamatedBuffer;
 

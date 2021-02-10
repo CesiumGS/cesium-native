@@ -8,7 +8,7 @@
 
 void writeAnimationChannel(
     const CesiumGltf::AnimationChannel& animationChannel,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     j.StartObject();
     j.Key("sampler");
@@ -36,7 +36,7 @@ void writeAnimationChannel(
 
 void writeAnimationSampler(
     const CesiumGltf::AnimationSampler& animationSampler,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     auto&j = jsonWriter;
 
@@ -62,7 +62,7 @@ void writeAnimationSampler(
 
 void CesiumGltf::writeAnimation(
     const std::vector<Animation>& animations,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
 
     if (animations.empty()) {
         return;

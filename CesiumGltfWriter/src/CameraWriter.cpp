@@ -3,8 +3,7 @@
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
 #include <CesiumGltf/CameraPerspective.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
+#include "JsonWriter.h"
 #include <utility>
 #include <vector>
 #include <cstdint>
@@ -12,7 +11,7 @@
 
 void writeOrthographicCamera(
     const CesiumGltf::CameraOrthographic& cameraOrthographic,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     auto& j = jsonWriter;
     j.Key("orthographic");
@@ -32,12 +31,11 @@ void writeOrthographicCamera(
     }
 
     j.EndObject();
-    // todo: extras
 }
 
 void writePerspectiveCamera(
     const CesiumGltf::CameraPerspective& cameraPerspective,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     auto& j = jsonWriter;
     j.Key("perspective");
@@ -66,7 +64,7 @@ void writePerspectiveCamera(
 
 void CesiumGltf::writeCamera(
     const std::vector<Camera>& cameras,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     if (cameras.empty()) {
         return;

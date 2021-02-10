@@ -2,12 +2,14 @@
 #include <algorithm>
 #include <magic_enum.hpp>
 
-const size_t BYTE_HEADER_SIZE = 12;
-const size_t CHUNK_HEADER_MINIMUM_SIZE = 8;
-const uint32_t GLTF_VERSION = 2;
-const uint8_t PADDING_CHAR = 0x20;
+const std::size_t BYTE_HEADER_SIZE = 12;
+const std::size_t CHUNK_HEADER_MINIMUM_SIZE = 8;
+const std::uint32_t GLTF_VERSION = 2;
+const std::uint8_t PADDING_CHAR = 0x20;
 
-inline size_t nextMultipleOfFour(size_t n) { return (n + 3) & ~0x03ul; }
+inline std::size_t nextMultipleOfFour(std::size_t n) {
+    return (n + 3) & ~0x03ul;
+}
 
 void writeGLTFHeader(std::vector<std::uint8_t>& glbBuffer) {
     glbBuffer[0] = 'g';
@@ -45,7 +47,7 @@ void writeGLBJsonChunk(
 void writeGLBBinaryChunk(
     std::vector<std::uint8_t>& glbBuffer,
     std::vector<std::uint8_t>&& bufferChunk,
-    size_t byteOffset) {
+    std::size_t byteOffset) {
 
     const auto bufferLength = bufferChunk.size();
     const auto paddingLength = nextMultipleOfFour(bufferLength) - bufferLength;
@@ -64,7 +66,7 @@ void writeGLBBinaryChunk(
     glbBuffer[byteOffset + 7] = (GLBChunkType::BIN >> 24) & 0xff;
 
     glbBuffer.insert(glbBuffer.end(), bufferChunk.begin(), bufferChunk.end());
-    glbBuffer.insert(glbBuffer.end(), paddingLength, 0x20);
+    glbBuffer.insert(glbBuffer.end(), paddingLength, PADDING_CHAR);
 }
 
 std::vector<std::uint8_t> CesiumGltf::writeBinaryGLB(

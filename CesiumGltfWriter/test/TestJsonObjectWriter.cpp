@@ -1,10 +1,9 @@
-#include "catch2/catch.hpp"
-// TODO: This path should NOT be relative, should be accessible using
+// TODO: These paths should NOT be relative, use
 //       target_include_directories(...)
 #include "../src/JsonObjectWriter.h"
+#include "../src/JsonWriter.h"
 #include <CesiumGltf/JsonValue.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include <catch2/catch.hpp>
 #include <string>
 
 using namespace CesiumGltf;
@@ -19,22 +18,15 @@ using Null = JsonValue::Null;
 
 TEST_CASE("TestExtrasWjriter") {
     SECTION("[{}, {}, {}]") {
-        StringBuffer strBuffer;
-        Writer<StringBuffer> writer(strBuffer);
-        // clang-format off
-        const auto extrasObject = Object {
-            {"extras",  Array {Object {}, Object{}, Object{}} }
-        };
-        // clang-format on
-
+        CesiumGltf::JsonWriter writer;
+        const auto extrasObject =
+            Object{{"extras", Array{Object{}, Object{}, Object{}}}};
         writeJsonObject(extrasObject, writer);
-        auto str = std::string(strBuffer.GetString());
-        REQUIRE(str == R"({"extras":[{},{},{}]})");
+        REQUIRE(writer.toString() == R"({"extras":[{},{},{}]})");
     }
 
     SECTION(R"("A": {"B": "C"{}})") {
-        StringBuffer strBuffer;
-        Writer<StringBuffer> writer(strBuffer);
+        CesiumGltf::JsonWriter writer;
         // clang-format off
         const auto extrasObject = Object {{
             "extras", Object {{
@@ -48,33 +40,28 @@ TEST_CASE("TestExtrasWjriter") {
         // clang-format on
 
         writeJsonObject(extrasObject, writer);
-        auto str = std::string(strBuffer.GetString());
-        REQUIRE(str == R"({"extras":{"A":{"B":{"C":{}}}}})");
+        REQUIRE(writer.toString() == R"({"extras":{"A":{"B":{"C":{}}}}})");
     }
 
     SECTION(R"([[[1 -2,false,null,true,{"emojis": "😂👽🇵🇷"}]]])") {
-        StringBuffer strBuffer;
-        Writer<StringBuffer> writer(strBuffer);
+        CesiumGltf::JsonWriter writer;
         // clang-format off
         const auto extrasObject = Object {{
             "extras", Array {{{
                 Number(1), Number(-2), Bool(false), Null(), Bool(true),
-                Object {{ "emojis", "😂👽🇵🇷" }}
-            }}}
+                Object {{ "emojis", "😂👽🇵🇷" }} }}}
         }};
         // clang-format on
 
         writeJsonObject(extrasObject, writer);
-        auto str = std::string(strBuffer.GetString());
         REQUIRE(
-            str ==
+            writer.toString() ==
             R"({"extras":[[[1.0,-2.0,false,null,true,{"emojis":"😂👽🇵🇷"}]]]})");
     }
 
     SECTION("Empty object is serialized correctly") {
-        StringBuffer strBuffer;
-        Writer<StringBuffer> writer(strBuffer);
+        CesiumGltf::JsonWriter writer;
         writeJsonObject(Object{}, writer);
-        REQUIRE(std::string(strBuffer.GetString()) == "{}");
+        REQUIRE(writer.toString() == "{}");
     }
 }

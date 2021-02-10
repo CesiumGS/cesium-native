@@ -4,7 +4,7 @@
 
 void CesiumGltf::writeSampler(
     const std::vector<Sampler>& samplers,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
 
     if (samplers.empty()) {

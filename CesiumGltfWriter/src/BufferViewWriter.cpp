@@ -6,7 +6,7 @@
 
 void CesiumGltf::writeBufferView(
     const std::vector<BufferView>& bufferViews,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
 
     if (bufferViews.empty()) {
         return;

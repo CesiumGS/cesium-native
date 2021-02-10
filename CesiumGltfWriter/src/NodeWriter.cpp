@@ -1,8 +1,7 @@
 #include "JsonObjectWriter.h"
 #include "NodeWriter.h"
 #include <CesiumGltf/Image.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
+#include "JsonWriter.h"
 #include <vector>
 
 const std::vector<double> IDENTITY_4X4 { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
@@ -12,7 +11,7 @@ const std::vector<double> DEFAULT_TRANSLATION { 0, 0, 0 };
 
 void CesiumGltf::writeNode(
     const std::vector<Node>& nodes,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     if (nodes.empty()) {
         return;
@@ -52,7 +51,7 @@ void CesiumGltf::writeNode(
             assert(node.matrix.size() == IDENTITY_4X4.size());
             j.Key("matrix");
             j.StartArray();
-            for (size_t i = 0; i < IDENTITY_4X4.size(); ++i) {
+            for (std::size_t i = 0; i < IDENTITY_4X4.size(); ++i) {
                 j.Double(node.matrix[i]);
             }
             j.EndArray();
@@ -62,7 +61,7 @@ void CesiumGltf::writeNode(
             assert(node.rotation.size() == DEFAULT_ROTATION.size());
             j.Key("rotation");
             j.StartArray();
-            for (size_t i = 0; i < DEFAULT_ROTATION.size(); ++i) {
+            for (std::size_t i = 0; i < DEFAULT_ROTATION.size(); ++i) {
                 j.Double(node.rotation[i]);
             }
             j.EndArray();
@@ -72,7 +71,7 @@ void CesiumGltf::writeNode(
             assert(node.scale.size() == DEFAULT_SCALE.size());
             j.Key("scale");
             j.StartArray();
-            for (size_t i = 0; i < DEFAULT_SCALE.size(); ++i) {
+            for (std::size_t i = 0; i < DEFAULT_SCALE.size(); ++i) {
                 j.Double(node.scale[i]);
             }
             j.EndArray();
@@ -82,7 +81,7 @@ void CesiumGltf::writeNode(
             assert(node.translation.size() == DEFAULT_TRANSLATION.size());
             j.Key("translation");
             j.StartArray();
-            for (size_t i = 0; i < DEFAULT_TRANSLATION.size(); ++i) {
+            for (std::size_t i = 0; i < DEFAULT_TRANSLATION.size(); ++i) {
                 j.Double(node.translation[i]);
             }
             j.EndArray();

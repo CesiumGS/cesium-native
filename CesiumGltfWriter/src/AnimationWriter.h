@@ -1,11 +1,10 @@
 #pragma once
 #include <CesiumGltf/Animation.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include "JsonWriter.h"
 #include <vector>
 
 namespace CesiumGltf {
     void writeAnimation(
         const std::vector<Animation>& animations,
-        rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter);
+        CesiumGltf::JsonWriter& jsonWriter);
 }

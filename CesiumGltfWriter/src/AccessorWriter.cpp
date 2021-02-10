@@ -7,7 +7,7 @@
 
 void CesiumGltf::writeAccessor(
     const std::vector<Accessor>& accessors,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
 
     if (accessors.empty()) {
         return;
@@ -38,10 +38,10 @@ void CesiumGltf::writeAccessor(
         }
 
         j.Key("count");
-        j.Uint(static_cast<unsigned int>(accessor.count));
+        j.Int64(accessor.count);
 
         j.Key("type");
-        j.String(AccessorSpec::typeToString(accessor.type).c_str());
+        j.String(magic_enum::enum_name(accessor.type));
 
         if (!accessor.max.empty()) {
             j.Key("max");

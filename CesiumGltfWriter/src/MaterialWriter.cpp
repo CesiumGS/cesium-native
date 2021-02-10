@@ -9,7 +9,7 @@
 #include <vector>
 #include <cassert>
 
-void writePbrMetallicRoughness(const CesiumGltf::MaterialPBRMetallicRoughness& pbr, rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+void writePbrMetallicRoughness(const CesiumGltf::MaterialPBRMetallicRoughness& pbr, CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     j.Key("pbrMetallicRoughness");
     j.StartObject();
@@ -53,7 +53,7 @@ void writePbrMetallicRoughness(const CesiumGltf::MaterialPBRMetallicRoughness& p
     j.EndObject();
 }
 
-void writeNormalTexture(const CesiumGltf::MaterialNormalTextureInfo& normalTexture, rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+void writeNormalTexture(const CesiumGltf::MaterialNormalTextureInfo& normalTexture, CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     j.Key("normalTextureInfo");
     j.StartObject();
@@ -80,7 +80,7 @@ void writeNormalTexture(const CesiumGltf::MaterialNormalTextureInfo& normalTextu
     j.EndObject();
 }
 
-void writeOcclusionTexture(const CesiumGltf::MaterialOcclusionTextureInfo& occlusionTexture, rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+void writeOcclusionTexture(const CesiumGltf::MaterialOcclusionTextureInfo& occlusionTexture, CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     j.Key("occlusionTexture");
     j.StartObject();
@@ -106,7 +106,7 @@ void writeOcclusionTexture(const CesiumGltf::MaterialOcclusionTextureInfo& occlu
     j.EndObject();
 }
 
-void writeEmissiveTexture(const CesiumGltf::TextureInfo& emissiveTexture, rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+void writeEmissiveTexture(const CesiumGltf::TextureInfo& emissiveTexture, CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     j.Key("emissiveTexture");
     j.StartObject();
@@ -129,7 +129,7 @@ void writeEmissiveTexture(const CesiumGltf::TextureInfo& emissiveTexture, rapidj
 
 void CesiumGltf::writeMaterial(
     const std::vector<Material>& materials,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     if (materials.empty()) {
         return;

@@ -1,9 +1,8 @@
 #pragma once
 #include <CesiumGltf/JsonValue.h>
 #include <CesiumGltf/ExtensibleObject.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
+#include "JsonWriter.h"
 
 namespace CesiumGltf {
-    void writeJsonObject(const JsonValue::Object& object, rapidjson::Writer<rapidjson::StringBuffer>& writer);
+    void writeJsonObject(const JsonValue::Object& object, CesiumGltf::JsonWriter& writer);
 }

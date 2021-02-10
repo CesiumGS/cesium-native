@@ -4,8 +4,8 @@
 #include <algorithm>
 
 void CesiumGltf::writeImage(
-    const std::vector<Image>& images,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    const std::vector<CesiumGltf::Image>& images,
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
     if (images.empty()) {
         return;
