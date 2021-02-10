@@ -35,9 +35,11 @@ namespace Cesium3DTilesTests
 			}
 			SPDLOG_TRACE("SimpleTaskProcessor thread running DONE");
 		});
-		thread.detach();
+
 		if (_blocking) {
 			thread.join();
+		} else {
+			thread.detach();
 		}
 	}
 }
