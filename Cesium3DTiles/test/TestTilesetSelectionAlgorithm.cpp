@@ -1,6 +1,7 @@
 #include "catch2/catch.hpp"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/ViewState.h"
+#include "Cesium3DTiles/registerAllTileContentTypes.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumUtility/Math.h"
 #include "SimpleAssetRequest.h"
@@ -96,6 +97,8 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 }
 
 TEST_CASE("Test replace refinement for render") {
+	Cesium3DTiles::registerAllTileContentTypes();
+
 	// initialize REPLACE tileset
 	//
 	//				   parent.b3dm
@@ -464,6 +467,8 @@ TEST_CASE("Test replace refinement for render") {
 }
 
 TEST_CASE("Test additive refinement") {
+	Cesium3DTiles::registerAllTileContentTypes();
+
 	std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
 	testDataPath = testDataPath / "AddTileset";
 	std::vector<std::string> files{
