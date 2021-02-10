@@ -1,13 +1,13 @@
 #include "catch2/catch.hpp"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/ViewState.h"
-#include "Cesium3DTiles/IPrepareRendererResources.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumUtility/Math.h"
+#include "SimpleAssetRequest.h"
+#include "SimpleAssetResponse.h"
+#include "SimplePrepareRendererResource.h"
+#include "SimpleAssetAccessor.h"
+#include "SimpleTaskProcessor.h"
 #include "glm/mat4x4.hpp"
 #include <fstream>
 #include <filesystem>
@@ -16,181 +16,6 @@ using namespace CesiumAsync;
 using namespace Cesium3DTiles;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
-
-class MockAssetResponse : public IAssetResponse {
-public:
-	MockAssetResponse(uint16_t statusCode,
-		const std::string& contentType,
-		const std::vector<uint8_t>& data)
-		: mockStatusCode{ statusCode }
-		, mockContentType{ contentType }
-		, mockData{ data }
-	{}
-
-	virtual uint16_t statusCode() const override { return this->mockStatusCode; }
-
-	virtual std::string contentType() const override { return this->mockContentType; }
-
-	virtual gsl::span<const uint8_t> data() const override {
-		return gsl::span<const uint8_t>(mockData.data(), mockData.size());
-	}
-
-	uint16_t mockStatusCode;
-	std::string mockContentType;
-	std::vector<uint8_t> mockData;
-};
-
-class MockAssetRequest : public IAssetRequest {
-public:
-	MockAssetRequest(const std::string& url,
-		std::unique_ptr<MockAssetResponse> response)
-		: requestUrl{ url }
-		, pResponse{ std::move(response) }
-	{}
-
-	virtual std::string url() const override {
-		return this->requestUrl;
-	}
-
-	virtual IAssetResponse* response() override {
-		return this->pResponse.get();
-	}
-
-	virtual void bind(std::function<void(IAssetRequest*)> callback) override {
-		callback(this);
-	}
-
-	virtual void cancel() noexcept override {}
-
-	std::string requestUrl;
-	std::unique_ptr<MockAssetResponse> pResponse;
-};
-
-class MockAssetAccessor : public IAssetAccessor {
-public:
-	MockAssetAccessor(std::map<std::string, std::unique_ptr<MockAssetRequest>> mockCompletedRequests)
-		: mockCompletedRequests{std::move(mockCompletedRequests)}
-	{}
-
-	virtual std::unique_ptr<IAssetRequest> requestAsset(
-		const std::string& url,
-		const std::vector<THeader>&) override
-	{
-		auto mockRequestIt = mockCompletedRequests.find(url);
-		if (mockRequestIt != mockCompletedRequests.end()) {
-			return std::move(mockRequestIt->second);
-		}
-
-		return nullptr;
-	}
-
-	virtual void tick() noexcept override {}
-
-	std::map<std::string, std::unique_ptr<MockAssetRequest>> mockCompletedRequests;
-};
-
-class MockTaskProcessor : public ITaskProcessor {
-public:
-	virtual void startTask(std::function<void()> f) override { f(); }
-};
-
-class MockPrepareRendererResource : public IPrepareRendererResources {
-public:
-	struct LoadThreadResult {
-		const CesiumGltf::Model& model;
-        const glm::dmat4& transform;
-	};
-
-	struct MainThreadResult {
-        const Tile& tile;
-        void* pLoadThreadResult;
-	};
-
-	struct LoadThreadRasterResult {
-		const CesiumGltf::ImageCesium& image;
-	};
-
-	struct MainThreadRasterResult {
-		const RasterOverlayTile& rasterTile;
-		void* pLoadThreadResult;
-	};
-
-	virtual void* prepareInLoadThread(
-		const CesiumGltf::Model& model,
-		const glm::dmat4& transform) override 
-	{
-		return new LoadThreadResult{model, transform};
-	}
-
-	virtual void* prepareInMainThread(Tile& tile, void* pLoadThreadResult) override 
-	{
-		return new MainThreadResult{tile, pLoadThreadResult};
-    }
-
-	virtual void free(
-		Tile& /*tile*/,
-		void* pLoadThreadResult,
-		void* pMainThreadResult) noexcept override
-	{
-		if (pMainThreadResult) {
-            MainThreadResult* mainThreadResult = reinterpret_cast<MainThreadResult*>(pMainThreadResult); 
-			delete mainThreadResult;
-		}
-
-		if (pLoadThreadResult) {
-            LoadThreadResult* loadThreadResult = reinterpret_cast<LoadThreadResult*>(pLoadThreadResult); 
-			delete loadThreadResult;
-		}
-	}
-
-	virtual void* prepareRasterInLoadThread(const CesiumGltf::ImageCesium& image) override 
-	{
-		return new LoadThreadRasterResult{image};
-	}
-
-	virtual void* prepareRasterInMainThread(
-            const RasterOverlayTile& rasterTile,
-            void* pLoadThreadResult) override 
-	{
-		return new MainThreadRasterResult{rasterTile, pLoadThreadResult};
-	}
-
-	virtual void freeRaster(
-            const RasterOverlayTile& /*rasterTile*/,
-            void* pLoadThreadResult,
-            void* pMainThreadResult) noexcept override 
-	{
-		if (pMainThreadResult) {
-            MainThreadRasterResult* mainThreadResult = reinterpret_cast<MainThreadRasterResult*>(pMainThreadResult); 
-			delete mainThreadResult;
-		}
-
-		if (pLoadThreadResult) {
-            LoadThreadRasterResult* loadThreadResult = reinterpret_cast<LoadThreadRasterResult*>(pLoadThreadResult); 
-			delete loadThreadResult;
-		}
-	}
-
-	virtual void attachRasterInMainThread(
-		const Tile& /*tile*/,
-		uint32_t /*overlayTextureCoordinateID*/,
-		const RasterOverlayTile& /*rasterTile*/,
-		void* /*pMainThreadRendererResources*/,
-		const CesiumGeometry::Rectangle& /*textureCoordinateRectangle*/,
-		const glm::dvec2& /*translation*/,
-		const glm::dvec2& /*scale*/) override 
-	{
-	}
-
-	virtual void detachRasterInMainThread(
-		const Tile& /*tile*/,
-		uint32_t /*overlayTextureCoordinateID*/,
-		const RasterOverlayTile& /*rasterTile*/,
-		void* /*pMainThreadRendererResources*/,
-		const CesiumGeometry::Rectangle& /*textureCoordinateRectangle*/) noexcept override 
-	{
-	}
-};
 
 static std::vector<uint8_t> readFile(const std::filesystem::path& fileName) {
 	std::ifstream file(fileName, std::ios::binary | std::ios::ate);
@@ -273,7 +98,7 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 TEST_CASE("Test replace refinement for render") {
 	// initialize tileset
 	std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
-	testDataPath = testDataPath / "Tileset";
+	testDataPath = testDataPath / "ReplaceTileset";
 	std::vector<std::string> files{
 		"tileset.json",
 		"parent.b3dm",
@@ -284,18 +109,18 @@ TEST_CASE("Test replace refinement for render") {
 		"ll_ll.b3dm",
 	};
 
-	std::map<std::string, std::unique_ptr<MockAssetRequest>> mockCompletedRequests;
+	std::map<std::string, std::unique_ptr<SimpleAssetRequest>> mockCompletedRequests;
 	for (const auto& file : files) {
 		mockCompletedRequests.insert({ 
 			file, 
-			std::make_unique<MockAssetRequest>(file, std::make_unique<MockAssetResponse>(static_cast<uint16_t>(200), "app/json", readFile(testDataPath / file))) });
+			std::make_unique<SimpleAssetRequest>(file, std::make_unique<SimpleAssetResponse>(static_cast<uint16_t>(200), "app/json", readFile(testDataPath / file))) });
 	}
 
-	std::shared_ptr<MockAssetAccessor> mockAssetAccessor = std::make_shared<MockAssetAccessor>(std::move(mockCompletedRequests));
+	std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor = std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
 	TilesetExternals tilesetExternals {
 		mockAssetAccessor,
-		std::make_shared<MockPrepareRendererResource>(),
-        std::make_shared<MockTaskProcessor>()
+		std::make_shared<SimplePrepareRendererResource>(),
+        std::make_shared<SimpleTaskProcessor>()
 	};
 
 	// create tileset and call updateView() to give it a chance to load
