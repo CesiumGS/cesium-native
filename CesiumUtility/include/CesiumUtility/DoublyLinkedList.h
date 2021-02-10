@@ -25,7 +25,7 @@ namespace CesiumUtility {
         // Following the example of boost::instrusive::list's list_member_hook, the
         // copy constructor and assignment operator do nothing.
         // https://www.boost.org/doc/libs/1_73_0/doc/html/boost/intrusive/list_member_hook.html
-        DoublyLinkedListPointers(DoublyLinkedListPointers& rhs) noexcept :
+        DoublyLinkedListPointers(DoublyLinkedListPointers&) noexcept :
             DoublyLinkedListPointers()
         {}
 
