@@ -464,8 +464,140 @@ TEST_CASE("Test replace refinement for render") {
 }
 
 TEST_CASE("Test additive refinement") {
-	SECTION("Load external tilesets") {
+	std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
+	testDataPath = testDataPath / "AddTileset";
+	std::vector<std::string> files{
+		"tileset.json",
+		"tileset2.json",
+		"parent.b3dm",
+		"lr.b3dm",
+		"ul.b3dm",
+		"ur.b3dm",
+		"tileset3/tileset3.json",
+		"tileset3/ll.b3dm"
+	};
 
+	std::map<std::string, std::unique_ptr<SimpleAssetRequest>> mockCompletedRequests;
+	for (const auto& file : files) {
+		mockCompletedRequests.insert({ 
+			file, 
+			std::make_unique<SimpleAssetRequest>(file, std::make_unique<SimpleAssetResponse>(static_cast<uint16_t>(200), "app/json", readFile(testDataPath / file))) });
+	}
+
+	std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor = std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+	TilesetExternals tilesetExternals {
+		mockAssetAccessor,
+		std::make_shared<SimplePrepareRendererResource>(),
+        std::make_shared<SimpleTaskProcessor>()
+	};
+
+	// create tileset and call updateView() to give it a chance to load
+	std::unique_ptr<Tileset> tileset = std::make_unique<Tileset>(tilesetExternals, "tileset.json");
+	initializeTileset(*tileset);
+
+	// root is external tileset. Since its content is loading, we won't know if it has children or not
+	const Tile* root = tileset->getRootTile();
+	REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+	REQUIRE(root->getChildren().size() == 0);
+
+	SECTION("Load external tilesets") {
+		ViewState viewState = zoomToTileset(*tileset);
+
+		// 1st frame. Root will get rendered first and 5 of its children are loading since they meet sse
+		{
+			ViewUpdateResult result = tileset->updateView(viewState);
+
+			// root is rendered first
+			REQUIRE(root->getState() == Tile::LoadState::Done);
+			REQUIRE(!isTileMeetSSE(viewState, *root, *tileset));
+			REQUIRE(root->getChildren().size() == 1);
+
+			// root's children don't have content loading right now, so only root get rendered
+			const Tile& parentB3DM = root->getChildren().front();
+			REQUIRE(parentB3DM.getState() == Tile::LoadState::ContentLoading);
+			REQUIRE(!isTileMeetSSE(viewState, parentB3DM, *tileset));
+			REQUIRE(parentB3DM.getChildren().size() == 4);
+
+			for (const Tile& child : parentB3DM.getChildren()) {
+				REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+				REQUIRE(isTileMeetSSE(viewState, child, *tileset));
+			}
+
+			// TODO: it's suprised that external tileset tile is put in the render queue
+			REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+			REQUIRE(result.tilesToRenderThisFrame.front() == root);
+
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+
+			REQUIRE(result.tilesVisited == 6);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
+			REQUIRE(result.tilesLoadingMediumPriority == 5);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
+			REQUIRE(result.tilesCulled == 0);
+			REQUIRE(result.culledTilesVisited == 0);
+		}
+
+		// 2nd frame
+		{
+			ViewUpdateResult result = tileset->updateView(viewState);
+
+			// root is rendered first
+			REQUIRE(root->getState() == Tile::LoadState::Done);
+			REQUIRE(!isTileMeetSSE(viewState, *root, *tileset));
+			REQUIRE(root->getChildren().size() == 1);
+
+			// root's children don't have content loading right now, so only root get rendered
+			const Tile& parentB3DM = root->getChildren().front();
+			REQUIRE(parentB3DM.getState() == Tile::LoadState::Done);
+			REQUIRE(!isTileMeetSSE(viewState, parentB3DM, *tileset));
+			REQUIRE(parentB3DM.getChildren().size() == 4);
+
+			for (const Tile& child : parentB3DM.getChildren()) {
+				REQUIRE(child.getState() == Tile::LoadState::Done);
+
+				if (*std::get_if<std::string>(&child.getTileID()) != "tileset3/tileset3.json") {
+					REQUIRE(isTileMeetSSE(viewState, child, *tileset));
+				}
+				else {
+					// external tileset has always geometric error over 999999, so it won't meet sse
+					REQUIRE(!isTileMeetSSE(viewState, child, *tileset));
+
+					// expect the children to meet sse and begin loading the content
+					REQUIRE(child.getChildren().size() == 1);
+					REQUIRE(isTileMeetSSE(viewState, child.getChildren().front(), *tileset));
+					REQUIRE(child.getChildren().front().getState() == Tile::LoadState::ContentLoading);
+				}
+			}
+
+			REQUIRE(result.tilesToRenderThisFrame.size() == 2);
+			REQUIRE(result.tilesToRenderThisFrame[0] == root);
+			REQUIRE(result.tilesToRenderThisFrame[1] == &parentB3DM);
+
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+
+			REQUIRE(result.tilesVisited == 7);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
+			REQUIRE(result.tilesLoadingMediumPriority == 1);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
+			REQUIRE(result.tilesCulled == 0); 
+			REQUIRE(result.culledTilesVisited == 0);
+		}
+
+		// 3rd frame. All the children finish loading. All should be rendered now
+		{
+			ViewUpdateResult result = tileset->updateView(viewState);
+
+			REQUIRE(result.tilesToRenderThisFrame.size() == 7);
+
+			REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+
+			REQUIRE(result.tilesVisited == 7);
+			REQUIRE(result.tilesLoadingLowPriority == 0);
+			REQUIRE(result.tilesLoadingMediumPriority == 0);
+			REQUIRE(result.tilesLoadingHighPriority == 0);
+			REQUIRE(result.tilesCulled == 0); 
+			REQUIRE(result.culledTilesVisited == 0);
+		}
 	}
 }
 
