@@ -2,15 +2,34 @@ add_library(CesiumUtility "")
 
 configure_cesium_library(CesiumUtility)
 
-file(GLOB SOURCES include/CesiumUtility*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumUtility/*.h)
+set(CESIUM_UTILITY_SOURCE
+    src/Library.cpp
+)
+
+set(CESIUM_UTILITY_TEST_SOURCE
+    test/TestDoublyLinkedList.cpp
+    test/TestMath.cpp
+)
+
+list(TRANSFORM CESIUM_UTILITY_TEST_SOURCE PREPEND "${CMAKE_CURRENT_LIST_DIR}/")
+set(CESIUM_UTILITY_TEST_SOURCE "${CESIUM_UTILITY_TEST_SOURCE}" PARENT_SCOPE)
+
+set(CESIUM_UTILITY_PUBLIC_HEADERS
+    include/CesiumUtility/DoublyLinkedList.h
+    include/CesiumUtility/IntrusivePointer.h
+    include/CesiumUtility/joinToString.h
+    include/CesiumUtility/Library.h
+    include/CesiumUtility/Math.h
+)
+
+set(CESIUM_UTILITY_PUBLIC_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include" PARENT_SCOPE)
 
 target_sources(
     CesiumUtility
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_UTILITY_SOURCE}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_UTILITY_PUBLIC_HEADERS}
 )
 
 target_include_directories(
@@ -21,13 +40,9 @@ target_include_directories(
         # into an error) in a glm header, and there's no way to make the glm include directory a _system_
         # include directory via target_link_libraries (which would ignore the warning). So we add it as a
         # system include dir here.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/glm
+        ${CESIUM_NATIVE_GLM_INCLUDE_DIR}
     PUBLIC
         include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumUtility_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
 target_link_libraries(CesiumUtility PUBLIC GSL glm)

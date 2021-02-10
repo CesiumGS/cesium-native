@@ -2,15 +2,25 @@ add_library(CesiumAsync "")
 
 configure_cesium_library(CesiumAsync)
 
-file(GLOB SOURCES include/CesiumAsync/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumAsync/*.h)
+set(CESIUM_ASYNC_SOURCE
+    src/AsyncSystem.cpp
+)
+
+set(CESIUM_ASYNC_PUBLIC_HEADERS
+    include/CesiumAsync/AsyncSystem.h
+    include/CesiumAsync/IAssetAccessor.h
+    include/CesiumAsync/IAssetRequest.h
+    include/CesiumAsync/IAssetResponse.h
+    include/CesiumAsync/ITaskProcessor.h
+    include/CesiumAsync/Library.h
+)
 
 target_sources(
     CesiumAsync
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_ASYNC_SOURCE}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_ASYNC_PUBLIC_HEADERS}
 )
 
 target_include_directories(
@@ -18,10 +28,6 @@ target_include_directories(
     SYSTEM PUBLIC
     PUBLIC
         include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumAsync_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
 target_link_libraries(CesiumAsync PUBLIC Async++)
