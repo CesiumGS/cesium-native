@@ -35,5 +35,5 @@ void CesiumGltf::writeAsset(
 
     j.EndObject();
 
-    // TODO: extensions, extras
+    // TODO: extensions
 }
