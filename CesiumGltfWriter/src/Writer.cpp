@@ -1,16 +1,19 @@
-#include "JsonObjectWriter.h"
-#include "CesiumGltf/Writer.h"
+#include "Writer.h"
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
+#include "CesiumGltf/Writer.h"
 #include "ImageWriter.h"
+#include "JsonObjectWriter.h"
+#include "JsonWriter.h"
 #include "MaterialWriter.h"
+#include "MeshWriter.h"
 #include "NodeWriter.h"
 #include "SamplerWriter.h"
 #include "SceneWriter.h"
-#include "MeshWriter.h"
 #include "SkinWriter.h"
 #include "TextureWriter.h"
+#include "ExtensionWriter.h"
 #include "WriteBinaryGLB.h"
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
@@ -18,13 +21,12 @@
 #include <CesiumGltf/JsonValue.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include <stdexcept>
 #include <string_view>
 
 void validateFlags(CesiumGltf::WriteFlags options) {
-    if (options & CesiumGltf::WriteFlags::GLB && options & CesiumGltf::WriteFlags::GLTF) {
+    if (options & CesiumGltf::WriteFlags::GLB &&
+        options & CesiumGltf::WriteFlags::GLTF) {
         throw std::runtime_error("GLB and GLTF flags are mutually exclusive.");
     }
 }
@@ -34,8 +36,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteFlags flags) {
     validateFlags(flags);
     std::vector<std::uint8_t> result;
 
-    rapidjson::StringBuffer strBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(strBuffer);
+    CesiumGltf::JsonWriter writer;
     writer.StartObject();
     CesiumGltf::writeAccessor(model.accessors, writer);
     CesiumGltf::writeAnimation(model.animations, writer);
@@ -51,8 +52,8 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteFlags flags) {
     CesiumGltf::writeScene(model.scenes, writer);
     CesiumGltf::writeSkin(model.skins, writer);
     CesiumGltf::writeTexture(model.textures, writer);
+    CesiumGltf::writeExtensions(model.extensions, writer);
 
-    // TODO: extensions
     // TODO: extensionsUsed
     // TODO: extensionsRequired
 
@@ -61,7 +62,7 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteFlags flags) {
     }
 
     writer.EndObject();
-    std::string_view view(strBuffer.GetString());
+    std::string_view view(writer.toString());
 
     if (flags & WriteFlags::GLB) {
         return writeBinaryGLB(std::move(buffers), view);

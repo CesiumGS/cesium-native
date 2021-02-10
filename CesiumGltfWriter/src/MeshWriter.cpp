@@ -2,14 +2,13 @@
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include "JsonWriter.h"
 #include <vector>
 #include <magic_enum.hpp>
 
 void writePrimitive(
     const CesiumGltf::MeshPrimitive& primitive,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
     auto& j = jsonWriter;
     j.StartObject();
 
@@ -17,7 +16,7 @@ void writePrimitive(
     assert(!primitive.attributes.empty());
     j.StartObject();
     for (const auto& [key, index] : primitive.attributes) {
-        j.Key(key.c_str());
+        j.Key(key);
         j.Int(index);
     }
     j.EndObject();
@@ -60,7 +59,7 @@ void writePrimitive(
 
 void CesiumGltf::writeMesh(
     const std::vector<Mesh>& meshes,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
 
     if (meshes.empty()) {
         return;
@@ -99,7 +98,7 @@ void CesiumGltf::writeMesh(
             writeJsonObject(mesh.extras, j);
         }
 
-        // extensions
+        // todo: extensions
         j.EndObject();
     }
 

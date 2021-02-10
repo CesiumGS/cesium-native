@@ -2,7 +2,7 @@
 #include "SkinWriter.h"
 void CesiumGltf::writeSkin(
     const std::vector<Skin>& skins,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
 
     if (skins.empty()) {
         return;

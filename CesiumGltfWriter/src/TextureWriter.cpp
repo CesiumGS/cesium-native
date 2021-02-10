@@ -3,7 +3,7 @@
 
 void CesiumGltf::writeTexture(
     const std::vector<Texture>& textures,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter
+    CesiumGltf::JsonWriter& jsonWriter
 ) {
 
     if (textures.empty()) {

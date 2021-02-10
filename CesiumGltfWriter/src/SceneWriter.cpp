@@ -2,7 +2,7 @@
 #include "SceneWriter.h"
 void CesiumGltf::writeScene(
     const std::vector<Scene>& scenes,
-    rapidjson::Writer<rapidjson::StringBuffer>& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter) {
 
     if (scenes.empty()) {
         return;
