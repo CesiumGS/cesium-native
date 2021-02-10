@@ -20,6 +20,7 @@ target_sources(
         ${CESIUM_GEOSPATIAL_TEST_SOURCE}
         ${CESIUM_GLTF_TEST_SOURCE}
         ${CESIUM_GLTF_READER_TEST_SOURCE}
+        ${CESIUM_GLTF_WRITER_TEST_SOURCE}
         ${CESIUM_UTILITY_TEST_SOURCE}
         src/test-main.cpp
 )
@@ -33,5 +34,6 @@ target_link_libraries(
         CesiumGeospatial
         CesiumGltf
         CesiumGltfReader
+        CesiumGltfWriter
         Catch2::Catch2
 )

@@ -2,10 +2,7 @@ add_library(CesiumGltfWriter "")
 
 configure_cesium_library(CesiumGltfWriter)
 
-#file(GLOB SOURCES include/CesiumGltf/*.h src/*.cpp src/*.h generated/*.cpp generated/*.h)
-#file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
-
-set(SOURCES 
+set(CESIUM_GLTF_WRITER_SOURCE 
     src/AccessorSparseWriter.cpp
     src/AccessorWriter.cpp
     src/AnimationWriter.cpp
@@ -28,11 +25,19 @@ set(SOURCES
     src/Writer.cpp
 )
 
+set(CESIUM_GLTF_WRITER_TEST_SOURCE 
+    test/TestFindMinMax.cpp
+    test/TestJsonObjectWriter.cpp
+    test/TestWriter.cpp
+)
+
+list(TRANSFORM CESIUM_GLTF_WRITER_TEST_SOURCE PREPEND "${CMAKE_CURRENT_LIST_DIR}/")
+set(CESIUM_GLTF_WRITER_TEST_SOURCE "${CESIUM_GLTF_WRITER_TEST_SOURCE}" PARENT_SCOPE)
 
 target_sources(
     CesiumGltfWriter
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_GLTF_WRITER_SOURCE}
     PUBLIC
         ${PUBLIC_INCLUDES}
 )
@@ -40,14 +45,14 @@ target_sources(
 target_include_directories(
     CesiumGltfWriter
     SYSTEM PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
     PUBLIC
         "include"
+        ${CESIUM_GLTF_PUBLIC_HEADERS}
     PRIVATE
-        "${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltf"
-        ${MAGIC_ENUM_INCLUDE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
+        ${CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR}
+        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         src
         generated
 )

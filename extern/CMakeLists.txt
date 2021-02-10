@@ -23,6 +23,10 @@ add_subdirectory(spdlog)
 add_subdirectory(modp_b64)
 add_subdirectory(sqlite3)
 
+set(CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/magic_enum/" CACHE INTERNAL 
+    "Include directory for magic_enum"
+)
+
 set(CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/rapidjson/include" CACHE INTERNAL
     "Include directory for rapidjson"
 )
