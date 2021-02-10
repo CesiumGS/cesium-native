@@ -96,7 +96,14 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 }
 
 TEST_CASE("Test replace refinement for render") {
-	// initialize tileset
+	// initialize REPLACE tileset
+	//
+	//				   parent.b3dm
+	//		/			/		\			\
+	// ll.b3dm		lr.b3dm		ul.b3dm		ur.b3dm
+	//  /
+	// ll_ll.b3dm
+	//
 	std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
 	testDataPath = testDataPath / "ReplaceTileset";
 	std::vector<std::string> files{
@@ -457,7 +464,7 @@ TEST_CASE("Test replace refinement for render") {
 }
 
 TEST_CASE("Test additive refinement") {
-	SECTION("") {
+	SECTION("Load external tilesets") {
 
 	}
 }
