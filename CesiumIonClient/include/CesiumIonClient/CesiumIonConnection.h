@@ -4,6 +4,7 @@
 #include <optional>
 
 namespace CesiumIonClient {
+    struct CesiumIonAssets;
     struct CesiumIonProfile;
 
     class CesiumIonConnection final {
@@ -86,6 +87,8 @@ namespace CesiumIonClient {
          * @return A future that resolves to the profile information.
          */
         CesiumAsync::Future<Response<CesiumIonProfile>> me() const;
+
+        CesiumAsync::Future<Response<CesiumIonAssets>> assets() const;
 
     private:
         CesiumAsync::AsyncSystem _asyncSystem;

@@ -1,4 +1,5 @@
 #include "CesiumIonClient/CesiumIonConnection.h"
+#include "CesiumIonClient/CesiumIonAssets.h"
 #include "CesiumIonClient/CesiumIonProfile.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Uri.h"
@@ -169,6 +170,76 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonProfile>> CesiumIonCo
         }
 
         return Response<CesiumIonProfile> {
+            result,
+            pResponse->statusCode(),
+            std::string(),
+            std::string()
+        };
+    });
+}
+
+CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonAssets>> CesiumIonConnection::assets() const {
+    return this->_asyncSystem.requestAsset(
+        CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets")
+    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            return Response<CesiumIonAssets> {
+                std::nullopt,
+                0,
+                "NoResponse",
+                "The server did not return a response."
+            };
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            return createErrorResponse<CesiumIonAssets>(pResponse);
+        }
+
+        rapidjson::Document d;
+        d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
+        if (d.HasParseError()) {
+            return Response<CesiumIonAssets> {
+                std::nullopt,
+                pResponse->statusCode(),
+                "ParseError",
+                std::string("Failed to parse JSON response: ") + rapidjson::GetParseError_En(d.GetParseError())
+            };
+        }
+
+        if (!d.IsObject()) {
+            return Response<CesiumIonAssets> {
+                std::nullopt,
+                pResponse->statusCode(),
+                "ParseError",
+                "Response is not a JSON object."
+            };
+        }
+
+        CesiumIonAssets result;
+
+        result.link = JsonHelpers::getStringOrDefault(d, "link", "");
+        
+        auto itemsIt = d.FindMember("items");
+        if (itemsIt != d.MemberEnd() && itemsIt->value.IsArray()) {
+            const rapidjson::Value& items = itemsIt->value;
+            result.items.resize(items.Size());
+            std::transform(items.Begin(), items.End(), result.items.begin(), [](const rapidjson::Value& item) {
+                CesiumIonAsset result;
+                result.id = JsonHelpers::getInt64OrDefault(item, "id", -1);
+                result.name = JsonHelpers::getStringOrDefault(item, "name", "");
+                result.description = JsonHelpers::getStringOrDefault(item, "description", "");
+                result.attribution = JsonHelpers::getStringOrDefault(item, "attribution", "");
+                result.type = JsonHelpers::getStringOrDefault(item, "type", "");
+                result.bytes = JsonHelpers::getInt64OrDefault(item, "type", -1);
+                result.dateAdded = JsonHelpers::getStringOrDefault(item, "dateAdded", "");
+                result.status = JsonHelpers::getStringOrDefault(item, "status", "");
+                result.percentComplete = int8_t(JsonHelpers::getInt32OrDefault(item, "percentComplete", -1));
+                return result;
+            });
+        }
+
+        return Response<CesiumIonAssets> {
             result,
             pResponse->statusCode(),
             std::string(),
