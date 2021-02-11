@@ -25,7 +25,7 @@ static std::vector<uint8_t> readFile(const std::filesystem::path& fileName) {
 	std::streamsize size = file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	std::vector<uint8_t> buffer(size);
+	std::vector<uint8_t> buffer(static_cast<size_t>(size));
 	file.read(reinterpret_cast<char*>(buffer.data()), size);
 
 	return buffer;
@@ -130,7 +130,8 @@ TEST_CASE("Test replace refinement for render") {
 	TilesetExternals tilesetExternals {
 		mockAssetAccessor,
 		std::make_shared<SimplePrepareRendererResource>(),
-        std::make_shared<SimpleTaskProcessor>()
+        std::make_shared<SimpleTaskProcessor>(),
+		nullptr
 	};
 
 	// create tileset and call updateView() to give it a chance to load
@@ -493,7 +494,8 @@ TEST_CASE("Test additive refinement") {
 	TilesetExternals tilesetExternals {
 		mockAssetAccessor,
 		std::make_shared<SimplePrepareRendererResource>(),
-        std::make_shared<SimpleTaskProcessor>()
+        std::make_shared<SimpleTaskProcessor>(),
+		nullptr
 	};
 
 	// create tileset and call updateView() to give it a chance to load
