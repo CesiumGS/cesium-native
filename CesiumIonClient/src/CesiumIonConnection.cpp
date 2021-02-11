@@ -231,7 +231,7 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonAssets>> CesiumIonCon
                 result.description = JsonHelpers::getStringOrDefault(item, "description", "");
                 result.attribution = JsonHelpers::getStringOrDefault(item, "attribution", "");
                 result.type = JsonHelpers::getStringOrDefault(item, "type", "");
-                result.bytes = JsonHelpers::getInt64OrDefault(item, "type", -1);
+                result.bytes = JsonHelpers::getInt64OrDefault(item, "bytes", -1);
                 result.dateAdded = JsonHelpers::getStringOrDefault(item, "dateAdded", "");
                 result.status = JsonHelpers::getStringOrDefault(item, "status", "");
                 result.percentComplete = int8_t(JsonHelpers::getInt32OrDefault(item, "percentComplete", -1));
