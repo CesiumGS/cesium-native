@@ -43,7 +43,7 @@ namespace Cesium3DTiles {
             this->addReference();
             this->setState(LoadState::Loading);
 
-            std::move(imageRequest).thenInWorkerThread([this, &imageRequest](std::unique_ptr<IAssetRequest> pRequest) { 
+            std::move(imageRequest).thenInWorkerThread([this](std::unique_ptr<IAssetRequest> pRequest) { 
                 return obtainImageFromRequest(std::move(pRequest)); 
             }).thenInMainThread([this](LoadResult&& result) {
 
