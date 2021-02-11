@@ -164,6 +164,58 @@ namespace Cesium3DTiles {
         uint32_t getReferenceCount() const noexcept { return this->_references; }
 
     private:
+
+        struct LoadResult {
+            LoadResult() = default;
+            LoadResult(RasterOverlayTile::LoadState state_) :
+                state(state_),
+                image(),
+                warnings(),
+                errors(),
+                pRendererResources(nullptr)
+            {}
+
+            RasterOverlayTile::LoadState state;
+            CesiumGltf::ImageCesium image;
+            std::vector<std::string> warnings;
+            std::vector<std::string> errors;
+            void* pRendererResources;
+        };
+
+        /**
+         * @brief Creates a CesiumGltf::Image from the given request
+         * 
+         * If the given request has a valid, non-empty response, then this will try to 
+         * obtain a CesiumGltf::Image from this response. If this does not succeed,
+         * the an `LoadResult` with the `LoadState::Failed` will be returned.
+         * 
+         * Otherwise, the returned image data is prepared according to the cutouts
+         * of the raster overlay of this tile with `prepareCutoutsImageData`.
+         * 
+         * It is then scheduled for the preparation in the load thread by passing it to
+         * the {@link IPrepareRendererResources::prepareRasterInLoadThread} method
+         * of the `IPrepareRendererResources` of the `RasterOverlayTileProvider`
+         * of the `RasterOverlay` of this tile...
+         * 
+         * The resulting renderer resources will be returned, together with the
+         * image, via the `LoadResult`, which will have a `LoadState::Loaded`.
+         * 
+         * @param pRequest The image request
+         * @return The LoadResult 
+         */
+        RasterOverlayTile::LoadResult obtainImageFromRequest(std::unique_ptr<CesiumAsync::IAssetRequest> pRequest);
+
+        /**
+         * @brief Prepare the coutouts of the given image data
+         * 
+         * This will set the alpha values in the given image data to 0 for
+         * pixels that are in the intersection of the rectangle of this tile,
+         * and any cutout of the `RasterOverlay`.
+         * 
+         * @param image The image
+         */
+        void prepareCutoutsImageData(CesiumGltf::ImageCesium& image);
+
         void setState(LoadState newState);
 
         RasterOverlay* _pOverlay;
