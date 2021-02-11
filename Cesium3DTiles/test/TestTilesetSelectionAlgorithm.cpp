@@ -530,7 +530,6 @@ TEST_CASE("Test additive refinement") {
 				REQUIRE(isTileMeetSSE(viewState, child, *tileset));
 			}
 
-			// TODO: it's suprised that external tileset tile is put in the render queue
 			REQUIRE(result.tilesToRenderThisFrame.size() == 1);
 			REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
