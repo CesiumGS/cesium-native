@@ -106,8 +106,6 @@ target_include_directories(
         include
 )
 
-target_compile_options(spdlog PRIVATE "-fPIC")
-
 target_link_libraries(Cesium3DTiles PUBLIC 
     CesiumAsync 
     CesiumGeospatial 
