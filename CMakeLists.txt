@@ -6,9 +6,8 @@ project(cesium-native
     LANGUAGES CXX
 )
 
-if (BUILD_SHARED_LIBS)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
+# Shared object support is currently NOT working on Windows
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 function(configure_cesium_library targetName)
     if (MSVC)
@@ -30,21 +29,31 @@ function(configure_cesium_library targetName)
                 CESIUM_SHARED=${BUILD_SHARED_LIBS}
         )
     endif()
+
+    if (NOT ${targetName} MATCHES "cesium-native-tests")
+        string(TOUPPER ${targetName} capitalizedTargetName)
+        target_compile_definitions(
+            ${targetName}
+            PRIVATE
+                ${capitalizedTargetName}_BUILDING
+        )
+    endif()
+
 endfunction()
 
 # Private Libraries
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
 # Public Targets
-add_subdirectory(CesiumUtility EXCLUDE_FROM_ALL)
-add_subdirectory(CesiumGltf EXCLUDE_FROM_ALL)
-add_subdirectory(CesiumGeometry EXCLUDE_FROM_ALL)
-add_subdirectory(CesiumGeospatial EXCLUDE_FROM_ALL)
-add_subdirectory(CesiumGltfReader EXCLUDE_FROM_ALL)
-add_subdirectory(CesiumGltfWriter EXCLUDE_FROM_ALL)
-add_subdirectory(CesiumAsync EXCLUDE_FROM_ALL)
-add_subdirectory(Cesium3DTiles EXCLUDE_FROM_ALL)
+add_subdirectory(CesiumUtility)
+add_subdirectory(CesiumGltf)
+add_subdirectory(CesiumGeometry)
+add_subdirectory(CesiumGeospatial)
+add_subdirectory(CesiumGltfReader)
+add_subdirectory(CesiumGltfWriter)
+add_subdirectory(CesiumAsync)
+add_subdirectory(Cesium3DTiles)
 
 # Private Targets
-add_subdirectory(CesiumNativeTests EXCLUDE_FROM_ALL)
-add_subdirectory(doc EXCLUDE_FROM_ALL)
+add_subdirectory(CesiumNativeTests)
+add_subdirectory(doc)

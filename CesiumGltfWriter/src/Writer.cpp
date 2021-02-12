@@ -1,4 +1,3 @@
-#include "Writer.h"
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
@@ -18,6 +17,7 @@
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
+#include <CesiumGltf/Writer.h>
 #include <CesiumGltf/JsonValue.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
