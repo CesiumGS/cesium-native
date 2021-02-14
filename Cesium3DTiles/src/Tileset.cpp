@@ -929,7 +929,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        double distance = sqrt(viewState.computeDistanceSquaredToBoundingVolume(boundingVolume));
+        double distance = sqrt(glm::max(viewState.computeDistanceSquaredToBoundingVolume(boundingVolume), 0.0));
 
         // if we are still considering visiting this tile, check for fog occlusion
         if (shouldVisit && !isVisibleInFog(distance, frameState.fogDensity)) {
