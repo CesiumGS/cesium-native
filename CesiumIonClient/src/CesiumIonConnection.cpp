@@ -1,6 +1,7 @@
 #include "CesiumIonClient/CesiumIonConnection.h"
 #include "CesiumIonClient/CesiumIonAssets.h"
 #include "CesiumIonClient/CesiumIonProfile.h"
+#include "CesiumIonClient/CesiumIonToken.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Uri.h"
 #include "CesiumUtility/JsonHelpers.h"
@@ -241,6 +242,160 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonAssets>> CesiumIonCon
 
         return Response<CesiumIonAssets> {
             result,
+            pResponse->statusCode(),
+            std::string(),
+            std::string()
+        };
+    });
+}
+
+static std::optional<CesiumIonToken> tokenFromJson(const rapidjson::Value& json) {
+    if (!json.IsObject()) {
+        return std::nullopt;
+    }
+
+    CesiumIonToken token;
+    token.jti = JsonHelpers::getStringOrDefault(json, "jti", "");
+    token.name = JsonHelpers::getStringOrDefault(json, "name", "");
+    token.token = JsonHelpers::getStringOrDefault(json, "token", "");
+    token.isDefault = JsonHelpers::getBoolOrDefault(json, "isDefault", false);
+    token.lastUsed = JsonHelpers::getStringOrDefault(json, "lastUsed", "");
+    token.scopes = JsonHelpers::getStrings(json, "scopes");
+    token.assets = JsonHelpers::getInt64s(json, "assets");
+    return token;
+}
+
+CesiumAsync::Future<CesiumIonConnection::Response<std::vector<CesiumIonToken>>> CesiumIonConnection::tokens() const {
+    return this->_asyncSystem.requestAsset(
+        CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens")
+    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            return Response<std::vector<CesiumIonToken>> {
+                std::nullopt,
+                0,
+                "NoResponse",
+                "The server did not return a response."
+            };
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            return createErrorResponse<std::vector<CesiumIonToken>>(pResponse);
+        }
+
+        rapidjson::Document d;
+        d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
+        if (d.HasParseError()) {
+            return Response<std::vector<CesiumIonToken>> {
+                std::nullopt,
+                pResponse->statusCode(),
+                "ParseError",
+                std::string("Failed to parse JSON response: ") + rapidjson::GetParseError_En(d.GetParseError())
+            };
+        }
+
+        if (!d.IsArray()) {
+            return Response<std::vector<CesiumIonToken>> {
+                std::nullopt,
+                pResponse->statusCode(),
+                "ParseError",
+                "Response is not a JSON array."
+            };
+        }
+
+        std::vector<CesiumIonToken> result;
+
+        for (auto it = d.Begin(); it != d.End(); ++it) {
+            std::optional<CesiumIonToken> token = tokenFromJson(*it);
+            if (!token) {
+                continue;
+            }
+
+            result.emplace_back(std::move(token.value()));
+        }
+
+        return Response<std::vector<CesiumIonToken>> {
+            result,
+            pResponse->statusCode(),
+            std::string(),
+            std::string()
+        };
+    });
+}
+
+CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonToken>> CesiumIonConnection::createToken(
+    const std::string& name,
+    const std::vector<std::string>& scopes,
+    const std::optional<std::vector<int64_t>>& assets
+) const {
+    rapidjson::StringBuffer tokenBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(tokenBuffer);
+    
+    writer.StartObject();
+    writer.Key("name");
+    writer.String(name.c_str(), rapidjson::SizeType(name.size()));
+    writer.Key("scopes");
+    writer.StartArray();
+    for (auto& scope : scopes) {
+        writer.String(scope.c_str(), rapidjson::SizeType(scope.size()));
+    }
+    writer.EndArray();
+    writer.Key("assets");
+    if (assets) {
+        writer.StartArray();
+        for (auto asset : assets.value()) {
+            writer.Int64(asset);
+        }
+        writer.EndArray();
+    } else {
+        writer.Null();
+    }
+    writer.EndObject();
+
+    gsl::span<const uint8_t> tokenBytes(reinterpret_cast<const uint8_t*>(tokenBuffer.GetString()), tokenBuffer.GetSize());
+    return this->_asyncSystem.post(
+        CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
+        { {"Content-Type", "application/json"} },
+        tokenBytes
+    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            return Response<CesiumIonToken> {
+                std::nullopt,
+                0,
+                "NoResponse",
+                "The server did not return a response."
+            };
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            return createErrorResponse<CesiumIonToken>(pResponse);
+        }
+
+        rapidjson::Document d;
+        d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
+        if (d.HasParseError()) {
+            return Response<CesiumIonToken> {
+                std::nullopt,
+                pResponse->statusCode(),
+                "ParseError",
+                std::string("Failed to parse JSON response: ") + rapidjson::GetParseError_En(d.GetParseError())
+            };
+        }
+
+        std::optional<CesiumIonToken> maybeToken = tokenFromJson(d);
+
+        if (!maybeToken) {
+            return Response<CesiumIonToken> {
+                std::nullopt,
+                pResponse->statusCode(),
+                "ParseError",
+                "Response is not a JSON object."
+            };
+        }
+
+        return Response<CesiumIonToken> {
+            std::move(maybeToken),
             pResponse->statusCode(),
             std::string(),
             std::string()

@@ -51,6 +51,7 @@ namespace CesiumUtility {
         static bool getBoolOrDefault(const rapidjson::Value& json, bool defaultValue);
 
         static std::vector<std::string> getStrings(const rapidjson::Value& json, const std::string& key);
+        static std::vector<int64_t> getInt64s(const rapidjson::Value& json, const std::string& key);
     };
 
 }

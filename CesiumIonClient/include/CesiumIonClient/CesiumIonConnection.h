@@ -6,6 +6,7 @@
 namespace CesiumIonClient {
     struct CesiumIonAssets;
     struct CesiumIonProfile;
+    struct CesiumIonToken;
 
     class CesiumIonConnection final {
     public:
@@ -89,6 +90,14 @@ namespace CesiumIonClient {
         CesiumAsync::Future<Response<CesiumIonProfile>> me() const;
 
         CesiumAsync::Future<Response<CesiumIonAssets>> assets() const;
+
+        CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> tokens() const;
+
+        CesiumAsync::Future<Response<CesiumIonToken>> createToken(
+            const std::string& name,
+            const std::vector<std::string>& scopes,
+            const std::optional<std::vector<int64_t>>& assets = std::nullopt
+        ) const;
 
     private:
         CesiumAsync::AsyncSystem _asyncSystem;

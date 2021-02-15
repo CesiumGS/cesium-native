@@ -169,4 +169,23 @@ namespace CesiumUtility {
 		return result;
 	}
 
+	std::vector<int64_t> JsonHelpers::getInt64s(const rapidjson::Value& json, const std::string& key) {
+		std::vector<int64_t> result;
+
+        auto it = json.FindMember(key.c_str());
+        if (it != json.MemberEnd() && it->value.IsArray()) {
+            const auto& valueJson = it->value;
+            
+			result.reserve(valueJson.Size());
+
+			for (rapidjson::SizeType i = 0; i < valueJson.Size(); ++i) {
+				const auto& element = valueJson[i];
+                if (element.IsInt64()) {
+					result.emplace_back(element.GetInt64());
+                }
+			}
+        }
+
+		return result;
+	}
 }

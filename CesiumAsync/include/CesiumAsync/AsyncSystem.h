@@ -308,6 +308,10 @@ namespace CesiumAsync {
             return Future<T>(this->_pSchedulers, async::make_task<T>(std::forward<T>(value)));
         }
 
+        Future<void> createResolvedFuture() const {
+            return Future<void>(this->_pSchedulers, async::make_task());
+        }
+
         /**
          * @brief Runs all tasks that are currently queued for the main thread.
          * 
