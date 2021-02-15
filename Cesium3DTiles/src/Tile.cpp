@@ -132,7 +132,7 @@ namespace Cesium3DTiles {
         std::vector<Projection> projections;
 
         const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
-        if (pRectangle) {
+        if (pRectangle && tileset.supportsRasterOverlays()) {
             // Map overlays to this tile.
             RasterOverlayCollection& overlays = tileset.getOverlays();
             // gsl::span<RasterOverlayTileProvider*> providers = overlays.getTileProviders();
@@ -563,7 +563,7 @@ namespace Cesium3DTiles {
             }
         }
 
-        if (this->getState() == LoadState::Done) {
+        if (this->getState() == LoadState::Done && this->getTileset()->supportsRasterOverlays()) {
             bool moreRasterDetailAvailable = false;
 
             for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {

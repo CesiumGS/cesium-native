@@ -328,6 +328,13 @@ namespace Cesium3DTiles {
          */
         int64_t getTotalDataBytes() const noexcept;
 
+        /**
+         * @brief Determines if this tileset supports raster overlays.
+         * 
+         * Currently, raster overlays can only be draped over quantized-mesh terrain tilesets.
+         */
+        bool supportsRasterOverlays() const noexcept { return this->_supportsRasterOverlays; }
+
     private:
 
         /**
@@ -394,6 +401,7 @@ namespace Cesium3DTiles {
         struct LoadResult {
             std::unique_ptr<TileContext> pContext;
             std::unique_ptr<Tile> pRootTile;
+            bool supportsRasterOverlays;
         };
 
         /**
@@ -547,6 +555,8 @@ namespace Cesium3DTiles {
         RasterOverlayCollection _overlays;
 
         int64_t _tileDataBytes;
+
+        bool _supportsRasterOverlays;
 
         static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const ViewState& viewState, Tile& tile, double distance);
         static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);

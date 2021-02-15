@@ -55,7 +55,8 @@ namespace Cesium3DTiles {
         _loadsInProgress(0),
         _loadedTiles(),
         _overlays(*this),
-        _tileDataBytes(0)
+        _tileDataBytes(0),
+        _supportsRasterOverlays(false)
     {
         ++this->_loadsInProgress;
         this->_loadTilesetJson(url);
@@ -90,7 +91,8 @@ namespace Cesium3DTiles {
         _loadsInProgress(0),
         _loadedTiles(),
         _overlays(*this),
-        _tileDataBytes(0)
+        _tileDataBytes(0),
+        _supportsRasterOverlays(false)
     {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -264,6 +266,10 @@ namespace Cesium3DTiles {
             return result;
         }
 
+        if (!this->supportsRasterOverlays() && this->_overlays.size() > 0) {
+            this->_externals.pLogger->warn("Only quantized-mesh terrain tilesets currently support overlays.");
+        }
+
         double fogDensity = computeFogDensity(this->_options.fogDensityTable, viewState);
 
         this->_loadQueueHigh.clear();
@@ -402,6 +408,7 @@ namespace Cesium3DTiles {
         ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
             return Tileset::_handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
         }).thenInMainThread([this](LoadResult&& loadResult) {
+            this->_supportsRasterOverlays = loadResult.supportsRasterOverlays;
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
             this->notifyTileDoneLoading(nullptr);
@@ -416,12 +423,12 @@ namespace Cesium3DTiles {
         IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
-            return LoadResult{ std::move(pContext), nullptr };
+            return LoadResult{ std::move(pContext), nullptr, false };
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
-            return LoadResult{ std::move(pContext), nullptr };
+            return LoadResult{ std::move(pContext), nullptr, false };
         }
 
         pContext->baseUrl = pRequest->url();
@@ -433,7 +440,7 @@ namespace Cesium3DTiles {
 
         if (tileset.HasParseError()) {
             SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
-            return LoadResult{ std::move(pContext), nullptr };
+            return LoadResult{ std::move(pContext), nullptr, false };
         }
 
         std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
@@ -442,17 +449,20 @@ namespace Cesium3DTiles {
         auto rootIt = tileset.FindMember("root");
         auto formatIt = tileset.FindMember("format");
 
+        bool supportsRasterOverlays = false;
+
         if (rootIt != tileset.MemberEnd()) {
             rapidjson::Value& rootJson = rootIt->value;
             Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext, pLogger);
-        }
-        else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
+        } else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
             Tileset::_createTerrainTile(*pRootTile, tileset, *pContext, pLogger);
+            supportsRasterOverlays = true;
         }
 
         return LoadResult{
             std::move(pContext),
-            std::move(pRootTile)
+            std::move(pRootTile),
+            supportsRasterOverlays
         };
     }
 

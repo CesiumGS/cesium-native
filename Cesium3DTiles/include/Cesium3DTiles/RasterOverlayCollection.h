@@ -60,6 +60,11 @@ namespace Cesium3DTiles {
          */
         const_iterator end() const noexcept { return this->_overlays.end(); }
 
+        /**
+         * @brief Gets the number of overlays in the collection.
+         */
+        size_t size() const noexcept { return this->_overlays.size(); }
+
     private:
         Tileset* _pTileset;
         std::vector<std::unique_ptr<RasterOverlay>> _overlays;
