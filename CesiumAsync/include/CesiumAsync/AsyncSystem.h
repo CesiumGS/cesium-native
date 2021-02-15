@@ -26,6 +26,9 @@ namespace CesiumAsync {
     class Future;
 
     namespace Impl {
+        // Begin omitting doxgen warnings for Impl namespace
+        //! @cond Doxygen_Suppress
+
         struct AsyncSystemSchedulers {
             AsyncSystemSchedulers(
                 std::shared_ptr<IAssetAccessor> pAssetAccessor,
@@ -108,6 +111,9 @@ namespace CesiumAsync {
                 TaskUnwrapper<Func>
             >::type::unwrap(std::forward<Func>(f));
         }
+
+        //! @endcond
+        // End omitting doxgen warnings for Impl namespace
     }
 
     /**
@@ -118,6 +124,10 @@ namespace CesiumAsync {
     template <class T>
     class Future final {
     public:
+
+        /**
+         * @brief Move constructor
+         */
         Future(Future<T>&& rhs) noexcept :
             _pSchedulers(std::move(rhs._pSchedulers)),
             _task(std::move(rhs._task))
@@ -149,7 +159,7 @@ namespace CesiumAsync {
          * @brief Registers a continuation function to be invoked in the main thread when this Future resolves, and invalidates this Future.
          * 
          * The supplied function will not be invoked immediately, even if this method is called from the main thread.
-         * Instead, it will be queued and invoked the next time {@link dispatchMainThreadTasks} is called.
+         * Instead, it will be queued and invoked the next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
          * 
          * If the function itself returns a `Future`, the function will not be considered complete
          * until that returned `Future` also resolves.
@@ -170,7 +180,7 @@ namespace CesiumAsync {
          * @brief Registers a continuation function to be invoked in the main thread when this Future rejects, and invalidates this Future.
          * 
          * The supplied function will not be invoked immediately, even if this method is called from the main thread.
-         * Instead, it will be queued and invoked the next time {@link dispatchMainThreadTasks} is called.
+         * Instead, it will be queued and invoked the next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
          * 
          * If the function itself returns a `Future`, the function will not be considered complete
          * until that returned `Future` also resolves.
@@ -290,6 +300,13 @@ namespace CesiumAsync {
             );
         }
 
+        /**
+         * @brief Creates a future that is already resolved.
+         * 
+         * @tparam T The type of the future
+         * @param value The value for the future
+         * @return The future
+         */
         template <class T>
         Future<T> createResolvedFuture(T&& value) const {
             return Future<T>(this->_pSchedulers, async::make_task<T>(std::forward<T>(value)));

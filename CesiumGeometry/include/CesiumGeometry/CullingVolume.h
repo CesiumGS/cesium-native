@@ -12,9 +12,33 @@ namespace Cesium3DTiles {
      * point inwards.
      */
     struct CullingVolume final {
+
+        /**
+         * @brief The left plane of the culling volume.
+         * 
+         * Defaults to (0,0,1), with a distance of 0.
+         */
         CesiumGeometry::Plane leftPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+
+        /**
+         * @brief The right plane of the culling volume.
+         * 
+         * Defaults to (0,0,1), with a distance of 0.
+         */
         CesiumGeometry::Plane rightPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+
+        /**
+         * @brief The top plane of the culling volume.
+         * 
+         * Defaults to (0,0,1), with a distance of 0.
+         */
         CesiumGeometry::Plane topPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+
+        /**
+         * @brief The bottom plane of the culling volume.
+         * 
+         * Defaults to (0,0,1), with a distance of 0.
+         */
         CesiumGeometry::Plane bottomPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
     };
 
@@ -26,7 +50,7 @@ namespace Cesium3DTiles {
      * @param up The up-vector of the frustum
      * @param fovx The horizontal Field-Of-View angle, in radians
      * @param fovy The vertical Field-Of-View angle, in radians
-     * @return The {@ling CullingVolume}
+     * @return The {@link CullingVolume}
      */
     CullingVolume createCullingVolume(
         const glm::dvec3& position,

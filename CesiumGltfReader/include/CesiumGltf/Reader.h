@@ -45,7 +45,7 @@ namespace CesiumGltf {
         bool clearDecodedDataUrls = true;
 
         /**
-         * @brief Whether embedded images in {@link Model:buffers} should be automatically decoded as part of the load process.
+         * @brief Whether embedded images in {@link Model::buffers} should be automatically decoded as part of the load process.
          * 
          * The {@link ImageSpec::mimeType} property is ignored, and instead the [stb_image](https://github.com/nothings/stb) library
          * is used to decode images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
@@ -72,8 +72,22 @@ namespace CesiumGltf {
      * @brief The result of reading an image with {@link readImage}.
      */
     struct CESIUMGLTFREADER_API ImageReaderResult {
+
+        /**
+         * @brief The {@link ImageCesium} that was read.
+         * 
+         * This will be `std::nullopt` if the image could not be read.
+         */
         std::optional<ImageCesium> image;
+
+        /**
+         * @brief Error messages that occurred while trying to read the image.
+         */
         std::vector<std::string> errors;
+
+        /**
+         * @brief Warning messages that occurred while reading the image.
+         */
         std::vector<std::string> warnings;
     };
 

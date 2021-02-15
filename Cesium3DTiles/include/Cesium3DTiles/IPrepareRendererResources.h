@@ -123,8 +123,7 @@ namespace Cesium3DTiles {
          * @brief Attaches a raster overlay tile to a geometry tile.
          * 
          * @param tile The geometry tile.
-         * @param overlayTextureCoordinateID The ID of the overlay texture coordinate set to use. The texture coordinates have
-         *        previously been added by a call to {@link addRasterOverlayTextureCoordinates}.
+         * @param overlayTextureCoordinateID The ID of the overlay texture coordinate set to use.
          * @param rasterTile The raster overlay tile to add. The raster tile will have been previously prepared with a call to
          *        {@link prepareRasterInLoadThread} followed by {@link prepareRasterInMainThread}.
          * @param pMainThreadRendererResources The renderer resources for this raster tile, as created and returned by
