@@ -145,6 +145,10 @@ namespace Cesium3DTiles {
             headers = this->_headers
         ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
             IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+                SPDLOG_LOGGER_ERROR(pLogger, "No response received from Tile Map Service.");
+                return nullptr;
+            }
 
             gsl::span<const uint8_t> data = pResponse->data();
 
