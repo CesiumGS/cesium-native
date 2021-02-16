@@ -7,6 +7,7 @@
 #include <map>
 #include <variant>
 #include <vector>
+#include <optional>
 
 namespace CesiumGltf {
 
@@ -241,6 +242,11 @@ namespace CesiumGltf {
          * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
          */
         JsonValue* getValueForKey(const std::string& key);
+        
+        [[nodiscard]] std::optional<double> getValueForKeyAsDouble(const std::string& key) const noexcept;
+        [[nodiscard]] std::optional<float> getValueForKeyAsFloat(const std::string& key) const noexcept;
+        [[nodiscard]] std::optional<std::int32_t> getValueForKeyAsInt32(const std::string& key) const noexcept;
+        [[nodiscard]] std::optional<std::size_t> getValueForKeyAsSizeT(const std::string& key) const noexcept;
 
         /**
          * @brief Returns whether this value is a `null` value.

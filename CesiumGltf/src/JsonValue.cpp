@@ -57,6 +57,42 @@ JsonValue* JsonValue::getValueForKey(const std::string& key) {
     return &it->second;
 }
 
+std::optional<double> JsonValue::getValueForKeyAsDouble(const std::string& key) const noexcept {
+    const auto* v = getValueForKey(key);
+    if (!v) {
+        return std::nullopt;
+    }
+    const auto* number = std::get_if<Number>(&this->value);
+    return !number ? std::nullopt : std::optional(*number);
+}
+
+std::optional<float> JsonValue::getValueForKeyAsFloat(const std::string& key) const noexcept {
+    const auto* v = getValueForKey(key);
+    if (!v) {
+        return std::nullopt;
+    }
+    const auto* number = std::get_if<Number>(&this->value);
+    return !number ? std::nullopt : std::optional(static_cast<float>(*number));
+}
+
+std::optional<std::int32_t> JsonValue::getValueForKeyAsInt32(const std::string& key) const noexcept {
+    const auto* v = getValueForKey(key);
+    if (!v) {
+        return std::nullopt;
+    }
+    const auto* number = std::get_if<Number>(&this->value);
+    return !number ? std::nullopt : std::optional(static_cast<std::int32_t>(*number));
+}
+
+std::optional<std::size_t> JsonValue::getValueForKeyAsSizeT(const std::string& key) const noexcept {
+    const auto* v = getValueForKey(key);
+    if (!v) {
+        return std::nullopt;
+    }
+    const auto* number = std::get_if<Number>(&this->value);
+    return !number ? std::nullopt : std::optional(static_cast<size_t>(*number));
+}
+
 bool JsonValue::isNull() const {
     return std::holds_alternative<Null>(this->value);
 }
