@@ -73,9 +73,9 @@ target_include_directories(
     SYSTEM PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
     PUBLIC
-        include
+        ${CESIUM_GLTF_PUBLIC_INCLUDE_DIR}
     PRIVATE
-        src
+        "${CMAKE_CURRENT_LIST_DIR}/src"
 )
 
 target_link_libraries(CesiumGltf PUBLIC)

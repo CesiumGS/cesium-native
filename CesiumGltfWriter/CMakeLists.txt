@@ -50,14 +50,13 @@ target_include_directories(
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
     PUBLIC
-        "include"
         ${CESIUM_GLTF_PUBLIC_HEADERS}
         ${CESIUM_GLTF_WRITER_PUBLIC_INCLUDE_DIR}
     PRIVATE
         ${CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR}
         ${CESIUM_NATIVE_STB_INCLUDE_DIR}
-        src
-        generated
+        "${CMAKE_CURRENT_LIST_DIR}/src"
+        "${CMAKE_CURRENT_LIST_DIR}/generated"
 )
 
 target_link_libraries(CesiumGltfWriter PUBLIC CesiumGltf)
