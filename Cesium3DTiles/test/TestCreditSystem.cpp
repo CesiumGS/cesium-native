@@ -74,7 +74,7 @@ TEST_CASE("Test wrong credit handling") {
     Credit creditA0 = creditSystemA.createCredit(html0);
     Credit creditA1 = creditSystemA.createCredit(html1);
 
-    Credit creditB0 = creditSystemB.createCredit(html0);
+    /*Credit creditB0 = */creditSystemB.createCredit(html0);
 
     // NOTE: This is using a Credit from a different credit 
     // system, which coincidentally has a valid ID here. 
