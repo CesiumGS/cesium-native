@@ -1,4 +1,5 @@
 #include "JsonObjectWriter.h"
+#include "ExtensionWriter.h"
 #include "AnimationWriter.h"
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
@@ -23,12 +24,12 @@ void writeAnimationChannel(
         j.String(pathAsString.c_str());
 
         if (!animationChannel.target.extensions.empty()) {
-            throw std::runtime_error("Not implemented");
+            writeExtensions(animationChannel.target.extensions, j);
         }
 
         if (!animationChannel.target.extras.empty()) {
             j.Key("extras");
-            CesiumGltf::writeJsonObject(animationChannel.target.extras, j);
+            CesiumGltf::writeJsonValue(animationChannel.target.extras, j);
         }
     }
     j.EndObject();
@@ -41,21 +42,18 @@ void writeAnimationSampler(
     auto&j = jsonWriter;
 
     j.StartObject();
-    j.Key("input");
-    j.Int(animationSampler.input);
+    j.KeyPrimitive("input", animationSampler.input);
+    j.KeyPrimitive("interpolation", magic_enum::enum_name(animationSampler.interpolation));
+    j.KeyPrimitive("output", animationSampler.output);
 
-    j.Key("interpolation");
-    const auto interpolationAsString = std::string(magic_enum::enum_name(animationSampler.interpolation));
-    j.String(interpolationAsString.c_str());
-
-    j.Key("output");
-    j.Int(animationSampler.output);
+    if (!animationSampler.extensions.empty()) {
+        writeExtensions(animationSampler.extensions, j);
+    }
 
     if (!animationSampler.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonObject(animationSampler.extras, j);
+        CesiumGltf::writeJsonValue(animationSampler.extras, j);
     }
-    // TODO extensions
 
     j.EndObject();
 }
@@ -88,13 +86,15 @@ void CesiumGltf::writeAnimation(
             writeAnimationSampler(animationSampler, j);
         }
         j.EndArray();
+        
+        if (!animation.extensions.empty()) {
+            writeExtensions(animation.extensions, j);
+        }
 
         if (!animation.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(animation.extras, j);
+            writeJsonValue(animation.extras, j);
         }
-
-        // TODO extensions
 
         j.EndObject();
     }

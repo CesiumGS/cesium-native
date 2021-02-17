@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "ImageWriter.h"
 #include <magic_enum.hpp>
@@ -19,8 +20,7 @@ void CesiumGltf::writeImage(
         j.StartObject();
 
         if (image.uri) {
-            j.Key("uri");
-            j.String(image.uri->c_str());
+            j.KeyPrimitive("uri", *image.uri);
         }
 
         if (image.mimeType) {
@@ -34,21 +34,21 @@ void CesiumGltf::writeImage(
         }
 
         if (image.bufferView >= 0) {
-            j.Key("bufferView");
-            j.Int(image.bufferView);
+            j.KeyPrimitive("bufferView", image.bufferView);
         }
 
         if (!image.name.empty()) {
-            j.Key("name");
-            j.String(image.name.c_str());
+            j.KeyPrimitive("name", image.name);
+        }
+        
+        if (!image.extensions.empty()) {
+            writeExtensions(image.extensions, j);
         }
 
         if (!image.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(image.extras, j);
+            writeJsonValue(image.extras, j);
         }
-
-        // todo: extensions / extras
 
         j.EndObject();
     }

@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "SkinWriter.h"
 void CesiumGltf::writeSkin(
@@ -36,13 +37,16 @@ void CesiumGltf::writeSkin(
             j.Key("name");
             j.String(skin.name.c_str());
         }
+        
+        if (!skin.extensions.empty()) {
+            writeExtensions(skin.extensions, j);
+        }
 
         if (!skin.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(skin.extras, j);
+            writeJsonValue(skin.extras, j);
         }
 
-        // todo: extensions
         j.EndObject();
     }
 

@@ -1,3 +1,5 @@
+#include <CesiumGltf/JsonValue.h>
+#include "JsonObjectWriter.h"
 #include "ExtensionWriter.h"
 
 void CesiumGltf::writeExtensions(
@@ -9,14 +11,15 @@ void CesiumGltf::writeExtensions(
     }
     
     auto& j = jsonWriter;
-    
     j.Key("extensions");
-    
-    j.StartArray();
-    /*
-    for (const auto& extension :1 extensions) {
-        // TODO: implement me
+    j.StartObject();
+
+    for (const auto& extension : extensions) {
+        if (extension.type() == typeid(JsonValue::Object)) {
+            const auto& object = std::any_cast<JsonValue::Object>(extension);
+            writeJsonValue(object, jsonWriter);
+        }
     }
-    */
-    j.EndArray();
+
+    j.EndObject();
 }

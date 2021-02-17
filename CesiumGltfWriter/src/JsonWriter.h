@@ -41,12 +41,16 @@ namespace CesiumGltf {
         void Primitive(float value);
         void Primitive(double value);
         void Primitive(std::nullptr_t value);
+        void Primitive(std::string_view string);
 
         // Integral
         void KeyPrimitive(std::string_view keyName, std::int32_t value);
         void KeyPrimitive(std::string_view keyName, std::uint32_t value);
         void KeyPrimitive(std::string_view keyName, std::int64_t value);
         void KeyPrimitive(std::string_view keyName, std::uint64_t value);
+
+        // String
+        void KeyPrimitive(std::string_view keyName, std::string_view value);
 
         // Floating Point
         void KeyPrimitive(std::string_view keyName, float value);

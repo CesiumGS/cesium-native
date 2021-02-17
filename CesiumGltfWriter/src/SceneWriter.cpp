@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h" 
 #include "JsonObjectWriter.h"
 #include "SceneWriter.h"
 void CesiumGltf::writeScene(
@@ -27,13 +28,15 @@ void CesiumGltf::writeScene(
             j.Key("name");
             j.String(scene.name.c_str());
         }
+        
+        if (!scene.extensions.empty()) {
+            writeExtensions(scene.extensions, j);
+        }
 
         if (!scene.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(scene.extras, j);
+            writeJsonValue(scene.extras, j);
         }
-
-        // todo: extensions
 
         j.EndObject();
     }

@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "TextureWriter.h"
 
@@ -5,7 +6,6 @@ void CesiumGltf::writeTexture(
     const std::vector<Texture>& textures,
     CesiumGltf::JsonWriter& jsonWriter
 ) {
-
     if (textures.empty()) {
         return;
     }
@@ -30,15 +30,17 @@ void CesiumGltf::writeTexture(
             j.Key("name");
             j.String(texture.name.c_str());
         }
+        
+        if (!texture.extensions.empty()) {
+            writeExtensions(texture.extensions, j);
+        }
 
         if (!texture.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(texture.extras, j);
+            writeJsonValue(texture.extras, j);
         }
 
-        // todo extensions
         j.EndObject();
-
     }
     j.EndArray();
 }

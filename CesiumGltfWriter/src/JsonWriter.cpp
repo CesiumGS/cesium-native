@@ -57,6 +57,10 @@ namespace CesiumGltf {
 
     void JsonWriter::Primitive(std::nullptr_t) { writer->Null(); }
 
+    void JsonWriter::Primitive(std::string_view string) { 
+        writer->String(string.data(), static_cast<unsigned int>(string.size()));
+    }
+
     // Integral
     void
     JsonWriter::KeyPrimitive(std::string_view keyName, std::int32_t value) {
@@ -78,6 +82,12 @@ namespace CesiumGltf {
 
     void
     JsonWriter::KeyPrimitive(std::string_view keyName, std::uint64_t value) {
+        Key(keyName);
+        Primitive(value);
+    }
+
+    void
+    JsonWriter::KeyPrimitive(std::string_view keyName, std::string_view value) {
         Key(keyName);
         Primitive(value);
     }

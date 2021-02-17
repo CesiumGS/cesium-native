@@ -4,5 +4,5 @@
 #include "JsonWriter.h"
 
 namespace CesiumGltf {
-    void writeJsonObject(const JsonValue::Object& object, CesiumGltf::JsonWriter& writer);
+    void writeJsonValue(const JsonValue& value, CesiumGltf::JsonWriter& writer);
 }

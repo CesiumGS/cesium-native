@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "AssetWriter.h"
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/Asset.h>
@@ -11,29 +12,28 @@ void CesiumGltf::writeAsset(
     j.StartObject();
 
     if (asset.copyright) {
-        j.Key("copyright");
-        j.String(asset.copyright->c_str());
+        j.KeyPrimitive("copyright", *asset.copyright);
     }
 
     if (asset.generator) {
-        j.Key("generator");
-        j.String(asset.generator->c_str());
+        j.KeyPrimitive("generator", *asset.generator);
     }
-
-    j.Key("version");
-    j.String(asset.version.c_str());
+    
+    j.KeyPrimitive("version", asset.version);
 
     if (asset.minVersion) {
-        j.Key("minVersion");
-        j.String(asset.minVersion->c_str());
+        j.KeyPrimitive("minVersion", *asset.minVersion);
+    }
+
+    if (!asset.extensions.empty()) {
+        writeExtensions(asset.extensions, j);
     }
 
     if (!asset.extras.empty()) {
         j.Key("extras");
-        writeJsonObject(asset.extras, j);
+        writeJsonValue(asset.extras, j);
     }
 
     j.EndObject();
 
-    // TODO: extensions
 }

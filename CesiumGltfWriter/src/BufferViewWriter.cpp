@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "BufferViewWriter.h"
 #include <magic_enum.hpp>
@@ -43,14 +44,17 @@ void CesiumGltf::writeBufferView(
             j.Key("name");
             j.String(buffer.name.c_str());
         }
+        
+        if (!buffer.extensions.empty()) {
+            writeExtensions(buffer.extensions, j);
+        }
 
         if (!buffer.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(buffer.extras, j);
+            writeJsonValue(buffer.extras, j);
         }
 
         j.EndObject();
-        // TODO: extensions
     }
     j.EndArray();
 }

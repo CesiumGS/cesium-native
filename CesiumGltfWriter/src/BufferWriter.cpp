@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "BufferWriter.h"
 #include <stdexcept>
@@ -24,8 +25,7 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
             // TODO: Check to see if the URI is a reference to an
             // external file. We need to return a struct of some sort
             // with a list of these.
-            j.Key("uri");
-            j.String((*buffer.uri).c_str());
+            j.KeyPrimitive("uri", *buffer.uri);
         }
 
         auto& src = buffer.cesium.data;
@@ -44,10 +44,13 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
 
         if (!buffer.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(buffer.extras, j);
+            writeJsonValue(buffer.extras, j);
         }
 
-        // TODO extensions
+        if (!buffer.extensions.empty()) {
+            writeExtensions(buffer.extensions, j);
+        }
+
         j.EndObject();
     }
 

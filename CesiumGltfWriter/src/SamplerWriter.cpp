@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "SamplerWriter.h"
 #include <magic_enum.hpp>
@@ -6,7 +7,6 @@ void CesiumGltf::writeSampler(
     const std::vector<Sampler>& samplers,
     CesiumGltf::JsonWriter& jsonWriter
 ) {
-
     if (samplers.empty()) {
         return;
     }
@@ -39,16 +39,18 @@ void CesiumGltf::writeSampler(
         }
 
         if (!sampler.name.empty())  {
-            j.Key("name");
-            j.String(sampler.name.c_str());
+            j.KeyPrimitive("name", sampler.name);
+        }
+        
+        if (sampler.extensions.empty()) {
+            writeExtensions(sampler.extensions, j);
         }
 
         if (!sampler.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(sampler.extras, j);
+            writeJsonValue(sampler.extras, j);
         }
 
-        // todo extensions
         j.EndObject();
 
     }

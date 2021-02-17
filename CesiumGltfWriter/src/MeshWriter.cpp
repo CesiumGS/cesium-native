@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "MeshWriter.h"
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/Mesh.h>
@@ -16,8 +17,7 @@ void writePrimitive(
     assert(!primitive.attributes.empty());
     j.StartObject();
     for (const auto& [key, index] : primitive.attributes) {
-        j.Key(key);
-        j.Int(index);
+        j.KeyPrimitive(key, index);
     }
     j.EndObject();
 
@@ -49,10 +49,15 @@ void writePrimitive(
         }
         j.EndArray();
     }
+    
+    if (!primitive.extensions.empty()) {
+        j.Key("extensions");
+        writeExtensions(primitive.extensions, j);
+    }
 
     if (!primitive.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonObject(primitive.extras, j);
+        CesiumGltf::writeJsonValue(primitive.extras, j);
     }
     j.EndObject();
 }
@@ -92,13 +97,16 @@ void CesiumGltf::writeMesh(
             j.Key("name");
             j.String(mesh.name.c_str());
         }
+        
+        if (!mesh.extensions.empty()) {
+            writeExtensions(mesh.extensions, j);
+        }
 
         if (!mesh.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(mesh.extras, j);
+            writeJsonValue(mesh.extras, j);
         }
 
-        // todo: extensions
         j.EndObject();
     }
 

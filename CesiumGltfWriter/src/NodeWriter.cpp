@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "NodeWriter.h"
 #include <CesiumGltf/Image.h>
@@ -97,16 +98,17 @@ void CesiumGltf::writeNode(
         }
 
         if (!node.name.empty()) {
-            j.Key("name");
-            j.String(node.name.c_str());
+            j.KeyPrimitive("name", node.name);
+        }
+        
+        if (!node.extensions.empty()) {
+            writeExtensions(node.extensions, j);
         }
 
         if (!node.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(node.extras, j);
+            writeJsonValue(node.extras, j);
         }
-
-        // TODO: extensions
 
         j.EndObject();
     }

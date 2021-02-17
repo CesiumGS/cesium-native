@@ -1,4 +1,5 @@
 #include "JsonWriter.h"
+#include "ExtensionWriter.h"
 #include "AccessorSparseWriter.h"
 #include <CesiumGltf/AccessorSparse.h>
 #include <CesiumGltf/AccessorSparseIndices.h>
@@ -23,12 +24,12 @@ void writeAccessorSparseIndices(
     j.KeyPrimitive("componentType", static_cast<std::uint16_t>(magic_enum::enum_integer(indices.componentType)));
 
     if (!indices.extensions.empty()) {
-        throw std::runtime_error("Not implemented.");
+        writeExtensions(indices.extensions, j);
     }
 
     if (!indices.extras.empty()) {
         j.Key("extras");
-        writeJsonObject(indices.extras, j);
+        writeJsonValue(indices.extras, j);
     }
 }
 
@@ -46,12 +47,12 @@ void writeAccessorSparseValues(
     }
 
     if (!values.extensions.empty()) {
-        throw std::runtime_error("Not implemented.");
+        writeExtensions(values.extensions, j);
     }
 
     if (!values.extras.empty()) {
         j.Key("extras");
-        writeJsonObject(values.extras, j);
+        writeJsonValue(values.extras, j);
     }
 }
 
@@ -65,5 +66,15 @@ void CesiumGltf::writeAccessorSparse(
     j.Int64(accessorSparse.count);
     writeAccessorSparseIndices(accessorSparse.indices, jsonWriter);
     writeAccessorSparseValues(accessorSparse.values, jsonWriter);
+    
+    if (!accessorSparse.extensions.empty()) {
+        writeExtensions(accessorSparse.extensions, jsonWriter);
+    }
+    
+    if (!accessorSparse.extras.empty()) {
+        j.Key("extras");
+        writeJsonValue(accessorSparse.extras, jsonWriter);
+    }
+
     j.EndObject();
 }

@@ -1,3 +1,4 @@
+#include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "CameraWriter.h"
 #include <CesiumGltf/Camera.h>
@@ -27,7 +28,7 @@ void writeOrthographicCamera(
 
     if (!cameraOrthographic.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonObject(cameraOrthographic.extras, j);
+        CesiumGltf::writeJsonValue(cameraOrthographic.extras, j);
     }
 
     j.EndObject();
@@ -41,8 +42,7 @@ void writePerspectiveCamera(
     j.Key("perspective");
     j.StartObject();
     if (cameraPerspective.aspectRatio) {
-        j.Key("aspectRatio");
-        j.Double(*cameraPerspective.aspectRatio);
+        j.KeyPrimitive("aspectRatio", *cameraPerspective.aspectRatio);
     }
     j.Key("yfov");
     j.Double(cameraPerspective.yfov);
@@ -52,13 +52,16 @@ void writePerspectiveCamera(
     }
     j.Key("znear");
     j.Double(cameraPerspective.znear);
+    
+    if (!cameraPerspective.extensions.empty()) {
+        writeExtensions(cameraPerspective.extensions, j);
+    }
 
     if (!cameraPerspective.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonObject(cameraPerspective.extras, j);
+        CesiumGltf::writeJsonValue(cameraPerspective.extras, j);
     }
 
-    // TODO: extensions
     j.EndObject();
 }
 
@@ -93,13 +96,15 @@ void CesiumGltf::writeCamera(
             j.Key("name");
             j.String(camera.name.c_str());
         }
+        
+        if (!camera.extensions.empty()) {
+            writeExtensions(camera.extensions, j);
+        }
 
         if (!camera.extras.empty()) {
             j.Key("extras");
-            writeJsonObject(camera.extras, j);
+            writeJsonValue(camera.extras, j);
         }
-
-        // TODO: extensions
 
         j.EndObject();
     }

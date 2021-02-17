@@ -38,6 +38,23 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteFlags flags) {
 
     CesiumGltf::JsonWriter writer;
     writer.StartObject();
+
+    if (!model.extensionsUsed.empty()) {
+        writer.KeyArray("extensionsUsed", [&]() {
+            for (const auto& extensionUsed : model.extensionsUsed) {
+                writer.String(extensionUsed);
+            }
+        });
+    }
+
+    if (!model.extensionsRequired.empty()) {
+        writer.KeyArray("extensionsRequired", [&]() {
+            for (const auto& extensionRequired : model.extensionsRequired) {
+                writer.String(extensionRequired);
+            }
+        });
+    }
+
     CesiumGltf::writeAccessor(model.accessors, writer);
     CesiumGltf::writeAnimation(model.animations, writer);
     CesiumGltf::writeAsset(model.asset, writer);
@@ -54,18 +71,14 @@ CesiumGltf::writeModelToByteArray(const Model& model, WriteFlags flags) {
     CesiumGltf::writeTexture(model.textures, writer);
     CesiumGltf::writeExtensions(model.extensions, writer);
 
-    // TODO: extensionsUsed
-    // TODO: extensionsRequired
-
     if (!model.extras.empty()) {
-        writeJsonObject(model.extras, writer);
+        writeJsonValue(model.extras, writer);
     }
 
     writer.EndObject();
-    std::string_view view(writer.toString());
 
     if (flags & WriteFlags::GLB) {
-        return writeBinaryGLB(std::move(buffers), view);
+        return writeBinaryGLB(std::move(buffers), writer.toString());
     }
 
     return result;

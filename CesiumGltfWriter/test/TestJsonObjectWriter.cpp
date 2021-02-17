@@ -21,7 +21,7 @@ TEST_CASE("TestExtrasWjriter") {
         CesiumGltf::JsonWriter writer;
         const auto extrasObject =
             Object{{"extras", Array{Object{}, Object{}, Object{}}}};
-        writeJsonObject(extrasObject, writer);
+        writeJsonValue(extrasObject, writer);
         REQUIRE(writer.toString() == R"({"extras":[{},{},{}]})");
     }
 
@@ -39,7 +39,7 @@ TEST_CASE("TestExtrasWjriter") {
         }};
         // clang-format on
 
-        writeJsonObject(extrasObject, writer);
+        writeJsonValue(extrasObject, writer);
         REQUIRE(writer.toString() == R"({"extras":{"A":{"B":{"C":{}}}}})");
     }
 
@@ -53,7 +53,7 @@ TEST_CASE("TestExtrasWjriter") {
         }};
         // clang-format on
 
-        writeJsonObject(extrasObject, writer);
+        writeJsonValue(extrasObject, writer);
         REQUIRE(
             writer.toString() ==
             R"({"extras":[[[1.0,-2.0,false,null,true,{"emojis":"😂👽🇵🇷"}]]]})");
@@ -61,7 +61,7 @@ TEST_CASE("TestExtrasWjriter") {
 
     SECTION("Empty object is serialized correctly") {
         CesiumGltf::JsonWriter writer;
-        writeJsonObject(Object{}, writer);
+        writeJsonValue(Object{}, writer);
         REQUIRE(writer.toString() == "{}");
     }
 }
