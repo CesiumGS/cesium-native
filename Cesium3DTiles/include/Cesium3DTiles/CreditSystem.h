@@ -18,11 +18,6 @@ namespace Cesium3DTiles {
              */
             bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
 
-            /**
-             * @brief Returns `true` if the id of this credit is less than the ID of the right-hand side.
-             */
-            bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
-
         private:
             size_t id;
 
