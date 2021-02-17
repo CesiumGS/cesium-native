@@ -15,7 +15,7 @@ void recursiveArrayWriter(
 void recursiveObjectWriter(
     const JsonValue::Object& object,
     CesiumGltf::JsonWriter& j,
-    bool isRoot = false);
+    bool hasRootObject = false);
 
 void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j) {
     if (item.isBool()) {
@@ -58,9 +58,9 @@ void recursiveArrayWriter(
 void recursiveObjectWriter(
     const CesiumGltf::JsonValue::Object& object,
     CesiumGltf::JsonWriter& j,
-    bool isRoot) {
+    bool hasRootObject) {
 
-    if (!isRoot)  {
+    if (!hasRootObject)  {
         j.StartObject();
     }
 
@@ -79,18 +79,19 @@ void recursiveObjectWriter(
         }
     }
 
-    if (!isRoot) {
+    if (!hasRootObject) {
         j.EndObject();
     }
 }
 
 void CesiumGltf::writeJsonValue(
     const JsonValue& value,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumGltf::JsonWriter& jsonWriter,
+    bool hasRootObject) {
     if (value.isArray()) {
         recursiveArrayWriter(std::get<JsonValue::Array>(value.value), jsonWriter);
     } else if (value.isObject()) {
-        recursiveObjectWriter(std::get<JsonValue::Object>(value.value), jsonWriter, true);
+        recursiveObjectWriter(std::get<JsonValue::Object>(value.value), jsonWriter, hasRootObject);
     } else {
         primitiveWriter(value, jsonWriter);
     }
