@@ -30,18 +30,18 @@ namespace Cesium3DTiles
 		    TileRefine tileRefine_,
 		    const std::string& url_,
             const std::string& contentType_,
-		    const gsl::span<const uint8_t>& data_) :
+		    gsl::span<const uint8_t>&& data_) :
             pLogger(pLogger_),
+            data(std::move(data_)),
+            contentType(contentType_),
+            url(url_),
             context(context_),
             tileID(tileID_),
             tileBoundingVolume(tileBoundingVolume_),
-            tileGeometricError(tileGeometricError_),
-            tileTransform(tileTransform_),
             tileContentBoundingVolume(tileContentBoundingVolume_),
             tileRefine(tileRefine_),
-            url(url_),
-            contentType(contentType_),
-            data(data_)
+            tileGeometricError(tileGeometricError_),
+            tileTransform(tileTransform_)
         {
         }
 
@@ -49,20 +49,34 @@ namespace Cesium3DTiles
         /**
          * @brief The logger that receives details of loading errors and warnings.
          */
-		const std::shared_ptr<spdlog::logger> pLogger;
+		std::shared_ptr<spdlog::logger> pLogger;
 
         /**
-         * @brief The raw input data
+         * @brief The raw input data.
+         * 
+         * The {@link TileContentFactory} will try to determine the type of the
+         * data using the first four bytes (i.e. the "magic header"). If this 
+         * does not succeed, it will try to determine the type based on the
+         * `contentType` field.
          */
-        const gsl::span<const uint8_t>& data;
-
-        // XXX TODO May become optional!
-        const std::string contentType;
+        gsl::span<const uint8_t> data;
 
         /**
-         * @brief The source URL
+         * @brief The content type. 
+         * 
+         * If the data was obtained via a HTTP response, then this will be
+         * the `Content-Type` of that response. The {@link TileContentFactory}
+         * will try to interpret the data based on this content type. 
+         * 
+         * If the data was not directly obtained from an HTTP response, then
+         * this may be the empty string.
          */
-		const std::string& url;
+        std::string contentType;
+
+        /**
+         * @brief The source URL.
+         */
+		const std::string url;
 
         /**
          * @brief The {@link TileContext}.
@@ -70,34 +84,34 @@ namespace Cesium3DTiles
 		const TileContext& context;
 
         /**
-         * @brief The {@link TileID}
+         * @brief The {@link TileID}.
          */
-		const TileID& tileID;
+		const TileID tileID;
 
         /**
-         * @brief The tile {@link BoundingVolume}
+         * @brief The tile {@link BoundingVolume}.
          */
-		const BoundingVolume& tileBoundingVolume;
+		const BoundingVolume tileBoundingVolume;
 
         /**
-         * @brief Tile content {@link BoundingVolume}
+         * @brief Tile content {@link BoundingVolume}.
          */
-		const std::optional<BoundingVolume>& tileContentBoundingVolume;
+		const std::optional<BoundingVolume> tileContentBoundingVolume;
 
         /**
-         * @brief The {@link TileRefine}
+         * @brief The {@link TileRefine}.
          */
 		const TileRefine tileRefine;
 
         /**
-         * @brief The geometric error
+         * @brief The geometric error.
          */
         const double tileGeometricError;
 
         /**
          * @brief The tile transform
          */
-        const glm::dmat4& tileTransform;
+        const glm::dmat4 tileTransform;
 
     };
 }

@@ -74,6 +74,9 @@ namespace Cesium3DTiles {
          * It will first try to find a loader based on the magic header
          * of the `data` in the given input. If no matching loader is found, then 
          * it will look up a loader based on the `contentType` of the given input.
+         * (This will ignore any parameters that may appear after a `;` in the 
+         * `contentType` string).
+         * 
          * If no such loader is found then `nullptr` is returned.
          * 
          * If a matching loader is found, it will be applied to the given
