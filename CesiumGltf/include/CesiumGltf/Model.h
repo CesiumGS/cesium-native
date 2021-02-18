@@ -12,7 +12,7 @@ namespace CesiumGltf {
          * After this method returns, this `Model` contains all of the
          * elements that were originally in it _plus_ all of the elements
          * that were in `rhs`. Element indices are updated accordingly.
-         * However, element indices in {@ExtensibleObject::extras}, if any,
+         * However, element indices in {@link ExtensibleObject::extras}, if any,
          * are _not_ updated.
          * 
          * @param rhs The model to merge into this one.
@@ -41,7 +41,7 @@ namespace CesiumGltf {
          * @brief Safely gets a pointer to the element with a given index, returning `nullptr` if the index is outside the range.
          * 
          * @tparam T The type of the array.
-         * @param items The array.
+         * @param pItems The array.
          * @param index The index of the array element to retrieve.
          * @return A pointer to the requested element, or `nullptr` if the index is invalid.
          */
@@ -58,7 +58,7 @@ namespace CesiumGltf {
          * @brief Safely gets a pointer to the element with a given index, returning `nullptr` if the index is outside the range.
          * 
          * @tparam T The type of the array.
-         * @param items The array.
+         * @param pItems The array.
          * @param index The index of the array element to retrieve.
          * @return A pointer to the requested element, or `nullptr` if the index is invalid.
          */

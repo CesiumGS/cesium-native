@@ -160,7 +160,7 @@ namespace Cesium3DTiles {
                     return result;
                 }
             }).thenInMainThread([this](LoadResult&& result) {
-                result.pRendererResources = result.pRendererResources;
+                this->_pRendererResources = result.pRendererResources;
                 this->_image = std::move(result.image);
                 this->setState(result.state);
 

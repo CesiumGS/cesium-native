@@ -181,7 +181,7 @@ namespace CesiumUtility {
             return this->_pHead;
         }
 
-        /** @copydoc DoubleLinkedList::head() */
+        /** @copydoc DoublyLinkedList::head() */
         const T* head() const noexcept {
             return this->_pHead;
         }
@@ -193,7 +193,7 @@ namespace CesiumUtility {
             return this->_pTail;
         }
 
-        /** @copydoc DoubleLinkedList::tail() */
+        /** @copydoc DoublyLinkedList::tail() */
         const T* tail() const noexcept {
             return this->_pTail;
         }
@@ -205,7 +205,7 @@ namespace CesiumUtility {
             return (node.*Pointers).pNext;
         }
 
-        /** @copydoc DoubleLinkedList::next(T&) */
+        /** @copydoc DoublyLinkedList::next(T&) */
         const T* next(const T& node) const noexcept {
             return (node.*Pointers).pNext;
         }
@@ -217,7 +217,7 @@ namespace CesiumUtility {
             return pNode ? this->next(*pNode) : this->_pHead;
         }
 
-        /** @copydoc DoubleLinkedList::next(T*) */
+        /** @copydoc DoublyLinkedList::next(T*) */
         const T* next(const T* pNode) const noexcept {
             return pNode ? this->next(*pNode) : this->_pHead;
         }
@@ -229,7 +229,7 @@ namespace CesiumUtility {
             return (node.*Pointers).pPrevious;
         }
 
-        /** @copydoc DoubleLinkedList::previous(T&) */
+        /** @copydoc DoublyLinkedList::previous(T&) */
         const T* previous(const T& node) const noexcept {
             return (node.*Pointers).pPrevious;
         }
@@ -241,7 +241,7 @@ namespace CesiumUtility {
             return pNode ? this->previous(*pNode) : this->_pTail;
         }
 
-        /** @copydoc DoubleLinkedList::previous(T*) */
+        /** @copydoc DoublyLinkedList::previous(T*) */
         const T* previous(const T* pNode) const noexcept {
             return pNode ? this->previous(*pNode) : this->_pTail;
         }

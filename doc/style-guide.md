@@ -57,6 +57,15 @@ cesium-native may be used in environments with exceptions disabled, such as in W
 * Report improper API usage and precondition violations with `assert` rather than by throwing exceptions. In CesiumJS, these kinds of checks would throw `DeveloperError` and would be removed from release builds. `assert` is a more elegant way to do much the same. The C++ Core Guidelines ([I.6](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i6-prefer-expects-for-expressing-preconditions) and [I.8](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i8-prefer-ensures-for-expressing-postconditions)) suggest using the `Expects` and `Ensures` macros from the Guidelines Support Library instead of `assert`, but we suggest sticking with the more standard `assert` for the time being.
 * Don't cause buffer overruns or other memory corruption. If it's not possible to continue safely, throwing an exception can be ok. When exceptions are disabled, throwing an exception will cause immediate termination of the program, which is better than memory corruption.
 
+## ✨ Const by-value parameters
+
+Not covered by the C++ Core Guidelines.
+
+Whether a by-value parameter is `const`, e.g. `void someFunction(int foo)` versus `void someFunction(const int foo)` does not affect how that function is called in any way. From the standpoint of overload resolution, overriding, and linking, these two functions are _identical_. In fact, it is perfectly valid to _declare_ a function with a non-const value parameter and _define_ it with a const value parameter. Therefore we follow the advice suggested in https://abseil.io/tips/109:
+
+> 1. Never use top-level const on function parameters in declarations that are not definitions (and be careful not to copy/paste a meaningless const). It is meaningless and ignored by the compiler, it is visual noise, and it could mislead readers.
+> 2. Do use top-level const on function parameters in definitions at your (or your team’s) discretion. You might follow the same rationale as you would for when to declare a function-local variable const.
+
 ## 🎱 Use UTF-8 Everywhere
 
 Not covered by C++ Core Guidelines.

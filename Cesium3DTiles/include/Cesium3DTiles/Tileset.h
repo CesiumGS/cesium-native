@@ -230,7 +230,12 @@ namespace Cesium3DTiles {
          */
         const TilesetExternals& getExternals() const noexcept { return this->_externals; }
 
+        /**
+         * @brief Returns the {@link CesiumAsync::AsyncSystem} that is used for dispatching asynchronous tasks.
+         */
         CesiumAsync::AsyncSystem& getAsyncSystem() noexcept { return this->_asyncSystem; }
+
+        /** @copydoc Tileset::getAsyncSystem() */
         const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept { return this->_asyncSystem; }
 
         /** @copydoc Tileset::getOptions() */
@@ -294,6 +299,7 @@ namespace Cesium3DTiles {
          * @param parentTransform The new tile's parent transform.
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
          * @param context The context of the new tiles.
+         * @param pLogger The logger.
          */
         void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) const;
 
