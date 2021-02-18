@@ -58,39 +58,51 @@ JsonValue* JsonValue::getValueForKey(const std::string& key) {
 }
 
 std::optional<double> JsonValue::getValueForKeyAsDouble(const std::string& key) const noexcept {
-    const auto* v = getValueForKey(key);
-    if (!v) {
-        return std::nullopt;
+    const CesiumGltf::JsonValue* v = getValueForKey(key);
+    if (v) {
+        const auto* number = std::get_if<Number>(&(v->value));
+        if (number) {
+            return *number;
+        }
     }
-    const auto* number = std::get_if<Number>(&this->value);
-    return !number ? std::nullopt : std::optional(*number);
+
+    return std::nullopt;
 }
 
 std::optional<float> JsonValue::getValueForKeyAsFloat(const std::string& key) const noexcept {
-    const auto* v = getValueForKey(key);
-    if (!v) {
-        return std::nullopt;
+    const CesiumGltf::JsonValue* v = getValueForKey(key);
+    if (v) {
+        const auto* number = std::get_if<Number>(&(v->value));
+        if (number) {
+            return static_cast<float>(*number);
+        }
     }
-    const auto* number = std::get_if<Number>(&this->value);
-    return !number ? std::nullopt : std::optional(static_cast<float>(*number));
+
+    return std::nullopt;
 }
 
 std::optional<std::int32_t> JsonValue::getValueForKeyAsInt32(const std::string& key) const noexcept {
-    const auto* v = getValueForKey(key);
-    if (!v) {
-        return std::nullopt;
+    const CesiumGltf::JsonValue* v = getValueForKey(key);
+    if (v) {
+        const auto* number = std::get_if<Number>(&(v->value));
+        if (number) {
+            return static_cast<std::int32_t>(*number);
+        }
     }
-    const auto* number = std::get_if<Number>(&this->value);
-    return !number ? std::nullopt : std::optional(static_cast<std::int32_t>(*number));
+
+    return std::nullopt;
 }
 
 std::optional<std::size_t> JsonValue::getValueForKeyAsSizeT(const std::string& key) const noexcept {
-    const auto* v = getValueForKey(key);
-    if (!v) {
-        return std::nullopt;
+    const CesiumGltf::JsonValue* v = getValueForKey(key);
+    if (v) {
+        const auto* number = std::get_if<Number>(&(v->value));
+        if (number) {
+            return static_cast<size_t>(*number);
+        }
     }
-    const auto* number = std::get_if<Number>(&this->value);
-    return !number ? std::nullopt : std::optional(static_cast<size_t>(*number));
+
+    return std::nullopt;
 }
 
 bool JsonValue::isNull() const {
