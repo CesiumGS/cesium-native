@@ -225,7 +225,7 @@ namespace Cesium3DTiles {
         ](std::unique_ptr<IAssetRequest>&& pRequest) {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-                // TODO: report the lack of response. Network error? Can this even happen?
+                SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tile content {}", pRequest->url());
                 auto pLoadResult = std::make_unique<TileContentLoadResult>();
                 pLoadResult->httpStatusCode = 0;
                 return LoadResult {
@@ -236,7 +236,7 @@ namespace Cesium3DTiles {
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                // TODO: report error response.
+                SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tile content {}", pResponse->statusCode(), pRequest->url());
                 auto pLoadResult = std::make_unique<TileContentLoadResult>();
                 pLoadResult->httpStatusCode = pResponse->statusCode();
                 return LoadResult {
