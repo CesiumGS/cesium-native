@@ -212,6 +212,7 @@ namespace Cesium3DTiles {
         };
 
         std::move(maybeRequestFuture.value()).thenInWorkerThread([
+            this,
             pContext = this->getContext(),
             tileID = this->getTileID(),
             boundingVolume = this->getBoundingVolume(),
@@ -249,16 +250,10 @@ namespace Cesium3DTiles {
             std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
                 TileContentLoadInput(
                     pLogger,
-                    *pContext,
-                    tileID,
-                    boundingVolume,
-                    geometricError,
-                    transform,
-                    contentBoundingVolume,
-                    refine,
-                    pRequest->url(),
+                    pResponse->data(),
                     pResponse->contentType(),
-                    pResponse->data()
+                    pRequest->url(),
+                    *this
                 )
             );
 
