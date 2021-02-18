@@ -11,7 +11,8 @@ void CesiumGltf::writeTexture(
     }
 
     auto& j = jsonWriter;
-
+    
+    j.Key("textures");
     j.StartArray();
     for (const auto& texture : textures) {
         j.StartObject();
