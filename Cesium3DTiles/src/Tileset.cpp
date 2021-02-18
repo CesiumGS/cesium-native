@@ -242,6 +242,19 @@ namespace Cesium3DTiles {
         return density;
     }
 
+    const ViewUpdateResult& Tileset::updateViewOffline(const ViewState& viewState) {
+        std::vector<Tile*> tilesToNoLongerRenderThisFrame = this->_updateResult.tilesToRenderThisFrame;
+
+        this->updateView(viewState);
+        while (this->_loadsInProgress > 0) {
+            this->_externals.pAssetAccessor->tick();
+			this->updateView(viewState);
+        }
+
+        this->_updateResult.tilesToNoLongerRenderThisFrame = std::move(tilesToNoLongerRenderThisFrame);
+        return this->_updateResult;
+    }
+
     const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
         this->_asyncSystem.dispatchMainThreadTasks();
 

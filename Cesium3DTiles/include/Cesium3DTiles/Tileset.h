@@ -264,6 +264,8 @@ namespace Cesium3DTiles {
         /** @copydoc Tileset::getOverlays() */
         const RasterOverlayCollection& getOverlays() const noexcept { return this->_overlays; }
 
+        const ViewUpdateResult& updateViewOffline(const ViewState& viewState);
+
         /**
          * @brief Updates this view, returning the set of tiles to render in this view.
          * @param viewState The {@link ViewState} that the view should be updated for
