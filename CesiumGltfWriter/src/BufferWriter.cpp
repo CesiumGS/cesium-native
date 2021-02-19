@@ -33,13 +33,12 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
             amalgamatedBuffer.end(),
             src.begin(),
             src.end());
-
-        j.Key("byteLength");
-        j.Int64(buffer.byteLength);
+        
+        const auto byteLength = (buffer.byteLength == 0 && !buffer.cesium.data.empty()) ? static_cast<std::int64_t>(buffer.cesium.data.size()) : buffer.byteLength;
+        j.KeyPrimitive("byteLength", byteLength);
 
         if (!buffer.name.empty()) {
-            j.Key("name");
-            j.String(buffer.name.c_str());
+            j.KeyPrimitive("name", buffer.name);
         }
 
         if (!buffer.extras.empty()) {
