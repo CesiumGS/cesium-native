@@ -233,36 +233,71 @@ namespace CesiumGltf {
     struct AccessorTypes {
         #pragma pack(push, 1)
 
+		/** 
+		 * @brief A scalar element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct SCALAR {
             T value[1];
         };
 
+		/** 
+		 * @brief A 2D vector element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct VEC2 {
             T value[2];
         };
 
+		/** 
+		 * @brief A 3D vector element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct VEC3 {
             T value[3];
         };
 
+		/** 
+		 * @brief A 4D vector element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct VEC4 {
             T value[4];
         };
 
+		/** 
+		 * @brief A 2x2 matrix element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct MAT2 {
             T value[4];
         };
 
+		/** 
+		 * @brief A 3x3 matrix element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct MAT3 {
             T value[9];
         };
 
+		/** 
+		 * @brief A 4x4 matrix element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct MAT4 {
             T value[16];

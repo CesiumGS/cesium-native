@@ -80,8 +80,8 @@ namespace Cesium3DTiles {
              * @brief The tile content is currently being loaded. 
              *
              * Note that while a tile is in this state, its {@link Tile::getContent},
-             * {@link Tile::getState}, and {@link Tile::setState} methods may be 
-             * called from the load thread.
+             * and {@link Tile::getState}, methods may be called from the load thread,
+             * and the state may change due to the internal loading process.
              */
             ContentLoading = 1,
 

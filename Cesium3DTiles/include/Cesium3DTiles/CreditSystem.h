@@ -13,9 +13,10 @@ namespace Cesium3DTiles {
      */
     struct CESIUM3DTILES_API Credit {
         public:
+            /**
+             * @brief Returns `true` if two credit objects have the same ID.
+             */
             bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
-
-            bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
 
         private:
             size_t id;
