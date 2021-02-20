@@ -23,15 +23,15 @@ namespace CesiumAsync {
          * @param responseCacheControl the cache-control of the response
          * @param cacheData the body of the response
          */
-        CacheResponse(uint16_t cacheStatusCode, 
-            std::string cacheContentType, 
-            HttpHeaders cacheHeaders, 
-            std::optional<ResponseCacheControl> responseCacheControl,
-            std::vector<uint8_t> cacheData)
+        CacheResponse(
+            uint16_t cacheStatusCode, 
+            HttpHeaders&& cacheHeaders, 
+            // std::optional<ResponseCacheControl> responseCacheControl,
+            std::vector<uint8_t>&& cacheData)
             : statusCode{cacheStatusCode}
-            , contentType{std::move(cacheContentType)}
+            // , contentType{std::move(cacheContentType)}
             , headers{std::move(cacheHeaders)}
-            , cacheControl{std::move(responseCacheControl)}
+            // , cacheControl{std::move(responseCacheControl)}
             , data{std::move(cacheData)}
         {}
 
@@ -43,7 +43,7 @@ namespace CesiumAsync {
         /**
          * @brief The content type of the response.
          */
-        std::string contentType;
+        // std::string contentType;
 
         /**
          * @brief The headers of the response.
@@ -53,7 +53,7 @@ namespace CesiumAsync {
         /**
          * @brief The Cache-Control of the response.
          */
-        std::optional<ResponseCacheControl> cacheControl;
+        // std::optional<ResponseCacheControl> cacheControl;
 
         /**
          * @brief The body data of the response.
@@ -109,14 +109,15 @@ namespace CesiumAsync {
          * @param request the cache request owned by this item
          * @param response the cache response owned by this item
          */
-        CacheItem(std::time_t cacheExpiryTime, 
-            std::time_t cacheLastAccessedTime, 
+        CacheItem(
+            std::time_t cacheExpiryTime, 
+            // std::time_t cacheLastAccessedTime, 
             CacheRequest request,
-            CacheResponse response) 
-            : expiryTime{cacheExpiryTime}
-            , lastAccessedTime{cacheLastAccessedTime}
-            , cacheRequest{std::move(request)}
-            , cacheResponse{std::move(response)}
+            CacheResponse response) :
+            expiryTime{cacheExpiryTime},
+            // , lastAccessedTime{cacheLastAccessedTime}
+            cacheRequest{std::move(request)},
+            cacheResponse{std::move(response)}
         {}
 
         /**
@@ -127,7 +128,7 @@ namespace CesiumAsync {
         /**
          * @brief The latest time point that this cache item is accessed.
          */
-        std::time_t lastAccessedTime;
+        // std::time_t lastAccessedTime;
 
         /**
          * @brief The cache request owned by this cache item.

@@ -51,15 +51,19 @@ namespace CesiumAsync {
         DiskCache& operator=(DiskCache&&) noexcept;
 
         /** @copydoc ICacheDatabase::getEntry(const std::string&, std::function<bool(CacheItem)>, std::string&)*/
-        virtual bool getEntry(const std::string& key, 
-            std::function<bool(CacheItem)> predicate, 
-            std::string& error) const override;
+        virtual CacheLookupResult getEntry(const std::string& key) const override;
 
-        /** @copydoc ICacheDatabase::storeResponse(const std::string&, std::time_t, const IAssetRequest&, std::string&)*/
-        virtual bool storeResponse(const std::string& key, 
+        /** @copydoc ICacheDatabase::storeEntry*/
+        virtual CacheStoreResult storeEntry(
+            const std::string& key,
             std::time_t expiryTime,
-            const IAssetRequest& request,
-            std::string& error) override;
+            const std::string& url,
+            const std::string& requestMethod,
+            const HttpHeaders& requestHeaders,
+            uint16_t statusCode,
+            const HttpHeaders& responseHeaders,
+            const gsl::span<const uint8_t>& responseData
+        ) override;
 
         /** @copydoc ICacheDatabase::prune(std::string&)*/
         virtual bool prune(std::string& error) override;

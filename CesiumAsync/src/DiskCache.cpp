@@ -9,37 +9,28 @@
 namespace CesiumAsync {
     // Cache table column names
     static const std::string CACHE_TABLE = "CacheItemTable";
-    static const std::string CACHE_TABLE_ID_COLUMN = "id";
+    static const std::string CACHE_TABLE_KEY_COLUMN = "key";
     static const std::string CACHE_TABLE_EXPIRY_TIME_COLUMN = "expiryTime";
     static const std::string CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN = "lastAccessedTime";
     static const std::string CACHE_TABLE_RESPONSE_HEADER_COLUMN = "responseHeaders";
-    static const std::string CACHE_TABLE_RESPONSE_CONTENT_TYPE_COLUMN = "responseContentType";
     static const std::string CACHE_TABLE_RESPONSE_STATUS_CODE_COLUMN = "responseStatusCode";
-    static const std::string CACHE_TABLE_RESPONSE_CACHE_CONTROL_COLUMN = "responseCacheControl";
     static const std::string CACHE_TABLE_RESPONSE_DATA_COLUMN = "responseData";
     static const std::string CACHE_TABLE_REQUEST_HEADER_COLUMN = "requestHeader";
     static const std::string CACHE_TABLE_REQUEST_METHOD_COLUMN = "requestMethod";
     static const std::string CACHE_TABLE_REQUEST_URL_COLUMN = "requestUrl";
-    static const std::string CACHE_TABLE_KEY_COLUMN = "key";
     static const std::string CACHE_TABLE_VIRTUAL_TOTAL_ITEMS_COLUMN = "totalItems";
 
     // Sql commands for setting up database
     static const std::string CREATE_CACHE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS " + CACHE_TABLE + "(" +
-            CACHE_TABLE_ID_COLUMN + " INTEGER PRIMARY KEY NOT NULL," +
+            CACHE_TABLE_KEY_COLUMN + " TEXT PRIMARY KEY NOT NULL," +
             CACHE_TABLE_EXPIRY_TIME_COLUMN + " DATETIME NOT NULL," +
             CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + " DATETIME NOT NULL," +
             CACHE_TABLE_RESPONSE_HEADER_COLUMN + " TEXT NOT NULL," +
-            CACHE_TABLE_RESPONSE_CONTENT_TYPE_COLUMN + " TEXT NOT NULL," +
             CACHE_TABLE_RESPONSE_STATUS_CODE_COLUMN + " INTEGER NOT NULL," +
-            CACHE_TABLE_RESPONSE_CACHE_CONTROL_COLUMN + " TEXT NOT NULL," +
             CACHE_TABLE_RESPONSE_DATA_COLUMN + " BLOB," +
             CACHE_TABLE_REQUEST_HEADER_COLUMN + " TEXT NOT NULL," +
             CACHE_TABLE_REQUEST_METHOD_COLUMN + " TEXT NOT NULL," +
-            CACHE_TABLE_REQUEST_URL_COLUMN + " TEXT NOT NULL," +
-            CACHE_TABLE_KEY_COLUMN + " TEXT NOT NULL)"; 
-
-    static const std::string INDEX_KEY_COLUMN_SQL = "CREATE INDEX IF NOT EXISTS " + 
-        CACHE_TABLE_KEY_COLUMN + "_index ON " + CACHE_TABLE + "(" + CACHE_TABLE_KEY_COLUMN + ")";
+            CACHE_TABLE_REQUEST_URL_COLUMN + " TEXT NOT NULL)";
 
     static const std::string PRAGMA_WAL_SQL = "PRAGMA journal_mode=WAL";
 
@@ -48,14 +39,10 @@ namespace CesiumAsync {
     static const std::string PRAGMA_PAGE_SIZE_SQL = "PRAGMA page_size=4096";
 
     // Sql commands for getting entry from database
-    static const std::string GET_ENTRY_SQL = "SELECT " +
-        CACHE_TABLE_ID_COLUMN + ", " +
+    static const std::string GET_ENTRY_SQL = "SELECT rowid, " +
         CACHE_TABLE_EXPIRY_TIME_COLUMN + ", " +
-        CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + ", " +
         CACHE_TABLE_RESPONSE_HEADER_COLUMN + ", " +
-        CACHE_TABLE_RESPONSE_CONTENT_TYPE_COLUMN + " , " +
         CACHE_TABLE_RESPONSE_STATUS_CODE_COLUMN + ", " +
-        CACHE_TABLE_RESPONSE_CACHE_CONTROL_COLUMN + ", " +
         CACHE_TABLE_RESPONSE_DATA_COLUMN + ", " +
         CACHE_TABLE_REQUEST_HEADER_COLUMN + ", " +
         CACHE_TABLE_REQUEST_METHOD_COLUMN + ", " +
@@ -70,23 +57,21 @@ namespace CesiumAsync {
         CACHE_TABLE_EXPIRY_TIME_COLUMN + ", " +
         CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + ", " +
         CACHE_TABLE_RESPONSE_HEADER_COLUMN + ", " +
-        CACHE_TABLE_RESPONSE_CONTENT_TYPE_COLUMN + " , " +
         CACHE_TABLE_RESPONSE_STATUS_CODE_COLUMN + ", " +
-        CACHE_TABLE_RESPONSE_CACHE_CONTROL_COLUMN + ", " +
         CACHE_TABLE_RESPONSE_DATA_COLUMN + ", " +
         CACHE_TABLE_REQUEST_HEADER_COLUMN + ", " +
         CACHE_TABLE_REQUEST_METHOD_COLUMN + ", " +
         CACHE_TABLE_REQUEST_URL_COLUMN + ", " +
         CACHE_TABLE_KEY_COLUMN +
-        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     // Sql commands for prunning the database
     static const std::string TOTAL_ITEMS_QUERY_SQL = "SELECT COUNT(*) " + CACHE_TABLE_VIRTUAL_TOTAL_ITEMS_COLUMN + " FROM " + CACHE_TABLE;
 
     static const std::string DELETE_EXPIRED_ITEMS_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_EXPIRY_TIME_COLUMN + " < strftime('%s','now')";
 
-    static const std::string DELETE_LRU_ITEMS_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE " + CACHE_TABLE_ID_COLUMN + 
-        " IN (SELECT " + CACHE_TABLE_ID_COLUMN + " FROM " + CACHE_TABLE + " ORDER BY " + CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + " ASC " + " LIMIT ?)";
+    static const std::string DELETE_LRU_ITEMS_SQL = "DELETE FROM " + CACHE_TABLE + " WHERE rowid " + 
+        " IN (SELECT rowid FROM " + CACHE_TABLE + " ORDER BY " + CACHE_TABLE_LAST_ACCESSED_TIME_COLUMN + " ASC " + " LIMIT ?)";
 
     // Sql commands for clean all items
     static const std::string CLEAR_ALL_SQL = "DELETE FROM " + CACHE_TABLE;
@@ -117,15 +102,6 @@ namespace CesiumAsync {
             throw std::runtime_error(errorStr);
         }
 
-        // index Key column
-        char* indexKeyError = nullptr;
-        status = sqlite3_exec(this->_pConnection, INDEX_KEY_COLUMN_SQL.c_str(), nullptr, nullptr, &indexKeyError);
-        if (status != SQLITE_OK) {
-            std::string errorStr(indexKeyError);
-            sqlite3_free(indexKeyError);
-            throw std::runtime_error(errorStr);
-        }
-        
         // turn on WAL mode
         char* walError = nullptr;
         status = sqlite3_exec(this->_pConnection, PRAGMA_WAL_SQL.c_str(), nullptr, nullptr, &walError);
@@ -223,225 +199,228 @@ namespace CesiumAsync {
         }
     }
 
-    bool DiskCache::getEntry(const std::string& key, 
-            std::function<bool(CacheItem)> predicate, 
-            std::string& error) const 
-    {
+    CacheLookupResult DiskCache::getEntry(const std::string& key) const {
         std::lock_guard<std::mutex> guard(this->_mutex);
 
         // get entry based on key
         int status = sqlite3_reset(this->_getEntryStmtWrapper.stmt);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(status)
+            };
         }
 
         status = sqlite3_clear_bindings(this->_getEntryStmtWrapper.stmt);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(status)
+            };
         }
 
         status = sqlite3_bind_text(this->_getEntryStmtWrapper.stmt, 1, key.c_str(), -1, SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(status)
+            };
         }
 
-        while ((status = sqlite3_step(this->_getEntryStmtWrapper.stmt)) == SQLITE_ROW) {
-            int64_t itemIndex = sqlite3_column_int64(this->_getEntryStmtWrapper.stmt, 0);
-
-            // parse cache item metadata
-            std::time_t expiryTime = sqlite3_column_int64(this->_getEntryStmtWrapper.stmt, 1);
-
-            std::time_t lastAccessedTime = sqlite3_column_int64(this->_getEntryStmtWrapper.stmt, 2);
-
-            // parse response cache 
-            std::string serializedResponseHeaders = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 3));
-            HttpHeaders responseHeaders = convertStringToHeaders(serializedResponseHeaders);
-
-            std::string responseContentType = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 4));
-
-            uint16_t statusCode = static_cast<uint16_t>(sqlite3_column_int(this->_getEntryStmtWrapper.stmt, 5));
-
-            const char* serializedResponseCacheControl = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 6));
-            std::optional<ResponseCacheControl> responseCacheControl = convertStringToResponseCacheControl(serializedResponseCacheControl);
-
-            const void* rawResponseData = sqlite3_column_blob(this->_getEntryStmtWrapper.stmt, 7);
-            size_t responseDataSize = static_cast<size_t>(sqlite3_column_bytes(this->_getEntryStmtWrapper.stmt, 7));
-            std::vector<uint8_t> responseData(responseDataSize);
-            if (responseDataSize != 0) {
-                std::memcpy(responseData.data(), rawResponseData, responseDataSize);
-            }
-
-            CacheResponse cacheResponse(statusCode, 
-                std::move(responseContentType), 
-                std::move(responseHeaders), 
-                std::move(responseCacheControl), 
-                std::move(responseData));
-            
-            // parse request
-            std::string serializedRequestHeaders = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 8));
-            HttpHeaders requestHeaders = convertStringToHeaders(serializedRequestHeaders);
-
-            std::string requestMethod = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 9));
-
-            std::string requestUrl = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 10));
-
-            CacheRequest cacheRequest(std::move(requestHeaders), 
-                std::move(requestMethod), 
-                std::move(requestUrl));
-
-            CacheItem item{ expiryTime,
-                lastAccessedTime,
-                std::move(cacheRequest),
-                std::move(cacheResponse) };
-
-            if (predicate(std::move(item))) {
-                // update the last accessed time
-                int updateStatus = sqlite3_reset(this->_updateLastAccessedTimeStmtWrapper.stmt);
-                if (updateStatus != SQLITE_OK) {
-                    error = std::string(sqlite3_errstr(updateStatus));
-                    return false;
-                }
-
-                updateStatus = sqlite3_clear_bindings(this->_updateLastAccessedTimeStmtWrapper.stmt);
-                if (updateStatus != SQLITE_OK) {
-                    error = std::string(sqlite3_errstr(updateStatus));
-                    return false;
-                }
-
-                updateStatus = sqlite3_bind_int64(this->_updateLastAccessedTimeStmtWrapper.stmt, 1, itemIndex);
-                if (updateStatus != SQLITE_OK) {
-                    error = std::string(sqlite3_errstr(updateStatus));
-                    return false;
-                }
-
-                updateStatus = sqlite3_step(this->_updateLastAccessedTimeStmtWrapper.stmt);
-                if (updateStatus != SQLITE_DONE) {
-                    error = std::string(sqlite3_errstr(updateStatus));
-                    return false;
-                }
-
-                break;
-            }
+        status = sqlite3_step(this->_getEntryStmtWrapper.stmt);
+        if (status == SQLITE_DONE) {
+            // Cache miss
+            return CacheLookupResult {
+                std::nullopt,
+                std::string()
+            };
         }
 
-        if (status != SQLITE_DONE && status != SQLITE_ROW) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+        if (status != SQLITE_ROW) {
+            // Something went wrong.
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(status)
+            };
         }
 
-        return true;
+        // Cache hit - unpack and return it.
+        int64_t itemIndex = sqlite3_column_int64(this->_getEntryStmtWrapper.stmt, 0);
+
+        // parse cache item metadata
+        std::time_t expiryTime = sqlite3_column_int64(this->_getEntryStmtWrapper.stmt, 1);
+
+        // parse response cache 
+        std::string serializedResponseHeaders = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 2));
+        HttpHeaders responseHeaders = convertStringToHeaders(serializedResponseHeaders);
+
+        uint16_t statusCode = static_cast<uint16_t>(sqlite3_column_int(this->_getEntryStmtWrapper.stmt, 3));
+
+        const uint8_t* rawResponseData = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(this->_getEntryStmtWrapper.stmt, 4));
+        int responseDataSize = sqlite3_column_bytes(this->_getEntryStmtWrapper.stmt, 4);
+        std::vector<uint8_t> responseData(rawResponseData, rawResponseData + responseDataSize);
+
+        // parse request
+        std::string serializedRequestHeaders = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 5));
+        HttpHeaders requestHeaders = convertStringToHeaders(serializedRequestHeaders);
+
+        std::string requestMethod = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 6));
+
+        std::string requestUrl = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.stmt, 7));
+
+        // update the last accessed time
+        int updateStatus = sqlite3_reset(this->_updateLastAccessedTimeStmtWrapper.stmt);
+        if (updateStatus != SQLITE_OK) {
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(updateStatus)
+            };
+        }
+
+        updateStatus = sqlite3_clear_bindings(this->_updateLastAccessedTimeStmtWrapper.stmt);
+        if (updateStatus != SQLITE_OK) {
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(updateStatus)
+            };
+        }
+
+        updateStatus = sqlite3_bind_int64(this->_updateLastAccessedTimeStmtWrapper.stmt, 1, itemIndex);
+        if (updateStatus != SQLITE_OK) {
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(updateStatus)
+            };
+        }
+
+        updateStatus = sqlite3_step(this->_updateLastAccessedTimeStmtWrapper.stmt);
+        if (updateStatus != SQLITE_DONE) {
+            return CacheLookupResult {
+                std::nullopt,
+                sqlite3_errstr(updateStatus)
+            };
+        }
+
+        return CacheLookupResult {
+            CacheItem {
+                expiryTime,
+                CacheRequest {
+                    std::move(requestHeaders),
+                    std::move(requestMethod),
+                    std::move(requestUrl)
+                },
+                CacheResponse {
+                    statusCode,
+                    std::move(responseHeaders),
+                    std::move(responseData)
+                }
+            },
+            std::string()
+        };
     }
 
-    bool DiskCache::storeResponse(const std::string& key, 
+    CacheStoreResult DiskCache::storeEntry(
+        const std::string& key,
         std::time_t expiryTime,
-        const IAssetRequest& request,
-        std::string& error) 
-    {
-        const IAssetResponse* response = request.response();
-        if (response == nullptr) {
-            error = std::string("Request needs to have a response");
-            return false;
-        }
-
-        gsl::span<const uint8_t> responseData = response->data();
-
+        const std::string& url,
+        const std::string& requestMethod,
+        const HttpHeaders& requestHeaders,
+        uint16_t statusCode,
+        const HttpHeaders& responseHeaders,
+        const gsl::span<const uint8_t>& responseData
+    ) {
         std::lock_guard<std::mutex> guard(this->_mutex);
 
         // cache the request with the key
         int status = sqlite3_reset(this->_storeResponseStmtWrapper.stmt);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
         status = sqlite3_clear_bindings(this->_storeResponseStmtWrapper.stmt);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
         status = sqlite3_bind_int64(this->_storeResponseStmtWrapper.stmt, 1, static_cast<int64_t>(expiryTime));
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        status = sqlite3_bind_int64(this->_storeResponseStmtWrapper.stmt, 2, static_cast<int64_t>(std::time(0)));
+        status = sqlite3_bind_int64(this->_storeResponseStmtWrapper.stmt, 2, static_cast<int64_t>(std::time(nullptr)));
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        std::string responseHeader = convertHeadersToString(response->headers());
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 3, responseHeader.c_str(), -1, SQLITE_STATIC);
+        std::string responseHeaderString = convertHeadersToString(responseHeaders);
+        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 3, responseHeaderString.c_str(), -1, SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
         
-        const std::string& responseContentType = response->contentType();
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 4, responseContentType.c_str(), -1, SQLITE_STATIC);
+        status = sqlite3_bind_int(this->_storeResponseStmtWrapper.stmt, 4, static_cast<int>(statusCode));
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        status = sqlite3_bind_int(this->_storeResponseStmtWrapper.stmt, 5, static_cast<int>(response->statusCode()));
+        status = sqlite3_bind_blob(this->_storeResponseStmtWrapper.stmt, 5, responseData.data(), static_cast<int>(responseData.size()), SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        std::string responseCacheControl = convertCacheControlToString(response->cacheControl());
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 6, responseCacheControl.c_str(), -1, SQLITE_STATIC);
+        std::string requestHeaderString = convertHeadersToString(requestHeaders);
+        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 6, requestHeaderString.c_str(), -1, SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        status = sqlite3_bind_blob(this->_storeResponseStmtWrapper.stmt, 7, responseData.data(), static_cast<int>(responseData.size()), SQLITE_STATIC);
+        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 7, requestMethod.c_str(), -1, SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        std::string requestHeader = convertHeadersToString(request.headers());
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 8, requestHeader.c_str(), -1, SQLITE_STATIC);
+        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 8, url.c_str(), -1, SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        const std::string& requestMethod = request.method();
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 9, requestMethod.c_str(), -1, SQLITE_STATIC);
+        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 9, key.c_str(), -1, SQLITE_STATIC);
         if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
-        }
-
-        const std::string& requestUrl = request.url();
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 10, requestUrl.c_str(), -1, SQLITE_STATIC);
-        if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
-        }
-
-        status = sqlite3_bind_text(this->_storeResponseStmtWrapper.stmt, 11, key.c_str(), -1, SQLITE_STATIC);
-        if (status != SQLITE_OK) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
         status = sqlite3_step(this->_storeResponseStmtWrapper.stmt);
         if (status != SQLITE_DONE) {
-            error = std::string(sqlite3_errstr(status));
-            return false;
+            return CacheStoreResult {
+                std::string(sqlite3_errstr(status))
+            };
         }
 
-        return true;
+        return CacheStoreResult {
+            std::string()
+        };
     }
 
     bool DiskCache::prune(std::string& error)
@@ -577,30 +556,6 @@ namespace CesiumAsync {
         return buffer.GetString();
     }
 
-    std::string convertCacheControlToString(const ResponseCacheControl* cacheControl) {
-        if (!cacheControl) {
-            return "";
-        }
-
-        rapidjson::Document document;
-        rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-        rapidjson::Value root(rapidjson::kObjectType);
-        root.AddMember("mustRevalidate", cacheControl->mustRevalidate(), allocator);
-        root.AddMember("noCache", cacheControl->noCache(), allocator);
-        root.AddMember("noStore", cacheControl->noStore(), allocator);
-        root.AddMember("noTransform", cacheControl->noTransform(), allocator);
-        root.AddMember("accessControlPublic", cacheControl->accessControlPublic(), allocator);
-        root.AddMember("accessControlPrivate", cacheControl->accessControlPrivate(), allocator);
-        root.AddMember("proxyRevalidate", cacheControl->proxyRevalidate(), allocator);
-        root.AddMember("maxAge", cacheControl->maxAge(), allocator);
-        root.AddMember("sharedMaxAge", cacheControl->sharedMaxAge(), allocator);
-
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        root.Accept(writer);
-        return buffer.GetString();
-    }
-
     HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
         rapidjson::Document document;
         document.Parse(serializedHeaders.c_str());
@@ -611,25 +566,5 @@ namespace CesiumAsync {
         }
 
         return headers;
-    }
-
-    std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const char* serializedResponseCacheControl) {
-        if (serializedResponseCacheControl == nullptr) {
-            return std::nullopt;
-        }
-
-        rapidjson::Document document;
-        document.Parse(serializedResponseCacheControl);
-        return ResponseCacheControl{
-            document["mustRevalidate"].GetBool(),
-            document["noCache"].GetBool(),
-            document["noStore"].GetBool(),
-            document["noTransform"].GetBool(),
-            document["accessControlPublic"].GetBool(),
-            document["accessControlPrivate"].GetBool(),
-            document["proxyRevalidate"].GetBool(),
-            document["maxAge"].GetInt(),
-            document["sharedMaxAge"].GetInt()
-        };
     }
 }

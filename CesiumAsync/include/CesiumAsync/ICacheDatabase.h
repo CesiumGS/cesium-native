@@ -6,6 +6,37 @@
 #include <optional>
 
 namespace CesiumAsync {
+    /**
+     * @brief The result of a cache lookup with {@link ICacheDatabase::getEntry}.
+     */
+    struct CacheLookupResult {
+        /**
+         * @brief The found cache item, or `std::nullopt`.
+         * 
+         * This property will be `std::nullopt` if the cache key does not exist in the
+         * database, or if an error occurs.
+         */
+        std::optional<CacheItem> item;
+
+        /**
+         * @brief Details of an error that occurred during cache lookup, if any.
+         * 
+         * If the string is empty, no error occurred.
+         */
+        std::string error;
+    };
+
+    /**
+     * @brief The result of a cache store with {@link ICacheDatabase::storeEntry}.
+     */
+    struct CacheStoreResult {
+        /**
+         * @brief Details of an error that occuring during cache store, if any.
+         * 
+         * If the string is empty, no error occurred.
+         */
+        std::string error;
+    };
 
     /**
      * @brief Provides database storage interface to cache completed request.
@@ -15,18 +46,12 @@ namespace CesiumAsync {
         virtual ~ICacheDatabase() noexcept = default;
 
         /**
-         * @brief Get cache entry from the database. 
-         * predicate callback will be invoked if there are any existing cache 
-         * entries in the database. The predicate should return true to stop the database
-         * from searching more entries associated with the key.
-         * @param key the unique key associated with the cache entries 
-         * @param predicate the function that is invoked when there are any existing cache item.
-         * @param error the error message when there are problems happening when retrieving cache entry
-         * @return A boolean true if there are no errors when calling this function
+         * @brief Gets a cache entry from the database.
+         * 
+         * @param key The unique key associated with the cache entry.
+         * @return The result of the cache lookup.
          */
-        virtual bool getEntry(const std::string& key, 
-            std::function<bool(CacheItem)> predicate, 
-            std::string& error) const = 0;
+        virtual CacheLookupResult getEntry(const std::string& key) const = 0;
 
         /**
          * @brief Store response into the database. 
@@ -36,10 +61,16 @@ namespace CesiumAsync {
          * @param error the error message when there are problems happening when storing the response
          * @return A boolean true if there are no errors when calling this function
          */
-        virtual bool storeResponse(const std::string& key, 
+        virtual CacheStoreResult storeEntry(
+            const std::string& key,
             std::time_t expiryTime,
-            const IAssetRequest& request,
-            std::string& error) = 0;
+            const std::string& url,
+            const std::string& requestMethod,
+            const HttpHeaders& requestHeaders,
+            uint16_t statusCode,
+            const HttpHeaders& responseHeaders,
+            const gsl::span<const uint8_t>& responseData
+        ) = 0;
 
         /**
          * @brief Remove cache entries from the database to satisfy the database invariant condition (.e.g exired response or LRU). 
