@@ -244,9 +244,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct SCALAR {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[1];
         };
 
@@ -257,9 +257,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct VEC2 {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[2];
         };
 
@@ -270,9 +270,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct VEC3 {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[3];
         };
 
@@ -283,9 +283,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct VEC4 {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[4];
         };
 
@@ -296,9 +296,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct MAT2 {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[4];
         };
 
@@ -309,9 +309,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct MAT3 {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[9];
         };
 
@@ -322,9 +322,9 @@ namespace CesiumGltf {
 		 */
         template <typename T>
         struct MAT4 {
-			/**
-			 * @brief The component values of this element.
-			 */
+            /**
+             * @brief The component values of this element.
+             */
             T value[16];
         };
 
