@@ -108,55 +108,69 @@ namespace CesiumAsync {
 
     CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 
-    void CachingAssetAccessor::requestAsset(
-        const AsyncSystem* pAsyncSystem, 
+    Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
+        const AsyncSystem& asyncSystem,
         const std::string& url, 
-        const std::vector<THeader>& headers,
-        std::function<void(std::shared_ptr<IAssetRequest>)> callback) 
+        const std::vector<THeader>& headers) 
     {
-        pAsyncSystem->runInWorkerThread([this, pAsyncSystem, url, headers, callback]() {
+        int32_t requestSinceLastPrune = ++this->_requestSinceLastPrune;
+        if (requestSinceLastPrune == this->_requestsPerCachePrune) {
+            // More requests may have started and incremented _requestSinceLastPrune beyond _requestsPerCachePrune
+            // before this next line. That's ok.
+            this->_requestSinceLastPrune = 0;
+
+            asyncSystem.runInWorkerThread([this]() {
+                std::string error;
+                if (!this->_pCacheDatabase->prune(error)) {
+                    SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot prune the cache database: {}", error);
+                }
+            });
+        }
+
+        return asyncSystem.runInWorkerThread([
+            asyncSystem,
+            pAssetAccessor = this->_pAssetAccessor,
+            pCacheDatabase = this->_pCacheDatabase,
+            pLogger = this->_pLogger,
+            url,
+            headers
+        ]() -> Future<std::shared_ptr<IAssetRequest>> {
             bool readError = false;
 
-            CacheLookupResult cacheLookup = this->_pCacheDatabase->getEntry(url);
+            CacheLookupResult cacheLookup = pCacheDatabase->getEntry(url);
             if (!cacheLookup.error.empty()) {
-                SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot access cache database: {}. Requesting directly from the server instead.", cacheLookup.error);
+                SPDLOG_LOGGER_WARN(pLogger, "Cannot access cache database: {}. Requesting directly from the server instead.", cacheLookup.error);
                 readError = true;
             }
 
-            // if no cache found, then request directly to the server
+            // if no cache item found, then request directly to the server
             if (!cacheLookup.item) { 
-                ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
-                this->_pAssetAccessor->requestAsset(pAsyncSystem, url, headers, 
-                    [pAsyncSystem, pCacheDatabase, pLogger = _pLogger, callback, readError](std::shared_ptr<IAssetRequest> pCompletedRequest) {
-                        if (!readError && shouldCacheRequest(*pCompletedRequest)) {
-                            pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pCompletedRequest]() {
-                                const IAssetResponse* pResponse = pCompletedRequest->response();
-                                if (!pResponse) {
-                                    // Can't a null response, so ignore it. The callback will log if necessary.
-                                    return;
-                                }
+                return pAssetAccessor->requestAsset(asyncSystem, url, headers).thenInWorkerThread([
+                    pCacheDatabase,
+                    pLogger,
+                    readError
+                ](std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
+                    const IAssetResponse* pResponse = pCompletedRequest->response();
 
-                                CacheStoreResult storeResult = pCacheDatabase->storeEntry(
-                                    calculateCacheKey(*pCompletedRequest),
-                                    calculateExpiryTime(*pCompletedRequest),
-                                    pCompletedRequest->url(),
-                                    pCompletedRequest->method(),
-                                    pCompletedRequest->headers(),
-                                    pResponse->statusCode(),
-                                    pResponse->headers(),
-                                    pResponse->data()
-                                );
+                    if (!readError && pResponse && shouldCacheRequest(*pCompletedRequest)) {
+                        CacheStoreResult storeResult = pCacheDatabase->storeEntry(
+                            calculateCacheKey(*pCompletedRequest),
+                            calculateExpiryTime(*pCompletedRequest),
+                            pCompletedRequest->url(),
+                            pCompletedRequest->method(),
+                            pCompletedRequest->headers(),
+                            pResponse->statusCode(),
+                            pResponse->headers(),
+                            pResponse->data()
+                        );
 
-                                if (!storeResult.error.empty()) {
-                                    SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", storeResult.error);
-                                }
-                            });
+                        if (!storeResult.error.empty()) {
+                            SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", storeResult.error);
                         }
+                    }
 
-                        callback(pCompletedRequest);
-                    });
-
-                return;
+                    return std::move(pCompletedRequest);
+                });
             }
 
             CacheItem& cacheItem = cacheLookup.item.value();
@@ -175,63 +189,46 @@ namespace CesiumAsync {
                     newHeaders.emplace_back("If-Modified-Since", lastModifiedHeader->second);
                 }
 
-                spdlog::logger* pLogger = this->_pLogger.get();
-                ICacheDatabase* pCacheDatabase = this->_pCacheDatabase.get();
-                this->_pAssetAccessor->requestAsset(pAsyncSystem, url, newHeaders,
-                    [pLogger, pCacheDatabase, pAsyncSystem, callback, cacheItem = std::move(cacheItem)](std::shared_ptr<IAssetRequest> pCompletedRequest) mutable {
-                        if (!pCompletedRequest) {
-                            return;
+                return pAssetAccessor->requestAsset(asyncSystem, url, newHeaders).thenInWorkerThread([
+                    cacheItem = std::move(cacheItem),
+                    pCacheDatabase,
+                    pLogger
+                ](std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
+                    if (!pCompletedRequest) {
+                        return std::move(pCompletedRequest);
+                    }
+
+                    std::shared_ptr<IAssetRequest> pRequestToStore;
+                    if (pCompletedRequest->response()->statusCode() == 304) { // status Not-Modified
+                        pRequestToStore = updateCacheItem(std::move(cacheItem), *pCompletedRequest);
+                    } else {
+                        pRequestToStore = pCompletedRequest;
+                    }
+
+                    if (shouldCacheRequest(*pRequestToStore)) {
+                        CacheStoreResult storeResult = pCacheDatabase->storeEntry(
+                            calculateCacheKey(*pRequestToStore),
+                            calculateExpiryTime(*pRequestToStore),
+                            pRequestToStore->url(),
+                            pRequestToStore->method(),
+                            pRequestToStore->headers(),
+                            pRequestToStore->response()->statusCode(),
+                            pRequestToStore->response()->headers(),
+                            pRequestToStore->response()->data()
+                        );
+
+                        if (!storeResult.error.empty()) {
+                            SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", storeResult.error);
                         }
+                    }
 
-                        std::shared_ptr<IAssetRequest> pRequestToStore;
-                        if (pCompletedRequest->response()->statusCode() == 304) { // status Not-Modified
-                            pRequestToStore = updateCacheItem(std::move(cacheItem), *pCompletedRequest);
-                        }
-                        else {
-                            pRequestToStore = pCompletedRequest;
-                        }
-
-                        if (shouldCacheRequest(*pRequestToStore)) {
-                            pAsyncSystem->runInWorkerThread([pLogger, pCacheDatabase, pRequestToStore]() {
-                                CacheStoreResult storeResult = pCacheDatabase->storeEntry(
-                                    calculateCacheKey(*pRequestToStore),
-                                    calculateExpiryTime(*pRequestToStore),
-                                    pRequestToStore->url(),
-                                    pRequestToStore->method(),
-                                    pRequestToStore->headers(),
-                                    pRequestToStore->response()->statusCode(),
-                                    pRequestToStore->response()->headers(),
-                                    pRequestToStore->response()->data()
-                                );
-
-                                if (!storeResult.error.empty()) {
-                                    SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", storeResult.error);
-                                }
-                            });
-                        }
-
-                        callback(pRequestToStore);
-                    });
-
-                return;
+                    return std::move(pRequestToStore);
+                });
             }
 
-            pAsyncSystem->runInMainThread([cacheItem = std::move(cacheItem), callback]() mutable {
-                callback(std::make_unique<CacheAssetRequest>(std::move(cacheItem)));
-            });
+            std::shared_ptr<IAssetRequest> pRequest = std::make_shared<CacheAssetRequest>(std::move(cacheItem));
+            return asyncSystem.createResolvedFuture(std::move(pRequest));
         });
-
-        int32_t requestSinceLastPrune = ++this->_requestSinceLastPrune;
-        if (requestSinceLastPrune > this->_requestsPerCachePrune) {
-            this->_requestSinceLastPrune = 0;
-
-            pAsyncSystem->runInWorkerThread([this]() {
-                std::string error;
-                if (!this->_pCacheDatabase->prune(error)) {
-                    SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot prune the cache database: {}", error);
-                }
-            });
-        }
     }
 
     void CachingAssetAccessor::tick() noexcept {

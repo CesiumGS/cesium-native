@@ -5,28 +5,27 @@
 namespace CesiumAsync {
 
     AsyncSystem::AsyncSystem(
-        std::shared_ptr<IAssetAccessor> pAssetAccessor,
         std::shared_ptr<ITaskProcessor> pTaskProcessor
     ) noexcept :
-        _pSchedulers(std::make_shared<Impl::AsyncSystemSchedulers>(pAssetAccessor, pTaskProcessor))
+        _pSchedulers(std::make_shared<Impl::AsyncSystemSchedulers>(pTaskProcessor))
     {
     }
 
-    Future<std::shared_ptr<IAssetRequest>> AsyncSystem::requestAsset(
-        const std::string& url,
-        const std::vector<IAssetAccessor::THeader>& headers
-    ) const {
-        std::shared_ptr<async::event_task<std::shared_ptr<IAssetRequest>>> pEvent = std::make_shared<async::event_task<std::shared_ptr<IAssetRequest>>>();
-        this->_pSchedulers->pAssetAccessor->requestAsset(this, 
-            url, 
-            headers, 
-            [pEvent](std::shared_ptr<IAssetRequest> pRequest) {
-                pEvent->set(std::move(pRequest));
-            });
+    // Future<std::shared_ptr<IAssetRequest>> AsyncSystem::requestAsset(
+    //     const std::string& url,
+    //     const std::vector<IAssetAccessor::THeader>& headers
+    // ) const {
+    //     std::shared_ptr<async::event_task<std::shared_ptr<IAssetRequest>>> pEvent = std::make_shared<async::event_task<std::shared_ptr<IAssetRequest>>>();
+    //     this->_pSchedulers->pAssetAccessor->requestAsset(this, 
+    //         url, 
+    //         headers, 
+    //         [pEvent](std::shared_ptr<IAssetRequest> pRequest) {
+    //             pEvent->set(std::move(pRequest));
+    //         });
 
-        Future<std::shared_ptr<IAssetRequest>> result(this->_pSchedulers, pEvent->get_task());
-        return result;
-    }
+    //     Future<std::shared_ptr<IAssetRequest>> result(this->_pSchedulers, pEvent->get_task());
+    //     return result;
+    // }
 
     void AsyncSystem::dispatchMainThreadTasks() {
         this->_pSchedulers->mainThreadScheduler.run_all_tasks();
@@ -34,10 +33,8 @@ namespace CesiumAsync {
 
     namespace Impl {
         AsyncSystemSchedulers::AsyncSystemSchedulers(
-            std::shared_ptr<IAssetAccessor> pAssetAccessor_,
             std::shared_ptr<ITaskProcessor> pTaskProcessor_
         ) :
-            pAssetAccessor(pAssetAccessor_),
             pTaskProcessor(pTaskProcessor_),
             mainThreadScheduler()
         {

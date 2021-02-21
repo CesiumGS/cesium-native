@@ -2,7 +2,7 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
-#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetAccessor.h"
 #include <spdlog/fwd.h>
 #include <functional>
 #include <memory>
@@ -89,16 +89,18 @@ namespace Cesium3DTiles {
          * This method does nothing if the tile provider has already been created or
          * is already in the process of being created.
          * 
-         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param asyncSystem The async system used to do work in threads.
+         * @param pAssetAccessor The interface used to download assets like overlay metadata and tiles.
          * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pLogger The logger to which to send messages about the tile provider and tiles.
          */
         void createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
             const std::shared_ptr<CreditSystem>& pCreditSystem,
-            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-            std::shared_ptr<spdlog::logger> pLogger
+            const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+            const std::shared_ptr<spdlog::logger>& pLogger
         );
 
         /**
@@ -107,7 +109,8 @@ namespace Cesium3DTiles {
          * The created tile provider will not be returned via {@link getTileProvider}. This method is primarily useful for
          * overlays that aggregate other overlays.
          * 
-         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param asyncSystem The async system used to do work in threads.
+         * @param pAssetAccessor The interface used to download assets like overlay metadata and tiles.
          * @param pCreditSystem The {@link CreditSystem} to use when creating a per-TileProvider {@link Credit}.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pLogger The logger to which to send messages about the tile provider and tiles.
@@ -117,9 +120,10 @@ namespace Cesium3DTiles {
          */
         virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>> createTileProvider(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
             const std::shared_ptr<CreditSystem>& pCreditSystem,
-            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-            std::shared_ptr<spdlog::logger> pLogger,
+            const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+            const std::shared_ptr<spdlog::logger>& pLogger,
             RasterOverlay* pOwner
         ) = 0;
 

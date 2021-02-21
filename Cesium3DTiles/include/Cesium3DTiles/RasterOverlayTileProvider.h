@@ -1,16 +1,17 @@
 #pragma once
 
+#include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
-#include "Cesium3DTiles/CreditSystem.h"
+#include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/IntrusivePointer.h"
-#include <unordered_map>
 #include <optional>
 #include <spdlog/fwd.h>
+#include <unordered_map>
 
 namespace Cesium3DTiles {
 
@@ -35,18 +36,21 @@ namespace Cesium3DTiles {
          * Constructs a placeholder tile provider.
          * 
          * @param owner The raster overlay that owns this tile provider.
-         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param asyncSystem The async system used to do work in threads.
+         * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for this raster overlay.
          */
         RasterOverlayTileProvider(
             RasterOverlay& owner,
-            const CesiumAsync::AsyncSystem& asyncSystem
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor
         ) noexcept;
 
         /**
          * @brief Creates a new instance.
          *
          * @param owner The {@link RasterOverlay}. May not be `nullptr`.
-         * @param asyncSystem The async system used to request assets and do work in threads.
+         * @param asyncSystem The async system used to do work in threads.
+         * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for this raster overlay.
          * @param credit The {@link Credit} for this tile provider, if it exists.
          * @param pPrepareRendererResources The interface used to prepare raster images for rendering.
          * @param pLogger The logger to which to send messages about the tile provider and tiles.
@@ -61,6 +65,7 @@ namespace Cesium3DTiles {
         RasterOverlayTileProvider(
             RasterOverlay& owner,
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
             std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
@@ -92,9 +97,11 @@ namespace Cesium3DTiles {
         /**
          * @brief Get the system to use for asychronous requests and threaded work.
          */
-        CesiumAsync::AsyncSystem& getAsyncSystem() noexcept { return this->_asyncSystem; }
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& getAssetAccessor() const noexcept { return this->_pAssetAccessor; }
 
-        /** @copydoc getAsyncSystem */
+        /**
+         * @brief Gets the async system used to do work in threads.
+         */
         const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept { return this->_asyncSystem; }
 
         /**
@@ -304,6 +311,7 @@ namespace Cesium3DTiles {
 
         RasterOverlay* _pOwner;
         CesiumAsync::AsyncSystem _asyncSystem;
+        std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
         std::optional<Credit> _credit;
         std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
         std::shared_ptr<spdlog::logger> _pLogger;

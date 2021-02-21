@@ -10,9 +10,10 @@ namespace {
     public:
         PlaceholderTileProvider(
             Cesium3DTiles::RasterOverlay& owner,
-            const CesiumAsync::AsyncSystem& asyncSystem
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<IAssetAccessor>& pAssetAccessor
         ) noexcept :
-            Cesium3DTiles::RasterOverlayTileProvider(owner, asyncSystem)
+            Cesium3DTiles::RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor)
         {
         }
 
@@ -46,10 +47,11 @@ namespace Cesium3DTiles {
     }
 
     void RasterOverlay::createTileProvider(
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CreditSystem>& pCreditSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-        std::shared_ptr<spdlog::logger> pLogger
+        const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger
     ) {
         if (this->_pPlaceholder) {
             return;
@@ -57,13 +59,15 @@ namespace Cesium3DTiles {
 
         this->_pPlaceholder = std::make_unique<PlaceholderTileProvider>(
             *this,
-            asyncSystem
+            asyncSystem,
+            pAssetAccessor
         );
 
         this->_isLoadingTileProvider = true;
 
         this->createTileProvider(
             asyncSystem,
+            pAssetAccessor,
             pCreditSystem,
             pPrepareRendererResources,
             pLogger,

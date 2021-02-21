@@ -35,10 +35,10 @@ namespace CesiumAsync {
         virtual ~CachingAssetAccessor() noexcept override;
 
         /** @copydoc IAssetAccessor::requestAsset */
-        virtual void requestAsset(const AsyncSystem* pAsyncSystem, 
+        virtual Future<std::shared_ptr<IAssetRequest>> requestAsset(
+            const AsyncSystem& asyncSystem,
             const std::string& url, 
-            const std::vector<THeader>& headers,
-            std::function<void(std::shared_ptr<IAssetRequest>)> callback) override;
+            const std::vector<THeader>& headers) override;
 
         /** @copydoc IAssetAccessor::tick */
         virtual void tick() noexcept override;
@@ -47,7 +47,7 @@ namespace CesiumAsync {
         int32_t _requestsPerCachePrune;
         std::atomic<int32_t> _requestSinceLastPrune;
         std::shared_ptr<spdlog::logger> _pLogger;
-        std::unique_ptr<IAssetAccessor> _pAssetAccessor;
-        std::unique_ptr<ICacheDatabase> _pCacheDatabase;
+        std::shared_ptr<IAssetAccessor> _pAssetAccessor;
+        std::shared_ptr<ICacheDatabase> _pCacheDatabase;
     };
 }
