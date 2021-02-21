@@ -96,6 +96,7 @@ namespace Cesium3DTiles {
          * If a matching function is found, it will be applied to the given
          * input, and the result will be returned.
          * 
+         * @param pLogger The logger.
          * @param context The {@link TileContext}.
          * @param tileID The {@link TileID}
          * @param tileBoundingVolume The tile {@link BoundingVolume}

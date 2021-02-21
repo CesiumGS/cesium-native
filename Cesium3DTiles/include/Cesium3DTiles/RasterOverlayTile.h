@@ -158,6 +158,9 @@ namespace Cesium3DTiles {
          */
         void releaseReference() noexcept;
 
+        /**
+         * @brief Returns the current reference count of this instance.
+         */
         uint32_t getReferenceCount() const noexcept { return this->_references; }
 
     private:

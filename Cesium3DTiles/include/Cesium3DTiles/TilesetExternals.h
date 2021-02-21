@@ -22,7 +22,7 @@ namespace Cesium3DTiles {
     public:
 
         /**
-         * @brief An external {@link IAssetAccessor}.
+         * @brief An external {@link CesiumAsync::IAssetAccessor}.
          */
         std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
@@ -32,7 +32,7 @@ namespace Cesium3DTiles {
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources;
 
         /**
-         * @brief An external {@link ITaskProcessor}
+         * @brief An external {@link CesiumAsync::ITaskProcessor}
          */
         std::shared_ptr<CesiumAsync::ITaskProcessor> pTaskProcessor;
 
