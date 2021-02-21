@@ -11,12 +11,22 @@ namespace CesiumGltf {
      * @brief Texture sampler properties for filtering and wrapping modes.
      */
     struct CESIUMGLTF_API Sampler final : public NamedObject {
+        /**
+         * @brief Magnification filter.
+         *
+         * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729` (LINEAR).
+         */
         enum class MagFilter {
             NEAREST = 9728,
 
             LINEAR = 9729
         };
 
+        /**
+         * @brief Minification filter.
+         *
+         * All valid values correspond to WebGL enums.
+         */
         enum class MinFilter {
             NEAREST = 9728,
 
@@ -31,6 +41,11 @@ namespace CesiumGltf {
             LINEAR_MIPMAP_LINEAR = 9987
         };
 
+        /**
+         * @brief s wrapping mode.
+         *
+         * S (U) wrapping mode.  All valid values correspond to WebGL enums.
+         */
         enum class WrapS {
             CLAMP_TO_EDGE = 33071,
 
@@ -39,6 +54,11 @@ namespace CesiumGltf {
             REPEAT = 10497
         };
 
+        /**
+         * @brief t wrapping mode.
+         *
+         * T (V) wrapping mode.  All valid values correspond to WebGL enums.
+         */
         enum class WrapT {
             CLAMP_TO_EDGE = 33071,
 
