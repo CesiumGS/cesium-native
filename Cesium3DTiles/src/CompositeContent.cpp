@@ -41,7 +41,7 @@ namespace Cesium3DTiles {
          * @param derivedData The data for the result.
          * @return The result.
          */
-        TileContentLoadInput derive(const TileContentLoadInput& input, gsl::span<const uint8_t>&& derivedData) {
+        TileContentLoadInput derive(const TileContentLoadInput& input, const gsl::span<const uint8_t>& derivedData) {
             return TileContentLoadInput(
                 input.pLogger,
                 std::move(derivedData),
@@ -105,7 +105,7 @@ namespace Cesium3DTiles {
             gsl::span<const uint8_t> innerData(data.data() + pos, pInner->byteLength);
 
             std::unique_ptr<TileContentLoadResult> pInnerLoadResult = TileContentFactory::createContent(
-                derive(input, std::move(innerData))
+                derive(input, innerData)
             );
 
             if (pInnerLoadResult) {

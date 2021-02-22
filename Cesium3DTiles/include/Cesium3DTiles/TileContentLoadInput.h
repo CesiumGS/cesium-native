@@ -35,13 +35,13 @@ namespace Cesium3DTiles
          */
         TileContentLoadInput(
             const std::shared_ptr<spdlog::logger> pLogger_,
-            gsl::span<const uint8_t>&& data_,
+            const gsl::span<const uint8_t>& data_,
             const std::string& contentType_,
             const std::string& url_,
             const Tile& tile_
         ) :
             pLogger(pLogger_),
-            data(std::move(data_)),
+            data(data_),
             contentType(contentType_),
             url(url_),
             context(*tile_.getContext()),
@@ -75,7 +75,7 @@ namespace Cesium3DTiles
          */
         TileContentLoadInput(
             const std::shared_ptr<spdlog::logger> pLogger_,
-            gsl::span<const uint8_t>&& data_,
+            const gsl::span<const uint8_t>& data_,
             const std::string& contentType_,
             const std::string& url_,
             const TileContext& context_,
@@ -87,7 +87,7 @@ namespace Cesium3DTiles
             const glm::dmat4& tileTransform_
         ) :
             pLogger(pLogger_),
-            data(std::move(data_)),
+            data(data_),
             contentType(contentType_),
             url(url_),
             context(context_),
