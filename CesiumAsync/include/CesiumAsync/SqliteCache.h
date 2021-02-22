@@ -14,7 +14,7 @@ namespace CesiumAsync {
     /**
      * @brief Cache storage using SQLITE to store completed response.
      */
-    class CESIUMASYNC_API DiskCache : public ICacheDatabase {
+    class CESIUMASYNC_API SqliteCache : public ICacheDatabase {
     public:
         /**
          * @brief Constructs a new instance with a given `databaseName` pointing to a database.
@@ -22,33 +22,33 @@ namespace CesiumAsync {
          * @param databaseName the database path.
          * @param maxItems the maximum number of items should be kept in the database after prunning.
          */
-        DiskCache(const std::string& databaseName, uint64_t maxItems = 4096);
+        SqliteCache(const std::string& databaseName, uint64_t maxItems = 4096);
 
         /**
          * @brief Destroys this instance. 
          * This will close the database connection
          */
-        ~DiskCache() noexcept;
+        ~SqliteCache() noexcept;
 
         /**
          * @brief Deleted copy constructor. 
          */
-        DiskCache(const DiskCache&) = delete;
+        SqliteCache(const SqliteCache&) = delete;
 
         /**
          * @brief Move constructor. 
          */
-        DiskCache(DiskCache&&) noexcept;
+        SqliteCache(SqliteCache&&) noexcept;
 
         /**
          * @brief Deleted copy assignment. 
          */
-        DiskCache& operator=(const DiskCache&) = delete;
+        SqliteCache& operator=(const SqliteCache&) = delete;
 
         /**
          * @brief Move assignment. 
          */
-        DiskCache& operator=(DiskCache&&) noexcept;
+        SqliteCache& operator=(SqliteCache&&) noexcept;
 
         /** @copydoc ICacheDatabase::getEntry(const std::string&, std::function<bool(CacheItem)>, std::string&)*/
         virtual CacheLookupResult getEntry(const std::string& key) const override;

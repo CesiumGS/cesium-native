@@ -84,7 +84,7 @@ namespace CesiumAsync {
 
     static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const char* serializedResponseCacheControl);
 
-    DiskCache::DiskCache(const std::string &databaseName, uint64_t maxItems)
+    SqliteCache::SqliteCache(const std::string &databaseName, uint64_t maxItems)
         : _pConnection{nullptr}
         , _maxItems{maxItems}
     {
@@ -173,7 +173,7 @@ namespace CesiumAsync {
         }
     }
 
-    DiskCache::DiskCache(DiskCache&& other) noexcept {
+    SqliteCache::SqliteCache(SqliteCache&& other) noexcept {
         this->_pConnection = other._pConnection;
         this->_maxItems = other._maxItems;
 
@@ -181,7 +181,7 @@ namespace CesiumAsync {
         other._maxItems = 0;
     }
 
-    DiskCache& DiskCache::operator=(DiskCache&& other) noexcept {
+    SqliteCache& SqliteCache::operator=(SqliteCache&& other) noexcept {
         if (&other != this) {
             this->_pConnection = other._pConnection;
             this->_maxItems = other._maxItems;
@@ -193,13 +193,13 @@ namespace CesiumAsync {
         return *this;
     }
 
-    DiskCache::~DiskCache() noexcept {
+    SqliteCache::~SqliteCache() noexcept {
         if (this->_pConnection) {
             sqlite3_close(this->_pConnection);
         }
     }
 
-    CacheLookupResult DiskCache::getEntry(const std::string& key) const {
+    CacheLookupResult SqliteCache::getEntry(const std::string& key) const {
         std::lock_guard<std::mutex> guard(this->_mutex);
 
         // get entry based on key
@@ -319,7 +319,7 @@ namespace CesiumAsync {
         };
     }
 
-    CacheStoreResult DiskCache::storeEntry(
+    CacheStoreResult SqliteCache::storeEntry(
         const std::string& key,
         std::time_t expiryTime,
         const std::string& url,
@@ -423,7 +423,7 @@ namespace CesiumAsync {
         };
     }
 
-    bool DiskCache::prune(std::string& error)
+    bool SqliteCache::prune(std::string& error)
     {
         std::lock_guard<std::mutex> guard(this->_mutex);
 
@@ -518,7 +518,7 @@ namespace CesiumAsync {
         return true;
     }
 
-    bool DiskCache::clearAll(std::string& error)
+    bool SqliteCache::clearAll(std::string& error)
     {
         std::lock_guard<std::mutex> guard(this->_mutex);
 

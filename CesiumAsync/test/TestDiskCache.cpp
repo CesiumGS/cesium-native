@@ -11,7 +11,7 @@ static void getFirstCacheItem(const ICacheDatabase& database, const std::string&
 }
 
 TEST_CASE("Test disk cache with Sqlite") {
-    DiskCache diskCache("test.db", 3);
+    SqliteCache diskCache("test.db", 3);
 
     std::string error;
     REQUIRE(diskCache.clearAll(error));
