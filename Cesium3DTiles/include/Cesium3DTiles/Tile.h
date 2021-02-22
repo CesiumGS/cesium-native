@@ -494,6 +494,64 @@ namespace Cesium3DTiles {
          */
         void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
 
+        /**
+         * @brief Computes the projections for this tile.
+         * 
+         * If this tile does not have a region-based bounding volume, then
+         * an empty vector will be returned.
+         * 
+         * Otherwise, this will compute the projections that have to be used
+         * according to the raster overlay tile providers.
+         * 
+         * TODO Add more details here...
+         * 
+         * @return The projecions
+         */
+        std::vector<CesiumGeospatial::Projection> computeProjections();
+
+        /**
+         * @brief Try to upsample the parent.
+         * 
+         * If the parent is already loaded, it will be upsampled via `upsampleParent`. 
+         *
+         * Otherwise, the tile will go into the `LoadState::Unloaded` state, and the 
+         * task to load the parent will be re-scheduled.
+         */
+        void tryUpsampleParent();
+
+        struct LoadResult {
+            LoadState state;
+            std::unique_ptr<TileContentLoadResult> pContent;
+            void* pRendererResources;
+        };
+
+        /**
+         * @brief Computes the result of loading the data from the given request.
+         * 
+         * This method is supposed to be called on the worker thread.
+         * 
+         * If the given response is not valid, then an empty result with the
+         * state `LoadState::FailedTemporarily` will be returned.
+         * 
+         * Otherwise, the content for this tile will be created by calling 
+         * `TileContentFactory::createContent`, passing in the `TileContentLoadInput`
+         * for the given payload and this tile.
+         * 
+         * If the resulting `TileContentLoadResult` contains a model, then the
+         * texture coordinates of this model will be generated, based on the
+         * given projections.
+         * 
+         * The `pRendererResources` of the `LoadResult` will contain 
+         * resources that have been created by passing the model to 
+         * `IPrepareRendererResources::prepareInLoadThread`.
+         * 
+         * @param projections The projections (TODO preliminary)
+         * @param pRequest The request
+         * @return The `LoadResult`
+         */
+        LoadResult Tile::computeLoadResultInWorkerThread(
+            std::vector<CesiumGeospatial::Projection>&& projections, std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+
         // Position in bounding-volume hierarchy.
         TileContext* _pContext;
         Tile* _pParent;

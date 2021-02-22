@@ -114,12 +114,13 @@ namespace Cesium3DTiles {
             });
     }
 
-    void Tile::loadContent() {
-        if (this->getState() != LoadState::Unloaded) {
-            return;
-        }
+    std::vector<Projection> Tile::computeProjections(){
 
-        this->setState(LoadState::ContentLoading);
+        std::vector<Projection> projections;
+        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+        if (!pRectangle) {
+            return projections;
+        }
 
         Tileset& tileset = *this->getTileset();
 
@@ -129,155 +130,167 @@ namespace Cesium3DTiles {
         // nicely lon/lat aligned like geographic or web mercator, because we won't know our raster rectangle
         // until we can project each vertex.
 
-        std::vector<Projection> projections;
-
-        const CesiumGeospatial::GlobeRectangle* pRectangle = Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
-        if (pRectangle) {
-            // Map overlays to this tile.
-            RasterOverlayCollection& overlays = tileset.getOverlays();
-            // gsl::span<RasterOverlayTileProvider*> providers = overlays.getTileProviders();
+        // Map overlays to this tile.
+        RasterOverlayCollection& overlays = tileset.getOverlays();
+        // gsl::span<RasterOverlayTileProvider*> providers = overlays.getTileProviders();
             
-            // Map raster tiles to a new vector first, and then replace the old one.
-            // Doing it in this order ensures that tiles that are already loaded and that we
-            // still need are not freed too soon.
-            std::vector<RasterMappedTo3DTile> newRasterTiles;
+        // Map raster tiles to a new vector first, and then replace the old one.
+        // Doing it in this order ensures that tiles that are already loaded and that we
+        // still need are not freed too soon.
+        std::vector<RasterMappedTo3DTile> newRasterTiles;
 
-            for (auto& overlay : overlays) {
-                overlay->getTileProvider()->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), newRasterTiles);
-            }
-
-            this->_rasterTiles = std::move(newRasterTiles);
-
-            // Find the unique projections; we'll create texture coordinates for each later.
-            // TODO: actually find the unique projections, instead of assuming there's only one
-            // projection and it's Web Mercator. The code below mostly works, except that
-            // we don't currently have a way to add texture coordinates to already-loaded
-            // tiles that didn't have them originally.
-
-            // uint32_t projectionID = 0;
-
-            // for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
-            //     std::shared_ptr<RasterOverlayTile> pTile = mappedTile.getLoadingTile();
-            //     if (!pTile) {
-            //         pTile = mappedTile.getReadyTile();
-            //         if (!pTile) {
-            //             continue;
-            //         }
-            //     }
-
-            //     const CesiumGeospatial::Projection& projection = pTile->getOverlay().getTileProvider()->getProjection();
-
-            //     auto existingCoordinatesIt = std::find(projections.begin(), projections.end(), projection);
-            //     if (existingCoordinatesIt == projections.end()) {
-            //         projections.push_back(projection);
-
-            //         mappedTile.setTextureCoordinateID(projectionID);
-            //         ++projectionID;
-            //     } else {
-            //         // Use previously-added texture coordinates.
-            //         mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt - projections.begin()));
-            //     }
-            // }
-
-            projections.push_back(WebMercatorProjection());
+        for (auto& overlay : overlays) {
+            overlay->getTileProvider()->mapRasterTilesToGeometryTile(*pRectangle, this->getGeometricError(), newRasterTiles);
         }
 
-        std::optional<Future<std::unique_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
-        if (!maybeRequestFuture) {
-            // There is no content to load. But we may need to upsample.
+        this->_rasterTiles = std::move(newRasterTiles);
 
-            const UpsampledQuadtreeNode* pSubdivided = std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
-            if (pSubdivided) {
-                // We can't upsample this tile until its parent tile is done loading.
-                if (this->getParent() && this->getParent()->getState() == LoadState::Done) {
-                    this->upsampleParent(std::move(projections));
-                } else {
-                    // Try again later. Push the parent tile loading along if we can.
-                    if (this->getParent()) {
-                        this->getParent()->loadContent();
-                    }
-                    this->setState(LoadState::Unloaded);
-                }
-            } else {
-                this->setState(LoadState::ContentLoaded);
+        // Find the unique projections; we'll create texture coordinates for each later.
+        // TODO: actually find the unique projections, instead of assuming there's only one
+        // projection and it's Web Mercator. The code below mostly works, except that
+        // we don't currently have a way to add texture coordinates to already-loaded
+        // tiles that didn't have them originally.
+
+        // uint32_t projectionID = 0;
+
+        // for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
+        //     std::shared_ptr<RasterOverlayTile> pTile = mappedTile.getLoadingTile();
+        //     if (!pTile) {
+        //         pTile = mappedTile.getReadyTile();
+        //         if (!pTile) {
+        //             continue;
+        //         }
+        //     }
+
+        //     const CesiumGeospatial::Projection& projection = pTile->getOverlay().getTileProvider()->getProjection();
+
+        //     auto existingCoordinatesIt = std::find(projections.begin(), projections.end(), projection);
+        //     if (existingCoordinatesIt == projections.end()) {
+        //         projections.push_back(projection);
+
+        //         mappedTile.setTextureCoordinateID(projectionID);
+        //         ++projectionID;
+        //     } else {
+        //         // Use previously-added texture coordinates.
+        //         mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt - projections.begin()));
+        //     }
+        // }
+
+        projections.push_back(WebMercatorProjection());
+        return projections;
+    }
+
+    void Tile::tryUpsampleParent() {
+        // We can't upsample this tile until its parent tile is done loading.
+        if (this->getParent() && this->getParent()->getState() == LoadState::Done) {
+            std::vector<Projection> projections = computeProjections();
+            this->upsampleParent(std::move(projections));
+        } else {
+            // Try again later. Push the parent tile loading along if we can.
+            if (this->getParent()) {
+                this->getParent()->loadContent();
             }
+            this->setState(LoadState::Unloaded);
+        }
+    }
 
+    Tile::LoadResult Tile::computeLoadResultInWorkerThread(
+        std::vector<Projection>&& projections, std::unique_ptr<IAssetRequest>&& pRequest) {
+
+        Tileset& tileset = *this->getTileset();
+        std::shared_ptr<spdlog::logger>& pLogger = tileset.getExternals().pLogger;
+
+        IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tile content {}", pRequest->url());
+            auto pLoadResult = std::make_unique<TileContentLoadResult>();
+            pLoadResult->httpStatusCode = 0;
+            return LoadResult {
+                LoadState::FailedTemporarily,
+                std::move(pLoadResult),
+                nullptr
+            };
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+            SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tile content {}", pResponse->statusCode(), pRequest->url());
+            auto pLoadResult = std::make_unique<TileContentLoadResult>();
+            pLoadResult->httpStatusCode = pResponse->statusCode();
+            return LoadResult {
+                LoadState::FailedTemporarily,
+                std::move(pLoadResult),
+                nullptr
+            };
+        }
+
+        TileContentLoadInput loadInput(
+            tileset.getExternals().pLogger,
+            pResponse->data(),
+            pResponse->contentType(),
+            pRequest->url(),
+            *this
+        );
+        std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(loadInput);
+
+        if (!pContent) {
+            // TODO Shouldn't this issue a log warning, at least? 
+            pContent = std::make_unique<TileContentLoadResult>();
+        }
+
+        pContent->httpStatusCode = pResponse->statusCode();
+
+        void* pRendererResources = nullptr;
+
+        if (pContent->model) {
+            const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
+            Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
+
+            std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources;
+            if (pPrepareRendererResources) {
+                const glm::dmat4& transform = loadInput.tileTransform;
+                pRendererResources = pPrepareRendererResources->prepareInLoadThread(
+                    pContent->model.value(),
+                    transform
+                );
+            }
+        }
+
+        LoadResult result;
+        result.state = LoadState::ContentLoaded;
+        result.pContent = std::move(pContent);
+        result.pRendererResources = pRendererResources;
+        return result;
+    }
+
+
+    void Tile::loadContent() {
+        if (this->getState() != LoadState::Unloaded) {
             return;
         }
 
-        struct LoadResult {
-            LoadState state;
-            std::unique_ptr<TileContentLoadResult> pContent;
-            void* pRendererResources;
-        };
-        TileContentLoadInput loadInput(
-            tileset.getExternals().pLogger,
-            *this
-        );
+        this->setState(LoadState::ContentLoading);
+
+        Tileset& tileset = *this->getTileset();
+        std::optional<Future<std::unique_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
+        if (!maybeRequestFuture) {
+            // There is no content to load. But we may need to upsample.
+            const UpsampledQuadtreeNode* pSubdivided = std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
+            if (!pSubdivided) {
+                this->setState(LoadState::ContentLoaded);
+            } else {
+                tryUpsampleParent();
+            }
+            return;
+        }
+
+        // TODO Could be computed later, if the call is thread-safe
+        std::vector<Projection> projections = computeProjections();
 
         std::move(maybeRequestFuture.value()).thenInWorkerThread([
-            &loadInput,
-            projections = std::move(projections),
-            pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
-            pLogger = tileset.getExternals().pLogger
+            this, 
+            &projections
         ](std::unique_ptr<IAssetRequest>&& pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-                SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tile content {}", pRequest->url());
-                auto pLoadResult = std::make_unique<TileContentLoadResult>();
-                pLoadResult->httpStatusCode = 0;
-                return LoadResult {
-                    LoadState::FailedTemporarily,
-                    std::move(pLoadResult),
-                    nullptr
-                };
-            }
-
-            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tile content {}", pResponse->statusCode(), pRequest->url());
-                auto pLoadResult = std::make_unique<TileContentLoadResult>();
-                pLoadResult->httpStatusCode = pResponse->statusCode();
-                return LoadResult {
-                    LoadState::FailedTemporarily,
-                    std::move(pLoadResult),
-                    nullptr
-                };
-            }
-
-            loadInput.data = pResponse->data();
-            loadInput.contentType = pResponse->contentType();
-            loadInput.url = pRequest->url();
-            std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
-                loadInput
-            );
-
-            if (!pContent) {
-                pContent = std::make_unique<TileContentLoadResult>();
-            }
-
-            pContent->httpStatusCode = pResponse->statusCode();
-
-            void* pRendererResources = nullptr;
-
-            if (pContent->model) {
-                const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
-                Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
-
-                if (pPrepareRendererResources) {
-                    const glm::dmat4& transform = loadInput.tileTransform;
-                    pRendererResources = pPrepareRendererResources->prepareInLoadThread(
-                        pContent->model.value(),
-                        transform
-                    );
-                }
-            }
-
-            LoadResult result;
-            result.state = LoadState::ContentLoaded;
-            result.pContent = std::move(pContent);
-            result.pRendererResources = pRendererResources;
-
-            return result;
+            return computeLoadResultInWorkerThread(std::move(projections), std::move(pRequest));
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->_pContent = std::move(loadResult.pContent);
             this->_pRendererResources = loadResult.pRendererResources;
