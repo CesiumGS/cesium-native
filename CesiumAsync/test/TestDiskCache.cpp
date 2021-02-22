@@ -6,9 +6,8 @@
 using namespace CesiumAsync;
 
 static void getFirstCacheItem(const ICacheDatabase& database, const std::string& key, std::optional<CacheItem>& cacheItem) {
-    std::string error;
-    auto getItemCallback = [&cacheItem](CacheItem item) mutable { cacheItem = std::move(item); return true; };
-    REQUIRE(database.getEntry(key, getItemCallback, error));
+    CacheLookupResult result = database.getEntry(key);
+    cacheItem = result.item;
 }
 
 TEST_CASE("Test disk cache with Sqlite") {
@@ -18,18 +17,33 @@ TEST_CASE("Test disk cache with Sqlite") {
     REQUIRE(diskCache.clearAll(error));
 
     SECTION("Test store and retrive cache") {
-        HttpHeaders responseHeaders = { { "Response-Header", "Response-Value" } };
-        ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
+        HttpHeaders responseHeaders = {
+            { "Response-Header", "Response-Value" },
+            { "Content-Type", "text/html" }
+        };
         std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
         std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
-            static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
+            static_cast<uint16_t>(200),
+            "text/html",
+            responseHeaders,
+            responseData
+        );
 
         HttpHeaders requestHeaders{ {"Request-Header", "Request-Value" } };
         std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
             "test.com", requestHeaders, std::move(response));
 
-        std::time_t currentTime = std::time(0);
-        REQUIRE(diskCache.storeResponse("TestKey", currentTime, *request, error));
+        std::time_t currentTime = std::time(nullptr);
+        REQUIRE(diskCache.storeEntry(
+            "TestKey",
+            currentTime,
+            request->url(),
+            request->method(),
+            request->headers(),
+            request->response()->statusCode(),
+            request->response()->headers(),
+            request->response()->data()
+        ).error.empty());
 
         std::optional<CacheItem> cacheItem;
         getFirstCacheItem(diskCache, "TestKey", cacheItem);
@@ -41,37 +55,43 @@ TEST_CASE("Test disk cache with Sqlite") {
         REQUIRE(cacheRequest.url == "test.com");
 
         const CacheResponse& cacheResponse = cacheItem->cacheResponse;
-        REQUIRE(cacheResponse.contentType == "text/html");
+        REQUIRE(cacheResponse.headers.at("Content-Type") == "text/html");
         REQUIRE(cacheResponse.statusCode == 200);
-        REQUIRE(cacheResponse.headers == HttpHeaders{ {"Response-Header", "Response-Value"} });
+        REQUIRE(cacheResponse.headers.at("Response-Header") == "Response-Value");
         REQUIRE(cacheResponse.data == std::vector<uint8_t>{ 0, 1, 2, 3, 4 });
-        REQUIRE(cacheResponse.cacheControl->mustRevalidate() == false);
-        REQUIRE(cacheResponse.cacheControl->noCache() == false);
-        REQUIRE(cacheResponse.cacheControl->noStore() == false);
-        REQUIRE(cacheResponse.cacheControl->noTransform() == false);
-        REQUIRE(cacheResponse.cacheControl->accessControlPublic() == false);
-        REQUIRE(cacheResponse.cacheControl->accessControlPrivate() == false);
-        REQUIRE(cacheResponse.cacheControl->proxyRevalidate() == false);
-        REQUIRE(cacheResponse.cacheControl->maxAge() == 0);
-        REQUIRE(cacheResponse.cacheControl->sharedMaxAge() == 0);
+
+        std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
+        REQUIRE(!cacheControl.has_value());
     }
 
     SECTION("Test prune") {
         // store data in the cache first
-        std::time_t currentTime = std::time(0);
+        std::time_t currentTime = std::time(nullptr);
         std::time_t interval = -10;
         for (size_t i = 0; i < 20; ++i) {
-            HttpHeaders responseHeaders{ {"Response-Header-" + std::to_string(i), "Response-Value-" + std::to_string(i)} };
-            ResponseCacheControl responseCacheControl(true, false, true, false, true, false, true, 0, 0);
+            HttpHeaders responseHeaders{
+                {"Response-Header-" + std::to_string(i), "Response-Value-" + std::to_string(i)},
+                {"Content-Type", "text/html"},
+                {"Cache-Control", "must-revalidate, no-store, public, proxy-revalidate"}
+            };
             std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
             std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
-                static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
+                static_cast<uint16_t>(200), "text/html", responseHeaders, responseData);
 
             HttpHeaders requestHeaders{ {"Request-Header-" + std::to_string(i), "Request-Value-" + std::to_string(i)} };
             std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>(
                 "GET", "test.com", requestHeaders, std::move(response));
 
-            REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), currentTime + interval + static_cast<std::time_t>(i), *request, error));
+            REQUIRE(diskCache.storeEntry(
+                "TestKey" + std::to_string(i),
+                currentTime + interval + static_cast<std::time_t>(i),
+                request->url(),
+                request->method(),
+                request->headers(),
+                request->response()->statusCode(),
+                request->response()->headers(),
+                request->response()->data()
+            ).error.empty());
         }
 
         REQUIRE(diskCache.prune(error));
@@ -95,36 +115,54 @@ TEST_CASE("Test disk cache with Sqlite") {
             REQUIRE(cacheRequest.url == "test.com");
 
             const CacheResponse& cacheResponse = cacheItem->cacheResponse;
-            REQUIRE(cacheResponse.contentType == "text/html");
+            REQUIRE(cacheResponse.headers.at("Content-Type") == "text/html");
             REQUIRE(cacheResponse.statusCode == 200);
-            REQUIRE(cacheResponse.headers == HttpHeaders{ {"Response-Header-" + std::to_string(i), "Response-Value-" + std::to_string(i)} });
+            REQUIRE(cacheResponse.headers.at("Response-Header-" + std::to_string(i)) == "Response-Value-" + std::to_string(i));
             REQUIRE(cacheResponse.data == std::vector<uint8_t>{ 0, 1, 2, 3, 4 });
-            REQUIRE(cacheResponse.cacheControl->mustRevalidate() == true);
-            REQUIRE(cacheResponse.cacheControl->noCache() == false);
-            REQUIRE(cacheResponse.cacheControl->noStore() == true);
-            REQUIRE(cacheResponse.cacheControl->noTransform() == false);
-            REQUIRE(cacheResponse.cacheControl->accessControlPublic() == true);
-            REQUIRE(cacheResponse.cacheControl->accessControlPrivate() == false);
-            REQUIRE(cacheResponse.cacheControl->proxyRevalidate() == true);
-            REQUIRE(cacheResponse.cacheControl->maxAge() == 0);
-            REQUIRE(cacheResponse.cacheControl->sharedMaxAge() == 0);
+
+            std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
+            REQUIRE(cacheControl.has_value());
+            REQUIRE(cacheControl->mustRevalidate() == true);
+            REQUIRE(cacheControl->noCache() == false);
+            REQUIRE(cacheControl->noStore() == true);
+            REQUIRE(cacheControl->noTransform() == false);
+            REQUIRE(cacheControl->accessControlPublic() == true);
+            REQUIRE(cacheControl->accessControlPrivate() == false);
+            REQUIRE(cacheControl->proxyRevalidate() == true);
+            REQUIRE(cacheControl->maxAge() == 0);
+            REQUIRE(cacheControl->sharedMaxAge() == 0);
         }
     }
 
     SECTION("Test clear all") {
         // store data in the cache first
-        HttpHeaders responseHeaders{ {"Response-Header", "Response-Value"} };
-        ResponseCacheControl responseCacheControl(false, false, false, false, false, false, false, 0, 0);
+        HttpHeaders responseHeaders{
+            {"Content-Type", "text/html"},
+            {"Response-Header", "Response-Value"}
+        };
         std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
         std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
-            static_cast<uint16_t>(200), "text/html", responseHeaders, responseCacheControl, responseData);
+            static_cast<uint16_t>(200),
+            "text/html",
+            responseHeaders,
+            responseData
+        );
 
         HttpHeaders requestHeaders{ {"Request-Header", "Request-Value"} };
         std::unique_ptr<MockAssetRequest> request = std::make_unique<MockAssetRequest>("GET", 
             "test.com", requestHeaders, std::move(response));
 
         for (size_t i = 0; i < 10; ++i) {
-            REQUIRE(diskCache.storeResponse("TestKey" + std::to_string(i), std::time(0), *request, error));
+            REQUIRE(diskCache.storeEntry(
+                "TestKey" + std::to_string(i),
+                std::time(nullptr),
+                request->url(),
+                request->method(),
+                request->headers(),
+                request->response()->statusCode(),
+                request->response()->headers(),
+                request->response()->data()
+            ).error.empty());
         }
 
         // clear all

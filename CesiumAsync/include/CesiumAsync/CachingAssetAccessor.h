@@ -28,8 +28,8 @@ namespace CesiumAsync {
          */
         CachingAssetAccessor(
             const std::shared_ptr<spdlog::logger>& pLogger,
-            std::unique_ptr<IAssetAccessor>&& pAssetAccessor,
-            std::unique_ptr<ICacheDatabase>&& pCacheDatabase,
+            const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+            const std::shared_ptr<ICacheDatabase>& pCacheDatabase,
             int32_t requestsPerCachePrune = 10000);
 
         virtual ~CachingAssetAccessor() noexcept override;

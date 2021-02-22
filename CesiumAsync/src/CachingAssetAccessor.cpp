@@ -85,18 +85,18 @@ namespace CesiumAsync {
 
     static bool isCacheStale(const CacheItem& cacheItem);
 
-    static bool shouldCacheRequest(const IAssetRequest& request);
+    static bool shouldCacheRequest(const IAssetRequest& request, const std::optional<ResponseCacheControl>& cacheControl);
 
     static std::string calculateCacheKey(const IAssetRequest& request);
 
-    static std::time_t calculateExpiryTime(const IAssetRequest& request);
+    static std::time_t calculateExpiryTime(const IAssetRequest& request, const std::optional<ResponseCacheControl>& cacheControl);
 
     static std::unique_ptr<IAssetRequest> updateCacheItem(CacheItem&& cacheItem, const IAssetRequest& request);
 
     CachingAssetAccessor::CachingAssetAccessor(
         const std::shared_ptr<spdlog::logger>& pLogger,
-        std::unique_ptr<IAssetAccessor>&& pAssetAccessor,
-        std::unique_ptr<ICacheDatabase>&& pCacheDatabase,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+        const std::shared_ptr<ICacheDatabase>& pCacheDatabase,
         int32_t requestsPerCachePrune) 
         : _requestsPerCachePrune(requestsPerCachePrune)
         , _requestSinceLastPrune(0)
@@ -143,19 +143,24 @@ namespace CesiumAsync {
                 readError = true;
             }
 
-            // if no cache item found, then request directly to the server
             if (!cacheLookup.item) { 
+                // No cache item found, request directly from the server
                 return pAssetAccessor->requestAsset(asyncSystem, url, headers).thenInWorkerThread([
                     pCacheDatabase,
                     pLogger,
                     readError
                 ](std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
                     const IAssetResponse* pResponse = pCompletedRequest->response();
+                    if (readError || !pResponse) {
+                        return std::move(pCompletedRequest);
+                    }
 
-                    if (!readError && pResponse && shouldCacheRequest(*pCompletedRequest)) {
+                    std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(pResponse->headers());
+
+                    if (!readError && pResponse && shouldCacheRequest(*pCompletedRequest, cacheControl)) {
                         CacheStoreResult storeResult = pCacheDatabase->storeEntry(
                             calculateCacheKey(*pCompletedRequest),
-                            calculateExpiryTime(*pCompletedRequest),
+                            calculateExpiryTime(*pCompletedRequest, cacheControl),
                             pCompletedRequest->url(),
                             pCompletedRequest->method(),
                             pCompletedRequest->headers(),
@@ -175,8 +180,8 @@ namespace CesiumAsync {
 
             CacheItem& cacheItem = cacheLookup.item.value();
 
-            // cache is stale and need revalidation 
             if (shouldRevalidateCache(cacheItem)) {
+                // Cache is stale and needs revalidation 
                 std::vector<THeader> newHeaders = headers;
                 const CacheResponse& cacheResponse = cacheLookup.item->cacheResponse;
                 const HttpHeaders& responseHeaders = cacheResponse.headers;
@@ -184,8 +189,7 @@ namespace CesiumAsync {
                 HttpHeaders::const_iterator etagHeader = responseHeaders.find("Etag");
                 if (etagHeader != responseHeaders.end()) {
                     newHeaders.emplace_back("If-None-Match", etagHeader->second);
-                }
-                else if (lastModifiedHeader != responseHeaders.end()) {
+                } else if (lastModifiedHeader != responseHeaders.end()) {
                     newHeaders.emplace_back("If-Modified-Since", lastModifiedHeader->second);
                 }
 
@@ -205,16 +209,20 @@ namespace CesiumAsync {
                         pRequestToStore = pCompletedRequest;
                     }
 
-                    if (shouldCacheRequest(*pRequestToStore)) {
+                    const IAssetResponse* pResponseToStore = pRequestToStore->response();
+                    std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(pResponseToStore->headers());
+
+                    if (shouldCacheRequest(*pRequestToStore, cacheControl)) {
+
                         CacheStoreResult storeResult = pCacheDatabase->storeEntry(
                             calculateCacheKey(*pRequestToStore),
-                            calculateExpiryTime(*pRequestToStore),
+                            calculateExpiryTime(*pRequestToStore, cacheControl),
                             pRequestToStore->url(),
                             pRequestToStore->method(),
                             pRequestToStore->headers(),
-                            pRequestToStore->response()->statusCode(),
-                            pRequestToStore->response()->headers(),
-                            pRequestToStore->response()->data()
+                            pResponseToStore->statusCode(),
+                            pResponseToStore->headers(),
+                            pResponseToStore->data()
                         );
 
                         if (!storeResult.error.empty()) {
@@ -226,6 +234,7 @@ namespace CesiumAsync {
                 });
             }
 
+            // Good cache item that doesn't need to be revalidated, just return it.
             std::shared_ptr<IAssetRequest> pRequest = std::make_shared<CacheAssetRequest>(std::move(cacheItem));
             return asyncSystem.createResolvedFuture(std::move(pRequest));
         });
@@ -251,7 +260,7 @@ namespace CesiumAsync {
         return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
     }
 
-    bool shouldCacheRequest(const IAssetRequest& request) {
+    bool shouldCacheRequest(const IAssetRequest& request, const std::optional<ResponseCacheControl>& cacheControl) {
         // no response then no cache
         const IAssetResponse* pResponse = request.response();
         if (!pResponse) {
@@ -277,8 +286,6 @@ namespace CesiumAsync {
         }
 
         // check if cache control contains no-store or no-cache directives
-        std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(pResponse->headers());
-
         int maxAge = 0;
         if (cacheControl) {
             if (cacheControl->noStore() || cacheControl->noCache()) {
@@ -296,7 +303,7 @@ namespace CesiumAsync {
                 return false;
             }
 
-            return std::difftime(convertHttpDateToTime(expiresHeader->second), std::time(0)) > 0.0;
+            return std::difftime(convertHttpDateToTime(expiresHeader->second), std::time(nullptr)) > 0.0;
         }
 
 
@@ -308,15 +315,14 @@ namespace CesiumAsync {
         return request.url();
     }
 
-    std::time_t calculateExpiryTime(const IAssetRequest& request) {
-        const IAssetResponse* pResponse = request.response();
-        std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(pResponse->headers());
+    std::time_t calculateExpiryTime(const IAssetRequest& request, const std::optional<ResponseCacheControl>& cacheControl) {
         if (cacheControl) {
             if (cacheControl->maxAge() != 0) {
                 return std::time(nullptr) + cacheControl->maxAge();
             }
         }
 
+        const IAssetResponse* pResponse = request.response();
         const HttpHeaders& responseHeaders = pResponse->headers();
         HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
         if (expiresHeader != responseHeaders.end()) {
@@ -331,9 +337,9 @@ namespace CesiumAsync {
             cacheItem.cacheRequest.headers[header.first] = header.second;
         }
 
-        const IAssetResponse* response = request.response();
-        if (response) {
-            for (const std::pair<const std::string, std::string>& header : response->headers()) {
+        const IAssetResponse* pResponse = request.response();
+        if (pResponse) {
+            for (const std::pair<const std::string, std::string>& header : pResponse->headers()) {
                 cacheItem.cacheResponse.headers[header.first] = header.second;
             }
         }
