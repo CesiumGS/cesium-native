@@ -4,14 +4,14 @@
 
 namespace Cesium3DTiles {
 
-    void TileContentFactory::registerMagic(const std::string& magic, std::shared_ptr<TileContentLoader> loader) {
+    void TileContentFactory::registerMagic(const std::string& magic, const std::shared_ptr<TileContentLoader>& pLoader) {
 
         SPDLOG_INFO("Registering magic header {}", magic);
 
         TileContentFactory::_loadersByMagic[magic] = loader;
     }
 
-    void TileContentFactory::registerContentType(const std::string& contentType, std::shared_ptr<TileContentLoader> loader) {
+    void TileContentFactory::registerContentType(const std::string& contentType, const std::shared_ptr<TileContentLoader>& pLoader) {
 
         SPDLOG_INFO("Registering content type {}", contentType);
 
