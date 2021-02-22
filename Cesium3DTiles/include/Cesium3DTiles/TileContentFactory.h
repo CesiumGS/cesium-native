@@ -46,9 +46,9 @@ namespace Cesium3DTiles {
          * {@link TileContentLoadResult} from the input data.
          * 
          * @param magic The string describing the magic header.
-         * @param loader The loader that will be used to create the tile content.
+         * @param pLoader The loader that will be used to create the tile content.
          */
-        static void registerMagic(const std::string& magic, std::shared_ptr<TileContentLoader> loader);
+        static void registerMagic(const std::string& magic, const std::shared_ptr<TileContentLoader>& pLoader);
 
         /**
          * @brief Register the given function for the given content type.
@@ -59,9 +59,9 @@ namespace Cesium3DTiles {
          * {@link TileContentLoadInput} with the same `contentType`.
          *
          * @param contentType The string describing the content type.
-         * @param loader The loader that will be used to create the tile content
+         * @param pLoader The loader that will be used to create the tile content
          */
-        static void registerContentType(const std::string& contentType, std::shared_ptr<TileContentLoader> loader);
+        static void registerContentType(const std::string& contentType, const std::shared_ptr<TileContentLoader>& pLoader);
 
         /**
          * @brief Creates the {@link TileContentLoadResult} from the given {@link TileContentLoadInput}.

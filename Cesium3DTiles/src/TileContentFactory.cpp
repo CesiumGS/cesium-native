@@ -8,7 +8,7 @@ namespace Cesium3DTiles {
 
         SPDLOG_INFO("Registering magic header {}", magic);
 
-        TileContentFactory::_loadersByMagic[magic] = loader;
+        TileContentFactory::_loadersByMagic[magic] = pLoader;
     }
 
     void TileContentFactory::registerContentType(const std::string& contentType, const std::shared_ptr<TileContentLoader>& pLoader) {
@@ -17,7 +17,7 @@ namespace Cesium3DTiles {
 
         std::string lowercaseContentType;
         std::transform(contentType.begin(), contentType.end(), std::back_inserter(lowercaseContentType), [](char c) { return static_cast<char>(::tolower(c)); });
-        TileContentFactory::_loadersByContentType[lowercaseContentType] = loader;
+        TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
     }
 
     std::unique_ptr<TileContentLoadResult> TileContentFactory::createContent(
