@@ -30,16 +30,13 @@ public:
         , clearAllCall{false}
     {}
 
-    virtual CacheLookupResult getEntry(const std::string& /*key*/) const override
+    virtual std::optional<CacheItem> getEntry(const std::string& /*key*/) const override
     {
         this->getEntryCall = true;
-        return CacheLookupResult {
-            this->cacheItem,
-            std::string()
-        };
+        return this->cacheItem;
     }
 
-    virtual CacheStoreResult storeEntry(
+    virtual bool storeEntry(
         const std::string& key,
         std::time_t expiryTime,
         const std::string& url,
@@ -60,18 +57,16 @@ public:
             std::vector<uint8_t>(responseData.begin(), responseData.end())
         };
         this->storeResponseCall = true;
-        return CacheStoreResult {
-            std::string()
-        };
+        return true;
     }
 
-    virtual bool prune(std::string& /*error*/) override
+    virtual bool prune() override
     {
         this->pruneCall = true;
         return true;
     }
 
-    virtual bool clearAll(std::string& /*error*/) override
+    virtual bool clearAll() override
     {
         this->clearAllCall = true;
         return true;

@@ -2,19 +2,14 @@
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
 #include "CesiumAsync/SqliteCache.h"
+#include <spdlog/spdlog.h>
 
 using namespace CesiumAsync;
 
-static void getFirstCacheItem(const ICacheDatabase& database, const std::string& key, std::optional<CacheItem>& cacheItem) {
-    CacheLookupResult result = database.getEntry(key);
-    cacheItem = result.item;
-}
-
 TEST_CASE("Test disk cache with Sqlite") {
-    SqliteCache diskCache("test.db", 3);
+    SqliteCache diskCache(spdlog::default_logger(), "test.db", 3);
 
-    std::string error;
-    REQUIRE(diskCache.clearAll(error));
+    REQUIRE(diskCache.clearAll());
 
     SECTION("Test store and retrive cache") {
         HttpHeaders responseHeaders = {
@@ -43,10 +38,9 @@ TEST_CASE("Test disk cache with Sqlite") {
             request->response()->statusCode(),
             request->response()->headers(),
             request->response()->data()
-        ).error.empty());
+        ));
 
-        std::optional<CacheItem> cacheItem;
-        getFirstCacheItem(diskCache, "TestKey", cacheItem);
+        std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey");
         REQUIRE(cacheItem->expiryTime == currentTime);
 
         const CacheRequest& cacheRequest = cacheItem->cacheRequest;
@@ -91,19 +85,17 @@ TEST_CASE("Test disk cache with Sqlite") {
                 request->response()->statusCode(),
                 request->response()->headers(),
                 request->response()->data()
-            ).error.empty());
+            ));
         }
 
-        REQUIRE(diskCache.prune(error));
+        REQUIRE(diskCache.prune());
         for (int i = 0; i <= 16; ++i) {
-            std::optional<CacheItem> cacheItem;
-            getFirstCacheItem(diskCache, "TestKey" + std::to_string(i), cacheItem);
+            std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey" + std::to_string(i));
             REQUIRE(cacheItem == std::nullopt);
         }
 
         for (int i = 17; i < 20; ++i) {
-            std::optional<CacheItem> cacheItem;
-            getFirstCacheItem(diskCache, "TestKey" + std::to_string(i), cacheItem);
+            std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey" + std::to_string(i));
             REQUIRE(cacheItem != std::nullopt);
 
             // make sure the item is still in there
@@ -162,14 +154,13 @@ TEST_CASE("Test disk cache with Sqlite") {
                 request->response()->statusCode(),
                 request->response()->headers(),
                 request->response()->data()
-            ).error.empty());
+            ));
         }
 
         // clear all
-        REQUIRE(diskCache.clearAll(error));
+        REQUIRE(diskCache.clearAll());
         for (size_t i = 0; i < 10; ++i) {
-            std::optional<CacheItem> cacheItem;
-            getFirstCacheItem(diskCache, "TestKey" + std::to_string(i), cacheItem);
+            std::optional<CacheItem> cacheItem = diskCache.getEntry("TestKey" + std::to_string(i));
             REQUIRE(cacheItem == std::nullopt);
         }
     }
