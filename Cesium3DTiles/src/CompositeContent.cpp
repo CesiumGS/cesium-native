@@ -44,7 +44,7 @@ namespace Cesium3DTiles {
         TileContentLoadInput derive(const TileContentLoadInput& input, const gsl::span<const uint8_t>& derivedData) {
             return TileContentLoadInput(
                 input.pLogger,
-                std::move(derivedData),
+                derivedData,
                 "",
                 input.url,
                 input.context,
