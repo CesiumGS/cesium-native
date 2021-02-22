@@ -87,7 +87,7 @@ namespace CesiumAsync {
     static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const char* serializedResponseCacheControl);
 
     void SqliteCache::DeleteSqliteConnection::operator()(sqlite3* pConnection) noexcept {
-        sqlite3_close(pConnection);
+        sqlite3_close_v2(pConnection);
     }
 
     void SqliteCache::DeleteSqliteStatement::operator()(sqlite3_stmt* pStatement) noexcept {
