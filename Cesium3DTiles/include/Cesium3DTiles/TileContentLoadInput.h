@@ -25,6 +25,34 @@ namespace Cesium3DTiles
     struct CESIUM3DTILES_API TileContentLoadInput {
 
         /**
+         * @brief Creates a new, uninitialized instance for the given tile.
+         * 
+         * The `data`, `contentType` and `url` will have default values,
+         * and have to be initialized before this instance is passed to
+         * one of the loader functions.
+         * 
+         * @param pLogger_ The logger that will be used
+         * @param tile_ The {@link Tile} that the content belongs to
+         */
+        TileContentLoadInput(
+            const std::shared_ptr<spdlog::logger> pLogger_,
+            const Tile& tile_
+        ) :
+            pLogger(pLogger_),
+            data(),
+            contentType(),
+            url(),
+            context(*tile_.getContext()),
+            tileID(tile_.getTileID()),
+            tileBoundingVolume(tile_.getBoundingVolume()),
+            tileContentBoundingVolume(tile_.getContentBoundingVolume()),
+            tileRefine(tile_.getRefine()),
+            tileGeometricError(tile_.getGeometricError()),
+            tileTransform(tile_.getTransform())
+        {
+        }
+
+        /**
          * @brief Creates a new instance for the given tile.
          * 
          * @param pLogger_ The logger that will be used

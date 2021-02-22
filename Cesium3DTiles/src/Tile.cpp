@@ -210,16 +210,13 @@ namespace Cesium3DTiles {
             std::unique_ptr<TileContentLoadResult> pContent;
             void* pRendererResources;
         };
+        TileContentLoadInput loadInput(
+            tileset.getExternals().pLogger,
+            *this
+        );
 
         std::move(maybeRequestFuture.value()).thenInWorkerThread([
-            this,
-            pContext = this->getContext(),
-            tileID = this->getTileID(),
-            boundingVolume = this->getBoundingVolume(),
-            geometricError = this->getGeometricError(),
-            transform = this->getTransform(),
-            contentBoundingVolume = this->getContentBoundingVolume(),
-            refine = this->getRefine(),
+            &loadInput,
             projections = std::move(projections),
             pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
             pLogger = tileset.getExternals().pLogger
@@ -247,14 +244,11 @@ namespace Cesium3DTiles {
                 };
             }
 
+            loadInput.data = pResponse->data();
+            loadInput.contentType = pResponse->contentType();
+            loadInput.url = pRequest->url();
             std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
-                TileContentLoadInput(
-                    pLogger,
-                    pResponse->data(),
-                    pResponse->contentType(),
-                    pRequest->url(),
-                    *this
-                )
+                loadInput
             );
 
             if (!pContent) {
@@ -266,9 +260,11 @@ namespace Cesium3DTiles {
             void* pRendererResources = nullptr;
 
             if (pContent->model) {
+                const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
                 Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
 
                 if (pPrepareRendererResources) {
+                    const glm::dmat4& transform = loadInput.tileTransform;
                     pRendererResources = pPrepareRendererResources->prepareInLoadThread(
                         pContent->model.value(),
                         transform
