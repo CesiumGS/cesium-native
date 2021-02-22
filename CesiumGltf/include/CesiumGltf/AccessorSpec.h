@@ -14,6 +14,11 @@ namespace CesiumGltf {
      * @brief A typed view into a bufferView.  A bufferView contains raw binary data.  An accessor provides a typed view into a bufferView or a subset of a bufferView similar to how WebGL's `vertexAttribPointer()` defines an attribute in a buffer.
      */
     struct CESIUMGLTF_API AccessorSpec : public NamedObject {
+        /**
+         * @brief The datatype of components in the attribute.
+         *
+         * All valid values correspond to WebGL enums.  The corresponding typed arrays are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when the accessor contains indices, i.e., the accessor is only referenced by `primitive.indices`.
+         */
         enum class ComponentType {
             BYTE = 5120,
 
@@ -28,6 +33,9 @@ namespace CesiumGltf {
             FLOAT = 5126
         };
 
+        /**
+         * @brief Specifies if the attribute is a scalar, vector, or matrix.
+         */
         enum class Type {
             SCALAR,
 
