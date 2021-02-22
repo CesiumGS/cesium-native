@@ -84,7 +84,4 @@ TEST_CASE("CesiumGltf::Writer") {
         // const auto triangleModel = generateTriangleModel();
     }
 
-    // TODO: This is a meta test and not a real unittest
-    //       this should be removed
-   
 }
