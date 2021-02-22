@@ -245,7 +245,7 @@ namespace CesiumAsync {
 
         template <class T, class Func>
         Future<T> createFuture(Func&& f) const {
-            std::shared_ptr<async::event_task<std::shared_ptr<IAssetRequest>>> pEvent = std::make_shared<async::event_task<std::shared_ptr<IAssetRequest>>>();
+            std::shared_ptr<async::event_task<T>> pEvent = std::make_shared<async::event_task<T>>();
 
             f([pEvent](T&& result) {
                 pEvent->set(std::move(result));
@@ -255,18 +255,6 @@ namespace CesiumAsync {
 
             return Future<T>(this->_pSchedulers, pEvent->get_task());
         }
-
-        // /**
-        //  * @brief Requests a new asset, returning a `Future` that resolves when the request completes.
-        //  * 
-        //  * @param url The URL of the asset to request.
-        //  * @param headers The HTTP headers to include in the request.
-        //  * @return A Future that resolves when the request completes.
-        //  */
-        // Future<std::shared_ptr<IAssetRequest>> requestAsset(
-        //     const std::string& url,
-        //     const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>()
-        // ) const;
 
         /**
          * @brief Runs a function in a worker thread, returning a promise that resolves when the function completes.
