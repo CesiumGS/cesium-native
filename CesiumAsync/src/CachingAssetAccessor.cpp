@@ -12,8 +12,8 @@
 namespace CesiumAsync {
     class CacheAssetResponse : public IAssetResponse {
     public:
-        CacheAssetResponse(const CacheItem* pCacheItem) 
-            : _pCacheItem{pCacheItem}
+        CacheAssetResponse(const CacheItem* pCacheItem) :
+            _pCacheItem{pCacheItem}
         {}
 
         virtual uint16_t statusCode() const override { 
@@ -33,12 +33,6 @@ namespace CesiumAsync {
             return this->_pCacheItem->cacheResponse.headers; 
         }
 
-        // virtual const ResponseCacheControl* cacheControl() const override {
-        //     return this->_pCacheItem->cacheResponse.cacheControl ? 
-        //         &this->_pCacheItem->cacheResponse.cacheControl.value() : 
-        //         nullptr; 
-        // }
-
         virtual gsl::span<const uint8_t> data() const override {
             return gsl::span<const uint8_t>(
                 this->_pCacheItem->cacheResponse.data.data(), 
@@ -52,31 +46,31 @@ namespace CesiumAsync {
     class CacheAssetRequest : public IAssetRequest 
     {
     public:
-        CacheAssetRequest(CacheItem&& cacheItem) 
-            : _cacheItem{std::move(cacheItem)}
+        CacheAssetRequest(CacheItem&& cacheItem) : 
+            _cacheItem(std::move(cacheItem)),
+            _response(&this->_cacheItem)
         {
-            _response = std::make_optional<CacheAssetResponse>(&this->_cacheItem.value());
         }
 
         virtual const std::string& method() const override {
-            return this->_cacheItem->cacheRequest.method;
+            return this->_cacheItem.cacheRequest.method;
         }
 
         virtual const std::string& url() const override {
-            return this->_cacheItem->cacheRequest.url;
+            return this->_cacheItem.cacheRequest.url;
         }
 
         virtual const HttpHeaders& headers() const override {
-            return this->_cacheItem->cacheRequest.headers;
+            return this->_cacheItem.cacheRequest.headers;
         }
 
         virtual const IAssetResponse* response() const override {
-            return &_response.value();
+            return &this->_response;
         }
 
     private:
-        std::optional<CacheAssetResponse> _response;
-        std::optional<CacheItem> _cacheItem;
+        CacheItem _cacheItem;
+        CacheAssetResponse _response;
     };
 
     static std::time_t convertHttpDateToTime(const std::string& httpDate);
