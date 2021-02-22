@@ -34,11 +34,6 @@ namespace CesiumAsync {
          */
         virtual const HttpHeaders& headers() const = 0;
 
-        // /**
-        //  * @brief Returns the HTTP cache control of the response
-        //  */
-        // virtual const ResponseCacheControl *cacheControl() const = 0;
-
         /**
          * @brief Returns the data of this response
          */
