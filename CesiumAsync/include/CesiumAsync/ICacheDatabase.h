@@ -7,38 +7,6 @@
 
 namespace CesiumAsync {
     /**
-     * @brief The result of a cache lookup with {@link ICacheDatabase::getEntry}.
-     */
-    struct CacheLookupResult {
-        /**
-         * @brief The found cache item, or `std::nullopt`.
-         * 
-         * This property will be `std::nullopt` if the cache key does not exist in the
-         * database, or if an error occurs.
-         */
-        std::optional<CacheItem> item;
-
-        /**
-         * @brief Details of an error that occurred during cache lookup, if any.
-         * 
-         * If the string is empty, no error occurred.
-         */
-        std::string error;
-    };
-
-    /**
-     * @brief The result of a cache store with {@link ICacheDatabase::storeEntry}.
-     */
-    struct CacheStoreResult {
-        /**
-         * @brief Details of an error that occuring during cache store, if any.
-         * 
-         * If the string is empty, no error occurred.
-         */
-        std::string error;
-    };
-
-    /**
      * @brief Provides database storage interface to cache completed request.
      */
     class CESIUMASYNC_API ICacheDatabase {
@@ -48,20 +16,31 @@ namespace CesiumAsync {
         /**
          * @brief Gets a cache entry from the database.
          * 
+         * If an error prevents checking the database for the key, this function,
+         * depending on the implementation, may log the error. However, it should
+         * return `std::nullopt`. It should not throw an exception.
+         * 
          * @param key The unique key associated with the cache entry.
-         * @return The result of the cache lookup.
+         * @return The result of the cache lookup, or `std::nullopt` if the key does not
+         *         exist in the cache or an error occurred.
          */
-        virtual CacheLookupResult getEntry(const std::string& key) const = 0;
+        virtual std::optional<CacheItem> getEntry(const std::string& key) const = 0;
 
         /**
-         * @brief Store response into the database. 
+         * @brief Store a cache entry in the database.
+         * 
          * @param key the unique key associated with the response
-         * @param expiryTime the time point that this response should be expired. An expired response will be removed when prunning the database
-         * @param request the completed request and response that will be stored in the database
-         * @param error the error message when there are problems happening when storing the response
-         * @return A boolean true if there are no errors when calling this function
+         * @param expiryTime the time point that this response should be expired. An expired response will be removed when prunning the database.
+         * @param url The URL being cached.
+         * @param requestMethod The HTTP method being cached.
+         * @param requestHeaders The HTTP request headers being cached.
+         * @param statusCode The HTTP response status code being cached.
+         * @param responseHeaders The HTTP response headers being cached.
+         * @param responseData The HTTP response being cached.
+         * @return `true` if the entry was successfully stored, or `false` if it could not be stored due
+         *         to an error.
          */
-        virtual CacheStoreResult storeEntry(
+        virtual bool storeEntry(
             const std::string& key,
             std::time_t expiryTime,
             const std::string& url,
@@ -74,16 +53,18 @@ namespace CesiumAsync {
 
         /**
          * @brief Remove cache entries from the database to satisfy the database invariant condition (.e.g exired response or LRU). 
-         * @param error the error message when there are problems happening when deleting entries
-         * @return A boolean true if there are no errors when calling this function
+         *
+         * @return `true` if the database was successfully pruned, or `false` if it could not be
+         *         pruned due to an errror.
          */
-        virtual bool prune(std::string& error) = 0;
+        virtual bool prune() = 0;
 
         /**
-         * @brief Remove all cache entries from the database. 
-         * @param error the error message when there are problems happening when deleting entries
-         * @return A boolean true if there are no errors when calling this function
+         * @brief Removes all cache entries from the database.
+         * 
+         * @return `true` if the database was successfully cleared, or `false` if it could not be
+         *         pruned due to an errror.
          */
-        virtual bool clearAll(std::string& error) = 0;
+        virtual bool clearAll() = 0;
     };
 }

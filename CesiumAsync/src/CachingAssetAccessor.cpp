@@ -120,10 +120,7 @@ namespace CesiumAsync {
             this->_requestSinceLastPrune = 0;
 
             asyncSystem.runInWorkerThread([this]() {
-                std::string error;
-                if (!this->_pCacheDatabase->prune(error)) {
-                    SPDLOG_LOGGER_WARN(this->_pLogger, "Cannot prune the cache database: {}", error);
-                }
+                this->_pCacheDatabase->prune();
             });
         }
 
@@ -135,30 +132,22 @@ namespace CesiumAsync {
             url,
             headers
         ]() -> Future<std::shared_ptr<IAssetRequest>> {
-            bool readError = false;
-
-            CacheLookupResult cacheLookup = pCacheDatabase->getEntry(url);
-            if (!cacheLookup.error.empty()) {
-                SPDLOG_LOGGER_WARN(pLogger, "Cannot access cache database: {}. Requesting directly from the server instead.", cacheLookup.error);
-                readError = true;
-            }
-
-            if (!cacheLookup.item) { 
+            std::optional<CacheItem> cacheLookup = pCacheDatabase->getEntry(url);
+            if (!cacheLookup) { 
                 // No cache item found, request directly from the server
                 return pAssetAccessor->requestAsset(asyncSystem, url, headers).thenInWorkerThread([
                     pCacheDatabase,
-                    pLogger,
-                    readError
+                    pLogger
                 ](std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
                     const IAssetResponse* pResponse = pCompletedRequest->response();
-                    if (readError || !pResponse) {
+                    if (!pResponse) {
                         return std::move(pCompletedRequest);
                     }
 
                     std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(pResponse->headers());
 
-                    if (!readError && pResponse && shouldCacheRequest(*pCompletedRequest, cacheControl)) {
-                        CacheStoreResult storeResult = pCacheDatabase->storeEntry(
+                    if (pResponse && shouldCacheRequest(*pCompletedRequest, cacheControl)) {
+                        pCacheDatabase->storeEntry(
                             calculateCacheKey(*pCompletedRequest),
                             calculateExpiryTime(*pCompletedRequest, cacheControl),
                             pCompletedRequest->url(),
@@ -168,22 +157,18 @@ namespace CesiumAsync {
                             pResponse->headers(),
                             pResponse->data()
                         );
-
-                        if (!storeResult.error.empty()) {
-                            SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", storeResult.error);
-                        }
                     }
 
                     return std::move(pCompletedRequest);
                 });
             }
 
-            CacheItem& cacheItem = cacheLookup.item.value();
+            CacheItem& cacheItem = cacheLookup.value();
 
             if (shouldRevalidateCache(cacheItem)) {
                 // Cache is stale and needs revalidation 
                 std::vector<THeader> newHeaders = headers;
-                const CacheResponse& cacheResponse = cacheLookup.item->cacheResponse;
+                const CacheResponse& cacheResponse = cacheItem.cacheResponse;
                 const HttpHeaders& responseHeaders = cacheResponse.headers;
                 HttpHeaders::const_iterator lastModifiedHeader = responseHeaders.find("Last-Modified");
                 HttpHeaders::const_iterator etagHeader = responseHeaders.find("Etag");
@@ -214,7 +199,7 @@ namespace CesiumAsync {
 
                     if (shouldCacheRequest(*pRequestToStore, cacheControl)) {
 
-                        CacheStoreResult storeResult = pCacheDatabase->storeEntry(
+                        pCacheDatabase->storeEntry(
                             calculateCacheKey(*pRequestToStore),
                             calculateExpiryTime(*pRequestToStore, cacheControl),
                             pRequestToStore->url(),
@@ -224,10 +209,6 @@ namespace CesiumAsync {
                             pResponseToStore->headers(),
                             pResponseToStore->data()
                         );
-
-                        if (!storeResult.error.empty()) {
-                            SPDLOG_LOGGER_WARN(pLogger, "Cannot store response in the cache database: {}", storeResult.error);
-                        }
                     }
 
                     return std::move(pRequestToStore);
