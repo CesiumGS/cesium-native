@@ -80,11 +80,7 @@ namespace CesiumAsync {
 
     static std::string convertHeadersToString(const HttpHeaders& headers);
 
-    static std::string convertCacheControlToString(const ResponseCacheControl* cacheControl);
-
     static HttpHeaders convertStringToHeaders(const std::string& serializedHeaders);
-
-    static std::optional<ResponseCacheControl> convertStringToResponseCacheControl(const char* serializedResponseCacheControl);
 
     void SqliteCache::DeleteSqliteConnection::operator()(sqlite3* pConnection) noexcept {
         sqlite3_close_v2(pConnection);
