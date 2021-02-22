@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
-#include "CesiumAsync/DiskCache.h"
+#include "CesiumAsync/SqliteCache.h"
 
 using namespace CesiumAsync;
 
