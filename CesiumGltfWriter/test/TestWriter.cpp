@@ -84,25 +84,7 @@ TEST_CASE("CesiumGltf::Writer") {
         // const auto triangleModel = generateTriangleModel();
     }
 
-    SECTION("Triangle is serialized to GLB") {
-        auto triangleModel = generateTriangleModel();
-        auto& buffer = triangleModel.buffers[0];
-        buffer.uri = std::nullopt;
-        // position + indices
-        buffer.cesium.data = std::vector<uint8_t>{
-            0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x00};
-        buffer.byteLength = static_cast<long>(buffer.cesium.data.size());
-        std::vector<uint8_t> result = writeModelToByteArray(triangleModel);
-        std::ofstream output(
-            "/home/sam/space_lasers.glb",
-            std::ios::binary | std::ios::out);
-        output.write(
-            reinterpret_cast<char*>(result.data()),
-            static_cast<long>(result.size()));
-        output.close();
-    }
+    // TODO: This is a meta test and not a real unittest
+    //       this should be removed
+   
 }
