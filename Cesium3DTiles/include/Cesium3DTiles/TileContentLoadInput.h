@@ -34,12 +34,12 @@ namespace Cesium3DTiles
          * @param tile_ The {@link Tile} that the content belongs to
          */
         TileContentLoadInput(
-        	const std::shared_ptr<spdlog::logger> pLogger_,
+            const std::shared_ptr<spdlog::logger> pLogger_,
             gsl::span<const uint8_t>&& data_,
             const std::string& contentType_,
             const std::string& url_,
-		    const Tile& tile_
-		) :
+            const Tile& tile_
+        ) :
             pLogger(pLogger_),
             data(std::move(data_)),
             contentType(contentType_),
@@ -74,18 +74,18 @@ namespace Cesium3DTiles
          * @param tileTransform_ The tile transform
          */
         TileContentLoadInput(
-        	const std::shared_ptr<spdlog::logger> pLogger_,
+            const std::shared_ptr<spdlog::logger> pLogger_,
             gsl::span<const uint8_t>&& data_,
             const std::string& contentType_,
             const std::string& url_,
-		    const TileContext& context_,
-		    const TileID& tileID_,
-		    const BoundingVolume& tileBoundingVolume_,
-		    const std::optional<BoundingVolume>& tileContentBoundingVolume_,
-		    TileRefine tileRefine_,
+            const TileContext& context_,
+            const TileID& tileID_,
+            const BoundingVolume& tileBoundingVolume_,
+            const std::optional<BoundingVolume>& tileContentBoundingVolume_,
+            TileRefine tileRefine_,
             double tileGeometricError_,
-    		const glm::dmat4& tileTransform_
-		) :
+            const glm::dmat4& tileTransform_
+        ) :
             pLogger(pLogger_),
             data(std::move(data_)),
             contentType(contentType_),
@@ -103,7 +103,7 @@ namespace Cesium3DTiles
         /**
          * @brief The logger that receives details of loading errors and warnings.
          */
-		std::shared_ptr<spdlog::logger> pLogger;
+        std::shared_ptr<spdlog::logger> pLogger;
 
         /**
          * @brief The raw input data.
@@ -130,42 +130,42 @@ namespace Cesium3DTiles
         /**
          * @brief The source URL.
          */
-		const std::string url;
+        std::string url;
 
         /**
          * @brief The {@link TileContext}.
          */
-		const TileContext& context;
+        const TileContext& context;
 
         /**
          * @brief The {@link TileID}.
          */
-		const TileID tileID;
+        TileID tileID;
 
         /**
          * @brief The tile {@link BoundingVolume}.
          */
-		const BoundingVolume tileBoundingVolume;
+        BoundingVolume tileBoundingVolume;
 
         /**
          * @brief Tile content {@link BoundingVolume}.
          */
-		const std::optional<BoundingVolume> tileContentBoundingVolume;
+        std::optional<BoundingVolume> tileContentBoundingVolume;
 
         /**
          * @brief The {@link TileRefine}.
          */
-		const TileRefine tileRefine;
+        TileRefine tileRefine;
 
         /**
          * @brief The geometric error.
          */
-        const double tileGeometricError;
+        double tileGeometricError;
 
         /**
          * @brief The tile transform
          */
-        const glm::dmat4 tileTransform;
+        glm::dmat4 tileTransform;
 
     };
 }
