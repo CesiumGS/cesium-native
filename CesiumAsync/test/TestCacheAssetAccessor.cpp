@@ -509,7 +509,7 @@ TEST_CASE("Test serving cache item") {
                 {"Cache-Control", "max-age=100, private"}
             },
             std::vector<uint8_t>());
-        CacheItem cacheItem(currentTime + 100, cacheRequest, cacheResponse);
+        CacheItem cacheItem(currentTime + 100, std::move(cacheRequest), std::move(cacheResponse));
         mockCacheDatabase->cacheItem = cacheItem;
 
         std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor = std::make_shared<CachingAssetAccessor>(
@@ -585,7 +585,7 @@ TEST_CASE("Test serving cache item") {
                 {"Cache-Control", "max-age=100, private"}
             },
             std::vector<uint8_t>());
-        CacheItem cacheItem(currentTime - 100, cacheRequest, cacheResponse);
+        CacheItem cacheItem(currentTime - 100, std::move(cacheRequest), std::move(cacheResponse));
         mockCacheDatabase->cacheItem = cacheItem;
 
         std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor = std::make_shared<CachingAssetAccessor>(
@@ -663,7 +663,7 @@ TEST_CASE("Test serving cache item") {
                 {"Cache-Control", "max-age=100, private"}
             },
             std::vector<uint8_t>());
-        CacheItem cacheItem(currentTime - 100, cacheRequest, cacheResponse);
+        CacheItem cacheItem(currentTime - 100, std::move(cacheRequest), std::move(cacheResponse));
         mockCacheDatabase->cacheItem = cacheItem;
 
         std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor = std::make_shared<CachingAssetAccessor>(
