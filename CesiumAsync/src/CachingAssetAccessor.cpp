@@ -205,7 +205,7 @@ namespace CesiumAsync {
                         );
                     }
 
-                    return std::move(pRequestToStore);
+                    return pRequestToStore;
                 });
             }
 
