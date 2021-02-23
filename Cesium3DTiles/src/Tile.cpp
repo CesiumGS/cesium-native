@@ -216,11 +216,11 @@ namespace Cesium3DTiles {
         );
 
         std::move(maybeRequestFuture.value()).thenInWorkerThread([
-            &loadInput,
+            loadInput = std::move(loadInput),
             projections = std::move(projections),
             pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
             pLogger = tileset.getExternals().pLogger
-        ](std::unique_ptr<IAssetRequest>&& pRequest) {
+        ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
             IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tile content {}", pRequest->url());
