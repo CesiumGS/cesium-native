@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/Library.h"
 #include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,11 +30,10 @@ namespace CesiumAsync {
          * @param headers The headers to include in the request.
          * @return The in-progress asset request.
          */
-        virtual void requestAsset(
-            const AsyncSystem* asyncSystem,
+        virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> requestAsset(
+            const AsyncSystem& asyncSystem,
             const std::string& url,
-            const std::vector<THeader>& headers,
-            std::function<void(std::shared_ptr<IAssetRequest>)> callback
+            const std::vector<THeader>& headers = {}
         ) = 0;
 
         /**

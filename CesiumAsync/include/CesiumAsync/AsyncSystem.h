@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CesiumAsync/Library.h"
-#include "CesiumAsync/IAssetAccessor.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -19,7 +18,6 @@
 #pragma warning(pop)
 
 namespace CesiumAsync {
-    class IAssetAccessor;
     class ITaskProcessor;
 
     template <class T>
@@ -31,11 +29,9 @@ namespace CesiumAsync {
 
         struct AsyncSystemSchedulers {
             AsyncSystemSchedulers(
-                std::shared_ptr<IAssetAccessor> pAssetAccessor,
                 std::shared_ptr<ITaskProcessor> pTaskProcessor
             );
 
-            std::shared_ptr<IAssetAccessor> pAssetAccessor;
             std::shared_ptr<ITaskProcessor> pTaskProcessor;
             async::fifo_scheduler mainThreadScheduler;
 
@@ -241,25 +237,24 @@ namespace CesiumAsync {
         /**
          * @brief Constructs a new instance.
          * 
-         * @param pAssetAccessor The interface used to start asynchronous asset requests, usually over HTTP.
          * @param pTaskProcessor The interface used to run tasks in background threads.
          */
         AsyncSystem(
-            std::shared_ptr<IAssetAccessor> pAssetAccessor,
             std::shared_ptr<ITaskProcessor> pTaskProcessor
         ) noexcept;
 
-        /**
-         * @brief Requests a new asset, returning a `Future` that resolves when the request completes.
-         * 
-         * @param url The URL of the asset to request.
-         * @param headers The HTTP headers to include in the request.
-         * @return A Future that resolves when the request completes.
-         */
-        Future<std::shared_ptr<IAssetRequest>> requestAsset(
-            const std::string& url,
-            const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>()
-        ) const;
+        template <class T, class Func>
+        Future<T> createFuture(Func&& f) const {
+            std::shared_ptr<async::event_task<T>> pEvent = std::make_shared<async::event_task<T>>();
+
+            f([pEvent](T&& result) {
+                pEvent->set(std::move(result));
+            }, [pEvent](std::exception&& error) {
+                pEvent->set_exception(std::make_exception_ptr(error));
+            });
+
+            return Future<T>(this->_pSchedulers, pEvent->get_task());
+        }
 
         /**
          * @brief Runs a function in a worker thread, returning a promise that resolves when the function completes.

@@ -55,11 +55,12 @@ namespace Cesium3DTiles {
     public:
         BingMapsTileProvider(
             RasterOverlay& owner,
-            const AsyncSystem& asyncSystem,
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
             Credit bingCredit,
             const std::vector<CreditAndCoverageAreas>& perTileCredits,
-            std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-            std::shared_ptr<spdlog::logger> pLogger,
+            const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+            const std::shared_ptr<spdlog::logger>& pLogger,
             const std::string& baseUrl,
             const std::string& urlTemplate,
             const std::vector<std::string>& subdomains,
@@ -72,6 +73,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                pAssetAccessor,
                 bingCredit,
                 pPrepareRendererResources,
                 pLogger,
@@ -186,9 +188,10 @@ namespace Cesium3DTiles {
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> BingMapsRasterOverlay::createTileProvider(
         const AsyncSystem& asyncSystem,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CreditSystem>& pCreditSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-        std::shared_ptr<spdlog::logger> pLogger,
+        const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger,
         RasterOverlay* pOwner
     ) {
         std::string metadataUrl = Uri::resolve(this->_url, "REST/v1/Imagery/Metadata/" + this->_mapStyle, true);
@@ -198,9 +201,10 @@ namespace Cesium3DTiles {
 
         pOwner = pOwner ? pOwner : this;
 
-        return asyncSystem.requestAsset(metadataUrl).thenInWorkerThread([
+        return pAssetAccessor->requestAsset(asyncSystem, metadataUrl).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            pAssetAccessor,
             pCreditSystem,
             pPrepareRendererResources,
             pLogger,
@@ -294,6 +298,7 @@ namespace Cesium3DTiles {
             return std::make_unique<BingMapsTileProvider>(
                 *pOwner,
                 asyncSystem,
+                pAssetAccessor,
                 bingCredit,
                 credits,
                 pPrepareRendererResources,

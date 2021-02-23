@@ -33,7 +33,7 @@ namespace Cesium3DTiles {
     ) :
         _contexts(),
         _externals(externals),
-        _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _asyncSystem(externals.pTaskProcessor),
         _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
@@ -68,7 +68,7 @@ namespace Cesium3DTiles {
     ) :
         _contexts(),
         _externals(externals),
-        _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _asyncSystem(externals.pTaskProcessor),
         _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
@@ -99,7 +99,7 @@ namespace Cesium3DTiles {
 
         ++this->_loadsInProgress;
 
-        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
+        this->_externals.pAssetAccessor->requestAsset(this->_asyncSystem, ionUrl).thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
             this->_handleAssetResponse(std::move(pRequest));
         }).catchInMainThread([this, &ionAssetID](const std::exception& e) {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error for asset {}: {}", ionAssetID, e.what());
@@ -356,7 +356,7 @@ namespace Cesium3DTiles {
 
         this->notifyTileStartLoading(&tile);
 
-        return this->getAsyncSystem().requestAsset(url, tile.getContext()->requestHeaders);
+        return this->getExternals().pAssetAccessor->requestAsset(this->getAsyncSystem(), url, tile.getContext()->requestHeaders);
     }
 
     void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
@@ -395,7 +395,7 @@ namespace Cesium3DTiles {
         }
         pContext->pTileset = this;
 
-        this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
+        this->getExternals().pAssetAccessor->requestAsset(this->getAsyncSystem(), url, headers).thenInWorkerThread([
             pLogger = this->_externals.pLogger,
             pContext = std::move(pContext)
         ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
@@ -762,7 +762,7 @@ namespace Cesium3DTiles {
 
             ++this->_loadsInProgress;
 
-            this->_asyncSystem.requestAsset(url).thenInMainThread([
+            this->getExternals().pAssetAccessor->requestAsset(this->getAsyncSystem(), url).thenInMainThread([
                 this,
                 pContext = failedTile.getContext()
             ](std::shared_ptr<IAssetRequest>&& pIonRequest) {

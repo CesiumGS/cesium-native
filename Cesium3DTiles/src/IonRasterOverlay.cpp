@@ -28,10 +28,11 @@ namespace Cesium3DTiles {
     }
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> IonRasterOverlay::createTileProvider(
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CreditSystem>& pCreditSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-        std::shared_ptr<spdlog::logger> pLogger,
+        const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger,
         RasterOverlay* pOwner
     ) {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(this->_ionAssetID) + "/endpoint";
@@ -39,7 +40,7 @@ namespace Cesium3DTiles {
 
         pOwner = pOwner ? pOwner : this;
 
-        return asyncSystem.requestAsset(ionUrl).thenInWorkerThread([
+        return pAssetAccessor->requestAsset(asyncSystem, ionUrl).thenInWorkerThread([
             pLogger
         ](
             std::shared_ptr<IAssetRequest> pRequest
@@ -90,15 +91,16 @@ namespace Cesium3DTiles {
                 );
             }
         }).thenInMainThread([
-            pOwner,
             asyncSystem,
+            pOwner,
+            pAssetAccessor,
             pCreditSystem,
             pPrepareRendererResources,
             pLogger
         ](std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
             // Handle the case that the code above bails out with an error, returning a nullptr.
             if (pAggregatedOverlay) {
-                return pAggregatedOverlay->createTileProvider(asyncSystem, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
+                return pAggregatedOverlay->createTileProvider(asyncSystem, pAssetAccessor, pCreditSystem, pPrepareRendererResources, pLogger, pOwner);
             }
             return asyncSystem.createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(nullptr);
 

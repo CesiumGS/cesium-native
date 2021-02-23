@@ -1,4 +1,4 @@
-#include "CesiumAsync/ResponseCacheControl.h"
+#include "ResponseCacheControl.h"
 #include <map>
 #include <set>
 

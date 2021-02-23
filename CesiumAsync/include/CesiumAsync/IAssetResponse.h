@@ -2,7 +2,6 @@
 
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
-#include "CesiumAsync/ResponseCacheControl.h"
 #include <gsl/span>
 #include <string>
 #include <map>
@@ -27,17 +26,12 @@ namespace CesiumAsync {
         /**
          * @brief Returns the HTTP content type
          */
-        virtual const std::string& contentType() const = 0;
+        virtual std::string contentType() const = 0;
 
         /**
          * @brief Returns the HTTP headers of the response
          */
         virtual const HttpHeaders& headers() const = 0;
-
-        /**
-         * @brief Returns the HTTP cache control of the response
-         */
-        virtual const ResponseCacheControl *cacheControl() const = 0;
 
         /**
          * @brief Returns the data of this response

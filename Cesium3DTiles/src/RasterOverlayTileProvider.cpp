@@ -16,10 +16,12 @@ namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
-        const AsyncSystem& asyncSystem
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor
     ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
+        _pAssetAccessor(pAssetAccessor),
         _credit(std::nullopt),
         _pPrepareRendererResources(nullptr),
         _pLogger(nullptr),
@@ -41,7 +43,8 @@ namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
         std::optional<Credit> credit,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         std::shared_ptr<spdlog::logger> pLogger,
@@ -55,6 +58,7 @@ namespace Cesium3DTiles {
     ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
+        _pAssetAccessor(pAssetAccessor),
         _credit(credit),
         _pPrepareRendererResources(pPrepareRendererResources),
         _pLogger(pLogger),
@@ -406,7 +410,7 @@ namespace Cesium3DTiles {
         const std::vector<IAssetAccessor::THeader>& headers,
         const std::vector<Credit>& credits
     ) const {
-        return this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
+        return this->getAssetAccessor()->requestAsset(this->getAsyncSystem(), url, headers).thenInWorkerThread([
             credits
         ](
             std::shared_ptr<IAssetRequest>&& pRequest

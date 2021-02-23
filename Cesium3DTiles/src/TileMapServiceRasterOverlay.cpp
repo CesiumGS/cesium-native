@@ -19,7 +19,8 @@ namespace Cesium3DTiles {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
-            const AsyncSystem& asyncSystem,
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
             std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
@@ -37,6 +38,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                pAssetAccessor,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
@@ -120,10 +122,11 @@ namespace Cesium3DTiles {
     }
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CreditSystem>& pCreditSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-        std::shared_ptr<spdlog::logger> pLogger,
+        const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger,
         RasterOverlay* pOwner
     ) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
@@ -134,9 +137,10 @@ namespace Cesium3DTiles {
             std::make_optional(pCreditSystem->createCredit(this->_options.credit.value())) :
             std::nullopt;
 
-        return asyncSystem.requestAsset(xmlUrl, this->_headers).thenInWorkerThread([
+        return pAssetAccessor->requestAsset(asyncSystem, xmlUrl, this->_headers).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            pAssetAccessor,
             credit,
             pPrepareRendererResources,
             pLogger,
@@ -247,6 +251,7 @@ namespace Cesium3DTiles {
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
                 asyncSystem,
+                pAssetAccessor,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
