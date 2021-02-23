@@ -16,6 +16,11 @@ namespace CesiumGltf {
      * @brief The material appearance of a primitive.
      */
     struct CESIUMGLTF_API Material final : public NamedObject {
+        /**
+         * @brief The alpha rendering mode of the material.
+         *
+         * The material's alpha rendering mode enumeration specifying the interpretation of the alpha value of the main factor and texture.
+         */
         enum class AlphaMode {
             OPAQUE,
 

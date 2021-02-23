@@ -11,6 +11,11 @@ namespace CesiumGltf {
      * @brief Indices of those attributes that deviate from their initialization value.
      */
     struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
+        /**
+         * @brief The indices data type.
+         *
+         * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123` (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
+         */
         enum class ComponentType {
             UNSIGNED_BYTE = 5121,
 

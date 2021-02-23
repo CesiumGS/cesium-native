@@ -12,6 +12,9 @@ namespace CesiumGltf {
      * @brief A view into a buffer generally representing a subset of the buffer.
      */
     struct CESIUMGLTF_API BufferView final : public NamedObject {
+        /**
+         * @brief The target that the GPU buffer should be bound to.
+         */
         enum class Target {
             ARRAY_BUFFER = 34962,
 
