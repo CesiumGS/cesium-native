@@ -27,18 +27,44 @@ namespace {
 
 namespace Cesium3DTiles {
 
+    namespace 
+    {
+        /**
+         * @brief Derive a {@link TileContentLoadInput} from the given one.
+         * 
+         * This will return a new instance where all properies are set to be
+         * the same as in the given input, except for the content type (which
+         * is set to be the empty string), and the data, which is set to be
+         * the given derived data.
+         * 
+         * @param input The original input.
+         * @param derivedData The data for the result.
+         * @return The result.
+         */
+        TileContentLoadInput derive(const TileContentLoadInput& input, const gsl::span<const uint8_t>& derivedData) {
+            return TileContentLoadInput(
+                input.pLogger,
+                derivedData,
+                "",
+                input.url,
+                input.context,
+                input.tileID,
+                input.tileBoundingVolume,
+                input.tileContentBoundingVolume,
+                input.tileRefine,
+                input.tileGeometricError,
+                input.tileTransform
+            );
+        }
+    }
+
+
     std::unique_ptr<TileContentLoadResult> CompositeContent::load(
-		std::shared_ptr<spdlog::logger> pLogger,
-		const TileContext& context,
-		const TileID& tileID,
-		const BoundingVolume& tileBoundingVolume,
-		double tileGeometricError,
-		const glm::dmat4& tileTransform,
-		const std::optional<BoundingVolume>& tileContentBoundingVolume,
-		TileRefine tileRefine,
-		const std::string& url,
-		const gsl::span<const uint8_t>& data
-	) {
+		const TileContentLoadInput& input) {
+        const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
+        const gsl::span<const uint8_t>& data = input.data;
+        const std::string& url = input.url;
+
         if (data.size() < sizeof(CmptHeader)) {
             SPDLOG_LOGGER_WARN(pLogger, "Composite tile {} must be at least 16 bytes.", url);
             return nullptr;
@@ -79,17 +105,7 @@ namespace Cesium3DTiles {
             gsl::span<const uint8_t> innerData(data.data() + pos, pInner->byteLength);
 
             std::unique_ptr<TileContentLoadResult> pInnerLoadResult = TileContentFactory::createContent(
-                pLogger,
-                context,
-                tileID,
-                tileBoundingVolume,
-                tileGeometricError,
-                tileTransform,
-                tileContentBoundingVolume,
-                tileRefine,
-                url,
-                "",
-                innerData
+                derive(input, innerData)
             );
 
             if (pInnerLoadResult) {
