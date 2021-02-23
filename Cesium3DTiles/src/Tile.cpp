@@ -116,6 +116,17 @@ namespace Cesium3DTiles {
 
     void Tile::loadContent() {
         if (this->getState() != LoadState::Unloaded) {
+            // No need to load geometry, but give previously-throttled
+            // raster overlay tiles a chance to load.
+            for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+                RasterOverlayTile* pLoading = mapped.getLoadingTile();
+                if (pLoading && pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+                    RasterOverlayTileProvider* pProvider = pLoading->getOverlay().getTileProvider();
+                    if (pProvider) {
+                        pProvider->loadTileThrottled(*pLoading);
+                    }
+                }
+            }
             return;
         }
 
@@ -182,7 +193,7 @@ namespace Cesium3DTiles {
             projections.push_back(WebMercatorProjection());
         }
 
-        std::optional<Future<std::unique_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
+        std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
         if (!maybeRequestFuture) {
             // There is no content to load. But we may need to upsample.
 
@@ -220,8 +231,8 @@ namespace Cesium3DTiles {
             projections = std::move(projections),
             pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
             pLogger = tileset.getExternals().pLogger
-        ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
-            IAssetResponse* pResponse = pRequest->response();
+        ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
                 SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tile content {}", pRequest->url());
                 auto pLoadResult = std::make_unique<TileContentLoadResult>();
@@ -564,8 +575,9 @@ namespace Cesium3DTiles {
 
                 RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
                 if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
-                    // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
+
+                    // Try to replace this placeholder with real tiles.
                     if (!pProvider->isPlaceholder()) {
                         this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
                         --i;

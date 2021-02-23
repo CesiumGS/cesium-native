@@ -1,8 +1,10 @@
 #pragma once
 
+#include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
 #include <gsl/span>
 #include <string>
+#include <map>
 
 namespace CesiumAsync {
 
@@ -11,7 +13,6 @@ namespace CesiumAsync {
      */
     class CESIUMASYNC_API IAssetResponse {
     public:
-
         /**
          * @brief Default destructor
          */
@@ -26,7 +27,11 @@ namespace CesiumAsync {
          * @brief Returns the HTTP content type
          */
         virtual std::string contentType() const = 0;
-        //virtual const std::map<std::string, std::string>& headers() = 0;
+
+        /**
+         * @brief Returns the HTTP headers of the response
+         */
+        virtual const HttpHeaders& headers() const = 0;
 
         /**
          * @brief Returns the data of this response

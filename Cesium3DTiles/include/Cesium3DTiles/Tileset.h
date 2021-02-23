@@ -311,7 +311,7 @@ namespace Cesium3DTiles {
          * @param tile The tile for which the content is requested.
          * @return A future that resolves when the content response is received, or std::nullopt if this Tile has no content to load.
          */
-        std::optional<CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
+        std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
 
         /**
          * @brief Add the given {@link TileContext} to this tile set.
@@ -395,7 +395,7 @@ namespace Cesium3DTiles {
           *
           * @param pRequest The request for which the response was received.
           */
-        void _handleAssetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+        void _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
         struct LoadResult {
             std::unique_ptr<TileContext> pContext;
@@ -415,7 +415,7 @@ namespace Cesium3DTiles {
          * @param pRequest The request for which the response was received.
          * @return The LoadResult structure
          */
-        static LoadResult _handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger);
+        static LoadResult _handleTilesetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
         void _loadTilesetJson(
             const std::string& url,
@@ -437,7 +437,7 @@ namespace Cesium3DTiles {
          * @param pIonRequest The request.
          * @param pContext The context.
          */
-        void _handleTokenRefreshResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
+        void _handleTokenRefreshResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
         /**
          * @brief Input information that is constant throughout the traversal.

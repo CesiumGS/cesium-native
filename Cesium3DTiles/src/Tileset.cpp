@@ -33,7 +33,7 @@ namespace Cesium3DTiles {
     ) :
         _contexts(),
         _externals(externals),
-        _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _asyncSystem(externals.pTaskProcessor),
         _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
@@ -68,7 +68,7 @@ namespace Cesium3DTiles {
     ) :
         _contexts(),
         _externals(externals),
-        _asyncSystem(externals.pAssetAccessor, externals.pTaskProcessor),
+        _asyncSystem(externals.pTaskProcessor),
         _userCredit(
                 (options.credit && externals.pCreditSystem) ? 
                 std::optional<Credit>(externals.pCreditSystem->createCredit(options.credit.value())) : 
@@ -99,7 +99,7 @@ namespace Cesium3DTiles {
 
         ++this->_loadsInProgress;
 
-        this->_asyncSystem.requestAsset(ionUrl).thenInMainThread([this](std::unique_ptr<IAssetRequest>&& pRequest) {
+        this->_externals.pAssetAccessor->requestAsset(this->_asyncSystem, ionUrl).thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
             this->_handleAssetResponse(std::move(pRequest));
         }).catchInMainThread([this, &ionAssetID](const std::exception& e) {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error for asset {}: {}", ionAssetID, e.what());
@@ -129,8 +129,8 @@ namespace Cesium3DTiles {
         }
     }
 
-    void Tileset::_handleAssetResponse(std::unique_ptr<IAssetRequest>&& pRequest) {
-        IAssetResponse* pResponse = pRequest->response();
+    void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "No response received for asset request {}", pRequest->url());
             this->notifyTileDoneLoading(nullptr);
@@ -348,7 +348,7 @@ namespace Cesium3DTiles {
         this->_createTile(rootTile, tilesetJson["root"], parentTransform, parentRefine, context, pLogger);
     }
 
-    std::optional<Future<std::unique_ptr<IAssetRequest>>> Tileset::requestTileContent(Tile& tile) {
+    std::optional<Future<std::shared_ptr<IAssetRequest>>> Tileset::requestTileContent(Tile& tile) {
         std::string url = this->getResolvedContentUrl(tile);
         if (url.empty()) {
             return std::nullopt;
@@ -356,7 +356,7 @@ namespace Cesium3DTiles {
 
         this->notifyTileStartLoading(&tile);
 
-        return this->getAsyncSystem().requestAsset(url, tile.getContext()->requestHeaders);
+        return this->getExternals().pAssetAccessor->requestAsset(this->getAsyncSystem(), url, tile.getContext()->requestHeaders);
     }
 
     void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
@@ -395,10 +395,10 @@ namespace Cesium3DTiles {
         }
         pContext->pTileset = this;
 
-        this->_asyncSystem.requestAsset(url, headers).thenInWorkerThread([
+        this->getExternals().pAssetAccessor->requestAsset(this->getAsyncSystem(), url, headers).thenInWorkerThread([
             pLogger = this->_externals.pLogger,
             pContext = std::move(pContext)
-        ](std::unique_ptr<IAssetRequest>&& pRequest) mutable {
+        ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             return Tileset::_handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
         }).thenInMainThread([this](LoadResult&& loadResult) {
             this->addContext(std::move(loadResult.pContext));
@@ -411,8 +411,8 @@ namespace Cesium3DTiles {
         });
     }
 
-    /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::unique_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
-        IAssetResponse* pResponse = pRequest->response();
+    /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(std::shared_ptr<IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
+        const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
             return LoadResult{ std::move(pContext), nullptr };
@@ -672,7 +672,7 @@ namespace Cesium3DTiles {
      * @param pIonResponse The response
      * @return Whether the update succeeded
      */
-    static bool updateContextWithNewToken(TileContext* pContext, IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
+    static bool updateContextWithNewToken(TileContext* pContext, const IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
         gsl::span<const uint8_t> data = pIonResponse->data();
 
         rapidjson::Document ionResponse;
@@ -699,8 +699,8 @@ namespace Cesium3DTiles {
         return true;
     }
 
-    void Tileset::_handleTokenRefreshResponse(std::unique_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
-        IAssetResponse* pIonResponse = pIonRequest->response();
+    void Tileset::_handleTokenRefreshResponse(std::shared_ptr<IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger) {
+        const IAssetResponse* pIonResponse = pIonRequest->response();
 
         bool failed = true;
         if (pIonResponse && pIonResponse->statusCode() >= 200 && pIonResponse->statusCode() < 300) {
@@ -762,10 +762,10 @@ namespace Cesium3DTiles {
 
             ++this->_loadsInProgress;
 
-            this->_asyncSystem.requestAsset(url).thenInMainThread([
+            this->getExternals().pAssetAccessor->requestAsset(this->getAsyncSystem(), url).thenInMainThread([
                 this,
                 pContext = failedTile.getContext()
-            ](std::unique_ptr<IAssetRequest>&& pIonRequest) {
+            ](std::shared_ptr<IAssetRequest>&& pIonRequest) {
                 this->_handleTokenRefreshResponse(std::move(pIonRequest), pContext, this->_externals.pLogger);
             }).catchInMainThread([this](const std::exception& e) {
                 SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Unhandled error when retrying request: {}", e.what());
@@ -1315,6 +1315,17 @@ namespace Cesium3DTiles {
         return Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
+    static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
+        for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+            const RasterOverlayTile* pLoading = mapped.getLoadingTile();
+            if (pLoading && pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // TODO The viewState is only needed to
     // compute the priority from the distance. So maybe this function should 
     // receive a priority directly and be called with 
@@ -1327,7 +1338,10 @@ namespace Cesium3DTiles {
         Tile& tile,
         double distance
     ) {
-        if (tile.getState() == Tile::LoadState::Unloaded) {
+        if (
+            tile.getState() == Tile::LoadState::Unloaded ||
+            anyRasterOverlaysNeedLoading(tile)
+        ) {
             double loadPriority = 0.0;
 
             glm::dvec3 tileDirection = getBoundingVolumeCenter(tile.getBoundingVolume()) - viewState.getPosition();
@@ -1352,12 +1366,10 @@ namespace Cesium3DTiles {
         std::sort(queue.begin(), queue.end());
 
         for (LoadRecord& record : queue) {
-            if (record.pTile->getState() == Tile::LoadState::Unloaded) {
-                record.pTile->loadContent();
+            record.pTile->loadContent();
 
-                if (loadsInProgress >= maximumLoadsInProgress) {
-                    break;
-                }
+            if (loadsInProgress >= maximumLoadsInProgress) {
+                break;
             }
         }
     }
