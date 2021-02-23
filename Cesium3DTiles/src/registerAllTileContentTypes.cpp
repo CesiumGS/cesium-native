@@ -10,12 +10,12 @@ namespace Cesium3DTiles {
 
     void registerAllTileContentTypes() {
 
-        TileContentFactory::registerMagic("glTF", GltfContent::load);
-        TileContentFactory::registerMagic("b3dm", Batched3DModelContent::load);
-        TileContentFactory::registerMagic("cmpt", CompositeContent::load);
-        TileContentFactory::registerMagic("json", ExternalTilesetContent::load);
+        TileContentFactory::registerMagic("glTF", std::make_shared<GltfContent>());
+        TileContentFactory::registerMagic("b3dm", std::make_shared<Batched3DModelContent>());
+        TileContentFactory::registerMagic("cmpt", std::make_shared<CompositeContent>());
+        TileContentFactory::registerMagic("json", std::make_shared<ExternalTilesetContent>());
 
-        TileContentFactory::registerContentType(QuantizedMeshContent::CONTENT_TYPE, QuantizedMeshContent::load);
+        TileContentFactory::registerContentType(QuantizedMeshContent::CONTENT_TYPE, std::make_shared<QuantizedMeshContent>());
     }
 
 }
