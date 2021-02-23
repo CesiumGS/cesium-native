@@ -10,7 +10,7 @@ namespace CesiumAsync {
     /**
      * @brief Response cache control directives parsed from the response header.
      */
-    class CESIUMASYNC_API ResponseCacheControl {
+    class ResponseCacheControl {
     public:
         /**
          * @brief Constructor.

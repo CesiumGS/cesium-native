@@ -2,7 +2,6 @@
 
 #include "CesiumAsync/Library.h"
 #include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/ResponseCacheControl.h"
 #include "gsl/span"
 #include <vector>
 #include <map>

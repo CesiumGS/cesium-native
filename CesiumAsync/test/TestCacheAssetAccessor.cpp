@@ -1,12 +1,13 @@
 #include "catch2/catch.hpp"
-#include "MockAssetRequest.h"
-#include "MockAssetResponse.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/CachingAssetAccessor.h"
 #include "CesiumAsync/ICacheDatabase.h"
 #include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include <spdlog/spdlog.h>
+#include "MockAssetRequest.h"
+#include "MockAssetResponse.h"
+#include "ResponseCacheControl.h"
 #include <optional>
+#include <spdlog/spdlog.h>
 
 using namespace CesiumAsync;
 

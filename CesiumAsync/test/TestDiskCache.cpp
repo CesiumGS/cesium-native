@@ -1,7 +1,8 @@
 #include "catch2/catch.hpp"
+#include "CesiumAsync/SqliteCache.h"
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
-#include "CesiumAsync/SqliteCache.h"
+#include "ResponseCacheControl.h"
 #include <spdlog/spdlog.h>
 
 using namespace CesiumAsync;
