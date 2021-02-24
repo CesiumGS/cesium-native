@@ -1,14 +1,22 @@
 #include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "BufferWriter.h"
-#include <stdexcept>
+#include "EncodeBase64String.h"
+#include <CesiumGltf/WriterException.h>
+#include <string_view>
 
-// TODO: Add const std::vector<Buffer>&& buffers variant
-//       that consumes the model, that way we can MOVE the buffers
-//       into the amalgamated one instead of performing extra copies.
+constexpr auto BASE64_PREFIX = "data:application/octet-stream;base64,";
+
+[[nodiscard]] inline bool isURIBase64DataURI(std::string_view view) noexcept {
+    return view.rfind(BASE64_PREFIX, 0) == 0;
+}
+
 std::vector<std::uint8_t> CesiumGltf::writeBuffer(
     const std::vector<Buffer>& buffers,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    JsonWriter& jsonWriter,
+    WriteFlags flags,
+    WriteGLTFCallback writeGLTFCallback
+) {
     auto& j = jsonWriter;
     std::vector<std::uint8_t> amalgamatedBuffer;
 
@@ -18,24 +26,45 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
 
     j.Key("buffers");
     j.StartArray();
+    
+    for (auto i = 0ul; i < buffers.size(); ++i) {
+        auto& buffer = buffers.at(i);
+        const auto bufferReservedForGLB = i == 0 && flags & WriteFlags::GLB;
+        const auto uriSet = buffer.uri.has_value();
+        const auto dataBufferNonEmpty = !buffer.cesium.data.empty();
+        const auto isBase64URI = uriSet && isURIBase64DataURI(*buffer.uri);
+        const auto isExternalFileURI = uriSet && !isBase64URI;
 
-    for (const auto& buffer : buffers) {
         j.StartObject();
-        if (buffer.uri) {
-            // TODO: Check to see if the URI is a reference to an
-            // external file. We need to return a struct of some sort
-            // with a list of these.
+
+        if (bufferReservedForGLB) {
+            if (uriSet) {
+                throw URIErroneouslyDefined("model.buffers[0].uri should NOT be set in GLB mode. (0th buffer is reserved)");
+            }
+        } 
+
+        else if (isBase64URI && dataBufferNonEmpty) {
             j.KeyPrimitive("uri", *buffer.uri);
         }
-
-        auto& src = buffer.cesium.data;
-        amalgamatedBuffer.insert(
-            amalgamatedBuffer.end(),
-            src.begin(),
-            src.end());
         
-        const auto byteLength = (buffer.byteLength == 0 && !buffer.cesium.data.empty()) ? static_cast<std::int64_t>(buffer.cesium.data.size()) : buffer.byteLength;
-        j.KeyPrimitive("byteLength", byteLength);
+        else if (isExternalFileURI && dataBufferNonEmpty) {
+            writeGLTFCallback(*buffer.uri, buffer.cesium.data);
+        }
+        
+        else if (!uriSet && dataBufferNonEmpty) {
+            if (flags & WriteFlags::AutoConvertDataToBase64) {
+                j.KeyPrimitive("uri", BASE64_PREFIX + encodeAsBase64String(buffer.cesium.data));
+            } else {
+                writeGLTFCallback(std::to_string(i) + ".bin", buffer.cesium.data);
+            }
+        }
+        
+        else if (dataBufferNonEmpty && !buffer.uri) {
+            // TODO: Better exception message, custom exception
+            throw std::runtime_error("buffer.cesium.data was empty, but buffer.uri was set");
+        }
+
+        j.KeyPrimitive("byteLength", buffer.byteLength);
 
         if (!buffer.name.empty()) {
             j.KeyPrimitive("name", buffer.name);

@@ -35,6 +35,12 @@ set(CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/rapidjson/inc
     "Include directory for rapidjson"
 )
 
+set(CESIUM_NATIVE_RAPIDJSON_DEFINES 
+    RAPIDJSON_HAS_CXX11_RVALUE_REFS
+CACHE INTERNAL
+    "Compiler definitions for rapidjson"
+)
+
 set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE INTERNAL
     "Include directory for Draco"
 )

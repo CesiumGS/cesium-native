@@ -7,11 +7,11 @@ const std::size_t CHUNK_HEADER_MINIMUM_SIZE = 8;
 const std::uint32_t GLTF_VERSION = 2;
 const std::uint8_t PADDING_CHAR = 0x20;
 
-inline std::size_t nextMultipleOfFour(std::size_t n) {
+[[nodiscard]] inline std::size_t nextMultipleOfFour(std::size_t n) noexcept {
     return (n + 3) & ~0x03ul;
 }
 
-void writeGLTFHeader(std::vector<std::uint8_t>& glbBuffer) {
+void writeGLTFHeader(std::vector<std::uint8_t>& glbBuffer) noexcept {
     glbBuffer[0] = 'g';
     glbBuffer[1] = 'l';
     glbBuffer[2] = 'T';
@@ -21,6 +21,14 @@ void writeGLTFHeader(std::vector<std::uint8_t>& glbBuffer) {
     glbBuffer[5] = (GLTF_VERSION >> 8) & 0xff;
     glbBuffer[6] = (GLTF_VERSION >> 16) & 0xff;
     glbBuffer[7] = (GLTF_VERSION >> 24) & 0xff;
+}
+
+void writeGLBSize(std::vector<std::uint8_t>& glbBuffer) noexcept {
+    const auto totalGLBLength = glbBuffer.size();
+    glbBuffer[8] = totalGLBLength & 0xff;
+    glbBuffer[9] = (totalGLBLength >> 8) & 0xff;
+    glbBuffer[10] = (totalGLBLength >> 16) & 0xff;
+    glbBuffer[11] = (totalGLBLength >> 24) & 0xff;
 }
 
 void writeGLBJsonChunk(
@@ -46,10 +54,10 @@ void writeGLBJsonChunk(
 
 void writeGLBBinaryChunk(
     std::vector<std::uint8_t>& glbBuffer,
-    std::vector<std::uint8_t>&& bufferChunk,
+    const std::vector<std::uint8_t>& binaryChunk,
     std::size_t byteOffset) {
 
-    const auto bufferLength = bufferChunk.size();
+    const auto bufferLength = binaryChunk.size();
     const auto paddingLength = nextMultipleOfFour(bufferLength) - bufferLength;
     const auto chunkLength = bufferLength + paddingLength;
 
@@ -65,30 +73,23 @@ void writeGLBBinaryChunk(
     glbBuffer[byteOffset + 6] = (GLBChunkType::BIN >> 16) & 0xff;
     glbBuffer[byteOffset + 7] = (GLBChunkType::BIN >> 24) & 0xff;
 
-    glbBuffer.insert(glbBuffer.end(), bufferChunk.begin(), bufferChunk.end());
+    glbBuffer.insert(glbBuffer.end(), binaryChunk.begin(), binaryChunk.end());
     glbBuffer.insert(glbBuffer.end(), paddingLength, PADDING_CHAR);
 }
 
-std::vector<std::uint8_t> CesiumGltf::writeBinaryGLB(
-    std::vector<uint8_t>&& amalgamatedBuffer,
+[[nodiscard]] std::vector<std::uint8_t> CesiumGltf::writeBinaryGLB(
+    const std::vector<std::uint8_t>& binaryChunk,
     const std::string_view& gltfJson) {
 
     std::vector<std::uint8_t> glbBuffer(
         BYTE_HEADER_SIZE + CHUNK_HEADER_MINIMUM_SIZE);
     writeGLTFHeader(glbBuffer);
     writeGLBJsonChunk(glbBuffer, gltfJson);
-
-    if (!amalgamatedBuffer.empty()) {
-        writeGLBBinaryChunk(
-            glbBuffer,
-            std::move(amalgamatedBuffer),
-            glbBuffer.size());
+    
+    if (!binaryChunk.empty()) {
+        writeGLBBinaryChunk(glbBuffer, binaryChunk, glbBuffer.size());
     }
-
-    const auto totalGLBLength = glbBuffer.size();
-    glbBuffer[8] = totalGLBLength & 0xff;
-    glbBuffer[9] = (totalGLBLength >> 8) & 0xff;
-    glbBuffer[10] = (totalGLBLength >> 16) & 0xff;
-    glbBuffer[11] = (totalGLBLength >> 24) & 0xff;
+    
+    writeGLBSize(glbBuffer);
     return glbBuffer;
 }

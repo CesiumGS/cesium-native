@@ -1,95 +1,74 @@
 #pragma once
 #include "JsonWriter.h"
-#include <array>
-#include <cstdint>
-#include <functional>
-#include <optional>
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
+#include <cstdint>
+#include <functional>
 #include <string_view>
 #include <vector>
+#include <memory>
 
 namespace CesiumGltf {
-    struct JsonWriter {
-        rapidjson::StringBuffer _stringBuffer;
-        std::optional<rapidjson::Writer<rapidjson::StringBuffer>> writer;
-
+    class JsonWriter {
+        rapidjson::StringBuffer _compactBuffer;
+        std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> compact;
+        
     public:
-        explicit JsonWriter();
+        JsonWriter();
+        virtual ~JsonWriter() {}
 
         // rapidjson methods
-        bool Null();
-        bool Bool(bool b);
-        bool Int(int i);
-        bool Uint(unsigned int i);
-        bool Uint64(std::uint64_t i);
-        bool Int64(std::int64_t i);
-        bool Double(double d);
-        bool RawNumber(const char* str, unsigned int length, bool copy);
-        bool Key(std::string_view string);
-        bool String(std::string_view string);
-        bool StartObject();
-        bool EndObject();
-        bool StartArray();
-        bool EndArray();
+        virtual bool Null();
+        virtual bool Bool(bool b);
+        virtual bool Int(int i);
+        virtual bool Uint(unsigned int i);
+        virtual bool Uint64(std::uint64_t i);
+        virtual bool Int64(std::int64_t i);
+        virtual bool Double(double d);
+        virtual bool RawNumber(const char* str, unsigned int length, bool copy);
+        virtual bool Key(std::string_view string);
+        virtual bool String(std::string_view string);
+        virtual bool StartObject();
+        virtual bool EndObject();
+        virtual bool StartArray();
+        virtual bool EndArray();
 
         // Primitive overloads
-        void Primitive(std::int32_t value);
-        void Primitive(std::uint32_t value);
-        void Primitive(std::int64_t value);
-        void Primitive(std::uint64_t value);
-        void Primitive(float value);
-        void Primitive(double value);
-        void Primitive(std::nullptr_t value);
-        void Primitive(std::string_view string);
+        virtual void Primitive(std::int32_t value);
+        virtual void Primitive(std::uint32_t value);
+        virtual void Primitive(std::int64_t value);
+        virtual void Primitive(std::uint64_t value);
+        virtual void Primitive(float value);
+        virtual void Primitive(double value);
+        virtual void Primitive(std::nullptr_t value);
+        virtual void Primitive(std::string_view string);
 
         // Integral
-        void KeyPrimitive(std::string_view keyName, std::int32_t value);
-        void KeyPrimitive(std::string_view keyName, std::uint32_t value);
-        void KeyPrimitive(std::string_view keyName, std::int64_t value);
-        void KeyPrimitive(std::string_view keyName, std::uint64_t value);
+        virtual void KeyPrimitive(std::string_view keyName, std::int32_t value);
+        virtual void KeyPrimitive(std::string_view keyName, std::uint32_t value);
+        virtual void KeyPrimitive(std::string_view keyName, std::int64_t value);
+        virtual void KeyPrimitive(std::string_view keyName, std::uint64_t value);
 
         // String
-        void KeyPrimitive(std::string_view keyName, std::string_view value);
+        virtual void KeyPrimitive(std::string_view keyName, std::string_view value);
 
         // Floating Point
-        void KeyPrimitive(std::string_view keyName, float value);
-        void KeyPrimitive(std::string_view keyName, double value);
+        virtual void KeyPrimitive(std::string_view keyName, float value);
+        virtual void KeyPrimitive(std::string_view keyName, double value);
 
         // Null
-        void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
+        virtual void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
 
         // Array / Objects
-        void KeyArray(
+        virtual void KeyArray(
             std::string_view keyName,
             std::function<void(void)> insideArray);
 
-        template <typename T>
-        inline void
-        KeyArray(std::string_view keyName, const std::vector<T>& vector) {
-            Key(keyName);
-            writer->StartArray();
-            for (const auto& v : vector) {
-                Primitive(v);
-            }
-            writer->EndArray();
-        }
-
-        template <typename T, std::size_t Size>
-        inline void
-        KeyArray(std::string_view keyName, const std::array<T, Size>& array) {
-            Key(keyName);
-            writer->StartArray();
-            for (const auto& v : array) {
-                Primitive(v);
-            }
-            writer->EndArray();
-        }
-
-        void KeyObject(
+        virtual void KeyObject(
             std::string_view keyName,
             std::function<void(void)> insideObject);
 
-        std::string_view toString();
+        virtual std::string_view toString();
+        virtual std::vector<std::uint8_t> toBytes();
     };
 }

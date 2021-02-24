@@ -1,64 +1,63 @@
 #include "JsonWriter.h"
 
 namespace CesiumGltf {
-    JsonWriter::JsonWriter()
-        : writer(std::make_optional(
-              rapidjson::Writer<rapidjson::StringBuffer>(_stringBuffer))) {}
+    JsonWriter::JsonWriter() : compact(std::make_unique<rapidjson::Writer<rapidjson::StringBuffer>>(_compactBuffer)) {
+    }
 
-    bool JsonWriter::Null() { return writer->Null(); }
+    bool JsonWriter::Null() { return compact->Null(); }
 
-    bool JsonWriter::Bool(bool b) { return writer->Bool(b); }
+    bool JsonWriter::Bool(bool b) { return compact->Bool(b); }
 
-    bool JsonWriter::Int(int i) { return writer->Int(i); }
+    bool JsonWriter::Int(int i) { return compact->Int(i); }
 
-    bool JsonWriter::Uint(unsigned int i) { return writer->Uint(i); }
+    bool JsonWriter::Uint(unsigned int i) { return compact->Uint(i); }
 
-    bool JsonWriter::Uint64(std::uint64_t i) { return writer->Uint64(i); }
+    bool JsonWriter::Uint64(std::uint64_t i) { return compact->Uint64(i); }
 
-    bool JsonWriter::Int64(std::int64_t i) { return writer->Int64(i); }
+    bool JsonWriter::Int64(std::int64_t i) { return compact->Int64(i); }
 
-    bool JsonWriter::Double(double d) { return writer->Double(d); }
+    bool JsonWriter::Double(double d) { return compact->Double(d); }
 
     bool
     JsonWriter::RawNumber(const char* str, unsigned int length, bool copy) {
-        return writer->RawNumber(str, length, copy);
+        return compact->RawNumber(str, length, copy);
     }
 
     bool JsonWriter::String(std::string_view string) {
-        return writer->String(string.data(), static_cast<unsigned int>(string.size()));
+        return compact->String(string.data(), static_cast<unsigned int>(string.size()));
     }
 
     bool JsonWriter::Key(std::string_view key) {
-        return writer->Key(key.data(), static_cast<unsigned int>(key.size()));
+        return compact->Key(key.data(), static_cast<unsigned int>(key.size()));
     }
 
-    bool JsonWriter::StartObject() { return writer->StartObject(); }
+    bool JsonWriter::StartObject() { return compact->StartObject(); }
 
-    bool JsonWriter::EndObject() { return writer->EndObject(); }
+    bool JsonWriter::EndObject() { return compact->EndObject(); }
 
-    bool JsonWriter::StartArray() { return writer->StartArray(); }
+    bool JsonWriter::StartArray() { return compact->StartArray(); }
 
-    bool JsonWriter::EndArray() { return writer->EndArray(); }
+    bool JsonWriter::EndArray() { return compact->EndArray(); }
 
 
-    void JsonWriter::Primitive(std::int32_t value) { writer->Int(value); }
+    void JsonWriter::Primitive(std::int32_t value) { compact->Int(value); }
 
-    void JsonWriter::Primitive(std::uint32_t value) { writer->Uint(value); }
+    void JsonWriter::Primitive(std::uint32_t value) { compact->Uint(value); }
 
-    void JsonWriter::Primitive(std::int64_t value) { writer->Int64(value); }
+    void JsonWriter::Primitive(std::int64_t value) { compact->Int64(value); }
 
-    void JsonWriter::Primitive(std::uint64_t value) { writer->Uint64(value); }
+    void JsonWriter::Primitive(std::uint64_t value) { compact->Uint64(value); }
 
     void JsonWriter::Primitive(float value) {
-        writer->Double(static_cast<double>(value));
+        compact->Double(static_cast<double>(value));
     }
 
-    void JsonWriter::Primitive(double value) { writer->Double(value); }
+    void JsonWriter::Primitive(double value) { compact->Double(value); }
 
-    void JsonWriter::Primitive(std::nullptr_t) { writer->Null(); }
+    void JsonWriter::Primitive(std::nullptr_t) { compact->Null(); }
 
     void JsonWriter::Primitive(std::string_view string) { 
-        writer->String(string.data(), static_cast<unsigned int>(string.size()));
+        compact->String(string.data(), static_cast<unsigned int>(string.size()));
     }
 
     // Integral
@@ -115,22 +114,30 @@ namespace CesiumGltf {
         std::string_view keyName,
         std::function<void(void)> insideArray) {
         Key(keyName);
-        writer->StartArray();
+        compact->StartArray();
         insideArray();
-        writer->EndArray();
+        compact->EndArray();
     }
 
     void JsonWriter::KeyObject(
         std::string_view keyName,
         std::function<void(void)> insideObject) {
         Key(keyName);
-        writer->StartObject();
+        compact->StartObject();
         insideObject();
-        writer->EndObject();
+        compact->EndObject();
     }
 
     std::string_view JsonWriter::toString() {
-        return std::string_view(_stringBuffer.GetString());
+        return std::string_view(_compactBuffer.GetString());
+    }
+
+    std::vector<std::uint8_t> JsonWriter::toBytes() {
+        const auto& string = _compactBuffer.GetString();
+        const auto& size = _compactBuffer.GetSize();
+        std::vector<uint8_t> result(size);
+        std::copy(string, string + size, result.begin());
+        return result;
     }
 
 }

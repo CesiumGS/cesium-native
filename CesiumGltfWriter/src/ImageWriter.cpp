@@ -18,6 +18,7 @@ void CesiumGltf::writeImage(
 
     for (const auto& image : images) {
         j.StartObject();
+        
 
         if (image.uri) {
             j.KeyPrimitive("uri", *image.uri);
