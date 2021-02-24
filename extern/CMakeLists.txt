@@ -23,6 +23,10 @@ add_subdirectory(spdlog)
 add_subdirectory(modp_b64)
 add_subdirectory(sqlite3)
 
+set(CESIUM_NATIVE_BASE64_ENCODE_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/base64_encode/" CACHE INTERNAL 
+    "Include directory for base64_encode"
+)
+
 set(CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/magic_enum/" CACHE INTERNAL 
     "Include directory for magic_enum"
 )
