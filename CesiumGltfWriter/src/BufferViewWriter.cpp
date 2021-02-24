@@ -16,42 +16,42 @@ void CesiumGltf::writeBufferView(
     auto& j = jsonWriter;
     j.Key("bufferViews");
     j.StartArray();
-    for (const auto& buffer : bufferViews) {
+    for (const auto& bufferView : bufferViews) {
         j.StartObject();
 
         j.Key("buffer");
-        j.Int(buffer.buffer);
+        j.Int(bufferView.buffer);
 
-        if (buffer.byteOffset >= 0) {
+        if (bufferView.byteOffset >= 0) {
             j.Key("byteOffset");
-            j.Int64(buffer.byteOffset);
+            j.Int64(bufferView.byteOffset);
         }
 
         j.Key("byteLength");
-        j.Int64(buffer.byteLength);
+        j.Int64(bufferView.byteLength);
 
-        if (buffer.byteStride && buffer.byteStride >= 0) {
+        if (bufferView.byteStride) {
             j.Key("byteStride");
-            j.Int64(*buffer.byteStride);
+            j.Int64(*bufferView.byteStride);
         }
 
-        if (buffer.target) {
+        if (bufferView.target) {
             j.Key("target");
-            j.Int(magic_enum::enum_integer(*buffer.target));
+            j.Int(magic_enum::enum_integer(*bufferView.target));
         }
 
-        if (!buffer.name.empty()) {
+        if (!bufferView.name.empty()) {
             j.Key("name");
-            j.String(buffer.name.c_str());
+            j.String(bufferView.name.c_str());
         }
         
-        if (!buffer.extensions.empty()) {
-            writeExtensions(buffer.extensions, j);
+        if (!bufferView.extensions.empty()) {
+            writeExtensions(bufferView.extensions, j);
         }
 
-        if (!buffer.extras.empty()) {
+        if (!bufferView.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(buffer.extras, j);
+            writeJsonValue(bufferView.extras, j);
         }
 
         j.EndObject();
