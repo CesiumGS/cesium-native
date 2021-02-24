@@ -42,6 +42,8 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
             if (uriSet) {
                 throw URIErroneouslyDefined("model.buffers[0].uri should NOT be set in GLB mode. (0th buffer is reserved)");
             }
+            
+            byteLength = static_cast<std::int64_t>(buffer.cesium.data.size());
         } 
 
         else if (isBase64URI && dataBufferNonEmpty) {
