@@ -7,14 +7,15 @@
 
 namespace Cesium3DTiles {
 
+    std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
+		const TileContentLoadInput& input) {
+		return load(input.pLogger, input.context, input.tileTransform, input.tileRefine, input.url, input.data);
+	}
+
     /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
         std::shared_ptr<spdlog::logger> pLogger,
         const TileContext& context,
-        const TileID& /*tileID*/,
-        const BoundingVolume& /*tileBoundingVolume*/,
-        double /*tileGeometricError*/,
         const glm::dmat4& tileTransform,
-        const std::optional<BoundingVolume>& /*tileContentBoundingVolume*/,
         TileRefine tileRefine,
         const std::string& url,
         const gsl::span<const uint8_t>& data

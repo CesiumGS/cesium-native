@@ -116,6 +116,17 @@ namespace Cesium3DTiles {
 
     void Tile::loadContent() {
         if (this->getState() != LoadState::Unloaded) {
+            // No need to load geometry, but give previously-throttled
+            // raster overlay tiles a chance to load.
+            for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+                RasterOverlayTile* pLoading = mapped.getLoadingTile();
+                if (pLoading && pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+                    RasterOverlayTileProvider* pProvider = pLoading->getOverlay().getTileProvider();
+                    if (pProvider) {
+                        pProvider->loadTileThrottled(*pLoading);
+                    }
+                }
+            }
             return;
         }
 
@@ -182,7 +193,7 @@ namespace Cesium3DTiles {
             projections.push_back(WebMercatorProjection());
         }
 
-        std::optional<Future<std::unique_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
+        std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture = tileset.requestTileContent(*this);
         if (!maybeRequestFuture) {
             // There is no content to load. But we may need to upsample.
 
@@ -210,22 +221,20 @@ namespace Cesium3DTiles {
             std::unique_ptr<TileContentLoadResult> pContent;
             void* pRendererResources;
         };
+        TileContentLoadInput loadInput(
+            tileset.getExternals().pLogger,
+            *this
+        );
 
         std::move(maybeRequestFuture.value()).thenInWorkerThread([
-            pContext = this->getContext(),
-            tileID = this->getTileID(),
-            boundingVolume = this->getBoundingVolume(),
-            geometricError = this->getGeometricError(),
-            transform = this->getTransform(),
-            contentBoundingVolume = this->getContentBoundingVolume(),
-            refine = this->getRefine(),
+            loadInput = std::move(loadInput),
             projections = std::move(projections),
             pPrepareRendererResources = tileset.getExternals().pPrepareRendererResources,
             pLogger = tileset.getExternals().pLogger
-        ](std::unique_ptr<IAssetRequest>&& pRequest) {
-            IAssetResponse* pResponse = pRequest->response();
+        ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-                // TODO: report the lack of response. Network error? Can this even happen?
+                SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tile content {}", pRequest->url());
                 auto pLoadResult = std::make_unique<TileContentLoadResult>();
                 pLoadResult->httpStatusCode = 0;
                 return LoadResult {
@@ -236,7 +245,7 @@ namespace Cesium3DTiles {
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                // TODO: report error response.
+                SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tile content {}", pResponse->statusCode(), pRequest->url());
                 auto pLoadResult = std::make_unique<TileContentLoadResult>();
                 pLoadResult->httpStatusCode = pResponse->statusCode();
                 return LoadResult {
@@ -246,18 +255,11 @@ namespace Cesium3DTiles {
                 };
             }
 
+            loadInput.data = pResponse->data();
+            loadInput.contentType = pResponse->contentType();
+            loadInput.url = pRequest->url();
             std::unique_ptr<TileContentLoadResult> pContent = TileContentFactory::createContent(
-                pLogger,
-                *pContext,
-                tileID,
-                boundingVolume,
-                geometricError,
-                transform,
-                contentBoundingVolume,
-                refine,
-                pRequest->url(),
-                pResponse->contentType(),
-                pResponse->data()
+                loadInput
             );
 
             if (!pContent) {
@@ -269,9 +271,11 @@ namespace Cesium3DTiles {
             void* pRendererResources = nullptr;
 
             if (pContent->model) {
+                const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
                 Tile::generateTextureCoordinates(pContent->model.value(), boundingVolume, projections);
 
                 if (pPrepareRendererResources) {
+                    const glm::dmat4& transform = loadInput.tileTransform;
                     pRendererResources = pPrepareRendererResources->prepareInLoadThread(
                         pContent->model.value(),
                         transform
@@ -571,8 +575,9 @@ namespace Cesium3DTiles {
 
                 RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
                 if (pLoadingTile && pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
-                    // Try to replace this placeholder with real tiles.
                     RasterOverlayTileProvider* pProvider = pLoadingTile->getOverlay().getTileProvider();
+
+                    // Try to replace this placeholder with real tiles.
                     if (!pProvider->isPlaceholder()) {
                         this->_rasterTiles.erase(this->_rasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(i));
                         --i;

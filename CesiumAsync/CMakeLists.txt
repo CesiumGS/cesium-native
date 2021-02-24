@@ -16,6 +16,11 @@ target_sources(
 target_include_directories(
     CesiumAsync
     SYSTEM PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/sqlite3
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/GSL/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
+
     PUBLIC
         include
 
@@ -24,4 +29,4 @@ target_include_directories(
         "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumAsync_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
-target_link_libraries(CesiumAsync PUBLIC Async++ GSL)
+target_link_libraries(CesiumAsync PUBLIC Async++ GSL sqlite3 spdlog)

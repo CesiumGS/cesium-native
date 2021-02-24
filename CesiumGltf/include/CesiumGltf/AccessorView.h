@@ -4,8 +4,9 @@
 #include <stdexcept>
 
 namespace CesiumGltf {
+
 	/**
-	 * @brief Indicates the status of an {@link AccessorView}.
+	 * @brief Indicates the status of an accessor view.
 	 * 
 	 * The {@link AccessorView} constructor always completes successfully. However, it may not
 	 * always reflect the actual content of the {@link Accessor}, but instead indicate that
@@ -70,6 +71,9 @@ namespace CesiumGltf {
 		AccessorViewStatus _status;
 
 	public:
+		/**
+		 * @brief The type of the elements in the accessor.
+		 */
 		typedef T value_type;
 
 		/**
@@ -233,38 +237,94 @@ namespace CesiumGltf {
     struct AccessorTypes {
         #pragma pack(push, 1)
 
+		/** 
+		 * @brief A scalar element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct SCALAR {
+            /**
+             * @brief The component values of this element.
+             */
             T value[1];
         };
 
+		/** 
+		 * @brief A 2D vector element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct VEC2 {
+            /**
+             * @brief The component values of this element.
+             */
             T value[2];
         };
 
+		/** 
+		 * @brief A 3D vector element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct VEC3 {
+            /**
+             * @brief The component values of this element.
+             */
             T value[3];
         };
 
+		/** 
+		 * @brief A 4D vector element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct VEC4 {
+            /**
+             * @brief The component values of this element.
+             */
             T value[4];
         };
 
+		/** 
+		 * @brief A 2x2 matrix element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct MAT2 {
+            /**
+             * @brief The component values of this element.
+             */
             T value[4];
         };
 
+		/** 
+		 * @brief A 3x3 matrix element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct MAT3 {
+            /**
+             * @brief The component values of this element.
+             */
             T value[9];
         };
 
+		/** 
+		 * @brief A 4x4 matrix element for an {@link AccessorView}.
+		 * 
+		 * @tparam T The component type.
+		 */
         template <typename T>
         struct MAT4 {
+            /**
+             * @brief The component values of this element.
+             */
             T value[16];
         };
 

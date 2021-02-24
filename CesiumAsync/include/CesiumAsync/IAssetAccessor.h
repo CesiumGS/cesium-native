@@ -2,12 +2,14 @@
 
 #include "CesiumAsync/Library.h"
 #include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include <memory>
 #include <string>
 #include <vector>
 #include <gsl/span>
 
 namespace CesiumAsync {
+    class AsyncSystem;
 
     /**
      * @brief Provides asynchronous access to assets, usually files downloaded via HTTP.
@@ -29,9 +31,10 @@ namespace CesiumAsync {
          * @param headers The headers to include in the request.
          * @return The in-progress asset request.
          */
-        virtual std::unique_ptr<IAssetRequest> requestAsset(
+        virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> requestAsset(
+            const AsyncSystem& asyncSystem,
             const std::string& url,
-            const std::vector<THeader>& headers = std::vector<THeader>()
+            const std::vector<THeader>& headers = {}
         ) = 0;
 
         virtual std::unique_ptr<IAssetRequest> post(

@@ -5,7 +5,7 @@
 
 namespace CesiumAsync {
     /**
-     * @brief When implemented by a rendering engine, allows a {@link Tileset} to create tasks to be asynchronously executed in background threads.
+     * @brief When implemented by a rendering engine, allows tasks to be asynchronously executed in background threads.
      *
      * Not supposed to be used by clients.
      */

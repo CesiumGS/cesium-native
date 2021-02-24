@@ -13,6 +13,11 @@ namespace CesiumGltf {
      * @brief Geometry to be rendered with the given material.
      */
     struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
+        /**
+         * @brief The type of primitives to render.
+         *
+         * All valid values correspond to WebGL enums.
+         */
         enum class Mode {
             POINTS = 0,
 

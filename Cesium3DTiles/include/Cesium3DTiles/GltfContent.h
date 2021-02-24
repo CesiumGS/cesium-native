@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
+#include "Cesium3DTiles/TileContentLoader.h"
 #include "Cesium3DTiles/TileContentLoadResult.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
@@ -17,21 +18,34 @@ namespace Cesium3DTiles {
     /**
      * @brief Creates {@link TileContentLoadResult} from glTF data.
      */
-    class CESIUM3DTILES_API GltfContent final {
+    class CESIUM3DTILES_API GltfContent final : public TileContentLoader {
     public:
-        /** @copydoc ExternalTilesetContent::load */
+        /** 
+         * @copydoc TileContentLoader::load 
+         * 
+         * The result will only contain the `model`. Other fields will be
+         * empty or have default values.
+         */
+        std::unique_ptr<TileContentLoadResult> load(
+            const TileContentLoadInput& input) override;
+
+        /**
+         * @brief Create a {@link TileContentLoadResult} from the given data. 
+         * 
+         * (Only public to be called from `Batched3DModelContent`)
+         * 
+         * @param pLogger Only used for logging
+         * @param url The URL, only used for logging
+         * @param data The actual glTF data
+         * @return The {@link TileContentLoadResult}
+         */
         static std::unique_ptr<TileContentLoadResult> load(
             std::shared_ptr<spdlog::logger> pLogger,
-            const TileContext& context,
-            const TileID& tileID,
-            const BoundingVolume& tileBoundingVolume,
-            double tileGeometricError,
-            const glm::dmat4& tileTransform,
-            const std::optional<BoundingVolume>& tileContentBoundingVolume,
-            TileRefine tileRefine,
             const std::string& url,
             const gsl::span<const uint8_t>& data
         );
+
+    public:
 
         /**
          * @brief Creates texture coordinates for raster tiles that are mapped to 3D tiles.

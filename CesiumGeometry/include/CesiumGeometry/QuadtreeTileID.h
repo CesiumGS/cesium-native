@@ -72,7 +72,14 @@ namespace CesiumGeometry {
         uint32_t y;
     };
 
+    /**
+     * @brief A node of a tile hierarchy that was created by upsampling the tile content of a parent node.
+     */
     struct CESIUMGEOMETRY_API UpsampledQuadtreeNode final {
+
+        /**
+         * @brief The {@link QuadtreeTileID} for this tree node.
+         */
         QuadtreeTileID tileID;
     };
 }

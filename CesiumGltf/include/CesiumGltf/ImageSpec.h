@@ -13,6 +13,9 @@ namespace CesiumGltf {
      * @brief Image data used to create a texture. Image can be referenced by URI or `bufferView` index. `mimeType` is required in the latter case.
      */
     struct CESIUMGLTF_API ImageSpec : public NamedObject {
+        /**
+         * @brief The image's MIME type. Required if `bufferView` is defined.
+         */
         enum class MimeType {
             image_jpeg,
 

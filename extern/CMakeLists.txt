@@ -19,4 +19,6 @@ add_subdirectory(asyncplusplus)
 
 add_subdirectory(spdlog)
 
+add_subdirectory(sqlite3)
+
 add_subdirectory(modp_b64)

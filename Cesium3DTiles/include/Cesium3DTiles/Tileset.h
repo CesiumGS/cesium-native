@@ -230,7 +230,12 @@ namespace Cesium3DTiles {
          */
         const TilesetExternals& getExternals() const noexcept { return this->_externals; }
 
+        /**
+         * @brief Returns the {@link CesiumAsync::AsyncSystem} that is used for dispatching asynchronous tasks.
+         */
         CesiumAsync::AsyncSystem& getAsyncSystem() noexcept { return this->_asyncSystem; }
+
+        /** @copydoc Tileset::getAsyncSystem() */
         const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept { return this->_asyncSystem; }
 
         /** @copydoc Tileset::getOptions() */
@@ -294,6 +299,7 @@ namespace Cesium3DTiles {
          * @param parentTransform The new tile's parent transform.
          * @param parentRefine The default refinment to use if not specified explicitly for this tile.
          * @param context The context of the new tiles.
+         * @param pLogger The logger.
          */
         void loadTilesFromJson(Tile& rootTile, const rapidjson::Value& tilesetJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) const;
 
@@ -305,7 +311,7 @@ namespace Cesium3DTiles {
          * @param tile The tile for which the content is requested.
          * @return A future that resolves when the content response is received, or std::nullopt if this Tile has no content to load.
          */
-        std::optional<CesiumAsync::Future<std::unique_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
+        std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>> requestTileContent(Tile& tile);
 
         /**
          * @brief Add the given {@link TileContext} to this tile set.
@@ -396,7 +402,7 @@ namespace Cesium3DTiles {
           *
           * @param pRequest The request for which the response was received.
           */
-        void _handleAssetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+        void _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
         struct LoadResult {
             std::unique_ptr<TileContext> pContext;
@@ -417,7 +423,7 @@ namespace Cesium3DTiles {
          * @param pRequest The request for which the response was received.
          * @return The LoadResult structure
          */
-        static LoadResult _handleTilesetResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger);
+        static LoadResult _handleTilesetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest, std::unique_ptr<TileContext>&& pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
         void _loadTilesetJson(
             const std::string& url,
@@ -439,7 +445,7 @@ namespace Cesium3DTiles {
          * @param pIonRequest The request.
          * @param pContext The context.
          */
-        void _handleTokenRefreshResponse(std::unique_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
+        void _handleTokenRefreshResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest, TileContext* pContext, const std::shared_ptr<spdlog::logger>& pLogger);
 
         /**
          * @brief Input information that is constant throughout the traversal.
