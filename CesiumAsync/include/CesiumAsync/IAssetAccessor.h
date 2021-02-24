@@ -27,6 +27,7 @@ namespace CesiumAsync {
          * @brief Starts a new request for the asset with the given URL.
          * The request proceeds asynchronously without blocking the calling thread.
          * 
+         * @param asyncSystem The async system used to do work in threads.
          * @param url The URL of the asset.
          * @param headers The headers to include in the request.
          * @return The in-progress asset request.
@@ -37,7 +38,19 @@ namespace CesiumAsync {
             const std::vector<THeader>& headers = {}
         ) = 0;
 
-        virtual std::unique_ptr<IAssetRequest> post(
+        /**
+         * @brief Starts a new POST request to the given URL.
+         * 
+         * The request proceeds asynchronously without blocking the calling thread.
+         * 
+         * @param asyncSystem The async system used to do work in threads.
+         * @param url The URL of the asset.
+         * @param headers The headers to include in the request.
+         * @param contentPayload The payload data of the POST.
+         * @return The in-progress asset request.
+         */
+        virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> post(
+            const AsyncSystem& asyncSystem,
             const std::string& url,
             const std::vector<THeader>& headers = std::vector<THeader>(),
             const gsl::span<const uint8_t>& contentPayload = {}

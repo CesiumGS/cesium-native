@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetAccessor.h"
 #include <optional>
 
 namespace CesiumIonClient {
@@ -51,6 +52,8 @@ namespace CesiumIonClient {
         /**
          * @brief Connect to Cesium ion using the provided username and password.
          * 
+         * @param asyncSystem The async system used to do work in threads.
+         * @param pAssetAccessor The interface used to interact with the Cesium ion REST API.
          * @param username The username.
          * @param password The password.
          * @param apiUrl The base URL of the Cesium ion API.
@@ -58,6 +61,7 @@ namespace CesiumIonClient {
          */
         static CesiumAsync::Future<Response<CesiumIonConnection>> connect(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
             const std::string& username,
             const std::string& password,
             const std::string& apiUrl = "https://api.cesium.com"
@@ -66,17 +70,22 @@ namespace CesiumIonClient {
         /**
          * @brief Creates a connection to Cesium ion using the provided access token.
          * 
+         * @param asyncSystem The async system used to do work in threads.
+         * @param pAssetAccessor The interface used to interact with the Cesium ion REST API.
          * @param accessToken The access token
          * @param apiUrl The base URL of the Cesium ion API.
          */
         CesiumIonConnection(
             const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
             const std::string& accessToken,
             const std::string& apiUrl = "https://api.cesium.com"
         );
 
         CesiumAsync::AsyncSystem& getAsyncSystem() { return this->_asyncSystem; }
         const CesiumAsync::AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& getAssetAccessor() const { return this->_pAssetAccessor; }
 
         const std::string& getAccessToken() const { return this->_accessToken; }
 
@@ -101,6 +110,7 @@ namespace CesiumIonClient {
 
     private:
         CesiumAsync::AsyncSystem _asyncSystem;
+        std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
         std::string _accessToken;
         std::string _apiUrl;
     };

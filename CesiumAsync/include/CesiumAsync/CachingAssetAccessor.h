@@ -40,6 +40,12 @@ namespace CesiumAsync {
             const std::string& url, 
             const std::vector<THeader>& headers) override;
 
+        virtual Future<std::shared_ptr<IAssetRequest>> post(
+            const AsyncSystem& asyncSystem,
+            const std::string& url, 
+            const std::vector<THeader>& headers,
+            const gsl::span<const uint8_t>& contentPayload) override;
+
         /** @copydoc IAssetAccessor::tick */
         virtual void tick() noexcept override;
 

@@ -96,6 +96,15 @@ public:
         return asyncSystem.createResolvedFuture(std::shared_ptr<IAssetRequest>(testRequest));
     }
 
+    virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> post(
+        const AsyncSystem& asyncSystem,
+        const std::string& /* url */,
+        const std::vector<THeader>& /* headers */,
+        const gsl::span<const uint8_t>& /* contentPayload */
+    ) override {
+        return asyncSystem.createResolvedFuture(std::shared_ptr<IAssetRequest>(testRequest));
+    }
+
     virtual void tick() noexcept override {}
 
     std::shared_ptr<IAssetRequest> testRequest;

@@ -215,6 +215,15 @@ namespace CesiumAsync {
         });
     }
 
+    Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::post(
+        const AsyncSystem& asyncSystem,
+        const std::string& url, 
+        const std::vector<THeader>& headers,
+        const gsl::span<const uint8_t>& contentPayload) 
+    {
+        return this->_pAssetAccessor->post(asyncSystem, url, headers, contentPayload);
+    }
+
     void CachingAssetAccessor::tick() noexcept {
         _pAssetAccessor->tick();
     }

@@ -26,6 +26,7 @@ static CesiumIonConnection::Response<T> createErrorResponse(const IAssetResponse
 
 CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonConnection>> CesiumIonConnection::connect(
     const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& username,
     const std::string& password,
     const std::string& apiUrl
@@ -42,11 +43,12 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonConnection>> CesiumIo
 
     gsl::span<const uint8_t> loginBytes(reinterpret_cast<const uint8_t*>(loginBuffer.GetString()), loginBuffer.GetSize());
 
-    return asyncSystem.post(
+    return pAssetAccessor->post(
+        asyncSystem,
         Uri::resolve(apiUrl, "signIn"),
         { {"Content-Type", "application/json"} },
         loginBytes
-    ).thenInMainThread([asyncSystem](std::unique_ptr<IAssetRequest>&& pRequest) -> Response<CesiumIonConnection> {
+    ).thenInMainThread([asyncSystem, pAssetAccessor](std::shared_ptr<IAssetRequest>&& pRequest) -> Response<CesiumIonConnection> {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             return Response<CesiumIonConnection> {
@@ -92,7 +94,7 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonConnection>> CesiumIo
         }
 
         return Response<CesiumIonConnection> {
-            CesiumIonConnection(asyncSystem, tokenIt->value.GetString()),
+            CesiumIonConnection(asyncSystem, pAssetAccessor, tokenIt->value.GetString()),
             pResponse->statusCode(),
             std::string(),
             std::string()
@@ -102,19 +104,22 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonConnection>> CesiumIo
 
 CesiumIonConnection::CesiumIonConnection(
     const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& accessToken,
     const std::string& apiUrl
 ) :
     _asyncSystem(asyncSystem),
+    _pAssetAccessor(pAssetAccessor),
     _accessToken(accessToken),
     _apiUrl(apiUrl)
 {
 }
 
 CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonProfile>> CesiumIonConnection::me() const {
-    return this->_asyncSystem.requestAsset(
+    return this->_pAssetAccessor->requestAsset(
+        this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/me")
-    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+    ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             return Response<CesiumIonProfile> {
@@ -180,9 +185,10 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonProfile>> CesiumIonCo
 }
 
 CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonAssets>> CesiumIonConnection::assets() const {
-    return this->_asyncSystem.requestAsset(
+    return this->_pAssetAccessor->requestAsset(
+        this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets")
-    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+    ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             return Response<CesiumIonAssets> {
@@ -266,9 +272,10 @@ static std::optional<CesiumIonToken> tokenFromJson(const rapidjson::Value& json)
 }
 
 CesiumAsync::Future<CesiumIonConnection::Response<std::vector<CesiumIonToken>>> CesiumIonConnection::tokens() const {
-    return this->_asyncSystem.requestAsset(
+    return this->_pAssetAccessor->requestAsset(
+        this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens")
-    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+    ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             return Response<std::vector<CesiumIonToken>> {
@@ -353,11 +360,12 @@ CesiumAsync::Future<CesiumIonConnection::Response<CesiumIonToken>> CesiumIonConn
     writer.EndObject();
 
     gsl::span<const uint8_t> tokenBytes(reinterpret_cast<const uint8_t*>(tokenBuffer.GetString()), tokenBuffer.GetSize());
-    return this->_asyncSystem.post(
+    return this->_pAssetAccessor->post(
+        this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
         { {"Content-Type", "application/json"} },
         tokenBytes
-    ).thenInMainThread([](std::unique_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+    ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             return Response<CesiumIonToken> {
