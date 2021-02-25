@@ -31,3 +31,6 @@
 [submodule "extern/stb"]
 	path = extern/stb
 	url = https://github.com/nothings/stb.git
+[submodule "extern/cpp-httplib"]
+	path = extern/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git

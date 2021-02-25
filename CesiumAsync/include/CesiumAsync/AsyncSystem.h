@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <variant>
 
 #pragma warning(push)
 
@@ -205,6 +206,17 @@ namespace CesiumAsync {
             );
         }
 
+        
+        std::variant<T, std::exception> wait() {
+            try {
+                return this->_task.get();
+            } catch (std::exception& e) {
+                return e;
+            } catch (...) {
+                return std::runtime_error("Uknown exception.");
+            }
+        }
+
     private:
         Future(std::shared_ptr<Impl::AsyncSystemSchedulers> pSchedulers, async::task<T>&& task) noexcept :
             _pSchedulers(pSchedulers),
@@ -234,6 +246,25 @@ namespace CesiumAsync {
      */
     class CESIUMASYNC_API AsyncSystem final {
     public:
+        template <typename T>
+        struct Promise {
+            Promise(const std::shared_ptr<async::event_task<T>>& pEvent) :
+                _pEvent(pEvent)
+            {
+            }
+
+            void resolve(T&& value) const {
+                this->_pEvent->set(std::move(value));
+            }
+
+            void reject(std::exception&& error) const {
+                this->_pEvent->set_exception(std::make_exception_ptr(error));
+            }
+
+        private:
+            std::shared_ptr<async::event_task<T>> _pEvent;
+        };
+
         /**
          * @brief Constructs a new instance.
          * 
@@ -247,11 +278,8 @@ namespace CesiumAsync {
         Future<T> createFuture(Func&& f) const {
             std::shared_ptr<async::event_task<T>> pEvent = std::make_shared<async::event_task<T>>();
 
-            f([pEvent](T&& result) {
-                pEvent->set(std::move(result));
-            }, [pEvent](std::exception&& error) {
-                pEvent->set_exception(std::make_exception_ptr(error));
-            });
+            Promise<T> promise(pEvent);
+            f(promise);
 
             return Future<T>(this->_pSchedulers, pEvent->get_task());
         }
