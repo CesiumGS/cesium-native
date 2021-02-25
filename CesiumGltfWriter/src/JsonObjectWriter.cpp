@@ -26,8 +26,20 @@ void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j) {
         j.Null();
     }
 
-    else if (item.isNumber()) {
-        j.Double(std::get<JsonValue::Number>(item.value));
+    else if (item.isDouble()) {
+        j.Double(std::get<double>(item.value));
+    }
+    
+    else if (item.isFloat()) {
+        j.Double(static_cast<double>(std::get<float>(item.value)));
+    }
+
+    else if (item.isUnsignedInt()) {
+        j.Uint64(*item.getUInt());
+    }
+    
+    else if (item.isSignedInt()) {
+        j.Int64(*item.getInt());
     }
 
     else if (item.isString()) {

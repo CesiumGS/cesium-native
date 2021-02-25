@@ -13,7 +13,6 @@ using namespace rapidjson;
 using Object = JsonValue::Object;
 using Value = JsonValue;
 using Array = JsonValue::Array;
-using Number = JsonValue::Number;
 using Bool = JsonValue::Bool;
 using Null = JsonValue::Null;
 
@@ -49,7 +48,7 @@ TEST_CASE("TestJsonObjectWriter") {
         // clang-format off
         const auto extrasObject = Object {{
             "extras", Array {{{
-                Number(1), Number(-2), Bool(false), Null(), Bool(true),
+                1.0, -2.0, Bool(false), Null(), Bool(true),
                 Object {{ "emojis", "😂👽🇵🇷" }} }}}
         }};
         // clang-format on

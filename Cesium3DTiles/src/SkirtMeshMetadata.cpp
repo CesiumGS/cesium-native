@@ -17,12 +17,12 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        if (!(*pNoSkirtRange)[0].isNumber() || !(*pNoSkirtRange)[1].isNumber()) {
+        if (!(*pNoSkirtRange)[0].isDouble() || !(*pNoSkirtRange)[1].isDouble()) {
             return std::nullopt;
         }
 
-        double noSkirtIndicesBegin = (*pNoSkirtRange)[0].getNumber(-1.0);
-        double noSkirtIndicesCount = (*pNoSkirtRange)[1].getNumber(-1.0);
+        double noSkirtIndicesBegin = (*pNoSkirtRange)[0].getDoubleOrDefault(-1.0);
+        double noSkirtIndicesCount = (*pNoSkirtRange)[1].getDoubleOrDefault(-1.0);
 
         if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0) {
             return std::nullopt;
@@ -36,20 +36,20 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        if (!(*pMeshCenter)[0].isNumber() || !(*pMeshCenter)[1].isNumber() || !(*pMeshCenter)[2].isNumber()) {
+        if (!(*pMeshCenter)[0].isDouble() || !(*pMeshCenter)[1].isDouble() || !(*pMeshCenter)[2].isDouble()) {
             return std::nullopt;
         }
 
         skirtMeshMetadata.meshCenter = glm::dvec3(
-            (*pMeshCenter)[0].getNumber(0.0),
-            (*pMeshCenter)[1].getNumber(0.0),
-            (*pMeshCenter)[2].getNumber(0.0)
+            (*pMeshCenter)[0].getDoubleOrDefault(0.0),
+            (*pMeshCenter)[1].getDoubleOrDefault(0.0),
+            (*pMeshCenter)[2].getDoubleOrDefault(0.0)
         );
 
-        const double* pWestHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtWestHeight");
-        const double* pSouthHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtSouthHeight");
-        const double* pEastHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtEastHeight");
-        const double* pNorthHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtNorthHeight");
+        const double* pWestHeight = gltfSkirtMeshMetadata.getValueForKey<double>("skirtWestHeight");
+        const double* pSouthHeight = gltfSkirtMeshMetadata.getValueForKey<double>("skirtSouthHeight");
+        const double* pEastHeight = gltfSkirtMeshMetadata.getValueForKey<double>("skirtEastHeight");
+        const double* pNorthHeight = gltfSkirtMeshMetadata.getValueForKey<double>("skirtNorthHeight");
 
         if (!pWestHeight || !pSouthHeight || !pEastHeight || !pNorthHeight) {
             return std::nullopt;

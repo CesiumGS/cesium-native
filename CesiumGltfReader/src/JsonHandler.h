@@ -10,10 +10,10 @@ namespace CesiumGltf {
     public:
         virtual IJsonHandler* Null() override;
         virtual IJsonHandler* Bool(bool b) override;
-        virtual IJsonHandler* Int(int i) override;
-        virtual IJsonHandler* Uint(unsigned i) override;
-        virtual IJsonHandler* Int64(int64_t i) override;
-        virtual IJsonHandler* Uint64(uint64_t i) override;
+        virtual IJsonHandler* Int(std::int32_t i) override;
+        virtual IJsonHandler* Uint(std::uint32_t i) override;
+        virtual IJsonHandler* Int64(std::int64_t i) override;
+        virtual IJsonHandler* Uint64(std::uint64_t i) override;
         virtual IJsonHandler* Double(double d) override;
         virtual IJsonHandler* RawNumber(const char* str, size_t length, bool copy) override;
         virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;

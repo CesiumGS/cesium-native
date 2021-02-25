@@ -3,6 +3,7 @@
 #include "CesiumGltf/JsonValue.h"
 #include "JsonHandler.h"
 
+
 namespace CesiumGltf {
 
     class JsonObjectJsonHandler : public JsonHandler {

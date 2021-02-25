@@ -31,22 +31,22 @@ IJsonHandler* JsonObjectJsonHandler::Bool(bool b) {
 }
 
 IJsonHandler* JsonObjectJsonHandler::Int(int i) {
-    addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+    addOrReplace(*this->_stack.back(), double(i));
     return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::Uint(unsigned i) {
-    addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+    addOrReplace(*this->_stack.back(), double(i));
     return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::Int64(int64_t i) {
-    addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+    addOrReplace(*this->_stack.back(), double(i));
     return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::Uint64(uint64_t i) {
-    addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+    addOrReplace(*this->_stack.back(), double(i));
     return this->doneElement();
 }
 
