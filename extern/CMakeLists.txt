@@ -21,7 +21,10 @@ add_subdirectory(tinyxml2)
 add_subdirectory(asyncplusplus)
 add_subdirectory(spdlog)
 add_subdirectory(modp_b64)
-add_subdirectory(sqlite3)
+
+if (NOT TARGET sqlite3)
+    add_subdirectory(sqlite3)
+endif()
 
 set(CESIUM_NATIVE_BASE64_ENCODE_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/base64_encode/" CACHE INTERNAL 
     "Include directory for base64_encode"
@@ -47,6 +50,10 @@ set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE
 
 set(CESIUM_NATIVE_GLM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/glm" CACHE INTERNAL
     "Include directory for GLM"
+)
+
+set(CESIUM_NATIVE_GSL_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/GSL/include" CACHE INTERNAL
+    "Include directory for GSL libraries"
 )
 
 set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
