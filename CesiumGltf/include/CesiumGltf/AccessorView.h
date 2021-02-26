@@ -200,7 +200,7 @@ namespace CesiumGltf {
 			}
 
 			const std::vector<uint8_t>& data = pBuffer->cesium.data;
-			int64_t bufferBytes = data.size();
+			int64_t bufferBytes = int64_t(data.size());
 			if (pBufferView->byteOffset + pBufferView->byteLength > bufferBytes) {
                 this->_status = AccessorViewStatus::BufferTooSmall;
                 return;
