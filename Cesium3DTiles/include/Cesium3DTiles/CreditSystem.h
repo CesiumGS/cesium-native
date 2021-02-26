@@ -15,8 +15,6 @@ namespace Cesium3DTiles {
         public:
             bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
 
-            bool operator<(const Credit& rhs) const { return this->id < rhs.id; }
-
         private:
             size_t id;
 
