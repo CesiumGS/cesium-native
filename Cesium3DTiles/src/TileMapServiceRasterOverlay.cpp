@@ -19,7 +19,8 @@ namespace Cesium3DTiles {
     public:
         TileMapServiceTileProvider(
             RasterOverlay& owner,
-            const AsyncSystem& asyncSystem,
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
             std::optional<Credit> credit,
             std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
             std::shared_ptr<spdlog::logger> pLogger,
@@ -37,6 +38,7 @@ namespace Cesium3DTiles {
             RasterOverlayTileProvider(
                 owner,
                 asyncSystem,
+                pAssetAccessor,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
@@ -57,7 +59,7 @@ namespace Cesium3DTiles {
         virtual ~TileMapServiceTileProvider() {}
 
     protected:
-        virtual std::unique_ptr<RasterOverlayTile> requestNewTile(const CesiumGeometry::QuadtreeTileID& tileID) override {
+        virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
             std::string url = Uri::resolve(
                 this->_url,
                 std::to_string(tileID.level) + "/" +
@@ -67,7 +69,7 @@ namespace Cesium3DTiles {
                 true
             );
 
-            return std::make_unique<RasterOverlayTile>(this->getOwner(), tileID, std::vector<Credit>(), this->getAsyncSystem().requestAsset(url, this->_headers));
+            return this->loadTileImageFromUrl(url, this->_headers, {});
         }
     
     private:
@@ -120,10 +122,11 @@ namespace Cesium3DTiles {
     }
 
     Future<std::unique_ptr<RasterOverlayTileProvider>> TileMapServiceRasterOverlay::createTileProvider(
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CreditSystem>& pCreditSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-        std::shared_ptr<spdlog::logger> pLogger,
+        const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger,
         RasterOverlay* pOwner
     ) {
         std::string xmlUrl = Uri::resolve(this->_url, "tilemapresource.xml");
@@ -134,17 +137,18 @@ namespace Cesium3DTiles {
             std::make_optional(pCreditSystem->createCredit(this->_options.credit.value())) :
             std::nullopt;
 
-        return asyncSystem.requestAsset(xmlUrl, this->_headers).thenInWorkerThread([
+        return pAssetAccessor->requestAsset(asyncSystem, xmlUrl, this->_headers).thenInWorkerThread([
             pOwner,
             asyncSystem,
+            pAssetAccessor,
             credit,
             pPrepareRendererResources,
             pLogger,
             options = this->_options,
             url = this->_url,
             headers = this->_headers
-        ](std::unique_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
-            IAssetResponse* pResponse = pRequest->response();
+        ](std::shared_ptr<IAssetRequest> pRequest) -> std::unique_ptr<RasterOverlayTileProvider> {
+            const IAssetResponse* pResponse = pRequest->response();
 
             gsl::span<const uint8_t> data = pResponse->data();
 
@@ -247,6 +251,7 @@ namespace Cesium3DTiles {
             return std::make_unique<TileMapServiceTileProvider>(
                 *pOwner,
                 asyncSystem,
+                pAssetAccessor,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
