@@ -69,10 +69,13 @@ target_sources(
         ${CESIUM_GLTF_PUBLIC_HEADERS}
 )
 
+# TODO: Cmake configuration issue, we shouldn't have to link to GSL and then
+#       include GSL as a public include dir
 target_include_directories(
     CesiumGltf
     SYSTEM PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
+        ${CESIUM_NATIVE_GSL_INCLUDE_DIR}
     PUBLIC
         ${CESIUM_GLTF_PUBLIC_INCLUDE_DIR}
     PRIVATE
