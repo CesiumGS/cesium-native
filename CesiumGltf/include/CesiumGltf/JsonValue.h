@@ -6,7 +6,6 @@
 #include <gsl/narrow>
 #include <initializer_list>
 #include <map>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
