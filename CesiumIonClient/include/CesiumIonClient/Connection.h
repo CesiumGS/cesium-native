@@ -10,6 +10,9 @@
 #include <cstdint>
 
 namespace CesiumIonClient {
+    /**
+     * @brief A connection to Cesium ion that can be used to interact with it via its REST API.
+     */
     class CESIUMASYNC_API Connection {
     public:
         /**
