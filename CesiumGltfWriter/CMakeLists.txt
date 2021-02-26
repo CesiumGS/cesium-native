@@ -45,7 +45,6 @@ target_sources(
         ${PUBLIC_INCLUDES}
 )
 
-message("BANDITO: ${CESIUM_NATIVE_RAPIDJSON_DEFINES}")
 target_compile_definitions(
     CesiumGltfWriter
     PRIVATE
