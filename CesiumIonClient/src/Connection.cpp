@@ -280,7 +280,14 @@ static std::optional<Token> tokenFromJson(const rapidjson::Value& json) {
     token.isDefault = JsonHelpers::getBoolOrDefault(json, "isDefault", false);
     token.lastUsed = JsonHelpers::getStringOrDefault(json, "lastUsed", "");
     token.scopes = JsonHelpers::getStrings(json, "scopes");
-    token.assets = JsonHelpers::getInt64s(json, "assets");
+
+    auto assetsIt = json.FindMember("assets");
+    if (assetsIt != json.MemberEnd()) {
+        token.assets = JsonHelpers::getInt64s(json, "assets");
+    } else {
+        token.assets = std::nullopt;
+    }
+
     return token;
 }
 

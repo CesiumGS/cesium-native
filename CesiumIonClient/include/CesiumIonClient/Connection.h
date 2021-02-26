@@ -18,8 +18,7 @@ namespace CesiumIonClient {
         /**
          * @brief Authorizes access to Cesium ion on behalf of a user, and returns a {@link Connection} that can be used to interact with ion.
          * 
-         * Uses the "Authorization Code with PKCE" OAuth2 flow. It is mostly suitable for native
-         * (non-web-browser) applications.
+         * Uses the "Authorization Code with PKCE" OAuth2 flow.
          * 
          * See [Connection to Cesium ion with OAuth2](https://cesium.com/docs/oauth/) for a description
          * of the authorization process.
@@ -72,10 +71,30 @@ namespace CesiumIonClient {
          * 
          * @return A future that resolves to the profile information.
          */
-
         CesiumAsync::Future<Response<Profile>> me() const;
+
+        /**
+         * @brief Gets the list of available assets.
+         * 
+         * @return A future that resolves to the asset information.
+         */
         CesiumAsync::Future<Response<Assets>> assets() const;
+
+        /**
+         * @brief Gets the list of available tokens.
+         * 
+         * @return A future that resolves to the token information.
+         */
         CesiumAsync::Future<Response<std::vector<Token>>> tokens() const;
+
+        /**
+         * @brief Creates a new token.
+         * 
+         * @param name The name of the new token.
+         * @param scopes The scopes allowed by this token.
+         * @param assets The assets that may be accessed by this token. If `std::nullopt`, access to all assets is allowed.
+         * @return The new token.
+         */
         CesiumAsync::Future<Response<Token>> createToken(
             const std::string& name,
             const std::vector<std::string>& scopes,
