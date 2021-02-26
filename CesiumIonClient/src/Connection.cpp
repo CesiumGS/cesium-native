@@ -120,7 +120,7 @@ static Response<T> createErrorResponse(const IAssetResponse* pResponse) {
     };
 }
 
-CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
+CesiumAsync::Future<Response<Profile>> Connection::me() const {
     return this->_pAssetAccessor->requestAsset(
         this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/me"),
@@ -131,7 +131,7 @@ CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
     ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
-            return Response<CesiumIonProfile> {
+            return Response<Profile> {
                 std::nullopt,
                 0,
                 "NoResponse",
@@ -140,13 +140,13 @@ CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            return createErrorResponse<CesiumIonProfile>(pResponse);
+            return createErrorResponse<Profile>(pResponse);
         }
 
         rapidjson::Document d;
         d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
         if (d.HasParseError()) {
-            return Response<CesiumIonProfile> {
+            return Response<Profile> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -155,7 +155,7 @@ CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
         }
 
         if (!d.IsObject()) {
-            return Response<CesiumIonProfile> {
+            return Response<Profile> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -163,7 +163,7 @@ CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
             };
         }
 
-        CesiumIonProfile result;
+        Profile result;
 
         result.id = JsonHelpers::getInt64OrDefault(d, "id", -1);
         result.scopes = JsonHelpers::getStrings(d, "scopes");
@@ -184,7 +184,7 @@ CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
             result.storage.used = JsonHelpers::getInt64OrDefault(storage, "used", 0);
         }
 
-        return Response<CesiumIonProfile> {
+        return Response<Profile> {
             result,
             pResponse->statusCode(),
             std::string(),
@@ -193,7 +193,7 @@ CesiumAsync::Future<Response<CesiumIonProfile>> Connection::me() const {
     });
 }
 
-CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
+CesiumAsync::Future<Response<Assets>> Connection::assets() const {
     return this->_pAssetAccessor->requestAsset(
         this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets"),
@@ -204,7 +204,7 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
     ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
-            return Response<CesiumIonAssets> {
+            return Response<Assets> {
                 std::nullopt,
                 0,
                 "NoResponse",
@@ -213,13 +213,13 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            return createErrorResponse<CesiumIonAssets>(pResponse);
+            return createErrorResponse<Assets>(pResponse);
         }
 
         rapidjson::Document d;
         d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
         if (d.HasParseError()) {
-            return Response<CesiumIonAssets> {
+            return Response<Assets> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -228,7 +228,7 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
         }
 
         if (!d.IsObject()) {
-            return Response<CesiumIonAssets> {
+            return Response<Assets> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -236,7 +236,7 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
             };
         }
 
-        CesiumIonAssets result;
+        Assets result;
 
         result.link = JsonHelpers::getStringOrDefault(d, "link", "");
         
@@ -245,7 +245,7 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
             const rapidjson::Value& items = itemsIt->value;
             result.items.resize(items.Size());
             std::transform(items.Begin(), items.End(), result.items.begin(), [](const rapidjson::Value& item) {
-                CesiumIonAsset result;
+                Asset result;
                 result.id = JsonHelpers::getInt64OrDefault(item, "id", -1);
                 result.name = JsonHelpers::getStringOrDefault(item, "name", "");
                 result.description = JsonHelpers::getStringOrDefault(item, "description", "");
@@ -259,7 +259,7 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
             });
         }
 
-        return Response<CesiumIonAssets> {
+        return Response<Assets> {
             result,
             pResponse->statusCode(),
             std::string(),
@@ -268,12 +268,12 @@ CesiumAsync::Future<Response<CesiumIonAssets>> Connection::assets() const {
     });
 }
 
-static std::optional<CesiumIonToken> tokenFromJson(const rapidjson::Value& json) {
+static std::optional<Token> tokenFromJson(const rapidjson::Value& json) {
     if (!json.IsObject()) {
         return std::nullopt;
     }
 
-    CesiumIonToken token;
+    Token token;
     token.jti = JsonHelpers::getStringOrDefault(json, "jti", "");
     token.name = JsonHelpers::getStringOrDefault(json, "name", "");
     token.token = JsonHelpers::getStringOrDefault(json, "token", "");
@@ -284,7 +284,7 @@ static std::optional<CesiumIonToken> tokenFromJson(const rapidjson::Value& json)
     return token;
 }
 
-CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() const {
+CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
     return this->_pAssetAccessor->requestAsset(
         this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
@@ -295,7 +295,7 @@ CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() 
     ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
-            return Response<std::vector<CesiumIonToken>> {
+            return Response<std::vector<Token>> {
                 std::nullopt,
                 0,
                 "NoResponse",
@@ -304,13 +304,13 @@ CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() 
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            return createErrorResponse<std::vector<CesiumIonToken>>(pResponse);
+            return createErrorResponse<std::vector<Token>>(pResponse);
         }
 
         rapidjson::Document d;
         d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
         if (d.HasParseError()) {
-            return Response<std::vector<CesiumIonToken>> {
+            return Response<std::vector<Token>> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -319,7 +319,7 @@ CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() 
         }
 
         if (!d.IsArray()) {
-            return Response<std::vector<CesiumIonToken>> {
+            return Response<std::vector<Token>> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -327,10 +327,10 @@ CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() 
             };
         }
 
-        std::vector<CesiumIonToken> result;
+        std::vector<Token> result;
 
         for (auto it = d.Begin(); it != d.End(); ++it) {
-            std::optional<CesiumIonToken> token = tokenFromJson(*it);
+            std::optional<Token> token = tokenFromJson(*it);
             if (!token) {
                 continue;
             }
@@ -338,7 +338,7 @@ CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() 
             result.emplace_back(std::move(token.value()));
         }
 
-        return Response<std::vector<CesiumIonToken>> {
+        return Response<std::vector<Token>> {
             result,
             pResponse->statusCode(),
             std::string(),
@@ -347,7 +347,7 @@ CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> Connection::tokens() 
     });
 }
 
-CesiumAsync::Future<Response<CesiumIonToken>> Connection::createToken(
+CesiumAsync::Future<Response<Token>> Connection::createToken(
     const std::string& name,
     const std::vector<std::string>& scopes,
     const std::optional<std::vector<int64_t>>& assets
@@ -389,7 +389,7 @@ CesiumAsync::Future<Response<CesiumIonToken>> Connection::createToken(
     ).thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
-            return Response<CesiumIonToken> {
+            return Response<Token> {
                 std::nullopt,
                 0,
                 "NoResponse",
@@ -398,13 +398,13 @@ CesiumAsync::Future<Response<CesiumIonToken>> Connection::createToken(
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-            return createErrorResponse<CesiumIonToken>(pResponse);
+            return createErrorResponse<Token>(pResponse);
         }
 
         rapidjson::Document d;
         d.Parse(reinterpret_cast<const char*>(pResponse->data().data()), pResponse->data().size());
         if (d.HasParseError()) {
-            return Response<CesiumIonToken> {
+            return Response<Token> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -412,10 +412,10 @@ CesiumAsync::Future<Response<CesiumIonToken>> Connection::createToken(
             };
         }
 
-        std::optional<CesiumIonToken> maybeToken = tokenFromJson(d);
+        std::optional<Token> maybeToken = tokenFromJson(d);
 
         if (!maybeToken) {
-            return Response<CesiumIonToken> {
+            return Response<Token> {
                 std::nullopt,
                 pResponse->statusCode(),
                 "ParseError",
@@ -423,7 +423,7 @@ CesiumAsync::Future<Response<CesiumIonToken>> Connection::createToken(
             };
         }
 
-        return Response<CesiumIonToken> {
+        return Response<Token> {
             std::move(maybeToken),
             pResponse->statusCode(),
             std::string(),

@@ -9,7 +9,7 @@ namespace CesiumIonClient {
     /**
      * @brief Information about the amount of storage available in a user's account.
      */
-    struct CesiumIonProfileStorage final {
+    struct ProfileStorage final {
         /**
          * @brief The number of bytes currently being used by this account.
          */
@@ -31,7 +31,7 @@ namespace CesiumIonClient {
      * 
      * @see CesiumIonConnection#me
      */
-    struct CesiumIonProfile final {
+    struct Profile final {
         /**
          * @brief The unique identifier for this account.
          */
@@ -65,7 +65,7 @@ namespace CesiumIonClient {
         /**
          * @brief Information about the amount of storage available in the user's account.
          */
-        CesiumIonProfileStorage storage;
+        ProfileStorage storage;
     };
 
 }

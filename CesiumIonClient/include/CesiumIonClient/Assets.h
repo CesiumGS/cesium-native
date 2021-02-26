@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace CesiumIonClient {
-    struct CesiumIonAsset {
+    struct Asset {
         int64_t id;
         std::string name;
         std::string description;
@@ -17,8 +17,8 @@ namespace CesiumIonClient {
         int8_t percentComplete;
     };
 
-    struct CesiumIonAssets {
+    struct Assets {
         std::string link;
-        std::vector<CesiumIonAsset> items;
+        std::vector<Asset> items;
     };
 }

@@ -6,7 +6,7 @@
 
 namespace CesiumIonClient {
 
-    struct CesiumIonToken {
+    struct Token {
         std::string jti;
         std::string name;
         std::string token;

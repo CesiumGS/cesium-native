@@ -4,9 +4,9 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumIonClient/Response.h"
-#include "CesiumIonClient/CesiumIonAssets.h"
-#include "CesiumIonClient/CesiumIonProfile.h"
-#include "CesiumIonClient/CesiumIonToken.h"
+#include "CesiumIonClient/Assets.h"
+#include "CesiumIonClient/Profile.h"
+#include "CesiumIonClient/Token.h"
 #include <cstdint>
 
 namespace CesiumIonClient {
@@ -73,10 +73,10 @@ namespace CesiumIonClient {
          * @return A future that resolves to the profile information.
          */
 
-        CesiumAsync::Future<Response<CesiumIonProfile>> me() const;
-        CesiumAsync::Future<Response<CesiumIonAssets>> assets() const;
-        CesiumAsync::Future<Response<std::vector<CesiumIonToken>>> tokens() const;
-        CesiumAsync::Future<Response<CesiumIonToken>> createToken(
+        CesiumAsync::Future<Response<Profile>> me() const;
+        CesiumAsync::Future<Response<Assets>> assets() const;
+        CesiumAsync::Future<Response<std::vector<Token>>> tokens() const;
+        CesiumAsync::Future<Response<Token>> createToken(
             const std::string& name,
             const std::vector<std::string>& scopes,
             const std::optional<std::vector<int64_t>>& assets = std::nullopt
