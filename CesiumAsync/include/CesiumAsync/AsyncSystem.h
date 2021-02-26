@@ -206,14 +206,23 @@ namespace CesiumAsync {
             );
         }
 
-        
+        /**
+         * @brief Waits for the future to resolve or reject and returns the result.
+         *
+         * This method must not be called from the main thread, the one that calls
+         * {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
+         * deadlock because the main thread tasks will never complete while this
+         * method is blocking the main thread.
+         *
+         * @return The value if the future resolves successfully, or the exception if it rejects.
+         */
         std::variant<T, std::exception> wait() {
             try {
                 return this->_task.get();
             } catch (std::exception& e) {
                 return e;
             } catch (...) {
-                return std::runtime_error("Uknown exception.");
+                return std::runtime_error("Unknown exception.");
             }
         }
 
