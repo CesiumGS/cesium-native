@@ -19,31 +19,27 @@ void recursiveObjectWriter(
 
 void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j) {
     if (item.isBool()) {
-        j.Bool(std::get<JsonValue::Bool>(item.value));
+        j.Bool(item.getBool());
     }
 
     else if (item.isNull()) {
         j.Null();
     }
+    
+    else if (item.isInt64()) {
+        j.Int64(item.getInt64());
+    }
+    
+    else if (item.isUint64()) {
+        j.Uint64(item.getUint64());
+    }
 
     else if (item.isDouble()) {
-        j.Double(std::get<double>(item.value));
-    }
-    
-    else if (item.isFloat()) {
-        j.Double(static_cast<double>(std::get<float>(item.value)));
-    }
-
-    else if (item.isUnsignedInt()) {
-        j.Uint64(*item.getUInt());
-    }
-    
-    else if (item.isSignedInt()) {
-        j.Int64(*item.getInt());
+        j.Double(item.getDouble());
     }
 
     else if (item.isString()) {
-        j.String(std::get<JsonValue::String>(item.value).c_str());
+        j.String(item.getString());
     }
 }
 
@@ -53,11 +49,11 @@ void recursiveArrayWriter(
     j.StartArray();
     for (const auto& item : array) {
         if (item.isArray()) {
-            recursiveArrayWriter(std::get<JsonValue::Array>(item.value), j);
+            recursiveArrayWriter(item.getArray(), j);
         }
 
         else if (item.isObject()) {
-            recursiveObjectWriter(std::get<JsonValue::Object>(item.value), j);
+            recursiveObjectWriter(item.getObject(), j);
         }
 
         else {

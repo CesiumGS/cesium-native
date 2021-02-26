@@ -20,27 +20,27 @@ TEST_CASE("Test converting skirt mesh metadata to gltf extras") {
     REQUIRE(extras.find("skirtMeshMetadata") != extras.end());
 
     JsonValue& gltfSkirt = extras["skirtMeshMetadata"];
-    JsonValue::Array* pNoSkirtRange = gltfSkirt.getValueForKey<JsonValue::Array>("noSkirtRange");
-    REQUIRE(pNoSkirtRange != nullptr);
-    REQUIRE((*pNoSkirtRange)[0].getDoubleOrDefault(-1.0) == 0.0);
-    REQUIRE((*pNoSkirtRange)[1].getDoubleOrDefault(-1.0) == 12.0);
+    const auto* pNoSkirtRange = gltfSkirt.getValuePtrForKey<JsonValue::Array>("noSkirtRange");
+    REQUIRE(pNoSkirtRange);
+    REQUIRE((*pNoSkirtRange)[0].getNumberOrDefault<double>(-1.0) == 0.0);
+    REQUIRE((*pNoSkirtRange)[1].getNumberOrDefault<double>(-1.0) == 12.0);
 
-    JsonValue::Array* pMeshCenter = gltfSkirt.getValueForKey<JsonValue::Array>("meshCenter");
-    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[0].getDoubleOrDefault(0.0), skirtMeshMetadata.meshCenter.x, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[1].getDoubleOrDefault(0.0), skirtMeshMetadata.meshCenter.y, Math::EPSILON7));
-    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[2].getDoubleOrDefault(0.0), skirtMeshMetadata.meshCenter.z, Math::EPSILON7));
+    const auto* pMeshCenter = gltfSkirt.getValuePtrForKey<JsonValue::Array>("meshCenter");
+    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[0].getNumberOrDefault<double>(0.0), skirtMeshMetadata.meshCenter.x, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[1].getNumberOrDefault<double>(0.0), skirtMeshMetadata.meshCenter.y, Math::EPSILON7));
+    REQUIRE(Math::equalsEpsilon((*pMeshCenter)[2].getNumberOrDefault<double>(0.0), skirtMeshMetadata.meshCenter.z, Math::EPSILON7));
 
-    double* pSkirtWestHeight = gltfSkirt.getValueForKey<double>("skirtWestHeight");
-    REQUIRE(Math::equalsEpsilon(*pSkirtWestHeight, skirtMeshMetadata.skirtWestHeight, Math::EPSILON7));
+    const auto pSkirtWestHeight = gltfSkirt.getSafeNumericalValueForKey<double>("skirtWestHeight");
+    REQUIRE(Math::equalsEpsilon(pSkirtWestHeight, skirtMeshMetadata.skirtWestHeight, Math::EPSILON7));
 
-    double* pSkirtSouthHeight = gltfSkirt.getValueForKey<double>("skirtSouthHeight");
-    REQUIRE(Math::equalsEpsilon(*pSkirtSouthHeight, skirtMeshMetadata.skirtSouthHeight, Math::EPSILON7));
+    const auto pSkirtSouthHeight = gltfSkirt.getSafeNumericalValueForKey<double>("skirtSouthHeight");
+    REQUIRE(Math::equalsEpsilon(pSkirtSouthHeight, skirtMeshMetadata.skirtSouthHeight, Math::EPSILON7));
 
-    double* pSkirtEastHeight = gltfSkirt.getValueForKey<double>("skirtEastHeight");
-    REQUIRE(Math::equalsEpsilon(*pSkirtEastHeight, skirtMeshMetadata.skirtEastHeight, Math::EPSILON7));
+    const auto pSkirtEastHeight = gltfSkirt.getSafeNumericalValueForKey<double>("skirtEastHeight");
+    REQUIRE(Math::equalsEpsilon(pSkirtEastHeight, skirtMeshMetadata.skirtEastHeight, Math::EPSILON7));
 
-    double* pSkirtNorthHeight = gltfSkirt.getValueForKey<double>("skirtNorthHeight");
-    REQUIRE(Math::equalsEpsilon(*pSkirtNorthHeight, skirtMeshMetadata.skirtNorthHeight, Math::EPSILON7));
+    const auto pSkirtNorthHeight = gltfSkirt.getSafeNumericalValueForKey<double>("skirtNorthHeight");
+    REQUIRE(Math::equalsEpsilon(pSkirtNorthHeight, skirtMeshMetadata.skirtNorthHeight, Math::EPSILON7));
 }
 
 TEST_CASE("Test converting gltf extras to skirt mesh metadata") {

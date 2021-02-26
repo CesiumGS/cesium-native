@@ -55,6 +55,7 @@ set(CESIUM_GLTF_SOURCE
 
 set(CESIUM_GLTF_TEST_SOURCE
     test/TestAccessorView.cpp
+    test/TestJsonValue.cpp
 )
 
 list(TRANSFORM CESIUM_GLTF_TEST_SOURCE PREPEND "${CMAKE_CURRENT_LIST_DIR}/")
@@ -78,4 +79,7 @@ target_include_directories(
         "${CMAKE_CURRENT_LIST_DIR}/src"
 )
 
-target_link_libraries(CesiumGltf PUBLIC)
+target_link_libraries(CesiumGltf 
+    PUBLIC 
+        GSL
+)
