@@ -6,9 +6,9 @@
 class SimpleAssetRequest : public CesiumAsync::IAssetRequest {
 public:
 	SimpleAssetRequest(const std::string& url,
-		std::unique_ptr<SimpleAssetResponse> response)
+		std::unique_ptr<SimpleAssetResponse> pSimpleResponse)
 		: requestUrl{ url }
-		, pResponse{ std::move(response) }
+		, pResponse{ std::move(pSimpleResponse) }
 	{}
 
 	virtual std::string url() const override {

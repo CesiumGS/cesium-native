@@ -9,7 +9,7 @@
 
 class SimpleAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
-	SimpleAssetAccessor(std::map<std::string, std::unique_ptr<SimpleAssetRequest>> mockCompletedRequests)
+	SimpleAssetAccessor(std::map<std::string, std::unique_ptr<SimpleAssetRequest>>&& mockCompletedRequests)
 		: mockCompletedRequests{std::move(mockCompletedRequests)}
 	{}
 
