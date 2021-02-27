@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/Tileset.h"
 

@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGltf/JsonValue.h"
 
 using namespace CesiumGltf;

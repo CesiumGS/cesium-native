@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include <algorithm>

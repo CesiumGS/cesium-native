@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 
 #include "Cesium3DTiles/ViewState.h"
 #include "CesiumGeometry/CullingVolume.h"

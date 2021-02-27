@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include <algorithm>
 #include <glm/common.hpp>

@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include <future>

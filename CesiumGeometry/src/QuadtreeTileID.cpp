@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 
 namespace CesiumGeometry {

@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #pragma once
 
 #if defined(_WIN32) && defined(CESIUM_SHARED)

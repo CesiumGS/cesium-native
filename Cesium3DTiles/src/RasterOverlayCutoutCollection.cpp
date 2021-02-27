@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 
 namespace Cesium3DTiles {

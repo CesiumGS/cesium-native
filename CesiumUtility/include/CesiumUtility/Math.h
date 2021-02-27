@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #pragma once
 
 #include <glm/gtc/epsilon.hpp>

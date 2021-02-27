@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/registerAllTileContentTypes.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/GltfContent.h"

@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"

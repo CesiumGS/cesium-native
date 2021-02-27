@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
 #include "Cesium3DTiles/IonRasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"

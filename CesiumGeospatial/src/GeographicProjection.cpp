@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumUtility/Math.h"

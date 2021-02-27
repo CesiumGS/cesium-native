@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Uri.h"
 #include "uriparser/Uri.h"
 #include <stdexcept>

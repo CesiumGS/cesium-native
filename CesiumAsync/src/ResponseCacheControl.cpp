@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "ResponseCacheControl.h"
 #include <map>
 #include <set>

@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeometry/OrientedBoundingBox.h"
 #include <glm/geometric.hpp>
 #include <glm/ext/matrix_transform.hpp>

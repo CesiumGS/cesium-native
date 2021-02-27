@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include <algorithm>

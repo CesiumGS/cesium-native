@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGltf/JsonValue.h"
 #include <glm/vec3.hpp>
 #include <optional>

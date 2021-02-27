@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeometry/Ray.h"
 #include "CesiumUtility/Math.h"
 #include <glm/geometric.hpp>

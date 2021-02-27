@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeometry/BoundingSphere.h"
 #include <glm/geometric.hpp>
 #include "CesiumGeometry/Plane.h"

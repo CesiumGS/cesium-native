@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeospatial/BoundingRegion.h"
 #include "CesiumGeometry/IntersectionTests.h"
 #include "CesiumGeometry/Ray.h"

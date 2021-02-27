@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "Cesium3DTiles/BoundingVolume.h"
 
 using namespace CesiumGeometry;

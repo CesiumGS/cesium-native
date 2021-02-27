@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeospatial/Projection.h"
 #include <glm/trigonometric.hpp>
 

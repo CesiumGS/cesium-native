@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeometry/IntersectionTests.h"
 #include <glm/geometric.hpp>
 #include "CesiumUtility/Math.h"

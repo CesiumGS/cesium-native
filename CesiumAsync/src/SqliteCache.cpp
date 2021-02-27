@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/SqliteCache.h"
 #include "rapidjson/document.h"

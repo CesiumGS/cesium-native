@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "JsonHelpers.h"
 #include <rapidjson/document.h>
 

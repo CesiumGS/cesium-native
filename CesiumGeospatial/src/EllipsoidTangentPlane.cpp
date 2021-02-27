@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeospatial/EllipsoidTangentPlane.h"
 #include "CesiumGeospatial/Transforms.h"
 #include "CesiumGeometry/Plane.h"

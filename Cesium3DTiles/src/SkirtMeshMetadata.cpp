@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "SkirtMeshMetadata.h"
 
 using namespace CesiumGltf;

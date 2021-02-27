@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "calcQuadtreeMaxGeometricError.h"
 
 namespace Cesium3DTiles {

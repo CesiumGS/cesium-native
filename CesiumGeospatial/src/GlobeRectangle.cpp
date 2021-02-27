@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/Math.h"
 

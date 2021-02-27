@@ -1,3 +1,5 @@
+// Copyright CesiumGS, Inc. and Contributors
+
 #include "TileUtilities.h"
 
 #include <variant>
