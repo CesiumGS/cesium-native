@@ -12,6 +12,11 @@
 #include <rapidjson/writer.h>
 #include <thread>
 
+#pragma warning(push)
+#pragma warning(disable:4244)
+#include <picosha2.h>
+#pragma warning(pop)
+
 using namespace CesiumAsync;
 using namespace CesiumIonClient;
 using namespace CesiumUtility;
@@ -22,6 +27,16 @@ namespace {
         std::string result(count, 0);
         size_t actualLength = modp_b64_encode(result.data(), reinterpret_cast<const char*>(bytes.data()), bytes.size());
         result.resize(actualLength);
+        
+        // Convert to a URL-friendly form of Base64 according to the algorithm
+        // in [RFC7636 Appendix A](https://tools.ietf.org/html/rfc7636#appendix-A)
+        size_t firstPaddingIndex = result.find('=');
+        if (firstPaddingIndex != std::string::npos) {
+            result.erase(result.begin() + int64_t(firstPaddingIndex), result.end());
+        }
+        std::replace(result.begin(), result.end(), '+', '-');
+        std::replace(result.begin(), result.end(), '/', '_');
+
         return result;
     }
 }
@@ -59,12 +74,23 @@ namespace {
 
         std::string state = encodeBase64(stateBytes);
 
+        std::vector<uint8_t> codeVerifierBytes(32, 0);
+        rng(codeVerifierBytes);
+
+        std::string codeVerifier = encodeBase64(codeVerifierBytes);
+
+        std::vector<uint8_t> hashedChallengeBytes(picosha2::k_digest_size);
+        picosha2::hash256(codeVerifier, hashedChallengeBytes);
+        std::string hashedChallenge = encodeBase64(hashedChallengeBytes);
+
         std::string authorizeUrl = ionAuthorizeUrl;
         authorizeUrl = Uri::addQuery(authorizeUrl, "response_type", "code");
         authorizeUrl = Uri::addQuery(authorizeUrl, "client_id", std::to_string(clientID));
         authorizeUrl = Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, " "));
         authorizeUrl = Uri::addQuery(authorizeUrl, "redirect_uri", redirectUrl);
         authorizeUrl = Uri::addQuery(authorizeUrl, "state", state);
+        authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge_method", "S256");
+        authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge", hashedChallenge);
 
         // TODO: state and code_challenge
 
@@ -77,15 +103,13 @@ namespace {
             clientID,
             ionApiUrl,
             redirectUrl,
-            expectedState = state
+            expectedState = state,
+            codeVerifier
         ](const httplib::Request& request, httplib::Response& response) {
             pServer->stop();
             
             std::string code = request.get_param_value("code");
             std::string state = request.get_param_value("state");
-
-            // The URL decoding by `get_param_value` will turn `+` into ` `. Change it back.
-            std::replace(state.begin(), state.end(), ' ', '+');
 
             if (state != expectedState) {
                 response.set_content("Invalid state! Please close this window and return to " + friendlyApplicationName + " to try again.", "text/html");
@@ -93,7 +117,7 @@ namespace {
                 return;
             }
 
-            std::variant<Connection, std::exception> result = Connection::completeTokenExchange(asyncSystem, pAssetAccessor, clientID, ionApiUrl, code, redirectUrl, "TODO").wait();
+            std::variant<Connection, std::exception> result = Connection::completeTokenExchange(asyncSystem, pAssetAccessor, clientID, ionApiUrl, code, redirectUrl, codeVerifier).wait();
 
             // TODO: nicer HTML
 
@@ -474,7 +498,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
     const std::string& ionApiUrl,
     const std::string& code,
     const std::string& redirectUrl,
-    const std::string& /* codeVerifier */
+    const std::string& codeVerifier
 ) {
     rapidjson::StringBuffer postBuffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
@@ -488,6 +512,8 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
     writer.String(code.c_str(), rapidjson::SizeType(code.size()));
     writer.Key("redirect_uri");
     writer.String(redirectUrl.c_str(), rapidjson::SizeType(redirectUrl.size()));
+    writer.Key("code_verifier");
+    writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
     writer.EndObject();
 
     gsl::span<const uint8_t> payload(reinterpret_cast<const uint8_t*>(postBuffer.GetString()), postBuffer.GetSize());

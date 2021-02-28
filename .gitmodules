@@ -37,3 +37,6 @@
 [submodule "extern/CSPRNG"]
 	path = extern/CSPRNG
 	url = https://github.com/Duthomhas/CSPRNG.git
+[submodule "extern/PicoSHA2"]
+	path = extern/PicoSHA2
+	url = https://github.com/okdshin/PicoSHA2.git

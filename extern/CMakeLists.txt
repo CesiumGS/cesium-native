@@ -33,3 +33,7 @@ target_include_directories(
     PUBLIC
         CSPRNG/source
 )
+
+# PicoSHA2 doesn't have CMakeLists.txt at all
+add_library(PicoSHA2 INTERFACE)
+target_include_directories(PicoSHA2 SYSTEM INTERFACE PicoSHA2)
