@@ -1,7 +1,7 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/Reader.h"
 #include "decodeDataUrls.h"
-#include "modp_b64.h"
+#include <modp_b64.h>
 
 namespace {
 

@@ -109,7 +109,6 @@ namespace CesiumIonClient {
             const std::string& ionApiUrl,
             const std::string& code,
             const std::string& redirectUrl,
-            const std::string& state,
             const std::string& codeVerifier
         );
 

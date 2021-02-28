@@ -3,7 +3,9 @@
 #include "CesiumUtility/joinToString.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Uri.h"
+#include <duthomhas/csprng.hpp>
 #include <httplib.h>
+#include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
@@ -13,6 +15,16 @@
 using namespace CesiumAsync;
 using namespace CesiumIonClient;
 using namespace CesiumUtility;
+
+namespace {
+    std::string encodeBase64(const std::vector<uint8_t>& bytes) {
+        size_t count = modp_b64_encode_len(bytes.size());
+        std::string result(count, 0);
+        size_t actualLength = modp_b64_encode(result.data(), reinterpret_cast<const char*>(bytes.data()), bytes.size());
+        result.resize(actualLength);
+        return result;
+    }
+}
 
 /*static*/ CesiumAsync::Future<Connection> Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -41,12 +53,18 @@ using namespace CesiumUtility;
 
         std::string redirectUrl = Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
 
+        duthomhas::csprng rng;
+        std::vector<uint8_t> stateBytes(32, 0);
+        rng(stateBytes);
+
+        std::string state = encodeBase64(stateBytes);
+
         std::string authorizeUrl = ionAuthorizeUrl;
         authorizeUrl = Uri::addQuery(authorizeUrl, "response_type", "code");
         authorizeUrl = Uri::addQuery(authorizeUrl, "client_id", std::to_string(clientID));
         authorizeUrl = Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, " "));
         authorizeUrl = Uri::addQuery(authorizeUrl, "redirect_uri", redirectUrl);
-        authorizeUrl = Uri::addQuery(authorizeUrl, "state", "TODO");
+        authorizeUrl = Uri::addQuery(authorizeUrl, "state", state);
 
         // TODO: state and code_challenge
 
@@ -58,14 +76,24 @@ using namespace CesiumUtility;
             friendlyApplicationName,
             clientID,
             ionApiUrl,
-            redirectUrl
+            redirectUrl,
+            expectedState = state
         ](const httplib::Request& request, httplib::Response& response) {
             pServer->stop();
             
             std::string code = request.get_param_value("code");
             std::string state = request.get_param_value("state");
 
-            std::variant<Connection, std::exception> result = Connection::completeTokenExchange(asyncSystem, pAssetAccessor, clientID, ionApiUrl, code, redirectUrl, state, "TODO").wait();
+            // The URL decoding by `get_param_value` will turn `+` into ` `. Change it back.
+            std::replace(state.begin(), state.end(), ' ', '+');
+
+            if (state != expectedState) {
+                response.set_content("Invalid state! Please close this window and return to " + friendlyApplicationName + " to try again.", "text/html");
+                promise.reject(std::runtime_error("Received an invalid state."));
+                return;
+            }
+
+            std::variant<Connection, std::exception> result = Connection::completeTokenExchange(asyncSystem, pAssetAccessor, clientID, ionApiUrl, code, redirectUrl, "TODO").wait();
 
             // TODO: nicer HTML
 
@@ -446,7 +474,6 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
     const std::string& ionApiUrl,
     const std::string& code,
     const std::string& redirectUrl,
-    const std::string& /* state */,
     const std::string& /* codeVerifier */
 ) {
     rapidjson::StringBuffer postBuffer;
