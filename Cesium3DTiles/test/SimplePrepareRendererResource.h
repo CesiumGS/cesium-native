@@ -6,35 +6,24 @@
 
 class SimplePrepareRendererResource : public Cesium3DTiles::IPrepareRendererResources {
 public:
-	struct LoadThreadResult {
-		const CesiumGltf::Model& model;
-        const glm::dmat4& transform;
-	};
+	struct LoadThreadResult {};
 
-	struct MainThreadResult {
-        const Cesium3DTiles::Tile& tile;
-        void* pLoadThreadResult;
-	};
+	struct MainThreadResult {};
 
-	struct LoadThreadRasterResult {
-		const CesiumGltf::ImageCesium& image;
-	};
+	struct LoadThreadRasterResult {};
 
-	struct MainThreadRasterResult {
-		const Cesium3DTiles::RasterOverlayTile& rasterTile;
-		void* pLoadThreadResult;
-	};
+	struct MainThreadRasterResult {};
 
 	virtual void* prepareInLoadThread(
-		const CesiumGltf::Model& model,
-		const glm::dmat4& transform) override 
+		const CesiumGltf::Model& /*model*/,
+		const glm::dmat4& /*transform*/) override 
 	{
-		return new LoadThreadResult{model, transform};
+		return new LoadThreadResult{};
 	}
 
-	virtual void* prepareInMainThread(Cesium3DTiles::Tile& tile, void* pLoadThreadResult) override 
+	virtual void* prepareInMainThread(Cesium3DTiles::Tile& /*tile*/, void* /*pLoadThreadResult*/) override 
 	{
-		return new MainThreadResult{tile, pLoadThreadResult};
+		return new MainThreadResult{};
     }
 
 	virtual void free(
@@ -53,16 +42,16 @@ public:
 		}
 	}
 
-	virtual void* prepareRasterInLoadThread(const CesiumGltf::ImageCesium& image) override 
+	virtual void* prepareRasterInLoadThread(const CesiumGltf::ImageCesium& /*image*/) override 
 	{
-		return new LoadThreadRasterResult{image};
+		return new LoadThreadRasterResult{};
 	}
 
 	virtual void* prepareRasterInMainThread(
-            const Cesium3DTiles::RasterOverlayTile& rasterTile,
-            void* pLoadThreadResult) override 
+            const Cesium3DTiles::RasterOverlayTile& /*rasterTile*/,
+            void* /*pLoadThreadResult*/) override 
 	{
-		return new MainThreadRasterResult{rasterTile, pLoadThreadResult};
+		return new MainThreadRasterResult{};
 	}
 
 	virtual void freeRaster(
