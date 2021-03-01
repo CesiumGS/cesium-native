@@ -194,7 +194,7 @@ namespace CesiumAsync {
                 try {
                     return t.get();
                 } catch (std::exception& e) {
-                    return f(e);
+                    return f(std::move(e));
                 } catch (...) {
                     return f(std::runtime_error("Unknown exception"));
                 }
