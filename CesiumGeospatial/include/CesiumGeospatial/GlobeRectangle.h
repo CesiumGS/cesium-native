@@ -99,7 +99,7 @@ namespace CesiumGeospatial {
         constexpr Cartographic getNortheast() const noexcept { return Cartographic(this->_east, this->_north); }
 
         /**
-         * @brief Returns this rectangle as a {@link CesiumGemetry::Rectangle}.
+         * @brief Returns this rectangle as a {@link CesiumGeometry::Rectangle}.
          */
         constexpr CesiumGeometry::Rectangle toSimpleRectangle() const noexcept {
             return CesiumGeometry::Rectangle(this->getWest(), this->getSouth(), this->getEast(), this->getNorth());

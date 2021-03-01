@@ -1,7 +1,12 @@
+#include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -11,10 +16,12 @@ namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
-        const AsyncSystem& asyncSystem
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor
     ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
+        _pAssetAccessor(pAssetAccessor),
         _credit(std::nullopt),
         _pPrepareRendererResources(nullptr),
         _pLogger(nullptr),
@@ -27,7 +34,8 @@ namespace Cesium3DTiles {
         _imageHeight(1),
         _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
         _tileDataBytes(0),
-        _tilesCurrentlyLoading(0)
+        _totalTilesCurrentlyLoading(0),
+        _throttledTilesCurrentlyLoading(0)
     {
         // Placeholders should never be removed.
         this->_pPlaceholder->addReference();
@@ -35,7 +43,8 @@ namespace Cesium3DTiles {
 
     RasterOverlayTileProvider::RasterOverlayTileProvider(
         RasterOverlay& owner,
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
         std::optional<Credit> credit,
         std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
         std::shared_ptr<spdlog::logger> pLogger,
@@ -49,6 +58,7 @@ namespace Cesium3DTiles {
     ) noexcept :
         _pOwner(&owner),
         _asyncSystem(asyncSystem),
+        _pAssetAccessor(pAssetAccessor),
         _credit(credit),
         _pPrepareRendererResources(pPrepareRendererResources),
         _pLogger(pLogger),
@@ -61,25 +71,25 @@ namespace Cesium3DTiles {
         _imageHeight(imageHeight),
         _pPlaceholder(nullptr),
         _tileDataBytes(0),
-        _tilesCurrentlyLoading(0)
+        _totalTilesCurrentlyLoading(0),
+        _throttledTilesCurrentlyLoading(0)
     {
     }
 
     CesiumUtility::IntrusivePointer<RasterOverlayTile> RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
-        CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTileWithoutRequesting(id);
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTileWithoutCreating(id);
         if (pTile) {
             return pTile;
         }
 
-        ++this->_tilesCurrentlyLoading;
-        std::unique_ptr<RasterOverlayTile> pNew = this->requestNewTile(id);
-        CesiumUtility::IntrusivePointer<RasterOverlayTile> pResult = pNew.get();
+        std::unique_ptr<RasterOverlayTile> pNew = std::make_unique<RasterOverlayTile>(this->getOwner(), id);
 
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pResult = pNew.get();
         this->_tiles[id] = std::move(pNew);
         return pResult;
     }
 
-    CesiumUtility::IntrusivePointer<RasterOverlayTile> RasterOverlayTileProvider::getTileWithoutRequesting(const CesiumGeometry::QuadtreeTileID& id) {
+    CesiumUtility::IntrusivePointer<RasterOverlayTile> RasterOverlayTileProvider::getTileWithoutCreating(const CesiumGeometry::QuadtreeTileID& id) {
         auto it = this->_tiles.find(id);
         if (it != this->_tiles.end()) {
             return it->second.get();
@@ -349,15 +359,15 @@ namespace Cesium3DTiles {
                 CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
                 CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = this->getTile(QuadtreeTileID(imageryLevel, i, j));
+
+                if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
+                    this->loadTileThrottled(*pTile);
+                }
+
                 outputRasterTiles.emplace(outputRasterTiles.begin() + static_cast<std::vector<RasterMappedTo3DTile>::iterator::difference_type>(realOutputIndex), pTile, texCoordsRectangle);
                 ++realOutputIndex;
             }
         }
-    }
-
-    void RasterOverlayTileProvider::notifyTileLoaded(RasterOverlayTile* pTile) noexcept {
-        this->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
-        --this->_tilesCurrentlyLoading;
     }
 
     void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
@@ -378,8 +388,201 @@ namespace Cesium3DTiles {
         }
     }
 
-    std::unique_ptr<RasterOverlayTile> RasterOverlayTileProvider::requestNewTile(const CesiumGeometry::QuadtreeTileID& /*tileID*/) {
-        return nullptr;
+    void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
+        this->doLoad(tile, false);
     }
 
+    bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
+        if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
+            return true;
+        }
+
+        if (this->_throttledTilesCurrentlyLoading >= this->getOwner().getOptions().maximumSimultaneousTileLoads) {
+            return false;
+        }
+
+        doLoad(tile, true);
+        return true;
+    }
+
+    CesiumAsync::Future<LoadedRasterOverlayImage> RasterOverlayTileProvider::loadTileImageFromUrl(
+        const std::string& url,
+        const std::vector<IAssetAccessor::THeader>& headers,
+        const std::vector<Credit>& credits
+    ) const {
+        return this->getAssetAccessor()->requestAsset(this->getAsyncSystem(), url, headers).thenInWorkerThread([
+            credits
+        ](
+            std::shared_ptr<IAssetRequest>&& pRequest
+        ) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (pResponse == nullptr) {
+                return LoadedRasterOverlayImage {
+                    std::nullopt,
+                    std::move(credits),
+                    { "Image request failed." },
+                    {}
+                };
+            }
+
+            if (pResponse->data().size() == 0) {
+                return LoadedRasterOverlayImage {
+                    std::nullopt,
+                    std::move(credits),
+                    { "Image response is empty." },
+                    {}
+                };
+            }
+
+            gsl::span<const uint8_t> data = pResponse->data();
+            CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
+
+            return LoadedRasterOverlayImage {
+                loadedImage.image,
+                std::move(credits),
+                std::move(loadedImage.errors),
+                std::move(loadedImage.warnings)
+            };
+        });
+    }
+
+    void RasterOverlayTileProvider::doLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
+        if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
+            // Already loading or loaded, do nothing.
+            return;
+        }
+
+        // Don't let this tile be destroyed while it's loading.
+        tile.setState(RasterOverlayTile::LoadState::Loading);
+
+        this->beginTileLoad(tile, isThrottledLoad);
+
+        struct LoadResult {
+            RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+            CesiumGltf::ImageCesium image = {};
+            void* pRendererResources = nullptr;
+        };
+
+        this->loadTileImage(tile.getID()).thenInWorkerThread([
+            tileRectangle = this->getTilingScheme().tileToRectangle(tile.getID()),
+            projection = this->getProjection(),
+            cutoutsCollection = this->getOwner().getCutouts(),
+            pPrepareRendererResources = this->getPrepareRendererResources(),
+            pLogger = this->getLogger()
+        ](
+            LoadedRasterOverlayImage&& loadedImage
+        ) {
+            if (!loadedImage.image.has_value()) {
+                SPDLOG_LOGGER_ERROR(pLogger, "Failed to load image:\n- {}", CesiumUtility::joinToString(loadedImage.errors, "\n- "));
+                LoadResult result;
+                result.state = RasterOverlayTile::LoadState::Failed;
+                return result;
+            }
+
+            if (!loadedImage.warnings.empty()) {
+                SPDLOG_LOGGER_WARN(pLogger, "Warnings while loading image:\n- {}", CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+            }
+
+            CesiumGltf::ImageCesium& image = loadedImage.image.value();
+
+            int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+
+            if (image.pixelData.size() >= static_cast<size_t>(image.width * image.height * bytesPerPixel)) {
+                double tileWidth = tileRectangle.computeWidth();
+                double tileHeight = tileRectangle.computeHeight();
+
+                // Remove cutouts from the image by setting pixel alpha to 0.
+                gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = cutoutsCollection.getCutouts();
+
+                std::vector<uint8_t>& imageData = image.pixelData;
+                int width = image.width; 
+                int height = image.height;
+
+                for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
+                    CesiumGeometry::Rectangle cutoutRectangle = projectRectangleSimple(projection, rectangle);
+                    std::optional<CesiumGeometry::Rectangle> cutoutInTileOpt = tileRectangle.intersect(cutoutRectangle);
+                    if (!cutoutInTileOpt) {
+                        continue;
+                    }
+
+                    CesiumGeometry::Rectangle& cutoutInTile = cutoutInTileOpt.value();
+                    double startU = (cutoutInTile.minimumX - tileRectangle.minimumX) / tileWidth;
+                    double endU = (cutoutInTile.maximumX - tileRectangle.minimumX) / tileWidth;
+                    double startV = (cutoutInTile.minimumY - tileRectangle.minimumY) / tileHeight;
+                    double endV = (cutoutInTile.maximumY - tileRectangle.minimumY) / tileHeight;
+
+                    // The first row in the image is at v coordinate 1.0.
+                    startV = 1.0 - startV;
+                    endV = 1.0 - endV;
+
+                    std::swap(startV, endV);
+
+                    int32_t startPixelX = static_cast<int32_t>(std::floor(startU * width));
+                    int32_t endPixelX = static_cast<int32_t>(std::ceil(endU * width));
+                    int32_t startPixelY = static_cast<int32_t>(std::floor(startV * height));
+                    int32_t endPixelY = static_cast<int32_t>(std::ceil(endV * height));
+
+                    for (int32_t j = startPixelY; j < endPixelY; ++j) {
+                        int32_t rowStart = j * width * bytesPerPixel;
+                        for (int32_t i = startPixelX; i < endPixelX; ++i) {
+                            int32_t pixelStart = rowStart + i * bytesPerPixel;
+                            
+                            // Set alpha to 0
+                            imageData[size_t(pixelStart + 3)] = 0;
+                        }
+                    }
+                }
+
+                void* pRendererResources = pPrepareRendererResources->prepareRasterInLoadThread(image);
+
+                LoadResult result;
+                result.state = RasterOverlayTile::LoadState::Loaded;
+                result.image = std::move(image);
+                result.pRendererResources = pRendererResources;
+                return result;
+            } else {
+                LoadResult result;
+                result.pRendererResources = nullptr;
+                result.state = RasterOverlayTile::LoadState::Failed;
+                return result;
+            }
+        }).thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
+            tile._pRendererResources = result.pRendererResources;
+            tile._image = std::move(result.image);
+            tile.setState(result.state);
+
+            this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
+
+            this->finalizeTileLoad(tile, isThrottledLoad);
+        }).catchInMainThread([this, &tile, isThrottledLoad](const std::exception& /*e*/) {
+            tile._pRendererResources = nullptr;
+            tile._image = {};
+            tile.setState(RasterOverlayTile::LoadState::Failed);
+
+            this->finalizeTileLoad(tile, isThrottledLoad);
+        });
+
+    }
+
+    void RasterOverlayTileProvider::beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
+        // Keep this tile from being destroyed while it's loading.
+        tile.addReference();
+
+        ++this->_totalTilesCurrentlyLoading;
+        if (isThrottledLoad) {
+            ++this->_throttledTilesCurrentlyLoading;
+        }
+    }
+
+    void RasterOverlayTileProvider::finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
+        --this->_totalTilesCurrentlyLoading;
+        if (isThrottledLoad) {
+            --this->_throttledTilesCurrentlyLoading;
+        }
+
+        // Release the reference we held during load to prevent
+        // the tile from disappearing out from under us. This could cause
+        // it to immediately be deleted.
+        tile.releaseReference();
+    }
 }

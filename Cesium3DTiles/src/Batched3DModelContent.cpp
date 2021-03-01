@@ -71,16 +71,14 @@ namespace Cesium3DTiles {
 
 	}
 
+    std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
+		const TileContentLoadInput& input) {
+		return load(input.pLogger, input.url, input.data);
+	}
+	
 
     std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
 		std::shared_ptr<spdlog::logger> pLogger,
-		const TileContext& context,
-		const TileID& tileID,
-		const BoundingVolume& tileBoundingVolume,
-		double tileGeometricError,
-		const glm::dmat4& tileTransform,
-		const std::optional<BoundingVolume>& tileContentBoundingVolume,
-		TileRefine tileRefine,
 		const std::string& url,
 		const gsl::span<const uint8_t>& data
 	) {
@@ -152,13 +150,6 @@ namespace Cesium3DTiles {
 		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
         std::unique_ptr<TileContentLoadResult> pResult = GltfContent::load(
 			pLogger,
-			context,
-			tileID,
-			tileBoundingVolume,
-			tileGeometricError,
-			tileTransform,
-			tileContentBoundingVolume,
-			tileRefine,
 			url, 
 			glbData
 		);

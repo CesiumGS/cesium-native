@@ -237,6 +237,25 @@ function resolveDictionary(
   };
 }
 
+/**
+ * @brief Creates a documentation comment block for the given property.
+ * 
+ * The result will be a (non-indented) doxygen comment block that contains 
+ * the `briefDoc` (or `name`) and `fullDoc` from the given property values.
+ * 
+ * @param {Object} propertyValues The property
+ * @return {String} The comment block
+ */
+function createPropertyDoc(propertyValues) {
+  let propertyDoc = `/**\n * @brief ${propertyValues.briefDoc || propertyValues.name}\n`;
+  if (propertyValues.fullDoc) {
+    propertyDoc += ` *\n * ${propertyValues.fullDoc.split("\n").join("\n * ")}\n`;
+  }
+  propertyDoc += ` */`;
+  return propertyDoc;
+}
+ 
+
 function resolveEnum(
   schemaCache,
   config,
@@ -263,10 +282,12 @@ function resolveEnum(
     propertyDetails
   );
 
+  const propertyDefaultValues = propertyDefaults(propertyName, propertyDetails);
   const result = {
-    ...propertyDefaults(propertyName, propertyDetails),
+    ...propertyDefaultValues,
     localTypes: [
       unindent(`
+        ${createPropertyDoc(propertyDefaultValues)}
         enum class ${toPascalCase(propertyName)} {
             ${indent(
               propertyDetails.anyOf

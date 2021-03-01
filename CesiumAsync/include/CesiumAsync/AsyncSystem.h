@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CesiumAsync/Library.h"
-#include "CesiumAsync/IAssetAccessor.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -19,20 +18,20 @@
 #pragma warning(pop)
 
 namespace CesiumAsync {
-    class IAssetAccessor;
     class ITaskProcessor;
 
     template <class T>
     class Future;
 
     namespace Impl {
+        // Begin omitting doxgen warnings for Impl namespace
+        //! @cond Doxygen_Suppress
+
         struct AsyncSystemSchedulers {
             AsyncSystemSchedulers(
-                std::shared_ptr<IAssetAccessor> pAssetAccessor,
                 std::shared_ptr<ITaskProcessor> pTaskProcessor
             );
 
-            std::shared_ptr<IAssetAccessor> pAssetAccessor;
             std::shared_ptr<ITaskProcessor> pTaskProcessor;
             async::fifo_scheduler mainThreadScheduler;
 
@@ -108,6 +107,9 @@ namespace CesiumAsync {
                 TaskUnwrapper<Func>
             >::type::unwrap(std::forward<Func>(f));
         }
+
+        //! @endcond
+        // End omitting doxgen warnings for Impl namespace
     }
 
     /**
@@ -118,6 +120,10 @@ namespace CesiumAsync {
     template <class T>
     class Future final {
     public:
+
+        /**
+         * @brief Move constructor
+         */
         Future(Future<T>&& rhs) noexcept :
             _pSchedulers(std::move(rhs._pSchedulers)),
             _task(std::move(rhs._task))
@@ -149,7 +155,7 @@ namespace CesiumAsync {
          * @brief Registers a continuation function to be invoked in the main thread when this Future resolves, and invalidates this Future.
          * 
          * The supplied function will not be invoked immediately, even if this method is called from the main thread.
-         * Instead, it will be queued and invoked the next time {@link dispatchMainThreadTasks} is called.
+         * Instead, it will be queued and invoked the next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
          * 
          * If the function itself returns a `Future`, the function will not be considered complete
          * until that returned `Future` also resolves.
@@ -170,7 +176,7 @@ namespace CesiumAsync {
          * @brief Registers a continuation function to be invoked in the main thread when this Future rejects, and invalidates this Future.
          * 
          * The supplied function will not be invoked immediately, even if this method is called from the main thread.
-         * Instead, it will be queued and invoked the next time {@link dispatchMainThreadTasks} is called.
+         * Instead, it will be queued and invoked the next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
          * 
          * If the function itself returns a `Future`, the function will not be considered complete
          * until that returned `Future` also resolves.
@@ -231,25 +237,24 @@ namespace CesiumAsync {
         /**
          * @brief Constructs a new instance.
          * 
-         * @param pAssetAccessor The interface used to start asynchronous asset requests, usually over HTTP.
          * @param pTaskProcessor The interface used to run tasks in background threads.
          */
         AsyncSystem(
-            std::shared_ptr<IAssetAccessor> pAssetAccessor,
             std::shared_ptr<ITaskProcessor> pTaskProcessor
         ) noexcept;
 
-        /**
-         * @brief Requests a new asset, returning a `Future` that resolves when the request completes.
-         * 
-         * @param url The URL of the asset to request.
-         * @param headers The HTTP headers to include in the request.
-         * @return A Future that resolves when the request completes.
-         */
-        Future<std::unique_ptr<IAssetRequest>> requestAsset(
-            const std::string& url,
-            const std::vector<IAssetAccessor::THeader>& headers = std::vector<IAssetAccessor::THeader>()
-        ) const;
+        template <class T, class Func>
+        Future<T> createFuture(Func&& f) const {
+            std::shared_ptr<async::event_task<T>> pEvent = std::make_shared<async::event_task<T>>();
+
+            f([pEvent](T&& result) {
+                pEvent->set(std::move(result));
+            }, [pEvent](std::exception&& error) {
+                pEvent->set_exception(std::make_exception_ptr(error));
+            });
+
+            return Future<T>(this->_pSchedulers, pEvent->get_task());
+        }
 
         /**
          * @brief Runs a function in a worker thread, returning a promise that resolves when the function completes.
@@ -290,6 +295,13 @@ namespace CesiumAsync {
             );
         }
 
+        /**
+         * @brief Creates a future that is already resolved.
+         * 
+         * @tparam T The type of the future
+         * @param value The value for the future
+         * @return The future
+         */
         template <class T>
         Future<T> createResolvedFuture(T&& value) const {
             return Future<T>(this->_pSchedulers, async::make_task<T>(std::forward<T>(value)));

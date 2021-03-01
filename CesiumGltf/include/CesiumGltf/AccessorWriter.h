@@ -18,17 +18,19 @@ namespace CesiumGltf {
 		{
 		}
 
-		/** @copydoc AccessorView::AccessorView */
+		/** @copydoc AccessorView::AccessorView(const uint8_t*,int64_t,int64_t,int64_t) */
 		AccessorWriter(uint8_t* pData, int64_t stride, int64_t offset, int64_t size) :
 			_accessor(pData, stride, offset, size)
 		{
 		}
 
+		/** @copydoc AccessorView::AccessorView(const Model&,const Accessor&) */
 		AccessorWriter(Model& model, const Accessor& accessor) :
 			_accessor(model, accessor)
 		{
 		}
 
+		/** @copydoc AccessorView::AccessorView(const Model&,int32_t) */
 		AccessorWriter(Model& model, int32_t accessorIndex) :
 			_accessor(model, accessorIndex)
 		{

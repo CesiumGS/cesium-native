@@ -1,17 +1,37 @@
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
+#include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 
 using namespace CesiumAsync;
 
+namespace {
+    class PlaceholderTileProvider : public Cesium3DTiles::RasterOverlayTileProvider {
+    public:
+        PlaceholderTileProvider(
+            Cesium3DTiles::RasterOverlay& owner,
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            const std::shared_ptr<IAssetAccessor>& pAssetAccessor
+        ) noexcept :
+            Cesium3DTiles::RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor)
+        {
+        }
+
+        virtual CesiumAsync::Future<Cesium3DTiles::LoadedRasterOverlayImage> loadTileImage(const CesiumGeometry::QuadtreeTileID& /* tileID */) const override {
+            return this->getAsyncSystem().createResolvedFuture<Cesium3DTiles::LoadedRasterOverlayImage>({});
+        }
+    };
+}
+
 namespace Cesium3DTiles {
 
-    RasterOverlay::RasterOverlay() :
+    RasterOverlay::RasterOverlay(const RasterOverlayOptions& options) :
         _pPlaceholder(),
         _pTileProvider(),
         _cutouts(),
         _pSelf(),
-        _isLoadingTileProvider(false)
+        _isLoadingTileProvider(false),
+        _options(options)
     {
     }
 
@@ -27,24 +47,27 @@ namespace Cesium3DTiles {
     }
 
     void RasterOverlay::createTileProvider(
-        const AsyncSystem& asyncSystem,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CreditSystem>& pCreditSystem,
-        std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-        std::shared_ptr<spdlog::logger> pLogger
+        const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger
     ) {
         if (this->_pPlaceholder) {
             return;
         }
 
-        this->_pPlaceholder = std::make_unique<RasterOverlayTileProvider>(
+        this->_pPlaceholder = std::make_unique<PlaceholderTileProvider>(
             *this,
-            asyncSystem
+            asyncSystem,
+            pAssetAccessor
         );
 
         this->_isLoadingTileProvider = true;
 
         this->createTileProvider(
             asyncSystem,
+            pAssetAccessor,
             pCreditSystem,
             pPrepareRendererResources,
             pLogger,

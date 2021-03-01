@@ -13,6 +13,11 @@ namespace CesiumGltf {
      * @brief A camera's projection.  A node can reference a camera to apply a transform to place the camera in the scene.
      */
     struct CESIUMGLTF_API Camera final : public NamedObject {
+        /**
+         * @brief Specifies if the camera uses a perspective or orthographic projection.
+         *
+         * Based on this, either the camera's `perspective` or `orthographic` property will be defined.
+         */
         enum class Type {
             perspective,
 
