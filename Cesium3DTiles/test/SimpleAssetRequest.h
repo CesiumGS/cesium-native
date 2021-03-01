@@ -2,29 +2,39 @@
 
 #include "CesiumAsync/IAssetRequest.h"
 #include "SimpleAssetResponse.h"
+#include <memory>
 
 class SimpleAssetRequest : public CesiumAsync::IAssetRequest {
 public:
-	SimpleAssetRequest(const std::string& url,
-		std::unique_ptr<SimpleAssetResponse> pSimpleResponse)
-		: requestUrl{ url }
-		, pResponse{ std::move(pSimpleResponse) }
-	{}
+    SimpleAssetRequest(const std::string& method, 
+        const std::string& url, 
+        const CesiumAsync::HttpHeaders& headers, 
+        std::unique_ptr<SimpleAssetResponse> pResponse) 
+        : requestMethod{method}
+        , requestUrl{url}
+        , requestHeaders{headers}
+        , pResponse{std::move(pResponse)}
+    {}
 
-	virtual std::string url() const override {
-		return this->requestUrl;
-	}
+    virtual const std::string& method() const override {
+        return this->requestMethod;
+    }
 
-	virtual CesiumAsync::IAssetResponse* response() override {
-		return this->pResponse.get();
-	}
+    virtual const std::string& url() const override {
+        return this->requestUrl;
+    }
 
-	virtual void bind(std::function<void(CesiumAsync::IAssetRequest*)> callback) override {
-		callback(this);
-	}
+    virtual const CesiumAsync::HttpHeaders& headers() const override {
+        return this->requestHeaders;
+    }
 
-	virtual void cancel() noexcept override {}
+    virtual const CesiumAsync::IAssetResponse* response() const override {
+        return this->pResponse.get();
+    }
 
-	std::string requestUrl;
-	std::unique_ptr<SimpleAssetResponse> pResponse;
+    std::string requestMethod;
+    std::string requestUrl;
+    CesiumAsync::HttpHeaders requestHeaders;
+    std::unique_ptr<SimpleAssetResponse> pResponse;
 };
+

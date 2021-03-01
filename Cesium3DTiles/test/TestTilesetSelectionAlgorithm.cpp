@@ -119,11 +119,19 @@ TEST_CASE("Test replace refinement for render") {
 		"ll_ll.b3dm",
 	};
 
-	std::map<std::string, std::unique_ptr<SimpleAssetRequest>> mockCompletedRequests;
+	std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockCompletedRequests;
 	for (const auto& file : files) {
+		std::unique_ptr<SimpleAssetResponse> mockCompletedResponse = std::make_unique<SimpleAssetResponse>(static_cast<uint16_t>(200), 
+					"doesn't matter", 
+					CesiumAsync::HttpHeaders{}, 
+					readFile(testDataPath / file));
 		mockCompletedRequests.insert({ 
 			file, 
-			std::make_unique<SimpleAssetRequest>(file, std::make_unique<SimpleAssetResponse>(static_cast<uint16_t>(200), "doesn't matter", readFile(testDataPath / file))) });
+			std::make_shared<SimpleAssetRequest>(
+				"GET",
+				file, 
+				CesiumAsync::HttpHeaders{}, 
+				std::move(mockCompletedResponse))});
 	}
 
 	std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor = std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
@@ -483,11 +491,20 @@ TEST_CASE("Test additive refinement") {
 		"tileset3/ll.b3dm"
 	};
 
-	std::map<std::string, std::unique_ptr<SimpleAssetRequest>> mockCompletedRequests;
+	std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockCompletedRequests;
 	for (const auto& file : files) {
+		std::unique_ptr<SimpleAssetResponse> mockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+			static_cast<uint16_t>(200), 
+			"doesn't matter", 
+			CesiumAsync::HttpHeaders{},
+			readFile(testDataPath / file));
 		mockCompletedRequests.insert({ 
 			file, 
-			std::make_unique<SimpleAssetRequest>(file, std::make_unique<SimpleAssetResponse>(static_cast<uint16_t>(200), "doesn't matter", readFile(testDataPath / file))) });
+			std::make_shared<SimpleAssetRequest>(
+				"GET",
+				file, 
+				CesiumAsync::HttpHeaders{},
+				std::move(mockCompletedResponse)) });
 	}
 
 	std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor = std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));

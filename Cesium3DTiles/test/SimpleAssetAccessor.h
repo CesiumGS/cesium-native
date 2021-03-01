@@ -9,23 +9,25 @@
 
 class SimpleAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
-	SimpleAssetAccessor(std::map<std::string, std::unique_ptr<SimpleAssetRequest>>&& mockCompletedRequests)
+	SimpleAssetAccessor(std::map<std::string, std::shared_ptr<SimpleAssetRequest>>&& mockCompletedRequests)
 		: mockCompletedRequests{std::move(mockCompletedRequests)}
 	{}
 
-	virtual std::unique_ptr<CesiumAsync::IAssetRequest> requestAsset(
+	virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>> requestAsset(
+        const CesiumAsync::AsyncSystem& asyncSystem,
 		const std::string& url,
 		const std::vector<THeader>&) override
 	{
 		auto mockRequestIt = mockCompletedRequests.find(url);
 		if (mockRequestIt != mockCompletedRequests.end()) {
-			return std::move(mockRequestIt->second);
+			return asyncSystem.createResolvedFuture(std::shared_ptr<CesiumAsync::IAssetRequest>(mockRequestIt->second));
 		}
 
-		return nullptr;
+		return asyncSystem.createResolvedFuture(std::shared_ptr<CesiumAsync::IAssetRequest>(nullptr));
 	}
 
 	virtual void tick() noexcept override {}
 
-	std::map<std::string, std::unique_ptr<SimpleAssetRequest>> mockCompletedRequests;
+	std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockCompletedRequests;
 };
+
