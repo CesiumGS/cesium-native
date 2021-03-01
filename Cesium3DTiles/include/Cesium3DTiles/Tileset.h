@@ -264,6 +264,13 @@ namespace Cesium3DTiles {
         /** @copydoc Tileset::getOverlays() */
         const RasterOverlayCollection& getOverlays() const noexcept { return this->_overlays; }
 
+        /**
+         * @brief Updates this view but waits for all tiles that meet sse to finish loading and ready to be rendered before returning the function.
+         * This method is significantly slower than {@link Tileset::updateView} and should only be used for capturing movie or non-realtime situation. 
+         * @param viewState The {@link ViewState} that the view should be updated for
+         * @returns The set of tiles to render in the updated view. This value is only valid until
+         *          the next call to `updateView` or until the tileset is destroyed, whichever comes first.
+         */
         const ViewUpdateResult& updateViewOffline(const ViewState& viewState);
 
         /**
