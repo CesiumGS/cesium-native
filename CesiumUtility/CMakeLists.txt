@@ -2,35 +2,46 @@ add_library(CesiumUtility "")
 
 configure_cesium_library(CesiumUtility)
 
-file(GLOB SOURCES include/CesiumUtility*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumUtility/*.h)
+cesium_glob_files(CESIUM_UTILITY_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_UTILITY_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_UTILITY_PUBLIC_HEADERS include/CesiumGltf/*.h)
+cesium_glob_files(CESIUM_UTILITY_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_UTILITY_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumUtility
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_UTILITY_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_UTILITY_TEST_HEADERS}"
+)
 
 target_sources(
     CesiumUtility
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_UTILITY_SOURCES}
+        ${CESIUM_UTILITY_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_UTILITY_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumUtility
     SYSTEM PUBLIC
-        # RapidJSON isn't built with cmake, so manually add its include directory here.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
-
-        # This line shouldn't be unnecessary, because the glm include dirs will be set via the
-        # target_link_libraries line below. But there is currently at least one warning (which gets turned
-        # into an error) in a glm header, and there's no way to make the glm include directory a _system_
-        # include directory via target_link_libraries (which would ignore the warning). So we add it as a
-        # system include dir here.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/glm
-    PUBLIC
-        include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumUtility_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-target_link_libraries(CesiumUtility PUBLIC GSL glm uriparser)
+# GLM erroneously does not declare its include a `SYSTEM` include, so
+# we must extract its include_directories using this function and manually
+# reinclude it as 'SYSTEM'.
+target_link_libraries_system(
+    CesiumUtility
+    PUBLIC
+        glm
+)
+
+target_link_libraries(CesiumUtility 
+    PUBLIC 
+        GSL
+)

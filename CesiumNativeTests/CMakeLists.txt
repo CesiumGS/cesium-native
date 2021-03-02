@@ -1,0 +1,78 @@
+add_executable(cesium-native-tests "")
+configure_cesium_library(cesium-native-tests)
+
+# Add tests here, ensure they define the TEST_SOURCES / TEST_HEADERS
+# properties.
+set(cesium_native_targets 
+    Cesium3DTiles 
+    CesiumAsync
+    CesiumGeometry
+    CesiumGeospatial
+    CesiumGltf
+    CesiumGltfReader
+    CesiumUtility
+)
+
+set(test_sources "")
+set(test_headers "")
+set(test_include_directories "")
+
+
+# Iterate through all targets, extracting their private sources and test sources / test headers
+foreach(target ${cesium_native_targets})
+    get_target_property(target_test_sources ${target} TEST_SOURCES)
+    get_target_property(target_test_headers ${target} TEST_HEADERS)
+
+    if ("${target_test_sources}" MATCHES ".*NOTFOUND$")
+        message(FATAL_ERROR "${target} did not define TEST_SOURCES property. Use quotes to prevent an empty list from generating this error.")
+    endif()
+
+    if ("${target_test_headers}" MATCHES ".*NOTFOUND$")
+        message(FATAL_ERROR "${target} did not define TEST_HEADERS property. Use quotes to prevent an empty list from generating this error.")
+    endif()
+
+    list(APPEND test_sources "${target_test_sources}")
+    list(APPEND test_headers "${target_test_headers}")
+
+    # Workaround to extract the private include directories from a target.
+    # (public ∪ private) - interface = private in CMake
+    get_target_property(_public_private_include_directories ${target} INCLUDE_DIRECTORIES)
+    get_target_property(_interface_include_directories ${target} INTERFACE_INCLUDE_DIRECTORIES)
+    set(_private_include_directories "")
+    list(APPEND _private_include_directories ${_public_private_include_directories})
+    list(REMOVE_ITEM _private_include_directories ${_interface_include_directories})
+    list(APPEND test_include_directories ${_private_include_directories})
+
+    # Add hardcoded defines to test data directories if they defined
+    # the `TEST_DATA_DIR` property on their targets.
+    get_target_property(target_test_data_dir ${target} TEST_DATA_DIR)
+    if (NOT "${target_test_data_dir}" MATCHES ".*NOTFOUND$")
+        target_compile_definitions(
+            cesium-native-tests
+            PRIVATE
+                ${target}_TEST_DATA_DIR=\"${target_test_data_dir}\"
+        )
+    endif()
+endforeach()
+
+target_sources(
+    cesium-native-tests
+    PRIVATE
+        ${test_sources}
+        ${test_headers}
+        src/test-main.cpp
+)
+
+target_include_directories(
+    cesium-native-tests
+    PRIVATE
+        ${test_include_directories}
+        ${CATCH2_SINGLE_INCLUDE_DIR}
+)
+
+target_link_libraries(
+    cesium-native-tests
+    PRIVATE
+        ${cesium_native_targets}
+        Catch2::Catch2
+)

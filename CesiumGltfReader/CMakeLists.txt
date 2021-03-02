@@ -1,30 +1,46 @@
 add_library(CesiumGltfReader "")
-
 configure_cesium_library(CesiumGltfReader)
 
-file(GLOB SOURCES include/CesiumGltf/*.h src/*.cpp src/*.h generated/*.cpp generated/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
+cesium_glob_files(CESIUM_GLTF_READER_SOURCES src/*.cpp generated/*.cpp)
+cesium_glob_files(CESIUM_GLTF_READER_HEADERS src/*.h src/*.hpp generated/*.h generated/*.hpp)
+cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS include/CesiumGltf/*.h)
+cesium_glob_files(CESIUM_GLTF_READER_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_GLTF_READER_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumGltfReader
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_GLTF_READER_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_GLTF_READER_TEST_HEADERS}"
+        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
+)
 
 target_sources(
     CesiumGltfReader
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_GLTF_READER_SOURCES}
+        ${CESIUM_GLTF_READER_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_GLTF_READER_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumGltfReader
     SYSTEM PUBLIC
-        # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
+        # Necessary for `draco/draco_features.h`
+        ${CESIUM_NATIVE_DRACO_INCLUDE_DIR} 
         ${CMAKE_BINARY_DIR}
-    PUBLIC
-        include
+        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
-        src
-        generated
+        ${CMAKE_CURRENT_LIST_DIR}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated
 )
 
-target_link_libraries(CesiumGltfReader PUBLIC CesiumGltf CesiumUtility GSL PRIVATE draco modp_b64)
+target_link_libraries(CesiumGltfReader 
+    PUBLIC 
+        CesiumGltf 
+        GSL 
+    PRIVATE 
+        draco 
+        modp_b64
+)

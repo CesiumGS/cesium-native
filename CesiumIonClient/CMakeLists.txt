@@ -2,25 +2,39 @@ add_library(CesiumIonClient "")
 
 configure_cesium_library(CesiumIonClient)
 
-file(GLOB SOURCES include/CesiumIonClient/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumIonClient/*.h)
+cesium_glob_files(CESIUM_ION_CLIENT_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_ION_CLIENT_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_ION_CLIENT_PUBLIC_HEADERS include/CesiumIonClient/*.h)
+cesium_glob_files(CESIUM_ION_CLIENT_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_ION_CLIENT_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumIonClient 
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_ION_CLIENT_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_ION_CLIENT_TEST_HEADERS}"
+)
 
 target_sources(
     CesiumIonClient
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_ION_CLIENT_TEST_SOURCES}
+        ${CESIUM_ION_CLIENT_TEST_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_ION_CLIENT_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumIonClient
-    PUBLIC
-        include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumIonClient_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
+    SYSTEM PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-target_link_libraries(CesiumIonClient PUBLIC CesiumAsync CesiumUtility httplib::httplib csprng modp_b64 PicoSHA2)
+target_link_libraries(CesiumIonClient 
+    PUBLIC 
+        CesiumAsync 
+        CesiumUtility 
+        httplib::httplib 
+        csprng 
+        modp_b64 
+        PicoSHA2
+)
