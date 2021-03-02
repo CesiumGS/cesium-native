@@ -97,5 +97,8 @@ add_subdirectory(Cesium3DTiles)
 add_subdirectory(CesiumIonClient)
 
 # Private Targets
+# enable_testing() MUST be called before add_subdirectory or no tests
+# will be found by ctest
+enable_testing()
 add_subdirectory(CesiumNativeTests)
 add_subdirectory(doc)
