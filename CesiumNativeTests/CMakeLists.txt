@@ -10,6 +10,7 @@ set(cesium_native_targets
     CesiumGeospatial
     CesiumGltf
     CesiumGltfReader
+    CesiumGltfWriter
     CesiumUtility
 )
 

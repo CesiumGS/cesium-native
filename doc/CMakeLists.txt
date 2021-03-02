@@ -9,6 +9,7 @@ if (DOXYGEN_FOUND)
         ../CesiumGeospatial/include
         ../CesiumGltf/include
         ../CesiumGltfReader/include
+        ../CesiumGltfWriter/include
         ../CesiumUtility/include
     )
 
@@ -21,6 +22,7 @@ if (DOXYGEN_FOUND)
         ../CesiumGeospatial/test
         ../CesiumGltf/test
         ../CesiumGltfReader/test
+        ../CesiumGltfWriter/test
         ../CesiumUtility/test
     )
 
