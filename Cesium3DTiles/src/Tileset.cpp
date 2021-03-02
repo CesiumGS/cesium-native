@@ -19,6 +19,7 @@
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
 #include <optional>
+#include <unordered_set>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -240,6 +241,27 @@ namespace Cesium3DTiles {
         // angle at all.
 
         return density;
+    }
+
+    const ViewUpdateResult& Tileset::updateViewOffline(const ViewState& viewState) {
+        std::vector<Tile*> tilesRenderedPrevFrame = this->_updateResult.tilesToRenderThisFrame;
+
+        this->updateView(viewState);
+        while (this->_loadsInProgress > 0) {
+            this->_externals.pAssetAccessor->tick();
+			this->updateView(viewState);
+        }
+
+        std::unordered_set<Tile*> uniqueTilesToRenderedThisFrame(this->_updateResult.tilesToRenderThisFrame.begin(), this->_updateResult.tilesToRenderThisFrame.end());
+        std::vector<Tile*> tilesToNoLongerRenderThisFrame;
+        for (Tile* tile : tilesRenderedPrevFrame) {
+            if (uniqueTilesToRenderedThisFrame.find(tile) == uniqueTilesToRenderedThisFrame.end()) {
+                tilesToNoLongerRenderThisFrame.emplace_back(tile);
+            }
+        }
+
+        this->_updateResult.tilesToNoLongerRenderThisFrame = std::move(tilesToNoLongerRenderThisFrame);
+        return this->_updateResult;
     }
 
     const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
