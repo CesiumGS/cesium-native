@@ -1,33 +1,45 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
+#include <cmath>
 #include <cstdint>
+#include <gsl/narrow>
 #include <initializer_list>
-#include <string>
 #include <map>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
+#include <string_view>
 
 namespace CesiumGltf {
+    
+    struct JsonValueMissingKey : public std::runtime_error {
+        JsonValueMissingKey(const std::string& key) : std::runtime_error(key + " is not present in Object") {}
+    };
+
+    struct JsonInvalidDoubleValue : public std::runtime_error {
+        JsonInvalidDoubleValue(const std::string& err) : std::runtime_error(err) {}
+    };
+
+    struct JsonValueNotRealValue : public std::runtime_error {
+        JsonValueNotRealValue() : std::runtime_error("this->value was not double, uint64_t or int64_t") {}
+    };
 
     /**
      * @brief A generic implementation of a value in a JSON structure.
-     * 
+     *
      * Instances of this class are used to represent the common `extras` field
      * of glTF elements that extend the the {@link ExtensibleObject} class.
      */
     class CESIUMGLTF_API JsonValue final {
     public:
-
         /**
          * @brief The type to represent a `null` JSON value.
          */
         using Null = std::nullptr_t;
-
-        /**
-         * @brief The type to represent a `Number` JSON value.
-         */
-        using Number = double;
 
         /**
          * @brief The type to represent a `Bool` JSON value.
@@ -61,48 +73,60 @@ namespace CesiumGltf {
 
         /**
          * @brief Creates a `Number` JSON value.
+
+         * @throws If a NaN or ±Infinity double is supplied.
          */
-        JsonValue(double v) : value(v) {}
+        JsonValue(double v) {
+            if (std::isnan(v)) {
+                throw JsonInvalidDoubleValue("NaN is not a valid JsonValue type.");
+            }
+
+            if (std::isinf(v)) {
+                throw JsonInvalidDoubleValue("±inf is not a valid JsonValue type.");
+            }
+
+            value = v;
+        }
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::int64_t` JSON value (Widening conversion from std::int8_t).
          */
-        JsonValue(int8_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::int8_t v) : value(static_cast<std::int64_t>(v)) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::uint64_t` JSON value (Widening conversion from std::uint8_t).
          */
-        JsonValue(uint8_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::uint8_t v) : value(static_cast<std::uint64_t>(v)) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::int64_t` JSON value (Widening conversion from std::int16_t).
          */
-        JsonValue(int16_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::int16_t v) : value(static_cast<std::int64_t>(v)) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::uint64_t` JSON value (Widening conversion from std::uint16_t).
          */
-        JsonValue(uint16_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::uint16_t v) : value(static_cast<std::uint64_t>(v)) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::int64_t` JSON value (Widening conversion from std::int32_t).
          */
-        JsonValue(int32_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::int32_t v) : value(static_cast<std::int64_t>(v)) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::uint64_t` JSON value (Widening conversion from std::uint32_t).
          */
-        JsonValue(uint32_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::uint32_t v) : value(static_cast<std::uint64_t>(v)) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::int64_t` JSON value.
          */
-        JsonValue(int64_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::int64_t v) : value(v) {}
 
         /**
-         * @brief Creates a `Number` JSON value.
+         * @brief Creates a `std::uint64_t` JSON value.
          */
-        JsonValue(uint64_t v) : JsonValue(static_cast<double>(v)) {}
+        JsonValue(std::uint64_t v) : value(v) {}
 
         /**
          * @brief Creates a `Bool` JSON value.
@@ -147,149 +171,392 @@ namespace CesiumGltf {
         /**
          * @brief Creates an JSON value from the given initializer list.
          */
-        JsonValue(std::initializer_list<JsonValue> v) :
-            value(std::vector<JsonValue>(v)) {}
+        JsonValue(std::initializer_list<JsonValue> v)
+            : value(std::vector<JsonValue>(v)) {}
 
         /**
          * @brief Creates an JSON value from the given initializer list.
          */
-        JsonValue(std::initializer_list<std::pair<const std::string, JsonValue>> v) :
-            value(std::map<std::string, JsonValue>(v)) {}
+        JsonValue(
+            std::initializer_list<std::pair<const std::string, JsonValue>> v)
+            : value(std::map<std::string, JsonValue>(v)) {}
+
+        [[nodiscard]] const JsonValue* getValuePtrForKey(const std::string& key) const;
+        [[nodiscard]] JsonValue* getValuePtrForKey(const std::string& key);
 
         /**
-         * @brief Gets the number from the value, or a default if the value does not contain a number.
-         * 
-         * @param defaultValue The default value to return if the value is not a number.
-         * @return The number.
+         * @brief Gets a typed value corresponding to the given key in the
+         * object represented by this instance.
+         *
+         * If this instance is not a {@link JsonValue::Object}, returns
+         * `nullptr`. If the key does not exist in this object, returns
+         * `nullptr`. If the named value does not have the type T, returns
+         * nullptr.
+         *
+         * @tparam T The expected type of the value.
+         * @param key The key for which to retrieve the value from this object.
+         * @return A pointer to the requested value, or nullptr if the value
+         * cannot be obtained as requested.
          */
-        double getNumber(double defaultValue) const;
+        template <typename T>
+        const T* getValuePtrForKey(const std::string& key) const {
+            const JsonValue* pValue = this->getValuePtrForKey(key);
+            if (!pValue) {
+                return nullptr;
+            }
+
+            return std::get_if<T>(&pValue->value);
+        }
 
         /**
-         * @brief Gets the bool from the value, or a default if the value does not contain a bool.
-         * 
-         * @param defaultValue The default value to return if the value is not a bool.
-         * @return The bool.
+         * @brief Gets a typed value corresponding to the given key in the
+         * object represented by this instance.
+         *
+         * If this instance is not a {@link JsonValue::Object}, returns
+         * `nullptr`. If the key does not exist in this object, returns
+         * `nullptr`. If the named value does not have the type T, returns
+         * nullptr.
+         *
+         * @tparam T The expected type of the value.
+         * @param key The key for which to retrieve the value from this object.
+         * @return A pointer to the requested value, or nullptr if the value
+         * cannot be obtained as requested.
          */
-        bool getBool(bool defaultValue) const;
+        template <typename T> T* getValuePtrForKey(const std::string& key) {
+            JsonValue* pValue = this->getValuePtrForKey(key);
+            return std::get_if<T>(&pValue->value);
+        }
 
         /**
-         * @brief Gets the string from the value, or a default if the value does not contain a string.
-         * 
-         * @param defaultValue The default value to return if the value is not a string.
+         * @brief Converts the numerical value corresponding to the given key
+         * to the provided numerical template type.
+
+         * If this instance is not a {@link JsonValue::Object}, throws
+         * `std::bad_variant_access`. If the key does not exist in this object, throws
+         * `JsonValueMissingKey`. If the named value does not have a numerical type T,
+         *  throws `JsonValueNotRealValue`, if the named value cannot be converted from
+         * `double` / `std::uint64_t` / `std::int64_t` without precision loss, throws
+         * `gsl::narrowing_error`
+         * @tparam To The expected type of the value.
+         * @param key The key for which to retrieve the value from this object.
+         * @return The converted value. 
+         * @throws If unable to convert the converted value for one of the aforementioned reasons.
+         */
+        template <
+            typename To,
+            typename std::enable_if<
+                std::is_integral<To>::value ||
+                std::is_floating_point<To>::value>::type* = nullptr>
+        [[nodiscard]] To getSafeNumericalValueForKey(const std::string& key) const {
+            const Object& pObject = std::get<Object>(this->value);
+            const auto it = pObject.find(key);
+            if (it == pObject.end()) {
+                throw JsonValueMissingKey(key);
+            }
+            return it->second.getSafeNumber<To>();
+        }
+
+        [[nodiscard]] inline bool hasKey(const std::string& key) const {
+            return std::get<Object>(this->value).count(key) != 0;
+        }
+
+        /**
+         * @brief Gets the numerical quantity from the value casted to the `To`
+         * type. This function should be used over `getDouble()` / `getUint64()` / `getInt64()`
+         * if you plan on casting that type into another smaller type or different type.
+         * @returns The converted type if it can be cast without precision loss.
+         * @throws If the underlying value is not a numerical type or it cannot be
+         *         converted without precision loss.
+         */
+        template <
+            typename To,
+            typename std::enable_if<
+                std::is_integral<To>::value ||
+                std::is_floating_point<To>::value>::type* = nullptr>
+        [[nodiscard]] To getSafeNumber() const {
+            const std::uint64_t* uInt =
+                std::get_if<std::uint64_t>(&this->value);
+            if (uInt) {
+                return gsl::narrow<To>(*uInt);
+            }
+
+            const std::int64_t* sInt = std::get_if<std::int64_t>(&this->value);
+            if (sInt) {
+                return gsl::narrow<To>(*sInt);
+            }
+
+            const double* real = std::get_if<double>(&this->value);
+            if (real) {
+                return gsl::narrow<To>(*real);
+            }
+
+            throw JsonValueNotRealValue();
+        }
+
+        /**
+         * @brief Gets the numerical quantity from the value casted to the `To`
+         * type or returns defaultValue if unable to do so.
+
+         * @returns The converted type if it can be cast without precision loss
+         * or `defaultValue` if it cannot be converted safely.
+         */
+        template <
+            typename To,
+            typename std::enable_if<
+                std::is_integral<To>::value ||
+                std::is_floating_point<To>::value>::type* = nullptr>
+        [[nodiscard]] To getNumberOrDefault(To defaultValue) const noexcept {
+            const std::uint64_t* uInt =
+                std::get_if<std::uint64_t>(&this->value);
+            if (uInt) {
+                try {
+                    return gsl::narrow<To>(*uInt);
+                } catch (...) {
+                    return defaultValue;
+                }
+            }
+
+            const std::int64_t* sInt = std::get_if<std::int64_t>(&this->value);
+            if (sInt) {
+                try {
+                    return gsl::narrow<To>(*sInt);
+                } catch (...) {
+                    return defaultValue;
+                }
+            }
+
+            const double* real = std::get_if<double>(&this->value);
+            if (real) {
+                try {
+                    return gsl::narrow<To>(*real);
+                } catch (...) {
+                    return defaultValue;
+                }
+            }
+
+            return defaultValue;
+        }
+
+        /**
+         * @brief Gets the object from the value.
+         * @return The object.
+         * @throws std::bad_variant_access if the underlying type is not a JsonValue::Object
+         */
+
+        [[nodiscard]] inline const JsonValue::Object& getObject() const {
+            return std::get<JsonValue::Object>(this->value);
+        }
+
+        /**
+         * @brief Gets the string from the value.
          * @return The string.
+         * @throws std::bad_variant_access if the underlying type is not a JsonValue::String
          */
-        std::string getString(const std::string& defaultValue) const;
-
-        /**
-         * @brief Gets a typed value corresponding to the given key in the object represented by this instance.
-         * 
-         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
-         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
-         * 
-         * @tparam T The expected type of the value.
-         * @param key The key for which to retrieve the value from this object.
-         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
-         */
-        template <typename T>
-        const T* getValueForKey(const std::string& key) const {
-            const JsonValue* pValue = this->getValueForKey(key);
-            if (!pValue) {
-                return nullptr;
-            }
-
-            return std::get_if<T>(&pValue->value);
+        [[nodiscard]] inline const JsonValue::String& getString() const {
+            return std::get<String>(this->value);
         }
 
         /**
-         * @brief Gets a typed value corresponding to the given key in the object represented by this instance.
-         * 
-         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
-         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
-         * 
-         * @tparam T The expected type of the value.
-         * @param key The key for which to retrieve the value from this object.
-         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         * @brief Gets the array from the value.
+         * @return The arrayj.
+         * @throws std::bad_variant_access if the underlying type is not a JsonValue::Array
          */
-        template <typename T>
-        T* getValueForKey(const std::string& key) {
-            JsonValue* pValue = this->getValueForKey(key);
-            if (!pValue) {
-                return nullptr;
-            }
-
-            return std::get_if<T>(&pValue->value);
+        [[nodiscard]] inline const JsonValue::Array& getArray() const {
+            return std::get<JsonValue::Array>(this->value);
         }
 
         /**
-         * @brief Gets the value corresponding to the given key in the object represented by this instance.
-         * 
-         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
-         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
-         * 
-         * @param key The key for which to retrieve the value from this object.
-         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         * @brief Gets the bool from the value.
+         * @return The bool.
+         * @throws std::bad_variant_access if the underlying type is not a JsonValue::Bool
          */
-        const JsonValue* getValueForKey(const std::string& key) const;
+        [[nodiscard]] inline bool getBool() const {
+            return std::get<bool>(this->value);
+        }
 
         /**
-         * @brief Gets the value corresponding to the given key in the object represented by this instance.
-         * 
-         * If this instance is not a {@link JsonValue::Object}, returns `nullptr`. If the key does not exist in
-         * this object, returns `nullptr`. If the named value does not have the type T, returns nullptr.
-         * 
-         * @param key The key for which to retrieve the value from this object.
-         * @return A pointer to the requested value, or nullptr if the value cannot be obtained as requested.
+         * @brief Gets the double from the value.
+         * @return The double.
+         * @throws std::bad_variant_access if the underlying type is not a double
          */
-        JsonValue* getValueForKey(const std::string& key);
+        [[nodiscard]] inline double getDouble() const {
+            return std::get<double>(this->value);
+        }
+
+        /**
+         * @brief Gets the std::uint64_t from the value.
+         * @return The std::uint64_t.
+         * @throws std::bad_variant_access if the underlying type is not a std::uint64_t
+         */
+        [[nodiscard]] std::uint64_t getUint64() const {
+            return std::get<std::uint64_t>(this->value);
+        }
+
+        /**
+         * @brief Gets the std::int64_t from the value.
+         * @return The std::int64_t.
+         * @throws std::bad_variant_access if the underlying type is not a std::int64_t
+         */
+        [[nodiscard]] std::int64_t getInt64() const {
+            return std::get<std::int64_t>(this->value);
+        }
+
+        /**
+         * @brief Gets the bool from the value or returns defaultValue
+         * @return The bool or defaultValue if this->value is not a bool.
+         */
+        [[nodiscard]] inline bool
+        getBoolOrDefault(bool defaultValue) {
+            const auto* v = std::get_if<bool>(&this->value);
+            if (v) {
+                return *v;
+            }
+
+            return defaultValue;
+        }
+
+        /**
+         * @brief Gets the string from the value or returns defaultValue
+         * @return The string or defaultValue if this->value is not a string.
+         */
+        [[nodiscard]] inline const JsonValue::String
+        getStringOrDefault(String defaultValue) {
+            const auto* v = std::get_if<JsonValue::String>(&this->value);
+            if (v) {
+                return *v;
+            }
+
+            return defaultValue;
+        }
+
+        /**
+         * @brief Gets the double from the value or returns defaultValue
+         * @return The double or defaultValue if this->value is not a double.
+         */
+        [[nodiscard]] inline double
+        getDoubleOrDefault(double defaultValue) {
+            const auto* v = std::get_if<double>(&this->value);
+            if (v) {
+                return *v;
+            }
+
+            return defaultValue;
+        }
+
+        /**
+         * @brief Gets the uint64_t from the value or returns defaultValue
+         * @return The uint64_t or defaultValue if this->value is not a uint64_t.
+         */
+        [[nodiscard]] inline std::uint64_t
+        getUint64OrDefault(std::uint64_t defaultValue) {
+            const auto* v = std::get_if<std::uint64_t>(&this->value);
+            if (v) {
+                return *v;
+            }
+
+            return defaultValue;
+        }
+
+        /**
+         * @brief Gets the int64_t from the value or returns defaultValue
+         * @return The int64_t or defaultValue if this->value is not a int64_t.
+         */
+        [[nodiscard]] inline std::int64_t
+        getInt64OrDefault(std::int64_t defaultValue) {
+            const auto* v = std::get_if<std::int64_t>(&this->value);
+            if (v) {
+                return *v;
+            }
+
+            return defaultValue;
+        }
 
         /**
          * @brief Returns whether this value is a `null` value.
          */
-        bool isNull() const;
+        [[nodiscard]] inline bool isNull() const noexcept {
+            return std::holds_alternative<Null>(this->value);
+        }
 
         /**
-         * @brief Returns whether this value is a `Number` value.
+         * @brief Returns whether this value is a `double`, `std::uint64_t` or
+         * `std::int64_t`. Use this function in conjunction with `getNumber` for
+         *  safely casting to arbitrary types
          */
-        bool isNumber() const;
+        [[nodiscard]] inline bool isNumber() const noexcept {
+            return isDouble() || isUint64() || isInt64();
+        }
 
         /**
          * @brief Returns whether this value is a `Bool` value.
          */
-        bool isBool() const;
+        [[nodiscard]] inline bool isBool() const noexcept {
+            return std::holds_alternative<Bool>(this->value);
+        }
 
         /**
          * @brief Returns whether this value is a `String` value.
          */
-        bool isString() const;
+        [[nodiscard]] inline bool isString() const noexcept {
+            return std::holds_alternative<String>(this->value);
+        }
 
         /**
          * @brief Returns whether this value is an `Object` value.
          */
-        bool isObject() const;
+        [[nodiscard]] inline bool isObject() const noexcept {
+            return std::holds_alternative<Object>(this->value);
+        }
 
         /**
          * @brief Returns whether this value is an `Array` value.
          */
-        bool isArray() const;
+        [[nodiscard]] inline bool isArray() const noexcept {
+            return std::holds_alternative<Array>(this->value);
+        }
 
-        /** 
-         * @brief The actual value. 
-         * 
-         * The type of the value may be queried with the `isNull`, `isNumber`, 
-         * `isBool`, `isString`, `isObject`, and `isArray` functions.
-         * 
+        /**
+         * @brief Returns whether this value is a `double` value.
+         */
+        [[nodiscard]] inline bool isDouble() const noexcept {
+            return std::holds_alternative<double>(this->value);
+        }
+
+        /**
+         * @brief Returns whether this value is a `std::uint64_t` value.
+         */
+        [[nodiscard]] inline bool isUint64() const noexcept {
+            return std::holds_alternative<std::uint64_t>(this->value);
+        }
+
+        /**
+         * @brief Returns whether this value is a `std::int64_t` value.
+         */
+        [[nodiscard]] inline bool isInt64() const noexcept {
+            return std::holds_alternative<std::int64_t>(this->value);
+        }
+
+        /**
+         * @brief The actual value.
+         *
+         * The type of the value may be queried with the `isNull`, `isDouble`,
+         * `isBool`, `isString`, `isObject`, `isUint64`, `isInt64`, `isNumber`, and 
+         * `isArray` functions.
+         *
          * The actual value may be obtained with the `getNumber`, `getBool`,
-         * and `getString` functions for the respective types. For 
-         * `Object` values, the properties may be accessed with the 
+         * and `getString` functions for the respective types. For
+         * `Object` values, the properties may be accessed with the
          * `getValueForKey` functions.
          */
         std::variant<
             Null,
-            Number,
+            double,
+            std::uint64_t,
+            std::int64_t,
             Bool,
             String,
             Object,
-            Array
-        > value;
+            Array>
+            value;
     };
 }

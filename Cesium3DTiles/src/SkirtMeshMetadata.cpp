@@ -1,4 +1,7 @@
 #include "SkirtMeshMetadata.h"
+#include <CesiumGltf/JsonValue.h>
+#include <optional>
+#include <stdexcept>
 
 using namespace CesiumGltf;
 
@@ -12,7 +15,7 @@ namespace Cesium3DTiles {
         SkirtMeshMetadata skirtMeshMetadata;
 
         const JsonValue& gltfSkirtMeshMetadata = skirtIt->second;
-        const JsonValue::Array* pNoSkirtRange = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Array>("noSkirtRange");
+        const auto* pNoSkirtRange = gltfSkirtMeshMetadata.getValuePtrForKey<JsonValue::Array>("noSkirtRange");
         if (!pNoSkirtRange || pNoSkirtRange->size() != 2) {
             return std::nullopt;
         }
@@ -21,8 +24,8 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        double noSkirtIndicesBegin = (*pNoSkirtRange)[0].getNumber(-1.0);
-        double noSkirtIndicesCount = (*pNoSkirtRange)[1].getNumber(-1.0);
+        double noSkirtIndicesBegin = (*pNoSkirtRange)[0].getNumberOrDefault<double>(-1.0);
+        double noSkirtIndicesCount = (*pNoSkirtRange)[1].getNumberOrDefault<double>(-1.0);
 
         if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0) {
             return std::nullopt;
@@ -31,7 +34,7 @@ namespace Cesium3DTiles {
         skirtMeshMetadata.noSkirtIndicesBegin = static_cast<uint32_t>(noSkirtIndicesBegin);
         skirtMeshMetadata.noSkirtIndicesCount = static_cast<uint32_t>(noSkirtIndicesCount);
 
-        const JsonValue::Array* pMeshCenter = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Array>("meshCenter");
+        const auto pMeshCenter = gltfSkirtMeshMetadata.getValuePtrForKey<JsonValue::Array>("meshCenter");
         if (!pMeshCenter || pMeshCenter->size() != 3) {
             return std::nullopt;
         }
@@ -41,24 +44,27 @@ namespace Cesium3DTiles {
         }
 
         skirtMeshMetadata.meshCenter = glm::dvec3(
-            (*pMeshCenter)[0].getNumber(0.0),
-            (*pMeshCenter)[1].getNumber(0.0),
-            (*pMeshCenter)[2].getNumber(0.0)
+            (*pMeshCenter)[0].getNumberOrDefault<double>(0.0),
+            (*pMeshCenter)[1].getNumberOrDefault<double>(0.0),
+            (*pMeshCenter)[2].getNumberOrDefault<double>(0.0)
         );
 
-        const double* pWestHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtWestHeight");
-        const double* pSouthHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtSouthHeight");
-        const double* pEastHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtEastHeight");
-        const double* pNorthHeight = gltfSkirtMeshMetadata.getValueForKey<JsonValue::Number>("skirtNorthHeight");
-
-        if (!pWestHeight || !pSouthHeight || !pEastHeight || !pNorthHeight) {
+        double pWestHeight, pSouthHeight, pEastHeight, pNorthHeight;
+        try {
+            pWestHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtWestHeight");
+            pSouthHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtSouthHeight");
+            pEastHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtEastHeight");
+            pNorthHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtNorthHeight");
+        } catch(const JsonValueMissingKey& e) {
+            return std::nullopt;
+        } catch (const JsonValueNotRealValue& e) {
             return std::nullopt;
         }
 
-        skirtMeshMetadata.skirtWestHeight = *pWestHeight;
-        skirtMeshMetadata.skirtSouthHeight = *pSouthHeight;
-        skirtMeshMetadata.skirtEastHeight = *pEastHeight;
-        skirtMeshMetadata.skirtNorthHeight = *pNorthHeight;
+        skirtMeshMetadata.skirtWestHeight = pWestHeight;
+        skirtMeshMetadata.skirtSouthHeight = pSouthHeight;
+        skirtMeshMetadata.skirtEastHeight = pEastHeight;
+        skirtMeshMetadata.skirtNorthHeight = pNorthHeight;
 
         return skirtMeshMetadata;
     }
