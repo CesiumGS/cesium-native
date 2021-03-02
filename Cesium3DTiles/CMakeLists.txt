@@ -16,8 +16,6 @@ target_sources(
 target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
-
         # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
         ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
 
@@ -30,4 +28,4 @@ target_include_directories(
         "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:Cesium3DTiles_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
-target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumGltf CesiumGltfReader CesiumUtility uriparser draco tinyxml2 spdlog)
+target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumGltf CesiumGltfReader CesiumUtility draco tinyxml2 spdlog)

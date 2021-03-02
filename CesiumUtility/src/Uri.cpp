@@ -1,6 +1,8 @@
-#include "Uri.h"
+#include "CesiumUtility/Uri.h"
 #include "uriparser/Uri.h"
 #include <stdexcept>
+
+using namespace CesiumUtility;
 
 std::string Uri::resolve(const std::string& base, const std::string& relative, bool useBaseQuery)
 {

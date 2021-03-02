@@ -3,7 +3,6 @@
 #include <future>
 
 namespace CesiumAsync {
-
     AsyncSystem::AsyncSystem(
         std::shared_ptr<ITaskProcessor> pTaskProcessor
     ) noexcept :

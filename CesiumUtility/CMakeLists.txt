@@ -16,6 +16,9 @@ target_sources(
 target_include_directories(
     CesiumUtility
     SYSTEM PUBLIC
+        # RapidJSON isn't built with cmake, so manually add its include directory here.
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
+
         # This line shouldn't be unnecessary, because the glm include dirs will be set via the
         # target_link_libraries line below. But there is currently at least one warning (which gets turned
         # into an error) in a glm header, and there's no way to make the glm include directory a _system_
@@ -30,4 +33,4 @@ target_include_directories(
         "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumUtility_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
 )
 
-target_link_libraries(CesiumUtility PUBLIC GSL glm)
+target_link_libraries(CesiumUtility PUBLIC GSL glm uriparser)

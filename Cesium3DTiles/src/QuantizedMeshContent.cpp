@@ -7,8 +7,8 @@
 #include "QuantizedMeshContent.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include "SkirtMeshMetadata.h"
-#include "Uri.h"
-#include "JsonHelpers.h"
+#include "CesiumUtility/Uri.h"
+#include "CesiumUtility/JsonHelpers.h"
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
 #include <stdexcept>

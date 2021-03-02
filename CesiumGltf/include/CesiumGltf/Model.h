@@ -33,7 +33,7 @@ namespace CesiumGltf {
             if (index < 0 || static_cast<size_t>(index) >= items.size()) {
                 return defaultObject;
             } else {
-                return items[index];
+                return items[static_cast<size_t>(index)];
             }
         }
 
@@ -50,7 +50,7 @@ namespace CesiumGltf {
             if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
                 return nullptr;
             } else {
-                return &(*pItems)[index];
+                return &(*pItems)[static_cast<size_t>(index)];
             }
         }
 
@@ -67,7 +67,7 @@ namespace CesiumGltf {
             if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
                 return nullptr;
             } else {
-                return &(*pItems)[index];
+                return &(*pItems)[static_cast<size_t>(index)];
             }
         }
     };

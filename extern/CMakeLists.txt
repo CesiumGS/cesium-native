@@ -22,3 +22,18 @@ add_subdirectory(spdlog)
 add_subdirectory(sqlite3)
 
 add_subdirectory(modp_b64)
+
+add_subdirectory(cpp-httplib)
+
+# CSPRNG's CMake setup is old school, and it really only has one source
+# file, so set up a library manually here.
+add_library(csprng CSPRNG/source/csprng.cpp)
+target_include_directories(
+    csprng
+    PUBLIC
+        CSPRNG/source
+)
+
+# PicoSHA2 doesn't have CMakeLists.txt at all
+add_library(PicoSHA2 INTERFACE)
+target_include_directories(PicoSHA2 SYSTEM INTERFACE PicoSHA2)

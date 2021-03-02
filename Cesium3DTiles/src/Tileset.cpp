@@ -13,9 +13,9 @@
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/Math.h"
 #include "calcQuadtreeMaxGeometricError.h"
-#include "JsonHelpers.h"
+#include "CesiumUtility/JsonHelpers.h"
 #include "TileUtilities.h"
-#include "Uri.h"
+#include "CesiumUtility/Uri.h"
 #include <glm/common.hpp>
 #include <rapidjson/document.h>
 #include <optional>
@@ -24,6 +24,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 
@@ -55,7 +56,8 @@ namespace Cesium3DTiles {
         _loadsInProgress(0),
         _loadedTiles(),
         _overlays(*this),
-        _tileDataBytes(0)
+        _tileDataBytes(0),
+        _supportsRasterOverlays(false)
     {
         ++this->_loadsInProgress;
         this->_loadTilesetJson(url);
@@ -90,7 +92,8 @@ namespace Cesium3DTiles {
         _loadsInProgress(0),
         _loadedTiles(),
         _overlays(*this),
-        _tileDataBytes(0)
+        _tileDataBytes(0),
+        _supportsRasterOverlays(false)
     {
         std::string ionUrl = "https://api.cesium.com/v1/assets/" + std::to_string(ionAssetID) + "/endpoint";
         if (ionAccessToken.size() > 0)
@@ -178,7 +181,7 @@ namespace Cesium3DTiles {
         std::string type = JsonHelpers::getStringOrDefault(ionResponse, "type", "");
         if (type == "TERRAIN") {
             // For terrain resources, we need to append `/layer.json` to the end of the URL.
-            url = Uri::resolve(url, "layer.json", true);
+            url = CesiumUtility::Uri::resolve(url, "layer.json", true);
         }
         else if (type != "3DTILES") {
             SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "Received unsupported asset response type: {}", type);
@@ -283,6 +286,10 @@ namespace Cesium3DTiles {
         Tile* pRootTile = this->getRootTile();
         if (!pRootTile) {
             return result;
+        }
+
+        if (!this->supportsRasterOverlays() && this->_overlays.size() > 0) {
+            this->_externals.pLogger->warn("Only quantized-mesh terrain tilesets currently support overlays.");
         }
 
         double fogDensity = computeFogDensity(this->_options.fogDensityTable, viewState);
@@ -423,6 +430,7 @@ namespace Cesium3DTiles {
         ](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             return Tileset::_handleTilesetResponse(std::move(pRequest), std::move(pContext), pLogger);
         }).thenInMainThread([this](LoadResult&& loadResult) {
+            this->_supportsRasterOverlays = loadResult.supportsRasterOverlays;
             this->addContext(std::move(loadResult.pContext));
             this->_pRootTile = std::move(loadResult.pRootTile);
             this->notifyTileDoneLoading(nullptr);
@@ -437,12 +445,12 @@ namespace Cesium3DTiles {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
             SPDLOG_LOGGER_ERROR(pLogger, "Did not receive a valid response for tileset {}", pRequest->url());
-            return LoadResult{ std::move(pContext), nullptr };
+            return LoadResult{ std::move(pContext), nullptr, false };
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
             SPDLOG_LOGGER_ERROR(pLogger, "Received status code {} for tileset {}", pResponse->statusCode(), pRequest->url());
-            return LoadResult{ std::move(pContext), nullptr };
+            return LoadResult{ std::move(pContext), nullptr, false };
         }
 
         pContext->baseUrl = pRequest->url();
@@ -454,7 +462,7 @@ namespace Cesium3DTiles {
 
         if (tileset.HasParseError()) {
             SPDLOG_LOGGER_ERROR(pLogger, "Error when parsing tileset JSON, error code {} at byte offset {}", tileset.GetParseError(), tileset.GetErrorOffset());
-            return LoadResult{ std::move(pContext), nullptr };
+            return LoadResult{ std::move(pContext), nullptr, false };
         }
 
         std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
@@ -463,19 +471,71 @@ namespace Cesium3DTiles {
         auto rootIt = tileset.FindMember("root");
         auto formatIt = tileset.FindMember("format");
 
+        bool supportsRasterOverlays = false;
+
         if (rootIt != tileset.MemberEnd()) {
             rapidjson::Value& rootJson = rootIt->value;
             Tileset::_createTile(*pRootTile, rootJson, glm::dmat4(1.0), TileRefine::Replace, *pContext, pLogger);
-        }
-        else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
+        } else if (formatIt != tileset.MemberEnd() && formatIt->value.IsString() && std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
             Tileset::_createTerrainTile(*pRootTile, tileset, *pContext, pLogger);
+            supportsRasterOverlays = true;
         }
 
         return LoadResult{
             std::move(pContext),
-            std::move(pRootTile)
+            std::move(pRootTile),
+            supportsRasterOverlays
         };
     }
+
+	static std::optional<BoundingVolume> getBoundingVolumeProperty(const rapidjson::Value& tileJson, const std::string& key) {
+		auto bvIt = tileJson.FindMember(key.c_str());
+		if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
+			return std::nullopt;
+		}
+
+		auto boxIt = bvIt->value.FindMember("box");
+		if (boxIt != bvIt->value.MemberEnd() && boxIt->value.IsArray() && boxIt->value.Size() >= 12) {
+			const auto& a = boxIt->value.GetArray();
+			for (rapidjson::SizeType i = 0; i < 12; ++i) {
+				if (!a[i].IsNumber()) {
+					return std::nullopt;
+				}
+			}
+			return OrientedBoundingBox(
+				glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
+				glm::dmat3(
+					a[3].GetDouble(), a[4].GetDouble(), a[5].GetDouble(),
+					a[6].GetDouble(), a[7].GetDouble(), a[8].GetDouble(),
+					a[9].GetDouble(), a[10].GetDouble(), a[11].GetDouble()
+				)
+			);
+		}
+
+		auto regionIt = bvIt->value.FindMember("region");
+		if (regionIt != bvIt->value.MemberEnd() && regionIt->value.IsArray() && regionIt->value.Size() >= 6) {
+			const auto& a = regionIt->value;
+			for (rapidjson::SizeType i = 0; i < 6; ++i) {
+				if (!a[i].IsNumber()) {
+					return std::nullopt;
+				}
+			}
+			return BoundingRegion(GlobeRectangle(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble(), a[3].GetDouble()), a[4].GetDouble(), a[5].GetDouble());
+		}
+
+		auto sphereIt = bvIt->value.FindMember("sphere");
+		if (sphereIt != bvIt->value.MemberEnd() && sphereIt->value.IsArray() && sphereIt->value.Size() >= 4) {
+			const auto& a = sphereIt->value;
+			for (rapidjson::SizeType i = 0; i < 4; ++i) {
+				if (!a[i].IsNumber()) {
+					return std::nullopt;
+				}
+			}
+			return BoundingSphere(glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()), a[3].GetDouble());
+		}
+
+		return std::nullopt;
+	}
 
     /*static*/ void Tileset::_createTile(Tile& tile, const rapidjson::Value& tileJson, const glm::dmat4& parentTransform, TileRefine parentRefine, const TileContext& context, const std::shared_ptr<spdlog::logger>& pLogger) {
         if (!tileJson.IsObject()) {
@@ -498,16 +558,16 @@ namespace Cesium3DTiles {
             }
 
             if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-                tile.setTileID(Uri::resolve(context.baseUrl, uriIt->value.GetString()));
+                tile.setTileID(CesiumUtility::Uri::resolve(context.baseUrl, uriIt->value.GetString()));
             }
 
-            std::optional<BoundingVolume> contentBoundingVolume = JsonHelpers::getBoundingVolumeProperty(contentIt->value, "boundingVolume");
+            std::optional<BoundingVolume> contentBoundingVolume = getBoundingVolumeProperty(contentIt->value, "boundingVolume");
             if (contentBoundingVolume) {
                 tile.setContentBoundingVolume(transformBoundingVolume(transform, contentBoundingVolume.value()));
             }
         }
 
-        std::optional<BoundingVolume> boundingVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "boundingVolume");
+        std::optional<BoundingVolume> boundingVolume = getBoundingVolumeProperty(tileJson, "boundingVolume");
         if (!boundingVolume) {
             SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
             return;
@@ -523,7 +583,7 @@ namespace Cesium3DTiles {
         //tile->setBoundingVolume(boundingVolume.value());
         tile.setGeometricError(geometricError.value());
 
-        std::optional<BoundingVolume> viewerRequestVolume = JsonHelpers::getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
+        std::optional<BoundingVolume> viewerRequestVolume = getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
         if (viewerRequestVolume) {
             tile.setViewerRequestVolume(transformBoundingVolume(transform, viewerRequestVolume.value()));
         }
@@ -658,7 +718,7 @@ namespace Cesium3DTiles {
 
         if (!extensionsToRequest.empty()) {
             for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
-                url = Uri::addQuery(url, "extensions", extensionsToRequest);
+                url = CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
             }
         }
 
@@ -1291,7 +1351,7 @@ namespace Cesium3DTiles {
                     return std::string();
                 }
 
-                return Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
+                return CesiumUtility::Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &quadtreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level" || placeholder == "z") {
                         return std::to_string(quadtreeID.level);
                     } else if (placeholder == "x") {
@@ -1311,7 +1371,7 @@ namespace Cesium3DTiles {
                     return std::string();
                 }
 
-                return Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
+                return CesiumUtility::Uri::substituteTemplateParameters(context.implicitContext.value().tileTemplateUrls[0], [this, &octreeID](const std::string& placeholder) -> std::string {
                     if (placeholder == "level") {
                         return std::to_string(octreeID.level);
                     } else if (placeholder == "x") {
@@ -1338,7 +1398,7 @@ namespace Cesium3DTiles {
             return url;
         }
 
-        return Uri::resolve(tile.getContext()->baseUrl, url, true);
+        return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
     }
 
     static bool anyRasterOverlaysNeedLoading(const Tile& tile) {

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <variant>
 
 #pragma warning(push)
 
@@ -193,7 +194,7 @@ namespace CesiumAsync {
                 try {
                     return t.get();
                 } catch (std::exception& e) {
-                    return f(e);
+                    return f(std::move(e));
                 } catch (...) {
                     return f(std::runtime_error("Unknown exception"));
                 }
@@ -203,6 +204,26 @@ namespace CesiumAsync {
                 this->_pSchedulers,
                 _task.then(this->_pSchedulers->mainThreadScheduler, catcher)
             );
+        }
+
+        /**
+         * @brief Waits for the future to resolve or reject and returns the result.
+         *
+         * This method must not be called from the main thread, the one that calls
+         * {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
+         * deadlock because the main thread tasks will never complete while this
+         * method is blocking the main thread.
+         *
+         * @return The value if the future resolves successfully, or the exception if it rejects.
+         */
+        std::variant<T, std::exception> wait() {
+            try {
+                return this->_task.get();
+            } catch (std::exception& e) {
+                return e;
+            } catch (...) {
+                return std::runtime_error("Unknown exception.");
+            }
         }
 
     private:
@@ -234,6 +255,25 @@ namespace CesiumAsync {
      */
     class CESIUMASYNC_API AsyncSystem final {
     public:
+        template <typename T>
+        struct Promise {
+            Promise(const std::shared_ptr<async::event_task<T>>& pEvent) :
+                _pEvent(pEvent)
+            {
+            }
+
+            void resolve(T&& value) const {
+                this->_pEvent->set(std::move(value));
+            }
+
+            void reject(std::exception&& error) const {
+                this->_pEvent->set_exception(std::make_exception_ptr(error));
+            }
+
+        private:
+            std::shared_ptr<async::event_task<T>> _pEvent;
+        };
+
         /**
          * @brief Constructs a new instance.
          * 
@@ -247,11 +287,8 @@ namespace CesiumAsync {
         Future<T> createFuture(Func&& f) const {
             std::shared_ptr<async::event_task<T>> pEvent = std::make_shared<async::event_task<T>>();
 
-            f([pEvent](T&& result) {
-                pEvent->set(std::move(result));
-            }, [pEvent](std::exception&& error) {
-                pEvent->set_exception(std::make_exception_ptr(error));
-            });
+            Promise<T> promise(pEvent);
+            f(promise);
 
             return Future<T>(this->_pSchedulers, pEvent->get_task());
         }
@@ -305,6 +342,10 @@ namespace CesiumAsync {
         template <class T>
         Future<T> createResolvedFuture(T&& value) const {
             return Future<T>(this->_pSchedulers, async::make_task<T>(std::forward<T>(value)));
+        }
+
+        Future<void> createResolvedFuture() const {
+            return Future<void>(this->_pSchedulers, async::make_task());
         }
 
         /**
