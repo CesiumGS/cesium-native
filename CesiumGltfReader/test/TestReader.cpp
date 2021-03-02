@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdio>
 #include <glm/vec3.hpp>
+#include <filesystem>
 
 using namespace CesiumGltf;
 
@@ -90,7 +91,9 @@ TEST_CASE("CesiumGltf::Reader") {
 }
 
 TEST_CASE("Read TriangleWithoutIndices") {
-    std::vector<uint8_t> data = readFile("../CesiumGltfReader/test/data/TriangleWithoutIndices.gltf");
+    std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+    gltfFile /= "TriangleWithoutIndices.gltf";
+    std::vector<uint8_t> data = readFile(gltfFile.string());
     ModelReaderResult result = CesiumGltf::readModel(data);
     REQUIRE(result.model);
 

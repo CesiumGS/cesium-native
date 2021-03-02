@@ -1057,7 +1057,11 @@ namespace Cesium3DTiles {
 
         // Remove all descendants from the render list and add this tile.
         renderList.erase(renderList.begin() + static_cast<std::vector<Tile*>::iterator::difference_type>(firstRenderedDescendantIndex), renderList.end());
-        renderList.push_back(&tile);
+
+        if (tile.getRefine() != Cesium3DTiles::TileRefine::Add) {
+			renderList.push_back(&tile);
+        }
+
         tile.setLastSelectionState(TileSelectionState(frameState.currentFrameNumber, TileSelectionState::Result::Rendered));
 
         // If we're waiting on heaps of descendants, the above will take too long. So in that case,
