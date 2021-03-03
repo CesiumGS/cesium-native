@@ -22,7 +22,7 @@ namespace CesiumGltf {
 
   private:
 
-    Scene* _pObject;
+    Scene* _pObject = nullptr;
     ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _nodes;
   };
 }

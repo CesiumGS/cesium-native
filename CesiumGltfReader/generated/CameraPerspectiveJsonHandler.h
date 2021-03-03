@@ -21,7 +21,7 @@ namespace CesiumGltf {
 
   private:
 
-    CameraPerspective* _pObject;
+    CameraPerspective* _pObject = nullptr;
     DoubleJsonHandler _aspectRatio;
     DoubleJsonHandler _yfov;
     DoubleJsonHandler _zfar;

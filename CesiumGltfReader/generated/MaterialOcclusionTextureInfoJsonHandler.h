@@ -21,7 +21,7 @@ namespace CesiumGltf {
 
   private:
 
-    MaterialOcclusionTextureInfo* _pObject;
+    MaterialOcclusionTextureInfo* _pObject = nullptr;
     DoubleJsonHandler _strength;
   };
 }

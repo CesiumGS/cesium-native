@@ -31,7 +31,7 @@ namespace CesiumGltf {
       Camera::Type* _pEnum = nullptr;
     };
 
-    Camera* _pObject;
+    Camera* _pObject = nullptr;
     CameraOrthographicJsonHandler _orthographic;
     CameraPerspectiveJsonHandler _perspective;
     TypeJsonHandler _type;

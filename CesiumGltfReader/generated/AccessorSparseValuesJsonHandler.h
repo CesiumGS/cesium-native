@@ -21,7 +21,7 @@ namespace CesiumGltf {
 
   private:
 
-    AccessorSparseValues* _pObject;
+    AccessorSparseValues* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _bufferView;
     IntegerJsonHandler<int64_t> _byteOffset;
   };

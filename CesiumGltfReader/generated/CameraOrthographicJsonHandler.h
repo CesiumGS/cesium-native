@@ -21,7 +21,7 @@ namespace CesiumGltf {
 
   private:
 
-    CameraOrthographic* _pObject;
+    CameraOrthographic* _pObject = nullptr;
     DoubleJsonHandler _xmag;
     DoubleJsonHandler _ymag;
     DoubleJsonHandler _zfar;

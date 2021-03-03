@@ -22,7 +22,7 @@ namespace CesiumGltf {
 
   private:
 
-    Buffer* _pObject;
+    Buffer* _pObject = nullptr;
     StringJsonHandler _uri;
     IntegerJsonHandler<int64_t> _byteLength;
   };
