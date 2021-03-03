@@ -4,7 +4,7 @@
 
 const std::size_t BYTE_HEADER_SIZE = 12;
 const std::size_t CHUNK_HEADER_MINIMUM_SIZE = 8;
-const std::uint32_t GLTF_VERSION = 2;
+const std::uint32_t GLB_CONTAINER_VERSION = 2;
 const std::uint8_t PADDING_CHAR = 0x20;
 
 [[nodiscard]] inline std::size_t nextMultipleOfFour(std::size_t n) noexcept {
@@ -17,10 +17,10 @@ void writeGLTFHeader(std::vector<std::uint8_t>& glbBuffer) noexcept {
     glbBuffer[2] = 'T';
     glbBuffer[3] = 'F';
 
-    glbBuffer[4] = GLTF_VERSION & 0xff;
-    glbBuffer[5] = (GLTF_VERSION >> 8) & 0xff;
-    glbBuffer[6] = (GLTF_VERSION >> 16) & 0xff;
-    glbBuffer[7] = (GLTF_VERSION >> 24) & 0xff;
+    glbBuffer[4] = GLB_CONTAINER_VERSION & 0xff;
+    glbBuffer[5] = (GLB_CONTAINER_VERSION >> 8) & 0xff;
+    glbBuffer[6] = (GLB_CONTAINER_VERSION >> 16) & 0xff;
+    glbBuffer[7] = (GLB_CONTAINER_VERSION >> 24) & 0xff;
 }
 
 void writeGLBSize(std::vector<std::uint8_t>& glbBuffer) noexcept {
