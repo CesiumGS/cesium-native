@@ -24,8 +24,8 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        double noSkirtIndicesBegin = (*pNoSkirtRange)[0].getNumberOrDefault<double>(-1.0);
-        double noSkirtIndicesCount = (*pNoSkirtRange)[1].getNumberOrDefault<double>(-1.0);
+        double noSkirtIndicesBegin = (*pNoSkirtRange)[0].getSafeNumberOrDefault<double>(-1.0);
+        double noSkirtIndicesCount = (*pNoSkirtRange)[1].getSafeNumberOrDefault<double>(-1.0);
 
         if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0) {
             return std::nullopt;
@@ -44,9 +44,9 @@ namespace Cesium3DTiles {
         }
 
         skirtMeshMetadata.meshCenter = glm::dvec3(
-            (*pMeshCenter)[0].getNumberOrDefault<double>(0.0),
-            (*pMeshCenter)[1].getNumberOrDefault<double>(0.0),
-            (*pMeshCenter)[2].getNumberOrDefault<double>(0.0)
+            (*pMeshCenter)[0].getSafeNumberOrDefault<double>(0.0),
+            (*pMeshCenter)[1].getSafeNumberOrDefault<double>(0.0),
+            (*pMeshCenter)[2].getSafeNumberOrDefault<double>(0.0)
         );
 
         double pWestHeight, pSouthHeight, pEastHeight, pNorthHeight;

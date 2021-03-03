@@ -305,7 +305,7 @@ namespace CesiumGltf {
             typename std::enable_if<
                 std::is_integral<To>::value ||
                 std::is_floating_point<To>::value>::type* = nullptr>
-        [[nodiscard]] To getNumberOrDefault(To defaultValue) const noexcept {
+        [[nodiscard]] To getSafeNumberOrDefault(To defaultValue) const noexcept {
             const std::uint64_t* uInt =
                 std::get_if<std::uint64_t>(&this->value);
             if (uInt) {
