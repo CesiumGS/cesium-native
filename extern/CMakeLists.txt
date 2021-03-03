@@ -53,6 +53,10 @@ set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" 
     "Include directory for spdlog"
 )
 
+set(CESIUM_NATIVE_GSL_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/GSL/include" CACHE INTERNAL
+    "Include directory for GSL"
+)
+
 set(CESIUM_NATIVE_SQLITE3_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/sqlite3/" CACHE INTERNAL
     "Include directory for sqlite3"
 )
