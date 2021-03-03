@@ -3,7 +3,7 @@
 #include <CesiumGltf/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <string>
-#include <iostream>
+#include <cstdint>
 
 using namespace CesiumGltf;
 using namespace rapidjson;
@@ -21,6 +21,23 @@ TEST_CASE("TestJsonObjectWriter") {
             Object{{"extras", Array{Object{}, Object{}, Object{}}}};
         writeJsonValue(extrasObject, writer, false);
         REQUIRE(writer.toString() == R"({"extras":[{},{},{}]})");
+    }
+
+    SECTION("[0,1,2.5]") {
+        CesiumGltf::JsonWriter writer;
+        const auto extrasObject = Array{
+            std::int64_t(0), std::uint64_t(1), double(2.5)
+        };
+        writeJsonValue(extrasObject, writer, false);
+        REQUIRE(writer.toString() == R"([0,1,2.5])");
+    }
+
+    SECTION("[👀]") {
+        CesiumGltf::JsonWriter writer;
+        writer.StartArray();
+        writeJsonValue(JsonValue("👀"), writer, true);
+        writer.EndArray();
+        REQUIRE(writer.toString() == "[\"👀\"]");
     }
 
     SECTION(R"("A": {"B": "C"{}})") {
