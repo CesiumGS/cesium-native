@@ -7,9 +7,10 @@
 #include "CesiumGltf/Writer.h"
 #include "catch2/catch.hpp"
 #include <CesiumGltf/MeshPrimitive.h>
-#include <fstream>
+#include <CesiumGltf/WriteFlags.h>
 #include <gsl/span>
 #include <string>
+#include <algorithm>
 
 using namespace CesiumGltf;
 
@@ -77,11 +78,43 @@ Model generateTriangleModel() {
     return triangleModel;
 }
 
-TEST_CASE("CesiumGltf::Writer") {
-    SECTION("Basic triangle is serialized to embedded glTF 2.0") {
-        // operator== is not defined, so I can't serialize / deserialize /
-        // serialize again to test if the object was written correctly
-        // const auto triangleModel = generateTriangleModel();
-    }
 
+TEST_CASE("Generates glTF asset with required top level property `asset`", "[GltfWriter]") {
+    CesiumGltf::Model m;
+    m.asset.version = "2.0";
+    const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLTF);
+    const std::string asString(asBytes.begin(), asBytes.end());
+    const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
+    REQUIRE(asString == expectedString); 
+}
+
+TEST_CASE("Generates glb asset with required top level property `asset`", "[GltfWriter]") {
+    CesiumGltf::Model m;
+    m.asset.version = "2.0";
+    const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLB);
+    std::vector<std::uint8_t> expectedMagic = {
+        'g', 'l', 'T', 'F',
+    };
+
+    REQUIRE(std::equal(expectedMagic.begin(), expectedMagic.end(), asBytes.begin()));
+
+    const std::uint32_t expectedGLBContainerVersion = 2;
+    const std::int64_t actualGLBContainerVersion = 
+        (asBytes[4]) | (asBytes[5] << 8) | (asBytes[6] << 16) | (asBytes[7] << 24);
+
+    //  12 byte header + 8 bytes for JSON chunk + 27 bytes for json string + 1 byte for padding to
+    //  48 bytes.
+    const std::int64_t expectedGLBSize = 48;
+    const std::int64_t totalGLBSize =  // is 48
+        (asBytes[8]) | (asBytes[9] << 8) | (asBytes[10] << 16) | (asBytes[11] << 24);
+
+    REQUIRE(expectedGLBContainerVersion == actualGLBContainerVersion);
+    REQUIRE(expectedGLBSize == totalGLBSize);
+
+    std::string extractedJson(asBytes.begin() + 20, asBytes.end() - 1); // - 1 for padding byte
+    const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
+    REQUIRE(expectedString == extractedJson);
+}
+
+TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
 }
