@@ -17,8 +17,8 @@ set_target_properties(CesiumIonClient
 target_sources(
     CesiumIonClient
     PRIVATE
-        ${CESIUM_ION_CLIENT_TEST_SOURCES}
-        ${CESIUM_ION_CLIENT_TEST_HEADERS}
+        ${CESIUM_ION_CLIENT_SOURCES}
+        ${CESIUM_ION_CLIENT_HEADERS}
     PUBLIC
         ${CESIUM_ION_CLIENT_PUBLIC_HEADERS}
 )
