@@ -4,10 +4,10 @@ add_subdirectory(Catch2)
 
 add_subdirectory(GSL)
 
-option(URIPARSER_BUILD_TESTS off)
-option(URIPARSER_BUILD_DOCS off)
-option(URIPARSER_ENABLE_INSTALL off)
-option(URIPARSER_BUILD_TOOLS off)
+option(URIPARSER_BUILD_TESTS "" off)
+option(URIPARSER_BUILD_DOCS "" off)
+option(URIPARSER_ENABLE_INSTALL "" off)
+option(URIPARSER_BUILD_TOOLS "" off)
 add_subdirectory(uriparser)
 
 if (NOT TARGET draco)
@@ -64,7 +64,7 @@ CACHE INTERNAL
     "Compiler definitions for rapidjson"
 )
 
-set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE INTERNAL
+set(CESIUM_NATI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   VE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE INTERNAL
     "Include directory for Draco"
 )
 

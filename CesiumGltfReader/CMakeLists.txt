@@ -44,3 +44,6 @@ target_link_libraries(CesiumGltfReader
         draco 
         modp_b64
 )
+
+install(TARGETS CesiumGltfReader)
+install(FILES ${CESIUM_GLTF_READER_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf)

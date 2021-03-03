@@ -42,8 +42,12 @@ target_link_libraries(Cesium3DTiles
         CesiumGeometry 
         CesiumGltf 
         CesiumGltfReader 
-        CesiumUtility 
-        uriparser 
-        tinyxml2 
+        CesiumUtility
         spdlog
+    PRIVATE
+        tinyxml2 
+        uriparser 
 )
+
+install(TARGETS Cesium3DTiles)
+install(FILES ${CESIUM_3DTILES_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles)

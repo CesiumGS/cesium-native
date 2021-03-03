@@ -33,3 +33,6 @@ target_link_libraries(CesiumGeospatial PUBLIC
     CesiumGeometry 
     CesiumUtility
 )
+
+install(TARGETS CesiumGeospatial)
+install(FILES ${CESIUM_GEOSPATIAL_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGeospatial)

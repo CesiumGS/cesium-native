@@ -32,9 +32,13 @@ target_include_directories(
 target_link_libraries(CesiumIonClient 
     PUBLIC 
         CesiumAsync 
-        CesiumUtility 
+        CesiumUtility
+    # PRIVATE
         httplib::httplib 
         csprng 
         modp_b64 
         PicoSHA2
 )
+
+install(TARGETS CesiumIonClient)
+install(FILES ${CESIUM_ION_CLIENT_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumIonClient)

@@ -4,7 +4,7 @@ configure_cesium_library(CesiumUtility)
 
 cesium_glob_files(CESIUM_UTILITY_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_UTILITY_HEADERS src/*.h src/*.hpp)
-cesium_glob_files(CESIUM_UTILITY_PUBLIC_HEADERS include/CesiumGltf/*.h)
+cesium_glob_files(CESIUM_UTILITY_PUBLIC_HEADERS include/CesiumUtility/*.h)
 cesium_glob_files(CESIUM_UTILITY_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_UTILITY_TEST_HEADERS test/*.h)
 
@@ -44,5 +44,9 @@ target_link_libraries_system(
 target_link_libraries(CesiumUtility 
     PUBLIC 
         GSL
+    # PRIVATE
         uriparser
 )
+
+install(TARGETS CesiumUtility)
+install(FILES ${CESIUM_UTILITY_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility)
