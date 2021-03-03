@@ -8,10 +8,10 @@
 #include <cstdint>
 
 namespace CesiumGltf {
-    std::vector<std::uint8_t> writeBuffer(
+    void writeBuffer(
         const std::vector<Buffer>& buffers,
         JsonWriter& jsonWriter,
         WriteFlags flags,
-        WriteGLTFCallback writeGLTFCallback
+        WriteGLTFCallback writeGLTFCallback = noopGltfWriter
     );
 }

@@ -22,10 +22,15 @@ namespace CesiumGltf {
      * @param options Bitset flags used to control writing glTF serialization behavior.
      */
 
-    CESIUMGLTFWRITER_API void writeModelToByteArray(
-        std::string_view filename,
+    CESIUMGLTFWRITER_API std::vector<std::uint8_t> writeModelAsEmbeddedBytes(
         const Model& model,
-        WriteGLTFCallback writeGLTFCallback,
-        WriteFlags options = WriteFlags::GLB | WriteFlags::EmbedBuffers | WriteFlags::EmbedImages
+        WriteFlags flags
+    );
+
+    CESIUMGLTFWRITER_API void writeModelAndExternalFiles(
+        const Model& model,
+        WriteFlags flags,
+        std::string_view filename,
+        WriteGLTFCallback writeGLTFCallback
     );
 }

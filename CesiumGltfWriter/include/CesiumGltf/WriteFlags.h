@@ -5,11 +5,8 @@ namespace CesiumGltf {
     CESIUMGLTFWRITER_API enum WriteFlags {
         GLB = 1,
         GLTF = 2,
-        EmbedImages = 4,
-        EmbedBuffers = 8,
-        ExternalBuffers = 16,
-        PrettyPrint = 32,
-        AutoConvertDataToBase64 = 64
+        PrettyPrint = 4,
+        AutoConvertDataToBase64 = 8
     };
 
     CESIUMGLTFWRITER_API inline constexpr WriteFlags

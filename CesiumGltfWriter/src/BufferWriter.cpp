@@ -11,17 +11,16 @@ constexpr auto BASE64_PREFIX = "data:application/octet-stream;base64,";
     return view.rfind(BASE64_PREFIX, 0) == 0;
 }
 
-std::vector<std::uint8_t> CesiumGltf::writeBuffer(
+void CesiumGltf::writeBuffer(
     const std::vector<Buffer>& buffers,
     JsonWriter& jsonWriter,
     WriteFlags flags,
     WriteGLTFCallback writeGLTFCallback
 ) {
     auto& j = jsonWriter;
-    std::vector<std::uint8_t> amalgamatedBuffer;
 
     if (buffers.empty()) {
-        return amalgamatedBuffer;
+        return;
     }
 
     j.Key("buffers");
@@ -91,5 +90,4 @@ std::vector<std::uint8_t> CesiumGltf::writeBuffer(
     }
 
     j.EndArray();
-    return amalgamatedBuffer;
 }

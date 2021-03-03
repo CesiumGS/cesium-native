@@ -18,6 +18,7 @@
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
+#include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/Writer.h>
 #include <CesiumGltf/JsonValue.h>
 #include <stdexcept>
@@ -34,15 +35,37 @@ void validateFlags(WriteFlags options) {
     }
 }
 
-void CesiumGltf::writeModelToByteArray(
-    std::string_view filename,
+std::vector<std::uint8_t> writeModel(
     const Model& model, 
-    WriteGLTFCallback writeGLTFCallback,
+    WriteFlags flags,
+    std::string_view filename,
+    WriteGLTFCallback writeGLTFCallback = noopGltfWriter
+);
+
+std::vector<std::uint8_t> CesiumGltf::writeModelAsEmbeddedBytes(
+    const Model& model,
     WriteFlags flags
+) {
+    return writeModel(model, flags, "");
+}
+
+void CesiumGltf::writeModelAndExternalFiles(
+    const Model& model,
+    WriteFlags flags,
+    std::string_view filename,
+    WriteGLTFCallback writeGLTFCallback
+) {
+    writeModel(model, flags, filename, writeGLTFCallback);
+}
+
+std::vector<std::uint8_t> writeModel(
+    const Model& model, 
+    WriteFlags flags,
+    std::string_view filename,
+    WriteGLTFCallback writeGLTFCallback 
 ) {
     validateFlags(flags);
     std::vector<std::uint8_t> result;
-    
     std::unique_ptr<JsonWriter> writer;
 
     if (flags & WriteFlags::PrettyPrint) {
@@ -104,4 +127,5 @@ void CesiumGltf::writeModelToByteArray(
     }
 
     writeGLTFCallback(filename, result);
+    return result;
 }
