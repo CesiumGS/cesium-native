@@ -116,5 +116,10 @@ TEST_CASE("Generates glb asset with required top level property `asset`", "[Gltf
     REQUIRE(expectedString == extractedJson);
 }
 
+TEST_CASE("Exception thrown if mutually exclusive flags are used at the same time", "[GltfWriter]") {
+    CesiumGltf::Model m;
+    REQUIRE_THROWS(CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLTF | WriteFlags::GLB));
+}
+
 TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
 }
