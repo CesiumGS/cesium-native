@@ -2,25 +2,34 @@ add_library(CesiumGeospatial "")
 
 configure_cesium_library(CesiumGeospatial)
 
-file(GLOB SOURCES include/CesiumGeospatial/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumGeospatial/*.h)
+cesium_glob_files(CESIUM_GEOSPATIAL_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_GEOSPATIAL_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_GEOSPATIAL_PUBLIC_HEADERS include/CesiumGeospatial/*.h)
+cesium_glob_files(CESIUM_GEOSPATIAL_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_GEOSPATIAL_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumGeospatial 
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_GEOSPATIAL_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_GEOSPATIAL_TEST_HEADERS}"
+)
 
 target_sources(
     CesiumGeospatial
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_GEOSPATIAL_SOURCES}
+        ${CESIUM_GEOSPATIAL_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_GEOSPATIAL_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumGeospatial
-    PUBLIC
-        include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumGeospatial_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
+    SYSTEM PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-target_link_libraries(CesiumGeospatial PUBLIC CesiumGeometry CesiumUtility)
+target_link_libraries(CesiumGeospatial PUBLIC 
+    CesiumGeometry 
+    CesiumUtility
+)

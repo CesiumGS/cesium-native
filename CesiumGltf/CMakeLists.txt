@@ -1,26 +1,37 @@
 add_library(CesiumGltf "")
-
 configure_cesium_library(CesiumGltf)
 
-file(GLOB SOURCES include/CesiumGltf/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumGltf/*.h)
+cesium_glob_files(CESIUM_GLTF_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_GLTF_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS include/CesiumGeometry/*.h)
+cesium_glob_files(CESIUM_GLTF_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_GLTF_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumGltf 
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_GLTF_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_GLTF_TEST_HEADERS}"
+)
 
 target_sources(
     CesiumGltf
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_GLTF_SOURCES}
+        ${CESIUM_GLTF_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_GLTF_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumGltf
-    PUBLIC
-        include
+    SYSTEM PUBLIC
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include/
     PRIVATE
-        src
-    SYSTEM PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/cgltf
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-target_link_libraries(CesiumGltf PUBLIC)
+target_link_libraries(CesiumGltf 
+    PUBLIC 
+        GSL
+)

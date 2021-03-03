@@ -1,18 +1,53 @@
 cmake_minimum_required(VERSION 3.15)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(
-    cesium-native
+project(cesium-native
     VERSION 0.1.0
     LANGUAGES CXX
 )
 
+if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
+    set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
+        "Controls if cesium-native targets should use configure_depends or not for globbing their sources"
+    )
+endif()
+
+# Use configure_depends to automatically reconfigure on filesystem
+# changes at the expense of computational overhead for CMake to
+# determine if new files have been added (-DGLOB_USE_CONFIGURE_DEPENDS).
+
+function(cesium_glob_files out_var_name regexes)
+    set(files "")
+    foreach(arg ${ARGV})
+        list(APPEND regexes_only "${arg}")
+    endforeach()
+    list(POP_FRONT regexes_only)
+    if (GLOB_USE_CONFIGURE_DEPENDS) 
+        file(GLOB_RECURSE files CONFIGURE_DEPENDS ${regexes_only})
+    else()
+        file(GLOB files ${regexes_only})
+    endif()
+    set(${ARGV0} "${files}" PARENT_SCOPE)
+endfunction()
+
+# Workaround for targets that erroneously forget to
+# declare their include directories as `SYSTEM`
+function(target_link_libraries_system target scope)
+  set(libs ${ARGN})
+  foreach(lib ${libs})
+    get_target_property(lib_include_dirs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
+
+    if ("${lib_include_dirs}" MATCHES ".*NOTFOUND$")
+        message(FATAL_ERROR "${target}: Cannot use INTERFACE_INCLUDE_DIRECTORIES from target ${lib} as it does not define it")
+    endif()
+
+    target_include_directories(${target} SYSTEM ${scope} ${lib_include_dirs})
+    target_link_libraries(${target} ${scope} ${lib})
+  endforeach()
+endfunction()
+
+# Shared object support is currently NOT working on Windows
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/extern/Catch2/contrib")
-
-include(CTest)
-enable_testing()
-
-add_subdirectory(extern EXCLUDE_FROM_ALL)
 
 function(configure_cesium_library targetName)
     if (MSVC)
@@ -27,10 +62,6 @@ function(configure_cesium_library targetName)
         CXX_EXTENSIONS NO
     )
 
-    set_property(TARGET ${targetName}
-        PROPERTY
-            ${targetName}_PRIVATE_SRC 1)
-
     if (BUILD_SHARED_LIBS)
         target_compile_definitions(
             ${targetName}
@@ -40,62 +71,34 @@ function(configure_cesium_library targetName)
     endif()
 
     if (NOT ${targetName} MATCHES "cesium-native-tests")
-        if (TARGET cesium-native-tests)
-            set_property(TARGET cesium-native-tests
-                PROPERTY
-                    ${targetName}_PRIVATE_SRC 1)
-
-            target_link_libraries(cesium-native-tests PUBLIC ${targetName})
-
-            file(GLOB TEST_SOURCES test/*.cpp test/*.h)
-            
-            target_sources(
-                cesium-native-tests
-                PRIVATE
-                    ${TEST_SOURCES}
-            )
-
-            target_compile_definitions(
-                cesium-native-tests
-                PRIVATE
-                    ${targetName}_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data"
-            )
-        endif()
-
         string(TOUPPER ${targetName} capitalizedTargetName)
-
         target_compile_definitions(
             ${targetName}
             PRIVATE
                 ${capitalizedTargetName}_BUILDING
-        )   
+        )
+
+
     endif()
+
 endfunction()
 
-add_executable(cesium-native-tests "")
-configure_cesium_library(cesium-native-tests)
+# Private Libraries
+add_subdirectory(extern EXCLUDE_FROM_ALL)
 
-target_sources(
-    cesium-native-tests
-    PRIVATE
-        test-main.cpp
-)
-
-target_link_libraries(cesium-native-tests PUBLIC Catch2::Catch2)
-
+# Public Targets
 add_subdirectory(CesiumUtility)
+add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
-add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumAsync)
-add_subdirectory(CesiumIonClient)
 add_subdirectory(Cesium3DTiles)
+add_subdirectory(CesiumIonClient)
 
-include(Catch)
-
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    catch_discover_tests(cesium-native-tests)
-endif()
-
+# Private Targets
+# enable_testing() MUST be called before add_subdirectory or no tests
+# will be found by ctest
+enable_testing()
+add_subdirectory(CesiumNativeTests)
 add_subdirectory(doc)
