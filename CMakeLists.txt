@@ -22,7 +22,7 @@ function(cesium_glob_files out_var_name regexes)
         list(APPEND regexes_only "${arg}")
     endforeach()
     list(POP_FRONT regexes_only)
-    if (GLOB_USE_CONFIGURE_DEPENDS) 
+    if (GLOB_USE_CONFIGURE_DEPENDS)
         file(GLOB_RECURSE files CONFIGURE_DEPENDS ${regexes_only})
     else()
         file(GLOB files ${regexes_only})
@@ -84,7 +84,7 @@ function(configure_cesium_library targetName)
 endfunction()
 
 # Private Libraries
-add_subdirectory(extern EXCLUDE_FROM_ALL)
+add_subdirectory(extern)
 
 # Public Targets
 add_subdirectory(CesiumUtility)

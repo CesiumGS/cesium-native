@@ -8,11 +8,16 @@ cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS include/Cesium3DTiles/*.h includ
 cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_3DTILES_TEST_HEADERS test/*.h test/*.hpp)
 
-set_target_properties(Cesium3DTiles 
-    PROPERTIES 
+set_target_properties(Cesium3DTiles
+    PROPERTIES
         TEST_SOURCES "${CESIUM_3DTILES_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_3DTILES_TEST_HEADERS}"
         TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
+)
+
+set_target_properties(Cesium3DTiles
+    PROPERTIES
+    PUBLIC_HEADER "${CESIUM_3DTILES_PUBLIC_HEADERS}"
 )
 
 target_sources(
@@ -35,19 +40,21 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-target_link_libraries(Cesium3DTiles 
-    PUBLIC 
-        CesiumAsync 
-        CesiumGeospatial 
-        CesiumGeometry 
-        CesiumGltf 
-        CesiumGltfReader 
+target_link_libraries(Cesium3DTiles
+    PUBLIC
+        CesiumAsync
+        CesiumGeospatial
+        CesiumGeometry
+        CesiumGltf
+        CesiumGltfReader
         CesiumUtility
         spdlog
-    # PRIVATE
-        tinyxml2 
-        uriparser 
+    PRIVATE
+        tinyxml2
+        uriparser
 )
 
-install(TARGETS Cesium3DTiles)
-install(FILES ${CESIUM_3DTILES_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles)
+install(TARGETS Cesium3DTiles
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles
+)

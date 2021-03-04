@@ -9,9 +9,14 @@ cesium_glob_files(CESIUM_UTILITY_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_UTILITY_TEST_HEADERS test/*.h)
 
 set_target_properties(CesiumUtility
-    PROPERTIES 
+    PROPERTIES
         TEST_SOURCES "${CESIUM_UTILITY_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_UTILITY_TEST_HEADERS}"
+)
+
+set_target_properties(CesiumUtility
+    PROPERTIES
+    PUBLIC_HEADER "${CESIUM_UTILITY_PUBLIC_HEADERS}"
 )
 
 target_sources(
@@ -41,12 +46,14 @@ target_link_libraries_system(
         glm
 )
 
-target_link_libraries(CesiumUtility 
-    PUBLIC 
+target_link_libraries(CesiumUtility
+    PUBLIC
         GSL
-    # PRIVATE
+    PRIVATE
         uriparser
 )
 
-install(TARGETS CesiumUtility)
-install(FILES ${CESIUM_UTILITY_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility)
+install(TARGETS CesiumUtility
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility
+)
