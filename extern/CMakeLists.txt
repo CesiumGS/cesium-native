@@ -9,8 +9,7 @@ option(URIPARSER_BUILD_DOCS "" off)
 option(URIPARSER_ENABLE_INSTALL "" on)
 option(URIPARSER_BUILD_TOOLS "" off)
 add_subdirectory(uriparser)
-install(TARGETS uriparser
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/uriparser/)
+install(TARGETS uriparser OPTIONAL) # Skips headers
 
 if (NOT TARGET draco)
     add_subdirectory(draco)
@@ -73,6 +72,8 @@ set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" 
     "Include directory for spdlog"
 )
 
+install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
 set(CESIUM_NATIVE_SQLITE3_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/sqlite3/" CACHE INTERNAL
     "Include directory for sqlite3"
 )
@@ -80,6 +81,8 @@ set(CESIUM_NATIVE_SQLITE3_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/sqlite3/" CACHE
 set(CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/rapidjson/include" CACHE INTERNAL
     "Include directory for rapidjson"
 )
+
+install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 set(CESIUM_NATIVE_RAPIDJSON_DEFINES
     RAPIDJSON_HAS_CXX11_RVALUE_REFS
