@@ -18,6 +18,7 @@
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
+#include <CesiumGltf/WriteFlags.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/Writer.h>
 #include <CesiumGltf/JsonValue.h>
@@ -30,8 +31,15 @@
 using namespace CesiumGltf;
 
 void validateFlags(WriteFlags options) {
-    if (options & WriteFlags::GLB && options & WriteFlags::GLTF) {
+    const auto isGLB = options & WriteFlags::GLB;
+    const auto isGLTF = options & WriteFlags::GLTF;
+
+    if (isGLB && isGLTF) {
         throw std::runtime_error("GLB and GLTF flags are mutually exclusive.");
+    }
+
+    if (!isGLB && !isGLTF) {
+        throw std::runtime_error("GLB or GLTF must be specified.");
     }
 }
 
@@ -116,11 +124,11 @@ std::vector<std::uint8_t> writeModel(
 
     if (flags & WriteFlags::GLB) {
         if (model.buffers.empty()) {
-            result = writeBinaryGLB(std::vector<std::uint8_t>{}, writer->toString());
+            result = writeBinaryGLB(std::vector<std::uint8_t>{}, writer->toStringView());
         }
         
         else {
-            result = writeBinaryGLB(model.buffers.at(0).cesium.data, writer->toString());
+            result = writeBinaryGLB(model.buffers.at(0).cesium.data, writer->toStringView());
         }
     } else {
         result = writer->toBytes();
