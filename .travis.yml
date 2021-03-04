@@ -3,6 +3,11 @@ jobs:
   include:
     - name: Windows + VS2017
       os: windows
+      install:
+        - mkdir -p build
+        - cd build
+        - cmake .. -A x64
+        - cd ..
     - name: Windows + VS2019
       os: windows
       install:
@@ -29,7 +34,7 @@ jobs:
 script:
   - mkdir -p build
   - cd build
-  - cmake .. -A x64
+  - cmake ..
   - cmake --build . --config Debug
   - ctest -V
   - cmake --build . --config Debug --target cesium-native-docs
