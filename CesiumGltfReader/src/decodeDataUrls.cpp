@@ -2,11 +2,12 @@
 #include "CesiumGltf/Reader.h"
 #include "decodeDataUrls.h"
 #include <modp_b64.h>
+#include <cstddef>
 
 namespace {
 
-    std::vector<uint8_t> decodeBase64(gsl::span<const uint8_t> data) {
-        std::vector<uint8_t> result(modp_b64_decode_len(data.size()));
+    std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
+        std::vector<std::byte> result(modp_b64_decode_len(data.size()));
 
         size_t resultLength = modp_b64_decode(reinterpret_cast<char*>(result.data()), reinterpret_cast<const char*>(data.data()), data.size());
         if (resultLength == size_t(-1)) {
@@ -21,7 +22,7 @@ namespace {
 
     struct DecodeResult {
         std::string mimeType;
-        std::vector<uint8_t> data;
+        std::vector<std::byte> data;
     };
 
     std::optional<DecodeResult> tryDecode(const std::string& uri) {
@@ -53,7 +54,7 @@ namespace {
             result.mimeType = result.mimeType.substr(0, result.mimeType.size() - base64IndicatorLength);
         }
 
-        gsl::span<const uint8_t> data(reinterpret_cast<const uint8_t*>(uri.data()) + dataDelimeter + 1, uri.size() - dataDelimeter - 1);
+        gsl::span<const std::byte> data(reinterpret_cast<const std::byte*>(uri.data()) + dataDelimeter + 1, uri.size() - dataDelimeter - 1);
 
         if (isBase64Encoded) {
             result.data = decodeBase64(data);
@@ -62,7 +63,7 @@ namespace {
                 return std::nullopt;
             }
         } else {
-            result.data = std::vector<uint8_t>(data.begin(), data.end());
+            result.data = std::vector<std::byte>(data.begin(), data.end());
         }
 
         return result;

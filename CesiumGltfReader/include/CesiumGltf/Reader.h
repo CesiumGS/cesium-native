@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 namespace CesiumGltf {
     /**
@@ -66,7 +67,7 @@ namespace CesiumGltf {
      * @param options Options for how to read the glTF.
      * @return The result of reading the glTF.
      */
-    CESIUMGLTFREADER_API ModelReaderResult readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options = ReadModelOptions());
+    CESIUMGLTFREADER_API ModelReaderResult readModel(const gsl::span<const std::byte>& data, const ReadModelOptions& options = ReadModelOptions());
 
     /**
      * @brief The result of reading an image with {@link readImage}.
@@ -100,5 +101,5 @@ namespace CesiumGltf {
      * @param data The buffer from which to read the image.
      * @return The result of reading the image.
      */
-    CESIUMGLTFREADER_API ImageReaderResult readImage(const gsl::span<const uint8_t>& data);
+    CESIUMGLTFREADER_API ImageReaderResult readImage(const gsl::span<const std::byte>& data);
 }

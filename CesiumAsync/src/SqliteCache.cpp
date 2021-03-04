@@ -6,6 +6,7 @@
 #include <sqlite3.h>
 #include <stdexcept>
 #include <utility>
+#include <cstddef>
 #include <spdlog/spdlog.h>
 
 namespace CesiumAsync {
@@ -219,9 +220,9 @@ namespace CesiumAsync {
 
         uint16_t statusCode = static_cast<uint16_t>(sqlite3_column_int(this->_getEntryStmtWrapper.get(), 3));
 
-        const uint8_t* rawResponseData = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(this->_getEntryStmtWrapper.get(), 4));
+        const std::byte* rawResponseData = reinterpret_cast<const std::byte*>(sqlite3_column_blob(this->_getEntryStmtWrapper.get(), 4));
         int responseDataSize = sqlite3_column_bytes(this->_getEntryStmtWrapper.get(), 4);
-        std::vector<uint8_t> responseData(rawResponseData, rawResponseData + responseDataSize);
+        std::vector<std::byte> responseData(rawResponseData, rawResponseData + responseDataSize);
 
         // parse request
         std::string serializedRequestHeaders = reinterpret_cast<const char*>(sqlite3_column_text(this->_getEntryStmtWrapper.get(), 5));
@@ -279,7 +280,7 @@ namespace CesiumAsync {
         const HttpHeaders& requestHeaders,
         uint16_t statusCode,
         const HttpHeaders& responseHeaders,
-        const gsl::span<const uint8_t>& responseData
+        const gsl::span<const std::byte>& responseData
     ) {
         std::lock_guard<std::mutex> guard(this->_mutex);
 

@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <cstddef>
 
 namespace Cesium3DTiles {
     class TileContent;
@@ -91,7 +92,7 @@ namespace Cesium3DTiles {
             const TileContentLoadInput& input);
 
     private:
-        static std::optional<std::string> getMagic(const gsl::span<const uint8_t>& data);
+        static std::optional<std::string> getMagic(const gsl::span<const std::byte>& data);
 
         static std::unordered_map<std::string, std::shared_ptr<TileContentLoader>> _loadersByMagic;
         static std::unordered_map<std::string, std::shared_ptr<TileContentLoader>> _loadersByContentType;

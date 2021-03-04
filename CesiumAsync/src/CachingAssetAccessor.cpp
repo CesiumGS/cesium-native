@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <spdlog/spdlog.h>
 #include <sstream>
+#include <cstddef>
 
 namespace CesiumAsync {
     class CacheAssetResponse : public IAssetResponse {
@@ -33,8 +34,8 @@ namespace CesiumAsync {
             return this->_pCacheItem->cacheResponse.headers; 
         }
 
-        virtual gsl::span<const uint8_t> data() const override {
-            return gsl::span<const uint8_t>(
+        virtual gsl::span<const std::byte> data() const override {
+            return gsl::span<const std::byte>(
                 this->_pCacheItem->cacheResponse.data.data(), 
                 this->_pCacheItem->cacheResponse.data.size()); 
         }
@@ -219,7 +220,7 @@ namespace CesiumAsync {
         const AsyncSystem& asyncSystem,
         const std::string& url, 
         const std::vector<THeader>& headers,
-        const gsl::span<const uint8_t>& contentPayload) 
+        const gsl::span<const std::byte>& contentPayload) 
     {
         return this->_pAssetAccessor->post(asyncSystem, url, headers, contentPayload);
     }

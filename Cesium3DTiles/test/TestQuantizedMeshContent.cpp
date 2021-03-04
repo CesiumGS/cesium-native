@@ -46,7 +46,7 @@ struct MeshData {
 
 struct Extension {
     uint8_t extensionID;
-    std::vector<uint8_t> extensionData;
+    std::vector<std::byte> extensionData;
 };
 
 template<typename T>
@@ -97,7 +97,7 @@ static double calculateSkirtHeight(int tileLevel, const CesiumGeospatial::Ellips
 }
 
 template<typename T>
-static std::vector<uint8_t> convertQuantizedMeshToBinary(const QuantizedMesh<T> &quantizedMesh) {
+static std::vector<std::byte> convertQuantizedMeshToBinary(const QuantizedMesh<T> &quantizedMesh) {
     // compute the total size of mesh to preallocate
     size_t totalSize = sizeof(quantizedMesh.header) +
         sizeof(uint32_t) + // vertex data 
@@ -121,7 +121,7 @@ static std::vector<uint8_t> convertQuantizedMeshToBinary(const QuantizedMesh<T> 
 
     size_t offset = 0;
     size_t length = 0;
-    std::vector<uint8_t> buffer(totalSize);
+    std::vector<std::byte> buffer(totalSize);
 
     // serialize header
     length = sizeof(quantizedMesh.header);
@@ -589,8 +589,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
 
         // convert to gltf
-        std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::vector<std::byte> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -636,8 +636,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         QuantizedMesh<uint32_t> quantizedMesh = createGridQuantizedMesh<uint32_t>(boundingVolume, verticesWidth, verticesHeight);
 
         // convert to gltf
-        std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::vector<std::byte> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -683,8 +683,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(boundingVolume, verticesWidth, verticesHeight);
 
         // convert to gltf
-        std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::vector<std::byte> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -734,10 +734,10 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
         uint8_t x = 0, y = 0;
         octEncode(normal, x, y);
-        std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
+        std::vector<std::byte> octNormals(verticesWidth * verticesHeight * 2);
         for (size_t i = 0; i < octNormals.size(); i += 2) {
-            octNormals[i] = x;
-            octNormals[i+1] = y;
+            octNormals[i] = std::byte(x);
+            octNormals[i+1] = std::byte(y);
         }
         
         Extension octNormalExtension;
@@ -747,8 +747,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
 
         // convert to gltf
-        std::vector<uint8_t> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::vector<std::byte> quantizedMeshBin = convertQuantizedMeshToBinary(quantizedMesh);
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -813,10 +813,10 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
     uint8_t x = 0, y = 0;
     octEncode(normal, x, y);
-    std::vector<uint8_t> octNormals(verticesWidth * verticesHeight * 2);
+    std::vector<std::byte> octNormals(verticesWidth * verticesHeight * 2);
     for (size_t i = 0; i < octNormals.size(); i += 2) {
-        octNormals[i] = x;
-        octNormals[i+1] = y;
+        octNormals[i] = std::byte(x);
+        octNormals[i+1] = std::byte(y);
     }
     
     Extension octNormalExtension;
@@ -826,8 +826,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
 
     SECTION("Quantized mesh with ill-formed header") {
-        std::vector<uint8_t> quantizedMeshBin(32);
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        std::vector<std::byte> quantizedMeshBin(32);
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -840,7 +840,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     }
 
     SECTION("Quantized mesh with ill-formed vertex data") {
-        std::vector<uint8_t> quantizedMeshBin(
+        std::vector<std::byte> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) // u buffer
@@ -862,7 +862,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = quantizedMesh.vertexData.u.size() * sizeof(uint16_t);
         std::memcpy(quantizedMeshBin.data() + offset, quantizedMesh.vertexData.u.data(), length);
 
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -875,7 +875,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     }
 
     SECTION("Quantized mesh with ill-formed indices") {
-        std::vector<uint8_t> quantizedMeshBin(
+        std::vector<std::byte> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -916,7 +916,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(triangleCount);
         std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
 
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -929,7 +929,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     }
 
     SECTION("Quantized mesh with ill-formed west edge indices") {
-        std::vector<uint8_t> quantizedMeshBin(
+        std::vector<std::byte> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -983,7 +983,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(westCount);
         std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
 
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -996,7 +996,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     }
 
     SECTION("Quantized mesh with ill-formed south edge indices") {
-        std::vector<uint8_t> quantizedMeshBin(
+        std::vector<std::byte> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -1062,7 +1062,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(westCount);
         std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
 
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -1075,7 +1075,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     }
 
     SECTION("Quantized mesh with ill-formed east edge indices") {
-        std::vector<uint8_t> quantizedMeshBin(
+        std::vector<std::byte> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -1153,7 +1153,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(eastCount);
         std::memcpy(quantizedMeshBin.data() + offset, &eastCount, length);
 
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 
@@ -1166,7 +1166,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     }
 
     SECTION("Quantized mesh with ill-formed north edge indices") {
-        std::vector<uint8_t> quantizedMeshBin(
+        std::vector<std::byte> quantizedMeshBin(
             sizeof(quantizedMesh.header) + // header 
             sizeof(uint32_t) +  // vertex count
             quantizedMesh.vertexData.u.size() * sizeof(uint16_t) +  // u buffer
@@ -1256,7 +1256,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         length = sizeof(northCount);
         std::memcpy(quantizedMeshBin.data() + offset, &northCount, length);
 
-        gsl::span<const uint8_t> data(quantizedMeshBin.data(), quantizedMeshBin.size());
+        gsl::span<const std::byte> data(quantizedMeshBin.data(), quantizedMeshBin.size());
         std::unique_ptr<TileContentLoadResult> loadResult = QuantizedMeshContent::load(
             spdlog::default_logger(),
             context, 

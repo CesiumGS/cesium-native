@@ -17,7 +17,7 @@ namespace Cesium3DTiles {
 	/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
 		std::shared_ptr<spdlog::logger> pLogger,
 		const std::string& url,
-		const gsl::span<const uint8_t>& data
+		const gsl::span<const std::byte>& data
 	) {
 		std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
 

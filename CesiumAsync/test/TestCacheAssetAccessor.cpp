@@ -7,6 +7,7 @@
 #include "MockAssetResponse.h"
 #include "ResponseCacheControl.h"
 #include <optional>
+#include <cstddef>
 #include <spdlog/spdlog.h>
 
 using namespace CesiumAsync;
@@ -21,7 +22,7 @@ public:
         HttpHeaders requestHeaders;
         uint16_t statusCode;
         HttpHeaders responseHeaders;
-        std::vector<uint8_t> responseData;
+        std::vector<std::byte> responseData;
     };
 
     MockStoreCacheDatabase() 
@@ -45,7 +46,7 @@ public:
         const HttpHeaders& requestHeaders,
         uint16_t statusCode,
         const HttpHeaders& responseHeaders,
-        const gsl::span<const uint8_t>& responseData
+        const gsl::span<const std::byte>& responseData
     ) override {
         this->storeRequestParam = StoreRequestParameters {
             key,
@@ -55,7 +56,7 @@ public:
             requestHeaders,
             statusCode,
             responseHeaders,
-            std::vector<uint8_t>(responseData.begin(), responseData.end())
+            std::vector<std::byte>(responseData.begin(), responseData.end())
         };
         this->storeResponseCall = true;
         return true;
@@ -100,7 +101,7 @@ public:
         const AsyncSystem& asyncSystem,
         const std::string& /* url */,
         const std::vector<THeader>& /* headers */,
-        const gsl::span<const uint8_t>& /* contentPayload */
+        const gsl::span<const std::byte>& /* contentPayload */
     ) override {
         return asyncSystem.createResolvedFuture(std::shared_ptr<IAssetRequest>(testRequest));
     }
@@ -129,7 +130,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Cache-Control", "must-revalidate, max-age=100"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -162,7 +163,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -195,7 +196,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Cache-Control", "must-revalidate, max-age=100, public, private"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "POST",
@@ -226,7 +227,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Cache-Control", "must-revalidate, public, private, max-age=100"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -257,7 +258,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Cache-Control", "no-store"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -288,7 +289,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Cache-Control", "must-revalidate, no-cache"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -318,7 +319,7 @@ TEST_CASE("Test the condition of caching the request") {
                 HttpHeaders {
                     {"Content-Type", "app/json"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -349,7 +350,7 @@ TEST_CASE("Test the condition of caching the request") {
                     {"Content-Type", "app/json"},
                     {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}
                 }, 
-                std::vector<uint8_t>());
+                std::vector<std::byte>());
 
             std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
                 "GET",
@@ -383,7 +384,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
                 {"Content-Type", "app/json"},
                 {"Cache-Control", "must-revalidate, private, max-age=400"}
             }, 
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
 
         std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
             "GET",
@@ -415,7 +416,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
                 {"Content-Type", "app/json"},
                 {"Expires", "Wed, 21 Oct 2021 07:28:00 GMT"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
 
         std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
             "GET",
@@ -449,7 +450,7 @@ TEST_CASE("Test serving cache item") {
                 {"Content-Type", "app/json"},
                 {"Response-Header", "Response-Value"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
 
         std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
             "GET",
@@ -495,7 +496,7 @@ TEST_CASE("Test serving cache item") {
                 {"Content-Type", "app/json"},
                 {"Response-Header", "Response-Value"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
 
         std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
             "GET",
@@ -518,7 +519,7 @@ TEST_CASE("Test serving cache item") {
                 {"Cache-Response-Header", "Cache-Response-Value"},
                 {"Cache-Control", "max-age=100, private"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
         CacheItem cacheItem(currentTime + 100, std::move(cacheRequest), std::move(cacheResponse));
         mockCacheDatabase->cacheItem = cacheItem;
 
@@ -571,7 +572,7 @@ TEST_CASE("Test serving cache item") {
                 {"Revalidation-Response-Header", "Revalidation-Response-Value"},
                 {"Cache-Control", "max-age=300, must-revalidate, private"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
 
         std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
             "GET",
@@ -594,7 +595,7 @@ TEST_CASE("Test serving cache item") {
                 {"Cache-Response-Header", "Cache-Response-Value"},
                 {"Cache-Control", "max-age=100, private"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
         CacheItem cacheItem(currentTime - 100, std::move(cacheRequest), std::move(cacheResponse));
         mockCacheDatabase->cacheItem = cacheItem;
 
@@ -649,7 +650,7 @@ TEST_CASE("Test serving cache item") {
                 {"Content-Type", "app/json"},
                 {"Revalidation-Response-Header", "Revalidation-Response-Value"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
 
         std::shared_ptr<IAssetRequest> mockRequest = std::make_shared<MockAssetRequest>(
             "GET",
@@ -672,7 +673,7 @@ TEST_CASE("Test serving cache item") {
                 {"Cache-Response-Header", "Cache-Response-Value"},
                 {"Cache-Control", "max-age=100, private"}
             },
-            std::vector<uint8_t>());
+            std::vector<std::byte>());
         CacheItem cacheItem(currentTime - 100, std::move(cacheRequest), std::move(cacheResponse));
         mockCacheDatabase->cacheItem = cacheItem;
 

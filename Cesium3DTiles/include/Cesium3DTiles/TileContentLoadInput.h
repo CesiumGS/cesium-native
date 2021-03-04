@@ -11,6 +11,7 @@
 #include <gsl/span>
 
 #include <memory>
+#include <cstddef>
 
 namespace Cesium3DTiles 
 {
@@ -63,7 +64,7 @@ namespace Cesium3DTiles
          */
         TileContentLoadInput(
             const std::shared_ptr<spdlog::logger> pLogger_,
-            const gsl::span<const uint8_t>& data_,
+            const gsl::span<const std::byte>& data_,
             const std::string& contentType_,
             const std::string& url_,
             const Tile& tile_
@@ -103,7 +104,7 @@ namespace Cesium3DTiles
          */
         TileContentLoadInput(
             const std::shared_ptr<spdlog::logger> pLogger_,
-            const gsl::span<const uint8_t>& data_,
+            const gsl::span<const std::byte>& data_,
             const std::string& contentType_,
             const std::string& url_,
             const TileContext& context_,
@@ -141,7 +142,7 @@ namespace Cesium3DTiles
          * does not succeed, it will try to determine the type based on the
          * `contentType` field.
          */
-        gsl::span<const uint8_t> data;
+        gsl::span<const std::byte> data;
 
         /**
          * @brief The content type. 

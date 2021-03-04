@@ -6,6 +6,7 @@
 #include "SimpleAssetResponse.h"
 #include <memory>
 #include <map>
+#include <cstddef>
 
 class SimpleAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
@@ -30,7 +31,7 @@ public:
         const CesiumAsync::AsyncSystem& asyncSystem,
         const std::string& url,
         const std::vector<THeader>& headers,
-        const gsl::span<const uint8_t>&) override
+        const gsl::span<const std::byte>&) override
     {
         return this->requestAsset(asyncSystem, url, headers);
     }

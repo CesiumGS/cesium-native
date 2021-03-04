@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumUtility/Uri.h"
 #include <rapidjson/document.h>
+#include <cstddef>
 
 namespace Cesium3DTiles {
 
@@ -18,7 +19,7 @@ namespace Cesium3DTiles {
         const glm::dmat4& tileTransform,
         TileRefine tileRefine,
         const std::string& url,
-        const gsl::span<const uint8_t>& data
+        const gsl::span<const std::byte>& data
     ) {
         std::unique_ptr<TileContentLoadResult> pResult = std::make_unique<TileContentLoadResult>();
 

@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/Model.h"
 #include <stdexcept>
+#include <cstddef>
 
 namespace CesiumGltf {
 
@@ -64,7 +65,7 @@ namespace CesiumGltf {
 	template <class T>
 	class AccessorView final {
 	private:
-        const uint8_t* _pData;
+        const std::byte* _pData;
 		int64_t _stride;
 		int64_t _offset;
 		int64_t _size;
@@ -199,7 +200,7 @@ namespace CesiumGltf {
 				return;
 			}
 
-			const std::vector<uint8_t>& data = pBuffer->cesium.data;
+			const std::vector<std::byte>& data = pBuffer->cesium.data;
 			int64_t bufferBytes = int64_t(data.size());
 			if (pBufferView->byteOffset + pBufferView->byteLength > bufferBytes) {
                 this->_status = AccessorViewStatus::BufferTooSmall;
