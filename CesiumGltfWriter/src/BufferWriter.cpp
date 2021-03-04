@@ -28,47 +28,54 @@ void CesiumGltf::writeBuffer(
     
     for (auto i = 0ul; i < buffers.size(); ++i) {
         auto& buffer = buffers.at(i);
-        const auto bufferReservedForGLB = i == 0 && flags & WriteFlags::GLB;
-        const auto uriSet = buffer.uri.has_value();
-        const auto dataBufferNonEmpty = !buffer.cesium.data.empty();
-        const auto isBase64URI = uriSet && isURIBase64DataURI(*buffer.uri);
-        const auto isExternalFileURI = uriSet && !isBase64URI;
+        const auto isBufferReservedForGLBBinaryChunk = i == 0 && flags & WriteFlags::GLB;
+        const auto isUriSet = buffer.uri.has_value();
+        const auto isDataBufferEmpty = buffer.cesium.data.empty();
+        const auto isBase64URI = isUriSet && isURIBase64DataURI(*buffer.uri);
+        const auto isExternalFileURI = isUriSet && !isBase64URI;
 
         j.StartObject();
 
         std::int64_t byteLength = buffer.byteLength;
-        if (bufferReservedForGLB) {
-            if (uriSet) {
+        if (isBufferReservedForGLBBinaryChunk) {
+            if (isUriSet) {
                 throw URIErroneouslyDefined("model.buffers[0].uri should NOT be set in GLB mode. (0th buffer is reserved)");
             }
             
             byteLength = static_cast<std::int64_t>(buffer.cesium.data.size());
         } 
 
-        else if (isBase64URI && dataBufferNonEmpty) {
-            if (buffer.byteLength == 0) {
-                throw std::runtime_error("buffer.uri has base64 data uri, but no buffer.byteLength");
+        else if (isBase64URI) {
+            if (!isDataBufferEmpty) {
+                throw AmbiguiousDataSource("buffer.uri is base64 data uri, but buffer.cesium.data is non-empty. Buffer.cesium.data should be empty if buffer.uri is a base64 uri");
+            }
+
+            if (byteLength == 0) {
+                throw ByteLengthNotSet("buffer.uri is base64 data uri, but buffer.byteLength is 0. (Empty base64 uri strings not supported)");
             }
             j.KeyPrimitive("uri", *buffer.uri);
         }
         
-        else if (isExternalFileURI && dataBufferNonEmpty) {
+        else if (isExternalFileURI) {
+            if (isDataBufferEmpty) {
+                throw MissingDataSource("buffer.uri is external file uri, but buffer.cesium.data is empty. Buffer.cesium.data must be non empty if uri is external file uri");
+            }
             byteLength = static_cast<std::int64_t>(buffer.cesium.data.size());
+            j.KeyPrimitive("uri", *buffer.uri);
             writeGLTFCallback(*buffer.uri, buffer.cesium.data);
         }
-        
-        else if (!uriSet && dataBufferNonEmpty) {
+
+        else if (!isDataBufferEmpty) {
             if (flags & WriteFlags::AutoConvertDataToBase64) {
                 byteLength = static_cast<std::int64_t>(buffer.cesium.data.size());
                 j.KeyPrimitive("uri", BASE64_PREFIX + encodeAsBase64String(buffer.cesium.data));
-            } else {
+            } 
+
+            // Default to calling the user provided lambda if they don't opt into auto
+            // base64 conversion.
+            else {
                 writeGLTFCallback(std::to_string(i) + ".bin", buffer.cesium.data);
             }
-        }
-        
-        else if (dataBufferNonEmpty && !buffer.uri) {
-            // TODO: Better exception message, custom exception
-            throw std::runtime_error("buffer.cesium.data was empty, but buffer.uri was set");
         }
 
         j.KeyPrimitive("byteLength", byteLength);
@@ -79,7 +86,7 @@ void CesiumGltf::writeBuffer(
 
         if (!buffer.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(buffer.extras, j);
+            writeJsonValue(buffer.extras, j, false);
         }
 
         if (!buffer.extensions.empty()) {

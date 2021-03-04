@@ -12,7 +12,7 @@ void CesiumGltf::writeExtensions(
     
     auto& j = jsonWriter;
     j.Key("extensions");
-    j.StartObject();
+    j.StartArray();
 
     for (const auto& extension : extensions) {
         if (extension.type() == typeid(JsonValue)) {
@@ -21,5 +21,5 @@ void CesiumGltf::writeExtensions(
         }
     }
 
-    j.EndObject();
+    j.EndArray();
 }
