@@ -1,15 +1,10 @@
+#include "Base64URIDetector.h"
 #include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
 #include "BufferWriter.h"
 #include "EncodeBase64String.h"
 #include <CesiumGltf/WriterException.h>
 #include <string_view>
-
-constexpr auto BASE64_PREFIX = "data:application/octet-stream;base64,";
-
-[[nodiscard]] inline bool isURIBase64DataURI(std::string_view view) noexcept {
-    return view.rfind(BASE64_PREFIX, 0) == 0;
-}
 
 void CesiumGltf::writeBuffer(
     const std::vector<Buffer>& buffers,
@@ -71,8 +66,7 @@ void CesiumGltf::writeBuffer(
                 j.KeyPrimitive("uri", BASE64_PREFIX + encodeAsBase64String(buffer.cesium.data));
             } 
 
-            // Default to calling the user provided lambda if they don't opt into auto
-            // base64 conversion.
+            // Auto generate a filename and invoke the user provided lambda.
             else {
                 writeGLTFCallback(std::to_string(i) + ".bin", buffer.cesium.data);
             }
