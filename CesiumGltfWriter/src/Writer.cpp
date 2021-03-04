@@ -106,7 +106,7 @@ std::vector<std::uint8_t> writeModel(
     CesiumGltf::writeBuffer(model.buffers, *writer, flags, writeGLTFCallback);
     CesiumGltf::writeBufferView(model.bufferViews, *writer);
     CesiumGltf::writeCamera(model.cameras, *writer);
-    CesiumGltf::writeImage(model.images, *writer);
+    CesiumGltf::writeImage(model.images, *writer, flags, writeGLTFCallback);
     CesiumGltf::writeMaterial(model.materials, *writer);
     CesiumGltf::writeMesh(model.meshes, *writer);
     CesiumGltf::writeNode(model.nodes, *writer);
