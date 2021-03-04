@@ -82,12 +82,12 @@ namespace CesiumUtility {
         /**
          * @brief two times pi
          */
-        static constexpr double TWO_PI = Math::ONE_PI * 2.0;
+        static constexpr double TWO_PI = ONE_PI * 2.0;
 
         /**
          * @brief pi divded by two
          */
-        static constexpr double PI_OVER_TWO = Math::ONE_PI / 2.0;
+        static constexpr double PI_OVER_TWO = ONE_PI / 2.0;
 
         /**
          * @brief Converts a relative to an absolute epsilon, for the epsilon-equality check between two values.
