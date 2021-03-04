@@ -4,6 +4,7 @@ jobs:
     - name: Windows + VS2017
       os: windows
       install:
+        - choco install doxygen.install
         - mkdir -p build
         - cd build
         - cmake .. -A x64
