@@ -1,6 +1,8 @@
 language: cpp
 jobs:
   include:
+    - name: Windows + VS2017
+      os: windows
     - name: Windows + VS2019
       os: windows
       install:
