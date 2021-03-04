@@ -4,7 +4,7 @@ jobs:
     - name: Windows + VS2017
       os: windows
       install:
-        - choco install visualstudio2017buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+        - choco upgrade visualstudio2017buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install
     - name: Windows + VS2019
       os: windows
