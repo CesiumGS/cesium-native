@@ -102,7 +102,7 @@ namespace CesiumGltf {
 		 * @param offset The offset from the start of the buffer to the first element.
 		 * @param size The total number of elements.
 		 */
-		AccessorView(const uint8_t* pData, int64_t stride, int64_t offset, int64_t size) :
+		AccessorView(const std::byte* pData, int64_t stride, int64_t offset, int64_t size) :
 			_pData(pData),
 			_stride(stride),
 			_offset(offset),
