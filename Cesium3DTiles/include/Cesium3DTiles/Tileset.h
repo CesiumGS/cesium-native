@@ -574,7 +574,7 @@ namespace Cesium3DTiles {
         bool _supportsRasterOverlays;
 
         static void addTileToLoadQueue(std::vector<LoadRecord>& loadQueue, const ViewState& viewState, Tile& tile, double distance);
-        static void processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress);
+        static void processQueue(std::vector<Tileset::LoadRecord>& queue, Tileset &tileset);
 
         Tileset(const Tileset& rhs) = delete;
         Tileset& operator=(const Tileset& rhs) = delete;

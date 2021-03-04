@@ -942,7 +942,6 @@ namespace Cesium3DTiles {
         ViewUpdateResult& result
     ) {
         tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
-        this->_markTileVisited(tile);
 
         // whether we should visit this tile
         bool shouldVisit = true;
@@ -1305,9 +1304,9 @@ namespace Cesium3DTiles {
     }
 
     void Tileset::_processLoadQueue() {
-        Tileset::processQueue(this->_loadQueueHigh, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
-        Tileset::processQueue(this->_loadQueueMedium, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
-        Tileset::processQueue(this->_loadQueueLow, this->_loadsInProgress, this->_options.maximumSimultaneousTileLoads);
+        Tileset::processQueue(this->_loadQueueHigh, *this);
+        Tileset::processQueue(this->_loadQueueMedium, *this);
+        Tileset::processQueue(this->_loadQueueLow, *this);
     }
 
     void Tileset::_unloadCachedTiles() {
@@ -1444,8 +1443,8 @@ namespace Cesium3DTiles {
         }
     }
 
-    /*static*/ void Tileset::processQueue(std::vector<Tileset::LoadRecord>& queue, std::atomic<uint32_t>& loadsInProgress, uint32_t maximumLoadsInProgress) {
-        if (loadsInProgress >= maximumLoadsInProgress) {
+    /*static*/ void Tileset::processQueue(std::vector<Tileset::LoadRecord>& queue, Tileset &tileset) {
+        if (tileset._loadsInProgress >= tileset._options.maximumSimultaneousTileLoads) {
             return;
         }
 
@@ -1453,8 +1452,9 @@ namespace Cesium3DTiles {
 
         for (LoadRecord& record : queue) {
             record.pTile->loadContent();
+            tileset._markTileVisited(*record.pTile);
 
-            if (loadsInProgress >= maximumLoadsInProgress) {
+            if (tileset._loadsInProgress >= tileset._options.maximumSimultaneousTileLoads) {
                 break;
             }
         }
