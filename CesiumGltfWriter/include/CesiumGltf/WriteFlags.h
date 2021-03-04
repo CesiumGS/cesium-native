@@ -1,6 +1,5 @@
 #pragma once
 #include "WriterLibrary.h"
-
 namespace CesiumGltf {
     CESIUMGLTFWRITER_API enum WriteFlags {
         GLB = 1,
