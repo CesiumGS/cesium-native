@@ -7,6 +7,8 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
+    const Ellipsoid Ellipsoid::WGS84(6378137.0, 6378137.0, 6356752.3142451793);
+
     glm::dvec3 Ellipsoid::geodeticSurfaceNormal(const glm::dvec3& position) const noexcept {
         return glm::normalize(position * this->_oneOverRadiiSquared);
     }

@@ -1,6 +1,14 @@
 language: cpp
 jobs:
   include:
+    - name: Windows + VS2017
+      os: windows
+      install:
+        - choco install doxygen.install
+        - mkdir -p build
+        - cd build
+        - cmake .. -A x64
+        - cd ..
     - name: Windows + VS2019
       os: windows
       install:
