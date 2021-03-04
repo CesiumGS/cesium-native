@@ -2,31 +2,46 @@ add_library(CesiumAsync "")
 
 configure_cesium_library(CesiumAsync)
 
-file(GLOB SOURCES include/CesiumAsync/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumAsync/*.h)
+cesium_glob_files(CESIUM_ASYNC_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_ASYNC_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_ASYNC_PUBLIC_HEADERS include/CesiumAsync/*.h)
+cesium_glob_files(CESIUM_ASYNC_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_ASYNC_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumAsync 
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_ASYNC_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_ASYNC_TEST_HEADERS}"
+)
 
 target_sources(
     CesiumAsync
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_ASYNC_SOURCES}
+        ${CESIUM_ASYNC_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_ASYNC_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumAsync
     SYSTEM PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/sqlite3
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/GSL/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/rapidjson/include
-
-    PUBLIC
-        include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumAsync_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
+        # SQLITE3 does not attach its include directory to
+        # its target
+        ${CESIUM_NATIVE_SQLITE3_INCLUDE_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src/
 )
 
-target_link_libraries(CesiumAsync PUBLIC Async++ GSL sqlite3 spdlog)
+target_link_libraries(CesiumAsync PUBLIC 
+    GSL
+    sqlite3 
+    Async++
+)
+
+# These libraries erroneously do NOT list their headers as `SYSTEM` headers
+target_link_libraries_system(CesiumAsync PUBLIC
+    spdlog
+)

@@ -2,30 +2,48 @@ add_library(Cesium3DTiles "")
 
 configure_cesium_library(Cesium3DTiles)
 
-file(GLOB SOURCES include/Cesium3DTiles/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/Cesium3DTiles/*.h)
+cesium_glob_files(CESIUM_3DTILES_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_3DTILES_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS include/Cesium3DTiles/*.h include/Cesium3DTiles/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_3DTILES_TEST_HEADERS test/*.h test/*.hpp)
+
+set_target_properties(Cesium3DTiles 
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_3DTILES_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_3DTILES_TEST_HEADERS}"
+        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
+)
 
 target_sources(
     Cesium3DTiles
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_3DTILES_SOURCES}
+        ${CESIUM_3DTILES_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_3DTILES_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
-        # Draco's CMake doesn't use target_include_directories, so we need to manually add draco's include dirs here.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/draco/src
-
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
+        ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
-    PUBLIC
-        include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:Cesium3DTiles_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
+        ${CMAKE_CURRENT_LIST_DIR}/include
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-target_link_libraries(Cesium3DTiles PUBLIC CesiumAsync CesiumGeospatial CesiumGeometry CesiumGltf CesiumGltfReader CesiumUtility draco tinyxml2 spdlog)
+target_link_libraries(Cesium3DTiles 
+    PUBLIC 
+        CesiumAsync 
+        CesiumGeospatial 
+        CesiumGeometry 
+        CesiumGltf 
+        CesiumGltfReader 
+        CesiumUtility 
+        uriparser 
+        tinyxml2 
+        spdlog
+)

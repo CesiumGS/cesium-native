@@ -142,6 +142,4 @@ namespace CesiumGeospatial {
         glm::dvec3 _oneOverRadiiSquared;
         double _centerToleranceSquared;
     };
-
-    inline constexpr Ellipsoid Ellipsoid::WGS84(6378137.0, 6378137.0, 6356752.3142451793);
 }

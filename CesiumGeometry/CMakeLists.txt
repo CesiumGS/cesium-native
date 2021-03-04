@@ -2,25 +2,33 @@ add_library(CesiumGeometry "")
 
 configure_cesium_library(CesiumGeometry)
 
-file(GLOB SOURCES include/CesiumGeometry/*.h src/*.cpp src/*.h)
-file(GLOB PUBLIC_INCLUDES include/CesiumGeometry/*.h)
+cesium_glob_files(CESIUM_GEOMETRY_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_GEOMETRY_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_GEOMETRY_PUBLIC_HEADERS include/CesiumGeometry/*.h)
+cesium_glob_files(CESIUM_GEOMETRY_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_GEOMETRY_TEST_HEADERS test/*.h)
+
+set_target_properties(CesiumGeometry 
+    PROPERTIES 
+        TEST_SOURCES "${CESIUM_GEOMETRY_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_GEOMETRY_TEST_HEADERS}"
+)
 
 target_sources(
     CesiumGeometry
     PRIVATE
-        ${SOURCES}
+        ${CESIUM_GEOMETRY_SOURCES}
+        ${CESIUM_GEOMETRY_HEADERS}
     PUBLIC
-        ${PUBLIC_INCLUDES}
+        ${CESIUM_GEOMETRY_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumGeometry
-    PUBLIC
-        include
-
-        # Must set ${targetName}_PRIVATE_SRC to 1 to add src directory to the public include directory. 
-        # This should only be set by the target itself and test target, and used for testing purpose only
-        "$<BUILD_INTERFACE:$<$<BOOL:$<TARGET_PROPERTY:CesiumGeometry_PRIVATE_SRC>>:${CMAKE_CURRENT_SOURCE_DIR}/src>>"
+    SYSTEM PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-target_link_libraries(CesiumGeometry PUBLIC CesiumUtility)
+target_link_libraries(CesiumGeometry PUBLIC 
+    CesiumUtility
+)
