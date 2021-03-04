@@ -71,9 +71,8 @@ target_include_directories(
 
 target_link_libraries(
     cesium-native-tests
-    PRIVATE
-        ${cesium_native_targets}
-        Catch2::Catch2
+    ${cesium_native_targets}
+    Catch2::Catch2
 )
 
 include(CTest)
