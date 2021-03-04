@@ -116,7 +116,7 @@ install(TARGETS draco)
 
 install(TARGETS sqlite3)
 
-set_target_properties(modp_b64 PROPERTIES PUBLIC_HEADER "extern/modp_b64/modp_b64.h")
+set_target_properties(modp_b64 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/extern/modp_b64/modp_b64.h")
 install(TARGETS modp_b64)
 
 install(TARGETS httplib)
@@ -125,4 +125,4 @@ install(TARGETS csprng
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/duthomhas/)
 
 install(TARGETS PicoSHA2)
-install(TARGETS GSL)
+install(TARGETS GSL PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gsl/)
