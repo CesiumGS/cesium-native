@@ -128,7 +128,11 @@ namespace CesiumGltf {
         compact->EndObject();
     }
 
-    std::string_view JsonWriter::toString() {
+    std::string JsonWriter::toString() {
+        return std::string(_compactBuffer.GetString());
+    }
+
+    std::string_view JsonWriter::toStringView() {
         return std::string_view(_compactBuffer.GetString());
     }
 

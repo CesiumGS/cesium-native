@@ -69,7 +69,8 @@ namespace CesiumGltf {
             std::string_view keyName,
             std::function<void(void)> insideObject) override;
 
-        std::string_view toString() override;
+        std::string toString() override;
+        std::string_view toStringView() override;
         std::vector<std::uint8_t> toBytes() override;
     };
 }

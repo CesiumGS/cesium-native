@@ -132,7 +132,11 @@ namespace CesiumGltf {
         pretty->EndObject();
     }
 
-    std::string_view PrettyJsonWriter::toString() {
+    std::string PrettyJsonWriter::toString() {
+        return std::string(_prettyBuffer.GetString());
+    }
+
+    std::string_view PrettyJsonWriter::toStringView() {
         return std::string_view(_prettyBuffer.GetString());
     }
 

@@ -68,7 +68,8 @@ namespace CesiumGltf {
             std::string_view keyName,
             std::function<void(void)> insideObject);
 
-        virtual std::string_view toString();
+        virtual std::string toString();
+        virtual std::string_view toStringView();
         virtual std::vector<std::uint8_t> toBytes();
     };
 }
