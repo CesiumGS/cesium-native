@@ -3,7 +3,7 @@ configure_cesium_library(CesiumGltf)
 
 cesium_glob_files(CESIUM_GLTF_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_GLTF_HEADERS src/*.h src/*.hpp)
-cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS include/CesiumGeometry/*.h)
+cesium_glob_files(CESIUM_GLTF_PUBLIC_HEADERS include/CesiumGltf/*.h)
 cesium_glob_files(CESIUM_GLTF_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_GLTF_TEST_HEADERS test/*.h)
 
