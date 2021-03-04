@@ -3,9 +3,6 @@ jobs:
   include:
     - name: Windows + VS2017
       os: windows
-      install:
-        - choco upgrade visualstudio2017buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
-        - choco install doxygen.install
     - name: Windows + VS2019
       os: windows
       install:
@@ -32,7 +29,7 @@ jobs:
 script:
   - mkdir -p build
   - cd build
-  - cmake ..
+  - cmake .. -A x64
   - cmake --build . --config Debug
   - ctest -V
   - cmake --build . --config Debug --target cesium-native-docs
