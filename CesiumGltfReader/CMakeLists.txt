@@ -45,7 +45,6 @@ target_link_libraries(CesiumGltfReader
     PUBLIC
         CesiumGltf
         GSL
-    PRIVATE
         draco
         modp_b64
 )

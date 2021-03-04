@@ -42,13 +42,13 @@ target_include_directories(
     PUBLIC
         CSPRNG/source
 )
-set(CSPRNG_HEADERS ${CMAKE_CURRENT_LIST_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_LIST_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_LIST_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
+set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
 set_target_properties(csprng PROPERTIES PUBLIC_HEADER "${CSPRNG_HEADERS}")
 
 # PicoSHA2 doesn't have CMakeLists.txt at all
 add_library(PicoSHA2 INTERFACE)
 target_include_directories(PicoSHA2 SYSTEM INTERFACE PicoSHA2)
-set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_LIST_DIR}/PicoSHA2/picosha2.h")
+set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/PicoSHA2/picosha2.h")
 
 set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" CACHE INTERNAL
     "Include directory for spdlog"

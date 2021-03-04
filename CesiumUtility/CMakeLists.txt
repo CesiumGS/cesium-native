@@ -49,7 +49,6 @@ target_link_libraries_system(
 target_link_libraries(CesiumUtility
     PUBLIC
         GSL
-    PRIVATE
         uriparser
 )
 
