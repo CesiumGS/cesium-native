@@ -21,7 +21,7 @@ namespace CesiumGltf {
 
   private:
 
-    Asset* _pObject;
+    Asset* _pObject = nullptr;
     StringJsonHandler _copyright;
     StringJsonHandler _generator;
     StringJsonHandler _version;

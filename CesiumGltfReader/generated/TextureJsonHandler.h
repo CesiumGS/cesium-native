@@ -21,7 +21,7 @@ namespace CesiumGltf {
 
   private:
 
-    Texture* _pObject;
+    Texture* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _sampler;
     IntegerJsonHandler<int32_t> _source;
   };

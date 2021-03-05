@@ -22,7 +22,7 @@ namespace CesiumGltf {
 
   private:
 
-    BufferView* _pObject;
+    BufferView* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _buffer;
     IntegerJsonHandler<int64_t> _byteOffset;
     IntegerJsonHandler<int64_t> _byteLength;

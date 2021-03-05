@@ -31,7 +31,7 @@ namespace CesiumGltf {
       Image::MimeType* _pEnum = nullptr;
     };
 
-    Image* _pObject;
+    Image* _pObject = nullptr;
     StringJsonHandler _uri;
     MimeTypeJsonHandler _mimeType;
     IntegerJsonHandler<int32_t> _bufferView;

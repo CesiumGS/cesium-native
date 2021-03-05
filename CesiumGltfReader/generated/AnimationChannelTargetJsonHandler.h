@@ -30,7 +30,7 @@ namespace CesiumGltf {
       AnimationChannelTarget::Path* _pEnum = nullptr;
     };
 
-    AnimationChannelTarget* _pObject;
+    AnimationChannelTarget* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _node;
     PathJsonHandler _path;
   };
