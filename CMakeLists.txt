@@ -22,7 +22,7 @@ function(cesium_glob_files out_var_name regexes)
         list(APPEND regexes_only "${arg}")
     endforeach()
     list(POP_FRONT regexes_only)
-    if (GLOB_USE_CONFIGURE_DEPENDS) 
+    if (GLOB_USE_CONFIGURE_DEPENDS)
         file(GLOB_RECURSE files CONFIGURE_DEPENDS ${regexes_only})
     else()
         file(GLOB files ${regexes_only})
@@ -102,3 +102,35 @@ add_subdirectory(CesiumIonClient)
 enable_testing()
 add_subdirectory(CesiumNativeTests)
 add_subdirectory(doc)
+
+# Installation of third-party libraries required to use cesium-native
+install(TARGETS uriparser OPTIONAL) # Skips headers
+
+install(DIRECTORY extern/glm/glm
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT GLM
+)
+
+install(TARGETS tinyxml2)
+
+install(TARGETS Async++)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++.h TYPE INCLUDE)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++ TYPE INCLUDE)
+
+install(TARGETS spdlog)
+install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+install(TARGETS draco)
+
+install(TARGETS sqlite3)
+
+install(TARGETS modp_b64)
+
+install(TARGETS httplib)
+
+install(TARGETS csprng)
+
+install(TARGETS GSL)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
+
+install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
