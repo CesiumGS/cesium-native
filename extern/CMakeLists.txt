@@ -43,7 +43,7 @@ target_include_directories(
         CSPRNG/source
 )
 set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.hpp ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/is_iterable.hpp)
-set_target_properties(csprng PROPERTIES PUBLIC_HEADER "${CSPRNG_HEADERS}")
+#set_target_properties(csprng PROPERTIES PUBLIC_HEADER "${CSPRNG_HEADERS}")
 
 # PicoSHA2 doesn't have CMakeLists.txt at all
 add_library(PicoSHA2 INTERFACE)
@@ -61,6 +61,8 @@ set(CESIUM_NATIVE_SQLITE3_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/sqlite3/" CACHE
 set(CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/rapidjson/include" CACHE INTERNAL
     "Include directory for rapidjson"
 )
+
+install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 set(CESIUM_NATIVE_RAPIDJSON_DEFINES
     RAPIDJSON_HAS_CXX11_RVALUE_REFS
