@@ -328,7 +328,7 @@ ImageReaderResult CesiumGltf::readImage(const gsl::span<const std::byte>& data) 
     int channelsInFile;
     stbi_uc* pImage = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(data.data()), static_cast<int>(data.size()), &image.width, &image.height, &channelsInFile, image.channels);
     if (pImage) {
-        const size_t lastByte = image.width * image.height * image.channels * image.bytesPerChannel;
+        const int lastByte = image.width * image.height * image.channels * image.bytesPerChannel;
         std::transform(
             pImage, 
             pImage + lastByte, 
