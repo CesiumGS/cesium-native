@@ -26,6 +26,10 @@ void writeOrthographicCamera(
     j.Key("znear");
     j.Double(cameraOrthographic.znear);
 
+    if (!cameraOrthographic.extensions.empty()) {
+        writeExtensions(cameraOrthographic.extensions, j);
+    }
+
     if (!cameraOrthographic.extras.empty()) {
         j.Key("extras");
         CesiumGltf::writeJsonValue(cameraOrthographic.extras, j);
