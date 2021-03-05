@@ -10,7 +10,7 @@ project(cesium-native
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/modules/")
 
 # Add a coverage target iff:
-# - gcovr is availableo
+# - gcovr is available
 # - cesium-native is not being used as a git submodule
 # - g++ is the active compiler.
 # This branch must occur before adding other targets, or gcovr
