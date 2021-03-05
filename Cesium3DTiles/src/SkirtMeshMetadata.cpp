@@ -55,9 +55,9 @@ namespace Cesium3DTiles {
             pSouthHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtSouthHeight");
             pEastHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtEastHeight");
             pNorthHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>("skirtNorthHeight");
-        } catch(const JsonValueMissingKey& e) {
+        } catch(const JsonValueMissingKey&) {
             return std::nullopt;
-        } catch (const JsonValueNotRealValue& e) {
+        } catch (const JsonValueNotRealValue&) {
             return std::nullopt;
         }
 
