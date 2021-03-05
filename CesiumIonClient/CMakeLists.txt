@@ -38,6 +38,7 @@ target_link_libraries(CesiumIonClient
     PUBLIC
         CesiumAsync
         CesiumUtility
+    PRIVATE
         httplib::httplib
         csprng
         modp_b64

@@ -44,6 +44,7 @@ target_link_libraries(CesiumAsync
     PUBLIC
         GSL
         Async++
+    PRIVATE
         sqlite3
 )
 
