@@ -3,5 +3,5 @@
 #include <string>
 #include <cstdint>
 namespace CesiumGltf {
-    [[nodiscard]] std::string encodeAsBase64String(const std::vector<std::uint8_t>& data) noexcept;
+    [[nodiscard]] std::string encodeAsBase64String(const std::vector<std::byte>& data) noexcept;
 }

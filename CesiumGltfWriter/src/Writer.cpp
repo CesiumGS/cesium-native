@@ -43,14 +43,14 @@ void validateFlags(WriteFlags options) {
     }
 }
 
-std::vector<std::uint8_t> writeModel(
+std::vector<std::byte> writeModel(
     const Model& model, 
     WriteFlags flags,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback = noopGltfWriter
 );
 
-std::vector<std::uint8_t> CesiumGltf::writeModelAsEmbeddedBytes(
+std::vector<std::byte> CesiumGltf::writeModelAsEmbeddedBytes(
     const Model& model,
     WriteFlags flags
 ) {
@@ -66,14 +66,14 @@ void CesiumGltf::writeModelAndExternalFiles(
     writeModel(model, flags, filename, writeGLTFCallback);
 }
 
-std::vector<std::uint8_t> writeModel(
+std::vector<std::byte> writeModel(
     const Model& model, 
     WriteFlags flags,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback 
 ) {
     validateFlags(flags);
-    std::vector<std::uint8_t> result;
+    std::vector<std::byte> result;
     std::unique_ptr<JsonWriter> writer;
 
     if (flags & WriteFlags::PrettyPrint) {
@@ -124,7 +124,7 @@ std::vector<std::uint8_t> writeModel(
 
     if (flags & WriteFlags::GLB) {
         if (model.buffers.empty()) {
-            result = writeBinaryGLB(std::vector<std::uint8_t>{}, writer->toStringView());
+            result = writeBinaryGLB(std::vector<std::byte>{}, writer->toStringView());
         }
         
         else {

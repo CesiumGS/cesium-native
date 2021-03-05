@@ -8,8 +8,18 @@
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
 
-const std::vector<std::uint8_t> HELLO_WORLD_STR {
-    'H', 'e', 'l', 'l', 'o', 'W','o','r','l','d','!'
+const std::vector<std::byte> HELLO_WORLD_STR {
+    std::byte('H'), 
+    std::byte('e'), 
+    std::byte('l'), 
+    std::byte('l'), 
+    std::byte('o'), 
+    std::byte('W'),
+    std::byte('o'),
+    std::byte('r'),
+    std::byte('l'),
+    std::byte('d'),
+    std::byte('!')
 };
 
 TEST_CASE("BufferWriter automatically converts buffer.cesium.data to base64 if WriteFlags::AutoConvertConvertDataToBase64 is set", "[GltfWriter]") {
@@ -52,7 +62,7 @@ TEST_CASE("If external file URI is detected for buffer[0] in glTF mode, user pro
     buffer.cesium.data = HELLO_WORLD_STR;
 
     bool callbackInvoked = false;
-    const auto onHelloWorldBin = [&callbackInvoked, &buffer](std::string_view filename, const std::vector<std::uint8_t>& bytes) {
+    const auto onHelloWorldBin = [&callbackInvoked, &buffer](std::string_view filename, const std::vector<std::byte>& bytes) {
         REQUIRE(filename == *buffer.uri);
         REQUIRE(bytes == buffer.cesium.data);
         callbackInvoked = true;
@@ -117,7 +127,7 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and AutoConvert
     buffer.cesium.data = HELLO_WORLD_STR;
 
     bool callbackInvoked = false;
-    const auto onHelloWorldBin = [&callbackInvoked, &buffer](std::string_view filename, const std::vector<std::uint8_t>& bytes) {
+    const auto onHelloWorldBin = [&callbackInvoked, &buffer](std::string_view filename, const std::vector<std::byte>& bytes) {
         REQUIRE(filename == "0.bin");
         REQUIRE(bytes == buffer.cesium.data);
         callbackInvoked = true;

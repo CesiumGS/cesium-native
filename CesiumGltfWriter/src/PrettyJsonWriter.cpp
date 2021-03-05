@@ -1,5 +1,6 @@
 #include "PrettyJsonWriter.h"
-#include <rapidjson/prettywriter.h>
+#include <algorithm>
+#include <iterator>
 
 namespace CesiumGltf {
     PrettyJsonWriter::PrettyJsonWriter() {
@@ -140,11 +141,15 @@ namespace CesiumGltf {
         return std::string_view(_prettyBuffer.GetString());
     }
 
-    std::vector<std::uint8_t> PrettyJsonWriter::toBytes() {
-        const auto& string = _prettyBuffer.GetString();
-        const auto& size = _prettyBuffer.GetSize();
-        std::vector<uint8_t> result(size);
-        std::copy(string, string + size, result.begin());
+    std::vector<std::byte> PrettyJsonWriter::toBytes() {
+        auto view = this->toStringView();
+        std::vector<std::byte> result;
+        std::transform(
+            view.begin(), 
+            view.end(), 
+            std::back_inserter(result), 
+            [] (char c) { return std::byte(c); }
+        );
         return result;
     }
 }

@@ -3,6 +3,7 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 #include <cstdint>
+#include <cstddef>
 #include <functional>
 #include <string_view>
 #include <vector>
@@ -70,6 +71,6 @@ namespace CesiumGltf {
 
         virtual std::string toString();
         virtual std::string_view toStringView();
-        virtual std::vector<std::uint8_t> toBytes();
+        virtual std::vector<std::byte> toBytes();
     };
 }

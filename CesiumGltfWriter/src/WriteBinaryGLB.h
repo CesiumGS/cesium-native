@@ -7,7 +7,7 @@
 enum GLBChunkType { JSON = 0x4E4F534A, BIN = 0x004E4942 };
 
 namespace CesiumGltf {
-    std::vector<std::uint8_t> writeBinaryGLB(
-        const std::vector<std::uint8_t>& binaryChunk,
+    std::vector<std::byte> writeBinaryGLB(
+        const std::vector<std::byte>& binaryChunk,
         const std::string_view& gltfJson);
 }

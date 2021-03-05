@@ -71,6 +71,6 @@ namespace CesiumGltf {
 
         std::string toString() override;
         std::string_view toStringView() override;
-        std::vector<std::uint8_t> toBytes() override;
+        std::vector<std::byte> toBytes() override;
     };
 }

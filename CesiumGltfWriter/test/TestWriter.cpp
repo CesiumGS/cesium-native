@@ -83,8 +83,8 @@ TEST_CASE("Generates glTF asset with required top level property `asset`", "[Glt
     CesiumGltf::Model m;
     m.asset.version = "2.0";
     const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLTF);
-    const std::string asString(asBytes.begin(), asBytes.end());
     const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
+    const std::string asString(reinterpret_cast<const char*>(asBytes.data()), asBytes.size());
     REQUIRE(asString == expectedString); 
 }
 
@@ -92,27 +92,31 @@ TEST_CASE("Generates glb asset with required top level property `asset`", "[Gltf
     CesiumGltf::Model m;
     m.asset.version = "2.0";
     const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLB);
-    std::vector<std::uint8_t> expectedMagic = {
-        'g', 'l', 'T', 'F',
+    std::vector<std::byte> expectedMagic = {
+        std::byte('g'), 
+        std::byte('l'), 
+        std::byte('T'), 
+        std::byte('F'),
     };
 
     REQUIRE(std::equal(expectedMagic.begin(), expectedMagic.end(), asBytes.begin()));
 
     const std::uint32_t expectedGLBContainerVersion = 2;
     const std::int64_t actualGLBContainerVersion = 
-        (asBytes[4]) | (asBytes[5] << 8) | (asBytes[6] << 16) | (asBytes[7] << 24);
+        (static_cast<std::uint8_t>(asBytes[4])) | (static_cast<std::uint8_t>(asBytes[5]) << 8) | (static_cast<std::uint8_t>(asBytes[6]) << 16) | (static_cast<std::uint8_t>(asBytes[7]) << 24);
 
     //  12 byte header + 8 bytes for JSON chunk + 27 bytes for json string + 1 byte for padding to
     //  48 bytes.
     const std::int64_t expectedGLBSize = 48;
     const std::int64_t totalGLBSize =  // is 48
-        (asBytes[8]) | (asBytes[9] << 8) | (asBytes[10] << 16) | (asBytes[11] << 24);
+        (static_cast<std::uint8_t>(asBytes[8])) | (static_cast<std::uint8_t>(asBytes[9]) << 8) | (static_cast<std::uint8_t>(asBytes[10]) << 16) | (static_cast<std::uint8_t>(asBytes[11]) << 24);
 
     REQUIRE(expectedGLBContainerVersion == actualGLBContainerVersion);
     REQUIRE(expectedGLBSize == totalGLBSize);
 
-    std::string extractedJson(asBytes.begin() + 20, asBytes.end() - 1); // - 1 for padding byte
-    const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
+    const std::string expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
+    const auto* asStringPtr = reinterpret_cast<const char*>(asBytes.data() + 20);
+    std::string extractedJson(asStringPtr, expectedString.size());
     REQUIRE(expectedString == extractedJson);
 }
 

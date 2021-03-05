@@ -6,10 +6,13 @@
 * See README for more details.
 */
 
+// 2021-03-05 - Samuel Vargas : Modified to accept a std::vector<std::byte>
 // 2016-12-12 - Gaspard Petit : Slightly modified to return a std::string 
 // instead of a buffer allocated with malloc.
 
 #include <string>
+#include <cstddef>
+#include <array>
 
 static const unsigned char base64_table[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -22,12 +25,13 @@ static const unsigned char base64_table[65] =
 * Returns: Allocated buffer of out_len bytes of encoded data,
 * or empty string on failure
 */
-std::string base64_encode(const unsigned char *src, size_t len)
+std::string base64_encode(const std::vector<std::byte>& src)
 {
     unsigned char *out, *pos;
-    const unsigned char *end, *in;
+    std::vector<std::byte>::const_iterator end, in;
 
-    size_t olen;
+    const std::size_t len = src.size();
+    std::size_t olen;
 
     olen = 4*((len + 2) / 3); /* 3-byte blocks to 4-byte */
 
@@ -38,27 +42,27 @@ std::string base64_encode(const unsigned char *src, size_t len)
     outStr.resize(olen);
     out = (unsigned char*)&outStr[0];
 
-    end = src + len;
-    in = src;
+    end = src.begin() + len;
+    in = src.begin();
     pos = out;
     while (end - in >= 3) {
-        *pos++ = base64_table[in[0] >> 2];
-        *pos++ = base64_table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
-        *pos++ = base64_table[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
-        *pos++ = base64_table[in[2] & 0x3f];
+        *pos++ = base64_table[static_cast<int>(in[0]) >> 2];
+        *pos++ = base64_table[((static_cast<int>(in[0]) & 0x03) << 4) | (static_cast<int>(in[1]) >> 4)];
+        *pos++ = base64_table[((static_cast<int>(in[1]) & 0x0f) << 2) | (static_cast<int>(in[2]) >> 6)];
+        *pos++ = base64_table[static_cast<int>(in[2]) & 0x3f];
         in += 3;
     }
 
     if (end - in) {
-        *pos++ = base64_table[in[0] >> 2];
+        *pos++ = base64_table[static_cast<int>(in[0]) >> 2];
         if (end - in == 1) {
-            *pos++ = base64_table[(in[0] & 0x03) << 4];
+            *pos++ = base64_table[(static_cast<int>(in[0]) & 0x03) << 4];
             *pos++ = '=';
         }
         else {
-            *pos++ = base64_table[((in[0] & 0x03) << 4) |
-                (in[1] >> 4)];
-            *pos++ = base64_table[(in[1] & 0x0f) << 2];
+            *pos++ = base64_table[((static_cast<int>(in[0]) & 0x03) << 4) |
+                (static_cast<int>(in[1]) >> 4)];
+            *pos++ = base64_table[(static_cast<int>(in[1]) & 0x0f) << 2];
         }
         *pos++ = '=';
     }
