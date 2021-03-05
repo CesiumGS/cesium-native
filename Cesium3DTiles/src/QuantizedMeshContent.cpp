@@ -12,6 +12,7 @@
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
 #include <stdexcept>
+#include <cstddef>
 
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
@@ -84,21 +85,21 @@ namespace Cesium3DTiles {
 
         QuantizedMeshIndexType indexType;
         uint32_t triangleCount;
-        gsl::span<const uint8_t> indicesBuffer;
+        gsl::span<const std::byte> indicesBuffer;
 
         uint32_t westEdgeIndicesCount;
-        gsl::span<const uint8_t> westEdgeIndicesBuffer;
+        gsl::span<const std::byte> westEdgeIndicesBuffer;
 
         uint32_t southEdgeIndicesCount;
-        gsl::span<const uint8_t> southEdgeIndicesBuffer;
+        gsl::span<const std::byte> southEdgeIndicesBuffer;
 
         uint32_t eastEdgeIndicesCount;
-        gsl::span<const uint8_t> eastEdgeIndicesBuffer;
+        gsl::span<const std::byte> eastEdgeIndicesBuffer;
 
         uint32_t northEdgeIndicesCount;
-        gsl::span<const uint8_t> northEdgeIndicesBuffer;
+        gsl::span<const std::byte> northEdgeIndicesBuffer;
 
-        gsl::span<const uint8_t> octEncodedNormalBuffer;
+        gsl::span<const std::byte> octEncodedNormalBuffer;
 
         uint32_t metadataJsonLength;
         gsl::span<const char> metadataJsonBuffer;
@@ -130,7 +131,7 @@ namespace Cesium3DTiles {
     }
 
     template <class T>
-    static T readValue(const gsl::span<const uint8_t>& data, size_t offset, T defaultValue) {
+    static T readValue(const gsl::span<const std::byte>& data, size_t offset, T defaultValue) {
         if (offset + sizeof(T) <= data.size()) {
             return *reinterpret_cast<const T*>(data.data() + offset);
         }
@@ -162,7 +163,7 @@ namespace Cesium3DTiles {
         TileContentLoadResult& result
     );
 
-    static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const uint8_t>& data) {
+    static std::optional<QuantizedMeshView> parseQuantizedMesh(const gsl::span<const std::byte>& data) {
         if (data.size() < headerLength) {
             return std::nullopt;
         }
@@ -213,7 +214,7 @@ namespace Cesium3DTiles {
             }
 
             uint32_t indicesCount = meshView.triangleCount * 3;
-            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
+            meshView.indicesBuffer = gsl::span<const std::byte>(data.data() + readIndex, indicesCount * sizeof(uint32_t));
             readIndex += meshView.indicesBuffer.size_bytes();
             if (readIndex > data.size()) {
                 return std::nullopt;
@@ -231,7 +232,7 @@ namespace Cesium3DTiles {
             }
 
             uint32_t indicesCount = meshView.triangleCount * 3;
-            meshView.indicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
+            meshView.indicesBuffer = gsl::span<const std::byte>(data.data() + readIndex, indicesCount * sizeof(uint16_t));
             readIndex += meshView.indicesBuffer.size_bytes();
             if (readIndex > data.size()) {
                 return std::nullopt;
@@ -252,7 +253,7 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        meshView.westEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        meshView.westEdgeIndicesBuffer = gsl::span<const std::byte>(data.data() + readIndex, edgeByteSizes);
         readIndex += edgeByteSizes;
 
         // read the south edge 
@@ -263,7 +264,7 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        meshView.southEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        meshView.southEdgeIndicesBuffer = gsl::span<const std::byte>(data.data() + readIndex, edgeByteSizes);
         readIndex += edgeByteSizes;
 
         // read the east edge 
@@ -274,7 +275,7 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        meshView.eastEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        meshView.eastEdgeIndicesBuffer = gsl::span<const std::byte>(data.data() + readIndex, edgeByteSizes);
         readIndex += edgeByteSizes;
 
         // read the north edge
@@ -285,7 +286,7 @@ namespace Cesium3DTiles {
             return std::nullopt;
         }
 
-        meshView.northEdgeIndicesBuffer = gsl::span<const uint8_t>(data.data() + readIndex, edgeByteSizes);
+        meshView.northEdgeIndicesBuffer = gsl::span<const std::byte>(data.data() + readIndex, edgeByteSizes);
         readIndex += edgeByteSizes;
 
         // parse oct-encoded normal buffer and metadata
@@ -305,7 +306,7 @@ namespace Cesium3DTiles {
                     break;
                 }
 
-                meshView.octEncodedNormalBuffer = gsl::span<const uint8_t>(data.data() + readIndex, vertexCount * 2);
+                meshView.octEncodedNormalBuffer = gsl::span<const std::byte>(data.data() + readIndex, vertexCount * 2);
             } else if (extensionID == 4) {
                 // Metadata
                 if (readIndex + sizeof(uint32_t) > data.size()) {
@@ -411,10 +412,10 @@ namespace Cesium3DTiles {
         double longitudeOffset,
         double latitudeOffset,
         const std::vector<glm::dvec3> &uvsAndHeights,
-        const gsl::span<const uint8_t> &westEdgeIndicesBuffer,
-        const gsl::span<const uint8_t> &southEdgeIndicesBuffer,
-        const gsl::span<const uint8_t> &eastEdgeIndicesBuffer,
-        const gsl::span<const uint8_t> &northEdgeIndicesBuffer,
+        const gsl::span<const std::byte> &westEdgeIndicesBuffer,
+        const gsl::span<const std::byte> &southEdgeIndicesBuffer,
+        const gsl::span<const std::byte> &eastEdgeIndicesBuffer,
+        const gsl::span<const std::byte> &northEdgeIndicesBuffer,
         gsl::span<float>& outputPositions,
         gsl::span<float>& outputNormals,
         gsl::span<I>& outputIndices) 
@@ -531,14 +532,14 @@ namespace Cesium3DTiles {
             outputIndices);
     }
 
-    static void decodeNormals(const gsl::span<const uint8_t>& encoded, gsl::span<float>& decoded) {
+    static void decodeNormals(const gsl::span<const std::byte>& encoded, gsl::span<float>& decoded) {
         if (decoded.size() < encoded.size()) {
             throw std::runtime_error("decoded buffer is too small.");
         }
 
         size_t normalOutputIndex = 0;
         for (size_t i = 0; i < encoded.size(); i += 2) {
-            glm::dvec3 normal = octDecode(encoded[i], encoded[i + 1]);
+            glm::dvec3 normal = octDecode(static_cast<uint8_t>(encoded[i]), static_cast<uint8_t>(encoded[i + 1]));
             decoded[normalOutputIndex++] = static_cast<float>(normal.x);
             decoded[normalOutputIndex++] = static_cast<float>(normal.y);
             decoded[normalOutputIndex++] = static_cast<float>(normal.z);
@@ -546,8 +547,8 @@ namespace Cesium3DTiles {
     }
 
     template<class T>
-    static std::vector<uint8_t> generateNormals(const gsl::span<const float> &positions, const gsl::span<T> &indices, size_t currentNumOfIndex) {
-        std::vector<uint8_t> normalsBuffer(positions.size() * sizeof(float));
+    static std::vector<std::byte> generateNormals(const gsl::span<const float> &positions, const gsl::span<T> &indices, size_t currentNumOfIndex) {
+        std::vector<std::byte> normalsBuffer(positions.size() * sizeof(float));
         gsl::span<float> normals(reinterpret_cast<float *>(normalsBuffer.data()), positions.size());
         for (size_t i = 0; i < currentNumOfIndex; i += 3) {
             T id0 = indices[i];
@@ -599,7 +600,7 @@ namespace Cesium3DTiles {
         const TileID& tileID,
         const BoundingVolume& tileBoundingVolume,
         const std::string& url,
-        const gsl::span<const uint8_t>& data
+        const gsl::span<const std::byte>& data
     ) {
         // TODO: use context plus tileID to compute the tile's rectangle, rather than inferring it from the parent tile.
         const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
@@ -635,7 +636,7 @@ namespace Cesium3DTiles {
         uint32_t skirtIndicesCount = (skirtVertexCount - 4) * 6;
 
         // decode position without skirt, but preallocate position buffer to include skirt as well
-        std::vector<unsigned char> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
+        std::vector<std::byte> outputPositionsBuffer((vertexCount + skirtVertexCount) * 3 * sizeof(float));
         gsl::span<float> outputPositions(reinterpret_cast<float*>(outputPositionsBuffer.data()), (vertexCount + skirtVertexCount) * 3);
         size_t positionOutputIndex = 0;
 
@@ -694,7 +695,7 @@ namespace Cesium3DTiles {
         }
 
         // decode normal vertices of the tile as well as its metadata without skirt
-        std::vector<unsigned char> outputNormalsBuffer;
+        std::vector<std::byte> outputNormalsBuffer;
         gsl::span<float> outputNormals;
         if (!meshView->octEncodedNormalBuffer.empty()) {
             uint32_t totalNormalFloats = (vertexCount + skirtVertexCount) * 3;
@@ -713,7 +714,7 @@ namespace Cesium3DTiles {
 
         // indices buffer for gltf to include tile and skirt indices. Caution of indices type 
         // since adding skirt means the number of vertices is potentially over maximum of uint16_t
-        std::vector<unsigned char> outputIndicesBuffer;
+        std::vector<std::byte> outputIndicesBuffer;
         uint32_t indexSizeBytes = meshView->indexType == QuantizedMeshIndexType::UnsignedInt ? sizeof(uint32_t) : sizeof(uint16_t);
         const std::optional<ImplicitTilingContext>& implicitContext = context.implicitContext;
         const QuadtreeTilingScheme& tilingScheme = implicitContext->tilingScheme;

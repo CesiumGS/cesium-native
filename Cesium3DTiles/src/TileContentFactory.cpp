@@ -24,7 +24,7 @@ namespace Cesium3DTiles {
     std::unique_ptr<TileContentLoadResult> TileContentFactory::createContent(
         const TileContentLoadInput& input) {
 
-        const gsl::span<const uint8_t>& data = input.data;
+        const gsl::span<const std::byte>& data = input.data;
         std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
         auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
@@ -43,12 +43,12 @@ namespace Cesium3DTiles {
         // Determine if this is plausibly a JSON external tileset.
         size_t i;
         for (i = 0; i < data.size(); ++i) {
-            if (!std::isspace(data[i])) {
+            if (!std::isspace(static_cast<char>(data[i]))) {
                 break;
             }
         }
 
-        if (i < data.size() && data[i] == '{') {
+        if (i < data.size() && static_cast<char>(data[i]) == '{') {
             // Might be an external tileset, try loading it that way.
             itMagic = TileContentFactory::_loadersByMagic.find("json");
             if (itMagic != TileContentFactory::_loadersByMagic.end()) {
@@ -67,10 +67,10 @@ namespace Cesium3DTiles {
      * @param data The raw data.
      * @return The string, or an empty optional if the given data contains less than 4 bytes
      */
-    std::optional<std::string> TileContentFactory::getMagic(const gsl::span<const uint8_t>& data) {
+    std::optional<std::string> TileContentFactory::getMagic(const gsl::span<const std::byte>& data) {
         if (data.size() >= 4) {
-            gsl::span<const uint8_t> magicData = data.subspan(0, 4);
-            return std::string(magicData.begin(), magicData.end());
+            gsl::span<const std::byte> magicData = data.subspan(0, 4);
+            return std::string(reinterpret_cast<const char*>(magicData.data()), 4);
         }
 
         return std::nullopt;

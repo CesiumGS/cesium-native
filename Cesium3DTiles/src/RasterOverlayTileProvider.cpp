@@ -434,7 +434,7 @@ namespace Cesium3DTiles {
                 };
             }
 
-            gsl::span<const uint8_t> data = pResponse->data();
+            gsl::span<const std::byte> data = pResponse->data();
             CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
             return LoadedRasterOverlayImage {

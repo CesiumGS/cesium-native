@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/TileContentFactory.h"
 #include <rapidjson/document.h>
 #include <stdexcept>
+#include <cstddef>
 
 namespace {
     #pragma pack(push, 1)
@@ -41,7 +42,7 @@ namespace Cesium3DTiles {
          * @param derivedData The data for the result.
          * @return The result.
          */
-        TileContentLoadInput derive(const TileContentLoadInput& input, const gsl::span<const uint8_t>& derivedData) {
+        TileContentLoadInput derive(const TileContentLoadInput& input, const gsl::span<const std::byte>& derivedData) {
             return TileContentLoadInput(
                 input.pLogger,
                 derivedData,
@@ -62,7 +63,7 @@ namespace Cesium3DTiles {
     std::unique_ptr<TileContentLoadResult> CompositeContent::load(
 		const TileContentLoadInput& input) {
         const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-        const gsl::span<const uint8_t>& data = input.data;
+        const gsl::span<const std::byte>& data = input.data;
         const std::string& url = input.url;
 
         if (data.size() < sizeof(CmptHeader)) {
@@ -102,7 +103,7 @@ namespace Cesium3DTiles {
                 break;
             }
 
-            gsl::span<const uint8_t> innerData(data.data() + pos, pInner->byteLength);
+            gsl::span<const std::byte> innerData(data.data() + pos, pInner->byteLength);
 
             std::unique_ptr<TileContentLoadResult> pInnerLoadResult = TileContentFactory::createContent(
                 derive(input, innerData)

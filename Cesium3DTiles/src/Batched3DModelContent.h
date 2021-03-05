@@ -8,6 +8,7 @@
 #include "Cesium3DTiles/TileContentLoader.h"
 #include <memory>
 #include <string>
+#include <cstddef>
 #include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
@@ -42,7 +43,7 @@ namespace Cesium3DTiles {
         static std::unique_ptr<TileContentLoadResult> load(
             std::shared_ptr<spdlog::logger> pLogger,
             const std::string& url,
-            const gsl::span<const uint8_t>& data
+            const gsl::span<const std::byte>& data
         );
     };
 

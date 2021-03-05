@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <ctime>
+#include <cstddef>
 
 namespace CesiumAsync {
 
@@ -23,7 +24,7 @@ namespace CesiumAsync {
         CacheResponse(
             uint16_t cacheStatusCode, 
             HttpHeaders&& cacheHeaders, 
-            std::vector<uint8_t>&& cacheData
+            std::vector<std::byte>&& cacheData
         ) :
             statusCode(cacheStatusCode),
             headers(std::move(cacheHeaders)),
@@ -43,7 +44,7 @@ namespace CesiumAsync {
         /**
          * @brief The body data of the response.
          */
-        std::vector<uint8_t> data;
+        std::vector<std::byte> data;
     };
 
     /**

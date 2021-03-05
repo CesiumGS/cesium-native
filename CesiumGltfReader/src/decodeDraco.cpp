@@ -3,6 +3,7 @@
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "CesiumGltf/Reader.h"
 #include <string>
+#include <cstddef>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -47,7 +48,7 @@ namespace {
             return nullptr;
         }
 
-        gsl::span<const uint8_t> data(buffer.cesium.data.data() + bufferView.byteOffset, static_cast<uint64_t>(bufferView.byteLength));
+        gsl::span<const std::byte> data(buffer.cesium.data.data() + bufferView.byteOffset, static_cast<uint64_t>(bufferView.byteLength));
 
         draco::DecoderBuffer decodeBuffer;
         decodeBuffer.Init(reinterpret_cast<const char*>(data.data()), data.size());

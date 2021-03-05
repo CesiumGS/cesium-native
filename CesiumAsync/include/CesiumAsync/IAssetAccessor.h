@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <gsl/span>
 
 namespace CesiumAsync {
@@ -53,7 +54,7 @@ namespace CesiumAsync {
             const AsyncSystem& asyncSystem,
             const std::string& url,
             const std::vector<THeader>& headers = std::vector<THeader>(),
-            const gsl::span<const uint8_t>& contentPayload = {}
+            const gsl::span<const std::byte>& contentPayload = {}
         ) = 0;
 
         /**

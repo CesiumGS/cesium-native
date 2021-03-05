@@ -7,11 +7,12 @@
 #include <cstdio>
 #include <glm/vec3.hpp>
 #include <filesystem>
+#include <cstddef>
 
 using namespace CesiumGltf;
 
 namespace {
-    std::vector<uint8_t> readFile(const std::string& path) {
+    std::vector<std::byte> readFile(const std::string& path) {
         FILE* fp = std::fopen(path.c_str(), "rb");
         REQUIRE(fp);
 
@@ -20,7 +21,7 @@ namespace {
             long pos = std::ftell(fp);
             std::fseek(fp, 0, SEEK_SET);
 
-            std::vector<uint8_t> result(static_cast<size_t>(pos));
+            std::vector<std::byte> result(static_cast<size_t>(pos));
             size_t itemsRead = std::fread(result.data(), 1, result.size(), fp);
             REQUIRE(itemsRead == result.size());
 
@@ -63,7 +64,7 @@ TEST_CASE("CesiumGltf::Reader") {
         "  }],"s +
         "  \"surprise\":{\"foo\":true}"s +
         "}"s;
-    ModelReaderResult result = CesiumGltf::readModel(gsl::span(reinterpret_cast<const uint8_t*>(s.c_str()), s.size()));
+    ModelReaderResult result = CesiumGltf::readModel(gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
     CHECK(result.errors.empty());
     REQUIRE(result.model.has_value());
 
@@ -93,7 +94,7 @@ TEST_CASE("CesiumGltf::Reader") {
 TEST_CASE("Read TriangleWithoutIndices") {
     std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
     gltfFile /= "TriangleWithoutIndices.gltf";
-    std::vector<uint8_t> data = readFile(gltfFile.string());
+    std::vector<std::byte> data = readFile(gltfFile.string());
     ModelReaderResult result = CesiumGltf::readModel(data);
     REQUIRE(result.model);
 

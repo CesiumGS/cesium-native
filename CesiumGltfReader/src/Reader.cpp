@@ -5,6 +5,7 @@
 #include "ModelJsonHandler.h"
 #include <rapidjson/reader.h>
 #include <string>
+#include <cstddef>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
@@ -121,7 +122,7 @@ namespace {
     };
     #pragma pack(pop)
 
-    bool isBinaryGltf(const gsl::span<const uint8_t>& data) {
+    bool isBinaryGltf(const gsl::span<const std::byte>& data) {
         if (data.size() < sizeof(GlbHeader)) {
             return false;
         }
@@ -129,7 +130,7 @@ namespace {
         return reinterpret_cast<const GlbHeader*>(data.data())->magic == 0x46546C67;
     }
 
-    ModelReaderResult readJsonModel(const gsl::span<const uint8_t>& data) {
+    ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data) {
         rapidjson::Reader reader;
         rapidjson::MemoryStream inputStream(reinterpret_cast<const char*>(data.data()), data.size());
 
@@ -161,7 +162,7 @@ namespace {
         return result;
     }
 
-    ModelReaderResult readBinaryModel(const gsl::span<const uint8_t>& data) {
+    ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
         if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
             return {
                 std::nullopt,
@@ -195,7 +196,7 @@ namespace {
             };
         }
 
-        gsl::span<const uint8_t> glbData = data.subspan(0, pHeader->length);
+        gsl::span<const std::byte> glbData = data.subspan(0, pHeader->length);
 
         const ChunkHeader* pJsonChunkHeader = reinterpret_cast<const ChunkHeader*>(glbData.data() + sizeof(GlbHeader));
         if (pJsonChunkHeader->chunkType != 0x4E4F534A) {
@@ -217,8 +218,8 @@ namespace {
             };
         }
 
-        gsl::span<const uint8_t> jsonChunk = glbData.subspan(jsonStart, pJsonChunkHeader->chunkLength);
-        gsl::span<const uint8_t> binaryChunk;
+        gsl::span<const std::byte> jsonChunk = glbData.subspan(jsonStart, pJsonChunkHeader->chunkLength);
+        gsl::span<const std::byte> binaryChunk;
 
         if (jsonEnd + sizeof(ChunkHeader) <= data.size()) {
             const ChunkHeader* pBinaryChunkHeader = reinterpret_cast<const ChunkHeader*>(glbData.data() + jsonEnd);
@@ -266,7 +267,7 @@ namespace {
                 return result;
             }
 
-            buffer.cesium.data = std::vector<uint8_t>(binaryChunk.begin(), binaryChunk.begin() + buffer.byteLength);
+            buffer.cesium.data = std::vector<std::byte>(binaryChunk.begin(), binaryChunk.begin() + buffer.byteLength);
         }
 
         return result;
@@ -289,8 +290,8 @@ namespace {
                     continue;
                 }
                
-                gsl::span<const uint8_t> bufferSpan(buffer.cesium.data);
-                gsl::span<const uint8_t> bufferViewSpan = bufferSpan.subspan(static_cast<size_t>(bufferView.byteOffset), static_cast<size_t>(bufferView.byteLength));
+                gsl::span<const std::byte> bufferSpan(buffer.cesium.data);
+                gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(static_cast<size_t>(bufferView.byteOffset), static_cast<size_t>(bufferView.byteLength));
                 ImageReaderResult imageResult = readImage(bufferViewSpan);
                 if (imageResult.image) {
                     image.cesium = std::move(imageResult.image.value());
@@ -304,7 +305,7 @@ namespace {
     }
 }
 
-ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data, const ReadModelOptions& options) {
+ModelReaderResult CesiumGltf::readModel(const gsl::span<const std::byte>& data, const ReadModelOptions& options) {
     ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(data) : readJsonModel(data);
 
     if (result.model) {
@@ -314,7 +315,7 @@ ModelReaderResult CesiumGltf::readModel(const gsl::span<const uint8_t>& data, co
     return result;
 }
 
-ImageReaderResult CesiumGltf::readImage(const gsl::span<const uint8_t>& data) {
+ImageReaderResult CesiumGltf::readImage(const gsl::span<const std::byte>& data) {
     ImageReaderResult result;
 
     result.image.emplace();
@@ -324,7 +325,7 @@ ImageReaderResult CesiumGltf::readImage(const gsl::span<const uint8_t>& data) {
     image.channels = 4;
 
     int channelsInFile;
-    stbi_uc* pImage = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &image.width, &image.height, &channelsInFile, image.channels);
+    stbi_uc* pImage = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(data.data()), static_cast<int>(data.size()), &image.width, &image.height, &channelsInFile, image.channels);
     if (pImage) {
         image.pixelData.assign(pImage, pImage + image.width * image.height * image.channels * image.bytesPerChannel);
         stbi_image_free(pImage);
