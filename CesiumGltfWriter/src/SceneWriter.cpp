@@ -35,7 +35,7 @@ void CesiumGltf::writeScene(
 
         if (!scene.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(scene.extras, j);
+            writeJsonValue(scene.extras, j, false);
         }
 
         j.EndObject();

@@ -31,7 +31,7 @@ void CesiumGltf::writeAsset(
 
     if (!asset.extras.empty()) {
         j.Key("extras");
-        writeJsonValue(asset.extras, j);
+        writeJsonValue(asset.extras, j, false);
     }
 
     j.EndObject();

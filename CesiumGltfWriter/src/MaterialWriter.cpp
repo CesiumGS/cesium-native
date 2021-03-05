@@ -55,7 +55,7 @@ void writePbrMetallicRoughness(const CesiumGltf::MaterialPBRMetallicRoughness& p
 
     if (!pbr.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonValue(pbr.extras, j);
+        CesiumGltf::writeJsonValue(pbr.extras, j, false);
     }
 
     j.EndObject();
@@ -83,7 +83,7 @@ void writeNormalTexture(const CesiumGltf::MaterialNormalTextureInfo& normalTextu
         
     if (!normalTexture.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonValue(normalTexture.extras, j);
+        CesiumGltf::writeJsonValue(normalTexture.extras, j, false);
     }
 
     j.EndObject();
@@ -113,7 +113,7 @@ void writeOcclusionTexture(const CesiumGltf::MaterialOcclusionTextureInfo& occlu
 
     if (!occlusionTexture.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonValue(occlusionTexture.extras, j);
+        CesiumGltf::writeJsonValue(occlusionTexture.extras, j, false);
     }
 
     j.EndObject();
@@ -135,7 +135,7 @@ void writeEmissiveTexture(const CesiumGltf::TextureInfo& emissiveTexture, Cesium
 
     if (!emissiveTexture.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonValue(emissiveTexture.extras, j);
+        CesiumGltf::writeJsonValue(emissiveTexture.extras, j, false);
     }
 
     j.EndObject();
@@ -205,7 +205,7 @@ void CesiumGltf::writeMaterial(
 
         if (!material.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(material.extras, j);
+            writeJsonValue(material.extras, j, false);
         }
 
         j.EndObject();

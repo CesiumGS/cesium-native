@@ -57,7 +57,7 @@ void writePrimitive(
 
     if (!primitive.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonValue(primitive.extras, j);
+        CesiumGltf::writeJsonValue(primitive.extras, j, false);
     }
     j.EndObject();
 }
@@ -104,7 +104,7 @@ void CesiumGltf::writeMesh(
 
         if (!mesh.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(mesh.extras, j);
+            writeJsonValue(mesh.extras, j, false);
         }
 
         j.EndObject();

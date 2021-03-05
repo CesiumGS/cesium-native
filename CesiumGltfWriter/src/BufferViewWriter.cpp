@@ -42,7 +42,7 @@ void CesiumGltf::writeBufferView(
 
         if (!bufferView.name.empty()) {
             j.Key("name");
-            j.String(bufferView.name.c_str());
+            j.String(bufferView.name);
         }
         
         if (!bufferView.extensions.empty()) {
@@ -51,7 +51,7 @@ void CesiumGltf::writeBufferView(
 
         if (!bufferView.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(bufferView.extras, j);
+            writeJsonValue(bufferView.extras, j, false);
         }
 
         j.EndObject();

@@ -29,7 +29,7 @@ void writeAnimationChannel(
 
         if (!animationChannel.target.extras.empty()) {
             j.Key("extras");
-            CesiumGltf::writeJsonValue(animationChannel.target.extras, j);
+            CesiumGltf::writeJsonValue(animationChannel.target.extras, j, false);
         }
     }
     j.EndObject();
@@ -52,7 +52,7 @@ void writeAnimationSampler(
 
     if (!animationSampler.extras.empty()) {
         j.Key("extras");
-        CesiumGltf::writeJsonValue(animationSampler.extras, j);
+        CesiumGltf::writeJsonValue(animationSampler.extras, j, false);
     }
 
     j.EndObject();
@@ -93,7 +93,7 @@ void CesiumGltf::writeAnimation(
 
         if (!animation.extras.empty()) {
             j.Key("extras");
-            writeJsonValue(animation.extras, j);
+            writeJsonValue(animation.extras, j, false);
         }
 
         j.EndObject();
