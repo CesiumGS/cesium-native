@@ -103,26 +103,29 @@ enable_testing()
 add_subdirectory(CesiumNativeTests)
 add_subdirectory(doc)
 
-install(TARGETS uriparser
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/uriparser/)
+install(TARGETS uriparser OPTIONAL) # Skips headers
 install(DIRECTORY extern/glm/glm
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT GLM
 )
 install(TARGETS tinyxml2)
+
 install(TARGETS Async++)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++.h TYPE INCLUDE)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++ TYPE INCLUDE)
+
 install(TARGETS spdlog)
+install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
 install(TARGETS draco)
 
 install(TARGETS sqlite3)
 
-set_target_properties(modp_b64 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/extern/modp_b64/modp_b64.h")
 install(TARGETS modp_b64)
 
 install(TARGETS httplib)
 
-install(TARGETS csprng
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/duthomhas/)
+install(TARGETS csprng)
 
-install(TARGETS PicoSHA2)
-install(TARGETS GSL PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gsl/)
+install(TARGETS GSL)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
