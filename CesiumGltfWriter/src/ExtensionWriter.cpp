@@ -12,14 +12,14 @@ void CesiumGltf::writeExtensions(
     
     auto& j = jsonWriter;
     j.Key("extensions");
-    j.StartArray();
+    j.StartObject();
 
     for (const auto& extension : extensions) {
-        if (extension.type() == typeid(JsonValue)) {
-            const auto& object = std::any_cast<JsonValue>(extension);
+        if (extension.type() == typeid(JsonValue::Object)) {
+            const auto& object = std::any_cast<JsonValue::Object>(extension);
             writeJsonValue(object, jsonWriter);
         }
     }
 
-    j.EndArray();
+    j.EndObject();
 }

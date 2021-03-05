@@ -1,6 +1,7 @@
 #include "BufferWriter.h"
 #include "JsonWriter.h"
 #include "PrettyJsonWriter.h"
+#include <CesiumGltf/JsonValue.h>
 #include <CesiumGltf/WriterException.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/WriteFlags.h>
@@ -219,7 +220,11 @@ TEST_CASE("extras and extensions are detected and serialized") {
         {"some", CesiumGltf::JsonValue("extra")}
     };
 
-    buffer.extensions.emplace_back(CesiumGltf::JsonValue("an extension"));
+    CesiumGltf::JsonValue::Object testExtension {
+        {"key", "value"}
+    };
+
+    buffer.extensions.emplace_back(testExtension);
 
     CesiumGltf::JsonWriter writer;
     writer.StartObject();
@@ -237,5 +242,5 @@ TEST_CASE("extras and extensions are detected and serialized") {
     REQUIRE(firstBuffer.HasMember("extras"));
     REQUIRE(firstBuffer.HasMember("extensions"));
     REQUIRE(std::string(firstBuffer["extras"]["some"].GetString()) == "extra");
-    REQUIRE(std::string(firstBuffer["extensions"][0].GetString()) == "an extension");
+    REQUIRE(std::string(firstBuffer["extensions"]["key"].GetString()) == "value");
 }
