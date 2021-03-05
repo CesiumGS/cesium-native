@@ -311,6 +311,10 @@ namespace Cesium3DTiles {
         result.tilesLoadingMediumPriority = static_cast<uint32_t>(this->_loadQueueMedium.size());
         result.tilesLoadingHighPriority = static_cast<uint32_t>(this->_loadQueueHigh.size());
 
+        for (Tile* tile : result.tilesToRenderThisFrame) {
+            this->_markTileVisited(*tile);
+        }
+
         this->_unloadCachedTiles();
         this->_processLoadQueue();
 
