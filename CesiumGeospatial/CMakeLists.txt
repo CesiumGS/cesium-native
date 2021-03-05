@@ -14,9 +14,9 @@ set_target_properties(CesiumGeospatial
         TEST_HEADERS "${CESIUM_GEOSPATIAL_TEST_HEADERS}"
 )
 
-set_target_properties(CesiumGeometry
+set_target_properties(CesiumGeospatial
     PROPERTIES
-    PUBLIC_HEADER "${CESIUM_GEOMETRY_PUBLIC_HEADERS}"
+    PUBLIC_HEADER "${CESIUM_GEOSPATIAL_PUBLIC_HEADERS}"
 )
 
 target_sources(

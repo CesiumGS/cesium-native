@@ -3,7 +3,7 @@ configure_cesium_library(CesiumGltfReader)
 
 cesium_glob_files(CESIUM_GLTF_READER_SOURCES src/*.cpp generated/*.cpp)
 cesium_glob_files(CESIUM_GLTF_READER_HEADERS src/*.h src/*.hpp generated/*.h generated/*.hpp)
-cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS include/CesiumGltfReader/*.h)
+cesium_glob_files(CESIUM_GLTF_READER_PUBLIC_HEADERS include/CesiumGltf/*.h) # Correct is CesiumGltf not CesiumGltfReader
 cesium_glob_files(CESIUM_GLTF_READER_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_GLTF_READER_TEST_HEADERS test/*.h)
 
@@ -51,5 +51,5 @@ target_link_libraries(CesiumGltfReader
 
 install(TARGETS CesiumGltfReader
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltfReader
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf # Correct is CesiumGltf not CesiumGltfReader
 )
