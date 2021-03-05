@@ -103,11 +103,14 @@ enable_testing()
 add_subdirectory(CesiumNativeTests)
 add_subdirectory(doc)
 
+# Installation of third-party libraries required to use cesium-native
 install(TARGETS uriparser OPTIONAL) # Skips headers
+
 install(DIRECTORY extern/glm/glm
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT GLM
 )
+
 install(TARGETS tinyxml2)
 
 install(TARGETS Async++)
