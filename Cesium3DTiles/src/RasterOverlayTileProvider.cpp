@@ -494,7 +494,7 @@ namespace Cesium3DTiles {
                 // Remove cutouts from the image by setting pixel alpha to 0.
                 gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts = cutoutsCollection.getCutouts();
 
-                std::vector<uint8_t>& imageData = image.pixelData;
+                std::vector<std::byte>& imageData = image.pixelData;
                 int width = image.width; 
                 int height = image.height;
 
@@ -528,7 +528,7 @@ namespace Cesium3DTiles {
                             int32_t pixelStart = rowStart + i * bytesPerPixel;
                             
                             // Set alpha to 0
-                            imageData[size_t(pixelStart + 3)] = 0;
+                            imageData[size_t(pixelStart + 3)] = std::byte(0);
                         }
                     }
                 }

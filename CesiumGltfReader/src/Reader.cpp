@@ -6,6 +6,7 @@
 #include <rapidjson/reader.h>
 #include <string>
 #include <cstddef>
+#include <algorithm>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
@@ -327,7 +328,13 @@ ImageReaderResult CesiumGltf::readImage(const gsl::span<const std::byte>& data) 
     int channelsInFile;
     stbi_uc* pImage = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(data.data()), static_cast<int>(data.size()), &image.width, &image.height, &channelsInFile, image.channels);
     if (pImage) {
-        image.pixelData.assign(pImage, pImage + image.width * image.height * image.channels * image.bytesPerChannel);
+        const size_t lastByte = image.width * image.height * image.channels * image.bytesPerChannel;
+        std::transform(
+            pImage, 
+            pImage + lastByte, 
+            std::back_inserter(image.pixelData), 
+            [] (char c) { return std::byte(c); }
+        );
         stbi_image_free(pImage);
     } else {
         result.image.reset();

@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/Library.h"
 #include <cstdint>
+#include <cstddef>
 #include <vector>
 
 namespace CesiumGltf {
@@ -47,6 +48,6 @@ namespace CesiumGltf {
          * | 3                  | red, green, blue          |
          * | 4                  | red, green, blue, alpha   |
          */
-        std::vector<uint8_t> pixelData;
+        std::vector<std::byte> pixelData;
     };
 }
