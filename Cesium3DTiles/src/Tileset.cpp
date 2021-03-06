@@ -20,6 +20,7 @@
 #include <rapidjson/document.h>
 #include <optional>
 #include <unordered_set>
+#include <cstddef>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -147,7 +148,7 @@ namespace Cesium3DTiles {
             return;
         }
 
-        gsl::span<const uint8_t> data = pResponse->data();
+        gsl::span<const std::byte> data = pResponse->data();
 
         rapidjson::Document ionResponse;
         ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -455,7 +456,7 @@ namespace Cesium3DTiles {
 
         pContext->baseUrl = pRequest->url();
 
-        gsl::span<const uint8_t> data = pResponse->data();
+        gsl::span<const std::byte> data = pResponse->data();
 
         rapidjson::Document tileset;
         tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -755,7 +756,7 @@ namespace Cesium3DTiles {
      * @return Whether the update succeeded
      */
     static bool updateContextWithNewToken(TileContext* pContext, const IAssetResponse* pIonResponse, const std::shared_ptr<spdlog::logger>& pLogger) {
-        gsl::span<const uint8_t> data = pIonResponse->data();
+        gsl::span<const std::byte> data = pIonResponse->data();
 
         rapidjson::Document ionResponse;
         ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());

@@ -10,6 +10,7 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "tinyxml2.h"
 #include "CesiumUtility/Uri.h"
+#include <cstddef>
 
 using namespace CesiumAsync;
 
@@ -154,7 +155,7 @@ namespace Cesium3DTiles {
                 return nullptr;
             }
 
-            gsl::span<const uint8_t> data = pResponse->data();
+            gsl::span<const std::byte> data = pResponse->data();
 
             tinyxml2::XMLDocument doc;
             tinyxml2::XMLError error = doc.Parse(reinterpret_cast<const char*>(data.data()), data.size_bytes());

@@ -22,7 +22,7 @@ namespace CesiumGltf {
 
   private:
 
-    KHR_draco_mesh_compression* _pObject;
+    KHR_draco_mesh_compression* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _bufferView;
     DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _attributes;
   };

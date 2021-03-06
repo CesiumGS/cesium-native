@@ -23,7 +23,7 @@ namespace CesiumGltf {
 
   private:
 
-    Mesh* _pObject;
+    Mesh* _pObject = nullptr;
     ArrayJsonHandler<MeshPrimitive, MeshPrimitiveJsonHandler> _primitives;
     ArrayJsonHandler<double, DoubleJsonHandler> _weights;
   };

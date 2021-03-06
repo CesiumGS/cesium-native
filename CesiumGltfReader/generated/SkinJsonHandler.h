@@ -22,7 +22,7 @@ namespace CesiumGltf {
 
   private:
 
-    Skin* _pObject;
+    Skin* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _inverseBindMatrices;
     IntegerJsonHandler<int32_t> _skeleton;
     ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _joints;

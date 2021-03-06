@@ -5,6 +5,7 @@
 #include <gsl/span>
 #include <string>
 #include <map>
+#include <cstddef>
 
 namespace CesiumAsync {
 
@@ -36,7 +37,7 @@ namespace CesiumAsync {
         /**
          * @brief Returns the data of this response
          */
-        virtual gsl::span<const uint8_t> data() const = 0;
+        virtual gsl::span<const std::byte> data() const = 0;
     };
 
 }

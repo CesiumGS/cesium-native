@@ -110,7 +110,7 @@ function generate(options, schema) {
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
 
-            ${name}* _pObject;
+            ${name}* _pObject = nullptr;
             ${indent(
               properties
                 .map((property) => formatReaderProperty(property))

@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <cstddef>
 #include <spdlog/fwd.h>
 
 struct sqlite3;
@@ -44,7 +45,7 @@ namespace CesiumAsync {
             const HttpHeaders& requestHeaders,
             uint16_t statusCode,
             const HttpHeaders& responseHeaders,
-            const gsl::span<const uint8_t>& responseData
+            const gsl::span<const std::byte>& responseData
         ) override;
 
         /** @copydoc ICacheDatabase::prune*/

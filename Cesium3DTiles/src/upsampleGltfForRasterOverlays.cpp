@@ -6,6 +6,7 @@
 #include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include <algorithm>
+#include <cstddef>
 
 using namespace CesiumGltf;
 
@@ -31,7 +32,7 @@ namespace Cesium3DTiles {
     );
 
     struct FloatVertexAttribute {
-        const std::vector<unsigned char>& buffer;
+        const std::vector<std::byte>& buffer;
         int64_t offset;
         int64_t stride;
         int64_t numberOfFloatsPerVertex;

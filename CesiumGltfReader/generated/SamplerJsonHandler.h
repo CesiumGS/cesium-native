@@ -22,7 +22,7 @@ namespace CesiumGltf {
 
   private:
 
-    Sampler* _pObject;
+    Sampler* _pObject = nullptr;
     IntegerJsonHandler<Sampler::MagFilter> _magFilter;
     IntegerJsonHandler<Sampler::MinFilter> _minFilter;
     IntegerJsonHandler<Sampler::WrapS> _wrapS;

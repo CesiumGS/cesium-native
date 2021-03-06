@@ -37,7 +37,7 @@ namespace CesiumGltf {
 
   private:
 
-    Model* _pObject;
+    Model* _pObject = nullptr;
     ArrayJsonHandler<std::string, StringJsonHandler> _extensionsUsed;
     ArrayJsonHandler<std::string, StringJsonHandler> _extensionsRequired;
     ArrayJsonHandler<Accessor, AccessorJsonHandler> _accessors;

@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <cstddef>
 
 namespace CesiumAsync {
     class AsyncSystem;
@@ -44,7 +45,7 @@ namespace CesiumAsync {
             const AsyncSystem& asyncSystem,
             const std::string& url, 
             const std::vector<THeader>& headers,
-            const gsl::span<const uint8_t>& contentPayload) override;
+            const gsl::span<const std::byte>& contentPayload) override;
 
         /** @copydoc IAssetAccessor::tick */
         virtual void tick() noexcept override;

@@ -3,8 +3,8 @@ configure_cesium_library(cesium-native-tests)
 
 # Add tests here, ensure they define the TEST_SOURCES / TEST_HEADERS
 # properties.
-set(cesium_native_targets 
-    Cesium3DTiles 
+set(cesium_native_targets
+    Cesium3DTiles
     CesiumAsync
     CesiumGeometry
     CesiumGeospatial
@@ -71,9 +71,8 @@ target_include_directories(
 
 target_link_libraries(
     cesium-native-tests
-    PRIVATE
-        ${cesium_native_targets}
-        Catch2::Catch2
+    ${cesium_native_targets}
+    Catch2::Catch2
 )
 
 include(CTest)

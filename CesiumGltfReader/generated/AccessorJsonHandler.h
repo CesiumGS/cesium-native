@@ -34,7 +34,7 @@ namespace CesiumGltf {
       Accessor::Type* _pEnum = nullptr;
     };
 
-    Accessor* _pObject;
+    Accessor* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _bufferView;
     IntegerJsonHandler<int64_t> _byteOffset;
     IntegerJsonHandler<Accessor::ComponentType> _componentType;

@@ -36,7 +36,7 @@ namespace CesiumGltf {
       Material::AlphaMode* _pEnum = nullptr;
     };
 
-    Material* _pObject;
+    Material* _pObject = nullptr;
     MaterialPBRMetallicRoughnessJsonHandler _pbrMetallicRoughness;
     MaterialNormalTextureInfoJsonHandler _normalTexture;
     MaterialOcclusionTextureInfoJsonHandler _occlusionTexture;

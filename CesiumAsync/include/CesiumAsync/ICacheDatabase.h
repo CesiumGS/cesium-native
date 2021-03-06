@@ -4,6 +4,7 @@
 #include "CesiumAsync/CacheItem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include <optional>
+#include <cstddef>
 
 namespace CesiumAsync {
     /**
@@ -48,7 +49,7 @@ namespace CesiumAsync {
             const HttpHeaders& requestHeaders,
             uint16_t statusCode,
             const HttpHeaders& responseHeaders,
-            const gsl::span<const uint8_t>& responseData
+            const gsl::span<const std::byte>& responseData
         ) = 0;
 
         /**

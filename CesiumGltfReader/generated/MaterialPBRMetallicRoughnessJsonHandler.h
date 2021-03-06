@@ -23,7 +23,7 @@ namespace CesiumGltf {
 
   private:
 
-    MaterialPBRMetallicRoughness* _pObject;
+    MaterialPBRMetallicRoughness* _pObject = nullptr;
     ArrayJsonHandler<double, DoubleJsonHandler> _baseColorFactor;
     TextureInfoJsonHandler _baseColorTexture;
     DoubleJsonHandler _metallicFactor;

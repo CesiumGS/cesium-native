@@ -23,7 +23,7 @@ namespace CesiumGltf {
 
   private:
 
-    Animation* _pObject;
+    Animation* _pObject = nullptr;
     ArrayJsonHandler<AnimationChannel, AnimationChannelJsonHandler> _channels;
     ArrayJsonHandler<AnimationSampler, AnimationSamplerJsonHandler> _samplers;
   };

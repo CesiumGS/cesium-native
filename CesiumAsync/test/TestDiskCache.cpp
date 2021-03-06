@@ -4,6 +4,7 @@
 #include "MockAssetResponse.h"
 #include "ResponseCacheControl.h"
 #include <spdlog/spdlog.h>
+#include <cstddef>
 
 using namespace CesiumAsync;
 
@@ -17,7 +18,7 @@ TEST_CASE("Test disk cache with Sqlite") {
             { "Response-Header", "Response-Value" },
             { "Content-Type", "text/html" }
         };
-        std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
+        std::vector<std::byte> responseData = { std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4) };
         std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
             "text/html",
@@ -53,7 +54,7 @@ TEST_CASE("Test disk cache with Sqlite") {
         REQUIRE(cacheResponse.headers.at("Content-Type") == "text/html");
         REQUIRE(cacheResponse.statusCode == 200);
         REQUIRE(cacheResponse.headers.at("Response-Header") == "Response-Value");
-        REQUIRE(cacheResponse.data == std::vector<uint8_t>{ 0, 1, 2, 3, 4 });
+        REQUIRE(cacheResponse.data == std::vector<std::byte>{ std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4) });
 
         std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
         REQUIRE(!cacheControl.has_value());
@@ -69,7 +70,7 @@ TEST_CASE("Test disk cache with Sqlite") {
                 {"Content-Type", "text/html"},
                 {"Cache-Control", "must-revalidate, no-store, public, proxy-revalidate"}
             };
-            std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
+            std::vector<std::byte> responseData = { std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4) };
             std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
                 static_cast<uint16_t>(200), "text/html", responseHeaders, responseData);
 
@@ -111,7 +112,7 @@ TEST_CASE("Test disk cache with Sqlite") {
             REQUIRE(cacheResponse.headers.at("Content-Type") == "text/html");
             REQUIRE(cacheResponse.statusCode == 200);
             REQUIRE(cacheResponse.headers.at("Response-Header-" + std::to_string(i)) == "Response-Value-" + std::to_string(i));
-            REQUIRE(cacheResponse.data == std::vector<uint8_t>{ 0, 1, 2, 3, 4 });
+            REQUIRE(cacheResponse.data == std::vector<std::byte>{ std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4) });
 
             std::optional<ResponseCacheControl> cacheControl = ResponseCacheControl::parseFromResponseHeaders(cacheResponse.headers);
             REQUIRE(cacheControl.has_value());
@@ -133,7 +134,7 @@ TEST_CASE("Test disk cache with Sqlite") {
             {"Content-Type", "text/html"},
             {"Response-Header", "Response-Value"}
         };
-        std::vector<uint8_t> responseData = {0, 1, 2, 3, 4};
+        std::vector<std::byte> responseData = { std::byte(0), std::byte(1), std::byte(2), std::byte(3), std::byte(4) };
         std::unique_ptr<MockAssetResponse> response = std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
             "text/html",

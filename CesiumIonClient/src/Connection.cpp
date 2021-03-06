@@ -441,7 +441,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
     }
     writer.EndObject();
 
-    gsl::span<const uint8_t> tokenBytes(reinterpret_cast<const uint8_t*>(tokenBuffer.GetString()), tokenBuffer.GetSize());
+    gsl::span<const std::byte> tokenBytes(reinterpret_cast<const std::byte*>(tokenBuffer.GetString()), tokenBuffer.GetSize());
     return this->_pAssetAccessor->post(
         this->_asyncSystem,
         CesiumUtility::Uri::resolve(this->_apiUrl, "v1/tokens"),
@@ -522,7 +522,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
     writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
     writer.EndObject();
 
-    gsl::span<const uint8_t> payload(reinterpret_cast<const uint8_t*>(postBuffer.GetString()), postBuffer.GetSize());
+    gsl::span<const std::byte> payload(reinterpret_cast<const std::byte*>(postBuffer.GetString()), postBuffer.GetSize());
 
     return pAssetAccessor->post(
         asyncSystem,

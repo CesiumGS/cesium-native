@@ -23,7 +23,7 @@ namespace CesiumGltf {
 
   private:
 
-    Node* _pObject;
+    Node* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _camera;
     ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _children;
     IntegerJsonHandler<int32_t> _skin;

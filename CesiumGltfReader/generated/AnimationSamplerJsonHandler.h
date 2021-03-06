@@ -30,7 +30,7 @@ namespace CesiumGltf {
       AnimationSampler::Interpolation* _pEnum = nullptr;
     };
 
-    AnimationSampler* _pObject;
+    AnimationSampler* _pObject = nullptr;
     IntegerJsonHandler<int32_t> _input;
     InterpolationJsonHandler _interpolation;
     IntegerJsonHandler<int32_t> _output;

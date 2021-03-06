@@ -2,13 +2,14 @@
 
 #include "CesiumAsync/IAssetResponse.h"
 #include <vector>
+#include <cstddef>
 
 class SimpleAssetResponse : public CesiumAsync::IAssetResponse {
 public:
     SimpleAssetResponse(uint16_t statusCode,
         const std::string& contentType,
         const CesiumAsync::HttpHeaders& headers, 
-        const std::vector<uint8_t>& data)
+        const std::vector<std::byte>& data)
         : mockStatusCode{ statusCode }
         , mockContentType{ contentType }
         , mockHeaders{ headers }
@@ -21,13 +22,13 @@ public:
 
     virtual const CesiumAsync::HttpHeaders& headers() const override { return this->mockHeaders; }
 
-    virtual gsl::span<const uint8_t> data() const override {
-        return gsl::span<const uint8_t>(mockData.data(), mockData.size());
+    virtual gsl::span<const std::byte> data() const override {
+        return gsl::span<const std::byte>(mockData.data(), mockData.size());
     }
 
     uint16_t mockStatusCode;
     std::string mockContentType;
     CesiumAsync::HttpHeaders mockHeaders;
-    std::vector<uint8_t> mockData;
+    std::vector<std::byte> mockData;
 };
 

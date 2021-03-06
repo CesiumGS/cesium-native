@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include <rapidjson/document.h>
 #include <stdexcept>
+#include <cstddef>
 
 namespace Cesium3DTiles {
 
@@ -41,7 +42,7 @@ namespace Cesium3DTiles {
 		void parseFeatureTableJsonData(
 			const std::shared_ptr<spdlog::logger>& pLogger,
 			CesiumGltf::Model& gltf,
-			const gsl::span<const uint8_t>& featureTableJsonData)
+			const gsl::span<const std::byte>& featureTableJsonData)
 		{
 			rapidjson::Document document;
 			document.Parse(reinterpret_cast<const char*>(featureTableJsonData.data()), featureTableJsonData.size());
@@ -80,7 +81,7 @@ namespace Cesium3DTiles {
     std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
 		std::shared_ptr<spdlog::logger> pLogger,
 		const std::string& url,
-		const gsl::span<const uint8_t>& data
+		const gsl::span<const std::byte>& data
 	) {
 		// TODO: actually use the b3dm payload
 		if (data.size() < sizeof(B3dmHeader)) {
@@ -147,7 +148,7 @@ namespace Cesium3DTiles {
 			throw std::runtime_error("The B3DM is invalid because the start of the glTF model is after the end of the entire B3DM.");
 		}
 
-		gsl::span<const uint8_t> glbData = data.subspan(glbStart, glbEnd - glbStart);
+		gsl::span<const std::byte> glbData = data.subspan(glbStart, glbEnd - glbStart);
         std::unique_ptr<TileContentLoadResult> pResult = GltfContent::load(
 			pLogger,
 			url, 
@@ -156,7 +157,7 @@ namespace Cesium3DTiles {
 
 		if (pResult->model && header.featureTableJsonByteLength > 0) {
 			CesiumGltf::Model& gltf = pResult->model.value();
-			gsl::span<const uint8_t> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
+			gsl::span<const std::byte> featureTableJsonData = data.subspan(headerLength, header.featureTableJsonByteLength);
 			parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 		}
 

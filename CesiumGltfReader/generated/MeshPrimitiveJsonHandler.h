@@ -34,7 +34,7 @@ namespace CesiumGltf {
       KHR_draco_mesh_compressionJsonHandler _KHR_draco_mesh_compression;
     };
 
-    MeshPrimitive* _pObject;
+    MeshPrimitive* _pObject = nullptr;
     DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _attributes;
     IntegerJsonHandler<int32_t> _indices;
     IntegerJsonHandler<int32_t> _material;

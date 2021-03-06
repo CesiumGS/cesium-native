@@ -8,6 +8,7 @@
 #include <gsl/span>
 #include <memory>
 #include <vector>
+#include <cstddef>
 #include <spdlog/fwd.h>
 
 namespace Cesium3DTiles {
@@ -47,7 +48,7 @@ namespace Cesium3DTiles {
             const glm::dmat4& tileTransform,
             TileRefine tileRefine,
             const std::string& url,
-            const gsl::span<const uint8_t>& data
+            const gsl::span<const std::byte>& data
         );
     };
 
