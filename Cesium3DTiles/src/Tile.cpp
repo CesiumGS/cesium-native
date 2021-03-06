@@ -115,16 +115,6 @@ namespace Cesium3DTiles {
     }
 
     void Tile::loadContent() {
-        for (const auto& raster : _rasterTiles) {
-            if (raster.getLoadingTile() && raster.getLoadingTile()->getReferenceCount() == 0) {
-                printf("asas\n");
-            }
-
-            if (raster.getReadyTile() && raster.getReadyTile()->getReferenceCount() == 0) {
-                printf("asas\n");
-            }
-        }
-
         if (this->getState() != LoadState::Unloaded) {
             // No need to load geometry, but give previously-throttled
             // raster overlay tiles a chance to load.
@@ -478,16 +468,6 @@ namespace Cesium3DTiles {
 
     void Tile::update(int32_t /*previousFrameNumber*/, int32_t /*currentFrameNumber*/) {
         const TilesetExternals& externals = this->getTileset()->getExternals();
-
-        for (const auto& raster : _rasterTiles) {
-            if (raster.getLoadingTile() && raster.getLoadingTile()->getReferenceCount() == 0) {
-                printf("asas\n");
-            }
-
-            if (raster.getReadyTile() && raster.getReadyTile()->getReferenceCount() == 0) {
-                printf("asas\n");
-            }
-        }
 
         if (this->getState() == LoadState::FailedTemporarily) {
             // Check with the TileContext to see if we should retry.
