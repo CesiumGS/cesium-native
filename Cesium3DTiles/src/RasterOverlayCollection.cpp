@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/Tileset.h"
 
 namespace Cesium3DTiles {
+
     RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept :
         _pTileset(&tileset),
         _overlays()
