@@ -2,6 +2,29 @@
 #include "Cesium3DTiles/Tileset.h"
 
 namespace Cesium3DTiles {
+    static void checkRemoveAll(Tile *tile, const RasterOverlay *overlay) {
+        if (tile == nullptr) {
+            return;
+        }
+
+        if (overlay == nullptr) {
+            return;
+        }
+
+        for (auto& map : tile->getMappedRasterTiles()) {
+            if (map.getLoadingTile() && &(map.getLoadingTile()->getOverlay()) == overlay) {
+                printf("asas\n");
+            }
+
+            if (map.getReadyTile() && &(map.getReadyTile()->getOverlay()) == overlay) {
+                printf("asas\n");
+            }
+        }
+
+        for (auto &child : tile->getChildren()) {
+            checkRemoveAll(&child, overlay);
+        }
+    }
 
     RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept :
         _pTileset(&tileset),
@@ -65,6 +88,8 @@ namespace Cesium3DTiles {
         if (it == this->_overlays.end()) {
             return;
         }
+
+        checkRemoveAll(_pTileset->getRootTile(), pOverlay);
 
         // Tell the overlay provider to destroy itself, which effectively transfers ownership
         // _of_ itself, _to_ itself. It will delete itself when all in-progress loads

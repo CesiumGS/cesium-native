@@ -312,6 +312,38 @@ namespace Cesium3DTiles {
         result.tilesLoadingHighPriority = static_cast<uint32_t>(this->_loadQueueHigh.size());
 
         this->_unloadCachedTiles();
+        std::unordered_set<Tile*> loaded;
+        Tile* pTile = this->_loadedTiles.head();
+        while (pTile)
+        {
+            loaded.insert(pTile);
+            pTile = this->_loadedTiles.next(pTile);
+        }
+
+        for (Tile* tile : result.tilesToRenderThisFrame) {
+            if (loaded.find(tile) == loaded.end()) {
+                printf("asas\n");
+            }
+        }
+
+        for (auto record : this->_loadQueueLow) {
+            if (loaded.find(record.pTile) == loaded.end()) {
+                printf("asas\n");
+            }
+        }
+
+        for (auto record : this->_loadQueueMedium) {
+            if (loaded.find(record.pTile) == loaded.end()) {
+                printf("asas\n");
+            }
+        }
+
+        for (auto record : this->_loadQueueHigh) {
+            if (loaded.find(record.pTile) == loaded.end()) {
+                printf("asas\n");
+            }
+        }
+
         this->_processLoadQueue();
 
         // aggregate all the credits needed from this tileset for the current frame 
