@@ -8,6 +8,8 @@
 #include "CesiumGltf/Reader.h"
 #include "CesiumUtility/joinToString.h"
 
+#include <sstream>
+
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -411,7 +413,7 @@ namespace Cesium3DTiles {
         const std::vector<Credit>& credits
     ) const {
         return this->getAssetAccessor()->requestAsset(this->getAsyncSystem(), url, headers).thenInWorkerThread([
-            credits
+            credits, url
         ](
             std::shared_ptr<IAssetRequest>&& pRequest
         ) {
@@ -419,7 +421,7 @@ namespace Cesium3DTiles {
             if (pResponse == nullptr) {
                 return LoadedRasterOverlayImage {
                     std::nullopt,
-                    std::move(credits),
+                    credits,
                     { "Image request failed." },
                     {}
                 };
@@ -428,8 +430,20 @@ namespace Cesium3DTiles {
             if (pResponse->data().size() == 0) {
                 return LoadedRasterOverlayImage {
                     std::nullopt,
-                    std::move(credits),
+                    credits,
                     { "Image response is empty." },
+                    {}
+                };
+            }
+
+            if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+                std::stringstream messageStream;
+                messageStream << "Image response code " << pResponse->statusCode();
+                std::string message = messageStream.str(); 
+                return LoadedRasterOverlayImage {
+                    std::nullopt,
+                    credits,
+                    { message },
                     {}
                 };
             }
@@ -437,9 +451,13 @@ namespace Cesium3DTiles {
             gsl::span<const std::byte> data = pResponse->data();
             CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
+            if (!loadedImage.image.has_value()) {
+                SPDLOG_ERROR("Failed to load image from URL {}", url);
+            }
+
             return LoadedRasterOverlayImage {
                 loadedImage.image,
-                std::move(credits),
+                credits,
                 std::move(loadedImage.errors),
                 std::move(loadedImage.warnings)
             };
