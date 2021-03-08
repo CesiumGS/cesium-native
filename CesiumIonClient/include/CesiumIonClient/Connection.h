@@ -65,6 +65,16 @@ namespace CesiumIonClient {
         );
 
         /**
+         * @brief Gets the access token used by this connection.
+         */
+        const std::string& getAccessToken() const { return this->_accessToken; }
+
+        /**
+         * @brief Gets the Cesium ion API base URL.
+         */
+        const std::string& getApiUrl() const { return this->_apiUrl; }
+
+        /**
          * @brief Retrieves profile information for the access token currently being used to make API calls.
          * 
          * This route works with any valid token, but additional information is returned if the token uses the `profile:read` scope.
