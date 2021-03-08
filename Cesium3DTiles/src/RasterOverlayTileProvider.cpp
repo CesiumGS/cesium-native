@@ -8,8 +8,6 @@
 #include "CesiumGltf/Reader.h"
 #include "CesiumUtility/joinToString.h"
 
-#include <sstream>
-
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -437,9 +435,7 @@ namespace Cesium3DTiles {
             }
 
             if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-                std::stringstream messageStream;
-                messageStream << "Image response code " << pResponse->statusCode();
-                std::string message = messageStream.str(); 
+                std::string message = "Image response code " + std::to_string(pResponse->statusCode());
                 return LoadedRasterOverlayImage {
                     std::nullopt,
                     credits,
