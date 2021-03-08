@@ -65,6 +65,16 @@ namespace CesiumIonClient {
         );
 
         /**
+         * @brief Gets the async system used by this connection to do work in threads.
+         */
+        const CesiumAsync::AsyncSystem& getAsyncSystem() const { return this->_asyncSystem; }
+
+        /**
+         * @brief Gets the interface used by this connection to interact with the Cesium ion REST API.
+         */
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& getAssetAccessor() const { return this->_pAssetAccessor; }
+
+        /**
          * @brief Gets the access token used by this connection.
          */
         const std::string& getAccessToken() const { return this->_accessToken; }
