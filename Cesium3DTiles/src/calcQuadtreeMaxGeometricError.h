@@ -1,8 +1,10 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumGeospatial/Ellipsoid.h"
 
 namespace Cesium3DTiles {
-    double calcQuadtreeMaxGeometricError(const CesiumGeospatial::Ellipsoid &ellipsoid, const CesiumGeometry::QuadtreeTilingScheme &tilingScheme);
+double calcQuadtreeMaxGeometricError(
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const CesiumGeometry::QuadtreeTilingScheme& tilingScheme);
 }

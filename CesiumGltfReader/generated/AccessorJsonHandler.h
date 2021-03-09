@@ -11,38 +11,41 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Accessor;
+struct Accessor;
 
-  class AccessorJsonHandler : public NamedObjectJsonHandler {
+class AccessorJsonHandler : public NamedObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Accessor* pObject);
+  Accessor* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+protected:
+  IJsonHandler* AccessorKey(const char* str, Accessor& o);
+
+private:
+  class TypeJsonHandler : public JsonHandler {
   public:
-    void reset(IJsonHandler* pHandler, Accessor* pObject);
-    Accessor* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
-
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
-
-  protected:
-    IJsonHandler* AccessorKey(const char* str, Accessor& o);
+    void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
+    virtual IJsonHandler*
+    String(const char* str, size_t length, bool copy) override;
 
   private:
-    class TypeJsonHandler : public JsonHandler {
-    public:
-      void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
-      virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
-
-    private:
-      Accessor::Type* _pEnum = nullptr;
-    };
-
-    Accessor* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _bufferView;
-    IntegerJsonHandler<int64_t> _byteOffset;
-    IntegerJsonHandler<Accessor::ComponentType> _componentType;
-    BoolJsonHandler _normalized;
-    IntegerJsonHandler<int64_t> _count;
-    TypeJsonHandler _type;
-    ArrayJsonHandler<double, DoubleJsonHandler> _max;
-    ArrayJsonHandler<double, DoubleJsonHandler> _min;
-    AccessorSparseJsonHandler _sparse;
+    Accessor::Type* _pEnum = nullptr;
   };
-}
+
+  Accessor* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _bufferView;
+  IntegerJsonHandler<int64_t> _byteOffset;
+  IntegerJsonHandler<Accessor::ComponentType> _componentType;
+  BoolJsonHandler _normalized;
+  IntegerJsonHandler<int64_t> _count;
+  TypeJsonHandler _type;
+  ArrayJsonHandler<double, DoubleJsonHandler> _max;
+  ArrayJsonHandler<double, DoubleJsonHandler> _min;
+  AccessorSparseJsonHandler _sparse;
+};
+} // namespace CesiumGltf

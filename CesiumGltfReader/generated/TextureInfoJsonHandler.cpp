@@ -8,32 +8,38 @@
 
 using namespace CesiumGltf;
 
-void TextureInfoJsonHandler::reset(IJsonHandler* pParent, TextureInfo* pObject) {
+void TextureInfoJsonHandler::reset(
+    IJsonHandler* pParent,
+    TextureInfo* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
 
-TextureInfo* TextureInfoJsonHandler::getObject() {
-  return this->_pObject;
-}
+TextureInfo* TextureInfoJsonHandler::getObject() { return this->_pObject; }
 
-void TextureInfoJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void TextureInfoJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* TextureInfoJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+TextureInfoJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->TextureInfoKey(str, *this->_pObject);
 }
 
-IJsonHandler* TextureInfoJsonHandler::TextureInfoKey(const char* str, TextureInfo& o) {
+IJsonHandler*
+TextureInfoJsonHandler::TextureInfoKey(const char* str, TextureInfo& o) {
   using namespace std::string_literals;
 
-  if ("index"s == str) return property("index", this->_index, o.index);
-  if ("texCoord"s == str) return property("texCoord", this->_texCoord, o.texCoord);
+  if ("index"s == str)
+    return property("index", this->_index, o.index);
+  if ("texCoord"s == str)
+    return property("texCoord", this->_texCoord, o.texCoord);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

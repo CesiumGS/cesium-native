@@ -8,7 +8,9 @@
 
 using namespace CesiumGltf;
 
-void AccessorSparseJsonHandler::reset(IJsonHandler* pParent, AccessorSparse* pObject) {
+void AccessorSparseJsonHandler::reset(
+    IJsonHandler* pParent,
+    AccessorSparse* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -17,24 +19,34 @@ AccessorSparse* AccessorSparseJsonHandler::getObject() {
   return this->_pObject;
 }
 
-void AccessorSparseJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void AccessorSparseJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AccessorSparseJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* AccessorSparseJsonHandler::Key(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->AccessorSparseKey(str, *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(const char* str, AccessorSparse& o) {
+IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(
+    const char* str,
+    AccessorSparse& o) {
   using namespace std::string_literals;
 
-  if ("count"s == str) return property("count", this->_count, o.count);
-  if ("indices"s == str) return property("indices", this->_indices, o.indices);
-  if ("values"s == str) return property("values", this->_values, o.values);
+  if ("count"s == str)
+    return property("count", this->_count, o.count);
+  if ("indices"s == str)
+    return property("indices", this->_indices, o.indices);
+  if ("values"s == str)
+    return property("values", this->_values, o.values);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

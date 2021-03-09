@@ -13,18 +13,19 @@ void SceneJsonHandler::reset(IJsonHandler* pParent, Scene* pObject) {
   this->_pObject = pObject;
 }
 
-Scene* SceneJsonHandler::getObject() {
-  return this->_pObject;
-}
+Scene* SceneJsonHandler::getObject() { return this->_pObject; }
 
-void SceneJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void SceneJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->SceneKey(str, *this->_pObject);
 }
@@ -32,7 +33,8 @@ IJsonHandler* SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*c
 IJsonHandler* SceneJsonHandler::SceneKey(const char* str, Scene& o) {
   using namespace std::string_literals;
 
-  if ("nodes"s == str) return property("nodes", this->_nodes, o.nodes);
+  if ("nodes"s == str)
+    return property("nodes", this->_nodes, o.nodes);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

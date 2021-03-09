@@ -2,13 +2,12 @@
 
 namespace Cesium3DTiles {
 
-    RasterOverlayCutoutCollection::RasterOverlayCutoutCollection() noexcept :
-        _cutouts()
-    {
-    }
+RasterOverlayCutoutCollection::RasterOverlayCutoutCollection() noexcept
+    : _cutouts() {}
 
-    void RasterOverlayCutoutCollection::push_back(const CesiumGeospatial::GlobeRectangle& cutoutRectangle) {
-        this->_cutouts.push_back(cutoutRectangle);
-    }
-
+void RasterOverlayCutoutCollection::push_back(
+    const CesiumGeospatial::GlobeRectangle& cutoutRectangle) {
+  this->_cutouts.push_back(cutoutRectangle);
 }
+
+} // namespace Cesium3DTiles

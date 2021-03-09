@@ -8,30 +8,31 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Node;
+struct Node;
 
-  class NodeJsonHandler : public NamedObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, Node* pObject);
-    Node* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class NodeJsonHandler : public NamedObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Node* pObject);
+  Node* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* NodeKey(const char* str, Node& o);
+protected:
+  IJsonHandler* NodeKey(const char* str, Node& o);
 
-  private:
-
-    Node* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _camera;
-    ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _children;
-    IntegerJsonHandler<int32_t> _skin;
-    ArrayJsonHandler<double, DoubleJsonHandler> _matrix;
-    IntegerJsonHandler<int32_t> _mesh;
-    ArrayJsonHandler<double, DoubleJsonHandler> _rotation;
-    ArrayJsonHandler<double, DoubleJsonHandler> _scale;
-    ArrayJsonHandler<double, DoubleJsonHandler> _translation;
-    ArrayJsonHandler<double, DoubleJsonHandler> _weights;
-  };
-}
+private:
+  Node* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _camera;
+  ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _children;
+  IntegerJsonHandler<int32_t> _skin;
+  ArrayJsonHandler<double, DoubleJsonHandler> _matrix;
+  IntegerJsonHandler<int32_t> _mesh;
+  ArrayJsonHandler<double, DoubleJsonHandler> _rotation;
+  ArrayJsonHandler<double, DoubleJsonHandler> _scale;
+  ArrayJsonHandler<double, DoubleJsonHandler> _translation;
+  ArrayJsonHandler<double, DoubleJsonHandler> _weights;
+};
+} // namespace CesiumGltf

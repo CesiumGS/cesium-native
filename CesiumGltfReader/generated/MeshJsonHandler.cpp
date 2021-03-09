@@ -13,18 +13,19 @@ void MeshJsonHandler::reset(IJsonHandler* pParent, Mesh* pObject) {
   this->_pObject = pObject;
 }
 
-Mesh* MeshJsonHandler::getObject() {
-  return this->_pObject;
-}
+Mesh* MeshJsonHandler::getObject() { return this->_pObject; }
 
-void MeshJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void MeshJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MeshJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+MeshJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->MeshKey(str, *this->_pObject);
 }
@@ -32,8 +33,10 @@ IJsonHandler* MeshJsonHandler::Key(const char* str, size_t /*length*/, bool /*co
 IJsonHandler* MeshJsonHandler::MeshKey(const char* str, Mesh& o) {
   using namespace std::string_literals;
 
-  if ("primitives"s == str) return property("primitives", this->_primitives, o.primitives);
-  if ("weights"s == str) return property("weights", this->_weights, o.weights);
+  if ("primitives"s == str)
+    return property("primitives", this->_primitives, o.primitives);
+  if ("weights"s == str)
+    return property("weights", this->_weights, o.weights);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

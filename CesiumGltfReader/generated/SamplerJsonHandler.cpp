@@ -13,18 +13,19 @@ void SamplerJsonHandler::reset(IJsonHandler* pParent, Sampler* pObject) {
   this->_pObject = pObject;
 }
 
-Sampler* SamplerJsonHandler::getObject() {
-  return this->_pObject;
-}
+Sampler* SamplerJsonHandler::getObject() { return this->_pObject; }
 
-void SamplerJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void SamplerJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+SamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->SamplerKey(str, *this->_pObject);
 }
@@ -32,10 +33,14 @@ IJsonHandler* SamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /
 IJsonHandler* SamplerJsonHandler::SamplerKey(const char* str, Sampler& o) {
   using namespace std::string_literals;
 
-  if ("magFilter"s == str) return property("magFilter", this->_magFilter, o.magFilter);
-  if ("minFilter"s == str) return property("minFilter", this->_minFilter, o.minFilter);
-  if ("wrapS"s == str) return property("wrapS", this->_wrapS, o.wrapS);
-  if ("wrapT"s == str) return property("wrapT", this->_wrapT, o.wrapT);
+  if ("magFilter"s == str)
+    return property("magFilter", this->_magFilter, o.magFilter);
+  if ("minFilter"s == str)
+    return property("minFilter", this->_minFilter, o.minFilter);
+  if ("wrapS"s == str)
+    return property("wrapS", this->_wrapS, o.wrapS);
+  if ("wrapT"s == str)
+    return property("wrapT", this->_wrapT, o.wrapT);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

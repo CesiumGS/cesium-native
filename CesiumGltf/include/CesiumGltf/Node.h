@@ -8,57 +8,70 @@
 #include <vector>
 
 namespace CesiumGltf {
-    /**
-     * @brief A node in the node hierarchy.  When the node contains `skin`, all `mesh.primitives` must contain `JOINTS_0` and `WEIGHTS_0` attributes.  A node can have either a `matrix` or any combination of `translation`/`rotation`/`scale` (TRS) properties. TRS properties are converted to matrices and postmultiplied in the `T * R * S` order to compose the transformation matrix; first the scale is applied to the vertices, then the rotation, and then the translation. If none are provided, the transform is the identity. When a node is targeted for animation (referenced by an animation.channel.target), only TRS properties may be present; `matrix` will not be present.
-     */
-    struct CESIUMGLTF_API Node final : public NamedObject {
+/**
+ * @brief A node in the node hierarchy.  When the node contains `skin`, all
+ * `mesh.primitives` must contain `JOINTS_0` and `WEIGHTS_0` attributes.  A node
+ * can have either a `matrix` or any combination of
+ * `translation`/`rotation`/`scale` (TRS) properties. TRS properties are
+ * converted to matrices and postmultiplied in the `T * R * S` order to compose
+ * the transformation matrix; first the scale is applied to the vertices, then
+ * the rotation, and then the translation. If none are provided, the transform
+ * is the identity. When a node is targeted for animation (referenced by an
+ * animation.channel.target), only TRS properties may be present; `matrix` will
+ * not be present.
+ */
+struct CESIUMGLTF_API Node final : public NamedObject {
 
-        /**
-         * @brief The index of the camera referenced by this node.
-         */
-        int32_t camera = -1;
+  /**
+   * @brief The index of the camera referenced by this node.
+   */
+  int32_t camera = -1;
 
-        /**
-         * @brief The indices of this node's children.
-         */
-        std::vector<int32_t> children;
+  /**
+   * @brief The indices of this node's children.
+   */
+  std::vector<int32_t> children;
 
-        /**
-         * @brief The index of the skin referenced by this node.
-         *
-         * When a skin is referenced by a node within a scene, all joints used by the skin must belong to the same scene.
-         */
-        int32_t skin = -1;
+  /**
+   * @brief The index of the skin referenced by this node.
+   *
+   * When a skin is referenced by a node within a scene, all joints used by the
+   * skin must belong to the same scene.
+   */
+  int32_t skin = -1;
 
-        /**
-         * @brief A floating-point 4x4 transformation matrix stored in column-major order.
-         */
-        std::vector<double> matrix = { 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 };
+  /**
+   * @brief A floating-point 4x4 transformation matrix stored in column-major
+   * order.
+   */
+  std::vector<double> matrix = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-        /**
-         * @brief The index of the mesh in this node.
-         */
-        int32_t mesh = -1;
+  /**
+   * @brief The index of the mesh in this node.
+   */
+  int32_t mesh = -1;
 
-        /**
-         * @brief The node's unit quaternion rotation in the order (x, y, z, w), where w is the scalar.
-         */
-        std::vector<double> rotation = { 0,0,0,1 };
+  /**
+   * @brief The node's unit quaternion rotation in the order (x, y, z, w), where
+   * w is the scalar.
+   */
+  std::vector<double> rotation = {0, 0, 0, 1};
 
-        /**
-         * @brief The node's non-uniform scale, given as the scaling factors along the x, y, and z axes.
-         */
-        std::vector<double> scale = { 1,1,1 };
+  /**
+   * @brief The node's non-uniform scale, given as the scaling factors along the
+   * x, y, and z axes.
+   */
+  std::vector<double> scale = {1, 1, 1};
 
-        /**
-         * @brief The node's translation along the x, y, and z axes.
-         */
-        std::vector<double> translation = { 0,0,0 };
+  /**
+   * @brief The node's translation along the x, y, and z axes.
+   */
+  std::vector<double> translation = {0, 0, 0};
 
-        /**
-         * @brief The weights of the instantiated Morph Target. Number of elements must match number of Morph Targets of used mesh.
-         */
-        std::vector<double> weights;
-
-    };
-}
+  /**
+   * @brief The weights of the instantiated Morph Target. Number of elements
+   * must match number of Morph Targets of used mesh.
+   */
+  std::vector<double> weights;
+};
+} // namespace CesiumGltf

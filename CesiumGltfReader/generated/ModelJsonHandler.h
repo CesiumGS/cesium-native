@@ -22,38 +22,39 @@
 #include "TextureJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Model;
+struct Model;
 
-  class ModelJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, Model* pObject);
-    Model* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class ModelJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Model* pObject);
+  Model* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* ModelKey(const char* str, Model& o);
+protected:
+  IJsonHandler* ModelKey(const char* str, Model& o);
 
-  private:
-
-    Model* _pObject = nullptr;
-    ArrayJsonHandler<std::string, StringJsonHandler> _extensionsUsed;
-    ArrayJsonHandler<std::string, StringJsonHandler> _extensionsRequired;
-    ArrayJsonHandler<Accessor, AccessorJsonHandler> _accessors;
-    ArrayJsonHandler<Animation, AnimationJsonHandler> _animations;
-    AssetJsonHandler _asset;
-    ArrayJsonHandler<Buffer, BufferJsonHandler> _buffers;
-    ArrayJsonHandler<BufferView, BufferViewJsonHandler> _bufferViews;
-    ArrayJsonHandler<Camera, CameraJsonHandler> _cameras;
-    ArrayJsonHandler<Image, ImageJsonHandler> _images;
-    ArrayJsonHandler<Material, MaterialJsonHandler> _materials;
-    ArrayJsonHandler<Mesh, MeshJsonHandler> _meshes;
-    ArrayJsonHandler<Node, NodeJsonHandler> _nodes;
-    ArrayJsonHandler<Sampler, SamplerJsonHandler> _samplers;
-    IntegerJsonHandler<int32_t> _scene;
-    ArrayJsonHandler<Scene, SceneJsonHandler> _scenes;
-    ArrayJsonHandler<Skin, SkinJsonHandler> _skins;
-    ArrayJsonHandler<Texture, TextureJsonHandler> _textures;
-  };
-}
+private:
+  Model* _pObject = nullptr;
+  ArrayJsonHandler<std::string, StringJsonHandler> _extensionsUsed;
+  ArrayJsonHandler<std::string, StringJsonHandler> _extensionsRequired;
+  ArrayJsonHandler<Accessor, AccessorJsonHandler> _accessors;
+  ArrayJsonHandler<Animation, AnimationJsonHandler> _animations;
+  AssetJsonHandler _asset;
+  ArrayJsonHandler<Buffer, BufferJsonHandler> _buffers;
+  ArrayJsonHandler<BufferView, BufferViewJsonHandler> _bufferViews;
+  ArrayJsonHandler<Camera, CameraJsonHandler> _cameras;
+  ArrayJsonHandler<Image, ImageJsonHandler> _images;
+  ArrayJsonHandler<Material, MaterialJsonHandler> _materials;
+  ArrayJsonHandler<Mesh, MeshJsonHandler> _meshes;
+  ArrayJsonHandler<Node, NodeJsonHandler> _nodes;
+  ArrayJsonHandler<Sampler, SamplerJsonHandler> _samplers;
+  IntegerJsonHandler<int32_t> _scene;
+  ArrayJsonHandler<Scene, SceneJsonHandler> _scenes;
+  ArrayJsonHandler<Skin, SkinJsonHandler> _skins;
+  ArrayJsonHandler<Texture, TextureJsonHandler> _textures;
+};
+} // namespace CesiumGltf

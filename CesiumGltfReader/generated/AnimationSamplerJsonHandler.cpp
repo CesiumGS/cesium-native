@@ -8,7 +8,9 @@
 
 using namespace CesiumGltf;
 
-void AnimationSamplerJsonHandler::reset(IJsonHandler* pParent, AnimationSampler* pObject) {
+void AnimationSamplerJsonHandler::reset(
+    IJsonHandler* pParent,
+    AnimationSampler* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -17,42 +19,61 @@ AnimationSampler* AnimationSamplerJsonHandler::getObject() {
   return this->_pObject;
 }
 
-void AnimationSamplerJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void AnimationSamplerJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* AnimationSamplerJsonHandler::Key(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->AnimationSamplerKey(str, *this->_pObject);
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(const char* str, AnimationSampler& o) {
+IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(
+    const char* str,
+    AnimationSampler& o) {
   using namespace std::string_literals;
 
-  if ("input"s == str) return property("input", this->_input, o.input);
-  if ("interpolation"s == str) return property("interpolation", this->_interpolation, o.interpolation);
-  if ("output"s == str) return property("output", this->_output, o.output);
+  if ("input"s == str)
+    return property("input", this->_input, o.input);
+  if ("interpolation"s == str)
+    return property("interpolation", this->_interpolation, o.interpolation);
+  if ("output"s == str)
+    return property("output", this->_output, o.output);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }
 
-void AnimationSamplerJsonHandler::InterpolationJsonHandler::reset(IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum) {
+void AnimationSamplerJsonHandler::InterpolationJsonHandler::reset(
+    IJsonHandler* pParent,
+    AnimationSampler::Interpolation* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::InterpolationJsonHandler::String(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* AnimationSamplerJsonHandler::InterpolationJsonHandler::String(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);
 
-  if ("LINEAR"s == str) *this->_pEnum = AnimationSampler::Interpolation::LINEAR;
-  else if ("STEP"s == str) *this->_pEnum = AnimationSampler::Interpolation::STEP;
-  else if ("CUBICSPLINE"s == str) *this->_pEnum = AnimationSampler::Interpolation::CUBICSPLINE;
-  else return nullptr;
+  if ("LINEAR"s == str)
+    *this->_pEnum = AnimationSampler::Interpolation::LINEAR;
+  else if ("STEP"s == str)
+    *this->_pEnum = AnimationSampler::Interpolation::STEP;
+  else if ("CUBICSPLINE"s == str)
+    *this->_pEnum = AnimationSampler::Interpolation::CUBICSPLINE;
+  else
+    return nullptr;
 
   return this->parent();
 }

@@ -6,25 +6,26 @@
 #include "StringJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Asset;
+struct Asset;
 
-  class AssetJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, Asset* pObject);
-    Asset* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class AssetJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Asset* pObject);
+  Asset* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* AssetKey(const char* str, Asset& o);
+protected:
+  IJsonHandler* AssetKey(const char* str, Asset& o);
 
-  private:
-
-    Asset* _pObject = nullptr;
-    StringJsonHandler _copyright;
-    StringJsonHandler _generator;
-    StringJsonHandler _version;
-    StringJsonHandler _minVersion;
-  };
-}
+private:
+  Asset* _pObject = nullptr;
+  StringJsonHandler _copyright;
+  StringJsonHandler _generator;
+  StringJsonHandler _version;
+  StringJsonHandler _minVersion;
+};
+} // namespace CesiumGltf

@@ -8,7 +8,9 @@
 
 using namespace CesiumGltf;
 
-void CameraPerspectiveJsonHandler::reset(IJsonHandler* pParent, CameraPerspective* pObject) {
+void CameraPerspectiveJsonHandler::reset(
+    IJsonHandler* pParent,
+    CameraPerspective* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -17,25 +19,36 @@ CameraPerspective* CameraPerspectiveJsonHandler::getObject() {
   return this->_pObject;
 }
 
-void CameraPerspectiveJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void CameraPerspectiveJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* CameraPerspectiveJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* CameraPerspectiveJsonHandler::Key(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->CameraPerspectiveKey(str, *this->_pObject);
 }
 
-IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(const char* str, CameraPerspective& o) {
+IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
+    const char* str,
+    CameraPerspective& o) {
   using namespace std::string_literals;
 
-  if ("aspectRatio"s == str) return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
-  if ("yfov"s == str) return property("yfov", this->_yfov, o.yfov);
-  if ("zfar"s == str) return property("zfar", this->_zfar, o.zfar);
-  if ("znear"s == str) return property("znear", this->_znear, o.znear);
+  if ("aspectRatio"s == str)
+    return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
+  if ("yfov"s == str)
+    return property("yfov", this->_yfov, o.yfov);
+  if ("zfar"s == str)
+    return property("zfar", this->_zfar, o.zfar);
+  if ("znear"s == str)
+    return property("znear", this->_znear, o.znear);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

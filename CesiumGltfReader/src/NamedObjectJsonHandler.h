@@ -4,14 +4,14 @@
 #include "StringJsonHandler.h"
 
 namespace CesiumGltf {
-    struct NamedObject;
+struct NamedObject;
 
-    class NamedObjectJsonHandler : public ExtensibleObjectJsonHandler {
-    protected:
-        void reset(IJsonHandler* pParent, NamedObject* pObject);
-        IJsonHandler* NamedObjectKey(const char* str, NamedObject& o);
+class NamedObjectJsonHandler : public ExtensibleObjectJsonHandler {
+protected:
+  void reset(IJsonHandler* pParent, NamedObject* pObject);
+  IJsonHandler* NamedObjectKey(const char* str, NamedObject& o);
 
-    private:
-        StringJsonHandler _name;
-    };
-}
+private:
+  StringJsonHandler _name;
+};
+} // namespace CesiumGltf

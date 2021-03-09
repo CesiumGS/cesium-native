@@ -13,18 +13,19 @@ void ModelJsonHandler::reset(IJsonHandler* pParent, Model* pObject) {
   this->_pObject = pObject;
 }
 
-Model* ModelJsonHandler::getObject() {
-  return this->_pObject;
-}
+Model* ModelJsonHandler::getObject() { return this->_pObject; }
 
-void ModelJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void ModelJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->ModelKey(str, *this->_pObject);
 }
@@ -32,23 +33,43 @@ IJsonHandler* ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*c
 IJsonHandler* ModelJsonHandler::ModelKey(const char* str, Model& o) {
   using namespace std::string_literals;
 
-  if ("extensionsUsed"s == str) return property("extensionsUsed", this->_extensionsUsed, o.extensionsUsed);
-  if ("extensionsRequired"s == str) return property("extensionsRequired", this->_extensionsRequired, o.extensionsRequired);
-  if ("accessors"s == str) return property("accessors", this->_accessors, o.accessors);
-  if ("animations"s == str) return property("animations", this->_animations, o.animations);
-  if ("asset"s == str) return property("asset", this->_asset, o.asset);
-  if ("buffers"s == str) return property("buffers", this->_buffers, o.buffers);
-  if ("bufferViews"s == str) return property("bufferViews", this->_bufferViews, o.bufferViews);
-  if ("cameras"s == str) return property("cameras", this->_cameras, o.cameras);
-  if ("images"s == str) return property("images", this->_images, o.images);
-  if ("materials"s == str) return property("materials", this->_materials, o.materials);
-  if ("meshes"s == str) return property("meshes", this->_meshes, o.meshes);
-  if ("nodes"s == str) return property("nodes", this->_nodes, o.nodes);
-  if ("samplers"s == str) return property("samplers", this->_samplers, o.samplers);
-  if ("scene"s == str) return property("scene", this->_scene, o.scene);
-  if ("scenes"s == str) return property("scenes", this->_scenes, o.scenes);
-  if ("skins"s == str) return property("skins", this->_skins, o.skins);
-  if ("textures"s == str) return property("textures", this->_textures, o.textures);
+  if ("extensionsUsed"s == str)
+    return property("extensionsUsed", this->_extensionsUsed, o.extensionsUsed);
+  if ("extensionsRequired"s == str)
+    return property(
+        "extensionsRequired",
+        this->_extensionsRequired,
+        o.extensionsRequired);
+  if ("accessors"s == str)
+    return property("accessors", this->_accessors, o.accessors);
+  if ("animations"s == str)
+    return property("animations", this->_animations, o.animations);
+  if ("asset"s == str)
+    return property("asset", this->_asset, o.asset);
+  if ("buffers"s == str)
+    return property("buffers", this->_buffers, o.buffers);
+  if ("bufferViews"s == str)
+    return property("bufferViews", this->_bufferViews, o.bufferViews);
+  if ("cameras"s == str)
+    return property("cameras", this->_cameras, o.cameras);
+  if ("images"s == str)
+    return property("images", this->_images, o.images);
+  if ("materials"s == str)
+    return property("materials", this->_materials, o.materials);
+  if ("meshes"s == str)
+    return property("meshes", this->_meshes, o.meshes);
+  if ("nodes"s == str)
+    return property("nodes", this->_nodes, o.nodes);
+  if ("samplers"s == str)
+    return property("samplers", this->_samplers, o.samplers);
+  if ("scene"s == str)
+    return property("scene", this->_scene, o.scene);
+  if ("scenes"s == str)
+    return property("scenes", this->_scenes, o.scenes);
+  if ("skins"s == str)
+    return property("skins", this->_skins, o.skins);
+  if ("textures"s == str)
+    return property("textures", this->_textures, o.textures);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

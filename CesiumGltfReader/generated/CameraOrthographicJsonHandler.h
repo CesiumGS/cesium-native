@@ -6,25 +6,26 @@
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
-  struct CameraOrthographic;
+struct CameraOrthographic;
 
-  class CameraOrthographicJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, CameraOrthographic* pObject);
-    CameraOrthographic* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class CameraOrthographicJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, CameraOrthographic* pObject);
+  CameraOrthographic* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* CameraOrthographicKey(const char* str, CameraOrthographic& o);
+protected:
+  IJsonHandler* CameraOrthographicKey(const char* str, CameraOrthographic& o);
 
-  private:
-
-    CameraOrthographic* _pObject = nullptr;
-    DoubleJsonHandler _xmag;
-    DoubleJsonHandler _ymag;
-    DoubleJsonHandler _zfar;
-    DoubleJsonHandler _znear;
-  };
-}
+private:
+  CameraOrthographic* _pObject = nullptr;
+  DoubleJsonHandler _xmag;
+  DoubleJsonHandler _ymag;
+  DoubleJsonHandler _zfar;
+  DoubleJsonHandler _znear;
+};
+} // namespace CesiumGltf

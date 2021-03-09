@@ -3,32 +3,30 @@
 using namespace CesiumGltf;
 
 IJsonHandler* ObjectJsonHandler::StartObject() {
-    ++this->_depth;
-    if (this->_depth > 1) {
-        return this->StartSubObject();
-    }
-    return this;
+  ++this->_depth;
+  if (this->_depth > 1) {
+    return this->StartSubObject();
+  }
+  return this;
 }
 
 IJsonHandler* ObjectJsonHandler::EndObject(size_t memberCount) {
-    this->_currentKey = nullptr;
+  this->_currentKey = nullptr;
 
-    --this->_depth;
+  --this->_depth;
 
-    if (this->_depth > 0)
-        return this->EndSubObject(memberCount);
-    else
-        return this->parent();
+  if (this->_depth > 0)
+    return this->EndSubObject(memberCount);
+  else
+    return this->parent();
 }
 
-IJsonHandler* ObjectJsonHandler::StartSubObject() {
-    return nullptr;
-}
+IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
 
 IJsonHandler* ObjectJsonHandler::EndSubObject(size_t /*memberCount*/) {
-    return nullptr;
+  return nullptr;
 }
 
 const char* ObjectJsonHandler::getCurrentKey() const {
-    return this->_currentKey;
+  return this->_currentKey;
 }
