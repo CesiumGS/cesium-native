@@ -34,6 +34,14 @@ if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     )
 endif()
 
+set(CESIUM_DEBUG_POSTFIX "d")
+set(CESIUM_RELEASE_POSTFIX "")
+
+set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
+set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
+set(CMAKE_MINSIZEREL_POSTFIX ${CESIUM_RELEASE_POSTFIX})
+set(CMAKE_RELWITHDEBINFO_POSTFIX ${CESIUM_RELEASE_POSTFIX})
+
 # Use configure_depends to automatically reconfigure on filesystem
 # changes at the expense of computational overhead for CMake to
 # determine if new files have been added (-DGLOB_USE_CONFIGURE_DEPENDS).
@@ -109,6 +117,9 @@ endfunction()
 # Private Libraries
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
+# These libraries override the debug postfix, so re-override it.
+set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
+set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 
 # Public Targets
 add_subdirectory(CesiumUtility)

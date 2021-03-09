@@ -1021,6 +1021,8 @@ namespace Cesium3DTiles {
             if (!child.isRenderable()) {
                 waitingForChildren = true;
 
+                this->_markTileVisited(child);
+
                 // We're using the distance to the parent tile to compute the load priority.
                 // This is fine because the relative priority of the children is irrelevant;
                 // we can't display any of them until all are loaded, anyway.
