@@ -13,18 +13,19 @@ void NodeJsonHandler::reset(IJsonHandler* pParent, Node* pObject) {
   this->_pObject = pObject;
 }
 
-Node* NodeJsonHandler::getObject() {
-  return this->_pObject;
-}
+Node* NodeJsonHandler::getObject() { return this->_pObject; }
 
-void NodeJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void NodeJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* NodeJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+NodeJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->NodeKey(str, *this->_pObject);
 }
@@ -32,15 +33,24 @@ IJsonHandler* NodeJsonHandler::Key(const char* str, size_t /*length*/, bool /*co
 IJsonHandler* NodeJsonHandler::NodeKey(const char* str, Node& o) {
   using namespace std::string_literals;
 
-  if ("camera"s == str) return property("camera", this->_camera, o.camera);
-  if ("children"s == str) return property("children", this->_children, o.children);
-  if ("skin"s == str) return property("skin", this->_skin, o.skin);
-  if ("matrix"s == str) return property("matrix", this->_matrix, o.matrix);
-  if ("mesh"s == str) return property("mesh", this->_mesh, o.mesh);
-  if ("rotation"s == str) return property("rotation", this->_rotation, o.rotation);
-  if ("scale"s == str) return property("scale", this->_scale, o.scale);
-  if ("translation"s == str) return property("translation", this->_translation, o.translation);
-  if ("weights"s == str) return property("weights", this->_weights, o.weights);
+  if ("camera"s == str)
+    return property("camera", this->_camera, o.camera);
+  if ("children"s == str)
+    return property("children", this->_children, o.children);
+  if ("skin"s == str)
+    return property("skin", this->_skin, o.skin);
+  if ("matrix"s == str)
+    return property("matrix", this->_matrix, o.matrix);
+  if ("mesh"s == str)
+    return property("mesh", this->_mesh, o.mesh);
+  if ("rotation"s == str)
+    return property("rotation", this->_rotation, o.rotation);
+  if ("scale"s == str)
+    return property("scale", this->_scale, o.scale);
+  if ("translation"s == str)
+    return property("translation", this->_translation, o.translation);
+  if ("weights"s == str)
+    return property("weights", this->_weights, o.weights);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

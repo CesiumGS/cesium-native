@@ -13,27 +13,31 @@ void AnimationJsonHandler::reset(IJsonHandler* pParent, Animation* pObject) {
   this->_pObject = pObject;
 }
 
-Animation* AnimationJsonHandler::getObject() {
-  return this->_pObject;
-}
+Animation* AnimationJsonHandler::getObject() { return this->_pObject; }
 
-void AnimationJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void AnimationJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AnimationJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler*
+AnimationJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
   return this->AnimationKey(str, *this->_pObject);
 }
 
-IJsonHandler* AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
+IJsonHandler*
+AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
   using namespace std::string_literals;
 
-  if ("channels"s == str) return property("channels", this->_channels, o.channels);
-  if ("samplers"s == str) return property("samplers", this->_samplers, o.samplers);
+  if ("channels"s == str)
+    return property("channels", this->_channels, o.channels);
+  if ("samplers"s == str)
+    return property("samplers", this->_samplers, o.samplers);
 
   return this->NamedObjectKey(str, *this->_pObject);
 }

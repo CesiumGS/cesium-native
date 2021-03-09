@@ -10,36 +10,42 @@
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 
 namespace CesiumGltf {
-  struct MeshPrimitive;
+struct MeshPrimitive;
 
-  class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
+class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, MeshPrimitive* pObject);
+  MeshPrimitive* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+protected:
+  IJsonHandler* MeshPrimitiveKey(const char* str, MeshPrimitive& o);
+
+private:
+  class ExtensionsJsonHandler : public ObjectJsonHandler {
   public:
-    void reset(IJsonHandler* pHandler, MeshPrimitive* pObject);
-    MeshPrimitive* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
-
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
-
-  protected:
-    IJsonHandler* MeshPrimitiveKey(const char* str, MeshPrimitive& o);
+    void reset(IJsonHandler* pParent, std::vector<std::any>* pExtensions);
+    virtual IJsonHandler*
+    Key(const char* str, size_t length, bool copy) override;
 
   private:
-    class ExtensionsJsonHandler : public ObjectJsonHandler {
-    public:
-      void reset(IJsonHandler* pParent, std::vector<std::any>* pExtensions);
-      virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
-
-    private:
-      std::vector<std::any>* _pExtensions = nullptr;
-      KHR_draco_mesh_compressionJsonHandler _KHR_draco_mesh_compression;
-    };
-
-    MeshPrimitive* _pObject = nullptr;
-    DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _attributes;
-    IntegerJsonHandler<int32_t> _indices;
-    IntegerJsonHandler<int32_t> _material;
-    IntegerJsonHandler<MeshPrimitive::Mode> _mode;
-    ArrayJsonHandler<std::unordered_map<std::string, int32_t>, DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>>> _targets;
-    ExtensionsJsonHandler _extensions;
+    std::vector<std::any>* _pExtensions = nullptr;
+    KHR_draco_mesh_compressionJsonHandler _KHR_draco_mesh_compression;
   };
-}
+
+  MeshPrimitive* _pObject = nullptr;
+  DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _attributes;
+  IntegerJsonHandler<int32_t> _indices;
+  IntegerJsonHandler<int32_t> _material;
+  IntegerJsonHandler<MeshPrimitive::Mode> _mode;
+  ArrayJsonHandler<
+      std::unordered_map<std::string, int32_t>,
+      DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>>>
+      _targets;
+  ExtensionsJsonHandler _extensions;
+};
+} // namespace CesiumGltf

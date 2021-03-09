@@ -8,7 +8,9 @@
 
 using namespace CesiumGltf;
 
-void AccessorSparseValuesJsonHandler::reset(IJsonHandler* pParent, AccessorSparseValues* pObject) {
+void AccessorSparseValuesJsonHandler::reset(
+    IJsonHandler* pParent,
+    AccessorSparseValues* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -17,23 +19,32 @@ AccessorSparseValues* AccessorSparseValuesJsonHandler::getObject() {
   return this->_pObject;
 }
 
-void AccessorSparseValuesJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void AccessorSparseValuesJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AccessorSparseValuesJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* AccessorSparseValuesJsonHandler::Key(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->AccessorSparseValuesKey(str, *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(const char* str, AccessorSparseValues& o) {
+IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
+    const char* str,
+    AccessorSparseValues& o) {
   using namespace std::string_literals;
 
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
-  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str)
+    return property("byteOffset", this->_byteOffset, o.byteOffset);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

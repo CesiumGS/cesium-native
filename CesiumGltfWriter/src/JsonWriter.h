@@ -1,76 +1,74 @@
 #pragma once
 #include "JsonWriter.h"
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <memory>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include <string_view>
 #include <vector>
-#include <memory>
 
 namespace CesiumGltf {
-    class JsonWriter {
-        rapidjson::StringBuffer _compactBuffer;
-        std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> compact;
-        
-    public:
-        JsonWriter();
-        virtual ~JsonWriter() {}
+class JsonWriter {
+  rapidjson::StringBuffer _compactBuffer;
+  std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> compact;
 
-        // rapidjson methods
-        virtual bool Null();
-        virtual bool Bool(bool b);
-        virtual bool Int(int i);
-        virtual bool Uint(unsigned int i);
-        virtual bool Uint64(std::uint64_t i);
-        virtual bool Int64(std::int64_t i);
-        virtual bool Double(double d);
-        virtual bool RawNumber(const char* str, unsigned int length, bool copy);
-        virtual bool Key(std::string_view string);
-        virtual bool String(std::string_view string);
-        virtual bool StartObject();
-        virtual bool EndObject();
-        virtual bool StartArray();
-        virtual bool EndArray();
+public:
+  JsonWriter();
+  virtual ~JsonWriter() {}
 
-        // Primitive overloads
-        virtual void Primitive(std::int32_t value);
-        virtual void Primitive(std::uint32_t value);
-        virtual void Primitive(std::int64_t value);
-        virtual void Primitive(std::uint64_t value);
-        virtual void Primitive(float value);
-        virtual void Primitive(double value);
-        virtual void Primitive(std::nullptr_t value);
-        virtual void Primitive(std::string_view string);
+  // rapidjson methods
+  virtual bool Null();
+  virtual bool Bool(bool b);
+  virtual bool Int(int i);
+  virtual bool Uint(unsigned int i);
+  virtual bool Uint64(std::uint64_t i);
+  virtual bool Int64(std::int64_t i);
+  virtual bool Double(double d);
+  virtual bool RawNumber(const char* str, unsigned int length, bool copy);
+  virtual bool Key(std::string_view string);
+  virtual bool String(std::string_view string);
+  virtual bool StartObject();
+  virtual bool EndObject();
+  virtual bool StartArray();
+  virtual bool EndArray();
 
-        // Integral
-        virtual void KeyPrimitive(std::string_view keyName, std::int32_t value);
-        virtual void KeyPrimitive(std::string_view keyName, std::uint32_t value);
-        virtual void KeyPrimitive(std::string_view keyName, std::int64_t value);
-        virtual void KeyPrimitive(std::string_view keyName, std::uint64_t value);
+  // Primitive overloads
+  virtual void Primitive(std::int32_t value);
+  virtual void Primitive(std::uint32_t value);
+  virtual void Primitive(std::int64_t value);
+  virtual void Primitive(std::uint64_t value);
+  virtual void Primitive(float value);
+  virtual void Primitive(double value);
+  virtual void Primitive(std::nullptr_t value);
+  virtual void Primitive(std::string_view string);
 
-        // String
-        virtual void KeyPrimitive(std::string_view keyName, std::string_view value);
+  // Integral
+  virtual void KeyPrimitive(std::string_view keyName, std::int32_t value);
+  virtual void KeyPrimitive(std::string_view keyName, std::uint32_t value);
+  virtual void KeyPrimitive(std::string_view keyName, std::int64_t value);
+  virtual void KeyPrimitive(std::string_view keyName, std::uint64_t value);
 
-        // Floating Point
-        virtual void KeyPrimitive(std::string_view keyName, float value);
-        virtual void KeyPrimitive(std::string_view keyName, double value);
+  // String
+  virtual void KeyPrimitive(std::string_view keyName, std::string_view value);
 
-        // Null
-        virtual void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
+  // Floating Point
+  virtual void KeyPrimitive(std::string_view keyName, float value);
+  virtual void KeyPrimitive(std::string_view keyName, double value);
 
-        // Array / Objects
-        virtual void KeyArray(
-            std::string_view keyName,
-            std::function<void(void)> insideArray);
+  // Null
+  virtual void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
 
-        virtual void KeyObject(
-            std::string_view keyName,
-            std::function<void(void)> insideObject);
+  // Array / Objects
+  virtual void
+  KeyArray(std::string_view keyName, std::function<void(void)> insideArray);
 
-        virtual std::string toString();
-        virtual std::string_view toStringView();
-        virtual std::vector<std::byte> toBytes();
-    };
-}
+  virtual void
+  KeyObject(std::string_view keyName, std::function<void(void)> insideObject);
+
+  virtual std::string toString();
+  virtual std::string_view toStringView();
+  virtual std::vector<std::byte> toBytes();
+};
+} // namespace CesiumGltf

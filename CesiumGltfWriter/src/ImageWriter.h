@@ -6,10 +6,9 @@
 #include <vector>
 
 namespace CesiumGltf {
-    void writeImage(
-        const std::vector<Image>& images,
-        CesiumGltf::JsonWriter& jsonWriter,
-        WriteFlags flags,
-        WriteGLTFCallback writeGLTFCallback = noopGltfWriter
-    );
+void writeImage(
+    const std::vector<Image>& images,
+    CesiumGltf::JsonWriter& jsonWriter,
+    WriteFlags flags,
+    WriteGLTFCallback writeGLTFCallback = noopGltfWriter);
 }

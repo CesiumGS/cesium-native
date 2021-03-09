@@ -4,17 +4,17 @@
 #include <cassert>
 
 namespace CesiumGltf {
-    class DoubleJsonHandler : public JsonHandler {
-    public:
-        void reset(IJsonHandler* pParent, double* pDouble);
+class DoubleJsonHandler : public JsonHandler {
+public:
+  void reset(IJsonHandler* pParent, double* pDouble);
 
-        virtual IJsonHandler* Int(int i) override;
-        virtual IJsonHandler* Uint(unsigned i) override;
-        virtual IJsonHandler* Int64(int64_t i) override;
-        virtual IJsonHandler* Uint64(uint64_t i) override;
-        virtual IJsonHandler* Double(double d) override;
+  virtual IJsonHandler* Int(int i) override;
+  virtual IJsonHandler* Uint(unsigned i) override;
+  virtual IJsonHandler* Int64(int64_t i) override;
+  virtual IJsonHandler* Uint64(uint64_t i) override;
+  virtual IJsonHandler* Double(double d) override;
 
-    private:
-        double* _pDouble = nullptr;
-    };
-}
+private:
+  double* _pDouble = nullptr;
+};
+} // namespace CesiumGltf

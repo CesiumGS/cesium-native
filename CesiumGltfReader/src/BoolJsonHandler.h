@@ -3,13 +3,13 @@
 #include "JsonHandler.h"
 
 namespace CesiumGltf {
-    class BoolJsonHandler : public JsonHandler {
-    public:
-        void reset(IJsonHandler* pParent, bool* pBool);
+class BoolJsonHandler : public JsonHandler {
+public:
+  void reset(IJsonHandler* pParent, bool* pBool);
 
-        virtual IJsonHandler* Bool(bool b) override;
+  virtual IJsonHandler* Bool(bool b) override;
 
-    private:
-        bool* _pBool = nullptr;
-    };
-}
+private:
+  bool* _pBool = nullptr;
+};
+} // namespace CesiumGltf

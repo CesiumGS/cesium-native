@@ -8,7 +8,9 @@
 
 using namespace CesiumGltf;
 
-void KHR_draco_mesh_compressionJsonHandler::reset(IJsonHandler* pParent, KHR_draco_mesh_compression* pObject) {
+void KHR_draco_mesh_compressionJsonHandler::reset(
+    IJsonHandler* pParent,
+    KHR_draco_mesh_compression* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -17,23 +19,33 @@ KHR_draco_mesh_compression* KHR_draco_mesh_compressionJsonHandler::getObject() {
   return this->_pObject;
 }
 
-void KHR_draco_mesh_compressionJsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
+void KHR_draco_mesh_compressionJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
   if (this->getCurrentKey()) {
     context.emplace_back(std::string(".") + this->getCurrentKey());
   }
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* KHR_draco_mesh_compressionJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* KHR_draco_mesh_compressionJsonHandler::Key(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->KHR_draco_mesh_compressionKey(str, *this->_pObject);
 }
 
-IJsonHandler* KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(const char* str, KHR_draco_mesh_compression& o) {
+IJsonHandler*
+KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
+    const char* str,
+    KHR_draco_mesh_compression& o) {
   using namespace std::string_literals;
 
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
-  if ("attributes"s == str) return property("attributes", this->_attributes, o.attributes);
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("attributes"s == str)
+    return property("attributes", this->_attributes, o.attributes);
 
   return this->ExtensibleObjectKey(str, *this->_pObject);
 }

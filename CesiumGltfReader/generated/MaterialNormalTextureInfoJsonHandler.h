@@ -6,22 +6,24 @@
 #include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
-  struct MaterialNormalTextureInfo;
+struct MaterialNormalTextureInfo;
 
-  class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, MaterialNormalTextureInfo* pObject);
-    MaterialNormalTextureInfo* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, MaterialNormalTextureInfo* pObject);
+  MaterialNormalTextureInfo* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* MaterialNormalTextureInfoKey(const char* str, MaterialNormalTextureInfo& o);
+protected:
+  IJsonHandler*
+  MaterialNormalTextureInfoKey(const char* str, MaterialNormalTextureInfo& o);
 
-  private:
-
-    MaterialNormalTextureInfo* _pObject = nullptr;
-    DoubleJsonHandler _scale;
-  };
-}
+private:
+  MaterialNormalTextureInfo* _pObject = nullptr;
+  DoubleJsonHandler _scale;
+};
+} // namespace CesiumGltf

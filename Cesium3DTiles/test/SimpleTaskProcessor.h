@@ -4,5 +4,5 @@
 
 class SimpleTaskProcessor : public CesiumAsync::ITaskProcessor {
 public:
-    virtual void startTask(std::function<void()> f) override { f(); }
+  virtual void startTask(std::function<void()> f) override { f(); }
 };

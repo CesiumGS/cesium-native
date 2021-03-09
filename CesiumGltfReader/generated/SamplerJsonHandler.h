@@ -7,25 +7,26 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Sampler;
+struct Sampler;
 
-  class SamplerJsonHandler : public NamedObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, Sampler* pObject);
-    Sampler* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class SamplerJsonHandler : public NamedObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Sampler* pObject);
+  Sampler* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* SamplerKey(const char* str, Sampler& o);
+protected:
+  IJsonHandler* SamplerKey(const char* str, Sampler& o);
 
-  private:
-
-    Sampler* _pObject = nullptr;
-    IntegerJsonHandler<Sampler::MagFilter> _magFilter;
-    IntegerJsonHandler<Sampler::MinFilter> _minFilter;
-    IntegerJsonHandler<Sampler::WrapS> _wrapS;
-    IntegerJsonHandler<Sampler::WrapT> _wrapT;
-  };
-}
+private:
+  Sampler* _pObject = nullptr;
+  IntegerJsonHandler<Sampler::MagFilter> _magFilter;
+  IntegerJsonHandler<Sampler::MinFilter> _minFilter;
+  IntegerJsonHandler<Sampler::WrapS> _wrapS;
+  IntegerJsonHandler<Sampler::WrapT> _wrapT;
+};
+} // namespace CesiumGltf

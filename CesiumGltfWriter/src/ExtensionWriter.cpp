@@ -1,25 +1,24 @@
-#include <CesiumGltf/JsonValue.h>
-#include "JsonObjectWriter.h"
 #include "ExtensionWriter.h"
+#include "JsonObjectWriter.h"
+#include <CesiumGltf/JsonValue.h>
 
 void CesiumGltf::writeExtensions(
-    const std::vector<std::any>& extensions, 
-    CesiumGltf::JsonWriter& jsonWriter
-) {
-    if (extensions.empty()) {
-        return;
-    }
-    
-    auto& j = jsonWriter;
-    j.Key("extensions");
-    j.StartObject();
+    const std::vector<std::any>& extensions,
+    CesiumGltf::JsonWriter& jsonWriter) {
+  if (extensions.empty()) {
+    return;
+  }
 
-    for (const auto& extension : extensions) {
-        if (extension.type() == typeid(JsonValue::Object)) {
-            const auto& object = std::any_cast<JsonValue::Object>(extension);
-            writeJsonValue(object, jsonWriter);
-        }
-    }
+  auto& j = jsonWriter;
+  j.Key("extensions");
+  j.StartObject();
 
-    j.EndObject();
+  for (const auto& extension : extensions) {
+    if (extension.type() == typeid(JsonValue::Object)) {
+      const auto& object = std::any_cast<JsonValue::Object>(extension);
+      writeJsonValue(object, jsonWriter);
+    }
+  }
+
+  j.EndObject();
 }

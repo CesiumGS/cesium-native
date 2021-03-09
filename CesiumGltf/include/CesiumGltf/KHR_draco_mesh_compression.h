@@ -8,20 +8,21 @@
 #include <unordered_map>
 
 namespace CesiumGltf {
-    /**
-     * @brief undefined
-     */
-    struct CESIUMGLTF_API KHR_draco_mesh_compression final : public ExtensibleObject {
+/**
+ * @brief undefined
+ */
+struct CESIUMGLTF_API KHR_draco_mesh_compression final
+    : public ExtensibleObject {
 
-        /**
-         * @brief The index of the bufferView.
-         */
-        int32_t bufferView = -1;
+  /**
+   * @brief The index of the bufferView.
+   */
+  int32_t bufferView = -1;
 
-        /**
-         * @brief A dictionary object, where each key corresponds to an attribute and its unique attribute id stored in the compressed geometry.
-         */
-        std::unordered_map<std::string, int32_t> attributes;
-
-    };
-}
+  /**
+   * @brief A dictionary object, where each key corresponds to an attribute and
+   * its unique attribute id stored in the compressed geometry.
+   */
+  std::unordered_map<std::string, int32_t> attributes;
+};
+} // namespace CesiumGltf

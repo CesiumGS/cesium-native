@@ -6,23 +6,25 @@
 #include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
-  struct AccessorSparseValues;
+struct AccessorSparseValues;
 
-  class AccessorSparseValuesJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, AccessorSparseValues* pObject);
-    AccessorSparseValues* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class AccessorSparseValuesJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, AccessorSparseValues* pObject);
+  AccessorSparseValues* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* AccessorSparseValuesKey(const char* str, AccessorSparseValues& o);
+protected:
+  IJsonHandler*
+  AccessorSparseValuesKey(const char* str, AccessorSparseValues& o);
 
-  private:
-
-    AccessorSparseValues* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _bufferView;
-    IntegerJsonHandler<int64_t> _byteOffset;
-  };
-}
+private:
+  AccessorSparseValues* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _bufferView;
+  IntegerJsonHandler<int64_t> _byteOffset;
+};
+} // namespace CesiumGltf

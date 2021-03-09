@@ -8,32 +8,35 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Camera;
+struct Camera;
 
-  class CameraJsonHandler : public NamedObjectJsonHandler {
+class CameraJsonHandler : public NamedObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Camera* pObject);
+  Camera* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+protected:
+  IJsonHandler* CameraKey(const char* str, Camera& o);
+
+private:
+  class TypeJsonHandler : public JsonHandler {
   public:
-    void reset(IJsonHandler* pHandler, Camera* pObject);
-    Camera* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
-
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
-
-  protected:
-    IJsonHandler* CameraKey(const char* str, Camera& o);
+    void reset(IJsonHandler* pParent, Camera::Type* pEnum);
+    virtual IJsonHandler*
+    String(const char* str, size_t length, bool copy) override;
 
   private:
-    class TypeJsonHandler : public JsonHandler {
-    public:
-      void reset(IJsonHandler* pParent, Camera::Type* pEnum);
-      virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
-
-    private:
-      Camera::Type* _pEnum = nullptr;
-    };
-
-    Camera* _pObject = nullptr;
-    CameraOrthographicJsonHandler _orthographic;
-    CameraPerspectiveJsonHandler _perspective;
-    TypeJsonHandler _type;
+    Camera::Type* _pEnum = nullptr;
   };
-}
+
+  Camera* _pObject = nullptr;
+  CameraOrthographicJsonHandler _orthographic;
+  CameraPerspectiveJsonHandler _perspective;
+  TypeJsonHandler _type;
+};
+} // namespace CesiumGltf

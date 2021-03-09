@@ -5,6 +5,8 @@
 
 namespace Cesium3DTiles {
 
-    CesiumGltf::Model upsampleGltfForRasterOverlays(const CesiumGltf::Model& parentModel, CesiumGeometry::UpsampledQuadtreeNode childID);
+CesiumGltf::Model upsampleGltfForRasterOverlays(
+    const CesiumGltf::Model& parentModel,
+    CesiumGeometry::UpsampledQuadtreeNode childID);
 
 }
