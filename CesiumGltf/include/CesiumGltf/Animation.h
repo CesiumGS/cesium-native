@@ -9,20 +9,22 @@
 #include <vector>
 
 namespace CesiumGltf {
-    /**
-     * @brief A keyframe animation.
-     */
-    struct CESIUMGLTF_API Animation final : public NamedObject {
+/**
+ * @brief A keyframe animation.
+ */
+struct CESIUMGLTF_API Animation final : public NamedObject {
 
-        /**
-         * @brief An array of channels, each of which targets an animation's sampler at a node's property. Different channels of the same animation can't have equal targets.
-         */
-        std::vector<AnimationChannel> channels;
+  /**
+   * @brief An array of channels, each of which targets an animation's sampler
+   * at a node's property. Different channels of the same animation can't have
+   * equal targets.
+   */
+  std::vector<AnimationChannel> channels;
 
-        /**
-         * @brief An array of samplers that combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
-         */
-        std::vector<AnimationSampler> samplers;
-
-    };
-}
+  /**
+   * @brief An array of samplers that combines input and output accessors with
+   * an interpolation algorithm to define a keyframe graph (but not its target).
+   */
+  std::vector<AnimationSampler> samplers;
+};
+} // namespace CesiumGltf

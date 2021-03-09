@@ -8,32 +8,35 @@
 #include "StringJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Image;
+struct Image;
 
-  class ImageJsonHandler : public NamedObjectJsonHandler {
+class ImageJsonHandler : public NamedObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Image* pObject);
+  Image* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+protected:
+  IJsonHandler* ImageKey(const char* str, Image& o);
+
+private:
+  class MimeTypeJsonHandler : public JsonHandler {
   public:
-    void reset(IJsonHandler* pHandler, Image* pObject);
-    Image* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
-
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
-
-  protected:
-    IJsonHandler* ImageKey(const char* str, Image& o);
+    void reset(IJsonHandler* pParent, Image::MimeType* pEnum);
+    virtual IJsonHandler*
+    String(const char* str, size_t length, bool copy) override;
 
   private:
-    class MimeTypeJsonHandler : public JsonHandler {
-    public:
-      void reset(IJsonHandler* pParent, Image::MimeType* pEnum);
-      virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
-
-    private:
-      Image::MimeType* _pEnum = nullptr;
-    };
-
-    Image* _pObject = nullptr;
-    StringJsonHandler _uri;
-    MimeTypeJsonHandler _mimeType;
-    IntegerJsonHandler<int32_t> _bufferView;
+    Image::MimeType* _pEnum = nullptr;
   };
-}
+
+  Image* _pObject = nullptr;
+  StringJsonHandler _uri;
+  MimeTypeJsonHandler _mimeType;
+  IntegerJsonHandler<int32_t> _bufferView;
+};
+} // namespace CesiumGltf

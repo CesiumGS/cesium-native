@@ -7,31 +7,35 @@
 #include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
-  struct AnimationChannelTarget;
+struct AnimationChannelTarget;
 
-  class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
+class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, AnimationChannelTarget* pObject);
+  AnimationChannelTarget* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+
+protected:
+  IJsonHandler*
+  AnimationChannelTargetKey(const char* str, AnimationChannelTarget& o);
+
+private:
+  class PathJsonHandler : public JsonHandler {
   public:
-    void reset(IJsonHandler* pHandler, AnimationChannelTarget* pObject);
-    AnimationChannelTarget* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
-
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
-
-  protected:
-    IJsonHandler* AnimationChannelTargetKey(const char* str, AnimationChannelTarget& o);
+    void reset(IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
+    virtual IJsonHandler*
+    String(const char* str, size_t length, bool copy) override;
 
   private:
-    class PathJsonHandler : public JsonHandler {
-    public:
-      void reset(IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
-      virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
-
-    private:
-      AnimationChannelTarget::Path* _pEnum = nullptr;
-    };
-
-    AnimationChannelTarget* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _node;
-    PathJsonHandler _path;
+    AnimationChannelTarget::Path* _pEnum = nullptr;
   };
-}
+
+  AnimationChannelTarget* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _node;
+  PathJsonHandler _path;
+};
+} // namespace CesiumGltf

@@ -7,24 +7,26 @@
 #include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
-  struct AccessorSparseIndices;
+struct AccessorSparseIndices;
 
-  class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, AccessorSparseIndices* pObject);
-    AccessorSparseIndices* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, AccessorSparseIndices* pObject);
+  AccessorSparseIndices* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* AccessorSparseIndicesKey(const char* str, AccessorSparseIndices& o);
+protected:
+  IJsonHandler*
+  AccessorSparseIndicesKey(const char* str, AccessorSparseIndices& o);
 
-  private:
-
-    AccessorSparseIndices* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _bufferView;
-    IntegerJsonHandler<int64_t> _byteOffset;
-    IntegerJsonHandler<AccessorSparseIndices::ComponentType> _componentType;
-  };
-}
+private:
+  AccessorSparseIndices* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _bufferView;
+  IntegerJsonHandler<int64_t> _byteOffset;
+  IntegerJsonHandler<AccessorSparseIndices::ComponentType> _componentType;
+};
+} // namespace CesiumGltf

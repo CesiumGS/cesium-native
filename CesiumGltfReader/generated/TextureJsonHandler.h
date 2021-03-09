@@ -6,23 +6,24 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-  struct Texture;
+struct Texture;
 
-  class TextureJsonHandler : public NamedObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, Texture* pObject);
-    Texture* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class TextureJsonHandler : public NamedObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, Texture* pObject);
+  Texture* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* TextureKey(const char* str, Texture& o);
+protected:
+  IJsonHandler* TextureKey(const char* str, Texture& o);
 
-  private:
-
-    Texture* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _sampler;
-    IntegerJsonHandler<int32_t> _source;
-  };
-}
+private:
+  Texture* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _sampler;
+  IntegerJsonHandler<int32_t> _source;
+};
+} // namespace CesiumGltf

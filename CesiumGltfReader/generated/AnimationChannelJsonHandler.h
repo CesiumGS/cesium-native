@@ -7,23 +7,24 @@
 #include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
-  struct AnimationChannel;
+struct AnimationChannel;
 
-  class AnimationChannelJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, AnimationChannel* pObject);
-    AnimationChannel* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class AnimationChannelJsonHandler : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, AnimationChannel* pObject);
+  AnimationChannel* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* AnimationChannelKey(const char* str, AnimationChannel& o);
+protected:
+  IJsonHandler* AnimationChannelKey(const char* str, AnimationChannel& o);
 
-  private:
-
-    AnimationChannel* _pObject = nullptr;
-    IntegerJsonHandler<int32_t> _sampler;
-    AnimationChannelTargetJsonHandler _target;
-  };
-}
+private:
+  AnimationChannel* _pObject = nullptr;
+  IntegerJsonHandler<int32_t> _sampler;
+  AnimationChannelTargetJsonHandler _target;
+};
+} // namespace CesiumGltf

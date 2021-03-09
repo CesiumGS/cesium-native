@@ -6,22 +6,25 @@
 #include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
-  struct MaterialOcclusionTextureInfo;
+struct MaterialOcclusionTextureInfo;
 
-  class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, MaterialOcclusionTextureInfo* pObject);
-    MaterialOcclusionTextureInfo* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, MaterialOcclusionTextureInfo* pObject);
+  MaterialOcclusionTextureInfo* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* MaterialOcclusionTextureInfoKey(const char* str, MaterialOcclusionTextureInfo& o);
+protected:
+  IJsonHandler* MaterialOcclusionTextureInfoKey(
+      const char* str,
+      MaterialOcclusionTextureInfo& o);
 
-  private:
-
-    MaterialOcclusionTextureInfo* _pObject = nullptr;
-    DoubleJsonHandler _strength;
-  };
-}
+private:
+  MaterialOcclusionTextureInfo* _pObject = nullptr;
+  DoubleJsonHandler _strength;
+};
+} // namespace CesiumGltf

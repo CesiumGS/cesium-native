@@ -8,26 +8,30 @@
 #include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
-  struct MaterialPBRMetallicRoughness;
+struct MaterialPBRMetallicRoughness;
 
-  class MaterialPBRMetallicRoughnessJsonHandler : public ExtensibleObjectJsonHandler {
-  public:
-    void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
-    MaterialPBRMetallicRoughness* getObject();
-    virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+class MaterialPBRMetallicRoughnessJsonHandler
+    : public ExtensibleObjectJsonHandler {
+public:
+  void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
+  MaterialPBRMetallicRoughness* getObject();
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-    virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
-  protected:
-    IJsonHandler* MaterialPBRMetallicRoughnessKey(const char* str, MaterialPBRMetallicRoughness& o);
+protected:
+  IJsonHandler* MaterialPBRMetallicRoughnessKey(
+      const char* str,
+      MaterialPBRMetallicRoughness& o);
 
-  private:
-
-    MaterialPBRMetallicRoughness* _pObject = nullptr;
-    ArrayJsonHandler<double, DoubleJsonHandler> _baseColorFactor;
-    TextureInfoJsonHandler _baseColorTexture;
-    DoubleJsonHandler _metallicFactor;
-    DoubleJsonHandler _roughnessFactor;
-    TextureInfoJsonHandler _metallicRoughnessTexture;
-  };
-}
+private:
+  MaterialPBRMetallicRoughness* _pObject = nullptr;
+  ArrayJsonHandler<double, DoubleJsonHandler> _baseColorFactor;
+  TextureInfoJsonHandler _baseColorTexture;
+  DoubleJsonHandler _metallicFactor;
+  DoubleJsonHandler _roughnessFactor;
+  TextureInfoJsonHandler _metallicRoughnessTexture;
+};
+} // namespace CesiumGltf
