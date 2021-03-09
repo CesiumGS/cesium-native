@@ -10,13 +10,14 @@ script:
   - cmake --build . --config Debug --target cesium-native-docs
 jobs:
   include:
-    - name: Formatting
+    - name: Check Source Formatting
       os: linux
       dist: focal
       before_script:
       script:
         - git config clangFormat.binary node_modules/.bin/clang-format
         - git config clangFormat.style file
+        - npm install
         - npm run check-format
     - name: Windows + VS2017
       os: windows
