@@ -305,43 +305,41 @@ namespace Cesium3DTiles {
     }
 
     bool Tile::unloadContent() noexcept {
+        if (this->getState() != Tile::LoadState::Unloaded) {
+			// Cannot unload while an async operation is in progress.
+			if (this->getState() == Tile::LoadState::ContentLoading) {
+				return false;
+			}
 
-        if (this->getState() == Tile::LoadState::Unloaded) {
-            return true;
-        }
+			// If a child tile is being upsampled from this one, we can't unload this one yet.
+			if (this->getState() == Tile::LoadState::Done && !this->getChildren().empty()) {
+				for (const Tile& child : this->getChildren()) {
+					if (
+						child.getState() == Tile::LoadState::ContentLoading &&
+						std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&child.getTileID()) != nullptr
+					) {
+						return false;
+					}
+				}
+			}
 
-        // Cannot unload while an async operation is in progress.
-        if (this->getState() == Tile::LoadState::ContentLoading) {
-            return false;
-        }
+			this->getTileset()->notifyTileUnloading(this);
 
-        // If a child tile is being upsampled from this one, we can't unload this one yet.
-        if (this->getState() == Tile::LoadState::Done && !this->getChildren().empty()) {
-            for (const Tile& child : this->getChildren()) {
-                if (
-                    child.getState() == Tile::LoadState::ContentLoading &&
-                    std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&child.getTileID()) != nullptr
-                ) {
-                    return false;
-                }
-            }
-        }
+			const TilesetExternals& externals = this->getTileset()->getExternals();
+			if (externals.pPrepareRendererResources) {
+				if (this->getState() == LoadState::ContentLoaded) {
+					externals.pPrepareRendererResources->free(*this, this->_pRendererResources, nullptr);
+				} else {
+					externals.pPrepareRendererResources->free(*this, nullptr, this->_pRendererResources);
+				}
+			}
 
-        this->getTileset()->notifyTileUnloading(this);
-
-        const TilesetExternals& externals = this->getTileset()->getExternals();
-        if (externals.pPrepareRendererResources) {
-            if (this->getState() == LoadState::ContentLoaded) {
-                externals.pPrepareRendererResources->free(*this, this->_pRendererResources, nullptr);
-            } else {
-                externals.pPrepareRendererResources->free(*this, nullptr, this->_pRendererResources);
-            }
+			this->setState(LoadState::Unloaded);
         }
 
         this->_pRendererResources = nullptr;
         this->_pContent.reset();
         this->_rasterTiles.clear();
-        this->setState(LoadState::Unloaded);
 
         return true;
     }
