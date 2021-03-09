@@ -1,0 +1,31 @@
+{
+  "name": "cesium-native",
+  "version": "1.0.0",
+  "description": "Cesium 3D Geospatial for C++",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "format": "clang-format -i \"--glob=@(Cesium*)/**/*.@(cpp|h|hpp)\"",
+    "check-format": "check-clang-format"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CesiumGS/cesium-native.git"
+  },
+  "keywords": [
+    "3D",
+    "geospatial",
+    "C++"
+  ],
+  "author": "CesiumGS, Inc. and Contributors",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/CesiumGS/cesium-native/issues"
+  },
+  "homepage": "https://github.com/CesiumGS/cesium-native#readme",
+  "devDependencies": {
+    "clang-format": "^1.5.0"
+  }
+}
