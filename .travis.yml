@@ -15,10 +15,8 @@ jobs:
       dist: focal
       before_script:
       script:
-        - git config clangFormat.binary node_modules/.bin/clang-format
-        - git config clangFormat.style file
         - npm install
-        - npm run check-format
+        - npm run format -- --dry-run -Werror
     - name: Windows + VS2017
       os: windows
       install:
