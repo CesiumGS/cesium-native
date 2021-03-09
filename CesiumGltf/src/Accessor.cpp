@@ -37,7 +37,7 @@ Accessor::computeNumberOfComponents(CesiumGltf::Accessor::Type type) {
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
   case CesiumGltf::Accessor::ComponentType::FLOAT:
     return 4;
-      default:
+  default:
     return 0;
   }
 }
