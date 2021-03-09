@@ -1,14 +1,31 @@
 language: cpp
+# Default scripts, which may be overridden by some jobs
+before_script:
+  - mkdir -p build
+  - cd build
+  - cmake ..
+script:
+  - cmake --build . --config Debug
+  - ctest -V
+  - cmake --build . --config Debug --target cesium-native-docs
 jobs:
   include:
+    - name: Formatting
+      os: linux
+      dist: focal
+      before_script:
+      script:
+        - git config clangFormat.binary node_modules/.bin/clang-format
+        - git config clangFormat.style file
+        - npm run check-format
     - name: Windows + VS2017
       os: windows
       install:
         - choco install doxygen.install
+      before_script:
         - mkdir -p build
         - cd build
         - cmake .. -A x64
-        - cd ..
     - name: Windows + VS2019
       os: windows
       install:
@@ -31,11 +48,3 @@ jobs:
       env:
         - CC=clang-10
         - CXX=clang++-10
-
-script:
-  - mkdir -p build
-  - cd build
-  - cmake ..
-  - cmake --build . --config Debug
-  - ctest -V
-  - cmake --build . --config Debug --target cesium-native-docs
