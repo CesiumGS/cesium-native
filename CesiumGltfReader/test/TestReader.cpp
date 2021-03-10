@@ -8,6 +8,7 @@
 #include <gsl/span>
 #include <rapidjson/reader.h>
 #include <string>
+#include <iostream>
 
 using namespace CesiumGltf;
 
@@ -98,4 +99,27 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[0] == glm::vec3(0.0, 0.0, 0.0));
   CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
+}
+
+TEST_CASE("Nested extras serializes properly") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "1.1"
+        },
+        "extras": {
+            "A": "Hello World",
+            "B": 1234567,
+            "C": {
+                "C1": {},
+                "C2": [1,2,3,4,5]
+            }
+        }
+    }
+  )";
+
+  ModelReaderResult result = CesiumGltf::readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+
+  REQUIRE(result.errors.empty());
 }
