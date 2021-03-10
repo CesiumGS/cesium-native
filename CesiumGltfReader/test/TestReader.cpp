@@ -99,3 +99,43 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
 }
+
+TEST_CASE("Nested extras serializes properly") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "1.1"
+        },
+        "extras": {
+            "A": "Hello World",
+            "B": 1234567,
+            "C": {
+                "C1": {},
+                "C2": [1,2,3,4,5]
+            }
+        }
+    }
+  )";
+
+  ModelReaderResult result = CesiumGltf::readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.model.has_value());
+
+  Model& model = result.model.value();
+  auto cit = model.extras.find("C");
+  REQUIRE(cit != model.extras.end());
+
+  JsonValue* pC2 = cit->second.getValueForKey("C2");
+  REQUIRE(pC2 != nullptr);
+
+  CHECK(pC2->isArray());
+  std::vector<JsonValue>& array = std::get<std::vector<JsonValue>>(pC2->value);
+  CHECK(array.size() == 5);
+  CHECK(array[0].getNumber(0.0) == 1.0);
+  CHECK(array[1].getNumber(0.0) == 2.0);
+  CHECK(array[2].getNumber(0.0) == 3.0);
+  CHECK(array[3].getNumber(0.0) == 4.0);
+  CHECK(array[4].getNumber(0.0) == 5.0);
+}
