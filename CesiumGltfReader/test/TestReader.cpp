@@ -121,4 +121,21 @@ TEST_CASE("Nested extras serializes properly") {
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
   REQUIRE(result.errors.empty());
+  REQUIRE(result.model.has_value());
+
+  Model& model = result.model.value();
+  auto cit = model.extras.find("C");
+  REQUIRE(cit != model.extras.end());
+
+  JsonValue* pC2 = cit->second.getValueForKey("C2");
+  REQUIRE(pC2 != nullptr);
+
+  CHECK(pC2->isArray());
+  std::vector<JsonValue>& array = std::get<std::vector<JsonValue>>(pC2->value);
+  CHECK(array.size() == 5);
+  CHECK(array[0].getNumber(0.0) == 1.0);
+  CHECK(array[1].getNumber(0.0) == 2.0);
+  CHECK(array[2].getNumber(0.0) == 3.0);
+  CHECK(array[3].getNumber(0.0) == 4.0);
+  CHECK(array[4].getNumber(0.0) == 5.0);
 }
