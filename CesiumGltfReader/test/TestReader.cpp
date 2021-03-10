@@ -8,7 +8,6 @@
 #include <gsl/span>
 #include <rapidjson/reader.h>
 #include <string>
-#include <iostream>
 
 using namespace CesiumGltf;
 
