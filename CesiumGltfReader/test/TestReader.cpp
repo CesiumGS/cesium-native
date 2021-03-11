@@ -139,3 +139,46 @@ TEST_CASE("Nested extras serializes properly") {
   CHECK(array[3].getNumber(0.0) == 4.0);
   CHECK(array[4].getNumber(0.0) == 5.0);
 }
+
+TEST_CASE("Test extensions serialize to JsonVaue iff options.deserializeExtensionsAsJsonValue is enabled") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "extensions": {
+            "A": "Hello World",
+            "B": "Goodbye World"
+        }
+    }
+  )";
+
+  ReadModelOptions options;
+  options.deserializeExtensionsAsJsonValue = true;
+  ModelReaderResult withCustomExtModel = CesiumGltf::readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()), options);
+
+  REQUIRE(withCustomExtModel.errors.empty());
+  REQUIRE(withCustomExtModel.model.has_value());
+
+  auto& oneExtension = withCustomExtModel.model->extensions;
+  REQUIRE(oneExtension.size() == 1);
+
+  auto& asJsonObject = std::any_cast<JsonValue::Object&>(oneExtension.at(0));
+
+  using namespace std::string_literals;
+  auto A = asJsonObject.find("A");
+  REQUIRE(A != asJsonObject.end());
+  REQUIRE(A->second.getString("") == "Hello World"s);
+
+  auto B = asJsonObject.find("B");
+  REQUIRE(B->second.getString("") == "Goodbye World"s);
+
+  // Repeat test but this time the extension should be skipped.
+  options.deserializeExtensionsAsJsonValue = false;
+  ModelReaderResult withoutCustomExt = CesiumGltf::readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()), options);
+
+  auto& zeroExtensions = withoutCustomExt.model->extensions;
+  REQUIRE(zeroExtensions.empty());
+}
