@@ -12,7 +12,7 @@ struct AccessorSparseIndices;
 
 class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AccessorSparseIndicesJsonHandler(ReadModelOptions options) noexcept;
+  AccessorSparseIndicesJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, AccessorSparseIndices* pObject);
   AccessorSparseIndices* getObject();
   virtual void reportWarning(

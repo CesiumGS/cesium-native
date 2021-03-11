@@ -13,7 +13,7 @@ struct Image;
 
 class ImageJsonHandler : public NamedObjectJsonHandler {
 public:
-  ImageJsonHandler(ReadModelOptions options) noexcept;
+  ImageJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Image* pObject);
   Image* getObject();
   virtual void reportWarning(
@@ -28,7 +28,7 @@ protected:
 private:
   class MimeTypeJsonHandler : public JsonHandler {
   public:
-    MimeTypeJsonHandler(ReadModelOptions options) noexcept
+    MimeTypeJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Image::MimeType* pEnum);
     virtual IJsonHandler*

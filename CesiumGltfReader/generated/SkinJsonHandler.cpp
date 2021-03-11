@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-SkinJsonHandler::SkinJsonHandler(ReadModelOptions options) noexcept
+SkinJsonHandler::SkinJsonHandler(const ReadModelOptions& options) noexcept
     : NamedObjectJsonHandler(options),
       _inverseBindMatrices(options),
       _skeleton(options),

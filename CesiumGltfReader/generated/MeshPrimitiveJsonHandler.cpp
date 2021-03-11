@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
-    ReadModelOptions options) noexcept
+    const ReadModelOptions& options) noexcept
     : ExtensibleObjectJsonHandler(options),
       _attributes(options),
       _indices(options),

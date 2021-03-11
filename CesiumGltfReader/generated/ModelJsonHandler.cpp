@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-ModelJsonHandler::ModelJsonHandler(ReadModelOptions options) noexcept
+ModelJsonHandler::ModelJsonHandler(const ReadModelOptions& options) noexcept
     : ExtensibleObjectJsonHandler(options),
       _extensionsUsed(options),
       _extensionsRequired(options),

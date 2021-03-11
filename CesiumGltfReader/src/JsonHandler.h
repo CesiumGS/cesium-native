@@ -9,7 +9,7 @@
 namespace CesiumGltf {
 class JsonHandler : public IJsonHandler {
 public:
-  JsonHandler(ReadModelOptions options) noexcept;
+  JsonHandler(const ReadModelOptions& options) noexcept;
   virtual IJsonHandler* Null() override;
   virtual IJsonHandler* Bool(bool b) override;
   virtual IJsonHandler* Int(int i) override;
@@ -48,7 +48,7 @@ protected:
   IJsonHandler* ignoreAndContinue();
 
 protected:
-  ReadModelOptions _options;
+  const ReadModelOptions _options;
 
 private:
   IJsonHandler* _pParent = nullptr;

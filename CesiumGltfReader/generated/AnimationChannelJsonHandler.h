@@ -12,7 +12,7 @@ struct AnimationChannel;
 
 class AnimationChannelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AnimationChannelJsonHandler(ReadModelOptions options) noexcept;
+  AnimationChannelJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, AnimationChannel* pObject);
   AnimationChannel* getObject();
   virtual void reportWarning(

@@ -12,7 +12,7 @@ struct Scene;
 
 class SceneJsonHandler : public NamedObjectJsonHandler {
 public:
-  SceneJsonHandler(ReadModelOptions options) noexcept;
+  SceneJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Scene* pObject);
   Scene* getObject();
   virtual void reportWarning(

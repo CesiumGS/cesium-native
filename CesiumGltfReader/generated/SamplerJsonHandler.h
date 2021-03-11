@@ -12,7 +12,7 @@ struct Sampler;
 
 class SamplerJsonHandler : public NamedObjectJsonHandler {
 public:
-  SamplerJsonHandler(ReadModelOptions options) noexcept;
+  SamplerJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Sampler* pObject);
   Sampler* getObject();
   virtual void reportWarning(

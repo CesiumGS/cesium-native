@@ -56,7 +56,7 @@ struct Dispatcher {
 class FinalJsonHandler : public ObjectJsonHandler {
 public:
   FinalJsonHandler(
-    ReadModelOptions options,
+    const ReadModelOptions& options,
       ModelReaderResult& result,
       rapidjson::MemoryStream& inputStream)
       : ObjectJsonHandler(options), _result(result), _inputStream(inputStream) {

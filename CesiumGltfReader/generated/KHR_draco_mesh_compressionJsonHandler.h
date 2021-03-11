@@ -13,7 +13,8 @@ struct KHR_draco_mesh_compression;
 class KHR_draco_mesh_compressionJsonHandler
     : public ExtensibleObjectJsonHandler {
 public:
-  KHR_draco_mesh_compressionJsonHandler(ReadModelOptions options) noexcept;
+  KHR_draco_mesh_compressionJsonHandler(
+      const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, KHR_draco_mesh_compression* pObject);
   KHR_draco_mesh_compression* getObject();
   virtual void reportWarning(

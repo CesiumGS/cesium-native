@@ -8,7 +8,8 @@
 
 using namespace CesiumGltf;
 
-AccessorJsonHandler::AccessorJsonHandler(ReadModelOptions options) noexcept
+AccessorJsonHandler::AccessorJsonHandler(
+    const ReadModelOptions& options) noexcept
     : NamedObjectJsonHandler(options),
       _bufferView(options),
       _byteOffset(options),

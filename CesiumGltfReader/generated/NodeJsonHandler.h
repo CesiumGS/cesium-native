@@ -13,7 +13,7 @@ struct Node;
 
 class NodeJsonHandler : public NamedObjectJsonHandler {
 public:
-  NodeJsonHandler(ReadModelOptions options) noexcept;
+  NodeJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Node* pObject);
   Node* getObject();
   virtual void reportWarning(

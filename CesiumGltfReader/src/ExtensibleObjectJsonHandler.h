@@ -10,7 +10,7 @@ struct ExtensibleObject;
 
 class ExtensibleObjectJsonHandler : public ObjectJsonHandler {
 public:
-  ExtensibleObjectJsonHandler(ReadModelOptions options) noexcept;
+  ExtensibleObjectJsonHandler(const ReadModelOptions& options) noexcept;
 protected:
   void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
   IJsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);

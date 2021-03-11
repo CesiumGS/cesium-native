@@ -15,7 +15,7 @@ struct MeshPrimitive;
 
 class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  MeshPrimitiveJsonHandler(ReadModelOptions options) noexcept;
+  MeshPrimitiveJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, MeshPrimitive* pObject);
   MeshPrimitive* getObject();
   virtual void reportWarning(
@@ -30,7 +30,7 @@ protected:
 private:
   class ExtensionsJsonHandler : public ObjectJsonHandler {
   public:
-    ExtensionsJsonHandler(ReadModelOptions options) noexcept
+    ExtensionsJsonHandler(const ReadModelOptions& options) noexcept
         : ObjectJsonHandler(options), _KHR_draco_mesh_compression(options) {}
     void reset(IJsonHandler* pParent, std::vector<std::any>* pExtensions);
     virtual IJsonHandler*

@@ -12,7 +12,7 @@ struct Buffer;
 
 class BufferJsonHandler : public NamedObjectJsonHandler {
 public:
-  BufferJsonHandler(ReadModelOptions options) noexcept;
+  BufferJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Buffer* pObject);
   Buffer* getObject();
   virtual void reportWarning(
