@@ -1,8 +1,8 @@
 #include "JsonHandler.h"
 
 using namespace CesiumGltf;
-JsonHandler::JsonHandler(const ReadModelOptions& options) noexcept : _options(options) {
-}
+JsonHandler::JsonHandler(const ReadModelOptions& options) noexcept
+    : _options(options) {}
 
 IJsonHandler* JsonHandler::Null() {
   this->reportWarning("A null value is not allowed and has been ignored.");

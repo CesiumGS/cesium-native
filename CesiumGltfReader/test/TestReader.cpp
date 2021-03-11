@@ -140,7 +140,8 @@ TEST_CASE("Nested extras serializes properly") {
   CHECK(array[4].getNumber(0.0) == 5.0);
 }
 
-TEST_CASE("Test extensions serialize to JsonVaue iff options.deserializeExtensionsAsJsonValue is enabled") {
+TEST_CASE("Test extensions serialize to JsonVaue iff "
+          "options.deserializeExtensionsAsJsonValue is enabled") {
   const std::string s = R"(
     {
         "asset" : {
@@ -156,7 +157,8 @@ TEST_CASE("Test extensions serialize to JsonVaue iff options.deserializeExtensio
   ReadModelOptions options;
   options.deserializeExtensionsAsJsonValue = true;
   ModelReaderResult withCustomExtModel = CesiumGltf::readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()), options);
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
 
   REQUIRE(withCustomExtModel.errors.empty());
   REQUIRE(withCustomExtModel.model.has_value());
@@ -177,7 +179,8 @@ TEST_CASE("Test extensions serialize to JsonVaue iff options.deserializeExtensio
   // Repeat test but this time the extension should be skipped.
   options.deserializeExtensionsAsJsonValue = false;
   ModelReaderResult withoutCustomExt = CesiumGltf::readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()), options);
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
 
   auto& zeroExtensions = withoutCustomExt.model->extensions;
   REQUIRE(zeroExtensions.empty());

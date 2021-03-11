@@ -3,7 +3,8 @@
 #include <cassert>
 
 using namespace CesiumGltf;
-BoolJsonHandler::BoolJsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options) {}
+BoolJsonHandler::BoolJsonHandler(const ReadModelOptions& options) noexcept
+    : JsonHandler(options) {}
 
 void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
   JsonHandler::reset(pParent);

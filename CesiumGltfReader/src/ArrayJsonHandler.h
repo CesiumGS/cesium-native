@@ -11,7 +11,8 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class ArrayJsonHandler : public JsonHandler {
 public:
-  ArrayJsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options), _objectHandler(options) {}
+  ArrayJsonHandler(const ReadModelOptions& options) noexcept
+      : JsonHandler(options), _objectHandler(options) {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
