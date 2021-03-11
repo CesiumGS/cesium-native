@@ -8,6 +8,10 @@
 
 using namespace CesiumGltf;
 
+MaterialOcclusionTextureInfoJsonHandler::
+    MaterialOcclusionTextureInfoJsonHandler(ReadModelOptions options) noexcept
+    : TextureInfoJsonHandler(options), _strength(options) {}
+
 void MaterialOcclusionTextureInfoJsonHandler::reset(
     IJsonHandler* pParent,
     MaterialOcclusionTextureInfo* pObject) {

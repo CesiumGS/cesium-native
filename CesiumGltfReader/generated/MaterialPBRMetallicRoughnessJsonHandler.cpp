@@ -8,6 +8,15 @@
 
 using namespace CesiumGltf;
 
+MaterialPBRMetallicRoughnessJsonHandler::
+    MaterialPBRMetallicRoughnessJsonHandler(ReadModelOptions options) noexcept
+    : ExtensibleObjectJsonHandler(options),
+      _baseColorFactor(options),
+      _baseColorTexture(options),
+      _metallicFactor(options),
+      _roughnessFactor(options),
+      _metallicRoughnessTexture(options) {}
+
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
     IJsonHandler* pParent,
     MaterialPBRMetallicRoughness* pObject) {

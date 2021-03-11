@@ -1,7 +1,9 @@
 #include "BoolJsonHandler.h"
+#include <JsonHandler.h>
 #include <cassert>
 
 using namespace CesiumGltf;
+BoolJsonHandler::BoolJsonHandler(ReadModelOptions options) noexcept : JsonHandler(options) {}
 
 void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
   JsonHandler::reset(pParent);

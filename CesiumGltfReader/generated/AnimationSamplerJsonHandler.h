@@ -5,12 +5,14 @@
 #include "CesiumGltf/AnimationSampler.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct AnimationSampler;
 
 class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  AnimationSamplerJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, AnimationSampler* pObject);
   AnimationSampler* getObject();
   virtual void reportWarning(
@@ -25,6 +27,8 @@ protected:
 private:
   class InterpolationJsonHandler : public JsonHandler {
   public:
+    InterpolationJsonHandler(ReadModelOptions options) noexcept
+        : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum);
     virtual IJsonHandler*
     String(const char* str, size_t length, bool copy) override;

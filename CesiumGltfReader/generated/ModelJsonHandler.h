@@ -20,12 +20,14 @@
 #include "SkinJsonHandler.h"
 #include "StringJsonHandler.h"
 #include "TextureJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Model;
 
 class ModelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  ModelJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Model* pObject);
   Model* getObject();
   virtual void reportWarning(

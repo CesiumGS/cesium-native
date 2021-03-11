@@ -2,11 +2,13 @@
 
 #include "CesiumGltf/JsonValue.h"
 #include "JsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 
 class JsonObjectJsonHandler : public JsonHandler {
 public:
+  JsonObjectJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pParent, JsonValue* pValue);
 
   virtual IJsonHandler* Null() override;

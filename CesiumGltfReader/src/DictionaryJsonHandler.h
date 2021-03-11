@@ -2,6 +2,7 @@
 
 #include "IntegerJsonHandler.h"
 #include "ObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 #include <map>
 #include <unordered_map>
 
@@ -9,6 +10,8 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class DictionaryJsonHandler : public ObjectJsonHandler {
 public:
+  DictionaryJsonHandler(ReadModelOptions options) noexcept : ObjectJsonHandler(options), _item(options) {}
+
   void reset(
       IJsonHandler* pParent,
       std::unordered_map<std::string, T>* pDictionary) {

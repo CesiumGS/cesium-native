@@ -4,12 +4,14 @@
 
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct TextureInfo;
 
 class TextureInfoJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  TextureInfoJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, TextureInfo* pObject);
   TextureInfo* getObject();
   virtual void reportWarning(

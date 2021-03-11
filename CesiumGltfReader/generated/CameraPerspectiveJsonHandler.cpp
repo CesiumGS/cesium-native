@@ -8,6 +8,14 @@
 
 using namespace CesiumGltf;
 
+CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
+    ReadModelOptions options) noexcept
+    : ExtensibleObjectJsonHandler(options),
+      _aspectRatio(options),
+      _yfov(options),
+      _zfar(options),
+      _znear(options) {}
+
 void CameraPerspectiveJsonHandler::reset(
     IJsonHandler* pParent,
     CameraPerspective* pObject) {

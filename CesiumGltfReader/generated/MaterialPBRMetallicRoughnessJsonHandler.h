@@ -6,6 +6,7 @@
 #include "DoubleJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct MaterialPBRMetallicRoughness;
@@ -13,6 +14,7 @@ struct MaterialPBRMetallicRoughness;
 class MaterialPBRMetallicRoughnessJsonHandler
     : public ExtensibleObjectJsonHandler {
 public:
+  MaterialPBRMetallicRoughnessJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
   MaterialPBRMetallicRoughness* getObject();
   virtual void reportWarning(

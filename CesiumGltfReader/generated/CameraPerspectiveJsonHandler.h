@@ -4,12 +4,14 @@
 
 #include "DoubleJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct CameraPerspective;
 
 class CameraPerspectiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  CameraPerspectiveJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, CameraPerspective* pObject);
   CameraPerspective* getObject();
   virtual void reportWarning(

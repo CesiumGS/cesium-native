@@ -6,12 +6,14 @@
 #include "AnimationSamplerJsonHandler.h"
 #include "ArrayJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Animation;
 
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:
+  AnimationJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Animation* pObject);
   Animation* getObject();
   virtual void reportWarning(

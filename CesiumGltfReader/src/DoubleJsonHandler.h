@@ -6,6 +6,7 @@
 namespace CesiumGltf {
 class DoubleJsonHandler : public JsonHandler {
 public:
+  DoubleJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pParent, double* pDouble);
 
   virtual IJsonHandler* Int(int i) override;

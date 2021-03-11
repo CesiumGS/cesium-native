@@ -1,11 +1,14 @@
 #pragma once
 
 #include "JsonHandler.h"
+#include <CesiumGltf/Reader.h>
 #include <optional>
 
 namespace CesiumGltf {
 class ObjectJsonHandler : public JsonHandler {
 public:
+  ObjectJsonHandler(ReadModelOptions options) : JsonHandler(options) {}
+
   virtual IJsonHandler* StartObject() override final;
   virtual IJsonHandler* EndObject(size_t memberCount) override final;
 
