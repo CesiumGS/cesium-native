@@ -4,12 +4,14 @@
 
 #include "DoubleJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct MaterialOcclusionTextureInfo;
 
 class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
+  MaterialOcclusionTextureInfoJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, MaterialOcclusionTextureInfo* pObject);
   MaterialOcclusionTextureInfo* getObject();
   virtual void reportWarning(

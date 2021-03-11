@@ -1,8 +1,13 @@
 #include "NamedObjectJsonHandler.h"
 #include "CesiumGltf/NamedObject.h"
+#include <ExtensibleObjectJsonHandler.h>
 #include <string>
 
 using namespace CesiumGltf;
+
+NamedObjectJsonHandler::NamedObjectJsonHandler(
+    ReadModelOptions options) noexcept : ExtensibleObjectJsonHandler(options), _name(options) {
+}
 
 void NamedObjectJsonHandler::reset(
     IJsonHandler* pParent,

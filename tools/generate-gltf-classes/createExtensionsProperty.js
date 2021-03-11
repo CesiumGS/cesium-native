@@ -21,10 +21,18 @@ function createExtensionsProperty(extensions, name, schema) {
     };
 }
 
+function generateExtensionInitializerLists(extensions, varName) {
+    const initializerList = extensions
+      .map(e => `_${e.className}(${varName})`)
+      .join(", ");
+    return initializerList == "" ? "" : ", " + initializerList;
+}
+
 function createExtensionType(extensions) {
     return unindent(`
         class ExtensionsJsonHandler : public ObjectJsonHandler {
         public:
+          ExtensionsJsonHandler(ReadModelOptions options) noexcept : ObjectJsonHandler(options)${generateExtensionInitializerLists(extensions, 'options')} {}
           void reset(IJsonHandler* pParent, std::vector<std::any>* pExtensions);
           virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
         
@@ -33,8 +41,8 @@ function createExtensionType(extensions) {
           ${extensions.map(extension => `${extension.className}JsonHandler _${extension.name};`).join("\n")}
         };
     `);
-    return "Extensions!!";
 }
+
 
 function createExtensionTypeImpl(name, extensions) {
     return unindent(`

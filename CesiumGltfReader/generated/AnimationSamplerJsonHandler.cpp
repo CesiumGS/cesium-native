@@ -8,6 +8,13 @@
 
 using namespace CesiumGltf;
 
+AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
+    ReadModelOptions options) noexcept
+    : ExtensibleObjectJsonHandler(options),
+      _input(options),
+      _interpolation(options),
+      _output(options) {}
+
 void AnimationSamplerJsonHandler::reset(
     IJsonHandler* pParent,
     AnimationSampler* pObject) {

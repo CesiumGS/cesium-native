@@ -5,12 +5,14 @@
 #include "CesiumGltf/Sampler.h"
 #include "IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Sampler;
 
 class SamplerJsonHandler : public NamedObjectJsonHandler {
 public:
+  SamplerJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Sampler* pObject);
   Sampler* getObject();
   virtual void reportWarning(

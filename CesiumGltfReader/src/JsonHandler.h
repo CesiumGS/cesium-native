@@ -2,12 +2,14 @@
 
 #include "IJsonHandler.h"
 #include "IgnoreValueJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 #include <cstdint>
 #include <string>
 
 namespace CesiumGltf {
 class JsonHandler : public IJsonHandler {
 public:
+  JsonHandler(ReadModelOptions options) noexcept;
   virtual IJsonHandler* Null() override;
   virtual IJsonHandler* Bool(bool b) override;
   virtual IJsonHandler* Int(int i) override;
@@ -44,6 +46,9 @@ protected:
    * this handler.
    */
   IJsonHandler* ignoreAndContinue();
+
+protected:
+  ReadModelOptions _options;
 
 private:
   IJsonHandler* _pParent = nullptr;

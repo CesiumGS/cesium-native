@@ -62,6 +62,16 @@ struct CESIUMGLTFREADER_API ReadModelOptions {
    * extension should be automatically decoded as part of the load process.
    */
   bool decodeDraco = true;
+
+  /**
+   * @brief Whether extensions inside a glTF object should be intelligently processed
+   * as part of the load process, or if they should be left as-is and stored in the extension's
+   * extension array as a JsonValue::Object. Slightly increases memory usage of the generated
+   * CesiumGLtf::Model but allows to do their own extension processing. Objects will
+   * be stored as a `JsonValue::Object` and must be casted back into the correct type
+   * using std::any_cast<JsonValue::Object>
+   */ 
+  bool deserializeExtensionsAsJsonValue = false;
 };
 
 /**

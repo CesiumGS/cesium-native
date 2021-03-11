@@ -8,6 +8,18 @@
 
 using namespace CesiumGltf;
 
+NodeJsonHandler::NodeJsonHandler(ReadModelOptions options) noexcept
+    : NamedObjectJsonHandler(options),
+      _camera(options),
+      _children(options),
+      _skin(options),
+      _matrix(options),
+      _mesh(options),
+      _rotation(options),
+      _scale(options),
+      _translation(options),
+      _weights(options) {}
+
 void NodeJsonHandler::reset(IJsonHandler* pParent, Node* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;

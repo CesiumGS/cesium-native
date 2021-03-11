@@ -5,12 +5,14 @@
 #include "CesiumGltf/BufferView.h"
 #include "IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct BufferView;
 
 class BufferViewJsonHandler : public NamedObjectJsonHandler {
 public:
+  BufferViewJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, BufferView* pObject);
   BufferView* getObject();
   virtual void reportWarning(

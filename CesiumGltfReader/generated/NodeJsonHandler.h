@@ -6,12 +6,14 @@
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Node;
 
 class NodeJsonHandler : public NamedObjectJsonHandler {
 public:
+  NodeJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Node* pObject);
   Node* getObject();
   virtual void reportWarning(

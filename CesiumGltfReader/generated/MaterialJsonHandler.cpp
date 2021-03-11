@@ -8,6 +8,17 @@
 
 using namespace CesiumGltf;
 
+MaterialJsonHandler::MaterialJsonHandler(ReadModelOptions options) noexcept
+    : NamedObjectJsonHandler(options),
+      _pbrMetallicRoughness(options),
+      _normalTexture(options),
+      _occlusionTexture(options),
+      _emissiveTexture(options),
+      _emissiveFactor(options),
+      _alphaMode(options),
+      _alphaCutoff(options),
+      _doubleSided(options) {}
+
 void MaterialJsonHandler::reset(IJsonHandler* pParent, Material* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;

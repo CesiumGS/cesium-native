@@ -6,12 +6,14 @@
 #include "DoubleJsonHandler.h"
 #include "MeshPrimitiveJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Mesh;
 
 class MeshJsonHandler : public NamedObjectJsonHandler {
 public:
+  MeshJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Mesh* pObject);
   Mesh* getObject();
   virtual void reportWarning(

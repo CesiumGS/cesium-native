@@ -5,12 +5,14 @@
 #include "ArrayJsonHandler.h"
 #include "IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Scene;
 
 class SceneJsonHandler : public NamedObjectJsonHandler {
 public:
+  SceneJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Scene* pObject);
   Scene* getObject();
   virtual void reportWarning(

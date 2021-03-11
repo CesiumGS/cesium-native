@@ -4,12 +4,14 @@
 
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct AccessorSparseValues;
 
 class AccessorSparseValuesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  AccessorSparseValuesJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, AccessorSparseValues* pObject);
   AccessorSparseValues* getObject();
   virtual void reportWarning(

@@ -8,6 +8,14 @@
 
 using namespace CesiumGltf;
 
+CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
+    ReadModelOptions options) noexcept
+    : ExtensibleObjectJsonHandler(options),
+      _xmag(options),
+      _ymag(options),
+      _zfar(options),
+      _znear(options) {}
+
 void CameraOrthographicJsonHandler::reset(
     IJsonHandler* pParent,
     CameraOrthographic* pObject) {

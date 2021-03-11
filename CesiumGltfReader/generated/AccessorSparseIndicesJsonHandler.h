@@ -5,12 +5,14 @@
 #include "CesiumGltf/AccessorSparseIndices.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct AccessorSparseIndices;
 
 class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  AccessorSparseIndicesJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, AccessorSparseIndices* pObject);
   AccessorSparseIndices* getObject();
   virtual void reportWarning(

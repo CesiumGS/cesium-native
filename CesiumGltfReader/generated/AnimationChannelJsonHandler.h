@@ -5,12 +5,14 @@
 #include "AnimationChannelTargetJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct AnimationChannel;
 
 class AnimationChannelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  AnimationChannelJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, AnimationChannel* pObject);
   AnimationChannel* getObject();
   virtual void reportWarning(

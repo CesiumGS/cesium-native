@@ -9,12 +9,14 @@
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
+  AccessorJsonHandler(ReadModelOptions options) noexcept;
   void reset(IJsonHandler* pHandler, Accessor* pObject);
   Accessor* getObject();
   virtual void reportWarning(
@@ -29,6 +31,7 @@ protected:
 private:
   class TypeJsonHandler : public JsonHandler {
   public:
+    TypeJsonHandler(ReadModelOptions options) noexcept : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
     virtual IJsonHandler*
     String(const char* str, size_t length, bool copy) override;

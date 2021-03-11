@@ -8,6 +8,16 @@
 
 using namespace CesiumGltf;
 
+MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
+    ReadModelOptions options) noexcept
+    : ExtensibleObjectJsonHandler(options),
+      _attributes(options),
+      _indices(options),
+      _material(options),
+      _mode(options),
+      _targets(options),
+      _extensions(options) {}
+
 void MeshPrimitiveJsonHandler::reset(
     IJsonHandler* pParent,
     MeshPrimitive* pObject) {
