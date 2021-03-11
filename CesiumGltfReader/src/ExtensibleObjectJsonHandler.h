@@ -11,6 +11,7 @@ struct ExtensibleObject;
 class ExtensibleObjectJsonHandler : public ObjectJsonHandler {
 public:
   ExtensibleObjectJsonHandler(const ReadModelOptions& options) noexcept;
+
 protected:
   void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
   IJsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);

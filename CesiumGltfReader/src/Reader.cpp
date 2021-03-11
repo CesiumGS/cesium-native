@@ -55,7 +55,7 @@ struct Dispatcher {
 class FinalJsonHandler : public ObjectJsonHandler {
 public:
   FinalJsonHandler(
-    const ReadModelOptions& options,
+      const ReadModelOptions& options,
       ModelReaderResult& result,
       rapidjson::MemoryStream& inputStream)
       : ObjectJsonHandler(options), _result(result), _inputStream(inputStream) {
@@ -143,7 +143,9 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) {
   return reinterpret_cast<const GlbHeader*>(data.data())->magic == 0x46546C67;
 }
 
-ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data, const ReadModelOptions& options) {
+ModelReaderResult readJsonModel(
+    const gsl::span<const std::byte>& data,
+    const ReadModelOptions& options) {
   rapidjson::Reader reader;
   rapidjson::MemoryStream inputStream(
       reinterpret_cast<const char*>(data.data()),
@@ -179,7 +181,9 @@ ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data, const Re
   return result;
 }
 
-ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data, const ReadModelOptions& options) {
+ModelReaderResult readBinaryModel(
+    const gsl::span<const std::byte>& data,
+    const ReadModelOptions& options) {
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
   }
@@ -324,8 +328,8 @@ void postprocess(
 ModelReaderResult CesiumGltf::readModel(
     const gsl::span<const std::byte>& data,
     const ReadModelOptions& options) {
-  ModelReaderResult result =
-      isBinaryGltf(data) ? readBinaryModel(data, options) : readJsonModel(data, options);
+  ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(data, options)
+                                                : readJsonModel(data, options);
 
   if (result.model) {
     postprocess(result, options);

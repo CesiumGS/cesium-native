@@ -13,8 +13,9 @@ template <typename T> void addOrReplace(JsonValue& json, T value) {
 }
 } // namespace
 
-JsonObjectJsonHandler::JsonObjectJsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options) {
-}
+JsonObjectJsonHandler::JsonObjectJsonHandler(
+    const ReadModelOptions& options) noexcept
+    : JsonHandler(options) {}
 
 void JsonObjectJsonHandler::reset(IJsonHandler* pParent, JsonValue* pValue) {
   JsonHandler::reset(pParent);
