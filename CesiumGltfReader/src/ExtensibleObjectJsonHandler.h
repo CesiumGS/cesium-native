@@ -14,5 +14,6 @@ protected:
 
 private:
   DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extras;
+  DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extensions;
 };
 } // namespace CesiumGltf
