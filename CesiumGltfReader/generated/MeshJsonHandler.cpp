@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-MeshJsonHandler::MeshJsonHandler(ReadModelOptions options) noexcept
+MeshJsonHandler::MeshJsonHandler(const ReadModelOptions& options) noexcept
     : NamedObjectJsonHandler(options),
       _primitives(options),
       _weights(options) {}

@@ -1,7 +1,7 @@
 #include "JsonHandler.h"
 
 using namespace CesiumGltf;
-JsonHandler::JsonHandler(ReadModelOptions options) noexcept : _options(options) {
+JsonHandler::JsonHandler(const ReadModelOptions& options) noexcept : _options(options) {
 }
 
 IJsonHandler* JsonHandler::Null() {

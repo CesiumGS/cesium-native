@@ -14,7 +14,8 @@ struct MaterialPBRMetallicRoughness;
 class MaterialPBRMetallicRoughnessJsonHandler
     : public ExtensibleObjectJsonHandler {
 public:
-  MaterialPBRMetallicRoughnessJsonHandler(ReadModelOptions options) noexcept;
+  MaterialPBRMetallicRoughnessJsonHandler(
+      const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
   MaterialPBRMetallicRoughness* getObject();
   virtual void reportWarning(

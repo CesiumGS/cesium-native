@@ -32,7 +32,7 @@ function createExtensionType(extensions) {
     return unindent(`
         class ExtensionsJsonHandler : public ObjectJsonHandler {
         public:
-          ExtensionsJsonHandler(ReadModelOptions options) noexcept : ObjectJsonHandler(options)${generateExtensionInitializerLists(extensions, 'options')} {}
+          ExtensionsJsonHandler(const ReadModelOptions& options) noexcept : ObjectJsonHandler(options)${generateExtensionInitializerLists(extensions, 'options')} {}
           void reset(IJsonHandler* pParent, std::vector<std::any>* pExtensions);
           virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
         

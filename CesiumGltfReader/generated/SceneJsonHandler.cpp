@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-SceneJsonHandler::SceneJsonHandler(ReadModelOptions options) noexcept
+SceneJsonHandler::SceneJsonHandler(const ReadModelOptions& options) noexcept
     : NamedObjectJsonHandler(options), _nodes(options) {}
 
 void SceneJsonHandler::reset(IJsonHandler* pParent, Scene* pObject) {

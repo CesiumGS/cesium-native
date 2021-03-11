@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
-    ReadModelOptions options) noexcept
+    const ReadModelOptions& options) noexcept
     : ExtensibleObjectJsonHandler(options),
       _xmag(options),
       _ymag(options),

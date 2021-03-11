@@ -8,7 +8,7 @@ namespace CesiumGltf {
 
 class JsonObjectJsonHandler : public JsonHandler {
 public:
-  JsonObjectJsonHandler(ReadModelOptions options) noexcept;
+  JsonObjectJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pParent, JsonValue* pValue);
 
   virtual IJsonHandler* Null() override;

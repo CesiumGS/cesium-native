@@ -18,7 +18,7 @@ struct Material;
 
 class MaterialJsonHandler : public NamedObjectJsonHandler {
 public:
-  MaterialJsonHandler(ReadModelOptions options) noexcept;
+  MaterialJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Material* pObject);
   Material* getObject();
   virtual void reportWarning(
@@ -33,7 +33,7 @@ protected:
 private:
   class AlphaModeJsonHandler : public JsonHandler {
   public:
-    AlphaModeJsonHandler(ReadModelOptions options) noexcept
+    AlphaModeJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Material::AlphaMode* pEnum);
     virtual IJsonHandler*

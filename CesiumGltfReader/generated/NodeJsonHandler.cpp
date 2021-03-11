@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-NodeJsonHandler::NodeJsonHandler(ReadModelOptions options) noexcept
+NodeJsonHandler::NodeJsonHandler(const ReadModelOptions& options) noexcept
     : NamedObjectJsonHandler(options),
       _camera(options),
       _children(options),

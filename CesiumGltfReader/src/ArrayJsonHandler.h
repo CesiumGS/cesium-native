@@ -11,7 +11,7 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class ArrayJsonHandler : public JsonHandler {
 public:
-  ArrayJsonHandler(ReadModelOptions options) noexcept : JsonHandler(options), _objectHandler(options) {}
+  ArrayJsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options), _objectHandler(options) {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
@@ -115,7 +115,7 @@ private:
 template <>
 class ArrayJsonHandler<double, DoubleJsonHandler> : public JsonHandler {
 public:
-  ArrayJsonHandler(ReadModelOptions options) : JsonHandler(options) {}
+  ArrayJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
 
   void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
     JsonHandler::reset(pParent);
@@ -232,7 +232,7 @@ private:
 template <typename T>
 class ArrayJsonHandler<T, IntegerJsonHandler<T>> : public JsonHandler {
 public:
-  ArrayJsonHandler(ReadModelOptions options) : JsonHandler(options) {}
+  ArrayJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
@@ -343,7 +343,7 @@ private:
 template <>
 class ArrayJsonHandler<std::string, StringJsonHandler> : public JsonHandler {
 public:
-  ArrayJsonHandler(ReadModelOptions options) : JsonHandler(options) {}
+  ArrayJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
 
   void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
     JsonHandler::reset(pParent);

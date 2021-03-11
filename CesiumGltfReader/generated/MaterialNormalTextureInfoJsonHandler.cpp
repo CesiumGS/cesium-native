@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoJsonHandler(
-    ReadModelOptions options) noexcept
+    const ReadModelOptions& options) noexcept
     : TextureInfoJsonHandler(options), _scale(options) {}
 
 void MaterialNormalTextureInfoJsonHandler::reset(

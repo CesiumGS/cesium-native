@@ -13,7 +13,7 @@ struct Animation;
 
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:
-  AnimationJsonHandler(ReadModelOptions options) noexcept;
+  AnimationJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Animation* pObject);
   Animation* getObject();
   virtual void reportWarning(

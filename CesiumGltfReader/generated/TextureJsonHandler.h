@@ -11,7 +11,7 @@ struct Texture;
 
 class TextureJsonHandler : public NamedObjectJsonHandler {
 public:
-  TextureJsonHandler(ReadModelOptions options) noexcept;
+  TextureJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, Texture* pObject);
   Texture* getObject();
   virtual void reportWarning(

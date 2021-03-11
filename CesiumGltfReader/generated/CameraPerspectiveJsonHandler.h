@@ -11,7 +11,7 @@ struct CameraPerspective;
 
 class CameraPerspectiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  CameraPerspectiveJsonHandler(ReadModelOptions options) noexcept;
+  CameraPerspectiveJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, CameraPerspective* pObject);
   CameraPerspective* getObject();
   virtual void reportWarning(

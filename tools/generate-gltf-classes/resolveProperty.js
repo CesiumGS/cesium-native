@@ -363,7 +363,7 @@ function createEnumReaderType(
   return unindent(`
     class ${enumName}JsonHandler : public JsonHandler {
     public:
-      ${enumName}JsonHandler(ReadModelOptions options) noexcept : JsonHandler(options) {}
+      ${enumName}JsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options) {}
       void reset(IJsonHandler* pParent, ${parentName}::${enumName}* pEnum);
       virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
 

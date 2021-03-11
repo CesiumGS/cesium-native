@@ -11,7 +11,8 @@ struct MaterialOcclusionTextureInfo;
 
 class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
-  MaterialOcclusionTextureInfoJsonHandler(ReadModelOptions options) noexcept;
+  MaterialOcclusionTextureInfoJsonHandler(
+      const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pHandler, MaterialOcclusionTextureInfo* pObject);
   MaterialOcclusionTextureInfo* getObject();
   virtual void reportWarning(
