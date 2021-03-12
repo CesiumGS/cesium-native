@@ -672,9 +672,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     }
 
     if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      tile.setTileID(CesiumUtility::Uri::resolve(
-          context.baseUrl,
-          uriIt->value.GetString()));
+      tile.setTileID(uriIt->value.GetString());
     }
 
     std::optional<BoundingVolume> contentBoundingVolume =
