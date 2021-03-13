@@ -233,9 +233,42 @@ void Tile::loadContent() {
     std::unique_ptr<TileContentLoadResult> pContent;
     void* pRendererResources;
   };
-  TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
+
+  std::shared_ptr<spdlog::logger> pLogger = tileset.getExternals().pLogger;
 
   std::move(maybeRequestFuture.value())
+      .thenImmediately([pLogger](std::shared_ptr<IAssetRequest>&& pRequest) {
+          const IAssetResponse* pResponse = pRequest->response();
+          if (!pResponse) {
+            SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "Did not receive a valid response for tile content {}",
+                pRequest->url());
+            auto pLoadResult = std::make_unique<TileContentLoadResult>();
+            pLoadResult->httpStatusCode = 0;
+            return LoadResult{
+                LoadState::FailedTemporarily,
+                std::move(pLoadResult),
+                nullptr};
+          }
+
+          if (pResponse->statusCode() < 200 ||
+              pResponse->statusCode() >= 300) {
+            SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "Received status code {} for tile content {}",
+                pResponse->statusCode(),
+                pRequest->url());
+            auto pLoadResult = std::make_unique<TileContentLoadResult>();
+            pLoadResult->httpStatusCode = pResponse->statusCode();
+            return LoadResult{
+                LoadState::FailedTemporarily,
+                std::move(pLoadResult),
+                nullptr};
+          }
+
+          return TileContentFactory::createContent(asyncSystem, )
+      })
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
@@ -243,34 +276,6 @@ void Tile::loadContent() {
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = 0;
-              return LoadResult{
-                  LoadState::FailedTemporarily,
-                  std::move(pLoadResult),
-                  nullptr};
-            }
-
-            if (pResponse->statusCode() < 200 ||
-                pResponse->statusCode() >= 300) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Received status code {} for tile content {}",
-                  pResponse->statusCode(),
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = pResponse->statusCode();
-              return LoadResult{
-                  LoadState::FailedTemporarily,
-                  std::move(pLoadResult),
-                  nullptr};
-            }
 
             loadInput.data = pResponse->data();
             loadInput.contentType = pResponse->contentType();

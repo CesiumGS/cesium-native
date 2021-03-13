@@ -153,6 +153,29 @@ public:
   }
 
   /**
+   * @brief Register a continuation function to be invoked immediately
+   * in whatever thread resolves this Future, and invalidates this Future.
+   * 
+   * Because the function may be invoked in any thread, it's essential
+   * that it complete quickly.
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func>
+  Future<typename Impl::RemoveFuture<
+      typename std::invoke_result<Func, T>::type>::type>
+  thenImmediately(Func&& f) && {
+    return Future<typename Impl::RemoveFuture<
+        typename std::invoke_result<Func, T>::type>::type>(
+        this->_pSchedulers,
+        _task.then(
+            async::inline_scheduler(),
+            Impl::unwrapFuture<Func, T>(std::forward<Func>(f))));
+  }
+
+  /**
    * @brief Registers a continuation function to be invoked in the main thread
    * when this Future rejects, and invalidates this Future.
    *

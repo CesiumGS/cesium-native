@@ -90,13 +90,23 @@ public:
    * If a matching loader is found, it will be applied to the given
    * input, and the result will be returned.
    *
-   * @param input The {@link TileContentLoadInput}.
-   * @return The {@link TileContentLoadResult}, or `nullptr` if there is
-   * no loader registered for the magic header of the given
-   * input, and no loader for the content type of the input.
+   * @param tile The tile for which content is being loaded.
+   * @param url The URL from which the content was loaded.
+   * @param contentType The content type of the content to be loaded. If the
+   * data was obtained via a HTTP response, then this should be the
+   * `Content-Type` header of that response. If the data was not
+   * directly obtained from an HTTP response, then this should be the empty
+   * string.
+   * @param data The buffer from which to load the content.
+   * @return A Future that resolves to the loaded content..
    */
-  static std::unique_ptr<TileContentLoadResult>
-  createContent(const TileContentLoadInput& input);
+  static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+  createContent(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const Tile& tile,
+      const std::string& url,
+      const std::string& contentType,
+      const gsl::span<const std::byte>& data);
 
 private:
   static std::optional<std::string>

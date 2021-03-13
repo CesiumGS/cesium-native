@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/TileContentFactory.h"
+#include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include <algorithm>
 #include <cctype>
@@ -29,24 +30,27 @@ void TileContentFactory::registerContentType(
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
-std::unique_ptr<TileContentLoadResult>
-TileContentFactory::createContent(const TileContentLoadInput& input) {
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+TileContentFactory::createContent(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const Tile& tile,
+    const std::string& url,
+    const std::string& contentType,
+    const gsl::span<const std::byte>& data) {
 
-  const gsl::span<const std::byte>& data = input.data;
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
   auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
   if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-    return itMagic->second->load(input);
+    return itMagic->second->load(asyncSystem, tile, url, contentType, data);
   }
 
-  const std::string& contentType = input.contentType;
   std::string baseContentType = contentType.substr(0, contentType.find(';'));
 
   auto itContentType =
       TileContentFactory::_loadersByContentType.find(baseContentType);
   if (itContentType != TileContentFactory::_loadersByContentType.end()) {
-    return itContentType->second->load(input);
+    return itContentType->second->load(asyncSystem, tile, url, contentType, data);
   }
 
   // Determine if this is plausibly a JSON external tileset.
@@ -61,18 +65,18 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
     // Might be an external tileset, try loading it that way.
     itMagic = TileContentFactory::_loadersByMagic.find("json");
     if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-      return itMagic->second->load(input);
+      return itMagic->second->load(asyncSystem, tile, url, contentType, data);
     }
   }
 
   // No content type registered for this magic or content type
   SPDLOG_LOGGER_WARN(
-      input.pLogger,
+      tile.getTileset()->getExternals().pLogger,
       "No loader registered for tile with content type '{}' and magic value "
       "'{}'.",
       baseContentType,
       magic);
-  return nullptr;
+  return asyncSystem.createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 
 /**
