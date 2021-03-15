@@ -32,7 +32,6 @@ public:
    * (Only public for tests)
    *
    * @param pLogger Only used for logging
-   * @param context The tile context
    * @param tileID The tile ID
    * @param tileBoundingVoume The tile bounding volume
    * @param url The URL
@@ -41,7 +40,6 @@ public:
    */
   static std::unique_ptr<TileContentLoadResult> load(
       std::shared_ptr<spdlog::logger> pLogger,
-      const TileContext& context,
       const TileID& tileID,
       const BoundingVolume& tileBoundingVolume,
       const std::string& url,

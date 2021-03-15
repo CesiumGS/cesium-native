@@ -42,7 +42,6 @@ struct CESIUM3DTILES_API TileContentLoadInput {
         data(),
         contentType(),
         url(),
-        context(*tile_.getContext()),
         tileID(tile_.getTileID()),
         tileBoundingVolume(tile_.getBoundingVolume()),
         tileContentBoundingVolume(tile_.getContentBoundingVolume()),
@@ -70,7 +69,6 @@ struct CESIUM3DTILES_API TileContentLoadInput {
         data(data_),
         contentType(contentType_),
         url(url_),
-        context(*tile_.getContext()),
         tileID(tile_.getTileID()),
         tileBoundingVolume(tile_.getBoundingVolume()),
         tileContentBoundingVolume(tile_.getContentBoundingVolume()),
@@ -103,7 +101,6 @@ struct CESIUM3DTILES_API TileContentLoadInput {
       const gsl::span<const std::byte>& data_,
       const std::string& contentType_,
       const std::string& url_,
-      const TileContext& context_,
       const TileID& tileID_,
       const BoundingVolume& tileBoundingVolume_,
       const std::optional<BoundingVolume>& tileContentBoundingVolume_,
@@ -114,7 +111,6 @@ struct CESIUM3DTILES_API TileContentLoadInput {
         data(data_),
         contentType(contentType_),
         url(url_),
-        context(context_),
         tileID(tileID_),
         tileBoundingVolume(tileBoundingVolume_),
         tileContentBoundingVolume(tileContentBoundingVolume_),
@@ -153,11 +149,6 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @brief The source URL.
    */
   std::string url;
-
-  /**
-   * @brief The {@link TileContext}.
-   */
-  const TileContext& context;
 
   /**
    * @brief The {@link TileID}.

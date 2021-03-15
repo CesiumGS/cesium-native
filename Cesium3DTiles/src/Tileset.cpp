@@ -898,7 +898,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     childTile.setBoundingVolume(
         createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
     childTile.setGeometricError(
-        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84, tilingScheme));
+        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) * childGlobeRectangle.computeWidth());
   }
 }
 
