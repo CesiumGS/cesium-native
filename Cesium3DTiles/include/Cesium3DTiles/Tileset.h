@@ -359,13 +359,13 @@ public:
    * @param context The context of the new tiles.
    * @param pLogger The logger.
    */
-  void loadTilesFromJson(
+  static void loadTilesFromJson(
       Tile& rootTile,
       const rapidjson::Value& tilesetJson,
       const glm::dmat4& parentTransform,
       TileRefine parentRefine,
       const TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger) const;
+      const std::shared_ptr<spdlog::logger>& pLogger);
 
   /**
    * @brief Request to load the content for the given tile.

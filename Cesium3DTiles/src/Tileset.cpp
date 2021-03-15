@@ -420,8 +420,8 @@ void Tileset::loadTilesFromJson(
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
     const TileContext& context,
-    const std::shared_ptr<spdlog::logger>& pLogger) const {
-  this->_createTile(
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  Tileset::_createTile(
       rootTile,
       tilesetJson["root"],
       parentTransform,
