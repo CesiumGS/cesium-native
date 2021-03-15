@@ -559,13 +559,9 @@ void Tile::update(
         // Initialize the new context, if there is one.
         if (this->_pContent->pNewTileContext &&
             this->_pContent->pNewTileContext->contextInitializerCallback) {
-          TileContext* pParentContext =
-              this->_pParent ? this->_pParent->getContext() : nullptr;
-          if (pParentContext) {
-            this->_pContent->pNewTileContext->contextInitializerCallback(
-                *pParentContext,
-                *this->_pContent->pNewTileContext);
-          }
+          this->_pContent->pNewTileContext->contextInitializerCallback(
+              *this->getContext(),
+              *this->_pContent->pNewTileContext);
         }
 
         this->getTileset()->addContext(

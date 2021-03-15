@@ -45,13 +45,13 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
   pResult->pNewTileContext->baseUrl = url;
 
   TileContext* pContext = pResult->pNewTileContext.get();
-  pContext->contextInitializerCallback =
-      [](const TileContext& parentContext, TileContext& currentContext) {
-        currentContext.pTileset = parentContext.pTileset;
-        currentContext.requestHeaders = parentContext.requestHeaders;
-        currentContext.version = parentContext.version;
-        currentContext.failedTileCallback = parentContext.failedTileCallback;
-      };
+  pContext->contextInitializerCallback = [](const TileContext& parentContext,
+                                            TileContext& currentContext) {
+    currentContext.pTileset = parentContext.pTileset;
+    currentContext.requestHeaders = parentContext.requestHeaders;
+    currentContext.version = parentContext.version;
+    currentContext.failedTileCallback = parentContext.failedTileCallback;
+  };
 
   pResult->childTiles.value()[0].setContext(pContext);
 
