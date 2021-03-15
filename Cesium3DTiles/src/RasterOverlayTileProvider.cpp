@@ -449,7 +449,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           return LoadedRasterOverlayImage{
               std::nullopt,
               credits,
-              {"Image request failed."},
+              {"Image request for " + url + " failed."},
               {}};
         }
 
@@ -457,21 +457,24 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           return LoadedRasterOverlayImage{
               std::nullopt,
               credits,
-              {"Image response is empty."},
+              {"Image response for " + url + " is empty."},
               {}};
         }
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
           std::string message =
-              "Image response code " + std::to_string(pResponse->statusCode());
+              "Image response code " + std::to_string(pResponse->statusCode()) + " for " + url;
           return LoadedRasterOverlayImage{std::nullopt, credits, {message}, {}};
         }
 
         gsl::span<const std::byte> data = pResponse->data();
         CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
-        if (!loadedImage.image.has_value()) {
-          SPDLOG_ERROR("Failed to load image from URL {}", url);
+        if (!loadedImage.errors.empty()) {
+          loadedImage.errors.push_back("Image url: " + url);
+        }
+        if (!loadedImage.warnings.empty()) {
+          loadedImage.warnings.push_back("Image url: " + url);
         }
 
         return LoadedRasterOverlayImage{
