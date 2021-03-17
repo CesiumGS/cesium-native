@@ -495,7 +495,6 @@ void RasterOverlayTileProvider::doLoad(
                                this->getTilingScheme().tileToRectangle(
                                    tile.getID()),
                            projection = this->getProjection(),
-                           cutoutsCollection = this->getOwner().getCutouts(),
                            pPrepareRendererResources =
                                this->getPrepareRendererResources(),
                            pLogger = this->getLogger()](
@@ -523,60 +522,6 @@ void RasterOverlayTileProvider::doLoad(
 
         if (image.pixelData.size() >=
             static_cast<size_t>(image.width * image.height * bytesPerPixel)) {
-          double tileWidth = tileRectangle.computeWidth();
-          double tileHeight = tileRectangle.computeHeight();
-
-          // Remove cutouts from the image by setting pixel alpha to 0.
-          gsl::span<const CesiumGeospatial::GlobeRectangle> cutouts =
-              cutoutsCollection.getCutouts();
-
-          std::vector<uint8_t>& imageData = image.pixelData;
-          int width = image.width;
-          int height = image.height;
-
-          for (const CesiumGeospatial::GlobeRectangle& rectangle : cutouts) {
-            CesiumGeometry::Rectangle cutoutRectangle =
-                projectRectangleSimple(projection, rectangle);
-            std::optional<CesiumGeometry::Rectangle> cutoutInTileOpt =
-                tileRectangle.intersect(cutoutRectangle);
-            if (!cutoutInTileOpt) {
-              continue;
-            }
-
-            CesiumGeometry::Rectangle& cutoutInTile = cutoutInTileOpt.value();
-            double startU =
-                (cutoutInTile.minimumX - tileRectangle.minimumX) / tileWidth;
-            double endU =
-                (cutoutInTile.maximumX - tileRectangle.minimumX) / tileWidth;
-            double startV =
-                (cutoutInTile.minimumY - tileRectangle.minimumY) / tileHeight;
-            double endV =
-                (cutoutInTile.maximumY - tileRectangle.minimumY) / tileHeight;
-
-            // The first row in the image is at v coordinate 1.0.
-            startV = 1.0 - startV;
-            endV = 1.0 - endV;
-
-            std::swap(startV, endV);
-
-            int32_t startPixelX =
-                static_cast<int32_t>(std::floor(startU * width));
-            int32_t endPixelX = static_cast<int32_t>(std::ceil(endU * width));
-            int32_t startPixelY =
-                static_cast<int32_t>(std::floor(startV * height));
-            int32_t endPixelY = static_cast<int32_t>(std::ceil(endV * height));
-
-            for (int32_t j = startPixelY; j < endPixelY; ++j) {
-              int32_t rowStart = j * width * bytesPerPixel;
-              for (int32_t i = startPixelX; i < endPixelX; ++i) {
-                int32_t pixelStart = rowStart + i * bytesPerPixel;
-
-                // Set alpha to 0
-                imageData[size_t(pixelStart + 3)] = 0;
-              }
-            }
-          }
-
           void* pRendererResources =
               pPrepareRendererResources->prepareRasterInLoadThread(image);
 

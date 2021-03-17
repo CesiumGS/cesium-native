@@ -32,7 +32,6 @@ namespace Cesium3DTiles {
 RasterOverlay::RasterOverlay(const RasterOverlayOptions& options)
     : _pPlaceholder(),
       _pTileProvider(),
-      _cutouts(),
       _pSelf(),
       _isLoadingTileProvider(false),
       _options(options) {}
