@@ -491,52 +491,52 @@ void RasterOverlayTileProvider::doLoad(
   };
 
   this->loadTileImage(tile.getID())
-      .thenInWorkerThread([tileRectangle =
-                               this->getTilingScheme().tileToRectangle(
-                                   tile.getID()),
-                           projection = this->getProjection(),
-                           pPrepareRendererResources =
-                               this->getPrepareRendererResources(),
-                           pLogger = this->getLogger()](
-                              LoadedRasterOverlayImage&& loadedImage) {
-        if (!loadedImage.image.has_value()) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Failed to load image:\n- {}",
-              CesiumUtility::joinToString(loadedImage.errors, "\n- "));
-          LoadResult result;
-          result.state = RasterOverlayTile::LoadState::Failed;
-          return result;
-        }
+      .thenInWorkerThread(
+          [tileRectangle =
+               this->getTilingScheme().tileToRectangle(tile.getID()),
+           projection = this->getProjection(),
+           pPrepareRendererResources = this->getPrepareRendererResources(),
+           pLogger =
+               this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
+            if (!loadedImage.image.has_value()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Failed to load image:\n- {}",
+                  CesiumUtility::joinToString(loadedImage.errors, "\n- "));
+              LoadResult result;
+              result.state = RasterOverlayTile::LoadState::Failed;
+              return result;
+            }
 
-        if (!loadedImage.warnings.empty()) {
-          SPDLOG_LOGGER_WARN(
-              pLogger,
-              "Warnings while loading image:\n- {}",
-              CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
-        }
+            if (!loadedImage.warnings.empty()) {
+              SPDLOG_LOGGER_WARN(
+                  pLogger,
+                  "Warnings while loading image:\n- {}",
+                  CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+            }
 
-        CesiumGltf::ImageCesium& image = loadedImage.image.value();
+            CesiumGltf::ImageCesium& image = loadedImage.image.value();
 
-        int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+            int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
 
-        if (image.pixelData.size() >=
-            static_cast<size_t>(image.width * image.height * bytesPerPixel)) {
-          void* pRendererResources =
-              pPrepareRendererResources->prepareRasterInLoadThread(image);
+            if (image.pixelData.size() >=
+                static_cast<size_t>(
+                    image.width * image.height * bytesPerPixel)) {
+              void* pRendererResources =
+                  pPrepareRendererResources->prepareRasterInLoadThread(image);
 
-          LoadResult result;
-          result.state = RasterOverlayTile::LoadState::Loaded;
-          result.image = std::move(image);
-          result.pRendererResources = pRendererResources;
-          return result;
-        } else {
-          LoadResult result;
-          result.pRendererResources = nullptr;
-          result.state = RasterOverlayTile::LoadState::Failed;
-          return result;
-        }
-      })
+              LoadResult result;
+              result.state = RasterOverlayTile::LoadState::Loaded;
+              result.image = std::move(image);
+              result.pRendererResources = pRendererResources;
+              return result;
+            } else {
+              LoadResult result;
+              result.pRendererResources = nullptr;
+              result.state = RasterOverlayTile::LoadState::Failed;
+              return result;
+            }
+          })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
