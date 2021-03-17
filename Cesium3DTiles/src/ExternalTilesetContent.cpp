@@ -12,7 +12,6 @@ std::unique_ptr<TileContentLoadResult>
 ExternalTilesetContent::load(const TileContentLoadInput& input) {
   return load(
       input.pLogger,
-      input.context,
       input.tileTransform,
       input.tileRefine,
       input.url,
@@ -21,7 +20,6 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
 
 /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(
     std::shared_ptr<spdlog::logger> pLogger,
-    const TileContext& context,
     const glm::dmat4& tileTransform,
     TileRefine tileRefine,
     const std::string& url,
@@ -44,16 +42,20 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
   pResult->childTiles.emplace(1);
 
   pResult->pNewTileContext = std::make_unique<TileContext>();
+  pResult->pNewTileContext->baseUrl = url;
+
   TileContext* pContext = pResult->pNewTileContext.get();
-  pContext->pTileset = context.pTileset;
-  pContext->baseUrl = url;
-  pContext->requestHeaders = context.requestHeaders;
-  pContext->version = context.version;
-  pContext->failedTileCallback = context.failedTileCallback;
+  pContext->contextInitializerCallback = [](const TileContext& parentContext,
+                                            TileContext& currentContext) {
+    currentContext.pTileset = parentContext.pTileset;
+    currentContext.requestHeaders = parentContext.requestHeaders;
+    currentContext.version = parentContext.version;
+    currentContext.failedTileCallback = parentContext.failedTileCallback;
+  };
 
   pResult->childTiles.value()[0].setContext(pContext);
 
-  context.pTileset->loadTilesFromJson(
+  Tileset::loadTilesFromJson(
       pResult->childTiles.value()[0],
       tilesetJson,
       tileTransform,

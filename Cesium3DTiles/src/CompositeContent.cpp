@@ -49,7 +49,6 @@ TileContentLoadInput derive(
       derivedData,
       "",
       input.url,
-      input.context,
       input.tileID,
       input.tileBoundingVolume,
       input.tileContentBoundingVolume,

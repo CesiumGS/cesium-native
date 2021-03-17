@@ -556,6 +556,14 @@ void Tile::update(
 
         this->createChildTiles(std::move(this->_pContent->childTiles.value()));
 
+        // Initialize the new context, if there is one.
+        if (this->_pContent->pNewTileContext &&
+            this->_pContent->pNewTileContext->contextInitializerCallback) {
+          this->_pContent->pNewTileContext->contextInitializerCallback(
+              *this->getContext(),
+              *this->_pContent->pNewTileContext);
+        }
+
         this->getTileset()->addContext(
             std::move(this->_pContent->pNewTileContext));
       }

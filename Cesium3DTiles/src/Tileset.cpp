@@ -420,8 +420,8 @@ void Tileset::loadTilesFromJson(
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
     const TileContext& context,
-    const std::shared_ptr<spdlog::logger>& pLogger) const {
-  this->_createTile(
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  Tileset::_createTile(
       rootTile,
       tilesetJson["root"],
       parentTransform,
@@ -672,9 +672,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     }
 
     if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      tile.setTileID(CesiumUtility::Uri::resolve(
-          context.baseUrl,
-          uriIt->value.GetString()));
+      tile.setTileID(uriIt->value.GetString());
     }
 
     std::optional<BoundingVolume> contentBoundingVolume =
@@ -900,7 +898,8 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     childTile.setBoundingVolume(
         createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
     childTile.setGeometricError(
-        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84, tilingScheme));
+        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) *
+        childGlobeRectangle.computeWidth());
   }
 }
 

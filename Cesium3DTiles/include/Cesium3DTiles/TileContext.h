@@ -9,6 +9,7 @@
 namespace Cesium3DTiles {
 
 class Tileset;
+class TileContext;
 
 /**
  * @brief A tiling context that was created for terrain tiles.
@@ -83,6 +84,19 @@ typedef FailedTileAction FailedTileSignature(Tile& failedTile);
 typedef std::function<FailedTileSignature> FailedTileCallback;
 
 /**
+ * @brief Signature of {@link ContextInitializerCallback}.
+ */
+typedef void ContextInitializerSignature(
+    const TileContext& parentContext,
+    TileContext& currentContext);
+
+/**
+ * @brief A function that serves as a callback for initializing a new {@link
+ * TileContext} from properties of the parent context.
+ */
+typedef std::function<ContextInitializerSignature> ContextInitializerCallback;
+
+/**
  * @brief A context in which a {@link Tileset} operates.
  *
  * The context summarizes the information which is needed by a tileset
@@ -142,6 +156,15 @@ public:
    * failure.
    */
   FailedTileCallback failedTileCallback;
+
+  /**
+   * @brief An optional {@link ContextInitializerCallback}.
+   *
+   * This callback is called once from the main thread in order to initialize
+   * this context - which may have been created in a worker thread - from
+   * properties of its parent context.
+   */
+  ContextInitializerCallback contextInitializerCallback;
 };
 
 } // namespace Cesium3DTiles

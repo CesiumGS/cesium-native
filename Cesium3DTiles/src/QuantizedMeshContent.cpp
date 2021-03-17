@@ -349,13 +349,10 @@ parseQuantizedMesh(const gsl::span<const std::byte>& data) {
 }
 
 static double calculateSkirtHeight(
-    uint32_t tileLevel,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const QuadtreeTilingScheme& tilingScheme) {
-  double levelZeroMaximumGeometricError =
-      calcQuadtreeMaxGeometricError(ellipsoid, tilingScheme);
+    const CesiumGeospatial::GlobeRectangle& rectangle) {
   double levelMaximumGeometricError =
-      levelZeroMaximumGeometricError / (1 << tileLevel);
+      calcQuadtreeMaxGeometricError(ellipsoid) * rectangle.computeWidth();
   return levelMaximumGeometricError * 5.0;
 }
 
@@ -658,7 +655,6 @@ std::unique_ptr<TileContentLoadResult>
 QuantizedMeshContent::load(const TileContentLoadInput& input) {
   return load(
       input.pLogger,
-      input.context,
       input.tileID,
       input.tileBoundingVolume,
       input.url,
@@ -667,7 +663,6 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
     std::shared_ptr<spdlog::logger> pLogger,
-    const TileContext& context,
     const TileID& tileID,
     const BoundingVolume& tileBoundingVolume,
     const std::string& url,
@@ -814,10 +809,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       meshView->indexType == QuantizedMeshIndexType::UnsignedInt
           ? sizeof(uint32_t)
           : sizeof(uint16_t);
-  const std::optional<ImplicitTilingContext>& implicitContext =
-      context.implicitContext;
-  const QuadtreeTilingScheme& tilingScheme = implicitContext->tilingScheme;
-  double skirtHeight = calculateSkirtHeight(id.level, ellipsoid, tilingScheme);
+  double skirtHeight = calculateSkirtHeight(ellipsoid, rectangle);
   double longitudeOffset = (east - west) * 0.0001;
   double latitudeOffset = (north - south) * 0.0001;
   if (meshView->indexType == QuantizedMeshIndexType::UnsignedInt) {
