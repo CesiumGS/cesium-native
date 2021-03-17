@@ -36,3 +36,23 @@ Or, you can easily build it in Visual Studio Code with the `CMake Tools` extensi
 * Install Doxygen.
 * Run: `cmake --build build --target cesium-native-docs`
 * Open `build/doc/html/index.html`
+
+
+## Formatting
+
+We are using `clang-format` for a consistent formatting of the source code.
+In order to install `clang-format`, you need npm
+from [https://www.npmjs.com/get-npm](https://www.npmjs.com/get-npm).
+After installing npm, run
+```bash
+npm install -g clang-format
+```
+at the command line. This has to be done only once, and will install
+`clang-format` globally.
+
+Before creating a pull request with changes, execute
+```bash
+clang-format -i "--glob=@(Cesium*)/**/*.@(cpp|h|hpp)"
+```
+to apply the formatting to all relevant source files.
+
