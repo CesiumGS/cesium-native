@@ -800,7 +800,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
       "*;q=0.01"));
 
-  auto tilesetVersionIt = layerJson.FindMember("tilesetVersion");
+  auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
       tilesetVersionIt->value.IsString()) {
     context.version = tilesetVersionIt->value.GetString();
