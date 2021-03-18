@@ -21,6 +21,9 @@ A change to C++ Core Guidelines [NL.17](http://isocpp.github.io/CppCoreGuideline
 
 Use `clang-format` and the `.clang-format` configuration in the root of this repo. Easy. If you're using Visual Studio Code with the C/C++ extension installed, just run the "Format Document" command.
 
+To format the source code from the command line, install npm from [https://www.npmjs.com/get-npm](https://www.npmjs.com/get-npm), and run `npm install`.
+Then, in order to apply the formatting, run `npm format`. 
+
 We believe that source code should be readable and even beautiful, but that automated formatting is more important than either concern. Especially when readability is largely a matter of what we're used to, and beauty is mostly subjective. For our JavaScript / TypeScript code, we format our code with the ubiquitous [Prettier](https://prettier.io/) tool. In C++, clang-format is widely used but there's no de facto style, and so we've created a clang-format style that tracks as close to Prettier as possible. We will be able to get closer once this [clang-format patch](https://reviews.llvm.org/D33029) is merged.
 
 ## 📛 Naming
