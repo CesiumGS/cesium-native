@@ -380,10 +380,17 @@ static void createImplicitTile(
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,
-    const QuadtreeTileID& childID) {
+    const QuadtreeTileID& childID,
+    bool available) {
   child.setContext(parent.getContext());
   child.setParent(&parent);
-  child.setTileID(childID);
+
+  if (available) {
+    child.setTileID(childID);
+  } else {
+    child.setTileID(UpsampledQuadtreeNode{childID});
+  }
+
   child.setGeometricError(parent.getGeometricError() * 0.5);
 
   double minimumHeight = -1000.0;
@@ -620,17 +627,18 @@ void Tile::update(
 
     size_t childCount = sw + se + nw + ne;
     if (childCount > 0) {
-      this->_children.resize(childCount);
+      // If any children are available, we need to create all four in order to
+      // avoid holes. But non-available tiles will be upsampled instead of
+      // loaded.
+      // TODO: this is the right thing to do for terrain, which is the only use
+      // of implicit tiling currently. But we may need to re-evaluate it if
+      // we're using implicit tiling for buildings (for example) in the future.
+      this->_children.resize(4);
 
-      uint32_t i = 0;
-      if (sw)
-        createImplicitTile(implicitContext, *this, this->_children[i++], swID);
-      if (se)
-        createImplicitTile(implicitContext, *this, this->_children[i++], seID);
-      if (nw)
-        createImplicitTile(implicitContext, *this, this->_children[i++], nwID);
-      if (ne)
-        createImplicitTile(implicitContext, *this, this->_children[i++], neID);
+      createImplicitTile(implicitContext, *this, this->_children[0], swID, sw);
+      createImplicitTile(implicitContext, *this, this->_children[1], seID, se);
+      createImplicitTile(implicitContext, *this, this->_children[2], nwID, nw);
+      createImplicitTile(implicitContext, *this, this->_children[3], neID, ne);
     }
   }
 
