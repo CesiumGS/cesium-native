@@ -487,6 +487,7 @@ void RasterOverlayTileProvider::doLoad(
   struct LoadResult {
     RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
     CesiumGltf::ImageCesium image = {};
+    std::vector<Credit> credits = {};
     void* pRendererResources = nullptr;
   };
 
@@ -528,6 +529,7 @@ void RasterOverlayTileProvider::doLoad(
               LoadResult result;
               result.state = RasterOverlayTile::LoadState::Loaded;
               result.image = std::move(image);
+              result.credits = std::move(loadedImage.credits);
               result.pRendererResources = pRendererResources;
               return result;
             } else {
@@ -540,6 +542,7 @@ void RasterOverlayTileProvider::doLoad(
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
+        tile._tileCredits = std::move(result.credits);
         tile.setState(result.state);
 
         this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
@@ -550,6 +553,7 @@ void RasterOverlayTileProvider::doLoad(
           [this, &tile, isThrottledLoad](const std::exception& /*e*/) {
             tile._pRendererResources = nullptr;
             tile._image = {};
+            tile._tileCredits = {};
             tile.setState(RasterOverlayTile::LoadState::Failed);
 
             this->finalizeTileLoad(tile, isThrottledLoad);
