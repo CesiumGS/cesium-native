@@ -442,30 +442,45 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::vector<Credit>& credits) const {
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread([credits](std::shared_ptr<IAssetRequest>&& pRequest) {
+      .thenInWorkerThread([credits,
+                           url](std::shared_ptr<IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (pResponse == nullptr) {
           return LoadedRasterOverlayImage{
               std::nullopt,
-              std::move(credits),
-              {"Image request failed."},
+              credits,
+              {"Image request for " + url + " failed."},
               {}};
         }
 
         if (pResponse->data().size() == 0) {
           return LoadedRasterOverlayImage{
               std::nullopt,
-              std::move(credits),
-              {"Image response is empty."},
+              credits,
+              {"Image response for " + url + " is empty."},
               {}};
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+          std::string message = "Image response code " +
+                                std::to_string(pResponse->statusCode()) +
+                                " for " + url;
+          return LoadedRasterOverlayImage{std::nullopt, credits, {message}, {}};
         }
 
         gsl::span<const std::byte> data = pResponse->data();
         CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
 
+        if (!loadedImage.errors.empty()) {
+          loadedImage.errors.push_back("Image url: " + url);
+        }
+        if (!loadedImage.warnings.empty()) {
+          loadedImage.warnings.push_back("Image url: " + url);
+        }
+
         return LoadedRasterOverlayImage{
             loadedImage.image,
-            std::move(credits),
+            credits,
             std::move(loadedImage.errors),
             std::move(loadedImage.warnings)};
       });
