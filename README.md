@@ -7,7 +7,7 @@ Cesium Native is a set of C++ libraries for [3D Tiles](https://github.com/Cesium
 [![License](https://img.shields.io/:license-Apache_2.0-blue.svg)](https://github.com/CesiumGS/cesium-native/blob/main/LICENSE)
 [![Build Status](https://api.travis-ci.com/CesiumGS/cesium-native.svg?token=z6LPvn37d5E37hGcTgua&branch=main&status=passed)](https://travis-ci.com/CesiumGS/cesium-native)
 
-### Libraries Overview
+### :card_file_box: Libraries Overview
 
 | Library | Description |
 | -- | -- |
@@ -20,9 +20,13 @@ Cesium Native is a set of C++ libraries for [3D Tiles](https://github.com/Cesium
 | **CesiumIonClient** | Functionality to integrate with [Cesium ion](https://cesium.com/cesium-ion) using REST API. |
 | **CesiumUtility** | Library for utility and helper functions for JSON, URI, etc. |
 
+### :books: API Documentation
+
+TODO: Add link to https://cesium.com/docs
+
 ### :card_index: Roadmap
 
-The roadmap of Cesium Native is closely linked with the roadmap of Cesium for Unreal. TODO: Link to Cesium for Unreal roadmap.
+The roadmap of Cesium Native is closely linked with the roadmap of [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal). TODO: Link to Cesium for Unreal roadmap.
 
 ### :green_book: License
 

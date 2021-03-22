@@ -283,6 +283,21 @@ CesiumAsync::Future<Response<Profile>> Connection::me() const {
           });
 }
 
+static Asset jsonToAsset(const rapidjson::Value& item) {
+  Asset result;
+  result.id = JsonHelpers::getInt64OrDefault(item, "id", -1);
+  result.name = JsonHelpers::getStringOrDefault(item, "name", "");
+  result.description = JsonHelpers::getStringOrDefault(item, "description", "");
+  result.attribution = JsonHelpers::getStringOrDefault(item, "attribution", "");
+  result.type = JsonHelpers::getStringOrDefault(item, "type", "");
+  result.bytes = JsonHelpers::getInt64OrDefault(item, "bytes", -1);
+  result.dateAdded = JsonHelpers::getStringOrDefault(item, "dateAdded", "");
+  result.status = JsonHelpers::getStringOrDefault(item, "status", "");
+  result.percentComplete =
+      int8_t(JsonHelpers::getInt32OrDefault(item, "percentComplete", -1));
+  return result;
+}
+
 CesiumAsync::Future<Response<Assets>> Connection::assets() const {
   return this->_pAssetAccessor
       ->requestAsset(
@@ -290,83 +305,64 @@ CesiumAsync::Future<Response<Assets>> Connection::assets() const {
           CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets"),
           {{"Accept", "application/json"},
            {"Authorization", "Bearer " + this->_accessToken}})
-      .thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pRequest) {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          return Response<Assets>{
-              std::nullopt,
-              0,
-              "NoResponse",
-              "The server did not return a response."};
-        }
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return Response<Assets>{
+                  std::nullopt,
+                  0,
+                  "NoResponse",
+                  "The server did not return a response."};
+            }
 
-        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          return createErrorResponse<Assets>(pResponse);
-        }
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<Assets>(pResponse);
+            }
 
-        rapidjson::Document d;
-        d.Parse(
-            reinterpret_cast<const char*>(pResponse->data().data()),
-            pResponse->data().size());
-        if (d.HasParseError()) {
-          return Response<Assets>{
-              std::nullopt,
-              pResponse->statusCode(),
-              "ParseError",
-              std::string("Failed to parse JSON response: ") +
-                  rapidjson::GetParseError_En(d.GetParseError())};
-        }
+            rapidjson::Document d;
+            d.Parse(
+                reinterpret_cast<const char*>(pResponse->data().data()),
+                pResponse->data().size());
+            if (d.HasParseError()) {
+              return Response<Assets>{
+                  std::nullopt,
+                  pResponse->statusCode(),
+                  "ParseError",
+                  std::string("Failed to parse JSON response: ") +
+                      rapidjson::GetParseError_En(d.GetParseError())};
+            }
 
-        if (!d.IsObject()) {
-          return Response<Assets>{
-              std::nullopt,
-              pResponse->statusCode(),
-              "ParseError",
-              "Response is not a JSON object."};
-        }
+            if (!d.IsObject()) {
+              return Response<Assets>{
+                  std::nullopt,
+                  pResponse->statusCode(),
+                  "ParseError",
+                  "Response is not a JSON object."};
+            }
 
-        Assets result;
+            Assets result;
 
-        result.link = JsonHelpers::getStringOrDefault(d, "link", "");
+            result.link = JsonHelpers::getStringOrDefault(d, "link", "");
 
-        auto itemsIt = d.FindMember("items");
-        if (itemsIt != d.MemberEnd() && itemsIt->value.IsArray()) {
-          const rapidjson::Value& items = itemsIt->value;
-          result.items.resize(items.Size());
-          std::transform(
-              items.Begin(),
-              items.End(),
-              result.items.begin(),
-              [](const rapidjson::Value& item) {
-                Asset result;
-                result.id = JsonHelpers::getInt64OrDefault(item, "id", -1);
-                result.name = JsonHelpers::getStringOrDefault(item, "name", "");
-                result.description =
-                    JsonHelpers::getStringOrDefault(item, "description", "");
-                result.attribution =
-                    JsonHelpers::getStringOrDefault(item, "attribution", "");
-                result.type = JsonHelpers::getStringOrDefault(item, "type", "");
-                result.bytes =
-                    JsonHelpers::getInt64OrDefault(item, "bytes", -1);
-                result.dateAdded =
-                    JsonHelpers::getStringOrDefault(item, "dateAdded", "");
-                result.status =
-                    JsonHelpers::getStringOrDefault(item, "status", "");
-                result.percentComplete = int8_t(JsonHelpers::getInt32OrDefault(
-                    item,
-                    "percentComplete",
-                    -1));
-                return result;
-              });
-        }
+            auto itemsIt = d.FindMember("items");
+            if (itemsIt != d.MemberEnd() && itemsIt->value.IsArray()) {
+              const rapidjson::Value& items = itemsIt->value;
+              result.items.resize(items.Size());
+              std::transform(
+                  items.Begin(),
+                  items.End(),
+                  result.items.begin(),
+                  jsonToAsset);
+            }
 
-        return Response<Assets>{
-            result,
-            pResponse->statusCode(),
-            std::string(),
-            std::string()};
-      });
+            return Response<Assets>{
+                result,
+                pResponse->statusCode(),
+                std::string(),
+                std::string()};
+          });
 }
 
 static std::optional<Token> tokenFromJson(const rapidjson::Value& json) {
@@ -449,6 +445,61 @@ CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
 
             return Response<std::vector<Token>>{
                 result,
+                pResponse->statusCode(),
+                std::string(),
+                std::string()};
+          });
+}
+
+CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
+  std::string assetsUrl =
+      CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets/");
+
+  return this->_pAssetAccessor
+      ->requestAsset(
+          this->_asyncSystem,
+          CesiumUtility::Uri::resolve(assetsUrl, std::to_string(assetID)),
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return Response<Asset>{
+                  std::nullopt,
+                  0,
+                  "NoResponse",
+                  "The server did not return a response."};
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<Asset>(pResponse);
+            }
+
+            rapidjson::Document d;
+            d.Parse(
+                reinterpret_cast<const char*>(pResponse->data().data()),
+                pResponse->data().size());
+            if (d.HasParseError()) {
+              return Response<Asset>{
+                  std::nullopt,
+                  pResponse->statusCode(),
+                  "ParseError",
+                  std::string("Failed to parse JSON response: ") +
+                      rapidjson::GetParseError_En(d.GetParseError())};
+            }
+
+            if (!d.IsObject()) {
+              return Response<Asset>{
+                  std::nullopt,
+                  pResponse->statusCode(),
+                  "ParseError",
+                  "Response is not a JSON object."};
+            }
+
+            return Response<Asset>{
+                jsonToAsset(d),
                 pResponse->statusCode(),
                 std::string(),
                 std::string()};

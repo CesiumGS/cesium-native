@@ -497,7 +497,7 @@ void Tileset::_loadTilesetJson(
         this->_pRootTile = std::move(loadResult.pRootTile);
         this->notifyTileDoneLoading(nullptr);
       })
-      .catchInMainThread([this, &url](const std::exception& e) {
+      .catchInMainThread([this, url](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
             this->_externals.pLogger,
             "Unhandled error for tileset {}: {}",
