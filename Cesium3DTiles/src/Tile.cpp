@@ -161,11 +161,6 @@ void Tile::loadContent() {
     // that we still need are not freed too soon.
     std::vector<RasterMappedTo3DTile> newRasterTiles;
 
-    QuadtreeTileID* quadtree = std::get_if<QuadtreeTileID>(&_id);
-    if (quadtree && quadtree->level == 8 && quadtree->x == 396 && quadtree->y == 249) {
-	  printf("asas\n");
-    }
-
     for (auto& overlay : overlays) {
       overlay->getTileProvider()->mapRasterTilesToGeometryTile(
           *pRectangle,
@@ -678,10 +673,6 @@ void Tile::update(
           const CesiumGeospatial::GlobeRectangle* pRectangle =
               Cesium3DTiles::Impl::obtainGlobeRectangle(
                   &this->getBoundingVolume());
-          QuadtreeTileID* quadtree = std::get_if<QuadtreeTileID>(&_id);
-          if (quadtree && quadtree->level == 8) {
-            printf("asas\n");
-          }
           pProvider->mapRasterTilesToGeometryTile(
               *pRectangle,
               this->getGeometricError(),
