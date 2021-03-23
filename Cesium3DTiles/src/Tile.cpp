@@ -98,13 +98,6 @@ bool Tile::isRenderable() const noexcept {
   // the children load.
 
   // So, we explicitly treat external tilesets as non-renderable.
-
-  const QuadtreeTileID* quadtree = std::get_if<QuadtreeTileID>(&_id);
-  if (quadtree && quadtree->level == 8 && quadtree->x == 396 &&
-      quadtree->y == 249) {
-    printf("asas\n");
-  }
-
   return this->getState() >= LoadState::ContentLoaded &&
          (!this->_pContent || this->_pContent->model.has_value()) &&
          !std::any_of(
