@@ -99,6 +99,12 @@ bool Tile::isRenderable() const noexcept {
 
   // So, we explicitly treat external tilesets as non-renderable.
 
+  const QuadtreeTileID* quadtree = std::get_if<QuadtreeTileID>(&_id);
+  if (quadtree && quadtree->level == 8 && quadtree->x == 396 &&
+      quadtree->y == 249) {
+    printf("asas\n");
+  }
+
   return this->getState() >= LoadState::ContentLoaded &&
          (!this->_pContent || this->_pContent->model.has_value()) &&
          !std::any_of(
@@ -154,6 +160,11 @@ void Tile::loadContent() {
     // Doing it in this order ensures that tiles that are already loaded and
     // that we still need are not freed too soon.
     std::vector<RasterMappedTo3DTile> newRasterTiles;
+
+    QuadtreeTileID* quadtree = std::get_if<QuadtreeTileID>(&_id);
+    if (quadtree && quadtree->level == 8 && quadtree->x == 396 && quadtree->y == 249) {
+	  printf("asas\n");
+    }
 
     for (auto& overlay : overlays) {
       overlay->getTileProvider()->mapRasterTilesToGeometryTile(
@@ -667,6 +678,10 @@ void Tile::update(
           const CesiumGeospatial::GlobeRectangle* pRectangle =
               Cesium3DTiles::Impl::obtainGlobeRectangle(
                   &this->getBoundingVolume());
+          QuadtreeTileID* quadtree = std::get_if<QuadtreeTileID>(&_id);
+          if (quadtree && quadtree->level == 8) {
+            printf("asas\n");
+          }
           pProvider->mapRasterTilesToGeometryTile(
               *pRectangle,
               this->getGeometricError(),
