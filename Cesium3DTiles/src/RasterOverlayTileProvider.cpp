@@ -184,7 +184,6 @@ void RasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     // if (!this.isBaseLayer()) {
     //     return false;
     // }
-
     intersection = geometryRectangle;
   }
 
