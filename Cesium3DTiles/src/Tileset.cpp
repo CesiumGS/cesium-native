@@ -521,7 +521,8 @@ void Tileset::_loadTilesetJson(
     return LoadResult{std::move(pContext), nullptr, false};
   }
 
-  if (pResponse->statusCode() != 0 && (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
+  if (pResponse->statusCode() != 0 &&
+      (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Received status code {} for tileset {}",

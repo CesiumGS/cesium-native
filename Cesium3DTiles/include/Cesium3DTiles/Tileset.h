@@ -45,6 +45,11 @@ struct CESIUM3DTILES_API TilesetOptions {
   /**
    * @brief The maximum number of pixels of error when rendering this tileset.
    * This is used to select an appropriate level-of-detail.
+   *
+   * When a tileset uses the older layer.json / quantized-mesh format rather
+   * than 3D Tiles, this value is effectively divided by 8.0. So the default
+   * value of 16.0 corresponds to the standard value for quantized-mesh terrain
+   * of 2.0.
    */
   double maximumScreenSpaceError = 16.0;
 
