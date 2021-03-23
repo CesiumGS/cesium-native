@@ -1,42 +1,38 @@
 # Cesium Native
 
-Cesium Native is the geospatial runtime engine powering [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal).
+Cesium Native is a set of C++ libraries for 3D geosaptial, including:
 
-Cesium Native is a set of C++ libraries for [3D Tiles](https://github.com/CesiumGS/3d-tiles) runtime, glTF, and high-precision 3D geospatial math to enable high-precision full-scale WGS84 virtual globes.
+* [3D Tiles](https://github.com/CesiumGS/3d-tiles) runtime streaming
+* lightweight glTF serialization and deserialization, and
+* high-precision 3D geospatial math types and functions, including support for global-scale WGS84 ellipsoids.
+
+Currently Cesium Native is used to develop Cesium for Unreal. In the future we plan for Cesium Native to be a foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
 
 [![License](https://img.shields.io/:license-Apache_2.0-blue.svg)](https://github.com/CesiumGS/cesium-native/blob/main/LICENSE)
 [![Build Status](https://api.travis-ci.com/CesiumGS/cesium-native.svg?token=z6LPvn37d5E37hGcTgua&branch=main&status=passed)](https://travis-ci.com/CesiumGS/cesium-native)
 
-### :card_file_box: Libraries Overview
+### :card_file_box:Libraries Overview
 
 | Library | Description |
 | -- | -- |
-| **Cesium3DTiles** | Runtime streaming, traversal, and decoding of 3D Tiles. |
-| **CesiumAsync** | Library to perform multi-threaded asynchronous tasks. |
-| **CesiumGeometry** | 3D Geometry library for common 3D geometry, bounds and intersection testing, and spatial indexing. |
-| **CesiumGeospatial** | Library for 3D geospatial math such as ellipsoids, transforms, projections. |
-| **CesiumGltf** | glTF processing library. |
-| **CesiumGltfReader** | Library for glTF 2.0 parsing, decoding, and processing. Supports optimizations such as Draco. |
-| **CesiumIonClient** | Functionality to integrate with [Cesium ion](https://cesium.com/cesium-ion) using REST API. |
-| **CesiumUtility** | Library for utility and helper functions for JSON, URI, etc. |
+| **Cesium3DTiles** | Runtime streaming, decoding, level of detail selection, culling, cache management, and decoding of 3D Tile. |
+| **CesiumAsync** | Classes for multi-threaded asynchronous tasks. |
+| **CesiumGeometry** | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms. |
+| **CesiumGeospatial** | 3D geospatial math types and functions for ellipsoids, transforms, projections. |
+| **CesiumGltf** | Lightweight glTF processing and optimization functions. |
+| **CesiumGltfReader** | glTF serialization and decoding, including glTF extensions including `KHR_draco_mesh_compression`. |
+| **CesiumIonClient** | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
+| **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
 
-### :books: API Documentation
+### :green_book:License
 
-TODO: Add link to https://cesium.com/docs
-
-### :card_index: Roadmap
-
-The roadmap of Cesium Native is closely linked with the roadmap of [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal). TODO: Link to Cesium for Unreal roadmap.
-
-### :green_book: License
-
-[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium for Unreal is free for both commercial and non-commercial use.
+[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium Native is free for both commercial and non-commercial use.
 
 ## 💻Developers
 
 ### ⭐Prerequisites
 
-* Visual Studio 2017 (or 2019) or GCC v7.x+. Other compilers may work but haven't been tested.
+* Visual Studio 2017 (or newer) or GCC v7.x+. Other compilers may work but haven't been tested.
 * CMake
 
 ### :rocket:Getting Started
@@ -74,6 +70,6 @@ Or, you can easily build it in Visual Studio Code with the `CMake Tools` extensi
 
 #### Generate Documentation
 
-* Install Doxygen.
+* Install [Doxygen](https://www.doxygen.nl/).
 * Run: `cmake --build build --target cesium-native-docs`
 * Open `build/doc/html/index.html`
