@@ -17,6 +17,10 @@ void Profiler::startTracing(const std::string& filePath) {
 
 void Profiler::writeTrace(const Trace& trace) {
   std::lock_guard<std::mutex> lock(_lock);
+  if (!this->_output) {
+    return;
+  }
+
   // Chrome tracing wants the text like this
   if (this->_numTraces++ > 0) {
     this->_output << ",";

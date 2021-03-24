@@ -19,10 +19,10 @@
 #if TRACING_ENABLED
 // The TRACE macro
 #define LAMBDA_CAPTURE_TRACE_START(name)                                       \
-  TRACE_NAME_AUX2(tracer, name) = CesiumUtility::ScopedTrace(name, false),
+  TRACE_NAME_AUX2(tracer, name) = CesiumUtility::ScopedTrace(name),
 #define LAMBDA_CAPTURE_TRACE_END(name) TRACE_NAME_AUX2(tracer, name).reset();
 #define TRACE(name)                                                            \
-  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name, false);
+  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name);
 #define TRACE_START(filename)                                                  \
   CesiumUtility::Profiler::instance().startTracing(filename);
 #define TRACE_END() CesiumUtility::Profiler::instance().endTracing();
