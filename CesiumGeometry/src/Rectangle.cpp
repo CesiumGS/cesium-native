@@ -48,7 +48,7 @@ Rectangle::intersect(const Rectangle& other) const noexcept {
   double right = glm::min(this->maximumX, other.maximumX);
   double top = glm::min(this->maximumY, other.maximumY);
 
-  if (bottom > top || left > right) {
+  if (bottom >= top || left >= right) {
     return std::nullopt;
   }
 
