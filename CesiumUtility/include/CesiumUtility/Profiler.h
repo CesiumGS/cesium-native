@@ -39,18 +39,18 @@ struct Trace {
 
 class Profiler {
 public:
-  static Profiler& instance(); 
+  static Profiler& instance();
 
   ~Profiler();
 
-  void startTracing(const std::string& filePath = "trace.json"); 
+  void startTracing(const std::string& filePath = "trace.json");
 
-  void writeTrace(const Trace& trace); 
+  void writeTrace(const Trace& trace);
 
-  void endTracing(); 
+  void endTracing();
 
 private:
-  Profiler(); 
+  Profiler();
 
   std::ofstream _output;
   uint32_t _numTraces;
@@ -69,4 +69,4 @@ private:
   std::chrono::steady_clock::time_point _startTime;
   std::thread::id _threadId;
 };
-}
+} // namespace CesiumUtility
