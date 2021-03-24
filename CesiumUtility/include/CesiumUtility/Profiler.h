@@ -28,8 +28,7 @@
 #define TRACE_END() CesiumUtility::Profiler::instance().endTracing();
 #else
 #define LAMBDA_CAPTURE_TRACE_START(name)                                       \
-#define LAMBDA_CAPTURE_TRACE_END(name)                                       \
-#define TRACE(name)
+#define LAMBDA_CAPTURE_TRACE_END(name) #define TRACE(name)
 #define TRACE_START(filename)
 #define TRACE_END()
 #endif
