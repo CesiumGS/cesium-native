@@ -44,7 +44,6 @@ target_link_libraries_system(
     CesiumUtility
     PUBLIC
         glm
-        spdlog
 )
 
 target_link_libraries(CesiumUtility

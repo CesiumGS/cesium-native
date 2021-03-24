@@ -9,7 +9,7 @@
 // If the build system doesn't enable the tracing support
 // consider it disabled by default.
 #ifndef TRACING_ENABLED
-#define TRACING_ENABLED 0
+#define TRACING_ENABLED 1
 #endif
 
 // helper macros to avoid shadowing variables
@@ -18,12 +18,17 @@
 
 #if TRACING_ENABLED
 // The TRACE macro
+#define LAMBDA_CAPTURE_TRACE_START(name)                                       \
+  TRACE_NAME_AUX2(tracer, name) = CesiumUtility::ScopedTrace(name, false),
+#define LAMBDA_CAPTURE_TRACE_END(name) TRACE_NAME_AUX2(tracer, name).reset();
 #define TRACE(name)                                                            \
   CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name, false);
 #define TRACE_START(filename)                                                  \
   CesiumUtility::Profiler::instance().startTracing(filename);
 #define TRACE_END() CesiumUtility::Profiler::instance().endTracing();
 #else
+#define LAMBDA_CAPTURE_TRACE_START(name)                                       \
+#define LAMBDA_CAPTURE_TRACE_END(name)                                       \
 #define TRACE(name)
 #define TRACE_START(filename)
 #define TRACE_END()
@@ -62,11 +67,14 @@ class ScopedTrace {
 public:
   explicit ScopedTrace(const std::string& message);
 
+  void reset();
+
   ~ScopedTrace();
 
 private:
   std::string _name;
   std::chrono::steady_clock::time_point _startTime;
   std::thread::id _threadId;
+  bool _reset;
 };
 } // namespace CesiumUtility

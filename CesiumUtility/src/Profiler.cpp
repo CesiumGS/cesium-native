@@ -6,7 +6,7 @@ Profiler& Profiler::instance() {
   return instance;
 }
 
-Profiler::Profiler() : _output(), _numTraces(0), _lock() {}
+Profiler::Profiler() : _output{}, _numTraces{0}, _lock{} {}
 
 Profiler::~Profiler() { endTracing(); }
 
@@ -38,13 +38,14 @@ void Profiler::endTracing() {
 }
 
 ScopedTrace::ScopedTrace(const std::string& message)
-    : _name(message),
-      _startTime(std::chrono::steady_clock::now()),
-      _threadId(std::this_thread::get_id()) {}
+    : _name{message},
+      _startTime{std::chrono::steady_clock::now()},
+      _threadId{std::this_thread::get_id()},
+      _reset{false} {}
 
-ScopedTrace::~ScopedTrace() {
+void ScopedTrace::reset() {
+  this->_reset = true;
   auto endTimePoint = std::chrono::steady_clock::now();
-#ifdef TRACING_ENABLED
   int64_t start =
       std::chrono::time_point_cast<std::chrono::microseconds>(this->_startTime)
           .time_since_epoch()
@@ -55,6 +56,11 @@ ScopedTrace::~ScopedTrace() {
           .count();
   Profiler::instance().writeTrace(
       {this->_name, start, end - start, this->_threadId});
-#endif
+}
+
+ScopedTrace::~ScopedTrace() {
+  if (!this->_reset) {
+    this->reset();
+  }
 }
 } // namespace CesiumUtility
