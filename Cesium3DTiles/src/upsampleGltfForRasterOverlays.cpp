@@ -347,6 +347,8 @@ static void upsamplePrimitiveForRasterOverlays(
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
+  TRACE("upsamplePrimitiveForRasterOverlays")
+
   // Add up the per-vertex size of all attributes and create buffers,
   // bufferViews, and accessors
   std::vector<FloatVertexAttribute> attributes;
@@ -715,7 +717,6 @@ static void addClippedPolygon(
     std::vector<uint32_t>& clipVertexToIndices,
     const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
     const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult) {
-  TRACE("addClippedPolygon")
   if (clipResult.size() < 3) {
     return;
   }
@@ -837,7 +838,6 @@ static void addSkirt(
     double skirtHeight,
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex) {
-  TRACE("addSkirt")
   const CesiumGeospatial::Ellipsoid& ellipsoid =
       CesiumGeospatial::Ellipsoid::WGS84;
 
@@ -911,6 +911,8 @@ static void addSkirts(
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex) {
+  TRACE("addSkirts")
+
   glm::dvec3 center = currentSkirt.meshCenter;
   double shortestSkirtHeight =
       glm::min(parentSkirt.skirtWestHeight, parentSkirt.skirtEastHeight);
@@ -1042,7 +1044,6 @@ static void upsamplePrimitiveForRasterOverlays(
     Mesh& mesh,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
-  TRACE("upsamplePrimitiveForRasterOverlays")
   if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
       primitive.indices < 0 ||
       primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
