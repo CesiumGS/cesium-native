@@ -9,7 +9,7 @@
 // If the build system doesn't enable the tracing support
 // consider it disabled by default.
 #ifndef TRACING_ENABLED
-#define TRACING_ENABLED 1
+#define TRACING_ENABLED 0
 #endif
 
 // helper macros to avoid shadowing variables
@@ -27,10 +27,13 @@
   CesiumUtility::Profiler::instance().startTracing(filename);
 #define TRACE_END() CesiumUtility::Profiler::instance().endTracing();
 #else
-#define LAMBDA_CAPTURE_TRACE_START(name)                                       \
-#define LAMBDA_CAPTURE_TRACE_END(name) #define TRACE(name)
+// clang-format off
+#define LAMBDA_CAPTURE_TRACE_START(name) 
+#define LAMBDA_CAPTURE_TRACE_END(name)
+#define TRACE(name)
 #define TRACE_START(filename)
 #define TRACE_END()
+// clang-format on
 #endif
 
 namespace CesiumUtility {
