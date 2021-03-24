@@ -1251,6 +1251,11 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
   gsl::span<Tile> children = tile.getChildren();
   bool waitingForChildren = false;
   for (Tile& child : children) {
+    // Give children a chance to update, otherwise they may never enter a
+    // renderable state. Note that this update call will be repeated again later
+    // when we actually visit this children, but no major harm done.
+    child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
+
     if (!child.isRenderable()) {
       waitingForChildren = true;
 
