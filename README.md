@@ -6,7 +6,7 @@ Cesium Native is a set of C++ libraries for 3D geosaptial, including:
 * lightweight glTF serialization and deserialization, and
 * high-precision 3D geospatial math types and functions, including support for global-scale WGS84 ellipsoids.
 
-Currently Cesium Native is used to develop Cesium for Unreal. In the future we plan for Cesium Native to be a foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
+Currently Cesium Native is used to develop [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal). In the future, we plan for Cesium Native to be a foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
 
 [![License](https://img.shields.io/:license-Apache_2.0-blue.svg)](https://github.com/CesiumGS/cesium-native/blob/main/LICENSE)
 [![Build Status](https://api.travis-ci.com/CesiumGS/cesium-native.svg?token=z6LPvn37d5E37hGcTgua&branch=main&status=passed)](https://travis-ci.com/CesiumGS/cesium-native)
@@ -32,7 +32,7 @@ Currently Cesium Native is used to develop Cesium for Unreal. In the future we p
 
 ### ⭐Prerequisites
 
-* Visual Studio 2017 (or newer) or GCC v7.x+. Other compilers may work but haven't been tested.
+* Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
 * CMake
 
 ### :rocket:Getting Started
