@@ -184,7 +184,29 @@ void RasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     // if (!this.isBaseLayer()) {
     //     return false;
     // }
-    intersection = geometryRectangle;
+    if (geometryRectangle.minimumY >= imageryRectangle.maximumY) {
+      intersection.minimumY = intersection.maximumY = imageryRectangle.maximumY;
+    } else if (geometryRectangle.maximumY <= imageryRectangle.minimumY) {
+      intersection.minimumY = intersection.maximumY = imageryRectangle.minimumY;
+    } else {
+      intersection.minimumY =
+          glm::max(geometryRectangle.minimumY, imageryRectangle.minimumY);
+
+      intersection.maximumY =
+          glm::min(geometryRectangle.maximumY, imageryRectangle.maximumY);
+    }
+
+    if (geometryRectangle.minimumX >= imageryRectangle.maximumX) {
+      intersection.minimumX = intersection.maximumX = imageryRectangle.maximumX;
+    } else if (geometryRectangle.maximumX <= imageryRectangle.minimumX) {
+      intersection.minimumX = intersection.maximumX = imageryRectangle.minimumX;
+    } else {
+      intersection.minimumX =
+          glm::max(geometryRectangle.minimumX, imageryRectangle.minimumX);
+
+      intersection.maximumX =
+          glm::min(geometryRectangle.maximumX, imageryRectangle.maximumX);
+    }
   }
 
   // Compute the required level in the imagery tiling scheme.
@@ -273,7 +295,7 @@ void RasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
   CesiumGeometry::Rectangle imageryBounds = intersection;
   std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
-      imageryRectangle.intersect(imageryBounds).value();
+      std::nullopt;
 
   size_t realOutputIndex =
       outputIndex ? outputIndex.value() : outputRasterTiles.size();

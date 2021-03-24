@@ -107,7 +107,7 @@ public:
    * @brief Returns the {@link CesiumGeometry::QuadtreeTileID} that was given
    * during construction.
    */
-  const CesiumGeometry::QuadtreeTileID& getID() noexcept {
+  const CesiumGeometry::QuadtreeTileID& getID() const noexcept {
     return this->_tileID;
   }
 
