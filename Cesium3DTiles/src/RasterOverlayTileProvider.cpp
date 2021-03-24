@@ -499,6 +499,21 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           loadedImage.warnings.push_back("Image url: " + url);
         }
 
+        if (loadedImage.image) {
+          CesiumGltf::ImageCesium& image = loadedImage.image.value();
+          std::vector<uint8_t>& pixelData = image.pixelData;
+          uint32_t* pPixels = (uint32_t*)pixelData.data();
+          for (size_t i = 0; i < image.width; ++i) {
+            pPixels[i] = 0xFF0000FF;
+            pPixels[image.width * (image.height - 1) + i] = 0xFF0000FF;
+          }
+
+          for (size_t j = 0; j < image.height; ++j) {
+            pPixels[j * image.width] = 0xFF0000FF;
+            pPixels[(j + 1) * image.width - 1] = 0xFF0000FF;
+          }
+        }
+
         return LoadedRasterOverlayImage{
             loadedImage.image,
             credits,

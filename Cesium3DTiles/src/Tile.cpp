@@ -90,6 +90,16 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
 
 void Tile::setTileID(const TileID& id) noexcept { this->_id = id; }
 
+static bool allOverlaysAreReady(const std::vector<RasterMappedTo3DTile>& rasterTiles) {
+  for (const RasterMappedTo3DTile& rasterTile : rasterTiles) {
+    if (!rasterTile.getReadyTile()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool Tile::isRenderable() const noexcept {
   // A tile whose content is an external tileset has no renderable content. If
   // we select such a tile for rendering, we'll end up rendering nothing even
@@ -100,14 +110,7 @@ bool Tile::isRenderable() const noexcept {
   // So, we explicitly treat external tilesets as non-renderable.
   return this->getState() >= LoadState::ContentLoaded &&
          (!this->_pContent || this->_pContent->model.has_value()) &&
-         !std::any_of(
-             this->_rasterTiles.begin(),
-             this->_rasterTiles.end(),
-             [](const RasterMappedTo3DTile& rasterTile) {
-               return rasterTile.getLoadingTile() &&
-                      rasterTile.getLoadingTile()->getState() ==
-                          RasterOverlayTile::LoadState::Loading;
-             });
+         allOverlaysAreReady(this->_rasterTiles);
 }
 
 void Tile::loadContent() {
