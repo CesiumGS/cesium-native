@@ -1,4 +1,5 @@
 #include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
+#include "CesiumUtility/Profiler.h"
 
 namespace CesiumGeometry {
 void clipTriangleAtAxisAlignedThreshold(
@@ -15,6 +16,7 @@ void clipTriangleAtAxisAlignedThreshold(
     std::vector<TriangleClipVertex>&
         result // The aray into which to copy the result.
     ) noexcept {
+  TRACE("clipTriangleAtAxisAlignedThreshold")
   bool u0Behind, u1Behind, u2Behind;
   if (keepAbove) {
     u0Behind = u0 < threshold;
