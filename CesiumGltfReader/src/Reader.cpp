@@ -1,4 +1,5 @@
 #include "CesiumGltf/Reader.h"
+#include "CesiumUtility/Profiler.h"
 #include "JsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -143,6 +144,7 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) {
 }
 
 ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data) {
+  TRACE("CesiumGltf::readJsonModel")
   rapidjson::Reader reader;
   rapidjson::MemoryStream inputStream(
       reinterpret_cast<const char*>(data.data()),
@@ -179,6 +181,7 @@ ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data) {
 }
 
 ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
+  TRACE("CesiumGltf::readBinaryModel")
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
   }
@@ -284,6 +287,7 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
 void postprocess(
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
+  TRACE("CesiumGltf::postprocess")
   Model& model = readModel.model.value();
 
   if (options.decodeDataUrls) {
@@ -335,6 +339,7 @@ ModelReaderResult CesiumGltf::readModel(
 
 ImageReaderResult
 CesiumGltf::readImage(const gsl::span<const std::byte>& data) {
+  TRACE("CesiumGltf::readImage")
   ImageReaderResult result;
 
   result.image.emplace();

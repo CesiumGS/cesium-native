@@ -2,6 +2,7 @@
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/Reader.h"
+#include "CesiumUtility/Profiler.h"
 #include <cstddef>
 #include <string>
 
@@ -24,6 +25,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     ModelReaderResult& readModel,
     MeshPrimitive& /* primitive */,
     KHR_draco_mesh_compression& draco) {
+  TRACE("CesiumGltf::decodeBufferViewToDracoMesh")
   Model& model = readModel.model.value();
 
   BufferView* pBufferView =
@@ -92,6 +94,7 @@ void copyDecodedIndices(
     ModelReaderResult& readModel,
     MeshPrimitive& primitive,
     draco::Mesh* pMesh) {
+  TRACE("CesiumGltf::copyDecodedIndices")
   Model& model = readModel.model.value();
 
   if (primitive.indices < 0) {
@@ -200,6 +203,7 @@ void copyDecodedAttribute(
     Accessor* pAccessor,
     const draco::Mesh* pMesh,
     const draco::PointAttribute* pAttribute) {
+  TRACE("CesiumGltf::copyDecodedAttribute")
   Model& model = readModel.model.value();
 
   if (pAccessor->count > pMesh->num_points()) {
@@ -265,6 +269,7 @@ void decodePrimitive(
     ModelReaderResult& readModel,
     MeshPrimitive& primitive,
     KHR_draco_mesh_compression& draco) {
+  TRACE("CesiumGltf::decodePrimitive")
   Model& model = readModel.model.value();
 
   std::unique_ptr<draco::Mesh> pMesh =
@@ -318,6 +323,7 @@ void decodePrimitive(
 namespace CesiumGltf {
 
 void decodeDraco(CesiumGltf::ModelReaderResult& readModel) {
+  TRACE("CesiumGltf::decodeDraco")
   if (!readModel.model) {
     return;
   }

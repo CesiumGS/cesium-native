@@ -1,12 +1,14 @@
 #include "decodeDataUrls.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/Reader.h"
+#include "CesiumUtility/Profiler.h"
 #include <cstddef>
 #include <modp_b64.h>
 
 namespace {
 
 std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
+  TRACE("CesiumGltf::decodeBase64")
   std::vector<std::byte> result(modp_b64_decode_len(data.size()));
 
   size_t resultLength = modp_b64_decode(
@@ -81,6 +83,7 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 namespace CesiumGltf {
 
 void decodeDataUrls(ModelReaderResult& readModel, bool clearDecodedDataUrls) {
+  TRACE("CesiumGltf::decodeDataUrls")
   if (!readModel.model) {
     return;
   }

@@ -43,6 +43,7 @@ target_include_directories(
 
 target_link_libraries(CesiumGltfReader
     PUBLIC
+        CesiumUtility
         CesiumGltf
         GSL
         draco
