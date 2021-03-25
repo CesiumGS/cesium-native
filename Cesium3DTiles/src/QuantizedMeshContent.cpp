@@ -7,6 +7,7 @@
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Uri.h"
+#include "CesiumUtility/Profiler.h"
 #include "SkirtMeshMetadata.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include <cstddef>
@@ -667,6 +668,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     const BoundingVolume& tileBoundingVolume,
     const std::string& url,
     const gsl::span<const std::byte>& data) {
+  TRACE("Cesium3DTiles::QuantizedMeshContent::load")
+
   // TODO: use context plus tileID to compute the tile's rectangle, rather than
   // inferring it from the parent tile.
   const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
