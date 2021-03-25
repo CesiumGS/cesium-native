@@ -4,8 +4,8 @@
 #include "CesiumGltf/AccessorWriter.h"
 #include "CesiumGltf/Reader.h"
 #include "CesiumUtility/Math.h"
-#include "CesiumUtility/joinToString.h"
 #include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/joinToString.h"
 #include <stdexcept>
 
 namespace Cesium3DTiles {

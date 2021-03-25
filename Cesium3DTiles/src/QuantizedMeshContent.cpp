@@ -6,8 +6,8 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
-#include "CesiumUtility/Uri.h"
 #include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Uri.h"
 #include "SkirtMeshMetadata.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include <cstddef>
