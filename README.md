@@ -1,6 +1,6 @@
 # Cesium Native
 
-Cesium Native is a set of C++ libraries for 3D geosaptial, including:
+Cesium Native is a set of C++ libraries for 3D geospatial, including:
 
 * [3D Tiles](https://github.com/CesiumGS/3d-tiles) runtime streaming
 * lightweight glTF serialization and deserialization, and
