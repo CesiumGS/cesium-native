@@ -942,6 +942,11 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   pResult->model.emplace();
   CesiumGltf::Model& model = pResult->model.value();
 
+  CesiumGltf::Material& material = model.materials.emplace_back();
+  CesiumGltf::MaterialPBRMetallicRoughness& pbr = material.pbrMetallicRoughness.emplace();
+  pbr.metallicFactor = 0.0;
+  pbr.roughnessFactor = 1.0;
+
   size_t meshId = model.meshes.size();
   model.meshes.emplace_back();
   CesiumGltf::Mesh& mesh = model.meshes[meshId];
