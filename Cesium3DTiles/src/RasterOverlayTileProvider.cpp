@@ -460,25 +460,17 @@ CesiumAsync::Future<LoadedRasterOverlayImage>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
-    const std::vector<Credit>& credits) const {
+    const LoadTileImageFromUrlOptions& options) const {
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread([credits,
-                           url](std::shared_ptr<IAssetRequest>&& pRequest) {
+      .thenInWorkerThread([url, options](
+                              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
         const IAssetResponse* pResponse = pRequest->response();
         if (pResponse == nullptr) {
           return LoadedRasterOverlayImage{
               std::nullopt,
-              credits,
+              std::move(options.credits),
               {"Image request for " + url + " failed."},
-              {}};
-        }
-
-        if (pResponse->data().size() == 0) {
-          return LoadedRasterOverlayImage{
-              std::nullopt,
-              credits,
-              {"Image response for " + url + " is empty."},
               {}};
         }
 
@@ -486,7 +478,23 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           std::string message = "Image response code " +
                                 std::to_string(pResponse->statusCode()) +
                                 " for " + url;
-          return LoadedRasterOverlayImage{std::nullopt, credits, {message}, {}};
+          return LoadedRasterOverlayImage{std::nullopt, std::move(options.credits), {message}, {}};
+        }
+
+        if (pResponse->data().size() == 0) {
+          if (options.allowEmptyImages) {
+            return LoadedRasterOverlayImage{
+                CesiumGltf::ImageCesium(),
+                std::move(options.credits),
+                {},
+                {}};
+          } else {
+            return LoadedRasterOverlayImage{
+                std::nullopt,
+                std::move(options.credits),
+                {"Image response for " + url + " is empty."},
+                {}};
+          }
         }
 
         gsl::span<const std::byte> data = pResponse->data();
@@ -501,7 +509,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
         return LoadedRasterOverlayImage{
             loadedImage.image,
-            credits,
+            std::move(options.credits),
             std::move(loadedImage.errors),
             std::move(loadedImage.warnings)};
       });
@@ -556,9 +564,10 @@ void RasterOverlayTileProvider::doLoad(
 
             int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
 
-            if (image.pixelData.size() >=
-                static_cast<size_t>(
-                    image.width * image.height * bytesPerPixel)) {
+            if (image.width > 0 && image.height > 0 &&
+                image.pixelData.size() >=
+                    static_cast<size_t>(
+                        image.width * image.height * bytesPerPixel)) {
               void* pRendererResources =
                   pPrepareRendererResources->prepareRasterInLoadThread(image);
 
