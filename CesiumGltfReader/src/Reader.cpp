@@ -192,10 +192,10 @@ namespace {
  * @return The string
  */
 std::string toMagicString(uint32_t i) {
-  unsigned char c0 = i & 0xFF;
-  unsigned char c1 = (i >> 8) & 0xFF;
-  unsigned char c2 = (i >> 16) & 0xFF;
-  unsigned char c3 = (i >> 24) & 0xFF;
+  unsigned char c0 = static_cast<unsigned char>(i & 0xFF));
+  unsigned char c1 = static_cast<unsigned char>((i >> 8) & 0xFF);
+  unsigned char c2 = static_cast<unsigned char>((i >> 16) & 0xFF);
+  unsigned char c3 = static_cast<unsigned char>((i >> 24) & 0xFF);
   std::stringstream stream;
   stream << c0 << c1 << c2 << c3 << " (0x" << std::hex << i << ")";
   return stream.str();
