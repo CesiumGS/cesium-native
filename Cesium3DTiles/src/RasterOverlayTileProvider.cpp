@@ -463,56 +463,62 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     const LoadTileImageFromUrlOptions& options) const {
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread([url, options](
-                              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (pResponse == nullptr) {
-          return LoadedRasterOverlayImage{
-              std::nullopt,
-              std::move(options.credits),
-              {"Image request for " + url + " failed."},
-              {}};
-        }
+      .thenInWorkerThread(
+          [url, options](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (pResponse == nullptr) {
+              return LoadedRasterOverlayImage{
+                  std::nullopt,
+                  std::move(options.credits),
+                  {"Image request for " + url + " failed."},
+                  {}};
+            }
 
-        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          std::string message = "Image response code " +
-                                std::to_string(pResponse->statusCode()) +
-                                " for " + url;
-          return LoadedRasterOverlayImage{std::nullopt, std::move(options.credits), {message}, {}};
-        }
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              std::string message = "Image response code " +
+                                    std::to_string(pResponse->statusCode()) +
+                                    " for " + url;
+              return LoadedRasterOverlayImage{
+                  std::nullopt,
+                  std::move(options.credits),
+                  {message},
+                  {}};
+            }
 
-        if (pResponse->data().size() == 0) {
-          if (options.allowEmptyImages) {
+            if (pResponse->data().size() == 0) {
+              if (options.allowEmptyImages) {
+                return LoadedRasterOverlayImage{
+                    CesiumGltf::ImageCesium(),
+                    std::move(options.credits),
+                    {},
+                    {}};
+              } else {
+                return LoadedRasterOverlayImage{
+                    std::nullopt,
+                    std::move(options.credits),
+                    {"Image response for " + url + " is empty."},
+                    {}};
+              }
+            }
+
+            gsl::span<const std::byte> data = pResponse->data();
+            CesiumGltf::ImageReaderResult loadedImage =
+                CesiumGltf::readImage(data);
+
+            if (!loadedImage.errors.empty()) {
+              loadedImage.errors.push_back("Image url: " + url);
+            }
+            if (!loadedImage.warnings.empty()) {
+              loadedImage.warnings.push_back("Image url: " + url);
+            }
+
             return LoadedRasterOverlayImage{
-                CesiumGltf::ImageCesium(),
+                loadedImage.image,
                 std::move(options.credits),
-                {},
-                {}};
-          } else {
-            return LoadedRasterOverlayImage{
-                std::nullopt,
-                std::move(options.credits),
-                {"Image response for " + url + " is empty."},
-                {}};
-          }
-        }
-
-        gsl::span<const std::byte> data = pResponse->data();
-        CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
-
-        if (!loadedImage.errors.empty()) {
-          loadedImage.errors.push_back("Image url: " + url);
-        }
-        if (!loadedImage.warnings.empty()) {
-          loadedImage.warnings.push_back("Image url: " + url);
-        }
-
-        return LoadedRasterOverlayImage{
-            loadedImage.image,
-            std::move(options.credits),
-            std::move(loadedImage.errors),
-            std::move(loadedImage.warnings)};
-      });
+                std::move(loadedImage.errors),
+                std::move(loadedImage.warnings)};
+          });
 }
 
 void RasterOverlayTileProvider::doLoad(
