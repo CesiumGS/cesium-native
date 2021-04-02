@@ -192,7 +192,7 @@ namespace {
  * @return The string
  */
 std::string toMagicString(uint32_t i) {
-  unsigned char c0 = static_cast<unsigned char>(i & 0xFF));
+  unsigned char c0 = static_cast<unsigned char>(i & 0xFF);
   unsigned char c1 = static_cast<unsigned char>((i >> 8) & 0xFF);
   unsigned char c2 = static_cast<unsigned char>((i >> 16) & 0xFF);
   unsigned char c3 = static_cast<unsigned char>((i >> 24) & 0xFF);
