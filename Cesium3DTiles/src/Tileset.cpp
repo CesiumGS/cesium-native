@@ -420,8 +420,8 @@ void Tileset::loadTilesFromJson(
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
     const TileContext& context,
-    const std::shared_ptr<spdlog::logger>& pLogger) const {
-  this->_createTile(
+    const std::shared_ptr<spdlog::logger>& pLogger) {
+  Tileset::_createTile(
       rootTile,
       tilesetJson["root"],
       parentTransform,
@@ -497,7 +497,7 @@ void Tileset::_loadTilesetJson(
         this->_pRootTile = std::move(loadResult.pRootTile);
         this->notifyTileDoneLoading(nullptr);
       })
-      .catchInMainThread([this, &url](const std::exception& e) {
+      .catchInMainThread([this, url](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
             this->_externals.pLogger,
             "Unhandled error for tileset {}: {}",
@@ -521,7 +521,8 @@ void Tileset::_loadTilesetJson(
     return LoadResult{std::move(pContext), nullptr, false};
   }
 
-  if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+  if (pResponse->statusCode() != 0 &&
+      (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Received status code {} for tileset {}",
@@ -672,9 +673,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     }
 
     if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      tile.setTileID(CesiumUtility::Uri::resolve(
-          context.baseUrl,
-          uriIt->value.GetString()));
+      tile.setTileID(uriIt->value.GetString());
     }
 
     std::optional<BoundingVolume> contentBoundingVolume =
@@ -688,14 +687,14 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   std::optional<BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return;
   }
 
   std::optional<double> geometricError =
       JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a geometricError");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a geometricError");
     return;
   }
 
@@ -721,7 +720,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     } else {
       SPDLOG_LOGGER_ERROR(
           pLogger,
-          "Tileset contained an unknown refine value: {}",
+          "Tile contained an unknown refine value: {}",
           refine);
     }
   } else {
@@ -802,7 +801,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
       "*;q=0.01"));
 
-  auto tilesetVersionIt = layerJson.FindMember("tilesetVersion");
+  auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
       tilesetVersionIt->value.IsString()) {
     context.version = tilesetVersionIt->value.GetString();
@@ -900,7 +899,8 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     childTile.setBoundingVolume(
         createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
     childTile.setGeometricError(
-        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84, tilingScheme));
+        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) *
+        childGlobeRectangle.computeWidth());
   }
 }
 

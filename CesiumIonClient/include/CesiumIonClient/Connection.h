@@ -123,6 +123,14 @@ public:
   CesiumAsync::Future<Response<std::vector<Token>>> tokens() const;
 
   /**
+   * @brief Gets details of the asset with the given ID.
+   *
+   * @param assetID The asset ID.
+   * @return A future that resolves to the asset details.
+   */
+  CesiumAsync::Future<Response<Asset>> asset(int64_t assetID) const;
+
+  /**
    * @brief Creates a new token.
    *
    * @param name The name of the new token.

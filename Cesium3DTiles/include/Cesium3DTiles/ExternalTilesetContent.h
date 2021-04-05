@@ -37,7 +37,6 @@ private:
    *
    * @param pLogger The logger that receives details of loading errors and
    * warnings.
-   * @param context The {@link TileContext}.
    * @param tileRefine The {@link TileRefine}
    * @param url The source URL
    * @param data The raw input data
@@ -45,7 +44,6 @@ private:
    */
   static std::unique_ptr<TileContentLoadResult> load(
       std::shared_ptr<spdlog::logger> pLogger,
-      const TileContext& context,
       const glm::dmat4& tileTransform,
       TileRefine tileRefine,
       const std::string& url,

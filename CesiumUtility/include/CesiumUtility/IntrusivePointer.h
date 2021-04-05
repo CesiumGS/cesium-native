@@ -54,6 +54,17 @@ public:
   }
 
   /**
+   * @brief Move assignment operator.
+   */
+  IntrusivePointer& operator=(IntrusivePointer&& rhs) noexcept {
+    if (this->_p != rhs._p) {
+      std::swap(this->_p, rhs._p);
+    }
+
+    return *this;
+  }
+
+  /**
    * @brief Assignment operator.
    */
   IntrusivePointer& operator=(T* p) noexcept {

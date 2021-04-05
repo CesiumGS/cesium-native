@@ -1,13 +1,48 @@
 # Cesium Native
 
-[CesiumJS](https://github.com/CesiumGS/cesium)-like functionality for C++.
+Cesium Native is a set of C++ libraries for 3D geospatial, including:
 
-## Prerequisites
+* [3D Tiles](https://github.com/CesiumGS/3d-tiles) runtime streaming
+* lightweight glTF serialization and deserialization, and
+* high-precision 3D geospatial math types and functions, including support for global-scale WGS84 ellipsoids.
 
-* Visual Studio 2019 or GCC v7.x+. Other compilers may work but haven't been tested.
-* CMake (add it to your path during install!)
+[![License](https://img.shields.io/:license-Apache_2.0-blue.svg)](https://github.com/CesiumGS/cesium-native/blob/main/LICENSE)
+[![Build Status](https://api.travis-ci.com/CesiumGS/cesium-native.svg?token=z6LPvn37d5E37hGcTgua&branch=main&status=passed)](https://travis-ci.com/CesiumGS/cesium-native)
 
-## Getting Started
+Currently Cesium Native is used to develop [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal). In the future, we plan for Cesium Native to be a foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles.
+
+![Cesium for Unreal Architecture](./doc/unreal-architecture.png)
+*<p align="center">A high-level architecture of Cesium for Unreal, Cesium Native and Unreal Engine streaming content from Cesium ion.</p>*
+
+
+### :card_file_box:Libraries Overview
+
+| Library | Description |
+| -- | -- |
+| **Cesium3DTiles** | Runtime streaming, decoding, level of detail selection, culling, cache management, and decoding of 3D Tile. |
+| **CesiumAsync** | Classes for multi-threaded asynchronous tasks. |
+| **CesiumGeometry** | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms. |
+| **CesiumGeospatial** | 3D geospatial math types and functions for ellipsoids, transforms, projections. |
+| **CesiumGltf** | Lightweight glTF processing and optimization functions. |
+| **CesiumGltfReader** | glTF serialization and decoding, including glTF extensions including `KHR_draco_mesh_compression`. |
+| **CesiumIonClient** | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
+| **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
+
+
+### :green_book:License
+
+[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium Native is free for both commercial and non-commercial use.
+
+## 💻Developers
+
+### ⭐Prerequisites
+
+* Visual Studio 2017 (or newer), GCC v7.x+, Clang 10+. Other compilers may work but haven't been tested.
+* CMake
+
+### :rocket:Getting Started
+
+#### Clone the repo
 
 Check out the repo with:
 
@@ -21,18 +56,25 @@ If you forget the `--recurse-submodules`, nothing will work because the git subm
 git submodule update --init --recursive
 ```
 
+#### Compile
+
 You can then build cesium-native on the command-line with CMake:
 
 ```bash
-mkdir build
-cmake -B build -S .
+## Windows compilation using Visual Studio
+cmake -B build -S . -G "Visual Studio 15 2017 Win64"
 cmake --build build --config Debug
+cmake --build build --config Release
+
+## Linux compilation
+cmake -B build -S .
+cmake --build build
 ```
 
-Or, you can easily build it in Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2019 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
+Or, you can easily build it in Visual Studio Code with the `CMake Tools` extension installed. It should prompt you to generate project files from CMake. On Windows, choose `Visual Studio 2017 Release - amd64` as the kit to build. Or choose an appropriate kit for your platform. Then press Ctrl-Shift-P and execute the `CMake: Build` task or press F7.
 
-## Building documentation
+#### Generate Documentation
 
-* Install Doxygen.
+* Install [Doxygen](https://www.doxygen.nl/).
 * Run: `cmake --build build --target cesium-native-docs`
 * Open `build/doc/html/index.html`

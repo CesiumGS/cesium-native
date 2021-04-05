@@ -720,7 +720,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -796,7 +795,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -872,7 +870,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -965,7 +962,6 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1060,7 +1056,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1102,7 +1097,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1171,7 +1165,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1257,7 +1250,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1359,7 +1351,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1477,7 +1468,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
@@ -1611,7 +1601,6 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     std::unique_ptr<TileContentLoadResult> loadResult =
         QuantizedMeshContent::load(
             spdlog::default_logger(),
-            context,
             tileID,
             boundingVolume,
             "url",
