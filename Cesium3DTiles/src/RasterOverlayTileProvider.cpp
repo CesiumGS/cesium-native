@@ -469,7 +469,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  std::move(options.credits),
+                  options.credits,
                   {"Image request for " + url + " failed."},
                   {}};
             }
@@ -481,7 +481,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                                     " for " + url;
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  std::move(options.credits),
+                  options.credits,
                   {message},
                   {}};
             }
@@ -490,13 +490,13 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
                     CesiumGltf::ImageCesium(),
-                    std::move(options.credits),
+                    options.credits,
                     {},
                     {}};
               } else {
                 return LoadedRasterOverlayImage{
                     std::nullopt,
-                    std::move(options.credits),
+                    options.credits,
                     {"Image response for " + url + " is empty."},
                     {}};
               }
@@ -515,7 +515,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             return LoadedRasterOverlayImage{
                 loadedImage.image,
-                std::move(options.credits),
+                options.credits,
                 std::move(loadedImage.errors),
                 std::move(loadedImage.warnings)};
           });
