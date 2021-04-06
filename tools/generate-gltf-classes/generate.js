@@ -58,6 +58,8 @@ function generate(options, schema) {
              * @brief ${schema.description}
              */
             struct CESIUMGLTF_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
+                static inline const std::string TypeName = "${name}";
+
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
@@ -101,7 +103,7 @@ function generate(options, schema) {
           struct ${name};
 
           class ${name}JsonHandler : public ${base}JsonHandler {
-          public: 
+          public:
             ${name}JsonHandler(const ReadModelOptions& options) noexcept;
             void reset(IJsonHandler* pHandler, ${name}* pObject);
             ${name}* getObject();
@@ -110,7 +112,7 @@ function generate(options, schema) {
             virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
           protected:
-            IJsonHandler* ${name}Key(const char* str, ${name}& o);
+            IJsonHandler* ${name}Key(const std::string& objectType, const char* str, ${name}& o);
     
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
@@ -178,10 +180,10 @@ function generateReaderOptionsInitializerList(properties, varName) {
 
         IJsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
           assert(this->_pObject);
-          return this->${name}Key(str, *this->_pObject);
+          return this->${name}Key(${name}::TypeName, str, *this->_pObject);
         }
 
-        IJsonHandler* ${name}JsonHandler::${name}Key(const char* str, ${name}& o) {
+        IJsonHandler* ${name}JsonHandler::${name}Key(const std::string& objectType, const char* str, ${name}& o) {
           using namespace std::string_literals;
 
           ${indent(
@@ -191,7 +193,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
             10
           )}
 
-          return this->${base}Key(str, *this->_pObject);
+          return this->${base}Key(objectType, str, *this->_pObject);
         }
 
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}

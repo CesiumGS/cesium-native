@@ -22,7 +22,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* SkinKey(const char* str, Skin& o);
+  IJsonHandler*
+  SkinKey(const std::string& objectType, const char* str, Skin& o);
 
 private:
   Skin* _pObject = nullptr;

@@ -22,8 +22,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler*
-  MaterialNormalTextureInfoKey(const char* str, MaterialNormalTextureInfo& o);
+  IJsonHandler* MaterialNormalTextureInfoKey(
+      const std::string& objectType,
+      const char* str,
+      MaterialNormalTextureInfo& o);
 
 private:
   MaterialNormalTextureInfo* _pObject = nullptr;

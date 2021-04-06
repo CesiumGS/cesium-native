@@ -34,10 +34,13 @@ void AssetJsonHandler::reportWarning(
 IJsonHandler*
 AssetJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->AssetKey(str, *this->_pObject);
+  return this->AssetKey(Asset::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AssetJsonHandler::AssetKey(const char* str, Asset& o) {
+IJsonHandler* AssetJsonHandler::AssetKey(
+    const std::string& objectType,
+    const char* str,
+    Asset& o) {
   using namespace std::string_literals;
 
   if ("copyright"s == str)
@@ -49,5 +52,5 @@ IJsonHandler* AssetJsonHandler::AssetKey(const char* str, Asset& o) {
   if ("minVersion"s == str)
     return property("minVersion", this->_minVersion, o.minVersion);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

@@ -37,7 +37,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* ModelKey(const char* str, Model& o);
+  IJsonHandler*
+  ModelKey(const std::string& objectType, const char* str, Model& o);
 
 private:
   Model* _pObject = nullptr;

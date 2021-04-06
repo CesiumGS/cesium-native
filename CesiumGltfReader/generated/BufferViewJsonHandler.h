@@ -22,7 +22,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* BufferViewKey(const char* str, BufferView& o);
+  IJsonHandler*
+  BufferViewKey(const std::string& objectType, const char* str, BufferView& o);
 
 private:
   BufferView* _pObject = nullptr;

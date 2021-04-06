@@ -22,7 +22,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* SamplerKey(const char* str, Sampler& o);
+  IJsonHandler*
+  SamplerKey(const std::string& objectType, const char* str, Sampler& o);
 
 private:
   Sampler* _pObject = nullptr;

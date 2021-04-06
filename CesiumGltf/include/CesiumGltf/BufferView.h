@@ -12,6 +12,8 @@ namespace CesiumGltf {
  * @brief A view into a buffer generally representing a subset of the buffer.
  */
 struct CESIUMGLTF_API BufferView final : public NamedObject {
+  static inline const std::string TypeName = "BufferView";
+
   /**
    * @brief The target that the GPU buffer should be bound to.
    */

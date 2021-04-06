@@ -39,10 +39,13 @@ void NodeJsonHandler::reportWarning(
 IJsonHandler*
 NodeJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->NodeKey(str, *this->_pObject);
+  return this->NodeKey(Node::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* NodeJsonHandler::NodeKey(const char* str, Node& o) {
+IJsonHandler* NodeJsonHandler::NodeKey(
+    const std::string& objectType,
+    const char* str,
+    Node& o) {
   using namespace std::string_literals;
 
   if ("camera"s == str)
@@ -64,5 +67,5 @@ IJsonHandler* NodeJsonHandler::NodeKey(const char* str, Node& o) {
   if ("weights"s == str)
     return property("weights", this->_weights, o.weights);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

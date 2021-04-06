@@ -21,7 +21,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* CameraOrthographicKey(const char* str, CameraOrthographic& o);
+  IJsonHandler* CameraOrthographicKey(
+      const std::string& objectType,
+      const char* str,
+      CameraOrthographic& o);
 
 private:
   CameraOrthographic* _pObject = nullptr;

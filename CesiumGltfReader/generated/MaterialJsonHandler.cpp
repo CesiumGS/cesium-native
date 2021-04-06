@@ -39,10 +39,13 @@ void MaterialJsonHandler::reportWarning(
 IJsonHandler*
 MaterialJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->MaterialKey(str, *this->_pObject);
+  return this->MaterialKey(Material::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* MaterialJsonHandler::MaterialKey(const char* str, Material& o) {
+IJsonHandler* MaterialJsonHandler::MaterialKey(
+    const std::string& objectType,
+    const char* str,
+    Material& o) {
   using namespace std::string_literals;
 
   if ("pbrMetallicRoughness"s == str)
@@ -71,7 +74,7 @@ IJsonHandler* MaterialJsonHandler::MaterialKey(const char* str, Material& o) {
   if ("doubleSided"s == str)
     return property("doubleSided", this->_doubleSided, o.doubleSided);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }
 
 void MaterialJsonHandler::AlphaModeJsonHandler::reset(

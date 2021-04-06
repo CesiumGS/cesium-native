@@ -23,6 +23,7 @@ public:
 
 protected:
   IJsonHandler* MaterialOcclusionTextureInfoKey(
+      const std::string& objectType,
       const char* str,
       MaterialOcclusionTextureInfo& o);
 

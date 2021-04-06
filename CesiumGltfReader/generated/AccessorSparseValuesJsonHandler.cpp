@@ -39,10 +39,14 @@ IJsonHandler* AccessorSparseValuesJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->AccessorSparseValuesKey(str, *this->_pObject);
+  return this->AccessorSparseValuesKey(
+      AccessorSparseValues::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
+    const std::string& objectType,
     const char* str,
     AccessorSparseValues& o) {
   using namespace std::string_literals;
@@ -52,5 +56,5 @@ IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
   if ("byteOffset"s == str)
     return property("byteOffset", this->_byteOffset, o.byteOffset);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

@@ -23,7 +23,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* ImageKey(const char* str, Image& o);
+  IJsonHandler*
+  ImageKey(const std::string& objectType, const char* str, Image& o);
 
 private:
   class MimeTypeJsonHandler : public JsonHandler {

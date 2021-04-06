@@ -40,10 +40,14 @@ IJsonHandler* AnimationSamplerJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->AnimationSamplerKey(str, *this->_pObject);
+  return this->AnimationSamplerKey(
+      AnimationSampler::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(
+    const std::string& objectType,
     const char* str,
     AnimationSampler& o) {
   using namespace std::string_literals;
@@ -55,7 +59,7 @@ IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(
   if ("output"s == str)
     return property("output", this->_output, o.output);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }
 
 void AnimationSamplerJsonHandler::InterpolationJsonHandler::reset(

@@ -40,10 +40,14 @@ IJsonHandler* AccessorSparseIndicesJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->AccessorSparseIndicesKey(str, *this->_pObject);
+  return this->AccessorSparseIndicesKey(
+      AccessorSparseIndices::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(
+    const std::string& objectType,
     const char* str,
     AccessorSparseIndices& o) {
   using namespace std::string_literals;
@@ -55,5 +59,5 @@ IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(
   if ("componentType"s == str)
     return property("componentType", this->_componentType, o.componentType);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

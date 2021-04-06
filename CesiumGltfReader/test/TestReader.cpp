@@ -1,4 +1,5 @@
 #include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "CesiumGltf/Reader.h"
 #include "catch2/catch.hpp"
 #include <cstddef>
@@ -140,22 +141,74 @@ TEST_CASE("Nested extras serializes properly") {
   CHECK(array[4].getNumber(0.0) == 5.0);
 }
 
-TEST_CASE("Test extensions serialize to JsonVaue iff "
-          "options.deserializeExtensionsAsJsonValue is enabled") {
+TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
+  const std::string s = R"(
+    {
+      "asset": {
+        "version": "2.0"
+      },
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "extensions": {
+                "KHR_draco_mesh_compression": {
+                  "bufferView": 1,
+                  "attributes": {
+                    "POSITION": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  )";
+
+  ReadModelOptions options;
+  ModelReaderResult modelResult = CesiumGltf::readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult.errors.empty());
+  REQUIRE(modelResult.model.has_value());
+
+  Model& model = modelResult.model.value();
+  REQUIRE(model.meshes.size() == 1);
+  REQUIRE(model.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive = model.meshes[0].primitives[0];
+  KHR_draco_mesh_compression* pDraco =
+      primitive.getExtension<KHR_draco_mesh_compression>();
+  REQUIRE(pDraco);
+
+  CHECK(pDraco->bufferView == 1);
+  CHECK(pDraco->attributes.size() == 1);
+
+  REQUIRE(pDraco->attributes.find("POSITION") != pDraco->attributes.end());
+  CHECK(pDraco->attributes.find("POSITION")->second == 0);
+}
+
+TEST_CASE("Extensions deserialize to JsonVaue iff "
+          "a default extension is registered") {
   const std::string s = R"(
     {
         "asset" : {
             "version" : "2.0"
         },
         "extensions": {
-            "A": "Hello World",
-            "B": "Goodbye World"
+            "A": {
+              "test": "Hello World"
+            },
+            "B": {
+              "another": "Goodbye World"
+            }
         }
     }
   )";
 
   ReadModelOptions options;
-  options.deserializeExtensionsAsJsonValue = true;
   ModelReaderResult withCustomExtModel = CesiumGltf::readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
@@ -163,21 +216,24 @@ TEST_CASE("Test extensions serialize to JsonVaue iff "
   REQUIRE(withCustomExtModel.errors.empty());
   REQUIRE(withCustomExtModel.model.has_value());
 
-  auto& oneExtension = withCustomExtModel.model->extensions;
-  REQUIRE(oneExtension.size() == 1);
+  REQUIRE(withCustomExtModel.model->extensions.size() == 2);
 
-  auto& asJsonObject = std::any_cast<JsonValue::Object&>(oneExtension.at(0));
+  JsonValue* pA = withCustomExtModel.model->getGenericExtension("A");
+  JsonValue* pB = withCustomExtModel.model->getGenericExtension("B");
+  REQUIRE(pA != nullptr);
+  REQUIRE(pB != nullptr);
 
-  using namespace std::string_literals;
-  auto A = asJsonObject.find("A");
-  REQUIRE(A != asJsonObject.end());
-  REQUIRE(A->second.getString("") == "Hello World"s);
+  REQUIRE(pA->getValueForKey("test"));
+  REQUIRE(pA->getValueForKey("test")->getString("") == "Hello World");
 
-  auto B = asJsonObject.find("B");
-  REQUIRE(B->second.getString("") == "Goodbye World"s);
+  REQUIRE(pB->getValueForKey("another"));
+  REQUIRE(pB->getValueForKey("another")->getString("") == "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
-  options.deserializeExtensionsAsJsonValue = false;
+  options.pExtensions =
+      std::make_shared<ExtensionRegistry>(*options.pExtensions);
+  options.pExtensions->clearDefault();
+
   ModelReaderResult withoutCustomExt = CesiumGltf::readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);

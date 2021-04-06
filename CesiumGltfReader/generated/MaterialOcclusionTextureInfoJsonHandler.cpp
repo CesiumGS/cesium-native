@@ -39,11 +39,15 @@ IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->MaterialOcclusionTextureInfoKey(str, *this->_pObject);
+  return this->MaterialOcclusionTextureInfoKey(
+      MaterialOcclusionTextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler*
 MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoKey(
+    const std::string& objectType,
     const char* str,
     MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
@@ -51,5 +55,5 @@ MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoKey(
   if ("strength"s == str)
     return property("strength", this->_strength, o.strength);
 
-  return this->TextureInfoKey(str, *this->_pObject);
+  return this->TextureInfoKey(objectType, str, *this->_pObject);
 }

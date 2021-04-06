@@ -44,11 +44,15 @@ IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->MaterialPBRMetallicRoughnessKey(str, *this->_pObject);
+  return this->MaterialPBRMetallicRoughnessKey(
+      MaterialPBRMetallicRoughness::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler*
 MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
+    const std::string& objectType,
     const char* str,
     MaterialPBRMetallicRoughness& o) {
   using namespace std::string_literals;
@@ -76,5 +80,5 @@ MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
         this->_metallicRoughnessTexture,
         o.metallicRoughnessTexture);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

@@ -41,10 +41,14 @@ IJsonHandler* CameraPerspectiveJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->CameraPerspectiveKey(str, *this->_pObject);
+  return this->CameraPerspectiveKey(
+      CameraPerspective::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
+    const std::string& objectType,
     const char* str,
     CameraPerspective& o) {
   using namespace std::string_literals;
@@ -58,5 +62,5 @@ IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
   if ("znear"s == str)
     return property("znear", this->_znear, o.znear);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

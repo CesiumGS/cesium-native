@@ -41,10 +41,14 @@ IJsonHandler* CameraOrthographicJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->CameraOrthographicKey(str, *this->_pObject);
+  return this->CameraOrthographicKey(
+      CameraOrthographic::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
+    const std::string& objectType,
     const char* str,
     CameraOrthographic& o) {
   using namespace std::string_literals;
@@ -58,5 +62,5 @@ IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
   if ("znear"s == str)
     return property("znear", this->_znear, o.znear);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

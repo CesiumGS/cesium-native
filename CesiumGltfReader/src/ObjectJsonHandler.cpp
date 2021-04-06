@@ -30,3 +30,7 @@ IJsonHandler* ObjectJsonHandler::EndSubObject(size_t /*memberCount*/) {
 const char* ObjectJsonHandler::getCurrentKey() const {
   return this->_currentKey;
 }
+
+void ObjectJsonHandler::setCurrentKey(const char* key) {
+  this->_currentKey = key;
+}

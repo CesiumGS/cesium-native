@@ -21,7 +21,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* AssetKey(const char* str, Asset& o);
+  IJsonHandler*
+  AssetKey(const std::string& objectType, const char* str, Asset& o);
 
 private:
   Asset* _pObject = nullptr;

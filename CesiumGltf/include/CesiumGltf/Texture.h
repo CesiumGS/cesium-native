@@ -11,6 +11,7 @@ namespace CesiumGltf {
  * @brief A texture and its sampler.
  */
 struct CESIUMGLTF_API Texture final : public NamedObject {
+  static inline const std::string TypeName = "Texture";
 
   /**
    * @brief The index of the sampler used by this texture. When undefined, a

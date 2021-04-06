@@ -40,10 +40,13 @@ void AccessorJsonHandler::reportWarning(
 IJsonHandler*
 AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->AccessorKey(str, *this->_pObject);
+  return this->AccessorKey(Accessor::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AccessorJsonHandler::AccessorKey(const char* str, Accessor& o) {
+IJsonHandler* AccessorJsonHandler::AccessorKey(
+    const std::string& objectType,
+    const char* str,
+    Accessor& o) {
   using namespace std::string_literals;
 
   if ("bufferView"s == str)
@@ -65,7 +68,7 @@ IJsonHandler* AccessorJsonHandler::AccessorKey(const char* str, Accessor& o) {
   if ("sparse"s == str)
     return property("sparse", this->_sparse, o.sparse);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }
 
 void AccessorJsonHandler::TypeJsonHandler::reset(

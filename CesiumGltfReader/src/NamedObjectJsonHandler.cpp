@@ -15,10 +15,12 @@ void NamedObjectJsonHandler::reset(
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
 }
 
-IJsonHandler*
-NamedObjectJsonHandler::NamedObjectKey(const char* str, NamedObject& o) {
+IJsonHandler* NamedObjectJsonHandler::NamedObjectKey(
+    const std::string& objectType,
+    const char* str,
+    NamedObject& o) {
   using namespace std::string_literals;
   if ("name"s == str)
     return property("name", this->_name, o.name);
-  return this->ExtensibleObjectKey(str, o);
+  return this->ExtensibleObjectKey(objectType, str, o);
 }

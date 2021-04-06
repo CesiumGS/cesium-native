@@ -39,11 +39,15 @@ IJsonHandler* KHR_draco_mesh_compressionJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->KHR_draco_mesh_compressionKey(str, *this->_pObject);
+  return this->KHR_draco_mesh_compressionKey(
+      KHR_draco_mesh_compression::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler*
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
+    const std::string& objectType,
     const char* str,
     KHR_draco_mesh_compression& o) {
   using namespace std::string_literals;
@@ -53,5 +57,5 @@ KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
   if ("attributes"s == str)
     return property("attributes", this->_attributes, o.attributes);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

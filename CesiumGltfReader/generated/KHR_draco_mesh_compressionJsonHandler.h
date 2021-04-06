@@ -24,8 +24,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler*
-  KHR_draco_mesh_compressionKey(const char* str, KHR_draco_mesh_compression& o);
+  IJsonHandler* KHR_draco_mesh_compressionKey(
+      const std::string& objectType,
+      const char* str,
+      KHR_draco_mesh_compression& o);
 
 private:
   KHR_draco_mesh_compression* _pObject = nullptr;

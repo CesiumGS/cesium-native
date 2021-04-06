@@ -34,10 +34,13 @@ void SamplerJsonHandler::reportWarning(
 IJsonHandler*
 SamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->SamplerKey(str, *this->_pObject);
+  return this->SamplerKey(Sampler::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SamplerJsonHandler::SamplerKey(const char* str, Sampler& o) {
+IJsonHandler* SamplerJsonHandler::SamplerKey(
+    const std::string& objectType,
+    const char* str,
+    Sampler& o) {
   using namespace std::string_literals;
 
   if ("magFilter"s == str)
@@ -49,5 +52,5 @@ IJsonHandler* SamplerJsonHandler::SamplerKey(const char* str, Sampler& o) {
   if ("wrapT"s == str)
     return property("wrapT", this->_wrapT, o.wrapT);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

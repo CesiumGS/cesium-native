@@ -23,7 +23,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* AnimationKey(const char* str, Animation& o);
+  IJsonHandler*
+  AnimationKey(const std::string& objectType, const char* str, Animation& o);
 
 private:
   Animation* _pObject = nullptr;

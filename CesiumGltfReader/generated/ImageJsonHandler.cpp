@@ -33,10 +33,13 @@ void ImageJsonHandler::reportWarning(
 IJsonHandler*
 ImageJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->ImageKey(str, *this->_pObject);
+  return this->ImageKey(Image::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ImageJsonHandler::ImageKey(const char* str, Image& o) {
+IJsonHandler* ImageJsonHandler::ImageKey(
+    const std::string& objectType,
+    const char* str,
+    Image& o) {
   using namespace std::string_literals;
 
   if ("uri"s == str)
@@ -46,7 +49,7 @@ IJsonHandler* ImageJsonHandler::ImageKey(const char* str, Image& o) {
   if ("bufferView"s == str)
     return property("bufferView", this->_bufferView, o.bufferView);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }
 
 void ImageJsonHandler::MimeTypeJsonHandler::reset(

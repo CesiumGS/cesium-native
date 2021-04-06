@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DictionaryJsonHandler.h"
+#include "ExtensionsJsonHandler.h"
 #include "JsonObjectJsonHandler.h"
 #include "ObjectJsonHandler.h"
 #include <CesiumGltf/Reader.h>
@@ -14,10 +15,13 @@ public:
 
 protected:
   void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
-  IJsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);
+  IJsonHandler* ExtensibleObjectKey(
+      const std::string& objectType,
+      const char* str,
+      ExtensibleObject& o);
 
 private:
   DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extras;
-  DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extensions;
+  ExtensionsJsonHandler _extensions;
 };
 } // namespace CesiumGltf

@@ -21,7 +21,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* CameraPerspectiveKey(const char* str, CameraPerspective& o);
+  IJsonHandler* CameraPerspectiveKey(
+      const std::string& objectType,
+      const char* str,
+      CameraPerspective& o);
 
 private:
   CameraPerspective* _pObject = nullptr;

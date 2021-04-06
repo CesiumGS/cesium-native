@@ -40,10 +40,14 @@ IJsonHandler* AccessorSparseJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->AccessorSparseKey(str, *this->_pObject);
+  return this->AccessorSparseKey(
+      AccessorSparse::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(
+    const std::string& objectType,
     const char* str,
     AccessorSparse& o) {
   using namespace std::string_literals;
@@ -55,5 +59,5 @@ IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(
   if ("values"s == str)
     return property("values", this->_values, o.values);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

@@ -47,10 +47,13 @@ void ModelJsonHandler::reportWarning(
 IJsonHandler*
 ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->ModelKey(str, *this->_pObject);
+  return this->ModelKey(Model::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ModelJsonHandler::ModelKey(const char* str, Model& o) {
+IJsonHandler* ModelJsonHandler::ModelKey(
+    const std::string& objectType,
+    const char* str,
+    Model& o) {
   using namespace std::string_literals;
 
   if ("extensionsUsed"s == str)
@@ -91,5 +94,5 @@ IJsonHandler* ModelJsonHandler::ModelKey(const char* str, Model& o) {
   if ("textures"s == str)
     return property("textures", this->_textures, o.textures);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }

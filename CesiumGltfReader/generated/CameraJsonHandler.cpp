@@ -33,10 +33,13 @@ void CameraJsonHandler::reportWarning(
 IJsonHandler*
 CameraJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->CameraKey(str, *this->_pObject);
+  return this->CameraKey(Camera::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* CameraJsonHandler::CameraKey(const char* str, Camera& o) {
+IJsonHandler* CameraJsonHandler::CameraKey(
+    const std::string& objectType,
+    const char* str,
+    Camera& o) {
   using namespace std::string_literals;
 
   if ("orthographic"s == str)
@@ -46,7 +49,7 @@ IJsonHandler* CameraJsonHandler::CameraKey(const char* str, Camera& o) {
   if ("type"s == str)
     return property("type", this->_type, o.type);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }
 
 void CameraJsonHandler::TypeJsonHandler::reset(

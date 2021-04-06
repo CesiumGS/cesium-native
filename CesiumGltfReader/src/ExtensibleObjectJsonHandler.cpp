@@ -1,7 +1,9 @@
 #include "ExtensibleObjectJsonHandler.h"
 #include "CesiumGltf/ExtensibleObject.h"
-#include <JsonHandler.h>
-#include <ObjectJsonHandler.h>
+#include "CesiumGltf/Extension.h"
+#include "ExtensionsJsonHandler.h"
+#include "JsonHandler.h"
+#include "ObjectJsonHandler.h"
 
 using namespace CesiumGltf;
 
@@ -16,6 +18,7 @@ void ExtensibleObjectJsonHandler::reset(
 }
 
 IJsonHandler* ExtensibleObjectJsonHandler::ExtensibleObjectKey(
+    const std::string& objectType,
     const char* str,
     ExtensibleObject& o) {
   using namespace std::string_literals;
@@ -23,13 +26,19 @@ IJsonHandler* ExtensibleObjectJsonHandler::ExtensibleObjectKey(
   if ("extras"s == str)
     return property("extras", this->_extras, o.extras);
 
-  if ("extensions"s == str && this->_options.deserializeExtensionsAsJsonValue) {
-    o.extensions.emplace_back(JsonValue::Object());
-    return property(
-        "extensions",
-        this->_extensions,
-        std::any_cast<JsonValue::Object&>(o.extensions.back()));
+  if ("extensions"s == str) {
+    this->_extensions.reset(this, &o, objectType);
+    return &this->_extensions;
   }
+
+  // if ("extensions"s == str &&
+  // this->_options.deserializeExtensionsAsJsonValue) {
+  //   o.extensions.emplace_back(JsonValue::Object());
+  //   return property(
+  //       "extensions",
+  //       this->_extensions,
+  //       std::any_cast<JsonValue::Object&>(o.extensions.back()));
+  // }
 
   return this->ignoreAndContinue();
 }

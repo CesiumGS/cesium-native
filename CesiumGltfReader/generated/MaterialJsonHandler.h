@@ -28,7 +28,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* MaterialKey(const char* str, Material& o);
+  IJsonHandler*
+  MaterialKey(const std::string& objectType, const char* str, Material& o);
 
 private:
   class AlphaModeJsonHandler : public JsonHandler {

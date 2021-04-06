@@ -32,10 +32,13 @@ void MeshJsonHandler::reportWarning(
 IJsonHandler*
 MeshJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->MeshKey(str, *this->_pObject);
+  return this->MeshKey(Mesh::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* MeshJsonHandler::MeshKey(const char* str, Mesh& o) {
+IJsonHandler* MeshJsonHandler::MeshKey(
+    const std::string& objectType,
+    const char* str,
+    Mesh& o) {
   using namespace std::string_literals;
 
   if ("primitives"s == str)
@@ -43,5 +46,5 @@ IJsonHandler* MeshJsonHandler::MeshKey(const char* str, Mesh& o) {
   if ("weights"s == str)
     return property("weights", this->_weights, o.weights);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

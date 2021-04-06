@@ -17,6 +17,8 @@ namespace CesiumGltf {
  * attribute in a buffer.
  */
 struct CESIUMGLTF_API AccessorSpec : public NamedObject {
+  static inline const std::string TypeName = "Accessor";
+
   /**
    * @brief The datatype of components in the attribute.
    *

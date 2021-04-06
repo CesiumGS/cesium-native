@@ -13,6 +13,7 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API KHR_draco_mesh_compression final
     : public ExtensibleObject {
+  static inline const std::string TypeName = "KHR_draco_mesh_compression";
 
   /**
    * @brief The index of the bufferView.

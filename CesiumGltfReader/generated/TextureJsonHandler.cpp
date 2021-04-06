@@ -30,10 +30,13 @@ void TextureJsonHandler::reportWarning(
 IJsonHandler*
 TextureJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->TextureKey(str, *this->_pObject);
+  return this->TextureKey(Texture::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* TextureJsonHandler::TextureKey(const char* str, Texture& o) {
+IJsonHandler* TextureJsonHandler::TextureKey(
+    const std::string& objectType,
+    const char* str,
+    Texture& o) {
   using namespace std::string_literals;
 
   if ("sampler"s == str)
@@ -41,5 +44,5 @@ IJsonHandler* TextureJsonHandler::TextureKey(const char* str, Texture& o) {
   if ("source"s == str)
     return property("source", this->_source, o.source);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

@@ -33,10 +33,13 @@ void SkinJsonHandler::reportWarning(
 IJsonHandler*
 SkinJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->SkinKey(str, *this->_pObject);
+  return this->SkinKey(Skin::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SkinJsonHandler::SkinKey(const char* str, Skin& o) {
+IJsonHandler* SkinJsonHandler::SkinKey(
+    const std::string& objectType,
+    const char* str,
+    Skin& o) {
   using namespace std::string_literals;
 
   if ("inverseBindMatrices"s == str)
@@ -49,5 +52,5 @@ IJsonHandler* SkinJsonHandler::SkinKey(const char* str, Skin& o) {
   if ("joints"s == str)
     return property("joints", this->_joints, o.joints);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

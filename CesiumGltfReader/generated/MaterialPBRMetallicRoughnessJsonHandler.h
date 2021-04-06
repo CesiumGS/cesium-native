@@ -26,6 +26,7 @@ public:
 
 protected:
   IJsonHandler* MaterialPBRMetallicRoughnessKey(
+      const std::string& objectType,
       const char* str,
       MaterialPBRMetallicRoughness& o);
 

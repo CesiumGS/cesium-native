@@ -36,11 +36,13 @@ void BufferViewJsonHandler::reportWarning(
 IJsonHandler*
 BufferViewJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->BufferViewKey(str, *this->_pObject);
+  return this->BufferViewKey(BufferView::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler*
-BufferViewJsonHandler::BufferViewKey(const char* str, BufferView& o) {
+IJsonHandler* BufferViewJsonHandler::BufferViewKey(
+    const std::string& objectType,
+    const char* str,
+    BufferView& o) {
   using namespace std::string_literals;
 
   if ("buffer"s == str)
@@ -54,5 +56,5 @@ BufferViewJsonHandler::BufferViewKey(const char* str, BufferView& o) {
   if ("target"s == str)
     return property("target", this->_target, o.target);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

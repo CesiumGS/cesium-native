@@ -22,7 +22,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* SceneKey(const char* str, Scene& o);
+  IJsonHandler*
+  SceneKey(const std::string& objectType, const char* str, Scene& o);
 
 private:
   Scene* _pObject = nullptr;

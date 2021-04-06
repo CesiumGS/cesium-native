@@ -13,6 +13,7 @@ namespace CesiumGltf {
  * `accessor.sparse.indices`.
  */
 struct CESIUMGLTF_API AccessorSparseValues final : public ExtensibleObject {
+  static inline const std::string TypeName = "AccessorSparseValues";
 
   /**
    * @brief The index of the bufferView with sparse values. Referenced

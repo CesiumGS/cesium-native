@@ -37,11 +37,15 @@ IJsonHandler* MaterialNormalTextureInfoJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->MaterialNormalTextureInfoKey(str, *this->_pObject);
+  return this->MaterialNormalTextureInfoKey(
+      MaterialNormalTextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler*
 MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoKey(
+    const std::string& objectType,
     const char* str,
     MaterialNormalTextureInfo& o) {
   using namespace std::string_literals;
@@ -49,5 +53,5 @@ MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoKey(
   if ("scale"s == str)
     return property("scale", this->_scale, o.scale);
 
-  return this->TextureInfoKey(str, *this->_pObject);
+  return this->TextureInfoKey(objectType, str, *this->_pObject);
 }

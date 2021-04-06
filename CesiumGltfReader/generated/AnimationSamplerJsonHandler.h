@@ -22,7 +22,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* AnimationSamplerKey(const char* str, AnimationSampler& o);
+  IJsonHandler* AnimationSamplerKey(
+      const std::string& objectType,
+      const char* str,
+      AnimationSampler& o);
 
 private:
   class InterpolationJsonHandler : public JsonHandler {

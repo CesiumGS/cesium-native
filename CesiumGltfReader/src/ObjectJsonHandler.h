@@ -33,6 +33,9 @@ protected:
 
   const char* getCurrentKey() const;
 
+protected:
+  void setCurrentKey(const char* key);
+
 private:
   template <typename T> struct isOptional {
     static constexpr bool value = false;

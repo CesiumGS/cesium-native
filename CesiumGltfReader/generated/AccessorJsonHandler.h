@@ -26,7 +26,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* AccessorKey(const char* str, Accessor& o);
+  IJsonHandler*
+  AccessorKey(const std::string& objectType, const char* str, Accessor& o);
 
 private:
   class TypeJsonHandler : public JsonHandler {

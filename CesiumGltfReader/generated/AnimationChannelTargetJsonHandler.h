@@ -22,8 +22,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler*
-  AnimationChannelTargetKey(const char* str, AnimationChannelTarget& o);
+  IJsonHandler* AnimationChannelTargetKey(
+      const std::string& objectType,
+      const char* str,
+      AnimationChannelTarget& o);
 
 private:
   class PathJsonHandler : public JsonHandler {

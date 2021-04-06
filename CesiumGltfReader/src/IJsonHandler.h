@@ -7,6 +7,7 @@
 namespace CesiumGltf {
 class IJsonHandler {
 public:
+  virtual ~IJsonHandler(){};
   virtual IJsonHandler* Null() = 0;
   virtual IJsonHandler* Bool(bool b) = 0;
   virtual IJsonHandler* Int(int i) = 0;

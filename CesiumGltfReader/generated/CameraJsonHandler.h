@@ -23,7 +23,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* CameraKey(const char* str, Camera& o);
+  IJsonHandler*
+  CameraKey(const std::string& objectType, const char* str, Camera& o);
 
 private:
   class TypeJsonHandler : public JsonHandler {

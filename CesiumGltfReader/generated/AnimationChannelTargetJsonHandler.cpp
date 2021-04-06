@@ -37,10 +37,14 @@ IJsonHandler* AnimationChannelTargetJsonHandler::Key(
     size_t /*length*/,
     bool /*copy*/) {
   assert(this->_pObject);
-  return this->AnimationChannelTargetKey(str, *this->_pObject);
+  return this->AnimationChannelTargetKey(
+      AnimationChannelTarget::TypeName,
+      str,
+      *this->_pObject);
 }
 
 IJsonHandler* AnimationChannelTargetJsonHandler::AnimationChannelTargetKey(
+    const std::string& objectType,
     const char* str,
     AnimationChannelTarget& o) {
   using namespace std::string_literals;
@@ -50,7 +54,7 @@ IJsonHandler* AnimationChannelTargetJsonHandler::AnimationChannelTargetKey(
   if ("path"s == str)
     return property("path", this->_path, o.path);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
 }
 
 void AnimationChannelTargetJsonHandler::PathJsonHandler::reset(

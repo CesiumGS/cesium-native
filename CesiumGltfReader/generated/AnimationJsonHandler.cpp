@@ -31,11 +31,13 @@ void AnimationJsonHandler::reportWarning(
 IJsonHandler*
 AnimationJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->AnimationKey(str, *this->_pObject);
+  return this->AnimationKey(Animation::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler*
-AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
+IJsonHandler* AnimationJsonHandler::AnimationKey(
+    const std::string& objectType,
+    const char* str,
+    Animation& o) {
   using namespace std::string_literals;
 
   if ("channels"s == str)
@@ -43,5 +45,5 @@ AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
   if ("samplers"s == str)
     return property("samplers", this->_samplers, o.samplers);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }

@@ -23,7 +23,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* MeshKey(const char* str, Mesh& o);
+  IJsonHandler*
+  MeshKey(const std::string& objectType, const char* str, Mesh& o);
 
 private:
   Mesh* _pObject = nullptr;

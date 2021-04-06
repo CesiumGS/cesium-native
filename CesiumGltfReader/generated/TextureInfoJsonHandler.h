@@ -21,7 +21,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* TextureInfoKey(const char* str, TextureInfo& o);
+  IJsonHandler* TextureInfoKey(
+      const std::string& objectType,
+      const char* str,
+      TextureInfo& o);
 
 private:
   TextureInfo* _pObject = nullptr;

@@ -23,7 +23,8 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler* NodeKey(const char* str, Node& o);
+  IJsonHandler*
+  NodeKey(const std::string& objectType, const char* str, Node& o);
 
 private:
   Node* _pObject = nullptr;

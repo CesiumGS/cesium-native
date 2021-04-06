@@ -1,8 +1,8 @@
 #pragma once
 
+#include "CesiumGltf/ReadModelOptions.h"
 #include "IJsonHandler.h"
 #include "IgnoreValueJsonHandler.h"
-#include <CesiumGltf/Reader.h>
 #include <cstdint>
 #include <string>
 
@@ -48,7 +48,7 @@ protected:
   IJsonHandler* ignoreAndContinue();
 
 protected:
-  const ReadModelOptions _options;
+  const ReadModelOptions& _options;
 
 private:
   IJsonHandler* _pParent = nullptr;

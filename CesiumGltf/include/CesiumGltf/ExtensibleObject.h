@@ -3,6 +3,7 @@
 #include "CesiumGltf/JsonValue.h"
 #include "CesiumGltf/Library.h"
 #include <any>
+#include <unordered_map>
 #include <vector>
 
 namespace CesiumGltf {
@@ -10,8 +11,6 @@ namespace CesiumGltf {
  * @brief The base class for objects in a glTF that have extensions and extras.
  */
 struct CESIUMGLTF_API ExtensibleObject {
-  // TODO: extras
-
   /**
    * @brief Gets an extension given its static type.
    *
@@ -20,13 +19,12 @@ struct CESIUMGLTF_API ExtensibleObject {
    * attached to this object.
    */
   template <typename T> const T* getExtension() const noexcept {
-    for (const std::any& extension : extensions) {
-      const T* p = std::any_cast<T>(&extension);
-      if (p) {
-        return p;
-      }
+    auto it = this->extensions.find(T::TypeName);
+    if (it == this->extensions.end()) {
+      return nullptr;
     }
-    return nullptr;
+
+    return std::any_cast<T>(&it->second);
   }
 
   /** @copydoc ExtensibleObject::getExtension */
@@ -35,13 +33,19 @@ struct CESIUMGLTF_API ExtensibleObject {
         const_cast<const ExtensibleObject*>(this)->getExtension<T>());
   }
 
+  JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
+
+  const JsonValue*
+  getGenericExtension(const std::string& extensionName) const noexcept;
+
   /**
    * @brief The extensions attached to this object.
    *
    * Use {@link getExtension} to get the extension with a particular static
-   * type.
+   * type. Use {@link getGenericExtension} to get unknowns extensions as a
+   * generic {@link JsonValue}.
    */
-  std::vector<std::any> extensions;
+  std::unordered_map<std::string, std::any> extensions;
 
   /**
    * @brief Application-specific data.

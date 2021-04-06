@@ -12,6 +12,7 @@ namespace CesiumGltf {
  * projection matrix.
  */
 struct CESIUMGLTF_API CameraPerspective final : public ExtensibleObject {
+  static inline const std::string TypeName = "CameraPerspective";
 
   /**
    * @brief The floating-point aspect ratio of the field of view.

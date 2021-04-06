@@ -16,6 +16,8 @@ namespace CesiumGltf {
  * @brief The material appearance of a primitive.
  */
 struct CESIUMGLTF_API Material final : public NamedObject {
+  static inline const std::string TypeName = "Material";
+
   /**
    * @brief The alpha rendering mode of the material.
    *

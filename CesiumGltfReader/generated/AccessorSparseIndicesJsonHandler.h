@@ -22,8 +22,10 @@ public:
   virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
 
 protected:
-  IJsonHandler*
-  AccessorSparseIndicesKey(const char* str, AccessorSparseIndices& o);
+  IJsonHandler* AccessorSparseIndicesKey(
+      const std::string& objectType,
+      const char* str,
+      AccessorSparseIndices& o);
 
 private:
   AccessorSparseIndices* _pObject = nullptr;

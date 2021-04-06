@@ -5,20 +5,21 @@ function createExtensionsProperty(extensions, name, schema) {
         return undefined;
     }
 
-    return {
-        name: "extensions",
-        headers: [],
-        readerHeaders: extensions.map(extension => `"${extension.className}JsonHandler.h"`),
-        readerHeadersImpl: extensions.map(extension => `"CesiumGltf/${extension.className}.h"`),
-        type: undefined,
-        readerType: "ExtensionsJsonHandler",
-        schemas: [],
-        localTypes: [],
-        readerLocalTypes: [createExtensionType(extensions)],
-        readerLocalTypesImpl: [createExtensionTypeImpl(name, extensions)],
-        briefDoc: undefined,
-        fullDoc: undefined
-    };
+    return undefined;
+    // return {
+    //     name: "extensions",
+    //     headers: [],
+    //     readerHeaders: extensions.map(extension => `"${extension.className}JsonHandler.h"`),
+    //     readerHeadersImpl: extensions.map(extension => `"CesiumGltf/${extension.className}.h"`),
+    //     type: undefined,
+    //     readerType: "ExtensionsJsonHandler",
+    //     schemas: [],
+    //     localTypes: [],
+    //     readerLocalTypes: [createExtensionType(extensions)],
+    //     readerLocalTypesImpl: [createExtensionTypeImpl(name, extensions)],
+    //     briefDoc: undefined,
+    //     fullDoc: undefined
+    // };
 }
 
 function generateExtensionInitializerLists(extensions, varName) {

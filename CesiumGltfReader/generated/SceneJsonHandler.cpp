@@ -30,14 +30,17 @@ void SceneJsonHandler::reportWarning(
 IJsonHandler*
 SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
   assert(this->_pObject);
-  return this->SceneKey(str, *this->_pObject);
+  return this->SceneKey(Scene::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SceneJsonHandler::SceneKey(const char* str, Scene& o) {
+IJsonHandler* SceneJsonHandler::SceneKey(
+    const std::string& objectType,
+    const char* str,
+    Scene& o) {
   using namespace std::string_literals;
 
   if ("nodes"s == str)
     return property("nodes", this->_nodes, o.nodes);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->NamedObjectKey(objectType, str, *this->_pObject);
 }
