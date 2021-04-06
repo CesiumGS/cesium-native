@@ -1,5 +1,5 @@
 #include "CesiumGltf/Reader.h"
-#include "CesiumGltf/JsonHandler.h"
+#include "CesiumGltf/JsonReader.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"

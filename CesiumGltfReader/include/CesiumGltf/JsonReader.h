@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/IJsonHandler.h"
+#include "CesiumGltf/IJsonReader.h"
 #include "CesiumGltf/ReadModelOptions.h"
 #include "IgnoreValueJsonHandler.h"
 #include <cstdint>

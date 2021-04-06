@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/JsonHandler.h"
+#include "CesiumGltf/JsonReader.h"
 #include "CesiumGltf/Reader.h"
 
 namespace CesiumGltf {

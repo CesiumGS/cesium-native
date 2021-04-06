@@ -1,5 +1,5 @@
 #include "StringJsonHandler.h"
-#include "CesiumGltf/JsonHandler.h"
+#include "CesiumGltf/JsonReader.h"
 
 using namespace CesiumGltf;
 StringJsonHandler::StringJsonHandler(const ReadModelOptions& options) noexcept

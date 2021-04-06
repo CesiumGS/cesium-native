@@ -1,5 +1,5 @@
 #include "BoolJsonHandler.h"
-#include "CesiumGltf/JsonHandler.h"
+#include "CesiumGltf/JsonReader.h"
 #include <cassert>
 
 using namespace CesiumGltf;
