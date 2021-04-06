@@ -464,7 +464,8 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [url, options = options](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+          [url, options = options](
+              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
