@@ -95,8 +95,8 @@ CachingAssetAccessor::CachingAssetAccessor(
     : _requestsPerCachePrune(requestsPerCachePrune),
       _requestSinceLastPrune(0),
       _pLogger(pLogger),
-      _pAssetAccessor(std::move(pAssetAccessor)),
-      _pCacheDatabase(std::move(pCacheDatabase)) {}
+      _pAssetAccessor(pAssetAccessor),
+      _pCacheDatabase(pCacheDatabase) {}
 
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 

@@ -2,6 +2,7 @@
 #include "CesiumGltf/Reader.h"
 #include "catch2/catch.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <glm/vec3.hpp>
@@ -98,4 +99,44 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[0] == glm::vec3(0.0, 0.0, 0.0));
   CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
+}
+
+TEST_CASE("Nested extras serializes properly") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "1.1"
+        },
+        "extras": {
+            "A": "Hello World",
+            "B": 1234567,
+            "C": {
+                "C1": {},
+                "C2": [1,2,3,4,5]
+            }
+        }
+    }
+  )";
+
+  ModelReaderResult result = CesiumGltf::readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.model.has_value());
+
+  Model& model = result.model.value();
+  auto cit = model.extras.find("C");
+  REQUIRE(cit != model.extras.end());
+
+  JsonValue* pC2 = cit->second.getValuePtrForKey("C2");
+  REQUIRE(pC2 != nullptr);
+
+  CHECK(pC2->isArray());
+  std::vector<JsonValue>& array = std::get<std::vector<JsonValue>>(pC2->value);
+  CHECK(array.size() == 5);
+  CHECK(array[0].getSafeNumber<double>() == 1.0);
+  CHECK(array[1].getSafeNumber<std::uint64_t>() == 2);
+  CHECK(array[2].getSafeNumber<std::uint8_t>() == 3);
+  CHECK(array[3].getSafeNumber<std::int16_t>() == 4);
+  CHECK(array[4].getSafeNumber<std::int32_t>() == 5);
 }

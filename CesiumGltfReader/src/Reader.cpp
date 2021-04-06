@@ -5,7 +5,9 @@
 #include "decodeDraco.h"
 #include <algorithm>
 #include <cstddef>
+#include <iomanip>
 #include <rapidjson/reader.h>
+#include <sstream>
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -179,6 +181,28 @@ ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data) {
   return result;
 }
 
+namespace {
+/**
+ * @brief Creates a string representation for the given magic value.
+ *
+ * The details are not specified, but the output will include a
+ * hex representation of the given value, as well as the result
+ * of interpreting the value as 4 unsigned characters.
+ *
+ * @param i The value
+ * @return The string
+ */
+std::string toMagicString(uint32_t i) {
+  unsigned char c0 = static_cast<unsigned char>(i & 0xFF);
+  unsigned char c1 = static_cast<unsigned char>((i >> 8) & 0xFF);
+  unsigned char c2 = static_cast<unsigned char>((i >> 16) & 0xFF);
+  unsigned char c3 = static_cast<unsigned char>((i >> 24) & 0xFF);
+  std::stringstream stream;
+  stream << c0 << c1 << c2 << c3 << " (0x" << std::hex << i << ")";
+  return stream.str();
+}
+} // namespace
+
 ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
@@ -188,16 +212,26 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
   if (pHeader->magic != 0x46546C67) {
     return {
         std::nullopt,
-        {"GLB does not start with the expected magic value 'glTF'."},
+        {"GLB does not start with the expected magic value 'glTF', but " +
+         toMagicString(pHeader->magic)},
         {}};
   }
 
   if (pHeader->version != 2) {
-    return {std::nullopt, {"Only binary glTF version 2 is supported."}, {}};
+    return {
+        std::nullopt,
+        {"Only binary glTF version 2 is supported, found version " +
+         std::to_string(pHeader->version)},
+        {}};
   }
 
   if (pHeader->length > data.size()) {
-    return {std::nullopt, {"GLB extends past the end of the buffer."}, {}};
+    return {
+        std::nullopt,
+        {"GLB extends past the end of the buffer, header size " +
+         std::to_string(pHeader->length) + ", data size " +
+         std::to_string(data.size())},
+        {}};
   }
 
   gsl::span<const std::byte> glbData = data.subspan(0, pHeader->length);
@@ -207,7 +241,8 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
   if (pJsonChunkHeader->chunkType != 0x4E4F534A) {
     return {
         std::nullopt,
-        {"GLB JSON chunk does not have the expected chunkType."},
+        {"GLB JSON chunk does not have the expected chunkType 'JSON', but " +
+         toMagicString(pJsonChunkHeader->chunkType)},
         {}};
   }
 
@@ -217,7 +252,9 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
   if (jsonEnd > glbData.size()) {
     return {
         std::nullopt,
-        {"GLB JSON chunk extends past the end of the buffer."},
+        {"GLB JSON chunk extends past the end of the buffer, JSON end at " +
+         std::to_string(jsonEnd) + ", data size " +
+         std::to_string(glbData.size())},
         {}};
   }
 
@@ -231,7 +268,8 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
     if (pBinaryChunkHeader->chunkType != 0x004E4942) {
       return {
           std::nullopt,
-          {"GLB binary chunk does not have the expected chunkType."},
+          {"GLB binary chunk does not have the expected chunkType 'BIN', but " +
+           toMagicString(pBinaryChunkHeader->chunkType)},
           {}};
     }
 
@@ -241,7 +279,10 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
     if (binaryEnd > glbData.size()) {
       return {
           std::nullopt,
-          {"GLB binary chunk extends past the end of the buffer."},
+          {"GLB binary chunk extends past the end of the buffer, binary end "
+           "at " +
+           std::to_string(binaryEnd) + ", data size " +
+           std::to_string(glbData.size())},
           {}};
     }
 
@@ -300,7 +341,12 @@ void postprocess(
       if (bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
         readModel.warnings.emplace_back(
-            "Image bufferView's byteLength is more than the available bytes.");
+            "Image bufferView's byte offset is " +
+            std::to_string(bufferView.byteOffset) + " and the byteLength is " +
+            std::to_string(bufferView.byteLength) + ", the result is " +
+            std::to_string(bufferView.byteOffset + bufferView.byteLength) +
+            ", which is more than the available " +
+            std::to_string(buffer.cesium.data.size()) + " bytes.");
         continue;
       }
 

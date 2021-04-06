@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/RasterOverlayCutoutCollection.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include <functional>
 #include <memory>
@@ -72,19 +71,6 @@ public:
   /** @copydoc getPlaceholder */
   const RasterOverlayTileProvider* getPlaceholder() const noexcept {
     return this->_pPlaceholder.get();
-  }
-
-  /**
-   * @brief Get a collection containing the sections of this overlay and its
-   * associated tileset that are not rendered.
-   */
-  RasterOverlayCutoutCollection& getCutouts() noexcept {
-    return this->_cutouts;
-  }
-
-  /** @copydoc getCutouts */
-  const RasterOverlayCutoutCollection& getCutouts() const noexcept {
-    return this->_cutouts;
   }
 
   /**
@@ -167,7 +153,6 @@ public:
 private:
   std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
   std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;
-  RasterOverlayCutoutCollection _cutouts;
   std::unique_ptr<RasterOverlay> _pSelf;
   bool _isLoadingTileProvider;
   RasterOverlayOptions _options;

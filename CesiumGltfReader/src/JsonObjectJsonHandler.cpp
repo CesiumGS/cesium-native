@@ -114,10 +114,17 @@ IJsonHandler* JsonObjectJsonHandler::StartArray() {
 }
 
 IJsonHandler* JsonObjectJsonHandler::EndArray(size_t /* elementCount */) {
-  return this->doneElement();
+  this->_stack.pop_back();
+  return this->_stack.empty() ? this->parent() : this;
 }
 
 IJsonHandler* JsonObjectJsonHandler::doneElement() {
-  this->_stack.pop_back();
-  return this->_stack.empty() ? this->parent() : this;
+  JsonValue& current = *this->_stack.back();
+  JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
+  if (!pArray) {
+    this->_stack.pop_back();
+    return this->_stack.empty() ? this->parent() : this;
+  } else {
+    return this;
+  }
 }
