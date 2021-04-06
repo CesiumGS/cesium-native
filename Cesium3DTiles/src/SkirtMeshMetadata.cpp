@@ -40,7 +40,7 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
   skirtMeshMetadata.noSkirtIndicesCount =
       static_cast<uint32_t>(noSkirtIndicesCount);
 
-  const auto pMeshCenter =
+  const auto* pMeshCenter =
       gltfSkirtMeshMetadata.getValuePtrForKey<JsonValue::Array>("meshCenter");
   if (!pMeshCenter || pMeshCenter->size() != 3) {
     return std::nullopt;
