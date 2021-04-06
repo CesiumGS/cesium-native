@@ -27,8 +27,10 @@ void BufferJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-BufferJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* BufferJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->BufferKey(Buffer::TypeName, str, *this->_pObject);
 }

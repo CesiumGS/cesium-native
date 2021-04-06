@@ -20,62 +20,64 @@ public:
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonHandler* Null() override {
-    return this->invalid("A null")->Null();
+  virtual IJsonHandler* readNull() override {
+    return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonHandler* Bool(bool b) override {
-    return this->invalid("A boolean")->Bool(b);
+  virtual IJsonHandler* readBool(bool b) override {
+    return this->invalid("A boolean")->readBool(b);
   }
 
-  virtual IJsonHandler* Int(int i) override {
-    return this->invalid("An integer")->Int(i);
+  virtual IJsonHandler* readInt32(int i) override {
+    return this->invalid("An integer")->readInt32(i);
   }
 
-  virtual IJsonHandler* Uint(unsigned i) override {
-    return this->invalid("An integer")->Uint(i);
+  virtual IJsonHandler* readUint32(unsigned i) override {
+    return this->invalid("An integer")->readUint32(i);
   }
 
-  virtual IJsonHandler* Int64(int64_t i) override {
-    return this->invalid("An integer")->Int64(i);
+  virtual IJsonHandler* readInt64(int64_t i) override {
+    return this->invalid("An integer")->readInt64(i);
   }
 
-  virtual IJsonHandler* Uint64(uint64_t i) override {
-    return this->invalid("An integer")->Uint64(i);
+  virtual IJsonHandler* readUint64(uint64_t i) override {
+    return this->invalid("An integer")->readUint64(i);
   }
 
-  virtual IJsonHandler* Double(double d) override {
-    return this->invalid("A double (floating-point)")->Double(d);
+  virtual IJsonHandler* readDouble(double d) override {
+    return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
   virtual IJsonHandler*
-  String(const char* str, size_t length, bool copy) override {
-    return this->invalid("A string")->String(str, length, copy);
+  readString(const char* str, size_t length, bool copy) override {
+    return this->invalid("A string")->readString(str, length, copy);
   }
 
-  virtual IJsonHandler* StartObject() override {
+  virtual IJsonHandler* readObjectStart() override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An object")->StartObject();
+      return this->invalid("An object")->readObjectStart();
     }
 
     assert(this->_pArray);
     T& o = this->_pArray->emplace_back();
     this->_objectHandler.reset(this, &o);
-    return this->_objectHandler.StartObject();
+    return this->_objectHandler.readObjectStart();
   }
 
-  virtual IJsonHandler*
-  Key(const char* /*str*/, size_t /*length*/, bool /*copy*/) override {
+  virtual IJsonHandler* readObjectKey(
+      const char* /*str*/,
+      size_t /*length*/,
+      bool /*copy*/) override {
     return nullptr;
   }
 
-  virtual IJsonHandler* EndObject(size_t /*memberCount*/) override {
+  virtual IJsonHandler* readObjectEnd(size_t /*memberCount*/) override {
     return nullptr;
   }
 
-  virtual IJsonHandler* StartArray() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
-      return this->invalid("An array")->StartArray();
+      return this->invalid("An array")->readArrayStart();
     }
 
     this->_arrayIsOpen = true;
@@ -83,7 +85,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* EndArray(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -124,17 +126,17 @@ public:
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonHandler* Null() override {
-    return this->invalid("A null")->Null();
+  virtual IJsonHandler* readNull() override {
+    return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonHandler* Bool(bool b) override {
-    return this->invalid("A bool")->Bool(b);
+  virtual IJsonHandler* readBool(bool b) override {
+    return this->invalid("A bool")->readBool(b);
   }
 
-  virtual IJsonHandler* Int(int i) override {
+  virtual IJsonHandler* readInt32(int i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Int(i);
+      return this->invalid("An integer")->readInt32(i);
     }
 
     assert(this->_pArray);
@@ -142,9 +144,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Uint(unsigned i) override {
+  virtual IJsonHandler* readUint32(unsigned i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Uint(i);
+      return this->invalid("An integer")->readUint32(i);
     }
 
     assert(this->_pArray);
@@ -152,9 +154,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Int64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Int64(i);
+      return this->invalid("An integer")->readInt64(i);
     }
 
     assert(this->_pArray);
@@ -162,9 +164,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Uint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Uint64(i);
+      return this->invalid("An integer")->readUint64(i);
     }
 
     assert(this->_pArray);
@@ -172,9 +174,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Double(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Double(d);
+      return this->invalid("An integer")->readDouble(d);
     }
 
     assert(this->_pArray);
@@ -183,17 +185,17 @@ public:
   }
 
   virtual IJsonHandler*
-  String(const char* str, size_t length, bool copy) override {
-    return this->invalid("A string")->String(str, length, copy);
+  readString(const char* str, size_t length, bool copy) override {
+    return this->invalid("A string")->readString(str, length, copy);
   }
 
-  virtual IJsonHandler* StartObject() override {
-    return this->invalid("An object")->StartObject();
+  virtual IJsonHandler* readObjectStart() override {
+    return this->invalid("An object")->readObjectStart();
   }
 
-  virtual IJsonHandler* StartArray() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
-      return this->invalid("An array")->StartArray();
+      return this->invalid("An array")->readArrayStart();
     }
 
     this->_arrayIsOpen = true;
@@ -201,7 +203,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* EndArray(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -241,17 +243,17 @@ public:
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonHandler* Null() override {
-    return this->invalid("A null")->Null();
+  virtual IJsonHandler* readNull() override {
+    return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonHandler* Bool(bool b) override {
-    return this->invalid("A null")->Bool(b);
+  virtual IJsonHandler* readBool(bool b) override {
+    return this->invalid("A null")->readBool(b);
   }
 
-  virtual IJsonHandler* Int(int i) override {
+  virtual IJsonHandler* readInt32(int i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Int(i);
+      return this->invalid("An integer")->readInt32(i);
     }
 
     assert(this->_pArray);
@@ -259,9 +261,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Uint(unsigned i) override {
+  virtual IJsonHandler* readUint32(unsigned i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Uint(i);
+      return this->invalid("An integer")->readUint32(i);
     }
 
     assert(this->_pArray);
@@ -269,9 +271,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Int64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Int64(i);
+      return this->invalid("An integer")->readInt64(i);
     }
 
     assert(this->_pArray);
@@ -279,9 +281,9 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Uint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->Uint64(i);
+      return this->invalid("An integer")->readUint64(i);
     }
 
     assert(this->_pArray);
@@ -289,22 +291,22 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* Double(double d) override {
-    return this->invalid("A double (floating-point)")->Double(d);
+  virtual IJsonHandler* readDouble(double d) override {
+    return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
   virtual IJsonHandler*
-  String(const char* str, size_t length, bool copy) override {
-    return this->invalid("A string")->String(str, length, copy);
+  readString(const char* str, size_t length, bool copy) override {
+    return this->invalid("A string")->readString(str, length, copy);
   }
 
-  virtual IJsonHandler* StartObject() override {
-    return this->invalid("An object")->StartObject();
+  virtual IJsonHandler* readObjectStart() override {
+    return this->invalid("An object")->readObjectStart();
   }
 
-  virtual IJsonHandler* StartArray() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
-      return this->invalid("An array")->StartArray();
+      return this->invalid("An array")->readArrayStart();
     }
 
     this->_arrayIsOpen = true;
@@ -312,7 +314,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* EndArray(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -352,41 +354,41 @@ public:
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonHandler* Null() override {
-    return this->invalid("A null")->Null();
+  virtual IJsonHandler* readNull() override {
+    return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonHandler* Bool(bool b) override {
-    return this->invalid("A bool")->Bool(b);
+  virtual IJsonHandler* readBool(bool b) override {
+    return this->invalid("A bool")->readBool(b);
   }
 
-  virtual IJsonHandler* Int(int i) override {
-    return this->invalid("An integer")->Int(i);
+  virtual IJsonHandler* readInt32(int i) override {
+    return this->invalid("An integer")->readInt32(i);
   }
 
-  virtual IJsonHandler* Uint(unsigned i) override {
-    return this->invalid("An integer")->Uint(i);
+  virtual IJsonHandler* readUint32(unsigned i) override {
+    return this->invalid("An integer")->readUint32(i);
   }
 
-  virtual IJsonHandler* Int64(int64_t i) override {
-    return this->invalid("An integer")->Int64(i);
+  virtual IJsonHandler* readInt64(int64_t i) override {
+    return this->invalid("An integer")->readInt64(i);
   }
 
-  virtual IJsonHandler* Uint64(uint64_t i) override {
-    return this->invalid("An integer")->Uint64(i);
+  virtual IJsonHandler* readUint64(uint64_t i) override {
+    return this->invalid("An integer")->readUint64(i);
   }
 
-  virtual IJsonHandler* Double(double d) override {
-    return this->invalid("A double (floating-point)")->Double(d);
+  virtual IJsonHandler* readDouble(double d) override {
+    return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
-  virtual IJsonHandler* StartObject() override {
-    return this->invalid("An object")->StartObject();
+  virtual IJsonHandler* readObjectStart() override {
+    return this->invalid("An object")->readObjectStart();
   }
 
-  virtual IJsonHandler* StartArray() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
-      return this->invalid("An array")->StartArray();
+      return this->invalid("An array")->readArrayStart();
     }
 
     this->_arrayIsOpen = true;
@@ -394,12 +396,12 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* EndArray(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
 
   virtual IJsonHandler*
-  String(const char* str, size_t length, bool copy) override {
+  readString(const char* str, size_t length, bool copy) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("A string")->String(str, length, copy);
+      return this->invalid("A string")->readString(str, length, copy);
     }
 
     assert(this->_pArray);

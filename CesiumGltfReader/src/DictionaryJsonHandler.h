@@ -26,7 +26,7 @@ public:
   }
 
   virtual IJsonHandler*
-  Key(const char* str, size_t /*length*/, bool /*copy*/) override {
+  readObjectKey(const char* str, size_t /*length*/, bool /*copy*/) override {
     assert(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {

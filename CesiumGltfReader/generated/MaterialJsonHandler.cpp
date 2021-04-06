@@ -36,8 +36,10 @@ void MaterialJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-MaterialJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* MaterialJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->MaterialKey(Material::TypeName, str, *this->_pObject);
 }
@@ -84,7 +86,7 @@ void MaterialJsonHandler::AlphaModeJsonHandler::reset(
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* MaterialJsonHandler::AlphaModeJsonHandler::String(
+IJsonHandler* MaterialJsonHandler::AlphaModeJsonHandler::readString(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

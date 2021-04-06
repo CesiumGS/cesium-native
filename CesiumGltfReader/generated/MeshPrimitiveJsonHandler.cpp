@@ -35,7 +35,7 @@ void MeshPrimitiveJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MeshPrimitiveJsonHandler::Key(
+IJsonHandler* MeshPrimitiveJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

@@ -8,21 +8,21 @@ namespace CesiumGltf {
 class IJsonHandler {
 public:
   virtual ~IJsonHandler(){};
-  virtual IJsonHandler* Null() = 0;
-  virtual IJsonHandler* Bool(bool b) = 0;
-  virtual IJsonHandler* Int(int i) = 0;
-  virtual IJsonHandler* Uint(unsigned i) = 0;
-  virtual IJsonHandler* Int64(int64_t i) = 0;
-  virtual IJsonHandler* Uint64(uint64_t i) = 0;
-  virtual IJsonHandler* Double(double d) = 0;
+  virtual IJsonHandler* readNull() = 0;
+  virtual IJsonHandler* readBool(bool b) = 0;
+  virtual IJsonHandler* readInt32(int i) = 0;
+  virtual IJsonHandler* readUint32(unsigned i) = 0;
+  virtual IJsonHandler* readInt64(int64_t i) = 0;
+  virtual IJsonHandler* readUint64(uint64_t i) = 0;
+  virtual IJsonHandler* readDouble(double d) = 0;
   virtual IJsonHandler*
-  RawNumber(const char* str, size_t length, bool copy) = 0;
-  virtual IJsonHandler* String(const char* str, size_t length, bool copy) = 0;
-  virtual IJsonHandler* StartObject() = 0;
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) = 0;
-  virtual IJsonHandler* EndObject(size_t memberCount) = 0;
-  virtual IJsonHandler* StartArray() = 0;
-  virtual IJsonHandler* EndArray(size_t elementCount) = 0;
+  readString(const char* str, size_t length, bool copy) = 0;
+  virtual IJsonHandler* readObjectStart() = 0;
+  virtual IJsonHandler*
+  readObjectKey(const char* str, size_t length, bool copy) = 0;
+  virtual IJsonHandler* readObjectEnd(size_t memberCount) = 0;
+  virtual IJsonHandler* readArrayStart() = 0;
+  virtual IJsonHandler* readArrayEnd(size_t elementCount) = 0;
 
   virtual void reportWarning(
       const std::string& warning,

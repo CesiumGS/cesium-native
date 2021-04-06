@@ -109,7 +109,7 @@ function generate(options, schema) {
             ${name}* getObject();
             virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-            virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+            virtual IJsonHandler* readObjectKey(const char* str, size_t length, bool copy) override;
 
           protected:
             IJsonHandler* ${name}Key(const std::string& objectType, const char* str, ${name}& o);
@@ -178,7 +178,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
           this->parent()->reportWarning(warning, std::move(context));
         }
 
-        IJsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+        IJsonHandler* ${name}JsonHandler::readObjectKey(const char* str, size_t /*length*/, bool /*copy*/) {
           assert(this->_pObject);
           return this->${name}Key(${name}::TypeName, str, *this->_pObject);
         }

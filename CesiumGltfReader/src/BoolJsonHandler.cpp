@@ -11,7 +11,7 @@ void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
   this->_pBool = pBool;
 }
 
-IJsonHandler* BoolJsonHandler::Bool(bool b) {
+IJsonHandler* BoolJsonHandler::readBool(bool b) {
   assert(this->_pBool);
   *this->_pBool = b;
   return this->parent();

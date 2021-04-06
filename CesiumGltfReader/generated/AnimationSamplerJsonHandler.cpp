@@ -35,7 +35,7 @@ void AnimationSamplerJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::Key(
+IJsonHandler* AnimationSamplerJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {
@@ -69,7 +69,7 @@ void AnimationSamplerJsonHandler::InterpolationJsonHandler::reset(
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::InterpolationJsonHandler::String(
+IJsonHandler* AnimationSamplerJsonHandler::InterpolationJsonHandler::readString(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

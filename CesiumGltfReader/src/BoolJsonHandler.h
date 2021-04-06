@@ -9,7 +9,7 @@ public:
   BoolJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pParent, bool* pBool);
 
-  virtual IJsonHandler* Bool(bool b) override;
+  virtual IJsonHandler* readBool(bool b) override;
 
 private:
   bool* _pBool = nullptr;

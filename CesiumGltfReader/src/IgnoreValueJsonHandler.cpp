@@ -7,71 +7,64 @@ void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) {
   this->_depth = 0;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Null() {
+IJsonHandler* IgnoreValueJsonHandler::readNull() {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Bool(bool /*b*/) {
+IJsonHandler* IgnoreValueJsonHandler::readBool(bool /*b*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Int(int /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readInt32(int /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Uint(unsigned /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readUint32(unsigned /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Int64(int64_t /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readInt64(int64_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Uint64(uint64_t /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readUint64(uint64_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Double(double /*d*/) {
+IJsonHandler* IgnoreValueJsonHandler::readDouble(double /*d*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::RawNumber(
+IJsonHandler* IgnoreValueJsonHandler::readString(
     const char* /*str*/,
     size_t /*length*/,
     bool /*copy*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::String(
-    const char* /*str*/,
-    size_t /*length*/,
-    bool /*copy*/) {
-  return this->_depth == 0 ? this->parent() : this;
-}
-
-IJsonHandler* IgnoreValueJsonHandler::StartObject() {
+IJsonHandler* IgnoreValueJsonHandler::readObjectStart() {
   ++this->_depth;
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::Key(
+IJsonHandler* IgnoreValueJsonHandler::readObjectKey(
     const char* /*str*/,
     size_t /*length*/,
     bool /*copy*/) {
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::EndObject(size_t /*memberCount*/) {
+IJsonHandler* IgnoreValueJsonHandler::readObjectEnd(size_t /*memberCount*/) {
   --this->_depth;
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::StartArray() {
+IJsonHandler* IgnoreValueJsonHandler::readArrayStart() {
   ++this->_depth;
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::EndArray(size_t /*elementCount*/) {
+IJsonHandler* IgnoreValueJsonHandler::readArrayEnd(size_t /*elementCount*/) {
   --this->_depth;
   return this->_depth == 0 ? this->parent() : this;
 }

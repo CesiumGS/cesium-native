@@ -32,7 +32,7 @@ void MaterialNormalTextureInfoJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MaterialNormalTextureInfoJsonHandler::Key(
+IJsonHandler* MaterialNormalTextureInfoJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

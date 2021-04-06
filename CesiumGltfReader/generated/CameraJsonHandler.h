@@ -20,7 +20,8 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler*
+  readObjectKey(const char* str, size_t length, bool copy) override;
 
 protected:
   IJsonHandler*
@@ -33,7 +34,7 @@ private:
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Camera::Type* pEnum);
     virtual IJsonHandler*
-    String(const char* str, size_t length, bool copy) override;
+    readString(const char* str, size_t length, bool copy) override;
 
   private:
     Camera::Type* _pEnum = nullptr;

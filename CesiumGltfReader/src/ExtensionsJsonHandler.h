@@ -18,7 +18,7 @@ public:
       const std::string& objectType);
 
   virtual IJsonHandler*
-  Key(const char* str, size_t /* length */, bool /* copy */) override;
+  readObjectKey(const char* str, size_t /* length */, bool /* copy */) override;
 
 private:
   ExtensibleObject* _pObject = nullptr;

@@ -34,7 +34,7 @@ void AnimationChannelJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AnimationChannelJsonHandler::Key(
+IJsonHandler* AnimationChannelJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

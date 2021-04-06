@@ -35,7 +35,7 @@ void AccessorSparseJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AccessorSparseJsonHandler::Key(
+IJsonHandler* AccessorSparseJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

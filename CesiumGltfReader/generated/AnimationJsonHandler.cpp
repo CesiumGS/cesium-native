@@ -28,8 +28,10 @@ void AnimationJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-AnimationJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* AnimationJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->AnimationKey(Animation::TypeName, str, *this->_pObject);
 }

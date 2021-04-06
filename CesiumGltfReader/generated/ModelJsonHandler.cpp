@@ -44,8 +44,10 @@ void ModelJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* ModelJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->ModelKey(Model::TypeName, str, *this->_pObject);
 }

@@ -34,7 +34,7 @@ void KHR_draco_mesh_compressionJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* KHR_draco_mesh_compressionJsonHandler::Key(
+IJsonHandler* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

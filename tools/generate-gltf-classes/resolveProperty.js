@@ -365,7 +365,7 @@ function createEnumReaderType(
     public:
       ${enumName}JsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options) {}
       void reset(IJsonHandler* pParent, ${parentName}::${enumName}* pEnum);
-      virtual IJsonHandler* String(const char* str, size_t length, bool copy) override;
+      virtual IJsonHandler* readString(const char* str, size_t length, bool copy) override;
 
     private:
       ${parentName}::${enumName}* _pEnum = nullptr;
@@ -390,7 +390,7 @@ function createEnumReaderTypeImpl(
       this->_pEnum = pEnum;
     }
 
-    IJsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::String(const char* str, size_t /*length*/, bool /*copy*/) {
+    IJsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::readString(const char* str, size_t /*length*/, bool /*copy*/) {
       using namespace std::string_literals;
 
       assert(this->_pEnum);

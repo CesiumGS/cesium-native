@@ -9,8 +9,8 @@ class ObjectJsonHandler : public JsonHandler {
 public:
   ObjectJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
 
-  virtual IJsonHandler* StartObject() override final;
-  virtual IJsonHandler* EndObject(size_t memberCount) override final;
+  virtual IJsonHandler* readObjectStart() override final;
+  virtual IJsonHandler* readObjectEnd(size_t memberCount) override final;
 
 protected:
   virtual IJsonHandler* StartSubObject();

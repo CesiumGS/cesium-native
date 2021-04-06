@@ -39,7 +39,7 @@ void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::Key(
+IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

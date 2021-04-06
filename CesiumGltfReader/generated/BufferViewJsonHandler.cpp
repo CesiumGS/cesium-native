@@ -33,8 +33,10 @@ void BufferViewJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-BufferViewJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* BufferViewJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->BufferViewKey(BufferView::TypeName, str, *this->_pObject);
 }

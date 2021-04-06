@@ -34,7 +34,7 @@ void MaterialOcclusionTextureInfoJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::Key(
+IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

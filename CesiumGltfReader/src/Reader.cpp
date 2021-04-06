@@ -28,29 +28,31 @@ struct Dispatcher {
     return true;
   }
 
-  bool Null() { return update(pCurrent->Null()); }
-  bool Bool(bool b) { return update(pCurrent->Bool(b)); }
-  bool Int(int i) { return update(pCurrent->Int(i)); }
-  bool Uint(unsigned i) { return update(pCurrent->Uint(i)); }
-  bool Int64(int64_t i) { return update(pCurrent->Int64(i)); }
-  bool Uint64(uint64_t i) { return update(pCurrent->Uint64(i)); }
-  bool Double(double d) { return update(pCurrent->Double(d)); }
-  bool RawNumber(const char* str, size_t length, bool copy) {
-    return update(pCurrent->RawNumber(str, length, copy));
+  bool Null() { return update(pCurrent->readNull()); }
+  bool Bool(bool b) { return update(pCurrent->readBool(b)); }
+  bool Int(int i) { return update(pCurrent->readInt32(i)); }
+  bool Uint(unsigned i) { return update(pCurrent->readUint32(i)); }
+  bool Int64(int64_t i) { return update(pCurrent->readInt64(i)); }
+  bool Uint64(uint64_t i) { return update(pCurrent->readUint64(i)); }
+  bool Double(double d) { return update(pCurrent->readDouble(d)); }
+  bool RawNumber(const char* /* str */, size_t /* length */, bool /* copy */) {
+    // This should not be called.
+    assert(false);
+    return false;
   }
   bool String(const char* str, size_t length, bool copy) {
-    return update(pCurrent->String(str, length, copy));
+    return update(pCurrent->readString(str, length, copy));
   }
-  bool StartObject() { return update(pCurrent->StartObject()); }
+  bool StartObject() { return update(pCurrent->readObjectStart()); }
   bool Key(const char* str, size_t length, bool copy) {
-    return update(pCurrent->Key(str, length, copy));
+    return update(pCurrent->readObjectKey(str, length, copy));
   }
   bool EndObject(size_t memberCount) {
-    return update(pCurrent->EndObject(memberCount));
+    return update(pCurrent->readObjectEnd(memberCount));
   }
-  bool StartArray() { return update(pCurrent->StartArray()); }
+  bool StartArray() { return update(pCurrent->readArrayStart()); }
   bool EndArray(size_t elementCount) {
-    return update(pCurrent->EndArray(elementCount));
+    return update(pCurrent->readArrayEnd(elementCount));
   }
 };
 

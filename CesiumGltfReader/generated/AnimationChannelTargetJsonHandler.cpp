@@ -32,7 +32,7 @@ void AnimationChannelTargetJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AnimationChannelTargetJsonHandler::Key(
+IJsonHandler* AnimationChannelTargetJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {
@@ -64,7 +64,7 @@ void AnimationChannelTargetJsonHandler::PathJsonHandler::reset(
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* AnimationChannelTargetJsonHandler::PathJsonHandler::String(
+IJsonHandler* AnimationChannelTargetJsonHandler::PathJsonHandler::readString(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

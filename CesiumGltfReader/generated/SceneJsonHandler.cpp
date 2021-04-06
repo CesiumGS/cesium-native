@@ -27,8 +27,10 @@ void SceneJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* SceneJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->SceneKey(Scene::TypeName, str, *this->_pObject);
 }

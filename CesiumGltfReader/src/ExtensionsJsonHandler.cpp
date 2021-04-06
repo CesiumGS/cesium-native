@@ -14,7 +14,7 @@ void ExtensionsJsonHandler::reset(
   }
 }
 
-IJsonHandler* ExtensionsJsonHandler::Key(
+IJsonHandler* ExtensionsJsonHandler::readObjectKey(
     const char* str,
     size_t /* length */,
     bool /* copy */) {

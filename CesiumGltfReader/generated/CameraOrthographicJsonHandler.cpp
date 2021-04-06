@@ -36,7 +36,7 @@ void CameraOrthographicJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* CameraOrthographicJsonHandler::Key(
+IJsonHandler* CameraOrthographicJsonHandler::readObjectKey(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {

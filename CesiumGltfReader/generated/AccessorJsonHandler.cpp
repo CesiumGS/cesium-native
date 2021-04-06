@@ -37,8 +37,10 @@ void AccessorJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
-AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* AccessorJsonHandler::readObjectKey(
+    const char* str,
+    size_t /*length*/,
+    bool /*copy*/) {
   assert(this->_pObject);
   return this->AccessorKey(Accessor::TypeName, str, *this->_pObject);
 }
@@ -78,7 +80,7 @@ void AccessorJsonHandler::TypeJsonHandler::reset(
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* AccessorJsonHandler::TypeJsonHandler::String(
+IJsonHandler* AccessorJsonHandler::TypeJsonHandler::readString(
     const char* str,
     size_t /*length*/,
     bool /*copy*/) {
