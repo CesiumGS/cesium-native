@@ -464,12 +464,12 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [url, options](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+          [url, options = options](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  options.credits,
+                  std::move(options.credits),
                   {"Image request for " + url + " failed."},
                   {}};
             }
@@ -481,7 +481,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                                     " for " + url;
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  options.credits,
+                  std::move(options.credits),
                   {message},
                   {}};
             }
@@ -490,13 +490,13 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
                     CesiumGltf::ImageCesium(),
-                    options.credits,
+                    std::move(options.credits),
                     {},
                     {}};
               } else {
                 return LoadedRasterOverlayImage{
                     std::nullopt,
-                    options.credits,
+                    std::move(options.credits),
                     {"Image response for " + url + " is empty."},
                     {}};
               }
@@ -515,7 +515,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             return LoadedRasterOverlayImage{
                 loadedImage.image,
-                options.credits,
+                std::move(options.credits),
                 std::move(loadedImage.errors),
                 std::move(loadedImage.warnings)};
           });
