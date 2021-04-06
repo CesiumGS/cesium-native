@@ -355,6 +355,8 @@ CesiumGltf::readImage(const gsl::span<const std::byte>& data) {
   if (pImage) {
     const int lastByte =
         image.width * image.height * image.channels * image.bytesPerChannel;
+    // std::uint8_t is not implicitly convertible to std::byte, so we must use
+    // std::transform here to force the conversion.
     std::transform(
         pImage,
         pImage + lastByte,
