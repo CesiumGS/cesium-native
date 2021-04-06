@@ -251,7 +251,8 @@ public:
    * @return The converted value.
    * @throws If unable to convert the converted value for one of the
    aforementioned reasons.
-   * @remarks Compilation will fail if type 'To' is not an integral / float / double type.
+   * @remarks Compilation will fail if type 'To' is not an integral / float /
+   double type.
    */
   template <
       typename To,
