@@ -700,8 +700,12 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
 
   tile.setBoundingVolume(
       transformBoundingVolume(transform, boundingVolume.value()));
-  // tile->setBoundingVolume(boundingVolume.value());
-  tile.setGeometricError(geometricError.value());
+  glm::dvec3 scale = glm::dvec3(
+      glm::length(transform[0]),
+      glm::length(transform[1]),
+      glm::length(transform[2]));
+  double maxScaleComponent = glm::max(scale.x, glm::max(scale.y, scale.z));
+  tile.setGeometricError(geometricError.value() * maxScaleComponent);
 
   std::optional<BoundingVolume> viewerRequestVolume =
       getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
