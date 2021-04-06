@@ -1,8 +1,8 @@
 #include "ExtensibleObjectJsonHandler.h"
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Extension.h"
+#include "CesiumGltf/JsonHandler.h"
 #include "ExtensionsJsonHandler.h"
-#include "JsonHandler.h"
 #include "ObjectJsonHandler.h"
 
 using namespace CesiumGltf;

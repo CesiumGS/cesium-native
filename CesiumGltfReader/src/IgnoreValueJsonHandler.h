@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IJsonHandler.h"
+#include "CesiumGltf/IJsonHandler.h"
 #include <cstdint>
 
 namespace CesiumGltf {

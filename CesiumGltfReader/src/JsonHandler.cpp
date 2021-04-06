@@ -1,4 +1,4 @@
-#include "JsonHandler.h"
+#include "CesiumGltf/JsonHandler.h"
 
 using namespace CesiumGltf;
 JsonHandler::JsonHandler(const ReadModelOptions& options) noexcept

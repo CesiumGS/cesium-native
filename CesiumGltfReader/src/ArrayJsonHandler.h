@@ -1,8 +1,8 @@
 #pragma once
 
+#include "CesiumGltf/JsonHandler.h"
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
-#include "JsonHandler.h"
 #include "StringJsonHandler.h"
 #include <cassert>
 #include <vector>

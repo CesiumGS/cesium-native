@@ -1,7 +1,7 @@
 #pragma once
 
-#include "JsonHandler.h"
-#include <CesiumGltf/Reader.h>
+#include "CesiumGltf/JsonHandler.h"
+#include "CesiumGltf/Reader.h"
 
 namespace CesiumGltf {
 class BoolJsonHandler : public JsonHandler {
