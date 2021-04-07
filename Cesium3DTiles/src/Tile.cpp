@@ -238,6 +238,7 @@ void Tile::loadContent() {
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
+           ownerTileset = &tileset,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
@@ -287,6 +288,13 @@ void Tile::loadContent() {
             void* pRendererResources = nullptr;
 
             if (pContent->model) {
+
+              // TODO The `extras` are currently the only way to pass
+              // arbitrary information to the consumer, so the up-axis
+              // is stored here:
+              pContent->model.value().extras["gltfUpAxis"] =
+                  ownerTileset->getGltfUpAxis();
+
               const BoundingVolume& boundingVolume =
                   loadInput.tileBoundingVolume;
               Tile::generateTextureCoordinates(
