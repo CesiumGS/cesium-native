@@ -14,12 +14,12 @@ IJsonHandler* JsonHandler::readBool(bool /*b*/) {
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readInt32(int /*i*/) {
+IJsonHandler* JsonHandler::readInt32(int32_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readUint32(unsigned /*i*/) {
+IJsonHandler* JsonHandler::readUint32(uint32_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
@@ -39,8 +39,7 @@ IJsonHandler* JsonHandler::readDouble(double /*d*/) {
   return this->parent();
 }
 
-IJsonHandler*
-JsonHandler::readString(const char* /*str*/, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* JsonHandler::readString(const std::string_view& /*str*/) {
   this->reportWarning("A string value is not allowed and has been ignored.");
   return this->parent();
 }
@@ -50,14 +49,11 @@ IJsonHandler* JsonHandler::readObjectStart() {
   return this->ignoreAndReturnToParent()->readObjectStart();
 }
 
-IJsonHandler* JsonHandler::readObjectKey(
-    const char* /*str*/,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* JsonHandler::readObjectKey(const std::string_view& /*str*/) {
   return nullptr;
 }
 
-IJsonHandler* JsonHandler::readObjectEnd(size_t /*memberCount*/) {
+IJsonHandler* JsonHandler::readObjectEnd() {
   return nullptr;
 }
 
@@ -66,7 +62,7 @@ IJsonHandler* JsonHandler::readArrayStart() {
   return this->ignoreAndReturnToParent()->readArrayStart();
 }
 
-IJsonHandler* JsonHandler::readArrayEnd(size_t /*elementCount*/) {
+IJsonHandler* JsonHandler::readArrayEnd() {
   return nullptr;
 }
 

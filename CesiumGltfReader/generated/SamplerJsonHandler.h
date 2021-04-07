@@ -19,12 +19,13 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  SamplerKey(const std::string& objectType, const char* str, Sampler& o);
+  IJsonHandler* SamplerKey(
+      const std::string& objectType,
+      const std::string_view& str,
+      Sampler& o);
 
 private:
   Sampler* _pObject = nullptr;

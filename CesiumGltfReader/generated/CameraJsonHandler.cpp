@@ -30,17 +30,14 @@ void CameraJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* CameraJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* CameraJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->CameraKey(Camera::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* CameraJsonHandler::CameraKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Camera& o) {
   using namespace std::string_literals;
 
@@ -61,10 +58,8 @@ void CameraJsonHandler::TypeJsonHandler::reset(
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* CameraJsonHandler::TypeJsonHandler::readString(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+CameraJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);

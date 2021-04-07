@@ -17,7 +17,7 @@ void NamedObjectJsonHandler::reset(
 
 IJsonHandler* NamedObjectJsonHandler::NamedObjectKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     NamedObject& o) {
   using namespace std::string_literals;
   if ("name"s == str)

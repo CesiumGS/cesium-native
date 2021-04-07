@@ -16,12 +16,12 @@ public:
 
   T* getObject() { return this->_pInteger; }
 
-  virtual IJsonHandler* readInt32(int i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* readUint32(unsigned i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();

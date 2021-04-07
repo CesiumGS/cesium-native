@@ -13,7 +13,7 @@ protected:
   void reset(IJsonHandler* pParent, NamedObject* pObject);
   IJsonHandler* NamedObjectKey(
       const std::string& objectType,
-      const char* str,
+      const std::string_view& str,
       NamedObject& o);
 
 private:

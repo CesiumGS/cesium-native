@@ -25,12 +25,13 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  MaterialKey(const std::string& objectType, const char* str, Material& o);
+  IJsonHandler* MaterialKey(
+      const std::string& objectType,
+      const std::string_view& str,
+      Material& o);
 
 private:
   class AlphaModeJsonHandler : public JsonHandler {
@@ -38,8 +39,7 @@ private:
     AlphaModeJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Material::AlphaMode* pEnum);
-    virtual IJsonHandler*
-    readString(const char* str, size_t length, bool copy) override;
+    virtual IJsonHandler* readString(const std::string_view& str) override;
 
   private:
     Material::AlphaMode* _pEnum = nullptr;

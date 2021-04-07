@@ -36,10 +36,8 @@ void CameraPerspectiveJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* CameraPerspectiveJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->CameraPerspectiveKey(
       CameraPerspective::TypeName,
@@ -49,7 +47,7 @@ IJsonHandler* CameraPerspectiveJsonHandler::readObjectKey(
 
 IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     CameraPerspective& o) {
   using namespace std::string_literals;
 

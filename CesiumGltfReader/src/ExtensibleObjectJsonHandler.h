@@ -17,7 +17,7 @@ protected:
   void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
   IJsonHandler* ExtensibleObjectKey(
       const std::string& objectType,
-      const char* str,
+      const std::string_view& str,
       ExtensibleObject& o);
 
 private:

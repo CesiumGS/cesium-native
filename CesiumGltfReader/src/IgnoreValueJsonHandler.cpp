@@ -15,11 +15,11 @@ IJsonHandler* IgnoreValueJsonHandler::readBool(bool /*b*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readInt32(int /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readInt32(int32_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readUint32(unsigned /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readUint32(uint32_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
@@ -35,10 +35,7 @@ IJsonHandler* IgnoreValueJsonHandler::readDouble(double /*d*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readString(
-    const char* /*str*/,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* IgnoreValueJsonHandler::readString(const std::string_view& /*str*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
@@ -47,14 +44,12 @@ IJsonHandler* IgnoreValueJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readObjectKey(
-    const char* /*str*/,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+IgnoreValueJsonHandler::readObjectKey(const std::string_view& /*str*/) {
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readObjectEnd(size_t /*memberCount*/) {
+IJsonHandler* IgnoreValueJsonHandler::readObjectEnd() {
   --this->_depth;
   return this->_depth == 0 ? this->parent() : this;
 }
@@ -64,7 +59,7 @@ IJsonHandler* IgnoreValueJsonHandler::readArrayStart() {
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readArrayEnd(size_t /*elementCount*/) {
+IJsonHandler* IgnoreValueJsonHandler::readArrayEnd() {
   --this->_depth;
   return this->_depth == 0 ? this->parent() : this;
 }

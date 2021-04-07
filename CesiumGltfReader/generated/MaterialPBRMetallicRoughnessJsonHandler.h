@@ -22,13 +22,12 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* MaterialPBRMetallicRoughnessKey(
       const std::string& objectType,
-      const char* str,
+      const std::string_view& str,
       MaterialPBRMetallicRoughness& o);
 
 private:

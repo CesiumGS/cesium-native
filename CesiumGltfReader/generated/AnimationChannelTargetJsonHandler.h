@@ -19,13 +19,12 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* AnimationChannelTargetKey(
       const std::string& objectType,
-      const char* str,
+      const std::string_view& str,
       AnimationChannelTarget& o);
 
 private:
@@ -34,8 +33,7 @@ private:
     PathJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
-    virtual IJsonHandler*
-    readString(const char* str, size_t length, bool copy) override;
+    virtual IJsonHandler* readString(const std::string_view& str) override;
 
   private:
     AnimationChannelTarget::Path* _pEnum = nullptr;

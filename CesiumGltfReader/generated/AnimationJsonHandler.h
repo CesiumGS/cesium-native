@@ -20,12 +20,13 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  AnimationKey(const std::string& objectType, const char* str, Animation& o);
+  IJsonHandler* AnimationKey(
+      const std::string& objectType,
+      const std::string_view& str,
+      Animation& o);
 
 private:
   Animation* _pObject = nullptr;

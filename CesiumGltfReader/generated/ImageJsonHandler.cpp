@@ -30,17 +30,14 @@ void ImageJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* ImageJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* ImageJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->ImageKey(Image::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* ImageJsonHandler::ImageKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Image& o) {
   using namespace std::string_literals;
 
@@ -61,10 +58,8 @@ void ImageJsonHandler::MimeTypeJsonHandler::reset(
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* ImageJsonHandler::MimeTypeJsonHandler::readString(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+ImageJsonHandler::MimeTypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);

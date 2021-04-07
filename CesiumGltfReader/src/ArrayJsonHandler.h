@@ -28,11 +28,11 @@ public:
     return this->invalid("A boolean")->readBool(b);
   }
 
-  virtual IJsonHandler* readInt32(int i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     return this->invalid("An integer")->readInt32(i);
   }
 
-  virtual IJsonHandler* readUint32(unsigned i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     return this->invalid("An integer")->readUint32(i);
   }
 
@@ -48,9 +48,8 @@ public:
     return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
-  virtual IJsonHandler*
-  readString(const char* str, size_t length, bool copy) override {
-    return this->invalid("A string")->readString(str, length, copy);
+  virtual IJsonHandler* readString(const std::string_view& str) override {
+    return this->invalid("A string")->readString(str);
   }
 
   virtual IJsonHandler* readObjectStart() override {
@@ -64,14 +63,11 @@ public:
     return this->_objectHandler.readObjectStart();
   }
 
-  virtual IJsonHandler* readObjectKey(
-      const char* /*str*/,
-      size_t /*length*/,
-      bool /*copy*/) override {
+  virtual IJsonHandler* readObjectKey(const std::string_view& /*str*/) override {
     return nullptr;
   }
 
-  virtual IJsonHandler* readObjectEnd(size_t /*memberCount*/) override {
+  virtual IJsonHandler* readObjectEnd() override {
     return nullptr;
   }
 
@@ -85,7 +81,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -134,7 +130,7 @@ public:
     return this->invalid("A bool")->readBool(b);
   }
 
-  virtual IJsonHandler* readInt32(int i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readInt32(i);
     }
@@ -144,7 +140,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* readUint32(unsigned i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readUint32(i);
     }
@@ -184,9 +180,8 @@ public:
     return this;
   }
 
-  virtual IJsonHandler*
-  readString(const char* str, size_t length, bool copy) override {
-    return this->invalid("A string")->readString(str, length, copy);
+  virtual IJsonHandler* readString(const std::string_view& str) override {
+    return this->invalid("A string")->readString(str);
   }
 
   virtual IJsonHandler* readObjectStart() override {
@@ -203,7 +198,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -251,7 +246,7 @@ public:
     return this->invalid("A null")->readBool(b);
   }
 
-  virtual IJsonHandler* readInt32(int i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readInt32(i);
     }
@@ -261,7 +256,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* readUint32(unsigned i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readUint32(i);
     }
@@ -295,9 +290,8 @@ public:
     return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
-  virtual IJsonHandler*
-  readString(const char* str, size_t length, bool copy) override {
-    return this->invalid("A string")->readString(str, length, copy);
+  virtual IJsonHandler* readString(const std::string_view& str) override {
+    return this->invalid("A string")->readString(str);
   }
 
   virtual IJsonHandler* readObjectStart() override {
@@ -314,7 +308,7 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -362,11 +356,11 @@ public:
     return this->invalid("A bool")->readBool(b);
   }
 
-  virtual IJsonHandler* readInt32(int i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     return this->invalid("An integer")->readInt32(i);
   }
 
-  virtual IJsonHandler* readUint32(unsigned i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     return this->invalid("An integer")->readUint32(i);
   }
 
@@ -396,16 +390,15 @@ public:
     return this;
   }
 
-  virtual IJsonHandler* readArrayEnd(size_t) override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
-  virtual IJsonHandler*
-  readString(const char* str, size_t length, bool copy) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("A string")->readString(str, length, copy);
+      return this->invalid("A string")->readString(str);
     }
 
     assert(this->_pArray);
-    this->_pArray->emplace_back(std::string(str, length));
+    this->_pArray->emplace_back(str);
     return this;
   }
 

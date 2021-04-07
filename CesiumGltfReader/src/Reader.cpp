@@ -40,19 +40,19 @@ struct Dispatcher {
     assert(false);
     return false;
   }
-  bool String(const char* str, size_t length, bool copy) {
-    return update(pCurrent->readString(str, length, copy));
+  bool String(const char* str, size_t length, bool /* copy */) {
+    return update(pCurrent->readString(std::string_view(str, length)));
   }
   bool StartObject() { return update(pCurrent->readObjectStart()); }
-  bool Key(const char* str, size_t length, bool copy) {
-    return update(pCurrent->readObjectKey(str, length, copy));
+  bool Key(const char* str, size_t length, bool /* copy */) {
+    return update(pCurrent->readObjectKey(std::string_view(str, length)));
   }
-  bool EndObject(size_t memberCount) {
-    return update(pCurrent->readObjectEnd(memberCount));
+  bool EndObject(size_t /* memberCount */) {
+    return update(pCurrent->readObjectEnd());
   }
   bool StartArray() { return update(pCurrent->readArrayStart()); }
-  bool EndArray(size_t elementCount) {
-    return update(pCurrent->readArrayEnd(elementCount));
+  bool EndArray(size_t /* elementCount */) {
+    return update(pCurrent->readArrayEnd());
   }
 };
 

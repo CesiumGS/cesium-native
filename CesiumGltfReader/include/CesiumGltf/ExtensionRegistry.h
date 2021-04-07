@@ -21,7 +21,7 @@ public:
 
   void clearDefault() { this->_pDefault.reset(); }
 
-  Extension* findExtension(const std::string& name) const;
+  Extension* findExtension(const std::string_view& name) const;
 
 private:
   std::unordered_map<std::string, std::shared_ptr<Extension>> _extensions;

@@ -36,17 +36,14 @@ void NodeJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* NodeJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->NodeKey(Node::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* NodeJsonHandler::NodeKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Node& o) {
   using namespace std::string_literals;
 

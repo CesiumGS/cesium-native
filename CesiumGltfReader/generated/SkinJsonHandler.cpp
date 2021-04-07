@@ -30,17 +30,14 @@ void SkinJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SkinJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->SkinKey(Skin::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* SkinJsonHandler::SkinKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Skin& o) {
   using namespace std::string_literals;
 

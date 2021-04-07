@@ -23,12 +23,13 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  AccessorKey(const std::string& objectType, const char* str, Accessor& o);
+  IJsonHandler* AccessorKey(
+      const std::string& objectType,
+      const std::string_view& str,
+      Accessor& o);
 
 private:
   class TypeJsonHandler : public JsonHandler {
@@ -36,8 +37,7 @@ private:
     TypeJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
-    virtual IJsonHandler*
-    readString(const char* str, size_t length, bool copy) override;
+    virtual IJsonHandler* readString(const std::string_view& str) override;
 
   private:
     Accessor::Type* _pEnum = nullptr;

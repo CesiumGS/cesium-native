@@ -10,8 +10,7 @@ public:
   StringJsonHandler(const ReadModelOptions& options) noexcept;
   void reset(IJsonHandler* pParent, std::string* pString);
   std::string* getObject();
-  virtual IJsonHandler*
-  readString(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readString(const std::string_view& str) override;
 
 private:
   std::string* _pString = nullptr;

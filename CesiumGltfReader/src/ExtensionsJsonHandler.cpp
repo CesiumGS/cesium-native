@@ -14,10 +14,7 @@ void ExtensionsJsonHandler::reset(
   }
 }
 
-IJsonHandler* ExtensionsJsonHandler::readObjectKey(
-    const char* str,
-    size_t /* length */,
-    bool /* copy */) {
+IJsonHandler* ExtensionsJsonHandler::readObjectKey(const std::string_view& str) {
   Extension* pExtension = this->_options.pExtensions->findExtension(str);
   if (pExtension) {
     this->_currentExtensionHandler = pExtension->readExtension(

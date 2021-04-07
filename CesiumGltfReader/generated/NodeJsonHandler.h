@@ -20,12 +20,11 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler*
-  NodeKey(const std::string& objectType, const char* str, Node& o);
+  NodeKey(const std::string& objectType, const std::string_view& str, Node& o);
 
 private:
   Node* _pObject = nullptr;

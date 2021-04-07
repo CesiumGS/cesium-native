@@ -33,12 +33,12 @@ IJsonHandler* JsonObjectJsonHandler::readBool(bool b) {
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::readInt32(int i) {
+IJsonHandler* JsonObjectJsonHandler::readInt32(int32_t i) {
   addOrReplace(*this->_stack.back(), JsonValue::Number(i));
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::readUint32(unsigned i) {
+IJsonHandler* JsonObjectJsonHandler::readUint32(uint32_t i) {
   addOrReplace(*this->_stack.back(), JsonValue::Number(i));
   return this->doneElement();
 }
@@ -58,11 +58,8 @@ IJsonHandler* JsonObjectJsonHandler::readDouble(double d) {
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::readString(
-    const char* str,
-    size_t /* length */,
-    bool /* copy */) {
-  *this->_stack.back() = str;
+IJsonHandler* JsonObjectJsonHandler::readString(const std::string_view& str) {
+  *this->_stack.back() = std::string(str);
   return this->doneElement();
 }
 
@@ -79,10 +76,7 @@ IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::readObjectKey(
-    const char* str,
-    size_t /* length */,
-    bool /* copy */) {
+IJsonHandler* JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
   JsonValue& json = *this->_stack.back();
   JsonValue::Object* pObject = std::get_if<JsonValue::Object>(&json.value);
 
@@ -92,7 +86,7 @@ IJsonHandler* JsonObjectJsonHandler::readObjectKey(
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::readObjectEnd(size_t /* memberCount */) {
+IJsonHandler* JsonObjectJsonHandler::readObjectEnd() {
   return this->doneElement();
 }
 
@@ -109,7 +103,7 @@ IJsonHandler* JsonObjectJsonHandler::readArrayStart() {
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::readArrayEnd(size_t /* elementCount */) {
+IJsonHandler* JsonObjectJsonHandler::readArrayEnd() {
   this->_stack.pop_back();
   return this->_stack.empty() ? this->parent() : this;
 }

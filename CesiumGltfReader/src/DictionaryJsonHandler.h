@@ -25,8 +25,7 @@ public:
     this->_pDictionary2 = pDictionary;
   }
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t /*length*/, bool /*copy*/) override {
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
     assert(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {

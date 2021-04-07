@@ -19,7 +19,7 @@ void ExtensibleObjectJsonHandler::reset(
 
 IJsonHandler* ExtensibleObjectJsonHandler::ExtensibleObjectKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     ExtensibleObject& o) {
   using namespace std::string_literals;
 

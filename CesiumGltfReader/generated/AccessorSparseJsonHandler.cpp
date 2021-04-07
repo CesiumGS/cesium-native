@@ -35,10 +35,8 @@ void AccessorSparseJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AccessorSparseJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->AccessorSparseKey(
       AccessorSparse::TypeName,
@@ -48,7 +46,7 @@ IJsonHandler* AccessorSparseJsonHandler::readObjectKey(
 
 IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     AccessorSparse& o) {
   using namespace std::string_literals;
 

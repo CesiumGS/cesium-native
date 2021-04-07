@@ -31,17 +31,14 @@ void AssetJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AssetJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* AssetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->AssetKey(Asset::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* AssetJsonHandler::AssetKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Asset& o) {
   using namespace std::string_literals;
 

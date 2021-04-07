@@ -19,13 +19,12 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* AnimationSamplerKey(
       const std::string& objectType,
-      const char* str,
+      const std::string_view& str,
       AnimationSampler& o);
 
 private:
@@ -34,8 +33,7 @@ private:
     InterpolationJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum);
-    virtual IJsonHandler*
-    readString(const char* str, size_t length, bool copy) override;
+    virtual IJsonHandler* readString(const std::string_view& str) override;
 
   private:
     AnimationSampler::Interpolation* _pEnum = nullptr;

@@ -35,9 +35,7 @@ void MaterialOcclusionTextureInfoJsonHandler::reportWarning(
 }
 
 IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+    const std::string_view& str) {
   assert(this->_pObject);
   return this->MaterialOcclusionTextureInfoKey(
       MaterialOcclusionTextureInfo::TypeName,
@@ -48,7 +46,7 @@ IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
 IJsonHandler*
 MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
 

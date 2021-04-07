@@ -10,13 +10,13 @@ void DoubleJsonHandler::reset(IJsonHandler* pParent, double* pDouble) {
   this->_pDouble = pDouble;
 }
 
-IJsonHandler* DoubleJsonHandler::readInt32(int i) {
+IJsonHandler* DoubleJsonHandler::readInt32(int32_t i) {
   assert(this->_pDouble);
   *this->_pDouble = static_cast<double>(i);
   return this->parent();
 }
 
-IJsonHandler* DoubleJsonHandler::readUint32(unsigned i) {
+IJsonHandler* DoubleJsonHandler::readUint32(uint32_t i) {
   assert(this->_pDouble);
   *this->_pDouble = static_cast<double>(i);
   return this->parent();

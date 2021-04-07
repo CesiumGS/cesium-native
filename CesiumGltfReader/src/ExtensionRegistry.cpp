@@ -8,7 +8,7 @@ class ExtensionAny : public Extension {
 public:
   virtual std::unique_ptr<IJsonHandler> readExtension(
       const ReadModelOptions& options,
-      const std::string& extensionName,
+      const std::string_view& extensionName,
       ExtensibleObject& parent,
       IJsonHandler* pParentHandler,
       const std::string& ownerType) override;
@@ -20,7 +20,7 @@ public:
 
 std::unique_ptr<IJsonHandler> ExtensionAny::readExtension(
     const ReadModelOptions& options,
-    const std::string& extensionName,
+    const std::string_view& extensionName,
     ExtensibleObject& parent,
     IJsonHandler* pParentHandler,
     const std::string& /* ownerType */) {
@@ -53,8 +53,12 @@ std::shared_ptr<ExtensionRegistry> createExtensionRegistry() {
   return pDefault;
 }
 
-Extension* ExtensionRegistry::findExtension(const std::string& name) const {
-  auto it = this->_extensions.find(name);
+Extension*
+ExtensionRegistry::findExtension(const std::string_view& name) const {
+  // In C++20 we can make this more efficient (avoid copying the name) by using
+  // heterogeneous lookup:
+  // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0919r2.html
+  auto it = this->_extensions.find(std::string(name));
   if (it == this->_extensions.end()) {
     return this->_pDefault.get();
   } else {

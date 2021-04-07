@@ -27,17 +27,14 @@ void BufferJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* BufferJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* BufferJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->BufferKey(Buffer::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* BufferJsonHandler::BufferKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Buffer& o) {
   using namespace std::string_literals;
 

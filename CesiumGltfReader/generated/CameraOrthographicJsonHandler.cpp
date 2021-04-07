@@ -36,10 +36,8 @@ void CameraOrthographicJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* CameraOrthographicJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->CameraOrthographicKey(
       CameraOrthographic::TypeName,
@@ -49,7 +47,7 @@ IJsonHandler* CameraOrthographicJsonHandler::readObjectKey(
 
 IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     CameraOrthographic& o) {
   using namespace std::string_literals;
 

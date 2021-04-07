@@ -29,17 +29,14 @@ void MeshJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MeshJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* MeshJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->MeshKey(Mesh::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* MeshJsonHandler::MeshKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Mesh& o) {
   using namespace std::string_literals;
 

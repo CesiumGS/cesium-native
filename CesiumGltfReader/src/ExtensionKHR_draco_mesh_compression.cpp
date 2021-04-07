@@ -9,7 +9,7 @@ using namespace CesiumGltf;
 std::unique_ptr<IJsonHandler>
 ExtensionKHR_draco_mesh_compression::readExtension(
     const ReadModelOptions& options,
-    const std::string& extensionName,
+    const std::string_view& extensionName,
     ExtensibleObject& parent,
     IJsonHandler* pParentHandler,
     const std::string& ownerType) {

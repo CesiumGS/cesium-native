@@ -15,7 +15,7 @@ public:
 
   virtual std::unique_ptr<IJsonHandler> readExtension(
       const ReadModelOptions& options,
-      const std::string& extensionName,
+      const std::string_view& extensionName,
       ExtensibleObject& parent,
       IJsonHandler* pParentHandler,
       const std::string& ownerType) override;

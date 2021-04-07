@@ -40,9 +40,7 @@ void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(
 }
 
 IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+    const std::string_view& str) {
   assert(this->_pObject);
   return this->MaterialPBRMetallicRoughnessKey(
       MaterialPBRMetallicRoughness::TypeName,
@@ -53,7 +51,7 @@ IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
 IJsonHandler*
 MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     MaterialPBRMetallicRoughness& o) {
   using namespace std::string_literals;
 

@@ -35,17 +35,15 @@ void MeshPrimitiveJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MeshPrimitiveJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->MeshPrimitiveKey(MeshPrimitive::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* MeshPrimitiveJsonHandler::MeshPrimitiveKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     MeshPrimitive& o) {
   using namespace std::string_literals;
 

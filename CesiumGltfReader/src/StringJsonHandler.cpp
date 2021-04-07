@@ -12,8 +12,7 @@ void StringJsonHandler::reset(IJsonHandler* pParent, std::string* pString) {
 
 std::string* StringJsonHandler::getObject() { return this->_pString; }
 
-IJsonHandler*
-StringJsonHandler::readString(const char* str, size_t length, bool /*copy*/) {
-  *this->_pString = std::string(str, length);
+IJsonHandler* StringJsonHandler::readString(const std::string_view& str) {
+  *this->_pString = str;
   return this->parent();
 }

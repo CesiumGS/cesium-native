@@ -32,17 +32,15 @@ void TextureInfoJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* TextureInfoJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler*
+TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->TextureInfoKey(TextureInfo::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* TextureInfoJsonHandler::TextureInfoKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     TextureInfo& o) {
   using namespace std::string_literals;
 

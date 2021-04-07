@@ -33,9 +33,7 @@ void MaterialNormalTextureInfoJsonHandler::reportWarning(
 }
 
 IJsonHandler* MaterialNormalTextureInfoJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+    const std::string_view& str) {
   assert(this->_pObject);
   return this->MaterialNormalTextureInfoKey(
       MaterialNormalTextureInfo::TypeName,
@@ -46,7 +44,7 @@ IJsonHandler* MaterialNormalTextureInfoJsonHandler::readObjectKey(
 IJsonHandler*
 MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     MaterialNormalTextureInfo& o) {
   using namespace std::string_literals;
 

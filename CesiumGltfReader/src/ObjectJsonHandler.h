@@ -10,11 +10,11 @@ public:
   ObjectJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
 
   virtual IJsonHandler* readObjectStart() override final;
-  virtual IJsonHandler* readObjectEnd(size_t memberCount) override final;
+  virtual IJsonHandler* readObjectEnd() override final;
 
 protected:
   virtual IJsonHandler* StartSubObject();
-  virtual IJsonHandler* EndSubObject(size_t memberCount);
+  virtual IJsonHandler* EndSubObject();
 
   template <typename TAccessor, typename TProperty>
   IJsonHandler*

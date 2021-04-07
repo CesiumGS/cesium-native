@@ -18,12 +18,13 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  AssetKey(const std::string& objectType, const char* str, Asset& o);
+  IJsonHandler* AssetKey(
+      const std::string& objectType,
+      const std::string_view& str,
+      Asset& o);
 
 private:
   Asset* _pObject = nullptr;

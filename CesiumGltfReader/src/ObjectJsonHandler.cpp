@@ -10,20 +10,20 @@ IJsonHandler* ObjectJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonHandler* ObjectJsonHandler::readObjectEnd(size_t memberCount) {
+IJsonHandler* ObjectJsonHandler::readObjectEnd() {
   this->_currentKey = nullptr;
 
   --this->_depth;
 
   if (this->_depth > 0)
-    return this->EndSubObject(memberCount);
+    return this->EndSubObject();
   else
     return this->parent();
 }
 
 IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
 
-IJsonHandler* ObjectJsonHandler::EndSubObject(size_t /*memberCount*/) {
+IJsonHandler* ObjectJsonHandler::EndSubObject() {
   return nullptr;
 }
 

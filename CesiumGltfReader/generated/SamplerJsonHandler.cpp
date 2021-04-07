@@ -31,17 +31,14 @@ void SamplerJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SamplerJsonHandler::readObjectKey(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+IJsonHandler* SamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->SamplerKey(Sampler::TypeName, str, *this->_pObject);
 }
 
 IJsonHandler* SamplerJsonHandler::SamplerKey(
     const std::string& objectType,
-    const char* str,
+    const std::string_view& str,
     Sampler& o) {
   using namespace std::string_literals;
 

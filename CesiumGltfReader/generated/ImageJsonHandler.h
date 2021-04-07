@@ -20,12 +20,13 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler*
-  readObjectKey(const char* str, size_t length, bool copy) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  ImageKey(const std::string& objectType, const char* str, Image& o);
+  IJsonHandler* ImageKey(
+      const std::string& objectType,
+      const std::string_view& str,
+      Image& o);
 
 private:
   class MimeTypeJsonHandler : public JsonHandler {
@@ -33,8 +34,7 @@ private:
     MimeTypeJsonHandler(const ReadModelOptions& options) noexcept
         : JsonHandler(options) {}
     void reset(IJsonHandler* pParent, Image::MimeType* pEnum);
-    virtual IJsonHandler*
-    readString(const char* str, size_t length, bool copy) override;
+    virtual IJsonHandler* readString(const std::string_view& str) override;
 
   private:
     Image::MimeType* _pEnum = nullptr;

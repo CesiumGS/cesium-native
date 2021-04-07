@@ -109,10 +109,10 @@ function generate(options, schema) {
             ${name}* getObject();
             virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-            virtual IJsonHandler* readObjectKey(const char* str, size_t length, bool copy) override;
+            virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
           protected:
-            IJsonHandler* ${name}Key(const std::string& objectType, const char* str, ${name}& o);
+            IJsonHandler* ${name}Key(const std::string& objectType, const std::string_view& str, ${name}& o);
     
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
@@ -178,12 +178,12 @@ function generateReaderOptionsInitializerList(properties, varName) {
           this->parent()->reportWarning(warning, std::move(context));
         }
 
-        IJsonHandler* ${name}JsonHandler::readObjectKey(const char* str, size_t /*length*/, bool /*copy*/) {
+        IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
           assert(this->_pObject);
           return this->${name}Key(${name}::TypeName, str, *this->_pObject);
         }
 
-        IJsonHandler* ${name}JsonHandler::${name}Key(const std::string& objectType, const char* str, ${name}& o) {
+        IJsonHandler* ${name}JsonHandler::${name}Key(const std::string& objectType, const std::string_view& str, ${name}& o) {
           using namespace std::string_literals;
 
           ${indent(
