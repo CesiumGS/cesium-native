@@ -12,7 +12,7 @@ struct Skin;
 
 class SkinJsonHandler : public NamedObjectJsonHandler {
 public:
-  SkinJsonHandler(const ReadModelOptions& options) noexcept;
+  SkinJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, Skin* pObject);
   Skin* getObject();
   virtual void reportWarning(

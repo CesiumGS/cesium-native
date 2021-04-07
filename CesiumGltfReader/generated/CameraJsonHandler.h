@@ -13,7 +13,7 @@ struct Camera;
 
 class CameraJsonHandler : public NamedObjectJsonHandler {
 public:
-  CameraJsonHandler(const ReadModelOptions& options) noexcept;
+  CameraJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, Camera* pObject);
   Camera* getObject();
   virtual void reportWarning(
@@ -31,8 +31,8 @@ protected:
 private:
   class TypeJsonHandler : public JsonHandler {
   public:
-    TypeJsonHandler(const ReadModelOptions& options) noexcept
-        : JsonHandler(options) {}
+    TypeJsonHandler(const JsonReaderContext& context) noexcept
+        : JsonHandler(context) {}
     void reset(IJsonHandler* pParent, Camera::Type* pEnum);
     virtual IJsonHandler* readString(const std::string_view& str) override;
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionRegistry.h"
 #include "CesiumGltf/ReaderLibrary.h"
 
 namespace CesiumGltf {
@@ -38,9 +37,6 @@ struct CESIUMGLTFREADER_API ReadModelOptions {
    * extension should be automatically decoded as part of the load process.
    */
   bool decodeDraco = true;
-
-  std::shared_ptr<ExtensionRegistry> pExtensions =
-      ExtensionRegistry::getDefault();
 };
 
 } // namespace CesiumGltf

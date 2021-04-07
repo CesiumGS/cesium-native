@@ -14,8 +14,8 @@ template <typename T> void addOrReplace(JsonValue& json, T value) {
 } // namespace
 
 JsonObjectJsonHandler::JsonObjectJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : JsonHandler(options) {}
+    const JsonReaderContext& context) noexcept
+    : JsonHandler(context) {}
 
 void JsonObjectJsonHandler::reset(IJsonHandler* pParent, JsonValue* pValue) {
   JsonHandler::reset(pParent);
@@ -67,8 +67,8 @@ IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
   JsonValue& current = *this->_stack.back();
   JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
   if (pArray) {
-    JsonValue& newArray = pArray->emplace_back(JsonValue::Object());
-    this->_stack.emplace_back(&newArray);
+    JsonValue& newObject = pArray->emplace_back(JsonValue::Object());
+    this->_stack.emplace_back(&newObject);
   } else {
     current = JsonValue::Object();
   }
@@ -76,7 +76,8 @@ IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonHandler*
+JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
   JsonValue& json = *this->_stack.back();
   JsonValue::Object* pObject = std::get_if<JsonValue::Object>(&json.value);
 

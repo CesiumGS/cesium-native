@@ -11,7 +11,7 @@ struct CameraOrthographic;
 
 class CameraOrthographicJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  CameraOrthographicJsonHandler(const ReadModelOptions& options) noexcept;
+  CameraOrthographicJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, CameraOrthographic* pObject);
   CameraOrthographic* getObject();
   virtual void reportWarning(

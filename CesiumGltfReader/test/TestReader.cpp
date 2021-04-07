@@ -51,7 +51,8 @@ TEST_CASE("CesiumGltf::Reader") {
       "        \"NORMAL\": 1"s + "      },"s + "      \"targets\": ["s +
       "        {\"POSITION\": 10, \"NORMAL\": 11}"s + "      ]"s + "    }]"s +
       "  }],"s + "  \"surprise\":{\"foo\":true}"s + "}"s;
-  ModelReaderResult result = CesiumGltf::readModel(
+  CesiumGltf::Reader reader;
+  ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   CHECK(result.errors.empty());
   REQUIRE(result.model.has_value());
@@ -85,7 +86,8 @@ TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /= "TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile.string());
-  ModelReaderResult result = CesiumGltf::readModel(data);
+  CesiumGltf::Reader reader;
+  ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
 
   const Model& model = result.model.value();
@@ -118,7 +120,8 @@ TEST_CASE("Nested extras serializes properly") {
     }
   )";
 
-  ModelReaderResult result = CesiumGltf::readModel(
+  CesiumGltf::Reader reader;
+  ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
   REQUIRE(result.errors.empty());
@@ -167,7 +170,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   )";
 
   ReadModelOptions options;
-  ModelReaderResult modelResult = CesiumGltf::readModel(
+  CesiumGltf::Reader reader;
+  ModelReaderResult modelResult = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
@@ -209,7 +213,8 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   )";
 
   ReadModelOptions options;
-  ModelReaderResult withCustomExtModel = CesiumGltf::readModel(
+  CesiumGltf::Reader reader;
+  ModelReaderResult withCustomExtModel = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
@@ -230,11 +235,10 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   REQUIRE(pB->getValueForKey("another")->getString("") == "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
-  options.pExtensions =
-      std::make_shared<ExtensionRegistry>(*options.pExtensions);
-  options.pExtensions->clearDefault();
+  reader.setExtensionState("A", ExtensionState::Disabled);
+  reader.setExtensionState("B", ExtensionState::Disabled);
 
-  ModelReaderResult withoutCustomExt = CesiumGltf::readModel(
+  ModelReaderResult withoutCustomExt = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 

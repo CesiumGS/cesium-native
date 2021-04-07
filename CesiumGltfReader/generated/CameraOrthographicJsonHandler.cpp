@@ -9,12 +9,12 @@
 using namespace CesiumGltf;
 
 CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : ExtensibleObjectJsonHandler(options),
-      _xmag(options),
-      _ymag(options),
-      _zfar(options),
-      _znear(options) {}
+    const JsonReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _xmag(context),
+      _ymag(context),
+      _zfar(context),
+      _znear(context) {}
 
 void CameraOrthographicJsonHandler::reset(
     IJsonHandler* pParent,

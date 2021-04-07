@@ -8,8 +8,8 @@
 using namespace CesiumGltf;
 
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : ObjectJsonHandler(options), _extras(options), _extensions(options) {}
+    const JsonReaderContext& context) noexcept
+    : ObjectJsonHandler(context), _extras(context), _extensions(context) {}
 
 void ExtensibleObjectJsonHandler::reset(
     IJsonHandler* pParent,

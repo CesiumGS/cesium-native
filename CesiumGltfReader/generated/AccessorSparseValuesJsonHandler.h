@@ -11,7 +11,7 @@ struct AccessorSparseValues;
 
 class AccessorSparseValuesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AccessorSparseValuesJsonHandler(const ReadModelOptions& options) noexcept;
+  AccessorSparseValuesJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, AccessorSparseValues* pObject);
   AccessorSparseValues* getObject();
   virtual void reportWarning(

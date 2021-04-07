@@ -9,13 +9,13 @@
 using namespace CesiumGltf;
 
 BufferViewJsonHandler::BufferViewJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options),
-      _buffer(options),
-      _byteOffset(options),
-      _byteLength(options),
-      _byteStride(options),
-      _target(options) {}
+    const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _buffer(context),
+      _byteOffset(context),
+      _byteLength(context),
+      _byteStride(context),
+      _target(context) {}
 
 void BufferViewJsonHandler::reset(IJsonHandler* pParent, BufferView* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

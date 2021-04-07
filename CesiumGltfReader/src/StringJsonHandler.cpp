@@ -2,8 +2,8 @@
 #include "CesiumGltf/JsonReader.h"
 
 using namespace CesiumGltf;
-StringJsonHandler::StringJsonHandler(const ReadModelOptions& options) noexcept
-    : JsonHandler(options) {}
+StringJsonHandler::StringJsonHandler(const JsonReaderContext& context) noexcept
+    : JsonHandler(context) {}
 
 void StringJsonHandler::reset(IJsonHandler* pParent, std::string* pString) {
   JsonHandler::reset(pParent);

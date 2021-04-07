@@ -27,7 +27,7 @@ struct Model;
 
 class ModelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  ModelJsonHandler(const ReadModelOptions& options) noexcept;
+  ModelJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, Model* pObject);
   Model* getObject();
   virtual void reportWarning(

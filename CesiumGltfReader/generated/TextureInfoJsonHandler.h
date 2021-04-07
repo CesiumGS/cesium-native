@@ -11,7 +11,7 @@ struct TextureInfo;
 
 class TextureInfoJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  TextureInfoJsonHandler(const ReadModelOptions& options) noexcept;
+  TextureInfoJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, TextureInfo* pObject);
   TextureInfo* getObject();
   virtual void reportWarning(

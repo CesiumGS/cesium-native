@@ -1,14 +1,16 @@
 #pragma once
 
+#include "CesiumGltf/IExtensionJsonReader.h"
 #include "CesiumGltf/JsonReader.h"
+#include "CesiumGltf/JsonReaderContext.h"
 #include "CesiumGltf/JsonValue.h"
-#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 
 class JsonObjectJsonHandler : public JsonHandler {
 public:
-  JsonObjectJsonHandler(const ReadModelOptions& options) noexcept;
+  JsonObjectJsonHandler(const JsonReaderContext& context) noexcept;
+
   void reset(IJsonHandler* pParent, JsonValue* pValue);
 
   virtual IJsonHandler* readNull() override;

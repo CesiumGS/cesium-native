@@ -9,7 +9,7 @@ struct NamedObject;
 
 class NamedObjectJsonHandler : public ExtensibleObjectJsonHandler {
 protected:
-  NamedObjectJsonHandler(const ReadModelOptions& options) noexcept;
+  NamedObjectJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pParent, NamedObject* pObject);
   IJsonHandler* NamedObjectKey(
       const std::string& objectType,

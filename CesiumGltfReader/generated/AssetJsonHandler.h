@@ -11,7 +11,7 @@ struct Asset;
 
 class AssetJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AssetJsonHandler(const ReadModelOptions& options) noexcept;
+  AssetJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, Asset* pObject);
   Asset* getObject();
   virtual void reportWarning(

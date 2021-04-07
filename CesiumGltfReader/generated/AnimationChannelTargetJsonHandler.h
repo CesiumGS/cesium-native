@@ -12,7 +12,7 @@ struct AnimationChannelTarget;
 
 class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AnimationChannelTargetJsonHandler(const ReadModelOptions& options) noexcept;
+  AnimationChannelTargetJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, AnimationChannelTarget* pObject);
   AnimationChannelTarget* getObject();
   virtual void reportWarning(
@@ -30,8 +30,8 @@ protected:
 private:
   class PathJsonHandler : public JsonHandler {
   public:
-    PathJsonHandler(const ReadModelOptions& options) noexcept
-        : JsonHandler(options) {}
+    PathJsonHandler(const JsonReaderContext& context) noexcept
+        : JsonHandler(context) {}
     void reset(IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
     virtual IJsonHandler* readString(const std::string_view& str) override;
 

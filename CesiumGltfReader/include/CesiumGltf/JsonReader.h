@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/IJsonReader.h"
-#include "CesiumGltf/ReadModelOptions.h"
+#include "CesiumGltf/JsonReaderContext.h"
 #include "IgnoreValueJsonHandler.h"
 #include <cstdint>
 #include <string>
@@ -9,7 +9,7 @@
 namespace CesiumGltf {
 class JsonHandler : public IJsonHandler {
 public:
-  JsonHandler(const ReadModelOptions& options) noexcept;
+  JsonHandler(const JsonReaderContext& context) noexcept;
   virtual IJsonHandler* readNull() override;
   virtual IJsonHandler* readBool(bool b) override;
   virtual IJsonHandler* readInt32(int32_t i) override;
@@ -45,7 +45,7 @@ protected:
   IJsonHandler* ignoreAndContinue();
 
 protected:
-  const ReadModelOptions& _options;
+  const JsonReaderContext& _context;
 
 private:
   IJsonHandler* _pParent = nullptr;

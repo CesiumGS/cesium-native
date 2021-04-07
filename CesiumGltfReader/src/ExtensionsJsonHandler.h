@@ -6,10 +6,9 @@ namespace CesiumGltf {
 
 class ExtensionsJsonHandler : public ObjectJsonHandler {
 public:
-  ExtensionsJsonHandler(const ReadModelOptions& options) noexcept
-      : ObjectJsonHandler(options),
+  ExtensionsJsonHandler(const JsonReaderContext& context) noexcept
+      : ObjectJsonHandler(context),
         _pObject(nullptr),
-        _handlers(),
         _currentExtensionHandler() {}
 
   void reset(
@@ -22,8 +21,7 @@ public:
 private:
   ExtensibleObject* _pObject = nullptr;
   std::string _objectType;
-  std::unordered_map<Extension*, std::unique_ptr<JsonHandler>> _handlers;
-  std::unique_ptr<IJsonHandler> _currentExtensionHandler;
+  std::unique_ptr<IExtensionJsonReader> _currentExtensionHandler;
 };
 
 } // namespace CesiumGltf

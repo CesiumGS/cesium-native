@@ -9,8 +9,8 @@
 using namespace CesiumGltf;
 
 AnimationJsonHandler::AnimationJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options), _channels(options), _samplers(options) {}
+    const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context), _channels(context), _samplers(context) {}
 
 void AnimationJsonHandler::reset(IJsonHandler* pParent, Animation* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

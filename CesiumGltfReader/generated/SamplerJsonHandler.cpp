@@ -8,12 +8,13 @@
 
 using namespace CesiumGltf;
 
-SamplerJsonHandler::SamplerJsonHandler(const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options),
-      _magFilter(options),
-      _minFilter(options),
-      _wrapS(options),
-      _wrapT(options) {}
+SamplerJsonHandler::SamplerJsonHandler(
+    const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _magFilter(context),
+      _minFilter(context),
+      _wrapS(context),
+      _wrapT(context) {}
 
 void SamplerJsonHandler::reset(IJsonHandler* pParent, Sampler* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

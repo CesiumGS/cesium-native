@@ -7,7 +7,7 @@
 namespace CesiumGltf {
 class StringJsonHandler : public JsonHandler {
 public:
-  StringJsonHandler(const ReadModelOptions& options) noexcept;
+  StringJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pParent, std::string* pString);
   std::string* getObject();
   virtual IJsonHandler* readString(const std::string_view& str) override;

@@ -13,7 +13,7 @@ struct Mesh;
 
 class MeshJsonHandler : public NamedObjectJsonHandler {
 public:
-  MeshJsonHandler(const ReadModelOptions& options) noexcept;
+  MeshJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, Mesh* pObject);
   Mesh* getObject();
   virtual void reportWarning(

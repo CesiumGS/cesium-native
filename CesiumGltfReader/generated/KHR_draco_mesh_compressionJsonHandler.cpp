@@ -9,10 +9,10 @@
 using namespace CesiumGltf;
 
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : ExtensibleObjectJsonHandler(options),
-      _bufferView(options),
-      _attributes(options) {}
+    const JsonReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _bufferView(context),
+      _attributes(context) {}
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
     IJsonHandler* pParent,

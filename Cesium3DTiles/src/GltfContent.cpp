@@ -21,7 +21,9 @@ GltfContent::load(const TileContentLoadInput& input) {
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
 
-  CesiumGltf::ModelReaderResult loadedModel = CesiumGltf::readModel(data);
+  // TODO: don't create a new Reader every time.
+  CesiumGltf::Reader reader;
+  CesiumGltf::ModelReaderResult loadedModel = reader.readModel(data);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,

@@ -104,7 +104,7 @@ function generate(options, schema) {
 
           class ${name}JsonHandler : public ${base}JsonHandler {
           public:
-            ${name}JsonHandler(const ReadModelOptions& options) noexcept;
+            ${name}JsonHandler(const JsonReaderContext& context) noexcept;
             void reset(IJsonHandler* pHandler, ${name}* pObject);
             ${name}* getObject();
             virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
@@ -160,7 +160,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
 
         using namespace CesiumGltf;
 
-        ${name}JsonHandler::${name}JsonHandler(const ReadModelOptions& options) noexcept : ${base}JsonHandler(options)${generateReaderOptionsInitializerList(properties, 'options')} {}
+        ${name}JsonHandler::${name}JsonHandler(const JsonReaderContext& context) noexcept : ${base}JsonHandler(context)${generateReaderOptionsInitializerList(properties, 'context')} {}
 
         void ${name}JsonHandler::reset(IJsonHandler* pParent, ${name}* pObject) {
           ${base}JsonHandler::reset(pParent, pObject);

@@ -8,11 +8,11 @@
 
 using namespace CesiumGltf;
 
-SkinJsonHandler::SkinJsonHandler(const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options),
-      _inverseBindMatrices(options),
-      _skeleton(options),
-      _joints(options) {}
+SkinJsonHandler::SkinJsonHandler(const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _inverseBindMatrices(context),
+      _skeleton(context),
+      _joints(context) {}
 
 void SkinJsonHandler::reset(IJsonHandler* pParent, Skin* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

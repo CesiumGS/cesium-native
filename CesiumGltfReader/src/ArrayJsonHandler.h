@@ -11,8 +11,8 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class ArrayJsonHandler : public JsonHandler {
 public:
-  ArrayJsonHandler(const ReadModelOptions& options) noexcept
-      : JsonHandler(options), _objectHandler(options) {}
+  ArrayJsonHandler(const JsonReaderContext& context) noexcept
+      : JsonHandler(context), _objectHandler(context) {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
@@ -63,13 +63,12 @@ public:
     return this->_objectHandler.readObjectStart();
   }
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& /*str*/) override {
+  virtual IJsonHandler*
+  readObjectKey(const std::string_view& /*str*/) override {
     return nullptr;
   }
 
-  virtual IJsonHandler* readObjectEnd() override {
-    return nullptr;
-  }
+  virtual IJsonHandler* readObjectEnd() override { return nullptr; }
 
   virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
@@ -114,7 +113,7 @@ private:
 template <>
 class ArrayJsonHandler<double, DoubleJsonHandler> : public JsonHandler {
 public:
-  ArrayJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
+  ArrayJsonHandler(const JsonReaderContext& context) : JsonHandler(context) {}
 
   void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
     JsonHandler::reset(pParent);
@@ -230,7 +229,7 @@ private:
 template <typename T>
 class ArrayJsonHandler<T, IntegerJsonHandler<T>> : public JsonHandler {
 public:
-  ArrayJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
+  ArrayJsonHandler(const JsonReaderContext& context) : JsonHandler(context) {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
@@ -340,7 +339,7 @@ private:
 template <>
 class ArrayJsonHandler<std::string, StringJsonHandler> : public JsonHandler {
 public:
-  ArrayJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
+  ArrayJsonHandler(const JsonReaderContext& context) : JsonHandler(context) {}
 
   void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
     JsonHandler::reset(pParent);

@@ -23,9 +23,7 @@ IJsonHandler* ObjectJsonHandler::readObjectEnd() {
 
 IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
 
-IJsonHandler* ObjectJsonHandler::EndSubObject() {
-  return nullptr;
-}
+IJsonHandler* ObjectJsonHandler::EndSubObject() { return nullptr; }
 
 const char* ObjectJsonHandler::getCurrentKey() const {
   return this->_currentKey;

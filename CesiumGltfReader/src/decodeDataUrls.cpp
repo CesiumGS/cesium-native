@@ -1,4 +1,5 @@
 #include "decodeDataUrls.h"
+#include "CesiumGltf/JsonReaderContext.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/Reader.h"
 #include <cstddef>
@@ -80,7 +81,10 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 
 namespace CesiumGltf {
 
-void decodeDataUrls(ModelReaderResult& readModel, bool clearDecodedDataUrls) {
+void decodeDataUrls(
+    const JsonReaderContext& context,
+    ModelReaderResult& readModel,
+    bool clearDecodedDataUrls) {
   if (!readModel.model) {
     return;
   }
@@ -114,7 +118,8 @@ void decodeDataUrls(ModelReaderResult& readModel, bool clearDecodedDataUrls) {
       continue;
     }
 
-    ImageReaderResult imageResult = readImage(decoded.value().data);
+    ImageReaderResult imageResult =
+        context.reader.readImage(decoded.value().data);
     if (imageResult.image) {
       image.cesium = std::move(imageResult.image.value());
     }

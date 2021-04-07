@@ -9,11 +9,11 @@
 using namespace CesiumGltf;
 
 AccessorSparseJsonHandler::AccessorSparseJsonHandler(
-    const ReadModelOptions& options) noexcept
-    : ExtensibleObjectJsonHandler(options),
-      _count(options),
-      _indices(options),
-      _values(options) {}
+    const JsonReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _count(context),
+      _indices(context),
+      _values(context) {}
 
 void AccessorSparseJsonHandler::reset(
     IJsonHandler* pParent,

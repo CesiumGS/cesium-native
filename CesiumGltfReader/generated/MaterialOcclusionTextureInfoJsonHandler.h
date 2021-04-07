@@ -12,7 +12,7 @@ struct MaterialOcclusionTextureInfo;
 class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   MaterialOcclusionTextureInfoJsonHandler(
-      const ReadModelOptions& options) noexcept;
+      const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, MaterialOcclusionTextureInfo* pObject);
   MaterialOcclusionTextureInfo* getObject();
   virtual void reportWarning(

@@ -14,7 +14,7 @@ struct MeshPrimitive;
 
 class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  MeshPrimitiveJsonHandler(const ReadModelOptions& options) noexcept;
+  MeshPrimitiveJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, MeshPrimitive* pObject);
   MeshPrimitive* getObject();
   virtual void reportWarning(

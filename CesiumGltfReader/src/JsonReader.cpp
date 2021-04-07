@@ -1,8 +1,8 @@
 #include "CesiumGltf/JsonReader.h"
 
 using namespace CesiumGltf;
-JsonHandler::JsonHandler(const ReadModelOptions& options) noexcept
-    : _options(options) {}
+JsonHandler::JsonHandler(const JsonReaderContext& context) noexcept
+    : _context(context) {}
 
 IJsonHandler* JsonHandler::readNull() {
   this->reportWarning("A null value is not allowed and has been ignored.");
@@ -53,18 +53,14 @@ IJsonHandler* JsonHandler::readObjectKey(const std::string_view& /*str*/) {
   return nullptr;
 }
 
-IJsonHandler* JsonHandler::readObjectEnd() {
-  return nullptr;
-}
+IJsonHandler* JsonHandler::readObjectEnd() { return nullptr; }
 
 IJsonHandler* JsonHandler::readArrayStart() {
   this->reportWarning("An array value is not allowed and has been ignored.");
   return this->ignoreAndReturnToParent()->readArrayStart();
 }
 
-IJsonHandler* JsonHandler::readArrayEnd() {
-  return nullptr;
-}
+IJsonHandler* JsonHandler::readArrayEnd() { return nullptr; }
 
 IJsonHandler* JsonHandler::parent() { return this->_pParent; }
 

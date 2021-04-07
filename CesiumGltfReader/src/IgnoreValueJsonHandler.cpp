@@ -35,7 +35,8 @@ IJsonHandler* IgnoreValueJsonHandler::readDouble(double /*d*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readString(const std::string_view& /*str*/) {
+IJsonHandler*
+IgnoreValueJsonHandler::readString(const std::string_view& /*str*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 

@@ -8,11 +8,11 @@
 
 using namespace CesiumGltf;
 
-CameraJsonHandler::CameraJsonHandler(const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options),
-      _orthographic(options),
-      _perspective(options),
-      _type(options) {}
+CameraJsonHandler::CameraJsonHandler(const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _orthographic(context),
+      _perspective(context),
+      _type(context) {}
 
 void CameraJsonHandler::reset(IJsonHandler* pParent, Camera* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

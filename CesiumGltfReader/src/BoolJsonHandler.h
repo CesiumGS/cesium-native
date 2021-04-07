@@ -6,7 +6,7 @@
 namespace CesiumGltf {
 class BoolJsonHandler : public JsonHandler {
 public:
-  BoolJsonHandler(const ReadModelOptions& options) noexcept;
+  BoolJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pParent, bool* pBool);
 
   virtual IJsonHandler* readBool(bool b) override;

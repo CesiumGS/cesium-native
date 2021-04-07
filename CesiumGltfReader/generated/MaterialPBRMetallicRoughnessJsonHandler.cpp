@@ -10,13 +10,13 @@ using namespace CesiumGltf;
 
 MaterialPBRMetallicRoughnessJsonHandler::
     MaterialPBRMetallicRoughnessJsonHandler(
-        const ReadModelOptions& options) noexcept
-    : ExtensibleObjectJsonHandler(options),
-      _baseColorFactor(options),
-      _baseColorTexture(options),
-      _metallicFactor(options),
-      _roughnessFactor(options),
-      _metallicRoughnessTexture(options) {}
+        const JsonReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _baseColorFactor(context),
+      _baseColorTexture(context),
+      _metallicFactor(context),
+      _roughnessFactor(context),
+      _metallicRoughnessTexture(context) {}
 
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
     IJsonHandler* pParent,

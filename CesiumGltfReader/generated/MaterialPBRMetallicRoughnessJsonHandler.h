@@ -15,7 +15,7 @@ class MaterialPBRMetallicRoughnessJsonHandler
     : public ExtensibleObjectJsonHandler {
 public:
   MaterialPBRMetallicRoughnessJsonHandler(
-      const ReadModelOptions& options) noexcept;
+      const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
   MaterialPBRMetallicRoughness* getObject();
   virtual void reportWarning(

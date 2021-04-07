@@ -8,8 +8,8 @@
 
 using namespace CesiumGltf;
 
-BufferJsonHandler::BufferJsonHandler(const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options), _uri(options), _byteLength(options) {}
+BufferJsonHandler::BufferJsonHandler(const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context), _uri(context), _byteLength(context) {}
 
 void BufferJsonHandler::reset(IJsonHandler* pParent, Buffer* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

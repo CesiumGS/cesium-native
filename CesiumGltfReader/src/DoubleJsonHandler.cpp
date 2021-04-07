@@ -2,8 +2,8 @@
 
 using namespace CesiumGltf;
 
-DoubleJsonHandler::DoubleJsonHandler(const ReadModelOptions& options) noexcept
-    : JsonHandler(options) {}
+DoubleJsonHandler::DoubleJsonHandler(const JsonReaderContext& context) noexcept
+    : JsonHandler(context) {}
 
 void DoubleJsonHandler::reset(IJsonHandler* pParent, double* pDouble) {
   JsonHandler::reset(pParent);

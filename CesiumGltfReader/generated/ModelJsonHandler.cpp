@@ -8,25 +8,25 @@
 
 using namespace CesiumGltf;
 
-ModelJsonHandler::ModelJsonHandler(const ReadModelOptions& options) noexcept
-    : ExtensibleObjectJsonHandler(options),
-      _extensionsUsed(options),
-      _extensionsRequired(options),
-      _accessors(options),
-      _animations(options),
-      _asset(options),
-      _buffers(options),
-      _bufferViews(options),
-      _cameras(options),
-      _images(options),
-      _materials(options),
-      _meshes(options),
-      _nodes(options),
-      _samplers(options),
-      _scene(options),
-      _scenes(options),
-      _skins(options),
-      _textures(options) {}
+ModelJsonHandler::ModelJsonHandler(const JsonReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _extensionsUsed(context),
+      _extensionsRequired(context),
+      _accessors(context),
+      _animations(context),
+      _asset(context),
+      _buffers(context),
+      _bufferViews(context),
+      _cameras(context),
+      _images(context),
+      _materials(context),
+      _meshes(context),
+      _nodes(context),
+      _samplers(context),
+      _scene(context),
+      _scenes(context),
+      _skins(context),
+      _textures(context) {}
 
 void ModelJsonHandler::reset(IJsonHandler* pParent, Model* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);

@@ -12,7 +12,7 @@ struct AnimationSampler;
 
 class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AnimationSamplerJsonHandler(const ReadModelOptions& options) noexcept;
+  AnimationSamplerJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, AnimationSampler* pObject);
   AnimationSampler* getObject();
   virtual void reportWarning(
@@ -30,8 +30,8 @@ protected:
 private:
   class InterpolationJsonHandler : public JsonHandler {
   public:
-    InterpolationJsonHandler(const ReadModelOptions& options) noexcept
-        : JsonHandler(options) {}
+    InterpolationJsonHandler(const JsonReaderContext& context) noexcept
+        : JsonHandler(context) {}
     void reset(IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum);
     virtual IJsonHandler* readString(const std::string_view& str) override;
 

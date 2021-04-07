@@ -16,7 +16,7 @@ struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
-  AccessorJsonHandler(const ReadModelOptions& options) noexcept;
+  AccessorJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, Accessor* pObject);
   Accessor* getObject();
   virtual void reportWarning(
@@ -34,8 +34,8 @@ protected:
 private:
   class TypeJsonHandler : public JsonHandler {
   public:
-    TypeJsonHandler(const ReadModelOptions& options) noexcept
-        : JsonHandler(options) {}
+    TypeJsonHandler(const JsonReaderContext& context) noexcept
+        : JsonHandler(context) {}
     void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
     virtual IJsonHandler* readString(const std::string_view& str) override;
 

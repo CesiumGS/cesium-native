@@ -7,7 +7,7 @@
 namespace CesiumGltf {
 class ObjectJsonHandler : public JsonHandler {
 public:
-  ObjectJsonHandler(const ReadModelOptions& options) : JsonHandler(options) {}
+  ObjectJsonHandler(const JsonReaderContext& context) : JsonHandler(context) {}
 
   virtual IJsonHandler* readObjectStart() override final;
   virtual IJsonHandler* readObjectEnd() override final;

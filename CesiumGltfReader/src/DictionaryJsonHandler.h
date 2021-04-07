@@ -10,8 +10,8 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class DictionaryJsonHandler : public ObjectJsonHandler {
 public:
-  DictionaryJsonHandler(const ReadModelOptions& options) noexcept
-      : ObjectJsonHandler(options), _item(options) {}
+  DictionaryJsonHandler(const JsonReaderContext& context) noexcept
+      : ObjectJsonHandler(context), _item(context) {}
 
   void reset(
       IJsonHandler* pParent,

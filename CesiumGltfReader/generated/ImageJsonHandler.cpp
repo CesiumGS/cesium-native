@@ -8,11 +8,11 @@
 
 using namespace CesiumGltf;
 
-ImageJsonHandler::ImageJsonHandler(const ReadModelOptions& options) noexcept
-    : NamedObjectJsonHandler(options),
-      _uri(options),
-      _mimeType(options),
-      _bufferView(options) {}
+ImageJsonHandler::ImageJsonHandler(const JsonReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _uri(context),
+      _mimeType(context),
+      _bufferView(context) {}
 
 void ImageJsonHandler::reset(IJsonHandler* pParent, Image* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);

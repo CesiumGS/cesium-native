@@ -12,7 +12,7 @@ struct MaterialNormalTextureInfo;
 class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   MaterialNormalTextureInfoJsonHandler(
-      const ReadModelOptions& options) noexcept;
+      const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, MaterialNormalTextureInfo* pObject);
   MaterialNormalTextureInfo* getObject();
   virtual void reportWarning(

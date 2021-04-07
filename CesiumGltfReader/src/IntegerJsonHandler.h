@@ -6,8 +6,8 @@
 namespace CesiumGltf {
 template <typename T> class IntegerJsonHandler : public JsonHandler {
 public:
-  IntegerJsonHandler(const ReadModelOptions& options) noexcept
-      : JsonHandler(options) {}
+  IntegerJsonHandler(const JsonReaderContext& context) noexcept
+      : JsonHandler(context) {}
 
   void reset(IJsonHandler* pParent, T* pInteger) {
     JsonHandler::reset(pParent);

@@ -490,7 +490,10 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
         }
 
         gsl::span<const std::byte> data = pResponse->data();
-        CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
+
+        // TODO: don't create a new Reader every time.
+        CesiumGltf::Reader reader;
+        CesiumGltf::ImageReaderResult loadedImage = reader.readImage(data);
 
         if (!loadedImage.errors.empty()) {
           loadedImage.errors.push_back("Image url: " + url);

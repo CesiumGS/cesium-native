@@ -363,7 +363,7 @@ function createEnumReaderType(
   return unindent(`
     class ${enumName}JsonHandler : public JsonHandler {
     public:
-      ${enumName}JsonHandler(const ReadModelOptions& options) noexcept : JsonHandler(options) {}
+      ${enumName}JsonHandler(const JsonReaderContext& context) noexcept : JsonHandler(context) {}
       void reset(IJsonHandler* pParent, ${parentName}::${enumName}* pEnum);
       virtual IJsonHandler* readString(const std::string_view& str) override;
 
