@@ -687,14 +687,14 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   std::optional<BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return;
   }
 
   std::optional<double> geometricError =
       JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a geometricError");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a geometricError");
     return;
   }
 
@@ -720,7 +720,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     } else {
       SPDLOG_LOGGER_ERROR(
           pLogger,
-          "Tileset contained an unknown refine value: {}",
+          "Tile contained an unknown refine value: {}",
           refine);
     }
   } else {
