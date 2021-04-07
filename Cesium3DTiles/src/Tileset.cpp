@@ -602,8 +602,6 @@ uint8_t obtainGltfUpAxis(const rapidjson::Document& tileset) {
   std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
   pRootTile->setContext(pContext.get());
 
-  glm::dmat4 rootTileTransform(1.0);
-
   auto rootIt = tileset.FindMember("root");
   auto formatIt = tileset.FindMember("format");
 
