@@ -3,11 +3,13 @@
 #include "CesiumGltf/IExtensionJsonReader.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ReaderLibrary.h"
-#include <cstddef>
 #include <functional>
 #include <gsl/span>
+#include <map>
+#include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace CesiumGltf {
