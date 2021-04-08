@@ -6,6 +6,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGeometry/Axis.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -234,7 +235,7 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
-  const uint8_t gltfUpAxis = tileset.getGltfUpAxis();
+  const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),

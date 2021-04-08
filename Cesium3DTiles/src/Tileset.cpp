@@ -9,6 +9,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/JsonHelpers.h"
@@ -58,7 +59,7 @@ Tileset::Tileset(
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
-      _gltfUpAxis(1) {
+      _gltfUpAxis(CesiumGeometry::Axis::Y) {
   ++this->_loadsInProgress;
   this->_loadTilesetJson(url);
 }
@@ -514,28 +515,28 @@ namespace {
  * @brief Obtains the up-axis that should be used for glTF content of the
  * tileset.
  *
- * The result will be 0=X, 1=Y, 2=Z.
- *
  * If the given tileset JSON does not contain an `asset.gltfUpAxis` string
- * property, then the default value of 1 (indicating the Y-axis) is returned.
+ * property, then the default value of CesiumGeometry::Axis::Y is returned.
  *
  * Otherwise, a warning is printed, saying that the `gltfUpAxis` property is
  * not strictly compliant to the 3D tiles standard, and the return value
  * will depend on the string value of this property, which may be "X", "Y", or
- * "Z", case-insensitively, causing 0, 1, or 2 to be returned, respectively.
+ * "Z", case-insensitively, causing CesiumGeometry::Axis::X,
+ * CesiumGeometry::Axis::Y, or CesiumGeometry::Axis::Z to be returned,
+ * respectively.
  *
  * @param tileset The tileset JSON
  * @return The up-axis to use for glTF content
  */
-uint8_t obtainGltfUpAxis(const rapidjson::Document& tileset) {
+CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
   auto assetIt = tileset.FindMember("asset");
   if (assetIt == tileset.MemberEnd()) {
-    return 1;
+    return CesiumGeometry::Axis::Y;
   }
   const rapidjson::Value& assetJson = assetIt->value;
   auto gltfUpAxisIt = assetJson.FindMember("gltfUpAxis");
   if (gltfUpAxisIt == assetJson.MemberEnd()) {
-    return 1;
+    return CesiumGeometry::Axis::Y;
   }
 
   SPDLOG_WARN("The tileset contains a gltfUpAxis property. "
@@ -545,16 +546,16 @@ uint8_t obtainGltfUpAxis(const rapidjson::Document& tileset) {
   const rapidjson::Value& gltfUpAxisJson = gltfUpAxisIt->value;
   auto gltfUpAxisString = std::string(gltfUpAxisJson.GetString());
   if (gltfUpAxisString == "X" || gltfUpAxisString == "x") {
-    return 0;
+    return CesiumGeometry::Axis::X;
   }
   if (gltfUpAxisString == "Y" || gltfUpAxisString == "y") {
-    return 1;
+    return CesiumGeometry::Axis::Y;
   }
   if (gltfUpAxisString == "Z" || gltfUpAxisString == "z") {
-    return 2;
+    return CesiumGeometry::Axis::Z;
   }
   SPDLOG_WARN("Unknown gltfUpAxis: {}, using default (Y)", gltfUpAxisString);
-  return 1;
+  return CesiumGeometry::Axis::Y;
 }
 } // namespace
 
