@@ -23,7 +23,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* AccessorSparseKey(
+  IJsonHandler* readObjectKeyAccessorSparse(
       const std::string& objectType,
       const std::string_view& str,
       AccessorSparse& o);

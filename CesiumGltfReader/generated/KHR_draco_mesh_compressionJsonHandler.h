@@ -69,7 +69,7 @@ public:
   }
 
 protected:
-  IJsonHandler* KHR_draco_mesh_compressionKey(
+  IJsonHandler* readObjectKeyKHR_draco_mesh_compression(
       const std::string& objectType,
       const std::string_view& str,
       KHR_draco_mesh_compression& o);

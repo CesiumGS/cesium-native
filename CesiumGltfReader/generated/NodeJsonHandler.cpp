@@ -38,10 +38,10 @@ void NodeJsonHandler::reportWarning(
 
 IJsonHandler* NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->NodeKey(Node::TypeName, str, *this->_pObject);
+  return this->readObjectKeyNode(Node::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* NodeJsonHandler::NodeKey(
+IJsonHandler* NodeJsonHandler::readObjectKeyNode(
     const std::string& objectType,
     const std::string_view& str,
     Node& o) {
@@ -66,5 +66,5 @@ IJsonHandler* NodeJsonHandler::NodeKey(
   if ("weights"s == str)
     return property("weights", this->_weights, o.weights);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

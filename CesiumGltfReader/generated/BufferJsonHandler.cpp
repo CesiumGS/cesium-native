@@ -29,10 +29,10 @@ void BufferJsonHandler::reportWarning(
 
 IJsonHandler* BufferJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->BufferKey(Buffer::TypeName, str, *this->_pObject);
+  return this->readObjectKeyBuffer(Buffer::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* BufferJsonHandler::BufferKey(
+IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
     const std::string& objectType,
     const std::string_view& str,
     Buffer& o) {
@@ -43,5 +43,5 @@ IJsonHandler* BufferJsonHandler::BufferKey(
   if ("byteLength"s == str)
     return property("byteLength", this->_byteLength, o.byteLength);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

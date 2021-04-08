@@ -11,7 +11,7 @@ class NamedObjectJsonHandler : public ExtensibleObjectJsonHandler {
 protected:
   NamedObjectJsonHandler(const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pParent, NamedObject* pObject);
-  IJsonHandler* NamedObjectKey(
+  IJsonHandler* readObjectKeyNamedObject(
       const std::string& objectType,
       const std::string_view& str,
       NamedObject& o);

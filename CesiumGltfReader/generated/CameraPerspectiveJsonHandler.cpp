@@ -39,13 +39,13 @@ void CameraPerspectiveJsonHandler::reportWarning(
 IJsonHandler*
 CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->CameraPerspectiveKey(
+  return this->readObjectKeyCameraPerspective(
       CameraPerspective::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
+IJsonHandler* CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
     const std::string& objectType,
     const std::string_view& str,
     CameraPerspective& o) {
@@ -60,5 +60,5 @@ IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
   if ("znear"s == str)
     return property("znear", this->_znear, o.znear);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

@@ -46,10 +46,10 @@ void ModelJsonHandler::reportWarning(
 
 IJsonHandler* ModelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->ModelKey(Model::TypeName, str, *this->_pObject);
+  return this->readObjectKeyModel(Model::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ModelJsonHandler::ModelKey(
+IJsonHandler* ModelJsonHandler::readObjectKeyModel(
     const std::string& objectType,
     const std::string_view& str,
     Model& o) {
@@ -93,5 +93,5 @@ IJsonHandler* ModelJsonHandler::ModelKey(
   if ("textures"s == str)
     return property("textures", this->_textures, o.textures);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

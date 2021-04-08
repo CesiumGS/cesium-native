@@ -23,7 +23,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* AnimationKey(
+  IJsonHandler* readObjectKeyAnimation(
       const std::string& objectType,
       const std::string_view& str,
       Animation& o);

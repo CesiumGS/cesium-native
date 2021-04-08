@@ -37,13 +37,14 @@ void AccessorSparseValuesJsonHandler::reportWarning(
 IJsonHandler*
 AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AccessorSparseValuesKey(
+  return this->readObjectKeyAccessorSparseValues(
       AccessorSparseValues::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
+IJsonHandler*
+AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
     const std::string& objectType,
     const std::string_view& str,
     AccessorSparseValues& o) {
@@ -54,5 +55,5 @@ IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
   if ("byteOffset"s == str)
     return property("byteOffset", this->_byteOffset, o.byteOffset);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

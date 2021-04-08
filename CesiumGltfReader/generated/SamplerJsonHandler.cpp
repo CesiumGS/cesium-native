@@ -34,10 +34,10 @@ void SamplerJsonHandler::reportWarning(
 
 IJsonHandler* SamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->SamplerKey(Sampler::TypeName, str, *this->_pObject);
+  return this->readObjectKeySampler(Sampler::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SamplerJsonHandler::SamplerKey(
+IJsonHandler* SamplerJsonHandler::readObjectKeySampler(
     const std::string& objectType,
     const std::string_view& str,
     Sampler& o) {
@@ -52,5 +52,5 @@ IJsonHandler* SamplerJsonHandler::SamplerKey(
   if ("wrapT"s == str)
     return property("wrapT", this->_wrapT, o.wrapT);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

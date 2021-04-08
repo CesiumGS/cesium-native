@@ -35,14 +35,14 @@ void MaterialNormalTextureInfoJsonHandler::reportWarning(
 IJsonHandler* MaterialNormalTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
-  return this->MaterialNormalTextureInfoKey(
+  return this->readObjectKeyMaterialNormalTextureInfo(
       MaterialNormalTextureInfo::TypeName,
       str,
       *this->_pObject);
 }
 
 IJsonHandler*
-MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoKey(
+MaterialNormalTextureInfoJsonHandler::readObjectKeyMaterialNormalTextureInfo(
     const std::string& objectType,
     const std::string_view& str,
     MaterialNormalTextureInfo& o) {
@@ -51,5 +51,5 @@ MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoKey(
   if ("scale"s == str)
     return property("scale", this->_scale, o.scale);
 
-  return this->TextureInfoKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyTextureInfo(objectType, str, *this->_pObject);
 }

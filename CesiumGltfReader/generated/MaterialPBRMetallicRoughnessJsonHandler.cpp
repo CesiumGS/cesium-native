@@ -42,17 +42,17 @@ void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(
 IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
-  return this->MaterialPBRMetallicRoughnessKey(
+  return this->readObjectKeyMaterialPBRMetallicRoughness(
       MaterialPBRMetallicRoughness::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler*
-MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
-    const std::string& objectType,
-    const std::string_view& str,
-    MaterialPBRMetallicRoughness& o) {
+IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::
+    readObjectKeyMaterialPBRMetallicRoughness(
+        const std::string& objectType,
+        const std::string_view& str,
+        MaterialPBRMetallicRoughness& o) {
   using namespace std::string_literals;
 
   if ("baseColorFactor"s == str)
@@ -78,5 +78,5 @@ MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
         this->_metallicRoughnessTexture,
         o.metallicRoughnessTexture);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

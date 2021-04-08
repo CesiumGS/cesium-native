@@ -21,7 +21,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* AssetKey(
+  IJsonHandler* readObjectKeyAsset(
       const std::string& objectType,
       const std::string_view& str,
       Asset& o);

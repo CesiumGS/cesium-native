@@ -32,10 +32,10 @@ void SkinJsonHandler::reportWarning(
 
 IJsonHandler* SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->SkinKey(Skin::TypeName, str, *this->_pObject);
+  return this->readObjectKeySkin(Skin::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SkinJsonHandler::SkinKey(
+IJsonHandler* SkinJsonHandler::readObjectKeySkin(
     const std::string& objectType,
     const std::string_view& str,
     Skin& o) {
@@ -51,5 +51,5 @@ IJsonHandler* SkinJsonHandler::SkinKey(
   if ("joints"s == str)
     return property("joints", this->_joints, o.joints);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

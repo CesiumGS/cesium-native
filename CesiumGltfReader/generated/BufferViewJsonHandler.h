@@ -22,7 +22,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* BufferViewKey(
+  IJsonHandler* readObjectKeyBufferView(
       const std::string& objectType,
       const std::string_view& str,
       BufferView& o);

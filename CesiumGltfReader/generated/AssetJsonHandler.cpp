@@ -33,10 +33,10 @@ void AssetJsonHandler::reportWarning(
 
 IJsonHandler* AssetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AssetKey(Asset::TypeName, str, *this->_pObject);
+  return this->readObjectKeyAsset(Asset::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AssetJsonHandler::AssetKey(
+IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
     const std::string& objectType,
     const std::string_view& str,
     Asset& o) {
@@ -51,5 +51,5 @@ IJsonHandler* AssetJsonHandler::AssetKey(
   if ("minVersion"s == str)
     return property("minVersion", this->_minVersion, o.minVersion);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

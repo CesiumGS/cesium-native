@@ -156,7 +156,7 @@ function generate(options, schema) {
             ` : ""}
           
           protected:
-            IJsonHandler* ${name}Key(const std::string& objectType, const std::string_view& str, ${name}& o);
+            IJsonHandler* readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o);
     
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
@@ -224,7 +224,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
 
         IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
           assert(this->_pObject);
-          return this->${name}Key(${name}::TypeName, str, *this->_pObject);
+          return this->readObjectKey${name}(${name}::TypeName, str, *this->_pObject);
         }
 
         ${thisConfig.extensionName ? `
@@ -238,7 +238,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
         }
         ` : ""}
 
-        IJsonHandler* ${name}JsonHandler::${name}Key(const std::string& objectType, const std::string_view& str, ${name}& o) {
+        IJsonHandler* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o) {
           using namespace std::string_literals;
 
           ${indent(
@@ -248,7 +248,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
             10
           )}
 
-          return this->${base}Key(objectType, str, *this->_pObject);
+          return this->readObjectKey${base}(objectType, str, *this->_pObject);
         }
 
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}

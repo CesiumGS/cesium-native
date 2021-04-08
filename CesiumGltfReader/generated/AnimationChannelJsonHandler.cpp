@@ -37,13 +37,13 @@ void AnimationChannelJsonHandler::reportWarning(
 IJsonHandler*
 AnimationChannelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AnimationChannelKey(
+  return this->readObjectKeyAnimationChannel(
       AnimationChannel::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler* AnimationChannelJsonHandler::AnimationChannelKey(
+IJsonHandler* AnimationChannelJsonHandler::readObjectKeyAnimationChannel(
     const std::string& objectType,
     const std::string_view& str,
     AnimationChannel& o) {
@@ -54,5 +54,5 @@ IJsonHandler* AnimationChannelJsonHandler::AnimationChannelKey(
   if ("target"s == str)
     return property("target", this->_target, o.target);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

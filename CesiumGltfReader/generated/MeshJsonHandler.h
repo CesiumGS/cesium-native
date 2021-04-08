@@ -23,8 +23,10 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  MeshKey(const std::string& objectType, const std::string_view& str, Mesh& o);
+  IJsonHandler* readObjectKeyMesh(
+      const std::string& objectType,
+      const std::string_view& str,
+      Mesh& o);
 
 private:
   Mesh* _pObject = nullptr;

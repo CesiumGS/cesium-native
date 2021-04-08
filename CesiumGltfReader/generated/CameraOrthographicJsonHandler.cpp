@@ -39,13 +39,13 @@ void CameraOrthographicJsonHandler::reportWarning(
 IJsonHandler*
 CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->CameraOrthographicKey(
+  return this->readObjectKeyCameraOrthographic(
       CameraOrthographic::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
+IJsonHandler* CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
     const std::string& objectType,
     const std::string_view& str,
     CameraOrthographic& o) {
@@ -60,5 +60,5 @@ IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
   if ("znear"s == str)
     return property("znear", this->_znear, o.znear);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

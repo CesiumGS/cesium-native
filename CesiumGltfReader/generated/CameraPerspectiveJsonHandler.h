@@ -21,7 +21,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* CameraPerspectiveKey(
+  IJsonHandler* readObjectKeyCameraPerspective(
       const std::string& objectType,
       const std::string_view& str,
       CameraPerspective& o);

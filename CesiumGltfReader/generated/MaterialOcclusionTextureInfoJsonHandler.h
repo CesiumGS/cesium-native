@@ -22,7 +22,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* MaterialOcclusionTextureInfoKey(
+  IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(
       const std::string& objectType,
       const std::string_view& str,
       MaterialOcclusionTextureInfo& o);

@@ -37,21 +37,21 @@ void MaterialOcclusionTextureInfoJsonHandler::reportWarning(
 IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
-  return this->MaterialOcclusionTextureInfoKey(
+  return this->readObjectKeyMaterialOcclusionTextureInfo(
       MaterialOcclusionTextureInfo::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler*
-MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoKey(
-    const std::string& objectType,
-    const std::string_view& str,
-    MaterialOcclusionTextureInfo& o) {
+IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::
+    readObjectKeyMaterialOcclusionTextureInfo(
+        const std::string& objectType,
+        const std::string_view& str,
+        MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
 
   if ("strength"s == str)
     return property("strength", this->_strength, o.strength);
 
-  return this->TextureInfoKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyTextureInfo(objectType, str, *this->_pObject);
 }

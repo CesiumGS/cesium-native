@@ -38,10 +38,13 @@ void MeshPrimitiveJsonHandler::reportWarning(
 IJsonHandler*
 MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->MeshPrimitiveKey(MeshPrimitive::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMeshPrimitive(
+      MeshPrimitive::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* MeshPrimitiveJsonHandler::MeshPrimitiveKey(
+IJsonHandler* MeshPrimitiveJsonHandler::readObjectKeyMeshPrimitive(
     const std::string& objectType,
     const std::string_view& str,
     MeshPrimitive& o) {
@@ -58,5 +61,5 @@ IJsonHandler* MeshPrimitiveJsonHandler::MeshPrimitiveKey(
   if ("targets"s == str)
     return property("targets", this->_targets, o.targets);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

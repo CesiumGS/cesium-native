@@ -24,7 +24,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* MeshPrimitiveKey(
+  IJsonHandler* readObjectKeyMeshPrimitive(
       const std::string& objectType,
       const std::string_view& str,
       MeshPrimitive& o);

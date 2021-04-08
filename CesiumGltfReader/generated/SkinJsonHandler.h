@@ -22,8 +22,10 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  SkinKey(const std::string& objectType, const std::string_view& str, Skin& o);
+  IJsonHandler* readObjectKeySkin(
+      const std::string& objectType,
+      const std::string_view& str,
+      Skin& o);
 
 private:
   Skin* _pObject = nullptr;

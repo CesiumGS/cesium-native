@@ -23,8 +23,10 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  NodeKey(const std::string& objectType, const std::string_view& str, Node& o);
+  IJsonHandler* readObjectKeyNode(
+      const std::string& objectType,
+      const std::string_view& str,
+      Node& o);
 
 private:
   Node* _pObject = nullptr;

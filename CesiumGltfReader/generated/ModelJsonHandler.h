@@ -37,7 +37,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* ModelKey(
+  IJsonHandler* readObjectKeyModel(
       const std::string& objectType,
       const std::string_view& str,
       Model& o);

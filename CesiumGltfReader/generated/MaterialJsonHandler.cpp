@@ -38,10 +38,10 @@ void MaterialJsonHandler::reportWarning(
 
 IJsonHandler* MaterialJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->MaterialKey(Material::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMaterial(Material::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* MaterialJsonHandler::MaterialKey(
+IJsonHandler* MaterialJsonHandler::readObjectKeyMaterial(
     const std::string& objectType,
     const std::string_view& str,
     Material& o) {
@@ -73,7 +73,7 @@ IJsonHandler* MaterialJsonHandler::MaterialKey(
   if ("doubleSided"s == str)
     return property("doubleSided", this->_doubleSided, o.doubleSided);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
 void MaterialJsonHandler::AlphaModeJsonHandler::reset(

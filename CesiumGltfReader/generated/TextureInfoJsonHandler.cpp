@@ -35,10 +35,13 @@ void TextureInfoJsonHandler::reportWarning(
 IJsonHandler*
 TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->TextureInfoKey(TextureInfo::TypeName, str, *this->_pObject);
+  return this->readObjectKeyTextureInfo(
+      TextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* TextureInfoJsonHandler::TextureInfoKey(
+IJsonHandler* TextureInfoJsonHandler::readObjectKeyTextureInfo(
     const std::string& objectType,
     const std::string_view& str,
     TextureInfo& o) {
@@ -49,5 +52,5 @@ IJsonHandler* TextureInfoJsonHandler::TextureInfoKey(
   if ("texCoord"s == str)
     return property("texCoord", this->_texCoord, o.texCoord);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

@@ -30,10 +30,13 @@ void AnimationJsonHandler::reportWarning(
 
 IJsonHandler* AnimationJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AnimationKey(Animation::TypeName, str, *this->_pObject);
+  return this->readObjectKeyAnimation(
+      Animation::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* AnimationJsonHandler::AnimationKey(
+IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
     const std::string& objectType,
     const std::string_view& str,
     Animation& o) {
@@ -44,5 +47,5 @@ IJsonHandler* AnimationJsonHandler::AnimationKey(
   if ("samplers"s == str)
     return property("samplers", this->_samplers, o.samplers);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

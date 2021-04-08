@@ -23,7 +23,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* ImageKey(
+  IJsonHandler* readObjectKeyImage(
       const std::string& objectType,
       const std::string_view& str,
       Image& o);

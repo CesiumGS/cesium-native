@@ -37,7 +37,7 @@ void KHR_draco_mesh_compressionJsonHandler::reportWarning(
 IJsonHandler* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
-  return this->KHR_draco_mesh_compressionKey(
+  return this->readObjectKeyKHR_draco_mesh_compression(
       KHR_draco_mesh_compression::TypeName,
       str,
       *this->_pObject);
@@ -56,7 +56,7 @@ void KHR_draco_mesh_compressionJsonHandler::reset(
 }
 
 IJsonHandler*
-KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
+KHR_draco_mesh_compressionJsonHandler::readObjectKeyKHR_draco_mesh_compression(
     const std::string& objectType,
     const std::string_view& str,
     KHR_draco_mesh_compression& o) {
@@ -67,5 +67,5 @@ KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
   if ("attributes"s == str)
     return property("attributes", this->_attributes, o.attributes);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

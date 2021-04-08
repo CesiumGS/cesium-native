@@ -16,7 +16,7 @@ void ExtensibleObjectJsonHandler::reset(
   ObjectJsonHandler::reset(pParent);
 }
 
-IJsonHandler* ExtensibleObjectJsonHandler::ExtensibleObjectKey(
+IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     const std::string& objectType,
     const std::string_view& str,
     ExtensibleObject& o) {

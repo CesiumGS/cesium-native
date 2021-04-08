@@ -32,10 +32,10 @@ void CameraJsonHandler::reportWarning(
 
 IJsonHandler* CameraJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->CameraKey(Camera::TypeName, str, *this->_pObject);
+  return this->readObjectKeyCamera(Camera::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* CameraJsonHandler::CameraKey(
+IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
     const std::string& objectType,
     const std::string_view& str,
     Camera& o) {
@@ -48,7 +48,7 @@ IJsonHandler* CameraJsonHandler::CameraKey(
   if ("type"s == str)
     return property("type", this->_type, o.type);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
 void CameraJsonHandler::TypeJsonHandler::reset(

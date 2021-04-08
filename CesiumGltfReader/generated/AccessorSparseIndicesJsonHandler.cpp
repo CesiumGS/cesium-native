@@ -38,13 +38,14 @@ void AccessorSparseIndicesJsonHandler::reportWarning(
 IJsonHandler*
 AccessorSparseIndicesJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AccessorSparseIndicesKey(
+  return this->readObjectKeyAccessorSparseIndices(
       AccessorSparseIndices::TypeName,
       str,
       *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(
+IJsonHandler*
+AccessorSparseIndicesJsonHandler::readObjectKeyAccessorSparseIndices(
     const std::string& objectType,
     const std::string_view& str,
     AccessorSparseIndices& o) {
@@ -57,5 +58,5 @@ IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(
   if ("componentType"s == str)
     return property("componentType", this->_componentType, o.componentType);
 
-  return this->ExtensibleObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

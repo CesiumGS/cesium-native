@@ -32,10 +32,10 @@ void ImageJsonHandler::reportWarning(
 
 IJsonHandler* ImageJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->ImageKey(Image::TypeName, str, *this->_pObject);
+  return this->readObjectKeyImage(Image::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ImageJsonHandler::ImageKey(
+IJsonHandler* ImageJsonHandler::readObjectKeyImage(
     const std::string& objectType,
     const std::string_view& str,
     Image& o) {
@@ -48,7 +48,7 @@ IJsonHandler* ImageJsonHandler::ImageKey(
   if ("bufferView"s == str)
     return property("bufferView", this->_bufferView, o.bufferView);
 
-  return this->NamedObjectKey(objectType, str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
 void ImageJsonHandler::MimeTypeJsonHandler::reset(
