@@ -2,7 +2,6 @@
 
 #include "CesiumGltf/IExtensionJsonReader.h"
 #include "CesiumGltf/Model.h"
-#include "CesiumGltf/ReadModelOptions.h"
 #include "CesiumGltf/ReaderLibrary.h"
 #include <cstddef>
 #include <functional>
@@ -87,8 +86,49 @@ enum class ExtensionState {
   Disabled
 };
 
+/**
+ * @brief Options for how to read a glTF.
+ */
+struct CESIUMGLTFREADER_API ReadModelOptions {
+  /**
+   * @brief Whether data URLs in buffers and images should be automatically
+   * decoded as part of the load process.
+   */
+  bool decodeDataUrls = true;
+
+  /**
+   * @brief Whether data URLs should be cleared after they are successfully
+   * decoded.
+   *
+   * This reduces the memory usage of the model.
+   */
+  bool clearDecodedDataUrls = true;
+
+  /**
+   * @brief Whether embedded images in {@link Model::buffers} should be
+   * automatically decoded as part of the load process.
+   *
+   * The {@link ImageSpec::mimeType} property is ignored, and instead the
+   * [stb_image](https://github.com/nothings/stb) library is used to decode
+   * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
+   */
+  bool decodeEmbeddedImages = true;
+
+  /**
+   * @brief Whether geometry compressed using the `KHR_draco_mesh_compression`
+   * extension should be automatically decoded as part of the load process.
+   */
+  bool decodeDraco = true;
+};
+
+/**
+ * @brief Reads glTF models and images.
+ */
 class CESIUMGLTFREADER_API Reader {
 public:
+  /**
+   * @brief Constructs a new instance.
+   */
   Reader();
 
   /**
@@ -132,6 +172,17 @@ public:
 
   /**
    * @brief Enables or disables a glTF extension.
+   *
+   * By default, all extensions are enabled. When an enabled extension is
+   * encountered in the source glTF, it is read into a statically-typed
+   * extension class, if one is registered, or into a {@link JsonValue} if not.
+   *
+   * When a disabled extension is encountered in the source glTF, it is ignored
+   * completely.
+   *
+   * An extension may also be set to `ExtensionState::JsonOnly`, in which case
+   * it will be read into a
+   * {@link JsonValue} even if a statically-typed extension class is registered.
    *
    * @param extensionName The name of the extension to be enabled or disabled.
    * @param newState The new state for the extension.

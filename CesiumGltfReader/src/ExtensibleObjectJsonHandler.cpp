@@ -1,6 +1,5 @@
 #include "ExtensibleObjectJsonHandler.h"
 #include "CesiumGltf/ExtensibleObject.h"
-#include "CesiumGltf/Extension.h"
 #include "CesiumGltf/JsonReader.h"
 #include "ExtensionsJsonHandler.h"
 #include "ObjectJsonHandler.h"
@@ -30,15 +29,6 @@ IJsonHandler* ExtensibleObjectJsonHandler::ExtensibleObjectKey(
     this->_extensions.reset(this, &o, objectType);
     return &this->_extensions;
   }
-
-  // if ("extensions"s == str &&
-  // this->_options.deserializeExtensionsAsJsonValue) {
-  //   o.extensions.emplace_back(JsonValue::Object());
-  //   return property(
-  //       "extensions",
-  //       this->_extensions,
-  //       std::any_cast<JsonValue::Object&>(o.extensions.back()));
-  // }
 
   return this->ignoreAndContinue();
 }
