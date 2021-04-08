@@ -234,11 +234,12 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
+  const uint8_t gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
-           ownerTileset = &tileset,
+           gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
@@ -292,8 +293,7 @@ void Tile::loadContent() {
               // TODO The `extras` are currently the only way to pass
               // arbitrary information to the consumer, so the up-axis
               // is stored here:
-              pContent->model.value().extras["gltfUpAxis"] =
-                  ownerTileset->getGltfUpAxis();
+              pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
 
               const BoundingVolume& boundingVolume =
                   loadInput.tileBoundingVolume;
