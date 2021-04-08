@@ -31,41 +31,40 @@ public:
       ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler* IExtensionJsonReader::readNull() override {
+  virtual IJsonHandler* readNull() override {
     return ExtensibleObjectJsonHandler::readNull();
   };
-  virtual IJsonHandler* IExtensionJsonReader::readBool(bool b) override {
+  virtual IJsonHandler* readBool(bool b) override {
     return ExtensibleObjectJsonHandler::readBool(b);
   }
-  virtual IJsonHandler* IExtensionJsonReader::readInt32(int32_t i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     return ExtensibleObjectJsonHandler::readInt32(i);
   }
-  virtual IJsonHandler* IExtensionJsonReader::readUint32(uint32_t i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     return ExtensibleObjectJsonHandler::readUint32(i);
   }
-  virtual IJsonHandler* IExtensionJsonReader::readInt64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     return ExtensibleObjectJsonHandler::readInt64(i);
   }
-  virtual IJsonHandler* IExtensionJsonReader::readUint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     return ExtensibleObjectJsonHandler::readUint64(i);
   }
-  virtual IJsonHandler* IExtensionJsonReader::readDouble(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     return ExtensibleObjectJsonHandler::readDouble(d);
   }
-  virtual IJsonHandler*
-  IExtensionJsonReader::readString(const std::string_view& str) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     return ExtensibleObjectJsonHandler::readString(str);
   }
-  virtual IJsonHandler* IExtensionJsonReader::readObjectStart() override {
+  virtual IJsonHandler* readObjectStart() override {
     return ExtensibleObjectJsonHandler::readObjectStart();
   }
-  virtual IJsonHandler* IExtensionJsonReader::readObjectEnd() override {
+  virtual IJsonHandler* readObjectEnd() override {
     return ExtensibleObjectJsonHandler::readObjectEnd();
   }
-  virtual IJsonHandler* IExtensionJsonReader::readArrayStart() override {
+  virtual IJsonHandler* readArrayStart() override {
     return ExtensibleObjectJsonHandler::readArrayStart();
   }
-  virtual IJsonHandler* IExtensionJsonReader::readArrayEnd() override {
+  virtual IJsonHandler* readArrayEnd() override {
     return ExtensibleObjectJsonHandler::readArrayEnd();
   }
 

@@ -117,40 +117,40 @@ function generate(options, schema) {
             ${thisConfig.extensionName ? `
             virtual void reset(IJsonHandler* pParentHandler, ExtensibleObject& o, const std::string_view& extensionName) override;
 
-            virtual IJsonHandler* IExtensionJsonReader::readNull() override {
+            virtual IJsonHandler* readNull() override {
               return ${base}JsonHandler::readNull();
             };
-            virtual IJsonHandler* IExtensionJsonReader::readBool(bool b) override {
+            virtual IJsonHandler* readBool(bool b) override {
               return ${base}JsonHandler::readBool(b);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readInt32(int32_t i) override {
+            virtual IJsonHandler* readInt32(int32_t i) override {
               return ${base}JsonHandler::readInt32(i);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readUint32(uint32_t i) override {
+            virtual IJsonHandler* readUint32(uint32_t i) override {
               return ${base}JsonHandler::readUint32(i);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readInt64(int64_t i) override {
+            virtual IJsonHandler* readInt64(int64_t i) override {
               return ${base}JsonHandler::readInt64(i);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readUint64(uint64_t i) override {
+            virtual IJsonHandler* readUint64(uint64_t i) override {
               return ${base}JsonHandler::readUint64(i);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readDouble(double d) override {
+            virtual IJsonHandler* readDouble(double d) override {
               return ${base}JsonHandler::readDouble(d);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readString(const std::string_view& str) override {
+            virtual IJsonHandler* readString(const std::string_view& str) override {
               return ${base}JsonHandler::readString(str);
             }
-            virtual IJsonHandler* IExtensionJsonReader::readObjectStart() override {
+            virtual IJsonHandler* readObjectStart() override {
               return ${base}JsonHandler::readObjectStart();
             }
-            virtual IJsonHandler* IExtensionJsonReader::readObjectEnd() override {
+            virtual IJsonHandler* readObjectEnd() override {
               return ${base}JsonHandler::readObjectEnd();
             }
-            virtual IJsonHandler* IExtensionJsonReader::readArrayStart() override {
+            virtual IJsonHandler* readArrayStart() override {
               return ${base}JsonHandler::readArrayStart();
             }
-            virtual IJsonHandler* IExtensionJsonReader::readArrayEnd() override {
+            virtual IJsonHandler* readArrayEnd() override {
               return ${base}JsonHandler::readArrayEnd();
             }
             ` : ""}
