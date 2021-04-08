@@ -89,6 +89,8 @@ enum class ExtensionState {
 
 class CESIUMGLTFREADER_API Reader {
 public:
+  Reader();
+
   /**
    * @brief Registers an extension for a glTF object.
    *
@@ -99,12 +101,12 @@ public:
   template <typename TExtended, typename TExtensionHandler>
   void registerExtension(const std::string& extensionName) {
     auto it =
-        this->_extensions.emplace(extensionName, TObjectTypeToReader()).first;
-    it->insert_or_assign(
+        this->_extensions.emplace(extensionName, ObjectTypeToReader()).first;
+    it->second.insert_or_assign(
         TExtended::TypeName,
-        [](const JsonReaderContext& context) {
-          return TExtensionHandler(context);
-        });
+        ExtensionReaderFactory([](const JsonReaderContext& context) {
+          return std::make_unique<TExtensionHandler>(context);
+        }));
   }
 
   /**
@@ -119,13 +121,13 @@ public:
   void registerExtension() {
     auto it =
         this->_extensions
-            .emplace(TExtensionHandler::ExtensionName, TObjectTypeToReader())
+            .emplace(TExtensionHandler::ExtensionName, ObjectTypeToReader())
             .first;
-    it->insert_or_assign(
+    it->second.insert_or_assign(
         TExtended::TypeName,
-        [](const JsonReaderContext& context) {
-          return TExtensionHandler(context);
-        });
+        ExtensionReaderFactory([](const JsonReaderContext& context) {
+          return std::make_unique<TExtensionHandler>(context);
+        }));
   }
 
   /**

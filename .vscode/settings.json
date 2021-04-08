@@ -99,7 +99,11 @@
         "codecvt": "cpp",
         "ranges": "cpp",
         "scoped_allocator": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "any": "cpp",
+        "csignal": "cpp",
+        "filesystem": "cpp",
+        "stop_token": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

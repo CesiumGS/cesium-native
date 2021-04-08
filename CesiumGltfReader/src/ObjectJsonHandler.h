@@ -9,8 +9,8 @@ class ObjectJsonHandler : public JsonHandler {
 public:
   ObjectJsonHandler(const JsonReaderContext& context) : JsonHandler(context) {}
 
-  virtual IJsonHandler* readObjectStart() override final;
-  virtual IJsonHandler* readObjectEnd() override final;
+  virtual IJsonHandler* readObjectStart() override /* final */;
+  virtual IJsonHandler* readObjectEnd() override /* final */;
 
 protected:
   virtual IJsonHandler* StartSubObject();

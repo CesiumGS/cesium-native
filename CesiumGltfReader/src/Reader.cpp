@@ -1,6 +1,7 @@
 #include "CesiumGltf/Reader.h"
 #include "CesiumGltf/IExtensionJsonReader.h"
 #include "CesiumGltf/JsonReader.h"
+#include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
@@ -441,6 +442,12 @@ public:
 };
 
 } // namespace
+
+Reader::Reader() {
+  this->registerExtension<
+      MeshPrimitive,
+      KHR_draco_mesh_compressionJsonHandler>();
+}
 
 void Reader::setExtensionState(
     const std::string& extensionName,

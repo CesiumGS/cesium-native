@@ -43,6 +43,18 @@ IJsonHandler* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
+void KHR_draco_mesh_compressionJsonHandler::reset(
+    IJsonHandler* pParentHandler,
+    ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::any& value =
+      o.extensions.emplace(extensionName, KHR_draco_mesh_compression())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::any_cast<KHR_draco_mesh_compression&>(value));
+}
+
 IJsonHandler*
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
     const std::string& objectType,

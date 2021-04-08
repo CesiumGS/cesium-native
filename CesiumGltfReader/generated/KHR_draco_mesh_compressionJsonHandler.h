@@ -11,8 +11,11 @@ namespace CesiumGltf {
 struct KHR_draco_mesh_compression;
 
 class KHR_draco_mesh_compressionJsonHandler
-    : public ExtensibleObjectJsonHandler {
+    : public ExtensibleObjectJsonHandler,
+      public IExtensionJsonReader {
 public:
+  static inline const std::string ExtensionName = "KHR_draco_mesh_compression";
+
   KHR_draco_mesh_compressionJsonHandler(
       const JsonReaderContext& context) noexcept;
   void reset(IJsonHandler* pHandler, KHR_draco_mesh_compression* pObject);
@@ -22,6 +25,49 @@ public:
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+  virtual void reset(
+      IJsonHandler* pParentHandler,
+      ExtensibleObject& o,
+      const std::string_view& extensionName) override;
+
+  virtual IJsonHandler* IExtensionJsonReader::readNull() override {
+    return ExtensibleObjectJsonHandler::readNull();
+  };
+  virtual IJsonHandler* IExtensionJsonReader::readBool(bool b) override {
+    return ExtensibleObjectJsonHandler::readBool(b);
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readInt32(int32_t i) override {
+    return ExtensibleObjectJsonHandler::readInt32(i);
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readUint32(uint32_t i) override {
+    return ExtensibleObjectJsonHandler::readUint32(i);
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readInt64(int64_t i) override {
+    return ExtensibleObjectJsonHandler::readInt64(i);
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readUint64(uint64_t i) override {
+    return ExtensibleObjectJsonHandler::readUint64(i);
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readDouble(double d) override {
+    return ExtensibleObjectJsonHandler::readDouble(d);
+  }
+  virtual IJsonHandler*
+  IExtensionJsonReader::readString(const std::string_view& str) override {
+    return ExtensibleObjectJsonHandler::readString(str);
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readObjectStart() override {
+    return ExtensibleObjectJsonHandler::readObjectStart();
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readObjectEnd() override {
+    return ExtensibleObjectJsonHandler::readObjectEnd();
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readArrayStart() override {
+    return ExtensibleObjectJsonHandler::readArrayStart();
+  }
+  virtual IJsonHandler* IExtensionJsonReader::readArrayEnd() override {
+    return ExtensibleObjectJsonHandler::readArrayEnd();
+  }
 
 protected:
   IJsonHandler* KHR_draco_mesh_compressionKey(
