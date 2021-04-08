@@ -71,6 +71,8 @@ struct QuantizedMeshView {
         southEdgeIndicesCount{0},
         eastEdgeIndicesCount{0},
         northEdgeIndicesCount{0},
+        onlyWater{false},
+        onlyLand{false},
         metadataJsonLength{0} {}
 
   const QuantizedMeshHeader* header;
@@ -96,6 +98,12 @@ struct QuantizedMeshView {
   gsl::span<const std::byte> northEdgeIndicesBuffer;
 
   gsl::span<const std::byte> octEncodedNormalBuffer;
+
+  bool onlyWater;
+  bool onlyLand;
+  // TODO: should be a texture
+  // water mask will always be a 256*256 map where 0 is land and 255 is water. 
+  gsl::span<const std::byte> waterMaskBuffer;
 
   uint32_t metadataJsonLength;
   gsl::span<const char> metadataJsonBuffer;
@@ -322,6 +330,17 @@ parseQuantizedMesh(const gsl::span<const std::byte>& data) {
 
       meshView.octEncodedNormalBuffer =
           gsl::span<const std::byte>(data.data() + readIndex, vertexCount * 2);
+    } else if (extensionID == 2) {
+      // Water Mask
+      if (extensionLength == 1) {
+      // Either fully land or fully water
+        meshView.onlyWater = static_cast<bool>(*reinterpret_cast<const char*>(data.data() + readIndex));
+        meshView.onlyLand = !meshView.onlyLand;
+      } else if (extensionLength == 65536) {
+      // We have a 256*256 mask defining where the water is within the tile
+      // 0 means land, 255 means water
+        meshView.waterMaskBuffer = gsl::span<const std::byte>(data.data() + readIndex, 65536);
+      }
     } else if (extensionID == 4) {
       // Metadata
       if (readIndex + sizeof(uint32_t) > data.size()) {
@@ -1050,6 +1069,39 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   skirtMeshMetadata.skirtNorthHeight = skirtHeight;
 
   primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+
+  // add water mask to primitive extras
+  primitive.extras.emplace("OnlyWater", meshView->onlyWater);
+  primitive.extras.emplace("OnlyLand", meshView->onlyLand);
+  if (!meshView->onlyWater && !meshView->onlyLand) {
+    //primitive.extras.emplace("WaterMask") = meshView->waterMask;
+    size_t waterMaskBufferId = model.buffers.size();
+    model.buffers.emplace_back();
+    CesiumGltf::Buffer& waterMaskBuffer = model.buffers[waterMaskBufferId];
+    waterMaskBuffer.cesium.data.resize(65536);
+    std::memcpy(waterMaskBuffer.cesium.data.data(), meshView->waterMaskBuffer.data(), 65536);
+
+    size_t waterMaskBufferViewId = model.bufferViews.size();
+    model.bufferViews.emplace_back();
+    CesiumGltf::BufferView& waterMaskBufferView =
+        model.bufferViews[waterMaskBufferViewId];
+    waterMaskBufferView.buffer = int32_t(waterMaskBufferId);
+    waterMaskBufferView.byteOffset = 0;
+    waterMaskBufferView.byteStride = 1;
+    waterMaskBufferView.byteLength = 65536;
+    waterMaskBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+    size_t waterMaskAccessorId = model.accessors.size();
+    model.accessors.emplace_back();
+    CesiumGltf::Accessor& waterMaskAccessor = model.accessors[waterMaskAccessorId];
+    waterMaskAccessor.bufferView = int32_t(waterMaskBufferViewId);
+    waterMaskAccessor.byteOffset = 0;
+    waterMaskAccessor.componentType = CesiumGltf::Accessor::ComponentType::BYTE;
+    waterMaskAccessor.count = 65536;
+    waterMaskAccessor.type = CesiumGltf::Accessor::Type::SCALAR;
+
+    primitive.extras.emplace("WaterMask", int32_t(waterMaskAccessorId));
+  }
 
   // create node and update bounding volume
   model.nodes.emplace_back();

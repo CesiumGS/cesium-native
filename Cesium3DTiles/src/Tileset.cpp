@@ -799,7 +799,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
   context.requestHeaders.push_back(std::make_pair(
       "Accept",
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01"));
+      "*;q=0.01;extensions=watermask"));
 
   auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
