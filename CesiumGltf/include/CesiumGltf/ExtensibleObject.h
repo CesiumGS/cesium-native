@@ -19,7 +19,7 @@ struct CESIUMGLTF_API ExtensibleObject {
    * attached to this object.
    */
   template <typename T> const T* getExtension() const noexcept {
-    auto it = this->extensions.find(T::TypeName);
+    auto it = this->extensions.find(T::ExtensionName);
     if (it == this->extensions.end()) {
       return nullptr;
     }
@@ -33,16 +33,27 @@ struct CESIUMGLTF_API ExtensibleObject {
         const_cast<const ExtensibleObject*>(this)->getExtension<T>());
   }
 
-  JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
-
+  /**
+   * @brief Gets a generic extension with the given name as a {@link JsonValue}.
+   *
+   * If the extension exists but has a static type, this method will retur
+   * nullptr. Use {@link getExtension} to retrieve a statically-typed extension.
+   *
+   * @param extensionName The name of the extension.
+   * @return The generic extension, or nullptr if the generic extension doesn't
+   * exist.
+   */
   const JsonValue*
   getGenericExtension(const std::string& extensionName) const noexcept;
+
+  /** @copydoc ExtensibleObject::getGenericExtension */
+  JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
 
   /**
    * @brief The extensions attached to this object.
    *
    * Use {@link getExtension} to get the extension with a particular static
-   * type. Use {@link getGenericExtension} to get unknowns extensions as a
+   * type. Use {@link getGenericExtension} to get unknown extensions as a
    * generic {@link JsonValue}.
    */
   std::unordered_map<std::string, std::any> extensions;

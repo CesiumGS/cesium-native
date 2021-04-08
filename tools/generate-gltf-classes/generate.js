@@ -59,6 +59,7 @@ function generate(options, schema) {
              */
             struct CESIUMGLTF_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
                 static inline const std::string TypeName = "${name}";
+                ${thisConfig.extensionName ? `static inline const std::string ExtensionName = "${thisConfig.extensionName}";` : ""}
 
                 ${indent(localTypes.join("\n\n"), 16)}
 
