@@ -192,6 +192,60 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   REQUIRE(pDraco->attributes.find("POSITION") != pDraco->attributes.end());
   CHECK(pDraco->attributes.find("POSITION")->second == 0);
+
+  // Repeat test but this time the extension should be deserialized as a
+  // JsonValue.
+  reader.setExtensionState(
+      "KHR_draco_mesh_compression",
+      ExtensionState::JsonOnly);
+
+  ModelReaderResult modelResult2 = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult2.errors.empty());
+  REQUIRE(modelResult2.model.has_value());
+
+  Model& model2 = modelResult2.model.value();
+  REQUIRE(model2.meshes.size() == 1);
+  REQUIRE(model2.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive2 = model2.meshes[0].primitives[0];
+  JsonValue* pDraco2 =
+      primitive2.getGenericExtension("KHR_draco_mesh_compression");
+  REQUIRE(pDraco2);
+
+  REQUIRE(pDraco2->getValueForKey("bufferView"));
+  CHECK(pDraco2->getValueForKey("bufferView")->getNumber(0.0) == 1.0);
+
+  REQUIRE(pDraco2->getValueForKey("attributes"));
+  REQUIRE(pDraco2->getValueForKey("attributes")->isObject());
+  REQUIRE(pDraco2->getValueForKey("attributes")->getValueForKey("POSITION"));
+  REQUIRE(
+      pDraco2->getValueForKey("attributes")
+          ->getValueForKey("POSITION")
+          ->getNumber(1.0) == 0.0);
+
+  // Repeat test but this time the extension should not be deserialized at all.
+  reader.setExtensionState(
+      "KHR_draco_mesh_compression",
+      ExtensionState::Disabled);
+
+  ModelReaderResult modelResult3 = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult3.errors.empty());
+  REQUIRE(modelResult3.model.has_value());
+
+  Model& model3 = modelResult3.model.value();
+  REQUIRE(model3.meshes.size() == 1);
+  REQUIRE(model3.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive3 = model3.meshes[0].primitives[0];
+
+  REQUIRE(!primitive3.getGenericExtension("KHR_draco_mesh_compression"));
+  REQUIRE(!primitive3.getExtension<KHR_draco_mesh_compression>());
 }
 
 TEST_CASE("Extensions deserialize to JsonVaue iff "
