@@ -7,16 +7,16 @@
 using namespace CesiumGltf;
 
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : ObjectJsonHandler(context), _extras(context), _extensions(context) {}
 
 void ExtensibleObjectJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     ExtensibleObject* /*pObject*/) {
   ObjectJsonHandler::reset(pParent);
 }
 
-IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
+IJsonReader* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     const std::string& objectType,
     const std::string_view& str,
     ExtensibleObject& o) {

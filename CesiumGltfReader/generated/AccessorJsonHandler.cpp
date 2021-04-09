@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 AccessorJsonHandler::AccessorJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _bufferView(context),
       _byteOffset(context),
@@ -21,7 +21,7 @@ AccessorJsonHandler::AccessorJsonHandler(
       _min(context),
       _sparse(context) {}
 
-void AccessorJsonHandler::reset(IJsonHandler* pParent, Accessor* pObject) {
+void AccessorJsonHandler::reset(IJsonReader* pParent, Accessor* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -37,12 +37,12 @@ void AccessorJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AccessorJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* AccessorJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAccessor(Accessor::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AccessorJsonHandler::readObjectKeyAccessor(
+IJsonReader* AccessorJsonHandler::readObjectKeyAccessor(
     const std::string& objectType,
     const std::string_view& str,
     Accessor& o) {
@@ -71,13 +71,13 @@ IJsonHandler* AccessorJsonHandler::readObjectKeyAccessor(
 }
 
 void AccessorJsonHandler::TypeJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     Accessor::Type* pEnum) {
-  JsonHandler::reset(pParent);
+  JsonReader::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler*
+IJsonReader*
 AccessorJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 

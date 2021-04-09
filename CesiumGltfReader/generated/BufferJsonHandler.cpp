@@ -8,10 +8,10 @@
 
 using namespace CesiumGltf;
 
-BufferJsonHandler::BufferJsonHandler(const JsonReaderContext& context) noexcept
+BufferJsonHandler::BufferJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _uri(context), _byteLength(context) {}
 
-void BufferJsonHandler::reset(IJsonHandler* pParent, Buffer* pObject) {
+void BufferJsonHandler::reset(IJsonReader* pParent, Buffer* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -27,12 +27,12 @@ void BufferJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* BufferJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* BufferJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyBuffer(Buffer::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
+IJsonReader* BufferJsonHandler::readObjectKeyBuffer(
     const std::string& objectType,
     const std::string_view& str,
     Buffer& o) {

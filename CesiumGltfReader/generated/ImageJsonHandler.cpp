@@ -8,13 +8,13 @@
 
 using namespace CesiumGltf;
 
-ImageJsonHandler::ImageJsonHandler(const JsonReaderContext& context) noexcept
+ImageJsonHandler::ImageJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _uri(context),
       _mimeType(context),
       _bufferView(context) {}
 
-void ImageJsonHandler::reset(IJsonHandler* pParent, Image* pObject) {
+void ImageJsonHandler::reset(IJsonReader* pParent, Image* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -30,12 +30,12 @@ void ImageJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* ImageJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* ImageJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyImage(Image::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ImageJsonHandler::readObjectKeyImage(
+IJsonReader* ImageJsonHandler::readObjectKeyImage(
     const std::string& objectType,
     const std::string_view& str,
     Image& o) {
@@ -52,13 +52,13 @@ IJsonHandler* ImageJsonHandler::readObjectKeyImage(
 }
 
 void ImageJsonHandler::MimeTypeJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     Image::MimeType* pEnum) {
-  JsonHandler::reset(pParent);
+  JsonReader::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler*
+IJsonReader*
 ImageJsonHandler::MimeTypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 

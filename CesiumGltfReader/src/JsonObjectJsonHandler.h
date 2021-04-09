@@ -2,33 +2,33 @@
 
 #include "CesiumGltf/IExtensionJsonReader.h"
 #include "CesiumGltf/JsonReader.h"
-#include "CesiumGltf/JsonReaderContext.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumGltf/JsonValue.h"
 
 namespace CesiumGltf {
 
-class JsonObjectJsonHandler : public JsonHandler {
+class JsonObjectJsonHandler : public JsonReader {
 public:
-  JsonObjectJsonHandler(const JsonReaderContext& context) noexcept;
+  JsonObjectJsonHandler(const ReaderContext& context) noexcept;
 
-  void reset(IJsonHandler* pParent, JsonValue* pValue);
+  void reset(IJsonReader* pParent, JsonValue* pValue);
 
-  virtual IJsonHandler* readNull() override;
-  virtual IJsonHandler* readBool(bool b) override;
-  virtual IJsonHandler* readInt32(int32_t i) override;
-  virtual IJsonHandler* readUint32(uint32_t i) override;
-  virtual IJsonHandler* readInt64(int64_t i) override;
-  virtual IJsonHandler* readUint64(uint64_t i) override;
-  virtual IJsonHandler* readDouble(double d) override;
-  virtual IJsonHandler* readString(const std::string_view& str) override;
-  virtual IJsonHandler* readObjectStart() override;
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-  virtual IJsonHandler* readObjectEnd() override;
-  virtual IJsonHandler* readArrayStart() override;
-  virtual IJsonHandler* readArrayEnd() override;
+  virtual IJsonReader* readNull() override;
+  virtual IJsonReader* readBool(bool b) override;
+  virtual IJsonReader* readInt32(int32_t i) override;
+  virtual IJsonReader* readUint32(uint32_t i) override;
+  virtual IJsonReader* readInt64(int64_t i) override;
+  virtual IJsonReader* readUint64(uint64_t i) override;
+  virtual IJsonReader* readDouble(double d) override;
+  virtual IJsonReader* readString(const std::string_view& str) override;
+  virtual IJsonReader* readObjectStart() override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectEnd() override;
+  virtual IJsonReader* readArrayStart() override;
+  virtual IJsonReader* readArrayEnd() override;
 
 private:
-  IJsonHandler* doneElement();
+  IJsonReader* doneElement();
 
   std::vector<JsonValue*> _stack;
   std::string_view _currentKey;

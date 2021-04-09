@@ -12,28 +12,28 @@ struct AnimationChannelTarget;
 
 class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AnimationChannelTargetJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, AnimationChannelTarget* pObject);
+  AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, AnimationChannelTarget* pObject);
   AnimationChannelTarget* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyAnimationChannelTarget(
+  IJsonReader* readObjectKeyAnimationChannelTarget(
       const std::string& objectType,
       const std::string_view& str,
       AnimationChannelTarget& o);
 
 private:
-  class PathJsonHandler : public JsonHandler {
+  class PathJsonHandler : public JsonReader {
   public:
-    PathJsonHandler(const JsonReaderContext& context) noexcept
-        : JsonHandler(context) {}
-    void reset(IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
-    virtual IJsonHandler* readString(const std::string_view& str) override;
+    PathJsonHandler(const ReaderContext& context) noexcept
+        : JsonReader(context) {}
+    void reset(IJsonReader* pParent, AnimationChannelTarget::Path* pEnum);
+    virtual IJsonReader* readString(const std::string_view& str) override;
 
   private:
     AnimationChannelTarget::Path* _pEnum = nullptr;

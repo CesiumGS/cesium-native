@@ -6,17 +6,17 @@ namespace CesiumGltf {
 
 class ExtensionsJsonHandler : public ObjectJsonHandler {
 public:
-  ExtensionsJsonHandler(const JsonReaderContext& context) noexcept
+  ExtensionsJsonHandler(const ReaderContext& context) noexcept
       : ObjectJsonHandler(context),
         _pObject(nullptr),
         _currentExtensionHandler() {}
 
   void reset(
-      IJsonHandler* pParent,
+      IJsonReader* pParent,
       ExtensibleObject* pObject,
       const std::string& objectType);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 private:
   ExtensibleObject* _pObject = nullptr;

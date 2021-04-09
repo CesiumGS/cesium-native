@@ -8,12 +8,12 @@
 
 using namespace CesiumGltf;
 
-MeshJsonHandler::MeshJsonHandler(const JsonReaderContext& context) noexcept
+MeshJsonHandler::MeshJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _primitives(context),
       _weights(context) {}
 
-void MeshJsonHandler::reset(IJsonHandler* pParent, Mesh* pObject) {
+void MeshJsonHandler::reset(IJsonReader* pParent, Mesh* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -29,12 +29,12 @@ void MeshJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MeshJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* MeshJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyMesh(Mesh::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* MeshJsonHandler::readObjectKeyMesh(
+IJsonReader* MeshJsonHandler::readObjectKeyMesh(
     const std::string& objectType,
     const std::string_view& str,
     Mesh& o) {

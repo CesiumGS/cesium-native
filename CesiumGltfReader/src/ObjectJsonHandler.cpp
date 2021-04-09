@@ -2,7 +2,7 @@
 
 using namespace CesiumGltf;
 
-IJsonHandler* ObjectJsonHandler::readObjectStart() {
+IJsonReader* ObjectJsonHandler::readObjectStart() {
   ++this->_depth;
   if (this->_depth > 1) {
     return this->StartSubObject();
@@ -10,7 +10,7 @@ IJsonHandler* ObjectJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonHandler* ObjectJsonHandler::readObjectEnd() {
+IJsonReader* ObjectJsonHandler::readObjectEnd() {
   this->_currentKey = nullptr;
 
   --this->_depth;
@@ -21,9 +21,9 @@ IJsonHandler* ObjectJsonHandler::readObjectEnd() {
     return this->parent();
 }
 
-IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
+IJsonReader* ObjectJsonHandler::StartSubObject() { return nullptr; }
 
-IJsonHandler* ObjectJsonHandler::EndSubObject() { return nullptr; }
+IJsonReader* ObjectJsonHandler::EndSubObject() { return nullptr; }
 
 const char* ObjectJsonHandler::getCurrentKey() const {
   return this->_currentKey;

@@ -19,9 +19,9 @@ using namespace CesiumGltf;
 
 namespace {
 struct Dispatcher {
-  IJsonHandler* pCurrent;
+  IJsonReader* pCurrent;
 
-  bool update(IJsonHandler* pNext) {
+  bool update(IJsonReader* pNext) {
     if (pNext == nullptr) {
       return false;
     }
@@ -61,7 +61,7 @@ struct Dispatcher {
 class FinalJsonHandler : public ObjectJsonHandler {
 public:
   FinalJsonHandler(
-      const JsonReaderContext& context,
+      const ReaderContext& context,
       ModelReaderResult& result,
       rapidjson::MemoryStream& inputStream)
       : ObjectJsonHandler(context), _result(result), _inputStream(inputStream) {
@@ -150,7 +150,7 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) {
 }
 
 ModelReaderResult readJsonModel(
-    const JsonReaderContext& context,
+    const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
   rapidjson::Reader reader;
   rapidjson::MemoryStream inputStream(
@@ -210,7 +210,7 @@ std::string toMagicString(uint32_t i) {
 } // namespace
 
 ModelReaderResult readBinaryModel(
-    const JsonReaderContext& context,
+    const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
@@ -332,7 +332,7 @@ ModelReaderResult readBinaryModel(
 }
 
 void postprocess(
-    JsonReaderContext& context,
+    ReaderContext& context,
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
   Model& model = readModel.model.value();
@@ -378,11 +378,11 @@ void postprocess(
 class AnyExtensionJsonReader : public JsonObjectJsonHandler,
                                public IExtensionJsonReader {
 public:
-  AnyExtensionJsonReader(const JsonReaderContext& context)
+  AnyExtensionJsonReader(const ReaderContext& context)
       : JsonObjectJsonHandler(context) {}
 
   virtual void reset(
-      IJsonHandler* pParentHandler,
+      IJsonReader* pParentHandler,
       ExtensibleObject& o,
       const std::string_view& extensionName) override {
     std::any& value =
@@ -393,43 +393,43 @@ public:
         &std::any_cast<JsonValue&>(value));
   }
 
-  virtual IJsonHandler* readNull() override {
+  virtual IJsonReader* readNull() override {
     return JsonObjectJsonHandler::readNull();
   };
-  virtual IJsonHandler* readBool(bool b) override {
+  virtual IJsonReader* readBool(bool b) override {
     return JsonObjectJsonHandler::readBool(b);
   }
-  virtual IJsonHandler* readInt32(int32_t i) override {
+  virtual IJsonReader* readInt32(int32_t i) override {
     return JsonObjectJsonHandler::readInt32(i);
   }
-  virtual IJsonHandler* readUint32(uint32_t i) override {
+  virtual IJsonReader* readUint32(uint32_t i) override {
     return JsonObjectJsonHandler::readUint32(i);
   }
-  virtual IJsonHandler* readInt64(int64_t i) override {
+  virtual IJsonReader* readInt64(int64_t i) override {
     return JsonObjectJsonHandler::readInt64(i);
   }
-  virtual IJsonHandler* readUint64(uint64_t i) override {
+  virtual IJsonReader* readUint64(uint64_t i) override {
     return JsonObjectJsonHandler::readUint64(i);
   }
-  virtual IJsonHandler* readDouble(double d) override {
+  virtual IJsonReader* readDouble(double d) override {
     return JsonObjectJsonHandler::readDouble(d);
   }
-  virtual IJsonHandler* readString(const std::string_view& str) override {
+  virtual IJsonReader* readString(const std::string_view& str) override {
     return JsonObjectJsonHandler::readString(str);
   }
-  virtual IJsonHandler* readObjectStart() override {
+  virtual IJsonReader* readObjectStart() override {
     return JsonObjectJsonHandler::readObjectStart();
   }
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override {
     return JsonObjectJsonHandler::readObjectKey(str);
   }
-  virtual IJsonHandler* readObjectEnd() override {
+  virtual IJsonReader* readObjectEnd() override {
     return JsonObjectJsonHandler::readObjectEnd();
   }
-  virtual IJsonHandler* readArrayStart() override {
+  virtual IJsonReader* readArrayStart() override {
     return JsonObjectJsonHandler::readArrayStart();
   }
-  virtual IJsonHandler* readArrayEnd() override {
+  virtual IJsonReader* readArrayEnd() override {
     return JsonObjectJsonHandler::readArrayEnd();
   }
 
@@ -459,7 +459,7 @@ ModelReaderResult Reader::readModel(
     const gsl::span<const std::byte>& data,
     const ReadModelOptions& options) const {
 
-  JsonReaderContext context{*this};
+  ReaderContext context{*this};
   ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(context, data)
                                                 : readJsonModel(context, data);
 
@@ -503,7 +503,7 @@ Reader::readImage(const gsl::span<const std::byte>& data) const {
 }
 
 std::unique_ptr<IExtensionJsonReader> Reader::createExtensionReader(
-    const JsonReaderContext& context,
+    const ReaderContext& context,
     const std::string_view& extensionName,
     const std::string& extendedObjectType) const {
 

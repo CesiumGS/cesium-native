@@ -10,7 +10,7 @@ using namespace CesiumGltf;
 
 MaterialPBRMetallicRoughnessJsonHandler::
     MaterialPBRMetallicRoughnessJsonHandler(
-        const JsonReaderContext& context) noexcept
+        const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _baseColorFactor(context),
       _baseColorTexture(context),
@@ -19,7 +19,7 @@ MaterialPBRMetallicRoughnessJsonHandler::
       _metallicRoughnessTexture(context) {}
 
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     MaterialPBRMetallicRoughness* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
@@ -39,7 +39,7 @@ void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
+IJsonReader* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyMaterialPBRMetallicRoughness(
@@ -48,7 +48,7 @@ IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::
+IJsonReader* MaterialPBRMetallicRoughnessJsonHandler::
     readObjectKeyMaterialPBRMetallicRoughness(
         const std::string& objectType,
         const std::string_view& str,

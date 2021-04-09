@@ -6,13 +6,13 @@
 
 namespace CesiumGltf {
 
-class IJsonHandler;
+class IJsonReader;
 struct ExtensibleObject;
 
-class IExtensionJsonReader : public IJsonHandler {
+class IExtensionJsonReader : public IJsonReader {
 public:
   virtual void reset(
-      IJsonHandler* pParentHandler,
+      IJsonReader* pParentHandler,
       ExtensibleObject& o,
       const std::string_view& extensionName) = 0;
 };

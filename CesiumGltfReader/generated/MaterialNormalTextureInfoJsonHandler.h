@@ -12,17 +12,17 @@ struct MaterialNormalTextureInfo;
 class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   MaterialNormalTextureInfoJsonHandler(
-      const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, MaterialNormalTextureInfo* pObject);
+      const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, MaterialNormalTextureInfo* pObject);
   MaterialNormalTextureInfo* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyMaterialNormalTextureInfo(
+  IJsonReader* readObjectKeyMaterialNormalTextureInfo(
       const std::string& objectType,
       const std::string_view& str,
       MaterialNormalTextureInfo& o);

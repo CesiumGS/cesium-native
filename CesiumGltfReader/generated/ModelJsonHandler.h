@@ -27,17 +27,17 @@ struct Model;
 
 class ModelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  ModelJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Model* pObject);
+  ModelJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Model* pObject);
   Model* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyModel(
+  IJsonReader* readObjectKeyModel(
       const std::string& objectType,
       const std::string_view& str,
       Model& o);

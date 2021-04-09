@@ -13,28 +13,28 @@ struct Camera;
 
 class CameraJsonHandler : public NamedObjectJsonHandler {
 public:
-  CameraJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Camera* pObject);
+  CameraJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Camera* pObject);
   Camera* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyCamera(
+  IJsonReader* readObjectKeyCamera(
       const std::string& objectType,
       const std::string_view& str,
       Camera& o);
 
 private:
-  class TypeJsonHandler : public JsonHandler {
+  class TypeJsonHandler : public JsonReader {
   public:
-    TypeJsonHandler(const JsonReaderContext& context) noexcept
-        : JsonHandler(context) {}
-    void reset(IJsonHandler* pParent, Camera::Type* pEnum);
-    virtual IJsonHandler* readString(const std::string_view& str) override;
+    TypeJsonHandler(const ReaderContext& context) noexcept
+        : JsonReader(context) {}
+    void reset(IJsonReader* pParent, Camera::Type* pEnum);
+    virtual IJsonReader* readString(const std::string_view& str) override;
 
   private:
     Camera::Type* _pEnum = nullptr;

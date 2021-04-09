@@ -4,16 +4,16 @@
 #include <cassert>
 
 namespace CesiumGltf {
-class DoubleJsonHandler : public JsonHandler {
+class DoubleJsonHandler : public JsonReader {
 public:
-  DoubleJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParent, double* pDouble);
+  DoubleJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pParent, double* pDouble);
 
-  virtual IJsonHandler* readInt32(int32_t i) override;
-  virtual IJsonHandler* readUint32(uint32_t i) override;
-  virtual IJsonHandler* readInt64(int64_t i) override;
-  virtual IJsonHandler* readUint64(uint64_t i) override;
-  virtual IJsonHandler* readDouble(double d) override;
+  virtual IJsonReader* readInt32(int32_t i) override;
+  virtual IJsonReader* readUint32(uint32_t i) override;
+  virtual IJsonReader* readInt64(int64_t i) override;
+  virtual IJsonReader* readUint64(uint64_t i) override;
+  virtual IJsonReader* readDouble(double d) override;
 
 private:
   double* _pDouble = nullptr;

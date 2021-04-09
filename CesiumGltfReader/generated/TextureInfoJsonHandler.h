@@ -11,17 +11,17 @@ struct TextureInfo;
 
 class TextureInfoJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  TextureInfoJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, TextureInfo* pObject);
+  TextureInfoJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, TextureInfo* pObject);
   TextureInfo* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyTextureInfo(
+  IJsonReader* readObjectKeyTextureInfo(
       const std::string& objectType,
       const std::string_view& str,
       TextureInfo& o);

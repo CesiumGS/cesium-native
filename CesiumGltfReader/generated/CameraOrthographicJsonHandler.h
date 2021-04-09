@@ -11,17 +11,17 @@ struct CameraOrthographic;
 
 class CameraOrthographicJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  CameraOrthographicJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, CameraOrthographic* pObject);
+  CameraOrthographicJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, CameraOrthographic* pObject);
   CameraOrthographic* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyCameraOrthographic(
+  IJsonReader* readObjectKeyCameraOrthographic(
       const std::string& objectType,
       const std::string_view& str,
       CameraOrthographic& o);

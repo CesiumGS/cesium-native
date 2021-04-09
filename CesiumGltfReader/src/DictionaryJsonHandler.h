@@ -10,22 +10,22 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class DictionaryJsonHandler : public ObjectJsonHandler {
 public:
-  DictionaryJsonHandler(const JsonReaderContext& context) noexcept
+  DictionaryJsonHandler(const ReaderContext& context) noexcept
       : ObjectJsonHandler(context), _item(context) {}
 
   void reset(
-      IJsonHandler* pParent,
+      IJsonReader* pParent,
       std::unordered_map<std::string, T>* pDictionary) {
     ObjectJsonHandler::reset(pParent);
     this->_pDictionary1 = pDictionary;
   }
 
-  void reset(IJsonHandler* pParent, std::map<std::string, T>* pDictionary) {
+  void reset(IJsonReader* pParent, std::map<std::string, T>* pDictionary) {
     ObjectJsonHandler::reset(pParent);
     this->_pDictionary2 = pDictionary;
   }
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override {
     assert(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {

@@ -9,13 +9,13 @@
 using namespace CesiumGltf;
 
 AnimationChannelJsonHandler::AnimationChannelJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _sampler(context),
       _target(context) {}
 
 void AnimationChannelJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     AnimationChannel* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
@@ -34,7 +34,7 @@ void AnimationChannelJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
+IJsonReader*
 AnimationChannelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAnimationChannel(
@@ -43,7 +43,7 @@ AnimationChannelJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonHandler* AnimationChannelJsonHandler::readObjectKeyAnimationChannel(
+IJsonReader* AnimationChannelJsonHandler::readObjectKeyAnimationChannel(
     const std::string& objectType,
     const std::string_view& str,
     AnimationChannel& o) {

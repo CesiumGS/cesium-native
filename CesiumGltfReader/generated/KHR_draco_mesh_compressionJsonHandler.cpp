@@ -9,13 +9,13 @@
 using namespace CesiumGltf;
 
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _bufferView(context),
       _attributes(context) {}
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     KHR_draco_mesh_compression* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
@@ -34,7 +34,7 @@ void KHR_draco_mesh_compressionJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
+IJsonReader* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyKHR_draco_mesh_compression(
@@ -44,7 +44,7 @@ IJsonHandler* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
 }
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    IJsonHandler* pParentHandler,
+    IJsonReader* pParentHandler,
     ExtensibleObject& o,
     const std::string_view& extensionName) {
   std::any& value =
@@ -55,7 +55,7 @@ void KHR_draco_mesh_compressionJsonHandler::reset(
       &std::any_cast<KHR_draco_mesh_compression&>(value));
 }
 
-IJsonHandler*
+IJsonReader*
 KHR_draco_mesh_compressionJsonHandler::readObjectKeyKHR_draco_mesh_compression(
     const std::string& objectType,
     const std::string_view& str,

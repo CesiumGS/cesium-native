@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-ModelJsonHandler::ModelJsonHandler(const JsonReaderContext& context) noexcept
+ModelJsonHandler::ModelJsonHandler(const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _extensionsUsed(context),
       _extensionsRequired(context),
@@ -28,7 +28,7 @@ ModelJsonHandler::ModelJsonHandler(const JsonReaderContext& context) noexcept
       _skins(context),
       _textures(context) {}
 
-void ModelJsonHandler::reset(IJsonHandler* pParent, Model* pObject) {
+void ModelJsonHandler::reset(IJsonReader* pParent, Model* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -44,12 +44,12 @@ void ModelJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* ModelJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* ModelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyModel(Model::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ModelJsonHandler::readObjectKeyModel(
+IJsonReader* ModelJsonHandler::readObjectKeyModel(
     const std::string& objectType,
     const std::string_view& str,
     Model& o) {

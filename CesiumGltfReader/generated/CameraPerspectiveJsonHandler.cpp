@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _aspectRatio(context),
       _yfov(context),
@@ -17,7 +17,7 @@ CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
       _znear(context) {}
 
 void CameraPerspectiveJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     CameraPerspective* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
@@ -36,7 +36,7 @@ void CameraPerspectiveJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
+IJsonReader*
 CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyCameraPerspective(
@@ -45,7 +45,7 @@ CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonHandler* CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
+IJsonReader* CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
     const std::string& objectType,
     const std::string_view& str,
     CameraPerspective& o) {

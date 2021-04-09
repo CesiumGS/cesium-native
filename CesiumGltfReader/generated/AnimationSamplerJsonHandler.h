@@ -12,28 +12,28 @@ struct AnimationSampler;
 
 class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AnimationSamplerJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, AnimationSampler* pObject);
+  AnimationSamplerJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, AnimationSampler* pObject);
   AnimationSampler* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyAnimationSampler(
+  IJsonReader* readObjectKeyAnimationSampler(
       const std::string& objectType,
       const std::string_view& str,
       AnimationSampler& o);
 
 private:
-  class InterpolationJsonHandler : public JsonHandler {
+  class InterpolationJsonHandler : public JsonReader {
   public:
-    InterpolationJsonHandler(const JsonReaderContext& context) noexcept
-        : JsonHandler(context) {}
-    void reset(IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum);
-    virtual IJsonHandler* readString(const std::string_view& str) override;
+    InterpolationJsonHandler(const ReaderContext& context) noexcept
+        : JsonReader(context) {}
+    void reset(IJsonReader* pParent, AnimationSampler::Interpolation* pEnum);
+    virtual IJsonReader* readString(const std::string_view& str) override;
 
   private:
     AnimationSampler::Interpolation* _pEnum = nullptr;

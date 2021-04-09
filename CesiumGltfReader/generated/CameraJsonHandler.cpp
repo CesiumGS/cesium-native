@@ -8,13 +8,13 @@
 
 using namespace CesiumGltf;
 
-CameraJsonHandler::CameraJsonHandler(const JsonReaderContext& context) noexcept
+CameraJsonHandler::CameraJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _orthographic(context),
       _perspective(context),
       _type(context) {}
 
-void CameraJsonHandler::reset(IJsonHandler* pParent, Camera* pObject) {
+void CameraJsonHandler::reset(IJsonReader* pParent, Camera* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -30,12 +30,12 @@ void CameraJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* CameraJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* CameraJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyCamera(Camera::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
+IJsonReader* CameraJsonHandler::readObjectKeyCamera(
     const std::string& objectType,
     const std::string_view& str,
     Camera& o) {
@@ -52,13 +52,13 @@ IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
 }
 
 void CameraJsonHandler::TypeJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     Camera::Type* pEnum) {
-  JsonHandler::reset(pParent);
+  JsonReader::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler*
+IJsonReader*
 CameraJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 

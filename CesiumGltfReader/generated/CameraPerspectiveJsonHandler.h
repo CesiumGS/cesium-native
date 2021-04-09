@@ -11,17 +11,17 @@ struct CameraPerspective;
 
 class CameraPerspectiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  CameraPerspectiveJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, CameraPerspective* pObject);
+  CameraPerspectiveJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, CameraPerspective* pObject);
   CameraPerspective* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyCameraPerspective(
+  IJsonReader* readObjectKeyCameraPerspective(
       const std::string& objectType,
       const std::string_view& str,
       CameraPerspective& o);

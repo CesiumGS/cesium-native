@@ -15,17 +15,17 @@ class MaterialPBRMetallicRoughnessJsonHandler
     : public ExtensibleObjectJsonHandler {
 public:
   MaterialPBRMetallicRoughnessJsonHandler(
-      const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, MaterialPBRMetallicRoughness* pObject);
+      const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, MaterialPBRMetallicRoughness* pObject);
   MaterialPBRMetallicRoughness* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyMaterialPBRMetallicRoughness(
+  IJsonReader* readObjectKeyMaterialPBRMetallicRoughness(
       const std::string& objectType,
       const std::string_view& str,
       MaterialPBRMetallicRoughness& o);

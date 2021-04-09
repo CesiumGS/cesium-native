@@ -5,12 +5,12 @@
 #include <string>
 
 namespace CesiumGltf {
-class StringJsonHandler : public JsonHandler {
+class StringJsonHandler : public JsonReader {
 public:
-  StringJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParent, std::string* pString);
+  StringJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pParent, std::string* pString);
   std::string* getObject();
-  virtual IJsonHandler* readString(const std::string_view& str) override;
+  virtual IJsonReader* readString(const std::string_view& str) override;
 
 private:
   std::string* _pString = nullptr;

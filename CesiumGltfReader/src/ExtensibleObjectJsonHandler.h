@@ -11,11 +11,11 @@ struct ExtensibleObject;
 
 class ExtensibleObjectJsonHandler : public ObjectJsonHandler {
 public:
-  ExtensibleObjectJsonHandler(const JsonReaderContext& context) noexcept;
+  ExtensibleObjectJsonHandler(const ReaderContext& context) noexcept;
 
 protected:
-  void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
-  IJsonHandler* readObjectKeyExtensibleObject(
+  void reset(IJsonReader* pParent, ExtensibleObject* pObject);
+  IJsonReader* readObjectKeyExtensibleObject(
       const std::string& objectType,
       const std::string_view& str,
       ExtensibleObject& o);

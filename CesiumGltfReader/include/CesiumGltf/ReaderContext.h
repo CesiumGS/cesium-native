@@ -4,7 +4,7 @@ namespace CesiumGltf {
 
 class Reader;
 
-struct JsonReaderContext {
+struct ReaderContext {
   const Reader& reader;
 };
 

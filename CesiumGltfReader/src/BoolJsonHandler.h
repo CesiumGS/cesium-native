@@ -4,12 +4,12 @@
 #include "CesiumGltf/Reader.h"
 
 namespace CesiumGltf {
-class BoolJsonHandler : public JsonHandler {
+class BoolJsonHandler : public JsonReader {
 public:
-  BoolJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParent, bool* pBool);
+  BoolJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pParent, bool* pBool);
 
-  virtual IJsonHandler* readBool(bool b) override;
+  virtual IJsonReader* readBool(bool b) override;
 
 private:
   bool* _pBool = nullptr;

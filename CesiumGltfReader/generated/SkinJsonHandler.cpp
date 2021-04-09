@@ -8,13 +8,13 @@
 
 using namespace CesiumGltf;
 
-SkinJsonHandler::SkinJsonHandler(const JsonReaderContext& context) noexcept
+SkinJsonHandler::SkinJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _inverseBindMatrices(context),
       _skeleton(context),
       _joints(context) {}
 
-void SkinJsonHandler::reset(IJsonHandler* pParent, Skin* pObject) {
+void SkinJsonHandler::reset(IJsonReader* pParent, Skin* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -30,12 +30,12 @@ void SkinJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SkinJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeySkin(Skin::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SkinJsonHandler::readObjectKeySkin(
+IJsonReader* SkinJsonHandler::readObjectKeySkin(
     const std::string& objectType,
     const std::string_view& str,
     Skin& o) {

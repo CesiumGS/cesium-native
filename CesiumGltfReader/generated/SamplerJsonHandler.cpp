@@ -9,14 +9,14 @@
 using namespace CesiumGltf;
 
 SamplerJsonHandler::SamplerJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _magFilter(context),
       _minFilter(context),
       _wrapS(context),
       _wrapT(context) {}
 
-void SamplerJsonHandler::reset(IJsonHandler* pParent, Sampler* pObject) {
+void SamplerJsonHandler::reset(IJsonReader* pParent, Sampler* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -32,12 +32,12 @@ void SamplerJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SamplerJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* SamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeySampler(Sampler::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SamplerJsonHandler::readObjectKeySampler(
+IJsonReader* SamplerJsonHandler::readObjectKeySampler(
     const std::string& objectType,
     const std::string_view& str,
     Sampler& o) {

@@ -8,10 +8,10 @@
 
 using namespace CesiumGltf;
 
-SceneJsonHandler::SceneJsonHandler(const JsonReaderContext& context) noexcept
+SceneJsonHandler::SceneJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _nodes(context) {}
 
-void SceneJsonHandler::reset(IJsonHandler* pParent, Scene* pObject) {
+void SceneJsonHandler::reset(IJsonReader* pParent, Scene* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -27,12 +27,12 @@ void SceneJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* SceneJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* SceneJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyScene(Scene::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SceneJsonHandler::readObjectKeyScene(
+IJsonReader* SceneJsonHandler::readObjectKeyScene(
     const std::string& objectType,
     const std::string_view& str,
     Scene& o) {

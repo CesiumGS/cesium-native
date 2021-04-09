@@ -1,83 +1,83 @@
 #include "CesiumGltf/JsonReader.h"
 
 using namespace CesiumGltf;
-JsonHandler::JsonHandler(const JsonReaderContext& context) noexcept
+JsonReader::JsonReader(const ReaderContext& context) noexcept
     : _context(context) {}
 
-IJsonHandler* JsonHandler::readNull() {
+IJsonReader* JsonReader::readNull() {
   this->reportWarning("A null value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readBool(bool /*b*/) {
+IJsonReader* JsonReader::readBool(bool /*b*/) {
   this->reportWarning("A boolean value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readInt32(int32_t /*i*/) {
+IJsonReader* JsonReader::readInt32(int32_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readUint32(uint32_t /*i*/) {
+IJsonReader* JsonReader::readUint32(uint32_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readInt64(int64_t /*i*/) {
+IJsonReader* JsonReader::readInt64(int64_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readUint64(uint64_t /*i*/) {
+IJsonReader* JsonReader::readUint64(uint64_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readDouble(double /*d*/) {
+IJsonReader* JsonReader::readDouble(double /*d*/) {
   this->reportWarning("A double value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readString(const std::string_view& /*str*/) {
+IJsonReader* JsonReader::readString(const std::string_view& /*str*/) {
   this->reportWarning("A string value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::readObjectStart() {
+IJsonReader* JsonReader::readObjectStart() {
   this->reportWarning("An object value is not allowed and has been ignored.");
   return this->ignoreAndReturnToParent()->readObjectStart();
 }
 
-IJsonHandler* JsonHandler::readObjectKey(const std::string_view& /*str*/) {
+IJsonReader* JsonReader::readObjectKey(const std::string_view& /*str*/) {
   return nullptr;
 }
 
-IJsonHandler* JsonHandler::readObjectEnd() { return nullptr; }
+IJsonReader* JsonReader::readObjectEnd() { return nullptr; }
 
-IJsonHandler* JsonHandler::readArrayStart() {
+IJsonReader* JsonReader::readArrayStart() {
   this->reportWarning("An array value is not allowed and has been ignored.");
   return this->ignoreAndReturnToParent()->readArrayStart();
 }
 
-IJsonHandler* JsonHandler::readArrayEnd() { return nullptr; }
+IJsonReader* JsonReader::readArrayEnd() { return nullptr; }
 
-IJsonHandler* JsonHandler::parent() { return this->_pParent; }
+IJsonReader* JsonReader::parent() { return this->_pParent; }
 
-IJsonHandler* JsonHandler::ignoreAndReturnToParent() {
+IJsonReader* JsonReader::ignoreAndReturnToParent() {
   this->_ignore.reset(this->parent());
   return &this->_ignore;
 }
 
-IJsonHandler* JsonHandler::ignoreAndContinue() {
+IJsonReader* JsonReader::ignoreAndContinue() {
   this->_ignore.reset(this);
   return &this->_ignore;
 }
 
-void JsonHandler::reportWarning(
+void JsonReader::reportWarning(
     const std::string& warning,
     std::vector<std::string>&& context) {
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-void JsonHandler::reset(IJsonHandler* pParent) { this->_pParent = pParent; }
+void JsonReader::reset(IJsonReader* pParent) { this->_pParent = pParent; }

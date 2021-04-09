@@ -12,17 +12,17 @@ struct Scene;
 
 class SceneJsonHandler : public NamedObjectJsonHandler {
 public:
-  SceneJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Scene* pObject);
+  SceneJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Scene* pObject);
   Scene* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyScene(
+  IJsonReader* readObjectKeyScene(
       const std::string& objectType,
       const std::string_view& str,
       Scene& o);

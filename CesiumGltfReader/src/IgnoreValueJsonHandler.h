@@ -4,32 +4,32 @@
 #include <cstdint>
 
 namespace CesiumGltf {
-class IgnoreValueJsonHandler : public IJsonHandler {
+class IgnoreValueJsonHandler : public IJsonReader {
 public:
-  void reset(IJsonHandler* pParent);
+  void reset(IJsonReader* pParent);
 
-  virtual IJsonHandler* readNull() override;
-  virtual IJsonHandler* readBool(bool b) override;
-  virtual IJsonHandler* readInt32(int32_t i) override;
-  virtual IJsonHandler* readUint32(uint32_t i) override;
-  virtual IJsonHandler* readInt64(int64_t i) override;
-  virtual IJsonHandler* readUint64(uint64_t i) override;
-  virtual IJsonHandler* readDouble(double d) override;
-  virtual IJsonHandler* readString(const std::string_view& str) override;
-  virtual IJsonHandler* readObjectStart() override;
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-  virtual IJsonHandler* readObjectEnd() override;
-  virtual IJsonHandler* readArrayStart() override;
-  virtual IJsonHandler* readArrayEnd() override;
+  virtual IJsonReader* readNull() override;
+  virtual IJsonReader* readBool(bool b) override;
+  virtual IJsonReader* readInt32(int32_t i) override;
+  virtual IJsonReader* readUint32(uint32_t i) override;
+  virtual IJsonReader* readInt64(int64_t i) override;
+  virtual IJsonReader* readUint64(uint64_t i) override;
+  virtual IJsonReader* readDouble(double d) override;
+  virtual IJsonReader* readString(const std::string_view& str) override;
+  virtual IJsonReader* readObjectStart() override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectEnd() override;
+  virtual IJsonReader* readArrayStart() override;
+  virtual IJsonReader* readArrayEnd() override;
 
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  IJsonHandler* parent();
+  IJsonReader* parent();
 
 private:
-  IJsonHandler* _pParent = nullptr;
+  IJsonReader* _pParent = nullptr;
   int32_t _depth = 0;
 };
 } // namespace CesiumGltf

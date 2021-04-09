@@ -13,17 +13,17 @@ struct Animation;
 
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:
-  AnimationJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Animation* pObject);
+  AnimationJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Animation* pObject);
   Animation* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyAnimation(
+  IJsonReader* readObjectKeyAnimation(
       const std::string& objectType,
       const std::string_view& str,
       Animation& o);

@@ -1,54 +1,54 @@
 #pragma once
 
 #include "CesiumGltf/IJsonReader.h"
-#include "CesiumGltf/JsonReaderContext.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "IgnoreValueJsonHandler.h"
 #include <cstdint>
 #include <string>
 
 namespace CesiumGltf {
-class JsonHandler : public IJsonHandler {
+class JsonReader : public IJsonReader {
 public:
-  JsonHandler(const JsonReaderContext& context) noexcept;
-  virtual IJsonHandler* readNull() override;
-  virtual IJsonHandler* readBool(bool b) override;
-  virtual IJsonHandler* readInt32(int32_t i) override;
-  virtual IJsonHandler* readUint32(uint32_t i) override;
-  virtual IJsonHandler* readInt64(int64_t i) override;
-  virtual IJsonHandler* readUint64(uint64_t i) override;
-  virtual IJsonHandler* readDouble(double d) override;
-  virtual IJsonHandler* readString(const std::string_view& str) override;
-  virtual IJsonHandler* readObjectStart() override;
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-  virtual IJsonHandler* readObjectEnd() override;
-  virtual IJsonHandler* readArrayStart() override;
-  virtual IJsonHandler* readArrayEnd() override;
+  JsonReader(const ReaderContext& context) noexcept;
+  virtual IJsonReader* readNull() override;
+  virtual IJsonReader* readBool(bool b) override;
+  virtual IJsonReader* readInt32(int32_t i) override;
+  virtual IJsonReader* readUint32(uint32_t i) override;
+  virtual IJsonReader* readInt64(int64_t i) override;
+  virtual IJsonReader* readUint64(uint64_t i) override;
+  virtual IJsonReader* readDouble(double d) override;
+  virtual IJsonReader* readString(const std::string_view& str) override;
+  virtual IJsonReader* readObjectStart() override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectEnd() override;
+  virtual IJsonReader* readArrayStart() override;
+  virtual IJsonReader* readArrayEnd() override;
 
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
 protected:
-  void reset(IJsonHandler* pParent);
+  void reset(IJsonReader* pParent);
 
-  IJsonHandler* parent();
+  IJsonReader* parent();
 
   /**
    * @brief Ignore a single value and then return to the parent handler.
    */
-  IJsonHandler* ignoreAndReturnToParent();
+  IJsonReader* ignoreAndReturnToParent();
 
   /**
    * @brief Ignore a single value and the continue processing more tokens with
    * this handler.
    */
-  IJsonHandler* ignoreAndContinue();
+  IJsonReader* ignoreAndContinue();
 
 protected:
-  const JsonReaderContext& _context;
+  const ReaderContext& _context;
 
 private:
-  IJsonHandler* _pParent = nullptr;
+  IJsonReader* _pParent = nullptr;
   IgnoreValueJsonHandler _ignore;
 };
 

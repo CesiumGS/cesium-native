@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 
-struct JsonReaderContext;
+struct ReaderContext;
 
 /**
  * @brief The result of reading a glTF model with {@link readModel}.
@@ -146,7 +146,7 @@ public:
         this->_extensions.emplace(extensionName, ObjectTypeToReader()).first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionReaderFactory([](const JsonReaderContext& context) {
+        ExtensionReaderFactory([](const ReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -167,7 +167,7 @@ public:
             .first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionReaderFactory([](const JsonReaderContext& context) {
+        ExtensionReaderFactory([](const ReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -215,14 +215,14 @@ public:
   ImageReaderResult readImage(const gsl::span<const std::byte>& data) const;
 
   std::unique_ptr<IExtensionJsonReader> createExtensionReader(
-      const JsonReaderContext& context,
+      const ReaderContext& context,
       const std::string_view& extensionName,
       const std::string& extendedObjectType) const;
 
 private:
   using ExtensionReaderFactory =
       std::function<std::unique_ptr<IExtensionJsonReader>(
-          const JsonReaderContext&)>;
+          const ReaderContext&)>;
   using ObjectTypeToReader = std::map<std::string, ExtensionReaderFactory>;
   using ExtensionNameMap = std::map<std::string, ObjectTypeToReader>;
 

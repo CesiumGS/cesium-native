@@ -16,28 +16,28 @@ struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
-  AccessorJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Accessor* pObject);
+  AccessorJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Accessor* pObject);
   Accessor* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyAccessor(
+  IJsonReader* readObjectKeyAccessor(
       const std::string& objectType,
       const std::string_view& str,
       Accessor& o);
 
 private:
-  class TypeJsonHandler : public JsonHandler {
+  class TypeJsonHandler : public JsonReader {
   public:
-    TypeJsonHandler(const JsonReaderContext& context) noexcept
-        : JsonHandler(context) {}
-    void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
-    virtual IJsonHandler* readString(const std::string_view& str) override;
+    TypeJsonHandler(const ReaderContext& context) noexcept
+        : JsonReader(context) {}
+    void reset(IJsonReader* pParent, Accessor::Type* pEnum);
+    virtual IJsonReader* readString(const std::string_view& str) override;
 
   private:
     Accessor::Type* _pEnum = nullptr;

@@ -4,34 +4,34 @@
 #include <cassert>
 
 namespace CesiumGltf {
-template <typename T> class IntegerJsonHandler : public JsonHandler {
+template <typename T> class IntegerJsonHandler : public JsonReader {
 public:
-  IntegerJsonHandler(const JsonReaderContext& context) noexcept
-      : JsonHandler(context) {}
+  IntegerJsonHandler(const ReaderContext& context) noexcept
+      : JsonReader(context) {}
 
-  void reset(IJsonHandler* pParent, T* pInteger) {
-    JsonHandler::reset(pParent);
+  void reset(IJsonReader* pParent, T* pInteger) {
+    JsonReader::reset(pParent);
     this->_pInteger = pInteger;
   }
 
   T* getObject() { return this->_pInteger; }
 
-  virtual IJsonHandler* readInt32(int32_t i) override {
+  virtual IJsonReader* readInt32(int32_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* readUint32(uint32_t i) override {
+  virtual IJsonReader* readUint32(uint32_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* readInt64(int64_t i) override {
+  virtual IJsonReader* readInt64(int64_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* readUint64(uint64_t i) override {
+  virtual IJsonReader* readUint64(uint64_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();

@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 BufferViewJsonHandler::BufferViewJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _buffer(context),
       _byteOffset(context),
@@ -17,7 +17,7 @@ BufferViewJsonHandler::BufferViewJsonHandler(
       _byteStride(context),
       _target(context) {}
 
-void BufferViewJsonHandler::reset(IJsonHandler* pParent, BufferView* pObject) {
+void BufferViewJsonHandler::reset(IJsonReader* pParent, BufferView* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -33,7 +33,7 @@ void BufferViewJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
+IJsonReader*
 BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyBufferView(
@@ -42,7 +42,7 @@ BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonHandler* BufferViewJsonHandler::readObjectKeyBufferView(
+IJsonReader* BufferViewJsonHandler::readObjectKeyBufferView(
     const std::string& objectType,
     const std::string_view& str,
     BufferView& o) {

@@ -8,7 +8,7 @@
 
 using namespace CesiumGltf;
 
-NodeJsonHandler::NodeJsonHandler(const JsonReaderContext& context) noexcept
+NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _camera(context),
       _children(context),
@@ -20,7 +20,7 @@ NodeJsonHandler::NodeJsonHandler(const JsonReaderContext& context) noexcept
       _translation(context),
       _weights(context) {}
 
-void NodeJsonHandler::reset(IJsonHandler* pParent, Node* pObject) {
+void NodeJsonHandler::reset(IJsonReader* pParent, Node* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -36,12 +36,12 @@ void NodeJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* NodeJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyNode(Node::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* NodeJsonHandler::readObjectKeyNode(
+IJsonReader* NodeJsonHandler::readObjectKeyNode(
     const std::string& objectType,
     const std::string_view& str,
     Node& o) {

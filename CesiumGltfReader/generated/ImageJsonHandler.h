@@ -13,28 +13,28 @@ struct Image;
 
 class ImageJsonHandler : public NamedObjectJsonHandler {
 public:
-  ImageJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Image* pObject);
+  ImageJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Image* pObject);
   Image* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyImage(
+  IJsonReader* readObjectKeyImage(
       const std::string& objectType,
       const std::string_view& str,
       Image& o);
 
 private:
-  class MimeTypeJsonHandler : public JsonHandler {
+  class MimeTypeJsonHandler : public JsonReader {
   public:
-    MimeTypeJsonHandler(const JsonReaderContext& context) noexcept
-        : JsonHandler(context) {}
-    void reset(IJsonHandler* pParent, Image::MimeType* pEnum);
-    virtual IJsonHandler* readString(const std::string_view& str) override;
+    MimeTypeJsonHandler(const ReaderContext& context) noexcept
+        : JsonReader(context) {}
+    void reset(IJsonReader* pParent, Image::MimeType* pEnum);
+    virtual IJsonReader* readString(const std::string_view& str) override;
 
   private:
     Image::MimeType* _pEnum = nullptr;

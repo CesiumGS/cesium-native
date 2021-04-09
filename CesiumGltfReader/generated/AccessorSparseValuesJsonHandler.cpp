@@ -9,13 +9,13 @@
 using namespace CesiumGltf;
 
 AccessorSparseValuesJsonHandler::AccessorSparseValuesJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _bufferView(context),
       _byteOffset(context) {}
 
 void AccessorSparseValuesJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     AccessorSparseValues* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
@@ -34,7 +34,7 @@ void AccessorSparseValuesJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
+IJsonReader*
 AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAccessorSparseValues(
@@ -43,7 +43,7 @@ AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonHandler*
+IJsonReader*
 AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
     const std::string& objectType,
     const std::string_view& str,

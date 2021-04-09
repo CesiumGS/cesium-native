@@ -3,7 +3,7 @@
 using namespace CesiumGltf;
 
 void ExtensionsJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     ExtensibleObject* pObject,
     const std::string& objectType) {
   ObjectJsonHandler::reset(pParent);
@@ -14,7 +14,7 @@ void ExtensionsJsonHandler::reset(
   }
 }
 
-IJsonHandler*
+IJsonReader*
 ExtensionsJsonHandler::readObjectKey(const std::string_view& str) {
   this->_currentExtensionHandler = this->_context.reader.createExtensionReader(
       this->_context,

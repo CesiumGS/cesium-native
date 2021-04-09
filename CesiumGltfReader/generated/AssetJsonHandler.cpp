@@ -8,14 +8,14 @@
 
 using namespace CesiumGltf;
 
-AssetJsonHandler::AssetJsonHandler(const JsonReaderContext& context) noexcept
+AssetJsonHandler::AssetJsonHandler(const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _copyright(context),
       _generator(context),
       _version(context),
       _minVersion(context) {}
 
-void AssetJsonHandler::reset(IJsonHandler* pParent, Asset* pObject) {
+void AssetJsonHandler::reset(IJsonReader* pParent, Asset* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -31,12 +31,12 @@ void AssetJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AssetJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* AssetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAsset(Asset::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
+IJsonReader* AssetJsonHandler::readObjectKeyAsset(
     const std::string& objectType,
     const std::string_view& str,
     Asset& o) {

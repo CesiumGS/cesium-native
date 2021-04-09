@@ -9,10 +9,10 @@
 using namespace CesiumGltf;
 
 AnimationJsonHandler::AnimationJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _channels(context), _samplers(context) {}
 
-void AnimationJsonHandler::reset(IJsonHandler* pParent, Animation* pObject) {
+void AnimationJsonHandler::reset(IJsonReader* pParent, Animation* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -28,7 +28,7 @@ void AnimationJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* AnimationJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* AnimationJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAnimation(
       Animation::TypeName,
@@ -36,7 +36,7 @@ IJsonHandler* AnimationJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
+IJsonReader* AnimationJsonHandler::readObjectKeyAnimation(
     const std::string& objectType,
     const std::string_view& str,
     Animation& o) {

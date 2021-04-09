@@ -9,10 +9,10 @@
 using namespace CesiumGltf;
 
 TextureJsonHandler::TextureJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _sampler(context), _source(context) {}
 
-void TextureJsonHandler::reset(IJsonHandler* pParent, Texture* pObject) {
+void TextureJsonHandler::reset(IJsonReader* pParent, Texture* pObject) {
   NamedObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }
@@ -28,12 +28,12 @@ void TextureJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* TextureJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* TextureJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyTexture(Texture::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* TextureJsonHandler::readObjectKeyTexture(
+IJsonReader* TextureJsonHandler::readObjectKeyTexture(
     const std::string& objectType,
     const std::string_view& str,
     Texture& o) {

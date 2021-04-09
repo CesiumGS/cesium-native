@@ -3,15 +3,15 @@
 #include <cassert>
 
 using namespace CesiumGltf;
-BoolJsonHandler::BoolJsonHandler(const JsonReaderContext& context) noexcept
-    : JsonHandler(context) {}
+BoolJsonHandler::BoolJsonHandler(const ReaderContext& context) noexcept
+    : JsonReader(context) {}
 
-void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
-  JsonHandler::reset(pParent);
+void BoolJsonHandler::reset(IJsonReader* pParent, bool* pBool) {
+  JsonReader::reset(pParent);
   this->_pBool = pBool;
 }
 
-IJsonHandler* BoolJsonHandler::readBool(bool b) {
+IJsonReader* BoolJsonHandler::readBool(bool b) {
   assert(this->_pBool);
   *this->_pBool = b;
   return this->parent();

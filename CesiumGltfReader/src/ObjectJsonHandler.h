@@ -5,19 +5,19 @@
 #include <optional>
 
 namespace CesiumGltf {
-class ObjectJsonHandler : public JsonHandler {
+class ObjectJsonHandler : public JsonReader {
 public:
-  ObjectJsonHandler(const JsonReaderContext& context) : JsonHandler(context) {}
+  ObjectJsonHandler(const ReaderContext& context) : JsonReader(context) {}
 
-  virtual IJsonHandler* readObjectStart() override /* final */;
-  virtual IJsonHandler* readObjectEnd() override /* final */;
+  virtual IJsonReader* readObjectStart() override /* final */;
+  virtual IJsonReader* readObjectEnd() override /* final */;
 
 protected:
-  virtual IJsonHandler* StartSubObject();
-  virtual IJsonHandler* EndSubObject();
+  virtual IJsonReader* StartSubObject();
+  virtual IJsonReader* EndSubObject();
 
   template <typename TAccessor, typename TProperty>
-  IJsonHandler*
+  IJsonReader*
   property(const char* currentKey, TAccessor& accessor, TProperty& value) {
     this->_currentKey = currentKey;
 

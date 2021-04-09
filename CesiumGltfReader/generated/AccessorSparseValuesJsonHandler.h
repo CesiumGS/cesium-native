@@ -11,17 +11,17 @@ struct AccessorSparseValues;
 
 class AccessorSparseValuesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  AccessorSparseValuesJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, AccessorSparseValues* pObject);
+  AccessorSparseValuesJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, AccessorSparseValues* pObject);
   AccessorSparseValues* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeyAccessorSparseValues(
+  IJsonReader* readObjectKeyAccessorSparseValues(
       const std::string& objectType,
       const std::string_view& str,
       AccessorSparseValues& o);

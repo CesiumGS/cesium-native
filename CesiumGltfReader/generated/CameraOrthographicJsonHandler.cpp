@@ -9,7 +9,7 @@
 using namespace CesiumGltf;
 
 CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
-    const JsonReaderContext& context) noexcept
+    const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
       _xmag(context),
       _ymag(context),
@@ -17,7 +17,7 @@ CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
       _znear(context) {}
 
 void CameraOrthographicJsonHandler::reset(
-    IJsonHandler* pParent,
+    IJsonReader* pParent,
     CameraOrthographic* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
@@ -36,7 +36,7 @@ void CameraOrthographicJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler*
+IJsonReader*
 CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyCameraOrthographic(
@@ -45,7 +45,7 @@ CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonHandler* CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
+IJsonReader* CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
     const std::string& objectType,
     const std::string_view& str,
     CameraOrthographic& o) {

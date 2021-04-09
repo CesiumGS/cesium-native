@@ -12,17 +12,17 @@ struct Skin;
 
 class SkinJsonHandler : public NamedObjectJsonHandler {
 public:
-  SkinJsonHandler(const JsonReaderContext& context) noexcept;
-  void reset(IJsonHandler* pHandler, Skin* pObject);
+  SkinJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pHandler, Skin* pObject);
   Skin* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* readObjectKeySkin(
+  IJsonReader* readObjectKeySkin(
       const std::string& objectType,
       const std::string_view& str,
       Skin& o);

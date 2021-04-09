@@ -1,5 +1,5 @@
 #include "decodeDataUrls.h"
-#include "CesiumGltf/JsonReaderContext.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/Reader.h"
 #include <cstddef>
@@ -82,7 +82,7 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 namespace CesiumGltf {
 
 void decodeDataUrls(
-    const JsonReaderContext& context,
+    const ReaderContext& context,
     ModelReaderResult& readModel,
     bool clearDecodedDataUrls) {
   if (!readModel.model) {
