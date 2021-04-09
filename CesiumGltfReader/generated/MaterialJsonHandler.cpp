@@ -8,8 +8,7 @@
 
 using namespace CesiumGltf;
 
-MaterialJsonHandler::MaterialJsonHandler(
-    const ReaderContext& context) noexcept
+MaterialJsonHandler::MaterialJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _pbrMetallicRoughness(context),
       _normalTexture(context),

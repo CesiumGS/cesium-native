@@ -8,8 +8,7 @@
 
 using namespace CesiumGltf;
 
-TextureJsonHandler::TextureJsonHandler(
-    const ReaderContext& context) noexcept
+TextureJsonHandler::TextureJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _sampler(context), _source(context) {}
 
 void TextureJsonHandler::reset(IJsonReader* pParent, Texture* pObject) {

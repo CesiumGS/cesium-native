@@ -14,9 +14,7 @@ TextureInfoJsonHandler::TextureInfoJsonHandler(
       _index(context),
       _texCoord(context) {}
 
-void TextureInfoJsonHandler::reset(
-    IJsonReader* pParent,
-    TextureInfo* pObject) {
+void TextureInfoJsonHandler::reset(IJsonReader* pParent, TextureInfo* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
   this->_pObject = pObject;
 }

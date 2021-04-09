@@ -33,8 +33,7 @@ void BufferViewJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader*
-BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyBufferView(
       BufferView::TypeName,

@@ -1,4 +1,4 @@
-#include "IgnoreValueJsonHandler.h"
+#include "CesiumGltf/IgnoreValueJsonHandler.h"
 #include <string>
 
 using namespace CesiumGltf;

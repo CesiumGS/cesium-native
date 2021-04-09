@@ -63,8 +63,7 @@ public:
     return this->_objectHandler.readObjectStart();
   }
 
-  virtual IJsonReader*
-  readObjectKey(const std::string_view& /*str*/) override {
+  virtual IJsonReader* readObjectKey(const std::string_view& /*str*/) override {
     return nullptr;
   }
 

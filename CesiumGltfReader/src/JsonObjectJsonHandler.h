@@ -2,8 +2,8 @@
 
 #include "CesiumGltf/IExtensionJsonReader.h"
 #include "CesiumGltf/JsonReader.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumGltf/JsonValue.h"
+#include "CesiumGltf/ReaderContext.h"
 
 namespace CesiumGltf {
 

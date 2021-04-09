@@ -16,8 +16,7 @@ class KHR_draco_mesh_compressionJsonHandler
 public:
   static inline const std::string ExtensionName = "KHR_draco_mesh_compression";
 
-  KHR_draco_mesh_compressionJsonHandler(
-      const ReaderContext& context) noexcept;
+  KHR_draco_mesh_compressionJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonReader* pHandler, KHR_draco_mesh_compression* pObject);
   KHR_draco_mesh_compression* getObject();
   virtual void reportWarning(

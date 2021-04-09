@@ -9,9 +9,7 @@ NamedObjectJsonHandler::NamedObjectJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context), _name(context) {}
 
-void NamedObjectJsonHandler::reset(
-    IJsonReader* pParent,
-    NamedObject* pObject) {
+void NamedObjectJsonHandler::reset(IJsonReader* pParent, NamedObject* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
 }
 

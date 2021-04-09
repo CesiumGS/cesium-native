@@ -43,8 +43,7 @@ AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonReader*
-AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
+IJsonReader* AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
     const std::string& objectType,
     const std::string_view& str,
     AccessorSparseValues& o) {

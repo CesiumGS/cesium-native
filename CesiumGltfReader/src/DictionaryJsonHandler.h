@@ -13,9 +13,8 @@ public:
   DictionaryJsonHandler(const ReaderContext& context) noexcept
       : ObjectJsonHandler(context), _item(context) {}
 
-  void reset(
-      IJsonReader* pParent,
-      std::unordered_map<std::string, T>* pDictionary) {
+  void
+  reset(IJsonReader* pParent, std::unordered_map<std::string, T>* pDictionary) {
     ObjectJsonHandler::reset(pParent);
     this->_pDictionary1 = pDictionary;
   }

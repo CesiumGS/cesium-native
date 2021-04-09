@@ -14,8 +14,7 @@ void ExtensionsJsonHandler::reset(
   }
 }
 
-IJsonReader*
-ExtensionsJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* ExtensionsJsonHandler::readObjectKey(const std::string_view& str) {
   this->_currentExtensionHandler = this->_context.reader.createExtensionReader(
       this->_context,
       str,

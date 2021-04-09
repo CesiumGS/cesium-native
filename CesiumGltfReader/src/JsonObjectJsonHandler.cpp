@@ -76,8 +76,7 @@ IJsonReader* JsonObjectJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonReader*
-JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
+IJsonReader* JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
   JsonValue& json = *this->_stack.back();
   JsonValue::Object* pObject = std::get_if<JsonValue::Object>(&json.value);
 
