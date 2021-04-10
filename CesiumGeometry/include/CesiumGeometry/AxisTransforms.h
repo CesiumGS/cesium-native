@@ -8,7 +8,7 @@ namespace CesiumGeometry {
 /**
  * @brief Coordinate system conversion matrices
  */
-struct CESIUMGEOMETRY_API Axes final {
+struct CESIUMGEOMETRY_API AxisTransforms final {
 
   /**
    * @brief A matrix to convert from y-up to z-up orientation,

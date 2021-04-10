@@ -1,12 +1,12 @@
-#include "CesiumGeometry/Axes.h"
+#include "CesiumGeometry/AxisTransforms.h"
 #include <glm/mat3x3.hpp>
 
 namespace CesiumGeometry {
 
 namespace {
-// Initialize with a static function instead of inline to avoid an
+// Initialize with a function instead of inline to avoid an
 // internal compiler error in MSVC v14.27.29110.
-static glm::dmat4 createYupToZup() {
+glm::dmat4 createYupToZup() {
   return glm::dmat4(
       glm::dvec4(1.0, 0.0, 0.0, 0.0),
       glm::dvec4(0.0, 0.0, 1.0, 0.0),
@@ -14,7 +14,7 @@ static glm::dmat4 createYupToZup() {
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 }
 
-static glm::dmat4 createZupToYup() {
+glm::dmat4 createZupToYup() {
   return glm::dmat4(
       glm::dvec4(1.0, 0.0, 0.0, 0.0),
       glm::dvec4(0.0, 0.0, -1.0, 0.0),
@@ -22,7 +22,7 @@ static glm::dmat4 createZupToYup() {
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 }
 
-static glm::dmat4 createXupToZup() {
+glm::dmat4 createXupToZup() {
   return glm::dmat4(
       glm::dvec4(0.0, 0.0, 1.0, 0.0),
       glm::dvec4(0.0, 1.0, 0.0, 0.0),
@@ -30,7 +30,7 @@ static glm::dmat4 createXupToZup() {
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 }
 
-static glm::dmat4 createZupToXup() {
+glm::dmat4 createZupToXup() {
   return glm::dmat4(
       glm::dvec4(0.0, 0.0, -1.0, 0.0),
       glm::dvec4(0.0, 1.0, 0.0, 0.0),
@@ -38,7 +38,7 @@ static glm::dmat4 createZupToXup() {
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 }
 
-static glm::dmat4 createXupToYup() {
+glm::dmat4 createXupToYup() {
   return glm::dmat4(
       glm::dvec4(0.0, 1.0, 0.0, 0.0),
       glm::dvec4(-1.0, 0.0, 0.0, 0.0),
@@ -46,7 +46,7 @@ static glm::dmat4 createXupToYup() {
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 }
 
-static glm::dmat4 createYupToXup() {
+glm::dmat4 createYupToXup() {
   return glm::dmat4(
       glm::dvec4(0.0, -1.0, 0.0, 0.0),
       glm::dvec4(1.0, 0.0, 0.0, 0.0),
@@ -55,11 +55,11 @@ static glm::dmat4 createYupToXup() {
 }
 } // namespace
 
-const glm::dmat4 Axes::Y_UP_TO_Z_UP = createYupToZup();
-const glm::dmat4 Axes::Z_UP_TO_Y_UP = createZupToYup();
-const glm::dmat4 Axes::X_UP_TO_Z_UP = createXupToZup();
-const glm::dmat4 Axes::Z_UP_TO_X_UP = createZupToXup();
-const glm::dmat4 Axes::X_UP_TO_Y_UP = createXupToYup();
-const glm::dmat4 Axes::Y_UP_TO_X_UP = createYupToXup();
+const glm::dmat4 AxisTransforms::Y_UP_TO_Z_UP = createYupToZup();
+const glm::dmat4 AxisTransforms::Z_UP_TO_Y_UP = createZupToYup();
+const glm::dmat4 AxisTransforms::X_UP_TO_Z_UP = createXupToZup();
+const glm::dmat4 AxisTransforms::Z_UP_TO_X_UP = createZupToXup();
+const glm::dmat4 AxisTransforms::X_UP_TO_Y_UP = createXupToYup();
+const glm::dmat4 AxisTransforms::Y_UP_TO_X_UP = createYupToXup();
 
 } // namespace CesiumGeometry
