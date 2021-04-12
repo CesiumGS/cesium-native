@@ -41,7 +41,7 @@ private:
    * the `model`. All other properties will be uninitialized.
    */
   static std::unique_ptr<TileContentLoadResult> load(
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& url,
       const gsl::span<const std::byte>& data);
 };

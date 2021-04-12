@@ -33,28 +33,19 @@ Tileset::Tileset(
     const TilesetExternals& externals,
     const std::string& url,
     const TilesetOptions& options)
-    : _contexts(),
-      _externals(externals),
+    : _externals(externals),
       _asyncSystem(externals.pTaskProcessor),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
                     options.credit.value()))
               : std::nullopt),
-      _tilesetCredits(),
       _url(url),
-      _ionAssetID(),
-      _ionAccessToken(),
       _isRefreshingIonToken(false),
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _updateResult(),
-      _loadQueueHigh(),
-      _loadQueueMedium(),
-      _loadQueueLow(),
       _loadsInProgress(0),
-      _loadedTiles(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false) {
@@ -67,34 +58,26 @@ Tileset::Tileset(
     uint32_t ionAssetID,
     const std::string& ionAccessToken,
     const TilesetOptions& options)
-    : _contexts(),
-      _externals(externals),
+    : _externals(externals),
       _asyncSystem(externals.pTaskProcessor),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
                     options.credit.value()))
               : std::nullopt),
-      _tilesetCredits(),
-      _url(),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
       _isRefreshingIonToken(false),
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _updateResult(),
-      _loadQueueHigh(),
-      _loadQueueMedium(),
-      _loadQueueLow(),
       _loadsInProgress(0),
-      _loadedTiles(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false) {
   std::string ionUrl = "https://api.cesium.com/v1/assets/" +
                        std::to_string(ionAssetID) + "/endpoint";
-  if (ionAccessToken.size() > 0) {
+  if (!ionAccessToken.empty()) {
     ionUrl += "?access_token=" + ionAccessToken;
   }
 
@@ -246,7 +229,8 @@ static double computeFogDensity(
 
   if (nextIt == fogDensityTable.end()) {
     return fogDensityTable.back().fogDensity;
-  } else if (nextIt == fogDensityTable.begin()) {
+  }
+  if (nextIt == fogDensityTable.begin()) {
     return nextIt->fogDensity;
   }
 
@@ -1713,11 +1697,14 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
           [this, &quadtreeID](const std::string& placeholder) -> std::string {
             if (placeholder == "level" || placeholder == "z") {
               return std::to_string(quadtreeID.level);
-            } else if (placeholder == "x") {
+            }
+            if (placeholder == "x") {
               return std::to_string(quadtreeID.x);
-            } else if (placeholder == "y") {
+            }
+            if (placeholder == "y") {
               return std::to_string(quadtreeID.y);
-            } else if (placeholder == "version") {
+            }
+            if (placeholder == "version") {
               return this->context.version.value_or(std::string());
             }
 
@@ -1735,13 +1722,17 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
           [this, &octreeID](const std::string& placeholder) -> std::string {
             if (placeholder == "level") {
               return std::to_string(octreeID.level);
-            } else if (placeholder == "x") {
+            }
+            if (placeholder == "x") {
               return std::to_string(octreeID.x);
-            } else if (placeholder == "y") {
+            }
+            if (placeholder == "y") {
               return std::to_string(octreeID.y);
-            } else if (placeholder == "z") {
+            }
+            if (placeholder == "z") {
               return std::to_string(octreeID.z);
-            } else if (placeholder == "version") {
+            }
+            if (placeholder == "version") {
               return this->context.version.value_or(std::string());
             }
 

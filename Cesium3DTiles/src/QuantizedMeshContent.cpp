@@ -662,7 +662,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
-    std::shared_ptr<spdlog::logger> pLogger,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const TileID& tileID,
     const BoundingVolume& tileBoundingVolume,
     const std::string& url,

@@ -75,7 +75,7 @@ Batched3DModelContent::load(const TileContentLoadInput& input) {
 }
 
 std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
-    std::shared_ptr<spdlog::logger> pLogger,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const gsl::span<const std::byte>& data) {
   // TODO: actually use the b3dm payload

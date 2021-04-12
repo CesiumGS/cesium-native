@@ -54,7 +54,7 @@ static void forEachPrimitiveInNodeObject(
     std::function<Gltf::ForEachPrimitiveInSceneConstCallback>& callback) {
   glm::dmat4x4 nodeTransform = transform;
 
-  if (node.matrix.size() > 0) {
+  if (!node.matrix.empty()) {
     const std::vector<double>& matrix = node.matrix;
 
     glm::dmat4x4 nodeTransformGltf(
@@ -65,8 +65,8 @@ static void forEachPrimitiveInNodeObject(
 
     nodeTransform = nodeTransform * nodeTransformGltf;
   } else if (
-      node.translation.size() > 0 || node.rotation.size() > 0 ||
-      node.scale.size() > 0) {
+      !node.translation.empty() || !node.rotation.empty() ||
+      !node.scale.empty()) {
     // TODO: handle this type of transformation
   }
 
@@ -128,14 +128,14 @@ static void forEachPrimitiveInSceneObject(
         gltf,
         gltf.scenes[static_cast<size_t>(gltf.scene)],
         callback);
-  } else if (gltf.scenes.size() > 0) {
+  } else if (!gltf.scenes.empty()) {
     // There's no default, so use the first scene
     const CesiumGltf::Scene& defaultScene = gltf.scenes[0];
     forEachPrimitiveInSceneObject(rootTransform, gltf, defaultScene, callback);
-  } else if (gltf.nodes.size() > 0) {
+  } else if (!gltf.nodes.empty()) {
     // No scenes at all, use the first node as the root node.
     forEachPrimitiveInNodeObject(rootTransform, gltf, gltf.nodes[0], callback);
-  } else if (gltf.meshes.size() > 0) {
+  } else if (!gltf.meshes.empty()) {
     // No nodes either, show all the meshes.
     for (const CesiumGltf::Mesh& mesh : gltf.meshes) {
       forEachPrimitiveInMeshObject(

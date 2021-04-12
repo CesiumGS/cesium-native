@@ -106,7 +106,6 @@ SqliteCache::SqliteCache(
     : _pLogger(pLogger),
       _pConnection(nullptr),
       _maxItems(maxItems),
-      _mutex(),
       _getEntryStmtWrapper(),
       _updateLastAccessedTimeStmtWrapper(),
       _storeResponseStmtWrapper(),
@@ -480,9 +479,12 @@ bool SqliteCache::prune() {
 
     totalItemsQueryStatus =
         sqlite3_step(this->_totalItemsQueryStmtWrapper.get());
+
     if (totalItemsQueryStatus == SQLITE_DONE) {
       return true;
-    } else if (totalItemsQueryStatus != SQLITE_ROW) {
+    }
+
+    if (totalItemsQueryStatus != SQLITE_ROW) {
       SPDLOG_LOGGER_ERROR(
           this->_pLogger,
           sqlite3_errstr(totalItemsQueryStatus));

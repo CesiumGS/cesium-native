@@ -39,7 +39,7 @@ public:
    * @return The {@link TileContentLoadResult}
    */
   static std::unique_ptr<TileContentLoadResult> load(
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const TileID& tileID,
       const BoundingVolume& tileBoundingVolume,
       const std::string& url,

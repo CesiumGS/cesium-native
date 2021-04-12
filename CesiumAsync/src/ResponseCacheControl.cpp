@@ -39,9 +39,9 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
   std::set<std::string, CaseInsensitiveCompare> directives;
   size_t last = 0;
   size_t next = 0;
-  while ((next = headerValue.find(",", last)) != std::string::npos) {
+  while ((next = headerValue.find(',', last)) != std::string::npos) {
     std::string directive = trimSpace(headerValue.substr(last, next - last));
-    size_t equalSize = directive.find("=");
+    size_t equalSize = directive.find('=');
     if (equalSize != std::string::npos) {
       parameterizedDirectives.insert(
           {trimSpace(directive.substr(0, equalSize)),
@@ -54,7 +54,7 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
   }
 
   std::string directive = trimSpace(headerValue.substr(last));
-  size_t equalSize = directive.find("=");
+  size_t equalSize = directive.find('=');
   if (equalSize != std::string::npos) {
     parameterizedDirectives.insert(
         {trimSpace(directive.substr(0, equalSize)),

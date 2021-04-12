@@ -32,13 +32,13 @@ Rectangle::computeSignedDistance(const glm::dvec2& position) const noexcept {
   if (maxDistance.x <= 0.0 && maxDistance.y <= 0.0) {
     // Inside, report closest edge.
     return glm::max(maxDistance.x, maxDistance.y);
-  } else if (maxDistance.x > 0.0 && maxDistance.y > 0.0) {
+  }
+  if (maxDistance.x > 0.0 && maxDistance.y > 0.0) {
     // Outside in both directions, closest point is a corner
     return glm::length(maxDistance);
-  } else {
-    // Outside in one direction, report the distance in that direction.
-    return glm::max(maxDistance.x, maxDistance.y);
   }
+  // Outside in one direction, report the distance in that direction.
+  return glm::max(maxDistance.x, maxDistance.y);
 }
 
 std::optional<Rectangle>
