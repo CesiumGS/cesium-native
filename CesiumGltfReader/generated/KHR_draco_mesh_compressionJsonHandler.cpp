@@ -10,14 +10,12 @@ using namespace CesiumGltf;
 
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
     const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
-      _bufferView(context),
-      _attributes(context) {}
+    : ExtensibleObjectJsonHandler(context), _bufferView(), _attributes() {}
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     KHR_draco_mesh_compression* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 
@@ -44,14 +42,14 @@ IJsonReader* KHR_draco_mesh_compressionJsonHandler::readObjectKey(
 }
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    IJsonReader* pParentHandler,
+    IJsonReader* pParentReader,
     ExtensibleObject& o,
     const std::string_view& extensionName) {
   std::any& value =
       o.extensions.emplace(extensionName, KHR_draco_mesh_compression())
           .first->second;
   this->reset(
-      pParentHandler,
+      pParentReader,
       &std::any_cast<KHR_draco_mesh_compression&>(value));
 }
 

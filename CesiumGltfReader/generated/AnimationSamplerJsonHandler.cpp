@@ -11,14 +11,14 @@ using namespace CesiumGltf;
 AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
-      _input(context),
-      _interpolation(context),
-      _output(context) {}
+      _input(),
+      _interpolation(),
+      _output() {}
 
 void AnimationSamplerJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     AnimationSampler* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

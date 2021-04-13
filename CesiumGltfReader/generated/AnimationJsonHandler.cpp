@@ -12,8 +12,10 @@ AnimationJsonHandler::AnimationJsonHandler(
     const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _channels(context), _samplers(context) {}
 
-void AnimationJsonHandler::reset(IJsonReader* pParent, Animation* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void AnimationJsonHandler::reset(
+    IJsonReader* pParentReader,
+    Animation* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

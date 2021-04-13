@@ -1,12 +1,12 @@
 #pragma once
 
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 
 namespace CesiumGltf {
 class DoubleJsonHandler : public JsonReader {
 public:
-  DoubleJsonHandler(const ReaderContext& context) noexcept;
+  DoubleJsonHandler() noexcept;
   void reset(IJsonReader* pParent, double* pDouble);
 
   virtual IJsonReader* readInt32(int32_t i) override;

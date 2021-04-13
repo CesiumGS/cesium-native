@@ -7,7 +7,7 @@ using namespace CesiumGltf;
 
 NamedObjectJsonHandler::NamedObjectJsonHandler(
     const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _name(context) {}
+    : ExtensibleObjectJsonHandler(context), _name() {}
 
 void NamedObjectJsonHandler::reset(IJsonReader* pParent, NamedObject* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);

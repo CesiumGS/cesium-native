@@ -11,12 +11,12 @@ using namespace CesiumGltf;
 MaterialOcclusionTextureInfoJsonHandler::
     MaterialOcclusionTextureInfoJsonHandler(
         const ReaderContext& context) noexcept
-    : TextureInfoJsonHandler(context), _strength(context) {}
+    : TextureInfoJsonHandler(context), _strength() {}
 
 void MaterialOcclusionTextureInfoJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     MaterialOcclusionTextureInfo* pObject) {
-  TextureInfoJsonHandler::reset(pParent, pObject);
+  TextureInfoJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

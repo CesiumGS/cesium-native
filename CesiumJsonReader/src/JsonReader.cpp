@@ -1,8 +1,7 @@
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumJsonReader/JsonReader.h"
 
 using namespace CesiumGltf;
-JsonReader::JsonReader(const ReaderContext& context) noexcept
-    : _context(context) {}
+JsonReader::JsonReader() noexcept {}
 
 IJsonReader* JsonReader::readNull() {
   this->reportWarning("A null value is not allowed and has been ignored.");

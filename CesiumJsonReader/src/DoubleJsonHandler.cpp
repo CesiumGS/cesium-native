@@ -1,9 +1,8 @@
-#include "DoubleJsonHandler.h"
+#include "CesiumJsonReader/DoubleJsonHandler.h"
 
 using namespace CesiumGltf;
 
-DoubleJsonHandler::DoubleJsonHandler(const ReaderContext& context) noexcept
-    : JsonReader(context) {}
+DoubleJsonHandler::DoubleJsonHandler() noexcept : JsonReader() {}
 
 void DoubleJsonHandler::reset(IJsonReader* pParent, double* pDouble) {
   JsonReader::reset(pParent);

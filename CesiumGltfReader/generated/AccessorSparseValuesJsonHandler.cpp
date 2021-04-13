@@ -10,14 +10,12 @@ using namespace CesiumGltf;
 
 AccessorSparseValuesJsonHandler::AccessorSparseValuesJsonHandler(
     const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
-      _bufferView(context),
-      _byteOffset(context) {}
+    : ExtensibleObjectJsonHandler(context), _bufferView(), _byteOffset() {}
 
 void AccessorSparseValuesJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     AccessorSparseValues* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

@@ -1,14 +1,14 @@
 #include "ExtensibleObjectJsonHandler.h"
 #include "CesiumGltf/ExtensibleObject.h"
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumJsonReader/JsonReader.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
 #include "ExtensionsJsonHandler.h"
-#include "ObjectJsonHandler.h"
 
 using namespace CesiumGltf;
 
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
     const ReaderContext& context) noexcept
-    : ObjectJsonHandler(context), _extras(context), _extensions(context) {}
+    : ObjectJsonHandler(), _extras(), _extensions(context) {}
 
 void ExtensibleObjectJsonHandler::reset(
     IJsonReader* pParent,

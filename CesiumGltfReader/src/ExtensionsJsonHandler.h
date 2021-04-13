@@ -1,13 +1,17 @@
 #pragma once
 
-#include "ObjectJsonHandler.h"
+#include "CesiumGltf/IExtensionJsonReader.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
+struct ExtensibleObject;
 
 class ExtensionsJsonHandler : public ObjectJsonHandler {
 public:
   ExtensionsJsonHandler(const ReaderContext& context) noexcept
-      : ObjectJsonHandler(context),
+      : ObjectJsonHandler(),
+        _context(context),
         _pObject(nullptr),
         _currentExtensionHandler() {}
 
@@ -19,6 +23,7 @@ public:
   virtual IJsonReader* readObjectKey(const std::string_view& str) override;
 
 private:
+  const ReaderContext& _context;
   ExtensibleObject* _pObject = nullptr;
   std::string _objectType;
   std::unique_ptr<IExtensionJsonReader> _currentExtensionHandler;

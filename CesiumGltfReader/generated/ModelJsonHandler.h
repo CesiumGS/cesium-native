@@ -4,31 +4,32 @@
 
 #include "AccessorJsonHandler.h"
 #include "AnimationJsonHandler.h"
-#include "ArrayJsonHandler.h"
 #include "AssetJsonHandler.h"
 #include "BufferJsonHandler.h"
 #include "BufferViewJsonHandler.h"
 #include "CameraJsonHandler.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumJsonReader/ArrayJsonHandler.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 #include "ImageJsonHandler.h"
-#include "IntegerJsonHandler.h"
 #include "MaterialJsonHandler.h"
 #include "MeshJsonHandler.h"
 #include "NodeJsonHandler.h"
 #include "SamplerJsonHandler.h"
 #include "SceneJsonHandler.h"
 #include "SkinJsonHandler.h"
-#include "StringJsonHandler.h"
 #include "TextureJsonHandler.h"
-#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct Model;
 
 class ModelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
   ModelJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pHandler, Model* pObject);
+  void reset(IJsonReader* pParentReader, Model* pObject);
   Model* getObject();
   virtual void reportWarning(
       const std::string& warning,

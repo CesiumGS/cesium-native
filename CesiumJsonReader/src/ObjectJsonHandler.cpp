@@ -1,4 +1,4 @@
-#include "ObjectJsonHandler.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
 
 using namespace CesiumGltf;
 

@@ -10,12 +10,12 @@ using namespace CesiumGltf;
 
 AnimationChannelTargetJsonHandler::AnimationChannelTargetJsonHandler(
     const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _node(context), _path(context) {}
+    : ExtensibleObjectJsonHandler(context), _node(), _path() {}
 
 void AnimationChannelTargetJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     AnimationChannelTarget* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

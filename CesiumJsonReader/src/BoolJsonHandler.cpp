@@ -1,10 +1,9 @@
-#include "BoolJsonHandler.h"
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumJsonReader/BoolJsonHandler.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 
 using namespace CesiumGltf;
-BoolJsonHandler::BoolJsonHandler(const ReaderContext& context) noexcept
-    : JsonReader(context) {}
+BoolJsonHandler::BoolJsonHandler() noexcept : JsonReader() {}
 
 void BoolJsonHandler::reset(IJsonReader* pParent, bool* pBool) {
   JsonReader::reset(pParent);

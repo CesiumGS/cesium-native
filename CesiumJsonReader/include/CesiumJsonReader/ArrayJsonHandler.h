@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
 #include "StringJsonHandler.h"
@@ -11,8 +11,9 @@ namespace CesiumGltf {
 template <typename T, typename THandler>
 class ArrayJsonHandler : public JsonReader {
 public:
-  ArrayJsonHandler(const ReaderContext& context) noexcept
-      : JsonReader(context), _objectHandler(context) {}
+  template <typename... Ts>
+  ArrayJsonHandler(Ts&&... args) noexcept
+      : JsonReader(), _objectHandler(std::forward<Ts>(args)...) {}
 
   void reset(IJsonReader* pParent, std::vector<T>* pArray) {
     JsonReader::reset(pParent);
@@ -112,7 +113,7 @@ private:
 template <>
 class ArrayJsonHandler<double, DoubleJsonHandler> : public JsonReader {
 public:
-  ArrayJsonHandler(const ReaderContext& context) : JsonReader(context) {}
+  ArrayJsonHandler() : JsonReader() {}
 
   void reset(IJsonReader* pParent, std::vector<double>* pArray) {
     JsonReader::reset(pParent);
@@ -228,7 +229,7 @@ private:
 template <typename T>
 class ArrayJsonHandler<T, IntegerJsonHandler<T>> : public JsonReader {
 public:
-  ArrayJsonHandler(const ReaderContext& context) : JsonReader(context) {}
+  ArrayJsonHandler() : JsonReader() {}
 
   void reset(IJsonReader* pParent, std::vector<T>* pArray) {
     JsonReader::reset(pParent);
@@ -338,7 +339,7 @@ private:
 template <>
 class ArrayJsonHandler<std::string, StringJsonHandler> : public JsonReader {
 public:
-  ArrayJsonHandler(const ReaderContext& context) : JsonReader(context) {}
+  ArrayJsonHandler() : JsonReader() {}
 
   void reset(IJsonReader* pParent, std::vector<std::string>* pArray) {
     JsonReader::reset(pParent);

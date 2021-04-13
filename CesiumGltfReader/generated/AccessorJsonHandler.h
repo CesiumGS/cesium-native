@@ -3,21 +3,22 @@
 #pragma once
 
 #include "AccessorSparseJsonHandler.h"
-#include "ArrayJsonHandler.h"
-#include "BoolJsonHandler.h"
 #include "CesiumGltf/Accessor.h"
-#include "DoubleJsonHandler.h"
-#include "IntegerJsonHandler.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumJsonReader/ArrayJsonHandler.h"
+#include "CesiumJsonReader/BoolJsonHandler.h"
+#include "CesiumJsonReader/DoubleJsonHandler.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
-#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
   AccessorJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pHandler, Accessor* pObject);
+  void reset(IJsonReader* pParentReader, Accessor* pObject);
   Accessor* getObject();
   virtual void reportWarning(
       const std::string& warning,
@@ -34,8 +35,7 @@ protected:
 private:
   class TypeJsonHandler : public JsonReader {
   public:
-    TypeJsonHandler(const ReaderContext& context) noexcept
-        : JsonReader(context) {}
+    TypeJsonHandler() noexcept : JsonReader() {}
     void reset(IJsonReader* pParent, Accessor::Type* pEnum);
     virtual IJsonReader* readString(const std::string_view& str) override;
 

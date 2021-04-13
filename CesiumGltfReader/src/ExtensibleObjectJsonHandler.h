@@ -1,10 +1,10 @@
 #pragma once
 
-#include "DictionaryJsonHandler.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumJsonReader/DictionaryJsonHandler.h"
+#include "CesiumJsonReader/JsonObjectJsonHandler.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
 #include "ExtensionsJsonHandler.h"
-#include "JsonObjectJsonHandler.h"
-#include "ObjectJsonHandler.h"
-#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
 struct ExtensibleObject;

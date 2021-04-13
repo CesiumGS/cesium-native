@@ -10,13 +10,13 @@ using namespace CesiumGltf;
 
 AssetJsonHandler::AssetJsonHandler(const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
-      _copyright(context),
-      _generator(context),
-      _version(context),
-      _minVersion(context) {}
+      _copyright(),
+      _generator(),
+      _version(),
+      _minVersion() {}
 
-void AssetJsonHandler::reset(IJsonReader* pParent, Asset* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+void AssetJsonHandler::reset(IJsonReader* pParentReader, Asset* pObject) {
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

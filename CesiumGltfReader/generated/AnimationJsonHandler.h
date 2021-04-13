@@ -4,17 +4,18 @@
 
 #include "AnimationChannelJsonHandler.h"
 #include "AnimationSamplerJsonHandler.h"
-#include "ArrayJsonHandler.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
-#include <CesiumGltf/Reader.h>
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct Animation;
 
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:
   AnimationJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pHandler, Animation* pObject);
+  void reset(IJsonReader* pParentReader, Animation* pObject);
   Animation* getObject();
   virtual void reportWarning(
       const std::string& warning,

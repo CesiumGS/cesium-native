@@ -44,6 +44,7 @@ target_include_directories(
 target_link_libraries(CesiumGltfReader
     PUBLIC
         CesiumGltf
+        CesiumJsonReader
         GSL
         draco
         modp_b64

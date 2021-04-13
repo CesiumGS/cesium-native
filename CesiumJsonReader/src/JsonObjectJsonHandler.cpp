@@ -1,4 +1,4 @@
-#include "JsonObjectJsonHandler.h"
+#include "CesiumJsonReader/JsonObjectJsonHandler.h"
 
 using namespace CesiumGltf;
 
@@ -13,9 +13,7 @@ template <typename T> void addOrReplace(JsonValue& json, T value) {
 }
 } // namespace
 
-JsonObjectJsonHandler::JsonObjectJsonHandler(
-    const ReaderContext& context) noexcept
-    : JsonReader(context) {}
+JsonObjectJsonHandler::JsonObjectJsonHandler() noexcept : JsonReader() {}
 
 void JsonObjectJsonHandler::reset(IJsonReader* pParent, JsonValue* pValue) {
   JsonReader::reset(pParent);

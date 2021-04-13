@@ -11,16 +11,16 @@ using namespace CesiumGltf;
 MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
-      _attributes(context),
-      _indices(context),
-      _material(context),
-      _mode(context),
-      _targets(context) {}
+      _attributes(),
+      _indices(),
+      _material(),
+      _mode(),
+      _targets() {}
 
 void MeshPrimitiveJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     MeshPrimitive* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

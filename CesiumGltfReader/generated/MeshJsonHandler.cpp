@@ -9,12 +9,10 @@
 using namespace CesiumGltf;
 
 MeshJsonHandler::MeshJsonHandler(const ReaderContext& context) noexcept
-    : NamedObjectJsonHandler(context),
-      _primitives(context),
-      _weights(context) {}
+    : NamedObjectJsonHandler(context), _primitives(context), _weights() {}
 
-void MeshJsonHandler::reset(IJsonReader* pParent, Mesh* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void MeshJsonHandler::reset(IJsonReader* pParentReader, Mesh* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

@@ -12,10 +12,10 @@ CameraJsonHandler::CameraJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _orthographic(context),
       _perspective(context),
-      _type(context) {}
+      _type() {}
 
-void CameraJsonHandler::reset(IJsonReader* pParent, Camera* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void CameraJsonHandler::reset(IJsonReader* pParentReader, Camera* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

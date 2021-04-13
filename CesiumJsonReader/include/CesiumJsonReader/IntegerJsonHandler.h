@@ -1,13 +1,12 @@
 #pragma once
 
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 
 namespace CesiumGltf {
 template <typename T> class IntegerJsonHandler : public JsonReader {
 public:
-  IntegerJsonHandler(const ReaderContext& context) noexcept
-      : JsonReader(context) {}
+  IntegerJsonHandler() noexcept : JsonReader() {}
 
   void reset(IJsonReader* pParent, T* pInteger) {
     JsonReader::reset(pParent);

@@ -10,13 +10,13 @@ using namespace CesiumGltf;
 
 SamplerJsonHandler::SamplerJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
-      _magFilter(context),
-      _minFilter(context),
-      _wrapS(context),
-      _wrapT(context) {}
+      _magFilter(),
+      _minFilter(),
+      _wrapS(),
+      _wrapT() {}
 
-void SamplerJsonHandler::reset(IJsonReader* pParent, Sampler* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void SamplerJsonHandler::reset(IJsonReader* pParentReader, Sampler* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

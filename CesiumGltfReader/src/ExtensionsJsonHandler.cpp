@@ -1,4 +1,6 @@
 #include "ExtensionsJsonHandler.h"
+#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 
 using namespace CesiumGltf;
 

@@ -1,6 +1,7 @@
 #include "CesiumGltf/Reader.h"
 #include "CesiumGltf/IExtensionJsonReader.h"
-#include "CesiumGltf/JsonReader.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -61,10 +62,10 @@ struct Dispatcher {
 class FinalJsonHandler : public ObjectJsonHandler {
 public:
   FinalJsonHandler(
-      const ReaderContext& context,
+      const ReaderContext& /* context */,
       ModelReaderResult& result,
       rapidjson::MemoryStream& inputStream)
-      : ObjectJsonHandler(context), _result(result), _inputStream(inputStream) {
+      : ObjectJsonHandler(), _result(result), _inputStream(inputStream) {
     reset(this);
   }
 
@@ -378,8 +379,8 @@ void postprocess(
 class AnyExtensionJsonReader : public JsonObjectJsonHandler,
                                public IExtensionJsonReader {
 public:
-  AnyExtensionJsonReader(const ReaderContext& context)
-      : JsonObjectJsonHandler(context) {}
+  AnyExtensionJsonReader(const ReaderContext& /* context */)
+      : JsonObjectJsonHandler() {}
 
   virtual void reset(
       IJsonReader* pParentHandler,

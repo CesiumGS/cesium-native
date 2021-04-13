@@ -11,15 +11,15 @@ using namespace CesiumGltf;
 CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
-      _xmag(context),
-      _ymag(context),
-      _zfar(context),
-      _znear(context) {}
+      _xmag(),
+      _ymag(),
+      _zfar(),
+      _znear() {}
 
 void CameraOrthographicJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     CameraOrthographic* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

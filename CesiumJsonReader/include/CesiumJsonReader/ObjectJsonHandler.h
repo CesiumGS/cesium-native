@@ -1,13 +1,12 @@
 #pragma once
 
-#include "CesiumGltf/JsonReader.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include <optional>
 
 namespace CesiumGltf {
 class ObjectJsonHandler : public JsonReader {
 public:
-  ObjectJsonHandler(const ReaderContext& context) : JsonReader(context) {}
+  ObjectJsonHandler() : JsonReader() {}
 
   virtual IJsonReader* readObjectStart() override /* final */;
   virtual IJsonReader* readObjectEnd() override /* final */;

@@ -10,18 +10,18 @@ using namespace CesiumGltf;
 
 AccessorJsonHandler::AccessorJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
-      _bufferView(context),
-      _byteOffset(context),
-      _componentType(context),
-      _normalized(context),
-      _count(context),
-      _type(context),
-      _max(context),
-      _min(context),
+      _bufferView(),
+      _byteOffset(),
+      _componentType(),
+      _normalized(),
+      _count(),
+      _type(),
+      _max(),
+      _min(),
       _sparse(context) {}
 
-void AccessorJsonHandler::reset(IJsonReader* pParent, Accessor* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void AccessorJsonHandler::reset(IJsonReader* pParentReader, Accessor* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

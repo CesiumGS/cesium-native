@@ -1,15 +1,13 @@
 #pragma once
 
-#include "CesiumGltf/IJsonReader.h"
-#include "CesiumGltf/IgnoreValueJsonHandler.h"
-#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/IJsonReader.h"
 #include <cstdint>
-#include <string>
 
 namespace CesiumGltf {
-class JsonReader : public IJsonReader {
+class IgnoreValueJsonHandler : public IJsonReader {
 public:
-  JsonReader(const ReaderContext& context) noexcept;
+  void reset(IJsonReader* pParent);
+
   virtual IJsonReader* readNull() override;
   virtual IJsonReader* readBool(bool b) override;
   virtual IJsonReader* readInt32(int32_t i) override;
@@ -28,28 +26,10 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-protected:
-  void reset(IJsonReader* pParent);
-
   IJsonReader* parent();
-
-  /**
-   * @brief Ignore a single value and then return to the parent handler.
-   */
-  IJsonReader* ignoreAndReturnToParent();
-
-  /**
-   * @brief Ignore a single value and the continue processing more tokens with
-   * this handler.
-   */
-  IJsonReader* ignoreAndContinue();
-
-protected:
-  const ReaderContext& _context;
 
 private:
   IJsonReader* _pParent = nullptr;
-  IgnoreValueJsonHandler _ignore;
+  int32_t _depth = 0;
 };
-
 } // namespace CesiumGltf

@@ -14,13 +14,13 @@ MaterialJsonHandler::MaterialJsonHandler(const ReaderContext& context) noexcept
       _normalTexture(context),
       _occlusionTexture(context),
       _emissiveTexture(context),
-      _emissiveFactor(context),
-      _alphaMode(context),
-      _alphaCutoff(context),
-      _doubleSided(context) {}
+      _emissiveFactor(),
+      _alphaMode(),
+      _alphaCutoff(),
+      _doubleSided() {}
 
-void MaterialJsonHandler::reset(IJsonReader* pParent, Material* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void MaterialJsonHandler::reset(IJsonReader* pParentReader, Material* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

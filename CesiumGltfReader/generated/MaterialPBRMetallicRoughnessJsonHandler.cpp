@@ -12,16 +12,16 @@ MaterialPBRMetallicRoughnessJsonHandler::
     MaterialPBRMetallicRoughnessJsonHandler(
         const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
-      _baseColorFactor(context),
+      _baseColorFactor(),
       _baseColorTexture(context),
-      _metallicFactor(context),
-      _roughnessFactor(context),
+      _metallicFactor(),
+      _roughnessFactor(),
       _metallicRoughnessTexture(context) {}
 
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonReader* pParentReader,
     MaterialPBRMetallicRoughness* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 

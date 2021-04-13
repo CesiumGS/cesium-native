@@ -10,18 +10,18 @@ using namespace CesiumGltf;
 
 NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
-      _camera(context),
-      _children(context),
-      _skin(context),
-      _matrix(context),
-      _mesh(context),
-      _rotation(context),
-      _scale(context),
-      _translation(context),
-      _weights(context) {}
+      _camera(),
+      _children(),
+      _skin(),
+      _matrix(),
+      _mesh(),
+      _rotation(),
+      _scale(),
+      _translation(),
+      _weights() {}
 
-void NodeJsonHandler::reset(IJsonReader* pParent, Node* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+void NodeJsonHandler::reset(IJsonReader* pParentReader, Node* pObject) {
+  NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
 
