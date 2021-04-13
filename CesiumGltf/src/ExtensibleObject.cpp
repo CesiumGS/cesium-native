@@ -1,6 +1,7 @@
 #include "CesiumGltf/ExtensibleObject.h"
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 JsonValue* ExtensibleObject::getGenericExtension(
     const std::string& extensionName) noexcept {

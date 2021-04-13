@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/JsonValue.h"
+#include "CesiumUtility/JsonValue.h"
 #include "CesiumGltf/Library.h"
 #include <any>
 #include <unordered_map>
@@ -43,18 +43,18 @@ struct CESIUMGLTF_API ExtensibleObject {
    * @return The generic extension, or nullptr if the generic extension doesn't
    * exist.
    */
-  const JsonValue*
+  const CesiumUtility::JsonValue*
   getGenericExtension(const std::string& extensionName) const noexcept;
 
   /** @copydoc ExtensibleObject::getGenericExtension */
-  JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
+  CesiumUtility::JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
 
   /**
    * @brief The extensions attached to this object.
    *
    * Use {@link getExtension} to get the extension with a particular static
    * type. Use {@link getGenericExtension} to get unknown extensions as a
-   * generic {@link JsonValue}.
+   * generic {@link CesiumUtility::JsonValue}.
    */
   std::unordered_map<std::string, std::any> extensions;
 
@@ -66,6 +66,6 @@ struct CESIUMGLTF_API ExtensibleObject {
    * best practice, extras should be an Object rather than a primitive value for
    * best portability.
    */
-  JsonValue::Object extras;
+  CesiumUtility::JsonValue::Object extras;
 };
 } // namespace CesiumGltf

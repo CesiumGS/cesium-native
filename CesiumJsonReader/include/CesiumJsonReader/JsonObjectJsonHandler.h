@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/JsonValue.h"
+#include "CesiumUtility/JsonValue.h"
 #include "CesiumJsonReader/JsonReader.h"
 
 namespace CesiumGltf {
@@ -9,7 +9,7 @@ class JsonObjectJsonHandler : public JsonReader {
 public:
   JsonObjectJsonHandler() noexcept;
 
-  void reset(IJsonReader* pParent, JsonValue* pValue);
+  void reset(IJsonReader* pParent, CesiumUtility::JsonValue* pValue);
 
   virtual IJsonReader* readNull() override;
   virtual IJsonReader* readBool(bool b) override;
@@ -28,7 +28,7 @@ public:
 private:
   IJsonReader* doneElement();
 
-  std::vector<JsonValue*> _stack;
+  std::vector<CesiumUtility::JsonValue*> _stack;
   std::string_view _currentKey;
 };
 

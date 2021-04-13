@@ -4,7 +4,6 @@
 
 using namespace Cesium3DTiles;
 using namespace CesiumUtility;
-using namespace CesiumGltf;
 
 TEST_CASE("Test converting skirt mesh metadata to gltf extras") {
   SkirtMeshMetadata skirtMeshMetadata;

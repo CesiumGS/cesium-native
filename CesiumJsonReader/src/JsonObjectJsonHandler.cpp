@@ -1,6 +1,7 @@
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 namespace {
 template <typename T> void addOrReplace(JsonValue& json, T value) {

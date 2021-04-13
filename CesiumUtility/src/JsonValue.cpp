@@ -1,6 +1,6 @@
-#include "CesiumGltf/JsonValue.h"
+#include "CesiumUtility/JsonValue.h"
 
-using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 double JsonValue::getNumber(double defaultValue) const {
   const double* p = std::get_if<Number>(&this->value);

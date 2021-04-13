@@ -4,6 +4,7 @@
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
+#include "CesiumUtility/JsonValue.h"
 #include "ExtensionsJsonHandler.h"
 
 namespace CesiumGltf {
@@ -21,7 +22,8 @@ protected:
       ExtensibleObject& o);
 
 private:
-  DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extras;
+  DictionaryJsonHandler<CesiumUtility::JsonValue, JsonObjectJsonHandler>
+      _extras;
   ExtensionsJsonHandler _extensions;
 };
 } // namespace CesiumGltf

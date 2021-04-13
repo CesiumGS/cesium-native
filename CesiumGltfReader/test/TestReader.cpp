@@ -11,6 +11,7 @@
 #include <string>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 namespace {
 std::vector<std::byte> readFile(const std::string& path) {

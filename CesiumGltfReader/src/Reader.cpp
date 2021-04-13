@@ -17,6 +17,7 @@
 #include <stb_image.h>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 namespace {
 struct Dispatcher {

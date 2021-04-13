@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
+#include "CesiumUtility/Library.h"
 #include <cstdint>
 #include <initializer_list>
 #include <map>
@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumUtility {
 
 /**
  * @brief A generic implementation of a value in a JSON structure.
@@ -16,7 +16,7 @@ namespace CesiumGltf {
  * Instances of this class are used to represent the common `extras` field
  * of glTF elements that extend the the {@link ExtensibleObject} class.
  */
-class CESIUMGLTF_API JsonValue final {
+class CESIUMUTILITY_API JsonValue final {
 public:
   /**
    * @brief The type to represent a `null` JSON value.
@@ -299,4 +299,4 @@ public:
    */
   std::variant<Null, Number, Bool, String, Object, Array> value;
 };
-} // namespace CesiumGltf
+} // namespace CesiumUtility
