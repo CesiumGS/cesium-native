@@ -3,7 +3,7 @@
 #pragma once
 
 #include "AnimationChannelTargetJsonHandler.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 

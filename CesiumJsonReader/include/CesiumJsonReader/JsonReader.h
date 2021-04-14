@@ -37,7 +37,7 @@ template <typename T> struct ReadJsonResult {
 /**
  * @brief Reads JSON.
  */
-class CESIUMJSONREADER_API Reader {
+class CESIUMJSONREADER_API JsonReader {
 public:
   /**
    * @brief Reads JSON from a byte buffer.
@@ -56,7 +56,7 @@ public:
     FinalJsonHandler finalHandler(result.warnings);
     handler.reset(&finalHandler, &result.value.value());
 
-    Reader::internalRead(
+    JsonReader::internalRead(
         data,
         handler,
         finalHandler,

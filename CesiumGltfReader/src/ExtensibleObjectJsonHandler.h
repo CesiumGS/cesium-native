@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"

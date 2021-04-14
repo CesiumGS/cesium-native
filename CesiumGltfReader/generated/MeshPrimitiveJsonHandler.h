@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/MeshPrimitive.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"

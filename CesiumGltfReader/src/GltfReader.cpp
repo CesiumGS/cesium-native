@@ -1,8 +1,8 @@
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumGltf/IExtensionJsonHandler.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/Reader.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -18,6 +18,7 @@
 #include <stb_image.h>
 
 using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
@@ -48,13 +49,12 @@ ModelReaderResult readJsonModel(
     const gsl::span<const std::byte>& data) {
 
   ModelJsonHandler modelHandler(context);
-  CesiumJsonReader::ReadJsonResult<Model> jsonResult = CesiumJsonReader::Reader::readJson(data, modelHandler);
+  ReadJsonResult<Model> jsonResult = JsonReader::readJson(data, modelHandler);
 
-  return ModelReaderResult {
-    std::move(jsonResult.value),
-    std::move(jsonResult.errors),
-    std::move(jsonResult.warnings)
-  };
+  return ModelReaderResult{
+      std::move(jsonResult.value),
+      std::move(jsonResult.errors),
+      std::move(jsonResult.warnings)};
 }
 
 namespace {
@@ -245,11 +245,11 @@ void postprocess(
   }
 }
 
-class AnyExtensionJsonHandler : public CesiumJsonReader::JsonObjectJsonHandler,
+class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
   AnyExtensionJsonHandler(const ReaderContext& /* context */)
-      : CesiumJsonReader::JsonObjectJsonHandler() {}
+      : JsonObjectJsonHandler() {}
 
   virtual void reset(
       IJsonHandler* pParentHandler,
@@ -313,19 +313,19 @@ public:
 
 } // namespace
 
-Reader::Reader() {
+GltfReader::GltfReader() {
   this->registerExtension<
       MeshPrimitive,
       KHR_draco_mesh_compressionJsonHandler>();
 }
 
-void Reader::setExtensionState(
+void GltfReader::setExtensionState(
     const std::string& extensionName,
     ExtensionState newState) {
   this->_extensionStates[extensionName] = newState;
 }
 
-ModelReaderResult Reader::readModel(
+ModelReaderResult GltfReader::readModel(
     const gsl::span<const std::byte>& data,
     const ReadModelOptions& options) const {
 
@@ -341,7 +341,7 @@ ModelReaderResult Reader::readModel(
 }
 
 ImageReaderResult
-Reader::readImage(const gsl::span<const std::byte>& data) const {
+GltfReader::readImage(const gsl::span<const std::byte>& data) const {
   ImageReaderResult result;
 
   result.image.emplace();
@@ -372,7 +372,7 @@ Reader::readImage(const gsl::span<const std::byte>& data) const {
   return result;
 }
 
-std::unique_ptr<IExtensionJsonHandler> Reader::createExtensionHandler(
+std::unique_ptr<IExtensionJsonHandler> GltfReader::createExtensionHandler(
     const ReaderContext& context,
     const std::string_view& extensionName,
     const std::string& extendedObjectType) const {

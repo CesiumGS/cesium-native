@@ -2,7 +2,7 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/joinToString.h"
 #include <stdexcept>
@@ -22,7 +22,7 @@ GltfContent::load(const TileContentLoadInput& input) {
       std::make_unique<TileContentLoadResult>();
 
   // TODO: don't create a new Reader every time.
-  CesiumGltf::Reader reader;
+  CesiumGltf::GltfReader reader;
   CesiumGltf::ModelReaderResult loadedModel = reader.readModel(data);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(

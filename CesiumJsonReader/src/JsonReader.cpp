@@ -1,4 +1,4 @@
-#include "CesiumJsonReader/Reader.h"
+#include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 #include <rapidjson/reader.h>
 
@@ -88,12 +88,13 @@ std::string getMessageFromRapidJsonError(rapidjson::ParseErrorCode code) {
 
 } // namespace
 
-Reader::FinalJsonHandler::FinalJsonHandler(std::vector<std::string>& warnings)
+JsonReader::FinalJsonHandler::FinalJsonHandler(
+    std::vector<std::string>& warnings)
     : JsonHandler(), _warnings(warnings), _pInputStream(nullptr) {
   reset(this);
 }
 
-void Reader::FinalJsonHandler::reportWarning(
+void JsonReader::FinalJsonHandler::reportWarning(
     const std::string& warning,
     std::vector<std::string>&& context) {
   std::string fullWarning = warning;
@@ -104,17 +105,18 @@ void Reader::FinalJsonHandler::reportWarning(
 
   fullWarning += "\n  From byte offset: ";
   fullWarning += this->_pInputStream
-                      ? std::to_string(this->_pInputStream->Tell())
-                      : "unknown";
+                     ? std::to_string(this->_pInputStream->Tell())
+                     : "unknown";
 
   this->_warnings.emplace_back(std::move(fullWarning));
 }
 
-void Reader::FinalJsonHandler::setInputStream(rapidjson::MemoryStream* pInputStream) {
+void JsonReader::FinalJsonHandler::setInputStream(
+    rapidjson::MemoryStream* pInputStream) {
   this->_pInputStream = pInputStream;
 }
 
-/*static*/ void Reader::internalRead(
+/*static*/ void JsonReader::internalRead(
     const gsl::span<const std::byte>& data,
     IJsonHandler& handler,
     FinalJsonHandler& finalHandler,

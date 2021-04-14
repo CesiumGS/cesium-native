@@ -8,7 +8,7 @@
 #include "BufferJsonHandler.h"
 #include "BufferViewJsonHandler.h"
 #include "CameraJsonHandler.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"

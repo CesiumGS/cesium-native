@@ -5,7 +5,7 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
@@ -492,7 +492,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
         gsl::span<const std::byte> data = pResponse->data();
 
         // TODO: don't create a new Reader every time.
-        CesiumGltf::Reader reader;
+        CesiumGltf::GltfReader reader;
         CesiumGltf::ImageReaderResult loadedImage = reader.readImage(data);
 
         if (!loadedImage.errors.empty()) {

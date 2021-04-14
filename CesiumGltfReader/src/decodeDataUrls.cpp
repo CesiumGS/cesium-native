@@ -1,6 +1,6 @@
 #include "decodeDataUrls.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumGltf/Model.h"
-#include "CesiumGltf/Reader.h"
 #include "CesiumGltf/ReaderContext.h"
 #include <cstddef>
 #include <modp_b64.h>

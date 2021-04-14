@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/BufferView.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 

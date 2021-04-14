@@ -3,7 +3,6 @@
 #include "CesiumJsonReader/Library.h"
 #include "IntegerJsonHandler.h"
 #include "ObjectJsonHandler.h"
-#include <CesiumGltf/Reader.h>
 #include <map>
 #include <unordered_map>
 

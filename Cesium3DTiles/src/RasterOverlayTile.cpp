@@ -5,7 +5,6 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumGltf/Reader.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;

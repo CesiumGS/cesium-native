@@ -82,7 +82,7 @@ function generate(options, schema) {
 
   const readerHeaders = lodash.uniq(
     [
-      `"CesiumGltf/Reader.h"`,
+      `"CesiumGltf/ReaderContext.h"`,
       `"${base}JsonHandler.h"`, 
       ...lodash.flatten(properties.map((property) => property.readerHeaders))
     ]

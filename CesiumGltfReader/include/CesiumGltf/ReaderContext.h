@@ -2,10 +2,10 @@
 
 namespace CesiumGltf {
 
-class Reader;
+class GltfReader;
 
 struct ReaderContext {
-  const Reader& reader;
+  const GltfReader& reader;
 };
 
 } // namespace CesiumGltf

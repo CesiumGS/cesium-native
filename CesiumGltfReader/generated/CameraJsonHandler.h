@@ -5,7 +5,7 @@
 #include "CameraOrthographicJsonHandler.h"
 #include "CameraPerspectiveJsonHandler.h"
 #include "CesiumGltf/Camera.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {

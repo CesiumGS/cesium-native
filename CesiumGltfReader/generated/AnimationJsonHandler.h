@@ -4,7 +4,7 @@
 
 #include "AnimationChannelJsonHandler.h"
 #include "AnimationSamplerJsonHandler.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 

@@ -126,12 +126,12 @@ struct CESIUMGLTFREADER_API ReadModelOptions {
 /**
  * @brief Reads glTF models and images.
  */
-class CESIUMGLTFREADER_API Reader {
+class CESIUMGLTFREADER_API GltfReader {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  Reader();
+  GltfReader();
 
   /**
    * @brief Registers an extension for a glTF object.

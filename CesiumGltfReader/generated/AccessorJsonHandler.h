@@ -4,7 +4,7 @@
 
 #include "AccessorSparseJsonHandler.h"
 #include "CesiumGltf/Accessor.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/BoolJsonHandler.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
