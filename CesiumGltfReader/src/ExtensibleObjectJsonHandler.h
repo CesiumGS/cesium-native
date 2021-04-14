@@ -15,8 +15,8 @@ public:
   ExtensibleObjectJsonHandler(const ReaderContext& context) noexcept;
 
 protected:
-  void reset(IJsonReader* pParent, ExtensibleObject* pObject);
-  IJsonReader* readObjectKeyExtensibleObject(
+  void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
+  IJsonHandler* readObjectKeyExtensibleObject(
       const std::string& objectType,
       const std::string_view& str,
       ExtensibleObject& o);

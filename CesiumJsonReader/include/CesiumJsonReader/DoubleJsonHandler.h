@@ -5,16 +5,16 @@
 #include <cassert>
 
 namespace CesiumJsonReader {
-class CESIUMJSONREADER_API DoubleJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API DoubleJsonHandler : public JsonHandler {
 public:
   DoubleJsonHandler() noexcept;
-  void reset(IJsonReader* pParent, double* pDouble);
+  void reset(IJsonHandler* pParent, double* pDouble);
 
-  virtual IJsonReader* readInt32(int32_t i) override;
-  virtual IJsonReader* readUint32(uint32_t i) override;
-  virtual IJsonReader* readInt64(int64_t i) override;
-  virtual IJsonReader* readUint64(uint64_t i) override;
-  virtual IJsonReader* readDouble(double d) override;
+  virtual IJsonHandler* readInt32(int32_t i) override;
+  virtual IJsonHandler* readUint32(uint32_t i) override;
+  virtual IJsonHandler* readInt64(int64_t i) override;
+  virtual IJsonHandler* readUint64(uint64_t i) override;
+  virtual IJsonHandler* readDouble(double d) override;
 
 private:
   double* _pDouble = nullptr;

@@ -3,16 +3,16 @@
 
 using namespace CesiumJsonReader;
 
-StringJsonHandler::StringJsonHandler() noexcept : JsonReader() {}
+StringJsonHandler::StringJsonHandler() noexcept : JsonHandler() {}
 
-void StringJsonHandler::reset(IJsonReader* pParent, std::string* pString) {
-  JsonReader::reset(pParent);
+void StringJsonHandler::reset(IJsonHandler* pParent, std::string* pString) {
+  JsonHandler::reset(pParent);
   this->_pString = pString;
 }
 
 std::string* StringJsonHandler::getObject() { return this->_pString; }
 
-IJsonReader* StringJsonHandler::readString(const std::string_view& str) {
+IJsonHandler* StringJsonHandler::readString(const std::string_view& str) {
   *this->_pString = str;
   return this->parent();
 }

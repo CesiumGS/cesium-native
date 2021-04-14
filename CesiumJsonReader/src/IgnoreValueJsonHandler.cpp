@@ -3,65 +3,65 @@
 
 using namespace CesiumJsonReader;
 
-void IgnoreValueJsonHandler::reset(IJsonReader* pParent) {
+void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) {
   this->_pParent = pParent;
   this->_depth = 0;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readNull() {
+IJsonHandler* IgnoreValueJsonHandler::readNull() {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readBool(bool /*b*/) {
+IJsonHandler* IgnoreValueJsonHandler::readBool(bool /*b*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readInt32(int32_t /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readInt32(int32_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readUint32(uint32_t /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readUint32(uint32_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readInt64(int64_t /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readInt64(int64_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readUint64(uint64_t /*i*/) {
+IJsonHandler* IgnoreValueJsonHandler::readUint64(uint64_t /*i*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readDouble(double /*d*/) {
+IJsonHandler* IgnoreValueJsonHandler::readDouble(double /*d*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader*
+IJsonHandler*
 IgnoreValueJsonHandler::readString(const std::string_view& /*str*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readObjectStart() {
+IJsonHandler* IgnoreValueJsonHandler::readObjectStart() {
   ++this->_depth;
   return this;
 }
 
-IJsonReader*
+IJsonHandler*
 IgnoreValueJsonHandler::readObjectKey(const std::string_view& /*str*/) {
   return this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readObjectEnd() {
+IJsonHandler* IgnoreValueJsonHandler::readObjectEnd() {
   --this->_depth;
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readArrayStart() {
+IJsonHandler* IgnoreValueJsonHandler::readArrayStart() {
   ++this->_depth;
   return this;
 }
 
-IJsonReader* IgnoreValueJsonHandler::readArrayEnd() {
+IJsonHandler* IgnoreValueJsonHandler::readArrayEnd() {
   --this->_depth;
   return this->_depth == 0 ? this->parent() : this;
 }
@@ -73,4 +73,4 @@ void IgnoreValueJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* IgnoreValueJsonHandler::parent() { return this->_pParent; }
+IJsonHandler* IgnoreValueJsonHandler::parent() { return this->_pParent; }

@@ -10,51 +10,51 @@
 
 namespace CesiumJsonReader {
 template <typename T, typename THandler>
-class CESIUMJSONREADER_API ArrayJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API ArrayJsonHandler : public JsonHandler {
 public:
   template <typename... Ts>
   ArrayJsonHandler(Ts&&... args) noexcept
-      : JsonReader(), _objectHandler(std::forward<Ts>(args)...) {}
+      : JsonHandler(), _objectHandler(std::forward<Ts>(args)...) {}
 
-  void reset(IJsonReader* pParent, std::vector<T>* pArray) {
-    JsonReader::reset(pParent);
+  void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
+    JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonReader* readNull() override {
+  virtual IJsonHandler* readNull() override {
     return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonReader* readBool(bool b) override {
+  virtual IJsonHandler* readBool(bool b) override {
     return this->invalid("A boolean")->readBool(b);
   }
 
-  virtual IJsonReader* readInt32(int32_t i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     return this->invalid("An integer")->readInt32(i);
   }
 
-  virtual IJsonReader* readUint32(uint32_t i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     return this->invalid("An integer")->readUint32(i);
   }
 
-  virtual IJsonReader* readInt64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     return this->invalid("An integer")->readInt64(i);
   }
 
-  virtual IJsonReader* readUint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     return this->invalid("An integer")->readUint64(i);
   }
 
-  virtual IJsonReader* readDouble(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
-  virtual IJsonReader* readString(const std::string_view& str) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     return this->invalid("A string")->readString(str);
   }
 
-  virtual IJsonReader* readObjectStart() override {
+  virtual IJsonHandler* readObjectStart() override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An object")->readObjectStart();
     }
@@ -65,13 +65,14 @@ public:
     return this->_objectHandler.readObjectStart();
   }
 
-  virtual IJsonReader* readObjectKey(const std::string_view& /*str*/) override {
+  virtual IJsonHandler*
+  readObjectKey(const std::string_view& /*str*/) override {
     return nullptr;
   }
 
-  virtual IJsonReader* readObjectEnd() override { return nullptr; }
+  virtual IJsonHandler* readObjectEnd() override { return nullptr; }
 
-  virtual IJsonReader* readArrayStart() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
       return this->invalid("An array")->readArrayStart();
     }
@@ -81,7 +82,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readArrayEnd() override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -93,7 +94,7 @@ public:
   }
 
 private:
-  IJsonReader* invalid(const std::string& type) {
+  IJsonHandler* invalid(const std::string& type) {
     if (this->_arrayIsOpen) {
       this->reportWarning(
           type + " value is not allowed in the object array and has been "
@@ -113,25 +114,25 @@ private:
 
 template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<double, DoubleJsonHandler>
-    : public JsonReader {
+    : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonReader() {}
+  ArrayJsonHandler() : JsonHandler() {}
 
-  void reset(IJsonReader* pParent, std::vector<double>* pArray) {
-    JsonReader::reset(pParent);
+  void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
+    JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonReader* readNull() override {
+  virtual IJsonHandler* readNull() override {
     return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonReader* readBool(bool b) override {
+  virtual IJsonHandler* readBool(bool b) override {
     return this->invalid("A bool")->readBool(b);
   }
 
-  virtual IJsonReader* readInt32(int32_t i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readInt32(i);
     }
@@ -141,7 +142,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readUint32(uint32_t i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readUint32(i);
     }
@@ -151,7 +152,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readInt64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readInt64(i);
     }
@@ -161,7 +162,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readUint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readUint64(i);
     }
@@ -171,7 +172,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readDouble(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readDouble(d);
     }
@@ -181,15 +182,15 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readString(const std::string_view& str) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     return this->invalid("A string")->readString(str);
   }
 
-  virtual IJsonReader* readObjectStart() override {
+  virtual IJsonHandler* readObjectStart() override {
     return this->invalid("An object")->readObjectStart();
   }
 
-  virtual IJsonReader* readArrayStart() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
       return this->invalid("An array")->readArrayStart();
     }
@@ -199,7 +200,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readArrayEnd() override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -211,7 +212,7 @@ public:
   }
 
 private:
-  IJsonReader* invalid(const std::string& type) {
+  IJsonHandler* invalid(const std::string& type) {
     if (this->_arrayIsOpen) {
       this->reportWarning(
           type + " value is not allowed in the double array and has been "
@@ -230,25 +231,25 @@ private:
 
 template <typename T>
 class CESIUMJSONREADER_API ArrayJsonHandler<T, IntegerJsonHandler<T>>
-    : public JsonReader {
+    : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonReader() {}
+  ArrayJsonHandler() : JsonHandler() {}
 
-  void reset(IJsonReader* pParent, std::vector<T>* pArray) {
-    JsonReader::reset(pParent);
+  void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
+    JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonReader* readNull() override {
+  virtual IJsonHandler* readNull() override {
     return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonReader* readBool(bool b) override {
+  virtual IJsonHandler* readBool(bool b) override {
     return this->invalid("A null")->readBool(b);
   }
 
-  virtual IJsonReader* readInt32(int32_t i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readInt32(i);
     }
@@ -258,7 +259,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readUint32(uint32_t i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readUint32(i);
     }
@@ -268,7 +269,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readInt64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readInt64(i);
     }
@@ -278,7 +279,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readUint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("An integer")->readUint64(i);
     }
@@ -288,19 +289,19 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readDouble(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
-  virtual IJsonReader* readString(const std::string_view& str) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     return this->invalid("A string")->readString(str);
   }
 
-  virtual IJsonReader* readObjectStart() override {
+  virtual IJsonHandler* readObjectStart() override {
     return this->invalid("An object")->readObjectStart();
   }
 
-  virtual IJsonReader* readArrayStart() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
       return this->invalid("An array")->readArrayStart();
     }
@@ -310,7 +311,7 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readArrayEnd() override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
   virtual void reportWarning(
       const std::string& warning,
@@ -322,7 +323,7 @@ public:
   }
 
 private:
-  IJsonReader* invalid(const std::string& type) {
+  IJsonHandler* invalid(const std::string& type) {
     if (this->_arrayIsOpen) {
       this->reportWarning(
           type + " value is not allowed in the integer array and has been "
@@ -341,49 +342,49 @@ private:
 
 template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<std::string, StringJsonHandler>
-    : public JsonReader {
+    : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonReader() {}
+  ArrayJsonHandler() : JsonHandler() {}
 
-  void reset(IJsonReader* pParent, std::vector<std::string>* pArray) {
-    JsonReader::reset(pParent);
+  void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
+    JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
   }
 
-  virtual IJsonReader* readNull() override {
+  virtual IJsonHandler* readNull() override {
     return this->invalid("A null")->readNull();
   }
 
-  virtual IJsonReader* readBool(bool b) override {
+  virtual IJsonHandler* readBool(bool b) override {
     return this->invalid("A bool")->readBool(b);
   }
 
-  virtual IJsonReader* readInt32(int32_t i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     return this->invalid("An integer")->readInt32(i);
   }
 
-  virtual IJsonReader* readUint32(uint32_t i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     return this->invalid("An integer")->readUint32(i);
   }
 
-  virtual IJsonReader* readInt64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     return this->invalid("An integer")->readInt64(i);
   }
 
-  virtual IJsonReader* readUint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     return this->invalid("An integer")->readUint64(i);
   }
 
-  virtual IJsonReader* readDouble(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     return this->invalid("A double (floating-point)")->readDouble(d);
   }
 
-  virtual IJsonReader* readObjectStart() override {
+  virtual IJsonHandler* readObjectStart() override {
     return this->invalid("An object")->readObjectStart();
   }
 
-  virtual IJsonReader* readArrayStart() override {
+  virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
       return this->invalid("An array")->readArrayStart();
     }
@@ -393,9 +394,9 @@ public:
     return this;
   }
 
-  virtual IJsonReader* readArrayEnd() override { return this->parent(); }
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
 
-  virtual IJsonReader* readString(const std::string_view& str) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     if (!this->_arrayIsOpen) {
       return this->invalid("A string")->readString(str);
     }
@@ -415,7 +416,7 @@ public:
   }
 
 private:
-  IJsonReader* invalid(const std::string& type) {
+  IJsonHandler* invalid(const std::string& type) {
     if (this->_arrayIsOpen) {
       this->reportWarning(
           type + " value is not allowed in the string array and has been "

@@ -18,9 +18,9 @@ MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
       _targets() {}
 
 void MeshPrimitiveJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     MeshPrimitive* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -35,7 +35,7 @@ void MeshPrimitiveJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyMeshPrimitive(
@@ -44,7 +44,7 @@ MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 MeshPrimitiveJsonHandler::readObjectKeyMeshPrimitive(
     const std::string& objectType,
     const std::string_view& str,

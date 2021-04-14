@@ -13,18 +13,19 @@ class CESIUMJSONREADER_API DictionaryJsonHandler : public ObjectJsonHandler {
 public:
   DictionaryJsonHandler() noexcept : ObjectJsonHandler(), _item() {}
 
-  void
-  reset(IJsonReader* pParent, std::unordered_map<std::string, T>* pDictionary) {
+  void reset(
+      IJsonHandler* pParent,
+      std::unordered_map<std::string, T>* pDictionary) {
     ObjectJsonHandler::reset(pParent);
     this->_pDictionary1 = pDictionary;
   }
 
-  void reset(IJsonReader* pParent, std::map<std::string, T>* pDictionary) {
+  void reset(IJsonHandler* pParent, std::map<std::string, T>* pDictionary) {
     ObjectJsonHandler::reset(pParent);
     this->_pDictionary2 = pDictionary;
   }
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override {
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
     assert(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {

@@ -14,28 +14,28 @@ struct AnimationChannelTarget;
 class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
 public:
   AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, AnimationChannelTarget* pObject);
+  void reset(IJsonHandler* pParentHandler, AnimationChannelTarget* pObject);
   AnimationChannelTarget* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyAnimationChannelTarget(
+  IJsonHandler* readObjectKeyAnimationChannelTarget(
       const std::string& objectType,
       const std::string_view& str,
       AnimationChannelTarget& o);
 
 private:
-  class PathJsonHandler : public CesiumJsonReader::JsonReader {
+  class PathJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    PathJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    PathJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
     void reset(
-        CesiumJsonReader::IJsonReader* pParent,
+        CesiumJsonReader::IJsonHandler* pParent,
         AnimationChannelTarget::Path* pEnum);
-    virtual CesiumJsonReader::IJsonReader*
+    virtual CesiumJsonReader::IJsonHandler*
     readString(const std::string_view& str) override;
 
   private:

@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @brief Classes for reading JSON.
+ */
+namespace CesiumJsonReader {}
+
 #if defined(_WIN32) && defined(CESIUM_SHARED)
 #ifdef CESIUMJSONREADER_BUILDING
 #define CESIUMJSONREADER_API __declspec(dllexport)

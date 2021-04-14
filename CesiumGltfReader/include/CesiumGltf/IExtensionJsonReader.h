@@ -8,10 +8,10 @@ namespace CesiumGltf {
 
 struct ExtensibleObject;
 
-class IExtensionJsonReader : public CesiumJsonReader::IJsonReader {
+class IExtensionJsonHandler : public CesiumJsonReader::IJsonHandler {
 public:
   virtual void reset(
-      IJsonReader* pParentHandler,
+      IJsonHandler* pParentHandler,
       ExtensibleObject& o,
       const std::string_view& extensionName) = 0;
 };

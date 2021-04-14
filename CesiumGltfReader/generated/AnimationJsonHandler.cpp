@@ -13,9 +13,9 @@ AnimationJsonHandler::AnimationJsonHandler(
     : NamedObjectJsonHandler(context), _channels(context), _samplers(context) {}
 
 void AnimationJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     Animation* pObject) {
-  NamedObjectJsonHandler::reset(pParentReader, pObject);
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -30,7 +30,7 @@ void AnimationJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 AnimationJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAnimation(
@@ -39,7 +39,7 @@ AnimationJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* AnimationJsonHandler::readObjectKeyAnimation(
+CesiumJsonReader::IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
     const std::string& objectType,
     const std::string_view& str,
     Animation& o) {

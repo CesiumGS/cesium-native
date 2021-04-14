@@ -12,9 +12,9 @@ SceneJsonHandler::SceneJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _nodes() {}
 
 void SceneJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     Scene* pObject) {
-  NamedObjectJsonHandler::reset(pParentReader, pObject);
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -29,13 +29,13 @@ void SceneJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 SceneJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyScene(Scene::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* SceneJsonHandler::readObjectKeyScene(
+CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKeyScene(
     const std::string& objectType,
     const std::string_view& str,
     Scene& o) {

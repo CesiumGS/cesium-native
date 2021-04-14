@@ -14,16 +14,16 @@ struct AccessorSparseIndices;
 class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
   AccessorSparseIndicesJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, AccessorSparseIndices* pObject);
+  void reset(IJsonHandler* pParentHandler, AccessorSparseIndices* pObject);
   AccessorSparseIndices* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyAccessorSparseIndices(
+  IJsonHandler* readObjectKeyAccessorSparseIndices(
       const std::string& objectType,
       const std::string_view& str,
       AccessorSparseIndices& o);

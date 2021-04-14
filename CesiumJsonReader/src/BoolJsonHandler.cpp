@@ -4,14 +4,14 @@
 
 using namespace CesiumJsonReader;
 
-BoolJsonHandler::BoolJsonHandler() noexcept : JsonReader() {}
+BoolJsonHandler::BoolJsonHandler() noexcept : JsonHandler() {}
 
-void BoolJsonHandler::reset(IJsonReader* pParent, bool* pBool) {
-  JsonReader::reset(pParent);
+void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
+  JsonHandler::reset(pParent);
   this->_pBool = pBool;
 }
 
-IJsonReader* BoolJsonHandler::readBool(bool b) {
+IJsonHandler* BoolJsonHandler::readBool(bool b) {
   assert(this->_pBool);
   *this->_pBool = b;
   return this->parent();

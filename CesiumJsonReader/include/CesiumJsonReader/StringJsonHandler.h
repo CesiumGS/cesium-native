@@ -5,12 +5,12 @@
 #include <string>
 
 namespace CesiumJsonReader {
-class CESIUMJSONREADER_API StringJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API StringJsonHandler : public JsonHandler {
 public:
   StringJsonHandler() noexcept;
-  void reset(IJsonReader* pParent, std::string* pString);
+  void reset(IJsonHandler* pParent, std::string* pString);
   std::string* getObject();
-  virtual IJsonReader* readString(const std::string_view& str) override;
+  virtual IJsonHandler* readString(const std::string_view& str) override;
 
 private:
   std::string* _pString = nullptr;

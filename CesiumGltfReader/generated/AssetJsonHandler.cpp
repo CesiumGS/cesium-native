@@ -16,9 +16,9 @@ AssetJsonHandler::AssetJsonHandler(const ReaderContext& context) noexcept
       _minVersion() {}
 
 void AssetJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     Asset* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -33,13 +33,13 @@ void AssetJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 AssetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAsset(Asset::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* AssetJsonHandler::readObjectKeyAsset(
+CesiumJsonReader::IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
     const std::string& objectType,
     const std::string_view& str,
     Asset& o) {

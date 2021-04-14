@@ -12,9 +12,9 @@ BufferJsonHandler::BufferJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _uri(), _byteLength() {}
 
 void BufferJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     Buffer* pObject) {
-  NamedObjectJsonHandler::reset(pParentReader, pObject);
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -29,13 +29,13 @@ void BufferJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 BufferJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyBuffer(Buffer::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* BufferJsonHandler::readObjectKeyBuffer(
+CesiumJsonReader::IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
     const std::string& objectType,
     const std::string_view& str,
     Buffer& o) {

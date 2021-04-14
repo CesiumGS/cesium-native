@@ -16,9 +16,9 @@ AccessorSparseJsonHandler::AccessorSparseJsonHandler(
       _values(context) {}
 
 void AccessorSparseJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparse* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -35,7 +35,7 @@ void AccessorSparseJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAccessorSparse(
@@ -44,7 +44,7 @@ AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 AccessorSparseJsonHandler::readObjectKeyAccessorSparse(
     const std::string& objectType,
     const std::string_view& str,

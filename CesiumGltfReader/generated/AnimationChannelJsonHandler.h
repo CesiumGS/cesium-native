@@ -14,16 +14,16 @@ struct AnimationChannel;
 class AnimationChannelJsonHandler : public ExtensibleObjectJsonHandler {
 public:
   AnimationChannelJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, AnimationChannel* pObject);
+  void reset(IJsonHandler* pParentHandler, AnimationChannel* pObject);
   AnimationChannel* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyAnimationChannel(
+  IJsonHandler* readObjectKeyAnimationChannel(
       const std::string& objectType,
       const std::string_view& str,
       AnimationChannel& o);

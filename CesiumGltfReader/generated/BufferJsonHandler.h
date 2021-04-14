@@ -14,16 +14,16 @@ struct Buffer;
 class BufferJsonHandler : public NamedObjectJsonHandler {
 public:
   BufferJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Buffer* pObject);
+  void reset(IJsonHandler* pParentHandler, Buffer* pObject);
   Buffer* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyBuffer(
+  IJsonHandler* readObjectKeyBuffer(
       const std::string& objectType,
       const std::string_view& str,
       Buffer& o);

@@ -14,16 +14,16 @@ struct BufferView;
 class BufferViewJsonHandler : public NamedObjectJsonHandler {
 public:
   BufferViewJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, BufferView* pObject);
+  void reset(IJsonHandler* pParentHandler, BufferView* pObject);
   BufferView* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyBufferView(
+  IJsonHandler* readObjectKeyBufferView(
       const std::string& objectType,
       const std::string_view& str,
       BufferView& o);

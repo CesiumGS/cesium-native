@@ -22,9 +22,9 @@ using namespace CesiumUtility;
 
 namespace {
 struct Dispatcher {
-  IJsonReader* pCurrent;
+  IJsonHandler* pCurrent;
 
-  bool update(IJsonReader* pNext) {
+  bool update(IJsonHandler* pNext) {
     if (pNext == nullptr) {
       return false;
     }
@@ -378,14 +378,14 @@ void postprocess(
   }
 }
 
-class AnyExtensionJsonReader : public JsonObjectJsonHandler,
-                               public IExtensionJsonReader {
+class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
+                                public IExtensionJsonHandler {
 public:
-  AnyExtensionJsonReader(const ReaderContext& /* context */)
+  AnyExtensionJsonHandler(const ReaderContext& /* context */)
       : JsonObjectJsonHandler() {}
 
   virtual void reset(
-      IJsonReader* pParentHandler,
+      IJsonHandler* pParentHandler,
       ExtensibleObject& o,
       const std::string_view& extensionName) override {
     std::any& value =
@@ -396,43 +396,43 @@ public:
         &std::any_cast<JsonValue&>(value));
   }
 
-  virtual IJsonReader* readNull() override {
+  virtual IJsonHandler* readNull() override {
     return JsonObjectJsonHandler::readNull();
   };
-  virtual IJsonReader* readBool(bool b) override {
+  virtual IJsonHandler* readBool(bool b) override {
     return JsonObjectJsonHandler::readBool(b);
   }
-  virtual IJsonReader* readInt32(int32_t i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     return JsonObjectJsonHandler::readInt32(i);
   }
-  virtual IJsonReader* readUint32(uint32_t i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     return JsonObjectJsonHandler::readUint32(i);
   }
-  virtual IJsonReader* readInt64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     return JsonObjectJsonHandler::readInt64(i);
   }
-  virtual IJsonReader* readUint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     return JsonObjectJsonHandler::readUint64(i);
   }
-  virtual IJsonReader* readDouble(double d) override {
+  virtual IJsonHandler* readDouble(double d) override {
     return JsonObjectJsonHandler::readDouble(d);
   }
-  virtual IJsonReader* readString(const std::string_view& str) override {
+  virtual IJsonHandler* readString(const std::string_view& str) override {
     return JsonObjectJsonHandler::readString(str);
   }
-  virtual IJsonReader* readObjectStart() override {
+  virtual IJsonHandler* readObjectStart() override {
     return JsonObjectJsonHandler::readObjectStart();
   }
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override {
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
     return JsonObjectJsonHandler::readObjectKey(str);
   }
-  virtual IJsonReader* readObjectEnd() override {
+  virtual IJsonHandler* readObjectEnd() override {
     return JsonObjectJsonHandler::readObjectEnd();
   }
-  virtual IJsonReader* readArrayStart() override {
+  virtual IJsonHandler* readArrayStart() override {
     return JsonObjectJsonHandler::readArrayStart();
   }
-  virtual IJsonReader* readArrayEnd() override {
+  virtual IJsonHandler* readArrayEnd() override {
     return JsonObjectJsonHandler::readArrayEnd();
   }
 
@@ -505,7 +505,7 @@ Reader::readImage(const gsl::span<const std::byte>& data) const {
   return result;
 }
 
-std::unique_ptr<IExtensionJsonReader> Reader::createExtensionReader(
+std::unique_ptr<IExtensionJsonHandler> Reader::createExtensionHandler(
     const ReaderContext& context,
     const std::string_view& extensionName,
     const std::string& extendedObjectType) const {
@@ -517,18 +517,18 @@ std::unique_ptr<IExtensionJsonReader> Reader::createExtensionReader(
     if (stateIt->second == ExtensionState::Disabled) {
       return nullptr;
     } else if (stateIt->second == ExtensionState::JsonOnly) {
-      return std::make_unique<AnyExtensionJsonReader>(context);
+      return std::make_unique<AnyExtensionJsonHandler>(context);
     }
   }
 
   auto extensionNameIt = this->_extensions.find(extensionNameString);
   if (extensionNameIt == this->_extensions.end()) {
-    return std::make_unique<AnyExtensionJsonReader>(context);
+    return std::make_unique<AnyExtensionJsonHandler>(context);
   }
 
   auto objectTypeIt = extensionNameIt->second.find(extendedObjectType);
   if (objectTypeIt == extensionNameIt->second.end()) {
-    return std::make_unique<AnyExtensionJsonReader>(context);
+    return std::make_unique<AnyExtensionJsonHandler>(context);
   }
 
   return objectTypeIt->second(context);

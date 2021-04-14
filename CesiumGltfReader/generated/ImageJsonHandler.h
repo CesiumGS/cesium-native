@@ -15,26 +15,26 @@ struct Image;
 class ImageJsonHandler : public NamedObjectJsonHandler {
 public:
   ImageJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Image* pObject);
+  void reset(IJsonHandler* pParentHandler, Image* pObject);
   Image* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyImage(
+  IJsonHandler* readObjectKeyImage(
       const std::string& objectType,
       const std::string_view& str,
       Image& o);
 
 private:
-  class MimeTypeJsonHandler : public CesiumJsonReader::JsonReader {
+  class MimeTypeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    MimeTypeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
-    void reset(CesiumJsonReader::IJsonReader* pParent, Image::MimeType* pEnum);
-    virtual CesiumJsonReader::IJsonReader*
+    MimeTypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(CesiumJsonReader::IJsonHandler* pParent, Image::MimeType* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
     readString(const std::string_view& str) override;
 
   private:

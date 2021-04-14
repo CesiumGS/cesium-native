@@ -13,9 +13,9 @@ KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
     : ExtensibleObjectJsonHandler(context), _bufferView(), _attributes() {}
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     KHR_draco_mesh_compression* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -32,7 +32,7 @@ void KHR_draco_mesh_compressionJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 KHR_draco_mesh_compressionJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
@@ -43,18 +43,18 @@ KHR_draco_mesh_compressionJsonHandler::readObjectKey(
 }
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     ExtensibleObject& o,
     const std::string_view& extensionName) {
   std::any& value =
       o.extensions.emplace(extensionName, KHR_draco_mesh_compression())
           .first->second;
   this->reset(
-      pParentReader,
+      pParentHandler,
       &std::any_cast<KHR_draco_mesh_compression&>(value));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 KHR_draco_mesh_compressionJsonHandler::readObjectKeyKHR_draco_mesh_compression(
     const std::string& objectType,
     const std::string_view& str,

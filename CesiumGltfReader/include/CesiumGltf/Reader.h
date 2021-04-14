@@ -163,11 +163,11 @@ public:
   void registerExtension() {
     auto it =
         this->_extensions
-            .emplace(TExtensionHandler::ExtensionName, ObjectTypeToReader())
+            .emplace(TExtensionHandler::ExtensionName, ObjectTypeToHandler())
             .first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionReaderFactory([](const ReaderContext& context) {
+        ExtensionHandlerFactory([](const ReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -214,17 +214,17 @@ public:
    */
   ImageReaderResult readImage(const gsl::span<const std::byte>& data) const;
 
-  std::unique_ptr<IExtensionJsonReader> createExtensionReader(
+  std::unique_ptr<IExtensionJsonHandler> createExtensionHandler(
       const ReaderContext& context,
       const std::string_view& extensionName,
       const std::string& extendedObjectType) const;
 
 private:
-  using ExtensionReaderFactory =
-      std::function<std::unique_ptr<IExtensionJsonReader>(
+  using ExtensionHandlerFactory =
+      std::function<std::unique_ptr<IExtensionJsonHandler>(
           const ReaderContext&)>;
-  using ObjectTypeToReader = std::map<std::string, ExtensionReaderFactory>;
-  using ExtensionNameMap = std::map<std::string, ObjectTypeToReader>;
+  using ObjectTypeToHandler = std::map<std::string, ExtensionHandlerFactory>;
+  using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;
   std::unordered_map<std::string, ExtensionState> _extensionStates;

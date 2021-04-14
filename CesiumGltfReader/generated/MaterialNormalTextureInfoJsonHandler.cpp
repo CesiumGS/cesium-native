@@ -13,9 +13,9 @@ MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoJsonHandler(
     : TextureInfoJsonHandler(context), _scale() {}
 
 void MaterialNormalTextureInfoJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     MaterialNormalTextureInfo* pObject) {
-  TextureInfoJsonHandler::reset(pParentReader, pObject);
+  TextureInfoJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -32,7 +32,7 @@ void MaterialNormalTextureInfoJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 MaterialNormalTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
@@ -42,7 +42,7 @@ MaterialNormalTextureInfoJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 MaterialNormalTextureInfoJsonHandler::readObjectKeyMaterialNormalTextureInfo(
     const std::string& objectType,
     const std::string_view& str,

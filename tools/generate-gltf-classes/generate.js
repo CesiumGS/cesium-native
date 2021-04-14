@@ -104,60 +104,60 @@ function generate(options, schema) {
           struct ReaderContext;
           struct ${name};
 
-          class ${name}JsonHandler : public ${base}JsonHandler${thisConfig.extensionName ? `, public IExtensionJsonReader` : ""} {
+          class ${name}JsonHandler : public ${base}JsonHandler${thisConfig.extensionName ? `, public IExtensionJsonHandler` : ""} {
           public:
             ${thisConfig.extensionName ? `static inline const std::string ExtensionName = "${thisConfig.extensionName}";` : ""}
 
             ${name}JsonHandler(const ReaderContext& context) noexcept;
-            void reset(IJsonReader* pParentReader, ${name}* pObject);
+            void reset(IJsonHandler* pParentHandler, ${name}* pObject);
             ${name}* getObject();
             virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-            virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+            virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
             ${thisConfig.extensionName ? `
-            virtual void reset(IJsonReader* pParentReader, ExtensibleObject& o, const std::string_view& extensionName) override;
+            virtual void reset(IJsonHandler* pParentHandler, ExtensibleObject& o, const std::string_view& extensionName) override;
 
-            virtual IJsonReader* readNull() override {
+            virtual IJsonHandler* readNull() override {
               return ${base}JsonHandler::readNull();
             };
-            virtual IJsonReader* readBool(bool b) override {
+            virtual IJsonHandler* readBool(bool b) override {
               return ${base}JsonHandler::readBool(b);
             }
-            virtual IJsonReader* readInt32(int32_t i) override {
+            virtual IJsonHandler* readInt32(int32_t i) override {
               return ${base}JsonHandler::readInt32(i);
             }
-            virtual IJsonReader* readUint32(uint32_t i) override {
+            virtual IJsonHandler* readUint32(uint32_t i) override {
               return ${base}JsonHandler::readUint32(i);
             }
-            virtual IJsonReader* readInt64(int64_t i) override {
+            virtual IJsonHandler* readInt64(int64_t i) override {
               return ${base}JsonHandler::readInt64(i);
             }
-            virtual IJsonReader* readUint64(uint64_t i) override {
+            virtual IJsonHandler* readUint64(uint64_t i) override {
               return ${base}JsonHandler::readUint64(i);
             }
-            virtual IJsonReader* readDouble(double d) override {
+            virtual IJsonHandler* readDouble(double d) override {
               return ${base}JsonHandler::readDouble(d);
             }
-            virtual IJsonReader* readString(const std::string_view& str) override {
+            virtual IJsonHandler* readString(const std::string_view& str) override {
               return ${base}JsonHandler::readString(str);
             }
-            virtual IJsonReader* readObjectStart() override {
+            virtual IJsonHandler* readObjectStart() override {
               return ${base}JsonHandler::readObjectStart();
             }
-            virtual IJsonReader* readObjectEnd() override {
+            virtual IJsonHandler* readObjectEnd() override {
               return ${base}JsonHandler::readObjectEnd();
             }
-            virtual IJsonReader* readArrayStart() override {
+            virtual IJsonHandler* readArrayStart() override {
               return ${base}JsonHandler::readArrayStart();
             }
-            virtual IJsonReader* readArrayEnd() override {
+            virtual IJsonHandler* readArrayEnd() override {
               return ${base}JsonHandler::readArrayEnd();
             }
             ` : ""}
           
           protected:
-            IJsonReader* readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o);
+            IJsonHandler* readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o);
     
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
@@ -207,8 +207,8 @@ function generateReaderOptionsInitializerList(properties, varName) {
 
         ${name}JsonHandler::${name}JsonHandler(const ReaderContext& context) noexcept : ${base}JsonHandler(context)${generateReaderOptionsInitializerList(properties, 'context')} {}
 
-        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonReader* pParentReader, ${name}* pObject) {
-          ${base}JsonHandler::reset(pParentReader, pObject);
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, ${name}* pObject) {
+          ${base}JsonHandler::reset(pParentHandler, pObject);
           this->_pObject = pObject;
         }
 
@@ -223,23 +223,23 @@ function generateReaderOptionsInitializerList(properties, varName) {
           this->parent()->reportWarning(warning, std::move(context));
         }
 
-        CesiumJsonReader::IJsonReader* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
+        CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
           assert(this->_pObject);
           return this->readObjectKey${name}(${name}::TypeName, str, *this->_pObject);
         }
 
         ${thisConfig.extensionName ? `
-        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonReader* pParentReader, ExtensibleObject& o, const std::string_view& extensionName) {
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, ExtensibleObject& o, const std::string_view& extensionName) {
           std::any& value =
               o.extensions.emplace(extensionName, ${name}())
                   .first->second;
           this->reset(
-              pParentReader,
+              pParentHandler,
               &std::any_cast<${name}&>(value));  
         }
         ` : ""}
 
-        CesiumJsonReader::IJsonReader* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o) {
+        CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o) {
           using namespace std::string_literals;
 
           ${indent(

@@ -9,11 +9,14 @@ NamedObjectJsonHandler::NamedObjectJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context), _name() {}
 
-void NamedObjectJsonHandler::reset(IJsonReader* pParent, NamedObject* pObject) {
+void NamedObjectJsonHandler::reset(
+    IJsonHandler* pParent,
+    NamedObject* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
 }
 
-CesiumJsonReader::IJsonReader* NamedObjectJsonHandler::readObjectKeyNamedObject(
+CesiumJsonReader::IJsonHandler*
+NamedObjectJsonHandler::readObjectKeyNamedObject(
     const std::string& objectType,
     const std::string_view& str,
     NamedObject& o) {

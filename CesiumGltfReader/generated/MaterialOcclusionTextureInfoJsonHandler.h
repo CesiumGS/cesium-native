@@ -14,16 +14,17 @@ class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   MaterialOcclusionTextureInfoJsonHandler(
       const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, MaterialOcclusionTextureInfo* pObject);
+  void
+  reset(IJsonHandler* pParentHandler, MaterialOcclusionTextureInfo* pObject);
   MaterialOcclusionTextureInfo* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyMaterialOcclusionTextureInfo(
+  IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(
       const std::string& objectType,
       const std::string_view& str,
       MaterialOcclusionTextureInfo& o);

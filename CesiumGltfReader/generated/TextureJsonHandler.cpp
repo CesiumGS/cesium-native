@@ -12,9 +12,9 @@ TextureJsonHandler::TextureJsonHandler(const ReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _sampler(), _source() {}
 
 void TextureJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     Texture* pObject) {
-  NamedObjectJsonHandler::reset(pParentReader, pObject);
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -29,13 +29,13 @@ void TextureJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 TextureJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyTexture(Texture::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* TextureJsonHandler::readObjectKeyTexture(
+CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(
     const std::string& objectType,
     const std::string_view& str,
     Texture& o) {

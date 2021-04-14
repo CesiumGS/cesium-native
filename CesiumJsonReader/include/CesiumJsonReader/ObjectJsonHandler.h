@@ -5,19 +5,19 @@
 #include <optional>
 
 namespace CesiumJsonReader {
-class CESIUMJSONREADER_API ObjectJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API ObjectJsonHandler : public JsonHandler {
 public:
-  ObjectJsonHandler() : JsonReader() {}
+  ObjectJsonHandler() : JsonHandler() {}
 
-  virtual IJsonReader* readObjectStart() override /* final */;
-  virtual IJsonReader* readObjectEnd() override /* final */;
+  virtual IJsonHandler* readObjectStart() override /* final */;
+  virtual IJsonHandler* readObjectEnd() override /* final */;
 
 protected:
-  virtual IJsonReader* StartSubObject();
-  virtual IJsonReader* EndSubObject();
+  virtual IJsonHandler* StartSubObject();
+  virtual IJsonHandler* EndSubObject();
 
   template <typename TAccessor, typename TProperty>
-  IJsonReader*
+  IJsonHandler*
   property(const char* currentKey, TAccessor& accessor, TProperty& value) {
     this->_currentKey = currentKey;
 

@@ -14,28 +14,28 @@ struct AnimationSampler;
 class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
 public:
   AnimationSamplerJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, AnimationSampler* pObject);
+  void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
   AnimationSampler* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyAnimationSampler(
+  IJsonHandler* readObjectKeyAnimationSampler(
       const std::string& objectType,
       const std::string_view& str,
       AnimationSampler& o);
 
 private:
-  class InterpolationJsonHandler : public CesiumJsonReader::JsonReader {
+  class InterpolationJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
     void reset(
-        CesiumJsonReader::IJsonReader* pParent,
+        CesiumJsonReader::IJsonHandler* pParent,
         AnimationSampler::Interpolation* pEnum);
-    virtual CesiumJsonReader::IJsonReader*
+    virtual CesiumJsonReader::IJsonHandler*
     readString(const std::string_view& str) override;
 
   private:

@@ -13,16 +13,16 @@ struct Texture;
 class TextureJsonHandler : public NamedObjectJsonHandler {
 public:
   TextureJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Texture* pObject);
+  void reset(IJsonHandler* pParentHandler, Texture* pObject);
   Texture* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyTexture(
+  IJsonHandler* readObjectKeyTexture(
       const std::string& objectType,
       const std::string_view& str,
       Texture& o);

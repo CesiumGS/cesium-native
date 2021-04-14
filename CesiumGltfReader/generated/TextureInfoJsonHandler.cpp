@@ -13,9 +13,9 @@ TextureInfoJsonHandler::TextureInfoJsonHandler(
     : ExtensibleObjectJsonHandler(context), _index(), _texCoord() {}
 
 void TextureInfoJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     TextureInfo* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -30,7 +30,7 @@ void TextureInfoJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyTextureInfo(
@@ -39,7 +39,8 @@ TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* TextureInfoJsonHandler::readObjectKeyTextureInfo(
+CesiumJsonReader::IJsonHandler*
+TextureInfoJsonHandler::readObjectKeyTextureInfo(
     const std::string& objectType,
     const std::string_view& str,
     TextureInfo& o) {

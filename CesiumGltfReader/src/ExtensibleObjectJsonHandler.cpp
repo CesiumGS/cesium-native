@@ -12,12 +12,12 @@ ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
     : ObjectJsonHandler(), _extras(), _extensions(context) {}
 
 void ExtensibleObjectJsonHandler::reset(
-    IJsonReader* pParent,
+    IJsonHandler* pParent,
     ExtensibleObject* /*pObject*/) {
   ObjectJsonHandler::reset(pParent);
 }
 
-IJsonReader* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
+IJsonHandler* ExtensibleObjectJsonHandler::readObjectKeyExtensibleObject(
     const std::string& objectType,
     const std::string_view& str,
     ExtensibleObject& o) {

@@ -18,26 +18,26 @@ struct Accessor;
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
   AccessorJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Accessor* pObject);
+  void reset(IJsonHandler* pParentHandler, Accessor* pObject);
   Accessor* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyAccessor(
+  IJsonHandler* readObjectKeyAccessor(
       const std::string& objectType,
       const std::string_view& str,
       Accessor& o);
 
 private:
-  class TypeJsonHandler : public CesiumJsonReader::JsonReader {
+  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    TypeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
-    void reset(CesiumJsonReader::IJsonReader* pParent, Accessor::Type* pEnum);
-    virtual CesiumJsonReader::IJsonReader*
+    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(CesiumJsonReader::IJsonHandler* pParent, Accessor::Type* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
     readString(const std::string_view& str) override;
 
   private:

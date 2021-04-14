@@ -15,26 +15,26 @@ struct Camera;
 class CameraJsonHandler : public NamedObjectJsonHandler {
 public:
   CameraJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Camera* pObject);
+  void reset(IJsonHandler* pParentHandler, Camera* pObject);
   Camera* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyCamera(
+  IJsonHandler* readObjectKeyCamera(
       const std::string& objectType,
       const std::string_view& str,
       Camera& o);
 
 private:
-  class TypeJsonHandler : public CesiumJsonReader::JsonReader {
+  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    TypeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
-    void reset(CesiumJsonReader::IJsonReader* pParent, Camera::Type* pEnum);
-    virtual CesiumJsonReader::IJsonReader*
+    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(CesiumJsonReader::IJsonHandler* pParent, Camera::Type* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
     readString(const std::string_view& str) override;
 
   private:

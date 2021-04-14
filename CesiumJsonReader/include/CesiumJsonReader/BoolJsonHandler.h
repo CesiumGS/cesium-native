@@ -4,12 +4,12 @@
 #include "CesiumJsonReader/Library.h"
 
 namespace CesiumJsonReader {
-class CESIUMJSONREADER_API BoolJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API BoolJsonHandler : public JsonHandler {
 public:
   BoolJsonHandler() noexcept;
-  void reset(IJsonReader* pParent, bool* pBool);
+  void reset(IJsonHandler* pParent, bool* pBool);
 
-  virtual IJsonReader* readBool(bool b) override;
+  virtual IJsonHandler* readBool(bool b) override;
 
 private:
   bool* _pBool = nullptr;

@@ -15,16 +15,16 @@ struct Node;
 class NodeJsonHandler : public NamedObjectJsonHandler {
 public:
   NodeJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Node* pObject);
+  void reset(IJsonHandler* pParentHandler, Node* pObject);
   Node* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyNode(
+  IJsonHandler* readObjectKeyNode(
       const std::string& objectType,
       const std::string_view& str,
       Node& o);

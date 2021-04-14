@@ -16,16 +16,16 @@ struct MeshPrimitive;
 class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
   MeshPrimitiveJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, MeshPrimitive* pObject);
+  void reset(IJsonHandler* pParentHandler, MeshPrimitive* pObject);
   MeshPrimitive* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyMeshPrimitive(
+  IJsonHandler* readObjectKeyMeshPrimitive(
       const std::string& objectType,
       const std::string_view& str,
       MeshPrimitive& o);

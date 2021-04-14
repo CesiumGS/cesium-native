@@ -7,45 +7,45 @@
 #include <string>
 
 namespace CesiumJsonReader {
-class CESIUMJSONREADER_API JsonReader : public IJsonReader {
+class CESIUMJSONREADER_API JsonHandler : public IJsonHandler {
 public:
-  JsonReader() noexcept;
-  virtual IJsonReader* readNull() override;
-  virtual IJsonReader* readBool(bool b) override;
-  virtual IJsonReader* readInt32(int32_t i) override;
-  virtual IJsonReader* readUint32(uint32_t i) override;
-  virtual IJsonReader* readInt64(int64_t i) override;
-  virtual IJsonReader* readUint64(uint64_t i) override;
-  virtual IJsonReader* readDouble(double d) override;
-  virtual IJsonReader* readString(const std::string_view& str) override;
-  virtual IJsonReader* readObjectStart() override;
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
-  virtual IJsonReader* readObjectEnd() override;
-  virtual IJsonReader* readArrayStart() override;
-  virtual IJsonReader* readArrayEnd() override;
+  JsonHandler() noexcept;
+  virtual IJsonHandler* readNull() override;
+  virtual IJsonHandler* readBool(bool b) override;
+  virtual IJsonHandler* readInt32(int32_t i) override;
+  virtual IJsonHandler* readUint32(uint32_t i) override;
+  virtual IJsonHandler* readInt64(int64_t i) override;
+  virtual IJsonHandler* readUint64(uint64_t i) override;
+  virtual IJsonHandler* readDouble(double d) override;
+  virtual IJsonHandler* readString(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectStart() override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectEnd() override;
+  virtual IJsonHandler* readArrayStart() override;
+  virtual IJsonHandler* readArrayEnd() override;
 
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
 protected:
-  void reset(IJsonReader* pParent);
+  void reset(IJsonHandler* pParent);
 
-  IJsonReader* parent();
+  IJsonHandler* parent();
 
   /**
    * @brief Ignore a single value and then return to the parent handler.
    */
-  IJsonReader* ignoreAndReturnToParent();
+  IJsonHandler* ignoreAndReturnToParent();
 
   /**
    * @brief Ignore a single value and the continue processing more tokens with
    * this handler.
    */
-  IJsonReader* ignoreAndContinue();
+  IJsonHandler* ignoreAndContinue();
 
 private:
-  IJsonReader* _pParent = nullptr;
+  IJsonHandler* _pParent = nullptr;
   IgnoreValueJsonHandler _ignore;
 };
 

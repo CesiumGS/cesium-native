@@ -20,9 +20,9 @@ MaterialJsonHandler::MaterialJsonHandler(const ReaderContext& context) noexcept
       _doubleSided() {}
 
 void MaterialJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     Material* pObject) {
-  NamedObjectJsonHandler::reset(pParentReader, pObject);
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -37,13 +37,13 @@ void MaterialJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 MaterialJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyMaterial(Material::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonReader* MaterialJsonHandler::readObjectKeyMaterial(
+CesiumJsonReader::IJsonHandler* MaterialJsonHandler::readObjectKeyMaterial(
     const std::string& objectType,
     const std::string_view& str,
     Material& o) {
@@ -79,13 +79,13 @@ CesiumJsonReader::IJsonReader* MaterialJsonHandler::readObjectKeyMaterial(
 }
 
 void MaterialJsonHandler::AlphaModeJsonHandler::reset(
-    CesiumJsonReader::IJsonReader* pParent,
+    CesiumJsonReader::IJsonHandler* pParent,
     Material::AlphaMode* pEnum) {
-  JsonReader::reset(pParent);
+  JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-CesiumJsonReader::IJsonReader*
+CesiumJsonReader::IJsonHandler*
 MaterialJsonHandler::AlphaModeJsonHandler::readString(
     const std::string_view& str) {
   using namespace std::string_literals;

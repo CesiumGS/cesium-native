@@ -15,16 +15,16 @@ struct Mesh;
 class MeshJsonHandler : public NamedObjectJsonHandler {
 public:
   MeshJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Mesh* pObject);
+  void reset(IJsonHandler* pParentHandler, Mesh* pObject);
   Mesh* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyMesh(
+  IJsonHandler* readObjectKeyMesh(
       const std::string& objectType,
       const std::string_view& str,
       Mesh& o);

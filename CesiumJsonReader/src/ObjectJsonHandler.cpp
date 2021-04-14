@@ -2,7 +2,7 @@
 
 using namespace CesiumJsonReader;
 
-IJsonReader* ObjectJsonHandler::readObjectStart() {
+IJsonHandler* ObjectJsonHandler::readObjectStart() {
   ++this->_depth;
   if (this->_depth > 1) {
     return this->StartSubObject();
@@ -10,7 +10,7 @@ IJsonReader* ObjectJsonHandler::readObjectStart() {
   return this;
 }
 
-IJsonReader* ObjectJsonHandler::readObjectEnd() {
+IJsonHandler* ObjectJsonHandler::readObjectEnd() {
   this->_currentKey = nullptr;
 
   --this->_depth;
@@ -21,9 +21,9 @@ IJsonReader* ObjectJsonHandler::readObjectEnd() {
     return this->parent();
 }
 
-IJsonReader* ObjectJsonHandler::StartSubObject() { return nullptr; }
+IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
 
-IJsonReader* ObjectJsonHandler::EndSubObject() { return nullptr; }
+IJsonHandler* ObjectJsonHandler::EndSubObject() { return nullptr; }
 
 const char* ObjectJsonHandler::getCurrentKey() const {
   return this->_currentKey;

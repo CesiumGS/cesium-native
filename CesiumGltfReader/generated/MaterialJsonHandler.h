@@ -20,27 +20,27 @@ struct Material;
 class MaterialJsonHandler : public NamedObjectJsonHandler {
 public:
   MaterialJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonReader* pParentReader, Material* pObject);
+  void reset(IJsonHandler* pParentHandler, Material* pObject);
   Material* getObject();
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  virtual IJsonReader* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonReader* readObjectKeyMaterial(
+  IJsonHandler* readObjectKeyMaterial(
       const std::string& objectType,
       const std::string_view& str,
       Material& o);
 
 private:
-  class AlphaModeJsonHandler : public CesiumJsonReader::JsonReader {
+  class AlphaModeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    AlphaModeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    AlphaModeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
     void
-    reset(CesiumJsonReader::IJsonReader* pParent, Material::AlphaMode* pEnum);
-    virtual CesiumJsonReader::IJsonReader*
+    reset(CesiumJsonReader::IJsonHandler* pParent, Material::AlphaMode* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
     readString(const std::string_view& str) override;
 
   private:
