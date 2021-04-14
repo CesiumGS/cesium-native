@@ -19,17 +19,6 @@ void TextureInfoJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-TextureInfo* TextureInfoJsonHandler::getObject() { return this->_pObject; }
-
-void TextureInfoJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

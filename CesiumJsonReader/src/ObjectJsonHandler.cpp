@@ -25,6 +25,15 @@ IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
 
 IJsonHandler* ObjectJsonHandler::EndSubObject() { return nullptr; }
 
+void ObjectJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
+  if (this->getCurrentKey()) {
+    context.emplace_back(std::string(".") + this->getCurrentKey());
+  }
+  this->parent()->reportWarning(warning, std::move(context));
+}
+
 const char* ObjectJsonHandler::getCurrentKey() const {
   return this->_currentKey;
 }

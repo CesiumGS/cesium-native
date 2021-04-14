@@ -12,12 +12,10 @@ struct CameraPerspective;
 
 class CameraPerspectiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  using ValueType = CameraPerspective;
+
   CameraPerspectiveJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CameraPerspective* pObject);
-  CameraPerspective* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

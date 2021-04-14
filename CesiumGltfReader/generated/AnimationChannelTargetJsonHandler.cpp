@@ -19,19 +19,6 @@ void AnimationChannelTargetJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-AnimationChannelTarget* AnimationChannelTargetJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void AnimationChannelTargetJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 AnimationChannelTargetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

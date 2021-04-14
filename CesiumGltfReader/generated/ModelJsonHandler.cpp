@@ -35,17 +35,6 @@ void ModelJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-Model* ModelJsonHandler::getObject() { return this->_pObject; }
-
-void ModelJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 ModelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

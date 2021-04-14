@@ -17,12 +17,10 @@ struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Accessor;
+
   AccessorJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Accessor* pObject);
-  Accessor* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

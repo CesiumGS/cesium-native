@@ -24,17 +24,6 @@ void BufferViewJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-BufferView* BufferViewJsonHandler::getObject() { return this->_pObject; }
-
-void BufferViewJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

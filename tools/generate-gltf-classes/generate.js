@@ -106,12 +106,12 @@ function generate(options, schema) {
 
           class ${name}JsonHandler : public ${base}JsonHandler${thisConfig.extensionName ? `, public IExtensionJsonHandler` : ""} {
           public:
+            using ValueType = ${name};
+
             ${thisConfig.extensionName ? `static inline const std::string ExtensionName = "${thisConfig.extensionName}";` : ""}
 
             ${name}JsonHandler(const ReaderContext& context) noexcept;
             void reset(IJsonHandler* pParentHandler, ${name}* pObject);
-            ${name}* getObject();
-            virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
 
             virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
@@ -153,6 +153,9 @@ function generate(options, schema) {
             }
             virtual IJsonHandler* readArrayEnd() override {
               return ${base}JsonHandler::readArrayEnd();
+            }
+            virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override {
+              ${base}JsonHandler::reportWarning(warning, std::move(context));
             }
             ` : ""}
           
@@ -210,17 +213,6 @@ function generateReaderOptionsInitializerList(properties, varName) {
         void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, ${name}* pObject) {
           ${base}JsonHandler::reset(pParentHandler, pObject);
           this->_pObject = pObject;
-        }
-
-        ${name}* ${name}JsonHandler::getObject() {
-          return this->_pObject;
-        }
-
-        void ${name}JsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
-          if (this->getCurrentKey()) {
-            context.emplace_back(std::string(".") + this->getCurrentKey());
-          }
-          this->parent()->reportWarning(warning, std::move(context));
         }
 
         CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {

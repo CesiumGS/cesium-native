@@ -13,12 +13,10 @@ struct Sampler;
 
 class SamplerJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Sampler;
+
   SamplerJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Sampler* pObject);
-  Sampler* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

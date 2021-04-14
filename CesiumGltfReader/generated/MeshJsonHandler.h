@@ -14,12 +14,10 @@ struct Mesh;
 
 class MeshJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Mesh;
+
   MeshJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Mesh* pObject);
-  Mesh* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

@@ -21,17 +21,6 @@ void SkinJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-Skin* SkinJsonHandler::getObject() { return this->_pObject; }
-
-void SkinJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

@@ -14,12 +14,10 @@ struct Image;
 
 class ImageJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Image;
+
   ImageJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Image* pObject);
-  Image* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

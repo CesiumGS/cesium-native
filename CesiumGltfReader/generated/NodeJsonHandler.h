@@ -14,12 +14,10 @@ struct Node;
 
 class NodeJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Node;
+
   NodeJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Node* pObject);
-  Node* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

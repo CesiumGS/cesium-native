@@ -12,12 +12,10 @@ struct Asset;
 
 class AssetJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  using ValueType = Asset;
+
   AssetJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Asset* pObject);
-  Asset* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

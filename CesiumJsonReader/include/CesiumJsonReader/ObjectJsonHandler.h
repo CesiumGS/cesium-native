@@ -33,6 +33,10 @@ protected:
 
   const char* getCurrentKey() const;
 
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
 protected:
   void setCurrentKey(const char* key);
 

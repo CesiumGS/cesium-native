@@ -21,17 +21,6 @@ void CameraJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-Camera* CameraJsonHandler::getObject() { return this->_pObject; }
-
-void CameraJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 CameraJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

@@ -20,20 +20,6 @@ void MaterialOcclusionTextureInfoJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-MaterialOcclusionTextureInfo*
-MaterialOcclusionTextureInfoJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void MaterialOcclusionTextureInfoJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {

@@ -13,12 +13,10 @@ struct BufferView;
 
 class BufferViewJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = BufferView;
+
   BufferViewJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, BufferView* pObject);
-  BufferView* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

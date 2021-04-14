@@ -12,14 +12,12 @@ struct MaterialOcclusionTextureInfo;
 
 class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
+  using ValueType = MaterialOcclusionTextureInfo;
+
   MaterialOcclusionTextureInfoJsonHandler(
       const ReaderContext& context) noexcept;
   void
   reset(IJsonHandler* pParentHandler, MaterialOcclusionTextureInfo* pObject);
-  MaterialOcclusionTextureInfo* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

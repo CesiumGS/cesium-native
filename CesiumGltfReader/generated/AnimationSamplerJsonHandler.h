@@ -13,12 +13,10 @@ struct AnimationSampler;
 
 class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  using ValueType = AnimationSampler;
+
   AnimationSamplerJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
-  AnimationSampler* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

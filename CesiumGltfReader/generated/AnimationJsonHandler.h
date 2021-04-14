@@ -14,12 +14,10 @@ struct Animation;
 
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Animation;
+
   AnimationJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Animation* pObject);
-  Animation* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

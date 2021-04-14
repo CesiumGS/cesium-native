@@ -24,17 +24,6 @@ void MeshPrimitiveJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-MeshPrimitive* MeshPrimitiveJsonHandler::getObject() { return this->_pObject; }
-
-void MeshPrimitiveJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

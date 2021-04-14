@@ -19,19 +19,6 @@ void MaterialNormalTextureInfoJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-MaterialNormalTextureInfo* MaterialNormalTextureInfoJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void MaterialNormalTextureInfoJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 MaterialNormalTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {

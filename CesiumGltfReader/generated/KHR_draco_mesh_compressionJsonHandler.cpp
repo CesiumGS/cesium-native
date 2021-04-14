@@ -19,19 +19,6 @@ void KHR_draco_mesh_compressionJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-KHR_draco_mesh_compression* KHR_draco_mesh_compressionJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void KHR_draco_mesh_compressionJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 KHR_draco_mesh_compressionJsonHandler::readObjectKey(
     const std::string_view& str) {

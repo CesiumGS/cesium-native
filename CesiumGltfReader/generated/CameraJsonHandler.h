@@ -14,12 +14,10 @@ struct Camera;
 
 class CameraJsonHandler : public NamedObjectJsonHandler {
 public:
+  using ValueType = Camera;
+
   CameraJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Camera* pObject);
-  Camera* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

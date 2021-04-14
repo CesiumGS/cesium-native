@@ -15,14 +15,12 @@ struct MaterialPBRMetallicRoughness;
 class MaterialPBRMetallicRoughnessJsonHandler
     : public ExtensibleObjectJsonHandler {
 public:
+  using ValueType = MaterialPBRMetallicRoughness;
+
   MaterialPBRMetallicRoughnessJsonHandler(
       const ReaderContext& context) noexcept;
   void
   reset(IJsonHandler* pParentHandler, MaterialPBRMetallicRoughness* pObject);
-  MaterialPBRMetallicRoughness* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

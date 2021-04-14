@@ -15,12 +15,10 @@ struct MeshPrimitive;
 
 class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:
+  using ValueType = MeshPrimitive;
+
   MeshPrimitiveJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, MeshPrimitive* pObject);
-  MeshPrimitive* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 

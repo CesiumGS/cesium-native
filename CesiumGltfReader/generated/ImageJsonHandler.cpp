@@ -18,17 +18,6 @@ void ImageJsonHandler::reset(
   this->_pObject = pObject;
 }
 
-Image* ImageJsonHandler::getObject() { return this->_pObject; }
-
-void ImageJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
 CesiumJsonReader::IJsonHandler*
 ImageJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);

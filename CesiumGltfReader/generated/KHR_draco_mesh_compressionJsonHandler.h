@@ -15,14 +15,12 @@ class KHR_draco_mesh_compressionJsonHandler
     : public ExtensibleObjectJsonHandler,
       public IExtensionJsonHandler {
 public:
+  using ValueType = KHR_draco_mesh_compression;
+
   static inline const std::string ExtensionName = "KHR_draco_mesh_compression";
 
   KHR_draco_mesh_compressionJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, KHR_draco_mesh_compression* pObject);
-  KHR_draco_mesh_compression* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
@@ -66,6 +64,12 @@ public:
   }
   virtual IJsonHandler* readArrayEnd() override {
     return ExtensibleObjectJsonHandler::readArrayEnd();
+  }
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context =
+          std::vector<std::string>()) override {
+    ExtensibleObjectJsonHandler::reportWarning(warning, std::move(context));
   }
 
 protected:
