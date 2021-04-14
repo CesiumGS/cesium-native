@@ -33,25 +33,30 @@ protected:
       Accessor& o);
 
 private:
-  class TypeJsonHandler : public JsonReader {
+  class TypeJsonHandler : public CesiumJsonReader::JsonReader {
   public:
-    TypeJsonHandler() noexcept : JsonReader() {}
-    void reset(IJsonReader* pParent, Accessor::Type* pEnum);
-    virtual IJsonReader* readString(const std::string_view& str) override;
+    TypeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    void reset(CesiumJsonReader::IJsonReader* pParent, Accessor::Type* pEnum);
+    virtual CesiumJsonReader::IJsonReader*
+    readString(const std::string_view& str) override;
 
   private:
     Accessor::Type* _pEnum = nullptr;
   };
 
   Accessor* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _bufferView;
-  IntegerJsonHandler<int64_t> _byteOffset;
-  IntegerJsonHandler<Accessor::ComponentType> _componentType;
-  BoolJsonHandler _normalized;
-  IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+  CesiumJsonReader::IntegerJsonHandler<Accessor::ComponentType> _componentType;
+  CesiumJsonReader::BoolJsonHandler _normalized;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
   TypeJsonHandler _type;
-  ArrayJsonHandler<double, DoubleJsonHandler> _max;
-  ArrayJsonHandler<double, DoubleJsonHandler> _min;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _max;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _min;
   AccessorSparseJsonHandler _sparse;
 };
 } // namespace CesiumGltf

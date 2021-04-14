@@ -31,14 +31,26 @@ protected:
 
 private:
   Node* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _camera;
-  ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _children;
-  IntegerJsonHandler<int32_t> _skin;
-  ArrayJsonHandler<double, DoubleJsonHandler> _matrix;
-  IntegerJsonHandler<int32_t> _mesh;
-  ArrayJsonHandler<double, DoubleJsonHandler> _rotation;
-  ArrayJsonHandler<double, DoubleJsonHandler> _scale;
-  ArrayJsonHandler<double, DoubleJsonHandler> _translation;
-  ArrayJsonHandler<double, DoubleJsonHandler> _weights;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _camera;
+  CesiumJsonReader::
+      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
+          _children;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _skin;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _matrix;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _mesh;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _rotation;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _scale;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _translation;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _weights;
 };
 } // namespace CesiumGltf

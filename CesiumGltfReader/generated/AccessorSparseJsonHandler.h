@@ -31,7 +31,7 @@ protected:
 
 private:
   AccessorSparse* _pObject = nullptr;
-  IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
   AccessorSparseIndicesJsonHandler _indices;
   AccessorSparseValuesJsonHandler _values;
 };

@@ -30,19 +30,20 @@ protected:
       Image& o);
 
 private:
-  class MimeTypeJsonHandler : public JsonReader {
+  class MimeTypeJsonHandler : public CesiumJsonReader::JsonReader {
   public:
-    MimeTypeJsonHandler() noexcept : JsonReader() {}
-    void reset(IJsonReader* pParent, Image::MimeType* pEnum);
-    virtual IJsonReader* readString(const std::string_view& str) override;
+    MimeTypeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    void reset(CesiumJsonReader::IJsonReader* pParent, Image::MimeType* pEnum);
+    virtual CesiumJsonReader::IJsonReader*
+    readString(const std::string_view& str) override;
 
   private:
     Image::MimeType* _pEnum = nullptr;
   };
 
   Image* _pObject = nullptr;
-  StringJsonHandler _uri;
+  CesiumJsonReader::StringJsonHandler _uri;
   MimeTypeJsonHandler _mimeType;
-  IntegerJsonHandler<int32_t> _bufferView;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
 };
 } // namespace CesiumGltf

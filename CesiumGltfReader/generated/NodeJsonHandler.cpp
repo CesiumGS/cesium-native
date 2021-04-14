@@ -20,7 +20,9 @@ NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept
       _translation(),
       _weights() {}
 
-void NodeJsonHandler::reset(IJsonReader* pParentReader, Node* pObject) {
+void NodeJsonHandler::reset(
+    CesiumJsonReader::IJsonReader* pParentReader,
+    Node* pObject) {
   NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
@@ -36,12 +38,13 @@ void NodeJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* NodeJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonReader*
+NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyNode(Node::TypeName, str, *this->_pObject);
 }
 
-IJsonReader* NodeJsonHandler::readObjectKeyNode(
+CesiumJsonReader::IJsonReader* NodeJsonHandler::readObjectKeyNode(
     const std::string& objectType,
     const std::string_view& str,
     Node& o) {

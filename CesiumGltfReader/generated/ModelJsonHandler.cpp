@@ -28,7 +28,9 @@ ModelJsonHandler::ModelJsonHandler(const ReaderContext& context) noexcept
       _skins(context),
       _textures(context) {}
 
-void ModelJsonHandler::reset(IJsonReader* pParentReader, Model* pObject) {
+void ModelJsonHandler::reset(
+    CesiumJsonReader::IJsonReader* pParentReader,
+    Model* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
@@ -44,12 +46,13 @@ void ModelJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* ModelJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonReader*
+ModelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyModel(Model::TypeName, str, *this->_pObject);
 }
 
-IJsonReader* ModelJsonHandler::readObjectKeyModel(
+CesiumJsonReader::IJsonReader* ModelJsonHandler::readObjectKeyModel(
     const std::string& objectType,
     const std::string_view& str,
     Model& o) {

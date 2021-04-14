@@ -1,6 +1,6 @@
 #include "CesiumJsonReader/DoubleJsonHandler.h"
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 
 DoubleJsonHandler::DoubleJsonHandler() noexcept : JsonReader() {}
 

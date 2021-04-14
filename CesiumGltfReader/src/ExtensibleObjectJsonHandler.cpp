@@ -5,6 +5,7 @@
 #include "ExtensionsJsonHandler.h"
 
 using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
     const ReaderContext& context) noexcept

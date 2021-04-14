@@ -45,22 +45,28 @@ protected:
 
 private:
   Model* _pObject = nullptr;
-  ArrayJsonHandler<std::string, StringJsonHandler> _extensionsUsed;
-  ArrayJsonHandler<std::string, StringJsonHandler> _extensionsRequired;
-  ArrayJsonHandler<Accessor, AccessorJsonHandler> _accessors;
-  ArrayJsonHandler<Animation, AnimationJsonHandler> _animations;
+  CesiumJsonReader::
+      ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
+          _extensionsUsed;
+  CesiumJsonReader::
+      ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
+          _extensionsRequired;
+  CesiumJsonReader::ArrayJsonHandler<Accessor, AccessorJsonHandler> _accessors;
+  CesiumJsonReader::ArrayJsonHandler<Animation, AnimationJsonHandler>
+      _animations;
   AssetJsonHandler _asset;
-  ArrayJsonHandler<Buffer, BufferJsonHandler> _buffers;
-  ArrayJsonHandler<BufferView, BufferViewJsonHandler> _bufferViews;
-  ArrayJsonHandler<Camera, CameraJsonHandler> _cameras;
-  ArrayJsonHandler<Image, ImageJsonHandler> _images;
-  ArrayJsonHandler<Material, MaterialJsonHandler> _materials;
-  ArrayJsonHandler<Mesh, MeshJsonHandler> _meshes;
-  ArrayJsonHandler<Node, NodeJsonHandler> _nodes;
-  ArrayJsonHandler<Sampler, SamplerJsonHandler> _samplers;
-  IntegerJsonHandler<int32_t> _scene;
-  ArrayJsonHandler<Scene, SceneJsonHandler> _scenes;
-  ArrayJsonHandler<Skin, SkinJsonHandler> _skins;
-  ArrayJsonHandler<Texture, TextureJsonHandler> _textures;
+  CesiumJsonReader::ArrayJsonHandler<Buffer, BufferJsonHandler> _buffers;
+  CesiumJsonReader::ArrayJsonHandler<BufferView, BufferViewJsonHandler>
+      _bufferViews;
+  CesiumJsonReader::ArrayJsonHandler<Camera, CameraJsonHandler> _cameras;
+  CesiumJsonReader::ArrayJsonHandler<Image, ImageJsonHandler> _images;
+  CesiumJsonReader::ArrayJsonHandler<Material, MaterialJsonHandler> _materials;
+  CesiumJsonReader::ArrayJsonHandler<Mesh, MeshJsonHandler> _meshes;
+  CesiumJsonReader::ArrayJsonHandler<Node, NodeJsonHandler> _nodes;
+  CesiumJsonReader::ArrayJsonHandler<Sampler, SamplerJsonHandler> _samplers;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _scene;
+  CesiumJsonReader::ArrayJsonHandler<Scene, SceneJsonHandler> _scenes;
+  CesiumJsonReader::ArrayJsonHandler<Skin, SkinJsonHandler> _skins;
+  CesiumJsonReader::ArrayJsonHandler<Texture, TextureJsonHandler> _textures;
 };
 } // namespace CesiumGltf

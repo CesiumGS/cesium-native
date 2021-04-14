@@ -29,7 +29,7 @@ protected:
 
 private:
   AccessorSparseValues* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _bufferView;
-  IntegerJsonHandler<int64_t> _byteOffset;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
 };
 } // namespace CesiumGltf

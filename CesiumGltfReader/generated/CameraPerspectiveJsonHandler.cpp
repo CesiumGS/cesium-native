@@ -17,7 +17,7 @@ CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
       _znear() {}
 
 void CameraPerspectiveJsonHandler::reset(
-    IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonReader* pParentReader,
     CameraPerspective* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
@@ -36,7 +36,7 @@ void CameraPerspectiveJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader*
+CesiumJsonReader::IJsonReader*
 CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyCameraPerspective(
@@ -45,7 +45,8 @@ CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonReader* CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
+CesiumJsonReader::IJsonReader*
+CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
     const std::string& objectType,
     const std::string_view& str,
     CameraPerspective& o) {

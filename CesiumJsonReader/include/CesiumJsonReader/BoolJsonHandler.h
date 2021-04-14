@@ -2,7 +2,7 @@
 
 #include "CesiumJsonReader/JsonReader.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class BoolJsonHandler : public JsonReader {
 public:
   BoolJsonHandler() noexcept;
@@ -13,4 +13,4 @@ public:
 private:
   bool* _pBool = nullptr;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

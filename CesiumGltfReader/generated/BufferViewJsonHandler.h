@@ -30,10 +30,10 @@ protected:
 
 private:
   BufferView* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _buffer;
-  IntegerJsonHandler<int64_t> _byteOffset;
-  IntegerJsonHandler<int64_t> _byteLength;
-  IntegerJsonHandler<int64_t> _byteStride;
-  IntegerJsonHandler<BufferView::Target> _target;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _buffer;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteStride;
+  CesiumJsonReader::IntegerJsonHandler<BufferView::Target> _target;
 };
 } // namespace CesiumGltf

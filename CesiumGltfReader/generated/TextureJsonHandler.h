@@ -29,7 +29,7 @@ protected:
 
 private:
   Texture* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _sampler;
-  IntegerJsonHandler<int32_t> _source;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _sampler;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _source;
 };
 } // namespace CesiumGltf

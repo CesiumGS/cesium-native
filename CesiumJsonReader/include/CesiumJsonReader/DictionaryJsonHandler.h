@@ -6,7 +6,7 @@
 #include <map>
 #include <unordered_map>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 template <typename T, typename THandler>
 class DictionaryJsonHandler : public ObjectJsonHandler {
 public:
@@ -42,4 +42,4 @@ private:
   std::map<std::string, T>* _pDictionary2 = nullptr;
   THandler _item;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

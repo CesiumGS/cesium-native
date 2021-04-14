@@ -18,7 +18,7 @@ BufferViewJsonHandler::BufferViewJsonHandler(
       _target() {}
 
 void BufferViewJsonHandler::reset(
-    IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonReader* pParentReader,
     BufferView* pObject) {
   NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
@@ -35,7 +35,8 @@ void BufferViewJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonReader*
+BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyBufferView(
       BufferView::TypeName,
@@ -43,7 +44,7 @@ IJsonReader* BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonReader* BufferViewJsonHandler::readObjectKeyBufferView(
+CesiumJsonReader::IJsonReader* BufferViewJsonHandler::readObjectKeyBufferView(
     const std::string& objectType,
     const std::string_view& str,
     BufferView& o) {

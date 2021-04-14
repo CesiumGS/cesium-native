@@ -19,7 +19,7 @@ MaterialPBRMetallicRoughnessJsonHandler::
       _metallicRoughnessTexture(context) {}
 
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
-    IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonReader* pParentReader,
     MaterialPBRMetallicRoughness* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
@@ -39,7 +39,8 @@ void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
+CesiumJsonReader::IJsonReader*
+MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyMaterialPBRMetallicRoughness(
@@ -48,7 +49,7 @@ IJsonReader* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-IJsonReader* MaterialPBRMetallicRoughnessJsonHandler::
+CesiumJsonReader::IJsonReader* MaterialPBRMetallicRoughnessJsonHandler::
     readObjectKeyMaterialPBRMetallicRoughness(
         const std::string& objectType,
         const std::string_view& str,

@@ -35,11 +35,13 @@ protected:
       Material& o);
 
 private:
-  class AlphaModeJsonHandler : public JsonReader {
+  class AlphaModeJsonHandler : public CesiumJsonReader::JsonReader {
   public:
-    AlphaModeJsonHandler() noexcept : JsonReader() {}
-    void reset(IJsonReader* pParent, Material::AlphaMode* pEnum);
-    virtual IJsonReader* readString(const std::string_view& str) override;
+    AlphaModeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    void
+    reset(CesiumJsonReader::IJsonReader* pParent, Material::AlphaMode* pEnum);
+    virtual CesiumJsonReader::IJsonReader*
+    readString(const std::string_view& str) override;
 
   private:
     Material::AlphaMode* _pEnum = nullptr;
@@ -50,9 +52,11 @@ private:
   MaterialNormalTextureInfoJsonHandler _normalTexture;
   MaterialOcclusionTextureInfoJsonHandler _occlusionTexture;
   TextureInfoJsonHandler _emissiveTexture;
-  ArrayJsonHandler<double, DoubleJsonHandler> _emissiveFactor;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _emissiveFactor;
   AlphaModeJsonHandler _alphaMode;
-  DoubleJsonHandler _alphaCutoff;
-  BoolJsonHandler _doubleSided;
+  CesiumJsonReader::DoubleJsonHandler _alphaCutoff;
+  CesiumJsonReader::BoolJsonHandler _doubleSided;
 };
 } // namespace CesiumGltf

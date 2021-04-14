@@ -20,7 +20,9 @@ AccessorJsonHandler::AccessorJsonHandler(const ReaderContext& context) noexcept
       _min(),
       _sparse(context) {}
 
-void AccessorJsonHandler::reset(IJsonReader* pParentReader, Accessor* pObject) {
+void AccessorJsonHandler::reset(
+    CesiumJsonReader::IJsonReader* pParentReader,
+    Accessor* pObject) {
   NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
@@ -36,12 +38,13 @@ void AccessorJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* AccessorJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonReader*
+AccessorJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAccessor(Accessor::TypeName, str, *this->_pObject);
 }
 
-IJsonReader* AccessorJsonHandler::readObjectKeyAccessor(
+CesiumJsonReader::IJsonReader* AccessorJsonHandler::readObjectKeyAccessor(
     const std::string& objectType,
     const std::string_view& str,
     Accessor& o) {
@@ -70,13 +73,13 @@ IJsonReader* AccessorJsonHandler::readObjectKeyAccessor(
 }
 
 void AccessorJsonHandler::TypeJsonHandler::reset(
-    IJsonReader* pParent,
+    CesiumJsonReader::IJsonReader* pParent,
     Accessor::Type* pEnum) {
   JsonReader::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonReader*
+CesiumJsonReader::IJsonReader*
 AccessorJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 

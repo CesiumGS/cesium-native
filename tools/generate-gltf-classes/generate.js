@@ -207,7 +207,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
 
         ${name}JsonHandler::${name}JsonHandler(const ReaderContext& context) noexcept : ${base}JsonHandler(context)${generateReaderOptionsInitializerList(properties, 'context')} {}
 
-        void ${name}JsonHandler::reset(IJsonReader* pParentReader, ${name}* pObject) {
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonReader* pParentReader, ${name}* pObject) {
           ${base}JsonHandler::reset(pParentReader, pObject);
           this->_pObject = pObject;
         }
@@ -223,13 +223,13 @@ function generateReaderOptionsInitializerList(properties, varName) {
           this->parent()->reportWarning(warning, std::move(context));
         }
 
-        IJsonReader* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
+        CesiumJsonReader::IJsonReader* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
           assert(this->_pObject);
           return this->readObjectKey${name}(${name}::TypeName, str, *this->_pObject);
         }
 
         ${thisConfig.extensionName ? `
-        void ${name}JsonHandler::reset(IJsonReader* pParentReader, ExtensibleObject& o, const std::string_view& extensionName) {
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonReader* pParentReader, ExtensibleObject& o, const std::string_view& extensionName) {
           std::any& value =
               o.extensions.emplace(extensionName, ${name}())
                   .first->second;
@@ -239,7 +239,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
         }
         ` : ""}
 
-        IJsonReader* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o) {
+        CesiumJsonReader::IJsonReader* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o) {
           using namespace std::string_literals;
 
           ${indent(

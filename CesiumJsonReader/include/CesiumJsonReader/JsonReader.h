@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class JsonReader : public IJsonReader {
 public:
   JsonReader() noexcept;
@@ -48,4 +48,4 @@ private:
   IgnoreValueJsonHandler _ignore;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

@@ -1,6 +1,6 @@
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 
 IJsonReader* ObjectJsonHandler::readObjectStart() {
   ++this->_depth;

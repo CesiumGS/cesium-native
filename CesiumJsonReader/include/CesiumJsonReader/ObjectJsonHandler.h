@@ -3,7 +3,7 @@
 #include "CesiumJsonReader/JsonReader.h"
 #include <optional>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ObjectJsonHandler : public JsonReader {
 public:
   ObjectJsonHandler() : JsonReader() {}
@@ -47,4 +47,4 @@ private:
   int32_t _depth = 0;
   const char* _currentKey;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

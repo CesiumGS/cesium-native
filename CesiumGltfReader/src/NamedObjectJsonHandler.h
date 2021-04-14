@@ -16,6 +16,6 @@ protected:
       NamedObject& o);
 
 private:
-  StringJsonHandler _name;
+  CesiumJsonReader::StringJsonHandler _name;
 };
 } // namespace CesiumGltf

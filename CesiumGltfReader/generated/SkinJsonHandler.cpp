@@ -14,7 +14,9 @@ SkinJsonHandler::SkinJsonHandler(const ReaderContext& context) noexcept
       _skeleton(),
       _joints() {}
 
-void SkinJsonHandler::reset(IJsonReader* pParentReader, Skin* pObject) {
+void SkinJsonHandler::reset(
+    CesiumJsonReader::IJsonReader* pParentReader,
+    Skin* pObject) {
   NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
@@ -30,12 +32,13 @@ void SkinJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* SkinJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonReader*
+SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeySkin(Skin::TypeName, str, *this->_pObject);
 }
 
-IJsonReader* SkinJsonHandler::readObjectKeySkin(
+CesiumJsonReader::IJsonReader* SkinJsonHandler::readObjectKeySkin(
     const std::string& objectType,
     const std::string_view& str,
     Skin& o) {

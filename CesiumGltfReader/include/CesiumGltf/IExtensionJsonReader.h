@@ -8,7 +8,7 @@ namespace CesiumGltf {
 
 struct ExtensibleObject;
 
-class IExtensionJsonReader : public IJsonReader {
+class IExtensionJsonReader : public CesiumJsonReader::IJsonReader {
 public:
   virtual void reset(
       IJsonReader* pParentHandler,

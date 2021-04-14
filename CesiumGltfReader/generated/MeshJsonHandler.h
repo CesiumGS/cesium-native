@@ -31,7 +31,10 @@ protected:
 
 private:
   Mesh* _pObject = nullptr;
-  ArrayJsonHandler<MeshPrimitive, MeshPrimitiveJsonHandler> _primitives;
-  ArrayJsonHandler<double, DoubleJsonHandler> _weights;
+  CesiumJsonReader::ArrayJsonHandler<MeshPrimitive, MeshPrimitiveJsonHandler>
+      _primitives;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _weights;
 };
 } // namespace CesiumGltf

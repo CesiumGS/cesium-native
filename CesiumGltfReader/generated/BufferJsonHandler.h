@@ -30,7 +30,7 @@ protected:
 
 private:
   Buffer* _pObject = nullptr;
-  StringJsonHandler _uri;
-  IntegerJsonHandler<int64_t> _byteLength;
+  CesiumJsonReader::StringJsonHandler _uri;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
 };
 } // namespace CesiumGltf

@@ -1,6 +1,7 @@
 #include "CesiumJsonReader/JsonReader.h"
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
+
 JsonReader::JsonReader() noexcept {}
 
 IJsonReader* JsonReader::readNull() {

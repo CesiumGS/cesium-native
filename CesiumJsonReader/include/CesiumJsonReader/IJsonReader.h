@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class IJsonReader {
 public:
   virtual ~IJsonReader(){};
@@ -26,4 +26,4 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) = 0;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

@@ -1,6 +1,6 @@
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {

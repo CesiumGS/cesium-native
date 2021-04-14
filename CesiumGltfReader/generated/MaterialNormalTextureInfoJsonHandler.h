@@ -29,6 +29,6 @@ protected:
 
 private:
   MaterialNormalTextureInfo* _pObject = nullptr;
-  DoubleJsonHandler _scale;
+  CesiumJsonReader::DoubleJsonHandler _scale;
 };
 } // namespace CesiumGltf

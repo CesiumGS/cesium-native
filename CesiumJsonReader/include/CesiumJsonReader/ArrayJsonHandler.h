@@ -7,7 +7,7 @@
 #include <cassert>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 template <typename T, typename THandler>
 class ArrayJsonHandler : public JsonReader {
 public:
@@ -427,4 +427,4 @@ private:
   std::vector<std::string>* _pArray = nullptr;
   bool _arrayIsOpen = false;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

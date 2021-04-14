@@ -29,9 +29,9 @@ protected:
 
 private:
   Asset* _pObject = nullptr;
-  StringJsonHandler _copyright;
-  StringJsonHandler _generator;
-  StringJsonHandler _version;
-  StringJsonHandler _minVersion;
+  CesiumJsonReader::StringJsonHandler _copyright;
+  CesiumJsonReader::StringJsonHandler _generator;
+  CesiumJsonReader::StringJsonHandler _version;
+  CesiumJsonReader::StringJsonHandler _minVersion;
 };
 } // namespace CesiumGltf

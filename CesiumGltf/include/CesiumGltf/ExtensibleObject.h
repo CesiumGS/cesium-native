@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumUtility/JsonValue.h"
 #include "CesiumGltf/Library.h"
+#include "CesiumUtility/JsonValue.h"
 #include <any>
 #include <unordered_map>
 #include <vector>
@@ -47,7 +47,8 @@ struct CESIUMGLTF_API ExtensibleObject {
   getGenericExtension(const std::string& extensionName) const noexcept;
 
   /** @copydoc ExtensibleObject::getGenericExtension */
-  CesiumUtility::JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
+  CesiumUtility::JsonValue*
+  getGenericExtension(const std::string& extensionName) noexcept;
 
   /**
    * @brief The extensions attached to this object.

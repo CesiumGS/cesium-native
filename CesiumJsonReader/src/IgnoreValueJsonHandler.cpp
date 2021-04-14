@@ -1,7 +1,7 @@
 #include "CesiumJsonReader/IgnoreValueJsonHandler.h"
 #include <string>
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 
 void IgnoreValueJsonHandler::reset(IJsonReader* pParent) {
   this->_pParent = pParent;

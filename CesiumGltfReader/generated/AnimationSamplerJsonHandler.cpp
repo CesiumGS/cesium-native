@@ -16,7 +16,7 @@ AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
       _output() {}
 
 void AnimationSamplerJsonHandler::reset(
-    IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonReader* pParentReader,
     AnimationSampler* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
@@ -35,7 +35,7 @@ void AnimationSamplerJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader*
+CesiumJsonReader::IJsonReader*
 AnimationSamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyAnimationSampler(
@@ -44,7 +44,8 @@ AnimationSamplerJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonReader* AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
+CesiumJsonReader::IJsonReader*
+AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
     const std::string& objectType,
     const std::string_view& str,
     AnimationSampler& o) {
@@ -61,13 +62,14 @@ IJsonReader* AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
 }
 
 void AnimationSamplerJsonHandler::InterpolationJsonHandler::reset(
-    IJsonReader* pParent,
+    CesiumJsonReader::IJsonReader* pParent,
     AnimationSampler::Interpolation* pEnum) {
   JsonReader::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonReader* AnimationSamplerJsonHandler::InterpolationJsonHandler::readString(
+CesiumJsonReader::IJsonReader*
+AnimationSamplerJsonHandler::InterpolationJsonHandler::readString(
     const std::string_view& str) {
   using namespace std::string_literals;
 

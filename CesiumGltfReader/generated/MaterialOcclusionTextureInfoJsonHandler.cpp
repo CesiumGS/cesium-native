@@ -14,7 +14,7 @@ MaterialOcclusionTextureInfoJsonHandler::
     : TextureInfoJsonHandler(context), _strength() {}
 
 void MaterialOcclusionTextureInfoJsonHandler::reset(
-    IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonReader* pParentReader,
     MaterialOcclusionTextureInfo* pObject) {
   TextureInfoJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
@@ -34,7 +34,8 @@ void MaterialOcclusionTextureInfoJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
+CesiumJsonReader::IJsonReader*
+MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyMaterialOcclusionTextureInfo(
@@ -43,7 +44,7 @@ IJsonReader* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
       *this->_pObject);
 }
 
-IJsonReader* MaterialOcclusionTextureInfoJsonHandler::
+CesiumJsonReader::IJsonReader* MaterialOcclusionTextureInfoJsonHandler::
     readObjectKeyMaterialOcclusionTextureInfo(
         const std::string& objectType,
         const std::string_view& str,

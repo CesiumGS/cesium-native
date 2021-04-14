@@ -29,19 +29,22 @@ protected:
       AnimationSampler& o);
 
 private:
-  class InterpolationJsonHandler : public JsonReader {
+  class InterpolationJsonHandler : public CesiumJsonReader::JsonReader {
   public:
-    InterpolationJsonHandler() noexcept : JsonReader() {}
-    void reset(IJsonReader* pParent, AnimationSampler::Interpolation* pEnum);
-    virtual IJsonReader* readString(const std::string_view& str) override;
+    InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    void reset(
+        CesiumJsonReader::IJsonReader* pParent,
+        AnimationSampler::Interpolation* pEnum);
+    virtual CesiumJsonReader::IJsonReader*
+    readString(const std::string_view& str) override;
 
   private:
     AnimationSampler::Interpolation* _pEnum = nullptr;
   };
 
   AnimationSampler* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _input;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
   InterpolationJsonHandler _interpolation;
-  IntegerJsonHandler<int32_t> _output;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
 };
 } // namespace CesiumGltf

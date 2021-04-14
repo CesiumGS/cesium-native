@@ -29,7 +29,7 @@ protected:
 
 private:
   TextureInfo* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _index;
-  IntegerJsonHandler<int64_t> _texCoord;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _index;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _texCoord;
 };
 } // namespace CesiumGltf

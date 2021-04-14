@@ -3,7 +3,7 @@
 #include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class DoubleJsonHandler : public JsonReader {
 public:
   DoubleJsonHandler() noexcept;
@@ -18,4 +18,4 @@ public:
 private:
   double* _pDouble = nullptr;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

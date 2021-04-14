@@ -7,7 +7,7 @@ namespace CesiumGltf {
 struct ReaderContext;
 struct ExtensibleObject;
 
-class ExtensionsJsonHandler : public ObjectJsonHandler {
+class ExtensionsJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
   ExtensionsJsonHandler(const ReaderContext& context) noexcept
       : ObjectJsonHandler(),

@@ -3,7 +3,7 @@
 #include "CesiumJsonReader/IJsonReader.h"
 #include <cstdint>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class IgnoreValueJsonHandler : public IJsonReader {
 public:
   void reset(IJsonReader* pParent);
@@ -32,4 +32,4 @@ private:
   IJsonReader* _pParent = nullptr;
   int32_t _depth = 0;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

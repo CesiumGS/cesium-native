@@ -13,7 +13,7 @@ void NamedObjectJsonHandler::reset(IJsonReader* pParent, NamedObject* pObject) {
   ExtensibleObjectJsonHandler::reset(pParent, pObject);
 }
 
-IJsonReader* NamedObjectJsonHandler::readObjectKeyNamedObject(
+CesiumJsonReader::IJsonReader* NamedObjectJsonHandler::readObjectKeyNamedObject(
     const std::string& objectType,
     const std::string_view& str,
     NamedObject& o) {

@@ -3,6 +3,7 @@
 #include "CesiumGltf/ReaderContext.h"
 
 using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 
 void ExtensionsJsonHandler::reset(
     IJsonReader* pParent,

@@ -33,10 +33,12 @@ protected:
 
 private:
   MaterialPBRMetallicRoughness* _pObject = nullptr;
-  ArrayJsonHandler<double, DoubleJsonHandler> _baseColorFactor;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _baseColorFactor;
   TextureInfoJsonHandler _baseColorTexture;
-  DoubleJsonHandler _metallicFactor;
-  DoubleJsonHandler _roughnessFactor;
+  CesiumJsonReader::DoubleJsonHandler _metallicFactor;
+  CesiumJsonReader::DoubleJsonHandler _roughnessFactor;
   TextureInfoJsonHandler _metallicRoughnessTexture;
 };
 } // namespace CesiumGltf

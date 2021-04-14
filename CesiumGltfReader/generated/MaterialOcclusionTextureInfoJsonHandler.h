@@ -30,6 +30,6 @@ protected:
 
 private:
   MaterialOcclusionTextureInfo* _pObject = nullptr;
-  DoubleJsonHandler _strength;
+  CesiumJsonReader::DoubleJsonHandler _strength;
 };
 } // namespace CesiumGltf

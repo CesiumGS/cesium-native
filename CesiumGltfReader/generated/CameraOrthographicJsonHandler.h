@@ -29,9 +29,9 @@ protected:
 
 private:
   CameraOrthographic* _pObject = nullptr;
-  DoubleJsonHandler _xmag;
-  DoubleJsonHandler _ymag;
-  DoubleJsonHandler _zfar;
-  DoubleJsonHandler _znear;
+  CesiumJsonReader::DoubleJsonHandler _xmag;
+  CesiumJsonReader::DoubleJsonHandler _ymag;
+  CesiumJsonReader::DoubleJsonHandler _zfar;
+  CesiumJsonReader::DoubleJsonHandler _znear;
 };
 } // namespace CesiumGltf

@@ -2,7 +2,8 @@
 #include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
+
 BoolJsonHandler::BoolJsonHandler() noexcept : JsonReader() {}
 
 void BoolJsonHandler::reset(IJsonReader* pParent, bool* pBool) {

@@ -30,11 +30,12 @@ protected:
       Camera& o);
 
 private:
-  class TypeJsonHandler : public JsonReader {
+  class TypeJsonHandler : public CesiumJsonReader::JsonReader {
   public:
-    TypeJsonHandler() noexcept : JsonReader() {}
-    void reset(IJsonReader* pParent, Camera::Type* pEnum);
-    virtual IJsonReader* readString(const std::string_view& str) override;
+    TypeJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    void reset(CesiumJsonReader::IJsonReader* pParent, Camera::Type* pEnum);
+    virtual CesiumJsonReader::IJsonReader*
+    readString(const std::string_view& str) override;
 
   private:
     Camera::Type* _pEnum = nullptr;

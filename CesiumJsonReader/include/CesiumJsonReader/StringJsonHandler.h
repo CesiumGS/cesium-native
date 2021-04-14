@@ -3,7 +3,7 @@
 #include "CesiumJsonReader/JsonReader.h"
 #include <string>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class StringJsonHandler : public JsonReader {
 public:
   StringJsonHandler() noexcept;
@@ -14,4 +14,4 @@ public:
 private:
   std::string* _pString = nullptr;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

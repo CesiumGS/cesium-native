@@ -10,7 +10,7 @@
 namespace CesiumGltf {
 struct ExtensibleObject;
 
-class ExtensibleObjectJsonHandler : public ObjectJsonHandler {
+class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
   ExtensibleObjectJsonHandler(const ReaderContext& context) noexcept;
 
@@ -22,7 +22,9 @@ protected:
       ExtensibleObject& o);
 
 private:
-  DictionaryJsonHandler<CesiumUtility::JsonValue, JsonObjectJsonHandler>
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumUtility::JsonValue,
+      CesiumJsonReader::JsonObjectJsonHandler>
       _extras;
   ExtensionsJsonHandler _extensions;
 };

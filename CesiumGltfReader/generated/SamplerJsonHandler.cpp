@@ -15,7 +15,9 @@ SamplerJsonHandler::SamplerJsonHandler(const ReaderContext& context) noexcept
       _wrapS(),
       _wrapT() {}
 
-void SamplerJsonHandler::reset(IJsonReader* pParentReader, Sampler* pObject) {
+void SamplerJsonHandler::reset(
+    CesiumJsonReader::IJsonReader* pParentReader,
+    Sampler* pObject) {
   NamedObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
 }
@@ -31,12 +33,13 @@ void SamplerJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader* SamplerJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonReader*
+SamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeySampler(Sampler::TypeName, str, *this->_pObject);
 }
 
-IJsonReader* SamplerJsonHandler::readObjectKeySampler(
+CesiumJsonReader::IJsonReader* SamplerJsonHandler::readObjectKeySampler(
     const std::string& objectType,
     const std::string_view& str,
     Sampler& o) {

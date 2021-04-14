@@ -40,7 +40,7 @@ target_include_directories(
 target_link_libraries(CesiumJsonReader
     PUBLIC
         GSL
-        CesiumGltf # TODO remove this dependency
+        CesiumUtility
 )
 
 install(TARGETS CesiumJsonReader

@@ -29,18 +29,21 @@ protected:
       AnimationChannelTarget& o);
 
 private:
-  class PathJsonHandler : public JsonReader {
+  class PathJsonHandler : public CesiumJsonReader::JsonReader {
   public:
-    PathJsonHandler() noexcept : JsonReader() {}
-    void reset(IJsonReader* pParent, AnimationChannelTarget::Path* pEnum);
-    virtual IJsonReader* readString(const std::string_view& str) override;
+    PathJsonHandler() noexcept : CesiumJsonReader::JsonReader() {}
+    void reset(
+        CesiumJsonReader::IJsonReader* pParent,
+        AnimationChannelTarget::Path* pEnum);
+    virtual CesiumJsonReader::IJsonReader*
+    readString(const std::string_view& str) override;
 
   private:
     AnimationChannelTarget::Path* _pEnum = nullptr;
   };
 
   AnimationChannelTarget* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _node;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _node;
   PathJsonHandler _path;
 };
 } // namespace CesiumGltf

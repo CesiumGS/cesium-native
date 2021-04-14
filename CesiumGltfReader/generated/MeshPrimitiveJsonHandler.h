@@ -32,13 +32,18 @@ protected:
 
 private:
   MeshPrimitive* _pObject = nullptr;
-  DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _attributes;
-  IntegerJsonHandler<int32_t> _indices;
-  IntegerJsonHandler<int32_t> _material;
-  IntegerJsonHandler<MeshPrimitive::Mode> _mode;
-  ArrayJsonHandler<
+  CesiumJsonReader::DictionaryJsonHandler<
+      int32_t,
+      CesiumJsonReader::IntegerJsonHandler<int32_t>>
+      _attributes;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
+  CesiumJsonReader::IntegerJsonHandler<MeshPrimitive::Mode> _mode;
+  CesiumJsonReader::ArrayJsonHandler<
       std::unordered_map<std::string, int32_t>,
-      DictionaryJsonHandler<int32_t, IntegerJsonHandler<int32_t>>>
+      CesiumJsonReader::DictionaryJsonHandler<
+          int32_t,
+          CesiumJsonReader::IntegerJsonHandler<int32_t>>>
       _targets;
 };
 } // namespace CesiumGltf

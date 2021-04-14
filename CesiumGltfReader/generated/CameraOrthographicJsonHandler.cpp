@@ -17,7 +17,7 @@ CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
       _znear() {}
 
 void CameraOrthographicJsonHandler::reset(
-    IJsonReader* pParentReader,
+    CesiumJsonReader::IJsonReader* pParentReader,
     CameraOrthographic* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentReader, pObject);
   this->_pObject = pObject;
@@ -36,7 +36,7 @@ void CameraOrthographicJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonReader*
+CesiumJsonReader::IJsonReader*
 CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyCameraOrthographic(
@@ -45,7 +45,8 @@ CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
       *this->_pObject);
 }
 
-IJsonReader* CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
+CesiumJsonReader::IJsonReader*
+CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
     const std::string& objectType,
     const std::string_view& str,
     CameraOrthographic& o) {

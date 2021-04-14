@@ -3,7 +3,7 @@
 #include "CesiumJsonReader/JsonReader.h"
 #include <cassert>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 template <typename T> class IntegerJsonHandler : public JsonReader {
 public:
   IntegerJsonHandler() noexcept : JsonReader() {}
@@ -46,4 +46,4 @@ public:
 private:
   T* _pInteger = nullptr;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

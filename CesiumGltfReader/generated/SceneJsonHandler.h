@@ -30,6 +30,8 @@ protected:
 
 private:
   Scene* _pObject = nullptr;
-  ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _nodes;
+  CesiumJsonReader::
+      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
+          _nodes;
 };
 } // namespace CesiumGltf

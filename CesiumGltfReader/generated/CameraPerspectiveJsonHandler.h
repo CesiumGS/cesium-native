@@ -29,9 +29,9 @@ protected:
 
 private:
   CameraPerspective* _pObject = nullptr;
-  DoubleJsonHandler _aspectRatio;
-  DoubleJsonHandler _yfov;
-  DoubleJsonHandler _zfar;
-  DoubleJsonHandler _znear;
+  CesiumJsonReader::DoubleJsonHandler _aspectRatio;
+  CesiumJsonReader::DoubleJsonHandler _yfov;
+  CesiumJsonReader::DoubleJsonHandler _zfar;
+  CesiumJsonReader::DoubleJsonHandler _znear;
 };
 } // namespace CesiumGltf

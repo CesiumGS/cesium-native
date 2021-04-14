@@ -1,7 +1,8 @@
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
+
 StringJsonHandler::StringJsonHandler() noexcept : JsonReader() {}
 
 void StringJsonHandler::reset(IJsonReader* pParent, std::string* pString) {

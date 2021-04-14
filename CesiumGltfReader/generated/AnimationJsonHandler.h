@@ -31,7 +31,11 @@ protected:
 
 private:
   Animation* _pObject = nullptr;
-  ArrayJsonHandler<AnimationChannel, AnimationChannelJsonHandler> _channels;
-  ArrayJsonHandler<AnimationSampler, AnimationSamplerJsonHandler> _samplers;
+  CesiumJsonReader::
+      ArrayJsonHandler<AnimationChannel, AnimationChannelJsonHandler>
+          _channels;
+  CesiumJsonReader::
+      ArrayJsonHandler<AnimationSampler, AnimationSamplerJsonHandler>
+          _samplers;
 };
 } // namespace CesiumGltf

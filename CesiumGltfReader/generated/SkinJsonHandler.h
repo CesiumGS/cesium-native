@@ -30,8 +30,10 @@ protected:
 
 private:
   Skin* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _inverseBindMatrices;
-  IntegerJsonHandler<int32_t> _skeleton;
-  ArrayJsonHandler<int32_t, IntegerJsonHandler<int32_t>> _joints;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _inverseBindMatrices;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _skeleton;
+  CesiumJsonReader::
+      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
+          _joints;
 };
 } // namespace CesiumGltf

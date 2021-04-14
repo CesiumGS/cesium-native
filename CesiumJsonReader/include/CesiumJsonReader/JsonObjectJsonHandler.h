@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumUtility/JsonValue.h"
 #include "CesiumJsonReader/JsonReader.h"
+#include "CesiumUtility/JsonValue.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 
 class JsonObjectJsonHandler : public JsonReader {
 public:
@@ -32,4 +32,4 @@ private:
   std::string_view _currentKey;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader
