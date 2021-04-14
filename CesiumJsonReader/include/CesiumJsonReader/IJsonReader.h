@@ -1,11 +1,12 @@
 #pragma once
 
+#include "CesiumJsonReader/Library.h"
 #include <cstdint>
 #include <string_view>
 #include <vector>
 
 namespace CesiumJsonReader {
-class IJsonReader {
+class CESIUMJSONREADER_API IJsonReader {
 public:
   virtual ~IJsonReader(){};
   virtual IJsonReader* readNull() = 0;

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "CesiumJsonReader/JsonReader.h"
+#include "CesiumJsonReader/Library.h"
 
 namespace CesiumJsonReader {
-class BoolJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API BoolJsonHandler : public JsonReader {
 public:
   BoolJsonHandler() noexcept;
   void reset(IJsonReader* pParent, bool* pBool);

@@ -2,11 +2,12 @@
 
 #include "CesiumJsonReader/IJsonReader.h"
 #include "CesiumJsonReader/IgnoreValueJsonHandler.h"
+#include "CesiumJsonReader/Library.h"
 #include <cstdint>
 #include <string>
 
 namespace CesiumJsonReader {
-class JsonReader : public IJsonReader {
+class CESIUMJSONREADER_API JsonReader : public IJsonReader {
 public:
   JsonReader() noexcept;
   virtual IJsonReader* readNull() override;

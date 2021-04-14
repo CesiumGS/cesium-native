@@ -1,10 +1,11 @@
 #pragma once
 
 #include "CesiumJsonReader/JsonReader.h"
+#include "CesiumJsonReader/Library.h"
 #include <optional>
 
 namespace CesiumJsonReader {
-class ObjectJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API ObjectJsonHandler : public JsonReader {
 public:
   ObjectJsonHandler() : JsonReader() {}
 

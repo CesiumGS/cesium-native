@@ -1,10 +1,11 @@
 #pragma once
 
 #include "CesiumJsonReader/IJsonReader.h"
+#include "CesiumJsonReader/Library.h"
 #include <cstdint>
 
 namespace CesiumJsonReader {
-class IgnoreValueJsonHandler : public IJsonReader {
+class CESIUMJSONREADER_API IgnoreValueJsonHandler : public IJsonReader {
 public:
   void reset(IJsonReader* pParent);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumJsonReader/Library.h"
 #include "IntegerJsonHandler.h"
 #include "ObjectJsonHandler.h"
 #include <CesiumGltf/Reader.h>
@@ -8,7 +9,7 @@
 
 namespace CesiumJsonReader {
 template <typename T, typename THandler>
-class DictionaryJsonHandler : public ObjectJsonHandler {
+class CESIUMJSONREADER_API DictionaryJsonHandler : public ObjectJsonHandler {
 public:
   DictionaryJsonHandler() noexcept : ObjectJsonHandler(), _item() {}
 

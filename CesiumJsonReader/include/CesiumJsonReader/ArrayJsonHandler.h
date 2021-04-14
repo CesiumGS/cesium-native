@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumJsonReader/JsonReader.h"
+#include "CesiumJsonReader/Library.h"
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
 #include "StringJsonHandler.h"
@@ -9,7 +10,7 @@
 
 namespace CesiumJsonReader {
 template <typename T, typename THandler>
-class ArrayJsonHandler : public JsonReader {
+class CESIUMJSONREADER_API ArrayJsonHandler : public JsonReader {
 public:
   template <typename... Ts>
   ArrayJsonHandler(Ts&&... args) noexcept
@@ -111,7 +112,8 @@ private:
 };
 
 template <>
-class ArrayJsonHandler<double, DoubleJsonHandler> : public JsonReader {
+class CESIUMJSONREADER_API ArrayJsonHandler<double, DoubleJsonHandler>
+    : public JsonReader {
 public:
   ArrayJsonHandler() : JsonReader() {}
 
@@ -227,7 +229,8 @@ private:
 };
 
 template <typename T>
-class ArrayJsonHandler<T, IntegerJsonHandler<T>> : public JsonReader {
+class CESIUMJSONREADER_API ArrayJsonHandler<T, IntegerJsonHandler<T>>
+    : public JsonReader {
 public:
   ArrayJsonHandler() : JsonReader() {}
 
@@ -337,7 +340,8 @@ private:
 };
 
 template <>
-class ArrayJsonHandler<std::string, StringJsonHandler> : public JsonReader {
+class CESIUMJSONREADER_API ArrayJsonHandler<std::string, StringJsonHandler>
+    : public JsonReader {
 public:
   ArrayJsonHandler() : JsonReader() {}
 

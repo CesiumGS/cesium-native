@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CesiumJsonReader/JsonReader.h"
+#include "CesiumJsonReader/Library.h"
 #include <cassert>
 
 namespace CesiumJsonReader {
-template <typename T> class IntegerJsonHandler : public JsonReader {
+template <typename T>
+class CESIUMJSONREADER_API IntegerJsonHandler : public JsonReader {
 public:
   IntegerJsonHandler() noexcept : JsonReader() {}
 
