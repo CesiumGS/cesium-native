@@ -2,6 +2,7 @@
 #include "CesiumGltf/IExtensionJsonHandler.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/Reader.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -17,119 +18,9 @@
 #include <stb_image.h>
 
 using namespace CesiumGltf;
-using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
-struct Dispatcher {
-  IJsonHandler* pCurrent;
-
-  bool update(IJsonHandler* pNext) {
-    if (pNext == nullptr) {
-      return false;
-    }
-
-    this->pCurrent = pNext;
-    return true;
-  }
-
-  bool Null() { return update(pCurrent->readNull()); }
-  bool Bool(bool b) { return update(pCurrent->readBool(b)); }
-  bool Int(int i) { return update(pCurrent->readInt32(i)); }
-  bool Uint(unsigned i) { return update(pCurrent->readUint32(i)); }
-  bool Int64(int64_t i) { return update(pCurrent->readInt64(i)); }
-  bool Uint64(uint64_t i) { return update(pCurrent->readUint64(i)); }
-  bool Double(double d) { return update(pCurrent->readDouble(d)); }
-  bool RawNumber(const char* /* str */, size_t /* length */, bool /* copy */) {
-    // This should not be called.
-    assert(false);
-    return false;
-  }
-  bool String(const char* str, size_t length, bool /* copy */) {
-    return update(pCurrent->readString(std::string_view(str, length)));
-  }
-  bool StartObject() { return update(pCurrent->readObjectStart()); }
-  bool Key(const char* str, size_t length, bool /* copy */) {
-    return update(pCurrent->readObjectKey(std::string_view(str, length)));
-  }
-  bool EndObject(size_t /* memberCount */) {
-    return update(pCurrent->readObjectEnd());
-  }
-  bool StartArray() { return update(pCurrent->readArrayStart()); }
-  bool EndArray(size_t /* elementCount */) {
-    return update(pCurrent->readArrayEnd());
-  }
-};
-
-class FinalJsonHandler : public ObjectJsonHandler {
-public:
-  FinalJsonHandler(
-      const ReaderContext& /* context */,
-      ModelReaderResult& result,
-      rapidjson::MemoryStream& inputStream)
-      : ObjectJsonHandler(), _result(result), _inputStream(inputStream) {
-    reset(this);
-  }
-
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context) override {
-    std::string fullWarning = warning;
-    fullWarning += "\n  While parsing: ";
-    for (auto it = context.rbegin(); it != context.rend(); ++it) {
-      fullWarning += *it;
-    }
-
-    fullWarning += "\n  From byte offset: ";
-    fullWarning += std::to_string(this->_inputStream.Tell());
-
-    this->_result.warnings.emplace_back(std::move(fullWarning));
-  }
-
-private:
-  ModelReaderResult& _result;
-  rapidjson::MemoryStream& _inputStream;
-};
-
-std::string getMessageFromRapidJsonError(rapidjson::ParseErrorCode code) {
-  switch (code) {
-  case rapidjson::ParseErrorCode::kParseErrorDocumentEmpty:
-    return "The document is empty.";
-  case rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular:
-    return "The document root must not be followed by other values.";
-  case rapidjson::ParseErrorCode::kParseErrorValueInvalid:
-    return "Invalid value.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissName:
-    return "Missing a name for object member.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissColon:
-    return "Missing a colon after a name of object member.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket:
-    return "Missing a comma or '}' after an object member.";
-  case rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket:
-    return "Missing a comma or ']' after an array element.";
-  case rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex:
-    return "Incorrect hex digit after \\u escape in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid:
-    return "The surrogate pair in string is invalid.";
-  case rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid:
-    return "Invalid escape character in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark:
-    return "Missing a closing quotation mark in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding:
-    return "Invalid encoding in string.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberTooBig:
-    return "Number too big to be stored in double.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberMissFraction:
-    return "Missing fraction part in number.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberMissExponent:
-    return "Missing exponent in number.";
-  case rapidjson::ParseErrorCode::kParseErrorTermination:
-    return "Parsing was terminated.";
-  case rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError:
-  default:
-    return "Unspecific syntax error.";
-  }
-}
 
 #pragma pack(push, 1)
 struct GlbHeader {
@@ -155,39 +46,15 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) {
 ModelReaderResult readJsonModel(
     const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
-  rapidjson::Reader reader;
-  rapidjson::MemoryStream inputStream(
-      reinterpret_cast<const char*>(data.data()),
-      data.size());
 
-  ModelReaderResult result;
   ModelJsonHandler modelHandler(context);
-  FinalJsonHandler finalHandler(context, result, inputStream);
-  Dispatcher dispatcher{&modelHandler};
+  CesiumJsonReader::ReadJsonResult<Model> jsonResult = CesiumJsonReader::Reader::readJson(data, modelHandler);
 
-  result.model.emplace();
-  modelHandler.reset(&finalHandler, &result.model.value());
-
-  reader.IterativeParseInit();
-
-  bool success = true;
-  while (success && !reader.IterativeParseComplete()) {
-    success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(
-        inputStream,
-        dispatcher);
-  }
-
-  if (reader.HasParseError()) {
-    result.model.reset();
-
-    std::string s("glTF JSON parsing error at byte offset ");
-    s += std::to_string(reader.GetErrorOffset());
-    s += ": ";
-    s += getMessageFromRapidJsonError(reader.GetParseErrorCode());
-    result.errors.emplace_back(std::move(s));
-  }
-
-  return result;
+  return ModelReaderResult {
+    std::move(jsonResult.value),
+    std::move(jsonResult.errors),
+    std::move(jsonResult.warnings)
+  };
 }
 
 namespace {
@@ -378,11 +245,11 @@ void postprocess(
   }
 }
 
-class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
+class AnyExtensionJsonHandler : public CesiumJsonReader::JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
   AnyExtensionJsonHandler(const ReaderContext& /* context */)
-      : JsonObjectJsonHandler() {}
+      : CesiumJsonReader::JsonObjectJsonHandler() {}
 
   virtual void reset(
       IJsonHandler* pParentHandler,

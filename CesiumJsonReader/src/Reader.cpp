@@ -88,15 +88,45 @@ std::string getMessageFromRapidJsonError(rapidjson::ParseErrorCode code) {
 
 } // namespace
 
+Reader::FinalJsonHandler::FinalJsonHandler(std::vector<std::string>& warnings)
+    : JsonHandler(), _warnings(warnings), _pInputStream(nullptr) {
+  reset(this);
+}
+
+void Reader::FinalJsonHandler::reportWarning(
+    const std::string& warning,
+    std::vector<std::string>&& context) {
+  std::string fullWarning = warning;
+  fullWarning += "\n  While parsing: ";
+  for (auto it = context.rbegin(); it != context.rend(); ++it) {
+    fullWarning += *it;
+  }
+
+  fullWarning += "\n  From byte offset: ";
+  fullWarning += this->_pInputStream
+                      ? std::to_string(this->_pInputStream->Tell())
+                      : "unknown";
+
+  this->_warnings.emplace_back(std::move(fullWarning));
+}
+
+void Reader::FinalJsonHandler::setInputStream(rapidjson::MemoryStream* pInputStream) {
+  this->_pInputStream = pInputStream;
+}
+
 /*static*/ void Reader::internalRead(
     const gsl::span<const std::byte>& data,
     IJsonHandler& handler,
+    FinalJsonHandler& finalHandler,
     std::vector<std::string>& errors,
     std::vector<std::string>& /* warnings */) {
+
   rapidjson::Reader reader;
   rapidjson::MemoryStream inputStream(
       reinterpret_cast<const char*>(data.data()),
       data.size());
+
+  finalHandler.setInputStream(&inputStream);
 
   Dispatcher dispatcher{&handler};
 

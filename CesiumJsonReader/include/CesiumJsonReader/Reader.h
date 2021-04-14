@@ -1,12 +1,16 @@
 #pragma once
 
-#include "CesiumJsonReader/IJsonHandler.h"
+#include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/Library.h"
 #include <cstddef>
 #include <gsl/span>
 #include <optional>
 #include <string>
 #include <vector>
+
+namespace rapidjson {
+struct MemoryStream;
+}
 
 namespace CesiumJsonReader {
 
@@ -49,10 +53,15 @@ public:
 
     result.value.emplace();
 
-    FinalHandler finalHandler(result.warnings);
+    FinalJsonHandler finalHandler(result.warnings);
     handler.reset(&finalHandler, &result.value.value());
 
-    Reader::internalRead(data, handler, result.errors, result.warnings);
+    Reader::internalRead(
+        data,
+        handler,
+        finalHandler,
+        result.errors,
+        result.warnings);
 
     if (!result.errors.empty()) {
       result.value.reset();
@@ -62,9 +71,23 @@ public:
   }
 
 private:
+  class FinalJsonHandler : public JsonHandler {
+  public:
+    FinalJsonHandler(std::vector<std::string>& warnings);
+    virtual void reportWarning(
+        const std::string& warning,
+        std::vector<std::string>&& context) override;
+    void setInputStream(rapidjson::MemoryStream* pInputStream);
+
+  private:
+    std::vector<std::string>& _warnings;
+    rapidjson::MemoryStream* _pInputStream;
+  };
+
   static void internalRead(
       const gsl::span<const std::byte>& data,
       IJsonHandler& handler,
+      FinalJsonHandler& finalHandler,
       std::vector<std::string>& errors,
       std::vector<std::string>& warnings);
 };
