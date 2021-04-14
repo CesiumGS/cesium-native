@@ -1,6 +1,6 @@
 #include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "CesiumGltf/GltfReader.h"
+#include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "catch2/catch.hpp"
 #include <cstddef>
 #include <cstdio>

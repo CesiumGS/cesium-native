@@ -1,4 +1,3 @@
-const createExtensionsProperty = require("./createExtensionsProperty");
 const fs = require("fs");
 const getNameFromSchema = require("./getNameFromSchema");
 const indent = require("./indent");
@@ -28,11 +27,6 @@ function generate(options, schema) {
       resolveProperty(schemaCache, config, name, key, schema.properties[key], required)
     )
     .filter((property) => property !== undefined);
-
-  const extensionsProperty = createExtensionsProperty(options.extensions[schema.title], name, schema);
-  if (extensionsProperty) {
-    properties.push(extensionsProperty);
-  }
 
   const localTypes = lodash.uniq(
     lodash.flatten(properties.map((property) => property.localTypes))
