@@ -7,6 +7,7 @@
 - Added diagnostic details to error messages for invalid glTF inputs
 - Added an `Axis` enum and `AxisTransforms` class for coordinate system transforms
 - Added support for the legacy `gltfUpVector` string property in the `asset` part of tilesets. The up vector is read and passed as an `Axis` in the `extras["gltfUpVector"]` property, so that receivers may rotate the glTF model's up-vector to match the Z-up convention of 3D Tiles.
+- 3D Tiles geometric error is now scaled by the tile's transform.
 
 ### v0.1.0 - 2021-03-30
 
