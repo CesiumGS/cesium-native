@@ -42,7 +42,7 @@ IonRasterOverlay::createTileProvider(
 
   return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
       .thenInWorkerThread(
-          [pLogger](std::shared_ptr<IAssetRequest> pRequest)
+          [pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlay> {
             const IAssetResponse* pResponse = pRequest->response();
 
@@ -104,19 +104,18 @@ IonRasterOverlay::createTileProvider(
                   key,
                   mapStyle,
                   culture);
-            } else {
-              std::string url =
-                  JsonHelpers::getStringOrDefault(response, "url", "");
-              return std::make_unique<TileMapServiceRasterOverlay>(
-                  url,
-                  std::vector<CesiumAsync::IAssetAccessor::THeader>{
-                      std::make_pair(
-                          "Authorization",
-                          "Bearer " + JsonHelpers::getStringOrDefault(
-                                          response,
-                                          "accessToken",
-                                          ""))});
             }
+            std::string url =
+                JsonHelpers::getStringOrDefault(response, "url", "");
+            return std::make_unique<TileMapServiceRasterOverlay>(
+                url,
+                std::vector<CesiumAsync::IAssetAccessor::THeader>{
+                    std::make_pair(
+                        "Authorization",
+                        "Bearer " + JsonHelpers::getStringOrDefault(
+                                        response,
+                                        "accessToken",
+                                        ""))});
           })
       .thenInMainThread([asyncSystem,
                          pOwner,

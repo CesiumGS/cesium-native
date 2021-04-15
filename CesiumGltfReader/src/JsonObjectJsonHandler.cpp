@@ -124,7 +124,6 @@ IJsonHandler* JsonObjectJsonHandler::doneElement() {
   if (!pArray) {
     this->_stack.pop_back();
     return this->_stack.empty() ? this->parent() : this;
-  } else {
-    return this;
   }
+  return this;
 }

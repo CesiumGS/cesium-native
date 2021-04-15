@@ -47,8 +47,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
-    std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-    std::shared_ptr<spdlog::logger> pLogger,
+    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
     const CesiumGeometry::Rectangle& coverageRectangle,
@@ -460,51 +460,65 @@ CesiumAsync::Future<LoadedRasterOverlayImage>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
-    const std::vector<Credit>& credits) const {
+    const LoadTileImageFromUrlOptions& options) const {
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread([credits,
-                           url](std::shared_ptr<IAssetRequest>&& pRequest) {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (pResponse == nullptr) {
-          return LoadedRasterOverlayImage{
-              std::nullopt,
-              credits,
-              {"Image request for " + url + " failed."},
-              {}};
-        }
+      .thenInWorkerThread(
+          [url, options = options](
+              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (pResponse == nullptr) {
+              return LoadedRasterOverlayImage{
+                  std::nullopt,
+                  std::move(options.credits),
+                  {"Image request for " + url + " failed."},
+                  {}};
+            }
 
-        if (pResponse->data().size() == 0) {
-          return LoadedRasterOverlayImage{
-              std::nullopt,
-              credits,
-              {"Image response for " + url + " is empty."},
-              {}};
-        }
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              std::string message = "Image response code " +
+                                    std::to_string(pResponse->statusCode()) +
+                                    " for " + url;
+              return LoadedRasterOverlayImage{
+                  std::nullopt,
+                  std::move(options.credits),
+                  {message},
+                  {}};
+            }
 
-        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          std::string message = "Image response code " +
-                                std::to_string(pResponse->statusCode()) +
-                                " for " + url;
-          return LoadedRasterOverlayImage{std::nullopt, credits, {message}, {}};
-        }
+            if (pResponse->data().empty()) {
+              if (options.allowEmptyImages) {
+                return LoadedRasterOverlayImage{
+                    CesiumGltf::ImageCesium(),
+                    std::move(options.credits),
+                    {},
+                    {}};
+              }
+              return LoadedRasterOverlayImage{
+                  std::nullopt,
+                  std::move(options.credits),
+                  {"Image response for " + url + " is empty."},
+                  {}};
+            }
 
-        gsl::span<const std::byte> data = pResponse->data();
-        CesiumGltf::ImageReaderResult loadedImage = CesiumGltf::readImage(data);
+            gsl::span<const std::byte> data = pResponse->data();
+            CesiumGltf::ImageReaderResult loadedImage =
+                CesiumGltf::readImage(data);
 
-        if (!loadedImage.errors.empty()) {
-          loadedImage.errors.push_back("Image url: " + url);
-        }
-        if (!loadedImage.warnings.empty()) {
-          loadedImage.warnings.push_back("Image url: " + url);
-        }
+            if (!loadedImage.errors.empty()) {
+              loadedImage.errors.push_back("Image url: " + url);
+            }
+            if (!loadedImage.warnings.empty()) {
+              loadedImage.warnings.push_back("Image url: " + url);
+            }
 
-        return LoadedRasterOverlayImage{
-            loadedImage.image,
-            credits,
-            std::move(loadedImage.errors),
-            std::move(loadedImage.warnings)};
-      });
+            return LoadedRasterOverlayImage{
+                loadedImage.image,
+                std::move(options.credits),
+                std::move(loadedImage.errors),
+                std::move(loadedImage.warnings)};
+          });
 }
 
 void RasterOverlayTileProvider::doLoad(
@@ -556,9 +570,10 @@ void RasterOverlayTileProvider::doLoad(
 
             int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
 
-            if (image.pixelData.size() >=
-                static_cast<size_t>(
-                    image.width * image.height * bytesPerPixel)) {
+            if (image.width > 0 && image.height > 0 &&
+                image.pixelData.size() >=
+                    static_cast<size_t>(
+                        image.width * image.height * bytesPerPixel)) {
               void* pRendererResources =
                   pPrepareRendererResources->prepareRasterInLoadThread(image);
 
@@ -568,12 +583,11 @@ void RasterOverlayTileProvider::doLoad(
               result.credits = std::move(loadedImage.credits);
               result.pRendererResources = pRendererResources;
               return result;
-            } else {
-              LoadResult result;
-              result.pRendererResources = nullptr;
-              result.state = RasterOverlayTile::LoadState::Failed;
-              return result;
             }
+            LoadResult result;
+            result.pRendererResources = nullptr;
+            result.state = RasterOverlayTile::LoadState::Failed;
+            return result;
           })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;

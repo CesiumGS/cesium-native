@@ -14,22 +14,22 @@ struct CESIUMGLTF_API ImageCesium final {
   /**
    * @brief The width of the image in pixels.
    */
-  int32_t width;
+  int32_t width = 0;
 
   /**
    * @brief The height of the image in pixels.
    */
-  int32_t height;
+  int32_t height = 0;
 
   /**
    * @brief The number of channels per pixel.
    */
-  int32_t channels;
+  int32_t channels = 4;
 
   /**
    * @brief The number of bytes per channel.
    */
-  int32_t bytesPerChannel;
+  int32_t bytesPerChannel = 1;
 
   /**
    * @brief The raw pixel data.

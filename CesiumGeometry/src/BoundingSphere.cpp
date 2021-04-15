@@ -13,7 +13,8 @@ BoundingSphere::intersectPlane(const Plane& plane) const noexcept {
   if (distanceToPlane < -radius) {
     // The center point is negative side of the plane normal
     return CullingResult::Outside;
-  } else if (distanceToPlane < radius) {
+  }
+  if (distanceToPlane < radius) {
     // The center point is positive side of the plane, but radius extends beyond
     // it; partial overlap
     return CullingResult::Intersecting;

@@ -49,7 +49,7 @@ public:
    * indicates the region that is covered by the raster overlay tile.
    */
   RasterMappedTo3DTile(
-      CesiumUtility::IntrusivePointer<RasterOverlayTile> pRasterTile,
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
       const CesiumGeometry::Rectangle& textureCoordinateRectangle);
 
   /**

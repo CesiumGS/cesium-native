@@ -23,8 +23,9 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
-      std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -144,7 +145,8 @@ TileMapServiceRasterOverlay::createTileProvider(
            pLogger,
            options = this->_options,
            url = this->_url,
-           headers = this->_headers](std::shared_ptr<IAssetRequest> pRequest)
+           headers =
+               this->_headers](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -303,7 +305,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 coverageRectangle,
                 url,
                 headers,
-                fileExtension.size() > 0 ? "." + fileExtension : fileExtension,
+                !fileExtension.empty() ? "." + fileExtension : fileExtension,
                 tileWidth,
                 tileHeight,
                 minimumLevel,
