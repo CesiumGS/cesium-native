@@ -103,8 +103,9 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
-      std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,

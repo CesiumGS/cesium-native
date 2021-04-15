@@ -15,7 +15,7 @@ GltfContent::load(const TileContentLoadInput& input) {
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
-    std::shared_ptr<spdlog::logger> pLogger,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const gsl::span<const std::byte>& data) {
   std::unique_ptr<TileContentLoadResult> pResult =

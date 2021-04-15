@@ -23,9 +23,8 @@ public:
     auto it = this->_pCacheItem->cacheResponse.headers.find("Content-Type");
     if (it == this->_pCacheItem->cacheResponse.headers.end()) {
       return std::string();
-    } else {
-      return it->second;
     }
+    return it->second;
   }
 
   virtual const HttpHeaders& headers() const override {

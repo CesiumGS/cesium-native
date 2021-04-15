@@ -86,9 +86,8 @@ std::string Uri::addQuery(
   // TODO
   if (uri.find('?') != std::string::npos) {
     return uri + "&" + key + "=" + value;
-  } else {
-    return uri + "?" + key + "=" + value;
   }
+  return uri + "?" + key + "=" + value;
   // UriUriA baseUri;
 
   // if (uriParseSingleUriA(&baseUri, uri.c_str(), nullptr) != URI_SUCCESS)

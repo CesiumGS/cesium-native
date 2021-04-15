@@ -95,7 +95,7 @@ bool QuadtreeTileAvailability::isTileAvailable(
     }
   }
 
-  if (pNode->rectangles.size() == 0 ||
+  if (pNode->rectangles.empty() ||
       pNode->rectangles.back().level <= rectangle.level) {
     pNode->rectangles.push_back(rectangle);
   } else {
@@ -154,7 +154,8 @@ bool QuadtreeTileAvailability::isTileAvailable(
             findMaxLevelFromNode(pNode, *pNode->ur, position));
       }
       break;
-    } else if (ll) {
+    }
+    if (ll) {
       pNode = pNode->ll.get();
     } else if (lr) {
       pNode = pNode->lr.get();
