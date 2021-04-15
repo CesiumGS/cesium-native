@@ -172,7 +172,7 @@ ModelReaderResult readBinaryModel(
   if (result.model && !binaryChunk.empty()) {
     Model& model = result.model.value();
 
-    if (model.buffers.size() == 0) {
+    if (model.buffers.empty()) {
       result.errors.emplace_back(
           "GLB has a binary chunk but the JSON does not define any buffers.");
       return result;

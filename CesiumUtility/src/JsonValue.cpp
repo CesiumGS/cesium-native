@@ -6,27 +6,24 @@ double JsonValue::getNumber(double defaultValue) const {
   const double* p = std::get_if<Number>(&this->value);
   if (p) {
     return *p;
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 bool JsonValue::getBool(bool defaultValue) const {
   const bool* p = std::get_if<Bool>(&this->value);
   if (p) {
     return *p;
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 std::string JsonValue::getString(const std::string& defaultValue) const {
   const std::string* p = std::get_if<String>(&this->value);
   if (p) {
     return *p;
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 const JsonValue* JsonValue::getValueForKey(const std::string& key) const {

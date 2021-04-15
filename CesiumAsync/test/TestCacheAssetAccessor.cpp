@@ -80,7 +80,7 @@ public:
 
 class MockAssetAccessor : public IAssetAccessor {
 public:
-  MockAssetAccessor(std::shared_ptr<IAssetRequest> request)
+  MockAssetAccessor(const std::shared_ptr<IAssetRequest>& request)
       : testRequest{request} {}
 
   virtual CesiumAsync::Future<std::shared_ptr<IAssetRequest>> requestAsset(
@@ -525,25 +525,27 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread([](std::shared_ptr<IAssetRequest> completedRequest) {
-          REQUIRE(completedRequest != nullptr);
-          REQUIRE(completedRequest->url() == "test.com");
-          REQUIRE(
-              completedRequest->headers() ==
-              HttpHeaders{{"Request-Header", "Request-Value"}});
-          REQUIRE(completedRequest->method() == "GET");
+        .thenInMainThread(
+            [](const std::shared_ptr<IAssetRequest>& completedRequest) {
+              REQUIRE(completedRequest != nullptr);
+              REQUIRE(completedRequest->url() == "test.com");
+              REQUIRE(
+                  completedRequest->headers() ==
+                  HttpHeaders{{"Request-Header", "Request-Value"}});
+              REQUIRE(completedRequest->method() == "GET");
 
-          const IAssetResponse* response = completedRequest->response();
-          REQUIRE(response != nullptr);
-          REQUIRE(
-              response->headers().at("Response-Header") == "Response-Value");
-          REQUIRE(response->statusCode() == 200);
-          REQUIRE(response->contentType() == "app/json");
-          REQUIRE(response->data().empty());
-          REQUIRE(!ResponseCacheControl::parseFromResponseHeaders(
-                       response->headers())
-                       .has_value());
-        });
+              const IAssetResponse* response = completedRequest->response();
+              REQUIRE(response != nullptr);
+              REQUIRE(
+                  response->headers().at("Response-Header") ==
+                  "Response-Value");
+              REQUIRE(response->statusCode() == 200);
+              REQUIRE(response->contentType() == "app/json");
+              REQUIRE(response->data().empty());
+              REQUIRE(!ResponseCacheControl::parseFromResponseHeaders(
+                           response->headers())
+                           .has_value());
+            });
     asyncSystem.dispatchMainThreadTasks();
   }
 
@@ -603,38 +605,39 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread([](std::shared_ptr<IAssetRequest> completedRequest) {
-          REQUIRE(completedRequest != nullptr);
-          REQUIRE(completedRequest->url() == "cache.com");
-          REQUIRE(
-              completedRequest->headers() ==
-              HttpHeaders{{"Cache-Request-Header", "Cache-Request-Value"}});
-          REQUIRE(completedRequest->method() == "GET");
+        .thenInMainThread(
+            [](const std::shared_ptr<IAssetRequest>& completedRequest) {
+              REQUIRE(completedRequest != nullptr);
+              REQUIRE(completedRequest->url() == "cache.com");
+              REQUIRE(
+                  completedRequest->headers() ==
+                  HttpHeaders{{"Cache-Request-Header", "Cache-Request-Value"}});
+              REQUIRE(completedRequest->method() == "GET");
 
-          const IAssetResponse* response = completedRequest->response();
-          REQUIRE(response != nullptr);
-          REQUIRE(
-              response->headers().at("Cache-Response-Header") ==
-              "Cache-Response-Value");
-          REQUIRE(response->statusCode() == 200);
-          REQUIRE(response->contentType() == "app/json");
-          REQUIRE(response->data().empty());
+              const IAssetResponse* response = completedRequest->response();
+              REQUIRE(response != nullptr);
+              REQUIRE(
+                  response->headers().at("Cache-Response-Header") ==
+                  "Cache-Response-Value");
+              REQUIRE(response->statusCode() == 200);
+              REQUIRE(response->contentType() == "app/json");
+              REQUIRE(response->data().empty());
 
-          std::optional<ResponseCacheControl> cacheControl =
-              ResponseCacheControl::parseFromResponseHeaders(
-                  response->headers());
+              std::optional<ResponseCacheControl> cacheControl =
+                  ResponseCacheControl::parseFromResponseHeaders(
+                      response->headers());
 
-          REQUIRE(cacheControl.has_value());
-          REQUIRE(cacheControl->mustRevalidate() == false);
-          REQUIRE(cacheControl->noCache() == false);
-          REQUIRE(cacheControl->noStore() == false);
-          REQUIRE(cacheControl->noTransform() == false);
-          REQUIRE(cacheControl->accessControlPublic() == false);
-          REQUIRE(cacheControl->accessControlPrivate() == true);
-          REQUIRE(cacheControl->proxyRevalidate() == false);
-          REQUIRE(cacheControl->maxAge() == 100);
-          REQUIRE(cacheControl->sharedMaxAge() == 0);
-        });
+              REQUIRE(cacheControl.has_value());
+              REQUIRE(cacheControl->mustRevalidate() == false);
+              REQUIRE(cacheControl->noCache() == false);
+              REQUIRE(cacheControl->noStore() == false);
+              REQUIRE(cacheControl->noTransform() == false);
+              REQUIRE(cacheControl->accessControlPublic() == false);
+              REQUIRE(cacheControl->accessControlPrivate() == true);
+              REQUIRE(cacheControl->proxyRevalidate() == false);
+              REQUIRE(cacheControl->maxAge() == 100);
+              REQUIRE(cacheControl->sharedMaxAge() == 0);
+            });
     asyncSystem.dispatchMainThreadTasks();
   }
 
@@ -695,42 +698,43 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread([](std::shared_ptr<IAssetRequest> completedRequest) {
-          REQUIRE(completedRequest != nullptr);
-          REQUIRE(completedRequest->url() == "cache.com");
-          REQUIRE(
-              completedRequest->headers() ==
-              HttpHeaders{{"Cache-Request-Header", "Cache-Request-Value"}});
-          REQUIRE(completedRequest->method() == "GET");
+        .thenInMainThread(
+            [](const std::shared_ptr<IAssetRequest>& completedRequest) {
+              REQUIRE(completedRequest != nullptr);
+              REQUIRE(completedRequest->url() == "cache.com");
+              REQUIRE(
+                  completedRequest->headers() ==
+                  HttpHeaders{{"Cache-Request-Header", "Cache-Request-Value"}});
+              REQUIRE(completedRequest->method() == "GET");
 
-          // check response header is updated
-          const IAssetResponse* response = completedRequest->response();
-          REQUIRE(response != nullptr);
-          REQUIRE(
-              response->headers().at("Revalidation-Response-Header") ==
-              "Revalidation-Response-Value");
-          REQUIRE(
-              response->headers().at("Cache-Response-Header") ==
-              "Cache-Response-Value");
-          REQUIRE(response->statusCode() == 200);
-          REQUIRE(response->contentType() == "app/json");
-          REQUIRE(response->data().empty());
+              // check response header is updated
+              const IAssetResponse* response = completedRequest->response();
+              REQUIRE(response != nullptr);
+              REQUIRE(
+                  response->headers().at("Revalidation-Response-Header") ==
+                  "Revalidation-Response-Value");
+              REQUIRE(
+                  response->headers().at("Cache-Response-Header") ==
+                  "Cache-Response-Value");
+              REQUIRE(response->statusCode() == 200);
+              REQUIRE(response->contentType() == "app/json");
+              REQUIRE(response->data().empty());
 
-          // check cache control is updated
-          std::optional<ResponseCacheControl> cacheControl =
-              ResponseCacheControl::parseFromResponseHeaders(
-                  response->headers());
-          REQUIRE(cacheControl.has_value());
-          REQUIRE(cacheControl->mustRevalidate() == true);
-          REQUIRE(cacheControl->noCache() == false);
-          REQUIRE(cacheControl->noStore() == false);
-          REQUIRE(cacheControl->noTransform() == false);
-          REQUIRE(cacheControl->accessControlPublic() == false);
-          REQUIRE(cacheControl->accessControlPrivate() == true);
-          REQUIRE(cacheControl->proxyRevalidate() == false);
-          REQUIRE(cacheControl->maxAge() == 300);
-          REQUIRE(cacheControl->sharedMaxAge() == 0);
-        });
+              // check cache control is updated
+              std::optional<ResponseCacheControl> cacheControl =
+                  ResponseCacheControl::parseFromResponseHeaders(
+                      response->headers());
+              REQUIRE(cacheControl.has_value());
+              REQUIRE(cacheControl->mustRevalidate() == true);
+              REQUIRE(cacheControl->noCache() == false);
+              REQUIRE(cacheControl->noStore() == false);
+              REQUIRE(cacheControl->noTransform() == false);
+              REQUIRE(cacheControl->accessControlPublic() == false);
+              REQUIRE(cacheControl->accessControlPrivate() == true);
+              REQUIRE(cacheControl->proxyRevalidate() == false);
+              REQUIRE(cacheControl->maxAge() == 300);
+              REQUIRE(cacheControl->sharedMaxAge() == 0);
+            });
     asyncSystem.dispatchMainThreadTasks();
   }
 
@@ -790,25 +794,26 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread([](std::shared_ptr<IAssetRequest> completedRequest) {
-          REQUIRE(completedRequest != nullptr);
-          REQUIRE(completedRequest->url() == "test.com");
-          REQUIRE(completedRequest->headers() == HttpHeaders{});
-          REQUIRE(completedRequest->method() == "GET");
+        .thenInMainThread(
+            [](const std::shared_ptr<IAssetRequest>& completedRequest) {
+              REQUIRE(completedRequest != nullptr);
+              REQUIRE(completedRequest->url() == "test.com");
+              REQUIRE(completedRequest->headers().empty());
+              REQUIRE(completedRequest->method() == "GET");
 
-          const IAssetResponse* response = completedRequest->response();
-          REQUIRE(response != nullptr);
+              const IAssetResponse* response = completedRequest->response();
+              REQUIRE(response != nullptr);
 
-          REQUIRE(
-              response->headers().at("Revalidation-Response-Header") ==
-              "Revalidation-Response-Value");
-          REQUIRE(response->statusCode() == 200);
-          REQUIRE(response->contentType() == "app/json");
-          REQUIRE(response->data().empty());
-          REQUIRE(!ResponseCacheControl::parseFromResponseHeaders(
-                       response->headers())
-                       .has_value());
-        });
+              REQUIRE(
+                  response->headers().at("Revalidation-Response-Header") ==
+                  "Revalidation-Response-Value");
+              REQUIRE(response->statusCode() == 200);
+              REQUIRE(response->contentType() == "app/json");
+              REQUIRE(response->data().empty());
+              REQUIRE(!ResponseCacheControl::parseFromResponseHeaders(
+                           response->headers())
+                           .has_value());
+            });
     asyncSystem.dispatchMainThreadTasks();
   }
 }

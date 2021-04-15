@@ -31,11 +31,11 @@ public:
       auto it = this->_pDictionary1->emplace(str, T()).first;
 
       return this->property(it->first.c_str(), this->_item, it->second);
-    } else {
-      auto it = this->_pDictionary2->emplace(str, T()).first;
-
-      return this->property(it->first.c_str(), this->_item, it->second);
     }
+
+    auto it = this->_pDictionary2->emplace(str, T()).first;
+
+    return this->property(it->first.c_str(), this->_item, it->second);
   }
 
 private:

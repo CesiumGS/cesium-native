@@ -36,7 +36,8 @@ OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
   if (distanceToPlane <= -radEffective) {
     // The entire box is on the negative side of the plane normal
     return CullingResult::Outside;
-  } else if (distanceToPlane >= radEffective) {
+  }
+  if (distanceToPlane >= radEffective) {
     // The entire box is on the positive side of the plane normal
     return CullingResult::Inside;
   }

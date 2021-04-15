@@ -17,8 +17,8 @@ IJsonHandler* ObjectJsonHandler::readObjectEnd() {
 
   if (this->_depth > 0)
     return this->EndSubObject();
-  else
-    return this->parent();
+
+  return this->parent();
 }
 
 IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }

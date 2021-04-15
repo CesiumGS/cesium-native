@@ -99,8 +99,6 @@ void clipTriangleAtAxisAlignedThreshold(
     result.emplace_back(i2);
   }
   // else completely behind threshold
-
-  return;
 }
 
 } // namespace CesiumGeometry

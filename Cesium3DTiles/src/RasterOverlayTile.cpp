@@ -14,9 +14,7 @@ namespace Cesium3DTiles {
 RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
     : _pOverlay(&overlay),
       _tileID(0, 0, 0),
-      _tileCredits(),
       _state(LoadState::Placeholder),
-      _image(),
       _pRendererResources(nullptr),
       _references(0) {}
 
@@ -25,9 +23,7 @@ RasterOverlayTile::RasterOverlayTile(
     const CesiumGeometry::QuadtreeTileID& tileID)
     : _pOverlay(&overlay),
       _tileID(tileID),
-      _tileCredits(),
       _state(LoadState::Unloaded),
-      _image(),
       _pRendererResources(nullptr),
       _references(0) {}
 

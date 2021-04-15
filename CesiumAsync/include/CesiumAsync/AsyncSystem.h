@@ -253,7 +253,7 @@ public:
    * @param pTaskProcessor The interface used to run tasks in background
    * threads.
    */
-  AsyncSystem(std::shared_ptr<ITaskProcessor> pTaskProcessor) noexcept;
+  AsyncSystem(const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept;
 
   template <class T, class Func> Future<T> createFuture(Func&& f) const {
     std::shared_ptr<async::event_task<T>> pEvent =
