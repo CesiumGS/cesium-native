@@ -28,6 +28,7 @@ private:
   ExtensibleObject* _pObject = nullptr;
   std::string _objectType;
   std::unique_ptr<IExtensionJsonHandler> _currentExtensionHandler;
+  
 };
 
 } // namespace CesiumGltf

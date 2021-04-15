@@ -143,7 +143,7 @@ public:
   template <typename TExtended, typename TExtensionHandler>
   void registerExtension(const std::string& extensionName) {
     auto it =
-        this->_extensions.emplace(extensionName, ObjectTypeToReader()).first;
+        this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
     it->second.insert_or_assign(
         TExtended::TypeName,
         ExtensionReaderFactory([](const ReaderContext& context) {
