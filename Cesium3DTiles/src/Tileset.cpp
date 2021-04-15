@@ -9,6 +9,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/JsonHelpers.h"
@@ -57,7 +58,8 @@ Tileset::Tileset(
       _loadedTiles(),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false) {
+      _supportsRasterOverlays(false),
+      _gltfUpAxis(CesiumGeometry::Axis::Y) {
   ++this->_loadsInProgress;
   this->_loadTilesetJson(url);
 }
@@ -508,6 +510,55 @@ void Tileset::_loadTilesetJson(
       });
 }
 
+namespace {
+/**
+ * @brief Obtains the up-axis that should be used for glTF content of the
+ * tileset.
+ *
+ * If the given tileset JSON does not contain an `asset.gltfUpAxis` string
+ * property, then the default value of CesiumGeometry::Axis::Y is returned.
+ *
+ * Otherwise, a warning is printed, saying that the `gltfUpAxis` property is
+ * not strictly compliant to the 3D tiles standard, and the return value
+ * will depend on the string value of this property, which may be "X", "Y", or
+ * "Z", case-insensitively, causing CesiumGeometry::Axis::X,
+ * CesiumGeometry::Axis::Y, or CesiumGeometry::Axis::Z to be returned,
+ * respectively.
+ *
+ * @param tileset The tileset JSON
+ * @return The up-axis to use for glTF content
+ */
+CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
+  auto assetIt = tileset.FindMember("asset");
+  if (assetIt == tileset.MemberEnd()) {
+    return CesiumGeometry::Axis::Y;
+  }
+  const rapidjson::Value& assetJson = assetIt->value;
+  auto gltfUpAxisIt = assetJson.FindMember("gltfUpAxis");
+  if (gltfUpAxisIt == assetJson.MemberEnd()) {
+    return CesiumGeometry::Axis::Y;
+  }
+
+  SPDLOG_WARN("The tileset contains a gltfUpAxis property. "
+              "This property is not part of the specification. "
+              "All glTF content should use the Y-axis as the up-axis.");
+
+  const rapidjson::Value& gltfUpAxisJson = gltfUpAxisIt->value;
+  auto gltfUpAxisString = std::string(gltfUpAxisJson.GetString());
+  if (gltfUpAxisString == "X" || gltfUpAxisString == "x") {
+    return CesiumGeometry::Axis::X;
+  }
+  if (gltfUpAxisString == "Y" || gltfUpAxisString == "y") {
+    return CesiumGeometry::Axis::Y;
+  }
+  if (gltfUpAxisString == "Z" || gltfUpAxisString == "z") {
+    return CesiumGeometry::Axis::Z;
+  }
+  SPDLOG_WARN("Unknown gltfUpAxis: {}, using default (Y)", gltfUpAxisString);
+  return CesiumGeometry::Axis::Y;
+}
+} // namespace
+
 /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
@@ -546,6 +597,8 @@ void Tileset::_loadTilesetJson(
         tileset.GetErrorOffset());
     return LoadResult{std::move(pContext), nullptr, false};
   }
+
+  pContext->pTileset->_gltfUpAxis = obtainGltfUpAxis(tileset);
 
   std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
   pRootTile->setContext(pContext.get());
@@ -687,14 +740,14 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   std::optional<BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return;
   }
 
   std::optional<double> geometricError =
       JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a geometricError");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a geometricError");
     return;
   }
 
@@ -720,7 +773,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     } else {
       SPDLOG_LOGGER_ERROR(
           pLogger,
-          "Tileset contained an unknown refine value: {}",
+          "Tile contained an unknown refine value: {}",
           refine);
     }
   } else {

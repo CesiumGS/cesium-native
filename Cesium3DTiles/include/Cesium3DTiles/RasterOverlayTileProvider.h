@@ -27,6 +27,38 @@ struct CESIUM3DTILES_API LoadedRasterOverlayImage {
 };
 
 /**
+ * @brief Options for {@link RasterOverlayTileProvider::loadTileImageFromUrl}.
+ */
+struct LoadTileImageFromUrlOptions {
+  /**
+   * @brief The credits to display with this tile.
+   *
+   * This property is copied verbatim to the {@link
+   * LoadedRasterOverlayImage::credits} property.
+   */
+  std::vector<Credit> credits = {};
+
+  /**
+   * @brief Whether empty (zero length) images are accepted as a valid
+   * response.
+   *
+   * If true, an otherwise valid response with zero length will be accepted as
+   * a valid 0x0 image. If false, such a response will be reported as an
+   * error.
+   *
+   * {@link RasterOverlayTileProvider::loadTile} and {@link
+   * RasterOverlayTileProvider::loadTileThrottled} will treat such an image as
+   * "failed" and use the quadtree parent (or ancestor) image instead, but
+   * will not report any error.
+   *
+   * This flag should only be set to true when the tile source uses a
+   * zero-length response as an indication that this tile is - as expected -
+   * not available.
+   */
+  bool allowEmptyImages = false;
+};
+
+/**
  * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
  *
  */
@@ -314,12 +346,13 @@ protected:
    *
    * @param url The URL.
    * @param headers The request headers.
+   * @param options Additional options for the load process.
    * @return A future that resolves to the image or error information.
    */
   CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
-      const std::vector<Credit>& credits = {}) const;
+      const LoadTileImageFromUrlOptions& options = {}) const;
 
 private:
   void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
