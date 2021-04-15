@@ -164,7 +164,10 @@ protected:
             this->getProjection(),
             this->getTilingScheme().tileToRectangle(tileID));
 
-    std::vector<Credit> tileCredits;
+    LoadTileImageFromUrlOptions options;
+    options.allowEmptyImages = true;
+    std::vector<Credit>& tileCredits = options.credits;
+
     for (CreditAndCoverageAreas creditAndCoverageAreas : _credits) {
       for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
         if (coverageArea.zoomMin <= bingTileLevel &&
@@ -176,7 +179,7 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, tileCredits);
+    return this->loadTileImageFromUrl(url, {}, options);
   }
 
 private:
