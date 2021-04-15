@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
+#include <memory>
 
 namespace CesiumGltf {
 struct ReaderContext;
