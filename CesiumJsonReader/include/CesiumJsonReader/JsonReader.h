@@ -49,7 +49,7 @@ public:
   template <typename T>
   static ReadJsonResult<typename T::ValueType>
   readJson(const gsl::span<const std::byte>& data, T& handler) {
-    ReadJsonResult<T::ValueType> result;
+    ReadJsonResult<typename T::ValueType> result;
 
     result.value.emplace();
 
