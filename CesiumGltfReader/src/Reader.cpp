@@ -3,6 +3,7 @@
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
+#include <algorithm>
 #include <cstddef>
 #include <iomanip>
 #include <rapidjson/reader.h>
@@ -398,10 +399,15 @@ CesiumGltf::readImage(const gsl::span<const std::byte>& data) {
       &channelsInFile,
       image.channels);
   if (pImage) {
-    image.pixelData.assign(
+    const int lastByte =
+        image.width * image.height * image.channels * image.bytesPerChannel;
+    // std::uint8_t is not implicitly convertible to std::byte, so we must use
+    // std::transform here to force the conversion.
+    std::transform(
         pImage,
-        pImage + image.width * image.height * image.channels *
-                     image.bytesPerChannel);
+        pImage + lastByte,
+        std::back_inserter(image.pixelData),
+        [](char c) { return std::byte(c); });
     stbi_image_free(pImage);
   } else {
     result.image.reset();

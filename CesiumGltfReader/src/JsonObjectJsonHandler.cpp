@@ -1,4 +1,5 @@
 #include "JsonObjectJsonHandler.h"
+#include <cstdint>
 
 using namespace CesiumGltf;
 
@@ -30,22 +31,22 @@ IJsonHandler* JsonObjectJsonHandler::Bool(bool b) {
 }
 
 IJsonHandler* JsonObjectJsonHandler::Int(int i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), std::int64_t(i));
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::Uint(unsigned i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), std::uint64_t(i));
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::Int64(int64_t i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), i);
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::Uint64(uint64_t i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), i);
   return this->doneElement();
 }
 

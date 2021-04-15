@@ -1,32 +1,9 @@
 #include "CesiumGltf/JsonValue.h"
+#include <cassert>
 
 using namespace CesiumGltf;
 
-double JsonValue::getNumber(double defaultValue) const {
-  const double* p = std::get_if<Number>(&this->value);
-  if (p) {
-    return *p;
-  }
-  return defaultValue;
-}
-
-bool JsonValue::getBool(bool defaultValue) const {
-  const bool* p = std::get_if<Bool>(&this->value);
-  if (p) {
-    return *p;
-  }
-  return defaultValue;
-}
-
-std::string JsonValue::getString(const std::string& defaultValue) const {
-  const std::string* p = std::get_if<String>(&this->value);
-  if (p) {
-    return *p;
-  }
-  return defaultValue;
-}
-
-const JsonValue* JsonValue::getValueForKey(const std::string& key) const {
+const JsonValue* JsonValue::getValuePtrForKey(const std::string& key) const {
   const Object* pObject = std::get_if<Object>(&this->value);
   if (!pObject) {
     return nullptr;
@@ -40,7 +17,7 @@ const JsonValue* JsonValue::getValueForKey(const std::string& key) const {
   return &it->second;
 }
 
-JsonValue* JsonValue::getValueForKey(const std::string& key) {
+JsonValue* JsonValue::getValuePtrForKey(const std::string& key) {
   Object* pObject = std::get_if<Object>(&this->value);
   if (!pObject) {
     return nullptr;
@@ -52,28 +29,4 @@ JsonValue* JsonValue::getValueForKey(const std::string& key) {
   }
 
   return &it->second;
-}
-
-bool JsonValue::isNull() const {
-  return std::holds_alternative<Null>(this->value);
-}
-
-bool JsonValue::isNumber() const {
-  return std::holds_alternative<Number>(this->value);
-}
-
-bool JsonValue::isBool() const {
-  return std::holds_alternative<Bool>(this->value);
-}
-
-bool JsonValue::isString() const {
-  return std::holds_alternative<String>(this->value);
-}
-
-bool JsonValue::isObject() const {
-  return std::holds_alternative<Object>(this->value);
-}
-
-bool JsonValue::isArray() const {
-  return std::holds_alternative<Array>(this->value);
 }
