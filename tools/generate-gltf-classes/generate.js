@@ -52,8 +52,8 @@ function generate(options, schema) {
              * @brief ${schema.description}
              */
             struct CESIUMGLTF_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
-                static inline const std::string TypeName = "${name}";
-                ${thisConfig.extensionName ? `static inline const std::string ExtensionName = "${thisConfig.extensionName}";` : ""}
+                static inline constexpr char* TypeName = "${name}";
+                ${thisConfig.extensionName ? `static inline constexpr char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
                 ${indent(localTypes.join("\n\n"), 16)}
 
@@ -102,7 +102,7 @@ function generate(options, schema) {
           public:
             using ValueType = ${name};
 
-            ${thisConfig.extensionName ? `static inline const std::string ExtensionName = "${thisConfig.extensionName}";` : ""}
+            ${thisConfig.extensionName ? `static inline constexpr char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
             ${name}JsonHandler(const ReaderContext& context) noexcept;
             void reset(IJsonHandler* pParentHandler, ${name}* pObject);

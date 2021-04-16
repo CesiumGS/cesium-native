@@ -14,6 +14,8 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
 
+/*static*/ CesiumGltf::GltfReader RasterOverlayTileProvider::_gltfReader{};
+
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -504,9 +506,8 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             gsl::span<const std::byte> data = pResponse->data();
 
-            // TODO: don't create a new Reader every time.
-            CesiumGltf::GltfReader reader;
-            CesiumGltf::ImageReaderResult loadedImage = reader.readImage(data);
+            CesiumGltf::ImageReaderResult loadedImage =
+                RasterOverlayTileProvider::_gltfReader.readImage(data);
 
             if (!loadedImage.errors.empty()) {
               loadedImage.errors.push_back("Image url: " + url);

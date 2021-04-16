@@ -11,7 +11,7 @@ namespace CesiumGltf {
  * @brief Reference to a texture.
  */
 struct CESIUMGLTF_API TextureInfo : public ExtensibleObject {
-  static inline const std::string TypeName = "TextureInfo";
+  static inline constexpr char* TypeName = "TextureInfo";
 
   /**
    * @brief The index of the texture.

@@ -8,6 +8,7 @@
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include <optional>
 #include <spdlog/fwd.h>
@@ -400,5 +401,7 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
+
+  static CesiumGltf::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTiles

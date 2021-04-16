@@ -14,7 +14,7 @@ namespace CesiumGltf {
  * `bufferView` index. `mimeType` is required in the latter case.
  */
 struct CESIUMGLTF_API ImageSpec : public NamedObject {
-  static inline const std::string TypeName = "Image";
+  static inline constexpr char* TypeName = "Image";
 
   /**
    * @brief The image's MIME type. Required if `bufferView` is defined.

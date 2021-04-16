@@ -12,7 +12,7 @@ namespace CesiumGltf {
  * targets.
  */
 struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
-  static inline const std::string TypeName = "AnimationChannelTarget";
+  static inline constexpr char* TypeName = "AnimationChannelTarget";
 
   /**
    * @brief The name of the node's TRS property to modify, or the "weights" of

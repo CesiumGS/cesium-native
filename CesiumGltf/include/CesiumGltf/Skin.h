@@ -12,7 +12,7 @@ namespace CesiumGltf {
  * @brief Joints and matrices defining a skin.
  */
 struct CESIUMGLTF_API Skin final : public NamedObject {
-  static inline const std::string TypeName = "Skin";
+  static inline constexpr char* TypeName = "Skin";
 
   /**
    * @brief The index of the accessor containing the floating-point 4x4

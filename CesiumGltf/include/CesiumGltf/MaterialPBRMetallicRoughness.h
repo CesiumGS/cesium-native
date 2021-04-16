@@ -16,7 +16,7 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API MaterialPBRMetallicRoughness final
     : public ExtensibleObject {
-  static inline const std::string TypeName = "MaterialPBRMetallicRoughness";
+  static inline constexpr char* TypeName = "MaterialPBRMetallicRoughness";
 
   /**
    * @brief The material's base color factor.
