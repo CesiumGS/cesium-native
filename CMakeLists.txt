@@ -6,6 +6,28 @@ project(cesium-native
     LANGUAGES CXX
 )
 
+# Add Modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/modules/")
+
+# Add a coverage target iff:
+# - gcovr is available
+# - cesium-native is not being used as a git submodule
+# - g++ is the active compiler.
+# This branch must occur before adding other targets, or gcovr
+# won't be able to inject the necessary coverage information.
+get_directory_property(_is_being_used_as_submodule PARENT_DIRECTORY)
+find_program(_gcovr "gcovr")
+if(CMAKE_COMPILER_IS_GNUCXX AND _gcovr AND NOT _is_being_used_as_submodule)
+    include(CodeCoverage)
+    append_coverage_compiler_flags()
+    setup_target_for_coverage_gcovr_html(
+        NAME cesium-native-tests-coverage
+        EXECUTABLE ctest -j ${PROCESSOR_COUNT}
+        EXCLUDE "${PROJECT_SOURCE_DIR}/extern/*" "${PROJECT_BINARY_DIR}"
+        DEPENDENCIES cesium-native-tests
+    )
+endif()
+
 if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
         "Controls if cesium-native targets should use configure_depends or not for globbing their sources"
@@ -91,6 +113,7 @@ function(configure_cesium_library targetName)
 
 endfunction()
 
+
 # Private Libraries
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
@@ -104,6 +127,7 @@ add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
 add_subdirectory(CesiumJsonReader)
+add_subdirectory(CesiumGltfWriter)
 add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)

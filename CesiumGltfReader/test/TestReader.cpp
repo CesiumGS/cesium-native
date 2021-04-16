@@ -3,6 +3,7 @@
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "catch2/catch.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <glm/vec3.hpp>
@@ -132,17 +133,17 @@ TEST_CASE("Nested extras serializes properly") {
   auto cit = model.extras.find("C");
   REQUIRE(cit != model.extras.end());
 
-  JsonValue* pC2 = cit->second.getValueForKey("C2");
+  JsonValue* pC2 = cit->second.getValuePtrForKey("C2");
   REQUIRE(pC2 != nullptr);
 
   CHECK(pC2->isArray());
   std::vector<JsonValue>& array = std::get<std::vector<JsonValue>>(pC2->value);
   CHECK(array.size() == 5);
-  CHECK(array[0].getNumber(0.0) == 1.0);
-  CHECK(array[1].getNumber(0.0) == 2.0);
-  CHECK(array[2].getNumber(0.0) == 3.0);
-  CHECK(array[3].getNumber(0.0) == 4.0);
-  CHECK(array[4].getNumber(0.0) == 5.0);
+  CHECK(array[0].getSafeNumber<double>() == 1.0);
+  CHECK(array[1].getSafeNumber<std::uint64_t>() == 2);
+  CHECK(array[2].getSafeNumber<std::uint8_t>() == 3);
+  CHECK(array[3].getSafeNumber<std::int16_t>() == 4);
+  CHECK(array[4].getSafeNumber<std::int32_t>() == 5);
 }
 
 TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
@@ -216,16 +217,16 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       primitive2.getGenericExtension("KHR_draco_mesh_compression");
   REQUIRE(pDraco2);
 
-  REQUIRE(pDraco2->getValueForKey("bufferView"));
-  CHECK(pDraco2->getValueForKey("bufferView")->getNumber(0.0) == 1.0);
+  REQUIRE(pDraco2->getValuePtrForKey("bufferView"));
+  CHECK(pDraco2->getValuePtrForKey("bufferView")->getSafeNumberOrDefault<int64_t>(0) == 1);
 
-  REQUIRE(pDraco2->getValueForKey("attributes"));
-  REQUIRE(pDraco2->getValueForKey("attributes")->isObject());
-  REQUIRE(pDraco2->getValueForKey("attributes")->getValueForKey("POSITION"));
+  REQUIRE(pDraco2->getValuePtrForKey("attributes"));
+  REQUIRE(pDraco2->getValuePtrForKey("attributes")->isObject());
+  REQUIRE(pDraco2->getValuePtrForKey("attributes")->getValuePtrForKey("POSITION"));
   REQUIRE(
-      pDraco2->getValueForKey("attributes")
-          ->getValueForKey("POSITION")
-          ->getNumber(1.0) == 0.0);
+      pDraco2->getValuePtrForKey("attributes")
+          ->getValuePtrForKey("POSITION")
+          ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
   // Repeat test but this time the extension should not be deserialized at all.
   reader.setExtensionState(
@@ -283,11 +284,11 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   REQUIRE(pA != nullptr);
   REQUIRE(pB != nullptr);
 
-  REQUIRE(pA->getValueForKey("test"));
-  REQUIRE(pA->getValueForKey("test")->getString("") == "Hello World");
+  REQUIRE(pA->getValuePtrForKey("test"));
+  REQUIRE(pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
 
-  REQUIRE(pB->getValueForKey("another"));
-  REQUIRE(pB->getValueForKey("another")->getString("") == "Goodbye World");
+  REQUIRE(pB->getValuePtrForKey("another"));
+  REQUIRE(pB->getValuePtrForKey("another")->getStringOrDefault("") == "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
   reader.setExtensionState("A", ExtensionState::Disabled);

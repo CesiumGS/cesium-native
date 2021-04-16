@@ -103,7 +103,8 @@
         "any": "cpp",
         "csignal": "cpp",
         "filesystem": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "xmemory0": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureOnOpen": true

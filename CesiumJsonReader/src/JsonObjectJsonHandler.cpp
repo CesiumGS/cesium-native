@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
+#include <cstdint>
 
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
@@ -33,22 +34,22 @@ IJsonHandler* JsonObjectJsonHandler::readBool(bool b) {
 }
 
 IJsonHandler* JsonObjectJsonHandler::readInt32(int32_t i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), std::int64_t(i));
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::readUint32(uint32_t i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), std::uint64_t(i));
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::readInt64(int64_t i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), i);
   return this->doneElement();
 }
 
 IJsonHandler* JsonObjectJsonHandler::readUint64(uint64_t i) {
-  addOrReplace(*this->_stack.back(), JsonValue::Number(i));
+  addOrReplace(*this->_stack.back(), i);
   return this->doneElement();
 }
 
