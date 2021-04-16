@@ -50,35 +50,43 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
 }
 } // namespace
 
-
-static std::string createSuccessHtml(const std::string& applicationName)
-{
+static std::string createSuccessHtml(const std::string& applicationName) {
   return std::string("<html>") +
-    "<h2 style=\"text-align: center;\">Successfully authorized!</h2><br/>" +
-    "<div style=\"text-align: center;\">Please close this window and return to " + applicationName + ".</div>" + 
-    "<html>";
+         "<h2 style=\"text-align: center;\">Successfully "
+         "authorized!</h2><br/>" +
+         "<div style=\"text-align: center;\">Please close this window and "
+         "return to " +
+         applicationName + ".</div>" + "<html>";
 }
 
-
-static std::string createGenericErrorHtml(const std::string& applicationName, const std::string& errorMessage, const std::string& errorDescription)
-{
-  return std::string("<html>") +
-    "<h2 style=\"text-align: center;\">" + errorMessage + "</h2><br/>" + 
-    "<div style=\"text-align: center;\">" + errorDescription + ".</div><br/>" + 
-    "<div style=\"text-align: center;\">Please close this window and return to " + applicationName + " to try again.</div>" + 
-    "<html>";
+static std::string createGenericErrorHtml(
+    const std::string& applicationName,
+    const std::string& errorMessage,
+    const std::string& errorDescription) {
+  return std::string("<html>") + "<h2 style=\"text-align: center;\">" +
+         errorMessage + "</h2><br/>" + "<div style=\"text-align: center;\">" +
+         errorDescription + ".</div><br/>" +
+         "<div style=\"text-align: center;\">Please close this window and "
+         "return to " +
+         applicationName + " to try again.</div>" + "<html>";
 }
 
-static std::string createAuthorizationErrorHtml(const std::string& applicationName, const std::exception& exception)
-{
+static std::string createAuthorizationErrorHtml(
+    const std::string& applicationName,
+    const std::exception& exception) {
   return std::string("<html>") +
-    "<h2 style=\"text-align: center;\">Not authorized!</h2><br/>" + 
-    "<div style=\"text-align: center;\">The authorization failed with the following error message: " + exception.what() + ".</div><br/>" + 
-    "<div style=\"text-align: center;\">Please close this window and return to " + applicationName + ".</div><br/>" + 
-    "<div style=\"text-align: center;\">If the problem persists, contact our support at <a href=\"mailto:support@cesium.com\">support@cesium.com</a>.</div>" + 
-    "<html>";
+         "<h2 style=\"text-align: center;\">Not authorized!</h2><br/>" +
+         "<div style=\"text-align: center;\">The authorization failed with the "
+         "following error message: " +
+         exception.what() + ".</div><br/>" +
+         "<div style=\"text-align: center;\">Please close this window and "
+         "return to " +
+         applicationName + ".</div><br/>" +
+         "<div style=\"text-align: center;\">If the problem persists, contact "
+         "our support at <a "
+         "href=\"mailto:support@cesium.com\">support@cesium.com</a>.</div>" +
+         "<html>";
 }
-
 
 /*static*/ CesiumAsync::Future<Connection> Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -153,9 +161,9 @@ static std::string createAuthorizationErrorHtml(const std::string& applicationNa
             httplib::Response& response) {
           pServer->stop();
 
-
           std::string error = request.get_param_value("error");
-          std::string errorDescription = request.get_param_value("error_description");
+          std::string errorDescription =
+              request.get_param_value("error_description");
           if (!error.empty()) {
             std::string errorMessage = "Error";
             std::string errorDescriptionMessage = "An unknown error occurred";
@@ -166,7 +174,10 @@ static std::string createAuthorizationErrorHtml(const std::string& applicationNa
               errorDescriptionMessage = errorDescription;
             }
             response.set_content(
-              createGenericErrorHtml(friendlyApplicationName, errorMessage, errorDescriptionMessage),
+                createGenericErrorHtml(
+                    friendlyApplicationName,
+                    errorMessage,
+                    errorDescriptionMessage),
                 "text/html");
             promise.reject(std::runtime_error("Received an error message"));
             return;
@@ -176,7 +187,10 @@ static std::string createAuthorizationErrorHtml(const std::string& applicationNa
           std::string state = request.get_param_value("state");
           if (state != expectedState) {
             response.set_content(
-              createGenericErrorHtml(friendlyApplicationName, "Invalid state", "The redirection received an invalid state"),
+                createGenericErrorHtml(
+                    friendlyApplicationName,
+                    "Invalid state",
+                    "The redirection received an invalid state"),
                 "text/html");
             promise.reject(std::runtime_error("Received an invalid state."));
             return;
@@ -200,13 +214,16 @@ static std::string createAuthorizationErrorHtml(const std::string& applicationNa
 
             void operator()(Connection& connection) {
               response.set_content(
-                createSuccessHtml(friendlyApplicationName),
+                  createSuccessHtml(friendlyApplicationName),
                   "text/html");
               promise.resolve(std::move(connection));
             }
 
             void operator()(std::exception& exception) {
-              response.set_content(createAuthorizationErrorHtml(friendlyApplicationName, exception),
+              response.set_content(
+                  createAuthorizationErrorHtml(
+                      friendlyApplicationName,
+                      exception),
                   "text/html");
               promise.reject(std::move(exception));
             }
@@ -237,8 +254,7 @@ Connection::Connection(
       _accessToken(accessToken),
       _apiUrl(apiUrl) {}
 
-template <typename T>
-static Response<T> createEmptyResponse() {
+template <typename T> static Response<T> createEmptyResponse() {
   return Response<T>{
       std::nullopt,
       0,
@@ -252,11 +268,13 @@ static Response<T> createErrorResponse(const IAssetResponse* pResponse) {
       std::nullopt,
       pResponse->statusCode(),
       std::to_string(pResponse->statusCode()),
-      "Received response code " + std::to_string(pResponse->statusCode()) };
+      "Received response code " + std::to_string(pResponse->statusCode())};
 }
 
 template <typename T>
-static Response<T> createJsonErrorResponse(const IAssetResponse* pResponse, rapidjson::Document& d) {
+static Response<T> createJsonErrorResponse(
+    const IAssetResponse* pResponse,
+    rapidjson::Document& d) {
   return Response<T>{
       std::nullopt,
       pResponse->statusCode(),
@@ -266,7 +284,9 @@ static Response<T> createJsonErrorResponse(const IAssetResponse* pResponse, rapi
 }
 
 template <typename T>
-static Response<T> createJsonTypeResponse(const IAssetResponse* pResponse, const std::string& expectedType) {
+static Response<T> createJsonTypeResponse(
+    const IAssetResponse* pResponse,
+    const std::string& expectedType) {
   return Response<T>{
       std::nullopt,
       pResponse->statusCode(),
@@ -274,14 +294,13 @@ static Response<T> createJsonTypeResponse(const IAssetResponse* pResponse, const
       "Response is not a JSON " + expectedType + "."};
 }
 
-static bool parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
+static bool
+parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
   d.Parse(
       reinterpret_cast<const char*>(pResponse->data().data()),
       pResponse->data().size());
   return !d.HasParseError();
 }
-
-
 
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
   return this->_pAssetAccessor
@@ -453,7 +472,9 @@ CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
               return createJsonErrorResponse<std::vector<Token>>(pResponse, d);
             }
             if (!d.IsArray()) {
-              return createJsonTypeResponse<std::vector<Token>>(pResponse, "array");
+              return createJsonTypeResponse<std::vector<Token>>(
+                  pResponse,
+                  "array");
             }
 
             std::vector<Token> result;
