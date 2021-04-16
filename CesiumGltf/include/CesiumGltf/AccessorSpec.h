@@ -17,7 +17,7 @@ namespace CesiumGltf {
  * attribute in a buffer.
  */
 struct CESIUMGLTF_API AccessorSpec : public NamedObject {
-  static inline constexpr char* TypeName = "Accessor";
+  static inline constexpr const char* TypeName = "Accessor";
 
   /**
    * @brief The datatype of components in the attribute.

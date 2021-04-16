@@ -13,7 +13,7 @@ namespace CesiumGltf {
  * node's transform places the mesh in the scene.
  */
 struct CESIUMGLTF_API Mesh final : public NamedObject {
-  static inline constexpr char* TypeName = "Mesh";
+  static inline constexpr const char* TypeName = "Mesh";
 
   /**
    * @brief An array of primitives, each defining geometry to be rendered with a

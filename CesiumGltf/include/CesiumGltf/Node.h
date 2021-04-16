@@ -21,7 +21,7 @@ namespace CesiumGltf {
  * not be present.
  */
 struct CESIUMGLTF_API Node final : public NamedObject {
-  static inline constexpr char* TypeName = "Node";
+  static inline constexpr const char* TypeName = "Node";
 
   /**
    * @brief The index of the camera referenced by this node.

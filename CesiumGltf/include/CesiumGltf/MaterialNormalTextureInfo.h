@@ -10,7 +10,7 @@ namespace CesiumGltf {
  * @brief undefined
  */
 struct CESIUMGLTF_API MaterialNormalTextureInfo final : public TextureInfo {
-  static inline constexpr char* TypeName = "MaterialNormalTextureInfo";
+  static inline constexpr const char* TypeName = "MaterialNormalTextureInfo";
 
   /**
    * @brief The scalar multiplier applied to each normal vector of the normal
