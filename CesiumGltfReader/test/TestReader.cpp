@@ -218,11 +218,14 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   REQUIRE(pDraco2);
 
   REQUIRE(pDraco2->getValuePtrForKey("bufferView"));
-  CHECK(pDraco2->getValuePtrForKey("bufferView")->getSafeNumberOrDefault<int64_t>(0) == 1);
+  CHECK(
+      pDraco2->getValuePtrForKey("bufferView")
+          ->getSafeNumberOrDefault<int64_t>(0) == 1);
 
   REQUIRE(pDraco2->getValuePtrForKey("attributes"));
   REQUIRE(pDraco2->getValuePtrForKey("attributes")->isObject());
-  REQUIRE(pDraco2->getValuePtrForKey("attributes")->getValuePtrForKey("POSITION"));
+  REQUIRE(
+      pDraco2->getValuePtrForKey("attributes")->getValuePtrForKey("POSITION"));
   REQUIRE(
       pDraco2->getValuePtrForKey("attributes")
           ->getValuePtrForKey("POSITION")
@@ -285,10 +288,13 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   REQUIRE(pB != nullptr);
 
   REQUIRE(pA->getValuePtrForKey("test"));
-  REQUIRE(pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
+  REQUIRE(
+      pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
 
   REQUIRE(pB->getValuePtrForKey("another"));
-  REQUIRE(pB->getValuePtrForKey("another")->getStringOrDefault("") == "Goodbye World");
+  REQUIRE(
+      pB->getValuePtrForKey("another")->getStringOrDefault("") ==
+      "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
   reader.setExtensionState("A", ExtensionState::Disabled);

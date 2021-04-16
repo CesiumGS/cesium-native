@@ -265,8 +265,8 @@ TEST_CASE("MissingDataSource thrown if ExternalFileURI detected and "
 
 TEST_CASE("extras and extensions are detected and serialized") {
   CesiumGltf::Buffer buffer;
-  buffer.extras =
-      CesiumUtility::JsonValue::Object{{"some", CesiumUtility::JsonValue("extra")}};
+  buffer.extras = CesiumUtility::JsonValue::Object{
+      {"some", CesiumUtility::JsonValue("extra")}};
 
   CesiumUtility::JsonValue testExtension("value");
 
