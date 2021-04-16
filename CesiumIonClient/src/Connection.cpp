@@ -60,10 +60,11 @@ static std::string createSuccessHtml(const std::string& applicationName)
 }
 
 
-static std::string createInvalidStateHtml(const std::string& applicationName)
+static std::string createGenericErrorHtml(const std::string& applicationName, const std::string& errorMessage, const std::string& errorDescription)
 {
   return std::string("<html>") +
-    "<h2 style=\"text-align: center;\">Invalid state!</h2><br/>" + 
+    "<h2 style=\"text-align: center;\">" + errorMessage + "</h2><br/>" + 
+    "<div style=\"text-align: center;\">" + errorDescription + ".</div><br/>" + 
     "<div style=\"text-align: center;\">Please close this window and return to " + applicationName + " to try again.</div>" + 
     "<html>";
 }
@@ -152,12 +153,30 @@ static std::string createAuthorizationErrorHtml(const std::string& applicationNa
             httplib::Response& response) {
           pServer->stop();
 
+
+          std::string error = request.get_param_value("error");
+          std::string errorDescription = request.get_param_value("error_description");
+          if (!error.empty()) {
+            std::string errorMessage = "Error";
+            std::string errorDescriptionMessage = "An unknown error occurred";
+            if (error == "access_denied") {
+              errorMessage = "Access denied";
+            }
+            if (!errorDescription.empty()) {
+              errorDescriptionMessage = errorDescription;
+            }
+            response.set_content(
+              createGenericErrorHtml(friendlyApplicationName, errorMessage, errorDescriptionMessage),
+                "text/html");
+            promise.reject(std::runtime_error("Received an error message"));
+            return;
+          }
+
           std::string code = request.get_param_value("code");
           std::string state = request.get_param_value("state");
-
           if (state != expectedState) {
             response.set_content(
-              createInvalidStateHtml(friendlyApplicationName),
+              createGenericErrorHtml(friendlyApplicationName, "Invalid state", "The redirection received an invalid state"),
                 "text/html");
             promise.reject(std::runtime_error("Received an invalid state."));
             return;
@@ -173,8 +192,6 @@ static std::string createAuthorizationErrorHtml(const std::string& applicationNa
                   redirectUrl,
                   codeVerifier)
                   .wait();
-
-          // TODO: nicer HTML
 
           struct Operation {
             const std::string& friendlyApplicationName;
