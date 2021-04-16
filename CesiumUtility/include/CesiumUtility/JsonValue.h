@@ -422,7 +422,7 @@ public:
    * @brief Gets the bool from the value or returns defaultValue
    * @return The bool or defaultValue if this->value is not a bool.
    */
-  [[nodiscard]] inline bool getBoolOrDefault(bool defaultValue) {
+  [[nodiscard]] inline bool getBoolOrDefault(bool defaultValue) const {
     const auto* v = std::get_if<bool>(&this->value);
     if (v) {
       return *v;
@@ -436,7 +436,7 @@ public:
    * @return The string or defaultValue if this->value is not a string.
    */
   [[nodiscard]] inline const JsonValue::String
-  getStringOrDefault(String defaultValue) {
+  getStringOrDefault(String defaultValue) const {
     const auto* v = std::get_if<JsonValue::String>(&this->value);
     if (v) {
       return *v;
@@ -449,7 +449,7 @@ public:
    * @brief Gets the double from the value or returns defaultValue
    * @return The double or defaultValue if this->value is not a double.
    */
-  [[nodiscard]] inline double getDoubleOrDefault(double defaultValue) {
+  [[nodiscard]] inline double getDoubleOrDefault(double defaultValue) const {
     const auto* v = std::get_if<double>(&this->value);
     if (v) {
       return *v;
@@ -463,7 +463,7 @@ public:
    * @return The uint64_t or defaultValue if this->value is not a uint64_t.
    */
   [[nodiscard]] inline std::uint64_t
-  getUint64OrDefault(std::uint64_t defaultValue) {
+  getUint64OrDefault(std::uint64_t defaultValue) const {
     const auto* v = std::get_if<std::uint64_t>(&this->value);
     if (v) {
       return *v;
@@ -477,7 +477,7 @@ public:
    * @return The int64_t or defaultValue if this->value is not a int64_t.
    */
   [[nodiscard]] inline std::int64_t
-  getInt64OrDefault(std::int64_t defaultValue) {
+  getInt64OrDefault(std::int64_t defaultValue) const {
     const auto* v = std::get_if<std::int64_t>(&this->value);
     if (v) {
       return *v;
