@@ -1,6 +1,7 @@
 #pragma once
 #include "JsonWriter.h"
 #include <any>
+#include <unordered_map>
 
 namespace CesiumGltf {
 void writeExtensions(
