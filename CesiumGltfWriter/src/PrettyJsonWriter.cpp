@@ -1,6 +1,8 @@
 #include "PrettyJsonWriter.h"
 #include <algorithm>
 #include <iterator>
+#include <string>
+#include <string_view>
 
 namespace CesiumGltf {
 PrettyJsonWriter::PrettyJsonWriter() {
