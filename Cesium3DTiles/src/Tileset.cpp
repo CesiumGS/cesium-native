@@ -1273,18 +1273,34 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 
   TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
-  tile.setLastSelectionState(TileSelectionState(
-      frameState.currentFrameNumber,
-      TileSelectionState::Result::Rendered));
-  result.tilesToRenderThisFrame.push_back(&tile);
-  addTileToLoadQueue(
-      this->_loadQueueMedium,
-      frameState.viewState,
-      tile,
-      distance);
+  bool isTileRenderable = tile.isRenderable();
+  if (tile.getRefine() == TileRefine::Add) {
+    if (isTileRenderable) {
+      tile.setLastSelectionState(TileSelectionState(
+          frameState.currentFrameNumber,
+          TileSelectionState::Result::Rendered));
+      result.tilesToRenderThisFrame.push_back(&tile);
+    } else {
+      addTileToLoadQueue(
+          this->_loadQueueMedium,
+          frameState.viewState,
+          tile,
+          distance);
+    }
+  } else {
+    tile.setLastSelectionState(TileSelectionState(
+        frameState.currentFrameNumber,
+        TileSelectionState::Result::Rendered));
+    result.tilesToRenderThisFrame.push_back(&tile);
+    addTileToLoadQueue(
+        this->_loadQueueMedium,
+        frameState.viewState,
+        tile,
+        distance);
+  }
 
   TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = tile.isRenderable();
+  traversalDetails.allAreRenderable = isTileRenderable;
   traversalDetails.anyWereRenderedLastFrame =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
       TileSelectionState::Result::Rendered;
@@ -1425,13 +1441,19 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    result.tilesToRenderThisFrame.push_back(&tile);
-    addTileToLoadQueue(
-        this->_loadQueueMedium,
-        frameState.viewState,
-        tile,
-        distance);
-    return true;
+    if (tile.isRenderable()) {
+      tile.setLastSelectionState(TileSelectionState(
+          frameState.currentFrameNumber,
+          TileSelectionState::Result::Rendered));
+      result.tilesToRenderThisFrame.push_back(&tile);
+    } else {
+      addTileToLoadQueue(
+          this->_loadQueueMedium,
+          frameState.viewState,
+          tile,
+          distance);
+      return true;
+    }
   }
   return false;
 }
@@ -1643,7 +1665,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // At least one descendant tile was added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
-  if (!traversalDetails.allAreRenderable &&
+  if (tile.getRefine() == TileRefine::Replace && 
+      !traversalDetails.allAreRenderable &&
       !traversalDetails.anyWereRenderedLastFrame) {
     // Some of our descendants aren't ready to render yet, and none were
     // rendered last frame, so kick them all out of the render list and render
