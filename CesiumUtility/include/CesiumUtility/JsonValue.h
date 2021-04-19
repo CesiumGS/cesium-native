@@ -21,10 +21,6 @@ struct JsonValueMissingKey : public std::runtime_error {
       : std::runtime_error(key + " is not present in Object") {}
 };
 
-struct JsonInvalidDoubleValue : public std::runtime_error {
-  JsonInvalidDoubleValue(const std::string& err) : std::runtime_error(err) {}
-};
-
 struct JsonValueNotRealValue : public std::runtime_error {
   JsonValueNotRealValue()
       : std::runtime_error("this->value was not double, uint64_t or int64_t") {}
@@ -90,19 +86,15 @@ public:
 
   /**
    * @brief Creates a `Number` JSON value.
-
-   * @throws If a NaN or ±Infinity double is supplied.
+   *
+   * NaN and ±Infinity are represented as {@link JsonValue::Null}.
    */
   JsonValue(double v) {
-    if (std::isnan(v)) {
-      throw JsonInvalidDoubleValue("NaN is not a valid JsonValue type.");
+    if (std::isnan(v) || std::isinf(v)) {
+      value = nullptr;
+    } else {
+      value = v;
     }
-
-    if (std::isinf(v)) {
-      throw JsonInvalidDoubleValue("±inf is not a valid JsonValue type.");
-    }
-
-    value = v;
   }
 
   /**
