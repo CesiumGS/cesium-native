@@ -50,6 +50,44 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
 }
 } // namespace
 
+static std::string createSuccessHtml(const std::string& applicationName) {
+  return std::string("<html>") +
+         "<h2 style=\"text-align: center;\">Successfully "
+         "authorized!</h2><br/>" +
+         "<div style=\"text-align: center;\">Please close this window and "
+         "return to " +
+         applicationName + ".</div>" + "<html>";
+}
+
+static std::string createGenericErrorHtml(
+    const std::string& applicationName,
+    const std::string& errorMessage,
+    const std::string& errorDescription) {
+  return std::string("<html>") + "<h2 style=\"text-align: center;\">" +
+         errorMessage + "</h2><br/>" + "<div style=\"text-align: center;\">" +
+         errorDescription + ".</div><br/>" +
+         "<div style=\"text-align: center;\">Please close this window and "
+         "return to " +
+         applicationName + " to try again.</div>" + "<html>";
+}
+
+static std::string createAuthorizationErrorHtml(
+    const std::string& applicationName,
+    const std::exception& exception) {
+  return std::string("<html>") +
+         "<h2 style=\"text-align: center;\">Not authorized!</h2><br/>" +
+         "<div style=\"text-align: center;\">The authorization failed with the "
+         "following error message: " +
+         exception.what() + ".</div><br/>" +
+         "<div style=\"text-align: center;\">Please close this window and "
+         "return to " +
+         applicationName + ".</div><br/>" +
+         "<div style=\"text-align: center;\">If the problem persists, contact "
+         "our support at <a "
+         "href=\"mailto:support@cesium.com\">support@cesium.com</a>.</div>" +
+         "<html>";
+}
+
 /*static*/ CesiumAsync::Future<Connection> Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -123,13 +161,36 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
             httplib::Response& response) {
           pServer->stop();
 
+          std::string error = request.get_param_value("error");
+          std::string errorDescription =
+              request.get_param_value("error_description");
+          if (!error.empty()) {
+            std::string errorMessage = "Error";
+            std::string errorDescriptionMessage = "An unknown error occurred";
+            if (error == "access_denied") {
+              errorMessage = "Access denied";
+            }
+            if (!errorDescription.empty()) {
+              errorDescriptionMessage = errorDescription;
+            }
+            response.set_content(
+                createGenericErrorHtml(
+                    friendlyApplicationName,
+                    errorMessage,
+                    errorDescriptionMessage),
+                "text/html");
+            promise.reject(std::runtime_error("Received an error message"));
+            return;
+          }
+
           std::string code = request.get_param_value("code");
           std::string state = request.get_param_value("state");
-
           if (state != expectedState) {
             response.set_content(
-                "Invalid state! Please close this window and return to " +
-                    friendlyApplicationName + " to try again.",
+                createGenericErrorHtml(
+                    friendlyApplicationName,
+                    "Invalid state",
+                    "The redirection received an invalid state"),
                 "text/html");
             promise.reject(std::runtime_error("Received an invalid state."));
             return;
@@ -146,8 +207,6 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
                   codeVerifier)
                   .wait();
 
-          // TODO: nicer HTML
-
           struct Operation {
             const std::string& friendlyApplicationName;
             httplib::Response& response;
@@ -155,17 +214,16 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
 
             void operator()(Connection& connection) {
               response.set_content(
-                  "Successfully authorized! Please close this window and "
-                  "return to " +
-                      friendlyApplicationName + ".",
+                  createSuccessHtml(friendlyApplicationName),
                   "text/html");
               promise.resolve(std::move(connection));
             }
 
             void operator()(std::exception& exception) {
               response.set_content(
-                  "Not authorized! Please close this window and return to " +
-                      friendlyApplicationName + ".",
+                  createAuthorizationErrorHtml(
+                      friendlyApplicationName,
+                      exception),
                   "text/html");
               promise.reject(std::move(exception));
             }
@@ -196,13 +254,52 @@ Connection::Connection(
       _accessToken(accessToken),
       _apiUrl(apiUrl) {}
 
+template <typename T> static Response<T> createEmptyResponse() {
+  return Response<T>{
+      std::nullopt,
+      0,
+      "NoResponse",
+      "The server did not return a response."};
+}
+
 template <typename T>
 static Response<T> createErrorResponse(const IAssetResponse* pResponse) {
   return Response<T>{
       std::nullopt,
       pResponse->statusCode(),
-      "TODO",
-      "Fill in this message"};
+      std::to_string(pResponse->statusCode()),
+      "Received response code " + std::to_string(pResponse->statusCode())};
+}
+
+template <typename T>
+static Response<T> createJsonErrorResponse(
+    const IAssetResponse* pResponse,
+    rapidjson::Document& d) {
+  return Response<T>{
+      std::nullopt,
+      pResponse->statusCode(),
+      "ParseError",
+      std::string("Failed to parse JSON response: ") +
+          rapidjson::GetParseError_En(d.GetParseError())};
+}
+
+template <typename T>
+static Response<T> createJsonTypeResponse(
+    const IAssetResponse* pResponse,
+    const std::string& expectedType) {
+  return Response<T>{
+      std::nullopt,
+      pResponse->statusCode(),
+      "ParseError",
+      "Response is not a JSON " + expectedType + "."};
+}
+
+static bool
+parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
+  d.Parse(
+      reinterpret_cast<const char*>(pResponse->data().data()),
+      pResponse->data().size());
+  return !d.HasParseError();
 }
 
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
@@ -216,11 +313,7 @@ CesiumAsync::Future<Response<Profile>> Connection::me() const {
           [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return Response<Profile>{
-                  std::nullopt,
-                  0,
-                  "NoResponse",
-                  "The server did not return a response."};
+              return createEmptyResponse<Profile>();
             }
 
             if (pResponse->statusCode() < 200 ||
@@ -229,24 +322,11 @@ CesiumAsync::Future<Response<Profile>> Connection::me() const {
             }
 
             rapidjson::Document d;
-            d.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
-            if (d.HasParseError()) {
-              return Response<Profile>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  std::string("Failed to parse JSON response: ") +
-                      rapidjson::GetParseError_En(d.GetParseError())};
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Profile>(pResponse, d);
             }
-
             if (!d.IsObject()) {
-              return Response<Profile>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  "Response is not a JSON object."};
+              return createJsonTypeResponse<Profile>(pResponse, "object");
             }
 
             Profile result;
@@ -309,11 +389,7 @@ CesiumAsync::Future<Response<Assets>> Connection::assets() const {
           [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return Response<Assets>{
-                  std::nullopt,
-                  0,
-                  "NoResponse",
-                  "The server did not return a response."};
+              return createEmptyResponse<Assets>();
             }
 
             if (pResponse->statusCode() < 200 ||
@@ -322,24 +398,11 @@ CesiumAsync::Future<Response<Assets>> Connection::assets() const {
             }
 
             rapidjson::Document d;
-            d.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
-            if (d.HasParseError()) {
-              return Response<Assets>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  std::string("Failed to parse JSON response: ") +
-                      rapidjson::GetParseError_En(d.GetParseError())};
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Assets>(pResponse, d);
             }
-
             if (!d.IsObject()) {
-              return Response<Assets>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  "Response is not a JSON object."};
+              return createJsonTypeResponse<Assets>(pResponse, "object");
             }
 
             Assets result;
@@ -365,10 +428,7 @@ CesiumAsync::Future<Response<Assets>> Connection::assets() const {
           });
 }
 
-static std::optional<Token> tokenFromJson(const rapidjson::Value& json) {
-  if (!json.IsObject()) {
-    return std::nullopt;
-  }
+static Token tokenFromJson(const rapidjson::Value& json) {
 
   Token token;
   token.jti = JsonHelpers::getStringOrDefault(json, "jti", "");
@@ -399,11 +459,7 @@ CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
           [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return Response<std::vector<Token>>{
-                  std::nullopt,
-                  0,
-                  "NoResponse",
-                  "The server did not return a response."};
+              return createEmptyResponse<std::vector<Token>>();
             }
 
             if (pResponse->statusCode() < 200 ||
@@ -412,28 +468,16 @@ CesiumAsync::Future<Response<std::vector<Token>>> Connection::tokens() const {
             }
 
             rapidjson::Document d;
-            d.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
-            if (d.HasParseError()) {
-              return Response<std::vector<Token>>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  std::string("Failed to parse JSON response: ") +
-                      rapidjson::GetParseError_En(d.GetParseError())};
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<std::vector<Token>>(pResponse, d);
             }
-
             if (!d.IsArray()) {
-              return Response<std::vector<Token>>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  "Response is not a JSON array."};
+              return createJsonTypeResponse<std::vector<Token>>(
+                  pResponse,
+                  "array");
             }
 
             std::vector<Token> result;
-
             for (auto it = d.Begin(); it != d.End(); ++it) {
               std::optional<Token> token = tokenFromJson(*it);
               if (!token) {
@@ -465,11 +509,7 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
           [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return Response<Asset>{
-                  std::nullopt,
-                  0,
-                  "NoResponse",
-                  "The server did not return a response."};
+              return createEmptyResponse<Asset>();
             }
 
             if (pResponse->statusCode() < 200 ||
@@ -478,24 +518,11 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
             }
 
             rapidjson::Document d;
-            d.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
-            if (d.HasParseError()) {
-              return Response<Asset>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  std::string("Failed to parse JSON response: ") +
-                      rapidjson::GetParseError_En(d.GetParseError())};
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Asset>(pResponse, d);
             }
-
             if (!d.IsObject()) {
-              return Response<Asset>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  "Response is not a JSON object."};
+              return createJsonTypeResponse<Asset>(pResponse, "object");
             }
 
             return Response<Asset>{
@@ -549,11 +576,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
           [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return Response<Token>{
-                  std::nullopt,
-                  0,
-                  "NoResponse",
-                  "The server did not return a response."};
+              return createEmptyResponse<Token>();
             }
 
             if (pResponse->statusCode() < 200 ||
@@ -562,30 +585,16 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
             }
 
             rapidjson::Document d;
-            d.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
-            if (d.HasParseError()) {
-              return Response<Token>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  std::string("Failed to parse JSON response: ") +
-                      rapidjson::GetParseError_En(d.GetParseError())};
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<Token>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<Token>(pResponse, "object");
             }
 
-            std::optional<Token> maybeToken = tokenFromJson(d);
-
-            if (!maybeToken) {
-              return Response<Token>{
-                  std::nullopt,
-                  pResponse->statusCode(),
-                  "ParseError",
-                  "Response is not a JSON object."};
-            }
-
+            Token token = tokenFromJson(d);
             return Response<Token>{
-                std::move(maybeToken),
+                std::move(token),
                 pResponse->statusCode(),
                 std::string(),
                 std::string()};
