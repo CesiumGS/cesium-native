@@ -745,13 +745,8 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 
     REQUIRE(root->isRenderable());
     for (const Tile& child : root->getChildren()) {
-      if (*std::get_if<std::string>(&child.getTileID()) == "error_lr.b3dm") {
-        REQUIRE(child.getState() == Tile::LoadState::Done);
-        //REQUIRE(!child.isRenderable());
-      } else {
-        REQUIRE(child.getState() == Tile::LoadState::Done);
-        REQUIRE(child.isRenderable());
-      }
+      REQUIRE(child.getState() == Tile::LoadState::Done);
+      REQUIRE(child.isRenderable());
     }
 
     REQUIRE(result.tilesToRenderThisFrame.size() == 4);
