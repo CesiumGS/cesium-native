@@ -365,7 +365,8 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) const {
     const auto lastByte =
         image.width * image.height * image.channels * image.bytesPerChannel;
     image.pixelData.resize(static_cast<std::size_t>(lastByte));
-    std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+    std::uint8_t* u8Pointer =
+        reinterpret_cast<std::uint8_t*>(image.pixelData.data());
     std::copy(pImage, pImage + lastByte, u8Pointer);
   } else {
     result.image.reset();

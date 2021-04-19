@@ -3,13 +3,14 @@
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
+#include <CesiumGltf/WriteOptions.h>
 #include <CesiumGltf/WriterException.h>
 #include <string_view>
 
 void CesiumGltf::writeBuffer(
     const std::vector<Buffer>& buffers,
     JsonWriter& jsonWriter,
-    WriteFlags flags,
+    const WriteOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
   auto& j = jsonWriter;
 
@@ -20,10 +21,10 @@ void CesiumGltf::writeBuffer(
   j.Key("buffers");
   j.StartArray();
 
-  for (auto i = 0ul; i < buffers.size(); ++i) {
+  for (std::size_t i = 0; i < buffers.size(); ++i) {
     auto& buffer = buffers.at(i);
     const auto isBufferReservedForGLBBinaryChunk =
-        i == 0 && flags & WriteFlags::GLB;
+        i == 0 && options.exportType == GltfExportType::GLB;
     const auto isUriSet = buffer.uri.has_value();
     const auto isDataBufferEmpty = buffer.cesium.data.empty();
     const auto isBase64URI = isUriSet && isURIBase64DataURI(*buffer.uri);
@@ -69,7 +70,7 @@ void CesiumGltf::writeBuffer(
     }
 
     else if (!isDataBufferEmpty) {
-      if (flags & WriteFlags::AutoConvertDataToBase64) {
+      if (options.autoConvertDataToBase64) {
         byteLength = static_cast<std::int64_t>(buffer.cesium.data.size());
         j.KeyPrimitive(
             "uri",

@@ -8,7 +8,7 @@
 #include "catch2/catch.hpp"
 #include <CesiumGltf/GltfReader.h>
 #include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/WriteFlags.h>
+#include <CesiumGltf/WriteOptions.h>
 #include <algorithm>
 #include <cstddef>
 #include <gsl/span>
@@ -99,8 +99,11 @@ TEST_CASE(
     "[GltfWriter]") {
   CesiumGltf::Model m;
   m.asset.version = "2.0";
-  const auto asBytes =
-      CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLTF);
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
+  const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
   const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
   const std::string asString(
       reinterpret_cast<const char*>(asBytes.data()),
@@ -113,8 +116,11 @@ TEST_CASE(
     "[GltfWriter]") {
   CesiumGltf::Model m;
   m.asset.version = "2.0";
-  const auto asBytes =
-      CesiumGltf::writeModelAsEmbeddedBytes(m, WriteFlags::GLB);
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLB;
+
+  const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
   std::vector<std::byte> expectedMagic = {
       std::byte('g'),
       std::byte('l'),
@@ -150,17 +156,7 @@ TEST_CASE(
   REQUIRE(expectedString == extractedJson);
 }
 
-TEST_CASE(
-    "Exception thrown if mutually exclusive flags are used at the same time",
-    "[GltfWriter]") {
-  CesiumGltf::Model m;
-  REQUIRE_THROWS(CesiumGltf::writeModelAsEmbeddedBytes(
-      m,
-      WriteFlags::GLTF | WriteFlags::GLB));
-}
-
 TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
-
   const auto validateStructure = [](const std::vector<std::byte>& gltfAsset) {
     CesiumGltf::GltfReader reader;
     auto loadedModelResult = reader.readModel(gsl::span(gltfAsset));
@@ -249,11 +245,17 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   };
 
   const auto model = generateTriangleModel();
-  const auto asGltfBytes = CesiumGltf::writeModelAsEmbeddedBytes(
-      model,
-      WriteFlags::GLTF | CesiumGltf::AutoConvertDataToBase64);
-  const auto asGLBBytes =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, WriteFlags::GLB);
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  options.autoConvertDataToBase64 = true;
+
+  const auto asGltfBytes =
+      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+
+  options.exportType = CesiumGltf::GltfExportType::GLB;
+
+  const auto asGLBBytes = CesiumGltf::writeModelAsEmbeddedBytes(model, options);
   validateStructure(asGltfBytes);
   validateStructure(asGLBBytes);
 }

@@ -30,7 +30,7 @@ mimeTypeToExtensionString(CesiumGltf::Image::MimeType mimeType) noexcept {
 void CesiumGltf::writeImage(
     const std::vector<CesiumGltf::Image>& images,
     CesiumGltf::JsonWriter& jsonWriter,
-    WriteFlags flags,
+    const WriteOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
   if (images.empty()) {
     return;
@@ -68,7 +68,7 @@ void CesiumGltf::writeImage(
     }
 
     else if (!isDataBufferEmpty) {
-      if (flags & WriteFlags::AutoConvertDataToBase64) {
+      if (options.autoConvertDataToBase64) {
         j.KeyPrimitive(
             "uri",
             BASE64_PREFIX + encodeAsBase64String(image.cesium.pixelData));

@@ -2,7 +2,7 @@
 #include "JsonWriter.h"
 #include "PrettyJsonWriter.h"
 #include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/WriteFlags.h>
+#include <CesiumGltf/WriteOptions.h>
 #include <CesiumGltf/WriterException.h>
 #include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
@@ -23,7 +23,7 @@ const std::vector<std::byte> HELLO_WORLD_STR{
 
 TEST_CASE(
     "BufferWriter automatically converts buffer.cesium.data to base64 if "
-    "WriteFlags::AutoConvertConvertDataToBase64 is set",
+    "autoConvertConvertDataToBase64 is specified",
     "[GltfWriter]") {
 
   CesiumGltf::Buffer buffer;
@@ -34,12 +34,15 @@ TEST_CASE(
   // if a base64 conversion occured.
   buffer.byteLength = 1337;
 
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  options.autoConvertDataToBase64 = true;
+
   writer.StartObject();
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::WriteFlags::GLTF |
-          CesiumGltf::WriteFlags::AutoConvertDataToBase64);
+      options);
 
   writer.EndObject();
 
@@ -81,12 +84,15 @@ TEST_CASE(
   // writing to an external file would occur.
   buffer.byteLength = 1337;
 
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  options.autoConvertDataToBase64 = true;
+
   writer.StartObject();
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::WriteFlags::GLTF |
-          CesiumGltf::WriteFlags::AutoConvertDataToBase64,
+      options,
       onHelloWorldBin);
   writer.EndObject();
   REQUIRE(callbackInvoked);
@@ -112,10 +118,15 @@ TEST_CASE("Buffer that only has byteLength set is serialized correctly") {
   buffer.byteLength = 1234;
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::GLTF);
+      options);
+
   writer.EndObject();
   const auto asStringView = writer.toStringView();
   REQUIRE(asStringView == R"({"buffers":[{"byteLength":1234}]})");
@@ -127,11 +138,15 @@ TEST_CASE("URI zero CANNOT be set in GLB mode. (0th buffer is reserved as "
   CesiumGltf::JsonWriter writer;
   buffer.uri = "literally anything here should trigger this error";
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLB;
+
   REQUIRE_THROWS_AS(
       CesiumGltf::writeBuffer(
           std::vector<CesiumGltf::Buffer>{buffer},
           writer,
-          CesiumGltf::GLB),
+          options),
       CesiumGltf::URIErroneouslyDefined);
 }
 
@@ -152,10 +167,14 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
   };
 
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::GLTF,
+      options,
       onHelloWorldBin);
   writer.EndObject();
 }
@@ -167,11 +186,15 @@ TEST_CASE("AmbiguiousDataSource thrown if buffer.uri is set to base64 uri and "
   buffer.cesium.data = HELLO_WORLD_STR;
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   REQUIRE_THROWS_AS(
       CesiumGltf::writeBuffer(
           std::vector<CesiumGltf::Buffer>{buffer},
           writer,
-          CesiumGltf::GLTF),
+          options),
       CesiumGltf::AmbiguiousDataSource);
 }
 
@@ -182,10 +205,14 @@ TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
   buffer.name = "HelloWorldBuffer";
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::GLTF),
+      options),
       writer.EndObject();
 
   rapidjson::Document document;
@@ -212,11 +239,15 @@ TEST_CASE("base64 uri set but byte length not set") {
   buffer.uri = "data:application/octet-stream;base64,SGVsbG9Xb3JsZCE=";
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   REQUIRE_THROWS_AS(
       CesiumGltf::writeBuffer(
           std::vector<CesiumGltf::Buffer>{buffer},
           writer,
-          CesiumGltf::GLTF),
+          options),
       CesiumGltf::ByteLengthNotSet);
 }
 
@@ -226,10 +257,14 @@ TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
   buffer.cesium.data = HELLO_WORLD_STR;
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLB;
+
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::GLB);
+      options);
   writer.EndObject();
 
   rapidjson::Document document;
@@ -255,11 +290,15 @@ TEST_CASE("MissingDataSource thrown if ExternalFileURI detected and "
   buffer.uri = "Foobar.bin";
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   REQUIRE_THROWS_AS(
       CesiumGltf::writeBuffer(
           std::vector<CesiumGltf::Buffer>{buffer},
           writer,
-          CesiumGltf::GLTF),
+          options),
       CesiumGltf::MissingDataSource);
 }
 
@@ -274,10 +313,14 @@ TEST_CASE("extras and extensions are detected and serialized") {
 
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
+
+  CesiumGltf::WriteOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLTF;
+
   CesiumGltf::writeBuffer(
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
-      CesiumGltf::GLTF);
+      options);
   writer.EndObject();
 
   rapidjson::Document document;

@@ -1,7 +1,7 @@
 #pragma once
 #include "CesiumGltf/Model.h"
-#include "WriteFlags.h"
 #include "WriteGLTFCallback.h"
+#include "WriteOptions.h"
 #include "WriterLibrary.h"
 #include <cstdint>
 #include <string_view>
@@ -13,20 +13,18 @@ namespace CesiumGltf {
  * @brief Write a glTF or glb asset to a byte vector.
  *
  * @param model Final assembled glTF asset, ready for serialization.
- * @param flags Bitset flags used to control writing glTF serialization
- * behavior.
+ * @param options Options to use for exporting the asset.
  *
  * @details Serializes the provided model object into a byte vector using the
- * provided flags to convert. Must provide WriteFlags::GLTF or WriteFlags::GLB.
- * Cannot provide both simultaneously. There are a few special scenarios with
+ * provided flags to convert. There are a few special scenarios with
  * serializing \link CesiumGltf::Buffer \endlink and \link CesiumGltf::Image
  * \endlink objects:
- * - If WriteFlags::GLB is enabled, model.buffers[0].cesium.data will be used as
- * the single binary data storage GLB chunk, so it's the callers responsibility
- * to place all their binary data in model.buffers[0].cesium.data if they want
- * it to be serialized to the GLB.
- * - If WriteFlags::GLB is enabled, model.buffers[0].uri CANNOT be set or a
- *   \link CesiumGltf::URIErroneouslyDefined \endlink exception will be thrown.
+ * - If GltfExportType::GLB is specified, model.buffers[0].cesium.data will be
+ * used as the single binary data storage GLB chunk, so it's the callers
+ * responsibility to place all their binary data in model.buffers[0].cesium.data
+ * if they want it to be serialized to the GLB.
+ * - If GltfExportType::GLB is specified, model.buffers[0].uri CANNOT be set or
+ * a \link CesiumGltf::URIErroneouslyDefined \endlink exception will be thrown.
  * - If a \link CesiumGltf::Buffer \endlink or \link CesiumGltf::Image \endlink
  * a contains base64 data uri and its `cesium.data` or `cesium.pixelData` vector
  * is non empty, a \link CesiumGltf::AmbiguiousDataSource \endlink exception
@@ -44,7 +42,7 @@ namespace CesiumGltf {
  */
 
 CESIUMGLTFWRITER_API std::vector<std::byte>
-writeModelAsEmbeddedBytes(const Model& model, WriteFlags flags);
+writeModelAsEmbeddedBytes(const Model& model, const WriteOptions& options);
 
 /**
  * @brief Write a glTF or glb asset and its associated external images and
@@ -80,7 +78,7 @@ writeModelAsEmbeddedBytes(const Model& model, WriteFlags flags);
 
 CESIUMGLTFWRITER_API void writeModelAndExternalFiles(
     const Model& model,
-    WriteFlags flags,
+    const WriteOptions& options,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback);
 } // namespace CesiumGltf
