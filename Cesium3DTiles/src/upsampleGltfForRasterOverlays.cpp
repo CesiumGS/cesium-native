@@ -662,10 +662,78 @@ static void upsamplePrimitiveForRasterOverlays(
   std::copy(indices.begin(), indices.end(), pAsUint32s);
   indexBufferView.byteLength = int64_t(indexBuffer.cesium.data.size());
 
+  // DEBUG
+  bool onlyWater = false;
+  bool onlyLand = true;
+  int32_t waterMaskTextureId = -1;
+  // TODO: can we just use the raster overlay tex coords
+  int64_t waterMaskTextureCoordsId = -1;
+  
+  auto onlyWaterIt = primitive.extras.find("OnlyWater");
+  auto onlyLandIt = primitive.extras.find("OnlyLand");
+
+  if (onlyWaterIt != primitive.extras.end() && onlyWaterIt->second.isBool() &&
+    onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
+
+    onlyWater = onlyWaterIt->second.getBool(false);
+    onlyLand = onlyLandIt->second.getBool(false);
+
+    if (!onlyWater && !onlyLand) {
+      // We have to clip the parent water mask
+      auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
+      auto waterMaskTextureCoordsIdIt =
+          primitive.extras.find("WaterMaskTexCoords");
+      if (waterMaskTextureIdIt != primitive.extras.end() &&
+          waterMaskTextureCoordsIdIt != primitive.extras.end()) {
+        waterMaskTextureId =
+            static_cast<int32_t>(waterMaskTextureIdIt->second.getNumber(-1.0));
+        waterMaskTextureCoordsId = static_cast<int64_t>(
+            waterMaskTextureCoordsIdIt->second.getNumber(-1.0));
+      }
+    }
+  }
+
+  double waterMaskTranslationX = 0.0;
+  double waterMaskTranslationY = 0.0;
+  double waterMaskScale = 0.125;
+
+  auto waterMaskTranslationXIt = 
+    primitive.extras.find("WaterMaskTranslationX");
+  auto waterMaskTranslationYIt = 
+    primitive.extras.find("WaterMaskTranslationY");
+  auto waterMaskScaleIt = primitive.extras.find("WaterMaskScale");
+
+  if (waterMaskTranslationXIt != primitive.extras.end() && 
+      waterMaskTranslationXIt->second.isNumber() &&
+      waterMaskTranslationYIt != primitive.extras.end() && 
+      waterMaskTranslationYIt->second.isNumber() &&
+      waterMaskScaleIt != primitive.extras.end() && 
+      waterMaskScaleIt->second.isNumber()) {
+    waterMaskScale = 0.5 * waterMaskScaleIt->second.getNumber(0.0);
+    waterMaskTranslationX = 
+      waterMaskTranslationXIt->second.getNumber(0.0) + 
+      waterMaskScale * (childID.tileID.x % 2);
+    waterMaskTranslationY = 
+      waterMaskTranslationYIt->second.getNumber(0.0) + 
+      waterMaskScale * (childID.tileID.y % 2);
+  }
+  
   // add skirts to extras to be upsampled later if needed
   if (hasSkirt) {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
   }
+
+  // TODO: change above line so watermask stuff doesn't have to be split across
+  primitive.extras.emplace("OnlyWater", onlyWater);
+  primitive.extras.emplace("OnlyLand", onlyLand);
+
+  primitive.extras.emplace("WaterMaskTex", int32_t(waterMaskTextureId));
+  primitive.extras.emplace("WaterMaskTexCoords", int64_t(waterMaskTextureCoordsId));
+
+  primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
+  primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
+  // TODO: where does this come from?
+  primitive.extras.emplace("WaterMaskScale", waterMaskScale);
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
 }

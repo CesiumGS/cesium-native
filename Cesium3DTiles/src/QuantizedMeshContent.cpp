@@ -1174,6 +1174,11 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   primitive.extras.emplace("OnlyWater", meshView->onlyWater);
   primitive.extras.emplace("OnlyLand", meshView->onlyLand);
 
+  primitive.extras.emplace("WaterMaskTranslationX", 0.0);
+  primitive.extras.emplace("WaterMaskTranslationY", 0.0);
+  // TODO: where does this come from?
+  primitive.extras.emplace("WaterMaskScale", 1.0);
+
   // TODO: should check if the extension is included here
   // if there is a combination of water and land, add the full water mask
   if (!meshView->onlyWater && !meshView->onlyLand) {
@@ -1199,8 +1204,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     waterMaskSampler.magFilter = CesiumGltf::Sampler::MagFilter::LINEAR;
     waterMaskSampler.minFilter =
         CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
-    waterMaskSampler.wrapS = CesiumGltf::Sampler::WrapS::REPEAT;
-    waterMaskSampler.wrapT = CesiumGltf::Sampler::WrapT::REPEAT;
+    waterMaskSampler.wrapS = CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
+    waterMaskSampler.wrapT = CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
 
     // create texture
     size_t waterMaskTextureId = model.textures.size();
