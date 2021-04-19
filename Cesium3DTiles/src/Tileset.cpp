@@ -1665,7 +1665,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // At least one descendant tile was added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
-  if (tile.getRefine() == TileRefine::Replace && 
+  if (tile.getRefine() == TileRefine::Replace &&
       !traversalDetails.allAreRenderable &&
       !traversalDetails.anyWereRenderedLastFrame) {
     // Some of our descendants aren't ready to render yet, and none were

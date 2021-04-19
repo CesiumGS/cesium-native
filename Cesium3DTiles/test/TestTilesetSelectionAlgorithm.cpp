@@ -671,7 +671,8 @@ TEST_CASE("Test additive refinement") {
   }
 }
 
-TEST_CASE("Render any tiles even when one of children can't be rendered for additive refinement") {
+TEST_CASE("Render any tiles even when one of children can't be rendered for "
+          "additive refinement") {
   Cesium3DTiles::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
@@ -720,8 +721,9 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for addi
   REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
   REQUIRE(root->getChildren().size() == 3);
 
-  // 1st frame. Root doesn't meet sse, so load children. But they are non-renderable, so render root only
-  { 
+  // 1st frame. Root doesn't meet sse, so load children. But they are
+  // non-renderable, so render root only
+  {
     ViewUpdateResult result = tileset.updateView(viewState);
 
     for (const Tile& child : root->getChildren()) {
@@ -738,18 +740,19 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for addi
     REQUIRE(result.culledTilesVisited == 0);
   }
 
-  // 2nd frame. Root doesn't meet sse, so load children. But they are non-renderable, so render root only
-  { 
+  // 2nd frame. Root doesn't meet sse, so load children. But they are
+  // non-renderable, so render root only
+  {
     ViewUpdateResult result = tileset.updateView(viewState);
 
     REQUIRE(root->isRenderable());
     for (const Tile& child : root->getChildren()) {
       if (*std::get_if<std::string>(&child.getTileID()) == "error_lr.b3dm") {
-		REQUIRE(child.getState() == Tile::LoadState::Done);
-		REQUIRE(!child.isRenderable());
+        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(!child.isRenderable());
       } else {
-		REQUIRE(child.getState() == Tile::LoadState::Done);
-		REQUIRE(child.isRenderable());
+        REQUIRE(child.getState() == Tile::LoadState::Done);
+        REQUIRE(child.isRenderable());
       }
     }
 
@@ -763,4 +766,3 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for addi
     REQUIRE(result.culledTilesVisited == 0);
   }
 }
-
