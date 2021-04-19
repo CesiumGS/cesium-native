@@ -249,13 +249,12 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   CesiumGltf::WriteOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
-
   const auto asGltfBytes =
       CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+  validateStructure(asGltfBytes);
 
   options.exportType = CesiumGltf::GltfExportType::GLB;
-
+  options.autoConvertDataToBase64 = false;
   const auto asGLBBytes = CesiumGltf::writeModelAsEmbeddedBytes(model, options);
-  validateStructure(asGltfBytes);
   validateStructure(asGLBBytes);
 }
