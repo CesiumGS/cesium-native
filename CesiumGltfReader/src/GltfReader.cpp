@@ -360,16 +360,13 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) const {
       &channelsInFile,
       image.channels);
   if (pImage) {
-    const int lastByte =
-        image.width * image.height * image.channels * image.bytesPerChannel;
     // std::uint8_t is not implicitly convertible to std::byte, so we must use
-    // std::transform here to force the conversion.
-    std::transform(
-        pImage,
-        pImage + lastByte,
-        std::back_inserter(image.pixelData),
-        [](char c) { return std::byte(c); });
-    stbi_image_free(pImage);
+    // reinterpret_cast to (safely) force the conversion.
+    const auto lastByte =
+        image.width * image.height * image.channels * image.bytesPerChannel;
+    image.pixelData.resize(static_cast<std::size_t>(lastByte));
+    std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(image.pixelData.data());
+    std::copy(pImage, pImage + lastByte, u8Pointer);
   } else {
     result.image.reset();
     result.errors.emplace_back(stbi_failure_reason());
