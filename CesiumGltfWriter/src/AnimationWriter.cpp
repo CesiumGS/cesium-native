@@ -3,6 +3,7 @@
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
+#include <iostream>
 #include <magic_enum.hpp>
 #include <stdexcept>
 #include <type_traits>
@@ -73,15 +74,18 @@ void CesiumGltf::writeAnimation(
   j.StartArray();
   for (const auto& animation : animations) {
     j.StartObject();
-    if (animation.channels.empty()) {
-      throw std::runtime_error("Must have at least 1 animation channel");
+    const bool hasAnimationChannels = !animation.channels.empty();
+    if (!hasAnimationChannels) {
+      std::cerr << "Detected empty animation channels, The generated glTF will "
+                   "not be spec-compliant."
+                << std::endl;
+    } else {
+      j.StartArray();
+      for (const auto& animationChannel : animation.channels) {
+        writeAnimationChannel(animationChannel, j);
+      }
+      j.EndArray();
     }
-
-    j.StartArray();
-    for (const auto& animationChannel : animation.channels) {
-      writeAnimationChannel(animationChannel, j);
-    }
-    j.EndArray();
 
     j.StartArray();
     for (const auto& animationSampler : animation.samplers) {
