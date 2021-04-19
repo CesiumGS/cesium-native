@@ -281,34 +281,31 @@ void Tile::loadContent() {
             std::unique_ptr<TileContentLoadResult> pContent =
                 TileContentFactory::createContent(loadInput);
 
-            if (!pContent) {
-              pContent = std::make_unique<TileContentLoadResult>();
-            }
-
-            pContent->httpStatusCode = pResponse->statusCode();
-
             void* pRendererResources = nullptr;
+            if (pContent) {
+              pContent->httpStatusCode = pResponse->statusCode();
 
-            if (pContent->model) {
+              if (pContent->model) {
 
-              // TODO The `extras` are currently the only way to pass
-              // arbitrary information to the consumer, so the up-axis
-              // is stored here:
-              pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
+                // TODO The `extras` are currently the only way to pass
+                // arbitrary information to the consumer, so the up-axis
+                // is stored here:
+                pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
 
-              const BoundingVolume& boundingVolume =
-                  loadInput.tileBoundingVolume;
-              Tile::generateTextureCoordinates(
-                  pContent->model.value(),
-                  boundingVolume,
-                  projections);
+                const BoundingVolume& boundingVolume =
+                    loadInput.tileBoundingVolume;
+                Tile::generateTextureCoordinates(
+                    pContent->model.value(),
+                    boundingVolume,
+                    projections);
 
-              if (pPrepareRendererResources) {
-                const glm::dmat4& transform = loadInput.tileTransform;
-                pRendererResources =
-                    pPrepareRendererResources->prepareInLoadThread(
-                        pContent->model.value(),
-                        transform);
+                if (pPrepareRendererResources) {
+                  const glm::dmat4& transform = loadInput.tileTransform;
+                  pRendererResources =
+                      pPrepareRendererResources->prepareInLoadThread(
+                          pContent->model.value(),
+                          transform);
+                }
               }
             }
 

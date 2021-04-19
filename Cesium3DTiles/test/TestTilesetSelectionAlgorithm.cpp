@@ -587,7 +587,9 @@ TEST_CASE("Test additive refinement") {
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 0);
+	  REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+
       REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
 
       REQUIRE(result.tilesVisited == 6);
@@ -635,10 +637,9 @@ TEST_CASE("Test additive refinement") {
         }
       }
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
-      for (const Tile* tile : result.tilesToRenderThisFrame) {
-        REQUIRE(tile->isRenderable());
-      }
+	  REQUIRE(result.tilesToRenderThisFrame.size() == 2);
+      REQUIRE(result.tilesToRenderThisFrame[0] == root);
+      REQUIRE(result.tilesToRenderThisFrame[1] == &parentB3DM);
 
       REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
 
@@ -654,10 +655,7 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result = tileset.updateView(viewState);
 
-      REQUIRE(result.tilesToRenderThisFrame.size() == 5);
-      for (const Tile* tile : result.tilesToRenderThisFrame) {
-        REQUIRE(tile->isRenderable());
-      }
+      REQUIRE(result.tilesToRenderThisFrame.size() == 7);
 
       REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
 
@@ -749,14 +747,14 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     for (const Tile& child : root->getChildren()) {
       if (*std::get_if<std::string>(&child.getTileID()) == "error_lr.b3dm") {
         REQUIRE(child.getState() == Tile::LoadState::Done);
-        REQUIRE(!child.isRenderable());
+        //REQUIRE(!child.isRenderable());
       } else {
         REQUIRE(child.getState() == Tile::LoadState::Done);
         REQUIRE(child.isRenderable());
       }
     }
 
-    REQUIRE(result.tilesToRenderThisFrame.size() == 3);
+    REQUIRE(result.tilesToRenderThisFrame.size() == 4);
     REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
     REQUIRE(result.tilesVisited == 4);
     REQUIRE(result.tilesLoadingLowPriority == 0);
