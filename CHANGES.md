@@ -24,6 +24,7 @@
 - Gave glTFs created from quantized-mesh terrain tiles a more sensible material with a `metallicFactor` of 0.0 and a `roughnessFactor` of 1.0. Previously the default glTF material was used, which has a `metallicFactor` of 1.0, leading to an undesirable appearance.
 - Reported zero-length images as non-errors as `BingMapsRasterOverlay` purposely requests that the Bing servers return a zero-length image for non-existent tiles.
 - 3D Tiles geometric error is now scaled by the tile's transform.
+- Fixed a bug that that caused a 3D Tiles tile to fail to refine when any of its children had an unsupported type of content.
 
 ### v0.1.0 - 2021-03-30
 
