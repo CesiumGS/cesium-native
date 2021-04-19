@@ -1278,10 +1278,10 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
   addTileToLoadQueue(
-        this->_loadQueueMedium,
-        frameState.viewState,
-        tile,
-        distance);
+      this->_loadQueueMedium,
+      frameState.viewState,
+      tile,
+      distance);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();

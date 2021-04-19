@@ -587,7 +587,7 @@ TEST_CASE("Test additive refinement") {
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
-	  REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
       REQUIRE(result.tilesToRenderThisFrame.front() == root);
 
       REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
@@ -637,7 +637,7 @@ TEST_CASE("Test additive refinement") {
         }
       }
 
-	  REQUIRE(result.tilesToRenderThisFrame.size() == 2);
+      REQUIRE(result.tilesToRenderThisFrame.size() == 2);
       REQUIRE(result.tilesToRenderThisFrame[0] == root);
       REQUIRE(result.tilesToRenderThisFrame[1] == &parentB3DM);
 
