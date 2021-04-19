@@ -8,7 +8,8 @@
   },
   "scripts": {
     "format": "clang-format -i \"--glob=@(Cesium*)/**/*.@(cpp|h|hpp)\"",
-    "check-format": "check-clang-format"
+    "check-format": "check-clang-format",
+    "generate-gltf": "cd tools/generate-gltf-classes && npm run generate && cd ../.. && npm run format"
   },
   "repository": {
     "type": "git",

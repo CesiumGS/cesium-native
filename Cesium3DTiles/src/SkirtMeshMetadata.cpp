@@ -1,9 +1,9 @@
 #include "SkirtMeshMetadata.h"
-#include <CesiumGltf/JsonValue.h>
+#include <CesiumUtility/JsonValue.h>
 #include <optional>
 #include <stdexcept>
 
-using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 std::optional<SkirtMeshMetadata>
@@ -80,7 +80,7 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
   return skirtMeshMetadata;
 }
 
-CesiumGltf::JsonValue::Object SkirtMeshMetadata::createGltfExtras(
+JsonValue::Object SkirtMeshMetadata::createGltfExtras(
     const SkirtMeshMetadata& skirtMeshMetadata) {
   return {
       {"skirtMeshMetadata",

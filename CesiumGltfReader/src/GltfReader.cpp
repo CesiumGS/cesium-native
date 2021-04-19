@@ -1,5 +1,9 @@
-#include "CesiumGltf/Reader.h"
-#include "JsonHandler.h"
+#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltf/IExtensionJsonHandler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/JsonReader.h"
+#include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
@@ -15,114 +19,10 @@
 #include <stb_image.h>
 
 using namespace CesiumGltf;
+using namespace CesiumJsonReader;
+using namespace CesiumUtility;
 
 namespace {
-struct Dispatcher {
-  IJsonHandler* pCurrent;
-
-  bool update(IJsonHandler* pNext) {
-    if (pNext == nullptr) {
-      return false;
-    }
-
-    this->pCurrent = pNext;
-    return true;
-  }
-
-  bool Null() { return update(pCurrent->Null()); }
-  bool Bool(bool b) { return update(pCurrent->Bool(b)); }
-  bool Int(int i) { return update(pCurrent->Int(i)); }
-  bool Uint(unsigned i) { return update(pCurrent->Uint(i)); }
-  bool Int64(int64_t i) { return update(pCurrent->Int64(i)); }
-  bool Uint64(uint64_t i) { return update(pCurrent->Uint64(i)); }
-  bool Double(double d) { return update(pCurrent->Double(d)); }
-  bool RawNumber(const char* str, size_t length, bool copy) {
-    return update(pCurrent->RawNumber(str, length, copy));
-  }
-  bool String(const char* str, size_t length, bool copy) {
-    return update(pCurrent->String(str, length, copy));
-  }
-  bool StartObject() { return update(pCurrent->StartObject()); }
-  bool Key(const char* str, size_t length, bool copy) {
-    return update(pCurrent->Key(str, length, copy));
-  }
-  bool EndObject(size_t memberCount) {
-    return update(pCurrent->EndObject(memberCount));
-  }
-  bool StartArray() { return update(pCurrent->StartArray()); }
-  bool EndArray(size_t elementCount) {
-    return update(pCurrent->EndArray(elementCount));
-  }
-};
-
-class FinalJsonHandler : public ObjectJsonHandler {
-public:
-  FinalJsonHandler(
-      ModelReaderResult& result,
-      rapidjson::MemoryStream& inputStream)
-      : _result(result), _inputStream(inputStream) {
-    reset(this);
-  }
-
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context) override {
-    std::string fullWarning = warning;
-    fullWarning += "\n  While parsing: ";
-    for (auto it = context.rbegin(); it != context.rend(); ++it) {
-      fullWarning += *it;
-    }
-
-    fullWarning += "\n  From byte offset: ";
-    fullWarning += std::to_string(this->_inputStream.Tell());
-
-    this->_result.warnings.emplace_back(std::move(fullWarning));
-  }
-
-private:
-  ModelReaderResult& _result;
-  rapidjson::MemoryStream& _inputStream;
-};
-
-std::string getMessageFromRapidJsonError(rapidjson::ParseErrorCode code) {
-  switch (code) {
-  case rapidjson::ParseErrorCode::kParseErrorDocumentEmpty:
-    return "The document is empty.";
-  case rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular:
-    return "The document root must not be followed by other values.";
-  case rapidjson::ParseErrorCode::kParseErrorValueInvalid:
-    return "Invalid value.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissName:
-    return "Missing a name for object member.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissColon:
-    return "Missing a colon after a name of object member.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket:
-    return "Missing a comma or '}' after an object member.";
-  case rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket:
-    return "Missing a comma or ']' after an array element.";
-  case rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex:
-    return "Incorrect hex digit after \\u escape in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid:
-    return "The surrogate pair in string is invalid.";
-  case rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid:
-    return "Invalid escape character in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark:
-    return "Missing a closing quotation mark in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding:
-    return "Invalid encoding in string.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberTooBig:
-    return "Number too big to be stored in double.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberMissFraction:
-    return "Missing fraction part in number.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberMissExponent:
-    return "Missing exponent in number.";
-  case rapidjson::ParseErrorCode::kParseErrorTermination:
-    return "Parsing was terminated.";
-  case rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError:
-  default:
-    return "Unspecific syntax error.";
-  }
-}
 
 #pragma pack(push, 1)
 struct GlbHeader {
@@ -145,40 +45,17 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) {
   return reinterpret_cast<const GlbHeader*>(data.data())->magic == 0x46546C67;
 }
 
-ModelReaderResult readJsonModel(const gsl::span<const std::byte>& data) {
-  rapidjson::Reader reader;
-  rapidjson::MemoryStream inputStream(
-      reinterpret_cast<const char*>(data.data()),
-      data.size());
+ModelReaderResult readJsonModel(
+    const ReaderContext& context,
+    const gsl::span<const std::byte>& data) {
 
-  ModelReaderResult result;
-  ModelJsonHandler modelHandler;
-  FinalJsonHandler finalHandler(result, inputStream);
-  Dispatcher dispatcher{&modelHandler};
+  ModelJsonHandler modelHandler(context);
+  ReadJsonResult<Model> jsonResult = JsonReader::readJson(data, modelHandler);
 
-  result.model.emplace();
-  modelHandler.reset(&finalHandler, &result.model.value());
-
-  reader.IterativeParseInit();
-
-  bool success = true;
-  while (success && !reader.IterativeParseComplete()) {
-    success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(
-        inputStream,
-        dispatcher);
-  }
-
-  if (reader.HasParseError()) {
-    result.model.reset();
-
-    std::string s("glTF JSON parsing error at byte offset ");
-    s += std::to_string(reader.GetErrorOffset());
-    s += ": ";
-    s += getMessageFromRapidJsonError(reader.GetParseErrorCode());
-    result.errors.emplace_back(std::move(s));
-  }
-
-  return result;
+  return ModelReaderResult{
+      std::move(jsonResult.value),
+      std::move(jsonResult.errors),
+      std::move(jsonResult.warnings)};
 }
 
 namespace {
@@ -203,7 +80,9 @@ std::string toMagicString(uint32_t i) {
 }
 } // namespace
 
-ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
+ModelReaderResult readBinaryModel(
+    const ReaderContext& context,
+    const gsl::span<const std::byte>& data) {
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
   }
@@ -289,7 +168,7 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
     binaryChunk = glbData.subspan(binaryStart, pBinaryChunkHeader->chunkLength);
   }
 
-  ModelReaderResult result = readJsonModel(jsonChunk);
+  ModelReaderResult result = readJsonModel(context, jsonChunk);
 
   if (result.model && !binaryChunk.empty()) {
     Model& model = result.model.value();
@@ -324,12 +203,13 @@ ModelReaderResult readBinaryModel(const gsl::span<const std::byte>& data) {
 }
 
 void postprocess(
+    ReaderContext& context,
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
   Model& model = readModel.model.value();
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(readModel, options.clearDecodedDataUrls);
+    decodeDataUrls(context, readModel, options.clearDecodedDataUrls);
   }
 
   if (options.decodeEmbeddedImages) {
@@ -354,7 +234,7 @@ void postprocess(
       gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
-      ImageReaderResult imageResult = readImage(bufferViewSpan);
+      ImageReaderResult imageResult = context.reader.readImage(bufferViewSpan);
       if (imageResult.image) {
         image.cesium = std::move(imageResult.image.value());
       }
@@ -365,23 +245,104 @@ void postprocess(
     decodeDraco(readModel);
   }
 }
+
+class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
+                                public IExtensionJsonHandler {
+public:
+  AnyExtensionJsonHandler(const ReaderContext& /* context */)
+      : JsonObjectJsonHandler() {}
+
+  virtual void reset(
+      IJsonHandler* pParentHandler,
+      ExtensibleObject& o,
+      const std::string_view& extensionName) override {
+    std::any& value =
+        o.extensions.emplace(extensionName, JsonValue(JsonValue::Object()))
+            .first->second;
+    JsonObjectJsonHandler::reset(
+        pParentHandler,
+        &std::any_cast<JsonValue&>(value));
+  }
+
+  virtual IJsonHandler* readNull() override {
+    return JsonObjectJsonHandler::readNull();
+  };
+  virtual IJsonHandler* readBool(bool b) override {
+    return JsonObjectJsonHandler::readBool(b);
+  }
+  virtual IJsonHandler* readInt32(int32_t i) override {
+    return JsonObjectJsonHandler::readInt32(i);
+  }
+  virtual IJsonHandler* readUint32(uint32_t i) override {
+    return JsonObjectJsonHandler::readUint32(i);
+  }
+  virtual IJsonHandler* readInt64(int64_t i) override {
+    return JsonObjectJsonHandler::readInt64(i);
+  }
+  virtual IJsonHandler* readUint64(uint64_t i) override {
+    return JsonObjectJsonHandler::readUint64(i);
+  }
+  virtual IJsonHandler* readDouble(double d) override {
+    return JsonObjectJsonHandler::readDouble(d);
+  }
+  virtual IJsonHandler* readString(const std::string_view& str) override {
+    return JsonObjectJsonHandler::readString(str);
+  }
+  virtual IJsonHandler* readObjectStart() override {
+    return JsonObjectJsonHandler::readObjectStart();
+  }
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
+    return JsonObjectJsonHandler::readObjectKey(str);
+  }
+  virtual IJsonHandler* readObjectEnd() override {
+    return JsonObjectJsonHandler::readObjectEnd();
+  }
+  virtual IJsonHandler* readArrayStart() override {
+    return JsonObjectJsonHandler::readArrayStart();
+  }
+  virtual IJsonHandler* readArrayEnd() override {
+    return JsonObjectJsonHandler::readArrayEnd();
+  }
+
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context =
+          std::vector<std::string>()) override {
+    JsonObjectJsonHandler::reportWarning(warning, std::move(context));
+  }
+};
+
 } // namespace
 
-ModelReaderResult CesiumGltf::readModel(
+GltfReader::GltfReader() {
+  this->registerExtension<
+      MeshPrimitive,
+      KHR_draco_mesh_compressionJsonHandler>();
+}
+
+void GltfReader::setExtensionState(
+    const std::string& extensionName,
+    ExtensionState newState) {
+  this->_extensionStates[extensionName] = newState;
+}
+
+ModelReaderResult GltfReader::readModel(
     const gsl::span<const std::byte>& data,
-    const ReadModelOptions& options) {
-  ModelReaderResult result =
-      isBinaryGltf(data) ? readBinaryModel(data) : readJsonModel(data);
+    const ReadModelOptions& options) const {
+
+  ReaderContext context{*this};
+  ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(context, data)
+                                                : readJsonModel(context, data);
 
   if (result.model) {
-    postprocess(result, options);
+    postprocess(context, result, options);
   }
 
   return result;
 }
 
 ImageReaderResult
-CesiumGltf::readImage(const gsl::span<const std::byte>& data) {
+GltfReader::readImage(const gsl::span<const std::byte>& data) const {
   ImageReaderResult result;
 
   result.image.emplace();
@@ -415,4 +376,33 @@ CesiumGltf::readImage(const gsl::span<const std::byte>& data) {
   }
 
   return result;
+}
+
+std::unique_ptr<IExtensionJsonHandler> GltfReader::createExtensionHandler(
+    const ReaderContext& context,
+    const std::string_view& extensionName,
+    const std::string& extendedObjectType) const {
+
+  std::string extensionNameString{extensionName};
+
+  auto stateIt = this->_extensionStates.find(extensionNameString);
+  if (stateIt != this->_extensionStates.end()) {
+    if (stateIt->second == ExtensionState::Disabled) {
+      return nullptr;
+    } else if (stateIt->second == ExtensionState::JsonOnly) {
+      return std::make_unique<AnyExtensionJsonHandler>(context);
+    }
+  }
+
+  auto extensionNameIt = this->_extensions.find(extensionNameString);
+  if (extensionNameIt == this->_extensions.end()) {
+    return std::make_unique<AnyExtensionJsonHandler>(context);
+  }
+
+  auto objectTypeIt = extensionNameIt->second.find(extendedObjectType);
+  if (objectTypeIt == extensionNameIt->second.end()) {
+    return std::make_unique<AnyExtensionJsonHandler>(context);
+  }
+
+  return objectTypeIt->second(context);
 }

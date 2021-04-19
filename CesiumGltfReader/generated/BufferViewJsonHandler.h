@@ -3,31 +3,35 @@
 #pragma once
 
 #include "CesiumGltf/BufferView.h"
-#include "IntegerJsonHandler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct BufferView;
 
 class BufferViewJsonHandler : public NamedObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, BufferView* pObject);
-  BufferView* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = BufferView;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  BufferViewJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, BufferView* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* BufferViewKey(const char* str, BufferView& o);
+  IJsonHandler* readObjectKeyBufferView(
+      const std::string& objectType,
+      const std::string_view& str,
+      BufferView& o);
 
 private:
   BufferView* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _buffer;
-  IntegerJsonHandler<int64_t> _byteOffset;
-  IntegerJsonHandler<int64_t> _byteLength;
-  IntegerJsonHandler<int64_t> _byteStride;
-  IntegerJsonHandler<BufferView::Target> _target;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _buffer;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteStride;
+  CesiumJsonReader::IntegerJsonHandler<BufferView::Target> _target;
 };
 } // namespace CesiumGltf

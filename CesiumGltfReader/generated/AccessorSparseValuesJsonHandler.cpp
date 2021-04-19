@@ -8,36 +8,30 @@
 
 using namespace CesiumGltf;
 
+AccessorSparseValuesJsonHandler::AccessorSparseValuesJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context), _bufferView(), _byteOffset() {}
+
 void AccessorSparseValuesJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparseValues* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-AccessorSparseValues* AccessorSparseValuesJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void AccessorSparseValuesJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* AccessorSparseValuesJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AccessorSparseValuesKey(str, *this->_pObject);
+  return this->readObjectKeyAccessorSparseValues(
+      AccessorSparseValues::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
-    const char* str,
+CesiumJsonReader::IJsonHandler*
+AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
+    const std::string& objectType,
+    const std::string_view& str,
     AccessorSparseValues& o) {
   using namespace std::string_literals;
 
@@ -46,5 +40,5 @@ IJsonHandler* AccessorSparseValuesJsonHandler::AccessorSparseValuesKey(
   if ("byteOffset"s == str)
     return property("byteOffset", this->_byteOffset, o.byteOffset);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

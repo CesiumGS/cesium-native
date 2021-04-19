@@ -1,7 +1,8 @@
-#include "JsonObjectJsonHandler.h"
+#include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include <cstdint>
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
+using namespace CesiumUtility;
 
 namespace {
 template <typename T> void addOrReplace(JsonValue& json, T value) {
@@ -14,68 +15,60 @@ template <typename T> void addOrReplace(JsonValue& json, T value) {
 }
 } // namespace
 
+JsonObjectJsonHandler::JsonObjectJsonHandler() noexcept : JsonHandler() {}
+
 void JsonObjectJsonHandler::reset(IJsonHandler* pParent, JsonValue* pValue) {
   JsonHandler::reset(pParent);
   this->_stack.clear();
   this->_stack.push_back(pValue);
 }
 
-IJsonHandler* JsonObjectJsonHandler::Null() {
+IJsonHandler* JsonObjectJsonHandler::readNull() {
   addOrReplace(*this->_stack.back(), JsonValue::Null());
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::Bool(bool b) {
+IJsonHandler* JsonObjectJsonHandler::readBool(bool b) {
   addOrReplace(*this->_stack.back(), b);
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::Int(int i) {
+IJsonHandler* JsonObjectJsonHandler::readInt32(int32_t i) {
   addOrReplace(*this->_stack.back(), std::int64_t(i));
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::Uint(unsigned i) {
+IJsonHandler* JsonObjectJsonHandler::readUint32(uint32_t i) {
   addOrReplace(*this->_stack.back(), std::uint64_t(i));
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::Int64(int64_t i) {
+IJsonHandler* JsonObjectJsonHandler::readInt64(int64_t i) {
   addOrReplace(*this->_stack.back(), i);
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::Uint64(uint64_t i) {
+IJsonHandler* JsonObjectJsonHandler::readUint64(uint64_t i) {
   addOrReplace(*this->_stack.back(), i);
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::Double(double d) {
+IJsonHandler* JsonObjectJsonHandler::readDouble(double d) {
   addOrReplace(*this->_stack.back(), d);
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::RawNumber(
-    const char* /* str */,
-    size_t /* length */,
-    bool /* copy */) {
-  return nullptr;
-}
-
-IJsonHandler* JsonObjectJsonHandler::String(
-    const char* str,
-    size_t /* length */,
-    bool /* copy */) {
-  *this->_stack.back() = str;
+IJsonHandler* JsonObjectJsonHandler::readString(const std::string_view& str) {
+  *this->_stack.back() = std::string(str);
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::StartObject() {
+IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
   JsonValue& current = *this->_stack.back();
   JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
   if (pArray) {
-    JsonValue& newArray = pArray->emplace_back(JsonValue::Object());
-    this->_stack.emplace_back(&newArray);
+    JsonValue& newObject = pArray->emplace_back(JsonValue::Object());
+    this->_stack.emplace_back(&newObject);
   } else {
     current = JsonValue::Object();
   }
@@ -83,10 +76,8 @@ IJsonHandler* JsonObjectJsonHandler::StartObject() {
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::Key(
-    const char* str,
-    size_t /* length */,
-    bool /* copy */) {
+IJsonHandler*
+JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
   JsonValue& json = *this->_stack.back();
   JsonValue::Object* pObject = std::get_if<JsonValue::Object>(&json.value);
 
@@ -96,11 +87,11 @@ IJsonHandler* JsonObjectJsonHandler::Key(
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::EndObject(size_t /* memberCount */) {
+IJsonHandler* JsonObjectJsonHandler::readObjectEnd() {
   return this->doneElement();
 }
 
-IJsonHandler* JsonObjectJsonHandler::StartArray() {
+IJsonHandler* JsonObjectJsonHandler::readArrayStart() {
   JsonValue& current = *this->_stack.back();
   JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
   if (pArray) {
@@ -113,7 +104,7 @@ IJsonHandler* JsonObjectJsonHandler::StartArray() {
   return this;
 }
 
-IJsonHandler* JsonObjectJsonHandler::EndArray(size_t /* elementCount */) {
+IJsonHandler* JsonObjectJsonHandler::readArrayEnd() {
   this->_stack.pop_back();
   return this->_stack.empty() ? this->parent() : this;
 }

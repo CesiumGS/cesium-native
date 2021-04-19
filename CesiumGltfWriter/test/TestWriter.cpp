@@ -6,8 +6,8 @@
 #include "CesiumGltf/Scene.h"
 #include "CesiumGltf/Writer.h"
 #include "catch2/catch.hpp"
+#include <CesiumGltf/GltfReader.h>
 #include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Reader.h>
 #include <CesiumGltf/WriteFlags.h>
 #include <algorithm>
 #include <cstddef>
@@ -162,7 +162,8 @@ TEST_CASE(
 TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
 
   const auto validateStructure = [](const std::vector<std::byte>& gltfAsset) {
-    auto loadedModelResult = CesiumGltf::readModel(gsl::span(gltfAsset));
+    CesiumGltf::GltfReader reader;
+    auto loadedModelResult = reader.readModel(gsl::span(gltfAsset));
     REQUIRE(loadedModelResult.model.has_value());
     auto& loadedModel = loadedModelResult.model;
 

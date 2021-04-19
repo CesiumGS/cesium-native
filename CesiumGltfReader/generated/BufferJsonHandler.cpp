@@ -8,29 +8,26 @@
 
 using namespace CesiumGltf;
 
-void BufferJsonHandler::reset(IJsonHandler* pParent, Buffer* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+BufferJsonHandler::BufferJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context), _uri(), _byteLength() {}
+
+void BufferJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Buffer* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Buffer* BufferJsonHandler::getObject() { return this->_pObject; }
-
-void BufferJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-BufferJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+BufferJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->BufferKey(str, *this->_pObject);
+  return this->readObjectKeyBuffer(Buffer::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* BufferJsonHandler::BufferKey(const char* str, Buffer& o) {
+CesiumJsonReader::IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
+    const std::string& objectType,
+    const std::string_view& str,
+    Buffer& o) {
   using namespace std::string_literals;
 
   if ("uri"s == str)
@@ -38,5 +35,5 @@ IJsonHandler* BufferJsonHandler::BufferKey(const char* str, Buffer& o) {
   if ("byteLength"s == str)
     return property("byteLength", this->_byteLength, o.byteLength);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

@@ -2,9 +2,9 @@
 #include "JsonWriter.h"
 #include "PrettyJsonWriter.h"
 #include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/JsonValue.h>
 #include <CesiumGltf/WriteFlags.h>
 #include <CesiumGltf/WriterException.h>
+#include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
 
@@ -265,12 +265,12 @@ TEST_CASE("MissingDataSource thrown if ExternalFileURI detected and "
 
 TEST_CASE("extras and extensions are detected and serialized") {
   CesiumGltf::Buffer buffer;
-  buffer.extras =
-      CesiumGltf::JsonValue::Object{{"some", CesiumGltf::JsonValue("extra")}};
+  buffer.extras = CesiumUtility::JsonValue::Object{
+      {"some", CesiumUtility::JsonValue("extra")}};
 
-  CesiumGltf::JsonValue::Object testExtension{{"key", "value"}};
+  CesiumUtility::JsonValue testExtension("value");
 
-  buffer.extensions.emplace_back(testExtension);
+  buffer.extensions.emplace("key", testExtension);
 
   CesiumGltf::JsonWriter writer;
   writer.StartObject();

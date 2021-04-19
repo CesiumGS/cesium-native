@@ -8,39 +8,38 @@
 
 using namespace CesiumGltf;
 
+MaterialPBRMetallicRoughnessJsonHandler::
+    MaterialPBRMetallicRoughnessJsonHandler(
+        const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _baseColorFactor(),
+      _baseColorTexture(context),
+      _metallicFactor(),
+      _roughnessFactor(),
+      _metallicRoughnessTexture(context) {}
+
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     MaterialPBRMetallicRoughness* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-MaterialPBRMetallicRoughness*
-MaterialPBRMetallicRoughnessJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void MaterialPBRMetallicRoughnessJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->MaterialPBRMetallicRoughnessKey(str, *this->_pObject);
+  return this->readObjectKeyMaterialPBRMetallicRoughness(
+      MaterialPBRMetallicRoughness::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler*
-MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
-    const char* str,
-    MaterialPBRMetallicRoughness& o) {
+CesiumJsonReader::IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::
+    readObjectKeyMaterialPBRMetallicRoughness(
+        const std::string& objectType,
+        const std::string_view& str,
+        MaterialPBRMetallicRoughness& o) {
   using namespace std::string_literals;
 
   if ("baseColorFactor"s == str)
@@ -66,5 +65,5 @@ MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessKey(
         this->_metallicRoughnessTexture,
         o.metallicRoughnessTexture);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

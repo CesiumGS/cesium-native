@@ -5,7 +5,7 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
@@ -13,6 +13,8 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
+
+/*static*/ CesiumGltf::GltfReader RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
@@ -503,8 +505,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             }
 
             gsl::span<const std::byte> data = pResponse->data();
+
             CesiumGltf::ImageReaderResult loadedImage =
-                CesiumGltf::readImage(data);
+                RasterOverlayTileProvider::_gltfReader.readImage(data);
 
             if (!loadedImage.errors.empty()) {
               loadedImage.errors.push_back("Image url: " + url);

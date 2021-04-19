@@ -12,6 +12,8 @@ namespace CesiumGltf {
  * define a keyframe graph (but not its target).
  */
 struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
+  static inline constexpr const char* TypeName = "AnimationSampler";
+
   /**
    * @brief Interpolation algorithm.
    */

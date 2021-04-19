@@ -8,29 +8,26 @@
 
 using namespace CesiumGltf;
 
-void MeshJsonHandler::reset(IJsonHandler* pParent, Mesh* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+MeshJsonHandler::MeshJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context), _primitives(context), _weights() {}
+
+void MeshJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Mesh* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Mesh* MeshJsonHandler::getObject() { return this->_pObject; }
-
-void MeshJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-MeshJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+MeshJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->MeshKey(str, *this->_pObject);
+  return this->readObjectKeyMesh(Mesh::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* MeshJsonHandler::MeshKey(const char* str, Mesh& o) {
+CesiumJsonReader::IJsonHandler* MeshJsonHandler::readObjectKeyMesh(
+    const std::string& objectType,
+    const std::string_view& str,
+    Mesh& o) {
   using namespace std::string_literals;
 
   if ("primitives"s == str)
@@ -38,5 +35,5 @@ IJsonHandler* MeshJsonHandler::MeshKey(const char* str, Mesh& o) {
   if ("weights"s == str)
     return property("weights", this->_weights, o.weights);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

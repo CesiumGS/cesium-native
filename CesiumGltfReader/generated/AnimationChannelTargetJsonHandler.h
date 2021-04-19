@@ -3,39 +3,45 @@
 #pragma once
 
 #include "CesiumGltf/AnimationChannelTarget.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
-#include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct AnimationChannelTarget;
 
 class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, AnimationChannelTarget* pObject);
-  AnimationChannelTarget* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = AnimationChannelTarget;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, AnimationChannelTarget* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler*
-  AnimationChannelTargetKey(const char* str, AnimationChannelTarget& o);
+  IJsonHandler* readObjectKeyAnimationChannelTarget(
+      const std::string& objectType,
+      const std::string_view& str,
+      AnimationChannelTarget& o);
 
 private:
-  class PathJsonHandler : public JsonHandler {
+  class PathJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    void reset(IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
-    virtual IJsonHandler*
-    String(const char* str, size_t length, bool copy) override;
+    PathJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(
+        CesiumJsonReader::IJsonHandler* pParent,
+        AnimationChannelTarget::Path* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
+    readString(const std::string_view& str) override;
 
   private:
     AnimationChannelTarget::Path* _pEnum = nullptr;
   };
 
   AnimationChannelTarget* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _node;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _node;
   PathJsonHandler _path;
 };
 } // namespace CesiumGltf

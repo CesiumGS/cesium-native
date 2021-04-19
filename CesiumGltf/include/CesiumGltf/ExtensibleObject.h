@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/JsonValue.h"
 #include "CesiumGltf/Library.h"
+#include "CesiumUtility/JsonValue.h"
 #include <any>
+#include <unordered_map>
 #include <vector>
 
 namespace CesiumGltf {
@@ -10,8 +11,6 @@ namespace CesiumGltf {
  * @brief The base class for objects in a glTF that have extensions and extras.
  */
 struct CESIUMGLTF_API ExtensibleObject {
-  // TODO: extras
-
   /**
    * @brief Gets an extension given its static type.
    *
@@ -20,13 +19,12 @@ struct CESIUMGLTF_API ExtensibleObject {
    * attached to this object.
    */
   template <typename T> const T* getExtension() const noexcept {
-    for (const std::any& extension : extensions) {
-      const T* p = std::any_cast<T>(&extension);
-      if (p) {
-        return p;
-      }
+    auto it = this->extensions.find(T::ExtensionName);
+    if (it == this->extensions.end()) {
+      return nullptr;
     }
-    return nullptr;
+
+    return std::any_cast<T>(&it->second);
   }
 
   /** @copydoc ExtensibleObject::getExtension */
@@ -36,12 +34,30 @@ struct CESIUMGLTF_API ExtensibleObject {
   }
 
   /**
+   * @brief Gets a generic extension with the given name as a {@link JsonValue}.
+   *
+   * If the extension exists but has a static type, this method will retur
+   * nullptr. Use {@link getExtension} to retrieve a statically-typed extension.
+   *
+   * @param extensionName The name of the extension.
+   * @return The generic extension, or nullptr if the generic extension doesn't
+   * exist.
+   */
+  const CesiumUtility::JsonValue*
+  getGenericExtension(const std::string& extensionName) const noexcept;
+
+  /** @copydoc ExtensibleObject::getGenericExtension */
+  CesiumUtility::JsonValue*
+  getGenericExtension(const std::string& extensionName) noexcept;
+
+  /**
    * @brief The extensions attached to this object.
    *
    * Use {@link getExtension} to get the extension with a particular static
-   * type.
+   * type. Use {@link getGenericExtension} to get unknown extensions as a
+   * generic {@link CesiumUtility::JsonValue}.
    */
-  std::vector<std::any> extensions;
+  std::unordered_map<std::string, std::any> extensions;
 
   /**
    * @brief Application-specific data.
@@ -51,6 +67,6 @@ struct CESIUMGLTF_API ExtensibleObject {
    * best practice, extras should be an Object rather than a primitive value for
    * best portability.
    */
-  JsonValue::Object extras;
+  CesiumUtility::JsonValue::Object extras;
 };
 } // namespace CesiumGltf

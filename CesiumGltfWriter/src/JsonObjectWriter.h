@@ -1,11 +1,11 @@
 #pragma once
 #include "JsonWriter.h"
 #include <CesiumGltf/ExtensibleObject.h>
-#include <CesiumGltf/JsonValue.h>
+#include <CesiumUtility/JsonValue.h>
 
 namespace CesiumGltf {
 void writeJsonValue(
-    const JsonValue& value,
+    const CesiumUtility::JsonValue& value,
     CesiumGltf::JsonWriter& writer,
     bool hasRootObject = true);
 }

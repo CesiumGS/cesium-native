@@ -18,10 +18,10 @@
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
-#include <CesiumGltf/JsonValue.h>
 #include <CesiumGltf/WriteFlags.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/Writer.h>
+#include <CesiumUtility/JsonValue.h>
 #include <array>
 #include <cstdio>
 #include <optional>
@@ -29,6 +29,7 @@
 #include <string_view>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 void validateFlags(WriteFlags options) {
   const auto isGLB = options & WriteFlags::GLB;

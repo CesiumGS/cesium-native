@@ -8,36 +8,33 @@
 
 using namespace CesiumGltf;
 
+AccessorSparseJsonHandler::AccessorSparseJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _count(),
+      _indices(context),
+      _values(context) {}
+
 void AccessorSparseJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparse* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-AccessorSparse* AccessorSparseJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void AccessorSparseJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* AccessorSparseJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AccessorSparseKey(str, *this->_pObject);
+  return this->readObjectKeyAccessorSparse(
+      AccessorSparse::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(
-    const char* str,
+CesiumJsonReader::IJsonHandler*
+AccessorSparseJsonHandler::readObjectKeyAccessorSparse(
+    const std::string& objectType,
+    const std::string_view& str,
     AccessorSparse& o) {
   using namespace std::string_literals;
 
@@ -48,5 +45,5 @@ IJsonHandler* AccessorSparseJsonHandler::AccessorSparseKey(
   if ("values"s == str)
     return property("values", this->_values, o.values);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

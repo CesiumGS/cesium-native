@@ -1,11 +1,11 @@
 #include "JsonObjectWriter.h"
 #include "JsonWriter.h"
-#include <CesiumGltf/JsonValue.h>
+#include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <cstdint>
 #include <string>
 
-using namespace CesiumGltf;
+using namespace CesiumUtility;
 using namespace rapidjson;
 
 using Object = JsonValue::Object;

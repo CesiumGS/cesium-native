@@ -1,5 +1,6 @@
 #include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "catch2/catch.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -11,6 +12,7 @@
 #include <string>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 namespace {
 std::vector<std::byte> readFile(const std::string& path) {
@@ -38,7 +40,7 @@ std::vector<std::byte> readFile(const std::string& path) {
 }
 } // namespace
 
-TEST_CASE("CesiumGltf::Reader") {
+TEST_CASE("CesiumGltf::GltfReader") {
   using namespace std::string_literals;
 
   std::string s =
@@ -51,7 +53,8 @@ TEST_CASE("CesiumGltf::Reader") {
       "        \"NORMAL\": 1"s + "      },"s + "      \"targets\": ["s +
       "        {\"POSITION\": 10, \"NORMAL\": 11}"s + "      ]"s + "    }]"s +
       "  }],"s + "  \"surprise\":{\"foo\":true}"s + "}"s;
-  ModelReaderResult result = CesiumGltf::readModel(
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   CHECK(result.errors.empty());
   REQUIRE(result.model.has_value());
@@ -85,7 +88,8 @@ TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /= "TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile.string());
-  ModelReaderResult result = CesiumGltf::readModel(data);
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
 
   const Model& model = result.model.value();
@@ -118,7 +122,8 @@ TEST_CASE("Nested extras serializes properly") {
     }
   )";
 
-  ModelReaderResult result = CesiumGltf::readModel(
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
   REQUIRE(result.errors.empty());
@@ -139,4 +144,166 @@ TEST_CASE("Nested extras serializes properly") {
   CHECK(array[2].getSafeNumber<std::uint8_t>() == 3);
   CHECK(array[3].getSafeNumber<std::int16_t>() == 4);
   CHECK(array[4].getSafeNumber<std::int32_t>() == 5);
+}
+
+TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
+  const std::string s = R"(
+    {
+      "asset": {
+        "version": "2.0"
+      },
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "extensions": {
+                "KHR_draco_mesh_compression": {
+                  "bufferView": 1,
+                  "attributes": {
+                    "POSITION": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  )";
+
+  ReadModelOptions options;
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult modelResult = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult.errors.empty());
+  REQUIRE(modelResult.model.has_value());
+
+  Model& model = modelResult.model.value();
+  REQUIRE(model.meshes.size() == 1);
+  REQUIRE(model.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive = model.meshes[0].primitives[0];
+  KHR_draco_mesh_compression* pDraco =
+      primitive.getExtension<KHR_draco_mesh_compression>();
+  REQUIRE(pDraco);
+
+  CHECK(pDraco->bufferView == 1);
+  CHECK(pDraco->attributes.size() == 1);
+
+  REQUIRE(pDraco->attributes.find("POSITION") != pDraco->attributes.end());
+  CHECK(pDraco->attributes.find("POSITION")->second == 0);
+
+  // Repeat test but this time the extension should be deserialized as a
+  // JsonValue.
+  reader.setExtensionState(
+      "KHR_draco_mesh_compression",
+      ExtensionState::JsonOnly);
+
+  ModelReaderResult modelResult2 = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult2.errors.empty());
+  REQUIRE(modelResult2.model.has_value());
+
+  Model& model2 = modelResult2.model.value();
+  REQUIRE(model2.meshes.size() == 1);
+  REQUIRE(model2.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive2 = model2.meshes[0].primitives[0];
+  JsonValue* pDraco2 =
+      primitive2.getGenericExtension("KHR_draco_mesh_compression");
+  REQUIRE(pDraco2);
+
+  REQUIRE(pDraco2->getValuePtrForKey("bufferView"));
+  CHECK(
+      pDraco2->getValuePtrForKey("bufferView")
+          ->getSafeNumberOrDefault<int64_t>(0) == 1);
+
+  REQUIRE(pDraco2->getValuePtrForKey("attributes"));
+  REQUIRE(pDraco2->getValuePtrForKey("attributes")->isObject());
+  REQUIRE(
+      pDraco2->getValuePtrForKey("attributes")->getValuePtrForKey("POSITION"));
+  REQUIRE(
+      pDraco2->getValuePtrForKey("attributes")
+          ->getValuePtrForKey("POSITION")
+          ->getSafeNumberOrDefault<int64_t>(1) == 0);
+
+  // Repeat test but this time the extension should not be deserialized at all.
+  reader.setExtensionState(
+      "KHR_draco_mesh_compression",
+      ExtensionState::Disabled);
+
+  ModelReaderResult modelResult3 = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult3.errors.empty());
+  REQUIRE(modelResult3.model.has_value());
+
+  Model& model3 = modelResult3.model.value();
+  REQUIRE(model3.meshes.size() == 1);
+  REQUIRE(model3.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive3 = model3.meshes[0].primitives[0];
+
+  REQUIRE(!primitive3.getGenericExtension("KHR_draco_mesh_compression"));
+  REQUIRE(!primitive3.getExtension<KHR_draco_mesh_compression>());
+}
+
+TEST_CASE("Extensions deserialize to JsonVaue iff "
+          "a default extension is registered") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "extensions": {
+            "A": {
+              "test": "Hello World"
+            },
+            "B": {
+              "another": "Goodbye World"
+            }
+        }
+    }
+  )";
+
+  ReadModelOptions options;
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult withCustomExtModel = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(withCustomExtModel.errors.empty());
+  REQUIRE(withCustomExtModel.model.has_value());
+
+  REQUIRE(withCustomExtModel.model->extensions.size() == 2);
+
+  JsonValue* pA = withCustomExtModel.model->getGenericExtension("A");
+  JsonValue* pB = withCustomExtModel.model->getGenericExtension("B");
+  REQUIRE(pA != nullptr);
+  REQUIRE(pB != nullptr);
+
+  REQUIRE(pA->getValuePtrForKey("test"));
+  REQUIRE(
+      pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
+
+  REQUIRE(pB->getValuePtrForKey("another"));
+  REQUIRE(
+      pB->getValuePtrForKey("another")->getStringOrDefault("") ==
+      "Goodbye World");
+
+  // Repeat test but this time the extension should be skipped.
+  reader.setExtensionState("A", ExtensionState::Disabled);
+  reader.setExtensionState("B", ExtensionState::Disabled);
+
+  ModelReaderResult withoutCustomExt = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  auto& zeroExtensions = withoutCustomExt.model->extensions;
+  REQUIRE(zeroExtensions.empty());
 }

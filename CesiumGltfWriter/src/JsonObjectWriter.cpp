@@ -1,11 +1,12 @@
 #include "JsonObjectWriter.h"
-#include <CesiumGltf/JsonValue.h>
+#include <CesiumUtility/JsonValue.h>
 #include <JsonWriter.h>
 #include <functional>
 #include <stack>
 #include <utility>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 using namespace rapidjson;
 
 void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j);
@@ -64,7 +65,7 @@ void recursiveArrayWriter(
 }
 
 void recursiveObjectWriter(
-    const CesiumGltf::JsonValue::Object& object,
+    const JsonValue::Object& object,
     CesiumGltf::JsonWriter& j,
     bool hasRootObject) {
 

@@ -3,39 +3,46 @@
 #pragma once
 
 #include "CesiumGltf/AnimationSampler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
-#include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct AnimationSampler;
 
 class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, AnimationSampler* pObject);
-  AnimationSampler* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = AnimationSampler;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  AnimationSamplerJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* AnimationSamplerKey(const char* str, AnimationSampler& o);
+  IJsonHandler* readObjectKeyAnimationSampler(
+      const std::string& objectType,
+      const std::string_view& str,
+      AnimationSampler& o);
 
 private:
-  class InterpolationJsonHandler : public JsonHandler {
+  class InterpolationJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    void reset(IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum);
-    virtual IJsonHandler*
-    String(const char* str, size_t length, bool copy) override;
+    InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(
+        CesiumJsonReader::IJsonHandler* pParent,
+        AnimationSampler::Interpolation* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
+    readString(const std::string_view& str) override;
 
   private:
     AnimationSampler::Interpolation* _pEnum = nullptr;
   };
 
   AnimationSampler* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _input;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
   InterpolationJsonHandler _interpolation;
-  IntegerJsonHandler<int32_t> _output;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
 };
 } // namespace CesiumGltf

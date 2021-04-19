@@ -1,14 +1,17 @@
 #pragma once
 
+#include "CesiumJsonReader/Library.h"
 #include "IntegerJsonHandler.h"
 #include "ObjectJsonHandler.h"
 #include <map>
 #include <unordered_map>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 template <typename T, typename THandler>
-class DictionaryJsonHandler : public ObjectJsonHandler {
+class CESIUMJSONREADER_API DictionaryJsonHandler : public ObjectJsonHandler {
 public:
+  DictionaryJsonHandler() noexcept : ObjectJsonHandler(), _item() {}
+
   void reset(
       IJsonHandler* pParent,
       std::unordered_map<std::string, T>* pDictionary) {
@@ -21,8 +24,7 @@ public:
     this->_pDictionary2 = pDictionary;
   }
 
-  virtual IJsonHandler*
-  Key(const char* str, size_t /*length*/, bool /*copy*/) override {
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
     assert(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {
@@ -41,4 +43,4 @@ private:
   std::map<std::string, T>* _pDictionary2 = nullptr;
   THandler _item;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

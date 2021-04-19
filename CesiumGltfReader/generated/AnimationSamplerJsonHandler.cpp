@@ -8,36 +8,33 @@
 
 using namespace CesiumGltf;
 
+AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _input(),
+      _interpolation(),
+      _output() {}
+
 void AnimationSamplerJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     AnimationSampler* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-AnimationSampler* AnimationSamplerJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void AnimationSamplerJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* AnimationSamplerJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AnimationSamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AnimationSamplerKey(str, *this->_pObject);
+  return this->readObjectKeyAnimationSampler(
+      AnimationSampler::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(
-    const char* str,
+CesiumJsonReader::IJsonHandler*
+AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
+    const std::string& objectType,
+    const std::string_view& str,
     AnimationSampler& o) {
   using namespace std::string_literals;
 
@@ -48,20 +45,19 @@ IJsonHandler* AnimationSamplerJsonHandler::AnimationSamplerKey(
   if ("output"s == str)
     return property("output", this->_output, o.output);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
 void AnimationSamplerJsonHandler::InterpolationJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParent,
     AnimationSampler::Interpolation* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* AnimationSamplerJsonHandler::InterpolationJsonHandler::String(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AnimationSamplerJsonHandler::InterpolationJsonHandler::readString(
+    const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);

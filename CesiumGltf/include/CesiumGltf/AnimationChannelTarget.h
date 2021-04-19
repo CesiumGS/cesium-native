@@ -12,6 +12,8 @@ namespace CesiumGltf {
  * targets.
  */
 struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
+  static inline constexpr const char* TypeName = "AnimationChannelTarget";
+
   /**
    * @brief The name of the node's TRS property to modify, or the "weights" of
    * the Morph Targets it instantiates. For the "translation" property, the

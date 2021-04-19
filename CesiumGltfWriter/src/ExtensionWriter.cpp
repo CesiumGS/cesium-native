@@ -1,9 +1,11 @@
 #include "ExtensionWriter.h"
 #include "JsonObjectWriter.h"
-#include <CesiumGltf/JsonValue.h>
+#include <CesiumUtility/JsonValue.h>
+
+using namespace CesiumUtility;
 
 void CesiumGltf::writeExtensions(
-    const std::vector<std::any>& extensions,
+    const std::unordered_map<std::string, std::any>& extensions,
     CesiumGltf::JsonWriter& jsonWriter) {
   if (extensions.empty()) {
     return;
@@ -14,8 +16,9 @@ void CesiumGltf::writeExtensions(
   j.StartObject();
 
   for (const auto& extension : extensions) {
-    if (extension.type() == typeid(JsonValue::Object)) {
-      const auto& object = std::any_cast<JsonValue::Object>(extension);
+    if (extension.second.type() == typeid(JsonValue)) {
+      const auto& object = std::any_cast<JsonValue>(extension.second);
+      j.Key(extension.first);
       writeJsonValue(object, jsonWriter);
     }
   }

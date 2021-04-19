@@ -1,72 +1,66 @@
-#include "JsonHandler.h"
+#include "CesiumJsonReader/JsonHandler.h"
 
-using namespace CesiumGltf;
+using namespace CesiumJsonReader;
 
-IJsonHandler* JsonHandler::Null() {
+JsonHandler::JsonHandler() noexcept {}
+
+IJsonHandler* JsonHandler::readNull() {
   this->reportWarning("A null value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::Bool(bool /*b*/) {
+IJsonHandler* JsonHandler::readBool(bool /*b*/) {
   this->reportWarning("A boolean value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::Int(int /*i*/) {
+IJsonHandler* JsonHandler::readInt32(int32_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::Uint(unsigned /*i*/) {
+IJsonHandler* JsonHandler::readUint32(uint32_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::Int64(int64_t /*i*/) {
+IJsonHandler* JsonHandler::readInt64(int64_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::Uint64(uint64_t /*i*/) {
+IJsonHandler* JsonHandler::readUint64(uint64_t /*i*/) {
   this->reportWarning("An integer value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::Double(double /*d*/) {
+IJsonHandler* JsonHandler::readDouble(double /*d*/) {
   this->reportWarning("A double value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler*
-JsonHandler::RawNumber(const char* /*str*/, size_t /*length*/, bool /*copy*/) {
-  this->reportWarning("A numeric value is not allowed and has been ignored.");
-  return this->parent();
-}
-
-IJsonHandler*
-JsonHandler::String(const char* /*str*/, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* JsonHandler::readString(const std::string_view& /*str*/) {
   this->reportWarning("A string value is not allowed and has been ignored.");
   return this->parent();
 }
 
-IJsonHandler* JsonHandler::StartObject() {
+IJsonHandler* JsonHandler::readObjectStart() {
   this->reportWarning("An object value is not allowed and has been ignored.");
-  return this->ignoreAndReturnToParent()->StartObject();
+  return this->ignoreAndReturnToParent()->readObjectStart();
 }
 
-IJsonHandler*
-JsonHandler::Key(const char* /*str*/, size_t /*length*/, bool /*copy*/) {
+IJsonHandler* JsonHandler::readObjectKey(const std::string_view& /*str*/) {
   return nullptr;
 }
 
-IJsonHandler* JsonHandler::EndObject(size_t /*memberCount*/) { return nullptr; }
+IJsonHandler* JsonHandler::readObjectEnd() { return nullptr; }
 
-IJsonHandler* JsonHandler::StartArray() {
+IJsonHandler* JsonHandler::readArrayStart() {
   this->reportWarning("An array value is not allowed and has been ignored.");
-  return this->ignoreAndReturnToParent()->StartArray();
+  return this->ignoreAndReturnToParent()->readArrayStart();
 }
 
-IJsonHandler* JsonHandler::EndArray(size_t /*elementCount*/) { return nullptr; }
+IJsonHandler* JsonHandler::readArrayEnd() { return nullptr; }
 
 IJsonHandler* JsonHandler::parent() { return this->_pParent; }
 

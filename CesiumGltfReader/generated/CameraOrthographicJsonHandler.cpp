@@ -8,36 +8,34 @@
 
 using namespace CesiumGltf;
 
+CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _xmag(),
+      _ymag(),
+      _zfar(),
+      _znear() {}
+
 void CameraOrthographicJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     CameraOrthographic* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CameraOrthographic* CameraOrthographicJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void CameraOrthographicJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* CameraOrthographicJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->CameraOrthographicKey(str, *this->_pObject);
+  return this->readObjectKeyCameraOrthographic(
+      CameraOrthographic::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
-    const char* str,
+CesiumJsonReader::IJsonHandler*
+CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
+    const std::string& objectType,
+    const std::string_view& str,
     CameraOrthographic& o) {
   using namespace std::string_literals;
 
@@ -50,5 +48,5 @@ IJsonHandler* CameraOrthographicJsonHandler::CameraOrthographicKey(
   if ("znear"s == str)
     return property("znear", this->_znear, o.znear);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

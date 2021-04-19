@@ -1,16 +1,17 @@
 #include "catch2/catch.hpp"
-#include <CesiumGltf/JsonValue.h>
+#include <CesiumUtility/JsonValue.h>
 #include <cstdint>
 #include <limits>
 
-using namespace CesiumGltf;
-TEST_CASE("JsonValue rejects NaN / inf floating point values") {
-  REQUIRE_THROWS(JsonValue(std::numeric_limits<float>::quiet_NaN()));
-  REQUIRE_THROWS(JsonValue(std::numeric_limits<double>::quiet_NaN()));
-  REQUIRE_THROWS(JsonValue(std::numeric_limits<float>::infinity()));
-  REQUIRE_THROWS(JsonValue(std::numeric_limits<double>::infinity()));
-  REQUIRE_THROWS(JsonValue(-std::numeric_limits<float>::infinity()));
-  REQUIRE_THROWS(JsonValue(-std::numeric_limits<double>::infinity()));
+using namespace CesiumUtility;
+
+TEST_CASE("JsonValue turns NaN / inf floating point values into null") {
+  CHECK(JsonValue(std::numeric_limits<float>::quiet_NaN()).isNull());
+  CHECK(JsonValue(std::numeric_limits<double>::quiet_NaN()).isNull());
+  CHECK(JsonValue(std::numeric_limits<float>::infinity()).isNull());
+  CHECK(JsonValue(std::numeric_limits<double>::infinity()).isNull());
+  CHECK(JsonValue(-std::numeric_limits<float>::infinity()).isNull());
+  CHECK(JsonValue(-std::numeric_limits<double>::infinity()).isNull());
 }
 
 TEST_CASE(

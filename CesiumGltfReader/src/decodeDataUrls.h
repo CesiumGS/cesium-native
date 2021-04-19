@@ -1,7 +1,12 @@
 #pragma once
 
 namespace CesiumGltf {
-struct ModelReaderResult;
 
-void decodeDataUrls(ModelReaderResult& readModel, bool clearDecodedDataUrls);
+struct ModelReaderResult;
+struct ReaderContext;
+
+void decodeDataUrls(
+    const ReaderContext& context,
+    ModelReaderResult& readModel,
+    bool clearDecodedDataUrls);
 } // namespace CesiumGltf

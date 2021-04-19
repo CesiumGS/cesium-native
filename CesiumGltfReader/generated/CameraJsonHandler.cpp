@@ -8,29 +8,29 @@
 
 using namespace CesiumGltf;
 
-void CameraJsonHandler::reset(IJsonHandler* pParent, Camera* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+CameraJsonHandler::CameraJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _orthographic(context),
+      _perspective(context),
+      _type() {}
+
+void CameraJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Camera* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Camera* CameraJsonHandler::getObject() { return this->_pObject; }
-
-void CameraJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-CameraJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+CameraJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->CameraKey(str, *this->_pObject);
+  return this->readObjectKeyCamera(Camera::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* CameraJsonHandler::CameraKey(const char* str, Camera& o) {
+CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
+    const std::string& objectType,
+    const std::string_view& str,
+    Camera& o) {
   using namespace std::string_literals;
 
   if ("orthographic"s == str)
@@ -40,20 +40,18 @@ IJsonHandler* CameraJsonHandler::CameraKey(const char* str, Camera& o) {
   if ("type"s == str)
     return property("type", this->_type, o.type);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
 void CameraJsonHandler::TypeJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParent,
     Camera::Type* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* CameraJsonHandler::TypeJsonHandler::String(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+CameraJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);

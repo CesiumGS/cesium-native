@@ -8,33 +8,30 @@
 
 using namespace CesiumGltf;
 
-void SceneJsonHandler::reset(IJsonHandler* pParent, Scene* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+SceneJsonHandler::SceneJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context), _nodes() {}
+
+void SceneJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Scene* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Scene* SceneJsonHandler::getObject() { return this->_pObject; }
-
-void SceneJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-SceneJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+SceneJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->SceneKey(str, *this->_pObject);
+  return this->readObjectKeyScene(Scene::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SceneJsonHandler::SceneKey(const char* str, Scene& o) {
+CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKeyScene(
+    const std::string& objectType,
+    const std::string_view& str,
+    Scene& o) {
   using namespace std::string_literals;
 
   if ("nodes"s == str)
     return property("nodes", this->_nodes, o.nodes);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

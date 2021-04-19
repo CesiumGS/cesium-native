@@ -1,17 +1,20 @@
 #pragma once
 
-#include "JsonHandler.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/Library.h"
 #include <optional>
 
-namespace CesiumGltf {
-class ObjectJsonHandler : public JsonHandler {
+namespace CesiumJsonReader {
+class CESIUMJSONREADER_API ObjectJsonHandler : public JsonHandler {
 public:
-  virtual IJsonHandler* StartObject() override final;
-  virtual IJsonHandler* EndObject(size_t memberCount) override final;
+  ObjectJsonHandler() : JsonHandler() {}
+
+  virtual IJsonHandler* readObjectStart() override /* final */;
+  virtual IJsonHandler* readObjectEnd() override /* final */;
 
 protected:
   virtual IJsonHandler* StartSubObject();
-  virtual IJsonHandler* EndSubObject(size_t memberCount);
+  virtual IJsonHandler* EndSubObject();
 
   template <typename TAccessor, typename TProperty>
   IJsonHandler*
@@ -30,6 +33,13 @@ protected:
 
   const char* getCurrentKey() const;
 
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context = std::vector<std::string>()) override;
+
+protected:
+  void setCurrentKey(const char* key);
+
 private:
   template <typename T> struct isOptional {
     static constexpr bool value = false;
@@ -42,4 +52,4 @@ private:
   int32_t _depth = 0;
   const char* _currentKey;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

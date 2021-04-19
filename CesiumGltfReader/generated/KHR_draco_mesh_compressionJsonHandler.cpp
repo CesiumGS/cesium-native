@@ -8,37 +8,43 @@
 
 using namespace CesiumGltf;
 
+KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context), _bufferView(), _attributes() {}
+
 void KHR_draco_mesh_compressionJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     KHR_draco_mesh_compression* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-KHR_draco_mesh_compression* KHR_draco_mesh_compressionJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void KHR_draco_mesh_compressionJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* KHR_draco_mesh_compressionJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+KHR_draco_mesh_compressionJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->KHR_draco_mesh_compressionKey(str, *this->_pObject);
+  return this->readObjectKeyKHR_draco_mesh_compression(
+      KHR_draco_mesh_compression::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler*
-KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
-    const char* str,
+void KHR_draco_mesh_compressionJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::any& value =
+      o.extensions.emplace(extensionName, KHR_draco_mesh_compression())
+          .first->second;
+  this->reset(
+      pParentHandler,
+      &std::any_cast<KHR_draco_mesh_compression&>(value));
+}
+
+CesiumJsonReader::IJsonHandler*
+KHR_draco_mesh_compressionJsonHandler::readObjectKeyKHR_draco_mesh_compression(
+    const std::string& objectType,
+    const std::string_view& str,
     KHR_draco_mesh_compression& o) {
   using namespace std::string_literals;
 
@@ -47,5 +53,5 @@ KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionKey(
   if ("attributes"s == str)
     return property("attributes", this->_attributes, o.attributes);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

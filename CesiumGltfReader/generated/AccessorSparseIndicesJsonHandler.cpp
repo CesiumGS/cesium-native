@@ -8,36 +8,33 @@
 
 using namespace CesiumGltf;
 
+AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _byteOffset(),
+      _componentType() {}
+
 void AccessorSparseIndicesJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparseIndices* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-AccessorSparseIndices* AccessorSparseIndicesJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void AccessorSparseIndicesJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* AccessorSparseIndicesJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AccessorSparseIndicesJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AccessorSparseIndicesKey(str, *this->_pObject);
+  return this->readObjectKeyAccessorSparseIndices(
+      AccessorSparseIndices::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(
-    const char* str,
+CesiumJsonReader::IJsonHandler*
+AccessorSparseIndicesJsonHandler::readObjectKeyAccessorSparseIndices(
+    const std::string& objectType,
+    const std::string_view& str,
     AccessorSparseIndices& o) {
   using namespace std::string_literals;
 
@@ -48,5 +45,5 @@ IJsonHandler* AccessorSparseIndicesJsonHandler::AccessorSparseIndicesKey(
   if ("componentType"s == str)
     return property("componentType", this->_componentType, o.componentType);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

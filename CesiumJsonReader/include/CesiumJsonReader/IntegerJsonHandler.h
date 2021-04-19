@@ -1,11 +1,15 @@
 #pragma once
 
-#include "JsonHandler.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/Library.h"
 #include <cassert>
 
-namespace CesiumGltf {
-template <typename T> class IntegerJsonHandler : public JsonHandler {
+namespace CesiumJsonReader {
+template <typename T>
+class CESIUMJSONREADER_API IntegerJsonHandler : public JsonHandler {
 public:
+  IntegerJsonHandler() noexcept : JsonHandler() {}
+
   void reset(IJsonHandler* pParent, T* pInteger) {
     JsonHandler::reset(pParent);
     this->_pInteger = pInteger;
@@ -13,22 +17,22 @@ public:
 
   T* getObject() { return this->_pInteger; }
 
-  virtual IJsonHandler* Int(int i) override {
+  virtual IJsonHandler* readInt32(int32_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* Uint(unsigned i) override {
+  virtual IJsonHandler* readUint32(uint32_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* Int64(int64_t i) override {
+  virtual IJsonHandler* readInt64(int64_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
-  virtual IJsonHandler* Uint64(uint64_t i) override {
+  virtual IJsonHandler* readUint64(uint64_t i) override {
     assert(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
@@ -44,4 +48,4 @@ public:
 private:
   T* _pInteger = nullptr;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonReader

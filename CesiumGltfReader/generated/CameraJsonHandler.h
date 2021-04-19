@@ -5,30 +5,35 @@
 #include "CameraOrthographicJsonHandler.h"
 #include "CameraPerspectiveJsonHandler.h"
 #include "CesiumGltf/Camera.h"
+#include "CesiumGltf/ReaderContext.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct Camera;
 
 class CameraJsonHandler : public NamedObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, Camera* pObject);
-  Camera* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = Camera;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  CameraJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, Camera* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* CameraKey(const char* str, Camera& o);
+  IJsonHandler* readObjectKeyCamera(
+      const std::string& objectType,
+      const std::string_view& str,
+      Camera& o);
 
 private:
-  class TypeJsonHandler : public JsonHandler {
+  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    void reset(IJsonHandler* pParent, Camera::Type* pEnum);
-    virtual IJsonHandler*
-    String(const char* str, size_t length, bool copy) override;
+    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(CesiumJsonReader::IJsonHandler* pParent, Camera::Type* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
+    readString(const std::string_view& str) override;
 
   private:
     Camera::Type* _pEnum = nullptr;
