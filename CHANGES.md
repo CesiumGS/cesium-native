@@ -8,9 +8,9 @@
 - Renamed `CesiumGltf::Reader` to `CesiumGltf::GltfReader`.
 - Made the `readModel` and `readImage` methods on `GltfReader` instance methods instead of static methods.
 
-
 ##### Additions :tada:
 
+- Added `CesiumGltfWriter` library.
 - Added `CesiumJsonReader` library.
 - Added diagnostic details to error messages for invalid glTF inputs.
 - Added an `Axis` enum and `AxisTransforms` class for coordinate system transforms
