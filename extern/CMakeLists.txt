@@ -80,6 +80,6 @@ set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
 )
 
-set(CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/magic_enum/" CACHE INTERNAL 
+set(CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/magic_enum/include/" CACHE INTERNAL 
     "Include directory for magic_enum"
 )
