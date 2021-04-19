@@ -19,7 +19,7 @@
 #include <BufferWriter.h>
 #include <CameraWriter.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
-#include <CesiumGltf/WriteOptions.h>
+#include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/Writer.h>
 #include <CesiumUtility/JsonValue.h>
 #include <array>
@@ -33,19 +33,19 @@ using namespace CesiumUtility;
 
 std::vector<std::byte> writeModel(
     const Model& model,
-    const WriteOptions& options,
+    const WriteModelOptions& options,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback = noopGltfWriter);
 
 std::vector<std::byte> CesiumGltf::writeModelAsEmbeddedBytes(
     const Model& model,
-    const WriteOptions& options) {
+    const WriteModelOptions& options) {
   return writeModel(model, options, "");
 }
 
 void CesiumGltf::writeModelAndExternalFiles(
     const Model& model,
-    const WriteOptions& options,
+    const WriteModelOptions& options,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback) {
   writeModel(model, options, filename, writeGLTFCallback);
@@ -53,7 +53,7 @@ void CesiumGltf::writeModelAndExternalFiles(
 
 std::vector<std::byte> writeModel(
     const Model& model,
-    const WriteOptions& options,
+    const WriteModelOptions& options,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback) {
   std::vector<std::byte> result;

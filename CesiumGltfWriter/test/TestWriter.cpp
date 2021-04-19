@@ -8,7 +8,7 @@
 #include "catch2/catch.hpp"
 #include <CesiumGltf/GltfReader.h>
 #include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/WriteOptions.h>
+#include <CesiumGltf/WriteModelOptions.h>
 #include <algorithm>
 #include <cstddef>
 #include <gsl/span>
@@ -100,7 +100,7 @@ TEST_CASE(
   CesiumGltf::Model m;
   m.asset.version = "2.0";
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
@@ -117,7 +117,7 @@ TEST_CASE(
   CesiumGltf::Model m;
   m.asset.version = "2.0";
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLB;
 
   const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
@@ -246,7 +246,7 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
 
   const auto model = generateTriangleModel();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
   const auto asGltfBytes =

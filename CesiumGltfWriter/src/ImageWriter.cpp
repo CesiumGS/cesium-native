@@ -30,7 +30,7 @@ mimeTypeToExtensionString(CesiumGltf::Image::MimeType mimeType) noexcept {
 void CesiumGltf::writeImage(
     const std::vector<CesiumGltf::Image>& images,
     CesiumGltf::JsonWriter& jsonWriter,
-    const WriteOptions& options,
+    const WriteModelOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
   if (images.empty()) {
     return;

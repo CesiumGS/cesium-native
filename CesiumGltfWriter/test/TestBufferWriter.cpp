@@ -2,7 +2,7 @@
 #include "JsonWriter.h"
 #include "PrettyJsonWriter.h"
 #include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/WriteOptions.h>
+#include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/WriterException.h>
 #include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
@@ -34,7 +34,7 @@ TEST_CASE(
   // if a base64 conversion occured.
   buffer.byteLength = 1337;
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
@@ -84,7 +84,7 @@ TEST_CASE(
   // writing to an external file would occur.
   buffer.byteLength = 1337;
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
@@ -119,7 +119,7 @@ TEST_CASE("Buffer that only has byteLength set is serialized correctly") {
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(
@@ -139,7 +139,7 @@ TEST_CASE("URI zero CANNOT be set in GLB mode. (0th buffer is reserved as "
   buffer.uri = "literally anything here should trigger this error";
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLB;
 
   REQUIRE_THROWS_AS(
@@ -168,7 +168,7 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
 
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(
@@ -187,7 +187,7 @@ TEST_CASE("AmbiguiousDataSource thrown if buffer.uri is set to base64 uri and "
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   REQUIRE_THROWS_AS(
@@ -206,7 +206,7 @@ TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(
@@ -240,7 +240,7 @@ TEST_CASE("base64 uri set but byte length not set") {
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   REQUIRE_THROWS_AS(
@@ -258,7 +258,7 @@ TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLB;
 
   CesiumGltf::writeBuffer(
@@ -291,7 +291,7 @@ TEST_CASE("MissingDataSource thrown if ExternalFileURI detected and "
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   REQUIRE_THROWS_AS(
@@ -314,7 +314,7 @@ TEST_CASE("extras and extensions are detected and serialized") {
   CesiumGltf::JsonWriter writer;
   writer.StartObject();
 
-  CesiumGltf::WriteOptions options;
+  CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(

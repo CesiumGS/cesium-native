@@ -1,7 +1,7 @@
 #pragma once
 #include "CesiumGltf/Model.h"
 #include "WriteGLTFCallback.h"
-#include "WriteOptions.h"
+#include "WriteModelOptions.h"
 #include "WriterLibrary.h"
 #include <cstdint>
 #include <string_view>
@@ -43,7 +43,7 @@ namespace CesiumGltf {
  */
 
 CESIUMGLTFWRITER_API std::vector<std::byte>
-writeModelAsEmbeddedBytes(const Model& model, const WriteOptions& options);
+writeModelAsEmbeddedBytes(const Model& model, const WriteModelOptions& options);
 
 /**
  * @brief Write a glTF or glb asset and its associated external images and
@@ -72,7 +72,7 @@ writeModelAsEmbeddedBytes(const Model& model, const WriteOptions& options);
 
 CESIUMGLTFWRITER_API void writeModelAndExternalFiles(
     const Model& model,
-    const WriteOptions& options,
+    const WriteModelOptions& options,
     std::string_view filename,
     WriteGLTFCallback writeGLTFCallback);
 } // namespace CesiumGltf

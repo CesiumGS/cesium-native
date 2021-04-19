@@ -2,7 +2,7 @@
 #include "JsonWriter.h"
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
-#include <CesiumGltf/WriteOptions.h>
+#include <CesiumGltf/WriteModelOptions.h>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -11,6 +11,6 @@ namespace CesiumGltf {
 void writeBuffer(
     const std::vector<Buffer>& buffers,
     JsonWriter& jsonWriter,
-    const WriteOptions& options,
+    const WriteModelOptions& options,
     WriteGLTFCallback writeGLTFCallback = noopGltfWriter);
 }
