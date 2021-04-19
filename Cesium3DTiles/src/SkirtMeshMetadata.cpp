@@ -56,15 +56,15 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
       (*pMeshCenter)[1].getSafeNumberOrDefault<double>(0.0),
       (*pMeshCenter)[2].getSafeNumberOrDefault<double>(0.0));
 
-  double pWestHeight, pSouthHeight, pEastHeight, pNorthHeight;
+  double westHeight, southHeight, eastHeight, northHeight;
   try {
-    pWestHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+    westHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
         "skirtWestHeight");
-    pSouthHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+    southHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
         "skirtSouthHeight");
-    pEastHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+    eastHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
         "skirtEastHeight");
-    pNorthHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+    northHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
         "skirtNorthHeight");
   } catch (const JsonValueMissingKey&) {
     return std::nullopt;
@@ -72,10 +72,10 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
     return std::nullopt;
   }
 
-  skirtMeshMetadata.skirtWestHeight = pWestHeight;
-  skirtMeshMetadata.skirtSouthHeight = pSouthHeight;
-  skirtMeshMetadata.skirtEastHeight = pEastHeight;
-  skirtMeshMetadata.skirtNorthHeight = pNorthHeight;
+  skirtMeshMetadata.skirtWestHeight = westHeight;
+  skirtMeshMetadata.skirtSouthHeight = southHeight;
+  skirtMeshMetadata.skirtEastHeight = eastHeight;
+  skirtMeshMetadata.skirtNorthHeight = northHeight;
 
   return skirtMeshMetadata;
 }
