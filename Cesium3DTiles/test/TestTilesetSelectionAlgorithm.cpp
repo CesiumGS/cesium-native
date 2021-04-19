@@ -668,3 +668,94 @@ TEST_CASE("Test additive refinement") {
     }
   }
 }
+
+TEST_CASE("Render any tiles even when one of children can't be rendered for "
+          "additive refinement") {
+  Cesium3DTiles::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
+  testDataPath = testDataPath / "ErrorChildrenAddTileset";
+  std::vector<std::string> files{
+      "tileset.json",
+      "parent.b3dm",
+      "error_lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm",
+  };
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      std::make_shared<SimpleTaskProcessor>(),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+  ViewState viewState = zoomToTileset(tileset);
+
+  Tile* root = tileset.getRootTile();
+  REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
+  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  REQUIRE(root->getChildren().size() == 3);
+
+  // 1st frame. Root doesn't meet sse, so load children. But they are
+  // non-renderable, so render root only
+  {
+    ViewUpdateResult result = tileset.updateView(viewState);
+
+    for (const Tile& child : root->getChildren()) {
+      CHECK(child.getState() == Tile::LoadState::ContentLoading);
+    }
+
+    REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+    REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+    REQUIRE(result.tilesVisited == 4);
+    REQUIRE(result.tilesLoadingLowPriority == 0);
+    REQUIRE(result.tilesLoadingMediumPriority == 3);
+    REQUIRE(result.tilesLoadingHighPriority == 0);
+    REQUIRE(result.tilesCulled == 0);
+    REQUIRE(result.culledTilesVisited == 0);
+  }
+
+  // 2nd frame. Root doesn't meet sse, so load children. But they are
+  // non-renderable, so render root only
+  {
+    ViewUpdateResult result = tileset.updateView(viewState);
+
+    REQUIRE(root->isRenderable());
+    for (const Tile& child : root->getChildren()) {
+      REQUIRE(child.getState() == Tile::LoadState::Done);
+      REQUIRE(child.isRenderable());
+    }
+
+    REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+    REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 0);
+    REQUIRE(result.tilesVisited == 4);
+    REQUIRE(result.tilesLoadingLowPriority == 0);
+    REQUIRE(result.tilesLoadingMediumPriority == 0);
+    REQUIRE(result.tilesLoadingHighPriority == 0);
+    REQUIRE(result.tilesCulled == 0);
+    REQUIRE(result.culledTilesVisited == 0);
+  }
+}

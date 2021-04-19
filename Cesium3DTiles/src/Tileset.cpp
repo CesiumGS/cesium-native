@@ -1421,6 +1421,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
         distance);
     return true;
   }
+
   return false;
 }
 
