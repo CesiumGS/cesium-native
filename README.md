@@ -24,8 +24,10 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 | **CesiumGeometry** | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms. |
 | **CesiumGeospatial** | 3D geospatial math types and functions for ellipsoids, transforms, projections. |
 | **CesiumGltf** | Lightweight glTF processing and optimization functions. |
-| **CesiumGltfReader** | glTF serialization and decoding, including glTF extensions including `KHR_draco_mesh_compression`. |
+| **CesiumGltfReader** | glTF deserialization / decoding, including glTF extension support (`KHR_draco_mesh_compression` etc). |
+| **CesiumGltfWriter** | glTF serialization / encoding, including glTF extension support. |
 | **CesiumIonClient** | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
+| **CesiumJsonReader** | Reads JSON from a buffer into statically-typed classes. |
 | **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
 
 

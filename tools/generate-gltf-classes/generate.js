@@ -1,4 +1,3 @@
-const createExtensionsProperty = require("./createExtensionsProperty");
 const fs = require("fs");
 const getNameFromSchema = require("./getNameFromSchema");
 const indent = require("./indent");
@@ -29,11 +28,6 @@ function generate(options, schema) {
     )
     .filter((property) => property !== undefined);
 
-  const extensionsProperty = createExtensionsProperty(options.extensions[schema.title], name, schema);
-  if (extensionsProperty) {
-    properties.push(extensionsProperty);
-  }
-
   const localTypes = lodash.uniq(
     lodash.flatten(properties.map((property) => property.localTypes))
   );
@@ -58,6 +52,9 @@ function generate(options, schema) {
              * @brief ${schema.description}
              */
             struct CESIUMGLTF_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
+                static inline constexpr const char* TypeName = "${name}";
+                ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
@@ -78,7 +75,11 @@ function generate(options, schema) {
   fs.writeFileSync(headerOutputPath, unindent(header), "utf-8");
 
   const readerHeaders = lodash.uniq(
-    [`"${base}JsonHandler.h"`, ...lodash.flatten(properties.map((property) => property.readerHeaders))]
+    [
+      `"CesiumGltf/ReaderContext.h"`,
+      `"${base}JsonHandler.h"`, 
+      ...lodash.flatten(properties.map((property) => property.readerHeaders))
+    ]
   );
   readerHeaders.sort();
 
@@ -94,18 +95,66 @@ function generate(options, schema) {
         ${readerHeaders.map((header) => `#include ${header}`).join("\n")}
 
         namespace CesiumGltf {
+          struct ReaderContext;
           struct ${name};
 
-          class ${name}JsonHandler : public ${base}JsonHandler {
+          class ${name}JsonHandler : public ${base}JsonHandler${thisConfig.extensionName ? `, public IExtensionJsonHandler` : ""} {
           public:
-            void reset(IJsonHandler* pHandler, ${name}* pObject);
-            ${name}* getObject();
-            virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override;
+            using ValueType = ${name};
 
-            virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+            ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
+            ${name}JsonHandler(const ReaderContext& context) noexcept;
+            void reset(IJsonHandler* pParentHandler, ${name}* pObject);
+
+            virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+            ${thisConfig.extensionName ? `
+            virtual void reset(IJsonHandler* pParentHandler, ExtensibleObject& o, const std::string_view& extensionName) override;
+
+            virtual IJsonHandler* readNull() override {
+              return ${base}JsonHandler::readNull();
+            };
+            virtual IJsonHandler* readBool(bool b) override {
+              return ${base}JsonHandler::readBool(b);
+            }
+            virtual IJsonHandler* readInt32(int32_t i) override {
+              return ${base}JsonHandler::readInt32(i);
+            }
+            virtual IJsonHandler* readUint32(uint32_t i) override {
+              return ${base}JsonHandler::readUint32(i);
+            }
+            virtual IJsonHandler* readInt64(int64_t i) override {
+              return ${base}JsonHandler::readInt64(i);
+            }
+            virtual IJsonHandler* readUint64(uint64_t i) override {
+              return ${base}JsonHandler::readUint64(i);
+            }
+            virtual IJsonHandler* readDouble(double d) override {
+              return ${base}JsonHandler::readDouble(d);
+            }
+            virtual IJsonHandler* readString(const std::string_view& str) override {
+              return ${base}JsonHandler::readString(str);
+            }
+            virtual IJsonHandler* readObjectStart() override {
+              return ${base}JsonHandler::readObjectStart();
+            }
+            virtual IJsonHandler* readObjectEnd() override {
+              return ${base}JsonHandler::readObjectEnd();
+            }
+            virtual IJsonHandler* readArrayStart() override {
+              return ${base}JsonHandler::readArrayStart();
+            }
+            virtual IJsonHandler* readArrayEnd() override {
+              return ${base}JsonHandler::readArrayEnd();
+            }
+            virtual void reportWarning(const std::string& warning, std::vector<std::string>&& context = std::vector<std::string>()) override {
+              ${base}JsonHandler::reportWarning(warning, std::move(context));
+            }
+            ` : ""}
+          
           protected:
-            IJsonHandler* ${name}Key(const char* str, ${name}& o);
+            IJsonHandler* readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o);
     
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
@@ -135,6 +184,13 @@ function generate(options, schema) {
   );
   readerHeadersImpl.sort();
 
+function generateReaderOptionsInitializerList(properties, varName) {
+    const initializerList = properties
+      .filter(p => p.readerType.toLowerCase().indexOf("jsonhandler") != -1)
+      .map(p => `_${p.name}(${p.schemas && p.schemas.length > 0 ? varName : ""})`)
+      .join(", ");
+    return initializerList == "" ? "" : ", " + initializerList;
+}
   const readerImpl = `
         // This file was generated by generate-gltf-classes.
         // DO NOT EDIT THIS FILE!
@@ -146,28 +202,30 @@ function generate(options, schema) {
 
         using namespace CesiumGltf;
 
-        void ${name}JsonHandler::reset(IJsonHandler* pParent, ${name}* pObject) {
-          ${base}JsonHandler::reset(pParent, pObject);
+        ${name}JsonHandler::${name}JsonHandler(const ReaderContext& context) noexcept : ${base}JsonHandler(context)${generateReaderOptionsInitializerList(properties, 'context')} {}
+
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, ${name}* pObject) {
+          ${base}JsonHandler::reset(pParentHandler, pObject);
           this->_pObject = pObject;
         }
 
-        ${name}* ${name}JsonHandler::getObject() {
-          return this->_pObject;
-        }
-
-        void ${name}JsonHandler::reportWarning(const std::string& warning, std::vector<std::string>&& context) {
-          if (this->getCurrentKey()) {
-            context.emplace_back(std::string(".") + this->getCurrentKey());
-          }
-          this->parent()->reportWarning(warning, std::move(context));
-        }
-
-        IJsonHandler* ${name}JsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+        CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
           assert(this->_pObject);
-          return this->${name}Key(str, *this->_pObject);
+          return this->readObjectKey${name}(${name}::TypeName, str, *this->_pObject);
         }
 
-        IJsonHandler* ${name}JsonHandler::${name}Key(const char* str, ${name}& o) {
+        ${thisConfig.extensionName ? `
+        void ${name}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, ExtensibleObject& o, const std::string_view& extensionName) {
+          std::any& value =
+              o.extensions.emplace(extensionName, ${name}())
+                  .first->second;
+          this->reset(
+              pParentHandler,
+              &std::any_cast<${name}&>(value));  
+        }
+        ` : ""}
+
+        CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o) {
           using namespace std::string_literals;
 
           ${indent(
@@ -177,7 +235,7 @@ function generate(options, schema) {
             10
           )}
 
-          return this->${base}Key(str, *this->_pObject);
+          return this->readObjectKey${base}(objectType, str, *this->_pObject);
         }
 
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}

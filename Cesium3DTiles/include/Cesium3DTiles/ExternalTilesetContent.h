@@ -43,7 +43,7 @@ private:
    * @return The {@link TileContentLoadResult}
    */
   static std::unique_ptr<TileContentLoadResult> load(
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const glm::dmat4& tileTransform,
       TileRefine tileRefine,
       const std::string& url,

@@ -5,7 +5,7 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGltf/Reader.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
@@ -13,6 +13,8 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
+
+/*static*/ CesiumGltf::GltfReader RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
@@ -47,8 +49,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
-    std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-    std::shared_ptr<spdlog::logger> pLogger,
+    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
     const CesiumGeometry::Rectangle& coverageRectangle,
@@ -487,25 +489,25 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   {}};
             }
 
-            if (pResponse->data().size() == 0) {
+            if (pResponse->data().empty()) {
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
                     CesiumGltf::ImageCesium(),
                     std::move(options.credits),
                     {},
                     {}};
-              } else {
-                return LoadedRasterOverlayImage{
-                    std::nullopt,
-                    std::move(options.credits),
-                    {"Image response for " + url + " is empty."},
-                    {}};
               }
+              return LoadedRasterOverlayImage{
+                  std::nullopt,
+                  std::move(options.credits),
+                  {"Image response for " + url + " is empty."},
+                  {}};
             }
 
             gsl::span<const std::byte> data = pResponse->data();
+
             CesiumGltf::ImageReaderResult loadedImage =
-                CesiumGltf::readImage(data);
+                RasterOverlayTileProvider::_gltfReader.readImage(data);
 
             if (!loadedImage.errors.empty()) {
               loadedImage.errors.push_back("Image url: " + url);
@@ -584,12 +586,11 @@ void RasterOverlayTileProvider::doLoad(
               result.credits = std::move(loadedImage.credits);
               result.pRendererResources = pRendererResources;
               return result;
-            } else {
-              LoadResult result;
-              result.pRendererResources = nullptr;
-              result.state = RasterOverlayTile::LoadState::Failed;
-              return result;
             }
+            LoadResult result;
+            result.pRendererResources = nullptr;
+            result.state = RasterOverlayTile::LoadState::Failed;
+            return result;
           })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;

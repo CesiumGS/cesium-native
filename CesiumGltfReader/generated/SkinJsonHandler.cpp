@@ -8,29 +8,29 @@
 
 using namespace CesiumGltf;
 
-void SkinJsonHandler::reset(IJsonHandler* pParent, Skin* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+SkinJsonHandler::SkinJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _inverseBindMatrices(),
+      _skeleton(),
+      _joints() {}
+
+void SkinJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Skin* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Skin* SkinJsonHandler::getObject() { return this->_pObject; }
-
-void SkinJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-SkinJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->SkinKey(str, *this->_pObject);
+  return this->readObjectKeySkin(Skin::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SkinJsonHandler::SkinKey(const char* str, Skin& o) {
+CesiumJsonReader::IJsonHandler* SkinJsonHandler::readObjectKeySkin(
+    const std::string& objectType,
+    const std::string_view& str,
+    Skin& o) {
   using namespace std::string_literals;
 
   if ("inverseBindMatrices"s == str)
@@ -43,5 +43,5 @@ IJsonHandler* SkinJsonHandler::SkinKey(const char* str, Skin& o) {
   if ("joints"s == str)
     return property("joints", this->_joints, o.joints);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

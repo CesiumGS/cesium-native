@@ -8,32 +8,31 @@
 
 using namespace CesiumGltf;
 
+TextureInfoJsonHandler::TextureInfoJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context), _index(), _texCoord() {}
+
 void TextureInfoJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     TextureInfo* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-TextureInfo* TextureInfoJsonHandler::getObject() { return this->_pObject; }
-
-void TextureInfoJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-TextureInfoJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->TextureInfoKey(str, *this->_pObject);
+  return this->readObjectKeyTextureInfo(
+      TextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler*
-TextureInfoJsonHandler::TextureInfoKey(const char* str, TextureInfo& o) {
+CesiumJsonReader::IJsonHandler*
+TextureInfoJsonHandler::readObjectKeyTextureInfo(
+    const std::string& objectType,
+    const std::string_view& str,
+    TextureInfo& o) {
   using namespace std::string_literals;
 
   if ("index"s == str)
@@ -41,5 +40,5 @@ TextureInfoJsonHandler::TextureInfoKey(const char* str, TextureInfo& o) {
   if ("texCoord"s == str)
     return property("texCoord", this->_texCoord, o.texCoord);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

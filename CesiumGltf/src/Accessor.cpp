@@ -13,7 +13,6 @@ Accessor::computeNumberOfComponents(CesiumGltf::Accessor::Type type) {
   case CesiumGltf::Accessor::Type::VEC3:
     return 3;
   case CesiumGltf::Accessor::Type::VEC4:
-    return 4;
   case CesiumGltf::Accessor::Type::MAT2:
     return 4;
   case CesiumGltf::Accessor::Type::MAT3:
@@ -63,8 +62,7 @@ int64_t Accessor::computeByteStride(const CesiumGltf::Model& model) const {
 
   if (pBufferView->byteStride) {
     return pBufferView->byteStride.value();
-  } else {
-    return computeNumberOfComponents(this->type) *
-           computeByteSizeOfComponent(this->componentType);
   }
+  return computeNumberOfComponents(this->type) *
+         computeByteSizeOfComponent(this->componentType);
 }

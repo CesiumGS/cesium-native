@@ -8,29 +8,30 @@
 
 using namespace CesiumGltf;
 
-void AssetJsonHandler::reset(IJsonHandler* pParent, Asset* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+AssetJsonHandler::AssetJsonHandler(const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _copyright(),
+      _generator(),
+      _version(),
+      _minVersion() {}
+
+void AssetJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Asset* pObject) {
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Asset* AssetJsonHandler::getObject() { return this->_pObject; }
-
-void AssetJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-AssetJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AssetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AssetKey(str, *this->_pObject);
+  return this->readObjectKeyAsset(Asset::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AssetJsonHandler::AssetKey(const char* str, Asset& o) {
+CesiumJsonReader::IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
+    const std::string& objectType,
+    const std::string_view& str,
+    Asset& o) {
   using namespace std::string_literals;
 
   if ("copyright"s == str)
@@ -42,5 +43,5 @@ IJsonHandler* AssetJsonHandler::AssetKey(const char* str, Asset& o) {
   if ("minVersion"s == str)
     return property("minVersion", this->_minVersion, o.minVersion);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

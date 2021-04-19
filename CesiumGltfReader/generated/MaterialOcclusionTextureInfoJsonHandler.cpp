@@ -8,43 +8,37 @@
 
 using namespace CesiumGltf;
 
+MaterialOcclusionTextureInfoJsonHandler::
+    MaterialOcclusionTextureInfoJsonHandler(
+        const ReaderContext& context) noexcept
+    : TextureInfoJsonHandler(context), _strength() {}
+
 void MaterialOcclusionTextureInfoJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     MaterialOcclusionTextureInfo* pObject) {
-  TextureInfoJsonHandler::reset(pParent, pObject);
+  TextureInfoJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-MaterialOcclusionTextureInfo*
-MaterialOcclusionTextureInfoJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void MaterialOcclusionTextureInfoJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->MaterialOcclusionTextureInfoKey(str, *this->_pObject);
+  return this->readObjectKeyMaterialOcclusionTextureInfo(
+      MaterialOcclusionTextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler*
-MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoKey(
-    const char* str,
-    MaterialOcclusionTextureInfo& o) {
+CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::
+    readObjectKeyMaterialOcclusionTextureInfo(
+        const std::string& objectType,
+        const std::string_view& str,
+        MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
 
   if ("strength"s == str)
     return property("strength", this->_strength, o.strength);
 
-  return this->TextureInfoKey(str, *this->_pObject);
+  return this->readObjectKeyTextureInfo(objectType, str, *this->_pObject);
 }

@@ -97,9 +97,8 @@ std::string JsonHelpers::getStringOrDefault(
     const std::string& defaultValue) {
   if (json.IsString()) {
     return json.GetString();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 double JsonHelpers::getDoubleOrDefault(
@@ -117,9 +116,8 @@ double JsonHelpers::getDoubleOrDefault(
     double defaultValue) {
   if (json.IsDouble()) {
     return json.GetDouble();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 uint32_t JsonHelpers::getUint32OrDefault(
@@ -137,9 +135,8 @@ uint32_t JsonHelpers::getUint32OrDefault(
     uint32_t defaultValue) {
   if (json.IsUint()) {
     return json.GetUint();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 int32_t JsonHelpers::getInt32OrDefault(
@@ -157,9 +154,8 @@ int32_t JsonHelpers::getInt32OrDefault(
     int32_t defaultValue) {
   if (json.IsInt()) {
     return json.GetInt();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 uint64_t JsonHelpers::getUint64OrDefault(
@@ -177,9 +173,8 @@ uint64_t JsonHelpers::getUint64OrDefault(
     uint64_t defaultValue) {
   if (json.IsUint()) {
     return json.GetUint();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 int64_t JsonHelpers::getInt64OrDefault(
@@ -197,9 +192,8 @@ int64_t JsonHelpers::getInt64OrDefault(
     int64_t defaultValue) {
   if (json.IsInt()) {
     return json.GetInt();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 bool JsonHelpers::getBoolOrDefault(
@@ -217,9 +211,8 @@ bool JsonHelpers::getBoolOrDefault(
     bool defaultValue) {
   if (json.IsBool()) {
     return json.GetBool();
-  } else {
-    return defaultValue;
   }
+  return defaultValue;
 }
 
 std::vector<std::string>

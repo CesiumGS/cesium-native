@@ -8,29 +8,43 @@
 
 using namespace CesiumGltf;
 
-void ModelJsonHandler::reset(IJsonHandler* pParent, Model* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+ModelJsonHandler::ModelJsonHandler(const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _extensionsUsed(),
+      _extensionsRequired(),
+      _accessors(context),
+      _animations(context),
+      _asset(context),
+      _buffers(context),
+      _bufferViews(context),
+      _cameras(context),
+      _images(context),
+      _materials(context),
+      _meshes(context),
+      _nodes(context),
+      _samplers(context),
+      _scene(),
+      _scenes(context),
+      _skins(context),
+      _textures(context) {}
+
+void ModelJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Model* pObject) {
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Model* ModelJsonHandler::getObject() { return this->_pObject; }
-
-void ModelJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-ModelJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+ModelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->ModelKey(str, *this->_pObject);
+  return this->readObjectKeyModel(Model::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* ModelJsonHandler::ModelKey(const char* str, Model& o) {
+CesiumJsonReader::IJsonHandler* ModelJsonHandler::readObjectKeyModel(
+    const std::string& objectType,
+    const std::string_view& str,
+    Model& o) {
   using namespace std::string_literals;
 
   if ("extensionsUsed"s == str)
@@ -71,5 +85,5 @@ IJsonHandler* ModelJsonHandler::ModelKey(const char* str, Model& o) {
   if ("textures"s == str)
     return property("textures", this->_textures, o.textures);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

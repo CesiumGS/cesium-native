@@ -1,4 +1,4 @@
-#include "CesiumGltf/JsonValue.h"
+#include "CesiumUtility/JsonValue.h"
 #include <glm/vec3.hpp>
 #include <optional>
 
@@ -14,9 +14,9 @@ struct SkirtMeshMetadata {
         skirtNorthHeight{0.0} {}
 
   static std::optional<SkirtMeshMetadata>
-  parseFromGltfExtras(const CesiumGltf::JsonValue::Object& extras);
+  parseFromGltfExtras(const CesiumUtility::JsonValue::Object& extras);
 
-  static CesiumGltf::JsonValue::Object
+  static CesiumUtility::JsonValue::Object
   createGltfExtras(const SkirtMeshMetadata& skirt);
 
   uint32_t noSkirtIndicesBegin;

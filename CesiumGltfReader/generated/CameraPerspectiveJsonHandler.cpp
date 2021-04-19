@@ -8,36 +8,34 @@
 
 using namespace CesiumGltf;
 
+CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
+    const ReaderContext& context) noexcept
+    : ExtensibleObjectJsonHandler(context),
+      _aspectRatio(),
+      _yfov(),
+      _zfar(),
+      _znear() {}
+
 void CameraPerspectiveJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParentHandler,
     CameraPerspective* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CameraPerspective* CameraPerspectiveJsonHandler::getObject() {
-  return this->_pObject;
-}
-
-void CameraPerspectiveJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler* CameraPerspectiveJsonHandler::Key(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->CameraPerspectiveKey(str, *this->_pObject);
+  return this->readObjectKeyCameraPerspective(
+      CameraPerspective::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
-    const char* str,
+CesiumJsonReader::IJsonHandler*
+CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
+    const std::string& objectType,
+    const std::string_view& str,
     CameraPerspective& o) {
   using namespace std::string_literals;
 
@@ -50,5 +48,5 @@ IJsonHandler* CameraPerspectiveJsonHandler::CameraPerspectiveKey(
   if ("znear"s == str)
     return property("znear", this->_znear, o.znear);
 
-  return this->ExtensibleObjectKey(str, *this->_pObject);
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

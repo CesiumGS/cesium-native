@@ -12,6 +12,7 @@ namespace CesiumGltf {
  * @brief Metadata about the glTF asset.
  */
 struct CESIUMGLTF_API Asset final : public ExtensibleObject {
+  static inline constexpr const char* TypeName = "Asset";
 
   /**
    * @brief A copyright message suitable for display to credit the content

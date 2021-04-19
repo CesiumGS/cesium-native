@@ -127,10 +127,9 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
         return boundingRegion.computeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),
             viewState._position);
-      } else {
-        return boundingRegion.computeDistanceSquaredToPosition(
-            viewState._position);
       }
+      return boundingRegion.computeDistanceSquaredToPosition(
+          viewState._position);
     }
 
     double operator()(const BoundingSphere& boundingSphere) {
@@ -144,10 +143,9 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
         return boundingRegion.computeConservativeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),
             viewState._position);
-      } else {
-        return boundingRegion.computeConservativeDistanceSquaredToPosition(
-            viewState._position);
       }
+      return boundingRegion.computeConservativeDistanceSquaredToPosition(
+          viewState._position);
     }
   };
 

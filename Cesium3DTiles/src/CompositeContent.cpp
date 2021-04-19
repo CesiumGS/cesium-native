@@ -130,32 +130,33 @@ CompositeContent::load(const TileContentLoadInput& input) {
     pos += pInner->byteLength;
   }
 
-  if (innerTiles.size() == 0) {
+  if (innerTiles.empty()) {
     if (pHeader->tilesLength > 0) {
       SPDLOG_LOGGER_WARN(
           pLogger,
           "Composite tile does not contain any loadable inner tiles.");
     }
     return nullptr;
-  } else if (innerTiles.size() == 1) {
+  }
+  if (innerTiles.size() == 1) {
     return std::move(innerTiles[0]);
-  } else {
-    std::unique_ptr<TileContentLoadResult> pResult = std::move(innerTiles[0]);
+  }
 
-    for (size_t i = 1; i < innerTiles.size(); ++i) {
-      if (!innerTiles[i]->model) {
-        continue;
-      }
+  std::unique_ptr<TileContentLoadResult> pResult = std::move(innerTiles[0]);
 
-      if (pResult->model) {
-        pResult->model.value().merge(std::move(innerTiles[i]->model.value()));
-      } else {
-        pResult->model = std::move(innerTiles[i]->model);
-      }
+  for (size_t i = 1; i < innerTiles.size(); ++i) {
+    if (!innerTiles[i]->model) {
+      continue;
     }
 
-    return pResult;
+    if (pResult->model) {
+      pResult->model.value().merge(std::move(innerTiles[i]->model.value()));
+    } else {
+      pResult->model = std::move(innerTiles[i]->model);
+    }
   }
+
+  return pResult;
 }
 
 } // namespace Cesium3DTiles

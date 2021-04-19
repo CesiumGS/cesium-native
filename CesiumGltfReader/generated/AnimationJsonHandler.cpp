@@ -8,30 +8,30 @@
 
 using namespace CesiumGltf;
 
-void AnimationJsonHandler::reset(IJsonHandler* pParent, Animation* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+AnimationJsonHandler::AnimationJsonHandler(
+    const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context), _channels(context), _samplers(context) {}
+
+void AnimationJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Animation* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Animation* AnimationJsonHandler::getObject() { return this->_pObject; }
-
-void AnimationJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-AnimationJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AnimationJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AnimationKey(str, *this->_pObject);
+  return this->readObjectKeyAnimation(
+      Animation::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler*
-AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
+CesiumJsonReader::IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
+    const std::string& objectType,
+    const std::string_view& str,
+    Animation& o) {
   using namespace std::string_literals;
 
   if ("channels"s == str)
@@ -39,5 +39,5 @@ AnimationJsonHandler::AnimationKey(const char* str, Animation& o) {
   if ("samplers"s == str)
     return property("samplers", this->_samplers, o.samplers);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

@@ -8,29 +8,35 @@
 
 using namespace CesiumGltf;
 
-void NodeJsonHandler::reset(IJsonHandler* pParent, Node* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _camera(),
+      _children(),
+      _skin(),
+      _matrix(),
+      _mesh(),
+      _rotation(),
+      _scale(),
+      _translation(),
+      _weights() {}
+
+void NodeJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Node* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Node* NodeJsonHandler::getObject() { return this->_pObject; }
-
-void NodeJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-NodeJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->NodeKey(str, *this->_pObject);
+  return this->readObjectKeyNode(Node::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* NodeJsonHandler::NodeKey(const char* str, Node& o) {
+CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(
+    const std::string& objectType,
+    const std::string_view& str,
+    Node& o) {
   using namespace std::string_literals;
 
   if ("camera"s == str)
@@ -52,5 +58,5 @@ IJsonHandler* NodeJsonHandler::NodeKey(const char* str, Node& o) {
   if ("weights"s == str)
     return property("weights", this->_weights, o.weights);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

@@ -8,30 +8,35 @@
 
 using namespace CesiumGltf;
 
-void BufferViewJsonHandler::reset(IJsonHandler* pParent, BufferView* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+BufferViewJsonHandler::BufferViewJsonHandler(
+    const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _buffer(),
+      _byteOffset(),
+      _byteLength(),
+      _byteStride(),
+      _target() {}
+
+void BufferViewJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    BufferView* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-BufferView* BufferViewJsonHandler::getObject() { return this->_pObject; }
-
-void BufferViewJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-BufferViewJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->BufferViewKey(str, *this->_pObject);
+  return this->readObjectKeyBufferView(
+      BufferView::TypeName,
+      str,
+      *this->_pObject);
 }
 
-IJsonHandler*
-BufferViewJsonHandler::BufferViewKey(const char* str, BufferView& o) {
+CesiumJsonReader::IJsonHandler* BufferViewJsonHandler::readObjectKeyBufferView(
+    const std::string& objectType,
+    const std::string_view& str,
+    BufferView& o) {
   using namespace std::string_literals;
 
   if ("buffer"s == str)
@@ -45,5 +50,5 @@ BufferViewJsonHandler::BufferViewKey(const char* str, BufferView& o) {
   if ("target"s == str)
     return property("target", this->_target, o.target);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

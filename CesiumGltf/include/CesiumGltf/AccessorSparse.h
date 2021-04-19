@@ -14,6 +14,7 @@ namespace CesiumGltf {
  * value.
  */
 struct CESIUMGLTF_API AccessorSparse final : public ExtensibleObject {
+  static inline constexpr const char* TypeName = "AccessorSparse";
 
   /**
    * @brief Number of entries stored in the sparse array.

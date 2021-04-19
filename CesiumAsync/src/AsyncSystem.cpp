@@ -4,7 +4,7 @@
 
 namespace CesiumAsync {
 AsyncSystem::AsyncSystem(
-    std::shared_ptr<ITaskProcessor> pTaskProcessor) noexcept
+    const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept
     : _pSchedulers(
           std::make_shared<Impl::AsyncSystemSchedulers>(pTaskProcessor)) {}
 
@@ -15,7 +15,7 @@ void AsyncSystem::dispatchMainThreadTasks() {
 namespace Impl {
 AsyncSystemSchedulers::AsyncSystemSchedulers(
     std::shared_ptr<ITaskProcessor> pTaskProcessor_)
-    : pTaskProcessor(pTaskProcessor_), mainThreadScheduler() {}
+    : pTaskProcessor(std::move(pTaskProcessor_)) {}
 
 void AsyncSystemSchedulers::schedule(async::task_run_handle t) {
   struct Receiver {

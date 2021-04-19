@@ -8,29 +8,30 @@
 
 using namespace CesiumGltf;
 
-void SamplerJsonHandler::reset(IJsonHandler* pParent, Sampler* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+SamplerJsonHandler::SamplerJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _magFilter(),
+      _minFilter(),
+      _wrapS(),
+      _wrapT() {}
+
+void SamplerJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Sampler* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Sampler* SamplerJsonHandler::getObject() { return this->_pObject; }
-
-void SamplerJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-SamplerJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+SamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->SamplerKey(str, *this->_pObject);
+  return this->readObjectKeySampler(Sampler::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* SamplerJsonHandler::SamplerKey(const char* str, Sampler& o) {
+CesiumJsonReader::IJsonHandler* SamplerJsonHandler::readObjectKeySampler(
+    const std::string& objectType,
+    const std::string_view& str,
+    Sampler& o) {
   using namespace std::string_literals;
 
   if ("magFilter"s == str)
@@ -42,5 +43,5 @@ IJsonHandler* SamplerJsonHandler::SamplerKey(const char* str, Sampler& o) {
   if ("wrapT"s == str)
     return property("wrapT", this->_wrapT, o.wrapT);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

@@ -32,6 +32,7 @@ endif()
 
 add_subdirectory(modp_b64)
 
+set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
 add_subdirectory(cpp-httplib)
 
 # CSPRNG's CMake setup is old school, and it really only has one source
@@ -51,6 +52,10 @@ set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_
 
 set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" CACHE INTERNAL
     "Include directory for spdlog"
+)
+
+set(CESIUM_NATIVE_GSL_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/GSL/include" CACHE INTERNAL
+    "Include directory for GSL"
 )
 
 set(CESIUM_NATIVE_SQLITE3_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/sqlite3/" CACHE INTERNAL
@@ -73,4 +78,12 @@ set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE
 
 set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
+)
+
+set(CESIUM_NATIVE_BASE64_ENCODE_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/base64_encode/" CACHE INTERNAL 
+    "Include directory for base64_encode"
+)
+
+set(CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/magic_enum/" CACHE INTERNAL 
+    "Include directory for magic_enum"
 )

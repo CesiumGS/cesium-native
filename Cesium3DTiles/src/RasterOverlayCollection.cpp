@@ -4,10 +4,10 @@
 namespace Cesium3DTiles {
 
 RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept
-    : _pTileset(&tileset), _overlays() {}
+    : _pTileset(&tileset) {}
 
 RasterOverlayCollection::~RasterOverlayCollection() {
-  if (this->_overlays.size() > 0) {
+  if (!this->_overlays.empty()) {
     for (int64_t i = static_cast<int64_t>(this->_overlays.size() - 1); i >= 0;
          --i) {
       this->remove(this->_overlays[static_cast<size_t>(i)].get());
