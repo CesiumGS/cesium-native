@@ -30,6 +30,21 @@ struct JsonValueNotRealValue : public std::runtime_error {
       : std::runtime_error("this->value was not double, uint64_t or int64_t") {}
 };
 
+template <typename T, typename U>
+constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
+  constexpr const bool is_different_signedness =
+      (std::is_signed<T>::value != std::is_signed<U>::value);
+
+  const T t = gsl::narrow_cast<T>(u);
+
+  if (static_cast<U>(t) != u ||
+      (is_different_signedness && ((t < T{}) != (u < U{})))) {
+    return defaultValue;
+  }
+
+  return t;
+}
+
 /**
  * @brief A generic implementation of a value in a JSON structure.
  *
@@ -268,8 +283,53 @@ public:
     return it->second.getSafeNumber<To>();
   }
 
+  /**
+   * @brief Converts the numerical value corresponding to the given key
+   * to the provided numerical template type.
+   *
+   * If this instance is not a {@link JsonValue::Object}, the key does not exist
+   * in this object, or the named value does not have a numerical type that can
+   * be represented as T without precision loss, then the default value is
+   * returned.
+   *
+   * @tparam To The expected type of the value.
+   * @param key The key for which to retrieve the value from this object.
+   * @return The converted value.
+   * @throws If unable to convert the converted value for one of the
+   * aforementioned reasons.
+   * @remarks Compilation will fail if type 'To' is not an integral / float /
+   * double type.
+   */
+  template <
+      typename To,
+      typename std::enable_if<
+          std::is_integral<To>::value ||
+          std::is_floating_point<To>::value>::type* = nullptr>
+  [[nodiscard]] To getSafeNumericalValueOrDefaultForKey(
+      const std::string& key,
+      To defaultValue) const {
+    const Object& pObject = std::get<Object>(this->value);
+    const auto it = pObject.find(key);
+    if (it == pObject.end()) {
+      return defaultValue;
+    }
+    return it->second.getSafeNumberOrDefault<To>(defaultValue);
+  }
+
+  /**
+   * @brief Determines if this value is an Object and has the given key.
+   *
+   * @param key The key.
+   * @return true if this value contains the key. false if it is not an object
+   * or does not contain the given key.
+   */
   [[nodiscard]] inline bool hasKey(const std::string& key) const {
-    return std::get<Object>(this->value).count(key) != 0;
+    const Object* pObject = std::get_if<Object>(&this->value);
+    if (!pObject) {
+      return false;
+    }
+
+    return pObject->find(key) != pObject->end();
   }
 
   /**
@@ -320,29 +380,17 @@ public:
   [[nodiscard]] To getSafeNumberOrDefault(To defaultValue) const noexcept {
     const std::uint64_t* uInt = std::get_if<std::uint64_t>(&this->value);
     if (uInt) {
-      try {
-        return gsl::narrow<To>(*uInt);
-      } catch (...) {
-        return defaultValue;
-      }
+      return losslessNarrowOrDefault<To>(*uInt, defaultValue);
     }
 
     const std::int64_t* sInt = std::get_if<std::int64_t>(&this->value);
     if (sInt) {
-      try {
-        return gsl::narrow<To>(*sInt);
-      } catch (...) {
-        return defaultValue;
-      }
+      return losslessNarrowOrDefault<To>(*sInt, defaultValue);
     }
 
     const double* real = std::get_if<double>(&this->value);
     if (real) {
-      try {
-        return gsl::narrow<To>(*real);
-      } catch (...) {
-        return defaultValue;
-      }
+      return losslessNarrowOrDefault<To>(*real, defaultValue);
     }
 
     return defaultValue;
