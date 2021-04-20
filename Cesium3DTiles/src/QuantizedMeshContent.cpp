@@ -1176,7 +1176,6 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   primitive.extras.emplace("WaterMaskTranslationX", 0.0);
   primitive.extras.emplace("WaterMaskTranslationY", 0.0);
-  // TODO: where does this come from?
   primitive.extras.emplace("WaterMaskScale", 1.0);
 
   // TODO: should check if the extension is included here

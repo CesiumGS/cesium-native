@@ -695,7 +695,7 @@ static void upsamplePrimitiveForRasterOverlays(
 
   double waterMaskTranslationX = 0.0;
   double waterMaskTranslationY = 0.0;
-  double waterMaskScale = 0.125;
+  double waterMaskScale = 0.0;
 
   auto waterMaskTranslationXIt = 
     primitive.extras.find("WaterMaskTranslationX");
@@ -732,7 +732,6 @@ static void upsamplePrimitiveForRasterOverlays(
 
   primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
   primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
-  // TODO: where does this come from?
   primitive.extras.emplace("WaterMaskScale", waterMaskScale);
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
