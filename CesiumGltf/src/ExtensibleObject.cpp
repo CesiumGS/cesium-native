@@ -6,8 +6,7 @@ using namespace CesiumUtility;
 JsonValue* ExtensibleObject::getGenericExtension(
     const std::string& extensionName) noexcept {
   return const_cast<JsonValue*>(
-      const_cast<const ExtensibleObject*>(this)->getGenericExtension(
-          extensionName));
+      std::as_const(*this).getGenericExtension(extensionName));
 }
 
 const JsonValue* ExtensibleObject::getGenericExtension(

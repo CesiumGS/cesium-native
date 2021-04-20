@@ -4,6 +4,7 @@
 #include "CesiumUtility/JsonValue.h"
 #include <any>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace CesiumGltf {
@@ -29,8 +30,7 @@ struct CESIUMGLTF_API ExtensibleObject {
 
   /** @copydoc ExtensibleObject::getExtension */
   template <typename T> T* getExtension() noexcept {
-    return const_cast<T*>(
-        const_cast<const ExtensibleObject*>(this)->getExtension<T>());
+    return const_cast<T*>(std::as_const(*this).getExtension<T>());
   }
 
   /**
