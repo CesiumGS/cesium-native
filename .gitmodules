@@ -43,3 +43,6 @@
 [submodule "extern/magic_enum"]
 	path = extern/magic_enum
 	url = https://github.com/Neargye/magic_enum.git
+[submodule "extern/cmake-modules"]
+	path = extern/cmake-modules
+	url = https://github.com/bilke/cmake-modules.git
