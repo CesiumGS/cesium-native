@@ -2,6 +2,7 @@
 #include "CesiumGltf/Model.h"
 #include "WriteGLTFCallback.h"
 #include "WriteModelOptions.h"
+#include "WriteModelResult.h"
 #include "WriterLibrary.h"
 #include <cstdint>
 #include <string_view>
@@ -15,6 +16,10 @@ namespace CesiumGltf {
  * @param model Final assembled glTF asset, ready for serialization.
  * @param options Options to use for exporting the asset.
  *
+ * @returns A {@link CesiumGltf::WriteModelResult} containing a list of
+ * errors, warnings, and the final generated std::vector<std::byte> of the
+ * glTF asset (as a GLB or GLTF).
+ *
  * @details Serializes the provided model object into a byte vector using the
  * provided flags to convert. There are a few special scenarios with
  * serializing {@link CesiumGltf::Buffer} and {@link CesiumGltf::Image}
@@ -24,25 +29,21 @@ namespace CesiumGltf {
  * responsibility to place all their binary data in
  * `model.buffers[0].cesium.data` if they want it to be serialized to the GLB.
  * - If {@link GltfExportType::GLB} is specified, `model.buffers[0].uri` CANNOT
- * be set or a {@link CesiumGltf::URIErroneouslyDefined} exception will be
- * thrown.
+ * be set or a URIErroneouslyDefined error will be returned.
  * - If a {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}
  * a contains base64 data uri and its `cesium.data` or `cesium.pixelData` vector
- * is non empty, a {@link CesiumGltf::AmbiguiousDataSource} exception
- * will be thrown.
+ * is non empty, a AmbiguiousDataSource error will be returned.
  * - If a {@link CesiumGltf::Buffer} contains a base64 data uri and its
- * byteLength is not set, a {@link CesiumGltf::ByteLengthNotSet}
- * exception will be thrown.
+ * byteLength is not set, a ByteLengthNotSet error will be returned.
  * - If a {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}
  * contains an external file uri and its `cesium.data` or `cesium.pixelData`
- * vector is empty, a {@link CesiumGltf::MissingDataSource} exception
- * will be thrown.
+ * vector is empty, a MissingDataSource error will be returned.
  * - If a {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}
  * contains an external file uri, it will be ignored (use {@link
  * CesiumGltf::writeModelAndExternalFiles} for external file support).
  */
 
-CESIUMGLTFWRITER_API std::vector<std::byte>
+CESIUMGLTFWRITER_API WriteModelResult
 writeModelAsEmbeddedBytes(const Model& model, const WriteModelOptions& options);
 
 /**
@@ -50,6 +51,10 @@ writeModelAsEmbeddedBytes(const Model& model, const WriteModelOptions& options);
  buffers to
  * multiple files via user provided callback.
 
+ * @returns A {@link CesiumGltf::WriteModelResult} containing a list of
+ * errors, warnings, and the final generated std::vector<std::byte> of the
+ * glTF asset (as a GLB or GLTF).
+ *
  * @param model Final assembled glTF asset, ready for serialization.
  * @param flags Bitset flags used to control writing glTF serialization
  behavior.
@@ -70,9 +75,9 @@ writeModelAsEmbeddedBytes(const Model& model, const WriteModelOptions& options);
  or `image.cesium.pixelData` is non-empty.
  */
 
-CESIUMGLTFWRITER_API void writeModelAndExternalFiles(
+CESIUMGLTFWRITER_API WriteModelResult writeModelAndExternalFiles(
     const Model& model,
     const WriteModelOptions& options,
     std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback);
+    const WriteGLTFCallback& writeGLTFCallback);
 } // namespace CesiumGltf

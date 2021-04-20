@@ -62,6 +62,7 @@ void writeAnimationSampler(
 }
 
 void CesiumGltf::writeAnimation(
+    CesiumGltf::WriteModelResult& result,
     const std::vector<Animation>& animations,
     CesiumGltf::JsonWriter& jsonWriter) {
 
@@ -72,13 +73,19 @@ void CesiumGltf::writeAnimation(
   auto& j = jsonWriter;
   j.Key("animations");
   j.StartArray();
-  for (const auto& animation : animations) {
+  for (std::size_t i = 0; i < animations.size(); ++i) {
+    auto& animation = animations.at(i);
     j.StartObject();
     const bool hasAnimationChannels = !animation.channels.empty();
     if (!hasAnimationChannels) {
-      std::cerr << "Detected empty animation channels, The generated glTF will "
-                   "not be spec-compliant."
-                << std::endl;
+      const std::string culpableAnimation =
+          "animations[" + std::to_string(i) + "]";
+      result.warnings.emplace_back(
+          "EmptyAnimationChannels: " + culpableAnimation + " " +
+          " is missing animation channels. The generated " +
+          "glTF asset will not be glTF 2.0 spec-compliant");
+      j.StartArray();
+      j.EndArray();
     } else {
       j.StartArray();
       for (const auto& animationChannel : animation.channels) {

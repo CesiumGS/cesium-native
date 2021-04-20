@@ -31,32 +31,33 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-std::vector<std::byte> writeModel(
+WriteModelResult writeModel(
     const Model& model,
     const WriteModelOptions& options,
     std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback = noopGltfWriter);
+    const WriteGLTFCallback& writeGLTFCallback = noopGltfWriter);
 
-std::vector<std::byte> CesiumGltf::writeModelAsEmbeddedBytes(
+WriteModelResult CesiumGltf::writeModelAsEmbeddedBytes(
     const Model& model,
     const WriteModelOptions& options) {
   return writeModel(model, options, "");
 }
 
-void CesiumGltf::writeModelAndExternalFiles(
+WriteModelResult CesiumGltf::writeModelAndExternalFiles(
     const Model& model,
     const WriteModelOptions& options,
     std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback) {
-  writeModel(model, options, filename, writeGLTFCallback);
+    const WriteGLTFCallback& writeGLTFCallback) {
+  return writeModel(model, options, filename, writeGLTFCallback);
 }
 
-std::vector<std::byte> writeModel(
+WriteModelResult writeModel(
     const Model& model,
     const WriteModelOptions& options,
     std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback) {
-  std::vector<std::byte> result;
+    const WriteGLTFCallback& writeGLTFCallback) {
+
+  WriteModelResult result;
   std::unique_ptr<JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -84,12 +85,22 @@ std::vector<std::byte> writeModel(
   }
 
   CesiumGltf::writeAccessor(model.accessors, *writer);
-  CesiumGltf::writeAnimation(model.animations, *writer);
+  CesiumGltf::writeAnimation(result, model.animations, *writer);
   CesiumGltf::writeAsset(model.asset, *writer);
-  CesiumGltf::writeBuffer(model.buffers, *writer, options, writeGLTFCallback);
+  CesiumGltf::writeBuffer(
+      result,
+      model.buffers,
+      *writer,
+      options,
+      writeGLTFCallback);
   CesiumGltf::writeBufferView(model.bufferViews, *writer);
   CesiumGltf::writeCamera(model.cameras, *writer);
-  CesiumGltf::writeImage(model.images, *writer, options, writeGLTFCallback);
+  CesiumGltf::writeImage(
+      result,
+      model.images,
+      *writer,
+      options,
+      writeGLTFCallback);
   CesiumGltf::writeMaterial(model.materials, *writer);
   CesiumGltf::writeMesh(model.meshes, *writer);
   CesiumGltf::writeNode(model.nodes, *writer);
@@ -107,18 +118,19 @@ std::vector<std::byte> writeModel(
 
   if (options.exportType == GltfExportType::GLB) {
     if (model.buffers.empty()) {
-      result = writeBinaryGLB(std::vector<std::byte>{}, writer->toStringView());
+      result.gltfAssetBytes =
+          writeBinaryGLB(std::vector<std::byte>{}, writer->toStringView());
     }
 
     else {
-      result = writeBinaryGLB(
+      result.gltfAssetBytes = writeBinaryGLB(
           model.buffers.at(0).cesium.data,
           writer->toStringView());
     }
   } else {
-    result = writer->toBytes();
+    result.gltfAssetBytes = writer->toBytes();
   }
 
-  writeGLTFCallback(filename, result);
+  writeGLTFCallback(filename, result.gltfAssetBytes);
   return result;
 }

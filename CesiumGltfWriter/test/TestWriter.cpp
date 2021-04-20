@@ -103,7 +103,8 @@ TEST_CASE(
   CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
-  const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto asBytes = writeResult.gltfAssetBytes;
   const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
   const std::string asString(
       reinterpret_cast<const char*>(asBytes.data()),
@@ -120,7 +121,11 @@ TEST_CASE(
   CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLB;
 
-  const auto asBytes = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  REQUIRE(writeResult.errors.empty());
+  REQUIRE(writeResult.warnings.empty());
+
+  auto& asBytes = writeResult.gltfAssetBytes;
   std::vector<std::byte> expectedMagic = {
       std::byte('g'),
       std::byte('l'),
@@ -249,12 +254,18 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
-  const auto asGltfBytes =
+
+  const auto writeResultGltf =
       CesiumGltf::writeModelAsEmbeddedBytes(model, options);
-  validateStructure(asGltfBytes);
+  REQUIRE(writeResultGltf.errors.empty());
+  REQUIRE(writeResultGltf.warnings.empty());
+  validateStructure(writeResultGltf.gltfAssetBytes);
 
   options.exportType = CesiumGltf::GltfExportType::GLB;
   options.autoConvertDataToBase64 = false;
-  const auto asGLBBytes = CesiumGltf::writeModelAsEmbeddedBytes(model, options);
-  validateStructure(asGLBBytes);
+  const auto writeResultGlb =
+      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+  REQUIRE(writeResultGlb.errors.empty());
+  REQUIRE(writeResultGlb.warnings.empty());
+  validateStructure(writeResultGlb.gltfAssetBytes);
 }

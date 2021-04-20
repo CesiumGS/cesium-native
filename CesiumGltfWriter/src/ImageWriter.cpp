@@ -5,7 +5,6 @@
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
-#include <CesiumGltf/WriterException.h>
 #include <algorithm>
 #include <cstdint>
 
@@ -28,6 +27,7 @@ mimeTypeToExtensionString(CesiumGltf::Image::MimeType mimeType) noexcept {
 }
 
 void CesiumGltf::writeImage(
+    WriteModelResult& result,
     const std::vector<CesiumGltf::Image>& images,
     CesiumGltf::JsonWriter& jsonWriter,
     const WriteModelOptions& options,
@@ -40,7 +40,7 @@ void CesiumGltf::writeImage(
   j.Key("images");
   j.StartArray();
 
-  for (auto i = 0ul; i < images.size(); ++i) {
+  for (std::size_t i = 0; i < images.size(); ++i) {
     auto& image = images.at(i);
     const auto isUriSet = image.uri.has_value();
     const auto isDataBufferEmpty = image.cesium.pixelData.empty();
@@ -51,8 +51,11 @@ void CesiumGltf::writeImage(
 
     if (isBase64URI) {
       if (!isDataBufferEmpty) {
-        throw AmbiguiousDataSource("image.uri cannot be a base64 uri if "
+        result.errors.emplace_back("image.uri cannot be a base64 uri if "
                                    "image.cesium.pixelData is non-empty");
+        j.EndObject();
+        j.EndArray();
+        return;
       }
 
       j.KeyPrimitive("uri", *image.uri);
@@ -60,8 +63,11 @@ void CesiumGltf::writeImage(
 
     else if (isExternalFileURI) {
       if (!isDataBufferEmpty) {
-        throw MissingDataSource("image.uri references an external file, but "
-                                "image.cesium.pixelData is empty");
+        result.errors.emplace_back("image.uri references an external file, but "
+                                   "image.cesium.pixelData is empty");
+        j.EndObject();
+        j.EndArray();
+        return;
       }
 
       writeGLTFCallback(*image.uri, image.cesium.pixelData);

@@ -3,7 +3,7 @@
 #include "PrettyJsonWriter.h"
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/WriteModelOptions.h>
-#include <CesiumGltf/WriterException.h>
+#include <CesiumGltf/WriteModelResult.h>
 #include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
@@ -39,12 +39,17 @@ TEST_CASE(
   options.autoConvertDataToBase64 = true;
 
   writer.StartObject();
+  CesiumGltf::WriteModelResult result;
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options);
 
   writer.EndObject();
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.empty());
 
   rapidjson::Document document;
   document.Parse(writer.toString().c_str());
@@ -88,13 +93,19 @@ TEST_CASE(
   options.exportType = CesiumGltf::GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
+  CesiumGltf::WriteModelResult result;
+
   writer.StartObject();
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options,
       onHelloWorldBin);
   writer.EndObject();
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.empty());
   REQUIRE(callbackInvoked);
 
   rapidjson::Document document;
@@ -122,10 +133,16 @@ TEST_CASE("Buffer that only has byteLength set is serialized correctly") {
   CesiumGltf::WriteModelOptions options;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
+  CesiumGltf::WriteModelResult result;
+
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options);
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.empty());
 
   writer.EndObject();
   const auto asStringView = writer.toStringView();
@@ -140,14 +157,20 @@ TEST_CASE("URI zero CANNOT be set in GLB mode. (0th buffer is reserved as "
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLB;
 
-  REQUIRE_THROWS_AS(
-      CesiumGltf::writeBuffer(
-          std::vector<CesiumGltf::Buffer>{buffer},
-          writer,
-          options),
-      CesiumGltf::URIErroneouslyDefined);
+  CesiumGltf::writeBuffer(
+      result,
+      std::vector<CesiumGltf::Buffer>{buffer},
+      writer,
+      options);
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.size() == 1);
+
+  const auto& errorString = result.errors.at(0);
+  REQUIRE(errorString.rfind("URIErroneouslyDefined", 0) == 0);
 }
 
 TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
@@ -169,17 +192,24 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options,
       onHelloWorldBin);
   writer.EndObject();
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.empty());
+  REQUIRE(callbackInvoked);
 }
 
-TEST_CASE("AmbiguiousDataSource thrown if buffer.uri is set to base64 uri and "
+TEST_CASE("AmbiguiousDataSource error returned if buffer.uri is set to base64 "
+          "uri and "
           "buffer.cesium.data also set") {
   CesiumGltf::Buffer buffer;
   buffer.uri = "data:application/octet-stream;base64,SGVsbG9Xb3JsZCE=";
@@ -188,14 +218,20 @@ TEST_CASE("AmbiguiousDataSource thrown if buffer.uri is set to base64 uri and "
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
-  REQUIRE_THROWS_AS(
-      CesiumGltf::writeBuffer(
-          std::vector<CesiumGltf::Buffer>{buffer},
-          writer,
-          options),
-      CesiumGltf::AmbiguiousDataSource);
+  CesiumGltf::writeBuffer(
+      result,
+      std::vector<CesiumGltf::Buffer>{buffer},
+      writer,
+      options);
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.size() == 1);
+
+  const auto& errorString = result.errors.at(0);
+  REQUIRE(errorString.rfind("AmbiguiousDataSource", 0) == 0);
 }
 
 TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
@@ -207,13 +243,18 @@ TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options),
       writer.EndObject();
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.empty());
 
   rapidjson::Document document;
   document.Parse(writer.toString().c_str());
@@ -241,14 +282,19 @@ TEST_CASE("base64 uri set but byte length not set") {
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
-  REQUIRE_THROWS_AS(
-      CesiumGltf::writeBuffer(
-          std::vector<CesiumGltf::Buffer>{buffer},
-          writer,
-          options),
-      CesiumGltf::ByteLengthNotSet);
+  CesiumGltf::writeBuffer(
+      result,
+      std::vector<CesiumGltf::Buffer>{buffer},
+      writer,
+      options);
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.size() == 1);
+  const auto& errorString = result.errors.at(0);
+  REQUIRE(errorString.rfind("ByteLengthNotSet", 0) == 0);
 }
 
 TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
@@ -259,13 +305,18 @@ TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLB;
 
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options);
   writer.EndObject();
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.empty());
 
   rapidjson::Document document;
   auto string = writer.toString();
@@ -284,7 +335,7 @@ TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
   REQUIRE(byteLength == HELLO_WORLD_STR.size());
 }
 
-TEST_CASE("MissingDataSource thrown if ExternalFileURI detected and "
+TEST_CASE("MissingDataSource error returned if ExternalFileURI detected and "
           "buffer.cesium.data is empty") {
   CesiumGltf::Buffer buffer;
   buffer.uri = "Foobar.bin";
@@ -292,14 +343,19 @@ TEST_CASE("MissingDataSource thrown if ExternalFileURI detected and "
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
-  REQUIRE_THROWS_AS(
-      CesiumGltf::writeBuffer(
-          std::vector<CesiumGltf::Buffer>{buffer},
-          writer,
-          options),
-      CesiumGltf::MissingDataSource);
+  CesiumGltf::writeBuffer(
+      result,
+      std::vector<CesiumGltf::Buffer>{buffer},
+      writer,
+      options);
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.size() == 1);
+  const auto& errorString = result.errors.at(0);
+  REQUIRE(errorString.rfind("MissingDataSource", 0) == 0);
 }
 
 TEST_CASE("extras and extensions are detected and serialized") {
@@ -315,13 +371,18 @@ TEST_CASE("extras and extensions are detected and serialized") {
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
+  CesiumGltf::WriteModelResult result;
   options.exportType = CesiumGltf::GltfExportType::GLTF;
 
   CesiumGltf::writeBuffer(
+      result,
       std::vector<CesiumGltf::Buffer>{buffer},
       writer,
       options);
   writer.EndObject();
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.empty());
 
   rapidjson::Document document;
   auto string = writer.toString();
