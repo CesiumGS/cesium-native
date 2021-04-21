@@ -10,9 +10,21 @@
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Uri.h"
 #include <rapidjson/document.h>
+#include <map>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
+
+namespace {
+struct BingOverlayArgs {
+    std::string url;
+    std::string key;
+    std::string mapStyle;
+    std::string culture;
+};
+
+static std::map<std::string, BingOverlayArgs> cachedBingImageryAssets = {};
+};
 
 namespace Cesium3DTiles {
 
@@ -40,9 +52,30 @@ IonRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
+  auto cachedBingArgsIt = cachedBingImageryAssets.find(ionUrl);
+  if (cachedBingArgsIt != cachedBingImageryAssets.end()) {
+    const BingOverlayArgs& cachedBingArgs = cachedBingArgsIt->second;   
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "-----------REUSING BING SESSION----------");
+    return 
+        std::make_unique<BingMapsRasterOverlay>(
+            cachedBingArgs.url,
+            cachedBingArgs.key,
+            cachedBingArgs.mapStyle,
+            cachedBingArgs.culture
+        )->createTileProvider(
+              asyncSystem,
+              pAssetAccessor,
+              pCreditSystem,
+              pPrepareRendererResources,
+              pLogger,
+              pOwner);
+  }
+
   return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
       .thenInWorkerThread(
-          [pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
+          [pLogger, ionUrl](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlay> {
             const IAssetResponse* pResponse = pRequest->response();
 
@@ -98,6 +131,13 @@ IonRasterOverlay::createTileProvider(
                   "AERIAL");
               std::string culture =
                   JsonHelpers::getStringOrDefault(options, "culture", "");
+
+              cachedBingImageryAssets[ionUrl] = {
+                  url,
+                  key,
+                  mapStyle,
+                  culture
+              };
 
               return std::make_unique<BingMapsRasterOverlay>(
                   url,
