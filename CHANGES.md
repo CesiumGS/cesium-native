@@ -7,6 +7,13 @@
 - Moved `JsonValue` from the `CesiumGltf` library to the `CesiumUtility` library and changes some of its methods.
 - Renamed `CesiumGltf::Reader` to `CesiumGltf::GltfReader`.
 - Made the `readModel` and `readImage` methods on `GltfReader` instance methods instead of static methods.
+- Converted `magic_enum` / `CodeCoverage.cmake` dependencies to external submodules.
+- Replaced `CesiumGltf::WriteFlags` bitmask with `CesiumGltf::WriteModelOptions` struct.
+  `CesiumGltf::writeModelAsEmbeddedBytes` and `CesiumGltf::writeModelAndExternalfiles` 
+  now use this struct for configuration.
+- Removed all exceptions in `WriterException.h`, warnings / errors are now reported in 
+ `WriteModelResult`, which is returned from `CesiumGltf::writeModelAsEmbeddedBytes` and
+ `CesiumGltf::writeModelAndExternalFiles` instead.
 
 ##### Additions :tada:
 
