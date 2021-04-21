@@ -32,7 +32,6 @@ target_include_directories(
     SYSTEM PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include/
-        ${CESIUM_NATIVE_GSL_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
