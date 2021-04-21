@@ -51,8 +51,10 @@ void CesiumGltf::writeImage(
 
     if (isBase64URI) {
       if (!isDataBufferEmpty) {
-        result.errors.emplace_back("image.uri cannot be a base64 uri if "
-                                   "image.cesium.pixelData is non-empty");
+        const std::string culpableImage = "images[" + std::to_string(i) + "]";
+        std::string error = culpableImage + ".uri cannot be a base64 uri if " +
+                            culpableImage + ".cesium.pixelData is non-empty";
+        result.errors.push_back(std::move(error));
         j.EndObject();
         j.EndArray();
         return;
@@ -63,8 +65,11 @@ void CesiumGltf::writeImage(
 
     else if (isExternalFileURI) {
       if (!isDataBufferEmpty) {
-        result.errors.emplace_back("image.uri references an external file, but "
-                                   "image.cesium.pixelData is empty");
+        const std::string culpableImage = "images[" + std::to_string(i) + "]";
+        std::string error = culpableImage +
+                            ".uri references an external file but " +
+                            culpableImage + ".cesium.pixelData is empty";
+        result.errors.push_back(std::move(error));
         j.EndObject();
         j.EndArray();
         return;

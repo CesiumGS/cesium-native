@@ -81,7 +81,7 @@ void CesiumGltf::writeAnimation(
           "animations[" + std::to_string(i) + "]";
       result.warnings.emplace_back(
           "EmptyAnimationChannels: " + culpableAnimation + " " +
-          " is missing animation channels. The generated " +
+          "is missing animation channels. The generated " +
           "glTF asset will not be glTF 2.0 spec-compliant");
       j.StartArray();
       j.EndArray();

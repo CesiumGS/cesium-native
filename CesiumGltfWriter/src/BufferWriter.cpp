@@ -36,8 +36,8 @@ void CesiumGltf::writeBuffer(
     if (isBufferReservedForGLBBinaryChunk) {
       if (isUriSet) {
         const std::string culpableBuffer = "buffers[" + std::to_string(i) + "]";
-        std::string error = "URIErroneouslyDefined: " + culpableBuffer +
-                            " should NOT be set in GLB mode " +
+        std::string error = "URIErroneouslyDefined: " + culpableBuffer + " " +
+                            "should NOT be set in GLB mode " +
                             "(0th buffer is reserved)";
         result.errors.push_back(std::move(error));
         j.EndObject();
@@ -51,8 +51,8 @@ void CesiumGltf::writeBuffer(
     else if (isBase64URI) {
       if (!isDataBufferEmpty) {
         const std::string culpableBuffer = "buffers[" + std::to_string(i) + "]";
-        std::string error = "AmbiguiousDataSource: " + culpableBuffer +
-                            " has a base64 data uri" + "but " + culpableBuffer +
+        std::string error = "AmbiguiousDataSource: " + culpableBuffer + " " +
+                            "has a base64 data uri but " + culpableBuffer +
                             ".cesium.data should be empty if " +
                             culpableBuffer + ".uri is a base64 uri";
         result.errors.push_back(std::move(error));
@@ -64,8 +64,8 @@ void CesiumGltf::writeBuffer(
       if (byteLength == 0) {
         const std::string culpableBuffer = "buffers[" + std::to_string(i) + "]";
         std::string error = "ByteLengthNotSet: " + culpableBuffer +
-                            " uri is a" +
-                            "base64 data uri, but buffer.byteLength is 0" +
+                            ".uri is a " +
+                            "base64 data uri, but buffer.byteLength is 0 " +
                             "(Empty base64 uri strings are not supported)";
         result.errors.push_back(std::move(error));
         j.EndObject();
@@ -78,12 +78,11 @@ void CesiumGltf::writeBuffer(
     else if (isExternalFileURI) {
       if (isDataBufferEmpty) {
         const std::string culpableBuffer = "buffers[" + std::to_string(i) + "]";
-        std::string error = "MissingDataSource: " + culpableBuffer +
-                            ".uri is an " + "external file uri, but " +
-                            culpableBuffer + ".cesium.data" + "is empty. " +
-                            culpableBuffer + ".cesium.data must be " +
-                            "non-empty if " + culpableBuffer +
-                            ".uri is an external " + "file uri";
+        std::string error = "MissingDataSource: " + culpableBuffer + ".uri " +
+                            "is an external file uri, but " + culpableBuffer +
+                            ".cesium.data is empty. " + culpableBuffer +
+                            ".cesium.data must be non-empty if " +
+                            culpableBuffer + ".uri is an external file uri";
         result.errors.emplace_back(std::move(error));
         j.EndObject();
         j.EndArray();
