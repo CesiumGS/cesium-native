@@ -3,7 +3,6 @@
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
-#include <iostream>
 #include <magic_enum.hpp>
 #include <stdexcept>
 #include <type_traits>
