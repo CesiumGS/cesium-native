@@ -9,22 +9,22 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Uri.h"
-#include <rapidjson/document.h>
 #include <map>
+#include <rapidjson/document.h>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
 
 namespace {
 struct BingOverlayArgs {
-    std::string url;
-    std::string key;
-    std::string mapStyle;
-    std::string culture;
+  std::string url;
+  std::string key;
+  std::string mapStyle;
+  std::string culture;
 };
 
-static std::map<std::string, BingOverlayArgs> cachedBingImageryAssets = {};
-};
+std::map<std::string, BingOverlayArgs> cachedBingImageryAssets = {};
+} // namespace
 
 namespace Cesium3DTiles {
 
@@ -54,23 +54,20 @@ IonRasterOverlay::createTileProvider(
 
   auto cachedBingArgsIt = cachedBingImageryAssets.find(ionUrl);
   if (cachedBingArgsIt != cachedBingImageryAssets.end()) {
-    const BingOverlayArgs& cachedBingArgs = cachedBingArgsIt->second;   
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "-----------REUSING BING SESSION----------");
-    return 
-        std::make_unique<BingMapsRasterOverlay>(
-            cachedBingArgs.url,
-            cachedBingArgs.key,
-            cachedBingArgs.mapStyle,
-            cachedBingArgs.culture
-        )->createTileProvider(
-              asyncSystem,
-              pAssetAccessor,
-              pCreditSystem,
-              pPrepareRendererResources,
-              pLogger,
-              pOwner);
+    const BingOverlayArgs& cachedBingArgs = cachedBingArgsIt->second;
+    SPDLOG_LOGGER_ERROR(pLogger, "-----------REUSING BING SESSION----------");
+    return std::make_unique<BingMapsRasterOverlay>(
+               cachedBingArgs.url,
+               cachedBingArgs.key,
+               cachedBingArgs.mapStyle,
+               cachedBingArgs.culture)
+        ->createTileProvider(
+            asyncSystem,
+            pAssetAccessor,
+            pCreditSystem,
+            pPrepareRendererResources,
+            pLogger,
+            pOwner);
   }
 
   return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
@@ -132,12 +129,7 @@ IonRasterOverlay::createTileProvider(
               std::string culture =
                   JsonHelpers::getStringOrDefault(options, "culture", "");
 
-              cachedBingImageryAssets[ionUrl] = {
-                  url,
-                  key,
-                  mapStyle,
-                  culture
-              };
+              cachedBingImageryAssets[ionUrl] = {url, key, mapStyle, culture};
 
               return std::make_unique<BingMapsRasterOverlay>(
                   url,
