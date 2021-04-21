@@ -22,9 +22,9 @@ CESIUMGLTFWRITER_API struct WriteModelOptions {
   bool prettyPrint = false;
 
   /**
-   * @brief Whether {@link CesiumGltf::BufferCesium} and {@link
-   * CesiumGltf::ImageCesium} should be automatically encoded into base64 uris
-   * or not.
+   * @brief If {@link CesiumGltf::BufferCesium} and
+   * {@link CesiumGltf::ImageCesium} should be automatically encoded into base64
+   * uris or not.
    */
   bool autoConvertDataToBase64 = false;
 };
