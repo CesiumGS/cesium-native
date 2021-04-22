@@ -1,5 +1,15 @@
 # Change Log
 
+### v0.3.0 - ????-??-??
+
+##### Breaking Changes :mega:
+
+##### Additions :tada:
+
+##### Fixes :wrench:
+
+- Let a tile be renderable if all its raster overlays are ready. 
+
 ### v0.2.0 - 2021-04-19
 
 ##### Breaking Changes :mega:
