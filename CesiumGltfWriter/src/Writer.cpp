@@ -18,8 +18,8 @@
 #include <BufferViewWriter.h>
 #include <BufferWriter.h>
 #include <CameraWriter.h>
-#include <CesiumGltf/WriteFlags.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
+#include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/Writer.h>
 #include <CesiumUtility/JsonValue.h>
 #include <array>
@@ -31,48 +31,36 @@
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-void validateFlags(WriteFlags options) {
-  const auto isGLB = options & WriteFlags::GLB;
-  const auto isGLTF = options & WriteFlags::GLTF;
+WriteModelResult writeModel(
+    const Model& model,
+    const WriteModelOptions& options,
+    std::string_view filename,
+    const WriteGLTFCallback& writeGLTFCallback = noopGltfWriter);
 
-  if (isGLB && isGLTF) {
-    throw std::runtime_error("GLB and GLTF flags are mutually exclusive.");
-  }
-
-  if (!isGLB && !isGLTF) {
-    throw std::runtime_error("GLB or GLTF must be specified.");
-  }
+WriteModelResult CesiumGltf::writeModelAsEmbeddedBytes(
+    const Model& model,
+    const WriteModelOptions& options) {
+  return writeModel(model, options, "");
 }
 
-std::vector<std::byte> writeModel(
+WriteModelResult CesiumGltf::writeModelAndExternalFiles(
     const Model& model,
-    WriteFlags flags,
+    const WriteModelOptions& options,
     std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback = noopGltfWriter);
-
-std::vector<std::byte>
-CesiumGltf::writeModelAsEmbeddedBytes(const Model& model, WriteFlags flags) {
-  return writeModel(model, flags, "");
+    const WriteGLTFCallback& writeGLTFCallback) {
+  return writeModel(model, options, filename, writeGLTFCallback);
 }
 
-void CesiumGltf::writeModelAndExternalFiles(
+WriteModelResult writeModel(
     const Model& model,
-    WriteFlags flags,
+    const WriteModelOptions& options,
     std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback) {
-  writeModel(model, flags, filename, writeGLTFCallback);
-}
+    const WriteGLTFCallback& writeGLTFCallback) {
 
-std::vector<std::byte> writeModel(
-    const Model& model,
-    WriteFlags flags,
-    std::string_view filename,
-    WriteGLTFCallback writeGLTFCallback) {
-  validateFlags(flags);
-  std::vector<std::byte> result;
+  WriteModelResult result;
   std::unique_ptr<JsonWriter> writer;
 
-  if (flags & WriteFlags::PrettyPrint) {
+  if (options.prettyPrint) {
     writer = std::make_unique<PrettyJsonWriter>();
   } else {
     writer = std::make_unique<JsonWriter>();
@@ -97,12 +85,22 @@ std::vector<std::byte> writeModel(
   }
 
   CesiumGltf::writeAccessor(model.accessors, *writer);
-  CesiumGltf::writeAnimation(model.animations, *writer);
+  CesiumGltf::writeAnimation(result, model.animations, *writer);
   CesiumGltf::writeAsset(model.asset, *writer);
-  CesiumGltf::writeBuffer(model.buffers, *writer, flags, writeGLTFCallback);
+  CesiumGltf::writeBuffer(
+      result,
+      model.buffers,
+      *writer,
+      options,
+      writeGLTFCallback);
   CesiumGltf::writeBufferView(model.bufferViews, *writer);
   CesiumGltf::writeCamera(model.cameras, *writer);
-  CesiumGltf::writeImage(model.images, *writer, flags, writeGLTFCallback);
+  CesiumGltf::writeImage(
+      result,
+      model.images,
+      *writer,
+      options,
+      writeGLTFCallback);
   CesiumGltf::writeMaterial(model.materials, *writer);
   CesiumGltf::writeMesh(model.meshes, *writer);
   CesiumGltf::writeNode(model.nodes, *writer);
@@ -118,20 +116,21 @@ std::vector<std::byte> writeModel(
 
   writer->EndObject();
 
-  if (flags & WriteFlags::GLB) {
+  if (options.exportType == GltfExportType::GLB) {
     if (model.buffers.empty()) {
-      result = writeBinaryGLB(std::vector<std::byte>{}, writer->toStringView());
+      result.gltfAssetBytes =
+          writeBinaryGLB(std::vector<std::byte>{}, writer->toStringView());
     }
 
     else {
-      result = writeBinaryGLB(
+      result.gltfAssetBytes = writeBinaryGLB(
           model.buffers.at(0).cesium.data,
           writer->toStringView());
     }
   } else {
-    result = writer->toBytes();
+    result.gltfAssetBytes = writer->toBytes();
   }
 
-  writeGLTFCallback(filename, result);
+  writeGLTFCallback(filename, result.gltfAssetBytes);
   return result;
 }

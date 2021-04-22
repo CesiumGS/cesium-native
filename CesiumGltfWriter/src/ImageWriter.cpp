@@ -5,7 +5,6 @@
 #include "JsonObjectWriter.h"
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
-#include <CesiumGltf/WriterException.h>
 #include <algorithm>
 #include <cstdint>
 
@@ -28,9 +27,10 @@ mimeTypeToExtensionString(CesiumGltf::Image::MimeType mimeType) noexcept {
 }
 
 void CesiumGltf::writeImage(
+    WriteModelResult& result,
     const std::vector<CesiumGltf::Image>& images,
     CesiumGltf::JsonWriter& jsonWriter,
-    WriteFlags flags,
+    const WriteModelOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
   if (images.empty()) {
     return;
@@ -40,7 +40,7 @@ void CesiumGltf::writeImage(
   j.Key("images");
   j.StartArray();
 
-  for (auto i = 0ul; i < images.size(); ++i) {
+  for (std::size_t i = 0; i < images.size(); ++i) {
     auto& image = images.at(i);
     const auto isUriSet = image.uri.has_value();
     const auto isDataBufferEmpty = image.cesium.pixelData.empty();
@@ -51,8 +51,13 @@ void CesiumGltf::writeImage(
 
     if (isBase64URI) {
       if (!isDataBufferEmpty) {
-        throw AmbiguiousDataSource("image.uri cannot be a base64 uri if "
-                                   "image.cesium.pixelData is non-empty");
+        const std::string culpableImage = "images[" + std::to_string(i) + "]";
+        std::string error = culpableImage + ".uri cannot be a base64 uri if " +
+                            culpableImage + ".cesium.pixelData is non-empty";
+        result.errors.push_back(std::move(error));
+        j.EndObject();
+        j.EndArray();
+        return;
       }
 
       j.KeyPrimitive("uri", *image.uri);
@@ -60,15 +65,21 @@ void CesiumGltf::writeImage(
 
     else if (isExternalFileURI) {
       if (!isDataBufferEmpty) {
-        throw MissingDataSource("image.uri references an external file, but "
-                                "image.cesium.pixelData is empty");
+        const std::string culpableImage = "images[" + std::to_string(i) + "]";
+        std::string error = culpableImage +
+                            ".uri references an external file but " +
+                            culpableImage + ".cesium.pixelData is empty";
+        result.errors.push_back(std::move(error));
+        j.EndObject();
+        j.EndArray();
+        return;
       }
 
       writeGLTFCallback(*image.uri, image.cesium.pixelData);
     }
 
     else if (!isDataBufferEmpty) {
-      if (flags & WriteFlags::AutoConvertDataToBase64) {
+      if (options.autoConvertDataToBase64) {
         j.KeyPrimitive(
             "uri",
             BASE64_PREFIX + encodeAsBase64String(image.cesium.pixelData));

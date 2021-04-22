@@ -37,8 +37,6 @@ target_include_directories(
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
-        ${CESIUM_NATIVE_BASE64_ENCODE_INCLUDE_DIR}
-        ${CESIUM_NATIVE_MAGIC_ENUM_INCLUDE_DIR}
         ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated
@@ -47,4 +45,7 @@ target_include_directories(
 target_link_libraries(CesiumGltfWriter 
     PUBLIC 
         CesiumGltf 
+        modp_b64
+    PRIVATE
+        magic_enum
 )

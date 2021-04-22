@@ -7,7 +7,7 @@ project(cesium-native
 )
 
 # Add Modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 
 # Add a coverage target iff:
 # - gcovr is available
