@@ -666,8 +666,6 @@ static void upsamplePrimitiveForRasterOverlays(
   bool onlyWater = false;
   bool onlyLand = true;
   int32_t waterMaskTextureId = -1;
-  // TODO: can we just use the raster overlay tex coords
-  int64_t waterMaskTextureCoordsId = -1;
   
   auto onlyWaterIt = primitive.extras.find("OnlyWater");
   auto onlyLandIt = primitive.extras.find("OnlyLand");
@@ -681,14 +679,9 @@ static void upsamplePrimitiveForRasterOverlays(
     if (!onlyWater && !onlyLand) {
       // We have to clip the parent water mask
       auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
-      auto waterMaskTextureCoordsIdIt =
-          primitive.extras.find("WaterMaskTexCoords");
-      if (waterMaskTextureIdIt != primitive.extras.end() &&
-          waterMaskTextureCoordsIdIt != primitive.extras.end()) {
+      if (waterMaskTextureIdIt != primitive.extras.end()) {
         waterMaskTextureId =
             static_cast<int32_t>(waterMaskTextureIdIt->second.getNumber(-1.0));
-        waterMaskTextureCoordsId = static_cast<int64_t>(
-            waterMaskTextureCoordsIdIt->second.getNumber(-1.0));
       }
     }
   }
@@ -728,7 +721,6 @@ static void upsamplePrimitiveForRasterOverlays(
   primitive.extras.emplace("OnlyLand", onlyLand);
 
   primitive.extras.emplace("WaterMaskTex", int32_t(waterMaskTextureId));
-  primitive.extras.emplace("WaterMaskTexCoords", int64_t(waterMaskTextureCoordsId));
 
   primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
   primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
