@@ -8,6 +8,6 @@ CesiumGltf::encodeAsBase64String(const std::vector<std::byte>& data) noexcept {
   const char* asCharPointer = reinterpret_cast<const char*>(data.data());
   const std::size_t actualLength =
       modp_b64_encode(result.data(), asCharPointer, data.size());
-  result.erase(actualLength, std::string::npos);
+  result.resize(actualLength);
   return result;
 }
