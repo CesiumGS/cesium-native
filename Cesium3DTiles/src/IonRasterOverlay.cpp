@@ -55,7 +55,6 @@ IonRasterOverlay::createTileProvider(
   auto cachedBingArgsIt = cachedBingImageryAssets.find(ionUrl);
   if (cachedBingArgsIt != cachedBingImageryAssets.end()) {
     const BingOverlayArgs& cachedBingArgs = cachedBingArgsIt->second;
-    SPDLOG_LOGGER_ERROR(pLogger, "-----------REUSING BING SESSION----------");
     return std::make_unique<BingMapsRasterOverlay>(
                cachedBingArgs.url,
                cachedBingArgs.key,
