@@ -1568,7 +1568,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         frameState.lastFrameNumber);
     if (renderThisTile) {
       // Only load this tile if it (not just an ancestor) meets the SSE.
-      if (meetsSse) {
+      if (meetsSse && !ancestorMeetsSse) {
         addTileToLoadQueue(
             this->_loadQueueMedium,
             frameState.viewState,
