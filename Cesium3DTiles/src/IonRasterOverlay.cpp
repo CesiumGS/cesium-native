@@ -10,6 +10,7 @@
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Uri.h"
 #include <map>
+#include <optional>
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
@@ -21,6 +22,11 @@ struct BingOverlayArgs {
   std::string key;
   std::string mapStyle;
   std::string culture;
+};
+
+struct OverlayInfo {
+  std::unique_ptr<Cesium3DTiles::RasterOverlay> pAggregatedOverlay;
+  std::optional<BingOverlayArgs> bingArgs;
 };
 
 std::map<std::string, BingOverlayArgs> cachedBingImageryAssets = {};
@@ -71,8 +77,8 @@ IonRasterOverlay::createTileProvider(
 
   return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
       .thenInWorkerThread(
-          [pLogger, ionUrl](const std::shared_ptr<IAssetRequest>& pRequest)
-              -> std::unique_ptr<RasterOverlay> {
+          [pLogger](
+              const std::shared_ptr<IAssetRequest>& pRequest) -> OverlayInfo {
             const IAssetResponse* pResponse = pRequest->response();
 
             rapidjson::Document response;
@@ -87,7 +93,7 @@ IonRasterOverlay::createTileProvider(
                   "{} at byte offset {}",
                   response.GetParseError(),
                   response.GetErrorOffset());
-              return nullptr;
+              return {nullptr, std::nullopt};
             }
 
             std::string type =
@@ -98,7 +104,7 @@ IonRasterOverlay::createTileProvider(
                   "Ion raster overlay metadata response type is not 'IMAGERY', "
                   "but {}",
                   type);
-              return nullptr;
+              return {nullptr, std::nullopt};
             }
 
             std::string externalType = JsonHelpers::getStringOrDefault(
@@ -113,7 +119,7 @@ IonRasterOverlay::createTileProvider(
                     pLogger,
                     "Cesium ion Bing Maps raster overlay metadata response "
                     "does not contain 'options' or it is not an object.");
-                return nullptr;
+                return {nullptr, std::nullopt};
               }
 
               const auto& options = optionsIt->value;
@@ -128,37 +134,47 @@ IonRasterOverlay::createTileProvider(
               std::string culture =
                   JsonHelpers::getStringOrDefault(options, "culture", "");
 
-              cachedBingImageryAssets[ionUrl] = {url, key, mapStyle, culture};
-
-              return std::make_unique<BingMapsRasterOverlay>(
-                  url,
-                  key,
-                  mapStyle,
-                  culture);
+              return {
+                  std::make_unique<BingMapsRasterOverlay>(
+                      url,
+                      key,
+                      mapStyle,
+                      culture),
+                  std::optional<BingOverlayArgs>(
+                      {url, key, mapStyle, culture})};
             }
+
             std::string url =
                 JsonHelpers::getStringOrDefault(response, "url", "");
-            return std::make_unique<TileMapServiceRasterOverlay>(
-                url,
-                std::vector<CesiumAsync::IAssetAccessor::THeader>{
-                    std::make_pair(
-                        "Authorization",
-                        "Bearer " + JsonHelpers::getStringOrDefault(
-                                        response,
-                                        "accessToken",
-                                        ""))});
+            return {
+                std::make_unique<TileMapServiceRasterOverlay>(
+                    url,
+                    std::vector<CesiumAsync::IAssetAccessor::THeader>{
+                        std::make_pair(
+                            "Authorization",
+                            "Bearer " + JsonHelpers::getStringOrDefault(
+                                            response,
+                                            "accessToken",
+                                            ""))}),
+                std::nullopt};
           })
       .thenInMainThread([asyncSystem,
                          pOwner,
                          pAssetAccessor,
                          pCreditSystem,
                          pPrepareRendererResources,
-                         pLogger](
-                            std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
+                         pLogger,
+                         ionUrl](OverlayInfo info) {
+        // If this is a Bing overlay, cache the session id for the duration of
+        // the application.
+        if (info.bingArgs) {
+          cachedBingImageryAssets[ionUrl] = *info.bingArgs;
+        }
+
         // Handle the case that the code above bails out with an error,
         // returning a nullptr.
-        if (pAggregatedOverlay) {
-          return pAggregatedOverlay->createTileProvider(
+        if (info.pAggregatedOverlay) {
+          return info.pAggregatedOverlay->createTileProvider(
               asyncSystem,
               pAssetAccessor,
               pCreditSystem,

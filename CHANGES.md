@@ -10,6 +10,7 @@
 
 ##### Additions :tada:
 
+- Added caching for Bing session keys for the duration of the application. Only relevant when Bing overlays are fetched through Cesium Ion.
 - Added `CesiumGltfWriter` library.
 - Added `CesiumJsonReader` library.
 - Added diagnostic details to error messages for invalid glTF inputs.
