@@ -22,8 +22,6 @@ public:
   /** @brief This class cannot be instantiated */
   Gltf() = delete;
 
-  static glm::dmat4 gltfAxesToCesiumAxes;
-
   /**
    * @brief A callback function for {@link Gltf::forEachPrimitiveInScene}.
    */

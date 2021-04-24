@@ -34,7 +34,7 @@ static glm::dmat4 createGltfAxesToCesiumAxes() {
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 }
 
-/*static*/ glm::dmat4 Gltf::gltfAxesToCesiumAxes = createGltfAxesToCesiumAxes();
+glm::dmat4 gltfAxesToCesiumAxes = createGltfAxesToCesiumAxes();
 
 static void forEachPrimitiveInMeshObject(
     const glm::dmat4x4& transform,
