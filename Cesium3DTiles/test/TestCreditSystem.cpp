@@ -1,6 +1,12 @@
 #include "Cesium3DTiles/CreditSystem.h"
 #include "catch2/catch.hpp"
 
+//#define TEST_THREADED 1
+
+#ifdef TEST_THREADED
+#include <thread>
+#endif // TEST_THREADED
+
 using namespace Cesium3DTiles;
 
 TEST_CASE("Test basic credit handling") {
@@ -79,3 +85,30 @@ TEST_CASE("Test wrong credit handling") {
 
   REQUIRE(creditSystemB.getHtml(creditA1) != html1);
 }
+
+#ifdef TEST_THREADED
+TEST_CASE("Test threaded credit handling") {
+
+  CreditSystem creditSystem;
+  try {
+    const int numWorkers = 20;
+    std::vector<std::thread> workers;
+    for (int w = 0; w < numWorkers; w++) {
+      INFO("Start worker " + std::to_string(w));
+      workers.push_back(std::thread([&creditSystem, w]() {
+        for (int i = 0; i < 100; i++) {
+          creditSystem.createCredit("html" + std::to_string(i));
+        }
+      }));
+    }
+
+    for (int w = 0; w < numWorkers; w++) {
+      INFO("Join worker " + std::to_string(w));
+      workers[w].join();
+    };
+    INFO("Test threaded credit handling done");
+  } catch (...) {
+    FAIL("Caught an error in threaded credit handling");
+  }
+}
+#endif // TEST_THREADED

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -81,6 +82,11 @@ private:
     std::string html;
     int32_t lastFrameNumber;
   };
+
+  /**
+   * The mutex that is used to synchronize all methods of this class
+   */
+  mutable std::mutex _mutex;
 
   std::vector<HtmlAndLastFrameNumber> _credits;
 

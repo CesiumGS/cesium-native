@@ -1,9 +1,13 @@
 #include "Cesium3DTiles/CreditSystem.h"
 #include <algorithm>
+#include <mutex>
 
 namespace Cesium3DTiles {
 
 Credit CreditSystem::createCredit(const std::string& html) {
+
+  std::lock_guard<std::mutex> lock(_mutex);
+
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
@@ -19,6 +23,7 @@ Credit CreditSystem::createCredit(const std::string& html) {
 }
 
 const std::string& CreditSystem::getHtml(Credit credit) const {
+  std::lock_guard<std::mutex> lock(_mutex);
   if (credit.id < _credits.size()) {
     return _credits[credit.id].html;
   }
@@ -26,6 +31,7 @@ const std::string& CreditSystem::getHtml(Credit credit) const {
 }
 
 void CreditSystem::addCreditToFrame(Credit credit) {
+  std::lock_guard<std::mutex> lock(_mutex);
   // if this credit has already been added to the current frame, there's nothing
   // to do
   if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
@@ -51,6 +57,7 @@ void CreditSystem::addCreditToFrame(Credit credit) {
 }
 
 void CreditSystem::startNextFrame() {
+  std::lock_guard<std::mutex> lock(_mutex);
   _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
   _creditsToShowThisFrame.clear();
   _currentFrameNumber++;
