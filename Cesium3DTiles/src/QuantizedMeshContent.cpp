@@ -74,7 +74,7 @@ struct QuantizedMeshView {
         eastEdgeIndicesCount{0},
         northEdgeIndicesCount{0},
         onlyWater{false},
-        onlyLand{false},
+        onlyLand{true},
         metadataJsonLength{0} {}
 
   const QuantizedMeshHeader* header;
