@@ -662,10 +662,9 @@ static void upsamplePrimitiveForRasterOverlays(
   std::copy(indices.begin(), indices.end(), pAsUint32s);
   indexBufferView.byteLength = int64_t(indexBuffer.cesium.data.size());
 
-  // DEBUG
   bool onlyWater = false;
   bool onlyLand = true;
-  int32_t waterMaskTextureId = -1;
+  int64_t waterMaskTextureId = -1;
 
   auto onlyWaterIt = primitive.extras.find("OnlyWater");
   auto onlyLandIt = primitive.extras.find("OnlyLand");
@@ -673,15 +672,15 @@ static void upsamplePrimitiveForRasterOverlays(
   if (onlyWaterIt != primitive.extras.end() && onlyWaterIt->second.isBool() &&
       onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
 
-    onlyWater = onlyWaterIt->second.getBool(false);
-    onlyLand = onlyLandIt->second.getBool(false);
+    onlyWater = onlyWaterIt->second.getBoolOrDefault(false);
+    onlyLand = onlyLandIt->second.getBoolOrDefault(true);
 
     if (!onlyWater && !onlyLand) {
-      // We have to clip the parent water mask
+      // We have to use the parent's water mask
       auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
-      if (waterMaskTextureIdIt != primitive.extras.end()) {
-        waterMaskTextureId =
-            static_cast<int32_t>(waterMaskTextureIdIt->second.getNumber(-1.0));
+      if (waterMaskTextureIdIt != primitive.extras.end() &&
+          waterMaskTextureIdIt->second.isInt64()) {
+        waterMaskTextureId = waterMaskTextureIdIt->second.getInt64OrDefault(-1);
       }
     }
   }
@@ -695,16 +694,18 @@ static void upsamplePrimitiveForRasterOverlays(
   auto waterMaskScaleIt = primitive.extras.find("WaterMaskScale");
 
   if (waterMaskTranslationXIt != primitive.extras.end() &&
-      waterMaskTranslationXIt->second.isNumber() &&
+      waterMaskTranslationXIt->second.isDouble() &&
       waterMaskTranslationYIt != primitive.extras.end() &&
-      waterMaskTranslationYIt->second.isNumber() &&
+      waterMaskTranslationYIt->second.isDouble() &&
       waterMaskScaleIt != primitive.extras.end() &&
-      waterMaskScaleIt->second.isNumber()) {
-    waterMaskScale = 0.5 * waterMaskScaleIt->second.getNumber(0.0);
-    waterMaskTranslationX = waterMaskTranslationXIt->second.getNumber(0.0) +
-                            waterMaskScale * (childID.tileID.x % 2);
-    waterMaskTranslationY = waterMaskTranslationYIt->second.getNumber(0.0) +
-                            waterMaskScale * (childID.tileID.y % 2);
+      waterMaskScaleIt->second.isDouble()) {
+    waterMaskScale = 0.5 * waterMaskScaleIt->second.getDoubleOrDefault(0.0);
+    waterMaskTranslationX =
+        waterMaskTranslationXIt->second.getDoubleOrDefault(0.0) +
+        waterMaskScale * (childID.tileID.x % 2);
+    waterMaskTranslationY =
+        waterMaskTranslationYIt->second.getDoubleOrDefault(0.0) +
+        waterMaskScale * (childID.tileID.y % 2);
   }
 
   // add skirts to extras to be upsampled later if needed
@@ -712,11 +713,10 @@ static void upsamplePrimitiveForRasterOverlays(
     primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
   }
 
-  // TODO: change above line so watermask stuff doesn't have to be split across
   primitive.extras.emplace("OnlyWater", onlyWater);
   primitive.extras.emplace("OnlyLand", onlyLand);
 
-  primitive.extras.emplace("WaterMaskTex", int32_t(waterMaskTextureId));
+  primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
 
   primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
   primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
