@@ -357,7 +357,37 @@ protected:
       const LoadTileImageFromUrlOptions& options = {}) const;
 
 private:
+  struct LoadResult {
+    RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+    CesiumGltf::ImageCesium image = {};
+    std::vector<Credit> credits = {};
+    void* pRendererResources = nullptr;
+  };
+
   void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+
+  /**
+   * @brief Processes the given `LoadedRasterOverlayImage`, producing a
+   * `LoadResult`.
+   *
+   * This function is intended to be called on the worker thread.
+   *
+   * If the given `loadedImage` contains no valid image data, then a
+   * `LoadResult` with the state `RasterOverlayTile::LoadState::Failed` will be
+   * returned.
+   *
+   * Otherwise, the image data will be passed to
+   * `IPrepareRendererResources::prepareRasterInLoadThread`, and the function
+   * will return a `LoadResult` with the image, the prepared renderer resources,
+   * and the state `RasterOverlayTile::LoadState::Loaded`.
+   *
+   * @param tileId The {@link TileID} - only used for logging
+   * @param loadedImage The `LoadedRasterOverlayImage`
+   * @return The `LoadResult`
+   */
+  LoadResult processLoadedImage(
+      const CesiumGeometry::QuadtreeTileID& tileId,
+      LoadedRasterOverlayImage&& loadedImage);
 
   /**
    * @brief Begins the process of loading of a tile.

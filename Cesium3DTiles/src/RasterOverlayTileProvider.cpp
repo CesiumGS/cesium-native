@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
+#include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -524,6 +525,58 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           });
 }
 
+RasterOverlayTileProvider::LoadResult
+RasterOverlayTileProvider::processLoadedImage(
+    const CesiumGeometry::QuadtreeTileID& tileId,
+    LoadedRasterOverlayImage&& loadedImage) {
+
+  const auto& pPrepareRendererResources = this->getPrepareRendererResources();
+  const auto& pLogger = this->getLogger();
+
+  if (!loadedImage.image.has_value()) {
+    std::string tileIdString =
+        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId);
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Failed to load image for tile " + tileIdString + ":\n- {}",
+        CesiumUtility::joinToString(loadedImage.errors, "\n- "));
+    LoadResult result;
+    result.state = RasterOverlayTile::LoadState::Failed;
+    return result;
+  }
+
+  if (!loadedImage.warnings.empty()) {
+    std::string tileIdString =
+        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId);
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Warnings while loading image for tile " + tileIdString + ":\n- {}",
+        CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+  }
+
+  CesiumGltf::ImageCesium& image = loadedImage.image.value();
+
+  int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+  size_t requiredBytes =
+      static_cast<size_t>(image.width) * image.height * bytesPerPixel;
+  if (image.width > 0 && image.height > 0 &&
+      image.pixelData.size() >= requiredBytes) {
+    void* pRendererResources =
+        pPrepareRendererResources->prepareRasterInLoadThread(image);
+
+    LoadResult result;
+    result.state = RasterOverlayTile::LoadState::Loaded;
+    result.image = std::move(image);
+    result.credits = std::move(loadedImage.credits);
+    result.pRendererResources = pRendererResources;
+    return result;
+  }
+  LoadResult result;
+  result.pRendererResources = nullptr;
+  result.state = RasterOverlayTile::LoadState::Failed;
+  return result;
+}
+
 void RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
@@ -537,61 +590,11 @@ void RasterOverlayTileProvider::doLoad(
 
   this->beginTileLoad(tile, isThrottledLoad);
 
-  struct LoadResult {
-    RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
-    CesiumGltf::ImageCesium image = {};
-    std::vector<Credit> credits = {};
-    void* pRendererResources = nullptr;
-  };
-
   this->loadTileImage(tile.getID())
-      .thenInWorkerThread(
-          [tileRectangle =
-               this->getTilingScheme().tileToRectangle(tile.getID()),
-           projection = this->getProjection(),
-           pPrepareRendererResources = this->getPrepareRendererResources(),
-           pLogger =
-               this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
-            if (!loadedImage.image.has_value()) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Failed to load image:\n- {}",
-                  CesiumUtility::joinToString(loadedImage.errors, "\n- "));
-              LoadResult result;
-              result.state = RasterOverlayTile::LoadState::Failed;
-              return result;
-            }
-
-            if (!loadedImage.warnings.empty()) {
-              SPDLOG_LOGGER_WARN(
-                  pLogger,
-                  "Warnings while loading image:\n- {}",
-                  CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
-            }
-
-            CesiumGltf::ImageCesium& image = loadedImage.image.value();
-
-            int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
-
-            if (image.width > 0 && image.height > 0 &&
-                image.pixelData.size() >=
-                    static_cast<size_t>(
-                        image.width * image.height * bytesPerPixel)) {
-              void* pRendererResources =
-                  pPrepareRendererResources->prepareRasterInLoadThread(image);
-
-              LoadResult result;
-              result.state = RasterOverlayTile::LoadState::Loaded;
-              result.image = std::move(image);
-              result.credits = std::move(loadedImage.credits);
-              result.pRendererResources = pRendererResources;
-              return result;
-            }
-            LoadResult result;
-            result.pRendererResources = nullptr;
-            result.state = RasterOverlayTile::LoadState::Failed;
-            return result;
-          })
+      .thenInWorkerThread([this, tileId = tile.getID()](
+                              LoadedRasterOverlayImage&& loadedImage) {
+        return processLoadedImage(tileId, std::move(loadedImage));
+      })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
