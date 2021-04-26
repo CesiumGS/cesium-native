@@ -687,7 +687,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
-    std::shared_ptr<spdlog::logger> pLogger,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const TileID& tileID,
     const BoundingVolume& tileBoundingVolume,
     const std::string& url,
@@ -966,6 +966,12 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   // create gltf
   pResult->model.emplace();
   CesiumGltf::Model& model = pResult->model.value();
+
+  CesiumGltf::Material& material = model.materials.emplace_back();
+  CesiumGltf::MaterialPBRMetallicRoughness& pbr =
+      material.pbrMetallicRoughness.emplace();
+  pbr.metallicFactor = 0.0;
+  pbr.roughnessFactor = 1.0;
 
   size_t meshId = model.meshes.size();
   model.meshes.emplace_back();

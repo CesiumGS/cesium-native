@@ -40,3 +40,9 @@
 [submodule "extern/PicoSHA2"]
 	path = extern/PicoSHA2
 	url = https://github.com/okdshin/PicoSHA2.git
+[submodule "extern/magic_enum"]
+	path = extern/magic_enum
+	url = https://github.com/Neargye/magic_enum.git
+[submodule "extern/cmake-modules"]
+	path = extern/cmake-modules
+	url = https://github.com/bilke/cmake-modules.git

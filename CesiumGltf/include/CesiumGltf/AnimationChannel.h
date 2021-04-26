@@ -12,6 +12,7 @@ namespace CesiumGltf {
  * @brief Targets an animation's sampler at a node's property.
  */
 struct CESIUMGLTF_API AnimationChannel final : public ExtensibleObject {
+  static inline constexpr const char* TypeName = "AnimationChannel";
 
   /**
    * @brief The index of a sampler in this animation used to compute the value

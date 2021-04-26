@@ -3,49 +3,58 @@
 #pragma once
 
 #include "AccessorSparseJsonHandler.h"
-#include "ArrayJsonHandler.h"
-#include "BoolJsonHandler.h"
 #include "CesiumGltf/Accessor.h"
-#include "DoubleJsonHandler.h"
-#include "IntegerJsonHandler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/ArrayJsonHandler.h"
+#include "CesiumJsonReader/BoolJsonHandler.h"
+#include "CesiumJsonReader/DoubleJsonHandler.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, Accessor* pObject);
-  Accessor* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = Accessor;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  AccessorJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, Accessor* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* AccessorKey(const char* str, Accessor& o);
+  IJsonHandler* readObjectKeyAccessor(
+      const std::string& objectType,
+      const std::string_view& str,
+      Accessor& o);
 
 private:
-  class TypeJsonHandler : public JsonHandler {
+  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    void reset(IJsonHandler* pParent, Accessor::Type* pEnum);
-    virtual IJsonHandler*
-    String(const char* str, size_t length, bool copy) override;
+    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(CesiumJsonReader::IJsonHandler* pParent, Accessor::Type* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
+    readString(const std::string_view& str) override;
 
   private:
     Accessor::Type* _pEnum = nullptr;
   };
 
   Accessor* _pObject = nullptr;
-  IntegerJsonHandler<int32_t> _bufferView;
-  IntegerJsonHandler<int64_t> _byteOffset;
-  IntegerJsonHandler<Accessor::ComponentType> _componentType;
-  BoolJsonHandler _normalized;
-  IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+  CesiumJsonReader::IntegerJsonHandler<Accessor::ComponentType> _componentType;
+  CesiumJsonReader::BoolJsonHandler _normalized;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
   TypeJsonHandler _type;
-  ArrayJsonHandler<double, DoubleJsonHandler> _max;
-  ArrayJsonHandler<double, DoubleJsonHandler> _min;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _max;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _min;
   AccessorSparseJsonHandler _sparse;
 };
 } // namespace CesiumGltf

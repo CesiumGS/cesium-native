@@ -3,40 +3,45 @@
 #pragma once
 
 #include "CesiumGltf/Image.h"
-#include "IntegerJsonHandler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
-#include "StringJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct Image;
 
 class ImageJsonHandler : public NamedObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, Image* pObject);
-  Image* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = Image;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  ImageJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, Image* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* ImageKey(const char* str, Image& o);
+  IJsonHandler* readObjectKeyImage(
+      const std::string& objectType,
+      const std::string_view& str,
+      Image& o);
 
 private:
-  class MimeTypeJsonHandler : public JsonHandler {
+  class MimeTypeJsonHandler : public CesiumJsonReader::JsonHandler {
   public:
-    void reset(IJsonHandler* pParent, Image::MimeType* pEnum);
-    virtual IJsonHandler*
-    String(const char* str, size_t length, bool copy) override;
+    MimeTypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+    void reset(CesiumJsonReader::IJsonHandler* pParent, Image::MimeType* pEnum);
+    virtual CesiumJsonReader::IJsonHandler*
+    readString(const std::string_view& str) override;
 
   private:
     Image::MimeType* _pEnum = nullptr;
   };
 
   Image* _pObject = nullptr;
-  StringJsonHandler _uri;
+  CesiumJsonReader::StringJsonHandler _uri;
   MimeTypeJsonHandler _mimeType;
-  IntegerJsonHandler<int32_t> _bufferView;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
 };
 } // namespace CesiumGltf

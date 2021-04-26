@@ -6,6 +6,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGeometry/Axis.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -54,7 +55,7 @@ Tile::Tile(Tile&& rhs) noexcept
 
 Tile& Tile::operator=(Tile&& rhs) noexcept {
   if (this != &rhs) {
-    this->_loadedTilesLinks = std::move(rhs._loadedTilesLinks);
+    this->_loadedTilesLinks = rhs._loadedTilesLinks;
     this->_pContext = rhs._pContext;
     this->_pParent = rhs._pParent;
     this->_children = std::move(rhs._children);
@@ -75,14 +76,14 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
 }
 
 void Tile::createChildTiles(size_t count) {
-  if (this->_children.size() > 0) {
+  if (!this->_children.empty()) {
     throw std::runtime_error("Children already created.");
   }
   this->_children.resize(count);
 }
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {
-  if (this->_children.size() > 0) {
+  if (!this->_children.empty()) {
     throw std::runtime_error("Children already created.");
   }
   this->_children = std::move(children);
@@ -98,16 +99,18 @@ bool Tile::isRenderable() const noexcept {
   // the children load.
 
   // So, we explicitly treat external tilesets as non-renderable.
-  return this->getState() >= LoadState::ContentLoaded &&
-         (!this->_pContent || this->_pContent->model.has_value()) &&
-         !std::any_of(
-             this->_rasterTiles.begin(),
-             this->_rasterTiles.end(),
-             [](const RasterMappedTo3DTile& rasterTile) {
-               return rasterTile.getLoadingTile() &&
-                      rasterTile.getLoadingTile()->getState() ==
-                          RasterOverlayTile::LoadState::Loading;
-             });
+  if (this->getState() >= LoadState::ContentLoaded) {
+    if (!this->_pContent || this->_pContent->model.has_value()) {
+      return std::all_of(
+          this->_rasterTiles.begin(),
+          this->_rasterTiles.end(),
+          [](const RasterMappedTo3DTile& rasterTile) {
+            return rasterTile.getReadyTile() != nullptr;
+          });
+    }
+  }
+
+  return false;
 }
 
 void Tile::loadContent() {
@@ -234,10 +237,12 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
+  const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
+           gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
@@ -278,28 +283,31 @@ void Tile::loadContent() {
             std::unique_ptr<TileContentLoadResult> pContent =
                 TileContentFactory::createContent(loadInput);
 
-            if (!pContent) {
-              pContent = std::make_unique<TileContentLoadResult>();
-            }
-
-            pContent->httpStatusCode = pResponse->statusCode();
-
             void* pRendererResources = nullptr;
+            if (pContent) {
+              pContent->httpStatusCode = pResponse->statusCode();
 
-            if (pContent->model) {
-              const BoundingVolume& boundingVolume =
-                  loadInput.tileBoundingVolume;
-              Tile::generateTextureCoordinates(
-                  pContent->model.value(),
-                  boundingVolume,
-                  projections);
+              if (pContent->model) {
 
-              if (pPrepareRendererResources) {
-                const glm::dmat4& transform = loadInput.tileTransform;
-                pRendererResources =
-                    pPrepareRendererResources->prepareInLoadThread(
-                        pContent->model.value(),
-                        transform);
+                // TODO The `extras` are currently the only way to pass
+                // arbitrary information to the consumer, so the up-axis
+                // is stored here:
+                pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
+
+                const BoundingVolume& boundingVolume =
+                    loadInput.tileBoundingVolume;
+                Tile::generateTextureCoordinates(
+                    pContent->model.value(),
+                    boundingVolume,
+                    projections);
+
+                if (pPrepareRendererResources) {
+                  const glm::dmat4& transform = loadInput.tileTransform;
+                  pRendererResources =
+                      pPrepareRendererResources->prepareInLoadThread(
+                          pContent->model.value(),
+                          transform);
+                }
               }
             }
 
@@ -556,7 +564,7 @@ void Tile::update(
     if (this->_pContent) {
       // Apply children from content, but only if we don't already have
       // children.
-      if (this->_pContent->childTiles && this->getChildren().size() == 0) {
+      if (this->_pContent->childTiles && this->getChildren().empty()) {
         for (Tile& childTile : this->_pContent->childTiles.value()) {
           childTile.setParent(this);
         }
@@ -602,7 +610,7 @@ void Tile::update(
     this->setState(LoadState::Done);
   }
 
-  if (this->getContext()->implicitContext && this->getChildren().size() == 0 &&
+  if (this->getContext()->implicitContext && this->getChildren().empty() &&
       std::get_if<QuadtreeTileID>(&this->_id)) {
     // Check if any child tiles are known to be available, and create them if
     // they are.
@@ -685,7 +693,7 @@ void Tile::update(
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (moreRasterDetailAvailable && this->_children.size() == 0) {
+    if (moreRasterDetailAvailable && this->_children.empty()) {
       createQuadtreeSubdividedChildren(*this);
     }
   }

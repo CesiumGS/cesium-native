@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/TileContentLoader.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "CesiumGltf/GltfReader.h"
 #include <cstddef>
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
@@ -41,11 +42,10 @@ public:
    * @return The {@link TileContentLoadResult}
    */
   static std::unique_ptr<TileContentLoadResult> load(
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& url,
       const gsl::span<const std::byte>& data);
 
-public:
   /**
    * @brief Creates texture coordinates for raster tiles that are mapped to 3D
    * tiles.
@@ -68,6 +68,9 @@ public:
       uint32_t textureCoordinateID,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
+
+private:
+  static CesiumGltf::GltfReader _gltfReader;
 };
 
 } // namespace Cesium3DTiles

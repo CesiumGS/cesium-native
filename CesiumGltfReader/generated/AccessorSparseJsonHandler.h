@@ -4,28 +4,32 @@
 
 #include "AccessorSparseIndicesJsonHandler.h"
 #include "AccessorSparseValuesJsonHandler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
-#include "IntegerJsonHandler.h"
 
 namespace CesiumGltf {
+struct ReaderContext;
 struct AccessorSparse;
 
 class AccessorSparseJsonHandler : public ExtensibleObjectJsonHandler {
 public:
-  void reset(IJsonHandler* pHandler, AccessorSparse* pObject);
-  AccessorSparse* getObject();
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context = std::vector<std::string>()) override;
+  using ValueType = AccessorSparse;
 
-  virtual IJsonHandler* Key(const char* str, size_t length, bool copy) override;
+  AccessorSparseJsonHandler(const ReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, AccessorSparse* pObject);
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
-  IJsonHandler* AccessorSparseKey(const char* str, AccessorSparse& o);
+  IJsonHandler* readObjectKeyAccessorSparse(
+      const std::string& objectType,
+      const std::string_view& str,
+      AccessorSparse& o);
 
 private:
   AccessorSparse* _pObject = nullptr;
-  IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
   AccessorSparseIndicesJsonHandler _indices;
   AccessorSparseValuesJsonHandler _values;
 };

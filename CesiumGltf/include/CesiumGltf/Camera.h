@@ -14,6 +14,8 @@ namespace CesiumGltf {
  * transform to place the camera in the scene.
  */
 struct CESIUMGLTF_API Camera final : public NamedObject {
+  static inline constexpr const char* TypeName = "Camera";
+
   /**
    * @brief Specifies if the camera uses a perspective or orthographic
    * projection.

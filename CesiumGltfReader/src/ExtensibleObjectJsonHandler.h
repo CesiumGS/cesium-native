@@ -1,18 +1,31 @@
 #pragma once
 
-#include "DictionaryJsonHandler.h"
-#include "JsonObjectJsonHandler.h"
-#include "ObjectJsonHandler.h"
+#include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/DictionaryJsonHandler.h"
+#include "CesiumJsonReader/JsonObjectJsonHandler.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
+#include "CesiumUtility/JsonValue.h"
+#include "ExtensionsJsonHandler.h"
 
 namespace CesiumGltf {
 struct ExtensibleObject;
 
-class ExtensibleObjectJsonHandler : public ObjectJsonHandler {
+class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
+public:
+  ExtensibleObjectJsonHandler(const ReaderContext& context) noexcept;
+
 protected:
   void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
-  IJsonHandler* ExtensibleObjectKey(const char* str, ExtensibleObject& o);
+  IJsonHandler* readObjectKeyExtensibleObject(
+      const std::string& objectType,
+      const std::string_view& str,
+      ExtensibleObject& o);
 
 private:
-  DictionaryJsonHandler<JsonValue, JsonObjectJsonHandler> _extras;
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumUtility::JsonValue,
+      CesiumJsonReader::JsonObjectJsonHandler>
+      _extras;
+  ExtensionsJsonHandler _extensions;
 };
 } // namespace CesiumGltf

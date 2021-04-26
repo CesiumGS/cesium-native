@@ -32,7 +32,10 @@ endif()
 
 add_subdirectory(modp_b64)
 
+set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
 add_subdirectory(cpp-httplib)
+
+add_subdirectory(magic_enum)
 
 # CSPRNG's CMake setup is old school, and it really only has one source
 # file, so set up a library manually here.

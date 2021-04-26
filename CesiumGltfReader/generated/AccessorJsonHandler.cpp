@@ -8,29 +8,35 @@
 
 using namespace CesiumGltf;
 
-void AccessorJsonHandler::reset(IJsonHandler* pParent, Accessor* pObject) {
-  NamedObjectJsonHandler::reset(pParent, pObject);
+AccessorJsonHandler::AccessorJsonHandler(const ReaderContext& context) noexcept
+    : NamedObjectJsonHandler(context),
+      _bufferView(),
+      _byteOffset(),
+      _componentType(),
+      _normalized(),
+      _count(),
+      _type(),
+      _max(),
+      _min(),
+      _sparse(context) {}
+
+void AccessorJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    Accessor* pObject) {
+  NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-Accessor* AccessorJsonHandler::getObject() { return this->_pObject; }
-
-void AccessorJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  if (this->getCurrentKey()) {
-    context.emplace_back(std::string(".") + this->getCurrentKey());
-  }
-  this->parent()->reportWarning(warning, std::move(context));
-}
-
-IJsonHandler*
-AccessorJsonHandler::Key(const char* str, size_t /*length*/, bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AccessorJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->AccessorKey(str, *this->_pObject);
+  return this->readObjectKeyAccessor(Accessor::TypeName, str, *this->_pObject);
 }
 
-IJsonHandler* AccessorJsonHandler::AccessorKey(const char* str, Accessor& o) {
+CesiumJsonReader::IJsonHandler* AccessorJsonHandler::readObjectKeyAccessor(
+    const std::string& objectType,
+    const std::string_view& str,
+    Accessor& o) {
   using namespace std::string_literals;
 
   if ("bufferView"s == str)
@@ -52,20 +58,18 @@ IJsonHandler* AccessorJsonHandler::AccessorKey(const char* str, Accessor& o) {
   if ("sparse"s == str)
     return property("sparse", this->_sparse, o.sparse);
 
-  return this->NamedObjectKey(str, *this->_pObject);
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
 void AccessorJsonHandler::TypeJsonHandler::reset(
-    IJsonHandler* pParent,
+    CesiumJsonReader::IJsonHandler* pParent,
     Accessor::Type* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-IJsonHandler* AccessorJsonHandler::TypeJsonHandler::String(
-    const char* str,
-    size_t /*length*/,
-    bool /*copy*/) {
+CesiumJsonReader::IJsonHandler*
+AccessorJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);

@@ -8,6 +8,7 @@
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
+#include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include <optional>
 #include <spdlog/fwd.h>
@@ -24,6 +25,38 @@ struct CESIUM3DTILES_API LoadedRasterOverlayImage {
   std::vector<Credit> credits;
   std::vector<std::string> errors;
   std::vector<std::string> warnings;
+};
+
+/**
+ * @brief Options for {@link RasterOverlayTileProvider::loadTileImageFromUrl}.
+ */
+struct LoadTileImageFromUrlOptions {
+  /**
+   * @brief The credits to display with this tile.
+   *
+   * This property is copied verbatim to the {@link
+   * LoadedRasterOverlayImage::credits} property.
+   */
+  std::vector<Credit> credits = {};
+
+  /**
+   * @brief Whether empty (zero length) images are accepted as a valid
+   * response.
+   *
+   * If true, an otherwise valid response with zero length will be accepted as
+   * a valid 0x0 image. If false, such a response will be reported as an
+   * error.
+   *
+   * {@link RasterOverlayTileProvider::loadTile} and {@link
+   * RasterOverlayTileProvider::loadTileThrottled} will treat such an image as
+   * "failed" and use the quadtree parent (or ancestor) image instead, but
+   * will not report any error.
+   *
+   * This flag should only be set to true when the tile source uses a
+   * zero-length response as an indication that this tile is - as expected -
+   * not available.
+   */
+  bool allowEmptyImages = false;
 };
 
 /**
@@ -71,8 +104,9 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::optional<Credit> credit,
-      std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources,
-      std::shared_ptr<spdlog::logger> pLogger,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -314,12 +348,13 @@ protected:
    *
    * @param url The URL.
    * @param headers The request headers.
+   * @param options Additional options for the load process.
    * @return A future that resolves to the image or error information.
    */
   CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
-      const std::vector<Credit>& credits = {}) const;
+      const LoadTileImageFromUrlOptions& options = {}) const;
 
 private:
   void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
@@ -366,5 +401,7 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
+
+  static CesiumGltf::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTiles

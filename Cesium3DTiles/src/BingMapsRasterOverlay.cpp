@@ -149,7 +149,8 @@ protected:
                 tileID.level,
                 tileID.x,
                 tileID.computeInvertedY(this->getTilingScheme()));
-          } else if (key == "subdomain") {
+          }
+          if (key == "subdomain") {
             size_t subdomainIndex =
                 (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
             return this->_subdomains[subdomainIndex];
@@ -164,8 +165,11 @@ protected:
             this->getProjection(),
             this->getTilingScheme().tileToRectangle(tileID));
 
-    std::vector<Credit> tileCredits;
-    for (CreditAndCoverageAreas creditAndCoverageAreas : _credits) {
+    LoadTileImageFromUrlOptions options;
+    options.allowEmptyImages = true;
+    std::vector<Credit>& tileCredits = options.credits;
+
+    for (const CreditAndCoverageAreas& creditAndCoverageAreas : _credits) {
       for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
         if (coverageArea.zoomMin <= bingTileLevel &&
             bingTileLevel <= coverageArea.zoomMax &&
@@ -176,12 +180,12 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, tileCredits);
+    return this->loadTileImageFromUrl(url, {}, options);
   }
 
 private:
   static std::string tileXYToQuadKey(uint32_t level, uint32_t x, uint32_t y) {
-    std::string quadkey = "";
+    std::string quadkey;
     for (int32_t i = static_cast<int32_t>(level); i >= 0; --i) {
       uint32_t bitmask = static_cast<uint32_t>(1 << i);
       uint32_t digit = 0;
@@ -247,7 +251,8 @@ BingMapsRasterOverlay::createTileProvider(
            pPrepareRendererResources,
            pLogger,
            baseUrl = this->_url,
-           culture = this->_culture](std::shared_ptr<IAssetRequest> pRequest)
+           culture =
+               this->_culture](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 

@@ -9,6 +9,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
+#include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/JsonHelpers.h"
@@ -33,31 +34,23 @@ Tileset::Tileset(
     const TilesetExternals& externals,
     const std::string& url,
     const TilesetOptions& options)
-    : _contexts(),
-      _externals(externals),
+    : _externals(externals),
       _asyncSystem(externals.pTaskProcessor),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
                     options.credit.value()))
               : std::nullopt),
-      _tilesetCredits(),
       _url(url),
-      _ionAssetID(),
-      _ionAccessToken(),
       _isRefreshingIonToken(false),
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _updateResult(),
-      _loadQueueHigh(),
-      _loadQueueMedium(),
-      _loadQueueLow(),
       _loadsInProgress(0),
-      _loadedTiles(),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false) {
+      _supportsRasterOverlays(false),
+      _gltfUpAxis(CesiumGeometry::Axis::Y) {
   ++this->_loadsInProgress;
   this->_loadTilesetJson(url);
 }
@@ -67,34 +60,26 @@ Tileset::Tileset(
     uint32_t ionAssetID,
     const std::string& ionAccessToken,
     const TilesetOptions& options)
-    : _contexts(),
-      _externals(externals),
+    : _externals(externals),
       _asyncSystem(externals.pTaskProcessor),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
                     options.credit.value()))
               : std::nullopt),
-      _tilesetCredits(),
-      _url(),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
       _isRefreshingIonToken(false),
       _options(options),
       _pRootTile(),
       _previousFrameNumber(0),
-      _updateResult(),
-      _loadQueueHigh(),
-      _loadQueueMedium(),
-      _loadQueueLow(),
       _loadsInProgress(0),
-      _loadedTiles(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false) {
   std::string ionUrl = "https://api.cesium.com/v1/assets/" +
                        std::to_string(ionAssetID) + "/endpoint";
-  if (ionAccessToken.size() > 0) {
+  if (!ionAccessToken.empty()) {
     ionUrl += "?access_token=" + ionAccessToken;
   }
 
@@ -246,7 +231,8 @@ static double computeFogDensity(
 
   if (nextIt == fogDensityTable.end()) {
     return fogDensityTable.back().fogDensity;
-  } else if (nextIt == fogDensityTable.begin()) {
+  }
+  if (nextIt == fogDensityTable.begin()) {
     return nextIt->fogDensity;
   }
 
@@ -508,6 +494,55 @@ void Tileset::_loadTilesetJson(
       });
 }
 
+namespace {
+/**
+ * @brief Obtains the up-axis that should be used for glTF content of the
+ * tileset.
+ *
+ * If the given tileset JSON does not contain an `asset.gltfUpAxis` string
+ * property, then the default value of CesiumGeometry::Axis::Y is returned.
+ *
+ * Otherwise, a warning is printed, saying that the `gltfUpAxis` property is
+ * not strictly compliant to the 3D tiles standard, and the return value
+ * will depend on the string value of this property, which may be "X", "Y", or
+ * "Z", case-insensitively, causing CesiumGeometry::Axis::X,
+ * CesiumGeometry::Axis::Y, or CesiumGeometry::Axis::Z to be returned,
+ * respectively.
+ *
+ * @param tileset The tileset JSON
+ * @return The up-axis to use for glTF content
+ */
+CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
+  auto assetIt = tileset.FindMember("asset");
+  if (assetIt == tileset.MemberEnd()) {
+    return CesiumGeometry::Axis::Y;
+  }
+  const rapidjson::Value& assetJson = assetIt->value;
+  auto gltfUpAxisIt = assetJson.FindMember("gltfUpAxis");
+  if (gltfUpAxisIt == assetJson.MemberEnd()) {
+    return CesiumGeometry::Axis::Y;
+  }
+
+  SPDLOG_WARN("The tileset contains a gltfUpAxis property. "
+              "This property is not part of the specification. "
+              "All glTF content should use the Y-axis as the up-axis.");
+
+  const rapidjson::Value& gltfUpAxisJson = gltfUpAxisIt->value;
+  auto gltfUpAxisString = std::string(gltfUpAxisJson.GetString());
+  if (gltfUpAxisString == "X" || gltfUpAxisString == "x") {
+    return CesiumGeometry::Axis::X;
+  }
+  if (gltfUpAxisString == "Y" || gltfUpAxisString == "y") {
+    return CesiumGeometry::Axis::Y;
+  }
+  if (gltfUpAxisString == "Z" || gltfUpAxisString == "z") {
+    return CesiumGeometry::Axis::Z;
+  }
+  SPDLOG_WARN("Unknown gltfUpAxis: {}, using default (Y)", gltfUpAxisString);
+  return CesiumGeometry::Axis::Y;
+}
+} // namespace
+
 /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
@@ -546,6 +581,8 @@ void Tileset::_loadTilesetJson(
         tileset.GetErrorOffset());
     return LoadResult{std::move(pContext), nullptr, false};
   }
+
+  pContext->pTileset->_gltfUpAxis = obtainGltfUpAxis(tileset);
 
   std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
   pRootTile->setContext(pContext.get());
@@ -687,21 +724,25 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   std::optional<BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume");
   if (!boundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a boundingVolume");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return;
   }
 
   std::optional<double> geometricError =
       JsonHelpers::getScalarProperty(tileJson, "geometricError");
   if (!geometricError) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tileset did not contain a geometricError");
+    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a geometricError");
     return;
   }
 
   tile.setBoundingVolume(
       transformBoundingVolume(transform, boundingVolume.value()));
-  // tile->setBoundingVolume(boundingVolume.value());
-  tile.setGeometricError(geometricError.value());
+  glm::dvec3 scale = glm::dvec3(
+      glm::length(transform[0]),
+      glm::length(transform[1]),
+      glm::length(transform[2]));
+  double maxScaleComponent = glm::max(scale.x, glm::max(scale.y, scale.z));
+  tile.setGeometricError(geometricError.value() * maxScaleComponent);
 
   std::optional<BoundingVolume> viewerRequestVolume =
       getBoundingVolumeProperty(tileJson, "viewerRequestVolume");
@@ -720,7 +761,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     } else {
       SPDLOG_LOGGER_ERROR(
           pLogger,
-          "Tileset contained an unknown refine value: {}",
+          "Tile contained an unknown refine value: {}",
           refine);
     }
   } else {
@@ -1383,6 +1424,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
         distance);
     return true;
   }
+
   return false;
 }
 
@@ -1529,7 +1571,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         frameState.lastFrameNumber);
     if (renderThisTile) {
       // Only load this tile if it (not just an ancestor) meets the SSE.
-      if (meetsSse) {
+      if (meetsSse && !ancestorMeetsSse) {
         addTileToLoadQueue(
             this->_loadQueueMedium,
             frameState.viewState,
@@ -1716,11 +1758,14 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
           [this, &quadtreeID](const std::string& placeholder) -> std::string {
             if (placeholder == "level" || placeholder == "z") {
               return std::to_string(quadtreeID.level);
-            } else if (placeholder == "x") {
+            }
+            if (placeholder == "x") {
               return std::to_string(quadtreeID.x);
-            } else if (placeholder == "y") {
+            }
+            if (placeholder == "y") {
               return std::to_string(quadtreeID.y);
-            } else if (placeholder == "version") {
+            }
+            if (placeholder == "version") {
               return this->context.version.value_or(std::string());
             }
 
@@ -1738,13 +1783,17 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
           [this, &octreeID](const std::string& placeholder) -> std::string {
             if (placeholder == "level") {
               return std::to_string(octreeID.level);
-            } else if (placeholder == "x") {
+            }
+            if (placeholder == "x") {
               return std::to_string(octreeID.x);
-            } else if (placeholder == "y") {
+            }
+            if (placeholder == "y") {
               return std::to_string(octreeID.y);
-            } else if (placeholder == "z") {
+            }
+            if (placeholder == "z") {
               return std::to_string(octreeID.z);
-            } else if (placeholder == "version") {
+            }
+            if (placeholder == "version") {
               return this->context.version.value_or(std::string());
             }
 

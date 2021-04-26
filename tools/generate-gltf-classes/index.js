@@ -65,6 +65,7 @@ for (const extension of config.extensions) {
     config.classes[extensionSchema.title] = {};
   }
   config.classes[extensionSchema.title].overrideName = extension.className;
+  config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
   schemas.push(...generate(options, extensionSchema));
 

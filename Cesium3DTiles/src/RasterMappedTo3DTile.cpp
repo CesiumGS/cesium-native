@@ -10,7 +10,7 @@
 namespace Cesium3DTiles {
 
 RasterMappedTo3DTile::RasterMappedTo3DTile(
-    CesiumUtility::IntrusivePointer<RasterOverlayTile> pRasterTile,
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
     const CesiumGeometry::Rectangle& textureCoordinateRectangle)
     : _pLoadingTile(pRasterTile),
       _pReadyTile(nullptr),
@@ -138,15 +138,14 @@ RasterMappedTo3DTile::update(Tile& tile) {
   // max level?
   if (this->_pLoadingTile) {
     return MoreDetailAvailable::Unknown;
-  } else {
-    return !this->_originalFailed && this->_pReadyTile &&
-                   this->_pReadyTile->getID().level <
-                       this->_pReadyTile->getOverlay()
-                           .getTileProvider()
-                           ->getMaximumLevel()
-               ? MoreDetailAvailable::Yes
-               : MoreDetailAvailable::No;
   }
+  return !this->_originalFailed && this->_pReadyTile &&
+                 this->_pReadyTile->getID().level <
+                     this->_pReadyTile->getOverlay()
+                         .getTileProvider()
+                         ->getMaximumLevel()
+             ? MoreDetailAvailable::Yes
+             : MoreDetailAvailable::No;
 }
 
 void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
