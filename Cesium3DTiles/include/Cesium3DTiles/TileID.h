@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cesium3DTiles/Library.h"
 #include "CesiumGeometry/OctreeTileID.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include <string>
@@ -35,5 +36,21 @@ typedef std::variant<
     CesiumGeometry::OctreeTileID,
     CesiumGeometry::UpsampledQuadtreeNode>
     TileID;
+
+struct CESIUM3DTILES_API TileIdUtilities {
+  /**
+   * @brief Creates an unspecified string representation of the given {@link
+   * TileID}.
+   *
+   * The returned string will contain information about the given tile ID,
+   * depending on its type. The exact format and contents of this string
+   * is not specified. This is mainly intended for printing informative
+   * log messages.
+   *
+   * @param tileId The tile ID
+   * @return The string
+   */
+  static std::string createTileIdString(const TileID& tileId);
+};
 
 } // namespace Cesium3DTiles
