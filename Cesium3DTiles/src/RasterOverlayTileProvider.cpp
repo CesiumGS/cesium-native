@@ -557,7 +557,7 @@ RasterOverlayTileProvider::processLoadedImage(
   CesiumGltf::ImageCesium& image = loadedImage.image.value();
 
   int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
-  size_t requiredBytes =
+  int64_t requiredBytes =
       static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
   if (image.width > 0 && image.height > 0 &&
       image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
