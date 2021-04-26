@@ -143,6 +143,14 @@ struct CESIUM3DTILES_API TilesetOptions {
   int64_t maximumCachedBytes = 512 * 1024 * 1024;
 
   /**
+   * @brief Whether to request and render the water mask.
+   *
+   * Currently only applicable for quantized-mesh tilesets that support the
+   * water mask extension.
+   */
+  bool enableWaterMask = true;
+
+  /**
    * @brief A table that maps the camera height above the ellipsoid to a fog
    * density. Tiles that are in full fog are culled. The density of the fog
    * increases as this number approaches 1.0 and becomes less dense as it

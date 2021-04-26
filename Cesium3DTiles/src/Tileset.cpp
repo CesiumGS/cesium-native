@@ -796,10 +796,13 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     const rapidjson::Value& layerJson,
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger) {
-  context.requestHeaders.push_back(std::make_pair(
-      "Accept",
+  std::string requestString =
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01;extensions=watermask"));
+      "*;q=0.01";
+  if (context.pTileset->_options.enableWaterMask) {
+    requestString += ";extensions=watermask";
+  }
+  context.requestHeaders.push_back(std::make_pair("Accept", requestString));
 
   auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&

@@ -666,12 +666,12 @@ static void upsamplePrimitiveForRasterOverlays(
   bool onlyWater = false;
   bool onlyLand = true;
   int32_t waterMaskTextureId = -1;
-  
+
   auto onlyWaterIt = primitive.extras.find("OnlyWater");
   auto onlyLandIt = primitive.extras.find("OnlyLand");
 
   if (onlyWaterIt != primitive.extras.end() && onlyWaterIt->second.isBool() &&
-    onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
+      onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
 
     onlyWater = onlyWaterIt->second.getBool(false);
     onlyLand = onlyLandIt->second.getBool(false);
@@ -690,27 +690,23 @@ static void upsamplePrimitiveForRasterOverlays(
   double waterMaskTranslationY = 0.0;
   double waterMaskScale = 0.0;
 
-  auto waterMaskTranslationXIt = 
-    primitive.extras.find("WaterMaskTranslationX");
-  auto waterMaskTranslationYIt = 
-    primitive.extras.find("WaterMaskTranslationY");
+  auto waterMaskTranslationXIt = primitive.extras.find("WaterMaskTranslationX");
+  auto waterMaskTranslationYIt = primitive.extras.find("WaterMaskTranslationY");
   auto waterMaskScaleIt = primitive.extras.find("WaterMaskScale");
 
-  if (waterMaskTranslationXIt != primitive.extras.end() && 
+  if (waterMaskTranslationXIt != primitive.extras.end() &&
       waterMaskTranslationXIt->second.isNumber() &&
-      waterMaskTranslationYIt != primitive.extras.end() && 
+      waterMaskTranslationYIt != primitive.extras.end() &&
       waterMaskTranslationYIt->second.isNumber() &&
-      waterMaskScaleIt != primitive.extras.end() && 
+      waterMaskScaleIt != primitive.extras.end() &&
       waterMaskScaleIt->second.isNumber()) {
     waterMaskScale = 0.5 * waterMaskScaleIt->second.getNumber(0.0);
-    waterMaskTranslationX = 
-      waterMaskTranslationXIt->second.getNumber(0.0) + 
-      waterMaskScale * (childID.tileID.x % 2);
-    waterMaskTranslationY = 
-      waterMaskTranslationYIt->second.getNumber(0.0) + 
-      waterMaskScale * (childID.tileID.y % 2);
+    waterMaskTranslationX = waterMaskTranslationXIt->second.getNumber(0.0) +
+                            waterMaskScale * (childID.tileID.x % 2);
+    waterMaskTranslationY = waterMaskTranslationYIt->second.getNumber(0.0) +
+                            waterMaskScale * (childID.tileID.y % 2);
   }
-  
+
   // add skirts to extras to be upsampled later if needed
   if (hasSkirt) {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
