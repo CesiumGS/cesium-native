@@ -558,9 +558,9 @@ RasterOverlayTileProvider::processLoadedImage(
 
   int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
   size_t requiredBytes =
-      static_cast<size_t>(image.width) * image.height * bytesPerPixel;
+      static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
   if (image.width > 0 && image.height > 0 &&
-      image.pixelData.size() >= requiredBytes) {
+      image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
     void* pRendererResources =
         pPrepareRendererResources->prepareRasterInLoadThread(image);
 
