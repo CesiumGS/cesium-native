@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
@@ -676,6 +677,77 @@ static std::vector<std::byte> generateNormals(
   return normalsBuffer;
 }
 
+static void createProjectedTextureCoordinatesForTile(
+  CesiumGltf::Model& model,
+  uint32_t positionsAccessorId,
+  uint32_t textureCoordinatesId,
+  const CesiumGeospatial::GlobeRectangle& rectangle
+) {
+  // TODO: How often exactly do these types of checks need to be made?
+  // If the accessor id is valid, then are the buffer view and buffer ids 
+  // implicitly valid?
+  if (positionsAccessorId < 0 || positionsAccessorId >= model.accessors.size()) {
+    return;
+  }
+  const CesiumGltf::Accessor& positionsAccessor = model.accessors[positionsAccessorId];
+  const CesiumGltf::BufferView& positionsBufferView = model.bufferViews[positionsAccessor.bufferView];
+  const CesiumGltf::Buffer& positionsBuffer = model.buffers[positionsBufferView.buffer];
+  const glm::vec3* positions = reinterpret_cast<const glm::vec3*>(positionsBuffer.cesium.data.data());
+  
+  std::string attributeName =
+      "TEXCOORD_" + std::to_string(textureCoordinatesId);
+
+  // create texture coordinates buffer
+  size_t bufferId = model.buffers.size();
+  model.buffers.emplace_back();
+  CesiumGltf::Buffer& buffer = model.buffers[bufferId];
+  buffer.cesium.data.resize(positionsAccessor.count * sizeof(glm::vec2));
+  glm::vec2* textureCoordinates = reinterpret_cast<glm::vec2*>(buffer.cesium.data.data());
+
+  // create texture coordinates buffer view
+  size_t bufferViewId = model.bufferViews.size();
+  model.bufferViews.emplace_back();
+  CesiumGltf::BufferView& bufferView =
+      model.bufferViews[bufferViewId];
+  bufferView.buffer = int32_t(bufferId);
+  bufferView.byteOffset = 0;
+  bufferView.byteStride = 2 * sizeof(float);
+  bufferView.byteLength = int64_t(buffer.cesium.data.size());
+  bufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+  // create texture coordinates accessor 
+  size_t accessorId = model.accessors.size();
+  model.accessors.emplace_back();
+  CesiumGltf::Accessor& accessor = model.accessors[accessorId];
+  accessor.bufferView = int32_t(bufferViewId);
+  accessor.byteOffset = 0;
+  accessor.type = CesiumGltf::Accessor::Type::VEC2;
+  accessor.count = positionsAccessor.count;
+  accessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+  
+  // TODO: is this a proper projection?
+  double difLong = glm::mod(rectangle.getEast() - rectangle.getWest(), CesiumUtility::Math::TWO_PI);
+  double difLat = glm::mod(rectangle.getSouth() - rectangle.getNorth(), CesiumUtility::Math::TWO_PI);
+
+  // calculate texture coordinates
+  for (int64_t i = 0; i < positionsAccessor.count; ++i) {
+    glm::dvec4 positionsEcef = CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP * glm::dvec4(positions[i], 1.0);
+    std::optional<CesiumGeospatial::Cartographic> positionsCartographic =
+      CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(positionsEcef);
+
+    if (!positionsCartographic) {
+      continue;
+    }
+
+    double u = 
+      glm::mod(positionsCartographic->longitude - rectangle.getWest(), CesiumUtility::Math::TWO_PI) / difLong;
+    double v = 
+      glm::mod(positionsCartographic->latitude - rectangle.getNorth(), CesiumUtility::Math::TWO_PI) / difLat;
+
+    textureCoordinates[i] = glm::vec2(u, v);
+  }
+}
+
 std::unique_ptr<TileContentLoadResult>
 QuantizedMeshContent::load(const TileContentLoadInput& input) {
   return load(
@@ -1081,6 +1153,14 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   skirtMeshMetadata.skirtNorthHeight = skirtHeight;
 
   primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+  
+  // create projected UV coordinates 
+  createProjectedTextureCoordinatesForTile(
+    model,
+    uint32_t(positionAccessorId),
+    0,
+    rectangle
+  );
 
   // add only-water and only-land flags to primitive extras
   primitive.extras.emplace("OnlyWater", meshView->onlyWater);
@@ -1127,8 +1207,10 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
     // store the texture id in the extras
     primitive.extras.emplace("WaterMaskTex", int32_t(waterMaskTextureId));
+    primitive.extras.emplace("WaterMaskTexCoords", int64_t(0));
   } else {
     primitive.extras.emplace("WaterMaskTex", int32_t(-1));
+    primitive.extras.emplace("WaterMaskTexCoords", int64_t(-1));
   }
 
   // create node and update bounding volume
