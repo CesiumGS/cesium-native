@@ -686,7 +686,7 @@ static void upsamplePrimitiveForRasterOverlays(
           waterMaskTextureCoordsIdIt != primitive.extras.end() &&
           waterMaskTextureCoordsIdIt->second.isInt64()) {
         waterMaskTextureId = waterMaskTextureIdIt->second.getInt64OrDefault(-1);
-        waterMaskTextureCoordsId = 
+        waterMaskTextureCoordsId =
             waterMaskTextureCoordsIdIt->second.getInt64OrDefault(-1);
       }
     }
@@ -724,7 +724,9 @@ static void upsamplePrimitiveForRasterOverlays(
   primitive.extras.emplace("OnlyLand", onlyLand);
 
   primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
-  primitive.extras.emplace("WaterMaskTexCoords", int64_t(waterMaskTextureCoordsId));
+  primitive.extras.emplace(
+      "WaterMaskTexCoords",
+      int64_t(waterMaskTextureCoordsId));
 
   primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
   primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
