@@ -665,7 +665,6 @@ static void upsamplePrimitiveForRasterOverlays(
   bool onlyWater = false;
   bool onlyLand = true;
   int64_t waterMaskTextureId = -1;
-  int64_t waterMaskTextureCoordsId = -1;
 
   auto onlyWaterIt = primitive.extras.find("OnlyWater");
   auto onlyLandIt = primitive.extras.find("OnlyLand");
@@ -679,15 +678,9 @@ static void upsamplePrimitiveForRasterOverlays(
     if (!onlyWater && !onlyLand) {
       // We have to use the parent's water mask
       auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
-      auto waterMaskTextureCoordsIdIt =
-          primitive.extras.find("WaterMaskTexCoords");
       if (waterMaskTextureIdIt != primitive.extras.end() &&
-          waterMaskTextureIdIt->second.isInt64() &&
-          waterMaskTextureCoordsIdIt != primitive.extras.end() &&
-          waterMaskTextureCoordsIdIt->second.isInt64()) {
+          waterMaskTextureIdIt->second.isInt64()) {
         waterMaskTextureId = waterMaskTextureIdIt->second.getInt64OrDefault(-1);
-        waterMaskTextureCoordsId =
-            waterMaskTextureCoordsIdIt->second.getInt64OrDefault(-1);
       }
     }
   }
@@ -724,9 +717,6 @@ static void upsamplePrimitiveForRasterOverlays(
   primitive.extras.emplace("OnlyLand", onlyLand);
 
   primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
-  primitive.extras.emplace(
-      "WaterMaskTexCoords",
-      int64_t(waterMaskTextureCoordsId));
 
   primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
   primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);

@@ -202,6 +202,7 @@ void Tile::loadContent() {
     // }
 
     projections.push_back(WebMercatorProjection());
+    projections.push_back(GeographicProjection());
   }
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
