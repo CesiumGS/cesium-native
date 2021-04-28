@@ -382,11 +382,16 @@ private:
    * and the state `RasterOverlayTile::LoadState::Loaded`.
    *
    * @param tileId The {@link TileID} - only used for logging
+   * @param pPrepareRendererResources The `IPrepareRendererResources`
+   * @param pLogger The logger
    * @param loadedImage The `LoadedRasterOverlayImage`
    * @return The `LoadResult`
    */
-  LoadResult processLoadedImage(
+  static LoadResult createLoadResultFromLoadedImage(
       const CesiumGeometry::QuadtreeTileID& tileId,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
       LoadedRasterOverlayImage&& loadedImage);
 
   /**

@@ -526,19 +526,17 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 }
 
 RasterOverlayTileProvider::LoadResult
-RasterOverlayTileProvider::processLoadedImage(
+RasterOverlayTileProvider::createLoadResultFromLoadedImage(
     const CesiumGeometry::QuadtreeTileID& tileId,
+    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     LoadedRasterOverlayImage&& loadedImage) {
 
-  const auto& pPrepareRendererResources = this->getPrepareRendererResources();
-  const auto& pLogger = this->getLogger();
-
   if (!loadedImage.image.has_value()) {
-    std::string tileIdString =
-        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId);
     SPDLOG_LOGGER_ERROR(
         pLogger,
-        "Failed to load image for tile " + tileIdString + ":\n- {}",
+        "Failed to load image for tile {}:\n- {}",
+        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
         CesiumUtility::joinToString(loadedImage.errors, "\n- "));
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Failed;
@@ -546,11 +544,10 @@ RasterOverlayTileProvider::processLoadedImage(
   }
 
   if (!loadedImage.warnings.empty()) {
-    std::string tileIdString =
-        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId);
     SPDLOG_LOGGER_WARN(
         pLogger,
-        "Warnings while loading image for tile " + tileIdString + ":\n- {}",
+        "Warnings while loading image for tile {}:\n- {}",
+        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
         CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
   }
 
@@ -591,10 +588,17 @@ void RasterOverlayTileProvider::doLoad(
   this->beginTileLoad(tile, isThrottledLoad);
 
   this->loadTileImage(tile.getID())
-      .thenInWorkerThread([this, tileId = tile.getID()](
-                              LoadedRasterOverlayImage&& loadedImage) {
-        return processLoadedImage(tileId, std::move(loadedImage));
-      })
+      .thenInWorkerThread(
+          [tileId = tile.getID(),
+           pPrepareRendererResources = this->getPrepareRendererResources(),
+           pLogger =
+               this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
+            return createLoadResultFromLoadedImage(
+                tileId,
+                pPrepareRendererResources,
+                pLogger,
+                std::move(loadedImage));
+          })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
