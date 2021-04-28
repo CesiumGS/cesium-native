@@ -149,7 +149,7 @@ struct CESIUM3DTILES_API TilesetOptions {
    * Currently only applicable for quantized-mesh tilesets that support the
    * water mask extension.
    */
-  bool enableWaterMask = true;
+  bool enableWaterMask = false;
 
   /**
    * @brief A table that maps the camera height above the ellipsoid to a fog

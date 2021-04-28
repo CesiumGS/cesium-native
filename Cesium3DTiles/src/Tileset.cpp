@@ -802,7 +802,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
 static std::string createExtensionsQueryParameter(
     const std::vector<std::string>& extensions) noexcept {
 
-  std::vector<std::string> knownExtensions = {"octvertexnormals", "metadata"};
+  std::vector<std::string> knownExtensions = {"octvertexnormals", "watermask", "metadata"};
   std::string extensionsToRequest;
   for (const std::string& extension : knownExtensions) {
     if (std::find(extensions.begin(), extensions.end(), extension) !=
@@ -837,13 +837,10 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     const rapidjson::Value& layerJson,
     TileContext& context,
     const std::shared_ptr<spdlog::logger>& pLogger) {
-  std::string requestString =
+  context.requestHeaders.push_back(std::make_pair(
+      "Accept",
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01";
-  if (context.pTileset->_options.enableWaterMask) {
-    requestString += ";extensions=watermask";
-  }
-  context.requestHeaders.push_back(std::make_pair("Accept", requestString));
+      "*;q=0.01"));
 
   auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
@@ -915,7 +912,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
   std::vector<std::string> extensions =
       JsonHelpers::getStrings(layerJson, "extensions");
 
-  // Request normals and metadata if they're available
+  // Request normals, watermask, and metadata if they're available
   std::string extensionsToRequest = createExtensionsQueryParameter(extensions);
 
   if (!extensionsToRequest.empty()) {
