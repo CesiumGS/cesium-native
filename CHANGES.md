@@ -4,6 +4,8 @@
 
 ##### Breaking Changes :mega:
 
+- Renamed `TilesetOptions` to `TilesetStreamingOptions`.
+- Added `TilesetContentOptions` to the API that can configure tile content parsing and gltf construction.
 - Converted `magic_enum` / `CodeCoverage.cmake` dependencies to external submodules.
 - Replaced `CesiumGltf::WriteFlags` bitmask with `CesiumGltf::WriteModelOptions` struct.
   `CesiumGltf::writeModelAsEmbeddedBytes` and `CesiumGltf::writeModelAndExternalfiles`
