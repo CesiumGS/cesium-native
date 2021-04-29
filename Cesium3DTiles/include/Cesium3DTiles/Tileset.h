@@ -5,8 +5,8 @@
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TilesetContentOptions.h"
-#include "Cesium3DTiles/TilesetStreamingOptions.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/TilesetStreamingOptions.h"
 #include "Cesium3DTiles/ViewState.h"
 #include "Cesium3DTiles/ViewUpdateResult.h"
 #include "CesiumAsync/AsyncSystem.h"
@@ -40,7 +40,8 @@ public:
       const TilesetExternals& externals,
       const std::string& url,
       const TilesetContentOptions& contentOptions = TilesetContentOptions(),
-      const TilesetStreamingOptions& streamingOtions = TilesetStreamingOptions());
+      const TilesetStreamingOptions& streamingOtions =
+          TilesetStreamingOptions());
 
   /**
    * @brief Constructs a new instance with the given asset ID on <a
@@ -56,7 +57,8 @@ public:
       uint32_t ionAssetID,
       const std::string& ionAccessToken,
       const TilesetContentOptions& contentOptions = TilesetContentOptions(),
-      const TilesetStreamingOptions& streamingOptions = TilesetStreamingOptions());
+      const TilesetStreamingOptions& streamingOptions =
+          TilesetStreamingOptions());
 
   /**
    * @brief Destroys this tileset.
@@ -117,20 +119,28 @@ public:
   }
 
   /** @copydoc Tileset::getContentOptions() */
-  const TilesetContentOptions& getContentOptions() const noexcept { return this->_contentOptions; }
+  const TilesetContentOptions& getContentOptions() const noexcept {
+    return this->_contentOptions;
+  }
 
   /**
    * @brief Gets the {@link TilesetContentOptions} of this tileset.
    */
-  TilesetContentOptions& getContentOptions() noexcept { return this->_contentOptions; }
+  TilesetContentOptions& getContentOptions() noexcept {
+    return this->_contentOptions;
+  }
 
   /** @copydoc Tileset::getStreamingOptions() */
-  const TilesetStreamingOptions& getStreamingOptions() const noexcept { return this->_streamingOptions; }
+  const TilesetStreamingOptions& getStreamingOptions() const noexcept {
+    return this->_streamingOptions;
+  }
 
   /**
    * @brief Gets the {@link TilesetStreamingOptions} of this tileset.
    */
-  TilesetStreamingOptions& getStreamingOptions() noexcept { return this->_streamingOptions; }
+  TilesetStreamingOptions& getStreamingOptions() noexcept {
+    return this->_streamingOptions;
+  }
 
   /**
    * @brief Gets the root tile of this tileset.
@@ -484,9 +494,9 @@ private:
    * @brief Queues load of tiles that are _required_ to be loaded before the
    * given tile can be refined.
    *
-   * If {@link TilesetStreamingOptions::forbidHoles} is false (the default), any tile can
-   * be refined, regardless of whether its children are loaded or not. So in
-   * that case, this method immediately returns `false`.
+   * If {@link TilesetStreamingOptions::forbidHoles} is false (the default), any
+   * tile can be refined, regardless of whether its children are loaded or not.
+   * So in that case, this method immediately returns `false`.
    *
    * When `forbidHoles` is true, however, and some of this tile's children are
    * not yet renderable, this method returns `true`. It also adds those

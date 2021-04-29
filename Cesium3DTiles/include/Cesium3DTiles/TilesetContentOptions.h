@@ -17,7 +17,6 @@ struct CESIUM3DTILES_API TilesetContentOptions {
    * water mask extension.
    */
   bool enableWaterMask = false;
-  
 };
 
 } // namespace Cesium3DTiles
