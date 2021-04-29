@@ -40,7 +40,7 @@ static bool doesTileMeetSSE(
       tile.getBoundingVolume()));
   double sse =
       viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
-  return sse < tileset.getOptions().maximumScreenSpaceError;
+  return sse < tileset.getStreamingOptions().maximumScreenSpaceError;
 }
 
 static void initializeTileset(Tileset& tileset) {
@@ -215,7 +215,7 @@ TEST_CASE("Test replace refinement for render") {
   SECTION("Root doesn't meet sse but has to be rendered because children "
           "cannot be rendered") {
     // we should forbid hole first to let the checks below happen
-    tileset.getOptions().forbidHoles = true;
+    tileset.getStreamingOptions().forbidHoles = true;
 
     SECTION("Children cannot be rendered because of no response") {
       // remove one of children completed response to mock network error

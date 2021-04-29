@@ -33,17 +33,14 @@ namespace Cesium3DTiles {
 Tileset::Tileset(
     const TilesetExternals& externals,
     const std::string& url,
-    const TilesetOptions& options)
+    const TilesetContentOptions& contentOptions,
+    const TilesetStreamingOptions& streamingOptions)
     : _externals(externals),
       _asyncSystem(externals.pTaskProcessor),
-      _userCredit(
-          (options.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
-              : std::nullopt),
       _url(url),
       _isRefreshingIonToken(false),
-      _options(options),
+      _contentOptions(contentOptions),
+      _streamingOptions(streamingOptions),
       _pRootTile(),
       _previousFrameNumber(0),
       _loadsInProgress(0),
@@ -59,18 +56,15 @@ Tileset::Tileset(
     const TilesetExternals& externals,
     uint32_t ionAssetID,
     const std::string& ionAccessToken,
-    const TilesetOptions& options)
+    const TilesetContentOptions& contentOptions,
+    const TilesetStreamingOptions& streamingOptions)
     : _externals(externals),
       _asyncSystem(externals.pTaskProcessor),
-      _userCredit(
-          (options.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    options.credit.value()))
-              : std::nullopt),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
       _isRefreshingIonToken(false),
-      _options(options),
+      _contentOptions(contentOptions),
+      _streamingOptions(streamingOptions),
       _pRootTile(),
       _previousFrameNumber(0),
       _loadsInProgress(0),
@@ -314,7 +308,7 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
   }
 
   double fogDensity =
-      computeFogDensity(this->_options.fogDensityTable, viewState);
+      computeFogDensity(this->_streamingOptions.fogDensityTable, viewState);
 
   this->_loadQueueHigh.clear();
   this->_loadQueueMedium.clear();
@@ -342,11 +336,6 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       this->_externals.pCreditSystem;
   if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
-    // per-tileset user-specified credit
-    if (this->_userCredit) {
-      pCreditSystem->addCreditToFrame(this->_userCredit.value());
-    }
-
     // per-tileset ion-specified credit
     for (Credit& credit : this->_tilesetCredits) {
       pCreditSystem->addCreditToFrame(credit);
@@ -1136,7 +1125,7 @@ static void markTileAndChildrenNonRendered(
  * @param viewState The {@link ViewState}
  * @param boundingVolume The bounding volume of the tile
  * @param forceRenderTilesUnderCamera Whether tiles under the camera should
- * always be rendered (see {@link Cesium3DTiles::TilesetOptions})
+ * always be rendered (see {@link Cesium3DTiles::TilesetStreamingOptions})
  * @return Whether the tile is visible according to the current camera
  * configuration
  */
@@ -1201,10 +1190,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   if (!isVisibleFromCamera(
           frameState.viewState,
           boundingVolume,
-          this->_options.renderTilesUnderCamera)) {
+          this->_streamingOptions.renderTilesUnderCamera)) {
     // this tile is off-screen so it is a culled tile
     culled = true;
-    if (this->_options.enableFrustumCulling) {
+    if (this->_streamingOptions.enableFrustumCulling) {
       // frustum culling is enabled so we shouldn't visit this off-screen tile
       shouldVisit = false;
     }
@@ -1218,7 +1207,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   if (shouldVisit && !isVisibleInFog(distance, frameState.fogDensity)) {
     // this tile is occluded by fog so it is a culled tile
     culled = true;
-    if (this->_options.enableFogCulling) {
+    if (this->_streamingOptions.enableFogCulling) {
       // fog culling is enabled so we shouldn't visit this tile
       shouldVisit = false;
     }
@@ -1231,7 +1220,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         TileSelectionState::Result::Culled));
 
     // Preload this culled sibling if requested.
-    if (this->_options.preloadSiblings) {
+    if (this->_streamingOptions.preloadSiblings) {
       addTileToLoadQueue(
           this->_loadQueueLow,
           frameState.viewState,
@@ -1288,7 +1277,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     const FrameState& frameState,
     Tile& tile,
     double distance) {
-  if (!this->_options.forbidHoles) {
+  if (!this->_streamingOptions.forbidHoles) {
     return false;
   }
   // If we're forbidding holes, don't refine if any children are still loading.
@@ -1321,9 +1310,9 @@ bool Tileset::_meetsSse(
   // Does this tile meet the screen-space error?
   double sse =
       viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
-  return culled ? !this->_options.enforceCulledScreenSpaceError ||
-                      sse < this->_options.culledScreenSpaceError
-                : sse < this->_options.maximumScreenSpaceError;
+  return culled ? !this->_streamingOptions.enforceCulledScreenSpaceError ||
+                      sse < this->_streamingOptions.culledScreenSpaceError
+                : sse < this->_streamingOptions.maximumScreenSpaceError;
 }
 
 /**
@@ -1484,7 +1473,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
-          this->_options.loadingDescendantLimit) {
+          this->_streamingOptions.loadingDescendantLimit) {
     // Remove all descendants from the load queues.
     this->_loadQueueLow.erase(
         this->_loadQueueLow.begin() +
@@ -1660,7 +1649,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         TileSelectionState::Result::Refined));
   }
 
-  if (this->_options.preloadAncestors && !queuedForLoad) {
+  if (this->_streamingOptions.preloadAncestors && !queuedForLoad) {
     addTileToLoadQueue(
         this->_loadQueueLow,
         frameState.viewState,
@@ -1703,19 +1692,19 @@ void Tileset::_processLoadQueue() {
   Tileset::processQueue(
       this->_loadQueueHigh,
       this->_loadsInProgress,
-      this->_options.maximumSimultaneousTileLoads);
+      this->_streamingOptions.maximumSimultaneousTileLoads);
   Tileset::processQueue(
       this->_loadQueueMedium,
       this->_loadsInProgress,
-      this->_options.maximumSimultaneousTileLoads);
+      this->_streamingOptions.maximumSimultaneousTileLoads);
   Tileset::processQueue(
       this->_loadQueueLow,
       this->_loadsInProgress,
-      this->_options.maximumSimultaneousTileLoads);
+      this->_streamingOptions.maximumSimultaneousTileLoads);
 }
 
 void Tileset::_unloadCachedTiles() {
-  const int64_t maxBytes = this->getOptions().maximumCachedBytes;
+  const int64_t maxBytes = this->_streamingOptions.maximumCachedBytes;
 
   Tile* pTile = this->_loadedTiles.head();
 
