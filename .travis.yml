@@ -45,7 +45,7 @@ jobs:
         - sudo apt-get check
         - sudo apt-get update
         - sudo apt-get check
-        - sudo apt-get -V install clang-10 cmake doxygen
+        - sudo apt-get -V -f install clang-10 cmake doxygen
       env:
         - CC=clang-10
         - CXX=clang++-10
