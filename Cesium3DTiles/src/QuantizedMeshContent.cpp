@@ -1092,7 +1092,6 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   primitive.extras.emplace("WaterMaskTranslationY", 0.0);
   primitive.extras.emplace("WaterMaskScale", 1.0);
 
-  // TODO: should check if the extension is included here
   // if there is a combination of water and land, add the full water mask
   if (!meshView->onlyWater && !meshView->onlyLand) {
 
