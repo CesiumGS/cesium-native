@@ -17,7 +17,7 @@ class Tileset;
 
 /**
  * @brief Creates a {@link TileContentLoadResult} from 3D Tiles external
- * tileset.json data.
+ * `tileset.json` data.
  */
 class CESIUM3DTILES_API ExternalTilesetContent final
     : public TileContentLoader {

@@ -85,8 +85,8 @@ template <class Func> auto unwrapFuture(Func&& f) {
 } // namespace Impl
 
 /**
- * @brief A value that will be available in the future, as produced by {@link
- * AsyncSystem}.
+ * @brief A value that will be available in the future, as produced by
+ * {@link AsyncSystem}.
  *
  * @tparam T The type of the value.
  */
@@ -233,12 +233,27 @@ private:
  */
 class CESIUMASYNC_API AsyncSystem final {
 public:
+  /**
+   * @brief A promise that can be resolved or rejected by an asynchronous task.
+   *
+   * @tparam T The type of the object that the promise will be resolved with.
+   */
   template <typename T> struct Promise {
     Promise(const std::shared_ptr<async::event_task<T>>& pEvent)
         : _pEvent(pEvent) {}
 
+    /**
+     * @brief Will be called when the task completed successfully.
+     *
+     * @param value The value that was computed by the asynchronous task.
+     */
     void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
 
+    /**
+     * @brief Will be called when the task failed.
+     *
+     * @param error The error that caused the task to fail.
+     */
     void reject(std::exception&& error) const {
       this->_pEvent->set_exception(std::make_exception_ptr(error));
     }

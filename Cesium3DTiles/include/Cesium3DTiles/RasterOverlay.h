@@ -13,6 +13,9 @@ class IPrepareRendererResources;
 class RasterOverlayTileProvider;
 class RasterOverlayCollection;
 
+/**
+ * @brief Options for loading raster overlays.
+ */
 struct CESIUM3DTILES_API RasterOverlayOptions {
   /**
    * @brief The maximum number of overlay tiles that may simultaneously be in
@@ -34,6 +37,11 @@ struct CESIUM3DTILES_API RasterOverlayOptions {
  */
 class RasterOverlay {
 public:
+  /**
+   * @brief Creates a new instance.
+   *
+   * @param options The {@link RasterOverlayOptions} for this instance.
+   */
   RasterOverlay(const RasterOverlayOptions& options = RasterOverlayOptions());
   virtual ~RasterOverlay();
 
@@ -82,8 +90,8 @@ public:
    * @brief Begins asynchronous creation of the tile provider for this overlay
    * and eventually makes it available directly from this instance.
    *
-   * When the tile provider is ready, it will be returned by {@link
-   * getTileProvider}.
+   * When the tile provider is ready, it will be returned by
+   * {@link getTileProvider}.
    *
    * This method does nothing if the tile provider has already been created or
    * is already in the process of being created.

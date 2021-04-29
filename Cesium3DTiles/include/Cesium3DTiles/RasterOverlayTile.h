@@ -63,8 +63,8 @@ public:
   /**
    * @brief Constructs a placeholder tile for the tile provider.
    *
-   * The {@link getState} of this instance will always be {@link
-   * LoadState::Placeholder}.
+   * The {@link getState} of this instance will always be
+   * {@link LoadState::Placeholder}.
    *
    * @param overlay The {@link RasterOverlay}.
    */
@@ -75,16 +75,16 @@ public:
    *
    * This is called by a {@link RasterOverlayTileProvider} when a new,
    * previously unknown tile is reqested. It receives the request for the image
-   * data, and the {@link getState} will initially be {@link LoadState
-   * `Loading`}. The constructor will attach a callback to this request.  When
+   * data, and the {@link getState} will initially be
+   * {@link LoadState `Loading`}.
+   * The constructor will attach a callback to this request.  When
    * the request completes successfully and the {@link getImage} data can be
-   * created, the state of this instance will change to {@link LoadState
-   * `Loaded`}. Otherwise, the state will become {@link LoadState `Failed`}.
+   * created, the state of this instance will change to
+   * {@link LoadState `Loaded`}.
+   * Otherwise, the state will become {@link LoadState `Failed`}.
    *
    * @param overlay The {@link RasterOverlay}.
    * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for this tile.
-   * @param tileCredits The list of {@link Credit}s needed for this tile.
-   * @param imageRequest The pending request for the image data.
    */
   RasterOverlayTile(
       RasterOverlay& overlay,
@@ -140,9 +140,9 @@ public:
    *
    * If the {@link getState} of this tile is not {@link LoadState `Loaded`},
    * then nothing will be done. Otherwise, the renderer resources will be
-   * prepared, so that they may later be obtained with {@link
-   * getRendererResources}, and the {@link getState} of this tile will change to
-   * {@link LoadState `Done`}.
+   * prepared, so that they may later be obtained with
+   * {@link getRendererResources}, and the {@link getState} of this tile
+   * will change to {@link LoadState `Done`}.
    */
   void loadInMainThread();
 

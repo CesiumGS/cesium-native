@@ -92,8 +92,8 @@ namespace std {
 template <> struct hash<CesiumGeometry::QuadtreeTileID> {
 
   /**
-   * @brief A specialization of the `std::hash` template for {@link
-   * CesiumGeometry::QuadtreeTileID} objects.
+   * @brief A specialization of the `std::hash` template for
+   * {@link CesiumGeometry::QuadtreeTileID} objects.
    */
   size_t operator()(const CesiumGeometry::QuadtreeTileID& key) const noexcept {
     // TODO: is this hash function any good? Probably not.

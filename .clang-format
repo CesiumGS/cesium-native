@@ -1,8 +1,37 @@
+
+# Based on the https://www.kernel.org/doc/Documentation/CodingStyle
 BasedOnStyle: LLVM
+
+# Always add a line break after an opening bracket if the parameters 
+# do not fit on a single line
 AlignAfterOpenBracket: AlwaysBreak
+
+# If arguments don't all fit on a single line, place each one in
+# a new line
 BinPackArguments: false
-BinPackParameters: false
-PointerAlignment: Left
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
-AllowAllParametersOfDeclarationOnNextLine: false
+
+# If a function call or braced initializer list does not fit on a 
+# line, allow putting all arguments onto the next line
+# (even if BinPackArguments is false).
 AllowAllArgumentsOnNextLine: false
+
+# If parameters don't all fit on a single line, place each one in
+# a new line
+BinPackParameters: false
+
+# If the function declaration does not fit on a line, allow putting 
+# all parameters of a function declaration onto the next line
+# (even when BinPackParameters is false).
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# Use 'int* a;' (instead of 'int *a;')
+PointerAlignment: Left
+
+# If the constructor initializers doe not fit on a line, put each 
+# initializer on its own line.
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+# Do not break comment lines that contain the given regex. This
+# is here to avoid breaking lines within "{@link SomeClass}"
+# which would cause doxygen to fail.
+CommentPragmas: '{.*}'

@@ -29,8 +29,8 @@ glm::dvec3
 projectPosition(const Projection& projection, const Cartographic& position);
 
 /**
- * @brief Unprojects a position from the globe using the given {@link
- * Projection}.
+ * @brief Unprojects a position from the globe using the given
+ * {@link Projection}.
  *
  * @param projection The projection.
  * @param position The coordinates of the point, in meters.

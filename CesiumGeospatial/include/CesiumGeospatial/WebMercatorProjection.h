@@ -49,8 +49,8 @@ public:
    * @brief Computes the maximum rectangle that can be covered with this
    * projection
    *
-   * @param ellipsoid The {@link Ellipsoid}. Default value: {@link
-   * Ellipsoid::WGS84}.
+   * @param ellipsoid The {@link Ellipsoid}. Default value:
+   * {@link Ellipsoid::WGS84}.
    * @return The rectangle
    */
   static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(
@@ -97,9 +97,9 @@ public:
   /**
    * @brief Converts Web Mercator coordinates to geodetic ellipsoid coordinates.
    *
-   * Converts Web Mercator X and Y coordinates, expressed in meters, to a {@link
-   * Cartographic} containing geodetic ellipsoid coordinates. The height is set
-   * to 0.0.
+   * Converts Web Mercator X and Y coordinates, expressed in meters, to a
+   * {@link Cartographic} containing geodetic ellipsoid coordinates.
+   * The height is set to 0.0.
    *
    * @param projectedCoordinates The web mercator projected coordinates to
    * unproject.
@@ -110,9 +110,9 @@ public:
   /**
    * @brief Converts Web Mercator coordinates to geodetic ellipsoid coordinates.
    *
-   * Converts Web Mercator X, Y coordinates, expressed in meters, to a {@link
-   * Cartographic} containing geodetic ellipsoid coordinates. The Z coordinate
-   * is copied unmodified to the height.
+   * Converts Web Mercator X, Y coordinates, expressed in meters, to a
+   * {@link Cartographic} containing geodetic ellipsoid coordinates.
+   * The Z coordinate is copied unmodified to the height.
    *
    * @param projectedCoordinates The web mercator projected coordinates to
    * unproject, with height (z) in meters.

@@ -22,17 +22,19 @@ class TileContent;
 class Tileset;
 
 /**
- * @brief Creates {@link TileContentLoadResult} objects from a {@link
- * TileContentLoadInput}.
+ * @brief Creates {@link TileContentLoadResult} objects from a
+ * {@link TileContentLoadInput}.
  *
- * The class offers a lookup functionality for registering {@link
- * TileContentLoader} instances that can create {@link TileContentLoadResult}
- * instances from a {@link TileContentLoadInput}.
+ * The class offers a lookup functionality for registering
+ * {@link TileContentLoader} instances that can create
+ * {@link TileContentLoadResult} instances from a
+ * {@link TileContentLoadInput}.
  *
  * The loaders are registered based on the magic header or the content type
- * of the input data. The raw data (i.e. the `data` of the {@link
- * TileContentLoadInput}) is usually received as a response to a  network
- * request, and the first four bytes of the raw data form the magic header.
+ * of the input data. The raw data (i.e. the `data` of the
+ * {@link TileContentLoadInput}) is usually received as a response to a
+ * network request, and the first four bytes of the raw data form the magic
+ * header.
  * Based on this header or the content type of the network response, the loader
  * that will be used for processing the input can be looked up.
  */
@@ -71,8 +73,8 @@ public:
       const std::shared_ptr<TileContentLoader>& pLoader);
 
   /**
-   * @brief Creates the {@link TileContentLoadResult} from the given {@link
-   * TileContentLoadInput}.
+   * @brief Creates the {@link TileContentLoadResult} from the given
+   * {@link TileContentLoadInput}.
    *
    * This will look up the {@link TileContentLoader} that can be used to
    * process the given input data, based on all loaders that
