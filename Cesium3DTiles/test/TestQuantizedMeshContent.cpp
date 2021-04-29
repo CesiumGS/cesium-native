@@ -4,6 +4,7 @@
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumUtility/Math.h"
+#include "Cesium3DTiles/TilesetContentOptions.h"
 #include "QuantizedMeshContent.h"
 #include "catch2/catch.hpp"
 #include <glm/glm.hpp>
@@ -722,6 +723,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
     REQUIRE(loadResult != nullptr);
@@ -797,6 +799,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
     REQUIRE(loadResult != nullptr);
@@ -872,6 +875,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
     REQUIRE(loadResult != nullptr);
@@ -964,6 +968,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
     REQUIRE(loadResult != nullptr);
@@ -1058,6 +1063,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
@@ -1099,6 +1105,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
@@ -1167,6 +1174,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
@@ -1252,6 +1260,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
@@ -1353,6 +1362,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
@@ -1470,6 +1480,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
@@ -1603,6 +1614,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             spdlog::default_logger(),
             tileID,
             boundingVolume,
+            TilesetContentOptions(),
             "url",
             data);
 
