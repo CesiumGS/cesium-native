@@ -171,8 +171,9 @@ static void processMetadata(
     gsl::span<const char> json,
     TileContentLoadResult& result);
 
-static std::optional<QuantizedMeshView>
-parseQuantizedMesh(const gsl::span<const std::byte>& data, bool enableWaterMask) {
+static std::optional<QuantizedMeshView> parseQuantizedMesh(
+    const gsl::span<const std::byte>& data,
+    bool enableWaterMask) {
   if (data.size() < headerLength) {
     return std::nullopt;
   }
@@ -700,7 +701,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
-  std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data, contentOptions.enableWaterMask);
+  std::optional<QuantizedMeshView> meshView =
+      parseQuantizedMesh(data, contentOptions.enableWaterMask);
   if (!meshView) {
     SPDLOG_LOGGER_ERROR(
         pLogger,

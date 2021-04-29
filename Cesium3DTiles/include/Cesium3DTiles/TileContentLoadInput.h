@@ -3,11 +3,11 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/Tile.h"
-#include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/TileContext.h"
-#include "Cesium3DTiles/TilesetContentOptions.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/TilesetContentOptions.h"
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -99,8 +99,8 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @param tileRefine_ The {@link TileRefine} strategy
    * @param tileGeometricError_ The geometric error of the tile
    * @param tileTransform_ The tile transform
-   * @param contentOptions_ Options for parsing content and creating Gltf 
-   * models. 
+   * @param contentOptions_ Options for parsing content and creating Gltf
+   * models.
    */
   TileContentLoadInput(
       const std::shared_ptr<spdlog::logger> pLogger_,
@@ -192,6 +192,5 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @brief Options for parsing content and creating Gltf models.
    */
   TilesetContentOptions contentOptions;
-
 };
 } // namespace Cesium3DTiles
