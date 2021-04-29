@@ -172,7 +172,7 @@ static void processMetadata(
     TileContentLoadResult& result);
 
 static std::optional<QuantizedMeshView>
-parseQuantizedMesh(const gsl::span<const std::byte>& data) {
+parseQuantizedMesh(const gsl::span<const std::byte>& data, bool enableWaterMask) {
   if (data.size() < headerLength) {
     return std::nullopt;
   }
@@ -332,7 +332,7 @@ parseQuantizedMesh(const gsl::span<const std::byte>& data) {
 
       meshView.octEncodedNormalBuffer =
           gsl::span<const std::byte>(data.data() + readIndex, vertexCount * 2);
-    } else if (extensionID == 2) {
+    } else if (enableWaterMask && extensionID == 2) {
       // Water Mask
       if (extensionLength == 1) {
         // Either fully land or fully water
@@ -682,6 +682,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       input.pLogger,
       input.tileID,
       input.tileBoundingVolume,
+      input.contentOptions,
       input.url,
       input.data);
 }
@@ -690,6 +691,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     const std::shared_ptr<spdlog::logger>& pLogger,
     const TileID& tileID,
     const BoundingVolume& tileBoundingVolume,
+    const TilesetContentOptions& contentOptions,
     const std::string& url,
     const gsl::span<const std::byte>& data) {
   // TODO: use context plus tileID to compute the tile's rectangle, rather than
@@ -698,7 +700,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
-  std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data);
+  std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data, contentOptions.enableWaterMask);
   if (!meshView) {
     SPDLOG_LOGGER_ERROR(
         pLogger,

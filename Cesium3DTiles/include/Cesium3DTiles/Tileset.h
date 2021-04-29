@@ -538,8 +538,8 @@ private:
   std::optional<std::string> _ionAccessToken;
   bool _isRefreshingIonToken;
 
-  TilesetStreamingOptions _streamingOptions;
   TilesetContentOptions _contentOptions;
+  TilesetStreamingOptions _streamingOptions;
 
   std::unique_ptr<Tile> _pRootTile;
 

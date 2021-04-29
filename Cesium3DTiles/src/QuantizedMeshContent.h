@@ -4,6 +4,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/TileContentLoadResult.h"
 #include "Cesium3DTiles/TileContentLoader.h"
+#include "Cesium3DTiles/TilesetContentOptions.h"
 #include <cstddef>
 
 namespace Cesium3DTiles {
@@ -42,6 +43,7 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const TileID& tileID,
       const BoundingVolume& tileBoundingVolume,
+      const TilesetContentOptions& contentOptions,
       const std::string& url,
       const gsl::span<const std::byte>& data);
 };

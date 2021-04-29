@@ -54,7 +54,8 @@ TileContentLoadInput derive(
       input.tileContentBoundingVolume,
       input.tileRefine,
       input.tileGeometricError,
-      input.tileTransform);
+      input.tileTransform,
+      input.contentOptions);
 }
 } // namespace
 
