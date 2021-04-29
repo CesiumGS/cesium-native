@@ -43,7 +43,9 @@ jobs:
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
       install:
         - sudo apt-get check
+        - sudo apt-get clean
         - sudo apt-get update
+        - sudo apt-get clean
         - sudo apt-get check
         - sudo apt-get -V -f install clang-10 cmake doxygen
       env:
