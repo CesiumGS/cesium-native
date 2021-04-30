@@ -43,7 +43,8 @@ public:
       const TileID& tileID,
       const BoundingVolume& tileBoundingVolume,
       const std::string& url,
-      const gsl::span<const std::byte>& data);
+      const gsl::span<const std::byte>& data,
+      bool enableWaterMask);
 };
 
 } // namespace Cesium3DTiles

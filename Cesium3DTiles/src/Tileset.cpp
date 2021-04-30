@@ -802,7 +802,10 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
 static std::string createExtensionsQueryParameter(
     const std::vector<std::string>& extensions) noexcept {
 
-  std::vector<std::string> knownExtensions = {"octvertexnormals", "watermask", "metadata"};
+  std::vector<std::string> knownExtensions = {
+      "octvertexnormals",
+      "watermask",
+      "metadata"};
   std::string extensionsToRequest;
   for (const std::string& extension : knownExtensions) {
     if (std::find(extensions.begin(), extensions.end(), extension) !=

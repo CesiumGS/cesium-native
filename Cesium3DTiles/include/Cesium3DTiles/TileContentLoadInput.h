@@ -6,6 +6,8 @@
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/TilesetOptions.h"
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -47,7 +49,9 @@ struct CESIUM3DTILES_API TileContentLoadInput {
         tileContentBoundingVolume(tile_.getContentBoundingVolume()),
         tileRefine(tile_.getRefine()),
         tileGeometricError(tile_.getGeometricError()),
-        tileTransform(tile_.getTransform()) {}
+        tileTransform(tile_.getTransform()),
+        contentOptions(
+            tile_.getContext()->pTileset->getOptions().contentOptions) {}
 
   /**
    * @brief Creates a new instance for the given tile.
@@ -74,7 +78,9 @@ struct CESIUM3DTILES_API TileContentLoadInput {
         tileContentBoundingVolume(tile_.getContentBoundingVolume()),
         tileRefine(tile_.getRefine()),
         tileGeometricError(tile_.getGeometricError()),
-        tileTransform(tile_.getTransform()) {}
+        tileTransform(tile_.getTransform()),
+        contentOptions(
+            tile_.getContext()->pTileset->getOptions().contentOptions) {}
 
   /**
    * @brief Creates a new instance.
@@ -106,7 +112,8 @@ struct CESIUM3DTILES_API TileContentLoadInput {
       const std::optional<BoundingVolume>& tileContentBoundingVolume_,
       TileRefine tileRefine_,
       double tileGeometricError_,
-      const glm::dmat4& tileTransform_)
+      const glm::dmat4& tileTransform_,
+      const TilesetContentOptions& contentOptions_)
       : pLogger(pLogger_),
         data(data_),
         contentType(contentType_),
@@ -116,7 +123,8 @@ struct CESIUM3DTILES_API TileContentLoadInput {
         tileContentBoundingVolume(tileContentBoundingVolume_),
         tileRefine(tileRefine_),
         tileGeometricError(tileGeometricError_),
-        tileTransform(tileTransform_) {}
+        tileTransform(tileTransform_),
+        contentOptions(contentOptions_) {}
 
   /**
    * @brief The logger that receives details of loading errors and warnings.
@@ -179,5 +187,10 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @brief The tile transform
    */
   glm::dmat4 tileTransform;
+
+  /**
+   * @brief Options for parsing content and creating Gltf models.
+   */
+  TilesetContentOptions contentOptions;
 };
 } // namespace Cesium3DTiles
