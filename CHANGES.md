@@ -14,6 +14,8 @@
 
 ##### Additions :tada:
 
+- Added Bing session caching per-asset for the duration of the application.
+
 ##### Fixes :wrench:
 
 - Let a tile be renderable if all its raster overlays are ready, even if some are still loading.
