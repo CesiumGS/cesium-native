@@ -1,5 +1,5 @@
 
-# Based on the https://www.kernel.org/doc/Documentation/CodingStyle
+# Based on the LLVM coding style https://llvm.org/docs/CodingStandards.html
 BasedOnStyle: LLVM
 
 # Always add a line break after an opening bracket if the parameters 
