@@ -14,6 +14,8 @@
 
 ##### Additions :tada:
 
+- Added support for water mask (only quantized-mesh for now).
+
 ##### Fixes :wrench:
 
 - Let a tile be renderable if all its raster overlays are ready, even if some are still loading.
