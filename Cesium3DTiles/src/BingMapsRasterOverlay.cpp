@@ -29,6 +29,13 @@ struct CreditAndCoverageAreas {
   Cesium3DTiles::Credit credit;
   std::vector<CoverageArea> coverageAreas;
 };
+
+struct SessionCacheItem {
+  std::string metadataUrl;
+  std::vector<std::byte> responseData;
+};
+
+std::vector<SessionCacheItem> sessionCache;
 } // namespace
 
 using namespace CesiumAsync;
@@ -235,7 +242,7 @@ namespace {
  * {
  *   "imageryProviders": [
  *     {
- *       "attribution": "© 2021 Microsoft Corporation",
+ *       "attribution": "ï¿½ 2021 Microsoft Corporation",
  *       "coverageAreas": [
  *         { "bbox": [-90, -180, 90, 180], "zoomMax": 21, "zoomMin": 1 }
  *       ]
@@ -330,8 +337,7 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  return pAssetAccessor->requestAsset(asyncSystem, metadataUrl)
-      .thenInMainThread(
+  auto handleResponse = 
           [pOwner,
            asyncSystem,
            pAssetAccessor,
@@ -339,8 +345,103 @@ BingMapsRasterOverlay::createTileProvider(
            pPrepareRendererResources,
            pLogger,
            baseUrl = this->_url,
-           culture =
-               this->_culture](const std::shared_ptr<IAssetRequest>& pRequest)
+           culture = this->_culture]
+            (const std::byte* responseBuffer, size_t responseSize)
+            -> std::unique_ptr<RasterOverlayTileProvider> {
+    
+      rapidjson::Document response;
+      response.Parse(
+          reinterpret_cast<const char*>(responseBuffer),
+          responseSize);
+
+      if (response.HasParseError()) {
+        SPDLOG_LOGGER_ERROR(
+            pLogger,
+            "Error when parsing Bing Maps imagery metadata, error code "
+            "{} at byte offset {}",
+            response.GetParseError(),
+            response.GetErrorOffset());
+        return nullptr;
+      }
+
+      rapidjson::Value* pResource =
+          rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
+      if (!pResource) {
+        SPDLOG_LOGGER_ERROR(
+            pLogger,
+            "Resources were not found in the Bing Maps imagery metadata "
+            "response.");
+        return nullptr;
+      }
+
+      uint32_t width =
+          JsonHelpers::getUint32OrDefault(*pResource, "imageWidth", 256U);
+      uint32_t height = JsonHelpers::getUint32OrDefault(
+          *pResource,
+          "imageHeight",
+          256U);
+      uint32_t maximumLevel =
+          JsonHelpers::getUint32OrDefault(*pResource, "zoomMax", 30U);
+
+      std::vector<std::string> subdomains =
+          JsonHelpers::getStrings(*pResource, "imageUrlSubdomains");
+      std::string urlTemplate = JsonHelpers::getStringOrDefault(
+          *pResource,
+          "imageUrl",
+          std::string());
+      if (urlTemplate.empty()) {
+        SPDLOG_LOGGER_ERROR(
+            pLogger,
+            "Bing Maps tile imageUrl is missing or empty.");
+        return nullptr;
+      }
+
+      std::vector<CreditAndCoverageAreas> credits =
+          collectCredits(pResource, pCreditSystem);
+      Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
+
+      return std::make_unique<BingMapsTileProvider>(
+          *pOwner,
+          asyncSystem,
+          pAssetAccessor,
+          bingCredit,
+          credits,
+          pPrepareRendererResources,
+          pLogger,
+          baseUrl,
+          urlTemplate,
+          subdomains,
+          width,
+          height,
+          0,
+          maximumLevel,
+          culture);
+  };
+
+  auto cacheResultIt = std::find_if(
+    sessionCache.begin(), 
+    sessionCache.end(), 
+    [metadataUrl](const SessionCacheItem& item) -> bool {
+      return item.metadataUrl == metadataUrl;
+    }
+  );
+
+  if (cacheResultIt != sessionCache.end()) {
+    SPDLOG_LOGGER_ERROR(
+      pLogger,
+      "---------REUSING BING SESSION------");
+    return asyncSystem.createResolvedFuture(
+      handleResponse(
+        cacheResultIt->responseData.data(),
+        cacheResultIt->responseData.size())
+    );
+  }
+
+  return pAssetAccessor->requestAsset(asyncSystem, metadataUrl)
+      .thenInMainThread(
+          [metadataUrl,
+           pLogger,
+           handleResponse](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlayTileProvider> {
             const IAssetResponse* pResponse = pRequest->response();
 
@@ -352,74 +453,20 @@ BingMapsRasterOverlay::createTileProvider(
               return nullptr;
             }
 
-            rapidjson::Document response;
-            response.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
+            const std::byte* responseBuffer = pResponse->data().data();
+            size_t responseSize = pResponse->data().size();
 
-            if (response.HasParseError()) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Error when parsing Bing Maps imagery metadata, error code "
-                  "{} at byte offset {}",
-                  response.GetParseError(),
-                  response.GetErrorOffset());
-              return nullptr;
-            }
+            SessionCacheItem& item = sessionCache.emplace_back();
+            item.metadataUrl = metadataUrl;
+            item.responseData.resize(responseSize);
+            std::memcpy(
+              item.responseData.data(), 
+              responseBuffer, 
+              responseSize);
 
-            rapidjson::Value* pResource =
-                rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
-            if (!pResource) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Resources were not found in the Bing Maps imagery metadata "
-                  "response.");
-              return nullptr;
-            }
-
-            uint32_t width =
-                JsonHelpers::getUint32OrDefault(*pResource, "imageWidth", 256U);
-            uint32_t height = JsonHelpers::getUint32OrDefault(
-                *pResource,
-                "imageHeight",
-                256U);
-            uint32_t maximumLevel =
-                JsonHelpers::getUint32OrDefault(*pResource, "zoomMax", 30U);
-
-            std::vector<std::string> subdomains =
-                JsonHelpers::getStrings(*pResource, "imageUrlSubdomains");
-            std::string urlTemplate = JsonHelpers::getStringOrDefault(
-                *pResource,
-                "imageUrl",
-                std::string());
-            if (urlTemplate.empty()) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Bing Maps tile imageUrl is missing or empty.");
-              return nullptr;
-            }
-
-            std::vector<CreditAndCoverageAreas> credits =
-                collectCredits(pResource, pCreditSystem);
-            Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
-
-            return std::make_unique<BingMapsTileProvider>(
-                *pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                bingCredit,
-                credits,
-                pPrepareRendererResources,
-                pLogger,
-                baseUrl,
-                urlTemplate,
-                subdomains,
-                width,
-                height,
-                0,
-                maximumLevel,
-                culture);
+            return handleResponse(responseBuffer, responseSize);
           });
+
 }
 
 } // namespace Cesium3DTiles
