@@ -9,8 +9,9 @@ namespace Cesium3DTiles {
  * @brief A description of the state of a {@link Tile} during the rendering
  * process
  *
- * Instances of this class combine a frame number and a {@link
- * TileSelectionState::Result} that describes the actual state of the tile.
+ * Instances of this class combine a frame number and a
+ * {@link TileSelectionState::Result} that describes the actual state of the
+ * tile.
  * Instances of this class are stored in a {@link Tile}, and are used to track
  * the state of the tile during the rendering process. The {@link Tileset}
  * updates this state while traversing the tile hierarchy, tracking whether a
@@ -64,15 +65,15 @@ public:
   };
 
   /**
-   * @brief Initializes a new instance with {@link
-   * TileSelectionState::Result::None}
+   * @brief Initializes a new instance with
+   * {@link TileSelectionState::Result::None}
    */
   constexpr TileSelectionState() noexcept
       : _frameNumber(0), _result(Result::None) {}
 
   /**
-   * @brief Initializes a new instance with a given {@link
-   * TileSelectionState::Result}.
+   * @brief Initializes a new instance with a given
+   * {@link TileSelectionState::Result}.
    *
    * @param frameNumber The frame number in which the selection took place.
    * @param result The result of the selection.
@@ -108,9 +109,9 @@ public:
    * @brief Determines if this tile or its descendents were kicked from the
    * render list.
    *
-   * In other words, if its last selection result was {@link
-   * TileSelectionState::Result::RenderedAndKicked} or {@link
-   * TileSelectionState::Result::RefinedAndKicked}.
+   * In other words, if its last selection result was
+   * {@link TileSelectionState::Result::RenderedAndKicked} or
+   * {@link TileSelectionState::Result::RefinedAndKicked}.
    *
    * @param frameNumber The previous frame number.
    * @return `true` if the tile was kicked, and `false` otherwise
