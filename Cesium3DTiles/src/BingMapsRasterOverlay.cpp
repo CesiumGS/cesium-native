@@ -223,6 +223,94 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
 
 BingMapsRasterOverlay::~BingMapsRasterOverlay() {}
 
+namespace {
+
+/**
+ * @brief Collects credit information from an imagery metadata response.
+ *
+ * The imagery metadata response contains a `resourceSets` array,
+ * each containing an `resources` array, where each resource has
+ * the following structure:
+ * \code
+ * {
+ *   "imageryProviders": [
+ *     {
+ *       "attribution": "© 2021 Microsoft Corporation",
+ *       "coverageAreas": [
+ *         { "bbox": [-90, -180, 90, 180], "zoomMax": 21, "zoomMin": 1 }
+ *       ]
+ *     },
+ *     ...
+ *   ],
+ *   ...
+ * }
+ * \endcode
+ *
+ * @param pResource The JSON value for the resource
+ * @param pCreditSystem The `CreditSystem` that will create one credit for
+ * each attribution
+ * @return The `CreditAndCoverageAreas` objects that have been parsed
+ */
+std::vector<CreditAndCoverageAreas> collectCredits(
+    const rapidjson::Value* pResource,
+    const std::shared_ptr<CreditSystem>& pCreditSystem) {
+  std::vector<CreditAndCoverageAreas> credits;
+  auto attributionsIt = pResource->FindMember("imageryProviders");
+  if (attributionsIt != pResource->MemberEnd() &&
+      attributionsIt->value.IsArray()) {
+
+    for (const rapidjson::Value& attribution :
+         attributionsIt->value.GetArray()) {
+
+      std::vector<CoverageArea> coverageAreas;
+      auto coverageAreasIt = attribution.FindMember("coverageAreas");
+      if (coverageAreasIt != attribution.MemberEnd() &&
+          coverageAreasIt->value.IsArray()) {
+
+        for (const rapidjson::Value& area : coverageAreasIt->value.GetArray()) {
+
+          auto bboxIt = area.FindMember("bbox");
+          if (bboxIt != area.MemberEnd() && bboxIt->value.IsArray() &&
+              bboxIt->value.Size() == 4) {
+
+            auto zoomMinIt = area.FindMember("zoomMin");
+            auto zoomMaxIt = area.FindMember("zoomMax");
+            auto bboxArrayIt = bboxIt->value.GetArray();
+            if (zoomMinIt != area.MemberEnd() &&
+                zoomMaxIt != area.MemberEnd() && zoomMinIt->value.IsUint() &&
+                zoomMaxIt->value.IsUint() && bboxArrayIt[0].IsNumber() &&
+                bboxArrayIt[1].IsNumber() && bboxArrayIt[2].IsNumber() &&
+                bboxArrayIt[3].IsNumber()) {
+              CoverageArea coverageArea{
+
+                  CesiumGeospatial::GlobeRectangle::fromDegrees(
+                      bboxArrayIt[1].GetDouble(),
+                      bboxArrayIt[0].GetDouble(),
+                      bboxArrayIt[3].GetDouble(),
+                      bboxArrayIt[2].GetDouble()),
+                  zoomMinIt->value.GetUint(),
+                  zoomMaxIt->value.GetUint()};
+
+              coverageAreas.push_back(coverageArea);
+            }
+          }
+        }
+      }
+
+      auto creditString = attribution.FindMember("attribution");
+      if (creditString != attribution.MemberEnd() &&
+          creditString->value.IsString()) {
+        credits.push_back(
+            {pCreditSystem->createCredit(creditString->value.GetString()),
+             coverageAreas});
+      }
+    }
+  }
+  return credits;
+}
+
+} // namespace
+
 Future<std::unique_ptr<RasterOverlayTileProvider>>
 BingMapsRasterOverlay::createTileProvider(
     const AsyncSystem& asyncSystem,
@@ -243,7 +331,7 @@ BingMapsRasterOverlay::createTileProvider(
   pOwner = pOwner ? pOwner : this;
 
   return pAssetAccessor->requestAsset(asyncSystem, metadataUrl)
-      .thenInWorkerThread(
+      .thenInMainThread(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
@@ -311,64 +399,8 @@ BingMapsRasterOverlay::createTileProvider(
               return nullptr;
             }
 
-            std::vector<CreditAndCoverageAreas> credits;
-            auto attributionsIt = pResource->FindMember("imageryProviders");
-            if (attributionsIt != pResource->MemberEnd() &&
-                attributionsIt->value.IsArray()) {
-
-              for (const rapidjson::Value& attribution :
-                   attributionsIt->value.GetArray()) {
-
-                std::vector<CoverageArea> coverageAreas;
-                auto coverageAreasIt = attribution.FindMember("coverageAreas");
-                if (coverageAreasIt != attribution.MemberEnd() &&
-                    coverageAreasIt->value.IsArray()) {
-
-                  for (const rapidjson::Value& area :
-                       coverageAreasIt->value.GetArray()) {
-
-                    auto bboxIt = area.FindMember("bbox");
-                    if (bboxIt != area.MemberEnd() && bboxIt->value.IsArray() &&
-                        bboxIt->value.Size() == 4) {
-
-                      auto zoomMinIt = area.FindMember("zoomMin");
-                      auto zoomMaxIt = area.FindMember("zoomMax");
-                      auto bboxArrayIt = bboxIt->value.GetArray();
-                      if (zoomMinIt != area.MemberEnd() &&
-                          zoomMaxIt != area.MemberEnd() &&
-                          zoomMinIt->value.IsUint() &&
-                          zoomMaxIt->value.IsUint() &&
-                          bboxArrayIt[0].IsNumber() &&
-                          bboxArrayIt[1].IsNumber() &&
-                          bboxArrayIt[2].IsNumber() &&
-                          bboxArrayIt[3].IsNumber()) {
-                        CoverageArea coverageArea{
-
-                            CesiumGeospatial::GlobeRectangle::fromDegrees(
-                                bboxArrayIt[1].GetDouble(),
-                                bboxArrayIt[0].GetDouble(),
-                                bboxArrayIt[3].GetDouble(),
-                                bboxArrayIt[2].GetDouble()),
-                            zoomMinIt->value.GetUint(),
-                            zoomMaxIt->value.GetUint()};
-
-                        coverageAreas.push_back(coverageArea);
-                      }
-                    }
-                  }
-                }
-
-                auto creditString = attribution.FindMember("attribution");
-                if (creditString != attribution.MemberEnd() &&
-                    creditString->value.IsString()) {
-                  credits.push_back(
-                      {pCreditSystem->createCredit(
-                           creditString->value.GetString()),
-                       coverageAreas});
-                }
-              }
-            }
-
+            std::vector<CreditAndCoverageAreas> credits =
+                collectCredits(pResource, pCreditSystem);
             Credit bingCredit = pCreditSystem->createCredit(BING_LOGO_HTML);
 
             return std::make_unique<BingMapsTileProvider>(

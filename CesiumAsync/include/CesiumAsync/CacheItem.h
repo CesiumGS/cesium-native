@@ -53,8 +53,8 @@ public:
   /**
    * @brief Constructor.
    * @param cacheHeaders the headers of the request
-   * @param method the method of the request
-   * @param url the url of the request
+   * @param cacheMethod the method of the request
+   * @param cacheUrl the url of the request
    */
   CacheRequest(
       HttpHeaders&& cacheHeaders,

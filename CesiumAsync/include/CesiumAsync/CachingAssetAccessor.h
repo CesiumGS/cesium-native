@@ -30,7 +30,7 @@ public:
    * retrieve assets that are not in the cache.
    * @param pCacheDatabase The database in which to cache requests and
    * responses.
-   * @param requestsPerCacheClean The number of requests to handle before each
+   * @param requestsPerCachePrune The number of requests to handle before each
    * {@link ICacheDatabase::prune} of old cached results from the database.
    */
   CachingAssetAccessor(

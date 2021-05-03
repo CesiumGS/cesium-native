@@ -94,7 +94,6 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @param contentType_ The content type, if the data was received via a
    * network response
    * @param url_ The URL that the data was loaded from
-   * @param context_ The {@link TileContext}
    * @param tileID_ The {@link TileID}
    * @param tileBoundingVolume_ The tile {@link BoundingVolume}
    * @param tileContentBoundingVolume_ The tile content {@link BoundingVolume}
