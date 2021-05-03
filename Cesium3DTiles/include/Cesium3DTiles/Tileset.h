@@ -347,7 +347,8 @@ private:
   static LoadResult _handleTilesetResponse(
       std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
       std::unique_ptr<TileContext>&& pContext,
-      const std::shared_ptr<spdlog::logger>& pLogger);
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      bool useWaterMask);
 
   void _loadTilesetJson(
       const std::string& url,
@@ -366,7 +367,8 @@ private:
       Tile& tile,
       const rapidjson::Value& layerJson,
       TileContext& context,
-      const std::shared_ptr<spdlog::logger>& pLogger);
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      bool useWaterMask);
   FailedTileAction _onIonTileFailed(Tile& failedTile);
 
   /**
