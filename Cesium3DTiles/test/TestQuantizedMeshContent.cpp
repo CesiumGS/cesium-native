@@ -723,7 +723,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
     REQUIRE(loadResult != nullptr);
     REQUIRE(loadResult->model != std::nullopt);
 
@@ -798,7 +799,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
     REQUIRE(loadResult != nullptr);
     REQUIRE(loadResult->model != std::nullopt);
 
@@ -873,7 +875,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
     REQUIRE(loadResult != nullptr);
     REQUIRE(loadResult->model != std::nullopt);
 
@@ -965,7 +968,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
     REQUIRE(loadResult != nullptr);
     REQUIRE(loadResult->model != std::nullopt);
 
@@ -1059,7 +1063,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }
@@ -1100,7 +1105,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }
@@ -1168,7 +1174,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }
@@ -1253,7 +1260,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }
@@ -1354,7 +1362,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }
@@ -1471,7 +1480,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }
@@ -1604,7 +1614,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
             tileID,
             boundingVolume,
             "url",
-            data);
+            data,
+            false);
 
     REQUIRE(loadResult->model == std::nullopt);
   }

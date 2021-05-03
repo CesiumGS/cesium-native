@@ -9,8 +9,8 @@ namespace Cesium3DTiles {
 
 /**
  * @brief Represents an HTML string that should be shown on screen to attribute
- * third parties for used data, imagery, etc. Acts as a handle into a {@link
- * CreditSystem} object that actually holds the credit string.
+ * third parties for used data, imagery, etc. Acts as a handle into a
+ * {@link CreditSystem} object that actually holds the credit string.
  */
 struct CESIUM3DTILES_API Credit {
 public:

@@ -54,12 +54,12 @@ public:
    * @brief Further prepares renderer resources.
    *
    * This is called after {@link prepareInLoadThread}, and unlike that method,
-   * this one is called from the same thread that called {@link
-   * Tileset::updateView}.
+   * this one is called from the same thread that called
+   * {@link Tileset::updateView}.
    *
    * @param tile The tile to prepare.
-   * @param pLoadThreadResult The value returned from {@link
-   * prepareInLoadThread}.
+   * @param pLoadThreadResult The value returned from
+   * {@link prepareInLoadThread}.
    * @returns Arbitrary data representing the result of the load process.
    * Note that the value returned by {@link prepareInLoadThread} will _not_ be
    * automatically preserved and passed to {@link free}. If you need to free
@@ -71,16 +71,16 @@ public:
   /**
    * @brief Frees previously-prepared renderer resources.
    *
-   * This method is always called from the thread that called {@link
-   * Tileset::updateView} or deleted the tileset.
+   * This method is always called from the thread that called
+   * {@link Tileset::updateView} or deleted the tileset.
    *
    * @param tile The tile for which to free renderer resources.
-   * @param pLoadThreadResult The result returned by {@link
-   * prepareInLoadThread}. If {@link prepareInMainThread} has already been
-   * called, this parameter will be `nullptr`.
-   * @param pMainThreadResult The result returned by {@link
-   * prepareInMainThread}. If {@link prepareInMainThread} has not yet been
-   * called, this parameter will be `nullptr`.
+   * @param pLoadThreadResult The result returned by
+   * {@link prepareInLoadThread}. If {@link prepareInMainThread} has
+   * already been called, this parameter will be `nullptr`.
+   * @param pMainThreadResult The result returned by
+   * {@link prepareInMainThread}. If {@link prepareInMainThread} has
+   * not yet been called, this parameter will be `nullptr`.
    */
   virtual void free(
       Tile& tile,
@@ -104,12 +104,12 @@ public:
    * @brief Further preprares a raster overlay tile.
    *
    * This is called after {@link prepareRasterInLoadThread}, and unlike that
-   * method, this one is called from the same thread that called {@link
-   * Tileset::updateView}.
+   * method, this one is called from the same thread that called
+   * {@link Tileset::updateView}.
    *
    * @param rasterTile The raster tile to prepare.
-   * @param pLoadThreadResult The value returned from {@link
-   * prepareInLoadThread}.
+   * @param pLoadThreadResult The value returned from
+   * {@link prepareInLoadThread}.
    * @returns Arbitrary data representing the result of the load process. Note
    * that the value returned by {@link prepareRasterInLoadThread} will _not_ be
    * automatically preserved and passed to {@link free}. If you need to free
@@ -123,16 +123,16 @@ public:
   /**
    * @brief Frees previously-prepared renderer resources for a raster tile.
    *
-   * This method is always called from the thread that called {@link
-   * Tileset::updateView} or deleted the tileset.
+   * This method is always called from the thread that called
+   * {@link Tileset::updateView} or deleted the tileset.
    *
    * @param rasterTile The tile for which to free renderer resources.
-   * @param pLoadThreadResult The result returned by {@link
-   * prepareRasterInLoadThread}. If {@link prepareRasterInMainThread} has
-   * already been called, this parameter will be `nullptr`.
-   * @param pMainThreadResult The result returned by {@link
-   * prepareRasterInMainThread}. If {@link prepareRasterInMainThread} has not
-   * yet been called, this parameter will be `nullptr`.
+   * @param pLoadThreadResult The result returned by
+   * {@link prepareRasterInLoadThread}. If {@link prepareRasterInMainThread}
+   * has already been called, this parameter will be `nullptr`.
+   * @param pMainThreadResult The result returned by
+   * {@link prepareRasterInMainThread}. If {@link prepareRasterInMainThread}
+   * has not yet been called, this parameter will be `nullptr`.
    */
   virtual void freeRaster(
       const RasterOverlayTile& rasterTile,
@@ -146,12 +146,10 @@ public:
    * @param overlayTextureCoordinateID The ID of the overlay texture coordinate
    * set to use.
    * @param rasterTile The raster overlay tile to add. The raster tile will have
-   * been previously prepared with a call to
-   *        {@link prepareRasterInLoadThread} followed by {@link
-   * prepareRasterInMainThread}.
+   * been previously prepared with a call to {@link prepareRasterInLoadThread}
+   * followed by {@link prepareRasterInMainThread}.
    * @param pMainThreadRendererResources The renderer resources for this raster
-   * tile, as created and returned by
-   *        {@link prepareRasterInMainThread}.
+   * tile, as created and returned by {@link prepareRasterInMainThread}.
    * @param textureCoordinateRectangle Defines the range of texture coordinates
    * in which this raster tile should be applied, in the order west, south, east
    * north. Each coordinate is in the range 0.0 (southwest corner) to 1.0
@@ -182,8 +180,7 @@ public:
    * set to which the raster tile was previously attached.
    * @param rasterTile The raster overlay tile to remove.
    * @param pMainThreadRendererResources The renderer resources for this raster
-   * tile, as created and returned by
-   *        {@link prepareRasterInMainThread}.
+   * tile, as created and returned by {@link prepareRasterInMainThread}.
    * @param textureCoordinateRectangle Defines the range of texture coordinates
    * in which this raster tile should be applied, in the order west, south, east
    * north. Each coordinate is in the range 0.0 (southwest corner) to 1.0

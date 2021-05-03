@@ -1,6 +1,6 @@
 # Change Log
 
-### v0.3.0 - ????-??-??
+### v0.3.0 - 2021-05-03
 
 ##### Breaking Changes :mega:
 
@@ -14,11 +14,12 @@
 
 ##### Additions :tada:
 
-- Added Bing session caching per-asset for the duration of the application.
+- Added support for loading the water mask from quantized-mesh terrain tiles.
 
 ##### Fixes :wrench:
 
 - Let a tile be renderable if all its raster overlays are ready, even if some are still loading.
+- Accessing the same Bing Maps layer multiple times in a single application run now reuses the same Bing Maps session instead of starting a new one each time.
 
 ### v0.2.0 - 2021-04-19
 

@@ -6,6 +6,7 @@
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "Cesium3DTiles/TilesetOptions.h"
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -32,49 +33,29 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * and have to be initialized before this instance is passed to
    * one of the loader functions.
    *
-   * @param pLogger_ The logger that will be used
-   * @param tile_ The {@link Tile} that the content belongs to
+   * @param pLogger The logger that will be used
+   * @param tile The {@link Tile} that the content belongs to
    */
   TileContentLoadInput(
-      const std::shared_ptr<spdlog::logger> pLogger_,
-      const Tile& tile_)
-      : pLogger(pLogger_),
-        data(),
-        contentType(),
-        url(),
-        tileID(tile_.getTileID()),
-        tileBoundingVolume(tile_.getBoundingVolume()),
-        tileContentBoundingVolume(tile_.getContentBoundingVolume()),
-        tileRefine(tile_.getRefine()),
-        tileGeometricError(tile_.getGeometricError()),
-        tileTransform(tile_.getTransform()) {}
+      const std::shared_ptr<spdlog::logger> pLogger,
+      const Tile& tile);
 
   /**
    * @brief Creates a new instance for the given tile.
    *
-   * @param pLogger_ The logger that will be used
-   * @param data_ The actual data that the tile content will be created from
-   * @param contentType_ The content type, if the data was received via a
+   * @param pLogger The logger that will be used
+   * @param data The actual data that the tile content will be created from
+   * @param contentType The content type, if the data was received via a
    * network response
-   * @param url_ The URL that the data was loaded from
-   * @param tile_ The {@link Tile} that the content belongs to
+   * @param url The URL that the data was loaded from
+   * @param tile The {@link Tile} that the content belongs to
    */
   TileContentLoadInput(
-      const std::shared_ptr<spdlog::logger> pLogger_,
-      const gsl::span<const std::byte>& data_,
-      const std::string& contentType_,
-      const std::string& url_,
-      const Tile& tile_)
-      : pLogger(pLogger_),
-        data(data_),
-        contentType(contentType_),
-        url(url_),
-        tileID(tile_.getTileID()),
-        tileBoundingVolume(tile_.getBoundingVolume()),
-        tileContentBoundingVolume(tile_.getContentBoundingVolume()),
-        tileRefine(tile_.getRefine()),
-        tileGeometricError(tile_.getGeometricError()),
-        tileTransform(tile_.getTransform()) {}
+      const std::shared_ptr<spdlog::logger> pLogger,
+      const gsl::span<const std::byte>& data,
+      const std::string& contentType,
+      const std::string& url,
+      const Tile& tile);
 
   /**
    * @brief Creates a new instance.
@@ -83,40 +64,30 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * other parameters are used for content that can generate child tiles, like
    * external tilesets or composite tiles.
    *
-   * @param pLogger_ The logger that will be used
-   * @param data_ The actual data that the tile content will be created from
-   * @param contentType_ The content type, if the data was received via a
+   * @param pLogger The logger that will be used
+   * @param data The actual data that the tile content will be created from
+   * @param contentType The content type, if the data was received via a
    * network response
-   * @param url_ The URL that the data was loaded from
-   * @param context_ The {@link TileContext}
-   * @param tileID_ The {@link TileID}
-   * @param tileBoundingVolume_ The tile {@link BoundingVolume}
-   * @param tileContentBoundingVolume_ The tile content {@link BoundingVolume}
-   * @param tileRefine_ The {@link TileRefine} strategy
-   * @param tileGeometricError_ The geometric error of the tile
-   * @param tileTransform_ The tile transform
+   * @param url The URL that the data was loaded from
+   * @param tileID The {@link TileID}
+   * @param tileBoundingVolume The tile {@link BoundingVolume}
+   * @param tileContentBoundingVolume The tile content {@link BoundingVolume}
+   * @param tileRefine The {@link TileRefine} strategy
+   * @param tileGeometricError The geometric error of the tile
+   * @param tileTransform The tile transform
    */
   TileContentLoadInput(
-      const std::shared_ptr<spdlog::logger> pLogger_,
-      const gsl::span<const std::byte>& data_,
-      const std::string& contentType_,
-      const std::string& url_,
-      const TileID& tileID_,
-      const BoundingVolume& tileBoundingVolume_,
-      const std::optional<BoundingVolume>& tileContentBoundingVolume_,
-      TileRefine tileRefine_,
-      double tileGeometricError_,
-      const glm::dmat4& tileTransform_)
-      : pLogger(pLogger_),
-        data(data_),
-        contentType(contentType_),
-        url(url_),
-        tileID(tileID_),
-        tileBoundingVolume(tileBoundingVolume_),
-        tileContentBoundingVolume(tileContentBoundingVolume_),
-        tileRefine(tileRefine_),
-        tileGeometricError(tileGeometricError_),
-        tileTransform(tileTransform_) {}
+      const std::shared_ptr<spdlog::logger> pLogger,
+      const gsl::span<const std::byte>& data,
+      const std::string& contentType,
+      const std::string& url,
+      const TileID& tileID,
+      const BoundingVolume& tileBoundingVolume,
+      const std::optional<BoundingVolume>& tileContentBoundingVolume,
+      TileRefine tileRefine,
+      double tileGeometricError,
+      const glm::dmat4& tileTransform,
+      const TilesetContentOptions& contentOptions);
 
   /**
    * @brief The logger that receives details of loading errors and warnings.
@@ -179,5 +150,10 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @brief The tile transform
    */
   glm::dmat4 tileTransform;
+
+  /**
+   * @brief Options for parsing content and creating Gltf models.
+   */
+  TilesetContentOptions contentOptions;
 };
 } // namespace Cesium3DTiles

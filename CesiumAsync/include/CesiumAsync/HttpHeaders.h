@@ -4,6 +4,15 @@
 #include <string>
 
 namespace CesiumAsync {
+
+/**
+ * @brief A case-insensitive `less-then` string comparison.
+ *
+ * This can be used as a `Compare` function, for example for a `std::map`.
+ * It will compare strings case-insensitively, by converting them to
+ * lower-case and comparing the results (leaving the exact behavior for
+ * non-ASCII strings unspecified).
+ */
 struct CaseInsensitiveCompare {
   bool operator()(const std::string& s1, const std::string& s2) const;
 };

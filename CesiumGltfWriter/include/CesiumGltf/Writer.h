@@ -39,8 +39,9 @@ namespace CesiumGltf {
  * contains an external file uri and its `cesium.data` or `cesium.pixelData`
  * vector is empty, a MissingDataSource error will be returned.
  * - If a {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}
- * contains an external file uri, it will be ignored (use {@link
- * CesiumGltf::writeModelAndExternalFiles} for external file support).
+ * contains an external file uri, it will be ignored (use
+ * {@link CesiumGltf::writeModelAndExternalFiles} for external file
+ * support).
  */
 
 CESIUMGLTFWRITER_API WriteModelResult
@@ -48,31 +49,28 @@ writeModelAsEmbeddedBytes(const Model& model, const WriteModelOptions& options);
 
 /**
  * @brief Write a glTF or glb asset and its associated external images and
- buffers to
- * multiple files via user provided callback.
-
+ * buffers to multiple files via user provided callback.
+ *
  * @returns A {@link CesiumGltf::WriteModelResult} containing a list of
  * errors, warnings, and the final generated std::vector<std::byte> of the
  * glTF asset (as a GLB or GLTF).
  *
  * @param model Final assembled glTF asset, ready for serialization.
- * @param flags Bitset flags used to control writing glTF serialization
- behavior.
+ * @param options Options to use for exporting the asset.
  * @param filename Filename of the final glTF / GLB asset or an encountered
- external
- * {@link CesiumGltf::ImageCesium} / {@link CesiumGltf::BufferCesium} during the
- serialization process
+ * external {@link CesiumGltf::ImageCesium} / {@link CesiumGltf::BufferCesium}
+ * during the serialization process
  * @param writeGLTFCallback Callback the user must implement. The serializer
- will invoke this callback everytime it encounters
- a {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}
+ * will invoke this callback everytime it encounters
+ * a {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}
  * with an external file uri, giving the callback a chance to write the asset to
- disk. The callback will be called a final time with the provided filename
- string when its time to serialize the final `glb` or `gltf` to disk.
+ * disk. The callback will be called a final time with the provided filename
+ * string when its time to serialize the final `glb` or `gltf` to disk.
  * @details Simialr to {@link CesiumGltf::writeModelAsEmbeddedBytes}, with the
  * key variation that a filename will be automatically generated
- for your {@link CesiumGltf::Buffer}
- * or {@link CesiumGltf::Image}  if no uri is provided but `buffer.cesium.data`
- or `image.cesium.pixelData` is non-empty.
+ * for your {@link CesiumGltf::Buffer} or {@link CesiumGltf::Image}  if no
+ * uri is provided but `buffer.cesium.data` or `image.cesium.pixelData`
+ * is non-empty.
  */
 
 CESIUMGLTFWRITER_API WriteModelResult writeModelAndExternalFiles(
