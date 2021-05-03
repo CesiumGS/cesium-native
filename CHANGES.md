@@ -1,6 +1,6 @@
 # Change Log
 
-### v0.3.0 - ????-??-??
+### v0.3.0 - 2021-05-03
 
 ##### Breaking Changes :mega:
 
