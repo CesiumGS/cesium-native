@@ -14,7 +14,7 @@
 
 ##### Additions :tada:
 
-- Added support for water mask (only quantized-mesh for now).
+- Added support for loading the water mask from quantized-mesh terrain tiles.
 
 ##### Fixes :wrench:
 
