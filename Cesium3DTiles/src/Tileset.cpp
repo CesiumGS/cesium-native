@@ -470,12 +470,15 @@ void Tileset::_loadTilesetJson(
   this->getExternals()
       .pAssetAccessor->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [pLogger = this->_externals.pLogger, pContext = std::move(pContext)](
+          [pLogger = this->_externals.pLogger,
+           pContext = std::move(pContext),
+           useWaterMask = this->getOptions().contentOptions.enableWaterMask](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             return Tileset::_handleTilesetResponse(
                 std::move(pRequest),
                 std::move(pContext),
-                pLogger);
+                pLogger,
+                useWaterMask);
           })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_supportsRasterOverlays = loadResult.supportsRasterOverlays;
@@ -546,7 +549,8 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
-    const std::shared_ptr<spdlog::logger>& pLogger) {
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    bool useWaterMask) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
     SPDLOG_LOGGER_ERROR(
@@ -604,7 +608,12 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
-    Tileset::_createTerrainTile(*pRootTile, tileset, *pContext, pLogger);
+    Tileset::_createTerrainTile(
+        *pRootTile,
+        tileset,
+        *pContext,
+        pLogger,
+        useWaterMask);
     supportsRasterOverlays = true;
   }
 
@@ -800,9 +809,9 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
  * @return The extensions (possibly the empty string)
  */
 static std::string createExtensionsQueryParameter(
+    const std::vector<std::string>& knownExtensions,
     const std::vector<std::string>& extensions) noexcept {
 
-  std::vector<std::string> knownExtensions = {"octvertexnormals", "metadata"};
   std::string extensionsToRequest;
   for (const std::string& extension : knownExtensions) {
     if (std::find(extensions.begin(), extensions.end(), extension) !=
@@ -836,7 +845,8 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     Tile& tile,
     const rapidjson::Value& layerJson,
     TileContext& context,
-    const std::shared_ptr<spdlog::logger>& pLogger) {
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    bool useWaterMask) {
   context.requestHeaders.push_back(std::make_pair(
       "Accept",
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
@@ -912,8 +922,15 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
   std::vector<std::string> extensions =
       JsonHelpers::getStrings(layerJson, "extensions");
 
-  // Request normals and metadata if they're available
-  std::string extensionsToRequest = createExtensionsQueryParameter(extensions);
+  // Request normals, watermask, and metadata if they're available
+  std::vector<std::string> knownExtensions = {"octvertexnormals", "metadata"};
+
+  if (useWaterMask) {
+    knownExtensions.emplace_back("watermask");
+  }
+
+  std::string extensionsToRequest =
+      createExtensionsQueryParameter(knownExtensions, extensions);
 
   if (!extensionsToRequest.empty()) {
     for (std::string& url : context.implicitContext.value().tileTemplateUrls) {

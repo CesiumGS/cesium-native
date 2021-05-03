@@ -10,6 +10,8 @@
 #include "SkirtMeshMetadata.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include <cstddef>
+#include <glm/common.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
 #include <stdexcept>
@@ -71,6 +73,8 @@ struct QuantizedMeshView {
         southEdgeIndicesCount{0},
         eastEdgeIndicesCount{0},
         northEdgeIndicesCount{0},
+        onlyWater{false},
+        onlyLand{true},
         metadataJsonLength{0} {}
 
   const QuantizedMeshHeader* header;
@@ -96,6 +100,12 @@ struct QuantizedMeshView {
   gsl::span<const std::byte> northEdgeIndicesBuffer;
 
   gsl::span<const std::byte> octEncodedNormalBuffer;
+
+  bool onlyWater;
+  bool onlyLand;
+
+  // water mask will always be a 256*256 map where 0 is land and 255 is water.
+  gsl::span<const std::byte> waterMaskBuffer;
 
   uint32_t metadataJsonLength;
   gsl::span<const char> metadataJsonBuffer;
@@ -161,8 +171,9 @@ static void processMetadata(
     gsl::span<const char> json,
     TileContentLoadResult& result);
 
-static std::optional<QuantizedMeshView>
-parseQuantizedMesh(const gsl::span<const std::byte>& data) {
+static std::optional<QuantizedMeshView> parseQuantizedMesh(
+    const gsl::span<const std::byte>& data,
+    bool enableWaterMask) {
   if (data.size() < headerLength) {
     return std::nullopt;
   }
@@ -322,6 +333,21 @@ parseQuantizedMesh(const gsl::span<const std::byte>& data) {
 
       meshView.octEncodedNormalBuffer =
           gsl::span<const std::byte>(data.data() + readIndex, vertexCount * 2);
+    } else if (enableWaterMask && extensionID == 2) {
+      // Water Mask
+      if (extensionLength == 1) {
+        // Either fully land or fully water
+        meshView.onlyWater = static_cast<bool>(
+            *reinterpret_cast<const unsigned char*>(data.data() + readIndex));
+        meshView.onlyLand = !meshView.onlyWater;
+      } else if (extensionLength == 65536) {
+        // We have a 256*256 mask defining where the water is within the tile
+        // 0 means land, 255 means water
+        meshView.onlyWater = false;
+        meshView.onlyLand = false;
+        meshView.waterMaskBuffer =
+            gsl::span<const std::byte>(data.data() + readIndex, 65536);
+      }
     } else if (extensionID == 4) {
       // Metadata
       if (readIndex + sizeof(uint32_t) > data.size()) {
@@ -658,7 +684,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       input.tileID,
       input.tileBoundingVolume,
       input.url,
-      input.data);
+      input.data,
+      input.contentOptions.enableWaterMask);
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
@@ -666,14 +693,16 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     const TileID& tileID,
     const BoundingVolume& tileBoundingVolume,
     const std::string& url,
-    const gsl::span<const std::byte>& data) {
+    const gsl::span<const std::byte>& data,
+    bool enableWaterMask) {
   // TODO: use context plus tileID to compute the tile's rectangle, rather than
   // inferring it from the parent tile.
   const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
-  std::optional<QuantizedMeshView> meshView = parseQuantizedMesh(data);
+  std::optional<QuantizedMeshView> meshView =
+      parseQuantizedMesh(data, enableWaterMask);
   if (!meshView) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -1056,6 +1085,54 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   skirtMeshMetadata.skirtNorthHeight = skirtHeight;
 
   primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+
+  // add only-water and only-land flags to primitive extras
+  primitive.extras.emplace("OnlyWater", meshView->onlyWater);
+  primitive.extras.emplace("OnlyLand", meshView->onlyLand);
+
+  primitive.extras.emplace("WaterMaskTranslationX", 0.0);
+  primitive.extras.emplace("WaterMaskTranslationY", 0.0);
+  primitive.extras.emplace("WaterMaskScale", 1.0);
+
+  // if there is a combination of water and land, add the full water mask
+  if (!meshView->onlyWater && !meshView->onlyLand) {
+
+    // create source image
+    size_t waterMaskImageId = model.images.size();
+    model.images.emplace_back();
+    CesiumGltf::Image& waterMaskImage = model.images[waterMaskImageId];
+    waterMaskImage.cesium.width = 256;
+    waterMaskImage.cesium.height = 256;
+    waterMaskImage.cesium.channels = 1;
+    waterMaskImage.cesium.bytesPerChannel = 1;
+    waterMaskImage.cesium.pixelData.resize(65536);
+    std::memcpy(
+        waterMaskImage.cesium.pixelData.data(),
+        meshView->waterMaskBuffer.data(),
+        65536);
+
+    // create sampler parameters
+    size_t waterMaskSamplerId = model.samplers.size();
+    model.samplers.emplace_back();
+    CesiumGltf::Sampler& waterMaskSampler = model.samplers[waterMaskSamplerId];
+    waterMaskSampler.magFilter = CesiumGltf::Sampler::MagFilter::LINEAR;
+    waterMaskSampler.minFilter =
+        CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
+    waterMaskSampler.wrapS = CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
+    waterMaskSampler.wrapT = CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
+
+    // create texture
+    size_t waterMaskTextureId = model.textures.size();
+    model.textures.emplace_back();
+    CesiumGltf::Texture& waterMaskTexture = model.textures[waterMaskTextureId];
+    waterMaskTexture.sampler = int32_t(waterMaskSamplerId);
+    waterMaskTexture.source = int32_t(waterMaskImageId);
+
+    // store the texture id in the extras
+    primitive.extras.emplace("WaterMaskTex", int32_t(waterMaskTextureId));
+  } else {
+    primitive.extras.emplace("WaterMaskTex", int32_t(-1));
+  }
 
   // create node and update bounding volume
   model.nodes.emplace_back();

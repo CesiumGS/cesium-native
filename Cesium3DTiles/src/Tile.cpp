@@ -202,6 +202,11 @@ void Tile::loadContent() {
     // }
 
     projections.push_back(WebMercatorProjection());
+
+    // Only add geographic coordinates for the watermask, currently.
+    if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
+      projections.push_back(GeographicProjection());
+    }
   }
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
