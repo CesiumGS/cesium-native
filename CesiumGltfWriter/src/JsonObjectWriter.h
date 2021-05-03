@@ -6,6 +6,5 @@
 namespace CesiumGltf {
 void writeJsonValue(
     const CesiumUtility::JsonValue& value,
-    CesiumGltf::JsonWriter& writer,
-    bool hasRootObject = true);
+    CesiumGltf::JsonWriter& writer);
 }
