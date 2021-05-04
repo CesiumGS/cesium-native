@@ -15,6 +15,7 @@
 #include <optional>
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -30,12 +31,7 @@ struct CreditAndCoverageAreas {
   std::vector<CoverageArea> coverageAreas;
 };
 
-struct SessionCacheItem {
-  std::string metadataUrl;
-  std::vector<std::byte> responseData;
-};
-
-std::vector<SessionCacheItem> sessionCache;
+std::unordered_map<std::string, std::vector<std::byte>> sessionCache;
 } // namespace
 
 using namespace CesiumAsync;
@@ -242,7 +238,7 @@ namespace {
  * {
  *   "imageryProviders": [
  *     {
- *       "attribution": "� 2021 Microsoft Corporation",
+ *       "attribution": "© 2021 Microsoft Corporation",
  *       "coverageAreas": [
  *         { "bbox": [-90, -180, 90, 180], "zoomMax": 21, "zoomMin": 1 }
  *       ]
@@ -411,17 +407,11 @@ BingMapsRasterOverlay::createTileProvider(
         culture);
   };
 
-  auto cacheResultIt = std::find_if(
-      sessionCache.begin(),
-      sessionCache.end(),
-      [metadataUrl](const SessionCacheItem& item) -> bool {
-        return item.metadataUrl == metadataUrl;
-      });
-
+  auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
     return asyncSystem.createResolvedFuture(handleResponse(
-        cacheResultIt->responseData.data(),
-        cacheResultIt->responseData.size()));
+        cacheResultIt->second.data(),
+        cacheResultIt->second.size()));
   }
 
   return pAssetAccessor->requestAsset(asyncSystem, metadataUrl)
@@ -442,10 +432,9 @@ BingMapsRasterOverlay::createTileProvider(
             const std::byte* responseBuffer = pResponse->data().data();
             size_t responseSize = pResponse->data().size();
 
-            SessionCacheItem& item = sessionCache.emplace_back();
-            item.metadataUrl = metadataUrl;
-            item.responseData.resize(responseSize);
-            std::memcpy(item.responseData.data(), responseBuffer, responseSize);
+            sessionCache[metadataUrl] = std::vector<std::byte>(
+                pResponse->data().begin(),
+                pResponse->data().end());
 
             return handleResponse(responseBuffer, responseSize);
           });
