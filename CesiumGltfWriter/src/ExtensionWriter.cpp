@@ -16,10 +16,27 @@ void CesiumGltf::writeExtensions(
   j.StartObject();
 
   for (const auto& extension : extensions) {
-    if (extension.second.type() == typeid(JsonValue)) {
-      const auto& object = std::any_cast<JsonValue>(extension.second);
-      j.Key(extension.first);
+    const auto isObject = extension.second.type() == typeid(JsonValue::Object);
+    const auto isArray = extension.second.type() == typeid(JsonValue::Array);
+    const auto isPrimitive = extension.second.type() == typeid(JsonValue);
+
+    // Always assume we're inside of an object, ExtensibleObject::extensions
+    // forces extensions to be in a key / value setup.
+    j.Key(extension.first);
+
+    if (isObject) {
+      const auto& object = std::any_cast<JsonValue::Object>(extension.second);
       writeJsonValue(object, jsonWriter);
+    }
+
+    else if (isArray) {
+      const auto& array = std::any_cast<JsonValue::Array>(extension.second);
+      writeJsonValue(array, jsonWriter);
+    }
+
+    else if (isPrimitive) {
+      const auto& primitive = std::any_cast<JsonValue>(extension.second);
+      writeJsonValue(primitive, jsonWriter);
     }
   }
 

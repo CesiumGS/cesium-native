@@ -32,7 +32,7 @@ void writeAccessorSparseIndices(
 
   if (!indices.extras.empty()) {
     j.Key("extras");
-    writeJsonValue(indices.extras, j, false);
+    writeJsonValue(indices.extras, j);
   }
 }
 

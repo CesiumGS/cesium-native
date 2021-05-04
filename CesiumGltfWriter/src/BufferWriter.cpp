@@ -115,7 +115,7 @@ void CesiumGltf::writeBuffer(
 
     if (!buffer.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(buffer.extras, j, false);
+      writeJsonValue(buffer.extras, j);
     }
 
     if (!buffer.extensions.empty()) {

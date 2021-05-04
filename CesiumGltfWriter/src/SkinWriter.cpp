@@ -44,7 +44,7 @@ void CesiumGltf::writeSkin(
 
     if (!skin.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(skin.extras, j, false);
+      writeJsonValue(skin.extras, j);
     }
 
     j.EndObject();
