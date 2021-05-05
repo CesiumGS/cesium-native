@@ -18,23 +18,6 @@ namespace CesiumAsync {
  */
 class CESIUMASYNC_API SqliteCache : public ICacheDatabase {
 public:
-  /**
-   * @brief Constructs a new instance with a given `databaseName` pointing to a
-   * database.
-   *
-   * The instance will connect to the existing database or create a new one if
-   * it doesn't exist
-   *
-   * @param pLogger The logger that receives error messages.
-   * @param databaseName the database path.
-   * @param maxItems the maximum number of items should be kept in the database
-   * after prunning.
-   */
-  SqliteCache(
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::string& databaseName,
-      uint64_t maxItems = 4096);
-
   /** @copydoc ICacheDatabase::getEntry*/
   virtual std::optional<CacheItem>
   getEntry(const std::string& key) const override;
@@ -56,6 +39,23 @@ public:
   /** @copydoc ICacheDatabase::clearAll*/
   virtual bool clearAll() override;
 
+  /**
+   * @brief Constructs a new instance with a given `databaseName` pointing to a
+   * database.
+   *
+   * The instance will connect to the existing database or create a new one if
+   * it doesn't exist
+   *
+   * @param pLogger The logger that receives error messages.
+   * @param databaseName the database path.
+   * @param maxItems the maximum number of items should be kept in the database
+   * after prunning.
+   */
+  static std::unique_ptr<SqliteCache> create(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::string& databaseName,
+      uint64_t maxItems = 4096);
+
 private:
   struct DeleteSqliteConnection {
     void operator()(sqlite3* pConnection) noexcept;
@@ -69,7 +69,20 @@ private:
   using SqliteStatementPtr =
       std::unique_ptr<sqlite3_stmt, DeleteSqliteStatement>;
 
+  SqliteCache(
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      SqliteConnectionPtr pConnection,
+      uint64_t maxItems,
+      SqliteStatementPtr getEntryStmtWrapper,
+      SqliteStatementPtr updateLastAccessedTimeStmtWrapper,
+      SqliteStatementPtr storeResponseStmtWrapper,
+      SqliteStatementPtr totalItemsQueryStmtWrapper,
+      SqliteStatementPtr deleteExpiredStmtWrapper,
+      SqliteStatementPtr deleteLRUStmtWrapper,
+      SqliteStatementPtr clearAllStmtWrapper);
+
   static SqliteStatementPtr prepareStatement(
+      const std::shared_ptr<spdlog::logger> &pLogger,
       const SqliteConnectionPtr& pConnection,
       const std::string& sql);
 

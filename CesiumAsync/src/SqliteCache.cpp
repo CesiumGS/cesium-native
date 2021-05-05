@@ -101,111 +101,25 @@ void SqliteCache::DeleteSqliteStatement::operator()(
 
 SqliteCache::SqliteCache(
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& databaseName,
-    uint64_t maxItems)
+    SqliteConnectionPtr pConnection,
+    uint64_t maxItems,
+    SqliteStatementPtr getEntryStmtWrapper,
+    SqliteStatementPtr updateLastAccessedTimeStmtWrapper,
+    SqliteStatementPtr storeResponseStmtWrapper,
+    SqliteStatementPtr totalItemsQueryStmtWrapper,
+    SqliteStatementPtr deleteExpiredStmtWrapper,
+    SqliteStatementPtr deleteLRUStmtWrapper,
+    SqliteStatementPtr clearAllStmtWrapper) 
     : _pLogger(pLogger),
-      _pConnection(nullptr),
+      _pConnection(std::move(pConnection)),
       _maxItems(maxItems),
-      _getEntryStmtWrapper(),
-      _updateLastAccessedTimeStmtWrapper(),
-      _storeResponseStmtWrapper(),
-      _totalItemsQueryStmtWrapper(),
-      _deleteExpiredStmtWrapper(),
-      _deleteLRUStmtWrapper(),
-      _clearAllStmtWrapper() {
-  sqlite3* pConnection;
-  int status = sqlite3_open(databaseName.c_str(), &pConnection);
-  if (status != SQLITE_OK) {
-    throw std::runtime_error(sqlite3_errstr(status));
-  }
-
-  this->_pConnection =
-      std::unique_ptr<sqlite3, DeleteSqliteConnection>(pConnection);
-
-  // create cache tables if not exist. Key -> Cache table: one-to-many
-  // relationship
-  char* createTableError = nullptr;
-  status = sqlite3_exec(
-      this->_pConnection.get(),
-      CREATE_CACHE_TABLE_SQL.c_str(),
-      nullptr,
-      nullptr,
-      &createTableError);
-  if (status != SQLITE_OK) {
-    std::string errorStr(createTableError);
-    sqlite3_free(createTableError);
-    throw std::runtime_error(errorStr);
-  }
-
-  // turn on WAL mode
-  char* walError = nullptr;
-  status = sqlite3_exec(
-      this->_pConnection.get(),
-      PRAGMA_WAL_SQL.c_str(),
-      nullptr,
-      nullptr,
-      &walError);
-  if (status != SQLITE_OK) {
-    std::string errorStr(walError);
-    sqlite3_free(walError);
-    throw std::runtime_error(errorStr);
-  }
-
-  // turn off synchronous mode
-  char* syncError = nullptr;
-  status = sqlite3_exec(
-      this->_pConnection.get(),
-      PRAGMA_SYNC_SQL.c_str(),
-      nullptr,
-      nullptr,
-      &syncError);
-  if (status != SQLITE_OK) {
-    std::string errorStr(syncError);
-    sqlite3_free(syncError);
-    throw std::runtime_error(errorStr);
-  }
-
-  // increase page size
-  char* pageSizeError = nullptr;
-  status = sqlite3_exec(
-      this->_pConnection.get(),
-      PRAGMA_PAGE_SIZE_SQL.c_str(),
-      nullptr,
-      nullptr,
-      &pageSizeError);
-  if (status != SQLITE_OK) {
-    std::string errorStr(pageSizeError);
-    sqlite3_free(pageSizeError);
-    throw std::runtime_error(errorStr);
-  }
-
-  // get entry based on key
-  this->_getEntryStmtWrapper =
-      prepareStatement(this->_pConnection, GET_ENTRY_SQL);
-
-  // update last accessed for entry
-  this->_updateLastAccessedTimeStmtWrapper =
-      prepareStatement(this->_pConnection, UPDATE_LAST_ACCESSED_TIME_SQL);
-
-  // store response
-  this->_storeResponseStmtWrapper =
-      prepareStatement(this->_pConnection, STORE_RESPONSE_SQL);
-
-  // query total items
-  this->_totalItemsQueryStmtWrapper =
-      prepareStatement(this->_pConnection, TOTAL_ITEMS_QUERY_SQL);
-
-  // delete expired items
-  this->_deleteExpiredStmtWrapper =
-      prepareStatement(this->_pConnection, DELETE_EXPIRED_ITEMS_SQL);
-
-  // delete expired items
-  this->_deleteLRUStmtWrapper =
-      prepareStatement(this->_pConnection, DELETE_LRU_ITEMS_SQL);
-
-  // clear all items
-  this->_clearAllStmtWrapper =
-      prepareStatement(this->_pConnection, CLEAR_ALL_SQL);
+      _getEntryStmtWrapper(std::move(getEntryStmtWrapper)),
+      _updateLastAccessedTimeStmtWrapper(std::move(updateLastAccessedTimeStmtWrapper)),
+      _storeResponseStmtWrapper(std::move(storeResponseStmtWrapper)),
+      _totalItemsQueryStmtWrapper(std::move(totalItemsQueryStmtWrapper)),
+      _deleteExpiredStmtWrapper(std::move(deleteExpiredStmtWrapper)),
+      _deleteLRUStmtWrapper(std::move(deleteLRUStmtWrapper)),
+      _clearAllStmtWrapper(std::move(clearAllStmtWrapper)) {
 }
 
 std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
@@ -614,7 +528,144 @@ HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
   return headers;
 }
 
+/*static*/ std::unique_ptr<SqliteCache> SqliteCache::create(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& databaseName,
+    uint64_t maxItems) {
+  sqlite3* pRawConnection;
+  int status = sqlite3_open(databaseName.c_str(), &pRawConnection);
+  if (status != SQLITE_OK) {
+    SPDLOG_LOGGER_ERROR(pLogger, sqlite3_errstr(status));
+    return nullptr;
+  }
+
+  SqliteConnectionPtr pConnection = SqliteConnectionPtr(pRawConnection);
+
+  // create cache tables if not exist. Key -> Cache table: one-to-many
+  // relationship
+  char* createTableError = nullptr;
+  status = sqlite3_exec(
+      pConnection.get(),
+      CREATE_CACHE_TABLE_SQL.c_str(),
+      nullptr,
+      nullptr,
+      &createTableError);
+  if (status != SQLITE_OK) {
+    std::string errorStr(createTableError);
+    sqlite3_free(createTableError);
+    SPDLOG_LOGGER_ERROR(pLogger, sqlite3_errstr(status));
+    return nullptr;
+  }
+
+  // turn on WAL mode
+  char* walError = nullptr;
+  status = sqlite3_exec(
+      pConnection.get(),
+      PRAGMA_WAL_SQL.c_str(),
+      nullptr,
+      nullptr,
+      &walError);
+  if (status != SQLITE_OK) {
+    std::string errorStr(walError);
+    sqlite3_free(walError);
+    SPDLOG_LOGGER_ERROR(pLogger, sqlite3_errstr(status));
+    return nullptr;
+  }
+
+  // turn off synchronous mode
+  char* syncError = nullptr;
+  status = sqlite3_exec(
+      pConnection.get(),
+      PRAGMA_SYNC_SQL.c_str(),
+      nullptr,
+      nullptr,
+      &syncError);
+  if (status != SQLITE_OK) {
+    std::string errorStr(syncError);
+    sqlite3_free(syncError);
+    SPDLOG_LOGGER_ERROR(pLogger, sqlite3_errstr(status));
+    return nullptr;
+  }
+
+  // increase page size
+  char* pageSizeError = nullptr;
+  status = sqlite3_exec(
+      pConnection.get(),
+      PRAGMA_PAGE_SIZE_SQL.c_str(),
+      nullptr,
+      nullptr,
+      &pageSizeError);
+  if (status != SQLITE_OK) {
+    std::string errorStr(pageSizeError);
+    sqlite3_free(pageSizeError);
+    SPDLOG_LOGGER_ERROR(pLogger, sqlite3_errstr(status));
+    return nullptr;
+  }
+
+  // get entry based on key
+  SqliteStatementPtr getEntryStmtWrapper =
+      prepareStatement(pLogger, pConnection, GET_ENTRY_SQL);
+  if (!getEntryStmtWrapper) {
+    return nullptr;
+  }
+
+  // update last accessed for entry
+  SqliteStatementPtr updateLastAccessedTimeStmtWrapper =
+      prepareStatement(pLogger, pConnection, UPDATE_LAST_ACCESSED_TIME_SQL);
+  if (!updateLastAccessedTimeStmtWrapper) {
+    return nullptr;
+  }
+
+  // store response
+  SqliteStatementPtr storeResponseStmtWrapper =
+      prepareStatement(pLogger, pConnection, STORE_RESPONSE_SQL);
+  if (!storeResponseStmtWrapper) {
+    return nullptr;
+  }
+
+  // query total items
+  SqliteStatementPtr totalItemsQueryStmtWrapper =
+      prepareStatement(pLogger, pConnection, TOTAL_ITEMS_QUERY_SQL);
+  if (!totalItemsQueryStmtWrapper) {
+    return nullptr;
+  }
+
+  // delete expired items
+  SqliteStatementPtr deleteExpiredStmtWrapper =
+      prepareStatement(pLogger, pConnection, DELETE_EXPIRED_ITEMS_SQL);
+  if (!deleteExpiredStmtWrapper) {
+    return nullptr;
+  }
+
+  // delete expired items
+  SqliteStatementPtr deleteLRUStmtWrapper =
+      prepareStatement(pLogger, pConnection, DELETE_LRU_ITEMS_SQL);
+  if (!deleteLRUStmtWrapper) {
+    return nullptr;
+  }
+
+  // clear all items
+  SqliteStatementPtr clearAllStmtWrapper =
+      prepareStatement(pLogger, pConnection, CLEAR_ALL_SQL);
+  if (!clearAllStmtWrapper) {
+    return nullptr;
+  }
+
+  return std::unique_ptr<SqliteCache>(new SqliteCache(
+      pLogger,
+      std::move(pConnection),
+      maxItems,
+      std::move(getEntryStmtWrapper),
+      std::move(updateLastAccessedTimeStmtWrapper),
+      std::move(storeResponseStmtWrapper),
+      std::move(totalItemsQueryStmtWrapper),
+      std::move(deleteExpiredStmtWrapper),
+      std::move(deleteLRUStmtWrapper),
+      std::move(clearAllStmtWrapper)));
+}
+
 /*static*/ SqliteCache::SqliteStatementPtr SqliteCache::prepareStatement(
+    const std::shared_ptr<spdlog::logger> &pLogger,
     const SqliteCache::SqliteConnectionPtr& pConnection,
     const std::string& sql) {
   sqlite3_stmt* pStmt;
@@ -625,7 +676,8 @@ HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
       &pStmt,
       nullptr);
   if (status != SQLITE_OK) {
-    throw std::runtime_error(std::string(sqlite3_errstr(status)));
+    SPDLOG_LOGGER_ERROR(pLogger, sqlite3_errstr(status));
+    return nullptr;
   }
   return SqliteStatementPtr(pStmt);
 }
