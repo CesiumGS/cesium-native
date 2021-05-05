@@ -91,8 +91,8 @@ typedef void ContextInitializerSignature(
     TileContext& currentContext);
 
 /**
- * @brief A function that serves as a callback for initializing a new {@link
- * TileContext} from properties of the parent context.
+ * @brief A function that serves as a callback for initializing a new
+ * {@link TileContext} from properties of the parent context.
  */
 typedef std::function<ContextInitializerSignature> ContextInitializerCallback;
 

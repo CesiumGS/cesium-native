@@ -43,7 +43,10 @@ jobs:
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
       install:
         - sudo apt-get update
-        - sudo apt-get install clang-10 cmake doxygen
+        -  # Workaround for an apparent Ubuntu package problem.
+        -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
+        - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
+        - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-10 cmake doxygen
       env:
         - CC=clang-10
         - CXX=clang++-10

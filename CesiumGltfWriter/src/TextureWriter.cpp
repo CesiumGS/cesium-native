@@ -37,7 +37,7 @@ void CesiumGltf::writeTexture(
 
     if (!texture.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(texture.extras, j, false);
+      writeJsonValue(texture.extras, j);
     }
 
     j.EndObject();

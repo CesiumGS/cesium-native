@@ -31,7 +31,7 @@ void writeOrthographicCamera(
 
   if (!cameraOrthographic.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(cameraOrthographic.extras, j, false);
+    CesiumGltf::writeJsonValue(cameraOrthographic.extras, j);
   }
 
   j.EndObject();
@@ -61,7 +61,7 @@ void writePerspectiveCamera(
 
   if (!cameraPerspective.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(cameraPerspective.extras, j, false);
+    CesiumGltf::writeJsonValue(cameraPerspective.extras, j);
   }
 
   j.EndObject();
@@ -104,7 +104,7 @@ void CesiumGltf::writeCamera(
 
     if (!camera.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(camera.extras, j, false);
+      writeJsonValue(camera.extras, j);
     }
 
     j.EndObject();

@@ -47,7 +47,7 @@ void CesiumGltf::writeSampler(
 
     if (!sampler.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(sampler.extras, j, false);
+      writeJsonValue(sampler.extras, j);
     }
 
     j.EndObject();

@@ -20,10 +20,38 @@ class RasterOverlay;
 class RasterOverlayTile;
 class IPrepareRendererResources;
 
+/**
+ * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
+ */
 struct CESIUM3DTILES_API LoadedRasterOverlayImage {
+
+  /**
+   * @brief The loaded image.
+   *
+   * This will be an empty optional if the loading failed. In this case,
+   * the `errors` vector will contain the corresponding error messages.
+   */
   std::optional<CesiumGltf::ImageCesium> image;
+
+  /**
+   * @brief The {@link Credit} objects that decribe the attributions that
+   * are required when using the image.
+   */
   std::vector<Credit> credits;
+
+  /**
+   * @brief Error messages from loading the image.
+   *
+   * If the image was loaded successfully, this should be empty.
+   */
   std::vector<std::string> errors;
+
+  /**
+   * @brief Warnings from loading the image.
+   */
+  // Implementation note: In the current implementation, this will
+  // always be empty, but it might contain warnings in the future,
+  // when other image types or loaders are used.
   std::vector<std::string> warnings;
 };
 
@@ -34,8 +62,8 @@ struct LoadTileImageFromUrlOptions {
   /**
    * @brief The credits to display with this tile.
    *
-   * This property is copied verbatim to the {@link
-   * LoadedRasterOverlayImage::credits} property.
+   * This property is copied verbatim to the
+   * {@link LoadedRasterOverlayImage::credits} property.
    */
   std::vector<Credit> credits = {};
 
@@ -47,12 +75,12 @@ struct LoadTileImageFromUrlOptions {
    * a valid 0x0 image. If false, such a response will be reported as an
    * error.
    *
-   * {@link RasterOverlayTileProvider::loadTile} and {@link
-   * RasterOverlayTileProvider::loadTileThrottled} will treat such an image as
-   * "failed" and use the quadtree parent (or ancestor) image instead, but
-   * will not report any error.
+   * {@link RasterOverlayTileProvider::loadTile} and
+   * {@link RasterOverlayTileProvider::loadTileThrottled} will treat such an
+   * image as "failed" and use the quadtree parent (or ancestor) image
+   * instead, but will not report any error.
    *
-   * This flag should only be set to true when the tile source uses a
+   * This flag should only be set to `true` when the tile source uses a
    * zero-length response as an indication that this tile is - as expected -
    * not available.
    */

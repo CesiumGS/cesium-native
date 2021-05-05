@@ -662,10 +662,65 @@ static void upsamplePrimitiveForRasterOverlays(
   std::copy(indices.begin(), indices.end(), pAsUint32s);
   indexBufferView.byteLength = int64_t(indexBuffer.cesium.data.size());
 
+  bool onlyWater = false;
+  bool onlyLand = true;
+  int64_t waterMaskTextureId = -1;
+
+  auto onlyWaterIt = primitive.extras.find("OnlyWater");
+  auto onlyLandIt = primitive.extras.find("OnlyLand");
+
+  if (onlyWaterIt != primitive.extras.end() && onlyWaterIt->second.isBool() &&
+      onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
+
+    onlyWater = onlyWaterIt->second.getBoolOrDefault(false);
+    onlyLand = onlyLandIt->second.getBoolOrDefault(true);
+
+    if (!onlyWater && !onlyLand) {
+      // We have to use the parent's water mask
+      auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
+      if (waterMaskTextureIdIt != primitive.extras.end() &&
+          waterMaskTextureIdIt->second.isInt64()) {
+        waterMaskTextureId = waterMaskTextureIdIt->second.getInt64OrDefault(-1);
+      }
+    }
+  }
+
+  double waterMaskTranslationX = 0.0;
+  double waterMaskTranslationY = 0.0;
+  double waterMaskScale = 0.0;
+
+  auto waterMaskTranslationXIt = primitive.extras.find("WaterMaskTranslationX");
+  auto waterMaskTranslationYIt = primitive.extras.find("WaterMaskTranslationY");
+  auto waterMaskScaleIt = primitive.extras.find("WaterMaskScale");
+
+  if (waterMaskTranslationXIt != primitive.extras.end() &&
+      waterMaskTranslationXIt->second.isDouble() &&
+      waterMaskTranslationYIt != primitive.extras.end() &&
+      waterMaskTranslationYIt->second.isDouble() &&
+      waterMaskScaleIt != primitive.extras.end() &&
+      waterMaskScaleIt->second.isDouble()) {
+    waterMaskScale = 0.5 * waterMaskScaleIt->second.getDoubleOrDefault(0.0);
+    waterMaskTranslationX =
+        waterMaskTranslationXIt->second.getDoubleOrDefault(0.0) +
+        waterMaskScale * (childID.tileID.x % 2);
+    waterMaskTranslationY =
+        waterMaskTranslationYIt->second.getDoubleOrDefault(0.0) +
+        waterMaskScale * (childID.tileID.y % 2);
+  }
+
   // add skirts to extras to be upsampled later if needed
   if (hasSkirt) {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
   }
+
+  primitive.extras.emplace("OnlyWater", onlyWater);
+  primitive.extras.emplace("OnlyLand", onlyLand);
+
+  primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
+
+  primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
+  primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
+  primitive.extras.emplace("WaterMaskScale", waterMaskScale);
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
 }

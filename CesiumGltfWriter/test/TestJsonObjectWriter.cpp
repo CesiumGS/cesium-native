@@ -19,7 +19,7 @@ TEST_CASE("TestJsonObjectWriter") {
     CesiumGltf::JsonWriter writer;
     const auto extrasObject =
         Object{{"extras", Array{Object{}, Object{}, Object{}}}};
-    writeJsonValue(extrasObject, writer, false);
+    writeJsonValue(extrasObject, writer);
     REQUIRE(writer.toStringView() == R"({"extras":[{},{},{}]})");
   }
 
@@ -27,14 +27,14 @@ TEST_CASE("TestJsonObjectWriter") {
     CesiumGltf::JsonWriter writer;
     const auto extrasObject =
         Array{std::int64_t(0), std::uint64_t(1), double(2.5)};
-    writeJsonValue(extrasObject, writer, false);
+    writeJsonValue(extrasObject, writer);
     REQUIRE(writer.toStringView() == R"([0,1,2.5])");
   }
 
   SECTION("[👀]") {
     CesiumGltf::JsonWriter writer;
     writer.StartArray();
-    writeJsonValue(JsonValue("👀"), writer, true);
+    writeJsonValue(JsonValue("👀"), writer);
     writer.EndArray();
     REQUIRE(writer.toStringView() == "[\"👀\"]");
   }
@@ -53,7 +53,7 @@ TEST_CASE("TestJsonObjectWriter") {
         }};
     // clang-format on
 
-    writeJsonValue(extrasObject, writer, false);
+    writeJsonValue(extrasObject, writer);
     REQUIRE(writer.toStringView() == R"({"extras":{"A":{"B":{"C":{}}}}})");
   }
 
@@ -67,7 +67,7 @@ TEST_CASE("TestJsonObjectWriter") {
         }};
     // clang-format on
 
-    writeJsonValue(extrasObject, writer, false);
+    writeJsonValue(extrasObject, writer);
     REQUIRE(
         writer.toStringView() ==
         R"({"extras":[[[1.0,-2.0,false,null,true,{"emojis":"😂👽🇵🇷"}]]]})");
@@ -75,7 +75,7 @@ TEST_CASE("TestJsonObjectWriter") {
 
   SECTION("Empty object is serialized correctly") {
     CesiumGltf::JsonWriter writer;
-    writeJsonValue(Object{}, writer, false);
+    writeJsonValue(Object{}, writer);
     REQUIRE(writer.toStringView() == "{}");
   }
 }

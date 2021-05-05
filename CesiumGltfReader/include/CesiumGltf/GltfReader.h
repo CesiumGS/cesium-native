@@ -17,7 +17,8 @@ namespace CesiumGltf {
 struct ReaderContext;
 
 /**
- * @brief The result of reading a glTF model with {@link readModel}.
+ * @brief The result of reading a glTF model with
+ * {@link GltfReader::readModel}.
  */
 struct CESIUMGLTFREADER_API ModelReaderResult {
   /**
@@ -37,7 +38,8 @@ struct CESIUMGLTFREADER_API ModelReaderResult {
 };
 
 /**
- * @brief The result of reading an image with {@link readImage}.
+ * @brief The result of reading an image with
+ * {@link GltfReader::readImage}.
  */
 struct CESIUMGLTFREADER_API ImageReaderResult {
 
@@ -67,13 +69,14 @@ enum class ExtensionState {
    * @brief The extension is enabled.
    *
    * If a statically-typed class is available for the extension, it will be
-   * used. Otherwise the extension will be represented as a {@link JsonValue}.
+   * used. Otherwise the extension will be represented as a
+   * {@link CesiumUtility::JsonValue}.
    */
   Enabled,
 
   /**
-   * @brief The extension is enabled but will always be deserialized as a {@link
-   * JsonValue}.
+   * @brief The extension is enabled but will always be deserialized as a
+   * {@link CesiumUtility::JsonValue}.
    *
    * Even if a statically-typed class is available for the extension, it will
    * not be used.
@@ -137,7 +140,8 @@ public:
    * @brief Registers an extension for a glTF object.
    *
    * @tparam TExtended The glTF object to extend.
-   * @tparam TExtensionHandler The extension's {@link JsonHandler}.
+   * @tparam TExtensionHandler The extension's
+   * {@link CesiumJsonReader::JsonHandler}.
    * @param extensionName The name of the extension.
    */
   template <typename TExtended, typename TExtensionHandler>
@@ -157,7 +161,8 @@ public:
    * The extension name is obtained from `TExtensionHandler::ExtensionName`.
    *
    * @tparam TExtended The glTF object to extend.
-   * @tparam TExtensionHandler The extension's {@link JsonHandler}.
+   * @tparam TExtensionHandler The extension's
+   * {@link CesiumJsonReader::JsonHandler}.
    */
   template <typename TExtended, typename TExtensionHandler>
   void registerExtension() {
@@ -177,14 +182,15 @@ public:
    *
    * By default, all extensions are enabled. When an enabled extension is
    * encountered in the source glTF, it is read into a statically-typed
-   * extension class, if one is registered, or into a {@link JsonValue} if not.
+   * extension class, if one is registered, or into a
+   * {@link CesiumUtility::JsonValue} if not.
    *
    * When a disabled extension is encountered in the source glTF, it is ignored
    * completely.
    *
    * An extension may also be set to `ExtensionState::JsonOnly`, in which case
-   * it will be read into a
-   * {@link JsonValue} even if a statically-typed extension class is registered.
+   * it will be read into a {@link CesiumUtility::JsonValue} even if a
+   * statically-typed extension class is registered.
    *
    * @param extensionName The name of the extension to be enabled or disabled.
    * @param newState The new state for the extension.

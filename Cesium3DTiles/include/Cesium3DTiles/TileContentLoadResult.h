@@ -17,9 +17,9 @@ class Tile;
  * structure encapsulates all of those possibilities. Each possible result is
  * therefore provided as an `std::optional`.
  *
- * Instances of this structure are created internally, by the {@link
- * TileContentFactory}, when the response to a network request for loading the
- * tile content was received.
+ * Instances of this structure are created internally, by the
+ * {@link TileContentFactory}, when the response to a network request for
+ * loading the tile content was received.
  */
 struct TileContentLoadResult {
   /**

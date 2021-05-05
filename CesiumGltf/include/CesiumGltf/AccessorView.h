@@ -48,8 +48,8 @@ enum class AccessorViewStatus {
   BufferTooSmall,
 
   /**
-   * @brief The `sizeof(T)` does not match the accessor's {@link
-   * Accessor::computeBytesPerVertex}.
+   * @brief The `sizeof(T)` does not match the accessor's
+   * {@link Accessor::computeBytesPerVertex}.
    */
   WrongSizeT,
 };
@@ -434,8 +434,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
  *
  * @tparam TCallback The callback.
  * @param model The model to access.
- * @param accessorIndex The index of the accessor to view in {@link
- * Model::accessors}.
+ * @param accessorIndex The index of the accessor to view in
+ * {@link Model::accessors}.
  * @param callback The callback that receives the created accessor.
  * @return The value returned by the callback.
  */
