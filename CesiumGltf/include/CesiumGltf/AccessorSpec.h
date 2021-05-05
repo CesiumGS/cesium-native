@@ -148,8 +148,7 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
 
 private:
   /**
-   * @brief This class is not mean to be instantiated directly. Use {@link
-   * Accessor} instead.
+   * @brief This class is not mean to be instantiated directly. Use {@link Accessor} instead.
    */
   AccessorSpec() = default;
   friend struct Accessor;
