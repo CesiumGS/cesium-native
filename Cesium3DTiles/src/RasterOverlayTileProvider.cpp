@@ -525,13 +525,40 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           });
 }
 
-RasterOverlayTileProvider::LoadResult
-RasterOverlayTileProvider::createLoadResultFromLoadedImage(
+namespace {
+struct LoadResult {
+  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+  CesiumGltf::ImageCesium image = {};
+  std::vector<Credit> credits = {};
+  void* pRendererResources = nullptr;
+};
+
+/**
+ * @brief Processes the given `LoadedRasterOverlayImage`, producing a
+ * `LoadResult`.
+ *
+ * This function is intended to be called on the worker thread.
+ *
+ * If the given `loadedImage` contains no valid image data, then a
+ * `LoadResult` with the state `RasterOverlayTile::LoadState::Failed` will be
+ * returned.
+ *
+ * Otherwise, the image data will be passed to
+ * `IPrepareRendererResources::prepareRasterInLoadThread`, and the function
+ * will return a `LoadResult` with the image, the prepared renderer resources,
+ * and the state `RasterOverlayTile::LoadState::Loaded`.
+ *
+ * @param tileId The {@link TileID} - only used for logging
+ * @param pPrepareRendererResources The `IPrepareRendererResources`
+ * @param pLogger The logger
+ * @param loadedImage The `LoadedRasterOverlayImage`
+ * @return The `LoadResult`
+ */
+static LoadResult createLoadResultFromLoadedImage(
     const CesiumGeometry::QuadtreeTileID& tileId,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     LoadedRasterOverlayImage&& loadedImage) {
-
   if (!loadedImage.image.has_value()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -573,6 +600,8 @@ RasterOverlayTileProvider::createLoadResultFromLoadedImage(
   result.state = RasterOverlayTile::LoadState::Failed;
   return result;
 }
+
+} // namespace
 
 void RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,

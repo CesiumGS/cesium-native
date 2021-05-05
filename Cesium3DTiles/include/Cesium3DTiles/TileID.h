@@ -37,6 +37,9 @@ typedef std::variant<
     CesiumGeometry::UpsampledQuadtreeNode>
     TileID;
 
+/**
+ * @brief Utility functions related to {@link TileID} objects.
+ */
 struct CESIUM3DTILES_API TileIdUtilities {
   /**
    * @brief Creates an unspecified string representation of the given {@link
