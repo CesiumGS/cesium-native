@@ -14,6 +14,8 @@ function generate(options, schema) {
 
   console.log(`Generating ${name}`);
 
+  schemaCache.pushContext(schema);
+
   let base = "ExtensibleObject";
   if (schema.allOf && schema.allOf.length > 0 && schema.allOf[0].$ref) {
     const baseSchema = schemaCache.load(schema.allOf[0].$ref);
@@ -31,6 +33,8 @@ function generate(options, schema) {
   const localTypes = lodash.uniq(
     lodash.flatten(properties.map((property) => property.localTypes))
   );
+
+  schemaCache.popContext();
 
   const headers = lodash.uniq([
       `"CesiumGltf/Library.h"`,

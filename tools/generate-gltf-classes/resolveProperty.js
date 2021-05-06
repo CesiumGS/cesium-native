@@ -2,6 +2,7 @@ const getNameFromSchema = require("./getNameFromSchema");
 const unindent = require("./unindent");
 const indent = require("./indent");
 const makeIdentifier = require("./makeIdentifier");
+const lodash = require("lodash");
 
 function resolveProperty(
   schemaCache,
@@ -11,8 +12,13 @@ function resolveProperty(
   propertyDetails,
   required
 ) {
-  if (Object.keys(propertyDetails).length === 0) {
-    // Ignore totally empty properties.
+  // if (Object.keys(propertyDetails).length === 0) {
+  //   // Ignore totally empty properties.
+  //   return undefined;
+  // }
+
+  // These properties are handled in hand-written base classes.
+  if (propertyName === "name" || propertyName === "extensions" || propertyName === "extras") {
     return undefined;
   }
 
@@ -129,9 +135,39 @@ function resolveProperty(
       briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
       fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
     };
+  } else if (Array.isArray(propertyDetails.type)) {
+    const nested = propertyDetails.type.map(type => {
+      const propertyNameWithType = propertyName + " (" + type + ")";
+      return resolveProperty(
+        schemaCache,
+        config,
+        parentName,
+        propertyNameWithType,
+        {
+          ...propertyDetails,
+          type: type
+        },
+        [propertyNameWithType]
+      );
+    });
+
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: `std::variant<${nested.map(item => item.type).join(", ")}>`,
+      headers: lodash.uniq(["<variant>", ...lodash.flatten(nested.map(type => type.headers))]),
+      readerType: `VariantJsonHandler<${nested.map(item => item.readerType).join(", ")}>`,
+      readerHeaders: lodash.uniq(["VariantJsonHandler.h", ...lodash.flatten(nested.map(item => item.readerHeaders))]),
+      schemas: lodash.uniq(lodash.flatten(nested.map(item => item.schemas)))
+    };
   } else {
-    console.warn(`Skipping unhandled property ${propertyName}.`);
-    return undefined;
+    console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: `CesiumUtility::JsonValue`,
+      headers: [`"CesiumUtility/JsonValue.h"`],
+      readerType: "JsonObjectJsonHandler",
+      readerHeaders: ["JsonObjectJsonHandler.h"]
+    };
   }
 }
 
@@ -183,7 +219,7 @@ function resolveArray(
     config,
     parentName,
     propertyName + ".items",
-    propertyDetails.items,
+    propertyDetails.items || [],
     undefined
   );
 
@@ -229,7 +265,7 @@ function resolveDictionary(
     ...propertyDefaults(propertyName, propertyDetails),
     name: propertyName,
     headers: ["<unordered_map>", ...additional.headers],
-    schema: additional.schemas,
+    schemas: additional.schemas,
     localTypes: additional.localTypes,
     type: `std::unordered_map<std::string, ${additional.type}>`,
     readerHeaders: [`"CesiumJsonReader/DictionaryJsonHandler.h"`, ...additional.readerHeaders],
