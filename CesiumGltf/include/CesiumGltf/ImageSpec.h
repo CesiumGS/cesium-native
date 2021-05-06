@@ -47,8 +47,7 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
 
 private:
   /**
-   * @brief This class is not mean to be instantiated directly. Use {@link
-   * Image} instead.
+   * @brief This class is not mean to be instantiated directly. Use {@link Image} instead.
    */
   ImageSpec() = default;
   friend struct Image;
