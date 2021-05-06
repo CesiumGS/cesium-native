@@ -1,5 +1,15 @@
 # Change Log
 
+### v?.?.? - ????-??-??
+
+##### Breaking Changes :mega:
+
+##### Additions :tada:
+
+- Added `Cesium3DTiles::TileIdUtilities` with a `createTileIdString` function to create logging/debugging strings for `TileID` objects.
+
+##### Fixes :wrench:
+
 ### v0.3.0 - 2021-05-03
 
 ##### Breaking Changes :mega:
