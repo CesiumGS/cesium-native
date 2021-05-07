@@ -71,7 +71,7 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
 
   REQUIRE(pMetadata->schema.has_value());
   REQUIRE(pMetadata->schema->classes.size() == 1);
-  
+
   auto treesIt = pMetadata->schema->classes.find("tree");
   REQUIRE(treesIt != pMetadata->schema->classes.end());
 
