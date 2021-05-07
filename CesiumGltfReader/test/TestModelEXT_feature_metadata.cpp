@@ -23,7 +23,8 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
                   },
                   "birdCount": {
                     "description": "Number of birds perching on the tree",
-                    "type": "UINT8"
+                    "type": "UINT8",
+                    "min": 1
                   },
                   "species": {
                     "description": "Species of the tree",
@@ -76,4 +77,10 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
   REQUIRE(treesIt != pMetadata->schema->classes.end());
 
   REQUIRE(treesIt->second.properties.size() == 3);
+
+  auto birdCountIt = treesIt->second.properties.find("birdCount");
+  REQUIRE(birdCountIt != treesIt->second.properties.end());
+  REQUIRE(birdCountIt->second.max.isNull());
+  REQUIRE(!birdCountIt->second.min.isNull());
+  REQUIRE(birdCountIt->second.min.getSafeNumberOrDefault(-1) == 1);
 }

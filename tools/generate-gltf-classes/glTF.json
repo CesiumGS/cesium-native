@@ -39,6 +39,14 @@
             "attachTo": [
                 "glTF"
             ]
+        },
+        {
+            "className": "PrimitiveEXT_feature_metadata",
+            "extensionName": "EXT_feature_metadata",
+            "schema": "Vendor/EXT_feature_metadata/1.0.0/schema/primitive.EXT_feature_metadata.schema.json",
+            "attachTo": [
+                "mesh.primitive"
+            ]
         }
     ]
 }
