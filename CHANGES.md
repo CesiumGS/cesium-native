@@ -1,17 +1,16 @@
 # Change Log
 
-### v0.4.0 - ????-??-??
+### v?.?.? - ????-??-??
 
 ##### Breaking Changes :mega:
 
-
 ##### Additions :tada:
 
+- Added `Cesium3DTiles::TileIdUtilities` with a `createTileIdString` function to create logging/debugging strings for `TileID` objects.
 
 ##### Fixes :wrench:
 
 - Matched draco's decoded indices to gltf primitive if indices attribute does not match with the decompressed indices.
-
 
 ### v0.3.0 - 2021-05-03
 
@@ -32,6 +31,7 @@
 ##### Fixes :wrench:
 
 - Let a tile be renderable if all its raster overlays are ready, even if some are still loading.
+- Accessing the same Bing Maps layer multiple times in a single application run now reuses the same Bing Maps session instead of starting a new one each time.
 
 ### v0.2.0 - 2021-04-19
 

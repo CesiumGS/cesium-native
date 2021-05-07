@@ -109,7 +109,7 @@ void CesiumGltf::writeImage(
 
     if (!image.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(image.extras, j, false);
+      writeJsonValue(image.extras, j);
     }
 
     if (!image.extensions.empty()) {

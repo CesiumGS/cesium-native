@@ -107,7 +107,7 @@ void CesiumGltf::writeNode(
 
     if (!node.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(node.extras, j, false);
+      writeJsonValue(node.extras, j);
     }
 
     j.EndObject();

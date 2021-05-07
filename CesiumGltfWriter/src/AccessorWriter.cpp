@@ -77,7 +77,7 @@ void CesiumGltf::writeAccessor(
 
     if (!accessor.extras.empty()) {
       j.Key("extras");
-      writeJsonValue(accessor.extras, j, false);
+      writeJsonValue(accessor.extras, j);
     }
 
     j.EndObject();

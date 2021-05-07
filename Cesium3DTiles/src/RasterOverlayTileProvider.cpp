@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
+#include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
@@ -524,6 +525,84 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           });
 }
 
+namespace {
+struct LoadResult {
+  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+  CesiumGltf::ImageCesium image = {};
+  std::vector<Credit> credits = {};
+  void* pRendererResources = nullptr;
+};
+
+/**
+ * @brief Processes the given `LoadedRasterOverlayImage`, producing a
+ * `LoadResult`.
+ *
+ * This function is intended to be called on the worker thread.
+ *
+ * If the given `loadedImage` contains no valid image data, then a
+ * `LoadResult` with the state `RasterOverlayTile::LoadState::Failed` will be
+ * returned.
+ *
+ * Otherwise, the image data will be passed to
+ * `IPrepareRendererResources::prepareRasterInLoadThread`, and the function
+ * will return a `LoadResult` with the image, the prepared renderer resources,
+ * and the state `RasterOverlayTile::LoadState::Loaded`.
+ *
+ * @param tileId The {@link TileID} - only used for logging
+ * @param pPrepareRendererResources The `IPrepareRendererResources`
+ * @param pLogger The logger
+ * @param loadedImage The `LoadedRasterOverlayImage`
+ * @return The `LoadResult`
+ */
+static LoadResult createLoadResultFromLoadedImage(
+    const CesiumGeometry::QuadtreeTileID& tileId,
+    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    LoadedRasterOverlayImage&& loadedImage) {
+  if (!loadedImage.image.has_value()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Failed to load image for tile {}:\n- {}",
+        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
+        CesiumUtility::joinToString(loadedImage.errors, "\n- "));
+    LoadResult result;
+    result.state = RasterOverlayTile::LoadState::Failed;
+    return result;
+  }
+
+  if (!loadedImage.warnings.empty()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Warnings while loading image for tile {}:\n- {}",
+        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
+        CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+  }
+
+  CesiumGltf::ImageCesium& image = loadedImage.image.value();
+
+  int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+  int64_t requiredBytes =
+      static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
+  if (image.width > 0 && image.height > 0 &&
+      image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
+    void* pRendererResources =
+        pPrepareRendererResources->prepareRasterInLoadThread(image);
+
+    LoadResult result;
+    result.state = RasterOverlayTile::LoadState::Loaded;
+    result.image = std::move(image);
+    result.credits = std::move(loadedImage.credits);
+    result.pRendererResources = pRendererResources;
+    return result;
+  }
+  LoadResult result;
+  result.pRendererResources = nullptr;
+  result.state = RasterOverlayTile::LoadState::Failed;
+  return result;
+}
+
+} // namespace
+
 void RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
@@ -537,60 +616,17 @@ void RasterOverlayTileProvider::doLoad(
 
   this->beginTileLoad(tile, isThrottledLoad);
 
-  struct LoadResult {
-    RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
-    CesiumGltf::ImageCesium image = {};
-    std::vector<Credit> credits = {};
-    void* pRendererResources = nullptr;
-  };
-
   this->loadTileImage(tile.getID())
       .thenInWorkerThread(
-          [tileRectangle =
-               this->getTilingScheme().tileToRectangle(tile.getID()),
-           projection = this->getProjection(),
+          [tileId = tile.getID(),
            pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger =
                this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
-            if (!loadedImage.image.has_value()) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Failed to load image:\n- {}",
-                  CesiumUtility::joinToString(loadedImage.errors, "\n- "));
-              LoadResult result;
-              result.state = RasterOverlayTile::LoadState::Failed;
-              return result;
-            }
-
-            if (!loadedImage.warnings.empty()) {
-              SPDLOG_LOGGER_WARN(
-                  pLogger,
-                  "Warnings while loading image:\n- {}",
-                  CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
-            }
-
-            CesiumGltf::ImageCesium& image = loadedImage.image.value();
-
-            int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
-
-            if (image.width > 0 && image.height > 0 &&
-                image.pixelData.size() >=
-                    static_cast<size_t>(
-                        image.width * image.height * bytesPerPixel)) {
-              void* pRendererResources =
-                  pPrepareRendererResources->prepareRasterInLoadThread(image);
-
-              LoadResult result;
-              result.state = RasterOverlayTile::LoadState::Loaded;
-              result.image = std::move(image);
-              result.credits = std::move(loadedImage.credits);
-              result.pRendererResources = pRendererResources;
-              return result;
-            }
-            LoadResult result;
-            result.pRendererResources = nullptr;
-            result.state = RasterOverlayTile::LoadState::Failed;
-            return result;
+            return createLoadResultFromLoadedImage(
+                tileId,
+                pPrepareRendererResources,
+                pLogger,
+                std::move(loadedImage));
           })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
         tile._pRendererResources = result.pRendererResources;
