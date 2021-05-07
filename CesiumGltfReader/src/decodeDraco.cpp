@@ -107,7 +107,8 @@ void copyDecodedIndices(
   }
 
   if (pIndicesAccessor->count != pMesh->num_faces() * 3) {
-    readModel.warnings.emplace_back("indices accessor doesn't match with decoded Draco indices");
+    readModel.warnings.emplace_back(
+        "indices accessor doesn't match with decoded Draco indices");
     pIndicesAccessor->count = pMesh->num_faces() * 3;
   }
 
