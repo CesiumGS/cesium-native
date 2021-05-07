@@ -40,13 +40,12 @@ struct CESIUMGLTF_API ModelEXT_feature_metadata final
    * @brief A dictionary, where each key is a feature table ID and each value is
    * an object defining the feature table.
    */
-  std::unordered_map<std::string, std::optional<FeatureTable>> featureTables;
+  std::unordered_map<std::string, FeatureTable> featureTables;
 
   /**
    * @brief A dictionary, where each key is a feature texture ID and each value
    * is an object defining the feature texture.
    */
-  std::unordered_map<std::string, std::optional<FeatureTexture>>
-      featureTextures;
+  std::unordered_map<std::string, FeatureTexture> featureTextures;
 };
 } // namespace CesiumGltf

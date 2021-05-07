@@ -15,7 +15,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Material;
 
 class MaterialJsonHandler : public NamedObjectJsonHandler {
 public:

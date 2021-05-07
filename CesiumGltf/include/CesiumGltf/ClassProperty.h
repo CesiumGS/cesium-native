@@ -8,8 +8,6 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <variant>
-#include <vector>
 
 namespace CesiumGltf {
 /**
@@ -70,7 +68,7 @@ struct CESIUMGLTF_API ClassProperty final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values: they always correspond to the integer values.
    */
-  std::variant<double, std::vector<double>> max;
+  CesiumUtility::JsonValue max;
 
   /**
    * @brief Minimum allowed values for property values. Only applicable for
@@ -79,7 +77,7 @@ struct CESIUMGLTF_API ClassProperty final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values: they always correspond to the integer values.
    */
-  std::variant<double, std::vector<double>> min;
+  CesiumUtility::JsonValue min;
 
   /**
    * @brief A default value to use when the property value is not defined. If
@@ -89,8 +87,7 @@ struct CESIUMGLTF_API ClassProperty final : public ExtensibleObject {
    * `ENUM` use the enum `name`, not the integer value. For `ARRAY` use a JSON
    * array containing values matching the `componentType`.
    */
-  std::variant<bool, double, std::string, std::vector<CesiumUtility::JsonValue>>
-      defaultProperty;
+  CesiumUtility::JsonValue defaultProperty;
 
   /**
    * @brief If true, this property is optional.

@@ -29,6 +29,6 @@ struct CESIUMGLTF_API FeatureTexture final : public ExtensibleObject {
    * class' `properties` dictionary and each value describes the texture
    * channels containing property values.
    */
-  std::unordered_map<std::string, std::optional<TextureAccessor>> properties;
+  std::unordered_map<std::string, TextureAccessor> properties;
 };
 } // namespace CesiumGltf

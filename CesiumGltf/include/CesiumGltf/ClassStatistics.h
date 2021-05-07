@@ -26,6 +26,6 @@ struct CESIUMGLTF_API ClassStatistics final : public ExtensibleObject {
    * class' `properties` dictionary and each value is an object containing
    * statistics about property values.
    */
-  std::unordered_map<std::string, std::optional<PropertyStatistics>> properties;
+  std::unordered_map<std::string, PropertyStatistics> properties;
 };
 } // namespace CesiumGltf

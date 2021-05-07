@@ -30,6 +30,6 @@ struct CESIUMGLTF_API Class final : public ExtensibleObject {
    * @brief A dictionary, where each key is a property ID and each value is an
    * object defining the property.
    */
-  std::unordered_map<std::string, std::optional<ClassProperty>> properties;
+  std::unordered_map<std::string, ClassProperty> properties;
 };
 } // namespace CesiumGltf

@@ -36,7 +36,6 @@ struct CESIUMGLTF_API FeatureTable final : public ExtensibleObject {
    * property values are stored. Optional properties may be excluded from this
    * dictionary.
    */
-  std::unordered_map<std::string, std::optional<FeatureTableProperty>>
-      properties;
+  std::unordered_map<std::string, FeatureTableProperty> properties;
 };
 } // namespace CesiumGltf

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltf/ReaderContext.h"
+#include "CesiumGltf/Schema.h"
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "ClassJsonHandler.h"
@@ -11,7 +12,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Schema;
 
 class SchemaJsonHandler : public ExtensibleObjectJsonHandler {
 public:
@@ -33,10 +33,7 @@ private:
   CesiumJsonReader::StringJsonHandler _name;
   CesiumJsonReader::StringJsonHandler _description;
   CesiumJsonReader::StringJsonHandler _version;
-  CesiumJsonReader::
-      DictionaryJsonHandler<std::optional<Class>, ClassJsonHandler>
-          _classes;
-  CesiumJsonReader::DictionaryJsonHandler<std::optional<Enum>, EnumJsonHandler>
-      _enums;
+  CesiumJsonReader::DictionaryJsonHandler<Class, ClassJsonHandler> _classes;
+  CesiumJsonReader::DictionaryJsonHandler<Enum, EnumJsonHandler> _enums;
 };
 } // namespace CesiumGltf

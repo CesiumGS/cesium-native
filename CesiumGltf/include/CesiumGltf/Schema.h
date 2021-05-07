@@ -36,12 +36,12 @@ struct CESIUMGLTF_API Schema final : public ExtensibleObject {
    * @brief A dictionary, where each key is a class ID and each value is an
    * object defining the class.
    */
-  std::unordered_map<std::string, std::optional<Class>> classes;
+  std::unordered_map<std::string, Class> classes;
 
   /**
    * @brief A dictionary, where each key is an enum ID and each value is an
    * object defining the values for the enum.
    */
-  std::unordered_map<std::string, std::optional<Enum>> enums;
+  std::unordered_map<std::string, Enum> enums;
 };
 } // namespace CesiumGltf

@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CesiumGltf/ReaderContext.h"
+#include "CesiumGltf/Statistics.h"
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "ClassStatisticsJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Statistics;
 
 class StatisticsJsonHandler : public ExtensibleObjectJsonHandler {
 public:
@@ -28,9 +28,8 @@ protected:
 
 private:
   Statistics* _pObject = nullptr;
-  CesiumJsonReader::DictionaryJsonHandler<
-      std::optional<ClassStatistics>,
-      ClassStatisticsJsonHandler>
-      _classes;
+  CesiumJsonReader::
+      DictionaryJsonHandler<ClassStatistics, ClassStatisticsJsonHandler>
+          _classes;
 };
 } // namespace CesiumGltf

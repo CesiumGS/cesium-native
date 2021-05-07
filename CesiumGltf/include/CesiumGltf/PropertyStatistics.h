@@ -4,9 +4,8 @@
 
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+#include "CesiumUtility/JsonValue.h"
 #include <unordered_map>
-#include <variant>
-#include <vector>
 
 namespace CesiumGltf {
 /**
@@ -22,7 +21,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * number of elements. The `normalized` property has no effect on these
    * values.
    */
-  std::variant<double, std::vector<double>> min;
+  CesiumUtility::JsonValue min;
 
   /**
    * @brief The maximum property value. Only applicable for numeric types and
@@ -31,7 +30,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * number of elements. The `normalized` property has no effect on these
    * values.
    */
-  std::variant<double, std::vector<double>> max;
+  CesiumUtility::JsonValue max;
 
   /**
    * @brief The arithmetic mean of the property values. Only applicable for
@@ -40,7 +39,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values.
    */
-  std::variant<double, std::vector<double>> mean;
+  CesiumUtility::JsonValue mean;
 
   /**
    * @brief The median of the property values. Only applicable for numeric types
@@ -49,7 +48,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values.
    */
-  std::variant<double, std::vector<double>> median;
+  CesiumUtility::JsonValue median;
 
   /**
    * @brief The standard deviation of the property values. Only applicable for
@@ -58,7 +57,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values.
    */
-  std::variant<double, std::vector<double>> standardDeviation;
+  CesiumUtility::JsonValue standardDeviation;
 
   /**
    * @brief The variance of the property values. Only applicable for numeric
@@ -67,7 +66,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values.
    */
-  std::variant<double, std::vector<double>> variance;
+  CesiumUtility::JsonValue variance;
 
   /**
    * @brief The sum of the property values. Only applicable for numeric types
@@ -76,7 +75,7 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * `componentCount` number of elements. The `normalized` property has no
    * effect on these values.
    */
-  std::variant<double, std::vector<double>> sum;
+  CesiumUtility::JsonValue sum;
 
   /**
    * @brief A dictionary, where each key corresponds to an enum `name` and each
@@ -84,7 +83,6 @@ struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
    * `type` or `componentType` is `ENUM`. For fixed-length arrays, this is an
    * array with `componentCount` number of elements.
    */
-  std::unordered_map<std::string, std::variant<double, std::vector<double>>>
-      occurrences;
+  std::unordered_map<std::string, CesiumUtility::JsonValue> occurrences;
 };
 } // namespace CesiumGltf
