@@ -10,6 +10,8 @@
 
 ##### Fixes :wrench:
 
+- Fixed a bug where development package crashes when exit due to use-after-free bug in `RasterOverlayTile` destructor.
+
 ### v0.3.0 - 2021-05-03
 
 ##### Breaking Changes :mega:
