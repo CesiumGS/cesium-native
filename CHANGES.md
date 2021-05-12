@@ -12,6 +12,7 @@
 ##### Fixes :wrench:
 
 - Matched draco's decoded indices to gltf primitive if indices attribute does not match with the decompressed indices.
+- Fixed a memory leak when loading textures from a glTF model.
 
 ### v0.3.0 - 2021-05-03
 
