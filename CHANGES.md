@@ -1,5 +1,11 @@
 # Change Log
 
+### v?.?.? - ????-??-??
+
+##### Fixes :wrench:
+
+- Fixed a memory leak when loading textures from a glTF model.
+
 ### v0.3.0 - 2021-05-03
 
 ##### Breaking Changes :mega:
