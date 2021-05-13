@@ -7,10 +7,13 @@
 ##### Additions :tada:
 
 - Added `Cesium3DTiles::TileIdUtilities` with a `createTileIdString` function to create logging/debugging strings for `TileID` objects.
+- Accessing the same Bing Maps layer multiple times in a single application run now reuses the same Bing Maps session instead of starting a new one each time.
 
 ##### Fixes :wrench:
 
-- Fixed a bug where development package crashes when exit due to use-after-free bug in `RasterOverlayTile` destructor.
+- Matched draco's decoded indices to gltf primitive if indices attribute does not match with the decompressed indices.
+- Fixed a memory leak when loading textures from a glTF model.
+- Fixed a use-after-free bug that could cause a crash when destroying a `RasterOverlay`.
 
 ### v0.3.0 - 2021-05-03
 
@@ -31,7 +34,6 @@
 ##### Fixes :wrench:
 
 - Let a tile be renderable if all its raster overlays are ready, even if some are still loading.
-- Accessing the same Bing Maps layer multiple times in a single application run now reuses the same Bing Maps session instead of starting a new one each time.
 
 ### v0.2.0 - 2021-04-19
 
