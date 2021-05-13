@@ -1,11 +1,11 @@
 # Change Log
 
-### v?.?.? - ????-??-??
+### v0.3.1 - 2021-05-13
 
 ##### Fixes :wrench:
 
 - Fixed a memory leak when loading textures from a glTF model.
-- Fixed a bug where development package crashes when exit due to use-after-free bug in `RasterOverlayTile` destructor.
+- Fixed a use-after-free bug that could cause a crash when destroying a `RasterOverlay`.
 
 ### v0.3.0 - 2021-05-03
 
