@@ -36,7 +36,16 @@ RasterOverlay::RasterOverlay(const RasterOverlayOptions& options)
       _isLoadingTileProvider(false),
       _options(options) {}
 
-RasterOverlay::~RasterOverlay() {}
+RasterOverlay::~RasterOverlay() {
+  // explicitly set those to nullptr, because RasterOverlayTile destructor
+  // relies on nullptr check to retrieve the correct provider. If we let
+  // unique_ptr() destructor called implicitly, pTileProvider will get
+  // destructed first, but it will never set to be nullptr. So when
+  // _pPlaceholder is destroyed, its _pPlaceholder and _tiles member destructor
+  // will retrieve _pTileProvider instead of _pPlaceholder and it crashes
+  this->_pTileProvider = nullptr;
+  this->_pPlaceholder = nullptr;
+}
 
 RasterOverlayTileProvider* RasterOverlay::getTileProvider() noexcept {
   return this->_pTileProvider ? this->_pTileProvider.get()
