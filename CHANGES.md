@@ -12,6 +12,11 @@
 ##### Fixes :wrench:
 
 - Matched draco's decoded indices to gltf primitive if indices attribute does not match with the decompressed indices.
+
+### v0.3.1 - 2021-05-13
+
+##### Fixes :wrench:
+
 - Fixed a memory leak when loading textures from a glTF model.
 - Fixed a use-after-free bug that could cause a crash when destroying a `RasterOverlay`.
 
