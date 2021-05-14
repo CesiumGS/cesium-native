@@ -91,9 +91,9 @@ const processed = {};
 
 while (schemas.length > 0) {
   const schema = schemas.pop();
-  if (processed[schema.title]) {
+  if (processed[schema.sourcePath]) {
     continue;
   }
-  processed[schema.title] = true;
+  processed[schema.sourcePath] = true;
   schemas.push(...generate(options, schema));
 }

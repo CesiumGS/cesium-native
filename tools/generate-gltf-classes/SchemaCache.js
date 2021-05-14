@@ -31,6 +31,7 @@ class SchemaCache {
         this.extensionPath = extensionPath;
         this.cache = {};
         this.contextStack = [];
+        this.byTitle = {};
     }
 
     load(name) {
@@ -65,6 +66,14 @@ class SchemaCache {
         const result = JSON.parse(jsonString);
         result.sourcePath = path;
         this.cache[path] = result;
+
+        const upperTitle = result.title.toUpperCase();
+        if (this.byTitle[upperTitle]) {
+            console.warn(`*** Two schema files share the same title, things will be broken:\n  ${this.byTitle[upperTitle].sourcePath}\n  ${path}`);
+        }
+
+        this.byTitle[upperTitle] = result;
+
         return result;
     }
 
@@ -80,6 +89,14 @@ class SchemaCache {
         const result = JSON.parse(jsonString, "utf-8");
         result.sourcePath = path;
         this.cache[name] = result;
+
+        const upperTitle = result.title.toUpperCase();
+        if (this.byTitle[upperTitle]) {
+            console.warn(`*** Two schema files share the same title, things will be broken:\n  ${this.byTitle[upperTitle].sourcePath}\n  ${path}`);
+        }
+
+        this.byTitle[result.title.toUpperCase()] = result;
+
         return result;
     }
 

@@ -1,8 +1,9 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
-#include "CesiumGltf/PrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "CesiumGltf/PrimitiveEXT_feature_metadata.h"
+#include "upgradeBatchTableToFeatureMetadata.h"
 #include <cstddef>
 #include <rapidjson/document.h>
 #include <stdexcept>
@@ -69,76 +70,6 @@ rapidjson::Document parseFeatureTableJsonData(
   }
 
   return document;
-}
-
-void parseBatchTableData(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumGltf::Model& gltf,
-    const rapidjson::Document& featureTable,
-    const gsl::span<const std::byte>& batchTableJsonData,
-    const gsl::span<const std::byte>& /* batchTableBinaryData */) {
-
-  using namespace CesiumGltf;
-
-  // Parse the b3dm batch table and convert it to the EXT_feature_metadata
-  // extension.
-
-  // If the feature table is missing the BATCH_LENGTH semantic, ignore the batch
-  // table completely.
-  auto batchLengthIt = featureTable.FindMember("BATCH_LENGTH");
-  if (batchLengthIt == featureTable.MemberEnd() ||
-      !batchLengthIt->value.IsInt64()) {
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "The B3DM has a batch table, but it is being ignored because there is "
-        "no "
-        "BATCH_LENGTH semantic in the feature table or it is not an integer.");
-    return;
-  }
-
-  rapidjson::Document document;
-  document.Parse(
-      reinterpret_cast<const char*>(batchTableJsonData.data()),
-      batchTableJsonData.size());
-  if (document.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Error when parsing batch table JSON, error code {} at byte offset "
-        "{}",
-        document.GetParseError(),
-        document.GetErrorOffset());
-    return;
-  }
-
-  ModelEXT_feature_metadata modelExtension;
-  FeatureTable table;
-  FeatureTableProperty property;
-
-  // Create an EXT_feature_metadata extension for each primitive with a _BATCHID
-  // attribute.
-  for (Mesh& mesh : gltf.meshes) {
-    for (MeshPrimitive& primitive : mesh.primitives) {
-      auto batchIDIt = primitive.attributes.find("_BATCHID");
-      if (batchIDIt == primitive.attributes.end()) {
-        // This primitive has no batch ID, ignore it.
-        continue;
-      }
-
-      // Rename the _BATCHID attribute to _FEATURE_ID_0
-      primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
-      primitive.attributes.erase("_BATCHID");
-
-      // Create a feature extension
-      PrimitiveEXT_feature_metadata extension;
-      FeatureIDAttribute attribute;
-      attribute.attribute = "_FEATURE_ID_0";
-      extension.featureIdAttributes.emplace_back(attribute);
-      primitive.extensions.emplace(
-          PrimitiveEXT_feature_metadata::ExtensionName,
-          extension);
-    }
-  }
-
 }
 
 } // namespace
@@ -263,7 +194,7 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
         gsl::span<const std::byte> batchTableBinaryData = data.subspan(
             batchTableStart + header.batchTableJsonByteLength,
             header.batchTableBinaryByteLength);
-        parseBatchTableData(
+        upgradeBatchTableToFeatureMetadata(
             pLogger,
             gltf,
             featureTable,

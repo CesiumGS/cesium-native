@@ -10,6 +10,7 @@
 #include "SimpleTaskProcessor.h"
 #include "catch2/catch.hpp"
 #include "glm/mat4x4.hpp"
+#include "readFile.h"
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
@@ -18,19 +19,6 @@ using namespace CesiumAsync;
 using namespace Cesium3DTiles;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
-
-static std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
-  std::ifstream file(fileName, std::ios::binary | std::ios::ate);
-  REQUIRE(file);
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::vector<std::byte> buffer(static_cast<size_t>(size));
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
-
-  return buffer;
-}
 
 static bool doesTileMeetSSE(
     const ViewState& viewState,

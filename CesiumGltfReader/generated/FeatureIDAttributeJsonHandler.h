@@ -4,9 +4,9 @@
 
 #include "CesiumGltf/FeatureIDAttribute.h"
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+#include "FeatureIDsJsonHandler.h"
 
 namespace CesiumGltf {
 struct ReaderContext;
@@ -28,8 +28,7 @@ protected:
 
 private:
   FeatureIDAttribute* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _attribute;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _constant;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _divisor;
+  CesiumJsonReader::StringJsonHandler _featureTable;
+  FeatureIDsJsonHandler _featureIds;
 };
 } // namespace CesiumGltf

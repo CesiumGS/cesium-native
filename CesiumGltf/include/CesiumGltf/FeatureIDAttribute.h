@@ -3,37 +3,29 @@
 #pragma once
 
 #include "CesiumGltf/ExtensibleObject.h"
+#include "CesiumGltf/FeatureIDs.h"
 #include "CesiumGltf/Library.h"
-#include <cstdint>
-#include <optional>
 #include <string>
 
 namespace CesiumGltf {
 /**
- * @brief Feature IDs to be used as indices to property arrays in the feature
- * table.
+ * @brief An object mapping feature IDs to a feature table.
  */
 struct CESIUMGLTF_API FeatureIDAttribute final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureIDAttribute";
 
   /**
-   * @brief The name of the attribute containing feature IDs.
+   * @brief The ID of the feature table in the model's root
+   * `EXT_feature_metadata.featureTables` dictionary.
    */
-  std::optional<std::string> attribute;
+  std::string featureTable;
 
   /**
-   * @brief Sets a constant feature ID when the attribute property is omitted.
+   * @brief An object describing feature IDs to be used as indices to property
+   * arrays in the feature table. Feature IDs must be whole numbers in the range
+   * `[0, count - 1]` (inclusive), where `count` is the total number of features
+   * in the feature table.
    */
-  int64_t constant = 0;
-
-  /**
-   * @brief The rate at which feature IDs increment. If `divisor` is 0 then
-   * `constant` is used. If `divisor` is non-zero the feature ID increments once
-   * per `divisor` sets of elements, starting at `constant`. For example, if
-   * `constant` is 0 and `divisor` is 1 the feature IDs are [0, 1, 2, ...]; if
-   * `constant` is 2 and `divisor` is 3 the feature IDs are [2, 2, 2, 3, 3, 3,
-   * 4, 4, 4, ...]
-   */
-  int64_t divisor = 0;
+  FeatureIDs featureIds;
 };
 } // namespace CesiumGltf

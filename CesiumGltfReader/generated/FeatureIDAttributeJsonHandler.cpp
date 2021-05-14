@@ -11,9 +11,8 @@ using namespace CesiumGltf;
 FeatureIDAttributeJsonHandler::FeatureIDAttributeJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context),
-      _attribute(),
-      _constant(),
-      _divisor() {}
+      _featureTable(),
+      _featureIds(context) {}
 
 void FeatureIDAttributeJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -38,12 +37,10 @@ FeatureIDAttributeJsonHandler::readObjectKeyFeatureIDAttribute(
     FeatureIDAttribute& o) {
   using namespace std::string_literals;
 
-  if ("attribute"s == str)
-    return property("attribute", this->_attribute, o.attribute);
-  if ("constant"s == str)
-    return property("constant", this->_constant, o.constant);
-  if ("divisor"s == str)
-    return property("divisor", this->_divisor, o.divisor);
+  if ("featureTable"s == str)
+    return property("featureTable", this->_featureTable, o.featureTable);
+  if ("featureIds"s == str)
+    return property("featureIds", this->_featureIds, o.featureIds);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
