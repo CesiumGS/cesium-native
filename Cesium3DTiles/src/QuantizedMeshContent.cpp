@@ -1090,6 +1090,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   primitive.extras.emplace("OnlyWater", meshView->onlyWater);
   primitive.extras.emplace("OnlyLand", meshView->onlyLand);
 
+  // TODO: use KHR_texture_transform
   primitive.extras.emplace("WaterMaskTranslationX", 0.0);
   primitive.extras.emplace("WaterMaskTranslationY", 0.0);
   primitive.extras.emplace("WaterMaskScale", 1.0);

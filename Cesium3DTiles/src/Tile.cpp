@@ -9,6 +9,7 @@
 #include "CesiumGeometry/Axis.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
+#include <set>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -142,7 +143,9 @@ void Tile::loadContent() {
   // aligned like geographic or web mercator, because we won't know our raster
   // rectangle until we can project each vertex.
 
-  std::vector<Projection> projections;
+  // Accumulate needed projections by name to avoid duplicates. For now they
+  // can only be "Web Mercator" or "Geographic". 
+  std::set<std::string> projections_str;
 
   const CesiumGeospatial::GlobeRectangle* pRectangle =
       Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
@@ -201,10 +204,35 @@ void Tile::loadContent() {
     //     }
     // }
 
-    projections.push_back(WebMercatorProjection());
+    projections_str.insert("Web Mercator");
 
     // Only add geographic coordinates for the watermask, currently.
     if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
+      projections_str.insert("Geographic");
+    }
+  }
+
+  // add geographic texture coordinates for any 
+  bool withinClippingBounds = false;
+  if (pRectangle) {
+    const std::vector<std::optional<CesiumGeospatial::GlobeRectangle>>& boundingBoxes = 
+        this->getTileset()->getOptions().cullingPolygonsBoundingBoxes;
+    for (size_t i = 0; i < boundingBoxes.size(); ++i) {
+      if (boundingBoxes[i] && pRectangle->intersect(*boundingBoxes[i])) {
+        projections_str.insert("Geographic");
+        withinClippingBounds = true;
+        break;
+      }
+    }
+  }
+
+  // convert accumulated projection names to the corresponding projections 
+  std::vector<Projection> projections;
+  for (const std::string& projectionName : projections_str) {
+    if (projectionName == "Web Mercator") {
+      projections.push_back(WebMercatorProjection());
+    }
+    else if (projectionName == "Geographic") {
       projections.push_back(GeographicProjection());
     }
   }
@@ -242,11 +270,38 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
+  /*
+  // EXPERIMENTAL - CUT THIS DOWN
+  struct CullingPolygon {
+    std::vector<glm::dvec2> vertices;
+    std::vector<uint32_t> indices;
+    CesiumGeospatial::GlobeRectangle boundingBox;
+  };
+
+  std::vector<CullingPolygon> cullingPolygons;
+  if (withinClippingBounds) {
+    size_t cullingPolygonsSize = this->getTileset()->getOptions().cullingPolygons.size();
+    cullingPolygons.resize(cullingPolygonsSize);
+    for (size_t i = 0; i < cullingPolygonsSize; ++i) {
+      const std::optional<CesiumGeospatial::GlobeRectangle>& boundingBox = 
+        this->getTileset()->getOptions().cullingPolygonsBoundingBoxes[i];
+      if (!boundingBox) {
+        continue;
+      }
+      cullingPolygons.push_back(CullingPolygon{
+        this->getTileset()->getOptions().cullingPolygons[i],
+        this->getTileset()->getOptions().cullingPolygonsIndices[i],
+        *boundingBox});
+    }
+  }*/
+
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
+           //cullingPolygons = std::move(cullingPolygons),
+           withinClippingBounds,
            gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
@@ -294,17 +349,67 @@ void Tile::loadContent() {
 
               if (pContent->model) {
 
+                CesiumGltf::Model& model = pContent->model.value();
+
                 // TODO The `extras` are currently the only way to pass
                 // arbitrary information to the consumer, so the up-axis
                 // is stored here:
-                pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
+                model.extras["gltfUpAxis"] = gltfUpAxis;
 
                 const BoundingVolume& boundingVolume =
                     loadInput.tileBoundingVolume;
                 Tile::generateTextureCoordinates(
-                    pContent->model.value(),
+                    model,
                     boundingVolume,
                     projections);
+
+                // TODO factor out into helper function
+                // rasterize culling polygons into the tile's bounding rectangle
+                //const CesiumGeospatial::GlobeRectangle* pRectangle =
+                //    Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+                if (withinClippingBounds) {// && pRectangle) {
+                  // Create opacity mask texture
+
+                  // create source image
+                  size_t clippingMaskImageId = model.images.size();
+                  model.images.emplace_back();
+                  CesiumGltf::Image& clippingMaskImage = model.images[clippingMaskImageId];
+                  clippingMaskImage.cesium.width = 256;
+                  clippingMaskImage.cesium.height = 256;
+                  clippingMaskImage.cesium.channels = 1;
+                  clippingMaskImage.cesium.bytesPerChannel = 1;
+                  clippingMaskImage.cesium.pixelData.resize(65536);
+                  // TEMP - hardcoded opacity mask
+                  std::memset(clippingMaskImage.cesium.pixelData.data(), 0xff, 256 * 256);
+                  for (size_t j = 0; j < 256; ++j) {
+                    std::memset(&clippingMaskImage.cesium.pixelData[256 * j], 0, j);
+                  }
+
+                  // create sampler parameters
+                  size_t clippingMaskSamplerId = model.samplers.size();
+                  model.samplers.emplace_back();
+                  CesiumGltf::Sampler& clippingMaskSampler = model.samplers[clippingMaskSamplerId];
+                  clippingMaskSampler.magFilter = CesiumGltf::Sampler::MagFilter::LINEAR;
+                  clippingMaskSampler.minFilter =
+                      CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
+                  clippingMaskSampler.wrapS = CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
+                  clippingMaskSampler.wrapT = CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
+
+                  // create texture
+                  size_t clippingMaskTextureId = model.textures.size();
+                  model.textures.emplace_back();
+                  CesiumGltf::Texture& clippingMaskTexture = model.textures[clippingMaskTextureId];
+                  clippingMaskTexture.sampler = int32_t(clippingMaskSamplerId);
+                  clippingMaskTexture.source = int32_t(clippingMaskImageId);
+
+                  // put the opacity mask in the extras
+                  model.extras.emplace("ClippingMaskTex", int32_t(clippingMaskTextureId));
+
+                  // TODO: use KHR_texture_transform
+                  model.extras.emplace("ClippingMaskTranslationX", 0.0);
+                  model.extras.emplace("ClippingMaskTranslationY", 0.0);
+                  model.extras.emplace("ClippingMaskScale", 1.0);
+                }
 
                 if (pPrepareRendererResources) {
                   const glm::dmat4& transform = loadInput.tileTransform;

@@ -110,7 +110,7 @@ Model upsampleGltfForRasterOverlays(
   result.extensionsUsed = parentModel.extensionsUsed;
   result.extensionsRequired = parentModel.extensionsRequired;
   result.asset = parentModel.asset;
-  // result.extras = parentModel.extras;
+  result.extras = parentModel.extras;
   // result.extensions = parentModel.extensions;
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;

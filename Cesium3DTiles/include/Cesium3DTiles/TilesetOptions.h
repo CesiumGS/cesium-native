@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <glm/glm.hpp>
 
 namespace Cesium3DTiles {
 
@@ -145,14 +146,6 @@ struct CESIUM3DTILES_API TilesetOptions {
   int64_t maximumCachedBytes = 512 * 1024 * 1024;
 
   /**
-   * @brief Whether to request and render the water mask.
-   *
-   * Currently only applicable for quantized-mesh tilesets that support the
-   * water mask extension.
-   */
-  bool enableWaterMask = false;
-
-  /**
    * @brief A table that maps the camera height above the ellipsoid to a fog
    * density. Tiles that are in full fog are culled. The density of the fog
    * increases as this number approaches 1.0 and becomes less dense as it
@@ -183,6 +176,23 @@ struct CESIUM3DTILES_API TilesetOptions {
    * types.
    */
   bool renderTilesUnderCamera = true;
+
+  /**
+   * TODO COMBINE INTO ARRAY OF CULLING SELECTION STRUCT
+   * maybe should even be calculated in cesium-native instead
+   */
+  std::vector<std::vector<glm::dvec2>> cullingPolygons;
+
+  /**
+   *
+   */
+  std::vector<std::vector<uint32_t>> cullingPolygonsIndices;
+
+  /**
+   *
+   */
+  std::vector<std::optional<CesiumGeospatial::GlobeRectangle>>
+      cullingPolygonsBoundingBoxes;
 
   /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
