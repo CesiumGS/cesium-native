@@ -285,6 +285,7 @@ void updateExtensionWithJsonNumericProperty(
   bufferView.buffer = int32_t(bufferIndex);
   bufferView.byteOffset = 0;
   bufferView.byteStride = sizeof(T);
+  bufferView.byteLength = buffer.byteLength;
 
   featureTableProperty.bufferView = int32_t(bufferViewIndex);
 
