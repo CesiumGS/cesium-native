@@ -2,7 +2,7 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "CesiumGltf/PrimitiveEXT_feature_metadata.h"
+#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include <rapidjson/document.h>
 
 using namespace CesiumGltf;
@@ -83,7 +83,8 @@ void upgradeBatchTableToFeatureMetadata(
         batchTableBinaryData.end());
   }
 
-  ModelEXT_feature_metadata modelExtension;
+  ModelEXT_feature_metadata& modelExtension =
+      gltf.addExtension<ModelEXT_feature_metadata>();
   Schema& schema = modelExtension.schema.emplace();
   Class& classDefinition =
       schema.classes.emplace("default", Class()).first->second;
@@ -130,14 +131,12 @@ void upgradeBatchTableToFeatureMetadata(
       primitive.attributes.erase("_BATCHID");
 
       // Create a feature extension
-      PrimitiveEXT_feature_metadata extension;
-      FeatureIDAttribute attribute;
+      MeshPrimitiveEXT_feature_metadata& extension =
+          primitive.addExtension<MeshPrimitiveEXT_feature_metadata>();
+      FeatureIDAttribute& attribute =
+          extension.featureIdAttributes.emplace_back();
       attribute.featureTable = "default";
       attribute.featureIds.attribute = "_FEATURE_ID_0";
-      extension.featureIdAttributes.emplace_back(attribute);
-      primitive.extensions.emplace(
-          PrimitiveEXT_feature_metadata::ExtensionName,
-          extension);
     }
   }
 }
@@ -269,23 +268,26 @@ void updateExtensionWithJsonNumericProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTable& featureTable,
-    FeatureTableProperty& /* featureTableProperty */,
+    FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue,
     const std::string& typeName) {
-  
+
   classProperty.type = typeName;
-  
+
   // Create a new buffer for this property.
   size_t bufferIndex = gltf.buffers.size();
   Buffer& buffer = gltf.buffers.emplace_back();
   buffer.byteLength = sizeof(T) * featureTable.count;
   buffer.cesium.data.resize(buffer.byteLength);
 
+  size_t bufferViewIndex = gltf.bufferViews.size();
   BufferView& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = int32_t(bufferIndex);
   bufferView.byteOffset = 0;
   bufferView.byteStride = sizeof(T);
-  
+
+  featureTableProperty.bufferView = int32_t(bufferViewIndex);
+
   assert(propertyValue.Size() == featureTable.count);
   T* p = reinterpret_cast<T*>(buffer.cesium.data.data());
 

@@ -2,7 +2,6 @@
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "CesiumGltf/PrimitiveEXT_feature_metadata.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
 #include <cstddef>
 #include <rapidjson/document.h>
