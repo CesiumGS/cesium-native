@@ -7,15 +7,157 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
+#include "CesiumGeospatial/Transforms.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include <cstddef>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <set>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace std::string_literals;
+
+namespace {
+struct GetGlobeRectangle {
+  std::optional<CesiumGeospatial::GlobeRectangle>
+  operator()(const CesiumGeometry::BoundingSphere& boundingSphere) {
+    const glm::dvec3& centerEcef = boundingSphere.getCenter();
+    double radius = boundingSphere.getRadius();
+
+    glm::dmat4 enuToEcef =
+        CesiumGeospatial::Transforms::eastNorthUpToFixedFrame(
+            centerEcef /*, ellipsoid*/);
+    glm::dmat4 ecefBounds = enuToEcef * glm::dmat4(
+                                            radius,
+                                            0.0,
+                                            0.0,
+                                            1.0,
+                                            -radius,
+                                            0.0,
+                                            0.0,
+                                            1.0,
+                                            0.0,
+                                            radius,
+                                            0.0,
+                                            1.0,
+                                            0.0,
+                                            -radius,
+                                            0.0,
+                                            1.0);
+
+    std::optional<CesiumGeospatial::Cartographic> east =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            ecefBounds[0]);
+    std::optional<CesiumGeospatial::Cartographic> west =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            ecefBounds[1]);
+    std::optional<CesiumGeospatial::Cartographic> north =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            ecefBounds[2]);
+    std::optional<CesiumGeospatial::Cartographic> south =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            ecefBounds[3]);
+
+    if (!east || !west || !north || !south) {
+      return std::nullopt;
+    }
+
+    return CesiumGeospatial::GlobeRectangle(
+        west->longitude,
+        south->latitude,
+        east->longitude,
+        north->latitude);
+  }
+
+  std::optional<CesiumGeospatial::GlobeRectangle>
+  operator()(const CesiumGeometry::OrientedBoundingBox& orientedBoundingBox) {
+    const glm::dvec3& centerEcef = orientedBoundingBox.getCenter();
+    glm::dmat3 enuToEcef =
+        CesiumGeospatial::Transforms::eastNorthUpToFixedFrame(
+            centerEcef /*, ellipsoid*/);
+    const glm::dmat3& halfAxes = orientedBoundingBox.getHalfAxes();
+    glm::dmat3 obbToEnu = glm::affineInverse(enuToEcef) * halfAxes;
+
+    constexpr glm::dvec3 obbVertices[] = {
+        glm::dvec3(1.0, 1.0, 1.0),
+        glm::dvec3(1.0, 1.0, -1.0),
+        glm::dvec3(1.0, -1.0, 1.0),
+        glm::dvec3(1.0, -1.0, -1.0),
+        glm::dvec3(-1.0, 1.0, 1.0),
+        glm::dvec3(-1.0, 1.0, -1.0),
+        glm::dvec3(-1.0, -1.0, 1.0),
+        glm::dvec3(-1.0, -1.0, -1.0)};
+
+    glm::dvec3 vert0Enu = obbToEnu * obbVertices[0];
+
+    int8_t eastmostIndex = 0;
+    double eastmostProjection = vert0Enu.x;
+    int8_t westmostIndex = 0;
+    double westmostProjection = vert0Enu.x;
+    int8_t northmostIndex = 0;
+    double northmostProjection = vert0Enu.y;
+    int8_t southmostIndex = 0;
+    double southmostProjection = vert0Enu.y;
+
+    for (int8_t i = 1; i < 8; ++i) {
+      glm::dvec3 vertEnu = obbToEnu * obbVertices[i];
+      if (vertEnu.x > eastmostProjection) {
+        eastmostProjection = vertEnu.x;
+        eastmostIndex = i;
+      }
+      if (vertEnu.x < westmostProjection) {
+        westmostProjection = vertEnu.x;
+        westmostIndex = i;
+      }
+      if (vertEnu.y > northmostProjection) {
+        northmostProjection = vertEnu.y;
+        northmostIndex = i;
+      }
+      if (vertEnu.y < southmostProjection) {
+        southmostProjection = vertEnu.y;
+        southmostIndex = i;
+      }
+    }
+
+    std::optional<CesiumGeospatial::Cartographic> east =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            halfAxes * obbVertices[eastmostIndex] + centerEcef);
+    std::optional<CesiumGeospatial::Cartographic> west =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            halfAxes * obbVertices[westmostIndex] + centerEcef);
+    std::optional<CesiumGeospatial::Cartographic> north =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            halfAxes * obbVertices[northmostIndex] + centerEcef);
+    std::optional<CesiumGeospatial::Cartographic> south =
+        CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+            halfAxes * obbVertices[southmostIndex] + centerEcef);
+
+    if (!east || !west || !north || !south) {
+      return std::nullopt;
+    }
+
+    return CesiumGeospatial::GlobeRectangle(
+        west->longitude,
+        south->latitude,
+        east->longitude,
+        north->latitude);
+  }
+
+  std::optional<CesiumGeospatial::GlobeRectangle>
+  operator()(const CesiumGeospatial::BoundingRegion& boundingRegion) {
+    return boundingRegion.getRectangle();
+  }
+
+  std::optional<CesiumGeospatial::GlobeRectangle>
+  operator()(const CesiumGeospatial::BoundingRegionWithLooseFittingHeights&
+                 boundingRegionWithLooseFittingHeights) {
+    return boundingRegionWithLooseFittingHeights.getBoundingRegion()
+        .getRectangle();
+  }
+};
+} // namespace
 
 namespace Cesium3DTiles {
 
@@ -148,8 +290,11 @@ void Tile::loadContent() {
   // can only be "Web Mercator" or "Geographic".
   std::set<std::string> projections_str;
 
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+  // const CesiumGeospatial::GlobeRectangle* pRectangle =
+  //    Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+  // TODO: change name if this works
+  std::optional<CesiumGeospatial::GlobeRectangle> pRectangle =
+      std::visit(GetGlobeRectangle(), this->getBoundingVolume());
   if (pRectangle && tileset.supportsRasterOverlays()) {
     // Map overlays to this tile.
     RasterOverlayCollection& overlays = tileset.getOverlays();
@@ -364,8 +509,10 @@ void Tile::loadContent() {
             // TODO factor out into helper function
             // rasterize culling polygons into the tile's bounding rectangle
 
-            const CesiumGeospatial::GlobeRectangle* pRectangle =
-                Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+            //const CesiumGeospatial::GlobeRectangle* pRectangle =
+            //    Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+            const std::optional<CesiumGeospatial::GlobeRectangle> pRectangle =
+                std::visit(GetGlobeRectangle(), boundingVolume);
             if (withinClippingBounds && pRectangle) {
               // TODO: fix
               double rectangleWidth =
@@ -925,9 +1072,12 @@ Tile::generateTextureCoordinates(
 
   // Generate texture coordinates for each projection.
   if (!projections.empty()) {
+    /*
     const CesiumGeospatial::GlobeRectangle* pRectangle =
         Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
-
+    */
+    std::optional<CesiumGeospatial::GlobeRectangle> pRectangle =
+        std::visit(GetGlobeRectangle(), boundingVolume);
     if (pRectangle) {
       for (size_t i = 0; i < projections.size(); ++i) {
         const Projection& projection = projections[i];

@@ -115,6 +115,35 @@ Model upsampleGltfForRasterOverlays(
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
 
+  double clippingMaskTranslationX = 0.0;
+  double clippingMaskTranslationY = 0.0;
+  double clippingMaskScale = 0.0;
+
+  auto clippingMaskTranslationXIt = parentModel.extras.find("ClippingMaskTranslationX");
+  auto clippingMaskTranslationYIt = parentModel.extras.find("ClippingMaskTranslationY");
+  auto clippingMaskScaleIt = parentModel.extras.find("ClippingMaskScale");
+
+  if (clippingMaskTranslationXIt != parentModel.extras.end() &&
+      clippingMaskTranslationXIt->second.isDouble() &&
+      clippingMaskTranslationYIt != parentModel.extras.end() &&
+      clippingMaskTranslationYIt->second.isDouble() &&
+      clippingMaskScaleIt != parentModel.extras.end() &&
+      clippingMaskScaleIt->second.isDouble()) {
+    clippingMaskScale = 0.5 * clippingMaskScaleIt->second.getDoubleOrDefault(0.0);
+    clippingMaskTranslationX =
+        clippingMaskTranslationXIt->second.getDoubleOrDefault(0.0) +
+        clippingMaskScale * (childID.tileID.x % 2);
+    clippingMaskTranslationY =
+        clippingMaskTranslationYIt->second.getDoubleOrDefault(0.0) +
+        clippingMaskScale * (childID.tileID.y % 2);
+  }
+
+  // result.extras.emplace("ClippingMaskTex", clippingMaskTextureId);
+
+  result.extras["ClippingMaskTranslationX"] = clippingMaskTranslationX;
+  result.extras["ClippingMaskTranslationY"] = clippingMaskTranslationY;
+  result.extras["ClippingMaskScale"] = clippingMaskScale;
+
   for (Mesh& mesh : result.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       upsamplePrimitiveForRasterOverlays(
