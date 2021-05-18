@@ -1,8 +1,9 @@
 #include "upgradeBatchTableToFeatureMetadata.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
+#include <map>
 #include <rapidjson/document.h>
 
 using namespace CesiumGltf;
@@ -11,6 +12,7 @@ namespace {
 
 void updateExtensionWithProperty(
     Model& gltf,
+    int64_t binaryBufferIndex,
     ClassProperty& classProperty,
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
@@ -23,6 +25,7 @@ void updateExtensionWithJsonProperty(
     const rapidjson::Value& propertyValue);
 void updateExtensionWithBinaryProperty(
     Model& gltf,
+    int64_t binaryBufferIndex,
     ClassProperty& classProperty,
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
@@ -110,6 +113,7 @@ void upgradeBatchTableToFeatureMetadata(
 
     updateExtensionWithProperty(
         gltf,
+        binaryBufferIndex,
         classProperty,
         featureTable,
         featureTableProperty,
@@ -145,8 +149,40 @@ void upgradeBatchTableToFeatureMetadata(
 
 namespace {
 
+struct CompatibleTypes {
+  bool isInt8 = true;
+  bool isUint8 = true;
+  bool isInt16 = true;
+  bool isUint16 = true;
+  bool isInt32 = true;
+  bool isUint32 = true;
+  bool isInt64 = true;
+  bool isUint64 = true;
+  bool isFloat32 = true;
+  bool isFloat64 = true;
+  bool isBool = true;
+};
+
+struct GltfFeatureTableType {
+  std::string typeName;
+  size_t typeSize;
+};
+
+const std::map<std::string, GltfFeatureTableType> b3dmComponentTypeToGltfType =
+    {
+        {"BYTE", GltfFeatureTableType{"INT8", sizeof(int8_t)}},
+        {"UNSIGNED_BYTE", GltfFeatureTableType{"UINT8", sizeof(uint8_t)}},
+        {"SHORT", GltfFeatureTableType{"INT16", sizeof(int16_t)}},
+        {"UNSIGNED_SHORT", GltfFeatureTableType{"UINT16", sizeof(uint16_t)}},
+        {"INT", GltfFeatureTableType{"INT32", sizeof(int32_t)}},
+        {"UNSIGNED_INT", GltfFeatureTableType{"UINT32", sizeof(uint32_t)}},
+        {"FLOAT", GltfFeatureTableType{"FLOAT32", sizeof(float)}},
+        {"DOUBLE", GltfFeatureTableType{"FLOAT64", sizeof(double)}},
+};
+
 void updateExtensionWithProperty(
     Model& gltf,
+    int64_t binaryBufferIndex,
     ClassProperty& classProperty,
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
@@ -162,6 +198,7 @@ void updateExtensionWithProperty(
   } else {
     updateExtensionWithBinaryProperty(
         gltf,
+        binaryBufferIndex,
         classProperty,
         featureTable,
         featureTableProperty,
@@ -182,20 +219,6 @@ template <typename T> bool isInRange(int64_t value) {
   return value >= std::numeric_limits<int8_t>::lowest() &&
          value <= std::numeric_limits<int8_t>::max();
 }
-
-struct CompatibleTypes {
-  bool isInt8 = true;
-  bool isUint8 = true;
-  bool isInt16 = true;
-  bool isUint16 = true;
-  bool isInt32 = true;
-  bool isUint32 = true;
-  bool isInt64 = true;
-  bool isUint64 = true;
-  bool isFloat32 = true;
-  bool isFloat64 = true;
-  bool isBool = true;
-};
 
 CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
   CompatibleTypes result{};
@@ -439,12 +462,72 @@ void updateExtensionWithJsonProperty(
 }
 
 void updateExtensionWithBinaryProperty(
-    Model& /* gltf */,
-    ClassProperty& /* classProperty */,
-    FeatureTable& /* featureTable */,
-    FeatureTableProperty& /* featureTableProperty */,
-    const rapidjson::Value& /* propertyValue */) {
-  // TODO
+    Model& gltf,
+    int64_t binaryBufferIndex,
+    ClassProperty& classProperty,
+    FeatureTable& featureTable,
+    FeatureTableProperty& featureTableProperty,
+    const rapidjson::Value& propertyValue) {
+  if (binaryBufferIndex < 0) {
+    return;
+  }
+
+  const auto& byteOffsetIt = propertyValue.FindMember("byteOffset");
+  if (byteOffsetIt == propertyValue.MemberEnd() ||
+      !byteOffsetIt->value.IsInt()) {
+    return;
+  }
+
+  const auto& componentTypeIt = propertyValue.FindMember("componentType");
+  if (componentTypeIt == propertyValue.MemberEnd() ||
+      !componentTypeIt->value.IsString()) {
+    return;
+  }
+
+  const auto& typeIt = propertyValue.FindMember("type");
+  if (typeIt == propertyValue.MemberEnd() || !typeIt->value.IsString()) {
+    return;
+  }
+
+  // convert class property
+  int32_t byteOffset = byteOffsetIt->value.GetInt();
+  const std::string& componentType = componentTypeIt->value.GetString();
+  const std::string& type = typeIt->value.GetString();
+
+  auto convertedTypeIt = b3dmComponentTypeToGltfType.find(componentType);
+  if (convertedTypeIt == b3dmComponentTypeToGltfType.end()) {
+    return;
+  }
+  const GltfFeatureTableType& gltfType = convertedTypeIt->second;
+
+  if (type == "SCALAR") {
+    classProperty.type = gltfType.typeName;
+  } else if (type == "VEC2") {
+    classProperty.type = "ARRAY";
+    classProperty.componentCount = 2;
+    classProperty.componentType = gltfType.typeName;
+  } else if (type == "VEC3") {
+    classProperty.type = "ARRAY";
+    classProperty.componentCount = 3;
+    classProperty.componentType = gltfType.typeName;
+  } else if (type == "VEC4") {
+    classProperty.type = "ARRAY";
+    classProperty.componentCount = 4;
+    classProperty.componentType = gltfType.typeName;
+  } else {
+    return;
+  }
+
+  // convert feature table
+  size_t typeSize = gltfType.typeSize;
+  auto& bufferView = gltf.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(binaryBufferIndex);
+  bufferView.byteOffset = byteOffset;
+  bufferView.byteStride = typeSize;
+  bufferView.byteLength = typeSize * featureTable.count;
+
+  featureTableProperty.bufferView =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 }
 
 } // namespace
