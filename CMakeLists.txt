@@ -53,6 +53,9 @@ if (OPT_BUILD_DOCUMENTATION)
     find_package(doxygen REQUIRED)
 endif()
 
+# Thirdparty not exists in conan
+add_subdirectory(extern)
+
 # Public Targets
 include(ConfigureTarget)
 add_subdirectory(CesiumUtility)

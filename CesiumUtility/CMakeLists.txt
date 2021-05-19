@@ -40,7 +40,8 @@ target_include_directories(
 target_link_libraries(CesiumUtility
     PUBLIC
         GSL
-        uriparser
+        uriparser::uriparser
+        glm::glm
 )
 
 install(TARGETS CesiumUtility

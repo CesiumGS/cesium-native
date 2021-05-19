@@ -47,5 +47,5 @@ target_link_libraries(CesiumGltfWriter
         CesiumGltf 
         modp_b64
     PRIVATE
-        magic_enum
+        magic_enum::magic_enum
 )

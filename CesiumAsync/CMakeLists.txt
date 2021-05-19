@@ -34,7 +34,6 @@ target_include_directories(
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         # SQLITE3 does not attach its include directory to
         # its target
-        ${CESIUM_NATIVE_SQLITE3_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/
@@ -43,9 +42,10 @@ target_include_directories(
 target_link_libraries(CesiumAsync
     PUBLIC
         GSL
-        Async++
+        Async++::Async++
+        spdlog::spdlog
     PRIVATE
-        sqlite3
+        SQLite::SQLite3
 )
 
 install(TARGETS CesiumAsync

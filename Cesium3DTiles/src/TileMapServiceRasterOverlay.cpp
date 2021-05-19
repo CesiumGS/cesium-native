@@ -9,7 +9,7 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "CesiumUtility/Uri.h"
-#include "tinyxml2.h"
+#include <tinyxml2.h>
 #include <cstddef>
 
 using namespace CesiumAsync;
