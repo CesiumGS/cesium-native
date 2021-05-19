@@ -1,3 +1,5 @@
+.vs
+CMakeSettings.json
 build
 doxygen
 Testing
