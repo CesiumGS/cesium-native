@@ -8,8 +8,8 @@
 #include <spdlog/fwd.h>
 #include <string>
 
-struct sqlite3;
-struct sqlite3_stmt;
+struct cqlite3;
+struct cqlite3_stmt;
 
 namespace CesiumAsync {
 
@@ -58,16 +58,16 @@ public:
 
 private:
   struct DeleteSqliteConnection {
-    void operator()(sqlite3* pConnection) noexcept;
+    void operator()(cqlite3* pConnection) noexcept;
   };
 
   struct DeleteSqliteStatement {
-    void operator()(sqlite3_stmt* pStmt) noexcept;
+    void operator()(cqlite3_stmt* pStmt) noexcept;
   };
 
-  using SqliteConnectionPtr = std::unique_ptr<sqlite3, DeleteSqliteConnection>;
+  using SqliteConnectionPtr = std::unique_ptr<cqlite3, DeleteSqliteConnection>;
   using SqliteStatementPtr =
-      std::unique_ptr<sqlite3_stmt, DeleteSqliteStatement>;
+      std::unique_ptr<cqlite3_stmt, DeleteSqliteStatement>;
 
   static SqliteStatementPtr prepareStatement(
       const SqliteConnectionPtr& pConnection,

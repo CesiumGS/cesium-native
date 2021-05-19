@@ -5,7 +5,7 @@
 #include "rapidjson/writer.h"
 #include <cstddef>
 #include <spdlog/spdlog.h>
-#include <sqlite3.h>
+#include <cqlite3.h>
 #include <stdexcept>
 #include <utility>
 
@@ -90,13 +90,13 @@ static std::string convertHeadersToString(const HttpHeaders& headers);
 static HttpHeaders convertStringToHeaders(const std::string& serializedHeaders);
 
 void SqliteCache::DeleteSqliteConnection::operator()(
-    sqlite3* pConnection) noexcept {
-  sqlite3_close_v2(pConnection);
+    cqlite3* pConnection) noexcept {
+  cqlite3_close_v2(pConnection);
 }
 
 void SqliteCache::DeleteSqliteStatement::operator()(
-    sqlite3_stmt* pStatement) noexcept {
-  sqlite3_finalize(pStatement);
+    cqlite3_stmt* pStatement) noexcept {
+  cqlite3_finalize(pStatement);
 }
 
 SqliteCache::SqliteCache(
@@ -113,19 +113,19 @@ SqliteCache::SqliteCache(
       _deleteExpiredStmtWrapper(),
       _deleteLRUStmtWrapper(),
       _clearAllStmtWrapper() {
-  sqlite3* pConnection;
-  int status = sqlite3_open(databaseName.c_str(), &pConnection);
+  cqlite3* pConnection;
+  int status = cqlite3_open(databaseName.c_str(), &pConnection);
   if (status != SQLITE_OK) {
-    throw std::runtime_error(sqlite3_errstr(status));
+    throw std::runtime_error(cqlite3_errstr(status));
   }
 
   this->_pConnection =
-      std::unique_ptr<sqlite3, DeleteSqliteConnection>(pConnection);
+      std::unique_ptr<cqlite3, DeleteSqliteConnection>(pConnection);
 
   // create cache tables if not exist. Key -> Cache table: one-to-many
   // relationship
   char* createTableError = nullptr;
-  status = sqlite3_exec(
+  status = cqlite3_exec(
       this->_pConnection.get(),
       CREATE_CACHE_TABLE_SQL.c_str(),
       nullptr,
@@ -133,13 +133,13 @@ SqliteCache::SqliteCache(
       &createTableError);
   if (status != SQLITE_OK) {
     std::string errorStr(createTableError);
-    sqlite3_free(createTableError);
+    cqlite3_free(createTableError);
     throw std::runtime_error(errorStr);
   }
 
   // turn on WAL mode
   char* walError = nullptr;
-  status = sqlite3_exec(
+  status = cqlite3_exec(
       this->_pConnection.get(),
       PRAGMA_WAL_SQL.c_str(),
       nullptr,
@@ -147,13 +147,13 @@ SqliteCache::SqliteCache(
       &walError);
   if (status != SQLITE_OK) {
     std::string errorStr(walError);
-    sqlite3_free(walError);
+    cqlite3_free(walError);
     throw std::runtime_error(errorStr);
   }
 
   // turn off synchronous mode
   char* syncError = nullptr;
-  status = sqlite3_exec(
+  status = cqlite3_exec(
       this->_pConnection.get(),
       PRAGMA_SYNC_SQL.c_str(),
       nullptr,
@@ -161,13 +161,13 @@ SqliteCache::SqliteCache(
       &syncError);
   if (status != SQLITE_OK) {
     std::string errorStr(syncError);
-    sqlite3_free(syncError);
+    cqlite3_free(syncError);
     throw std::runtime_error(errorStr);
   }
 
   // increase page size
   char* pageSizeError = nullptr;
-  status = sqlite3_exec(
+  status = cqlite3_exec(
       this->_pConnection.get(),
       PRAGMA_PAGE_SIZE_SQL.c_str(),
       nullptr,
@@ -175,7 +175,7 @@ SqliteCache::SqliteCache(
       &pageSizeError);
   if (status != SQLITE_OK) {
     std::string errorStr(pageSizeError);
-    sqlite3_free(pageSizeError);
+    cqlite3_free(pageSizeError);
     throw std::runtime_error(errorStr);
   }
 
@@ -212,30 +212,30 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   std::lock_guard<std::mutex> guard(this->_mutex);
 
   // get entry based on key
-  int status = sqlite3_reset(this->_getEntryStmtWrapper.get());
+  int status = cqlite3_reset(this->_getEntryStmtWrapper.get());
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return std::nullopt;
   }
 
-  status = sqlite3_clear_bindings(this->_getEntryStmtWrapper.get());
+  status = cqlite3_clear_bindings(this->_getEntryStmtWrapper.get());
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return std::nullopt;
   }
 
-  status = sqlite3_bind_text(
+  status = cqlite3_bind_text(
       this->_getEntryStmtWrapper.get(),
       1,
       key.c_str(),
       -1,
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return std::nullopt;
   }
 
-  status = sqlite3_step(this->_getEntryStmtWrapper.get());
+  status = cqlite3_step(this->_getEntryStmtWrapper.get());
   if (status == SQLITE_DONE) {
     // Cache miss
     return std::nullopt;
@@ -243,72 +243,72 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
 
   if (status != SQLITE_ROW) {
     // Something went wrong.
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return std::nullopt;
   }
 
   // Cache hit - unpack and return it.
-  int64_t itemIndex = sqlite3_column_int64(this->_getEntryStmtWrapper.get(), 0);
+  int64_t itemIndex = cqlite3_column_int64(this->_getEntryStmtWrapper.get(), 0);
 
   // parse cache item metadata
   std::time_t expiryTime =
-      sqlite3_column_int64(this->_getEntryStmtWrapper.get(), 1);
+      cqlite3_column_int64(this->_getEntryStmtWrapper.get(), 1);
 
   // parse response cache
   std::string serializedResponseHeaders = reinterpret_cast<const char*>(
-      sqlite3_column_text(this->_getEntryStmtWrapper.get(), 2));
+      cqlite3_column_text(this->_getEntryStmtWrapper.get(), 2));
   HttpHeaders responseHeaders =
       convertStringToHeaders(serializedResponseHeaders);
 
   uint16_t statusCode = static_cast<uint16_t>(
-      sqlite3_column_int(this->_getEntryStmtWrapper.get(), 3));
+      cqlite3_column_int(this->_getEntryStmtWrapper.get(), 3));
 
   const std::byte* rawResponseData = reinterpret_cast<const std::byte*>(
-      sqlite3_column_blob(this->_getEntryStmtWrapper.get(), 4));
+      cqlite3_column_blob(this->_getEntryStmtWrapper.get(), 4));
   int responseDataSize =
-      sqlite3_column_bytes(this->_getEntryStmtWrapper.get(), 4);
+      cqlite3_column_bytes(this->_getEntryStmtWrapper.get(), 4);
   std::vector<std::byte> responseData(
       rawResponseData,
       rawResponseData + responseDataSize);
 
   // parse request
   std::string serializedRequestHeaders = reinterpret_cast<const char*>(
-      sqlite3_column_text(this->_getEntryStmtWrapper.get(), 5));
+      cqlite3_column_text(this->_getEntryStmtWrapper.get(), 5));
   HttpHeaders requestHeaders = convertStringToHeaders(serializedRequestHeaders);
 
   std::string requestMethod = reinterpret_cast<const char*>(
-      sqlite3_column_text(this->_getEntryStmtWrapper.get(), 6));
+      cqlite3_column_text(this->_getEntryStmtWrapper.get(), 6));
 
   std::string requestUrl = reinterpret_cast<const char*>(
-      sqlite3_column_text(this->_getEntryStmtWrapper.get(), 7));
+      cqlite3_column_text(this->_getEntryStmtWrapper.get(), 7));
 
   // update the last accessed time
   int updateStatus =
-      sqlite3_reset(this->_updateLastAccessedTimeStmtWrapper.get());
+      cqlite3_reset(this->_updateLastAccessedTimeStmtWrapper.get());
   if (updateStatus != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(updateStatus));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(updateStatus));
     return std::nullopt;
   }
 
   updateStatus =
-      sqlite3_clear_bindings(this->_updateLastAccessedTimeStmtWrapper.get());
+      cqlite3_clear_bindings(this->_updateLastAccessedTimeStmtWrapper.get());
   if (updateStatus != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(updateStatus));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(updateStatus));
     return std::nullopt;
   }
 
-  updateStatus = sqlite3_bind_int64(
+  updateStatus = cqlite3_bind_int64(
       this->_updateLastAccessedTimeStmtWrapper.get(),
       1,
       itemIndex);
   if (updateStatus != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(updateStatus));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(updateStatus));
     return std::nullopt;
   }
 
-  updateStatus = sqlite3_step(this->_updateLastAccessedTimeStmtWrapper.get());
+  updateStatus = cqlite3_step(this->_updateLastAccessedTimeStmtWrapper.get());
   if (updateStatus != SQLITE_DONE) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(updateStatus));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(updateStatus));
     return std::nullopt;
   }
 
@@ -336,116 +336,116 @@ bool SqliteCache::storeEntry(
   std::lock_guard<std::mutex> guard(this->_mutex);
 
   // cache the request with the key
-  int status = sqlite3_reset(this->_storeResponseStmtWrapper.get());
+  int status = cqlite3_reset(this->_storeResponseStmtWrapper.get());
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_clear_bindings(this->_storeResponseStmtWrapper.get());
+  status = cqlite3_clear_bindings(this->_storeResponseStmtWrapper.get());
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_int64(
+  status = cqlite3_bind_int64(
       this->_storeResponseStmtWrapper.get(),
       1,
       static_cast<int64_t>(expiryTime));
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_int64(
+  status = cqlite3_bind_int64(
       this->_storeResponseStmtWrapper.get(),
       2,
       static_cast<int64_t>(std::time(nullptr)));
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
   std::string responseHeaderString = convertHeadersToString(responseHeaders);
-  status = sqlite3_bind_text(
+  status = cqlite3_bind_text(
       this->_storeResponseStmtWrapper.get(),
       3,
       responseHeaderString.c_str(),
       -1,
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_int(
+  status = cqlite3_bind_int(
       this->_storeResponseStmtWrapper.get(),
       4,
       static_cast<int>(statusCode));
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_blob(
+  status = cqlite3_bind_blob(
       this->_storeResponseStmtWrapper.get(),
       5,
       responseData.data(),
       static_cast<int>(responseData.size()),
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
   std::string requestHeaderString = convertHeadersToString(requestHeaders);
-  status = sqlite3_bind_text(
+  status = cqlite3_bind_text(
       this->_storeResponseStmtWrapper.get(),
       6,
       requestHeaderString.c_str(),
       -1,
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_text(
+  status = cqlite3_bind_text(
       this->_storeResponseStmtWrapper.get(),
       7,
       requestMethod.c_str(),
       -1,
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_text(
+  status = cqlite3_bind_text(
       this->_storeResponseStmtWrapper.get(),
       8,
       url.c_str(),
       -1,
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_bind_text(
+  status = cqlite3_bind_text(
       this->_storeResponseStmtWrapper.get(),
       9,
       key.c_str(),
       -1,
       SQLITE_STATIC);
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_step(this->_storeResponseStmtWrapper.get());
+  status = cqlite3_step(this->_storeResponseStmtWrapper.get());
   if (status != SQLITE_DONE) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
@@ -460,25 +460,25 @@ bool SqliteCache::prune() {
   // query total size of response's data
   {
     int totalItemsQueryStatus =
-        sqlite3_reset(this->_totalItemsQueryStmtWrapper.get());
+        cqlite3_reset(this->_totalItemsQueryStmtWrapper.get());
     if (totalItemsQueryStatus != SQLITE_OK) {
       SPDLOG_LOGGER_ERROR(
           this->_pLogger,
-          sqlite3_errstr(totalItemsQueryStatus));
+          cqlite3_errstr(totalItemsQueryStatus));
       return false;
     }
 
     totalItemsQueryStatus =
-        sqlite3_clear_bindings(this->_totalItemsQueryStmtWrapper.get());
+        cqlite3_clear_bindings(this->_totalItemsQueryStmtWrapper.get());
     if (totalItemsQueryStatus != SQLITE_OK) {
       SPDLOG_LOGGER_ERROR(
           this->_pLogger,
-          sqlite3_errstr(totalItemsQueryStatus));
+          cqlite3_errstr(totalItemsQueryStatus));
       return false;
     }
 
     totalItemsQueryStatus =
-        sqlite3_step(this->_totalItemsQueryStmtWrapper.get());
+        cqlite3_step(this->_totalItemsQueryStmtWrapper.get());
 
     if (totalItemsQueryStatus == SQLITE_DONE) {
       return true;
@@ -487,13 +487,13 @@ bool SqliteCache::prune() {
     if (totalItemsQueryStatus != SQLITE_ROW) {
       SPDLOG_LOGGER_ERROR(
           this->_pLogger,
-          sqlite3_errstr(totalItemsQueryStatus));
+          cqlite3_errstr(totalItemsQueryStatus));
       return false;
     }
 
     // prune the rows if over maximum
     totalItems =
-        sqlite3_column_int64(this->_totalItemsQueryStmtWrapper.get(), 0);
+        cqlite3_column_int64(this->_totalItemsQueryStmtWrapper.get(), 0);
     if (totalItems > 0 && totalItems <= static_cast<int64_t>(_maxItems)) {
       return true;
     }
@@ -502,28 +502,28 @@ bool SqliteCache::prune() {
   // delete expired rows first
   {
     int deleteExpiredStatus =
-        sqlite3_reset(this->_deleteExpiredStmtWrapper.get());
+        cqlite3_reset(this->_deleteExpiredStmtWrapper.get());
     if (deleteExpiredStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteExpiredStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteExpiredStatus));
       return false;
     }
 
     deleteExpiredStatus =
-        sqlite3_clear_bindings(this->_deleteExpiredStmtWrapper.get());
+        cqlite3_clear_bindings(this->_deleteExpiredStmtWrapper.get());
     if (deleteExpiredStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteExpiredStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteExpiredStatus));
       return false;
     }
 
-    deleteExpiredStatus = sqlite3_step(this->_deleteExpiredStmtWrapper.get());
+    deleteExpiredStatus = cqlite3_step(this->_deleteExpiredStmtWrapper.get());
     if (deleteExpiredStatus != SQLITE_DONE) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteExpiredStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteExpiredStatus));
       return false;
     }
   }
 
   // check if we should delete more
-  int deletedRows = sqlite3_changes(this->_pConnection.get());
+  int deletedRows = cqlite3_changes(this->_pConnection.get());
   if (totalItems - deletedRows < static_cast<int>(this->_maxItems)) {
     return true;
   }
@@ -532,31 +532,31 @@ bool SqliteCache::prune() {
 
   // delete rows LRU if we are still over maximum
   {
-    int deleteLLRUStatus = sqlite3_reset(this->_deleteLRUStmtWrapper.get());
+    int deleteLLRUStatus = cqlite3_reset(this->_deleteLRUStmtWrapper.get());
     if (deleteLLRUStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteLLRUStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteLLRUStatus));
       return false;
     }
 
     deleteLLRUStatus =
-        sqlite3_clear_bindings(this->_deleteLRUStmtWrapper.get());
+        cqlite3_clear_bindings(this->_deleteLRUStmtWrapper.get());
     if (deleteLLRUStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteLLRUStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteLLRUStatus));
       return false;
     }
 
-    deleteLLRUStatus = sqlite3_bind_int64(
+    deleteLLRUStatus = cqlite3_bind_int64(
         this->_deleteLRUStmtWrapper.get(),
         1,
         totalItems - static_cast<int64_t>(this->_maxItems));
     if (deleteLLRUStatus != SQLITE_OK) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteLLRUStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteLLRUStatus));
       return false;
     }
 
-    deleteLLRUStatus = sqlite3_step(this->_deleteLRUStmtWrapper.get());
+    deleteLLRUStatus = cqlite3_step(this->_deleteLRUStmtWrapper.get());
     if (deleteLLRUStatus != SQLITE_DONE) {
-      SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(deleteLLRUStatus));
+      SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(deleteLLRUStatus));
       return false;
     }
   }
@@ -567,15 +567,15 @@ bool SqliteCache::prune() {
 bool SqliteCache::clearAll() {
   std::lock_guard<std::mutex> guard(this->_mutex);
 
-  int status = sqlite3_reset(this->_clearAllStmtWrapper.get());
+  int status = cqlite3_reset(this->_clearAllStmtWrapper.get());
   if (status != SQLITE_OK) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
-  status = sqlite3_step(this->_clearAllStmtWrapper.get());
+  status = cqlite3_step(this->_clearAllStmtWrapper.get());
   if (status != SQLITE_DONE) {
-    SPDLOG_LOGGER_ERROR(this->_pLogger, sqlite3_errstr(status));
+    SPDLOG_LOGGER_ERROR(this->_pLogger, cqlite3_errstr(status));
     return false;
   }
 
@@ -617,15 +617,15 @@ HttpHeaders convertStringToHeaders(const std::string& serializedHeaders) {
 /*static*/ SqliteCache::SqliteStatementPtr SqliteCache::prepareStatement(
     const SqliteCache::SqliteConnectionPtr& pConnection,
     const std::string& sql) {
-  sqlite3_stmt* pStmt;
-  int status = sqlite3_prepare_v2(
+  cqlite3_stmt* pStmt;
+  int status = cqlite3_prepare_v2(
       pConnection.get(),
       sql.c_str(),
       int(sql.size()),
       &pStmt,
       nullptr);
   if (status != SQLITE_OK) {
-    throw std::runtime_error(std::string(sqlite3_errstr(status)));
+    throw std::runtime_error(std::string(cqlite3_errstr(status)));
   }
   return SqliteStatementPtr(pStmt);
 }
