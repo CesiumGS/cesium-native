@@ -48,11 +48,6 @@ target_link_libraries(CesiumAsync
         sqlite3
 )
 
-# These libraries erroneously do NOT list their headers as `SYSTEM` headers
-target_link_libraries_system(CesiumAsync PUBLIC
-    spdlog
-)
-
 install(TARGETS CesiumAsync
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumAsync

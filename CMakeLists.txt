@@ -7,17 +7,24 @@ project(cesium-native
 )
 
 # Add Modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-# Add a coverage target iff:
-# - gcovr is available
-# - cesium-native is not being used as a git submodule
-# - g++ is the active compiler.
-# This branch must occur before adding other targets, or gcovr
-# won't be able to inject the necessary coverage information.
-get_directory_property(_is_being_used_as_submodule PARENT_DIRECTORY)
-find_program(_gcovr "gcovr")
-if(CMAKE_COMPILER_IS_GNUCXX AND _gcovr AND NOT _is_being_used_as_submodule)
+# Add options
+option(OPT_BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(OPT_GLOB_USE_CONFIGURE_DEPENDS "Controls if cesium-native targets should use configure_depends or not for globbing their sources" OFF)
+option(OPT_BUILD_DOCUMENTATION "Build API documentations of cesium-native" ON)
+option(OPT_BUILD_TESTS "Build tests" ON)
+option(OPT_BUILD_TESTS_COVERAGE "Build tests coverage" OFF)
+
+set(CESIUM_DEBUG_POSTFIX "d")
+set(CESIUM_RELEASE_POSTFIX "")
+set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
+set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
+set(CMAKE_MINSIZEREL_POSTFIX ${CESIUM_RELEASE_POSTFIX})
+set(CMAKE_RELWITHDEBINFO_POSTFIX ${CESIUM_RELEASE_POSTFIX})
+
+# Create tests coverage target
+if(OPT_BUILD_TESTS_COVERAGE)
     include(CodeCoverage)
     append_coverage_compiler_flags()
     setup_target_for_coverage_gcovr_html(
@@ -28,100 +35,26 @@ if(CMAKE_COMPILER_IS_GNUCXX AND _gcovr AND NOT _is_being_used_as_submodule)
     )
 endif()
 
-if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
-    set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
-        "Controls if cesium-native targets should use configure_depends or not for globbing their sources"
-    )
+# Private Libraries
+include(ConfigureConan)
+find_package(Async++ REQUIRED)
+find_package(Catch2 REQUIRED)
+find_package(httplib REQUIRED)
+find_package(Draco REQUIRED)
+find_package(glm REQUIRED)
+find_package(magic_enum REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(SQLite3 REQUIRED)
+find_package(stb REQUIRED)
+find_package(tinyxml2 REQUIRED)
+find_package(uriparser REQUIRED)
+
+if (OPT_BUILD_DOCUMENTATION)
+    find_package(doxygen REQUIRED)
 endif()
 
-set(CESIUM_DEBUG_POSTFIX "d")
-set(CESIUM_RELEASE_POSTFIX "")
-
-set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-set(CMAKE_MINSIZEREL_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-set(CMAKE_RELWITHDEBINFO_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-
-# Use configure_depends to automatically reconfigure on filesystem
-# changes at the expense of computational overhead for CMake to
-# determine if new files have been added (-DGLOB_USE_CONFIGURE_DEPENDS).
-
-function(cesium_glob_files out_var_name regexes)
-    set(files "")
-    foreach(arg ${ARGV})
-        list(APPEND regexes_only "${arg}")
-    endforeach()
-    list(POP_FRONT regexes_only)
-    if (GLOB_USE_CONFIGURE_DEPENDS)
-        file(GLOB_RECURSE files CONFIGURE_DEPENDS ${regexes_only})
-    else()
-        file(GLOB files ${regexes_only})
-    endif()
-    set(${ARGV0} "${files}" PARENT_SCOPE)
-endfunction()
-
-# Workaround for targets that erroneously forget to
-# declare their include directories as `SYSTEM`
-function(target_link_libraries_system target scope)
-  set(libs ${ARGN})
-  foreach(lib ${libs})
-    get_target_property(lib_include_dirs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
-
-    if ("${lib_include_dirs}" MATCHES ".*NOTFOUND$")
-        message(FATAL_ERROR "${target}: Cannot use INTERFACE_INCLUDE_DIRECTORIES from target ${lib} as it does not define it")
-    endif()
-
-    target_include_directories(${target} SYSTEM ${scope} ${lib_include_dirs})
-    target_link_libraries(${target} ${scope} ${lib})
-  endforeach()
-endfunction()
-
-# Shared object support is currently NOT working on Windows
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-
-function(configure_cesium_library targetName)
-    if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
-    else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
-    endif()
-
-    set_target_properties(${targetName} PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
-    )
-
-    if (BUILD_SHARED_LIBS)
-        target_compile_definitions(
-            ${targetName}
-            PUBLIC
-                CESIUM_SHARED=${BUILD_SHARED_LIBS}
-        )
-    endif()
-
-    if (NOT ${targetName} MATCHES "cesium-native-tests")
-        string(TOUPPER ${targetName} capitalizedTargetName)
-        target_compile_definitions(
-            ${targetName}
-            PRIVATE
-                ${capitalizedTargetName}_BUILDING
-        )
-
-
-    endif()
-
-endfunction()
-
-
-# Private Libraries
-add_subdirectory(extern EXCLUDE_FROM_ALL)
-
-# These libraries override the debug postfix, so re-override it.
-set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-
 # Public Targets
+include(ConfigureTarget)
 add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGeometry)
@@ -134,40 +67,11 @@ add_subdirectory(Cesium3DTiles)
 add_subdirectory(CesiumIonClient)
 
 # Private Targets
-# enable_testing() MUST be called before add_subdirectory or no tests
-# will be found by ctest
-enable_testing()
-add_subdirectory(CesiumNativeTests)
-add_subdirectory(doc)
+if (OPT_BUILD_TESTS OR OPT_BUILD_TESTS_COVERAGE)
+    include(CTest)
+	add_subdirectory(CesiumNativeTests)
+endif()
 
-# Installation of third-party libraries required to use cesium-native
-install(TARGETS uriparser OPTIONAL) # Skips headers
-
-install(DIRECTORY extern/glm/glm
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    COMPONENT GLM
-)
-
-install(TARGETS tinyxml2)
-
-install(TARGETS Async++)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++.h TYPE INCLUDE)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++ TYPE INCLUDE)
-
-install(TARGETS spdlog)
-install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-
-install(TARGETS draco)
-
-install(TARGETS sqlite3)
-
-install(TARGETS modp_b64)
-
-install(TARGETS httplib)
-
-install(TARGETS csprng)
-
-install(TARGETS GSL)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
-
-install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
+if (OPT_BUILD_DOCUMENTATION)
+	add_subdirectory(doc)
+endif()
