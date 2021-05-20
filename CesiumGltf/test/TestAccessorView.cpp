@@ -49,7 +49,7 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
   buffer.cesium.data[1] = std::byte(2);
   buffer.cesium.data[2] = std::byte(3);
   buffer.cesium.data[3] = std::byte(4);
-  buffer.byteLength = buffer.cesium.data.size();
+  buffer.byteLength = int64_t(buffer.cesium.data.size());
 
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
@@ -62,12 +62,30 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
   accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
   createAccessorView(model, accessor, [](const auto& accessorView) {
     CHECK(accessorView.status() == AccessorViewStatus::Valid);
-    CHECK(accessorView[0].value[0] == 0x04030201);
+
+    // While this generic lambda will be instantiated for all possible types,
+    // it should only be _called_ for the actual type (UNSIGNED_INT).
+    using AccessorType =
+        std::remove_cv_t<std::remove_reference_t<decltype(accessorView)>>;
+    CHECK(std::is_same_v<
+          AccessorType,
+          AccessorView<AccessorTypes::SCALAR<uint32_t>>>);
+
+    CHECK(int64_t(accessorView[0].value[0]) == int64_t(0x04030201));
   });
 
   accessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
   createAccessorView(model, accessor, [](const auto& accessorView) {
     CHECK(accessorView.status() == AccessorViewStatus::Valid);
-    CHECK(accessorView[0].value[0] == 0x0201);
+
+    // While this generic lambda will be instantiated for all possible types,
+    // it should only be _called_ for the actual type (UNSIGNED_SHORT).
+    using AccessorType =
+        std::remove_cv_t<std::remove_reference_t<decltype(accessorView)>>;
+    CHECK(std::is_same_v<
+          AccessorType,
+          AccessorView<AccessorTypes::SCALAR<uint16_t>>>);
+
+    CHECK(int64_t(accessorView[0].value[0]) == int64_t(0x0201));
   });
 }
