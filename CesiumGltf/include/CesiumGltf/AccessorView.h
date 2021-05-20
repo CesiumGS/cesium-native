@@ -456,7 +456,7 @@ createAccessorView(
  * @return The value returned by the callback.
  */
 template <typename TCallback>
-std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<float>>> createAccessorView(
     const Model& model,
     int32_t accessorIndex,
     TCallback&& callback) {
