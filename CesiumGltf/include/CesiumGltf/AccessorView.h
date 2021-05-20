@@ -52,6 +52,16 @@ enum class AccessorViewStatus {
    * {@link Accessor::computeBytesPerVertex}.
    */
   WrongSizeT,
+
+  /**
+   * @brief The {@link Accessor:type} is invalid.
+   */
+  InvalidType,
+
+  /**
+   * @brief The {@link Accessor::componentType} is invalid.
+   */
+  InvalidComponentType,
 };
 
 /**
@@ -85,13 +95,13 @@ public:
    *
    * The new instance will have a {@link size} of 0 and a {@link status} of
    * `AccessorViewStatus::InvalidAccessorIndex`.
+   *
+   * @param status The status of the new accessor. Defaults to
+   * {@link AccessorViewStatus::InvalidAccessorIndex}.
    */
-  AccessorView()
-      : _pData(nullptr),
-        _stride(0),
-        _offset(0),
-        _size(0),
-        _status(AccessorViewStatus::InvalidAccessorIndex) {}
+  AccessorView(
+      AccessorViewStatus status = AccessorViewStatus::InvalidAccessorIndex)
+      : _pData(nullptr), _stride(0), _offset(0), _size(0), _status(status) {}
 
   /**
    * @brief Creates a new instance from low-level parameters.
@@ -337,7 +347,8 @@ struct AccessorTypes {
 
 namespace Impl {
 template <typename TCallback, typename TElement>
-std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<TElement>>>
+createAccessorView(
     const Model& model,
     const Accessor& accessor,
     TCallback&& callback) {
@@ -364,7 +375,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
     return callback(
         AccessorView<AccessorTypes::MAT4<TElement>>(model, accessor));
   default:
-    return callback(AccessorView<std::nullptr_t>());
+    return callback(AccessorView<AccessorTypes::SCALAR<TElement>>(
+        AccessorViewStatus::InvalidComponentType));
   }
 }
 } // namespace Impl
@@ -375,7 +387,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
  * The created accessor is provided via a callback, which is a function that can
  * be invoked with all possible {@link AccessorView} types. If an accessor
  * cannot be created, the callback will be invoked with
- * `AccessorView<std::nullptr_t>`.
+ * `AccessorView<AccessorTypes::SCALAR<float>>` and the
+ * {@link AccessorView::status} will indicate the reason.
  *
  * @tparam TCallback The callback.
  * @param model The model to access.
@@ -384,7 +397,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
  * @return The value returned by the callback.
  */
 template <typename TCallback>
-std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<float>>>
+createAccessorView(
     const Model& model,
     const Accessor& accessor,
     TCallback&& callback) {
@@ -420,7 +434,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
         accessor,
         std::forward<TCallback>(callback));
   default:
-    return callback(AccessorView<std::nullptr_t>());
+    return callback(AccessorView<AccessorTypes::SCALAR<float>>(
+        AccessorViewStatus::InvalidComponentType));
   }
 }
 
@@ -430,7 +445,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
  * The created accessor is provided via a callback, which is a function that can
  * be invoked with all possible {@link AccessorView} types. If an accessor
  * cannot be created, the callback will be invoked with
- * `AccessorView<std::nullptr_t>`.
+ * `AccessorView<AccessorTypes::SCALAR<float>>` and the
+ * {@link AccessorView::status} will indicate the reason.
  *
  * @tparam TCallback The callback.
  * @param model The model to access.
@@ -446,7 +462,8 @@ std::invoke_result_t<TCallback, AccessorView<float>> createAccessorView(
     TCallback&& callback) {
   const Accessor* pAccessor = Model::getSafe(&model.accessors, accessorIndex);
   if (!pAccessor) {
-    return callback(AccessorView<std::nullptr_t>());
+    return callback(AccessorView<AccessorTypes::SCALAR<float>>(
+        AccessorViewStatus::InvalidComponentType));
   }
 
   return createAccessorView(model, *pAccessor, callback);
