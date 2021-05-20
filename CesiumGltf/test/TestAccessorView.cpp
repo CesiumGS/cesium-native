@@ -58,7 +58,7 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
   Accessor& accessor = model.accessors.emplace_back();
   accessor.bufferView = 0;
   accessor.count = 1;
-  
+
   accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
   createAccessorView(model, accessor, [](const auto& accessorView) {
     CHECK(accessorView.status() == AccessorViewStatus::Valid);
