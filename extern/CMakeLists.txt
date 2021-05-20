@@ -52,10 +52,6 @@ add_library(PicoSHA2 INTERFACE)
 target_include_directories(PicoSHA2 SYSTEM INTERFACE PicoSHA2)
 set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/PicoSHA2/picosha2.h")
 
-# MikkTSpace doesn't have CMakeLists.txt at all either
-add_library(MikkTSpace MikkTSpace/mikktspace.c)
-target_include_directories(MikkTSpace PUBLIC MikkTSpace)
-
 set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" CACHE INTERNAL
     "Include directory for spdlog"
 )
