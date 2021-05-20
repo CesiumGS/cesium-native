@@ -46,3 +46,6 @@
 [submodule "extern/cmake-modules"]
 	path = extern/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
+[submodule "extern/MikkTSpace"]
+	path = extern/MikkTSpace
+	url = https://github.com/mmikk/MikkTSpace.git
