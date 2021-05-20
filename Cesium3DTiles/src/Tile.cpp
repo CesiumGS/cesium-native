@@ -12,7 +12,6 @@
 #include "upsampleGltfForRasterOverlays.h"
 #include <cstddef>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <set>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -129,10 +128,10 @@ struct GetGlobeRectangle {
             halfAxes * obbVertices[westmostIndex] + centerEcef);
     std::optional<CesiumGeospatial::Cartographic> north =
         CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
-            halfAxes * obbVertices[northmostIndex] + centerEcef);
+            halfAxes * obbVertices[southmostIndex] + centerEcef);
     std::optional<CesiumGeospatial::Cartographic> south =
         CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
-            halfAxes * obbVertices[southmostIndex] + centerEcef);
+            halfAxes * obbVertices[northmostIndex] + centerEcef);
 
     if (!east || !west || !north || !south) {
       return std::nullopt;
@@ -287,8 +286,8 @@ void Tile::loadContent() {
   // rectangle until we can project each vertex.
 
   // Accumulate needed projections by name to avoid duplicates. For now they
-  // can only be "Web Mercator" or "Geographic".
-  std::set<std::string> projections_str;
+  // can only be "WEB_MERCATOR" or "GEOGRAPHIC".
+  std::set<std::string> projections;
 
   // const CesiumGeospatial::GlobeRectangle* pRectangle =
   //    Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
@@ -350,15 +349,15 @@ void Tile::loadContent() {
     //     }
     // }
 
-    projections_str.insert("Web Mercator");
+    projections.insert("WEB_MERCATOR");
 
-    // Only add geographic coordinates for the watermask, currently.
+    // Add geographic texture coordinates for water mask
     if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
-      projections_str.insert("Geographic");
+      projections.insert("GEOGRAPHIC");
     }
   }
 
-  // add geographic texture coordinates for any
+  // add geographic texture coordinates for clipping mask
   bool withinClippingBounds = false;
   if (pRectangle) {
     const std::vector<std::optional<CesiumGeospatial::GlobeRectangle>>&
@@ -366,23 +365,23 @@ void Tile::loadContent() {
             this->getTileset()->getOptions().cullingPolygonsBoundingBoxes;
     for (size_t i = 0; i < boundingBoxes.size(); ++i) {
       if (boundingBoxes[i] && pRectangle->intersect(*boundingBoxes[i])) {
-        projections_str.insert("Geographic");
+        projections.insert("GEOGRAPHIC");
         withinClippingBounds = true;
         break;
       }
     }
   }
-
+/*
   // convert accumulated projection names to the corresponding projections
   std::vector<Projection> projections;
   for (const std::string& projectionName : projections_str) {
-    if (projectionName == "Web Mercator") {
+    if (projectionName == "WEB_MERCATOR") {
       projections.push_back(WebMercatorProjection());
-    } else if (projectionName == "Geographic") {
+    } else if (projectionName == "GEOGRAPHIC") {
       projections.push_back(GeographicProjection());
     }
   }
-
+*/
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
   if (!maybeRequestFuture) {
@@ -513,12 +512,48 @@ void Tile::loadContent() {
             //    Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
             const std::optional<CesiumGeospatial::GlobeRectangle> pRectangle =
                 std::visit(GetGlobeRectangle(), boundingVolume);
+            
+            auto val = std::get_if<CesiumGeometry::BoundingSphere>(&boundingVolume);
+            if (val && pRectangle) {
+              
+              SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "East: {}, South: {}, West: {}, North: {}",
+              glm::degrees(pRectangle->getEast()),
+              glm::degrees(pRectangle->getSouth()),
+              glm::degrees(pRectangle->getWest()),
+              glm::degrees(pRectangle->getNorth()));
+              
+              /*
+              for (int i = 0; i < 3; ++i) {
+                SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "HalfAxis[{}]: ({}, {}, {})",
+                i,
+                val->getHalfAxes()[i].x,
+                val->getHalfAxes()[i].y,
+                val->getHalfAxes()[i].z);
+              }*/
+            }
+
+
             if (withinClippingBounds && pRectangle) {
               // TODO: fix
               double rectangleWidth =
                   pRectangle->getEast() - pRectangle->getWest();
               double rectangleHeight =
                   pRectangle->getNorth() - pRectangle->getSouth();
+
+              if (rectangleWidth < 0 || rectangleHeight < 0) {
+                SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "East: {}, South: {}, West: {}, North: {}",
+                glm::degrees(pRectangle->getEast()),
+                glm::degrees(pRectangle->getSouth()),
+                glm::degrees(pRectangle->getWest()),
+                glm::degrees(pRectangle->getNorth()));
+              };
+              
 
               // Create opacity mask texture
 
@@ -1067,7 +1102,7 @@ void Tile::setState(LoadState value) noexcept {
 Tile::generateTextureCoordinates(
     CesiumGltf::Model& model,
     const BoundingVolume& boundingVolume,
-    const std::vector<Projection>& projections) {
+    const std::set<std::string>& projections) {
   std::optional<CesiumGeospatial::BoundingRegion> result;
 
   // Generate texture coordinates for each projection.
@@ -1079,9 +1114,15 @@ Tile::generateTextureCoordinates(
     std::optional<CesiumGeospatial::GlobeRectangle> pRectangle =
         std::visit(GetGlobeRectangle(), boundingVolume);
     if (pRectangle) {
-      for (size_t i = 0; i < projections.size(); ++i) {
-        const Projection& projection = projections[i];
-        uint32_t projectionID = static_cast<uint32_t>(i);
+      for (const std::string& projectionName : projections) {
+        Projection projection;
+        if (projectionName == "WEB_MERCATOR") {
+          projection = WebMercatorProjection();
+        } else if (projectionName == "GEOGRAPHIC") {
+          projection = GeographicProjection();
+        } else {
+          continue;
+        }
 
         CesiumGeometry::Rectangle rectangle =
             projectRectangleSimple(projection, *pRectangle);
@@ -1089,7 +1130,7 @@ Tile::generateTextureCoordinates(
         CesiumGeospatial::BoundingRegion boundingRegion =
             GltfContent::createRasterOverlayTextureCoordinates(
                 model,
-                projectionID,
+                projectionName,
                 projection,
                 rectangle);
         if (result) {
@@ -1105,7 +1146,7 @@ Tile::generateTextureCoordinates(
 }
 
 void Tile::upsampleParent(
-    std::vector<CesiumGeospatial::Projection>&& projections) {
+    std::set<std::string>&& projections) {
   Tile* pParent = this->getParent();
   const UpsampledQuadtreeNode* pSubdividedParentID =
       std::get_if<UpsampledQuadtreeNode>(&this->getTileID());

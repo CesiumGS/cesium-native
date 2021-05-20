@@ -406,15 +406,11 @@ static void upsamplePrimitiveForRasterOverlays(
   std::vector<std::string> toRemove;
 
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
-    if (attribute.first == "_CESIUMOVERLAY_0") {
-      uvAccessorIndex = attribute.second;
-
-      // Do not include _CESIUMOVERLAY_0, it will be generated later.
-      toRemove.push_back(attribute.first);
-      continue;
-    }
-
     if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
+      if (uvAccessorIndex == -1) {
+        uvAccessorIndex = attribute.second;
+      }
+      
       // Do not include _CESIUMOVERLAY_*, it will be generated later.
       toRemove.push_back(attribute.first);
       continue;

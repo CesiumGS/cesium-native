@@ -12,6 +12,7 @@
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
 #include <spdlog/fwd.h>
+#include <string>
 
 namespace Cesium3DTiles {
 
@@ -65,7 +66,7 @@ public:
    */
   static CesiumGeospatial::BoundingRegion createRasterOverlayTextureCoordinates(
       CesiumGltf::Model& gltf,
-      uint32_t textureCoordinateID,
+      const std::string& projectionName,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
 

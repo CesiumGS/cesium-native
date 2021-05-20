@@ -19,6 +19,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <set>
 
 namespace Cesium3DTiles {
 class Tileset;
@@ -548,7 +549,7 @@ private:
   generateTextureCoordinates(
       CesiumGltf::Model& model,
       const BoundingVolume& boundingVolume,
-      const std::vector<CesiumGeospatial::Projection>& projections);
+      const std::set<std::string>& projections);
 
   /**
    * @brief Upsample the parent of this tile.
@@ -556,7 +557,7 @@ private:
    * This method should only be called when this tile's parent is already
    * loaded.
    */
-  void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
+  void upsampleParent(std::set<std::string>&& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;
