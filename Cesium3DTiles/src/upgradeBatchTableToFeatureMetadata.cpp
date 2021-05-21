@@ -55,7 +55,7 @@ void updateExtensionWithJsonStringProperty(
     Model&  gltf,
     ClassProperty& /* classProperty */,
     FeatureTable& /* featureTable */,
-    FeatureTableProperty&  featureTableProperty,
+    FeatureTableProperty&  /*featureTableProperty*/,
     const rapidjson::Value&  propertyValue) {
   size_t totalSize = 0;
   size_t maxOffset = 0;

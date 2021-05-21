@@ -1,0 +1,1 @@
+#include "CesiumMetadata/Metadata.h"
