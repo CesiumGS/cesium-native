@@ -2,3 +2,5 @@ build
 doxygen
 Testing
 node_modules
+.vs
+CMakeSettings.json
