@@ -12,6 +12,7 @@
 ##### Fixes :wrench:
 
 - Matched draco's decoded indices to gltf primitive if indices attribute does not match with the decompressed indices.
+- `createAccessorView` now creates an (invalid) `AccessorView` with a standard numeric type on error, rather than creating `AccessorView<nullptr_t>`. This makes it easier to use a simple lambda as the callback.
 
 ### v0.3.1 - 2021-05-13
 
