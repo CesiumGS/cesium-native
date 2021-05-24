@@ -1,6 +1,6 @@
 #include "Cesium3DTiles/BoundingVolume.h"
-#include "CesiumGeospatial/Transforms.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Transforms.h"
 #include <glm/gtc/matrix_inverse.hpp>
 
 using namespace CesiumGeometry;
@@ -72,7 +72,8 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
 }
 
 // TODO: Test this more thoroughly
-std::optional<GlobeRectangle> getGlobeRectangle(const BoundingVolume& boundingVolume) {
+std::optional<GlobeRectangle>
+getGlobeRectangle(const BoundingVolume& boundingVolume) {
   struct Operation {
     std::optional<GlobeRectangle>
     operator()(const BoundingSphere& boundingSphere) {
@@ -80,8 +81,7 @@ std::optional<GlobeRectangle> getGlobeRectangle(const BoundingVolume& boundingVo
       double radius = boundingSphere.getRadius();
 
       glm::dmat4 enuToEcef =
-          Transforms::eastNorthUpToFixedFrame(
-              centerEcef /*, ellipsoid*/);
+          Transforms::eastNorthUpToFixedFrame(centerEcef /*, ellipsoid*/);
       glm::dmat4 ecefBounds = enuToEcef * glm::dmat4(
                                               radius,
                                               0.0,
@@ -101,17 +101,13 @@ std::optional<GlobeRectangle> getGlobeRectangle(const BoundingVolume& boundingVo
                                               1.0);
 
       std::optional<Cartographic> east =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              ecefBounds[0]);
+          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[0]);
       std::optional<Cartographic> west =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              ecefBounds[1]);
+          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[1]);
       std::optional<Cartographic> north =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              ecefBounds[2]);
+          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[2]);
       std::optional<Cartographic> south =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              ecefBounds[3]);
+          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[3]);
 
       if (!east || !west || !north || !south) {
         return std::nullopt;
@@ -128,8 +124,7 @@ std::optional<GlobeRectangle> getGlobeRectangle(const BoundingVolume& boundingVo
     operator()(const OrientedBoundingBox& orientedBoundingBox) {
       const glm::dvec3& centerEcef = orientedBoundingBox.getCenter();
       glm::dmat3 enuToEcef =
-          Transforms::eastNorthUpToFixedFrame(
-              centerEcef /*, ellipsoid*/);
+          Transforms::eastNorthUpToFixedFrame(centerEcef /*, ellipsoid*/);
       const glm::dmat3& halfAxes = orientedBoundingBox.getHalfAxes();
       glm::dmat3 obbToEnu = glm::affineInverse(enuToEcef) * halfAxes;
 
@@ -206,7 +201,7 @@ std::optional<GlobeRectangle> getGlobeRectangle(const BoundingVolume& boundingVo
 
     std::optional<GlobeRectangle>
     operator()(const BoundingRegionWithLooseFittingHeights&
-                  boundingRegionWithLooseFittingHeights) {
+                   boundingRegionWithLooseFittingHeights) {
       return boundingRegionWithLooseFittingHeights.getBoundingRegion()
           .getRectangle();
     }

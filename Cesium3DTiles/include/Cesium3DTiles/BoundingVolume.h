@@ -6,8 +6,8 @@
 #include "CesiumGeospatial/BoundingRegion.h"
 #include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
-#include <variant>
 #include <optional>
+#include <variant>
 
 namespace Cesium3DTiles {
 

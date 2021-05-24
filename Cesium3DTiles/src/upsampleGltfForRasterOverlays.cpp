@@ -119,8 +119,10 @@ Model upsampleGltfForRasterOverlays(
   double clippingMaskTranslationY = 0.0;
   double clippingMaskScale = 0.0;
 
-  auto clippingMaskTranslationXIt = parentModel.extras.find("ClippingMaskTranslationX");
-  auto clippingMaskTranslationYIt = parentModel.extras.find("ClippingMaskTranslationY");
+  auto clippingMaskTranslationXIt =
+      parentModel.extras.find("ClippingMaskTranslationX");
+  auto clippingMaskTranslationYIt =
+      parentModel.extras.find("ClippingMaskTranslationY");
   auto clippingMaskScaleIt = parentModel.extras.find("ClippingMaskScale");
 
   if (clippingMaskTranslationXIt != parentModel.extras.end() &&
@@ -129,7 +131,8 @@ Model upsampleGltfForRasterOverlays(
       clippingMaskTranslationYIt->second.isDouble() &&
       clippingMaskScaleIt != parentModel.extras.end() &&
       clippingMaskScaleIt->second.isDouble()) {
-    clippingMaskScale = 0.5 * clippingMaskScaleIt->second.getDoubleOrDefault(0.0);
+    clippingMaskScale =
+        0.5 * clippingMaskScaleIt->second.getDoubleOrDefault(0.0);
     clippingMaskTranslationX =
         clippingMaskTranslationXIt->second.getDoubleOrDefault(0.0) +
         clippingMaskScale * (childID.tileID.x % 2);
@@ -410,7 +413,7 @@ static void upsamplePrimitiveForRasterOverlays(
       if (uvAccessorIndex == -1) {
         uvAccessorIndex = attribute.second;
       }
-      
+
       // Do not include _CESIUMOVERLAY_*, it will be generated later.
       toRemove.push_back(attribute.first);
       continue;

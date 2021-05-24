@@ -17,9 +17,9 @@
 #include <gsl/span>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 namespace Cesium3DTiles {
 class Tileset;

@@ -189,8 +189,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 
-  std::string attributeName =
-      "_CESIUMOVERLAY_" + projectionName;
+  std::string attributeName = "_CESIUMOVERLAY_" + projectionName;
 
   double west = CesiumUtility::Math::ONE_PI;
   double south = CesiumUtility::Math::PI_OVER_TWO;

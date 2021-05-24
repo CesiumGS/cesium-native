@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
+#include <glm/glm.hpp>
 #include <optional>
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
 
 namespace Cesium3DTiles {
 
