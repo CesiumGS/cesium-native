@@ -423,10 +423,10 @@ void Tile::loadContent() {
                       double v_proj_ca_perp = glm::dot(cv, ca_perp);
 
                       // will determine in or out, irrespective of winding
-                      if (v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
-                              v_proj_bc_perp >= 0.0 ||
-                          v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
-                              v_proj_bc_perp <= 0.0) {
+                      if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
+                              v_proj_bc_perp >= 0.0) ||
+                          (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
+                              v_proj_bc_perp <= 0.0)) {
                         clippingMaskImage.cesium.pixelData[256 * j + i] =
                             static_cast<std::byte>(0);
                       }
