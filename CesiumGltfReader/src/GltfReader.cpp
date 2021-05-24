@@ -368,7 +368,7 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) const {
     std::uint8_t* u8Pointer =
         reinterpret_cast<std::uint8_t*>(image.pixelData.data());
     std::copy(pImage, pImage + lastByte, u8Pointer);
-    free(pImage);
+    stbi_image_free(pImage);
   } else {
     result.image.reset();
     result.errors.emplace_back(stbi_failure_reason());
