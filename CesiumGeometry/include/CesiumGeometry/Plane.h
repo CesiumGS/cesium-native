@@ -27,13 +27,40 @@ namespace CesiumGeometry {
 class CESIUMGEOMETRY_API Plane final {
 public:
 
+  /**
+   * @brief Creates a plane from the given parameters.
+   * 
+   * The caller is responsible to make sure that the given normal is normalized.
+   * 
+   * @param normal The normal.
+   * @param distance The distance.
+   * @return The plane.
+   */
   static Plane createUnchecked(const glm::dvec3& normal, double distance) noexcept;
+
+  /**
+   * @brief Creates a plane from the given parameters.
+   * 
+   * If the given normal is not normalized (i.e. when it does not have a length
+   * of 1.0, within a small machine epsilon), then an empty optional will be 
+   * returned.
+   * 
+   * @param normal The normal.
+   * @param distance The distance.
+   * @return The plane.
+   */
   static std::optional<Plane> createOptional(const glm::dvec3& normal, double distance) noexcept;
 
   /**
-  * TODO
-     * @exception std::exception `normal` must be normalized.
-* 
+   * @brief Creates a plane from the given parameters.
+   * 
+   * If the given normal is not normalized (i.e. when it does not have a length
+   * of 1.0, within a small machine epsilon), then an exception will be thrown.
+   * 
+   * @param normal The normal.
+   * @param distance The distance.
+   * @return The plane.
+   * @exception std::exception If the normal is not normalized
    */
   static Plane createThrowing(const glm::dvec3& normal, double distance);
 
