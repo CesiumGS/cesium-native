@@ -43,7 +43,7 @@ ViewState::ViewState(
       _verticalFieldOfView(verticalFieldOfView),
       _sseDenominator(2.0 * glm::tan(0.5 * verticalFieldOfView)),
       _positionCartographic(positionCartographic),
-      _cullingVolume(createCullingVolume(
+      _cullingVolume(CullingVolume::createUnchecked(
           position,
           direction,
           up,

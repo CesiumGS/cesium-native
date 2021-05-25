@@ -104,7 +104,7 @@ private:
   glm::dvec3 _origin;
   glm::dvec3 _xAxis;
   glm::dvec3 _yAxis;
-  CesiumGeometry::Plane _plane;
+  CesiumGeometry::Plane _plane = CesiumGeometry::Plane::createUnchecked({ 0, 0, 0 }, 0.0 );
 };
 
 } // namespace CesiumGeospatial

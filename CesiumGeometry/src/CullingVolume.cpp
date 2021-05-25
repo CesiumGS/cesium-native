@@ -6,7 +6,9 @@
 
 namespace Cesium3DTiles {
 
-CullingVolume createCullingVolume(
+CullingVolume::CullingVolume() {}
+
+CullingVolume CullingVolume::createUnchecked(
     const glm::dvec3& position,
     const glm::dvec3& direction,
     const glm::dvec3& up,
@@ -18,6 +20,8 @@ CullingVolume createCullingVolume(
   double l = -r;
 
   double n = 1.0;
+
+  CullingVolume result;
 
   // TODO: this is all ported directly from CesiumJS, can probably be refactored
   // to be more efficient with GLM.
@@ -35,7 +39,7 @@ CullingVolume createCullingVolume(
   normal = glm::cross(normal, up);
   normal = glm::normalize(normal);
 
-  CesiumGeometry::Plane leftPlane(normal, -glm::dot(normal, position));
+  result.leftPlane = CesiumGeometry::Plane::createUnchecked(normal, -glm::dot(normal, position));
 
   // Right plane computation
   normal = right * r;
@@ -44,7 +48,7 @@ CullingVolume createCullingVolume(
   normal = glm::cross(up, normal);
   normal = glm::normalize(normal);
 
-  CesiumGeometry::Plane rightPlane(normal, -glm::dot(normal, position));
+  result.rightPlane = CesiumGeometry::Plane::createUnchecked(normal, -glm::dot(normal, position));
 
   // Bottom plane computation
   normal = up * b;
@@ -53,7 +57,7 @@ CullingVolume createCullingVolume(
   normal = glm::cross(right, normal);
   normal = glm::normalize(normal);
 
-  CesiumGeometry::Plane bottomPlane(normal, -glm::dot(normal, position));
+  result.bottomPlane = CesiumGeometry::Plane::createUnchecked(normal, -glm::dot(normal, position));
 
   // Top plane computation
   normal = up * t;
@@ -62,8 +66,12 @@ CullingVolume createCullingVolume(
   normal = glm::cross(normal, right);
   normal = glm::normalize(normal);
 
-  CesiumGeometry::Plane topPlane(normal, -glm::dot(normal, position));
+  result.topPlane = CesiumGeometry::Plane::createUnchecked(normal, -glm::dot(normal, position));
 
-  return {leftPlane, rightPlane, topPlane, bottomPlane};
+  return result;
 }
+
+
+
+
 } // namespace Cesium3DTiles

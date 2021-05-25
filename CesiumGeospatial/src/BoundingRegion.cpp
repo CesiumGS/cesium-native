@@ -73,7 +73,8 @@ BoundingRegion::BoundingRegion(
             (rectangle.getWest() + rectangle.getEast()) * 0.5,
             south,
             0.0));
-    Plane westPlane(this->_southwestCornerCartesian, this->_westNormal);
+    double westDistance =  -glm::dot(this->_westNormal, this->_southwestCornerCartesian);
+    Plane westPlane = Plane::createUnchecked(this->_westNormal, westDistance);
 
     // Find a point that is on the west and the south planes
     std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
@@ -104,8 +105,8 @@ BoundingRegion::BoundingRegion(
             (rectangle.getWest() + rectangle.getEast()) * 0.5,
             north,
             0.0));
-
-    Plane eastPlane(this->_northeastCornerCartesian, this->_eastNormal);
+    double eastDistance = -glm::dot(this->_eastNormal, this->_northeastCornerCartesian);
+    Plane eastPlane = Plane::createUnchecked(this->_eastNormal, eastDistance);
 
     // Find a point that is on the east and the north planes
     std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
@@ -271,7 +272,7 @@ static OrientedBoundingBox fromPlaneExtents(
   //>>includeEnd('debug');
 
   double minX, maxX, minY, maxY, minZ, maxZ;
-  Plane plane(glm::dvec3(0.0, 0.0, 1.0), 0.0);
+  Plane plane = Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
 
   if (rectangle.computeWidth() <= Math::ONE_PI) {
     // The bounding box will be aligned with the tangent plane at the center of
@@ -393,7 +394,8 @@ static OrientedBoundingBox fromPlaneExtents(
       !isPole ? glm::normalize(planeOrigin) : glm::dvec3(1.0, 0.0, 0.0);
   glm::dvec3 planeYAxis(0.0, 0.0, 1.0);
   glm::dvec3 planeXAxis = glm::cross(planeNormal, planeYAxis);
-  plane = Plane(planeOrigin, planeNormal);
+  double planeDistance =  -glm::dot(planeNormal, planeOrigin); 
+  plane = Plane::createUnchecked(planeNormal, planeDistance);
 
   // Get the horizon point relative to the center. This will be the farthest
   // extent in the plane's X dimension.

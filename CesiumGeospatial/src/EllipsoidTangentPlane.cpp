@@ -23,8 +23,13 @@ EllipsoidTangentPlane::EllipsoidTangentPlane(
     : _ellipsoid(ellipsoid),
       _origin(eastNorthUpToFixedFrame[3]),
       _xAxis(eastNorthUpToFixedFrame[0]),
-      _yAxis(eastNorthUpToFixedFrame[1]),
-      _plane(eastNorthUpToFixedFrame[3], eastNorthUpToFixedFrame[2]) {}
+      _yAxis(eastNorthUpToFixedFrame[1]) 
+{
+  const glm::dvec3& point = eastNorthUpToFixedFrame[3];
+  const glm::dvec3& normal = eastNorthUpToFixedFrame[2];
+  double distance = -glm::dot(normal, point);
+  _plane = Plane::createUnchecked(normal, distance);
+}
 
 glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
     const glm::dvec3& cartesian) const noexcept {
