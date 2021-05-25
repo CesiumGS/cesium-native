@@ -1,5 +1,7 @@
 #pragma once
 
+#define sqlite3 cqlite3
+
 #include "CesiumAsync/ICacheDatabase.h"
 #include <cstddef>
 #include <memory>
