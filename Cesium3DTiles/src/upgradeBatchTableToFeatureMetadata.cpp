@@ -3,9 +3,9 @@
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "rapidjson/writer.h"
 #include <map>
 #include <rapidjson/document.h>
-#include "rapidjson/writer.h"
 
 using namespace CesiumGltf;
 
@@ -52,37 +52,35 @@ int64_t roundUp(int64_t num, int64_t multiple) {
 }
 
 void updateExtensionWithJsonStringProperty(
-    Model&  gltf,
+    Model& gltf,
     ClassProperty& /* classProperty */,
     FeatureTable& /* featureTable */,
-    FeatureTableProperty&  /*featureTableProperty*/,
-    const rapidjson::Value&  propertyValue) {
+    FeatureTableProperty& /*featureTableProperty*/,
+    const rapidjson::Value& propertyValue) {
   size_t totalSize = 0;
   size_t maxOffset = 0;
   std::vector<rapidjson::StringBuffer> rapidjsonStrBuffers;
   rapidjsonStrBuffers.reserve(propertyValue.Size());
   for (const auto& v : propertyValue.GetArray()) {
-    rapidjson::StringBuffer &buffer = rapidjsonStrBuffers.emplace_back();
+    rapidjson::StringBuffer& buffer = rapidjsonStrBuffers.emplace_back();
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     v.Accept(writer);
-    maxOffset = totalSize; 
+    maxOffset = totalSize;
     totalSize += buffer.GetSize();
   }
 
   size_t offset = 0;
   size_t stringOffset = 0;
-  std::vector<std::byte> buffer(totalSize + sizeof(size_t) * rapidjsonStrBuffers.size());
+  std::vector<std::byte> buffer(
+      totalSize + sizeof(size_t) * rapidjsonStrBuffers.size());
   for (const rapidjson::StringBuffer& rapidjsonBuffer : rapidjsonStrBuffers) {
-    size_t bufferLength = rapidjsonBuffer.GetSize(); 
+    size_t bufferLength = rapidjsonBuffer.GetSize();
     if (bufferLength != 0) {
       std::memcpy(
           buffer.data() + stringOffset,
           rapidjsonBuffer.GetString(),
           bufferLength);
-      std::memcpy(
-          buffer.data() + totalSize + offset,
-          &offset,
-          sizeof(size_t));
+      std::memcpy(buffer.data() + totalSize + offset, &offset, sizeof(size_t));
       stringOffset += bufferLength;
       offset += sizeof(size_t);
     }
@@ -342,7 +340,7 @@ void updateExtensionWithBinaryProperty(
     Model& gltf,
     int32_t gltfBufferIndex,
     int64_t gltfBufferOffset,
-    BinaryProperty &binaryProperty,
+    BinaryProperty& binaryProperty,
     ClassProperty& classProperty,
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
@@ -552,4 +550,3 @@ void upgradeBatchTableToFeatureMetadata(
 }
 
 } // namespace Cesium3DTiles
-

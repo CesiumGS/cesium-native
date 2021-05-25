@@ -120,18 +120,19 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   REQUIRE(pResult != nullptr);
   REQUIRE(pResult->model != std::nullopt);
 
-  ModelEXT_feature_metadata *metadata =
+  ModelEXT_feature_metadata* metadata =
       pResult->model->getExtension<ModelEXT_feature_metadata>();
   REQUIRE(metadata != nullptr);
-  
+
   std::optional<Schema> schema = metadata->schema;
   REQUIRE(schema != std::nullopt);
 
-  const std::unordered_map<std::string, Class> &classes = schema->classes;
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
   REQUIRE(classes.size() == 1);
 
   const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty> &properties = defaultClass.properties;
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
   const ClassProperty& id = properties.at("id");
