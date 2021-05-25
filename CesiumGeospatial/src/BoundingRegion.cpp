@@ -78,7 +78,7 @@ BoundingRegion::BoundingRegion(
 
     // Find a point that is on the west and the south planes
     std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
-        Ray(southCenterCartesian, eastWestNormal),
+        Ray::createUnchecked(southCenterCartesian, eastWestNormal),
         westPlane);
 
     if (!intersection) {
@@ -110,7 +110,7 @@ BoundingRegion::BoundingRegion(
 
     // Find a point that is on the east and the north planes
     std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
-        Ray(northCenterCartesian, -eastWestNormal),
+        Ray::createUnchecked(northCenterCartesian, -eastWestNormal),
         eastPlane);
 
     if (!intersection) {

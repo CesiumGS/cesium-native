@@ -29,6 +29,12 @@ public:
 
   static Plane createUnchecked(const glm::dvec3& normal, double distance) noexcept;
   static std::optional<Plane> createOptional(const glm::dvec3& normal, double distance) noexcept;
+
+  /**
+  * TODO
+     * @exception std::exception `normal` must be normalized.
+* 
+   */
   static Plane createThrowing(const glm::dvec3& normal, double distance);
 
   /**

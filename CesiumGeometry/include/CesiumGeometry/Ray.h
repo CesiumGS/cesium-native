@@ -1,6 +1,9 @@
 #pragma once
 
 #include "CesiumGeometry/Library.h"
+
+#include <optional>
+
 #include <glm/vec3.hpp>
 
 namespace CesiumGeometry {
@@ -11,15 +14,16 @@ namespace CesiumGeometry {
  */
 class CESIUMGEOMETRY_API Ray final {
 public:
+
+  static Ray createUnchecked(const glm::dvec3& origin, const glm::dvec3& direction) noexcept;
+  static std::optional<Ray> createOptional(const glm::dvec3& origin, const glm::dvec3& direction) noexcept;
+
   /**
-   * @brief Construct a new ray.
-   *
-   * @param origin The origin of the ray.
-   * @param direction The direction of the ray (normalized).
-   *
-   * @exception std::exception `direction` must be normalized.
+  * TODO
+     * @exception std::exception `direction` must be normalized.
+* 
    */
-  Ray(const glm::dvec3& origin, const glm::dvec3& direction);
+  static Ray createThrowing(const glm::dvec3& origin, const glm::dvec3& direction);
 
   /**
    * @brief Gets the origin of the ray.
@@ -37,6 +41,15 @@ public:
   Ray operator-() const noexcept;
 
 private:
+
+  /**
+   * @brief Construct a new ray.
+   *
+   * @param origin The origin of the ray.
+   * @param direction The direction of the ray
+   */
+  Ray(const glm::dvec3& origin, const glm::dvec3& direction);
+
   glm::dvec3 _origin;
   glm::dvec3 _direction;
 };
