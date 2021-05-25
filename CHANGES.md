@@ -4,6 +4,17 @@
 
 ##### Breaking Changes :mega:
 
+- The `CesiumGeometry::Plane` and `CesiumGeometry::Ray` classes now offer factory
+  methods to avoid throwing an `invalid_argument` exception in case of errors.
+  They offer a `createUnchecked` method that assumes valid input, a `createOptional`
+  method that returns an `std::optional` in case of errors, and a `createThrowing`
+  method that throws an exception in case of errors. This has the effect of other
+  classes also no longer throwing: The internal usage of these classes has been
+  changed to generally use the `createUnchecked` method, because the preconditions
+  for the exception to be thrown could not sensibly be propagated to the user.
+  This means that the `CullingVolume` and `EllipsoidTangentPlane` do no longer
+  throw for invalid inputs, but may return results that contain `NaN` values.
+
 ##### Additions :tada:
 
 - Added `Cesium3DTiles::TileIdUtilities` with a `createTileIdString` function to create logging/debugging strings for `TileID` objects.
