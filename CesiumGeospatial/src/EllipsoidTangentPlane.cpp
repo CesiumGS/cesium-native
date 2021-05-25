@@ -14,7 +14,7 @@ EllipsoidTangentPlane::EllipsoidTangentPlane(
     const glm::dvec3& origin,
     const Ellipsoid& ellipsoid)
     : EllipsoidTangentPlane(
-          computeEastNorthUpToFixedFrame(origin, ellipsoid),
+          computeEastNorthUpToFixedFrameUnchecked(origin, ellipsoid),
           ellipsoid) {}
 
 EllipsoidTangentPlane::EllipsoidTangentPlane(
@@ -48,13 +48,12 @@ glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
   return glm::dvec2(glm::dot(this->_xAxis, v), glm::dot(this->_yAxis, v));
 }
 
-/* static */ glm::dmat4 EllipsoidTangentPlane::computeEastNorthUpToFixedFrame(
+/* static */ glm::dmat4 EllipsoidTangentPlane::computeEastNorthUpToFixedFrameUnchecked(
     const glm::dvec3& origin,
     const Ellipsoid& ellipsoid) {
   const auto scaledOrigin = ellipsoid.scaleToGeodeticSurface(origin);
   if (!scaledOrigin) {
-    throw std::invalid_argument(
-        "The origin must not be near the center of the ellipsoid.");
+    return glm::dmat4(1.0);
   }
   return Transforms::eastNorthUpToFixedFrame(scaledOrigin.value(), ellipsoid);
 }

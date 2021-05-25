@@ -93,10 +93,14 @@ public:
 private:
   /**
    * Computes the matrix that is used for the constructor (if the origin
-   * and ellipsoid are given), but throws an `std::invalid_argument` if
-   * the origin is at the center of the ellipsoid.
+   * and ellipsoid are given). If the origin is at the center of the 
+   * ellipsoid, then an identity matrix will be returned.
+   * 
+   * @param origin The origin
+   * @param ellipsoid The {@link Ellipsoid}
+   * @return The matrix
    */
-  static glm::dmat4 computeEastNorthUpToFixedFrame(
+  static glm::dmat4 computeEastNorthUpToFixedFrameUnchecked(
       const glm::dvec3& origin,
       const Ellipsoid& ellipsoid);
 
