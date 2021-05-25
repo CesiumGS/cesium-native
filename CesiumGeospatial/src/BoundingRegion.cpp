@@ -73,7 +73,8 @@ BoundingRegion::BoundingRegion(
             (rectangle.getWest() + rectangle.getEast()) * 0.5,
             south,
             0.0));
-    double westDistance =  -glm::dot(this->_westNormal, this->_southwestCornerCartesian);
+    double westDistance =
+        -glm::dot(this->_westNormal, this->_southwestCornerCartesian);
     Plane westPlane = Plane::createUnchecked(this->_westNormal, westDistance);
 
     // Find a point that is on the west and the south planes
@@ -105,7 +106,8 @@ BoundingRegion::BoundingRegion(
             (rectangle.getWest() + rectangle.getEast()) * 0.5,
             north,
             0.0));
-    double eastDistance = -glm::dot(this->_eastNormal, this->_northeastCornerCartesian);
+    double eastDistance =
+        -glm::dot(this->_eastNormal, this->_northeastCornerCartesian);
     Plane eastPlane = Plane::createUnchecked(this->_eastNormal, eastDistance);
 
     // Find a point that is on the east and the north planes
@@ -394,7 +396,7 @@ static OrientedBoundingBox fromPlaneExtents(
       !isPole ? glm::normalize(planeOrigin) : glm::dvec3(1.0, 0.0, 0.0);
   glm::dvec3 planeYAxis(0.0, 0.0, 1.0);
   glm::dvec3 planeXAxis = glm::cross(planeNormal, planeYAxis);
-  double planeDistance =  -glm::dot(planeNormal, planeOrigin); 
+  double planeDistance = -glm::dot(planeNormal, planeOrigin);
   plane = Plane::createUnchecked(planeNormal, planeDistance);
 
   // Get the horizon point relative to the center. This will be the farthest

@@ -23,8 +23,7 @@ EllipsoidTangentPlane::EllipsoidTangentPlane(
     : _ellipsoid(ellipsoid),
       _origin(eastNorthUpToFixedFrame[3]),
       _xAxis(eastNorthUpToFixedFrame[0]),
-      _yAxis(eastNorthUpToFixedFrame[1]) 
-{
+      _yAxis(eastNorthUpToFixedFrame[1]) {
   const glm::dvec3& point = eastNorthUpToFixedFrame[3];
   const glm::dvec3& normal = eastNorthUpToFixedFrame[2];
   double distance = -glm::dot(normal, point);
@@ -48,7 +47,8 @@ glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
   return glm::dvec2(glm::dot(this->_xAxis, v), glm::dot(this->_yAxis, v));
 }
 
-/* static */ glm::dmat4 EllipsoidTangentPlane::computeEastNorthUpToFixedFrameUnchecked(
+/* static */ glm::dmat4
+EllipsoidTangentPlane::computeEastNorthUpToFixedFrameUnchecked(
     const glm::dvec3& origin,
     const Ellipsoid& ellipsoid) {
   const auto scaledOrigin = ellipsoid.scaleToGeodeticSurface(origin);

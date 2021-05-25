@@ -14,44 +14,49 @@ namespace CesiumGeometry {
  */
 class CESIUMGEOMETRY_API Ray final {
 public:
-
   /**
    * @brief Creates a ray from the given parameters.
-   * 
+   *
    * The caller is responsible to make sure that the given direction vector is
    * normalized.
-   * 
+   *
    * @param origin The origin.
    * @param direction The direction.
    * @return The ray.
    */
-  static Ray createUnchecked(const glm::dvec3& origin, const glm::dvec3& direction) noexcept;
+  static Ray createUnchecked(
+      const glm::dvec3& origin,
+      const glm::dvec3& direction) noexcept;
 
   /**
    * @brief Creates a ray from the given parameters.
-   * 
-   * If the given direction is not normalized (i.e. when it does not have a length
-   * of 1.0, within a small machine epsilon), then an empty optional will be 
-   * returned.
-   * 
+   *
+   * If the given direction is not normalized (i.e. when it does not have a
+   * length of 1.0, within a small machine epsilon), then an empty optional will
+   * be returned.
+   *
    * @param origin The origin.
    * @param direction The direction.
    * @return The ray.
    */
-  static std::optional<Ray> createOptional(const glm::dvec3& origin, const glm::dvec3& direction) noexcept;
+  static std::optional<Ray> createOptional(
+      const glm::dvec3& origin,
+      const glm::dvec3& direction) noexcept;
 
   /**
    * @brief Creates a ray from the given parameters.
-   * 
-   * If the given direction is not normalized (i.e. when it does not have a length
-   * of 1.0, within a small machine epsilon), then an exception will be thrown.
-   * 
+   *
+   * If the given direction is not normalized (i.e. when it does not have a
+   * length of 1.0, within a small machine epsilon), then an exception will be
+   * thrown.
+   *
    * @param origin The origin.
    * @param direction The direction.
    * @return The ray.
    * @exception std::exception If the direction is not normalized
    */
-  static Ray createThrowing(const glm::dvec3& origin, const glm::dvec3& direction);
+  static Ray
+  createThrowing(const glm::dvec3& origin, const glm::dvec3& direction);
 
   /**
    * @brief Gets the origin of the ray.
@@ -69,7 +74,6 @@ public:
   Ray operator-() const noexcept;
 
 private:
-
   /**
    * @brief Construct a new ray.
    *

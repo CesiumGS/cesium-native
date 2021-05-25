@@ -7,11 +7,14 @@ using namespace CesiumUtility;
 
 namespace CesiumGeometry {
 
-Plane Plane::createUnchecked(const glm::dvec3& normal, double distance) noexcept {
+Plane Plane::createUnchecked(
+    const glm::dvec3& normal,
+    double distance) noexcept {
   return Plane(normal, distance);
 }
 
-std::optional<Plane> Plane::createOptional(const glm::dvec3& normal, double distance) noexcept {
+std::optional<Plane>
+Plane::createOptional(const glm::dvec3& normal, double distance) noexcept {
   if (!Math::equalsEpsilon(glm::length(normal), 1.0, Math::EPSILON6)) {
     return std::nullopt;
   }
@@ -25,10 +28,8 @@ Plane Plane::createThrowing(const glm::dvec3& normal, double distance) {
   return Plane(normal, distance);
 }
 
-
 Plane::Plane(const glm::dvec3& normal, double distance)
-    : _normal(normal), _distance(distance) {
-}
+    : _normal(normal), _distance(distance) {}
 
 double Plane::getPointDistance(const glm::dvec3& point) const noexcept {
   return glm::dot(this->_normal, point) + this->_distance;

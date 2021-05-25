@@ -93,9 +93,9 @@ public:
 private:
   /**
    * Computes the matrix that is used for the constructor (if the origin
-   * and ellipsoid are given). If the origin is at the center of the 
+   * and ellipsoid are given). If the origin is at the center of the
    * ellipsoid, then an identity matrix will be returned.
-   * 
+   *
    * @param origin The origin
    * @param ellipsoid The {@link Ellipsoid}
    * @return The matrix
@@ -108,7 +108,8 @@ private:
   glm::dvec3 _origin;
   glm::dvec3 _xAxis;
   glm::dvec3 _yAxis;
-  CesiumGeometry::Plane _plane = CesiumGeometry::Plane::createUnchecked({ 0, 0, 0 }, 0.0 );
+  CesiumGeometry::Plane _plane =
+      CesiumGeometry::Plane::createUnchecked({0, 0, 0}, 0.0);
 };
 
 } // namespace CesiumGeospatial

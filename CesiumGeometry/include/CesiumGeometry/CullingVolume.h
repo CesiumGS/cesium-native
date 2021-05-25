@@ -35,32 +35,35 @@ struct CullingVolume final {
    *
    * Defaults to (0,0,1), with a distance of 0.
    */
-  CesiumGeometry::Plane leftPlane = CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
+  CesiumGeometry::Plane leftPlane =
+      CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
 
   /**
    * @brief The right plane of the culling volume.
    *
    * Defaults to (0,0,1), with a distance of 0.
    */
-  CesiumGeometry::Plane rightPlane = CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
+  CesiumGeometry::Plane rightPlane =
+      CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
 
   /**
    * @brief The top plane of the culling volume.
    *
    * Defaults to (0,0,1), with a distance of 0.
    */
-  CesiumGeometry::Plane topPlane = CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
+  CesiumGeometry::Plane topPlane =
+      CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
 
   /**
    * @brief The bottom plane of the culling volume.
    *
    * Defaults to (0,0,1), with a distance of 0.
    */
-  CesiumGeometry::Plane bottomPlane = CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
+  CesiumGeometry::Plane bottomPlane =
+      CesiumGeometry::Plane::createUnchecked(glm::dvec3(0.0, 0.0, 1.0), 0.0);
 
 private:
   CullingVolume();
-
 };
 
 } // namespace Cesium3DTiles
