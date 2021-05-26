@@ -39,27 +39,9 @@ public:
 
   static std::optional<PropertyAccessorView> create(
       const Model& model,
-      const Schema& schema,
-      const FeatureTable& table,
-      const std::string& propertyName) {
-    auto classIter = schema.classes.find(*table.classProperty);
-    if (classIter == schema.classes.end()) {
-      return std::nullopt;
-    }
-
-    const auto& classProperties = classIter->second.properties;
-    auto classPropertyIter = classProperties.find(propertyName);
-    if (classPropertyIter == classProperties.end()) {
-      return std::nullopt;
-    }
-
-    auto featureTablePropertyIter = table.properties.find(propertyName);
-    if (featureTablePropertyIter == table.properties.end()) {
-      return std::nullopt;
-    }
-
-    const FeatureTableProperty& featureTableProperty =
-        featureTablePropertyIter->second;
+      const ClassProperty& classProperty,
+      const FeatureTableProperty& featureTableProperty,
+      size_t instanceCount) {
     if (featureTableProperty.bufferView >= model.bufferViews.size()) {
       return std::nullopt;
     }
@@ -76,7 +58,6 @@ public:
       return std::nullopt;
     }
 
-    const ClassProperty* classProperty = &classPropertyIter->second;
     uint32_t type = getPropertyType(classProperty);
     if (!type) {
       return std::nullopt;
@@ -96,9 +77,9 @@ public:
     return PropertyAccessorView(
         valueBuffer,
         stride,
-        classProperty,
+        &classProperty,
         type,
-        table.count);
+        instanceCount);
   }
 
 private:
@@ -131,12 +112,12 @@ private:
     }
   }
 
-  static uint32_t getPropertyType(const ClassProperty* property) {
-    PropertyType type = convertStringToPropertyType(property->type);
+  static uint32_t getPropertyType(const ClassProperty& property) {
+    PropertyType type = convertStringToPropertyType(property.type);
     if (type == PropertyType::Array) {
-      if (property->componentType.isString()) {
+      if (property.componentType.isString()) {
         PropertyType componentType =
-            convertStringToPropertyType(property->componentType.getString());
+            convertStringToPropertyType(property.componentType.getString());
         if (componentType == PropertyType::Array) {
           return static_cast<uint32_t>(PropertyType::None);
         }

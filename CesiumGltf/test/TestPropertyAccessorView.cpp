@@ -1,4 +1,4 @@
-#include "CesiumGltf/MetadataView.h"
+#include "CesiumGltf/PropertyAccessorView.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
@@ -44,9 +44,9 @@ static void checkScalarProperty(
   // check values
   auto propertyView = CesiumGltf::PropertyAccessorView::create(
       model,
-      *metadata.schema,
-      featureTable,
-      "TestProperty");
+      metaProperty,
+      featureTableProperty,
+      featureTable.count);
   REQUIRE(propertyView != std::nullopt);
   REQUIRE(propertyView->getType() == static_cast<uint32_t>(propertyType));
   REQUIRE(propertyView->numOfInstances() == data.size());
@@ -55,7 +55,7 @@ static void checkScalarProperty(
   }
 }
 
-TEST_CASE("Access primitive type") {
+TEST_CASE("Access continuous scalar primitive type") {
   SECTION("uint8_t") {
     std::vector<uint8_t> data{21, 255, 3, 4, 122};
     checkScalarProperty(data, CesiumGltf::PropertyType::Uint8);
@@ -104,4 +104,8 @@ TEST_CASE("Access primitive type") {
     std::vector<double> data{221.5, 326,622, 39.14, 43.4, 122.3};
     checkScalarProperty(data, CesiumGltf::PropertyType::Float64);
   }
+}
+
+TEST_CASE("Accessor interleave scalar type") {
+
 }
