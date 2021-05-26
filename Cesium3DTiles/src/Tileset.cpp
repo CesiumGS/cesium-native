@@ -1146,6 +1146,17 @@ static void markTileAndChildrenNonRendered(
   markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
 }
 
+/**
+ * @brief Returns whether the tile is completely clipped out by a clipping 
+ * polygon.
+ * 
+ * @param boundingVolume The bounding volume of the tile.
+ * @param clippingPolygonsVertices The perimeters of the clipping polygons
+ * given in longitude-latitude vertices.
+ * @param clippingPolygonsIndices The triangulated indices for each clipping
+ * polygon.
+ * @return Whether the tile is completely clipped out by a clipping polygon.
+ */
 static bool isCompletelyClipped(
     const BoundingVolume& boundingVolume,
     const std::vector<std::vector<glm::dvec2>>& clippingPolygonsVertices,
@@ -1157,6 +1168,9 @@ static bool isCompletelyClipped(
   if (!pRectangle) {
     return false;
   }
+
+  // TODO: remove!!
+  if (pRectangle) return false;
 
   glm::dvec2 rectangleCorners[] = {
       glm::dvec2(pRectangle->getWest(), pRectangle->getSouth()),
@@ -1228,8 +1242,11 @@ static bool isCompletelyClipped(
         glm::dmat2 lineSegmentMatrix(cd, ba);
         glm::dvec2 ca = a - rectangleCorners[k];
         
+        // s and t are calculated such that:
+        // line_intersection = a + t * ab = c + s * cd
         glm::dvec2 st = glm::inverse(lineSegmentMatrix) * ca;
         
+        // check that the intersection is within the line segments
         if (st.x <= 1.0 && st.x >= 0.0 && st.y <= 1.0 && st.y >= 0.0) {
           intersectionFound = true;
           break;
