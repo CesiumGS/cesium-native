@@ -233,7 +233,8 @@ TEST_CASE("Wrong format property") {
     REQUIRE(propertyView == std::nullopt);
   }
 
-  SECTION("Buffer view byte stride make its length outside of the real buffer length") {
+  SECTION("Buffer view byte stride make its length outside of the real buffer "
+          "length") {
     // copy data to buffer
     std::vector<int64_t> data{210000, 26600, -3, 4222, -11122};
     CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
