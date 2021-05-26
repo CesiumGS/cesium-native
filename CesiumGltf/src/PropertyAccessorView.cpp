@@ -67,8 +67,13 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     return std::nullopt;
   }
 
+  // make sure dynamic array will have offset buffer
+  bool isFixedArray =
+      classProperty.componentCount && classProperty.componentCount > 0;
+  bool isDynamicArray =
+      type & static_cast<uint32_t>(PropertyType::Array) && !isFixedArray; 
   MetaBuffer arrayOffsetMetaBuffer;
-  if (type & static_cast<uint32_t>(PropertyType::Array)) {
+  if (isDynamicArray) {
     if (featureTableProperty.arrayOffsetBufferView < 0 ||
         featureTableProperty.arrayOffsetBufferView >=
             model.bufferViews.size()) {
@@ -87,8 +92,10 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     }
   }
 
+  // string will always require offset buffer no matter what
   MetaBuffer stringOffsetMetaBuffer;
-  if (type & static_cast<uint32_t>(PropertyType::String)) {
+  bool isString = type & static_cast<uint32_t>(PropertyType::String); 
+  if (isString) {
     if (featureTableProperty.stringOffsetBufferView < 0 ||
         featureTableProperty.stringOffsetBufferView >=
             model.bufferViews.size()) {
@@ -107,11 +114,14 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     }
   }
 
+  // dynamic array and string will require offset type here. Default to be uint32_t
   PropertyType offsetType = PropertyType::None;
-  if (type & (static_cast<uint32_t>(PropertyType::Array) |
-              static_cast<uint32_t>(PropertyType::String))) 
+  if (isDynamicArray || isString) 
   {
     offsetType = getOffsetType(featureTableProperty.offsetType);
+    if (offsetType == PropertyType::None) {
+      offsetType = PropertyType::Uint32; 
+    }
   }
 
   return PropertyAccessorView(
