@@ -126,6 +126,71 @@ TEST_CASE("Access continuous scalar primitive type") {
   }
 }
 
+TEST_CASE("Access fixed array") {
+  CesiumGltf::Model model;
+  CesiumGltf::ModelEXT_feature_metadata& metadata =
+      model.addExtension<CesiumGltf::ModelEXT_feature_metadata>();
+  metadata.schema = CesiumGltf::Schema();
+  metadata.schema->name = "TestSchema";
+
+  // create schema
+  CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
+  CesiumGltf::ClassProperty& metaProperty =
+      metaClass.properties["TestProperty"];
+  metaProperty.type =
+      CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::Array);
+
+  SECTION("Fixed array of 4 uint8_ts") {
+    metaProperty.componentCount = 4;
+    metaProperty.componentType = CesiumGltf::convertProperttTypeToString(
+        CesiumGltf::PropertyType::Uint8);
+
+    // copy data to buffer
+    std::vector<uint8_t> data{210, 211, 3, 42, 122, 22, 1, 45};
+    CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(data.size() * sizeof(int64_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        data.data(),
+        data.size() * sizeof(uint8_t));
+
+    // bufferView doesn't point to correct one
+    CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    bufferView.byteOffset = 0;
+    bufferView.byteLength = buffer.cesium.data.size();
+
+    // create feature table
+    CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
+    featureTable.count = data.size();
+
+    // point feature table class to data
+    featureTable.classProperty = "Test";
+    CesiumGltf::FeatureTableProperty& featureTableProperty =
+        featureTable.properties["TestProperty"];
+    featureTableProperty.bufferView =
+        static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+    // check values
+    auto propertyView = CesiumGltf::PropertyAccessorView::create(
+        model,
+        metaProperty,
+        featureTableProperty,
+        featureTable.count);
+    REQUIRE(propertyView != std::nullopt);
+    REQUIRE(
+        propertyView->getType() ==
+            (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
+        static_cast<uint32_t>(CesiumGltf::PropertyType::Uint8)));
+    gsl::span<const uint8_t> val = propertyView->get<gsl::span<const uint8_t>>(0);
+    REQUIRE(val.size() == 4);
+    REQUIRE(val[0] == data[0]);
+    REQUIRE(val[1] == data[1]);
+    REQUIRE(val[2] == data[2]);
+    REQUIRE(val[3] == data[3]);
+  }
+}
+
 TEST_CASE("Wrong format property") {
   CesiumGltf::Model model;
   CesiumGltf::ModelEXT_feature_metadata& metadata =

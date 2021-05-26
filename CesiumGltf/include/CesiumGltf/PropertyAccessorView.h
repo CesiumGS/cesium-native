@@ -21,6 +21,11 @@ class PropertyAccessorView {
     size_t stride;
   };
 
+  template <typename T> struct ArrayType;
+  template <typename T> struct ArrayType<gsl::span<const T>> {
+      using type = T;
+  };
+
 public:
   PropertyAccessorView(
       MetaBuffer valueBuffer,
@@ -60,10 +65,9 @@ public:
       return getBoolean(instance);
     }
 
-    if constexpr (
-        TypeToPropertyType<T>::value &
-        static_cast<uint32_t>(PropertyType::Array)) {
-      return getArray<T>(instance);
+    if constexpr ((TypeToPropertyType<T>::value &
+                   static_cast<uint32_t>(PropertyType::Array)) != 0) {
+      return getArray<typename ArrayType<T>::type>(instance);
     }
 
     if constexpr (
@@ -87,7 +91,7 @@ private:
   }
 
   template <typename T> gsl::span<const T> getArray(size_t instance) const {
-    assert(TypeToPropertyType<T>::value & PropertyType::Array);
+    assert((_type & static_cast<uint32_t>(PropertyType::Array)) != 0);
     if (_property->componentCount) {
       return gsl::span<const T>(
           reinterpret_cast<const T*>(
@@ -96,9 +100,9 @@ private:
     }
 
     size_t currentOffset =
-        getOffsetFromOffsetBuffer(instance, _arrayOffsetBuffer);
+        getOffsetFromOffsetBuffer(instance, _arrayOffsetBuffer, _offsetType);
     size_t nextOffset =
-        getOffsetFromOffsetBuffer(instance + 1, _arrayOffsetBuffer);
+        getOffsetFromOffsetBuffer(instance + 1, _arrayOffsetBuffer, _offsetType);
     return gsl::span<const T>(
         reinterpret_cast<const T*>(_valueBuffer.buffer.data() + currentOffset),
         (nextOffset - currentOffset) % sizeof(T));
