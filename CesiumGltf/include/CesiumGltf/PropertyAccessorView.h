@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/Model.h"
 #include "CesiumGltf/FeatureTableProperty.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumGltf/PropertyType.h"
 #include <cassert>
 #include <cstddef>

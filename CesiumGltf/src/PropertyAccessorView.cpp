@@ -22,13 +22,7 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
 
   const BufferView& bufferView =
       model.bufferViews[featureTableProperty.bufferView];
-  if (bufferView.buffer >= model.buffers.size()) {
-    return std::nullopt;
-  }
-
-  const Buffer& buffer = model.buffers[bufferView.buffer];
-  if (bufferView.byteOffset + bufferView.byteLength >
-      static_cast<int64_t>(buffer.cesium.data.size())) {
+  if (bufferView.buffer >= model.buffers.size() || bufferView.byteOffset < 0) {
     return std::nullopt;
   }
 
@@ -44,6 +38,12 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     stride = getNumberPropertyTypeSize(type);
   }
 
+  const Buffer& buffer = model.buffers[bufferView.buffer];
+  if (static_cast<size_t>(bufferView.byteOffset) + stride * instanceCount >
+      buffer.cesium.data.size()) {
+    return std::nullopt;
+  }
+
   gsl::span<const std::byte> valueBuffer(
       reinterpret_cast<const std::byte*>(
           buffer.cesium.data.data() + bufferView.byteOffset),
@@ -55,7 +55,8 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
       instanceCount);
 }
 
-/*static*/ size_t PropertyAccessorView::getNumberPropertyTypeSize(uint32_t type) {
+/*static*/ size_t
+PropertyAccessorView::getNumberPropertyTypeSize(uint32_t type) {
   switch (type) {
   case static_cast<uint32_t>(PropertyType::None):
     return 0;
@@ -84,7 +85,8 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
   }
 }
 
-/*static*/ uint32_t PropertyAccessorView::getPropertyType(const ClassProperty& property) {
+/*static*/ uint32_t
+PropertyAccessorView::getPropertyType(const ClassProperty& property) {
   PropertyType type = convertStringToPropertyType(property.type);
   if (type == PropertyType::Array) {
     if (property.componentType.isString()) {
