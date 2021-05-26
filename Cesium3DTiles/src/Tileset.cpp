@@ -12,6 +12,8 @@
 #include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Uri.h"
@@ -19,6 +21,7 @@
 #include "calcQuadtreeMaxGeometricError.h"
 #include <cstddef>
 #include <glm/common.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <optional>
 #include <rapidjson/document.h>
 #include <unordered_set>
@@ -1143,6 +1146,111 @@ static void markTileAndChildrenNonRendered(
   markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
 }
 
+static bool isCompletelyClipped(
+    const BoundingVolume& boundingVolume,
+    const std::vector<std::vector<glm::dvec2>>& clippingPolygonsVertices,
+    const std::vector<std::vector<uint32_t>>& clippingPolygonsIndices) {
+
+  // TODO: generalize to more than just bounding region
+  const CesiumGeospatial::GlobeRectangle* pRectangle =
+      Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+  if (!pRectangle) {
+    return false;
+  }
+
+  glm::dvec2 rectangleCorners[] = {
+      glm::dvec2(pRectangle->getWest(), pRectangle->getSouth()),
+      glm::dvec2(pRectangle->getWest(), pRectangle->getNorth()),
+      glm::dvec2(pRectangle->getEast(), pRectangle->getNorth()),
+      glm::dvec2(pRectangle->getEast(), pRectangle->getSouth())};
+
+  glm::dvec2 rectangleEdges[] = {
+      rectangleCorners[1] - rectangleCorners[0],
+      rectangleCorners[2] - rectangleCorners[1],
+      rectangleCorners[3] - rectangleCorners[2],
+      rectangleCorners[0] - rectangleCorners[3]};
+
+  // Iterate through all clipping polygons.
+  for (size_t i = 0; i < clippingPolygonsVertices.size(); ++i) {
+    const std::vector<glm::dvec2>& vertices = clippingPolygonsVertices[i];
+    const std::vector<uint32_t>& indices = clippingPolygonsIndices[i];
+
+    // First check if an arbitrary point on the bounding globe rectangle is
+    // inside the polygon.
+    bool inside = false;
+    for (size_t j = 2; j < indices.size(); j += 3) {
+      const glm::dvec2& a = vertices[indices[j - 2]];
+      const glm::dvec2& b = vertices[indices[j - 1]];
+      const glm::dvec2& c = vertices[indices[j]];
+
+      glm::dvec2 ab = b - a;
+      glm::dvec2 ab_perp(-ab.y, ab.x);
+      glm::dvec2 bc = c - b;
+      glm::dvec2 bc_perp(-bc.y, bc.x);
+      glm::dvec2 ca = a - c;
+      glm::dvec2 ca_perp(-ca.y, ca.x);
+
+      glm::dvec2 av = rectangleCorners[0] - a;
+      glm::dvec2 cv = rectangleCorners[0] - c;
+
+      double v_proj_ab_perp = glm::dot(av, ab_perp);
+      double v_proj_bc_perp = glm::dot(cv, bc_perp);
+      double v_proj_ca_perp = glm::dot(cv, ca_perp);
+
+      // This will determine in or out, irrespective of winding.
+      if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
+           v_proj_bc_perp >= 0.0) ||
+          (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
+           v_proj_bc_perp <= 0.0)) {
+        inside = true;
+        break;
+      }
+    }
+
+    // If the arbitrary point was outside, then this polygon does not entirely
+    // cull the tile.
+    if (!inside) {
+      continue;
+    }
+
+    // Check if the polygon perimeter intersects the bounding globe rectangle 
+    // edges.
+    bool intersectionFound = false;
+    for (size_t j = 0; j < vertices.size(); ++j) {
+      const glm::dvec2& a = vertices[j];
+      const glm::dvec2& b = vertices[(j + 1) % vertices.size()];
+
+      glm::dvec2 ba = a - b;
+
+      // Check each rectangle edge.
+      for (size_t k = 0; k < 4; ++k) {
+        const glm::dvec2& cd = rectangleEdges[k];
+        glm::dmat2 lineSegmentMatrix(cd, ba);
+        glm::dvec2 ca = a - rectangleCorners[k];
+        
+        glm::dvec2 st = glm::inverse(lineSegmentMatrix) * ca;
+        
+        if (st.x <= 1.0 && st.x >= 0.0 && st.y <= 1.0 && st.y >= 0.0) {
+          intersectionFound = true;
+          break;
+        }
+      }
+      
+      if (intersectionFound) {
+        break;
+      }
+    }
+
+    // There is no intersection with the perimeter and at least one point is 
+    // inside the polygon so the tile is completely inside this polygon.
+    if (!intersectionFound) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * @brief Returns whether a tile with the given bounding volume is visible for
  * the camera.
@@ -1211,6 +1319,11 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   const BoundingVolume& boundingVolume = tile.getBoundingVolume();
   const ViewState& viewState = frameState.viewState;
+
+  if (isCompletelyClipped(boundingVolume, this->_options.cullingPolygons, this->_options.cullingPolygonsIndices)) {
+    culled = true;
+    shouldVisit = false;
+  }
 
   if (!isVisibleFromCamera(
           frameState.viewState,
