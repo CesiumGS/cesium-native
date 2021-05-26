@@ -16,30 +16,37 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty,
     size_t instanceCount) {
+  // check correct type
+  uint32_t type = getPropertyType(classProperty);
+  if (!type) {
+    return std::nullopt;
+  }
+
+  // check buffer view index
   if (featureTableProperty.bufferView >= model.bufferViews.size()) {
     return std::nullopt;
   }
 
+  // check buffer view size is correct
   const BufferView& bufferView =
       model.bufferViews[featureTableProperty.bufferView];
   if (bufferView.buffer >= model.buffers.size() || bufferView.byteOffset < 0) {
     return std::nullopt;
   }
 
-  uint32_t type = getPropertyType(classProperty);
-  if (!type) {
+  size_t typeSize = getNumberPropertyTypeSize(type); 
+  size_t stride = typeSize;
+  if (bufferView.byteStride && bufferView.byteStride > 0) {
+    stride = *bufferView.byteStride;
+  } 
+
+  const Buffer& buffer = model.buffers[bufferView.buffer];
+  if (static_cast<size_t>(bufferView.byteOffset + bufferView.byteLength) >
+      buffer.cesium.data.size()) {
     return std::nullopt;
   }
 
-  size_t stride{};
-  if (bufferView.byteStride && bufferView.byteStride > 0) {
-    stride = *bufferView.byteStride;
-  } else {
-    stride = getNumberPropertyTypeSize(type);
-  }
-
-  const Buffer& buffer = model.buffers[bufferView.buffer];
-  if (static_cast<size_t>(bufferView.byteOffset) + stride * instanceCount >
+  if (static_cast<size_t>(bufferView.byteOffset) + stride * (instanceCount - 1) + typeSize >
       buffer.cesium.data.size()) {
     return std::nullopt;
   }
