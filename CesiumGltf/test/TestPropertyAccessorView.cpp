@@ -58,6 +58,70 @@ static void checkScalarProperty(
   }
 }
 
+template <typename T>
+static void checkFixedArray(
+    const std::vector<T>& data,
+    int64_t componentCount,
+    CesiumGltf::PropertyType componentType,
+    int64_t instanceCount) {
+  CesiumGltf::Model model;
+  CesiumGltf::ModelEXT_feature_metadata& metadata =
+      model.addExtension<CesiumGltf::ModelEXT_feature_metadata>();
+  metadata.schema = CesiumGltf::Schema();
+  metadata.schema->name = "TestSchema";
+
+  // create schema
+  CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
+  CesiumGltf::ClassProperty& metaProperty =
+      metaClass.properties["TestProperty"];
+  metaProperty.type =
+      CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::Array);
+  metaProperty.componentCount = componentCount;
+  metaProperty.componentType =
+      CesiumGltf::convertProperttTypeToString(componentType);
+
+  // copy data to buffer
+  CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data.resize(data.size() * sizeof(T));
+  std::memcpy(buffer.cesium.data.data(), data.data(), data.size() * sizeof(T));
+
+  CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = buffer.cesium.data.size();
+
+  // create feature table
+  CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
+  featureTable.count = instanceCount;
+
+  // point feature table class to data
+  featureTable.classProperty = "Test";
+  CesiumGltf::FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestProperty"];
+  featureTableProperty.bufferView =
+      static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+  // check values
+  auto propertyView = CesiumGltf::PropertyAccessorView::create(
+      model,
+      metaProperty,
+      featureTableProperty,
+      featureTable.count);
+  REQUIRE(propertyView != std::nullopt);
+  REQUIRE(
+      propertyView->getType() ==
+      (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
+       static_cast<uint32_t>(componentType)));
+
+  for (size_t i = 0; i < propertyView->numOfInstances(); ++i) {
+    gsl::span<const T> val = propertyView->get<gsl::span<const T>>(i);
+    REQUIRE(val.size() == static_cast<size_t>(componentCount));
+    for (size_t j = 0; j < val.size(); ++j) {
+      REQUIRE(val[j] == data[i * componentCount + j]);
+    }
+  }
+}
+
 TEST_CASE("Access continuous scalar primitive type") {
   SECTION("uint8_t") {
     std::vector<uint8_t> data{21, 255, 3, 4, 122, 30, 11, 20};
@@ -127,75 +191,102 @@ TEST_CASE("Access continuous scalar primitive type") {
 }
 
 TEST_CASE("Access fixed array") {
-  CesiumGltf::Model model;
-  CesiumGltf::ModelEXT_feature_metadata& metadata =
-      model.addExtension<CesiumGltf::ModelEXT_feature_metadata>();
-  metadata.schema = CesiumGltf::Schema();
-  metadata.schema->name = "TestSchema";
-
-  // create schema
-  CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
-  CesiumGltf::ClassProperty& metaProperty =
-      metaClass.properties["TestProperty"];
-  metaProperty.type =
-      CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::Array);
-
   SECTION("Fixed array of 4 uint8_ts") {
-    metaProperty.componentCount = 4;
-    metaProperty.componentType = CesiumGltf::convertProperttTypeToString(
-        CesiumGltf::PropertyType::Uint8);
+    // clang-format off
+    std::vector<uint8_t> data{
+        210, 211, 3, 42, 
+        122, 22, 1, 45};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Uint8, data.size() / 4);
+  }
 
-    // copy data to buffer
-    std::vector<uint8_t> data{210, 211, 3, 42, 122, 22, 1, 45};
-    CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
-    buffer.cesium.data.resize(data.size() * sizeof(int64_t));
-    std::memcpy(
-        buffer.cesium.data.data(),
-        data.data(),
-        data.size() * sizeof(uint8_t));
+  SECTION("Fixed array of 3 int8_ts") {
+    // clang-format off
+    std::vector<int8_t> data{
+        122, -12, 3, 
+        44, 11, -2, 
+        5, 6, -22, 
+        5, 6, 1};
+    // clang-format on
+    checkFixedArray(data, 3, CesiumGltf::PropertyType::Int8, data.size() / 3);
+  }
 
-    CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
-    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-    bufferView.byteOffset = 0;
-    bufferView.byteLength = buffer.cesium.data.size();
+  SECTION("Fixed array of 4 uint16_ts") {
+    // clang-format off
+    std::vector<uint16_t> data{
+        122, 12, 3, 44, 
+        11, 2, 5, 6000, 
+        119, 30, 51, 200, 
+        22000, 50000, 6000, 1};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Uint16, data.size() / 4);
+  }
 
-    // create feature table
-    CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
-    featureTable.count = 2;
+  SECTION("Fixed array of 4 int16_ts") {
+    // clang-format off
+    std::vector<int16_t> data{
+        -122, 12, 3, 44, 
+        11, 2, 5, -6000, 
+        119, 30, 51, 200, 
+        22000, -500, 6000, 1};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Int16, data.size() / 4);
+  }
 
-    // point feature table class to data
-    featureTable.classProperty = "Test";
-    CesiumGltf::FeatureTableProperty& featureTableProperty =
-        featureTable.properties["TestProperty"];
-    featureTableProperty.bufferView =
-        static_cast<uint32_t>(model.bufferViews.size() - 1);
+  SECTION("Fixed array of 6 uint32_ts") {
+    // clang-format off
+    std::vector<uint32_t> data{
+        122, 12, 3, 44, 34444, 2222,
+        11, 2, 5, 6000, 1111, 2222,
+        119, 30, 51, 200, 12534, 11,
+        22000, 500, 6000, 1, 3, 7};
+    // clang-format on
+    checkFixedArray(data, 6, CesiumGltf::PropertyType::Uint32, data.size() / 6);
+  }
 
-    // check values
-    auto propertyView = CesiumGltf::PropertyAccessorView::create(
-        model,
-        metaProperty,
-        featureTableProperty,
-        featureTable.count);
-    REQUIRE(propertyView != std::nullopt);
-    REQUIRE(
-        propertyView->getType() ==
-        (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
-         static_cast<uint32_t>(CesiumGltf::PropertyType::Uint8)));
+  SECTION("Fixed array of 2 int32_ts") {
+    // clang-format off
+    std::vector<uint32_t> data{
+        122, 12, 
+        3, 44};
+    // clang-format on
+    checkFixedArray(data, 2, CesiumGltf::PropertyType::Uint32, data.size() / 2);
+  }
 
-    gsl::span<const uint8_t> val =
-        propertyView->get<gsl::span<const uint8_t>>(0);
-    REQUIRE(val.size() == 4);
-    REQUIRE(val[0] == data[0]);
-    REQUIRE(val[1] == data[1]);
-    REQUIRE(val[2] == data[2]);
-    REQUIRE(val[3] == data[3]);
+  SECTION("Fixed array of 4 uint64_ts") {
+    // clang-format off
+    std::vector<uint64_t> data{
+        10022, 120000, 2422, 1111, 
+        3, 440000, 333, 1455};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Uint64, data.size() / 4);
+  }
 
-    val = propertyView->get<gsl::span<const uint8_t>>(1);
-    REQUIRE(val.size() == 4);
-    REQUIRE(val[0] == data[4]);
-    REQUIRE(val[1] == data[5]);
-    REQUIRE(val[2] == data[6]);
-    REQUIRE(val[3] == data[7]);
+  SECTION("Fixed array of 4 int64_ts") {
+    // clang-format off
+    std::vector<int64_t> data{
+        10022, -120000, 2422, 1111, 
+        3, 440000, -333, 1455};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Int64, data.size() / 4);
+  }
+
+  SECTION("Fixed array of 4 floats") {
+    // clang-format off
+    std::vector<float> data{
+        10.022f, -12.43f, 242.2f, 1.111f, 
+        3.333f, 440000.1f, -33.3f, 14.55f};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Float32, data.size() / 4);
+  }
+
+  SECTION("Fixed array of 4 double") {
+    // clang-format off
+    std::vector<double> data{
+        10.022, -12.43, 242.2, 1.111, 
+        3.333, 440000.1, -33.3, 14.55};
+    // clang-format on
+    checkFixedArray(data, 4, CesiumGltf::PropertyType::Float64, data.size() / 4);
   }
 }
 
