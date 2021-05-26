@@ -179,10 +179,11 @@ TEST_CASE("Access fixed array") {
     REQUIRE(propertyView != std::nullopt);
     REQUIRE(
         propertyView->getType() ==
-            (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
-        static_cast<uint32_t>(CesiumGltf::PropertyType::Uint8)));
+        (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
+         static_cast<uint32_t>(CesiumGltf::PropertyType::Uint8)));
 
-    gsl::span<const uint8_t> val = propertyView->get<gsl::span<const uint8_t>>(0);
+    gsl::span<const uint8_t> val =
+        propertyView->get<gsl::span<const uint8_t>>(0);
     REQUIRE(val.size() == 4);
     REQUIRE(val[0] == data[0]);
     REQUIRE(val[1] == data[1]);
