@@ -1,6 +1,29 @@
 #include "CesiumGltf/PropertyAccessorView.h"
+#include "CesiumGltf/Buffer.h"
 #include "CesiumGltf/BufferView.h"
 #include "CesiumGltf/ClassProperty.h"
+
+namespace {
+CesiumGltf::PropertyType getOffsetType(const std::string& type) {
+  if (type == "UINT8") {
+    return CesiumGltf::PropertyType::Uint8;
+  }
+
+  if (type == "UINT16") {
+    return CesiumGltf::PropertyType::Uint16;
+  }
+
+  if (type == "UINT32") {
+    return CesiumGltf::PropertyType::Uint32;
+  }
+
+  if (type == "UINT64") {
+    return CesiumGltf::PropertyType::Uint64;
+  }
+
+  return CesiumGltf::PropertyType::None;
+}
+}
 
 namespace CesiumGltf {
 bool PropertyAccessorView::getBoolean(size_t /*instance*/) const {
@@ -28,36 +51,74 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
   }
 
   // check buffer view size is correct
-  const BufferView& bufferView =
+  const BufferView& valueBufferView =
       model.bufferViews[featureTableProperty.bufferView];
-  if (bufferView.buffer >= model.buffers.size() || bufferView.byteOffset < 0) {
+  if (valueBufferView.buffer >= model.buffers.size() || valueBufferView.byteOffset < 0) {
     return std::nullopt;
   }
 
-  size_t typeSize = getNumberPropertyTypeSize(type);
-  size_t stride = typeSize;
-  if (bufferView.byteStride && bufferView.byteStride > 0) {
-    stride = *bufferView.byteStride;
-  }
-
-  const Buffer& buffer = model.buffers[bufferView.buffer];
-  if (static_cast<size_t>(bufferView.byteOffset + bufferView.byteLength) >
-      buffer.cesium.data.size()) {
+  MetaBuffer valueMetaBuffer;
+  if (!createMetaBuffer(
+          model,
+          valueBufferView,
+          instanceCount,
+          type,
+          valueMetaBuffer)) {
     return std::nullopt;
   }
 
-  if (static_cast<size_t>(bufferView.byteOffset) +
-          stride * (instanceCount - 1) + typeSize >
-      buffer.cesium.data.size()) {
-    return std::nullopt;
+  MetaBuffer arrayOffsetMetaBuffer;
+  if (type & static_cast<uint32_t>(PropertyType::Array)) {
+    if (featureTableProperty.arrayOffsetBufferView < 0 ||
+        featureTableProperty.arrayOffsetBufferView >=
+            model.bufferViews.size()) {
+      return std::nullopt;
+    }
+
+    const BufferView& arrayOffsetBufferView =
+        model.bufferViews[featureTableProperty.arrayOffsetBufferView]; 
+    if (!createMetaBuffer(
+            model,
+            arrayOffsetBufferView,
+            instanceCount,
+            type,
+            arrayOffsetMetaBuffer)) {
+      return std::nullopt;
+    }
   }
 
-  gsl::span<const std::byte> valueBuffer(
-      reinterpret_cast<const std::byte*>(
-          buffer.cesium.data.data() + bufferView.byteOffset),
-      bufferView.byteLength);
+  MetaBuffer stringOffsetMetaBuffer;
+  if (type & static_cast<uint32_t>(PropertyType::String)) {
+    if (featureTableProperty.stringOffsetBufferView < 0 ||
+        featureTableProperty.stringOffsetBufferView >=
+            model.bufferViews.size()) {
+      return std::nullopt;
+    }
+
+    const BufferView& stringOffsetBufferView =
+        model.bufferViews[featureTableProperty.arrayOffsetBufferView]; 
+    if (!createMetaBuffer(
+            model,
+            stringOffsetBufferView,
+            instanceCount,
+            type,
+            stringOffsetMetaBuffer)) {
+      return std::nullopt;
+    }
+  }
+
+  PropertyType offsetType = PropertyType::None;
+  if (type & (static_cast<uint32_t>(PropertyType::Array) |
+              static_cast<uint32_t>(PropertyType::String))) 
+  {
+    offsetType = getOffsetType(featureTableProperty.offsetType);
+  }
+
   return PropertyAccessorView(
-      MetaBuffer{valueBuffer, stride},
+      valueMetaBuffer,
+      arrayOffsetMetaBuffer,
+      stringOffsetMetaBuffer,
+      offsetType,
       &classProperty,
       type,
       instanceCount);
@@ -109,5 +170,39 @@ PropertyAccessorView::getPropertyType(const ClassProperty& property) {
   }
 
   return static_cast<uint32_t>(type);
+}
+
+/*static*/ bool PropertyAccessorView::createMetaBuffer(
+    const Model &model,
+    const BufferView& bufferView,
+    size_t instanceCount,
+    uint32_t type,
+    MetaBuffer& metaBuffer) 
+{
+  size_t typeSize = getNumberPropertyTypeSize(type);
+  size_t stride = typeSize;
+  if (bufferView.byteStride && bufferView.byteStride > 0) {
+    stride = *bufferView.byteStride;
+  }
+
+  const Buffer& buffer = model.buffers[bufferView.buffer];
+  if (static_cast<size_t>(bufferView.byteOffset + bufferView.byteLength) >
+      buffer.cesium.data.size()) {
+    return false;
+  }
+
+  if (static_cast<size_t>(bufferView.byteOffset) +
+          stride * (instanceCount - 1) + typeSize >
+      buffer.cesium.data.size()) {
+    return false;
+  }
+
+  metaBuffer.buffer = gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(
+          buffer.cesium.data.data() + bufferView.byteOffset),
+      bufferView.byteLength);
+  metaBuffer.stride = stride;
+
+  return true;
 }
 } // namespace CesiumGltf

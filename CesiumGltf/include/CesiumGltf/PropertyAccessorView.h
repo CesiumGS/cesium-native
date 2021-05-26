@@ -11,6 +11,8 @@
 #include <type_traits>
 
 namespace CesiumGltf {
+struct Model;
+struct BufferView;
 struct ClassProperty;
 
 class PropertyAccessorView {
@@ -22,10 +24,16 @@ class PropertyAccessorView {
 public:
   PropertyAccessorView(
       MetaBuffer valueBuffer,
+      MetaBuffer arrayOffsetBuffer,
+      MetaBuffer stringOffsetBuffer,
+      PropertyType offsetType,
       const ClassProperty* property,
       uint32_t type,
       size_t instanceCount)
-      : _valueBuffer{valueBuffer},
+      : _valueBuffer{valueBuffer}, 
+        _arrayOffsetBuffer {arrayOffsetBuffer},
+        _stringOffsetBuffer {stringOffsetBuffer},
+        _offsetType {offsetType},
         _instanceCount{instanceCount},
         _type{type},
         _property{property} {}
@@ -90,7 +98,17 @@ private:
 
   static uint32_t getPropertyType(const ClassProperty& property);
 
+  static bool createMetaBuffer(
+      const Model& model,
+      const BufferView& bufferView,
+      size_t instanceCount,
+      uint32_t type,
+      MetaBuffer& metaBuffer);
+
   MetaBuffer _valueBuffer;
+  MetaBuffer _arrayOffsetBuffer;
+  MetaBuffer _stringOffsetBuffer;
+  PropertyType _offsetType;
   size_t _instanceCount;
   uint32_t _type;
   const ClassProperty* _property;
