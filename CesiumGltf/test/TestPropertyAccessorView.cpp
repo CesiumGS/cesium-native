@@ -154,7 +154,6 @@ TEST_CASE("Access fixed array") {
         data.data(),
         data.size() * sizeof(uint8_t));
 
-    // bufferView doesn't point to correct one
     CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
     bufferView.byteOffset = 0;
@@ -162,7 +161,7 @@ TEST_CASE("Access fixed array") {
 
     // create feature table
     CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
-    featureTable.count = data.size();
+    featureTable.count = 2;
 
     // point feature table class to data
     featureTable.classProperty = "Test";
@@ -182,12 +181,20 @@ TEST_CASE("Access fixed array") {
         propertyView->getType() ==
             (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
         static_cast<uint32_t>(CesiumGltf::PropertyType::Uint8)));
+
     gsl::span<const uint8_t> val = propertyView->get<gsl::span<const uint8_t>>(0);
     REQUIRE(val.size() == 4);
     REQUIRE(val[0] == data[0]);
     REQUIRE(val[1] == data[1]);
     REQUIRE(val[2] == data[2]);
     REQUIRE(val[3] == data[3]);
+
+    val = propertyView->get<gsl::span<const uint8_t>>(1);
+    REQUIRE(val.size() == 4);
+    REQUIRE(val[0] == data[4]);
+    REQUIRE(val[1] == data[5]);
+    REQUIRE(val[2] == data[6]);
+    REQUIRE(val[3] == data[7]);
   }
 }
 

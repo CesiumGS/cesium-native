@@ -61,14 +61,35 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
   bool isArray = type & static_cast<uint32_t>(PropertyType::Array);
   bool isFixedArray = isArray && classProperty.componentCount &&
                       classProperty.componentCount > 1;
-  MetaBuffer valueMetaBuffer;
+  bool isString = type & static_cast<uint32_t>(PropertyType::String);
+  bool isDynamicArray = isArray && !isFixedArray;
+  size_t componentCount = 1;
   if (isFixedArray) {
+    componentCount = classProperty.componentCount.value();
+  }
+
+  MetaBuffer valueMetaBuffer;
+  if (isArray) {
+    // make sure component type is defined
+    PropertyType componentType = PropertyType::None;
+    if (classProperty.componentType.isString()) {
+      componentType =
+          convertStringToPropertyType(classProperty.componentType.getString());
+    } else {
+      // TODO: check enum here
+      componentType = PropertyType::None;
+    }
+
+    if (componentType == PropertyType::None) {
+      return std::nullopt;
+    }
+
     if (!createMetaBuffer(
             model,
             valueBufferView,
             instanceCount,
-            *classProperty.componentCount,
-            type,
+            componentCount,
+            static_cast<uint32_t>(componentType),
             valueMetaBuffer)) {
       return std::nullopt;
     }
@@ -86,8 +107,6 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
 
   // dynamic array and string will require offset type here. Default to be
   // uint32_t
-  bool isString = type & static_cast<uint32_t>(PropertyType::String);
-  bool isDynamicArray = isArray && !isFixedArray;
   PropertyType offsetType = PropertyType::None;
   if (isDynamicArray || isString) {
     offsetType = getOffsetType(featureTableProperty.offsetType);
@@ -152,7 +171,7 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
       instanceCount);
 }
 
-size_t PropertyAccessorView::getOffsetFromOffsetBuffer(
+/*static*/ size_t PropertyAccessorView::getOffsetFromOffsetBuffer(
     size_t instance,
     const gsl::span<const std::byte>& offsetBuffer,
     PropertyType offsetType) {

@@ -91,7 +91,7 @@ private:
   }
 
   template <typename T> gsl::span<const T> getArray(size_t instance) const {
-    assert((_type & static_cast<uint32_t>(PropertyType::Array)) != 0);
+    assert(_type == (static_cast<uint32_t>(PropertyType::Array) | TypeToPropertyType<T>::value));
     if (_property->componentCount) {
       return gsl::span<const T>(
           reinterpret_cast<const T*>(
