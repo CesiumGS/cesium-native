@@ -425,6 +425,80 @@ TEST_CASE("Access dynamic array") {
   }
 }
 
+TEST_CASE("Access string") {
+  CesiumGltf::Model model;
+  CesiumGltf::ModelEXT_feature_metadata& metadata =
+      model.addExtension<CesiumGltf::ModelEXT_feature_metadata>();
+  metadata.schema = CesiumGltf::Schema();
+  metadata.schema->name = "TestSchema";
+
+  // create schema
+  CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
+  CesiumGltf::ClassProperty& metaProperty =
+      metaClass.properties["TestProperty"];
+  metaProperty.type =
+      CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::String);
+
+  // copy data to buffer
+  CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+  std::vector<std::string> strings {"This is a fine test", "What's going on", "Good morning"};
+  size_t totalSize = 0;
+  for (const auto& s : strings) {
+    totalSize += s.size();
+  }
+
+  uint32_t currentOffset = 0;
+  buffer.cesium.data.resize(totalSize);
+  for (size_t i = 0; i < strings.size(); ++i) {
+    std::memcpy(buffer.cesium.data.data() + currentOffset, strings[i].data(), strings[i].size());
+    currentOffset += static_cast<uint32_t>(strings[i].size());
+  }
+
+  CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = buffer.cesium.data.size();
+  uint32_t bufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+  // copy offset to buffer
+  CesiumGltf::Buffer& offsetBuffer = model.buffers.emplace_back();
+  offsetBuffer.cesium.data.resize((strings.size() + 1) * sizeof(uint32_t));
+  currentOffset = 0;
+  for (size_t i = 0; i < strings.size(); ++i) {
+    std::memcpy(offsetBuffer.cesium.data.data() + i * sizeof(uint32_t), &currentOffset, sizeof(uint32_t));
+    currentOffset += static_cast<uint32_t>(strings[i].size());
+  }
+  std::memcpy(offsetBuffer.cesium.data.data() + strings.size() * sizeof(uint32_t), &currentOffset, sizeof(uint32_t));
+
+  CesiumGltf::BufferView& offsetBufferView = model.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  offsetBufferView.byteOffset = 0;
+  offsetBufferView.byteLength = buffer.cesium.data.size();
+  uint32_t offsetBufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+  // create feature table
+  CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
+  featureTable.count = strings.size();
+
+  // point feature table class to data
+  featureTable.classProperty = "Test";
+  CesiumGltf::FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestProperty"];
+  featureTableProperty.bufferView = bufferViewIdx;
+  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+
+  // check values
+  auto propertyView = CesiumGltf::PropertyAccessorView::create(
+      model,
+      metaProperty,
+      featureTableProperty,
+      featureTable.count);
+  REQUIRE(propertyView != std::nullopt);
+  for (size_t i = 0; i < propertyView->numOfInstances(); ++i) {
+    REQUIRE(propertyView->get<std::string_view>(i) == strings[i]);
+  }
+}
+
 TEST_CASE("Wrong format property") {
   CesiumGltf::Model model;
   CesiumGltf::ModelEXT_feature_metadata& metadata =

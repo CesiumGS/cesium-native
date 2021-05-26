@@ -30,8 +30,14 @@ bool PropertyAccessorView::getBoolean(size_t /*instance*/) const {
   return false;
 }
 
-std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
-  return {};
+std::string_view PropertyAccessorView::getString(size_t instance) const {
+  size_t currentOffset =
+      getOffsetFromOffsetBuffer(instance, _stringOffsetBuffer, _offsetType);
+  size_t nextOffset =
+      getOffsetFromOffsetBuffer(instance + 1, _stringOffsetBuffer, _offsetType);
+  return std::string_view(
+      reinterpret_cast<const char*>(_valueBuffer.buffer.data() + currentOffset),
+      (nextOffset - currentOffset));
 }
 
 /*static*/ std::optional<PropertyAccessorView> PropertyAccessorView::create(
