@@ -34,11 +34,11 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     return std::nullopt;
   }
 
-  size_t typeSize = getNumberPropertyTypeSize(type); 
+  size_t typeSize = getNumberPropertyTypeSize(type);
   size_t stride = typeSize;
   if (bufferView.byteStride && bufferView.byteStride > 0) {
     stride = *bufferView.byteStride;
-  } 
+  }
 
   const Buffer& buffer = model.buffers[bufferView.buffer];
   if (static_cast<size_t>(bufferView.byteOffset + bufferView.byteLength) >
@@ -46,7 +46,8 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
     return std::nullopt;
   }
 
-  if (static_cast<size_t>(bufferView.byteOffset) + stride * (instanceCount - 1) + typeSize >
+  if (static_cast<size_t>(bufferView.byteOffset) +
+          stride * (instanceCount - 1) + typeSize >
       buffer.cesium.data.size()) {
     return std::nullopt;
   }
