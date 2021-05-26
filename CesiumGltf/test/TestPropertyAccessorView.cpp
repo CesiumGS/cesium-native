@@ -407,6 +407,22 @@ TEST_CASE("Access dynamic array") {
 
     checkDynamicArray(data, offset, CesiumGltf::PropertyType::Int32, 4);
   }
+
+  SECTION("array of double") { 
+    // clang-format off
+    std::vector<double> data{
+        3.333, 200.2,
+        0.1122, 4.50, 2.30, 1.22, 4.444,
+        1.4, 3.3, 2.2,
+        1.11, 3.2, 4.111, 1.44
+    };
+    std::vector<uint32_t> offset{
+        0, 2 * sizeof(double), 7 * sizeof(double), 10 * sizeof(double), 14 * sizeof(double)
+    };
+    // clang-format on
+
+    checkDynamicArray(data, offset, CesiumGltf::PropertyType::Float64, 4);
+  }
 }
 
 TEST_CASE("Wrong format property") {
