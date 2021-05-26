@@ -277,7 +277,11 @@ TEST_CASE("Access fixed array") {
         10.022f, -12.43f, 242.2f, 1.111f, 
         3.333f, 440000.1f, -33.3f, 14.55f};
     // clang-format on
-    checkFixedArray(data, 4, CesiumGltf::PropertyType::Float32, data.size() / 4);
+    checkFixedArray(
+        data,
+        4,
+        CesiumGltf::PropertyType::Float32,
+        data.size() / 4);
   }
 
   SECTION("Fixed array of 4 double") {
@@ -286,7 +290,11 @@ TEST_CASE("Access fixed array") {
         10.022, -12.43, 242.2, 1.111, 
         3.333, 440000.1, -33.3, 14.55};
     // clang-format on
-    checkFixedArray(data, 4, CesiumGltf::PropertyType::Float64, data.size() / 4);
+    checkFixedArray(
+        data,
+        4,
+        CesiumGltf::PropertyType::Float64,
+        data.size() / 4);
   }
 }
 
