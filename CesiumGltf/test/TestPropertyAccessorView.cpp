@@ -1,6 +1,6 @@
-#include "CesiumGltf/PropertyAccessorView.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "CesiumGltf/PropertyAccessorView.h"
 #include "CesiumGltf/PropertyType.h"
 #include "catch2/catch.hpp"
 
@@ -51,7 +51,7 @@ static void checkScalarProperty(
   REQUIRE(propertyView->getType() == static_cast<uint32_t>(propertyType));
   REQUIRE(propertyView->numOfInstances() == data.size());
   for (size_t i = 0; i < propertyView->numOfInstances(); ++i) {
-    REQUIRE(propertyView->getScalar<T>(i) == data[i]);
+    REQUIRE(propertyView->get<T>(i) == data[i]);
   }
 }
 
@@ -101,11 +101,9 @@ TEST_CASE("Access continuous scalar primitive type") {
   }
 
   SECTION("Float64") {
-    std::vector<double> data{221.5, 326,622, 39.14, 43.4, 122.3};
+    std::vector<double> data{221.5, 326, 622, 39.14, 43.4, 122.3};
     checkScalarProperty(data, CesiumGltf::PropertyType::Float64);
   }
 }
 
-TEST_CASE("Accessor interleave scalar type") {
-
-}
+TEST_CASE("Accessor interleave scalar type") {}
