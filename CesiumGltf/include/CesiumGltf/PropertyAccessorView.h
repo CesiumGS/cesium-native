@@ -24,16 +24,16 @@ class PropertyAccessorView {
 public:
   PropertyAccessorView(
       MetaBuffer valueBuffer,
-      MetaBuffer arrayOffsetBuffer,
-      MetaBuffer stringOffsetBuffer,
+      gsl::span<const std::byte> arrayOffsetBuffer,
+      gsl::span<const std::byte> stringOffsetBuffer,
       PropertyType offsetType,
       const ClassProperty* property,
       uint32_t type,
       size_t instanceCount)
-      : _valueBuffer{valueBuffer}, 
-        _arrayOffsetBuffer {arrayOffsetBuffer},
-        _stringOffsetBuffer {stringOffsetBuffer},
-        _offsetType {offsetType},
+      : _valueBuffer{valueBuffer},
+        _arrayOffsetBuffer{arrayOffsetBuffer},
+        _stringOffsetBuffer{stringOffsetBuffer},
+        _offsetType{offsetType},
         _instanceCount{instanceCount},
         _type{type},
         _property{property} {}
@@ -86,13 +86,32 @@ private:
         _valueBuffer.buffer.data() + instance * _valueBuffer.stride);
   }
 
-  template <typename T> gsl::span<const T> getArray(size_t /*instance*/) const {
-    return gsl::span<const T>();
+  template <typename T> gsl::span<const T> getArray(size_t instance) const {
+    assert(TypeToPropertyType<T>::value & PropertyType::Array);
+    if (_property->componentCount) {
+      return gsl::span<const T>(
+          reinterpret_cast<const T*>(
+              _valueBuffer.buffer.data() + instance * _valueBuffer.stride),
+          *_property->componentCount);
+    }
+
+    size_t currentOffset =
+        getOffsetFromOffsetBuffer(instance, _arrayOffsetBuffer);
+    size_t nextOffset =
+        getOffsetFromOffsetBuffer(instance + 1, _arrayOffsetBuffer);
+    return gsl::span<const T>(
+        reinterpret_cast<const T*>(_valueBuffer.buffer.data() + currentOffset),
+        (nextOffset - currentOffset) % sizeof(T));
   }
 
   bool getBoolean(size_t instance) const;
 
   std::string_view getString(size_t isntance) const;
+
+  static size_t getOffsetFromOffsetBuffer(
+      size_t instance,
+      const gsl::span<const std::byte>& offsetBuffer,
+      PropertyType offsetType);
 
   static size_t getNumberPropertyTypeSize(uint32_t type);
 
@@ -102,12 +121,13 @@ private:
       const Model& model,
       const BufferView& bufferView,
       size_t instanceCount,
+      size_t componentCount,
       uint32_t type,
       MetaBuffer& metaBuffer);
 
   MetaBuffer _valueBuffer;
-  MetaBuffer _arrayOffsetBuffer;
-  MetaBuffer _stringOffsetBuffer;
+  gsl::span<const std::byte> _arrayOffsetBuffer;
+  gsl::span<const std::byte> _stringOffsetBuffer;
   PropertyType _offsetType;
   size_t _instanceCount;
   uint32_t _type;

@@ -23,7 +23,7 @@ CesiumGltf::PropertyType getOffsetType(const std::string& type) {
 
   return CesiumGltf::PropertyType::None;
 }
-}
+} // namespace
 
 namespace CesiumGltf {
 bool PropertyAccessorView::getBoolean(size_t /*instance*/) const {
@@ -53,25 +53,50 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
   // check buffer view size is correct
   const BufferView& valueBufferView =
       model.bufferViews[featureTableProperty.bufferView];
-  if (valueBufferView.buffer >= model.buffers.size() || valueBufferView.byteOffset < 0) {
+  if (valueBufferView.buffer >= model.buffers.size() ||
+      valueBufferView.byteOffset < 0) {
     return std::nullopt;
   }
 
+  bool isArray = type & static_cast<uint32_t>(PropertyType::Array);
+  bool isFixedArray = isArray && classProperty.componentCount &&
+                      classProperty.componentCount > 1;
   MetaBuffer valueMetaBuffer;
-  if (!createMetaBuffer(
-          model,
-          valueBufferView,
-          instanceCount,
-          type,
-          valueMetaBuffer)) {
-    return std::nullopt;
+  if (isFixedArray) {
+    if (!createMetaBuffer(
+            model,
+            valueBufferView,
+            instanceCount,
+            *classProperty.componentCount,
+            type,
+            valueMetaBuffer)) {
+      return std::nullopt;
+    }
+  } else {
+    if (!createMetaBuffer(
+            model,
+            valueBufferView,
+            instanceCount,
+            1,
+            type,
+            valueMetaBuffer)) {
+      return std::nullopt;
+    }
+  }
+
+  // dynamic array and string will require offset type here. Default to be
+  // uint32_t
+  bool isString = type & static_cast<uint32_t>(PropertyType::String);
+  bool isDynamicArray = isArray && !isFixedArray;
+  PropertyType offsetType = PropertyType::None;
+  if (isDynamicArray || isString) {
+    offsetType = getOffsetType(featureTableProperty.offsetType);
+    if (offsetType == PropertyType::None) {
+      offsetType = PropertyType::Uint32;
+    }
   }
 
   // make sure dynamic array will have offset buffer
-  bool isFixedArray =
-      classProperty.componentCount && classProperty.componentCount > 0;
-  bool isDynamicArray =
-      type & static_cast<uint32_t>(PropertyType::Array) && !isFixedArray; 
   MetaBuffer arrayOffsetMetaBuffer;
   if (isDynamicArray) {
     if (featureTableProperty.arrayOffsetBufferView < 0 ||
@@ -80,13 +105,15 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
       return std::nullopt;
     }
 
+    // specs requires that the number of offset instances is instanceCount + 1
     const BufferView& arrayOffsetBufferView =
-        model.bufferViews[featureTableProperty.arrayOffsetBufferView]; 
+        model.bufferViews[featureTableProperty.arrayOffsetBufferView];
     if (!createMetaBuffer(
             model,
             arrayOffsetBufferView,
-            instanceCount,
-            type,
+            instanceCount + 1,
+            1,
+            static_cast<uint32_t>(offsetType),
             arrayOffsetMetaBuffer)) {
       return std::nullopt;
     }
@@ -94,7 +121,6 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
 
   // string will always require offset buffer no matter what
   MetaBuffer stringOffsetMetaBuffer;
-  bool isString = type & static_cast<uint32_t>(PropertyType::String); 
   if (isString) {
     if (featureTableProperty.stringOffsetBufferView < 0 ||
         featureTableProperty.stringOffsetBufferView >=
@@ -102,36 +128,59 @@ std::string_view PropertyAccessorView::getString(size_t /*isntance*/) const {
       return std::nullopt;
     }
 
+    // specs requires that the number of offset instances is instanceCount + 1
     const BufferView& stringOffsetBufferView =
-        model.bufferViews[featureTableProperty.arrayOffsetBufferView]; 
+        model.bufferViews[featureTableProperty.stringOffsetBufferView];
     if (!createMetaBuffer(
             model,
             stringOffsetBufferView,
-            instanceCount,
-            type,
+            instanceCount + 1,
+            1,
+            static_cast<uint32_t>(offsetType),
             stringOffsetMetaBuffer)) {
       return std::nullopt;
     }
   }
 
-  // dynamic array and string will require offset type here. Default to be uint32_t
-  PropertyType offsetType = PropertyType::None;
-  if (isDynamicArray || isString) 
-  {
-    offsetType = getOffsetType(featureTableProperty.offsetType);
-    if (offsetType == PropertyType::None) {
-      offsetType = PropertyType::Uint32; 
-    }
-  }
-
   return PropertyAccessorView(
       valueMetaBuffer,
-      arrayOffsetMetaBuffer,
-      stringOffsetMetaBuffer,
+      arrayOffsetMetaBuffer.buffer,
+      stringOffsetMetaBuffer.buffer,
       offsetType,
       &classProperty,
       type,
       instanceCount);
+}
+
+size_t PropertyAccessorView::getOffsetFromOffsetBuffer(
+    size_t instance,
+    const gsl::span<const std::byte>& offsetBuffer,
+    PropertyType offsetType) {
+  switch (offsetType) {
+  case PropertyType::Uint8: {
+    uint8_t offset = *reinterpret_cast<const uint8_t*>(
+        offsetBuffer.data() + instance * sizeof(uint8_t));
+    return static_cast<size_t>(offset);
+  }
+  case PropertyType::Uint16: {
+    uint16_t offset = *reinterpret_cast<const uint16_t*>(
+        offsetBuffer.data() + instance * sizeof(uint16_t));
+    return static_cast<size_t>(offset);
+  }
+  case PropertyType::Uint32: {
+    uint32_t offset = *reinterpret_cast<const uint32_t*>(
+        offsetBuffer.data() + instance * sizeof(uint32_t));
+    return static_cast<size_t>(offset);
+  }
+  case PropertyType::Uint64: {
+    uint64_t offset = *reinterpret_cast<const uint64_t*>(
+        offsetBuffer.data() + instance * sizeof(uint64_t));
+    return static_cast<size_t>(offset);
+  }
+  default:
+    assert(false && "Offset type has unknown type");
+    return 0;
+  }
 }
 
 /*static*/ size_t
@@ -183,17 +232,14 @@ PropertyAccessorView::getPropertyType(const ClassProperty& property) {
 }
 
 /*static*/ bool PropertyAccessorView::createMetaBuffer(
-    const Model &model,
+    const Model& model,
     const BufferView& bufferView,
     size_t instanceCount,
+    size_t componentCount,
     uint32_t type,
-    MetaBuffer& metaBuffer) 
-{
-  size_t typeSize = getNumberPropertyTypeSize(type);
+    MetaBuffer& metaBuffer) {
+  size_t typeSize = getNumberPropertyTypeSize(type) * componentCount;
   size_t stride = typeSize;
-  if (bufferView.byteStride && bufferView.byteStride > 0) {
-    stride = *bufferView.byteStride;
-  }
 
   const Buffer& buffer = model.buffers[bufferView.buffer];
   if (static_cast<size_t>(bufferView.byteOffset + bufferView.byteLength) >
