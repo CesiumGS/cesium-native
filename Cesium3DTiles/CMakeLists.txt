@@ -52,6 +52,7 @@ target_link_libraries(Cesium3DTiles
     # PRIVATE
         tinyxml2
         uriparser
+        earcut.hpp
 )
 
 install(TARGETS Cesium3DTiles

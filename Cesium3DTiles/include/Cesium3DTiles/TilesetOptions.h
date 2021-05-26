@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "Cesium3DTiles/CartographicSelection.h"
 #include <glm/glm.hpp>
 #include <optional>
 #include <string>
@@ -194,6 +195,8 @@ struct CESIUM3DTILES_API TilesetOptions {
    */
   std::vector<std::optional<CesiumGeospatial::GlobeRectangle>>
       cullingPolygonsBoundingBoxes;
+
+  std::vector<CartographicSelection> cartographicSelections;
 
   /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
