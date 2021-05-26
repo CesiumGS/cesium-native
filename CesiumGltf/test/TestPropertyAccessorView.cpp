@@ -122,6 +122,83 @@ static void checkFixedArray(
   }
 }
 
+template <typename T, typename E>
+static void checkDynamicArray(
+    const std::vector<T>& data,
+    const std::vector<E>& offset,
+    CesiumGltf::PropertyType componentType,
+    int64_t instanceCount) {
+  CesiumGltf::Model model;
+  CesiumGltf::ModelEXT_feature_metadata& metadata =
+      model.addExtension<CesiumGltf::ModelEXT_feature_metadata>();
+  metadata.schema = CesiumGltf::Schema();
+  metadata.schema->name = "TestSchema";
+
+  // create schema
+  CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
+  CesiumGltf::ClassProperty& metaProperty =
+      metaClass.properties["TestProperty"];
+  metaProperty.type =
+      CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::Array);
+  metaProperty.componentType =
+      CesiumGltf::convertProperttTypeToString(componentType);
+
+  // copy data to buffer
+  CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data.resize(data.size() * sizeof(T));
+  std::memcpy(buffer.cesium.data.data(), data.data(), data.size() * sizeof(T));
+
+  CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = buffer.cesium.data.size();
+  uint32_t bufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+  // copy offset to buffer
+  CesiumGltf::Buffer& offsetBuffer = model.buffers.emplace_back();
+  offsetBuffer.cesium.data.resize(offset.size() * sizeof(E));
+  std::memcpy(offsetBuffer.cesium.data.data(), offset.data(), offset.size() * sizeof(E));
+
+  CesiumGltf::BufferView& offsetBufferView = model.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  offsetBufferView.byteOffset = 0;
+  offsetBufferView.byteLength = buffer.cesium.data.size();
+  uint32_t offsetBufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+  // create feature table
+  CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
+  featureTable.count = instanceCount;
+
+  // point feature table class to data
+  featureTable.classProperty = "Test";
+  CesiumGltf::FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestProperty"];
+  featureTableProperty.bufferView = bufferViewIdx;
+  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
+
+  // check values
+  auto propertyView = CesiumGltf::PropertyAccessorView::create(
+      model,
+      metaProperty,
+      featureTableProperty,
+      featureTable.count);
+  REQUIRE(propertyView != std::nullopt);
+  REQUIRE(
+      propertyView->getType() ==
+      (static_cast<uint32_t>(CesiumGltf::PropertyType::Array) |
+       static_cast<uint32_t>(componentType)));
+  size_t expectedIdx = 0;
+  for (size_t i = 0; i < propertyView->numOfInstances(); ++i) {
+    gsl::span<const T> val = propertyView->get<gsl::span<const T>>(i);
+    REQUIRE(val.size() == (offset[i + 1] - offset[i]) / sizeof(T));
+    for (size_t j = 0; j < val.size(); ++j) {
+      REQUIRE(val[j] == data[expectedIdx]);
+      ++expectedIdx;
+    }
+  }
+  REQUIRE(expectedIdx == data.size());
+}
+
 TEST_CASE("Access continuous scalar primitive type") {
   SECTION("uint8_t") {
     std::vector<uint8_t> data{21, 255, 3, 4, 122, 30, 11, 20};
@@ -295,6 +372,40 @@ TEST_CASE("Access fixed array") {
         4,
         CesiumGltf::PropertyType::Float64,
         data.size() / 4);
+  }
+}
+
+TEST_CASE("Access dynamic array") {
+  SECTION("array of uint8_t") { 
+    // clang-format off
+    std::vector<uint8_t> data{
+        3, 2,
+        0, 45, 2, 1, 4,
+        1, 3, 2,
+        1, 3, 4, 1
+    };
+    std::vector<uint32_t> offset{
+        0, 2, 7, 10, 14
+    };
+    // clang-format on
+
+    checkDynamicArray(data, offset, CesiumGltf::PropertyType::Uint8, 4);
+  }
+
+  SECTION("array of int32_t") { 
+    // clang-format off
+    std::vector<int32_t> data{
+        3, 200,
+        0, 450, 200, 1, 4,
+        1, 3, 2,
+        1, 3, 4, 1
+    };
+    std::vector<uint32_t> offset{
+        0, 2 * sizeof(int32_t), 7 * sizeof(int32_t), 10 * sizeof(int32_t), 14 * sizeof(int32_t)
+    };
+    // clang-format on
+
+    checkDynamicArray(data, offset, CesiumGltf::PropertyType::Int32, 4);
   }
 }
 

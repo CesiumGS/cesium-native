@@ -110,7 +110,7 @@ private:
         _offsetType);
     return gsl::span<const T>(
         reinterpret_cast<const T*>(_valueBuffer.buffer.data() + currentOffset),
-        (nextOffset - currentOffset) % sizeof(T));
+        (nextOffset - currentOffset) / sizeof(T));
   }
 
   bool getBoolean(size_t instance) const;
