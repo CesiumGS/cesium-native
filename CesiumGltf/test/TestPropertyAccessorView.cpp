@@ -472,7 +472,7 @@ TEST_CASE("Access string") {
   CesiumGltf::BufferView& offsetBufferView = model.bufferViews.emplace_back();
   offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
   offsetBufferView.byteOffset = 0;
-  offsetBufferView.byteLength = buffer.cesium.data.size();
+  offsetBufferView.byteLength = offsetBuffer.cesium.data.size();
   uint32_t offsetBufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
 
   // create feature table
