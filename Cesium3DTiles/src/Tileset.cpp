@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/Tileset.h"
+#include "Cesium3DTiles/CartographicSelection.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
@@ -1151,16 +1152,12 @@ static void markTileAndChildrenNonRendered(
  * polygon.
  *
  * @param boundingVolume The bounding volume of the tile.
- * @param clippingPolygonsVertices The perimeters of the clipping polygons
- * given in longitude-latitude vertices.
- * @param clippingPolygonsIndices The triangulated indices for each clipping
- * polygon.
+ * @param cartographicSelections The list of clipping selections to check.
  * @return Whether the tile is completely clipped out by a clipping polygon.
  */
 static bool isCompletelyClipped(
     const BoundingVolume& boundingVolume,
-    const std::vector<std::vector<glm::dvec2>>& clippingPolygonsVertices,
-    const std::vector<std::vector<uint32_t>>& clippingPolygonsIndices) {
+    const std::vector<CartographicSelection>& cartographicSelections) {
 
   // TODO: generalize to more than just bounding region
   const CesiumGeospatial::GlobeRectangle* pRectangle =
@@ -1168,10 +1165,6 @@ static bool isCompletelyClipped(
   if (!pRectangle) {
     return false;
   }
-
-  // TODO: remove!!
-  if (pRectangle)
-    return false;
 
   glm::dvec2 rectangleCorners[] = {
       glm::dvec2(pRectangle->getWest(), pRectangle->getSouth()),
@@ -1186,9 +1179,15 @@ static bool isCompletelyClipped(
       rectangleCorners[0] - rectangleCorners[3]};
 
   // Iterate through all clipping polygons.
-  for (size_t i = 0; i < clippingPolygonsVertices.size(); ++i) {
-    const std::vector<glm::dvec2>& vertices = clippingPolygonsVertices[i];
-    const std::vector<uint32_t>& indices = clippingPolygonsIndices[i];
+  for (size_t i = 0; i < cartographicSelections.size(); ++i) {
+    const CartographicSelection& selection = cartographicSelections[i];
+
+    if (!selection.isForCulling()) {
+      continue;
+    }
+
+    const std::vector<glm::dvec2>& vertices = selection.getVertices();
+    const std::vector<uint32_t>& indices = selection.getIndices();
 
     // First check if an arbitrary point on the bounding globe rectangle is
     // inside the polygon.
@@ -1340,8 +1339,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   if (isCompletelyClipped(
           boundingVolume,
-          this->_options.cullingPolygons,
-          this->_options.cullingPolygonsIndices)) {
+          this->_options.cartographicSelections)) {
     culled = true;
     shouldVisit = false;
   }

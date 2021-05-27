@@ -180,22 +180,9 @@ struct CESIUM3DTILES_API TilesetOptions {
   bool renderTilesUnderCamera = true;
 
   /**
-   * TODO COMBINE INTO ARRAY OF CULLING SELECTION STRUCT
-   * maybe should even be calculated in cesium-native instead
+   * List of 2D polygon selections given in longitude-latitude. Each
+   * selection will be rasterized onto the {@link Tileset} as textures.
    */
-  std::vector<std::vector<glm::dvec2>> cullingPolygons;
-
-  /**
-   *
-   */
-  std::vector<std::vector<uint32_t>> cullingPolygonsIndices;
-
-  /**
-   *
-   */
-  std::vector<std::optional<CesiumGeospatial::GlobeRectangle>>
-      cullingPolygonsBoundingBoxes;
-
   std::vector<CartographicSelection> cartographicSelections;
 
   /**

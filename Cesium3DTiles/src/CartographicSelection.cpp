@@ -105,9 +105,11 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
 }
 
 CartographicSelection::CartographicSelection(
-    const std::vector<glm::dvec2>& polygon)
+    const std::vector<glm::dvec2>& polygon,
+    bool isForCulling)
     : _vertices(polygon),
       _indices(triangulatePolygon(polygon)),
-      _boundingRectangle(computeBoundingRectangle(polygon)) {}
+      _boundingRectangle(computeBoundingRectangle(polygon)),
+      _isForCulling(isForCulling) {}
 
 } // namespace Cesium3DTiles

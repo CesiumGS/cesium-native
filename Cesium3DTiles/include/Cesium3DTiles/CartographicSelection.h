@@ -13,7 +13,9 @@ namespace Cesium3DTiles {
  */
 class CESIUM3DTILES_API CartographicSelection final {
 public:
-  CartographicSelection(const std::vector<glm::dvec2>& polygon);
+  CartographicSelection(
+      const std::vector<glm::dvec2>& polygon,
+      bool isForCulling);
 
   constexpr const std::vector<glm::dvec2>& getVertices() const {
     return this->_vertices;
@@ -28,10 +30,13 @@ public:
     return this->_boundingRectangle;
   }
 
+  constexpr bool isForCulling() const { return this->_isForCulling; }
+
 private:
   std::vector<glm::dvec2> _vertices;
   std::vector<uint32_t> _indices;
   std::optional<CesiumGeospatial::GlobeRectangle> _boundingRectangle;
+  bool _isForCulling;
 };
 
 } // namespace Cesium3DTiles

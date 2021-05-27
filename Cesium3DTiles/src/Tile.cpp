@@ -1,4 +1,5 @@
 #include "Cesium3DTiles/Tile.h"
+#include "Cesium3DTiles/CartographicSelection.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/TileContentFactory.h"
@@ -217,12 +218,14 @@ void Tile::loadContent() {
 
   // add geographic texture coordinates for clipping mask
   // TODO: generalize this for non-region bounding volumes
+  // TODO: generalize to non clipping-specific uses of 2d selections
   if (pRectangle) {
-    const std::vector<std::optional<CesiumGeospatial::GlobeRectangle>>&
-        boundingBoxes =
-            this->getTileset()->getOptions().cullingPolygonsBoundingBoxes;
-    for (size_t i = 0; i < boundingBoxes.size(); ++i) {
-      if (boundingBoxes[i] && pRectangle->intersect(*boundingBoxes[i])) {
+    const std::vector<CartographicSelection>& cartographicSelections =
+        this->getTileset()->getOptions().cartographicSelections;
+    for (size_t i = 0; i < cartographicSelections.size(); ++i) {
+      const std::optional<GlobeRectangle>& boundingRectangle =
+          cartographicSelections[i].getBoundingRectangle();
+      if (boundingRectangle && pRectangle->intersect(*boundingRectangle)) {
         projections.insert("GEOGRAPHIC");
         withinClippingBounds = true;
         break;
@@ -263,228 +266,207 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
-  // EXPERIMENTAL - CUT THIS DOWN
-  struct CullingPolygon {
-    const std::vector<glm::dvec2>& vertices;
-    const std::vector<uint32_t>& indices;
-    const CesiumGeospatial::GlobeRectangle& boundingBox;
-  };
-
-  std::vector<CullingPolygon> cullingPolygons;
-  if (withinClippingBounds) {
-    size_t cullingPolygonsSize =
-        this->getTileset()->getOptions().cullingPolygons.size();
-    for (size_t i = 0; i < cullingPolygonsSize; ++i) {
-      const std::optional<CesiumGeospatial::GlobeRectangle>& boundingBox =
-          this->getTileset()->getOptions().cullingPolygonsBoundingBoxes[i];
-      if (!boundingBox) {
-        continue;
-      }
-      cullingPolygons.push_back(
-          {this->getTileset()->getOptions().cullingPolygons[i],
-           this->getTileset()->getOptions().cullingPolygonsIndices[i],
-           *boundingBox});
-    }
-  }
-
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
-      .thenInWorkerThread([loadInput = std::move(loadInput),
-                           projections = std::move(projections),
-                           cullingPolygons = std::move(cullingPolygons),
-                           withinClippingBounds,
-                           gltfUpAxis,
-                           pPrepareRendererResources =
-                               tileset.getExternals().pPrepareRendererResources,
-                           pLogger = tileset.getExternals().pLogger](
-                              std::shared_ptr<IAssetRequest>&&
-                                  pRequest) mutable {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Did not receive a valid response for tile content {}",
-              pRequest->url());
-          auto pLoadResult = std::make_unique<TileContentLoadResult>();
-          pLoadResult->httpStatusCode = 0;
-          return LoadResult{
-              LoadState::FailedTemporarily,
-              std::move(pLoadResult),
-              nullptr};
-        }
+      .thenInWorkerThread(
+          [loadInput = std::move(loadInput),
+           projections = std::move(projections),
+           cartographicSelections =
+               this->getTileset()->getOptions().cartographicSelections,
+           withinClippingBounds,
+           gltfUpAxis,
+           pPrepareRendererResources =
+               tileset.getExternals().pPrepareRendererResources,
+           pLogger = tileset.getExternals().pLogger](
+              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url());
+              auto pLoadResult = std::make_unique<TileContentLoadResult>();
+              pLoadResult->httpStatusCode = 0;
+              return LoadResult{
+                  LoadState::FailedTemporarily,
+                  std::move(pLoadResult),
+                  nullptr};
+            }
 
-        if (pResponse->statusCode() != 0 &&
-            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Received status code {} for tile content {}",
-              pResponse->statusCode(),
-              pRequest->url());
-          auto pLoadResult = std::make_unique<TileContentLoadResult>();
-          pLoadResult->httpStatusCode = pResponse->statusCode();
-          return LoadResult{
-              LoadState::FailedTemporarily,
-              std::move(pLoadResult),
-              nullptr};
-        }
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Received status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url());
+              auto pLoadResult = std::make_unique<TileContentLoadResult>();
+              pLoadResult->httpStatusCode = pResponse->statusCode();
+              return LoadResult{
+                  LoadState::FailedTemporarily,
+                  std::move(pLoadResult),
+                  nullptr};
+            }
 
-        loadInput.data = pResponse->data();
-        loadInput.contentType = pResponse->contentType();
-        loadInput.url = pRequest->url();
-        std::unique_ptr<TileContentLoadResult> pContent =
-            TileContentFactory::createContent(loadInput);
+            loadInput.data = pResponse->data();
+            loadInput.contentType = pResponse->contentType();
+            loadInput.url = pRequest->url();
+            std::unique_ptr<TileContentLoadResult> pContent =
+                TileContentFactory::createContent(loadInput);
 
-        void* pRendererResources = nullptr;
-        if (pContent) {
-          pContent->httpStatusCode = pResponse->statusCode();
+            void* pRendererResources = nullptr;
+            if (pContent) {
+              pContent->httpStatusCode = pResponse->statusCode();
 
-          if (pContent->model) {
+              if (pContent->model) {
 
-            CesiumGltf::Model& model = pContent->model.value();
+                CesiumGltf::Model& model = pContent->model.value();
 
-            // TODO The `extras` are currently the only way to pass
-            // arbitrary information to the consumer, so the up-axis
-            // is stored here:
-            model.extras["gltfUpAxis"] = gltfUpAxis;
+                // TODO The `extras` are currently the only way to pass
+                // arbitrary information to the consumer, so the up-axis
+                // is stored here:
+                model.extras["gltfUpAxis"] = gltfUpAxis;
 
-            const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
-            Tile::generateTextureCoordinates(
-                model,
-                boundingVolume,
-                projections);
+                const BoundingVolume& boundingVolume =
+                    loadInput.tileBoundingVolume;
+                Tile::generateTextureCoordinates(
+                    model,
+                    boundingVolume,
+                    projections);
 
-            // TODO factor out into helper function
-            // rasterize culling polygons into the tile's bounding rectangle
+                // TODO factor out into helper function
+                // rasterize culling polygons into the tile's bounding rectangle
 
-            const CesiumGeospatial::GlobeRectangle* pRectangle =
-                Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
+                const CesiumGeospatial::GlobeRectangle* pRectangle =
+                    Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
 
-            if (withinClippingBounds && pRectangle) {
-              double rectangleWidth = pRectangle->computeWidth();
-              double rectangleHeight = pRectangle->computeHeight();
+                if (withinClippingBounds && pRectangle) {
+                  double rectangleWidth = pRectangle->computeWidth();
+                  double rectangleHeight = pRectangle->computeHeight();
 
-              // Create opacity mask texture
+                  // Create opacity mask texture
 
-              // create source image
-              size_t clippingMaskImageId = model.images.size();
-              model.images.emplace_back();
-              CesiumGltf::Image& clippingMaskImage =
-                  model.images[clippingMaskImageId];
-              clippingMaskImage.cesium.width = 256;
-              clippingMaskImage.cesium.height = 256;
-              clippingMaskImage.cesium.channels = 1;
-              clippingMaskImage.cesium.bytesPerChannel = 1;
-              clippingMaskImage.cesium.pixelData.resize(65536);
+                  // create source image
+                  size_t clippingMaskImageId = model.images.size();
+                  model.images.emplace_back();
+                  CesiumGltf::Image& clippingMaskImage =
+                      model.images[clippingMaskImageId];
+                  clippingMaskImage.cesium.width = 256;
+                  clippingMaskImage.cesium.height = 256;
+                  clippingMaskImage.cesium.channels = 1;
+                  clippingMaskImage.cesium.bytesPerChannel = 1;
+                  clippingMaskImage.cesium.pixelData.resize(65536);
 
-              std::memset(
-                  clippingMaskImage.cesium.pixelData.data(),
-                  0xff,
-                  65536);
+                  std::memset(
+                      clippingMaskImage.cesium.pixelData.data(),
+                      0xff,
+                      65536);
 
-              // TODO: this is naive approach, use line-triangle
-              // intersections to rasterize one row at a time
-              // NOTE: also completely ignores antimeridian (really these
-              // calculations should be normalized to the first vertex)
-              for (const CullingPolygon& cullingPolygon : cullingPolygons) {
-                for (size_t triangle = 0;
-                     triangle < cullingPolygon.indices.size() / 3;
-                     ++triangle) {
-                  const glm::dvec2& a =
-                      cullingPolygon
-                          .vertices[cullingPolygon.indices[3 * triangle]];
-                  const glm::dvec2& b =
-                      cullingPolygon
-                          .vertices[cullingPolygon.indices[3 * triangle + 1]];
-                  const glm::dvec2& c =
-                      cullingPolygon
-                          .vertices[cullingPolygon.indices[3 * triangle + 2]];
+                  // TODO: this is naive approach, use line-triangle
+                  // intersections to rasterize one row at a time
+                  // NOTE: also completely ignores antimeridian (really these
+                  // calculations should be normalized to the first vertex)
+                  // TODO: extend this to non-clipping-specific selections
+                  for (const CartographicSelection& selection :
+                       cartographicSelections) {
+                    const std::vector<glm::dvec2>& vertices =
+                        selection.getVertices();
+                    const std::vector<uint32_t>& indices =
+                        selection.getIndices();
+                    for (size_t triangle = 0; triangle < indices.size() / 3;
+                         ++triangle) {
+                      const glm::dvec2& a = vertices[indices[3 * triangle]];
+                      const glm::dvec2& b = vertices[indices[3 * triangle + 1]];
+                      const glm::dvec2& c = vertices[indices[3 * triangle + 2]];
 
-                  glm::dvec2 ab = b - a;
-                  glm::dvec2 ab_perp(-ab.y, ab.x);
-                  glm::dvec2 bc = c - b;
-                  glm::dvec2 bc_perp(-bc.y, bc.x);
-                  glm::dvec2 ca = a - c;
-                  glm::dvec2 ca_perp(-ca.y, ca.x);
+                      glm::dvec2 ab = b - a;
+                      glm::dvec2 ab_perp(-ab.y, ab.x);
+                      glm::dvec2 bc = c - b;
+                      glm::dvec2 bc_perp(-bc.y, bc.x);
+                      glm::dvec2 ca = a - c;
+                      glm::dvec2 ca_perp(-ca.y, ca.x);
 
-                  for (size_t j = 0; j < 256; ++j) {
-                    double pixelY = pRectangle->getSouth() +
-                                    rectangleHeight * (double(j) + 0.5) / 256.0;
-                    for (size_t i = 0; i < 256; ++i) {
-                      double pixelX =
-                          pRectangle->getWest() +
-                          rectangleWidth * (double(i) + 0.5) / 256.0;
-                      glm::dvec2 v(pixelX, pixelY);
+                      for (size_t j = 0; j < 256; ++j) {
+                        double pixelY =
+                            pRectangle->getSouth() +
+                            rectangleHeight * (double(j) + 0.5) / 256.0;
+                        for (size_t i = 0; i < 256; ++i) {
+                          double pixelX =
+                              pRectangle->getWest() +
+                              rectangleWidth * (double(i) + 0.5) / 256.0;
+                          glm::dvec2 v(pixelX, pixelY);
 
-                      glm::dvec2 av = v - a;
-                      glm::dvec2 cv = v - c;
+                          glm::dvec2 av = v - a;
+                          glm::dvec2 cv = v - c;
 
-                      double v_proj_ab_perp = glm::dot(av, ab_perp);
-                      double v_proj_bc_perp = glm::dot(cv, bc_perp);
-                      double v_proj_ca_perp = glm::dot(cv, ca_perp);
+                          double v_proj_ab_perp = glm::dot(av, ab_perp);
+                          double v_proj_bc_perp = glm::dot(cv, bc_perp);
+                          double v_proj_ca_perp = glm::dot(cv, ca_perp);
 
-                      // will determine in or out, irrespective of winding
-                      if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
-                           v_proj_bc_perp >= 0.0) ||
-                          (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
-                           v_proj_bc_perp <= 0.0)) {
-                        clippingMaskImage.cesium.pixelData[256 * j + i] =
-                            static_cast<std::byte>(0);
+                          // will determine in or out, irrespective of winding
+                          if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
+                               v_proj_bc_perp >= 0.0) ||
+                              (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
+                               v_proj_bc_perp <= 0.0)) {
+                            clippingMaskImage.cesium.pixelData[256 * j + i] =
+                                static_cast<std::byte>(0);
+                          }
+                        }
                       }
                     }
                   }
+
+                  // create sampler parameters
+                  size_t clippingMaskSamplerId = model.samplers.size();
+                  model.samplers.emplace_back();
+                  CesiumGltf::Sampler& clippingMaskSampler =
+                      model.samplers[clippingMaskSamplerId];
+                  clippingMaskSampler.magFilter =
+                      CesiumGltf::Sampler::MagFilter::LINEAR;
+                  clippingMaskSampler.minFilter =
+                      CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
+                  clippingMaskSampler.wrapS =
+                      CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
+                  clippingMaskSampler.wrapT =
+                      CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
+
+                  // create texture
+                  size_t clippingMaskTextureId = model.textures.size();
+                  model.textures.emplace_back();
+                  CesiumGltf::Texture& clippingMaskTexture =
+                      model.textures[clippingMaskTextureId];
+                  clippingMaskTexture.sampler = int32_t(clippingMaskSamplerId);
+                  clippingMaskTexture.source = int32_t(clippingMaskImageId);
+
+                  // put the opacity mask in the extras
+                  model.extras.emplace(
+                      "ClippingMaskTex",
+                      int32_t(clippingMaskTextureId));
+
+                  // TODO: use KHR_texture_transform
+                  model.extras.emplace("ClippingMaskTranslationX", 0.0);
+                  model.extras.emplace("ClippingMaskTranslationY", 0.0);
+                  model.extras.emplace("ClippingMaskScale", 1.0);
+                }
+
+                if (pPrepareRendererResources) {
+                  const glm::dmat4& transform = loadInput.tileTransform;
+                  pRendererResources =
+                      pPrepareRendererResources->prepareInLoadThread(
+                          pContent->model.value(),
+                          transform);
                 }
               }
-
-              // create sampler parameters
-              size_t clippingMaskSamplerId = model.samplers.size();
-              model.samplers.emplace_back();
-              CesiumGltf::Sampler& clippingMaskSampler =
-                  model.samplers[clippingMaskSamplerId];
-              clippingMaskSampler.magFilter =
-                  CesiumGltf::Sampler::MagFilter::LINEAR;
-              clippingMaskSampler.minFilter =
-                  CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
-              clippingMaskSampler.wrapS =
-                  CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
-              clippingMaskSampler.wrapT =
-                  CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
-
-              // create texture
-              size_t clippingMaskTextureId = model.textures.size();
-              model.textures.emplace_back();
-              CesiumGltf::Texture& clippingMaskTexture =
-                  model.textures[clippingMaskTextureId];
-              clippingMaskTexture.sampler = int32_t(clippingMaskSamplerId);
-              clippingMaskTexture.source = int32_t(clippingMaskImageId);
-
-              // put the opacity mask in the extras
-              model.extras.emplace(
-                  "ClippingMaskTex",
-                  int32_t(clippingMaskTextureId));
-
-              // TODO: use KHR_texture_transform
-              model.extras.emplace("ClippingMaskTranslationX", 0.0);
-              model.extras.emplace("ClippingMaskTranslationY", 0.0);
-              model.extras.emplace("ClippingMaskScale", 1.0);
             }
 
-            if (pPrepareRendererResources) {
-              const glm::dmat4& transform = loadInput.tileTransform;
-              pRendererResources =
-                  pPrepareRendererResources->prepareInLoadThread(
-                      pContent->model.value(),
-                      transform);
-            }
-          }
-        }
+            LoadResult result;
+            result.state = LoadState::ContentLoaded;
+            result.pContent = std::move(pContent);
+            result.pRendererResources = pRendererResources;
 
-        LoadResult result;
-        result.state = LoadState::ContentLoaded;
-        result.pContent = std::move(pContent);
-        result.pRendererResources = pRendererResources;
-
-        return result;
-      })
+            return result;
+          })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
