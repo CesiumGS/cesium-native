@@ -156,13 +156,17 @@ static void checkDynamicArray(
   // copy offset to buffer
   CesiumGltf::Buffer& offsetBuffer = model.buffers.emplace_back();
   offsetBuffer.cesium.data.resize(offset.size() * sizeof(E));
-  std::memcpy(offsetBuffer.cesium.data.data(), offset.data(), offset.size() * sizeof(E));
+  std::memcpy(
+      offsetBuffer.cesium.data.data(),
+      offset.data(),
+      offset.size() * sizeof(E));
 
   CesiumGltf::BufferView& offsetBufferView = model.bufferViews.emplace_back();
   offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
   offsetBufferView.byteOffset = 0;
   offsetBufferView.byteLength = offsetBuffer.cesium.data.size();
-  uint32_t offsetBufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
+  uint32_t offsetBufferViewIdx =
+      static_cast<uint32_t>(model.bufferViews.size() - 1);
 
   // create feature table
   CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
@@ -375,7 +379,7 @@ TEST_CASE("Access fixed array") {
 }
 
 TEST_CASE("Access dynamic array") {
-  SECTION("array of uint8_t") { 
+  SECTION("array of uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
         3, 2,
@@ -391,7 +395,7 @@ TEST_CASE("Access dynamic array") {
     checkDynamicArray(data, offset, CesiumGltf::PropertyType::Uint8, 4);
   }
 
-  SECTION("array of int32_t") { 
+  SECTION("array of int32_t") {
     // clang-format off
     std::vector<int32_t> data{
         3, 200,
@@ -407,7 +411,7 @@ TEST_CASE("Access dynamic array") {
     checkDynamicArray(data, offset, CesiumGltf::PropertyType::Int32, 4);
   }
 
-  SECTION("array of double") { 
+  SECTION("array of double") {
     // clang-format off
     std::vector<double> data{
         3.333, 200.2,
@@ -440,7 +444,10 @@ TEST_CASE("Access string") {
 
   // copy data to buffer
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
-  std::vector<std::string> strings {"This is a fine test", "What's going on", "Good morning"};
+  std::vector<std::string> strings{
+      "This is a fine test",
+      "What's going on",
+      "Good morning"};
   size_t totalSize = 0;
   for (const auto& s : strings) {
     totalSize += s.size();
@@ -449,7 +456,10 @@ TEST_CASE("Access string") {
   uint32_t currentOffset = 0;
   buffer.cesium.data.resize(totalSize);
   for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(buffer.cesium.data.data() + currentOffset, strings[i].data(), strings[i].size());
+    std::memcpy(
+        buffer.cesium.data.data() + currentOffset,
+        strings[i].data(),
+        strings[i].size());
     currentOffset += static_cast<uint32_t>(strings[i].size());
   }
 
@@ -464,16 +474,23 @@ TEST_CASE("Access string") {
   offsetBuffer.cesium.data.resize((strings.size() + 1) * sizeof(uint32_t));
   currentOffset = 0;
   for (size_t i = 0; i < strings.size(); ++i) {
-    std::memcpy(offsetBuffer.cesium.data.data() + i * sizeof(uint32_t), &currentOffset, sizeof(uint32_t));
+    std::memcpy(
+        offsetBuffer.cesium.data.data() + i * sizeof(uint32_t),
+        &currentOffset,
+        sizeof(uint32_t));
     currentOffset += static_cast<uint32_t>(strings[i].size());
   }
-  std::memcpy(offsetBuffer.cesium.data.data() + strings.size() * sizeof(uint32_t), &currentOffset, sizeof(uint32_t));
+  std::memcpy(
+      offsetBuffer.cesium.data.data() + strings.size() * sizeof(uint32_t),
+      &currentOffset,
+      sizeof(uint32_t));
 
   CesiumGltf::BufferView& offsetBufferView = model.bufferViews.emplace_back();
   offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
   offsetBufferView.byteOffset = 0;
   offsetBufferView.byteLength = offsetBuffer.cesium.data.size();
-  uint32_t offsetBufferViewIdx = static_cast<uint32_t>(model.bufferViews.size() - 1);
+  uint32_t offsetBufferViewIdx =
+      static_cast<uint32_t>(model.bufferViews.size() - 1);
 
   // create feature table
   CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
