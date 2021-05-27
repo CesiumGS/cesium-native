@@ -11,8 +11,8 @@
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
@@ -1147,9 +1147,9 @@ static void markTileAndChildrenNonRendered(
 }
 
 /**
- * @brief Returns whether the tile is completely clipped out by a clipping 
+ * @brief Returns whether the tile is completely clipped out by a clipping
  * polygon.
- * 
+ *
  * @param boundingVolume The bounding volume of the tile.
  * @param clippingPolygonsVertices The perimeters of the clipping polygons
  * given in longitude-latitude vertices.
@@ -1170,7 +1170,8 @@ static bool isCompletelyClipped(
   }
 
   // TODO: remove!!
-  if (pRectangle) return false;
+  if (pRectangle)
+    return false;
 
   glm::dvec2 rectangleCorners[] = {
       glm::dvec2(pRectangle->getWest(), pRectangle->getSouth()),
@@ -1227,7 +1228,7 @@ static bool isCompletelyClipped(
       continue;
     }
 
-    // Check if the polygon perimeter intersects the bounding globe rectangle 
+    // Check if the polygon perimeter intersects the bounding globe rectangle
     // edges.
     bool intersectionFound = false;
     for (size_t j = 0; j < vertices.size(); ++j) {
@@ -1241,24 +1242,24 @@ static bool isCompletelyClipped(
         const glm::dvec2& cd = rectangleEdges[k];
         glm::dmat2 lineSegmentMatrix(cd, ba);
         glm::dvec2 ca = a - rectangleCorners[k];
-        
+
         // s and t are calculated such that:
         // line_intersection = a + t * ab = c + s * cd
         glm::dvec2 st = glm::inverse(lineSegmentMatrix) * ca;
-        
+
         // check that the intersection is within the line segments
         if (st.x <= 1.0 && st.x >= 0.0 && st.y <= 1.0 && st.y >= 0.0) {
           intersectionFound = true;
           break;
         }
       }
-      
+
       if (intersectionFound) {
         break;
       }
     }
 
-    // There is no intersection with the perimeter and at least one point is 
+    // There is no intersection with the perimeter and at least one point is
     // inside the polygon so the tile is completely inside this polygon.
     if (!intersectionFound) {
       return true;
@@ -1337,7 +1338,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   const BoundingVolume& boundingVolume = tile.getBoundingVolume();
   const ViewState& viewState = frameState.viewState;
 
-  if (isCompletelyClipped(boundingVolume, this->_options.cullingPolygons, this->_options.cullingPolygonsIndices)) {
+  if (isCompletelyClipped(
+          boundingVolume,
+          this->_options.cullingPolygons,
+          this->_options.cullingPolygonsIndices)) {
     culled = true;
     shouldVisit = false;
   }
