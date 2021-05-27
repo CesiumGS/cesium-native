@@ -33,6 +33,7 @@ target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
+        ${CESIUM_NATIVE_EARCUT_INCLUDE_DIR}
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
@@ -52,7 +53,6 @@ target_link_libraries(Cesium3DTiles
     # PRIVATE
         tinyxml2
         uriparser
-        earcut.hpp
 )
 
 install(TARGETS Cesium3DTiles

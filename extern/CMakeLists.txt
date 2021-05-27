@@ -23,18 +23,6 @@ add_subdirectory(tinyxml2)
 
 add_subdirectory(asyncplusplus)
 
-option(EARCUT_BUILD_TESTS "" off)
-option(EARCUT_BUILD_BENCH "" off)
-option(EARCUT_BUILD_VIZ "" off)
-option(EARCUT_WARNING_IS_ERROR "" off)
-add_library(earcut.hpp earcut.hpp)
-set_target_properties(earcut.hpp PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(
-    earcut.hpp
-    PUBLIC
-        earcut.hpp/include/mapbox
-)
-
 set(SPDLOG_BUILD_TESTING OFF CACHE INTERNAL "Disable SPDLOG Testing")
 add_subdirectory(spdlog)
 
@@ -88,4 +76,8 @@ set(CESIUM_NATIVE_DRACO_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/draco/src/" CACHE
 
 set(CESIUM_NATIVE_STB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/stb" CACHE INTERNAL
     "Include directory for STB libraries"
+)
+
+set(CESIUM_NATIVE_EARCUT_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/earcut/include" CACHE INTERNAL
+    "Include directory for earcut"
 )

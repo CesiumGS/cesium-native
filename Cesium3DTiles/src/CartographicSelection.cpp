@@ -1,6 +1,6 @@
 
 #include "Cesium3DTiles/CartographicSelection.h"
-#include <earcut.hpp>
+#include <mapbox/earcut.hpp>
 #include <array>
 
 using namespace CesiumGeospatial;
