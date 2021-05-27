@@ -3,6 +3,8 @@
 #include "CesiumGltf/PropertyAccessorView.h"
 #include "CesiumGltf/PropertyType.h"
 #include "catch2/catch.hpp"
+#include <bitset>
+#include <climits>
 
 template <typename T>
 static void checkScalarProperty(
@@ -261,12 +263,62 @@ TEST_CASE("Access continuous scalar primitive type") {
   }
 
   SECTION("Float64") {
-    std::vector<double> data{221.5, 326, 622, 39.14, 43.4, 122.3};
+    std::vector<double> data{221.5, 32.6, 6.22, 39.14, 43.4, 122.3};
     checkScalarProperty(
         data,
         CesiumGltf::PropertyType::Float64,
         0,
         data.size());
+  }
+}
+
+TEST_CASE("Access boolean value") {
+  CesiumGltf::Model model;
+  CesiumGltf::ModelEXT_feature_metadata& metadata =
+      model.addExtension<CesiumGltf::ModelEXT_feature_metadata>();
+  metadata.schema = CesiumGltf::Schema();
+  metadata.schema->name = "TestSchema";
+
+  // copy data to buffer
+  std::bitset<sizeof(unsigned long) * CHAR_BIT> bits = 0b11110101;
+  unsigned long data = bits.to_ulong();
+  CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data.resize(sizeof(data));
+  std::memcpy(buffer.cesium.data.data(), &data, sizeof(data));
+
+  CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<uint32_t>(model.buffers.size() - 1);
+  bufferView.byteOffset = 0;
+  bufferView.byteLength = buffer.cesium.data.size();
+
+  // create schema
+  CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
+  CesiumGltf::ClassProperty& metaProperty =
+      metaClass.properties["TestProperty"];
+  metaProperty.type = CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::Boolean);
+
+  // create feature table
+  CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
+  featureTable.count = sizeof(data);
+
+  // point feature table class to data
+  featureTable.classProperty = "Test";
+  CesiumGltf::FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestProperty"];
+  featureTableProperty.bufferView =
+      static_cast<uint32_t>(model.bufferViews.size() - 1);
+
+  // check values
+  auto propertyView = CesiumGltf::PropertyAccessorView::create(
+      model,
+      metaProperty,
+      featureTableProperty,
+      featureTable.count);
+  REQUIRE(propertyView != std::nullopt);
+  REQUIRE(propertyView->getType() == static_cast<uint32_t>(CesiumGltf::PropertyType::Boolean));
+  REQUIRE(propertyView->numOfInstances() == sizeof(data));
+  for (size_t i = 0; i < bits.size(); ++i) {
+    REQUIRE(propertyView->get<bool>(i) == bits[i]);
   }
 }
 

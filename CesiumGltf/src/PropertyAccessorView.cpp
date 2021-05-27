@@ -26,8 +26,11 @@ CesiumGltf::PropertyType getOffsetType(const std::string& type) {
 } // namespace
 
 namespace CesiumGltf {
-bool PropertyAccessorView::getBoolean(size_t /*instance*/) const {
-  return false;
+bool PropertyAccessorView::getBoolean(size_t instance) const {
+  size_t byteIndex = instance / 8;
+  size_t bitIndex = instance % 8;
+  int bitValue = static_cast<int>(_valueBuffer.buffer[byteIndex] >> bitIndex) & 1;
+  return bitValue == 1;
 }
 
 std::string_view PropertyAccessorView::getString(size_t instance) const {

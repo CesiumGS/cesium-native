@@ -26,10 +26,6 @@ enum class PropertyType {
 
 template <typename T> struct TypeToPropertyType;
 
-template <typename T> struct TypeToPropertyType {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::None);
-};
-
 template <> struct TypeToPropertyType<uint8_t> {
   static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Uint8);
 };
