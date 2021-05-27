@@ -205,66 +205,66 @@ TEST_CASE("Access continuous scalar primitive type") {
     checkScalarProperty(data, CesiumGltf::PropertyType::Uint8, 1, 4);
   }
 
-  SECTION("int8_t") {
-    std::vector<int8_t> data{21, -122, -3, 12, -11};
-    checkScalarProperty(data, CesiumGltf::PropertyType::Int8, 0, data.size());
-  }
+  //SECTION("int8_t") {
+  //  std::vector<int8_t> data{21, -122, -3, 12, -11};
+  //  checkScalarProperty(data, CesiumGltf::PropertyType::Int8, 0, data.size());
+  //}
 
-  SECTION("uint16_t") {
-    std::vector<uint16_t> data{21, 266, 3, 4, 122};
-    checkScalarProperty(
-        data,
-        CesiumGltf::PropertyType::Uint16,
-        2,
-        data.size() - 2);
-  }
+  //SECTION("uint16_t") {
+  //  std::vector<uint16_t> data{21, 266, 3, 4, 122};
+  //  checkScalarProperty(
+  //      data,
+  //      CesiumGltf::PropertyType::Uint16,
+  //      2,
+  //      data.size() - 2);
+  //}
 
-  SECTION("int16_t") {
-    std::vector<int16_t> data{21, 26600, -3, 4222, -11122};
-    checkScalarProperty(data, CesiumGltf::PropertyType::Int16, 0, data.size());
-  }
+  //SECTION("int16_t") {
+  //  std::vector<int16_t> data{21, 26600, -3, 4222, -11122};
+  //  checkScalarProperty(data, CesiumGltf::PropertyType::Int16, 0, data.size());
+  //}
 
-  SECTION("uint32_t") {
-    std::vector<uint32_t> data{2100, 266000, 3, 4, 122};
-    checkScalarProperty(
-        data,
-        CesiumGltf::PropertyType::Uint32,
-        2,
-        data.size() - 2);
-  }
+  //SECTION("uint32_t") {
+  //  std::vector<uint32_t> data{2100, 266000, 3, 4, 122};
+  //  checkScalarProperty(
+  //      data,
+  //      CesiumGltf::PropertyType::Uint32,
+  //      2,
+  //      data.size() - 2);
+  //}
 
-  SECTION("int32_t") {
-    std::vector<int32_t> data{210000, 26600, -3, 4222, -11122, 1, 5, 7, 9};
-    checkScalarProperty(data, CesiumGltf::PropertyType::Int32, 2, 3);
-  }
+  //SECTION("int32_t") {
+  //  std::vector<int32_t> data{210000, 26600, -3, 4222, -11122, 1, 5, 7, 9};
+  //  checkScalarProperty(data, CesiumGltf::PropertyType::Int32, 2, 3);
+  //}
 
-  SECTION("uint64_t") {
-    std::vector<uint64_t> data{2100, 266000, 3, 4, 122};
-    checkScalarProperty(data, CesiumGltf::PropertyType::Uint64, 0, data.size());
-  }
+  //SECTION("uint64_t") {
+  //  std::vector<uint64_t> data{2100, 266000, 3, 4, 122};
+  //  checkScalarProperty(data, CesiumGltf::PropertyType::Uint64, 0, data.size());
+  //}
 
-  SECTION("int64_t") {
-    std::vector<int64_t> data{210000, 26600, -3, 4222, -11122};
-    checkScalarProperty(data, CesiumGltf::PropertyType::Int64, 0, data.size());
-  }
+  //SECTION("int64_t") {
+  //  std::vector<int64_t> data{210000, 26600, -3, 4222, -11122};
+  //  checkScalarProperty(data, CesiumGltf::PropertyType::Int64, 0, data.size());
+  //}
 
-  SECTION("Float32") {
-    std::vector<float> data{21.5f, 26.622f, 3.14f, 4.4f, 122.3f};
-    checkScalarProperty(
-        data,
-        CesiumGltf::PropertyType::Float32,
-        0,
-        data.size());
-  }
+  //SECTION("Float32") {
+  //  std::vector<float> data{21.5f, 26.622f, 3.14f, 4.4f, 122.3f};
+  //  checkScalarProperty(
+  //      data,
+  //      CesiumGltf::PropertyType::Float32,
+  //      0,
+  //      data.size());
+  //}
 
-  SECTION("Float64") {
-    std::vector<double> data{221.5, 326, 622, 39.14, 43.4, 122.3};
-    checkScalarProperty(
-        data,
-        CesiumGltf::PropertyType::Float64,
-        0,
-        data.size());
-  }
+  //SECTION("Float64") {
+  //  std::vector<double> data{221.5, 326, 622, 39.14, 43.4, 122.3};
+  //  checkScalarProperty(
+  //      data,
+  //      CesiumGltf::PropertyType::Float64,
+  //      0,
+  //      data.size());
+  //}
 }
 
 TEST_CASE("Access fixed array") {
