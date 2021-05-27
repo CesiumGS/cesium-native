@@ -205,24 +205,24 @@ TEST_CASE("Access continuous scalar primitive type") {
     checkScalarProperty(data, CesiumGltf::PropertyType::Uint8, 1, 4);
   }
 
-  //SECTION("int8_t") {
-  //  std::vector<int8_t> data{21, -122, -3, 12, -11};
-  //  checkScalarProperty(data, CesiumGltf::PropertyType::Int8, 0, data.size());
-  //}
+  SECTION("int8_t") {
+    std::vector<int8_t> data{21, -122, -3, 12, -11};
+    checkScalarProperty(data, CesiumGltf::PropertyType::Int8, 0, data.size());
+  }
 
-  //SECTION("uint16_t") {
-  //  std::vector<uint16_t> data{21, 266, 3, 4, 122};
-  //  checkScalarProperty(
-  //      data,
-  //      CesiumGltf::PropertyType::Uint16,
-  //      2,
-  //      data.size() - 2);
-  //}
+  SECTION("uint16_t") {
+    std::vector<uint16_t> data{21, 266, 3, 4, 122};
+    checkScalarProperty(
+        data,
+        CesiumGltf::PropertyType::Uint16,
+        2,
+        data.size() - 2);
+  }
 
-  //SECTION("int16_t") {
-  //  std::vector<int16_t> data{21, 26600, -3, 4222, -11122};
-  //  checkScalarProperty(data, CesiumGltf::PropertyType::Int16, 0, data.size());
-  //}
+  SECTION("int16_t") {
+    std::vector<int16_t> data{21, 26600, -3, 4222, -11122};
+    checkScalarProperty(data, CesiumGltf::PropertyType::Int16, 0, data.size());
+  }
 
   //SECTION("uint32_t") {
   //  std::vector<uint32_t> data{2100, 266000, 3, 4, 122};
