@@ -24,8 +24,7 @@ static void checkScalarProperty(
   CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = static_cast<uint32_t>(model.buffers.size() - 1);
   bufferView.byteOffset = instanceOffset * sizeof(T);
-  bufferView.byteLength =
-      (instanceCount - 1) * *bufferView.byteStride + sizeof(T);
+  bufferView.byteLength = instanceCount * sizeof(T);
 
   // create schema
   CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
