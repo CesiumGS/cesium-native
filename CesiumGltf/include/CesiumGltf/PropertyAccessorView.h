@@ -87,8 +87,7 @@ public:
 private:
   template <typename T> T getNumber(size_t instance) const {
     assert(TypeToPropertyType<T>::value == _type);
-    return *reinterpret_cast<const T*>(
-        _valueBuffer.buffer.data() + instance * _valueBuffer.stride);
+    return reinterpret_cast<const T*>(_valueBuffer.buffer.data())[instance];
   }
 
   template <typename T> gsl::span<const T> getArray(size_t instance) const {
