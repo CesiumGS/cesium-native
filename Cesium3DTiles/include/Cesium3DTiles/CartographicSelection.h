@@ -5,6 +5,7 @@
 #include <glm/vec2.hpp>
 #include <optional>
 #include <vector>
+#include <string>
 
 namespace Cesium3DTiles {
 
@@ -14,8 +15,13 @@ namespace Cesium3DTiles {
 class CESIUM3DTILES_API CartographicSelection final {
 public:
   CartographicSelection(
+      const std::string& targetTextureName,
       const std::vector<glm::dvec2>& polygon,
       bool isForCulling);
+
+  constexpr const std::string& getTargetTextureName() const {
+    return this->_targetTextureName;
+  }
 
   constexpr const std::vector<glm::dvec2>& getVertices() const {
     return this->_vertices;
@@ -33,6 +39,7 @@ public:
   constexpr bool isForCulling() const { return this->_isForCulling; }
 
 private:
+  std::string _targetTextureName;
   std::vector<glm::dvec2> _vertices;
   std::vector<uint32_t> _indices;
   std::optional<CesiumGeospatial::GlobeRectangle> _boundingRectangle;

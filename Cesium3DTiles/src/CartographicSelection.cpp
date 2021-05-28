@@ -105,9 +105,11 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
 }
 
 CartographicSelection::CartographicSelection(
+    const std::string& targetTextureName,
     const std::vector<glm::dvec2>& polygon,
     bool isForCulling)
-    : _vertices(polygon),
+    : _targetTextureName(targetTextureName),
+      _vertices(polygon),
       _indices(triangulatePolygon(polygon)),
       _boundingRectangle(computeBoundingRectangle(polygon)),
       _isForCulling(isForCulling) {}
