@@ -6,7 +6,7 @@ project(cesium-native
     LANGUAGES CXX
 )
 
-# Add Modules
+# Add helper modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Add options
@@ -16,6 +16,7 @@ option(OPT_BUILD_DOCUMENTATION "Build API documentations of cesium-native" ON)
 option(OPT_BUILD_TESTS "Build tests" ON)
 option(OPT_BUILD_TESTS_COVERAGE "Build tests coverage" OFF)
 
+# Add postfix "d" to installed debug targets
 set(CESIUM_DEBUG_POSTFIX "d")
 set(CESIUM_RELEASE_POSTFIX "")
 set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
@@ -35,7 +36,7 @@ if(OPT_BUILD_TESTS_COVERAGE)
     )
 endif()
 
-# Private Libraries
+# Add Libraries from Conan
 include(ConfigureConan)
 find_package(Async++ REQUIRED)
 find_package(Catch2 REQUIRED)
@@ -135,22 +136,19 @@ if (OPT_BUILD_DOCUMENTATION)
 	add_subdirectory(doc)
 endif()
 
-# Install third party libraries from conan
-include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+# Package third party libraries from conan
 include(GNUInstallDirs)
+include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_ASYNCPLUSPLUS}/ TYPE LIB)
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_ASYNCPLUSPLUS}/ TYPE INCLUDE)
 
-list (GET CONAN_INCLUDE_DIRS_CPP-HTTPLIB 0 CONAN_INCLUDE_DIRS_CPP-HTTPLIB)
+# cpp-httplib has multiple redundant include directories, so we get only need the first one
+list (GET CONAN_INCLUDE_DIRS_CPP-HTTPLIB 0 CONAN_INCLUDE_DIRS_CPP-HTTPLIB) 
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_CPP-HTTPLIB}/ TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_DRACO}/ TYPE LIB)
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_DRACO}/ TYPE INCLUDE)
-
-install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
-
-install(DIRECTORY ${CONAN_INCLUDE_DIRS_MAGIC_ENUM}/ TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_SPDLOG}/ TYPE LIB)
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_SPDLOG}/ TYPE INCLUDE)
@@ -161,15 +159,19 @@ install(DIRECTORY ${CONAN_INCLUDE_DIRS_FMT}/ TYPE INCLUDE)
 install(DIRECTORY ${CONAN_LIB_DIRS_SQLITE3}/ TYPE LIB)
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_SQLITE3}/ TYPE INCLUDE)
 
-install(DIRECTORY ${CONAN_INCLUDE_DIRS_STB}/ TYPE INCLUDE)
-
 install(DIRECTORY ${CONAN_LIB_DIRS_TINYXML2}/ TYPE LIB)
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_TINYXML2}/ TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_URIPARSER}/ TYPE LIB)
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_URIPARSER}/ TYPE INCLUDE)
 
-# Install third party not from conan
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_MAGIC_ENUM}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_STB}/ TYPE INCLUDE)
+
+# Package third parties not from conan
 install(TARGETS modp_b64)
 
 install(TARGETS csprng)
