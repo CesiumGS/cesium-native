@@ -28,14 +28,17 @@ jobs:
       before_script:
         - mkdir -p build
         - cd build
-        - cmake .. -A x64
+        - cmd //c "RefreshEnv.cmd && cmake .. -A x64"
     - name: Windows + VS2019
       os: windows
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install
         - choco install conan --params="'/AddToPath:1'"
-        - cmd //c "RefreshEnv.cmd"
+      before_script:
+		- mkdir -p build
+		- cd build
+        - cmd //c "RefreshEnv.cmd && cmake .."
     - name: Linux + GCC
       os: linux
       dist: focal
