@@ -29,7 +29,8 @@ namespace CesiumGltf {
 bool PropertyAccessorView::getBoolean(size_t instance) const {
   size_t byteIndex = instance / 8;
   size_t bitIndex = instance % 8;
-  int bitValue = static_cast<int>(_valueBuffer.buffer[byteIndex] >> bitIndex) & 1;
+  int bitValue =
+      static_cast<int>(_valueBuffer.buffer[byteIndex] >> bitIndex) & 1;
   return bitValue == 1;
 }
 

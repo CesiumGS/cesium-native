@@ -280,7 +280,7 @@ TEST_CASE("Access boolean value") {
   metadata.schema->name = "TestSchema";
 
   // copy data to buffer
-  std::bitset<sizeof(unsigned long) * CHAR_BIT> bits = 0b11110101;
+  std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
   unsigned long data = bits.to_ulong();
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
   buffer.cesium.data.resize(sizeof(data));
@@ -295,7 +295,8 @@ TEST_CASE("Access boolean value") {
   CesiumGltf::Class& metaClass = metadata.schema->classes["Test"];
   CesiumGltf::ClassProperty& metaProperty =
       metaClass.properties["TestProperty"];
-  metaProperty.type = CesiumGltf::convertProperttTypeToString(CesiumGltf::PropertyType::Boolean);
+  metaProperty.type = CesiumGltf::convertProperttTypeToString(
+      CesiumGltf::PropertyType::Boolean);
 
   // create feature table
   CesiumGltf::FeatureTable& featureTable = metadata.featureTables["Tests"];
@@ -315,7 +316,9 @@ TEST_CASE("Access boolean value") {
       featureTableProperty,
       featureTable.count);
   REQUIRE(propertyView != std::nullopt);
-  REQUIRE(propertyView->getType() == static_cast<uint32_t>(CesiumGltf::PropertyType::Boolean));
+  REQUIRE(
+      propertyView->getType() ==
+      static_cast<uint32_t>(CesiumGltf::PropertyType::Boolean));
   REQUIRE(propertyView->numOfInstances() == sizeof(data));
   for (size_t i = 0; i < bits.size(); ++i) {
     REQUIRE(propertyView->get<bool>(i) == bits[i]);
