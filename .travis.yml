@@ -36,8 +36,8 @@ jobs:
         - choco install doxygen.install
         - choco install conan --params="'/AddToPath:1'"
       before_script:
-		- mkdir -p build
-		- cd build
+        - mkdir -p build
+        - cd build
         - cmd //c "RefreshEnv.cmd && cmake .."
     - name: Linux + GCC
       os: linux
