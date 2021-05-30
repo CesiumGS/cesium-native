@@ -24,6 +24,7 @@ jobs:
       install:
         - choco install doxygen.install
         - choco install conan --params="'/AddToPath:1'"
+        - refreshenv
       before_script:
         - mkdir -p build
         - cd build
@@ -34,6 +35,7 @@ jobs:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install
         - choco install conan --params="'/AddToPath:1'"
+        - refreshenv
     - name: Linux + GCC
       os: linux
       dist: focal
