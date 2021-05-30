@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CesiumGeometry/Library.h"
-#include <functional>
 #include <cstdint>
+#include <functional>
 
 namespace CesiumGeometry {
 class QuadtreeTilingScheme;
