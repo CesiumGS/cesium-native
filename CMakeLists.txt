@@ -88,21 +88,54 @@ endif()
 include(GNUInstallDirs)
 include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
 
-install(DIRECTORY ${CONAN_LIB_DIRS_ASYNCPLUSPLUS}/ TYPE LIB)
+install(DIRECTORY ${CONAN_LIB_DIRS_ASYNCPLUSPLUS}/ 
+        TYPE LIB 
+        FILES_MATCHING 
+		PATTERN "*.a"
+        PATTERN "*.lib")
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_ASYNCPLUSPLUS}/ TYPE INCLUDE)
 
-install(DIRECTORY ${CONAN_LIB_DIRS_SPDLOG}/ TYPE LIB)
+install(DIRECTORY ${CONAN_LIB_DIRS_SPDLOG}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "*.a"
+        PATTERN "*.lib")
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_SPDLOG}/ TYPE INCLUDE)
 
-install(DIRECTORY ${CONAN_LIB_DIRS_FMT}/ TYPE LIB)
+install(DIRECTORY ${CONAN_LIB_DIRS_FMT}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "*.a"
+        PATTERN "*.lib")
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_FMT}/ TYPE INCLUDE)
 
-install(DIRECTORY ${CONAN_LIB_DIRS_DRACO}/ TYPE LIB)
-install(DIRECTORY ${CONAN_LIB_DIRS_SQLITE3}/ TYPE LIB)
-install(DIRECTORY ${CONAN_LIB_DIRS_TINYXML2}/ TYPE LIB)
-install(DIRECTORY ${CONAN_LIB_DIRS_URIPARSER}/ TYPE LIB)
+install(DIRECTORY ${CONAN_LIB_DIRS_DRACO}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "*.a"
+        PATTERN "*.lib")
+
+install(DIRECTORY ${CONAN_LIB_DIRS_SQLITE3}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "cmake" EXCLUDE
+        PATTERN "*.a"
+        PATTERN "*.lib")
+
+install(DIRECTORY ${CONAN_LIB_DIRS_TINYXML2}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "*.a"
+        PATTERN "*.lib")
+
+install(DIRECTORY ${CONAN_LIB_DIRS_URIPARSER}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "*.a"
+        PATTERN "*.lib")
 
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
+
 install(FILES ${CONAN_INCLUDE_DIRS_STB}/stb_image_resize.h TYPE INCLUDE)
 
 # Package third parties not from conan
