@@ -57,7 +57,63 @@ endif()
 add_subdirectory(extern)
 
 # Public Targets
-include(ConfigureTarget)
+# Use configure_depends to automatically reconfigure on filesystem
+# changes at the expense of computational overhead for CMake to
+# determine if new files have been added (-DGLOB_USE_CONFIGURE_DEPENDS).
+function(cesium_glob_files out_var_name regexes)
+	if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
+		set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
+			"Controls if cesium-native targets should use configure_depends or not for globbing their sources"
+		)
+	endif()
+
+    set(files "")
+    foreach(arg ${ARGV})
+        list(APPEND regexes_only "${arg}")
+    endforeach()
+
+    list(POP_FRONT regexes_only)
+    if (GLOB_USE_CONFIGURE_DEPENDS)
+        file(GLOB_RECURSE files CONFIGURE_DEPENDS ${regexes_only})
+    else()
+        file(GLOB files ${regexes_only})
+    endif()
+
+    set(${ARGV0} "${files}" PARENT_SCOPE)
+endfunction()
+
+function(configure_cesium_library targetName)
+    if (MSVC)
+        target_compile_definitions(${targetName} PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
+    else()
+        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
+    endif()
+
+    set_target_properties(${targetName} PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    if (OPT_BUILD_SHARED_LIBS)
+        target_compile_definitions(
+            ${targetName}
+            PUBLIC
+                CESIUM_SHARED=${OPT_BUILD_SHARED_LIBS}
+        )
+    endif()
+
+    if (NOT ${targetName} MATCHES "cesium-native-tests")
+        string(TOUPPER ${targetName} capitalizedTargetName)
+        target_compile_definitions(
+            ${targetName}
+            PRIVATE
+                ${capitalizedTargetName}_BUILDING
+        )
+    endif()
+endfunction()
+
 add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGeometry)
@@ -78,3 +134,44 @@ endif()
 if (OPT_BUILD_DOCUMENTATION)
 	add_subdirectory(doc)
 endif()
+
+# Install third party libraries from conan
+include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+include(GNUInstallDirs)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_ASYNCPLUSPLUS}/ TYPE LIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_ASYNCPLUSPLUS}/ TYPE INCLUDE)
+
+list (GET CONAN_INCLUDE_DIRS_CPP-HTTPLIB 0 CONAN_INCLUDE_DIRS_CPP-HTTPLIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_CPP-HTTPLIB}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_DRACO}/ TYPE LIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_DRACO}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_MAGIC_ENUM}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_SPDLOG}/ TYPE LIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_SPDLOG}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_SQLITE3}/ TYPE LIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_SQLITE3}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_STB}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_TINYXML2}/ TYPE LIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_TINYXML2}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_URIPARSER}/ TYPE LIB)
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_URIPARSER}/ TYPE INCLUDE)
+
+# Install third party not from conan
+install(TARGETS modp_b64)
+
+install(TARGETS csprng)
+
+install(TARGETS GSL)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
+
+install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)

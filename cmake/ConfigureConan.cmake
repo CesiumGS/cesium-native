@@ -1,17 +1,17 @@
 # cmake-conan configuration
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_BINARY_DIR})
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
   message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
-                "${CMAKE_BINARY_DIR}/conan.cmake"
+                "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake"
                 EXPECTED_HASH SHA256=396e16d0f5eabdc6a14afddbcfff62a54a7ee75c6da23f32f7a31bc85db23484
                 TLS_VERIFY ON)
 endif()
 
-include(${CMAKE_BINARY_DIR}/conan.cmake)
+include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
 # Add the list of dependencies for the project
 # When adding a new one add a comment on the side stating why is needed
@@ -29,6 +29,7 @@ conan_cmake_configure(REQUIRES
                         uriparser/0.9.5
                         doxygen/1.9.1
 					GENERATORS 
+                        cmake
                         cmake_find_package
 					OPTIONS 
                         spdlog:no_exceptions=True)
