@@ -2,6 +2,7 @@
 
 #include "CesiumGeometry/Library.h"
 #include <functional>
+#include <cstdint>
 
 namespace CesiumGeometry {
 class QuadtreeTilingScheme;
