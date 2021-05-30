@@ -27,7 +27,6 @@ conan_cmake_configure(REQUIRES
                         stb/20200203
                         tinyxml2/8.0.0
                         uriparser/0.9.5
-                        doxygen/1.9.1
 					GENERATORS 
                         cmake
                         cmake_find_package

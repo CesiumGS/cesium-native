@@ -12,7 +12,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Add options
 option(OPT_BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(OPT_GLOB_USE_CONFIGURE_DEPENDS "Controls if cesium-native targets should use configure_depends or not for globbing their sources" OFF)
-option(OPT_BUILD_DOCUMENTATION "Build API documentations of cesium-native" ON)
 option(OPT_BUILD_TESTS "Build tests" ON)
 option(OPT_BUILD_TESTS_COVERAGE "Build tests coverage" OFF)
 option(OPT_PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
@@ -55,10 +54,6 @@ find_package(stb REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(uriparser REQUIRED)
 
-if (OPT_BUILD_DOCUMENTATION)
-    find_package(doxygen REQUIRED)
-endif()
-
 # Thirdparty not exists in conan
 add_subdirectory(extern)
 
@@ -74,14 +69,11 @@ add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)
 add_subdirectory(CesiumIonClient)
+add_subdirectory(doc)
 
 if (OPT_BUILD_TESTS OR OPT_BUILD_TESTS_COVERAGE)
     include(CTest)
 	add_subdirectory(CesiumNativeTests)
-endif()
-
-if (OPT_BUILD_DOCUMENTATION)
-	add_subdirectory(doc)
 endif()
 
 # Package third party libraries from conan
