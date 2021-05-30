@@ -30,3 +30,8 @@ set(CESIUM_NATIVE_RAPIDJSON_DEFINES
     "Compiler definitions for rapidjson"
 )
 
+# We need our own sqlite3 cause we want to replace all sqlite3 symbol with cesium_sqlite3 symbol 
+# so that on the Unreal side, it doesn't link with unreal version of sqlite3
+if (NOT TARGET sqlite3)
+  add_subdirectory(sqlite3)
+endif()

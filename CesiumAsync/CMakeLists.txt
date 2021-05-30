@@ -43,7 +43,7 @@ target_link_libraries(CesiumAsync
         Async++::Async++
         spdlog::spdlog
     PRIVATE
-        SQLite::SQLite3
+        sqlite3
 )
 
 install(TARGETS CesiumAsync

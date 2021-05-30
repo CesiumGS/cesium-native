@@ -24,7 +24,6 @@ conan_cmake_configure(REQUIRES
                         magic_enum/0.7.2
                         spdlog/1.8.0 
                         fmt/7.0.3
-                        sqlite3/3.35.5
                         stb/20200203
                         tinyxml2/8.0.0
                         uriparser/0.9.5

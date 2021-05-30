@@ -51,7 +51,6 @@ find_package(Draco REQUIRED)
 find_package(glm REQUIRED)
 find_package(magic_enum REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(SQLite3 REQUIRED)
 find_package(stb REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(uriparser REQUIRED)
@@ -116,13 +115,6 @@ install(DIRECTORY ${CONAN_LIB_DIRS_DRACO}/
         PATTERN "*.a"
         PATTERN "*.lib")
 
-install(DIRECTORY ${CONAN_LIB_DIRS_SQLITE3}/ 
-        TYPE LIB
-        FILES_MATCHING 
-        PATTERN "cmake" EXCLUDE
-        PATTERN "*.a"
-        PATTERN "*.lib")
-
 install(DIRECTORY ${CONAN_LIB_DIRS_TINYXML2}/ 
         TYPE LIB
         FILES_MATCHING 
@@ -148,3 +140,5 @@ install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
 install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
+
+install(TARGETS sqlite3)
