@@ -23,8 +23,7 @@ jobs:
       os: windows
       install:
         - choco install doxygen.install
-        - choco install python
-        - pip install conan
+        - choco install conan --params="'/AddToPath:1'"
       before_script:
         - mkdir -p build
         - cd build
@@ -34,8 +33,7 @@ jobs:
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install
-        - choco install python
-        - pip install conan
+        - choco install conan --params="'/AddToPath:1'"
     - name: Linux + GCC
       os: linux
       dist: focal
