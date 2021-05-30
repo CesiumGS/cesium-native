@@ -16,6 +16,11 @@ option(OPT_BUILD_DOCUMENTATION "Build API documentations of cesium-native" ON)
 option(OPT_BUILD_TESTS "Build tests" ON)
 option(OPT_BUILD_TESTS_COVERAGE "Build tests coverage" OFF)
 
+# Change the default build type to Release. Conan will require CMAKE_BUILD_TYPE
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Type of build: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
 # Add postfix "d" to installed debug targets
 set(CESIUM_DEBUG_POSTFIX "d")
 set(CESIUM_RELEASE_POSTFIX "")
