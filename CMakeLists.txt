@@ -15,6 +15,7 @@ option(OPT_GLOB_USE_CONFIGURE_DEPENDS "Controls if cesium-native targets should 
 option(OPT_BUILD_DOCUMENTATION "Build API documentations of cesium-native" ON)
 option(OPT_BUILD_TESTS "Build tests" ON)
 option(OPT_BUILD_TESTS_COVERAGE "Build tests coverage" OFF)
+option(OPT_PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 
 # Change the default build type to Release. Conan will require CMAKE_BUILD_TYPE
 if(NOT CMAKE_BUILD_TYPE)
