@@ -1,6 +1,6 @@
 # Change Log
 
-### v?.?.? - ????-??-??
+### v0.4.0 - 2021-05-31
 
 ##### Breaking Changes :mega:
 
@@ -8,7 +8,7 @@
 
 - Added `Cesium3DTiles::TileIdUtilities` with a `createTileIdString` function to create logging/debugging strings for `TileID` objects.
 - Accessing the same Bing Maps layer multiple times in a single application run now reuses the same Bing Maps session instead of starting a new one each time.
-- Add a configure-time build option, `PRIVATE_CESIUM_SQLITE`, to rename all `sqlite3*` symbols to `cesium_sqlite3*`.
+- Added a configure-time build option, `PRIVATE_CESIUM_SQLITE`, to rename all `sqlite3*` symbols to `cesium_sqlite3*`.
 
 ##### Fixes :wrench:
 
