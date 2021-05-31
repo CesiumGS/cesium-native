@@ -24,7 +24,6 @@ jobs:
       install:
         - choco install doxygen.install
         - choco install conan --params="'/AddToPath:1'"
-        - cmd //c "RefreshEnv.cmd"
       before_script:
         - mkdir -p build
         - cd build
