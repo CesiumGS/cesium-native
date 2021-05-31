@@ -31,6 +31,20 @@ template <> struct IsBoolean<bool> : std::true_type {};
 template <typename... T> struct IsString;
 template <typename T> struct IsString<T> : std::false_type {};
 template <> struct IsString<std::string_view> : std::true_type {};
+
+template <typename... T> struct IsNumericArray;
+template <typename T> struct IsNumericArray<T> : std::false_type {};
+template <typename T> struct IsNumericArray<MetaArrayView<T>> {
+    static constexpr bool value = IsNumeric<T>::value;
+};
+
+template <typename... T> struct IsBooleanArray;
+template <typename T> struct IsBooleanArray<T> : std::false_type {};
+template <> struct IsBooleanArray<MetaArrayView<bool>> : std::true_type {};
+
+template <typename... T> struct IsStringArray;
+template <typename T> struct IsStringArray<T> : std::false_type {};
+template <> struct IsStringArray<MetaArrayView<std::string_view>> : std::true_type {};
 } // namespace Impl
 
 template <typename ElementType> class TPropertyView {
@@ -46,6 +60,7 @@ public:
         _arrayOffsetBuffer{arrayOffsetBuffer},
         _stringOffsetBuffer{stringOffsetBuffer},
         _offsetType{offsetType},
+        _offsetSize{getOffsetSize(offsetType)},
         _componentCount{componentCount},
         _instanceCount{instanceCount} {}
 
@@ -60,6 +75,18 @@ public:
 
     if constexpr (Impl::IsString<ElementType>::value) {
       return getString(instance);
+    }
+
+    if constexpr (Impl::IsNumericArray<ElementType>::value) {
+      return getNumericArray(instance);
+    }
+
+    //if constexpr (Impl::IsBooleanArray<ElementType>::value) {
+    //  return getBooleanArray(instance);
+    //}
+
+    if constexpr (Impl::IsStringArray<ElementType>::value) {
+      return getStringArray(instance);
     }
   }
 
@@ -78,9 +105,11 @@ private:
   }
 
   std::string_view getString(size_t instance) const {
-    size_t currentOffset =
-        getOffsetFromOffsetBuffer(instance, _stringOffsetBuffer, _offsetType);
-    size_t nextOffset = getOffsetFromOffsetBuffer(
+    size_t currentOffset = getOffsetFromOffsetBufferUseInstance(
+        instance,
+        _stringOffsetBuffer,
+        _offsetType);
+    size_t nextOffset = getOffsetFromOffsetBufferUseInstance(
         instance + 1,
         _stringOffsetBuffer,
         _offsetType);
@@ -89,7 +118,122 @@ private:
         (nextOffset - currentOffset));
   }
 
-  static size_t getOffsetFromOffsetBuffer(
+  MetaArrayView<ElementType> getNumericArray(size_t instance) const {
+    if (_componentCount > 0) {
+      gsl::span<const ElementType> vals(
+          reinterpret_cast<const ElementType*>(
+              _valueBuffer.data() +
+              instance * _componentCount * sizeof(ElementType)),
+          _componentCount);
+      return MetaArrayView{vals};
+    }
+
+    size_t currentOffset = getOffsetFromOffsetBufferUseInstance(
+        instance,
+        _arrayOffsetBuffer,
+        _offsetType);
+    size_t nextOffset = getOffsetFromOffsetBufferUseInstance(
+        instance + 1,
+        _arrayOffsetBuffer,
+        _offsetType);
+    gsl::span<const ElementType> vals(
+        reinterpret_cast<const ElementType*>(
+            _valueBuffer.buffer.data() + currentOffset),
+        (nextOffset - currentOffset) / sizeof(ElementType));
+    return MetaArrayView{vals};
+  }
+
+  MetaArrayView<std::string_view> getStringArray(size_t instance) const {
+    if (_componentCount > 0) {
+      size_t strCurrentOffset = getOffsetFromOffsetBufferUseInstance(
+          instance,
+          _stringOffsetBuffer,
+          _offsetType);
+      size_t strNextOffset = getOffsetFromOffsetBufferUseInstance(
+          instance + _componentCount,
+          _stringOffsetBuffer,
+          _offsetType);
+      gsl::span<const std::byte> vals(
+          _valueBuffer.buffer.data() + strCurrentOffset,
+          (strNextOffset - strCurrentOffset));
+      gsl::span<const std::byte> offsetVals(
+          _stringOffsetBuffer.buffer.data() + instance * _offsetSize,
+          _componentCount * _offsetSize);
+      return MetaArrayView{vals, offsetVals, _componentCount};
+    }
+
+    size_t currentOffset = getOffsetFromOffsetBufferUseInstance(
+        instance,
+        _arrayOffsetBuffer,
+        _offsetType);
+    size_t nextOffset = getOffsetFromOffsetBufferUseInstance(
+        instance + 1,
+        _arrayOffsetBuffer,
+        _offsetType);
+    size_t strCurrentOffset = getOffsetFromOffsetBufferUseByte(
+        currentOffset,
+        _stringOffsetBuffer,
+        _offsetType); 
+    size_t strNextOffset = getOffsetFromOffsetBufferUseByte(
+        nextOffset,
+        _stringOffsetBuffer,
+        _offsetType); 
+    gsl::span<const std::byte> vals(
+        _valueBuffer.buffer.data() + strCurrentOffset,
+        (strNextOffset - strCurrentOffset));
+    gsl::span<const std::byte> offsetVals(
+        _stringOffsetBuffer.buffer.data() + currentOffset,
+        (nextOffset - currentOffset));
+    return MetaArrayView{vals, offsetVals, nextOffset - currentOffset};
+  }
+
+  static size_t getOffsetSize(PropertyType offsetType) {
+    switch (offsetType) {
+    case CesiumGltf::PropertyType::Uint8:
+      return sizeof(uint8_t);
+    case CesiumGltf::PropertyType::Uint16:
+      return sizeof(uint16_t);
+    case CesiumGltf::PropertyType::Uint32:
+      return sizeof(uint32_t);
+    case CesiumGltf::PropertyType::Uint64:
+      return sizeof(uint64_t);
+    default:
+      return 0;
+    }
+  }
+
+  static size_t getOffsetFromOffsetBufferUseByte(
+      size_t byteOffset,
+      const gsl::span<const std::byte>& offsetBuffer,
+      PropertyType offsetType) {
+    switch (offsetType) {
+    case PropertyType::Uint8: {
+      uint8_t offset =
+          *reinterpret_cast<const uint8_t*>(offsetBuffer.data() + byteOffset);
+      return static_cast<size_t>(offset);
+    }
+    case PropertyType::Uint16: {
+      uint16_t offset =
+          *reinterpret_cast<const uint16_t*>(offsetBuffer.data() + byteOffset);
+      return static_cast<size_t>(offset);
+    }
+    case PropertyType::Uint32: {
+      uint32_t offset =
+          *reinterpret_cast<const uint32_t*>(offsetBuffer.data() + byteOffset);
+      return static_cast<size_t>(offset);
+    }
+    case PropertyType::Uint64: {
+      uint64_t offset =
+          *reinterpret_cast<const uint64_t*>(offsetBuffer.data() + byteOffset);
+      return static_cast<size_t>(offset);
+    }
+    default:
+      assert(false && "Offset type has unknown type");
+      return 0;
+    }
+  }
+
+  static size_t getOffsetFromOffsetBufferUseInstance(
       size_t instance,
       const gsl::span<const std::byte>& offsetBuffer,
       PropertyType offsetType) {
@@ -124,6 +268,7 @@ private:
   gsl::span<const std::byte> _arrayOffsetBuffer;
   gsl::span<const std::byte> _stringOffsetBuffer;
   PropertyType _offsetType;
+  size_t _offsetSize;
   size_t _componentCount;
   size_t _instanceCount;
 };
