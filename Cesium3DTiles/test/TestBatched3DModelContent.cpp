@@ -79,7 +79,7 @@ static void checkArrayProperty(
 
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
-  testFilePath = testFilePath / "Tileset" / "ll.b3dm";
+  testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
   std::vector<std::byte> b3dm = readFile(testFilePath);
 
   std::unique_ptr<TileContentLoadResult> pResult =
@@ -179,7 +179,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
 
 TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
-  testFilePath = testFilePath / "B3dm" / "batchedWithBatchTableBinary.b3dm";
+  testFilePath = testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
   std::vector<std::byte> b3dm = readFile(testFilePath);
 
   std::unique_ptr<TileContentLoadResult> pResult =
