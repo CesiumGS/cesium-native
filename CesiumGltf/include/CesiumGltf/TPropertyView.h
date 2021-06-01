@@ -87,9 +87,9 @@ public:
           instance);
     }
 
-    //if constexpr (Impl::IsBooleanArray<ElementType>::value) {
-    //  return getBooleanArray(instance);
-    //}
+    if constexpr (Impl::IsBooleanArray<ElementType>::value) {
+      return getBooleanArray(instance);
+    }
 
     if constexpr (Impl::IsStringArray<ElementType>::value) {
       return getStringArray(instance);
@@ -176,6 +176,29 @@ private:
         offsetVals,
         _offsetType,
         (nextOffset - currentOffset) / _offsetSize);
+  }
+
+  MetaArrayView<bool> getBooleanArray(size_t instance) const {
+    if (_componentCount > 0) {
+      size_t totalBits = _componentCount * instance;
+      gsl::span<const std::byte> buffer(
+          _valueBuffer.data() + totalBits / 8,
+          (_componentCount / 8 + 1));
+      return MetaArrayView<bool>(buffer, totalBits % 8, _componentCount);
+    }
+
+    size_t currentOffset =
+        getOffsetFromOffsetBuffer(instance, _arrayOffsetBuffer, _offsetType);
+    size_t nextOffset = getOffsetFromOffsetBuffer(
+        instance + 1,
+        _arrayOffsetBuffer,
+        _offsetType);
+
+    size_t totalBits = nextOffset - currentOffset;
+    gsl::span<const std::byte> buffer(
+        _valueBuffer.data() + totalBits / 8,
+        (_componentCount / 8 + 1));
+    return MetaArrayView<bool>(buffer, totalBits % 8, totalBits);
   }
 
   static size_t getOffsetSize(PropertyType offsetType) {

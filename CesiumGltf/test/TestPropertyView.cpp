@@ -448,3 +448,53 @@ TEST_CASE("Check dynamic array of string") {
 
   REQUIRE(expectedIdx == strings.size());
 }
+
+TEST_CASE("Check fixed array of boolean") {
+  std::vector<std::byte> buffer{
+      static_cast<std::byte>(0b10101111),
+      static_cast<std::byte>(0b11111010),
+      static_cast<std::byte>(0b11100111)};
+
+  CesiumGltf::TPropertyView<CesiumGltf::MetaArrayView<bool>> property(
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(),
+      gsl::span<const std::byte>(),
+      CesiumGltf::PropertyType::Uint32,
+      12,
+      2);
+
+  REQUIRE(property.size() == 2);
+
+  CesiumGltf::MetaArrayView<bool> val0 = property[0];
+  REQUIRE(val0.size() == 12);
+  REQUIRE(static_cast<int>(val0[0]) == 1);
+  REQUIRE(static_cast<int>(val0[1]) == 1);
+  REQUIRE(static_cast<int>(val0[2]) == 1);
+  REQUIRE(static_cast<int>(val0[3]) == 1);
+  REQUIRE(static_cast<int>(val0[4]) == 0);
+  REQUIRE(static_cast<int>(val0[5]) == 1);
+  REQUIRE(static_cast<int>(val0[6]) == 0);
+  REQUIRE(static_cast<int>(val0[7]) == 1);
+  REQUIRE(static_cast<int>(val0[8]) == 0);
+  REQUIRE(static_cast<int>(val0[9]) == 1);
+  REQUIRE(static_cast<int>(val0[10]) == 0);
+  REQUIRE(static_cast<int>(val0[11]) == 1);
+
+  CesiumGltf::MetaArrayView<bool> val1 = property[1];
+  REQUIRE(static_cast<int>(val1[0]) == 1);
+  REQUIRE(static_cast<int>(val1[1]) == 1);
+  REQUIRE(static_cast<int>(val1[2]) == 1);
+  REQUIRE(static_cast<int>(val1[3]) == 1);
+  REQUIRE(static_cast<int>(val1[4]) == 1);
+  REQUIRE(static_cast<int>(val1[5]) == 1);
+  REQUIRE(static_cast<int>(val1[6]) == 1);
+  REQUIRE(static_cast<int>(val1[7]) == 0);
+  REQUIRE(static_cast<int>(val1[8]) == 0);
+  REQUIRE(static_cast<int>(val1[9]) == 1);
+  REQUIRE(static_cast<int>(val1[10]) == 1);
+  REQUIRE(static_cast<int>(val1[11]) == 1);
+}
+
+TEST_CASE("Check dynamic array of boolean") {
+
+}
