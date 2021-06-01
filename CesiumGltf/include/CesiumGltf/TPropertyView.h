@@ -196,9 +196,9 @@ private:
 
     size_t totalBits = nextOffset - currentOffset;
     gsl::span<const std::byte> buffer(
-        _valueBuffer.data() + totalBits / 8,
-        (_componentCount / 8 + 1));
-    return MetaArrayView<bool>(buffer, totalBits % 8, totalBits);
+        _valueBuffer.data() + currentOffset / 8,
+        (totalBits / 8 + 1));
+    return MetaArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
   static size_t getOffsetSize(PropertyType offsetType) {

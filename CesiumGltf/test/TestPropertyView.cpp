@@ -496,5 +496,58 @@ TEST_CASE("Check fixed array of boolean") {
 }
 
 TEST_CASE("Check dynamic array of boolean") {
+  std::vector<std::byte> buffer{
+      static_cast<std::byte>(0b10101111),
+      static_cast<std::byte>(0b11111010),
+      static_cast<std::byte>(0b11100111),
+      static_cast<std::byte>(0b11110110)};
 
+  std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
+
+  CesiumGltf::TPropertyView<CesiumGltf::MetaArrayView<bool>> property(
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(reinterpret_cast<const std::byte*>(offsetBuffer.data()), offsetBuffer.size() * sizeof(uint32_t)),
+      gsl::span<const std::byte>(),
+      CesiumGltf::PropertyType::Uint32,
+      0,
+      3);
+
+  REQUIRE(property.size() == 3);
+
+  CesiumGltf::MetaArrayView<bool> val0 = property[0];
+  REQUIRE(val0.size() == 3);
+  REQUIRE(static_cast<int>(val0[0]) == 1);
+  REQUIRE(static_cast<int>(val0[1]) == 1);
+  REQUIRE(static_cast<int>(val0[2]) == 1);
+
+  CesiumGltf::MetaArrayView<bool> val1 = property[1];
+  REQUIRE(val1.size() == 9);
+  REQUIRE(static_cast<int>(val1[0]) == 1);
+  REQUIRE(static_cast<int>(val1[1]) == 0);
+  REQUIRE(static_cast<int>(val1[2]) == 1);
+  REQUIRE(static_cast<int>(val1[3]) == 0);
+  REQUIRE(static_cast<int>(val1[4]) == 1);
+  REQUIRE(static_cast<int>(val1[5]) == 0);
+  REQUIRE(static_cast<int>(val1[6]) == 1);
+  REQUIRE(static_cast<int>(val1[7]) == 0);
+  REQUIRE(static_cast<int>(val1[8]) == 1);
+
+  CesiumGltf::MetaArrayView<bool> val2 = property[2];
+  REQUIRE(val2.size() == 16);
+  REQUIRE(static_cast<int>(val2[0]) == 1);
+  REQUIRE(static_cast<int>(val2[1]) == 1);
+  REQUIRE(static_cast<int>(val2[2]) == 1);
+  REQUIRE(static_cast<int>(val2[3]) == 1);
+  REQUIRE(static_cast<int>(val2[4]) == 1);
+  REQUIRE(static_cast<int>(val2[5]) == 1);
+  REQUIRE(static_cast<int>(val2[6]) == 1);
+  REQUIRE(static_cast<int>(val2[7]) == 0);
+  REQUIRE(static_cast<int>(val2[8]) == 0);
+  REQUIRE(static_cast<int>(val2[9]) == 1);
+  REQUIRE(static_cast<int>(val2[10]) == 1);
+  REQUIRE(static_cast<int>(val2[11]) == 1);
+  REQUIRE(static_cast<int>(val2[12]) == 0);
+  REQUIRE(static_cast<int>(val2[13]) == 1);
+  REQUIRE(static_cast<int>(val2[14]) == 1);
+  REQUIRE(static_cast<int>(val2[15]) == 0);
 }
