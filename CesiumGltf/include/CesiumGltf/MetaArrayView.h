@@ -8,16 +8,16 @@
 namespace CesiumGltf {
 template <typename ElementType> class MetaArrayView {
 public:
-  MetaArrayView(gsl::span<ElementType> buffer) : _valueBuffer{buffer} {}
+  MetaArrayView(gsl::span<const ElementType> buffer) : _valueBuffer{buffer} {}
 
   const ElementType& operator[](size_t index) const {
     return _valueBuffer[index];
   }
 
-  size_t size() const { _valueBuffer.size(); }
+  size_t size() const { return _valueBuffer.size(); }
 
 private:
-  gsl::span<ElementType> _valueBuffer;
+  gsl::span<const ElementType> _valueBuffer;
 };
 
 template <> class MetaArrayView<std::string_view> {
