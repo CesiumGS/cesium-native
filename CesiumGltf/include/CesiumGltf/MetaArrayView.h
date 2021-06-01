@@ -20,10 +20,15 @@ private:
   gsl::span<const ElementType> _valueBuffer;
 };
 
-template <> class MetaArrayView<bool> { 
-public: 
-  MetaArrayView(gsl::span<const std::byte> buffer, size_t bitOffset, size_t instanceCount) 
-      : _valueBuffer{buffer}, _bitOffset{bitOffset}, _instanceCount{instanceCount} {}
+template <> class MetaArrayView<bool> {
+public:
+  MetaArrayView(
+      gsl::span<const std::byte> buffer,
+      size_t bitOffset,
+      size_t instanceCount)
+      : _valueBuffer{buffer},
+        _bitOffset{bitOffset},
+        _instanceCount{instanceCount} {}
 
   bool operator[](size_t index) const {
     index += _bitOffset;

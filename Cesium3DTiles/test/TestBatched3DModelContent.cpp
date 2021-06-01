@@ -1,5 +1,6 @@
 #include "Batched3DModelContent.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
+#include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "catch2/catch.hpp"
 #include "readFile.h"
@@ -9,6 +10,72 @@
 
 using namespace CesiumGltf;
 using namespace Cesium3DTiles;
+
+template <typename T>
+static void checkScalarProperty(
+    const Model& model,
+    const FeatureTable& featureTable,
+    const Class& metaClass,
+    const std::string& propertyName,
+    const std::string& expectedPropertyType,
+    const std::vector<T>& expected) {
+  const ClassProperty& property = metaClass.properties.at(propertyName);
+  REQUIRE(property.type == expectedPropertyType);
+
+  const FeatureTableProperty& values = featureTable.properties.at(propertyName);
+  const BufferView& valueBufferView = model.bufferViews[values.bufferView];
+  const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
+  MetadataPropertyView<T> propertyView(
+      gsl::span<const std::byte>(
+          valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
+          valueBufferView.byteLength),
+      gsl::span<const std::byte>(),
+      gsl::span<const std::byte>(),
+      PropertyType::None,
+      0,
+      featureTable.count);
+
+  REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
+  for (size_t i = 0; i < propertyView.size(); ++i) {
+    REQUIRE(propertyView[i] == Approx(expected[i]));
+  }
+}
+
+template <typename T>
+static void checkArrayProperty(
+    const Model& model,
+    const FeatureTable& featureTable,
+    const Class& metaClass,
+    const std::string& propertyName,
+    size_t componentCount,
+    const std::string& expectedComponentType,
+    const std::vector<T>& expected) {
+  const ClassProperty& property = metaClass.properties.at(propertyName);
+  REQUIRE(property.type == "ARRAY");
+  REQUIRE(property.componentType.getString() == expectedComponentType);
+  REQUIRE(property.componentCount == componentCount);
+
+  const FeatureTableProperty& values = featureTable.properties.at(propertyName);
+  const BufferView& valueBufferView = model.bufferViews[values.bufferView];
+  const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
+  MetadataPropertyView<MetaArrayView<T>> propertyView(
+      gsl::span<const std::byte>(
+          valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
+          valueBufferView.byteLength),
+      gsl::span<const std::byte>(),
+      gsl::span<const std::byte>(),
+      PropertyType::None,
+      componentCount,
+      featureTable.count);
+
+  REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
+  for (size_t i = 0; i < expected.size() / componentCount; ++i) {
+    MetaArrayView<T> val = propertyView[i];
+    for (size_t j = 0; j < componentCount; ++j) {
+      REQUIRE(val[j] == expected[i * componentCount + j]);
+    }
+  }
+}
 
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
@@ -135,23 +202,128 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
       defaultClass.properties;
   REQUIRE(properties.size() == 6);
 
-  const ClassProperty& id = properties.at("id");
-  REQUIRE(id.type == "INT8");
+  const FeatureTable& featureTable = metadata->featureTables["default"];
 
-  const ClassProperty& height = properties.at("Height");
-  REQUIRE(height.type == "FLOAT64");
+  {
+    const ClassProperty& id = properties.at("id");
+    REQUIRE(id.type == "INT8");
 
-  const ClassProperty& longitude = properties.at("Longitude");
-  REQUIRE(longitude.type == "FLOAT64");
+    const FeatureTableProperty& idValues = featureTable.properties.at("id");
+    const BufferView& valueBufferView =
+        pResult->model->bufferViews[idValues.bufferView];
+    const Buffer& valueBuffer = pResult->model->buffers[valueBufferView.buffer];
+    MetadataPropertyView<uint8_t> idView(
+        gsl::span<const std::byte>(
+            valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
+            valueBufferView.byteLength),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        PropertyType::None,
+        0,
+        featureTable.count);
 
-  const ClassProperty& latitude = properties.at("Latitude");
-  REQUIRE(latitude.type == "FLOAT64");
+    REQUIRE(idView.size() == static_cast<size_t>(featureTable.count));
+    for (size_t i = 0; i < idView.size(); ++i) {
+      REQUIRE(idView[i] == i);
+    }
+  }
 
-  const ClassProperty& cartographic = properties.at("cartographic");
-  REQUIRE(cartographic.type == "ARRAY");
-  REQUIRE(cartographic.componentType.getString() == "FLOAT64");
-  REQUIRE(cartographic.componentCount == 3);
+  {
+    std::vector<double> expected = {
+        6.155801922082901,
+        13.410263679921627,
+        6.1022464875131845,
+        6.742499912157655,
+        6.869888566434383,
+        10.701326800510287,
+        6.163868889212608,
+        12.224825594574213,
+        12.546202838420868,
+        7.632075032219291};
+    checkScalarProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "Height",
+        "FLOAT64",
+        expected);
+  }
 
-  const ClassProperty& code = properties.at("code");
-  REQUIRE(code.type == "UINT8");
+  {
+    std::vector<double> expected = {
+        -1.31968,
+        -1.3196832683949145,
+        -1.3196637662080655,
+        -1.3196656317210846,
+        -1.319679266890895,
+        -1.319693717777418,
+        -1.3196607462778132,
+        -1.3196940116311096,
+        -1.319683648959897,
+        -1.3196959060375169};
+    checkScalarProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "Longitude",
+        "FLOAT64",
+        expected);
+  }
+
+  {
+    std::vector<double> expected = {
+        0.698874,
+        0.6988615321420496,
+        0.6988736012180136,
+        0.6988863062831799,
+        0.6988864387845588,
+        0.6988814788613282,
+        0.6988618972526105,
+        0.6988590050687061,
+        0.6988690935212543,
+        0.6988854945986224};
+    checkScalarProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "Latitude",
+        "FLOAT64",
+        expected);
+  }
+
+  {
+    std::vector<uint8_t> expected(10, 255);
+    checkScalarProperty<uint8_t>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "code",
+        "UINT8",
+        expected);
+  }
+
+  {
+    // clang-format off
+    std::vector<double> expected{ 
+        -1.31968, 0.698874, 6.155801922082901,
+        -1.3196832683949145, 0.6988615321420496, 13.410263679921627,
+        -1.3196637662080655, 0.6988736012180136, 6.1022464875131845,
+        -1.3196656317210846, 0.6988863062831799, 6.742499912157655,
+        -1.319679266890895,  0.6988864387845588, 6.869888566434383,
+        -1.319693717777418, 0.6988814788613282, 10.701326800510287,
+        -1.3196607462778132, 0.6988618972526105, 6.163868889212608,
+        -1.3196940116311096, 0.6988590050687061, 12.224825594574213,
+        -1.319683648959897, 0.6988690935212543, 12.546202838420868,
+        -1.3196959060375169, 0.6988854945986224, 7.632075032219291
+    };
+    // clang-format on
+    checkArrayProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "cartographic",
+        3,
+        "FLOAT64",
+        expected);
+  }
 }

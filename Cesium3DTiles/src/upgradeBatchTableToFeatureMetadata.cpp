@@ -377,20 +377,24 @@ void updateExtensionWithBinaryProperty(
   }
   const GltfFeatureTableType& gltfType = convertedTypeIt->second;
 
+  size_t componentCount = 1;
   if (type == "SCALAR") {
     classProperty.type = gltfType.typeName;
   } else if (type == "VEC2") {
     classProperty.type = "ARRAY";
     classProperty.componentCount = 2;
     classProperty.componentType = gltfType.typeName;
+    componentCount = 2;
   } else if (type == "VEC3") {
     classProperty.type = "ARRAY";
     classProperty.componentCount = 3;
     classProperty.componentType = gltfType.typeName;
+    componentCount = 3;
   } else if (type == "VEC4") {
     classProperty.type = "ARRAY";
     classProperty.componentCount = 4;
     classProperty.componentType = gltfType.typeName;
+    componentCount = 4;
   } else {
     return;
   }
@@ -400,8 +404,8 @@ void updateExtensionWithBinaryProperty(
   auto& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = gltfBufferIndex;
   bufferView.byteOffset = gltfBufferOffset;
-  bufferView.byteStride = typeSize;
-  bufferView.byteLength = typeSize * featureTable.count;
+  bufferView.byteStride = 0;
+  bufferView.byteLength = typeSize * componentCount * featureTable.count;
 
   featureTableProperty.bufferView =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
