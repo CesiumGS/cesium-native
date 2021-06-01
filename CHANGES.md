@@ -1,8 +1,6 @@
 # Change Log
 
-### v0.4.0 - 2021-05-31
-
-##### Breaking Changes :mega:
+### v0.4.0 - 2021-06-01
 
 ##### Additions :tada:
 
