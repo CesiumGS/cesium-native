@@ -100,17 +100,17 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   auto firstClassIt = pExtension->schema->classes.begin();
   CHECK(firstClassIt->first == "default");
 
-  CesiumGltf::Class& classObject = firstClassIt->second;
-  REQUIRE(classObject.properties.size() == 4);
+  CesiumGltf::Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 4);
 
-  auto idIt = classObject.properties.find("id");
-  REQUIRE(idIt != classObject.properties.end());
-  auto longitudeIt = classObject.properties.find("Longitude");
-  REQUIRE(longitudeIt != classObject.properties.end());
-  auto latitudeIt = classObject.properties.find("Latitude");
-  REQUIRE(latitudeIt != classObject.properties.end());
-  auto heightIt = classObject.properties.find("Height");
-  REQUIRE(heightIt != classObject.properties.end());
+  auto idIt = defaultClass.properties.find("id");
+  REQUIRE(idIt != defaultClass.properties.end());
+  auto longitudeIt = defaultClass.properties.find("Longitude");
+  REQUIRE(longitudeIt != defaultClass.properties.end());
+  auto latitudeIt = defaultClass.properties.find("Latitude");
+  REQUIRE(latitudeIt != defaultClass.properties.end());
+  auto heightIt = defaultClass.properties.find("Height");
+  REQUIRE(heightIt != defaultClass.properties.end());
 
   CHECK(idIt->second.type == "INT8");
   CHECK(longitudeIt->second.type == "FLOAT64");
@@ -175,6 +175,82 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
       CHECK(attribute.featureTable == "default");
     }
   }
+
+  // Check metadata values
+  {
+    std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    checkScalarProperty<int8_t>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "id",
+        "INT8",
+        expected);
+  }
+
+  {
+    std::vector<double> expected = {
+        11.762595914304256,
+        13.992324123159051,
+        7.490081690251827,
+        13.484312580898404,
+        11.481756005436182,
+        7.836617760360241,
+        9.338438434526324,
+        13.513022359460592,
+        13.74609257467091,
+        10.145220385864377
+    };
+    checkScalarProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "Height",
+        "FLOAT64",
+        expected);
+  }
+
+  {
+    std::vector<double> expected = {
+        -1.3196595204101946,
+        -1.3196739888070643,
+        -1.3196641114334025,
+        -1.3196579305297966,
+        -1.3196585149509301,
+        -1.319678877969692,
+        -1.3196612732428445,
+        -1.3196718857616954,
+        -1.3196471198757775,
+        -1.319644104024109};
+    checkScalarProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "Longitude",
+        "FLOAT64",
+        expected);
+  }
+
+  {
+    std::vector<double> expected = {
+        0.6988582109,
+        0.6988498770649103,
+        0.6988533339856887,
+        0.6988691467754378,
+        0.698848878034009,
+        0.6988592976292447,
+        0.6988600642191055,
+        0.6988670019309562,
+        0.6988523191715889,
+        0.6988697375823105};
+    checkScalarProperty<double>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "Latitude",
+        "FLOAT64",
+        expected);
+  }
 }
 
 TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
@@ -205,27 +281,14 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   const FeatureTable& featureTable = metadata->featureTables["default"];
 
   {
-    const ClassProperty& id = properties.at("id");
-    REQUIRE(id.type == "INT8");
-
-    const FeatureTableProperty& idValues = featureTable.properties.at("id");
-    const BufferView& valueBufferView =
-        pResult->model->bufferViews[idValues.bufferView];
-    const Buffer& valueBuffer = pResult->model->buffers[valueBufferView.buffer];
-    MetadataPropertyView<uint8_t> idView(
-        gsl::span<const std::byte>(
-            valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
-            valueBufferView.byteLength),
-        gsl::span<const std::byte>(),
-        gsl::span<const std::byte>(),
-        PropertyType::None,
-        0,
-        featureTable.count);
-
-    REQUIRE(idView.size() == static_cast<size_t>(featureTable.count));
-    for (size_t i = 0; i < idView.size(); ++i) {
-      REQUIRE(idView[i] == i);
-    }
+    std::vector<int8_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    checkScalarProperty<int8_t>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "id",
+        "INT8",
+        expected);
   }
 
   {
