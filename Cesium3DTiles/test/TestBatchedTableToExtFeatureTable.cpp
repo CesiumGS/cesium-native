@@ -78,6 +78,40 @@ static void checkArrayProperty(
   }
 }
 
+static void checkStringProperty(const Model& model,
+    const FeatureTable& featureTable,
+    const Class& metaClass,
+    const std::string& propertyName,
+    const std::vector<std::string>& expected) 
+{
+  const ClassProperty& property = metaClass.properties.at(propertyName);
+  REQUIRE(property.type == "STRING");
+
+  const FeatureTableProperty& values = featureTable.properties.at(propertyName);
+  const BufferView& valueBufferView = model.bufferViews[values.bufferView];
+  const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
+
+  const BufferView& offsetBufferView = model.bufferViews[values.stringOffsetBufferView];
+  const Buffer& offsetBuffer = model.buffers[offsetBufferView.buffer];
+  MetadataPropertyView<std::string_view> propertyView(
+      gsl::span<const std::byte>(
+          valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
+          valueBufferView.byteLength),
+      gsl::span<const std::byte>(),
+      gsl::span<const std::byte>(
+          offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
+          offsetBufferView.byteLength),
+      CesiumGltf::convertStringToPropertyType(values.offsetType),
+      0,
+      featureTable.count);
+
+  REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
+  for (size_t i = 0; i < expected.size(); ++i) {
+    std::string_view val = propertyView[i];
+    REQUIRE(val == expected[i]);
+  }
+}
+
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
   testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
@@ -390,4 +424,46 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         "FLOAT64",
         expected);
   }
+}
+
+TEST_CASE("Upgrade json string and nested json metadata to string") {
+  std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
+  testFilePath =
+      testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
+  std::vector<std::byte> b3dm = readFile(testFilePath);
+
+  std::unique_ptr<TileContentLoadResult> pResult =
+      Batched3DModelContent::load(spdlog::default_logger(), "test.url", b3dm);
+  REQUIRE(pResult != nullptr);
+  REQUIRE(pResult->model != std::nullopt);
+
+  ModelEXT_feature_metadata* metadata =
+      pResult->model->getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(metadata != nullptr);
+
+  std::optional<Schema> schema = metadata->schema;
+  REQUIRE(schema != std::nullopt);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 6);
+
+  const FeatureTable& featureTable = metadata->featureTables["default"];
+
+  std::vector<std::string> expected;
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    std::string v = std::string("{\"name\":\"building") + std::to_string(i) +
+                    "\",\"year\":" + std::to_string(i) + "}";
+    expected.push_back(v);
+  }
+  checkStringProperty(
+      *pResult->model,
+      featureTable,
+      defaultClass,
+      "info",
+      expected);
 }

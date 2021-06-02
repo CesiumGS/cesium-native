@@ -5,6 +5,7 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "rapidjson/writer.h"
 #include <map>
+#include <type_traits>
 #include <rapidjson/document.h>
 
 using namespace CesiumGltf;
@@ -51,28 +52,21 @@ int64_t roundUp(int64_t num, int64_t multiple) {
   return ((num + multiple - 1) / multiple) * multiple;
 }
 
-void updateExtensionWithJsonStringProperty(
-    Model& gltf,
-    ClassProperty& /* classProperty */,
-    FeatureTable& /* featureTable */,
-    FeatureTableProperty& /*featureTableProperty*/,
-    const rapidjson::Value& propertyValue) {
-  size_t totalSize = 0;
-  size_t maxOffset = 0;
-  std::vector<rapidjson::StringBuffer> rapidjsonStrBuffers;
-  rapidjsonStrBuffers.reserve(propertyValue.Size());
-  for (const auto& v : propertyValue.GetArray()) {
-    rapidjson::StringBuffer& buffer = rapidjsonStrBuffers.emplace_back();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    v.Accept(writer);
-    maxOffset = totalSize;
-    totalSize += buffer.GetSize();
-  }
+template <typename T> bool isInRange(int64_t value) {
+  // this only work if sizeof(T) is smaller than int64_t
+  static_assert(
+      sizeof(T) <= sizeof(int64_t) && !std::is_same_v<T, uint64_t> &&
+      !std::is_same_v<T, float> && !std::is_same_v<T, double>);
+  return value >= static_cast<int64_t>(std::numeric_limits<T>::lowest()) &&
+         value <= static_cast<int64_t>(std::numeric_limits<T>::max());
+}
 
-  size_t offset = 0;
-  size_t stringOffset = 0;
-  std::vector<std::byte> buffer(
-      totalSize + sizeof(size_t) * rapidjsonStrBuffers.size());
+template<typename T>
+void copyStringBuffer(uint64_t totalSize, const std::vector<rapidjson::StringBuffer> &rapidjsonStrBuffers, std::vector<std::byte> &buffer) {
+  T offset = 0;
+  T stringOffset = 0;
+  buffer.resize(
+      totalSize + sizeof(T) * (rapidjsonStrBuffers.size() + 1));
   for (const rapidjson::StringBuffer& rapidjsonBuffer : rapidjsonStrBuffers) {
     size_t bufferLength = rapidjsonBuffer.GetSize();
     if (bufferLength != 0) {
@@ -80,19 +74,61 @@ void updateExtensionWithJsonStringProperty(
           buffer.data() + stringOffset,
           rapidjsonBuffer.GetString(),
           bufferLength);
-      std::memcpy(buffer.data() + totalSize + offset, &offset, sizeof(size_t));
-      stringOffset += bufferLength;
-      offset += sizeof(size_t);
+      std::memcpy(buffer.data() + totalSize + offset, &stringOffset, sizeof(T));
+      stringOffset += static_cast<T>(bufferLength);
+      offset += sizeof(T);
     }
+  }
+  std::memcpy(buffer.data() + totalSize + offset, &stringOffset, sizeof(T));
+}
+
+void updateExtensionWithJsonStringProperty(
+    Model& gltf,
+    ClassProperty&  classProperty,
+    FeatureTable&  /*featureTable*/,
+    FeatureTableProperty& featureTableProperty,
+    const rapidjson::Value& propertyValue) {
+  uint64_t totalSize = 0;
+  std::vector<rapidjson::StringBuffer> rapidjsonStrBuffers;
+  rapidjsonStrBuffers.reserve(propertyValue.Size());
+  for (const auto& v : propertyValue.GetArray()) {
+    rapidjson::StringBuffer& buffer = rapidjsonStrBuffers.emplace_back();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    v.Accept(writer);
+    totalSize += buffer.GetSize();
+  }
+
+  std::vector<std::byte> buffer;
+  if (isInRange<uint8_t>(totalSize)) {
+    copyStringBuffer<uint8_t>(totalSize, rapidjsonStrBuffers, buffer);
+    featureTableProperty.offsetType = "UINT8";
+  } else if (isInRange<uint16_t>(totalSize)) {
+    copyStringBuffer<uint16_t>(totalSize, rapidjsonStrBuffers, buffer);
+    featureTableProperty.offsetType = "UINT16";
+  } else if (isInRange<uint32_t>(totalSize)) {
+    copyStringBuffer<uint32_t>(totalSize, rapidjsonStrBuffers, buffer);
+    featureTableProperty.offsetType = "UINT32";
+  } else {
+    copyStringBuffer<uint64_t>(totalSize, rapidjsonStrBuffers, buffer);
+    featureTableProperty.offsetType = "UINT64";
   }
 
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
   gltfBuffer.cesium.data = std::move(buffer);
-}
 
-template <typename T> bool isInRange(int64_t value) {
-  return value >= std::numeric_limits<int8_t>::lowest() &&
-         value <= std::numeric_limits<int8_t>::max();
+  BufferView& gltfBufferView = gltf.bufferViews.emplace_back();
+  gltfBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfBufferView.byteOffset = 0;
+  gltfBufferView.byteLength = totalSize;
+  featureTableProperty.bufferView = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  BufferView& offsetBufferView = gltf.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  offsetBufferView.byteOffset = totalSize;
+  offsetBufferView.byteLength = static_cast<int64_t>(gltfBuffer.cesium.data.size());
+  featureTableProperty.stringOffsetBufferView = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  classProperty.type = "STRING";
 }
 
 CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
@@ -116,7 +152,7 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       result.isInt32 &= isInRange<int32_t>(value);
       result.isUint32 &= isInRange<uint32_t>(value);
       result.isInt64 &= isInRange<int64_t>(value);
-      result.isUint64 &= isInRange<uint64_t>(value);
+      result.isUint64 &= value >= 0;
       result.isFloat32 &= value >= -2e24 && value <= 2e24;
       result.isFloat64 &= value >= -2e53 && value <= 2e53;
       result.isBool = false;
