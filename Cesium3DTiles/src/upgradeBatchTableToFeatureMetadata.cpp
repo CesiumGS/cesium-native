@@ -114,6 +114,7 @@ void updateExtensionWithJsonStringProperty(
   }
 
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
+  gltfBuffer.byteLength = buffer.size();
   gltfBuffer.cesium.data = std::move(buffer);
 
   BufferView& gltfBufferView = gltf.bufferViews.emplace_back();
@@ -233,12 +234,34 @@ void updateExtensionWithJsonNumericProperty(
 }
 
 void updateExtensionWithJsonBoolProperty(
-    Model& /* gltf */,
-    ClassProperty& /* classProperty */,
-    FeatureTable& /* featureTable */,
-    FeatureTableProperty& /* featureTableProperty */,
-    const rapidjson::Value& /* propertyValue */) {
-  // TODO
+    Model& gltf,
+    ClassProperty& classProperty,
+    FeatureTable& featureTable,
+    FeatureTableProperty& featureTableProperty,
+    const rapidjson::Value& propertyValue) {
+  std::vector<std::byte> data(featureTable.count / 8 + 1);
+  const auto& jsonArray = propertyValue.GetArray();
+  for (rapidjson::SizeType i = 0; i < jsonArray.Size(); ++i) {
+    bool value = jsonArray[i].GetBool();
+    size_t byteIndex = i / 8;
+    size_t bitIndex = i % 8; 
+    data[byteIndex] = static_cast<std::byte>(value << bitIndex) | data[byteIndex];
+  }
+
+  size_t bufferIndex = gltf.buffers.size();
+  Buffer& buffer = gltf.buffers.emplace_back();
+  buffer.byteLength = data.size();
+  buffer.cesium.data = std::move(data);
+
+  BufferView& bufferView = gltf.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(bufferIndex);
+  bufferView.byteOffset = 0;
+  bufferView.byteStride = 0;
+  bufferView.byteLength = buffer.byteLength;
+
+  featureTableProperty.bufferView = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  classProperty.type = "BOOLEAN";
 }
 
 void updateExtensionWithJsonProperty(

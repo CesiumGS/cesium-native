@@ -1,9 +1,12 @@
 #include "Batched3DModelContent.h"
+#include "upgradeBatchTableToFeatureMetadata.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "catch2/catch.hpp"
 #include "readFile.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
 #include <filesystem>
 #include <set>
 #include <spdlog/spdlog.h>
@@ -426,7 +429,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   }
 }
 
-TEST_CASE("Upgrade json string and nested json metadata to string") {
+TEST_CASE("Upgrade json nested json metadata to string") {
   std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
@@ -454,16 +457,79 @@ TEST_CASE("Upgrade json string and nested json metadata to string") {
 
   const FeatureTable& featureTable = metadata->featureTables["default"];
 
-  std::vector<std::string> expected;
-  for (int64_t i = 0; i < featureTable.count; ++i) {
-    std::string v = std::string("{\"name\":\"building") + std::to_string(i) +
-                    "\",\"year\":" + std::to_string(i) + "}";
-    expected.push_back(v);
+  {
+    std::vector<std::string> expected;
+    for (int64_t i = 0; i < featureTable.count; ++i) {
+      std::string v = std::string("{\"name\":\"building") + std::to_string(i) +
+                      "\",\"year\":" + std::to_string(i) + "}";
+      expected.push_back(v);
+    }
+    checkStringProperty(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "info",
+        expected);
   }
-  checkStringProperty(
-      *pResult->model,
+}
+
+TEST_CASE("Upgrade bool json to string") {
+  Model model;
+
+  rapidjson::Document featureTableJson;
+  featureTableJson.SetObject();
+  rapidjson::Value batchLength(rapidjson::kNumberType);
+  batchLength.SetInt64(10);
+  featureTableJson.AddMember("BATCH_LENGTH", batchLength, featureTableJson.GetAllocator());
+
+  std::vector<bool> expected = {true, false, true, true, false, true, false, true, false, true};
+  rapidjson::Document jsonBatchTable;
+  jsonBatchTable.SetObject();
+  rapidjson::Value boolProperties(rapidjson::kArrayType);
+  for (size_t i = 0; i < expected.size(); ++i) {
+    boolProperties.PushBack(rapidjson::Value(static_cast<bool>(expected[i])), jsonBatchTable.GetAllocator());
+  }
+  jsonBatchTable.AddMember("boolProp", boolProperties, jsonBatchTable.GetAllocator());
+
+  rapidjson::StringBuffer buffer;
+  buffer.Clear();
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  jsonBatchTable.Accept(writer);
+
+  std::string strJsonData = buffer.GetString();
+  gsl::span<const std::byte> jsonData(reinterpret_cast<const std::byte*>(strJsonData.c_str()), strJsonData.size());
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      model,
+      featureTableJson,
+      jsonData,
+      gsl::span<const std::byte>());
+
+  ModelEXT_feature_metadata* metadata =
+      model.getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(metadata != nullptr);
+
+  std::optional<Schema> schema = metadata->schema;
+  REQUIRE(schema != std::nullopt);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 1);
+
+  const ClassProperty& propertyClass = properties.at("boolProp");
+  REQUIRE(propertyClass.type == "BOOLEAN");
+
+  const FeatureTable& featureTable = metadata->featureTables["default"];
+  checkScalarProperty(
+      model,
       featureTable,
       defaultClass,
-      "info",
+      "boolProp",
+      "BOOLEAN",
       expected);
 }
+
