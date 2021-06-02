@@ -5,8 +5,8 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "rapidjson/writer.h"
 #include <map>
-#include <type_traits>
 #include <rapidjson/document.h>
+#include <type_traits>
 
 using namespace CesiumGltf;
 
@@ -61,12 +61,14 @@ template <typename T> bool isInRange(int64_t value) {
          value <= static_cast<int64_t>(std::numeric_limits<T>::max());
 }
 
-template<typename T>
-void copyStringBuffer(uint64_t totalSize, const std::vector<rapidjson::StringBuffer> &rapidjsonStrBuffers, std::vector<std::byte> &buffer) {
+template <typename T>
+void copyStringBuffer(
+    uint64_t totalSize,
+    const std::vector<rapidjson::StringBuffer>& rapidjsonStrBuffers,
+    std::vector<std::byte>& buffer) {
   T offset = 0;
   T stringOffset = 0;
-  buffer.resize(
-      totalSize + sizeof(T) * (rapidjsonStrBuffers.size() + 1));
+  buffer.resize(totalSize + sizeof(T) * (rapidjsonStrBuffers.size() + 1));
   for (const rapidjson::StringBuffer& rapidjsonBuffer : rapidjsonStrBuffers) {
     size_t bufferLength = rapidjsonBuffer.GetSize();
     if (bufferLength != 0) {
@@ -84,8 +86,8 @@ void copyStringBuffer(uint64_t totalSize, const std::vector<rapidjson::StringBuf
 
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
-    ClassProperty&  classProperty,
-    FeatureTable&  /*featureTable*/,
+    ClassProperty& classProperty,
+    FeatureTable& /*featureTable*/,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
   uint64_t totalSize = 0;
@@ -121,13 +123,16 @@ void updateExtensionWithJsonStringProperty(
   gltfBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
   gltfBufferView.byteOffset = 0;
   gltfBufferView.byteLength = totalSize;
-  featureTableProperty.bufferView = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  featureTableProperty.bufferView =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   BufferView& offsetBufferView = gltf.bufferViews.emplace_back();
   offsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
   offsetBufferView.byteOffset = totalSize;
-  offsetBufferView.byteLength = static_cast<int64_t>(gltfBuffer.cesium.data.size());
-  featureTableProperty.stringOffsetBufferView = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  offsetBufferView.byteLength =
+      static_cast<int64_t>(gltfBuffer.cesium.data.size());
+  featureTableProperty.stringOffsetBufferView =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "STRING";
 }
@@ -244,8 +249,9 @@ void updateExtensionWithJsonBoolProperty(
   for (rapidjson::SizeType i = 0; i < jsonArray.Size(); ++i) {
     bool value = jsonArray[i].GetBool();
     size_t byteIndex = i / 8;
-    size_t bitIndex = i % 8; 
-    data[byteIndex] = static_cast<std::byte>(value << bitIndex) | data[byteIndex];
+    size_t bitIndex = i % 8;
+    data[byteIndex] =
+        static_cast<std::byte>(value << bitIndex) | data[byteIndex];
   }
 
   size_t bufferIndex = gltf.buffers.size();
@@ -259,7 +265,8 @@ void updateExtensionWithJsonBoolProperty(
   bufferView.byteStride = 0;
   bufferView.byteLength = buffer.byteLength;
 
-  featureTableProperty.bufferView = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  featureTableProperty.bufferView =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "BOOLEAN";
 }

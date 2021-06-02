@@ -1,12 +1,12 @@
 #include "Batched3DModelContent.h"
-#include "upgradeBatchTableToFeatureMetadata.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "catch2/catch.hpp"
-#include "readFile.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
+#include "readFile.h"
+#include "upgradeBatchTableToFeatureMetadata.h"
 #include <filesystem>
 #include <set>
 #include <spdlog/spdlog.h>
@@ -81,12 +81,12 @@ static void checkArrayProperty(
   }
 }
 
-static void checkStringProperty(const Model& model,
+static void checkStringProperty(
+    const Model& model,
     const FeatureTable& featureTable,
     const Class& metaClass,
     const std::string& propertyName,
-    const std::vector<std::string>& expected) 
-{
+    const std::vector<std::string>& expected) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "STRING");
 
@@ -94,7 +94,8 @@ static void checkStringProperty(const Model& model,
   const BufferView& valueBufferView = model.bufferViews[values.bufferView];
   const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
 
-  const BufferView& offsetBufferView = model.bufferViews[values.stringOffsetBufferView];
+  const BufferView& offsetBufferView =
+      model.bufferViews[values.stringOffsetBufferView];
   const Buffer& offsetBuffer = model.buffers[offsetBufferView.buffer];
   MetadataPropertyView<std::string_view> propertyView(
       gsl::span<const std::byte>(
@@ -480,16 +481,25 @@ TEST_CASE("Upgrade bool json to string") {
   featureTableJson.SetObject();
   rapidjson::Value batchLength(rapidjson::kNumberType);
   batchLength.SetInt64(10);
-  featureTableJson.AddMember("BATCH_LENGTH", batchLength, featureTableJson.GetAllocator());
+  featureTableJson.AddMember(
+      "BATCH_LENGTH",
+      batchLength,
+      featureTableJson.GetAllocator());
 
-  std::vector<bool> expected = {true, false, true, true, false, true, false, true, false, true};
+  std::vector<bool> expected =
+      {true, false, true, true, false, true, false, true, false, true};
   rapidjson::Document jsonBatchTable;
   jsonBatchTable.SetObject();
   rapidjson::Value boolProperties(rapidjson::kArrayType);
   for (size_t i = 0; i < expected.size(); ++i) {
-    boolProperties.PushBack(rapidjson::Value(static_cast<bool>(expected[i])), jsonBatchTable.GetAllocator());
+    boolProperties.PushBack(
+        rapidjson::Value(static_cast<bool>(expected[i])),
+        jsonBatchTable.GetAllocator());
   }
-  jsonBatchTable.AddMember("boolProp", boolProperties, jsonBatchTable.GetAllocator());
+  jsonBatchTable.AddMember(
+      "boolProp",
+      boolProperties,
+      jsonBatchTable.GetAllocator());
 
   rapidjson::StringBuffer buffer;
   buffer.Clear();
@@ -497,7 +507,9 @@ TEST_CASE("Upgrade bool json to string") {
   jsonBatchTable.Accept(writer);
 
   std::string strJsonData = buffer.GetString();
-  gsl::span<const std::byte> jsonData(reinterpret_cast<const std::byte*>(strJsonData.c_str()), strJsonData.size());
+  gsl::span<const std::byte> jsonData(
+      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
+      strJsonData.size());
   upgradeBatchTableToFeatureMetadata(
       spdlog::default_logger(),
       model,
@@ -532,4 +544,3 @@ TEST_CASE("Upgrade bool json to string") {
       "BOOLEAN",
       expected);
 }
-
