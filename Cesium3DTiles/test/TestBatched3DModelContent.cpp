@@ -53,7 +53,8 @@ static void checkArrayProperty(
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
   REQUIRE(property.componentType.getString() == expectedComponentType);
-  REQUIRE(property.componentCount == componentCount);
+  REQUIRE(
+      property.componentCount.value() == static_cast<int64_t>(componentCount));
 
   const FeatureTableProperty& values = featureTable.properties.at(propertyName);
   const BufferView& valueBufferView = model.bufferViews[values.bufferView];
@@ -199,8 +200,7 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         9.338438434526324,
         13.513022359460592,
         13.74609257467091,
-        10.145220385864377
-    };
+        10.145220385864377};
     checkScalarProperty<double>(
         *pResult->model,
         featureTable,
@@ -255,7 +255,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
 
 TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTiles_TEST_DATA_DIR;
-  testFilePath = testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
+  testFilePath =
+      testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
   std::vector<std::byte> b3dm = readFile(testFilePath);
 
   std::unique_ptr<TileContentLoadResult> pResult =
