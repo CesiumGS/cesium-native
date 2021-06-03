@@ -19,8 +19,8 @@ enum class PropertyType {
   Float32 = 1 << 8,
   Float64 = 1 << 9,
   Boolean = 1 << 10,
-  String = 1 << 11,
-  Enum = 1 << 12,
+  Enum = 1 << 11,
+  String = 1 << 12,
   Array = 1 << 13,
 };
 
