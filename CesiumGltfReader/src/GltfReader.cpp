@@ -23,6 +23,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
+#include <ktx.h>
+#include <rapidjson/reader.h>
 #include <sstream>
 #include <string>
 
@@ -444,6 +446,17 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
           });
 }
 
+bool isKtx(const gsl::span<const std::byte>& data) {
+  const size_t ktxMagicByteLength = 12;
+  if (data.size() < ktxMagicByteLength) {
+    return false;
+  }
+
+  const uint8_t ktxMagic[ktxMagicByteLength] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+
+  return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
+}
+
 /*static*/
 ImageReaderResult
 GltfReader::readImage(const gsl::span<const std::byte>& data) {
@@ -453,6 +466,47 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
 
   result.image.emplace();
   ImageCesium& image = result.image.value();
+
+  if (isKtx(data)) {
+    // TODO: better error handling; make sure KTX-Software doesn't throw exceptions
+    // TODO: support uncompressed textures
+    // TODO: currently hardcoded to DXT1 RGB textures. Won't work on mobile. Won't work for alpha. Need a way to pass this information to Cesium Native.
+    // TODO: need an enum for the compressed pixel format rather than using Unreal's PixelFormat values
+    // TODO: overall better API needed in ImageCesium
+    // TODO: Read the KHR_texture_basisu extension properly rather than making a hacky glTF
+    // TODO: no support for embedded mipmap
+
+
+    ktxTexture2* texture;
+    KTX_error_code errorCode;
+
+    errorCode = ktxTexture2_CreateFromMemory(reinterpret_cast<const std::uint8_t*>(data.data()), data.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
+    
+    if (errorCode == KTX_SUCCESS) {
+      if (ktxTexture2_NeedsTranscoding(texture)) {
+        errorCode = ktxTexture2_TranscodeBasis(texture, KTX_TTF_BC1_RGB, 0);
+        if (errorCode == KTX_SUCCESS) {
+          image.compressedPixelFormat = 5; // PF_DXT1
+          image.width = texture->baseWidth;
+          image.height = texture->baseHeight;
+
+          ktx_uint8_t* compressedPixelData = ktxTexture_GetData(ktxTexture(texture));
+          ktx_size_t compressedPixelDataSize = ktxTexture_GetDataSize(ktxTexture(texture));
+          image.compressedPixelData.resize(compressedPixelDataSize);
+          std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(image.compressedPixelData.data());
+          std::copy(compressedPixelData, compressedPixelData + compressedPixelDataSize, u8Pointer);
+          ktxTexture_Destroy(ktxTexture(texture));
+
+          return result;
+        }
+      }
+    }
+
+    result.image.reset();
+    result.errors.emplace_back("KTX2 loading failed");
+
+    return result;
+  }
 
   image.bytesPerChannel = 1;
   image.channels = 4;

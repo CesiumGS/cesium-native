@@ -52,5 +52,16 @@ struct CESIUMGLTF_API ImageCesium final {
    * | 4                  | red, green, blue, alpha   |
    */
   std::vector<std::byte> pixelData;
+
+  /**
+   * @brief The compressed pixel format. Maps to enum codes in UnrealEngine PixelFormat.h.
+   */
+  int32_t compressedPixelFormat = 0;
+
+  /**
+   * @brief The compressed pixel data.
+   */
+  std::vector<std::byte> compressedPixelData;
+
 };
 } // namespace CesiumGltf

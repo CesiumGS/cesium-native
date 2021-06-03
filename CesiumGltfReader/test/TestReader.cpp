@@ -359,3 +359,15 @@ TEST_CASE("Unknown MIME types are handled") {
   // because no images could be read.
   REQUIRE(modelResult.model.has_value());
 }
+
+TEST_CASE("KTX2_hacky_test") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "CesiumBalloonKTX2Hacky.glb";
+  std::vector<std::byte> data = readFile(gltfFile.string());
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult result = reader.readModel(data);
+  REQUIRE(result.model);
+
+  const Model& model = result.model.value();
+  REQUIRE(model.meshes.size() == 1);
+}

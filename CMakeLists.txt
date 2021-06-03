@@ -28,6 +28,7 @@ if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     )
 endif()
 
+<<<<<<< HEAD
 if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
         "Controls if cesium-native targets should use configure_depends or not for globbing their sources"
@@ -130,6 +131,28 @@ set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 
 # Public Targets
+=======
+# Add Libraries from Conan
+include(ConfigureConan)
+find_package(Async++ REQUIRED)
+find_package(Catch2 REQUIRED)
+find_package(httplib REQUIRED)
+find_package(Draco REQUIRED)
+find_package(glm REQUIRED)
+find_package(Ktx REQUIRED)
+find_package(magic_enum REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(stb REQUIRED)
+find_package(tinyxml2 REQUIRED)
+find_package(uriparser REQUIRED)
+find_package(RapidJSON REQUIRED)
+
+# Thirdparty not exists in conan
+add_subdirectory(extern)
+
+# Cesium Native Targets
+include(ConfigureTarget)
+>>>>>>> a05ad665 (Initial KTX2)
 add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGeometry)
