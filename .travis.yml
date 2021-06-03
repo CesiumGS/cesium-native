@@ -19,12 +19,11 @@ jobs:
       script:
         - npm install
         - npm run format -- --dry-run -Werror
-    - name: Cache conan dependencies
-      cache:
-        directories:
-        - $HOME/.conan/data/
     - name: Windows + VS2017
       os: windows
+      cache:
+        directories:
+         - $HOME/.conan/data/
       install:
         - choco install doxygen.install
         - choco install conan --params="'/AddToPath:1'"
@@ -34,6 +33,9 @@ jobs:
         - cmd //c "RefreshEnv.cmd && cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64"
     - name: Windows + VS2019
       os: windows
+      cache:
+        directories:
+         - $HOME/.conan/data/
       install:
         - choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
         - choco install doxygen.install
@@ -44,6 +46,9 @@ jobs:
         - cmd //c "RefreshEnv.cmd && cmake .. -DCMAKE_BUILD_TYPE=Debug"
     - name: Linux + GCC
       os: linux
+      cache:
+        directories:
+         - $HOME/.conan/data/
       dist: focal
       install:
         - sudo apt-get update
@@ -51,6 +56,9 @@ jobs:
         - pip3 install conan
     - name: Linux + Clang
       os: linux
+      cache:
+        directories:
+         - $HOME/.conan/data/
       dist: focal
       # We're using Clang 10 instead of the default (Clang 7) because of std::variant related failures
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
