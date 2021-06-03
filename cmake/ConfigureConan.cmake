@@ -22,15 +22,15 @@ conan_cmake_configure(REQUIRES
                         draco/1.3.6
                         glm/0.9.9.8
                         magic_enum/0.7.2
-                        spdlog/1.8.0 
+                        spdlog/1.8.0
                         fmt/7.0.3
                         stb/20200203
                         tinyxml2/8.0.0
                         uriparser/0.9.5
-					GENERATORS 
+                        GENERATORS
                         cmake
                         cmake_find_package
-					OPTIONS 
+                        OPTIONS
                         spdlog:no_exceptions=True)
 
 conan_cmake_autodetect(settings)
