@@ -124,6 +124,8 @@ install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
 
 install(FILES ${CONAN_INCLUDE_DIRS_STB}/stb_image_resize.h TYPE INCLUDE)
 
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_RAPIDJSON}/ TYPE INCLUDE)
+
 # Package third parties not from conan
 install(TARGETS modp_b64)
 
@@ -131,7 +133,5 @@ install(TARGETS csprng)
 
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
-
-install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
 
 install(TARGETS sqlite3)
