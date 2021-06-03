@@ -32,7 +32,6 @@ target_include_directories(
     CesiumUtility
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
@@ -42,6 +41,7 @@ target_link_libraries(CesiumUtility
         GSL
         uriparser::uriparser
         glm::glm
+        RapidJSON::RapidJSON
 )
 
 install(TARGETS CesiumUtility

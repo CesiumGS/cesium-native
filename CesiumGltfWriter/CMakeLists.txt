@@ -32,12 +32,9 @@ target_compile_definitions(
 target_include_directories(
     CesiumGltfWriter
     SYSTEM PUBLIC
-        # draco
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated
 )
@@ -48,4 +45,5 @@ target_link_libraries(CesiumGltfWriter
         modp_b64
     PRIVATE
         magic_enum::magic_enum
+        RapidJSON::RapidJSON
 )

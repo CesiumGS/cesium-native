@@ -53,6 +53,7 @@ find_package(spdlog REQUIRED)
 find_package(stb REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(uriparser REQUIRED)
+find_package(RapidJSON REQUIRED)
 
 # Thirdparty not exists in conan
 add_subdirectory(extern)

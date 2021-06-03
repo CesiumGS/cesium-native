@@ -27,11 +27,13 @@ conan_cmake_configure(REQUIRES
                         stb/20200203
                         tinyxml2/8.0.0
                         uriparser/0.9.5
+                        rapidjson/cci.20200410
 					GENERATORS 
                         cmake
                         cmake_find_package
 					OPTIONS 
-                        spdlog:no_exceptions=True)
+                        spdlog:no_exceptions=True
+                    )
 
 conan_cmake_autodetect(settings)
 

@@ -44,6 +44,7 @@ target_link_libraries(CesiumAsync
         spdlog::spdlog
     PRIVATE
         sqlite3
+        RapidJSON::RapidJSON
 )
 
 install(TARGETS CesiumAsync

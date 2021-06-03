@@ -20,16 +20,6 @@ add_library(PicoSHA2 INTERFACE)
 target_include_directories(PicoSHA2 SYSTEM INTERFACE PicoSHA2)
 set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/PicoSHA2/picosha2.h")
 
-set(CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/rapidjson/include" CACHE INTERNAL
-    "Include directory for rapidjson"
-)
-
-set(CESIUM_NATIVE_RAPIDJSON_DEFINES
-    RAPIDJSON_HAS_CXX11_RVALUE_REFS
-    CACHE INTERNAL
-    "Compiler definitions for rapidjson"
-)
-
 # We need our own sqlite3 cause we want to replace all sqlite3 symbol with cesium_sqlite3 symbol 
 # so that on the Unreal side, it doesn't link with unreal version of sqlite3
 if (NOT TARGET sqlite3)
