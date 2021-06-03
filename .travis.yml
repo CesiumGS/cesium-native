@@ -19,6 +19,10 @@ jobs:
       script:
         - npm install
         - npm run format -- --dry-run -Werror
+    - name: Cache conan dependencies
+      cache:
+        directories:
+        - $HOME/.conan/data/
     - name: Windows + VS2017
       os: windows
       install:
