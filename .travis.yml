@@ -27,7 +27,7 @@ jobs:
       before_script:
         - mkdir -p build
         - cd build
-        - cmd //c "RefreshEnv.cmd && cmake .. -A x64"
+        - cmd //c "RefreshEnv.cmd && cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64"
     - name: Windows + VS2019
       os: windows
       install:
@@ -37,7 +37,7 @@ jobs:
       before_script:
         - mkdir -p build
         - cd build
-        - cmd //c "RefreshEnv.cmd && cmake .."
+        - cmd //c "RefreshEnv.cmd && cmake .. -DCMAKE_BUILD_TYPE=Debug"
     - name: Linux + GCC
       os: linux
       dist: focal
