@@ -46,6 +46,7 @@ target_link_libraries(CesiumGltfReader
     PRIVATE
         Draco::Draco
         modp_b64
+        KTX::ktx
 )
 
 install(TARGETS CesiumGltfReader

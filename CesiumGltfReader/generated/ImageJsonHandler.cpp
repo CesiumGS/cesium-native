@@ -57,6 +57,8 @@ ImageJsonHandler::MimeTypeJsonHandler::readString(const std::string_view& str) {
     *this->_pEnum = Image::MimeType::image_jpeg;
   else if ("image/png"s == str)
     *this->_pEnum = Image::MimeType::image_png;
+  else if ("image/ktx2" == str)
+    *this->_pEnum = Image::MimeType::image_ktx2;
   else
     return nullptr;
 

@@ -28,6 +28,7 @@ conan_cmake_configure(REQUIRES
                         tinyxml2/8.0.0
                         uriparser/0.9.5
                         rapidjson/cci.20200410
+                        ktx/4.0.0
                         GENERATORS
                         cmake
                         cmake_find_package

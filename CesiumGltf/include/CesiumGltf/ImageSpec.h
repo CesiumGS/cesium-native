@@ -21,8 +21,8 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
    */
   enum class MimeType {
     image_jpeg,
-
-    image_png
+    image_png,
+    image_ktx2
   };
 
   /**

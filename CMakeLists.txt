@@ -48,6 +48,7 @@ find_package(Catch2 REQUIRED)
 find_package(httplib REQUIRED)
 find_package(Draco REQUIRED)
 find_package(glm REQUIRED)
+find_package(Ktx REQUIRED)
 find_package(magic_enum REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(stb REQUIRED)
@@ -125,6 +126,13 @@ install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
 install(FILES ${CONAN_INCLUDE_DIRS_STB}/stb_image_resize.h TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_RAPIDJSON}/ TYPE INCLUDE)
+
+install(DIRECTORY ${CONAN_LIB_DIRS_KTX}/ 
+        TYPE LIB
+        FILES_MATCHING 
+        PATTERN "*.a"
+        PATTERN "*.lib")
+install(DIRECTORY ${CONAN_INCLUDE_DIRS_KTX}/ TYPE INCLUDE)
 
 # Package third parties not from conan
 install(TARGETS modp_b64)
