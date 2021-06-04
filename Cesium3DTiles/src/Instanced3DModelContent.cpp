@@ -26,6 +26,10 @@ void parseFeatureTable(
     CesiumGltf::Model& gltf,
     const gsl::span<const std::byte>& featureTableJsonData,
     const gsl::span<const std::byte>& featureTableBinaryData) {
+    
+  SPDLOG_LOGGER_ERROR(
+    pLogger,
+    "Here");
   rapidjson::Document document;
   document.Parse(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
@@ -296,6 +300,10 @@ std::unique_ptr<TileContentLoadResult> Instanced3DModelContent::load(
 
     return pResult;
   }
+  
+  SPDLOG_LOGGER_ERROR(
+    pLogger,
+    "EXTERNAL GLTF CURRENTLY NOT SUPPORTED");
 
   // TODO: actually support gltf from URI source (also support pointing to
   // deferred asset)
