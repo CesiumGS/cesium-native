@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <functional>
 #include <thread>
+#include <chrono>
 
 namespace {
 #pragma pack(push, 1)
@@ -146,7 +147,7 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
          &pLogger,
          &innerTiles, 
          &unresolvedFutures, 
-         tilesLength](std::unique_ptr<TileContentLoadResult> pInnerLoadResult) -> void {
+         tilesLength](std::unique_ptr<TileContentLoadResult> pInnerLoadResult) mutable -> void {
           if (pInnerLoadResult) {
             innerTiles.emplace_back(std::move(pInnerLoadResult));
           }
@@ -160,12 +161,12 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
     processInnerContent();
   }
 
-  return asyncSystem.
+  return asyncSystem
     // TODO: How dubious is this exactly?
     .runInWorkerThread(
       [&unresolvedFutures]() -> int {
         while (unresolvedFutures > 0) {
-          
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         return 0;
       })
