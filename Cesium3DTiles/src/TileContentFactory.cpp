@@ -29,15 +29,15 @@ void TileContentFactory::registerContentType(
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
-std::unique_ptr<TileContentLoadResult>
-TileContentFactory::createContent(const TileContentLoadInput& input) {
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+TileContentFactory::createContent(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
 
   const gsl::span<const std::byte>& data = input.data;
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
   auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
   if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-    return itMagic->second->load(input);
+    return itMagic->second->load(asyncSystem, input);
   }
 
   const std::string& contentType = input.contentType;
@@ -46,7 +46,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
   auto itContentType =
       TileContentFactory::_loadersByContentType.find(baseContentType);
   if (itContentType != TileContentFactory::_loadersByContentType.end()) {
-    return itContentType->second->load(input);
+    return itContentType->second->load(asyncSystem, input);
   }
 
   // Determine if this is plausibly a JSON external tileset.
@@ -61,7 +61,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
     // Might be an external tileset, try loading it that way.
     itMagic = TileContentFactory::_loadersByMagic.find("json");
     if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-      return itMagic->second->load(input);
+      return itMagic->second->load(asyncSystem, input);
     }
   }
 
@@ -72,7 +72,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
       "'{}'.",
       baseContentType,
       magic);
-  return nullptr;
+  return asyncSystem.createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 
 /**

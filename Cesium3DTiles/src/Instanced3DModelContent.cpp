@@ -27,9 +27,6 @@ void parseFeatureTable(
     const gsl::span<const std::byte>& featureTableJsonData,
     const gsl::span<const std::byte>& featureTableBinaryData) {
     
-  SPDLOG_LOGGER_ERROR(
-    pLogger,
-    "Here");
   rapidjson::Document document;
   document.Parse(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
@@ -65,6 +62,7 @@ void parseFeatureTable(
   }
 
   // TODO: CATCH CASES WITH ILL FORMED I3DM
+  // TODO: actually use a proper extension (KHR_gpu_mesh_instancing?)
 
   uint32_t positionsOffset = 0;
   bool usingPositions = false;
@@ -244,9 +242,9 @@ void parseFeatureTable(
 
 } // namespace
 
-std::unique_ptr<TileContentLoadResult>
-Instanced3DModelContent::load(const TileContentLoadInput& input) {
-  return load(input.pLogger, input.url, input.data);
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+Instanced3DModelContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
+  return asyncSystem.createResolvedFuture(load(input.pLogger, input.url, input.data));
 }
 
 std::unique_ptr<TileContentLoadResult> Instanced3DModelContent::load(
@@ -270,21 +268,20 @@ std::unique_ptr<TileContentLoadResult> Instanced3DModelContent::load(
         "size specified in its header.");
   }
 
-  uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
+  uint32_t gltfStart = headerLength + header.featureTableJsonByteLength +
                       header.featureTableBinaryByteLength +
                       header.batchTableJsonByteLength +
                       header.batchTableBinaryByteLength;
-  uint32_t glbEnd = header.byteLength;
+  uint32_t gltfEnd = header.byteLength;
 
-  if (glbEnd <= glbStart) {
+  if (gltfEnd <= gltfStart) {
     throw std::runtime_error("The I3DM is invalid because the start of the "
                              "glTF model is after the end of the entire I3DM.");
   }
 
   if (header.gltfFormat) {
-
     gsl::span<const std::byte> glbData =
-        data.subspan(glbStart, glbEnd - glbStart);
+        data.subspan(gltfStart, gltfEnd - gltfStart);
     std::unique_ptr<TileContentLoadResult> pResult =
         GltfContent::load(pLogger, url, glbData);
 
@@ -300,10 +297,13 @@ std::unique_ptr<TileContentLoadResult> Instanced3DModelContent::load(
 
     return pResult;
   }
+
+  std::string externalGltfUri(reinterpret_cast<char const*>(data.data() + gltfStart), gltfEnd - gltfStart);
   
   SPDLOG_LOGGER_ERROR(
     pLogger,
-    "EXTERNAL GLTF CURRENTLY NOT SUPPORTED");
+    "EXTERNAL GLTF: {}",
+    externalGltfUri);
 
   // TODO: actually support gltf from URI source (also support pointing to
   // deferred asset)

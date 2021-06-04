@@ -10,6 +10,8 @@
 #include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
+#include <cstddef>
+#include <functional>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -115,7 +117,7 @@ bool Tile::isRenderable() const noexcept {
   return false;
 }
 
-void Tile::loadContent() {
+void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
   if (this->getState() != LoadState::Unloaded) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
@@ -227,7 +229,7 @@ void Tile::loadContent() {
       } else {
         // Try again later. Push the parent tile loading along if we can.
         if (this->getParent()) {
-          this->getParent()->loadContent();
+          this->getParent()->loadContent(asyncSystem);
         }
         this->setState(LoadState::Unloaded);
       }
@@ -245,10 +247,36 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
+  std::function<void(LoadResult&&)> handleLoadResult = [this](LoadResult&& loadResult) {
+    // if not already loaded, update the tile with the loading result
+    if (this->getState() != LoadState::ContentLoaded) {
+      this->_pContent = std::move(loadResult.pContent);
+      this->_pRendererResources = loadResult.pRendererResources;
+      this->getTileset()->notifyTileDoneLoading(this);
+      this->setState(loadResult.state);
+    }
+  };
+
+  std::function<void(const std::exception& e)> handleLoadError = [this](const std::exception& e) {
+      this->_pContent.reset();
+      this->_pRendererResources = nullptr;
+      this->getTileset()->notifyTileDoneLoading(this);
+      this->setState(LoadState::Failed);
+
+      SPDLOG_LOGGER_ERROR(
+          this->getTileset()->getExternals().pLogger,
+          "An exception occurred while loading tile: {}",
+          e.what());
+    };
+
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
-          [loadInput = std::move(loadInput),
+          [this,
+           asyncSystem,
+           loadInput = std::move(loadInput),
+           handleLoadResult,
+           handleLoadError,
            projections = std::move(projections),
            gltfUpAxis,
            pPrepareRendererResources =
@@ -290,7 +318,7 @@ void Tile::loadContent() {
             loadInput.contentType = pResponse->contentType();
             loadInput.url = pRequest->url();
             std::unique_ptr<TileContentLoadResult> pContent =
-                TileContentFactory::createContent(loadInput);
+                TileContentFactory::createContent(asyncSystem, loadInput);
 
             void* pRendererResources = nullptr;
             if (pContent) {
@@ -318,33 +346,25 @@ void Tile::loadContent() {
                           pContent->model.value(),
                           transform);
                 }
-              }
-            }
 
-            LoadResult result;
-            result.state = LoadState::ContentLoaded;
-            result.pContent = std::move(pContent);
-            result.pRendererResources = pRendererResources;
+                LoadResult result;
+                result.state = LoadState::ContentLoaded;
+                result.pContent = std::move(pContent);
+                result.pRendererResources = pRendererResources;
 
-            return result;
-          })
-      .thenInMainThread([this](LoadResult&& loadResult) {
-        this->_pContent = std::move(loadResult.pContent);
-        this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this);
-        this->setState(loadResult.state);
-      })
-      .catchInMainThread([this](const std::exception& e) {
-        this->_pContent.reset();
-        this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(this);
-        this->setState(LoadState::Failed);
+                return result;
+              })
+              .thenInMainThread(handleLoadResult)
+              .catchInMainThread(handleLoadError);
 
-        SPDLOG_LOGGER_ERROR(
-            this->getTileset()->getExternals().pLogger,
-            "An exception occurred while loading tile: {}",
-            e.what());
-      });
+          return LoadResult{
+            LoadState::ContentLoading,
+            std::make_unique<TileContentLoadResult>(),
+            nullptr
+          };
+        })
+        .thenInMainThread(handleLoadResult)
+        .catchInMainThread(handleLoadError);
 }
 
 bool Tile::unloadContent() noexcept {

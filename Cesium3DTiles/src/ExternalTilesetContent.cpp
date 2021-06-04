@@ -8,14 +8,15 @@
 
 namespace Cesium3DTiles {
 
-std::unique_ptr<TileContentLoadResult>
-ExternalTilesetContent::load(const TileContentLoadInput& input) {
-  return load(
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+ExternalTilesetContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
+  return asyncSystem.createResolvedFuture(
+    load(
       input.pLogger,
       input.tileTransform,
       input.tileRefine,
       input.url,
-      input.data);
+      input.data));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(

@@ -6,6 +6,7 @@
 #include "Cesium3DTiles/TileContentLoader.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include <memory>
 #include <spdlog/fwd.h>
 #include <string>
@@ -19,8 +20,8 @@ class Tileset;
  */
 class CESIUM3DTILES_API CompositeContent final : public TileContentLoader {
 public:
-  std::unique_ptr<TileContentLoadResult>
-  load(const TileContentLoadInput& input) override;
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+  load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) override;
 };
 
 } // namespace Cesium3DTiles

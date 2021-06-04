@@ -10,6 +10,7 @@
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TileSelectionState.h"
 #include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>
@@ -483,7 +484,7 @@ public:
    * {@link Tile::LoadState::ContentLoaded} state, and the
    * {@link Tile::getContent} will be available.
    */
-  void loadContent();
+  void loadContent(const CesiumAsync::AsyncSystem& asyncSystem);
 
   /**
    * @brief Frees all resources that have been allocated for the

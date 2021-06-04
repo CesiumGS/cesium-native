@@ -678,15 +678,16 @@ static std::vector<std::byte> generateNormals(
   return normalsBuffer;
 }
 
-std::unique_ptr<TileContentLoadResult>
-QuantizedMeshContent::load(const TileContentLoadInput& input) {
-  return load(
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+QuantizedMeshContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
+  return asyncSystem.createResolvedFuture(
+    load(
       input.pLogger,
       input.tileID,
       input.tileBoundingVolume,
       input.url,
       input.data,
-      input.contentOptions.enableWaterMask);
+      input.contentOptions.enableWaterMask));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(

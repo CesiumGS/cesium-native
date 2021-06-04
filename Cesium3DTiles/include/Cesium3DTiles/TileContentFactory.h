@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/TileContentLoader.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "CesiumAsync/AsyncSystem.h"
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -97,8 +98,8 @@ public:
    * no loader registered for the magic header of the given
    * input, and no loader for the content type of the input.
    */
-  static std::unique_ptr<TileContentLoadResult>
-  createContent(const TileContentLoadInput& input);
+  static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+  createContent(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input);
 
 private:
   static std::optional<std::string>

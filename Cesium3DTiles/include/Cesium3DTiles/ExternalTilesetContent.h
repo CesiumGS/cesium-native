@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/TileContentLoadResult.h"
 #include "Cesium3DTiles/TileContentLoader.h"
 #include "Cesium3DTiles/TileRefine.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include <cstddef>
 #include <gsl/span>
 #include <memory>
@@ -28,8 +29,8 @@ public:
    * The result will only contain the `childTiles` and the `pNewTileContext`.
    * Other fields will be empty or have default values.
    */
-  std::unique_ptr<TileContentLoadResult>
-  load(const TileContentLoadInput& input) override;
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+  load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) override;
 
 private:
   /**
