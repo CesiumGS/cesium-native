@@ -30,7 +30,6 @@ target_sources(
 target_include_directories(
     CesiumGltf
     SYSTEM PUBLIC
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include/
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
@@ -39,7 +38,10 @@ target_include_directories(
 target_link_libraries(CesiumGltf
     PUBLIC
         CesiumUtility
+        stb::stb
         GSL
+    PRIVATE
+        RapidJSON::RapidJSON
 )
 
 install(TARGETS CesiumGltf

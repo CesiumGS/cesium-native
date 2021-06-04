@@ -40,14 +40,11 @@ target_include_directories(
 target_link_libraries(CesiumAsync
     PUBLIC
         GSL
-        Async++
+        Async++::Async++
+        spdlog::spdlog
     PRIVATE
         sqlite3
-)
-
-# These libraries erroneously do NOT list their headers as `SYSTEM` headers
-target_link_libraries_system(CesiumAsync PUBLIC
-    spdlog
+        RapidJSON::RapidJSON
 )
 
 install(TARGETS CesiumAsync

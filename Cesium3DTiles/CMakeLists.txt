@@ -32,8 +32,6 @@ target_sources(
 target_include_directories(
     Cesium3DTiles
     SYSTEM PUBLIC
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
-        ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
@@ -48,10 +46,11 @@ target_link_libraries(Cesium3DTiles
         CesiumGltf
         CesiumGltfReader
         CesiumUtility
-        spdlog
-    # PRIVATE
-        tinyxml2
-        uriparser
+        spdlog::spdlog
+    PRIVATE
+        tinyxml2::tinyxml2
+        uriparser::uriparser
+        RapidJSON::RapidJSON
 )
 
 install(TARGETS Cesium3DTiles

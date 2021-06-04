@@ -34,8 +34,9 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-target_link_libraries(CesiumGeometry PUBLIC
-    CesiumUtility
+target_link_libraries(CesiumGeometry 
+    PUBLIC
+        CesiumUtility
 )
 
 install(TARGETS CesiumGeometry
