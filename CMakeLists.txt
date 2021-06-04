@@ -21,14 +21,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Type of build: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
-# Add postfix "d" to installed debug targets
-set(CESIUM_DEBUG_POSTFIX "d")
-set(CESIUM_RELEASE_POSTFIX "")
-set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-set(CMAKE_MINSIZEREL_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-set(CMAKE_RELWITHDEBINFO_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-
 # Create tests coverage target
 if(OPT_BUILD_TESTS_COVERAGE)
     include(CodeCoverage)
@@ -77,48 +69,48 @@ if (OPT_BUILD_TESTS OR OPT_BUILD_TESTS_COVERAGE)
 	add_subdirectory(CesiumNativeTests)
 endif()
 
-# Package third party libraries from conan
+# package third party libraries from conan
 include(GNUInstallDirs)
 include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_ASYNCPLUSPLUS}/ 
-        TYPE LIB 
-        FILES_MATCHING 
+		TYPE LIB 
+		FILES_MATCHING 
 		PATTERN "*.a"
-        PATTERN "*.lib")
+		PATTERN "*.lib")
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_ASYNCPLUSPLUS}/ TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_SPDLOG}/ 
-        TYPE LIB
-        FILES_MATCHING 
-        PATTERN "*.a"
-        PATTERN "*.lib")
+		TYPE LIB
+		FILES_MATCHING 
+		PATTERN "*.a"
+		PATTERN "*.lib")
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_SPDLOG}/ TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_FMT}/ 
-        TYPE LIB
-        FILES_MATCHING 
-        PATTERN "*.a"
-        PATTERN "*.lib")
+		TYPE LIB
+		FILES_MATCHING 
+		PATTERN "*.a"
+		PATTERN "*.lib")
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_FMT}/ TYPE INCLUDE)
 
 install(DIRECTORY ${CONAN_LIB_DIRS_DRACO}/ 
-        TYPE LIB
-        FILES_MATCHING 
-        PATTERN "*.a"
-        PATTERN "*.lib")
+		TYPE LIB
+		FILES_MATCHING 
+		PATTERN "*.a"
+		PATTERN "*.lib")
 
 install(DIRECTORY ${CONAN_LIB_DIRS_TINYXML2}/ 
-        TYPE LIB
-        FILES_MATCHING 
-        PATTERN "*.a"
-        PATTERN "*.lib")
+		TYPE LIB
+		FILES_MATCHING 
+		PATTERN "*.a"
+		PATTERN "*.lib")
 
 install(DIRECTORY ${CONAN_LIB_DIRS_URIPARSER}/ 
-        TYPE LIB
-        FILES_MATCHING 
-        PATTERN "*.a"
-        PATTERN "*.lib")
+		TYPE LIB
+		FILES_MATCHING 
+		PATTERN "*.a"
+		PATTERN "*.lib")
 
 install(DIRECTORY ${CONAN_INCLUDE_DIRS_GLM}/ TYPE INCLUDE)
 
