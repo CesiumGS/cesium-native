@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {
@@ -24,8 +25,8 @@ public:
    * and `updatedBoundingVolume`. Other fields will be empty or have
    * default values.
    */
-  std::unique_ptr<TileContentLoadResult>
-  load(const TileContentLoadInput& input) override;
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+  load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) override;
 
   /**
    * @brief Create a {@link TileContentLoadResult} from the given data.

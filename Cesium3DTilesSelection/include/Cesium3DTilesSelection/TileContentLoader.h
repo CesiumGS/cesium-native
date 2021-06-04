@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/TileContentLoadInput.h"
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
+#include "CesiumAsync/AsyncSystem.h"
 
 namespace Cesium3DTilesSelection {
 /**
@@ -20,7 +21,9 @@ public:
    * @return The {@link TileContentLoadResult}. This may be the `nullptr` if the
    * tile content could not be loaded.
    */
-  virtual std::unique_ptr<TileContentLoadResult>
-  load(const TileContentLoadInput& input) = 0;
+  virtual CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+  load(
+    const CesiumAsync::AsyncSystem& asyncSystem, 
+    const TileContentLoadInput& input) = 0;
 };
 } // namespace Cesium3DTilesSelection
