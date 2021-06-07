@@ -46,3 +46,6 @@
 [submodule "extern/cmake-modules"]
 	path = extern/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
+[submodule "extern/minitrace"]
+	path = extern/minitrace
+	url = https://github.com/hrydgard/minitrace.git

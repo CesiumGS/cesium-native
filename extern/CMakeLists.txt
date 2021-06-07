@@ -39,6 +39,10 @@ add_subdirectory(cpp-httplib)
 
 add_subdirectory(magic_enum)
 
+add_subdirectory(minitrace)
+
+target_compile_definitions(minitrace PRIVATE MTR_COPY_EVENT_CATEGORY_AND_NAME)
+
 # CSPRNG's CMake setup is old school, and it really only has one source
 # file, so set up a library manually here.
 add_library(csprng CSPRNG/source/csprng.cpp)

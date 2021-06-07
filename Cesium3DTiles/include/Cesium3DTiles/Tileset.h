@@ -167,13 +167,13 @@ public:
    * @brief Notifies the tileset that the given tile has started loading.
    * This method may be called from any thread.
    */
-  void notifyTileStartLoading(Tile* pTile) noexcept;
+  int64_t notifyTileStartLoading(Tile* pTile) noexcept;
 
   /**
    * @brief Notifies the tileset that the given tile has finished loading and is
    * ready to render. This method may be called from any thread.
    */
-  void notifyTileDoneLoading(Tile* pTile) noexcept;
+  void notifyTileDoneLoading(Tile* pTile, int64_t loaderID) noexcept;
 
   /**
    * @brief Notifies the tileset that the given tile is about to be unloaded.
@@ -201,6 +201,13 @@ public:
       const TileContext& context,
       const std::shared_ptr<spdlog::logger>& pLogger);
 
+  struct RequestTileContentResult {
+    std::optional<
+        CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+        future;
+    int64_t loaderID;
+  };
+
   /**
    * @brief Request to load the content for the given tile.
    *
@@ -210,9 +217,7 @@ public:
    * @return A future that resolves when the content response is received, or
    * std::nullopt if this Tile has no content to load.
    */
-  std::optional<
-      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
-  requestTileContent(Tile& tile);
+  RequestTileContentResult requestTileContent(Tile& tile);
 
   /**
    * @brief Add the given {@link TileContext} to this tile set.
@@ -547,7 +552,8 @@ private:
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
-  std::atomic<uint32_t> _loadsInProgress;
+  std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
+  std::vector<Tile*> _tilesBeingLoaded;
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -577,6 +583,7 @@ private:
   static void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       std::atomic<uint32_t>& loadsInProgress,
+      std::vector<Tile*>& tilesLoading,
       uint32_t maximumLoadsInProgress);
 
   Tileset(const Tileset& rhs) = delete;

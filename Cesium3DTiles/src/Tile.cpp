@@ -9,6 +9,7 @@
 #include "CesiumGeometry/Axis.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
+#include <minitrace.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -209,9 +210,9 @@ void Tile::loadContent() {
     }
   }
 
-  std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
+  Tileset::RequestTileContentResult maybeRequestFuture =
       tileset.requestTileContent(*this);
-  if (!maybeRequestFuture) {
+  if (!maybeRequestFuture.future) {
     // There is no content to load. But we may need to upsample.
 
     const UpsampledQuadtreeNode* pSubdivided =
@@ -243,7 +244,7 @@ void Tile::loadContent() {
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
-  std::move(maybeRequestFuture.value())
+  std::move(maybeRequestFuture.future.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
@@ -323,16 +324,18 @@ void Tile::loadContent() {
 
             return result;
           })
-      .thenInMainThread([this](LoadResult&& loadResult) {
+      .thenInMainThread([this, loaderID = maybeRequestFuture.loaderID](
+                            LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this);
+        this->getTileset()->notifyTileDoneLoading(this, loaderID);
         this->setState(loadResult.state);
       })
-      .catchInMainThread([this](const std::exception& e) {
+      .catchInMainThread([this, loaderID = maybeRequestFuture.loaderID](
+                             const std::exception& e) {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(this);
+        this->getTileset()->notifyTileDoneLoading(this, loaderID);
         this->setState(LoadState::Failed);
 
         SPDLOG_LOGGER_ERROR(
@@ -801,7 +804,7 @@ void Tile::upsampleParent(
   CesiumGltf::Model& parentModel = pParentContent->model.value();
 
   Tileset* pTileset = this->getTileset();
-  pTileset->notifyTileStartLoading(this);
+  int64_t loaderID = pTileset->notifyTileStartLoading(this);
 
   struct LoadResult {
     LoadState state;
@@ -841,16 +844,16 @@ void Tile::upsampleParent(
             std::move(pContent),
             pRendererResources};
       })
-      .thenInMainThread([this](LoadResult&& loadResult) {
+      .thenInMainThread([this, loaderID](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this);
+        this->getTileset()->notifyTileDoneLoading(this, loaderID);
         this->setState(loadResult.state);
       })
-      .catchInMainThread([this](const std::exception& /*e*/) {
+      .catchInMainThread([this, loaderID](const std::exception& /*e*/) {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(this);
+        this->getTileset()->notifyTileDoneLoading(this, loaderID);
         this->setState(LoadState::Failed);
       });
 }

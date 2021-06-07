@@ -19,6 +19,7 @@
 #include "calcQuadtreeMaxGeometricError.h"
 #include <cstddef>
 #include <glm/common.hpp>
+#include <minitrace.h>
 #include <optional>
 #include <rapidjson/document.h>
 #include <unordered_set>
@@ -47,6 +48,7 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _loadsInProgress(0),
+      _tilesBeingLoaded(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
@@ -74,6 +76,7 @@ Tileset::Tileset(
       _pRootTile(),
       _previousFrameNumber(0),
       _loadsInProgress(0),
+      _tilesBeingLoaded(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false) {
@@ -95,7 +98,7 @@ Tileset::Tileset(
             "Unhandled error for asset {}: {}",
             ionAssetID,
             e.what());
-        this->notifyTileDoneLoading(nullptr);
+        this->notifyTileDoneLoading(nullptr, 0);
       });
 }
 
@@ -120,6 +123,10 @@ Tileset::~Tileset() {
       tilesLoading += pOverlay->getTileProvider()->getNumberOfTilesLoading();
     }
   }
+
+  for (size_t i = 0; i < this->_tilesBeingLoaded.size(); ++i) {
+    MTR_FLOW_FINISH("load", ("Loading Slot " + std::to_string(i)).c_str(), i + 1);
+  }
 }
 
 void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
@@ -129,7 +136,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         this->_externals.pLogger,
         "No response received for asset request {}",
         pRequest->url());
-    this->notifyTileDoneLoading(nullptr);
+    this->notifyTileDoneLoading(nullptr, 0);
     return;
   }
 
@@ -139,7 +146,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         "Received status code {} for asset response {}",
         pResponse->statusCode(),
         pRequest->url());
-    this->notifyTileDoneLoading(nullptr);
+    this->notifyTileDoneLoading(nullptr, 0);
     return;
   }
 
@@ -195,7 +202,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         this->_externals.pLogger,
         "Received unsupported asset response type: {}",
         type);
-    this->notifyTileDoneLoading(nullptr);
+    this->notifyTileDoneLoading(nullptr, 0);
     return;
   }
 
@@ -381,16 +388,54 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
   return result;
 }
 
-void Tileset::notifyTileStartLoading(Tile* /*pTile*/) noexcept {
+int64_t Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
   ++this->_loadsInProgress;
+
+  int64_t loaderID = -1;
+
+  if (pTile) {
+    auto it = std::find(
+        this->_tilesBeingLoaded.begin(),
+        this->_tilesBeingLoaded.end(),
+        nullptr);
+
+    if (it != this->_tilesBeingLoaded.end()) {
+      *it = pTile;
+      loaderID = it - this->_tilesBeingLoaded.begin() + 1;
+
+      MTR_FLOW_START(
+          "load",
+          TileIdUtilities::createTileIdString(pTile->getTileID()).c_str(),
+          loaderID);
+    } else {
+      SPDLOG_WARN("Could not find a slot");
+    }
+  }
+
+  return loaderID;
 }
 
-void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
+void Tileset::notifyTileDoneLoading(Tile* pTile, int64_t loaderID) noexcept {
   assert(this->_loadsInProgress > 0);
   --this->_loadsInProgress;
 
   if (pTile) {
     this->_tileDataBytes += pTile->computeByteSize();
+
+    auto it = std::find(
+        this->_tilesBeingLoaded.begin(),
+        this->_tilesBeingLoaded.end(),
+        pTile);
+    if (it != this->_tilesBeingLoaded.end()) {
+      *it = nullptr;
+
+      MTR_FLOW_FINISH(
+          "load",
+          TileIdUtilities::createTileIdString(pTile->getTileID()).c_str(),
+          loaderID);
+    } else {
+      SPDLOG_WARN("Loading tile not found");
+    }
   }
 }
 
@@ -416,19 +461,21 @@ void Tileset::loadTilesFromJson(
       pLogger);
 }
 
-std::optional<Future<std::shared_ptr<IAssetRequest>>>
+Tileset::RequestTileContentResult
 Tileset::requestTileContent(Tile& tile) {
   std::string url = this->getResolvedContentUrl(tile);
   if (url.empty()) {
-    return std::nullopt;
+    return RequestTileContentResult{std::nullopt, -1};
   }
 
-  this->notifyTileStartLoading(&tile);
+  int64_t loaderID = this->notifyTileStartLoading(&tile);
 
-  return this->getExternals().pAssetAccessor->requestAsset(
-      this->getAsyncSystem(),
-      url,
-      tile.getContext()->requestHeaders);
+  return RequestTileContentResult{
+      this->getExternals().pAssetAccessor->requestAsset(
+          this->getAsyncSystem(),
+          url,
+          tile.getContext()->requestHeaders),
+      loaderID};
 }
 
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
@@ -484,7 +531,7 @@ void Tileset::_loadTilesetJson(
         this->_supportsRasterOverlays = loadResult.supportsRasterOverlays;
         this->addContext(std::move(loadResult.pContext));
         this->_pRootTile = std::move(loadResult.pRootTile);
-        this->notifyTileDoneLoading(nullptr);
+        this->notifyTileDoneLoading(nullptr, 0);
       })
       .catchInMainThread([this, url](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
@@ -493,7 +540,7 @@ void Tileset::_loadTilesetJson(
             url,
             e.what());
         this->_pRootTile.reset();
-        this->notifyTileDoneLoading(nullptr);
+        this->notifyTileDoneLoading(nullptr, 0);
       });
 }
 
@@ -1041,7 +1088,7 @@ void Tileset::_handleTokenRefreshResponse(
   }
 
   this->_isRefreshingIonToken = false;
-  this->notifyTileDoneLoading(nullptr);
+  this->notifyTileDoneLoading(nullptr, 0);
 }
 
 FailedTileAction Tileset::_onIonTileFailed(Tile& failedTile) {
@@ -1084,7 +1131,7 @@ FailedTileAction Tileset::_onIonTileFailed(Tile& failedTile) {
               "Unhandled error when retrying request: {}",
               e.what());
           this->_isRefreshingIonToken = false;
-          this->notifyTileDoneLoading(nullptr);
+          this->notifyTileDoneLoading(nullptr, 0);
         });
   }
 
@@ -1717,14 +1764,17 @@ void Tileset::_processLoadQueue() {
   Tileset::processQueue(
       this->_loadQueueHigh,
       this->_loadsInProgress,
+      this->_tilesBeingLoaded,
       this->_options.maximumSimultaneousTileLoads);
   Tileset::processQueue(
       this->_loadQueueMedium,
       this->_loadsInProgress,
+      this->_tilesBeingLoaded,
       this->_options.maximumSimultaneousTileLoads);
   Tileset::processQueue(
       this->_loadQueueLow,
       this->_loadsInProgress,
+      this->_tilesBeingLoaded,
       this->_options.maximumSimultaneousTileLoads);
 }
 
@@ -1872,16 +1922,23 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
 /*static*/ void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
     std::atomic<uint32_t>& loadsInProgress,
+    std::vector<Tile*>& tilesLoading,
     uint32_t maximumLoadsInProgress) {
   if (loadsInProgress >= maximumLoadsInProgress) {
     return;
+  }
+
+  if (tilesLoading.size() != maximumLoadsInProgress) {
+    tilesLoading.resize(maximumLoadsInProgress, nullptr);
+    for (size_t i = 0; i < tilesLoading.size(); ++i) {
+      MTR_FLOW_START("load", ("Loading Slot " + std::to_string(i)).c_str(), i + 1);
+    }
   }
 
   std::sort(queue.begin(), queue.end());
 
   for (LoadRecord& record : queue) {
     record.pTile->loadContent();
-
     if (loadsInProgress >= maximumLoadsInProgress) {
       break;
     }
