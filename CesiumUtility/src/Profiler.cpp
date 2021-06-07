@@ -6,6 +6,8 @@ Profiler& Profiler::instance() {
   return instance;
 }
 
+/*static*/ thread_local int64_t Profiler::_threadEnlistedID = -1;
+
 Profiler::Profiler() : _output{}, _numTraces{0}, _lock{} {}
 
 Profiler::~Profiler() { endTracing(); }
@@ -25,18 +27,41 @@ void Profiler::writeTrace(const Trace& trace) {
   if (this->_numTraces++ > 0) {
     this->_output << ",";
   }
-  this->_output << "{";
-  this->_output << "\"cat\":\"function\",";
-  this->_output << "\"dur\":" << trace.duration << ',';
-  this->_output << "\"name\":\"" << trace.name << "\",";
-  this->_output << "\"ph\":\"X\",";
-  this->_output << "\"pid\":0,";
-  this->_output << "\"tid\":" << trace.threadID << ",";
-  this->_output << "\"ts\":" << trace.start;
-  this->_output << "}";
+
+  if (Profiler::_threadEnlistedID >= 0) {
+    this->_output << "{";
+    this->_output << "\"cat\":\"cesium\",";
+    this->_output << "\"name\":\"" << trace.name << "\",";
+    this->_output << "\"ph\":\"b\",";
+    this->_output << "\"pid\":0,";
+    this->_output << "\"id\":" << Profiler::_threadEnlistedID << ",";
+    this->_output << "\"ts\":" << trace.start;
+    this->_output << "},{";
+    this->_output << "\"cat\":\"cesium\",";
+    this->_output << "\"name\":\"" << trace.name << "\",";
+    this->_output << "\"ph\":\"e\",";
+    this->_output << "\"pid\":0,";
+    this->_output << "\"id\":" << Profiler::_threadEnlistedID << ",";
+    this->_output << "\"ts\":" << trace.start + trace.duration;
+    this->_output << "}";
+  } else {
+    this->_output << "{";
+    this->_output << "\"cat\":\"cesium\",";
+    this->_output << "\"dur\":" << trace.duration << ',';
+    this->_output << "\"name\":\"" << trace.name << "\",";
+    this->_output << "\"ph\":\"X\",";
+    this->_output << "\"pid\":0,";
+    this->_output << "\"tid\":" << trace.threadID << ",";
+    this->_output << "\"ts\":" << trace.start;
+    this->_output << "}";
+  }
 }
 
-void Profiler::writeAsyncTrace(const char* category, const char* name, char type, int64_t id) {
+void Profiler::writeAsyncTrace(
+    const char* category,
+    const char* name,
+    char type,
+    int64_t id) {
   std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
   int64_t microseconds =
       std::chrono::time_point_cast<std::chrono::microseconds>(time)
@@ -61,6 +86,8 @@ void Profiler::writeAsyncTrace(const char* category, const char* name, char type
   this->_output << "\"ts\":" << microseconds;
   this->_output << "}";
 }
+
+void Profiler::enlist(int64_t id) { Profiler::_threadEnlistedID = id; }
 
 void Profiler::endTracing() {
   this->_output << "]}";
@@ -93,4 +120,13 @@ ScopedTrace::~ScopedTrace() {
     this->reset();
   }
 }
+
+ScopedEnlist::ScopedEnlist(int64_t id) {
+  CesiumUtility::Profiler::instance().enlist(id);
+}
+
+ScopedEnlist::~ScopedEnlist() {
+  CesiumUtility::Profiler::instance().enlist(-1);
+}
+
 } // namespace CesiumUtility

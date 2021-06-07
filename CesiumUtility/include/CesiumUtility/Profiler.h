@@ -30,6 +30,12 @@
   CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'b', id);
 #define TRACE_ASYNC_END(name, id)                                              \
   CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'e', id);
+
+/**
+ * @brief Enlist the current thread into an async process for the duration of
+ * the current scope.
+ */
+#define TRACE_ASYNC_ENLIST(id) CesiumUtility::ScopedEnlist TRACE_NAME_AUX2(tracerEnlist, __LINE__)(id);
 #else
 #define LAMBDA_CAPTURE_TRACE_START(name)
 #define LAMBDA_CAPTURE_TRACE_END(name)
@@ -62,6 +68,7 @@ public:
       const char* name,
       char type,
       int64_t id);
+  void enlist(int64_t id);
 
   void endTracing();
 
@@ -71,6 +78,7 @@ private:
   std::ofstream _output;
   uint32_t _numTraces;
   std::mutex _lock;
+  static thread_local int64_t _threadEnlistedID;
 };
 
 // Internal class used by TRACE and TRACE_LOG do not use directly
@@ -88,4 +96,11 @@ private:
   std::thread::id _threadId;
   bool _reset;
 };
+
+class ScopedEnlist {
+public:
+  explicit ScopedEnlist(int64_t id);
+  ~ScopedEnlist();
+};
+
 } // namespace CesiumUtility

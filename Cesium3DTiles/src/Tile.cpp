@@ -7,6 +7,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
+#include "CesiumUtility/Profiler.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -250,8 +251,10 @@ void Tile::loadContent() {
            gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
-           pLogger = tileset.getExternals().pLogger](
+           pLogger = tileset.getExternals().pLogger,
+           loaderID = maybeRequestFuture.loaderID](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            TRACE_ASYNC_ENLIST(loaderID);
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               SPDLOG_LOGGER_ERROR(
@@ -819,7 +822,9 @@ void Tile::upsampleParent(
                           boundingVolume = this->getBoundingVolume(),
                           pPrepareRendererResources =
                               pTileset->getExternals()
-                                  .pPrepareRendererResources]() {
+                                  .pPrepareRendererResources,
+                          loaderID]() {
+        TRACE_ASYNC_ENLIST(loaderID);
         std::unique_ptr<TileContentLoadResult> pContent =
             std::make_unique<TileContentLoadResult>();
         pContent->model =
