@@ -252,7 +252,9 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
     if (this->getState() != LoadState::ContentLoaded) {
       this->_pContent = std::move(loadResult.pContent);
       this->_pRendererResources = loadResult.pRendererResources;
-      this->getTileset()->notifyTileDoneLoading(this);
+      if (loadResult.state != LoadState::ContentLoading) {
+        this->getTileset()->notifyTileDoneLoading(this);
+      }
       this->setState(loadResult.state);
     }
   };
