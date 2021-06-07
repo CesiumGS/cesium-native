@@ -4,6 +4,7 @@
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumUtility/Math.h"
+#include "CesiumUtility/Profiler.h"
 #include "SkirtMeshMetadata.h"
 #include <algorithm>
 #include <cstddef>
@@ -92,6 +93,7 @@ static bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
 Model upsampleGltfForRasterOverlays(
     const Model& parentModel,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
+  TRACE("upsampleGltfForRasterOverlays")
   Model result;
 
   // Copy the entire parent model except for the buffers, bufferViews, and
@@ -345,6 +347,8 @@ static void upsamplePrimitiveForRasterOverlays(
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
+  TRACE("upsamplePrimitiveForRasterOverlays")
+
   // Add up the per-vertex size of all attributes and create buffers,
   // bufferViews, and accessors
   std::vector<FloatVertexAttribute> attributes;
@@ -962,6 +966,8 @@ static void addSkirts(
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex) {
+  TRACE("addSkirts")
+
   glm::dvec3 center = currentSkirt.meshCenter;
   double shortestSkirtHeight =
       glm::min(parentSkirt.skirtWestHeight, parentSkirt.skirtEastHeight);

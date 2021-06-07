@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumUtility/Profiler.h"
 #include <cstddef>
 #include <rapidjson/document.h>
 #include <stdexcept>
@@ -61,6 +62,7 @@ TileContentLoadInput derive(
 
 std::unique_ptr<TileContentLoadResult>
 CompositeContent::load(const TileContentLoadInput& input) {
+  TRACE("Cesium3DTiles::CompositeContent::load")
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const gsl::span<const std::byte>& data = input.data;
   const std::string& url = input.url;

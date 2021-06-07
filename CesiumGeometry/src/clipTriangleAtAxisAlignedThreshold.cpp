@@ -1,4 +1,5 @@
 #include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
+#include "CesiumUtility/Profiler.h"
 
 namespace CesiumGeometry {
 void clipTriangleAtAxisAlignedThreshold(
