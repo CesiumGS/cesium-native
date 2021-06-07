@@ -149,7 +149,7 @@ private:
     if (_componentCount > 0) {
       gsl::span<const std::byte> offsetVals(
           _stringOffsetBuffer.data() + instance * _componentCount * _offsetSize,
-          _componentCount * _offsetSize);
+          (_componentCount + 1) * _offsetSize);
       return MetaArrayView<std::string_view>(
           _valueBuffer,
           offsetVals,

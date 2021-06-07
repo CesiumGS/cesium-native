@@ -70,39 +70,60 @@ static void checkScalarProperty(
   }
 }
 
-template <typename T>
-static void checkArrayProperty(
+template <typename ExpectedType, typename PropertyViewType = ExpectedType>
+static void checkFixedArrayProperty(
     const Model& model,
     const FeatureTable& featureTable,
     const Class& metaClass,
     const std::string& propertyName,
     size_t componentCount,
     const std::string& expectedComponentType,
-    const std::vector<T>& expected) {
+    const std::vector<ExpectedType>& expected) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
   REQUIRE(property.componentType.getString() == expectedComponentType);
   REQUIRE(
       property.componentCount.value() == static_cast<int64_t>(componentCount));
 
-  const FeatureTableProperty& values = featureTable.properties.at(propertyName);
-  const BufferView& valueBufferView = model.bufferViews[values.bufferView];
-  const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
-  MetadataPropertyView<MetaArrayView<T>> propertyView(
-      gsl::span<const std::byte>(
-          valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
-          valueBufferView.byteLength),
+  const FeatureTableProperty& featureTableProperty =
+      featureTable.properties.at(propertyName);
+  const BufferView& valueBufferView =
+      model.bufferViews.at(featureTableProperty.bufferView);
+  const Buffer& valueBuffer = model.buffers.at(valueBufferView.buffer);
+  gsl::span<const std::byte> values(
+      valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
+      valueBufferView.byteLength);
+
+  // retrieve string offset buffer if expected type is string
+  PropertyType offsetType = PropertyType::None;
+  gsl::span<const std::byte> stringOffsetValues;
+  if (expectedComponentType == "STRING") {
+    const BufferView& offsetBufferView =
+        model.bufferViews.at(featureTableProperty.stringOffsetBufferView);
+    const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
+    stringOffsetValues = gsl::span<const std::byte>(
+        offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
+        offsetBufferView.byteLength);
+
+    offsetType = CesiumGltf::convertStringToPropertyType(
+        featureTableProperty.offsetType);
+  }
+
+  MetadataPropertyView<MetaArrayView<PropertyViewType>> propertyView(
+      values,
       gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      PropertyType::None,
+      stringOffsetValues,
+      offsetType,
       componentCount,
       featureTable.count);
 
   REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < expected.size() / componentCount; ++i) {
-    MetaArrayView<T> val = propertyView[i];
+    MetaArrayView<PropertyViewType> val = propertyView[i];
     for (size_t j = 0; j < componentCount; ++j) {
+      PropertyViewType v = val[j];
       REQUIRE(val[j] == expected[i * componentCount + j]);
+      (void)(v);
     }
   }
 }
@@ -165,13 +186,20 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
   REQUIRE(heightIt2 != featureTable.properties.end());
 
   CHECK(idIt2->second.bufferView >= 0);
-  CHECK(idIt2->second.bufferView < gltf.bufferViews.size());
+  CHECK(
+      idIt2->second.bufferView < static_cast<int32_t>(gltf.bufferViews.size()));
   CHECK(longitudeIt2->second.bufferView >= 0);
-  CHECK(longitudeIt2->second.bufferView < gltf.bufferViews.size());
+  CHECK(
+      longitudeIt2->second.bufferView <
+      static_cast<int32_t>(gltf.bufferViews.size()));
   CHECK(latitudeIt2->second.bufferView >= 0);
-  CHECK(latitudeIt2->second.bufferView < gltf.bufferViews.size());
+  CHECK(
+      latitudeIt2->second.bufferView <
+      static_cast<int32_t>(gltf.bufferViews.size()));
   CHECK(heightIt2->second.bufferView >= 0);
-  CHECK(heightIt2->second.bufferView < gltf.bufferViews.size());
+  CHECK(
+      heightIt2->second.bufferView <
+      static_cast<int32_t>(gltf.bufferViews.size()));
 
   // Make sure all property bufferViews are unique
   std::set<int32_t> bufferViews{
@@ -410,7 +438,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         -1.3196959060375169, 0.6988854945986224, 7.632075032219291
     };
     // clang-format on
-    checkArrayProperty<double>(
+    checkFixedArrayProperty<double>(
         *pResult->model,
         featureTable,
         defaultClass,
@@ -448,6 +476,7 @@ TEST_CASE("Upgrade json nested json metadata to string") {
   REQUIRE(properties.size() == 6);
 
   const FeatureTable& featureTable = metadata->featureTables["default"];
+  REQUIRE(featureTable.count == 10);
 
   {
     std::vector<std::string> expected;
@@ -465,7 +494,22 @@ TEST_CASE("Upgrade json nested json metadata to string") {
         expected);
   }
 
-  { std::vector<std::string> expected; }
+  {
+    std::vector<std::string> expected;
+    for (int64_t i = 0; i < featureTable.count; ++i) {
+      expected.emplace_back("room" + std::to_string(i) + "_a");
+      expected.emplace_back("room" + std::to_string(i) + "_b");
+      expected.emplace_back("room" + std::to_string(i) + "_c");
+    }
+    checkFixedArrayProperty<std::string, std::string_view>(
+        *pResult->model,
+        featureTable,
+        defaultClass,
+        "rooms",
+        3,
+        "STRING",
+        expected);
+  }
 }
 
 TEST_CASE("Upgrade bool json to boolean binary") {

@@ -424,6 +424,11 @@ void copyJsonStringArrayProperty(
       ++offsetIndex;
     }
   }
+
+  std::memcpy(
+      offsetBuffer.data() + offsetIndex * sizeof(OffsetType),
+      &offset,
+      sizeof(OffsetType));
 }
 
 template <typename OffsetType>
