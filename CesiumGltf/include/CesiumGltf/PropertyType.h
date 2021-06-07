@@ -1,21 +1,22 @@
 #pragma once
 
 #include <cstdint>
-#include <gsl/span>
 #include <string>
 #include <string_view>
 
 namespace CesiumGltf {
+template <typename T> class MetaArrayView;
+
 enum class PropertyType {
   None = 0,
-  Uint8 = 1 << 0,
-  Int8 = 1 << 1,
-  Uint16 = 1 << 2,
-  Int16 = 1 << 3,
-  Uint32 = 1 << 4,
-  Int32 = 1 << 5,
-  Uint64 = 1 << 6,
-  Int64 = 1 << 7,
+  Int8 = 1 << 0,
+  Uint8 = 1 << 1,
+  Int16 = 1 << 2,
+  Uint16 = 1 << 3,
+  Int32 = 1 << 4,
+  Uint32 = 1 << 5,
+  Int64 = 1 << 6,
+  Uint64 = 1 << 7,
   Float32 = 1 << 8,
   Float64 = 1 << 9,
   Boolean = 1 << 10,
@@ -77,7 +78,7 @@ template <> struct TypeToPropertyType<std::string_view> {
   static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::String);
 };
 
-template <typename T> struct TypeToPropertyType<gsl::span<const T>> {
+template <typename T> struct TypeToPropertyType<CesiumGltf::MetaArrayView<T>> {
   static constexpr uint32_t value =
       static_cast<uint32_t>(PropertyType::Array) | TypeToPropertyType<T>::value;
 };

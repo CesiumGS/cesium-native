@@ -14,33 +14,59 @@
 using namespace CesiumGltf;
 using namespace Cesium3DTiles;
 
-template <typename T>
+template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkScalarProperty(
     const Model& model,
     const FeatureTable& featureTable,
     const Class& metaClass,
     const std::string& propertyName,
     const std::string& expectedPropertyType,
-    const std::vector<T>& expected) {
+    const std::vector<ExpectedType>& expected) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedPropertyType);
 
-  const FeatureTableProperty& values = featureTable.properties.at(propertyName);
-  const BufferView& valueBufferView = model.bufferViews[values.bufferView];
-  const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
-  MetadataPropertyView<T> propertyView(
-      gsl::span<const std::byte>(
-          valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
-          valueBufferView.byteLength),
+  // retrieve value buffer
+  const FeatureTableProperty& featureTableProperty =
+      featureTable.properties.at(propertyName);
+  const BufferView& valueBufferView =
+      model.bufferViews.at(featureTableProperty.bufferView);
+  const Buffer& valueBuffer = model.buffers.at(valueBufferView.buffer);
+  gsl::span<const std::byte> values(
+      valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
+      valueBufferView.byteLength);
+
+  // retrieve string offset buffer if expected type is string
+  PropertyType offsetType = PropertyType::None;
+  gsl::span<const std::byte> stringOffsetValues;
+  if (expectedPropertyType == "STRING") {
+    const BufferView& offsetBufferView =
+        model.bufferViews.at(featureTableProperty.stringOffsetBufferView);
+    const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
+    stringOffsetValues = gsl::span<const std::byte>(
+        offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
+        offsetBufferView.byteLength);
+
+    offsetType = CesiumGltf::convertStringToPropertyType(
+        featureTableProperty.offsetType);
+  }
+
+  MetadataPropertyView<PropertyViewType> propertyView(
+      values,
       gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      PropertyType::None,
+      stringOffsetValues,
+      offsetType,
       0,
       featureTable.count);
 
   REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < propertyView.size(); ++i) {
-    REQUIRE(propertyView[i] == Approx(expected[i]));
+    if constexpr (
+        std::is_same_v<PropertyViewType, float> ||
+        std::is_same_v<PropertyViewType, double>) {
+      REQUIRE(propertyView[i] == Approx(expected[i]));
+    } else {
+      REQUIRE(propertyView[i] == expected[i]);
+    }
   }
 }
 
@@ -78,41 +104,6 @@ static void checkArrayProperty(
     for (size_t j = 0; j < componentCount; ++j) {
       REQUIRE(val[j] == expected[i * componentCount + j]);
     }
-  }
-}
-
-static void checkStringProperty(
-    const Model& model,
-    const FeatureTable& featureTable,
-    const Class& metaClass,
-    const std::string& propertyName,
-    const std::vector<std::string>& expected) {
-  const ClassProperty& property = metaClass.properties.at(propertyName);
-  REQUIRE(property.type == "STRING");
-
-  const FeatureTableProperty& values = featureTable.properties.at(propertyName);
-  const BufferView& valueBufferView = model.bufferViews[values.bufferView];
-  const Buffer& valueBuffer = model.buffers[valueBufferView.buffer];
-
-  const BufferView& offsetBufferView =
-      model.bufferViews[values.stringOffsetBufferView];
-  const Buffer& offsetBuffer = model.buffers[offsetBufferView.buffer];
-  MetadataPropertyView<std::string_view> propertyView(
-      gsl::span<const std::byte>(
-          valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
-          valueBufferView.byteLength),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(
-          offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
-          offsetBufferView.byteLength),
-      CesiumGltf::convertStringToPropertyType(values.offsetType),
-      0,
-      featureTable.count);
-
-  REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
-  for (size_t i = 0; i < expected.size(); ++i) {
-    std::string_view val = propertyView[i];
-    REQUIRE(val == expected[i]);
   }
 }
 
@@ -465,16 +456,19 @@ TEST_CASE("Upgrade json nested json metadata to string") {
                       "\",\"year\":" + std::to_string(i) + "}";
       expected.push_back(v);
     }
-    checkStringProperty(
+    checkScalarProperty<std::string, std::string_view>(
         *pResult->model,
         featureTable,
         defaultClass,
         "info",
+        "STRING",
         expected);
   }
+
+  { std::vector<std::string> expected; }
 }
 
-TEST_CASE("Upgrade bool json to string") {
+TEST_CASE("Upgrade bool json to boolean binary") {
   Model model;
 
   rapidjson::Document featureTableJson;

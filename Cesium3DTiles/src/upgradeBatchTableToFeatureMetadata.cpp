@@ -3,7 +3,9 @@
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "CesiumGltf/PropertyType.h"
 #include "rapidjson/writer.h"
+#include "glm/glm.hpp"
 #include <map>
 #include <rapidjson/document.h>
 #include <type_traits>
@@ -12,17 +14,10 @@ using namespace CesiumGltf;
 
 namespace {
 struct CompatibleTypes {
-  bool isInt8 = true;
-  bool isUint8 = true;
-  bool isInt16 = true;
-  bool isUint16 = true;
-  bool isInt32 = true;
-  bool isUint32 = true;
-  bool isInt64 = true;
-  bool isUint64 = true;
-  bool isFloat32 = true;
-  bool isFloat64 = true;
-  bool isBool = true;
+  PropertyType type;
+  std::optional<PropertyType> componentType;
+  std::optional<uint32_t> minComponentCount;
+  std::optional<uint32_t> maxComponentCount;
 };
 
 struct BinaryProperty {
@@ -52,13 +47,21 @@ int64_t roundUp(int64_t num, int64_t multiple) {
   return ((num + multiple - 1) / multiple) * multiple;
 }
 
-template <typename T> bool isInRange(int64_t value) {
+template <typename T> bool isInRangeForSignedInteger(int64_t value) {
   // this only work if sizeof(T) is smaller than int64_t
   static_assert(
-      sizeof(T) <= sizeof(int64_t) && !std::is_same_v<T, uint64_t> &&
-      !std::is_same_v<T, float> && !std::is_same_v<T, double>);
+      !std::is_same_v<T, uint64_t> && !std::is_same_v<T, float> &&
+      !std::is_same_v<T, double>);
+
   return value >= static_cast<int64_t>(std::numeric_limits<T>::lowest()) &&
          value <= static_cast<int64_t>(std::numeric_limits<T>::max());
+}
+
+template <typename T> bool isInRangeForUnsignedInteger(uint64_t value) {
+  static_assert(!std::is_signed_v<T>);
+
+  return value >= static_cast<uint64_t>(std::numeric_limits<T>::lowest()) &&
+         value <= static_cast<uint64_t>(std::numeric_limits<T>::max());
 }
 
 template <typename T>
@@ -84,6 +87,60 @@ void copyStringBuffer(
   std::memcpy(buffer.data() + totalSize + offset, &stringOffset, sizeof(T));
 }
 
+CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
+  CompatibleTypes result{};
+
+  for (auto it = propertyValue.Begin(); it != propertyValue.End(); ++it) {
+    if (it->IsBool()) {
+      // Should we allow conversion of bools to numeric 0 or 1? Nah.
+      result.type = PropertyType::Boolean;
+    } else if (it->IsInt64()) {
+      int64_t value = it->GetInt64();
+      if (isInRangeForSignedInteger<int8_t>(value) && result.type <= PropertyType::Int8) {
+        result.type = PropertyType::Int8;
+      } else if (isInRangeForSignedInteger<uint8_t>(value) && result.type <= PropertyType::Uint8) {
+        result.type = PropertyType::Uint8;
+      } else if (isInRangeForSignedInteger<int16_t>(value) && result.type <= PropertyType::Int16) {
+        result.type = PropertyType::Int16;
+      } else if (isInRangeForSignedInteger<uint16_t>(value) && result.type <= PropertyType::Uint16) {
+        result.type = PropertyType::Uint16;
+      } else if (isInRangeForSignedInteger<int32_t>(value) && result.type <= PropertyType::Int32) {
+        result.type = PropertyType::Int32;
+      } else if (isInRangeForSignedInteger<uint32_t>(value) && result.type <= PropertyType::Uint32) {
+        result.type = PropertyType::Uint32;
+      } else if (result.type <= PropertyType::Int64) {
+        result.type = PropertyType::Int64;
+      }
+    } else if (it->IsUint64()) {
+      result.type = PropertyType::Uint64;
+    } else if (it->IsLosslessFloat()) {
+      result.type = PropertyType::Float32;
+    } else if (it->IsDouble()) {
+      result.type = PropertyType::Float64;
+    } else if (it->IsArray() && !it->Begin()->IsArray() && (result.type == PropertyType::None || result.type == PropertyType::Array)) {
+      auto memberResult = findCompatibleTypes(*it);
+
+      result.type = PropertyType::Array;
+      result.componentType = memberResult.type;
+      result.maxComponentCount =
+          result.maxComponentCount
+              ? glm::max(*result.maxComponentCount, it->Size())
+              : it->Size();
+      result.minComponentCount =
+          result.minComponentCount
+              ? glm::min(*result.minComponentCount, it->Size())
+              : it->Size();
+    } else {
+      // A string, null, or something else. So convert to string
+      result = CompatibleTypes{};
+      result.type = PropertyType::String;
+      break;
+    }
+  }
+
+  return result;
+}
+
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
     ClassProperty& classProperty,
@@ -101,13 +158,13 @@ void updateExtensionWithJsonStringProperty(
   }
 
   std::vector<std::byte> buffer;
-  if (isInRange<uint8_t>(totalSize)) {
+  if (isInRangeForUnsignedInteger<uint8_t>(totalSize)) {
     copyStringBuffer<uint8_t>(totalSize, rapidjsonStrBuffers, buffer);
     featureTableProperty.offsetType = "UINT8";
-  } else if (isInRange<uint16_t>(totalSize)) {
+  } else if (isInRangeForUnsignedInteger<uint16_t>(totalSize)) {
     copyStringBuffer<uint16_t>(totalSize, rapidjsonStrBuffers, buffer);
     featureTableProperty.offsetType = "UINT16";
-  } else if (isInRange<uint32_t>(totalSize)) {
+  } else if (isInRangeForUnsignedInteger<uint32_t>(totalSize)) {
     copyStringBuffer<uint32_t>(totalSize, rapidjsonStrBuffers, buffer);
     featureTableProperty.offsetType = "UINT32";
   } else {
@@ -135,72 +192,6 @@ void updateExtensionWithJsonStringProperty(
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "STRING";
-}
-
-CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
-  CompatibleTypes result{};
-
-  for (auto it = propertyValue.Begin(); it != propertyValue.End(); ++it) {
-    if (it->IsBool()) {
-      // Should we allow conversion of bools to numeric 0 or 1? Nah.
-      result.isInt8 = result.isUint8 = false;
-      result.isInt16 = result.isUint16 = false;
-      result.isInt32 = result.isUint32 = false;
-      result.isInt64 = result.isUint64 = false;
-      result.isFloat32 = false;
-      result.isFloat64 = false;
-    } else if (it->IsInt64()) {
-      int64_t value = it->GetInt64();
-      result.isInt8 &= isInRange<int8_t>(value);
-      result.isUint8 &= isInRange<uint8_t>(value);
-      result.isInt16 &= isInRange<int16_t>(value);
-      result.isUint16 &= isInRange<uint16_t>(value);
-      result.isInt32 &= isInRange<int32_t>(value);
-      result.isUint32 &= isInRange<uint32_t>(value);
-      result.isInt64 &= isInRange<int64_t>(value);
-      result.isUint64 &= value >= 0;
-      result.isFloat32 &= value >= -2e24 && value <= 2e24;
-      result.isFloat64 &= value >= -2e53 && value <= 2e53;
-      result.isBool = false;
-    } else if (it->IsUint64()) {
-      // Only uint64_t can represent a value that fits in a uint64_t but not in
-      // an int64_t.
-      result.isInt8 = result.isUint8 = false;
-      result.isInt16 = result.isUint16 = false;
-      result.isInt32 = result.isUint32 = false;
-      result.isInt64 = false;
-      result.isFloat32 = false;
-      result.isFloat64 = false;
-      result.isBool = false;
-    } else if (it->IsLosslessFloat()) {
-      result.isInt8 = result.isUint8 = false;
-      result.isInt16 = result.isUint16 = false;
-      result.isInt32 = result.isUint32 = false;
-      result.isInt64 = result.isUint64 = false;
-      result.isFloat32 = true;
-      result.isFloat64 = true;
-      result.isBool = false;
-    } else if (it->IsDouble()) {
-      result.isInt8 = result.isUint8 = false;
-      result.isInt16 = result.isUint16 = false;
-      result.isInt32 = result.isUint32 = false;
-      result.isInt64 = result.isUint64 = false;
-      result.isFloat32 = false;
-      result.isFloat64 = true;
-      result.isBool = false;
-    } else {
-      // A string, null, or something else.
-      result.isInt8 = result.isUint8 = false;
-      result.isInt16 = result.isUint16 = false;
-      result.isInt32 = result.isUint32 = false;
-      result.isInt64 = result.isUint64 = false;
-      result.isFloat32 = false;
-      result.isFloat64 = false;
-      result.isBool = false;
-    }
-  }
-
-  return result;
 }
 
 template <typename T, typename TRapidJson = T>
@@ -271,6 +262,430 @@ void updateExtensionWithJsonBoolProperty(
   classProperty.type = "BOOLEAN";
 }
 
+template <typename TRapidjson, typename ValueType, typename OffsetType>
+void updateNumericDynamicArrayProperty(
+    std::vector<std::byte>& valueBuffer,
+    std::vector<std::byte>& offsetBuffer,
+    size_t numOfElements,
+    const rapidjson::Value& propertyValue) {
+  valueBuffer.resize(sizeof(ValueType) * numOfElements);
+  offsetBuffer.resize(sizeof(OffsetType) * (numOfElements + 1));
+  ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
+  OffsetType* offsetValue = reinterpret_cast<OffsetType*>(offsetBuffer.data());
+  OffsetType prevOffset = 0;
+  for (const auto& jsonArrayMember : propertyValue.GetArray()) {
+    *offsetValue = prevOffset;
+    ++offsetValue;
+    for (const auto& valueJson : jsonArrayMember.GetArray()) {
+      *value = static_cast<ValueType>(valueJson.Get<TRapidjson>());
+      ++value;
+    }
+
+    prevOffset +=
+        static_cast<OffsetType>(jsonArrayMember.Size() * sizeof(ValueType));
+  }
+
+  *offsetValue = prevOffset;
+}
+
+template <typename TRapidjson, typename ValueType>
+void updateNumericArrayProperty(
+    Model& gltf,
+    ClassProperty& classProperty,
+    FeatureTableProperty& featureTableProperty,
+    const CompatibleTypes& compatibleTypes,
+    const rapidjson::Value& propertyValue) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+
+  // check if it's a fixed array
+  if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
+    size_t numOfValues =
+        jsonOuterArray.Size() * *compatibleTypes.minComponentCount;
+    std::vector<std::byte> valueBuffer(sizeof(ValueType) * numOfValues);
+    ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
+    for (const auto& jsonArrayMember : jsonOuterArray) {
+      for (const auto& valueJson : jsonArrayMember.GetArray()) {
+        *value = static_cast<ValueType>(valueJson.Get<TRapidjson>());
+        ++value;
+      }
+    }
+
+    Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
+    gltfValueBuffer.byteLength = valueBuffer.size();
+    gltfValueBuffer.cesium.data = std::move(valueBuffer);
+
+    BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
+    gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+    gltfValueBufferView.byteOffset = 0;
+    gltfValueBufferView.byteLength = gltfValueBuffer.cesium.data.size();
+
+    classProperty.type = "ARRAY";
+    classProperty.componentType = convertProperttTypeToString(
+        static_cast<PropertyType>(TypeToPropertyType<ValueType>::value));
+    classProperty.componentCount = *compatibleTypes.minComponentCount;
+
+    featureTableProperty.bufferView =
+        static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+    return;
+  }
+
+  // total size of value buffer
+  size_t totalSize = 0;
+  for (const auto& jsonArrayMember : jsonOuterArray) {
+    totalSize += jsonArrayMember.Size();
+  }
+
+  PropertyType offsetType = PropertyType::None;
+  std::vector<std::byte> valueBuffer;
+  std::vector<std::byte> offsetBuffer;
+  if (isInRangeForSignedInteger<uint8_t>(totalSize * sizeof(uint8_t))) {
+    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint8_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalSize,
+        propertyValue);
+    offsetType = PropertyType::Uint8;
+  } else if (isInRangeForUnsignedInteger<uint16_t>(
+                 totalSize * sizeof(uint16_t))) {
+    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint16_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalSize,
+        propertyValue);
+    offsetType = PropertyType::Uint16;
+  } else if (isInRangeForUnsignedInteger<uint32_t>(
+                 totalSize * sizeof(uint32_t))) {
+    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint32_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalSize,
+        propertyValue);
+    offsetType = PropertyType::Uint32;
+  } else if (isInRangeForUnsignedInteger<uint64_t>(
+                 totalSize * sizeof(uint64_t))) {
+    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint64_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalSize,
+        propertyValue);
+    offsetType = PropertyType::Uint64;
+  }
+
+  Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
+  gltfValueBuffer.byteLength = valueBuffer.size();
+  gltfValueBuffer.cesium.data = std::move(valueBuffer);
+
+  BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
+  gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfValueBufferView.byteOffset = 0;
+  gltfValueBufferView.byteLength = gltfValueBuffer.cesium.data.size();
+  int32_t valueBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
+  gltfOffsetBuffer.byteLength = offsetBuffer.size();
+  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
+
+  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
+  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfOffsetBufferView.byteOffset = 0;
+  gltfOffsetBufferView.byteLength = gltfOffsetBuffer.cesium.data.size();
+  int32_t offsetBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  classProperty.type = "ARRAY";
+  classProperty.componentType = convertProperttTypeToString(
+      static_cast<PropertyType>(TypeToPropertyType<ValueType>::value));
+
+  featureTableProperty.bufferView = valueBufferIdx;
+  featureTableProperty.arrayOffsetBufferView = offsetBufferIdx;
+  featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+}
+
+template <typename OffsetType>
+void copyJsonStringArrayProperty(
+    std::vector<std::byte>& valueBuffer,
+    std::vector<std::byte>& offsetBuffer,
+    size_t totalStrings,
+    const rapidjson::Value& propertyValue) {
+  valueBuffer.resize(totalStrings * sizeof(rapidjson::Value::Ch));
+  offsetBuffer.resize((totalStrings + 1) * sizeof(OffsetType));
+  OffsetType offset = 0;
+  size_t offsetIndex = 0;
+  for (const auto& arrayMember : propertyValue.GetArray()) {
+    for (const auto& str : arrayMember.GetArray()) {
+      OffsetType byteLength = static_cast<OffsetType>(
+          str.GetStringLength() * sizeof(rapidjson::Value::Ch));
+      std::memcpy(valueBuffer.data() + offset, str.GetString(), byteLength);
+      std::memcpy(
+          offsetBuffer.data() + offsetIndex * sizeof(OffsetType),
+          &offset,
+          sizeof(OffsetType));
+      offset += byteLength;
+      ++offsetIndex;
+    }
+  }
+}
+
+template <typename OffsetType>
+void copyArrayOffsetBufferForStringArrayProperty(
+    std::vector<std::byte>& offsetBuffer,
+    size_t totalInstances,
+    const rapidjson::Value& propertyValue) {
+  OffsetType prevOffset = 0;
+  offsetBuffer.resize((totalInstances + 1) * sizeof(OffsetType));
+  OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
+  for (const auto& arrayMember : propertyValue.GetArray()) {
+    *offset = prevOffset;
+    prevOffset +=
+        static_cast<OffsetType>(arrayMember.Size() * sizeof(OffsetType));
+  }
+
+  *offset = prevOffset;
+}
+
+void updateStringArrayProperty(
+    Model& gltf,
+    ClassProperty& classProperty,
+    FeatureTableProperty& featureTableProperty,
+    const CompatibleTypes& compatibleTypes,
+    const rapidjson::Value& propertyValue) {
+  size_t totalStringLength = 0;
+  for (const auto& arrayMember : propertyValue.GetArray()) {
+    for (const auto& str : arrayMember.GetArray()) {
+      totalStringLength += str.GetStringLength();
+    }
+  }
+
+  uint64_t totalByteLength = totalStringLength * sizeof(rapidjson::Value::Ch);
+  std::vector<std::byte> valueBuffer;
+  std::vector<std::byte> offsetBuffer;
+  PropertyType offsetType = PropertyType::None;
+  if (isInRangeForUnsignedInteger<uint8_t>(totalByteLength)) {
+    copyJsonStringArrayProperty<uint8_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalStringLength,
+        propertyValue);
+    offsetType = PropertyType::Uint8;
+  } else if (isInRangeForUnsignedInteger<uint16_t>(totalByteLength)) {
+    copyJsonStringArrayProperty<uint16_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalStringLength,
+        propertyValue);
+    offsetType = PropertyType::Uint16;
+  } else if (isInRangeForUnsignedInteger<uint32_t>(totalByteLength)) {
+    copyJsonStringArrayProperty<uint32_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalStringLength,
+        propertyValue);
+    offsetType = PropertyType::Uint32;
+  } else if (isInRangeForUnsignedInteger<uint64_t>(totalByteLength)) {
+    copyJsonStringArrayProperty<uint64_t>(
+        valueBuffer,
+        offsetBuffer,
+        totalStringLength,
+        propertyValue);
+    offsetType = PropertyType::Uint64;
+  }
+
+  // create gltf value buffer view
+  Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
+  gltfValueBuffer.byteLength = valueBuffer.size();
+  gltfValueBuffer.cesium.data = std::move(valueBuffer);
+
+  BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
+  gltfValueBufferView.buffer =
+      static_cast<std::int32_t>(gltf.buffers.size() - 1);
+  gltfValueBufferView.byteOffset = 0;
+  gltfValueBufferView.byteLength = gltfValueBuffer.byteLength;
+  int32_t valueBufferViewIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  // create gltf string offset buffer view
+  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
+  gltfOffsetBuffer.byteLength = offsetBuffer.size();
+  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
+
+  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
+  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfOffsetBufferView.byteOffset = 0;
+  gltfOffsetBufferView.byteLength = gltfOffsetBuffer.byteLength;
+  int32_t offsetBufferViewIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  // fixed array of string
+  if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
+    classProperty.type = "ARRAY";
+    classProperty.componentCount = compatibleTypes.minComponentCount;
+    classProperty.componentType = "STRING";
+
+    featureTableProperty.bufferView = valueBufferViewIdx;
+    featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+    featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+    return;
+  }
+
+  // dynamic array of string needs array offset buffer
+  size_t totalInstances = propertyValue.Size();
+  std::vector<std::byte> arrayOffsetBuffer;
+  switch (offsetType) {
+  case PropertyType::Uint8:
+    copyArrayOffsetBufferForStringArrayProperty<uint8_t>(
+        arrayOffsetBuffer,
+        totalInstances,
+        propertyValue);
+    break;
+  case PropertyType::Uint16:
+    copyArrayOffsetBufferForStringArrayProperty<uint16_t>(
+        arrayOffsetBuffer,
+        totalInstances,
+        propertyValue);
+    break;
+  case PropertyType::Uint32:
+    copyArrayOffsetBufferForStringArrayProperty<uint32_t>(
+        arrayOffsetBuffer,
+        totalInstances,
+        propertyValue);
+    break;
+  case PropertyType::Uint64:
+    copyArrayOffsetBufferForStringArrayProperty<uint64_t>(
+        arrayOffsetBuffer,
+        totalInstances,
+        propertyValue);
+    break;
+  default:
+    break;
+  }
+
+  // create gltf array offset buffer view
+  Buffer& gltfArrayOffsetBuffer = gltf.buffers.emplace_back();
+  gltfArrayOffsetBuffer.byteLength = arrayOffsetBuffer.size();
+  gltfArrayOffsetBuffer.cesium.data = std::move(arrayOffsetBuffer);
+
+  BufferView& gltfArrayOffsetBufferView = gltf.bufferViews.emplace_back();
+  gltfArrayOffsetBufferView.buffer =
+      static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfArrayOffsetBufferView.byteOffset = 0;
+  gltfArrayOffsetBufferView.byteLength = gltfArrayOffsetBuffer.byteLength;
+  int32_t arrayOffsetBufferViewIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  classProperty.type = "ARRAY";
+  classProperty.componentCount = compatibleTypes.minComponentCount;
+  classProperty.componentType = "STRING";
+
+  featureTableProperty.bufferView = valueBufferViewIdx;
+  featureTableProperty.arrayOffsetBufferView = arrayOffsetBufferViewIdx;
+  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+}
+
+void updateExtensionWithArrayProperty(
+    Model& gltf,
+    ClassProperty& classProperty,
+    FeatureTable& /*featureTable*/,
+    FeatureTableProperty& featureTableProperty,
+    const CompatibleTypes& compatibleTypes,
+    const rapidjson::Value& propertyValue) {
+  switch (*compatibleTypes.componentType) {
+  case PropertyType::Boolean:
+    // TODO: update Boolean
+    break;
+  case PropertyType::Int8:
+    updateNumericArrayProperty<int32_t, int8_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Uint8:
+    updateNumericArrayProperty<uint32_t, uint8_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Int16:
+    updateNumericArrayProperty<int32_t, int16_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Uint16:
+    updateNumericArrayProperty<uint32_t, uint16_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Int32:
+    updateNumericArrayProperty<int32_t, int32_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Uint32:
+    updateNumericArrayProperty<uint32_t, uint32_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Int64:
+    updateNumericArrayProperty<int64_t, int64_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Uint64:
+    updateNumericArrayProperty<uint64_t, uint64_t>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Float32:
+    updateNumericArrayProperty<float, float>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::Float64:
+    updateNumericArrayProperty<double, double>(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  case PropertyType::String:
+    updateStringArrayProperty(
+        gltf,
+        classProperty,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  default:
+    break;
+  }
+}
+
 void updateExtensionWithJsonProperty(
     Model& gltf,
     ClassProperty& classProperty,
@@ -292,34 +707,20 @@ void updateExtensionWithJsonProperty(
     return;
   }
 
-  const rapidjson::Value& firstElement = propertyValue[0];
-  if (firstElement.IsArray() || firstElement.IsNull() ||
-      firstElement.IsObject() || firstElement.IsString()) {
-    // Strings, nulls, objects, and arrays are all represented as strings in
-    // EXT_feature_metadata.
-    // TODO: arrays of consistent type don't need to be represented as strings!
-    updateExtensionWithJsonStringProperty(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue);
-    return;
-  }
-
   // Figure out which types we can use for this data.
+  // Use the smallest type we can, and prefer signed to unsigned.
   CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
 
-  // Use the smallest type we can, and prefer signed to unsigned.
-  std::string type = "STRING";
-  if (compatibleTypes.isBool) {
+  switch (compatibleTypes.type) {
+  case PropertyType::Boolean:
     updateExtensionWithJsonBoolProperty(
         gltf,
         classProperty,
         featureTable,
         featureTableProperty,
         propertyValue);
-  } else if (compatibleTypes.isInt8) {
+    break;
+  case PropertyType::Int8:
     updateExtensionWithJsonNumericProperty<int8_t, int32_t>(
         gltf,
         classProperty,
@@ -327,7 +728,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT8");
-  } else if (compatibleTypes.isUint8) {
+    break;
+  case PropertyType::Uint8:
     updateExtensionWithJsonNumericProperty<uint8_t, uint32_t>(
         gltf,
         classProperty,
@@ -335,7 +737,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT8");
-  } else if (compatibleTypes.isInt16) {
+    break;
+  case PropertyType::Int16:
     updateExtensionWithJsonNumericProperty<int16_t, int32_t>(
         gltf,
         classProperty,
@@ -343,7 +746,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT16");
-  } else if (compatibleTypes.isUint16) {
+    break;
+  case PropertyType::Uint16:
     updateExtensionWithJsonNumericProperty<uint16_t, uint32_t>(
         gltf,
         classProperty,
@@ -351,7 +755,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT16");
-  } else if (compatibleTypes.isInt32) {
+    break;
+  case PropertyType::Int32:
     updateExtensionWithJsonNumericProperty<int32_t>(
         gltf,
         classProperty,
@@ -359,7 +764,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT32");
-  } else if (compatibleTypes.isUint32) {
+    break;
+  case PropertyType::Uint32:
     updateExtensionWithJsonNumericProperty<uint32_t>(
         gltf,
         classProperty,
@@ -367,7 +773,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT32");
-  } else if (compatibleTypes.isInt64) {
+    break;
+  case PropertyType::Int64:
     updateExtensionWithJsonNumericProperty<int64_t>(
         gltf,
         classProperty,
@@ -375,7 +782,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT64");
-  } else if (compatibleTypes.isUint64) {
+    break;
+  case PropertyType::Uint64:
     updateExtensionWithJsonNumericProperty<uint64_t>(
         gltf,
         classProperty,
@@ -383,7 +791,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT64");
-  } else if (compatibleTypes.isFloat32) {
+    break;
+  case PropertyType::Float32:
     updateExtensionWithJsonNumericProperty<float>(
         gltf,
         classProperty,
@@ -391,7 +800,8 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "FLOAT32");
-  } else if (compatibleTypes.isFloat64) {
+    break;
+  case PropertyType::Float64:
     updateExtensionWithJsonNumericProperty<double>(
         gltf,
         classProperty,
@@ -399,6 +809,26 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "FLOAT64");
+    break;
+  case PropertyType::String:
+    updateExtensionWithJsonStringProperty(
+        gltf,
+        classProperty,
+        featureTable,
+        featureTableProperty,
+        propertyValue);
+    break;
+  case PropertyType::Array:
+    updateExtensionWithArrayProperty(
+        gltf,
+        classProperty,
+        featureTable,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
+    break;
+  default:
+    break;
   }
 }
 
