@@ -123,10 +123,90 @@ static void checkFixedArrayProperty(
     MetaArrayView<PropertyViewType> val = propertyView[i];
     for (size_t j = 0; j < componentCount; ++j) {
       PropertyViewType v = val[j];
-      REQUIRE(val[j] == expected[i * componentCount + j]);
+      if constexpr (
+          std::is_same_v<ExpectedType, float> ||
+          std::is_same_v<ExpectedType, double>) {
+        REQUIRE(val[j] == Approx(expected[i * componentCount + j]));
+      } else {
+        REQUIRE(val[j] == expected[i * componentCount + j]);
+      }
       (void)(v);
     }
   }
+}
+
+template <typename T>
+static void createTestForFixedNumericArray(
+    const std::vector<T>& expected,
+    const std::string& expectedComponentType,
+    size_t componentCount) {
+  Model model;
+
+  rapidjson::Document featureTableJson;
+  featureTableJson.SetObject();
+  rapidjson::Value batchLength(rapidjson::kNumberType);
+  featureTableJson.AddMember(
+      "BATCH_LENGTH",
+      batchLength,
+      featureTableJson.GetAllocator());
+
+  rapidjson::Document jsonBatchTable;
+  jsonBatchTable.SetObject();
+  rapidjson::Value fixedArrayProperties(rapidjson::kArrayType);
+  for (size_t i = 0; i < expected.size(); i += componentCount) {
+    rapidjson::Value innerArray(rapidjson::kArrayType);
+    for (size_t j = i; j < i + componentCount; ++j) {
+      innerArray.PushBack(expected[j], jsonBatchTable.GetAllocator());
+    }
+    fixedArrayProperties.PushBack(innerArray, jsonBatchTable.GetAllocator());
+  }
+
+  jsonBatchTable.AddMember(
+      "fixedArrayProp",
+      fixedArrayProperties,
+      jsonBatchTable.GetAllocator());
+
+  rapidjson::StringBuffer buffer;
+  buffer.Clear();
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  jsonBatchTable.Accept(writer);
+
+  std::string strJsonData = buffer.GetString();
+  gsl::span<const std::byte> jsonData(
+      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
+      strJsonData.size());
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      model,
+      featureTableJson,
+      jsonData,
+      gsl::span<const std::byte>());
+
+  ModelEXT_feature_metadata* metadata =
+      model.getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(metadata != nullptr);
+
+  std::optional<Schema> schema = metadata->schema;
+  REQUIRE(schema != std::nullopt);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 1);
+
+  const FeatureTable& featureTable = metadata->featureTables["default"];
+  checkFixedArrayProperty(
+      model,
+      featureTable,
+      defaultClass,
+      "fixedArrayProp",
+      componentCount,
+      expectedComponentType,
+      expected);
 }
 
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
@@ -585,87 +665,131 @@ TEST_CASE("Upgrade bool json to boolean binary") {
 }
 
 TEST_CASE("Upgrade fixed json number array") {
-  Model model;
-
-  rapidjson::Document featureTableJson;
-  featureTableJson.SetObject();
-  rapidjson::Value batchLength(rapidjson::kNumberType);
-  batchLength.SetInt64(5);
-  featureTableJson.AddMember(
-      "BATCH_LENGTH",
-      batchLength,
-      featureTableJson.GetAllocator());
-
-  // clang-format off
-  std::vector<int32_t> expected{
+  SECTION("int8_t") {
+    // clang-format off
+    std::vector<int8_t> expected {
       0, 1, 4, 1,
-      1244, 500000, 1222, 544662,
-      123, 10, 122, 334,
+      12, 50, -12, -1,
+      123, 10, 122, 3,
       13, 45, 122, 94,
       11, 22, 3, 5};
-  // clang-format on
+    // clang-format on
 
-  size_t componentCount = 4;
-  rapidjson::Document jsonBatchTable;
-  jsonBatchTable.SetObject();
-  rapidjson::Value fixedArrayProperties(rapidjson::kArrayType);
-  for (size_t i = 0; i < expected.size(); i += componentCount) {
-    rapidjson::Value innerArray(rapidjson::kArrayType);
-    for (size_t j = i; j < i + componentCount; ++j) {
-      innerArray.PushBack(expected[j], jsonBatchTable.GetAllocator());
-    }
-    fixedArrayProperties.PushBack(innerArray, jsonBatchTable.GetAllocator());
+    std::string expectedComponentType = "INT8";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
   }
 
-  jsonBatchTable.AddMember(
-      "fixedArrayProp",
-      fixedArrayProperties,
-      jsonBatchTable.GetAllocator());
+  SECTION("uint8_t") {
+    // clang-format off
+    std::vector<uint8_t> expected {
+      0, 1, 4, 1, 223,
+      12, 50, 242, 212, 11,
+      223, 10, 122, 3, 44,
+      13, 45, 122, 94, 244,
+      119, 112, 156, 5, 35};
+    // clang-format on
 
-  rapidjson::StringBuffer buffer;
-  buffer.Clear();
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  jsonBatchTable.Accept(writer);
+    std::string expectedComponentType = "UINT8";
+    createTestForFixedNumericArray(expected, expectedComponentType, 5);
+  }
 
-  std::string strJsonData = buffer.GetString();
-  gsl::span<const std::byte> jsonData(
-      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
-      strJsonData.size());
+  SECTION("int16_t") {
+    // clang-format off
+    std::vector<int16_t> expected {
+      0, 1, 4, 4445,
+      12, 50, -12, -1,
+      123, 10, 3333, 3,
+      13, 450, 122, 94,
+      11, 22, 3, 50};
+    // clang-format on
 
-  upgradeBatchTableToFeatureMetadata(
-      spdlog::default_logger(),
-      model,
-      featureTableJson,
-      jsonData,
-      gsl::span<const std::byte>());
+    std::string expectedComponentType = "INT16";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
-  REQUIRE(metadata != nullptr);
+  SECTION("uint16_t") {
+    // clang-format off
+    std::vector<uint16_t> expected {
+      0, 1, 4, 65000,
+      12, 50, 12, 1,
+      123, 10, 33330, 3,
+      13, 450, 1220, 94,
+      11, 22, 3, 50000};
+    // clang-format on
 
-  std::optional<Schema> schema = metadata->schema;
-  REQUIRE(schema != std::nullopt);
+    std::string expectedComponentType = "UINT16";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
 
-  const std::unordered_map<std::string, Class>& classes = schema->classes;
-  REQUIRE(classes.size() == 1);
+  SECTION("int32_t") {
+    // clang-format off
+    std::vector<int32_t> expected {
+      0, 1, 4, 1,
+      1244, -500000, 1222, 544662,
+      123, -10, 122, 334,
+      13, 45, 122, 94,
+      11, 22, 3, 2147483647};
+    // clang-format on
 
-  const Class& defaultClass = classes.at("default");
-  const std::unordered_map<std::string, ClassProperty>& properties =
-      defaultClass.properties;
-  REQUIRE(properties.size() == 1);
+    std::string expectedComponentType = "INT32";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
 
-  const ClassProperty& propertyClass = properties.at("fixedArrayProp");
-  REQUIRE(propertyClass.type == "ARRAY");
+  SECTION("uint32_t") {
+    // clang-format off
+    std::vector<uint32_t> expected {
+      0, 1, 4, 1,
+      1244, 12200000, 1222, 544662,
+      123, 10, 122, 334,
+      13, 45, 122, 94,
+      11, 22, 3, 4294967295};
+    // clang-format on
 
-  const FeatureTable& featureTable = metadata->featureTables["default"];
-  checkFixedArrayProperty(
-      model,
-      featureTable,
-      defaultClass,
-      "fixedArrayProp",
-      4,
-      "INT32",
-      expected);
+    std::string expectedComponentType = "UINT32";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
+
+  SECTION("int64_t") {
+    // clang-format off
+    std::vector<int64_t> expected {
+      0, 1, 4, 1,
+      1244, -9223372036854775807, 1222, 544662,
+      123, 10, 122, 334,
+      13, 45, 122, 94,
+      11, 22, 3, 9223372036854775807};
+    // clang-format on
+
+    std::string expectedComponentType = "INT64";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
+
+  SECTION("uint64_t") {
+    // clang-format off
+    std::vector<uint64_t> expected {
+      0, 1, 4, 1,
+      1244, 13223302036854775807u, 1222, 544662,
+      123, 10, 122, 334,
+      13, 45, 122, 94,
+      11, 22, 3, 13223302036854775807u};
+    // clang-format on
+
+    std::string expectedComponentType = "UINT64";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
+
+  SECTION("double") {
+    // clang-format off
+    std::vector<double> expected {
+      0.122, 1.1233, 4.113, 1.11,
+      1.244, 122.3, 1.222, 544.66,
+      12.003, 1.21, 2.123, 33.12,
+      1.333, 4.232, 1.422, 9.4,
+      1.1221, 2.2, 3.0, 122.31};
+    // clang-format on
+
+    std::string expectedComponentType = "FLOAT64";
+    createTestForFixedNumericArray(expected, expectedComponentType, 4);
+  }
 }
 
 TEST_CASE("Upgrade dynamic json number array") {}
