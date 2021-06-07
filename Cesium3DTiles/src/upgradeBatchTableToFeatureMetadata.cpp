@@ -4,8 +4,8 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
-#include "rapidjson/writer.h"
 #include "glm/glm.hpp"
+#include "rapidjson/writer.h"
 #include <map>
 #include <rapidjson/document.h>
 #include <type_traits>
@@ -99,17 +99,28 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       result.type = PropertyType::Boolean;
     } else if (it->IsInt64()) {
       int64_t value = it->GetInt64();
-      if (isInRangeForSignedInteger<int8_t>(value) && result.type <= PropertyType::Int8) {
+      if (isInRangeForSignedInteger<int8_t>(value) &&
+          result.type <= PropertyType::Int8) {
         result.type = PropertyType::Int8;
-      } else if (isInRangeForSignedInteger<uint8_t>(value) && result.type <= PropertyType::Uint8) {
+      } else if (
+          isInRangeForSignedInteger<uint8_t>(value) &&
+          result.type <= PropertyType::Uint8) {
         result.type = PropertyType::Uint8;
-      } else if (isInRangeForSignedInteger<int16_t>(value) && result.type <= PropertyType::Int16) {
+      } else if (
+          isInRangeForSignedInteger<int16_t>(value) &&
+          result.type <= PropertyType::Int16) {
         result.type = PropertyType::Int16;
-      } else if (isInRangeForSignedInteger<uint16_t>(value) && result.type <= PropertyType::Uint16) {
+      } else if (
+          isInRangeForSignedInteger<uint16_t>(value) &&
+          result.type <= PropertyType::Uint16) {
         result.type = PropertyType::Uint16;
-      } else if (isInRangeForSignedInteger<int32_t>(value) && result.type <= PropertyType::Int32) {
+      } else if (
+          isInRangeForSignedInteger<int32_t>(value) &&
+          result.type <= PropertyType::Int32) {
         result.type = PropertyType::Int32;
-      } else if (isInRangeForSignedInteger<uint32_t>(value) && result.type <= PropertyType::Uint32) {
+      } else if (
+          isInRangeForSignedInteger<uint32_t>(value) &&
+          result.type <= PropertyType::Uint32) {
         result.type = PropertyType::Uint32;
       } else if (result.type <= PropertyType::Int64) {
         result.type = PropertyType::Int64;
@@ -120,7 +131,10 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       result.type = PropertyType::Float32;
     } else if (it->IsDouble()) {
       result.type = PropertyType::Float64;
-    } else if (it->IsArray() && !it->Begin()->IsArray() && (result.type == PropertyType::None || result.type == PropertyType::Array)) {
+    } else if (
+        it->IsArray() && !it->Begin()->IsArray() &&
+        (result.type == PropertyType::None ||
+         result.type == PropertyType::Array)) {
       auto memberResult = findCompatibleTypes(*it);
 
       result.type = PropertyType::Array;
