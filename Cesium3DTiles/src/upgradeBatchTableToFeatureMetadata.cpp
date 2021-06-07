@@ -64,14 +64,16 @@ template <typename T> bool isInRangeForUnsignedInteger(uint64_t value) {
          value <= static_cast<uint64_t>(std::numeric_limits<T>::max());
 }
 
-template <typename T>
+template <typename OffsetType>
 void copyStringBuffer(
     uint64_t totalSize,
     const std::vector<rapidjson::StringBuffer>& rapidjsonStrBuffers,
-    std::vector<std::byte>& buffer) {
-  T offset = 0;
-  T stringOffset = 0;
-  buffer.resize(totalSize + sizeof(T) * (rapidjsonStrBuffers.size() + 1));
+    std::vector<std::byte>& buffer,
+    std::vector<std::byte>& offsetBuffer) {
+  OffsetType stringOffset = 0;
+  buffer.resize(totalSize);
+  offsetBuffer.resize(sizeof(OffsetType) * (rapidjsonStrBuffers.size() + 1));
+  OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   for (const rapidjson::StringBuffer& rapidjsonBuffer : rapidjsonStrBuffers) {
     size_t bufferLength = rapidjsonBuffer.GetSize();
     if (bufferLength != 0) {
@@ -79,12 +81,13 @@ void copyStringBuffer(
           buffer.data() + stringOffset,
           rapidjsonBuffer.GetString(),
           bufferLength);
-      std::memcpy(buffer.data() + totalSize + offset, &stringOffset, sizeof(T));
-      stringOffset += static_cast<T>(bufferLength);
-      offset += sizeof(T);
+      *offset = stringOffset;
+      stringOffset += static_cast<OffsetType>(bufferLength);
+      ++offset;
     }
   }
-  std::memcpy(buffer.data() + totalSize + offset, &stringOffset, sizeof(T));
+
+  *offset = stringOffset;
 }
 
 CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
@@ -158,17 +161,34 @@ void updateExtensionWithJsonStringProperty(
   }
 
   std::vector<std::byte> buffer;
+  std::vector<std::byte> offsetBuffer;
   if (isInRangeForUnsignedInteger<uint8_t>(totalSize)) {
-    copyStringBuffer<uint8_t>(totalSize, rapidjsonStrBuffers, buffer);
+    copyStringBuffer<uint8_t>(
+        totalSize,
+        rapidjsonStrBuffers,
+        buffer,
+        offsetBuffer);
     featureTableProperty.offsetType = "UINT8";
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalSize)) {
-    copyStringBuffer<uint16_t>(totalSize, rapidjsonStrBuffers, buffer);
+    copyStringBuffer<uint16_t>(
+        totalSize,
+        rapidjsonStrBuffers,
+        buffer,
+        offsetBuffer);
     featureTableProperty.offsetType = "UINT16";
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalSize)) {
-    copyStringBuffer<uint32_t>(totalSize, rapidjsonStrBuffers, buffer);
+    copyStringBuffer<uint32_t>(
+        totalSize,
+        rapidjsonStrBuffers,
+        buffer,
+        offsetBuffer);
     featureTableProperty.offsetType = "UINT32";
   } else {
-    copyStringBuffer<uint64_t>(totalSize, rapidjsonStrBuffers, buffer);
+    copyStringBuffer<uint64_t>(
+        totalSize,
+        rapidjsonStrBuffers,
+        buffer,
+        offsetBuffer);
     featureTableProperty.offsetType = "UINT64";
   }
 
@@ -180,18 +200,25 @@ void updateExtensionWithJsonStringProperty(
   gltfBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
   gltfBufferView.byteOffset = 0;
   gltfBufferView.byteLength = totalSize;
-  featureTableProperty.bufferView =
+  int32_t valueBufferViewIdx =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
-  BufferView& offsetBufferView = gltf.bufferViews.emplace_back();
-  offsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
-  offsetBufferView.byteOffset = totalSize;
-  offsetBufferView.byteLength =
-      static_cast<int64_t>(gltfBuffer.cesium.data.size());
-  featureTableProperty.stringOffsetBufferView =
+  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
+  gltfOffsetBuffer.byteLength = offsetBuffer.size();
+  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
+
+  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
+  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfOffsetBufferView.byteOffset = 0;
+  gltfOffsetBufferView.byteLength =
+      static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
+  int32_t offsetBufferViewIdx =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "STRING";
+
+  featureTableProperty.bufferView = valueBufferViewIdx;
+  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
 }
 
 template <typename T, typename TRapidJson = T>
