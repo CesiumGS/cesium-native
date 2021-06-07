@@ -98,24 +98,39 @@ static void checkArrayProperty(
       valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
       valueBufferView.byteLength);
 
-  // retrieve string offset buffer if expected type is string
+  // retrieve offset type
   PropertyType offsetType = PropertyType::None;
+  if (featureTableProperty.arrayOffsetBufferView >= 0 ||
+      featureTableProperty.stringOffsetBufferView >= 0) {
+    offsetType = CesiumGltf::convertStringToPropertyType(
+        featureTableProperty.offsetType);
+  }
+
+  // retrieve array offset buffer
+  gsl::span<const std::byte> arrayOffsetValues;
+  if (featureTableProperty.arrayOffsetBufferView >= 0) {
+    const BufferView& offsetBufferView =
+        model.bufferViews.at(featureTableProperty.arrayOffsetBufferView);
+    const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
+    arrayOffsetValues = gsl::span<const std::byte>(
+        offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
+        offsetBufferView.byteLength);
+  }
+
+  // retrieve string offset buffer if expected type is string
   gsl::span<const std::byte> stringOffsetValues;
-  if (expectedComponentType == "STRING") {
+  if (featureTableProperty.stringOffsetBufferView >= 0) {
     const BufferView& offsetBufferView =
         model.bufferViews.at(featureTableProperty.stringOffsetBufferView);
     const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
     stringOffsetValues = gsl::span<const std::byte>(
         offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
         offsetBufferView.byteLength);
-
-    offsetType = CesiumGltf::convertStringToPropertyType(
-        featureTableProperty.offsetType);
   }
 
   MetadataPropertyView<MetaArrayView<PropertyViewType>> propertyView(
       values,
-      gsl::span<const std::byte>(),
+      arrayOffsetValues,
       stringOffsetValues,
       offsetType,
       expectedComponentCount,
@@ -826,4 +841,146 @@ TEST_CASE("Upgrade fixed json number array") {
   }
 }
 
-TEST_CASE("Upgrade dynamic json number array") {}
+TEST_CASE("Upgrade dynamic json number array") {
+  SECTION("int8_t") {
+    // clang-format off
+    std::vector<std::vector<int8_t>> expected {
+      {0, 1, 4},
+      {12, 50, -12},
+      {123, 10, 122, 3, 23},
+      {13, 45},
+      {11, 22, 3, 5, 33, 12, -122}};
+    // clang-format on
+
+    std::string expectedComponentType = "INT8";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("uint8_t") {
+    // clang-format off
+    std::vector<std::vector<uint8_t>> expected {
+      {0, 223},
+      {12, 50, 242, 212, 11},
+      {223},
+      {13, 45},
+      {119, 112, 156, 5, 35, 244, 122}};
+    // clang-format on
+
+    std::string expectedComponentType = "UINT8";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("int16_t") {
+    // clang-format off
+    std::vector<std::vector<int16_t>> expected {
+      {0, 1, 4, 4445, 12333},
+      {12, 50, -12, -1},
+      {123, 10},
+      {13, 450, 122, 94, 334},
+      {11, 22, 3, 50, 455, 122, 3333, 5555, 12233}};
+    // clang-format on
+
+    std::string expectedComponentType = "INT16";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("uint16_t") {
+    // clang-format off
+    std::vector<std::vector<uint16_t>> expected {
+      {0, 1},
+      {12, 50, 12, 1, 333, 5666},
+      {123, 10, 33330, 3, 1},
+      {13, 1220},
+      {11, 22, 3, 50000, 333}};
+    // clang-format on
+
+    std::string expectedComponentType = "UINT16";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("int32_t") {
+    // clang-format off
+    std::vector<std::vector<int32_t>> expected {
+      {0, 1},
+      {1244, -500000, 1222, 544662},
+      {123, -10},
+      {13},
+      {11, 22, 3, 2147483647, 12233}};
+    // clang-format on
+
+    std::string expectedComponentType = "INT32";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("uint32_t") {
+    // clang-format off
+    std::vector<std::vector<uint32_t>> expected {
+      {0, 1},
+      {1244, 12200000, 1222, 544662},
+      {123, 10},
+      {13, 45, 122, 94, 333, 212, 534, 1122},
+      {11, 22, 3, 4294967295}};
+    // clang-format on
+
+    std::string expectedComponentType = "UINT32";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("int64_t") {
+    // clang-format off
+    std::vector<std::vector<int64_t>> expected {
+      {0, 1, 4, 1},
+      {1244, -9223372036854775807, 1222, 544662, 12233},
+      {123},
+      {13, 45},
+      {11, 22, 3, 9223372036854775807, 12333}};
+    // clang-format on
+
+    std::string expectedComponentType = "INT64";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("uint64_t") {
+    // clang-format off
+    std::vector<std::vector<uint64_t>> expected {
+      {1},
+      {1244, 13223302036854775807u, 1222, 544662},
+      {123, 10, 2},
+      {13, 94},
+      {11, 22, 3, 13223302036854775807u, 32323}};
+    // clang-format on
+
+    std::string expectedComponentType = "UINT64";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("double") {
+    // clang-format off
+    std::vector<std::vector<double>> expected {
+      {0.122, 1.1233},
+      {1.244, 122.3, 1.222, 544.66, 323.122},
+      {12.003, 1.21, 2.123, 33.12, 122.2},
+      {1.333},
+      {1.1221, 2.2}};
+    // clang-format on
+
+    std::string expectedComponentType = "FLOAT64";
+    createTestForArrayJson(expected, expectedComponentType, 0);
+  }
+
+  SECTION("string") {
+    // clang-format off
+    std::vector<std::vector<std::string>> expected{
+      {"This is Test", "Another Test"},
+      {"Good morning", "How you doing?", "The book in the freezer", "Batman beats superman", ""},
+      {"Test9", "Test10", "", "Test12", ""},
+      {"Test13", ""},
+    };
+    // clang-format on
+
+    createTestForArrayJson<std::string, std::string_view>(
+        expected,
+        "STRING",
+        0);
+  }
+}

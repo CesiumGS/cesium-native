@@ -449,10 +449,11 @@ template <typename OffsetType>
 void copyJsonStringArrayProperty(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
-    size_t totalStrings,
+    size_t totalByteLength,
+    size_t numOfString,
     const rapidjson::Value& propertyValue) {
-  valueBuffer.resize(totalStrings * sizeof(rapidjson::Value::Ch));
-  offsetBuffer.resize((totalStrings + 1) * sizeof(OffsetType));
+  valueBuffer.resize(totalByteLength);
+  offsetBuffer.resize((numOfString + 1) * sizeof(OffsetType));
   OffsetType offset = 0;
   size_t offsetIndex = 0;
   for (const auto& arrayMember : propertyValue.GetArray()) {
@@ -487,6 +488,7 @@ void copyArrayOffsetBufferForStringArrayProperty(
     *offset = prevOffset;
     prevOffset +=
         static_cast<OffsetType>(arrayMember.Size() * sizeof(OffsetType));
+    ++offset;
   }
 
   *offset = prevOffset;
@@ -498,14 +500,16 @@ void updateStringArrayProperty(
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
-  size_t totalStringLength = 0;
+  size_t numOfString = 0;
+  size_t totalChars = 0;
   for (const auto& arrayMember : propertyValue.GetArray()) {
+    numOfString += arrayMember.Size();
     for (const auto& str : arrayMember.GetArray()) {
-      totalStringLength += str.GetStringLength();
+      totalChars += str.GetStringLength();
     }
   }
 
-  uint64_t totalByteLength = totalStringLength * sizeof(rapidjson::Value::Ch);
+  uint64_t totalByteLength = totalChars * sizeof(rapidjson::Value::Ch);
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
   PropertyType offsetType = PropertyType::None;
@@ -513,28 +517,32 @@ void updateStringArrayProperty(
     copyJsonStringArrayProperty<uint8_t>(
         valueBuffer,
         offsetBuffer,
-        totalStringLength,
+        totalByteLength,
+        numOfString,
         propertyValue);
     offsetType = PropertyType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalByteLength)) {
     copyJsonStringArrayProperty<uint16_t>(
         valueBuffer,
         offsetBuffer,
-        totalStringLength,
+        totalByteLength,
+        numOfString,
         propertyValue);
     offsetType = PropertyType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalByteLength)) {
     copyJsonStringArrayProperty<uint32_t>(
         valueBuffer,
         offsetBuffer,
-        totalStringLength,
+        totalByteLength,
+        numOfString,
         propertyValue);
     offsetType = PropertyType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(totalByteLength)) {
     copyJsonStringArrayProperty<uint64_t>(
         valueBuffer,
         offsetBuffer,
-        totalStringLength,
+        totalByteLength,
+        numOfString,
         propertyValue);
     offsetType = PropertyType::Uint64;
   }
