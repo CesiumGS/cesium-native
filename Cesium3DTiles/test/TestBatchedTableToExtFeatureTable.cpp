@@ -58,6 +58,7 @@ static void checkScalarProperty(
       0,
       featureTable.count);
 
+  // check buffer size is correct
   REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < propertyView.size(); ++i) {
     if constexpr (
@@ -582,3 +583,5 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       "BOOLEAN",
       expected);
 }
+
+TEST_CASE("Test") {}

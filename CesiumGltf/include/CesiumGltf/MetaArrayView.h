@@ -77,21 +77,25 @@ private:
       PropertyType offsetType) {
     switch (offsetType) {
     case PropertyType::Uint8: {
+      assert(instance < offsetBuffer.size() / sizeof(uint8_t));
       uint8_t offset = *reinterpret_cast<const uint8_t*>(
           offsetBuffer.data() + instance * sizeof(uint8_t));
       return static_cast<size_t>(offset);
     }
     case PropertyType::Uint16: {
+      assert(instance < offsetBuffer.size() / sizeof(uint16_t));
       uint16_t offset = *reinterpret_cast<const uint16_t*>(
           offsetBuffer.data() + instance * sizeof(uint16_t));
       return static_cast<size_t>(offset);
     }
     case PropertyType::Uint32: {
+      assert(instance < offsetBuffer.size() / sizeof(uint32_t));
       uint32_t offset = *reinterpret_cast<const uint32_t*>(
           offsetBuffer.data() + instance * sizeof(uint32_t));
       return static_cast<size_t>(offset);
     }
     case PropertyType::Uint64: {
+      assert(instance < offsetBuffer.size() / sizeof(uint64_t));
       uint64_t offset = *reinterpret_cast<const uint64_t*>(
           offsetBuffer.data() + instance * sizeof(uint64_t));
       return static_cast<size_t>(offset);
