@@ -52,7 +52,6 @@ target_link_libraries(Cesium3DTiles
     # PRIVATE
         tinyxml2
         uriparser
-        minitrace
 )
 
 install(TARGETS Cesium3DTiles

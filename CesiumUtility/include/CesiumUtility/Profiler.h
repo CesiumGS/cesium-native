@@ -26,14 +26,18 @@
 #define TRACE_START(filename)                                                  \
   CesiumUtility::Profiler::instance().startTracing(filename);
 #define TRACE_END() CesiumUtility::Profiler::instance().endTracing();
+#define TRACE_ASYNC_BEGIN(name, id)                                            \
+  CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'b', id);
+#define TRACE_ASYNC_END(name, id)                                              \
+  CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'e', id);
 #else
-// clang-format off
-#define LAMBDA_CAPTURE_TRACE_START(name) 
+#define LAMBDA_CAPTURE_TRACE_START(name)
 #define LAMBDA_CAPTURE_TRACE_END(name)
 #define TRACE(name)
 #define TRACE_START(filename)
 #define TRACE_END()
-// clang-format on
+#define TRACE_ASYNC_BEGIN(name, id)
+#define TRACE_ASYNC_END(name, id)
 #endif
 
 namespace CesiumUtility {
@@ -53,6 +57,11 @@ public:
   void startTracing(const std::string& filePath = "trace.json");
 
   void writeTrace(const Trace& trace);
+  void writeAsyncTrace(
+      const char* category,
+      const char* name,
+      char type,
+      int64_t id);
 
   void endTracing();
 

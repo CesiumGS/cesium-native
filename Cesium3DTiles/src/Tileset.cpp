@@ -14,12 +14,12 @@
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
+#include "CesiumUtility/Profiler.h"
 #include "CesiumUtility/Uri.h"
 #include "TileUtilities.h"
 #include "calcQuadtreeMaxGeometricError.h"
 #include <cstddef>
 #include <glm/common.hpp>
-#include <minitrace.h>
 #include <optional>
 #include <rapidjson/document.h>
 #include <unordered_set>
@@ -125,7 +125,7 @@ Tileset::~Tileset() {
   }
 
   for (size_t i = 0; i < this->_tilesBeingLoaded.size(); ++i) {
-    MTR_FLOW_FINISH("load", ("Loading Slot " + std::to_string(i)).c_str(), i + 1);
+    TRACE_ASYNC_END(("Loading Slot " + std::to_string(i)).c_str(), i + 1);
   }
 }
 
@@ -403,8 +403,7 @@ int64_t Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
       *it = pTile;
       loaderID = it - this->_tilesBeingLoaded.begin() + 1;
 
-      MTR_FLOW_START(
-          "load",
+      TRACE_ASYNC_BEGIN(
           TileIdUtilities::createTileIdString(pTile->getTileID()).c_str(),
           loaderID);
     } else {
@@ -415,7 +414,9 @@ int64_t Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
   return loaderID;
 }
 
-void Tileset::notifyTileDoneLoading(Tile* pTile, int64_t loaderID) noexcept {
+void Tileset::notifyTileDoneLoading(
+    Tile* pTile,
+    [[maybe_unused]] int64_t loaderID) noexcept {
   assert(this->_loadsInProgress > 0);
   --this->_loadsInProgress;
 
@@ -429,8 +430,7 @@ void Tileset::notifyTileDoneLoading(Tile* pTile, int64_t loaderID) noexcept {
     if (it != this->_tilesBeingLoaded.end()) {
       *it = nullptr;
 
-      MTR_FLOW_FINISH(
-          "load",
+      TRACE_ASYNC_END(
           TileIdUtilities::createTileIdString(pTile->getTileID()).c_str(),
           loaderID);
     } else {
@@ -461,8 +461,7 @@ void Tileset::loadTilesFromJson(
       pLogger);
 }
 
-Tileset::RequestTileContentResult
-Tileset::requestTileContent(Tile& tile) {
+Tileset::RequestTileContentResult Tileset::requestTileContent(Tile& tile) {
   std::string url = this->getResolvedContentUrl(tile);
   if (url.empty()) {
     return RequestTileContentResult{std::nullopt, -1};
@@ -1931,7 +1930,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
   if (tilesLoading.size() != maximumLoadsInProgress) {
     tilesLoading.resize(maximumLoadsInProgress, nullptr);
     for (size_t i = 0; i < tilesLoading.size(); ++i) {
-      MTR_FLOW_START("load", ("Loading Slot " + std::to_string(i)).c_str(), i + 1);
+      TRACE_ASYNC_BEGIN(("Loading Slot " + std::to_string(i)).c_str(), i + 1);
     }
   }
 

@@ -9,7 +9,6 @@
 #include "CesiumGeometry/Axis.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
-#include <minitrace.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;

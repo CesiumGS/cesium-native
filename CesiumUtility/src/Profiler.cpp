@@ -36,6 +36,32 @@ void Profiler::writeTrace(const Trace& trace) {
   this->_output << "}";
 }
 
+void Profiler::writeAsyncTrace(const char* category, const char* name, char type, int64_t id) {
+  std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
+  int64_t microseconds =
+      std::chrono::time_point_cast<std::chrono::microseconds>(time)
+          .time_since_epoch()
+          .count();
+
+  std::lock_guard<std::mutex> lock(_lock);
+  if (!this->_output) {
+    return;
+  }
+
+  // Chrome tracing wants the text like this
+  if (this->_numTraces++ > 0) {
+    this->_output << ",";
+  }
+  this->_output << "{";
+  this->_output << "\"cat\":\"" << category << "\",";
+  this->_output << "\"id\":" << id << ",";
+  this->_output << "\"name\":\"" << name << "\",";
+  this->_output << "\"ph\":\"" << type << "\",";
+  this->_output << "\"pid\":0,";
+  this->_output << "\"ts\":" << microseconds;
+  this->_output << "}";
+}
+
 void Profiler::endTracing() {
   this->_output << "]}";
   this->_output.close();
