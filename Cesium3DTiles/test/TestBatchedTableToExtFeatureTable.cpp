@@ -793,3 +793,88 @@ TEST_CASE("Upgrade fixed json number array") {
 }
 
 TEST_CASE("Upgrade dynamic json number array") {}
+
+TEST_CASE("Upgrade fixed array of string") {
+  // clang-format off
+  std::vector<std::string> expected{
+    "Test0", "Test1", "Test2", "Test4",
+    "Test5", "Test6", "Test7", "Test8",
+    "Test9", "Test10", "Test11", "Test12",
+    "Test13", "Test14", "Test15", "Test16",
+  };
+  // clang-format on
+  size_t componentCount = 4;
+
+  Model model;
+
+  rapidjson::Document featureTableJson;
+  featureTableJson.SetObject();
+  rapidjson::Value batchLength(rapidjson::kNumberType);
+  featureTableJson.AddMember(
+      "BATCH_LENGTH",
+      batchLength,
+      featureTableJson.GetAllocator());
+
+  rapidjson::Document jsonBatchTable;
+  jsonBatchTable.SetObject();
+  rapidjson::Value fixedArrayProperties(rapidjson::kArrayType);
+  for (size_t i = 0; i < expected.size(); i += componentCount) {
+    rapidjson::Value innerArray(rapidjson::kArrayType);
+    for (size_t j = i; j < i + componentCount; ++j) {
+      rapidjson::Value value(rapidjson::kStringType);
+      value.SetString(
+          expected[j].c_str(),
+          static_cast<rapidjson::SizeType>(expected[j].size()),
+          jsonBatchTable.GetAllocator());
+      innerArray.PushBack(value, jsonBatchTable.GetAllocator());
+    }
+    fixedArrayProperties.PushBack(innerArray, jsonBatchTable.GetAllocator());
+  }
+
+  jsonBatchTable.AddMember(
+      "fixedArrayProp",
+      fixedArrayProperties,
+      jsonBatchTable.GetAllocator());
+
+  rapidjson::StringBuffer buffer;
+  buffer.Clear();
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  jsonBatchTable.Accept(writer);
+
+  std::string strJsonData = buffer.GetString();
+  gsl::span<const std::byte> jsonData(
+      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
+      strJsonData.size());
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      model,
+      featureTableJson,
+      jsonData,
+      gsl::span<const std::byte>());
+
+  ModelEXT_feature_metadata* metadata =
+      model.getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(metadata != nullptr);
+
+  std::optional<Schema> schema = metadata->schema;
+  REQUIRE(schema != std::nullopt);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 1);
+
+  const FeatureTable& featureTable = metadata->featureTables["default"];
+  checkFixedArrayProperty<std::string, std::string_view>(
+      model,
+      featureTable,
+      defaultClass,
+      "fixedArrayProp",
+      componentCount,
+      "STRING",
+      expected);
+}
