@@ -469,11 +469,20 @@ Tileset::RequestTileContentResult Tileset::requestTileContent(Tile& tile) {
 
   int64_t loaderID = this->notifyTileStartLoading(&tile);
 
+  TRACE_ASYNC_BEGIN("requestAsset", loaderID);
+
   return RequestTileContentResult{
-      this->getExternals().pAssetAccessor->requestAsset(
-          this->getAsyncSystem(),
-          url,
-          tile.getContext()->requestHeaders),
+      this->getExternals()
+          .pAssetAccessor
+          ->requestAsset(
+              this->getAsyncSystem(),
+              url,
+              tile.getContext()->requestHeaders)
+          .thenImmediately(
+              [loaderID](std::shared_ptr<IAssetRequest>&& pRequest) {
+                TRACE_ASYNC_END("requestAsset", loaderID);
+                return pRequest;
+              }),
       loaderID};
 }
 

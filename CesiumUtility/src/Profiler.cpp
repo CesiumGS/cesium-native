@@ -28,33 +28,15 @@ void Profiler::writeTrace(const Trace& trace) {
     this->_output << ",";
   }
 
-  if (Profiler::_threadEnlistedID >= 0) {
-    this->_output << "{";
-    this->_output << "\"cat\":\"cesium\",";
-    this->_output << "\"name\":\"" << trace.name << "\",";
-    this->_output << "\"ph\":\"b\",";
-    this->_output << "\"pid\":0,";
-    this->_output << "\"id\":" << Profiler::_threadEnlistedID << ",";
-    this->_output << "\"ts\":" << trace.start;
-    this->_output << "},{";
-    this->_output << "\"cat\":\"cesium\",";
-    this->_output << "\"name\":\"" << trace.name << "\",";
-    this->_output << "\"ph\":\"e\",";
-    this->_output << "\"pid\":0,";
-    this->_output << "\"id\":" << Profiler::_threadEnlistedID << ",";
-    this->_output << "\"ts\":" << trace.start + trace.duration;
-    this->_output << "}";
-  } else {
-    this->_output << "{";
-    this->_output << "\"cat\":\"cesium\",";
-    this->_output << "\"dur\":" << trace.duration << ',';
-    this->_output << "\"name\":\"" << trace.name << "\",";
-    this->_output << "\"ph\":\"X\",";
-    this->_output << "\"pid\":0,";
-    this->_output << "\"tid\":" << trace.threadID << ",";
-    this->_output << "\"ts\":" << trace.start;
-    this->_output << "}";
-  }
+  this->_output << "{";
+  this->_output << "\"cat\":\"cesium\",";
+  this->_output << "\"dur\":" << trace.duration << ',';
+  this->_output << "\"name\":\"" << trace.name << "\",";
+  this->_output << "\"ph\":\"X\",";
+  this->_output << "\"pid\":0,";
+  this->_output << "\"tid\":" << trace.threadID << ",";
+  this->_output << "\"ts\":" << trace.start;
+  this->_output << "}";
 }
 
 void Profiler::writeAsyncTrace(
@@ -89,6 +71,8 @@ void Profiler::writeAsyncTrace(
 
 void Profiler::enlist(int64_t id) { Profiler::_threadEnlistedID = id; }
 
+int64_t Profiler::getEnlistedID() const { return Profiler::_threadEnlistedID; }
+
 void Profiler::endTracing() {
   this->_output << "]}";
   this->_output.close();
@@ -98,21 +82,39 @@ ScopedTrace::ScopedTrace(const std::string& message)
     : _name{message},
       _startTime{std::chrono::steady_clock::now()},
       _threadId{std::this_thread::get_id()},
-      _reset{false} {}
+      _reset{false} {
+  Profiler& profiler = Profiler::instance();
+  if (profiler.getEnlistedID() >= 0) {
+    profiler.writeAsyncTrace(
+        "cesium",
+        _name.c_str(),
+        'b',
+        profiler.getEnlistedID());
+  }
+}
 
 void ScopedTrace::reset() {
   this->_reset = true;
-  auto endTimePoint = std::chrono::steady_clock::now();
-  int64_t start =
-      std::chrono::time_point_cast<std::chrono::microseconds>(this->_startTime)
-          .time_since_epoch()
-          .count();
-  int64_t end =
-      std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint)
-          .time_since_epoch()
-          .count();
-  Profiler::instance().writeTrace(
-      {this->_name, start, end - start, this->_threadId});
+  Profiler& profiler = Profiler::instance();
+  if (profiler.getEnlistedID() >= 0) {
+    profiler.writeAsyncTrace(
+        "cesium",
+        _name.c_str(),
+        'e',
+        profiler.getEnlistedID());
+  } else {
+    auto endTimePoint = std::chrono::steady_clock::now();
+    int64_t start = std::chrono::time_point_cast<std::chrono::microseconds>(
+                        this->_startTime)
+                        .time_since_epoch()
+                        .count();
+    int64_t end =
+        std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint)
+            .time_since_epoch()
+            .count();
+    profiler.writeTrace(
+        {this->_name, start, end - start, this->_threadId});
+  }
 }
 
 ScopedTrace::~ScopedTrace() {

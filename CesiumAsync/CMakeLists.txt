@@ -39,6 +39,7 @@ target_include_directories(
 
 target_link_libraries(CesiumAsync
     PUBLIC
+        CesiumUtility
         GSL
         Async++
     PRIVATE

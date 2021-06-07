@@ -69,6 +69,7 @@ public:
       char type,
       int64_t id);
   void enlist(int64_t id);
+  int64_t getEnlistedID() const;
 
   void endTracing();
 

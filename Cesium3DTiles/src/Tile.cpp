@@ -14,6 +14,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTiles {
@@ -212,6 +213,7 @@ void Tile::loadContent() {
 
   Tileset::RequestTileContentResult maybeRequestFuture =
       tileset.requestTileContent(*this);
+
   if (!maybeRequestFuture.future) {
     // There is no content to load. But we may need to upsample.
 
@@ -236,6 +238,8 @@ void Tile::loadContent() {
     return;
   }
 
+  TRACE_ASYNC_ENLIST(maybeRequestFuture.loaderID);
+
   struct LoadResult {
     LoadState state;
     std::unique_ptr<TileContentLoadResult> pContent;
@@ -245,16 +249,25 @@ void Tile::loadContent() {
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.future.value())
+      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
+        TRACE_ASYNC_BEGIN(
+            "waiting for worker thread",
+            Profiler::instance().getEnlistedID());
+        return std::move(pRequest);
+      })
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
            gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
-           pLogger = tileset.getExternals().pLogger,
-           loaderID = maybeRequestFuture.loaderID](
+           pLogger = tileset.getExternals().pLogger](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            TRACE_ASYNC_ENLIST(loaderID);
+            TRACE_ASYNC_END(
+                "waiting for worker thread",
+                Profiler::instance().getEnlistedID());
+
+            TRACE("loadContent worker thread");
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               SPDLOG_LOGGER_ERROR(
@@ -310,6 +323,7 @@ void Tile::loadContent() {
                     projections);
 
                 if (pPrepareRendererResources) {
+                  TRACE("prepareInLoadThread");
                   const glm::dmat4& transform = loadInput.tileTransform;
                   pRendererResources =
                       pPrepareRendererResources->prepareInLoadThread(
@@ -326,18 +340,32 @@ void Tile::loadContent() {
 
             return result;
           })
-      .thenInMainThread([this, loaderID = maybeRequestFuture.loaderID](
-                            LoadResult&& loadResult) {
+      .thenImmediately([](LoadResult&& loadResult) {
+        TRACE_ASYNC_BEGIN(
+            "waiting for main thread",
+            Profiler::instance().getEnlistedID());
+        return std::move(loadResult);
+      })
+      .thenInMainThread([this](LoadResult&& loadResult) {
+        TRACE_ASYNC_END(
+            "waiting for main thread",
+            Profiler::instance().getEnlistedID());
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this, loaderID);
+        this->getTileset()->notifyTileDoneLoading(
+            this,
+            Profiler::instance().getEnlistedID());
         this->setState(loadResult.state);
       })
-      .catchInMainThread([this, loaderID = maybeRequestFuture.loaderID](
-                             const std::exception& e) {
+      .catchInMainThread([this](const std::exception& e) {
+        TRACE_ASYNC_END(
+            "waiting for main thread",
+            Profiler::instance().getEnlistedID());
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(this, loaderID);
+        this->getTileset()->notifyTileDoneLoading(
+            this,
+            Profiler::instance().getEnlistedID());
         this->setState(LoadState::Failed);
 
         SPDLOG_LOGGER_ERROR(
@@ -808,6 +836,8 @@ void Tile::upsampleParent(
   Tileset* pTileset = this->getTileset();
   int64_t loaderID = pTileset->notifyTileStartLoading(this);
 
+  TRACE_ASYNC_ENLIST(loaderID);
+
   struct LoadResult {
     LoadState state;
     std::unique_ptr<TileContentLoadResult> pContent;
@@ -822,9 +852,7 @@ void Tile::upsampleParent(
                           boundingVolume = this->getBoundingVolume(),
                           pPrepareRendererResources =
                               pTileset->getExternals()
-                                  .pPrepareRendererResources,
-                          loaderID]() {
-        TRACE_ASYNC_ENLIST(loaderID);
+                                  .pPrepareRendererResources]() {
         std::unique_ptr<TileContentLoadResult> pContent =
             std::make_unique<TileContentLoadResult>();
         pContent->model =
@@ -848,16 +876,20 @@ void Tile::upsampleParent(
             std::move(pContent),
             pRendererResources};
       })
-      .thenInMainThread([this, loaderID](LoadResult&& loadResult) {
+      .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(this, loaderID);
+        this->getTileset()->notifyTileDoneLoading(
+            this,
+            Profiler::instance().getEnlistedID());
         this->setState(loadResult.state);
       })
-      .catchInMainThread([this, loaderID](const std::exception& /*e*/) {
+      .catchInMainThread([this](const std::exception& /*e*/) {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(this, loaderID);
+        this->getTileset()->notifyTileDoneLoading(
+            this,
+            Profiler::instance().getEnlistedID());
         this->setState(LoadState::Failed);
       });
 }

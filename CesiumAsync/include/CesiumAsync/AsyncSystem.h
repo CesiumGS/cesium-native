@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumAsync/Library.h"
+#include "CesiumUtility/Profiler.h"
 #include <memory>
 #include <string>
 #include <variant>
@@ -80,6 +81,31 @@ template <class Func> auto unwrapFuture(Func&& f) {
       TaskUnwrapper<Func>>::type::unwrap(std::forward<Func>(f));
 }
 
+template <class Func, class T> auto withTracing(Func&& f) {
+#if TRACING_ENABLED
+  int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+  return [tracingID, f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
+             T&& result) mutable {
+    TRACE_ASYNC_ENLIST(tracingID);
+    return f(std::move(result));
+  };
+#else
+  return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+#endif
+}
+
+template <class Func> auto withTracing(Func&& f) {
+#if TRACING_ENABLED
+  int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+  return [tracingID, f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
+    TRACE_ASYNC_ENLIST(tracingID);
+    return f();
+  };
+#else
+  return Impl::unwrapFuture<Func>(std::forward<Func>(f));
+#endif
+}
+
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
 } // namespace Impl
@@ -120,9 +146,7 @@ public:
     return Future<typename Impl::RemoveFuture<
         typename std::invoke_result<Func, T>::type>::type>(
         this->_pSchedulers,
-        _task.then(
-            *this->_pSchedulers,
-            Impl::unwrapFuture<Func, T>(std::forward<Func>(f))));
+        _task.then(*this->_pSchedulers, Impl::withTracing<Func, T>(std::forward<Func>(f))));
   }
 
   /**
@@ -149,7 +173,35 @@ public:
         this->_pSchedulers,
         _task.then(
             this->_pSchedulers->mainThreadScheduler,
-            Impl::unwrapFuture<Func, T>(std::forward<Func>(f))));
+            Impl::withTracing<Func, T>(std::forward<Func>(f))));
+  }
+
+  /**
+   * @brief Registers a continuation function to be invoked immediately in
+   * whichever thread causes the Future to be resolved, and invalidates this
+   * Future.
+   *
+   * If the Future is already resolved, the supplied function will be called
+   * immediately in the calling thread and this method will not return until
+   * that function does.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func>
+  Future<typename Impl::RemoveFuture<
+      typename std::invoke_result<Func, T>::type>::type>
+  thenImmediately(Func&& f) && {
+    return Future<typename Impl::RemoveFuture<
+        typename std::invoke_result<Func, T>::type>::type>(
+        this->_pSchedulers,
+        _task.then(
+            async::inline_scheduler(),
+            Impl::withTracing<Func, T>(std::forward<Func>(f))));
   }
 
   /**
@@ -171,7 +223,7 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <class Func> Future<T> catchInMainThread(Func&& f) && {
-    auto catcher = [f = std::move(f)](async::task<T>&& t) {
+    auto catcher = [f = Impl::withTracing<Func, std::exception>(std::forward<Func>(f))](async::task<T>&& t) mutable {
       try {
         return t.get();
       } catch (std::exception& e) {
@@ -300,7 +352,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             *this->_pSchedulers,
-            Impl::unwrapFuture<Func>(std::forward<Func>(f))));
+            Impl::withTracing<Func>(std::forward<Func>(f))));
   }
 
   /**
@@ -327,7 +379,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThreadScheduler,
-            Impl::unwrapFuture<Func>(std::forward<Func>(f))));
+            Impl::withTracing<Func>(std::forward<Func>(f))));
   }
 
   /**
