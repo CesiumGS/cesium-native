@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.14.0, 2021-06-06T17:35:32. -->
+<!-- Written by QtCreator 4.14.0, 2021-06-07T13:12:56. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -68,7 +68,9 @@
     <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp">Checked</value>
     <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Convert binary batch table to EXT_feature_metadata">Checked</value>
     <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Converts simple batch table to EXT_feature_metadata">Checked</value>
-    <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Upgrade bool json to string">Checked</value>
+    <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Upgrade bool json to boolean binary">Checked</value>
+    <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Upgrade dynamic json number array">Checked</value>
+    <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Upgrade fixed json number array">Checked</value>
     <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestBatchedTableToExtFeatureTable.cpp:Upgrade json nested json metadata to string">Checked</value>
     <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestCreditSystem.cpp:C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestCreditSystem.cpp">Checked</value>
     <value type="Qt::CheckState" key="C:/Users/bao/Documents/Projects/cesium-unreal-samples/Plugins/cesium-unreal/extern/cesium-native/Cesium3DTiles/test/TestCreditSystem.cpp:Test basic credit handling">Checked</value>

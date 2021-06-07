@@ -584,4 +584,88 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       expected);
 }
 
-TEST_CASE("Test") {}
+TEST_CASE("Upgrade fixed json number array") {
+  Model model;
+
+  rapidjson::Document featureTableJson;
+  featureTableJson.SetObject();
+  rapidjson::Value batchLength(rapidjson::kNumberType);
+  batchLength.SetInt64(5);
+  featureTableJson.AddMember(
+      "BATCH_LENGTH",
+      batchLength,
+      featureTableJson.GetAllocator());
+
+  // clang-format off
+  std::vector<int32_t> expected{
+      0, 1, 4, 1,
+      1244, 500000, 1222, 544662,
+      123, 10, 122, 334,
+      13, 45, 122, 94,
+      11, 22, 3, 5};
+  // clang-format on
+
+  size_t componentCount = 4;
+  rapidjson::Document jsonBatchTable;
+  jsonBatchTable.SetObject();
+  rapidjson::Value fixedArrayProperties(rapidjson::kArrayType);
+  for (size_t i = 0; i < expected.size(); i += componentCount) {
+    rapidjson::Value innerArray(rapidjson::kArrayType);
+    for (size_t j = i; j < i + componentCount; ++j) {
+      innerArray.PushBack(expected[j], jsonBatchTable.GetAllocator());
+    }
+    fixedArrayProperties.PushBack(innerArray, jsonBatchTable.GetAllocator());
+  }
+
+  jsonBatchTable.AddMember(
+      "fixedArrayProp",
+      fixedArrayProperties,
+      jsonBatchTable.GetAllocator());
+
+  rapidjson::StringBuffer buffer;
+  buffer.Clear();
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  jsonBatchTable.Accept(writer);
+
+  std::string strJsonData = buffer.GetString();
+  gsl::span<const std::byte> jsonData(
+      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
+      strJsonData.size());
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      model,
+      featureTableJson,
+      jsonData,
+      gsl::span<const std::byte>());
+
+  ModelEXT_feature_metadata* metadata =
+      model.getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(metadata != nullptr);
+
+  std::optional<Schema> schema = metadata->schema;
+  REQUIRE(schema != std::nullopt);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 1);
+
+  const ClassProperty& propertyClass = properties.at("fixedArrayProp");
+  REQUIRE(propertyClass.type == "ARRAY");
+
+  const FeatureTable& featureTable = metadata->featureTables["default"];
+  checkFixedArrayProperty(
+      model,
+      featureTable,
+      defaultClass,
+      "fixedArrayProp",
+      4,
+      "INT32",
+      expected);
+}
+
+TEST_CASE("Upgrade dynamic json number array") {}

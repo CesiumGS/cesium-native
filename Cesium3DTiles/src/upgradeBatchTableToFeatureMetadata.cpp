@@ -138,7 +138,10 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       auto memberResult = findCompatibleTypes(*it);
 
       result.type = PropertyType::Array;
-      result.componentType = memberResult.type;
+      if (!result.componentType || result.componentType < memberResult.type) {
+        result.componentType = memberResult.type;
+      }
+
       result.maxComponentCount =
           result.maxComponentCount
               ? glm::max(*result.maxComponentCount, it->Size())
