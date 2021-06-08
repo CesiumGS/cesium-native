@@ -849,14 +849,14 @@ TEST_CASE("Upgrade fixed json number array") {
   SECTION("Boolean") {
     // clang-format off
     std::vector<std::vector<bool>> expected{
-      {true, true, false, true},
-      {true, false, true, false},
-      {false, true, true, false},
-      {false, true, true, true},
+      {true, true, false, true, false, true},
+      {true, false, true, false, true, true},
+      {false, true, true, false, false, true},
+      {false, true, true, true, true, true},
     };
     // clang-format on
 
-    createTestForArrayJson(expected, "BOOLEAN", 4);
+    createTestForArrayJson(expected, "BOOLEAN", 6);
   }
 }
 

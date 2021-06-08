@@ -175,11 +175,12 @@ private:
 
   MetaArrayView<bool> getBooleanArray(size_t instance) const {
     if (_componentCount > 0) {
-      size_t totalBits = _componentCount * instance;
+      size_t offsetBits = _componentCount * instance;
+      size_t nextOffsetBits = _componentCount * (instance + 1);
       gsl::span<const std::byte> buffer(
-          _valueBuffer.data() + totalBits / 8,
-          (_componentCount / 8 + 1));
-      return MetaArrayView<bool>(buffer, totalBits % 8, _componentCount);
+          _valueBuffer.data() + offsetBits / 8,
+          (nextOffsetBits / 8 - offsetBits / 8 + 1));
+      return MetaArrayView<bool>(buffer, offsetBits % 8, _componentCount);
     }
 
     size_t currentOffset =
