@@ -844,6 +844,8 @@ TEST_CASE("Upgrade fixed json number array") {
         "STRING",
         4);
   }
+
+  SECTION("Boolean") {}
 }
 
 TEST_CASE("Upgrade dynamic json number array") {
@@ -988,4 +990,6 @@ TEST_CASE("Upgrade dynamic json number array") {
         "STRING",
         0);
   }
+
+  SECTION("Boolean") {}
 }

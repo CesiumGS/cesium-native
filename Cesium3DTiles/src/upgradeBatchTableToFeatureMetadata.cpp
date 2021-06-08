@@ -314,7 +314,7 @@ void copyNumericDynamicArrayBuffers(
     size_t numOfElements,
     const rapidjson::Value& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
-  offsetBuffer.resize(sizeof(OffsetType) * (numOfElements + 1));
+  offsetBuffer.resize(sizeof(OffsetType) * (propertyValue.Size() + 1));
   ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
   OffsetType* offsetValue = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
@@ -377,43 +377,41 @@ void updateNumericArrayProperty(
   }
 
   // total size of value buffer
-  size_t totalSize = 0;
+  size_t numOfElements = 0;
   for (const auto& jsonArrayMember : jsonOuterArray) {
-    totalSize += jsonArrayMember.Size();
+    numOfElements += jsonArrayMember.Size();
   }
 
   PropertyType offsetType = PropertyType::None;
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
-  if (isInRangeForUnsignedInteger<uint8_t>(totalSize * sizeof(uint8_t))) {
+  uint64_t maxOffsetValue = numOfElements * sizeof(ValueType);
+  if (isInRangeForUnsignedInteger<uint8_t>(maxOffsetValue)) {
     copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint8_t>(
         valueBuffer,
         offsetBuffer,
-        totalSize,
+        numOfElements,
         propertyValue);
     offsetType = PropertyType::Uint8;
-  } else if (isInRangeForUnsignedInteger<uint16_t>(
-                 totalSize * sizeof(uint16_t))) {
+  } else if (isInRangeForUnsignedInteger<uint16_t>(maxOffsetValue)) {
     copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint16_t>(
         valueBuffer,
         offsetBuffer,
-        totalSize,
+        numOfElements,
         propertyValue);
     offsetType = PropertyType::Uint16;
-  } else if (isInRangeForUnsignedInteger<uint32_t>(
-                 totalSize * sizeof(uint32_t))) {
+  } else if (isInRangeForUnsignedInteger<uint32_t>(maxOffsetValue)) {
     copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint32_t>(
         valueBuffer,
         offsetBuffer,
-        totalSize,
+        numOfElements,
         propertyValue);
     offsetType = PropertyType::Uint32;
-  } else if (isInRangeForUnsignedInteger<uint64_t>(
-                 totalSize * sizeof(uint64_t))) {
+  } else if (isInRangeForUnsignedInteger<uint64_t>(maxOffsetValue)) {
     copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint64_t>(
         valueBuffer,
         offsetBuffer,
-        totalSize,
+        numOfElements,
         propertyValue);
     offsetType = PropertyType::Uint64;
   }
@@ -635,7 +633,6 @@ void updateStringArrayProperty(
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "ARRAY";
-  classProperty.componentCount = compatibleTypes.minComponentCount;
   classProperty.componentType = "STRING";
 
   featureTableProperty.bufferView = valueBufferViewIdx;
@@ -644,16 +641,164 @@ void updateStringArrayProperty(
   featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
 }
 
+template <typename OffsetType>
+void copyBooleanArrayBuffers(
+    std::vector<std::byte>& valueBuffer,
+    std::vector<std::byte>& offsetBuffer,
+    size_t numOfElements,
+    const rapidjson::Value& propertyValue) {
+  size_t currentIndex = 0;
+  size_t totalByteLength = numOfElements / 8 + 1;
+  valueBuffer.resize(totalByteLength);
+  offsetBuffer.resize((propertyValue.Size() + 1) * sizeof(OffsetType));
+  OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
+  OffsetType prevOffset = 0;
+  for (const auto& arrayMember : propertyValue.GetArray()) {
+    *offset = prevOffset;
+    ++offset;
+    prevOffset = static_cast<OffsetType>(prevOffset + arrayMember.Size());
+    for (const auto& data : arrayMember.GetArray()) {
+      bool value = data.GetBool();
+      size_t byteIndex = currentIndex / 8;
+      size_t bitIndex = currentIndex % 8;
+      valueBuffer[byteIndex] =
+          static_cast<std::byte>(value << bitIndex) | valueBuffer[byteIndex];
+      ++currentIndex;
+    }
+  }
+
+  *offset = prevOffset;
+}
+
+void updateBooleanArrayProperty(
+    Model& gltf,
+    ClassProperty& classProperty,
+    FeatureTable& featureTable,
+    FeatureTableProperty& featureTableProperty,
+    const CompatibleTypes& compatibleTypes,
+    const rapidjson::Value& propertyValue) {
+  // fixed array of boolean
+  if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
+    size_t totalByteLength = static_cast<size_t>(featureTable.count) *
+                                 compatibleTypes.minComponentCount.value() / 8 +
+                             1;
+    std::vector<std::byte> valueBuffer(totalByteLength);
+    size_t currentIndex = 0;
+    for (const auto& arrayMember : propertyValue.GetArray()) {
+      for (const auto& data : arrayMember.GetArray()) {
+        bool value = data.GetBool();
+        size_t byteIndex = currentIndex / 8;
+        size_t bitIndex = currentIndex % 8;
+        valueBuffer[byteIndex] =
+            static_cast<std::byte>(value << bitIndex) | valueBuffer[byteIndex];
+        ++currentIndex;
+      }
+    }
+
+    Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
+    gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
+    gltfValueBuffer.cesium.data = std::move(valueBuffer);
+
+    BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
+    gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+    gltfValueBufferView.byteOffset = 0;
+    gltfValueBufferView.byteLength = gltfValueBuffer.byteLength;
+
+    classProperty.type = "ARRAY";
+    classProperty.componentCount = compatibleTypes.minComponentCount;
+    classProperty.componentType = "BOOLEAN";
+
+    featureTableProperty.bufferView =
+        static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+    return;
+  }
+
+  // dynamic array of boolean
+  size_t numOfElements = 0;
+  for (const auto& arrayMember : propertyValue.GetArray()) {
+    numOfElements += arrayMember.Size();
+  }
+
+  std::vector<std::byte> valueBuffer;
+  std::vector<std::byte> offsetBuffer;
+  PropertyType offsetType = PropertyType::None;
+  if (isInRangeForUnsignedInteger<uint8_t>(numOfElements)) {
+    copyBooleanArrayBuffers<uint8_t>(
+        valueBuffer,
+        offsetBuffer,
+        numOfElements,
+        propertyValue);
+    offsetType = PropertyType::Uint8;
+  } else if (isInRangeForUnsignedInteger<uint16_t>(numOfElements)) {
+    copyBooleanArrayBuffers<uint16_t>(
+        valueBuffer,
+        offsetBuffer,
+        numOfElements,
+        propertyValue);
+    offsetType = PropertyType::Uint16;
+  } else if (isInRangeForUnsignedInteger<uint32_t>(numOfElements)) {
+    copyBooleanArrayBuffers<uint32_t>(
+        valueBuffer,
+        offsetBuffer,
+        numOfElements,
+        propertyValue);
+    offsetType = PropertyType::Uint32;
+  } else {
+    copyBooleanArrayBuffers<uint64_t>(
+        valueBuffer,
+        offsetBuffer,
+        numOfElements,
+        propertyValue);
+    offsetType = PropertyType::Uint64;
+  }
+
+  Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
+  gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
+  gltfValueBuffer.cesium.data = std::move(valueBuffer);
+
+  BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
+  gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfValueBufferView.byteOffset = 0;
+  gltfValueBufferView.byteLength =
+      static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
+  int32_t valueBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
+  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
+  gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
+
+  BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
+  gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
+  gltfOffsetBufferView.byteOffset = 0;
+  gltfOffsetBufferView.byteLength =
+      static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
+  int32_t offsetBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+
+  classProperty.type = "ARRAY";
+  classProperty.componentType = "BOOLEAN";
+
+  featureTableProperty.bufferView = valueBufferIdx;
+  featureTableProperty.arrayOffsetBufferView = offsetBufferIdx;
+  featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+}
+
 void updateExtensionWithArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& /*featureTable*/,
+    FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
   switch (*compatibleTypes.componentType) {
   case PropertyType::Boolean:
-    // TODO: update Boolean
+    updateBooleanArrayProperty(
+        gltf,
+        classProperty,
+        featureTable,
+        featureTableProperty,
+        compatibleTypes,
+        propertyValue);
     break;
   case PropertyType::Int8:
     updateNumericArrayProperty<int32_t, int8_t>(
