@@ -308,7 +308,7 @@ void updateExtensionWithJsonBoolProperty(
 }
 
 template <typename TRapidjson, typename ValueType, typename OffsetType>
-void updateNumericDynamicArrayProperty(
+void copyNumericDynamicArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
@@ -386,7 +386,7 @@ void updateNumericArrayProperty(
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
   if (isInRangeForUnsignedInteger<uint8_t>(totalSize * sizeof(uint8_t))) {
-    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint8_t>(
+    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint8_t>(
         valueBuffer,
         offsetBuffer,
         totalSize,
@@ -394,7 +394,7 @@ void updateNumericArrayProperty(
     offsetType = PropertyType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(
                  totalSize * sizeof(uint16_t))) {
-    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint16_t>(
+    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint16_t>(
         valueBuffer,
         offsetBuffer,
         totalSize,
@@ -402,7 +402,7 @@ void updateNumericArrayProperty(
     offsetType = PropertyType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(
                  totalSize * sizeof(uint32_t))) {
-    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint32_t>(
+    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint32_t>(
         valueBuffer,
         offsetBuffer,
         totalSize,
@@ -410,7 +410,7 @@ void updateNumericArrayProperty(
     offsetType = PropertyType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(
                  totalSize * sizeof(uint64_t))) {
-    updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint64_t>(
+    copyNumericDynamicArrayBuffers<TRapidjson, ValueType, uint64_t>(
         valueBuffer,
         offsetBuffer,
         totalSize,
@@ -450,7 +450,7 @@ void updateNumericArrayProperty(
 }
 
 template <typename OffsetType>
-void copyJsonStringArrayProperty(
+void copyStringArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t totalByteLength,
@@ -518,7 +518,7 @@ void updateStringArrayProperty(
   std::vector<std::byte> offsetBuffer;
   PropertyType offsetType = PropertyType::None;
   if (isInRangeForUnsignedInteger<uint8_t>(totalByteLength)) {
-    copyJsonStringArrayProperty<uint8_t>(
+    copyStringArrayBuffers<uint8_t>(
         valueBuffer,
         offsetBuffer,
         totalByteLength,
@@ -526,7 +526,7 @@ void updateStringArrayProperty(
         propertyValue);
     offsetType = PropertyType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalByteLength)) {
-    copyJsonStringArrayProperty<uint16_t>(
+    copyStringArrayBuffers<uint16_t>(
         valueBuffer,
         offsetBuffer,
         totalByteLength,
@@ -534,7 +534,7 @@ void updateStringArrayProperty(
         propertyValue);
     offsetType = PropertyType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalByteLength)) {
-    copyJsonStringArrayProperty<uint32_t>(
+    copyStringArrayBuffers<uint32_t>(
         valueBuffer,
         offsetBuffer,
         totalByteLength,
@@ -542,7 +542,7 @@ void updateStringArrayProperty(
         propertyValue);
     offsetType = PropertyType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(totalByteLength)) {
-    copyJsonStringArrayProperty<uint64_t>(
+    copyStringArrayBuffers<uint64_t>(
         valueBuffer,
         offsetBuffer,
         totalByteLength,
