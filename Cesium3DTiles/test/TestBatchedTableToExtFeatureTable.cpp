@@ -172,6 +172,7 @@ static void createTestForArrayJson(
   rapidjson::Document featureTableJson;
   featureTableJson.SetObject();
   rapidjson::Value batchLength(rapidjson::kNumberType);
+  batchLength.SetUint64(expected.size());
   featureTableJson.AddMember(
       "BATCH_LENGTH",
       batchLength,
@@ -845,7 +846,18 @@ TEST_CASE("Upgrade fixed json number array") {
         4);
   }
 
-  SECTION("Boolean") {}
+  SECTION("Boolean") {
+    // clang-format off
+    std::vector<std::vector<bool>> expected{
+      {true, true, false, true},
+      {true, false, true, false},
+      {false, true, true, false},
+      {false, true, true, true},
+    };
+    // clang-format on
+
+    createTestForArrayJson(expected, "BOOLEAN", 4);
+  }
 }
 
 TEST_CASE("Upgrade dynamic json number array") {

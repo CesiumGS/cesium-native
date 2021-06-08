@@ -280,7 +280,8 @@ void updateExtensionWithJsonBoolProperty(
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
-  std::vector<std::byte> data(static_cast<size_t>(featureTable.count / 8 + 1));
+  std::vector<std::byte> data(static_cast<size_t>(
+      glm::ceil(static_cast<double>(featureTable.count) / 8.0)));
   const auto& jsonArray = propertyValue.GetArray();
   for (rapidjson::SizeType i = 0; i < jsonArray.Size(); ++i) {
     bool value = jsonArray[i].GetBool();
@@ -648,7 +649,8 @@ void copyBooleanArrayBuffers(
     size_t numOfElements,
     const rapidjson::Value& propertyValue) {
   size_t currentIndex = 0;
-  size_t totalByteLength = numOfElements / 8 + 1;
+  size_t totalByteLength =
+      static_cast<size_t>(glm::ceil(static_cast<double>(numOfElements) / 8.0));
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize((propertyValue.Size() + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
@@ -673,15 +675,15 @@ void copyBooleanArrayBuffers(
 void updateBooleanArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
   // fixed array of boolean
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
-    size_t totalByteLength = static_cast<size_t>(featureTable.count) *
-                                 compatibleTypes.minComponentCount.value() / 8 +
-                             1;
+    size_t numOfElements =
+        propertyValue.Size() * compatibleTypes.minComponentCount.value();
+    size_t totalByteLength = static_cast<size_t>(
+        glm::ceil(static_cast<double>(numOfElements) / 8.0));
     std::vector<std::byte> valueBuffer(totalByteLength);
     size_t currentIndex = 0;
     for (const auto& arrayMember : propertyValue.GetArray()) {
@@ -786,7 +788,7 @@ void updateBooleanArrayProperty(
 void updateExtensionWithArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    FeatureTable& /*featureTable*/,
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
@@ -795,7 +797,6 @@ void updateExtensionWithArrayProperty(
     updateBooleanArrayProperty(
         gltf,
         classProperty,
-        featureTable,
         featureTableProperty,
         compatibleTypes,
         propertyValue);
