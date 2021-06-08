@@ -188,10 +188,12 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
           header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
 
       if (batchTableLength > 0) {
-        gsl::span<const std::byte> batchTableJsonData =
-            data.subspan(batchTableStart, header.batchTableJsonByteLength);
+        gsl::span<const std::byte> batchTableJsonData = data.subspan(
+            static_cast<size_t>(batchTableStart),
+            header.batchTableJsonByteLength);
         gsl::span<const std::byte> batchTableBinaryData = data.subspan(
-            batchTableStart + header.batchTableJsonByteLength,
+            static_cast<size_t>(
+                batchTableStart + header.batchTableJsonByteLength),
             header.batchTableBinaryByteLength);
         upgradeBatchTableToFeatureMetadata(
             pLogger,
