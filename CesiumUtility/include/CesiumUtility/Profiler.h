@@ -31,6 +31,18 @@
   CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'b', id);
 #define TRACE_ASYNC_END(name, id)                                              \
   CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'e', id);
+#define TRACE_ASYNC_BEGIN2(name)                                                      \
+  CesiumUtility::Profiler::instance().writeAsyncTrace(                         \
+      "cesium",                                                                \
+      name,                                                                    \
+      'b',                                                                     \
+      CesiumUtility::Profiler::instance().getEnlistedID());
+#define TRACE_ASYNC_END2(name)                                                        \
+  CesiumUtility::Profiler::instance().writeAsyncTrace(                         \
+      "cesium",                                                                \
+      name,                                                                    \
+      'e',                                                                     \
+      CesiumUtility::Profiler::instance().getEnlistedID());
 
 /**
  * @brief Enlist the current thread into an async process for the duration of

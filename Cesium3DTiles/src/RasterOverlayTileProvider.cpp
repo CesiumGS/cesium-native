@@ -7,11 +7,13 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGltf/GltfReader.h"
+#include "CesiumUtility/Profiler.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 
@@ -40,7 +42,9 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {
+      _throttledTilesCurrentlyLoading(0),
+      _tilesBeingLoaded(),
+      _loadingIDs() {
   // Placeholders should never be removed.
   this->_pPlaceholder->addReference();
 }
@@ -75,7 +79,9 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {}
+      _throttledTilesCurrentlyLoading(0),
+      _tilesBeingLoaded(),
+      _loadingIDs() {}
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
@@ -455,7 +461,7 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
     return false;
   }
 
-  doLoad(tile, true);
+  this->doLoad(tile, true);
   return true;
 }
 
@@ -464,11 +470,21 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
     const LoadTileImageFromUrlOptions& options) const {
+
+  TRACE_ASYNC_BEGIN2("requestAsset");
+
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
+      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
+        TRACE_ASYNC_END2("requestAsset");
+        TRACE_ASYNC_BEGIN2("waiting for worker thread");
+        return std::move(pRequest);
+      })
       .thenInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            TRACE_ASYNC_END2("waiting for worker thread");
+            TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
@@ -585,6 +601,10 @@ static LoadResult createLoadResultFromLoadedImage(
       static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
   if (image.width > 0 && image.height > 0 &&
       image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
+    TRACE(
+        "Prepare Raster " + std::to_string(image.width) + "x" +
+        std::to_string(image.height) + "x" + std::to_string(image.channels) +
+        "x" + std::to_string(image.bytesPerChannel));
     void* pRendererResources =
         pPrepareRendererResources->prepareRasterInLoadThread(image);
 
@@ -614,21 +634,32 @@ void RasterOverlayTileProvider::doLoad(
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
-  this->beginTileLoad(tile, isThrottledLoad);
+  int64_t loadID = this->beginTileLoad(tile, isThrottledLoad);
+  TRACE_ASYNC_ENLIST(loadID);
 
   this->loadTileImage(tile.getID())
+      .thenImmediately([](LoadedRasterOverlayImage&& loadedImage) {
+        TRACE_ASYNC_BEGIN2("waiting for worker thread");
+        return std::move(loadedImage);
+      })
       .thenInWorkerThread(
           [tileId = tile.getID(),
            pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger =
                this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
+            TRACE_ASYNC_END2("waiting for worker thread");
             return createLoadResultFromLoadedImage(
                 tileId,
                 pPrepareRendererResources,
                 pLogger,
                 std::move(loadedImage));
           })
+      .thenImmediately([](LoadResult&& result) {
+        TRACE_ASYNC_BEGIN2("waiting for main thread");
+        return std::move(result);
+      })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
+        TRACE_ASYNC_END2("waiting for main thread");
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
         tile._tileCredits = std::move(result.credits);
@@ -640,6 +671,7 @@ void RasterOverlayTileProvider::doLoad(
       })
       .catchInMainThread(
           [this, &tile, isThrottledLoad](const std::exception& /*e*/) {
+            TRACE_ASYNC_END2("waiting for main thread");
             tile._pRendererResources = nullptr;
             tile._image = {};
             tile._tileCredits = {};
@@ -649,16 +681,53 @@ void RasterOverlayTileProvider::doLoad(
           });
 }
 
-void RasterOverlayTileProvider::beginTileLoad(
+int64_t RasterOverlayTileProvider::beginTileLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
   // Keep this tile from being destroyed while it's loading.
   tile.addReference();
 
+  int64_t loaderID = -1;
+
   ++this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
+    int32_t maxLoads =
+        this->getOwner().getOptions().maximumSimultaneousTileLoads;
+    if (this->_tilesBeingLoaded.size() != maxLoads) {
+      this->_tilesBeingLoaded.resize(maxLoads, nullptr);
+      this->_loadingIDs.resize(maxLoads, 0);
+
+      for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
+        int64_t id = Profiler::instance().allocateID();
+        this->_loadingIDs[i] = id;
+        TRACE_ASYNC_BEGIN(
+            ("Overlay Loading Slot " + std::to_string(id)).c_str(),
+            id);
+      }
+    }
+
     ++this->_throttledTilesCurrentlyLoading;
+
+    auto it = std::find(
+        this->_tilesBeingLoaded.begin(),
+        this->_tilesBeingLoaded.end(),
+        nullptr);
+
+    if (it != this->_tilesBeingLoaded.end()) {
+      *it = &tile;
+      int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
+      loaderID = this->_loadingIDs[loaderIndex];
+
+      TRACE_ASYNC_BEGIN(
+          ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
+              .c_str(),
+          loaderID);
+    } else {
+      SPDLOG_WARN("Could not find an overlay slot");
+    }
   }
+
+  return loaderID;
 }
 
 void RasterOverlayTileProvider::finalizeTileLoad(
@@ -667,6 +736,21 @@ void RasterOverlayTileProvider::finalizeTileLoad(
   --this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
     --this->_throttledTilesCurrentlyLoading;
+
+    auto it = std::find(
+        this->_tilesBeingLoaded.begin(),
+        this->_tilesBeingLoaded.end(),
+        &tile);
+    if (it != this->_tilesBeingLoaded.end()) {
+      TRACE_ASYNC_END(
+          ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
+              .c_str(),
+          this->_loadingIDs[it - this->_tilesBeingLoaded.begin()]);
+
+      *it = nullptr;
+    } else {
+      SPDLOG_WARN("Loading overlay tile not found");
+    }
   }
 
   // Release the reference we held during load to prevent

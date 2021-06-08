@@ -44,6 +44,7 @@ void Profiler::writeAsyncTrace(
     const char* name,
     char type,
     int64_t id) {
+
   std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
   int64_t microseconds =
       std::chrono::time_point_cast<std::chrono::microseconds>(time)
