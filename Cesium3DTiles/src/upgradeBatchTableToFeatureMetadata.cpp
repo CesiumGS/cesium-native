@@ -82,7 +82,7 @@ void copyStringBuffer(
           rapidjsonBuffer.GetString(),
           bufferLength);
       *offset = stringOffset;
-      stringOffset += static_cast<OffsetType>(bufferLength);
+      stringOffset = static_cast<OffsetType>(stringOffset + bufferLength);
       ++offset;
     }
   }
@@ -210,18 +210,18 @@ void updateExtensionWithJsonStringProperty(
   }
 
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
-  gltfBuffer.byteLength = buffer.size();
+  gltfBuffer.byteLength = static_cast<int64_t>(buffer.size());
   gltfBuffer.cesium.data = std::move(buffer);
 
   BufferView& gltfBufferView = gltf.bufferViews.emplace_back();
   gltfBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
   gltfBufferView.byteOffset = 0;
-  gltfBufferView.byteLength = totalSize;
+  gltfBufferView.byteLength = static_cast<int64_t>(totalSize);
   int32_t valueBufferViewIdx =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = offsetBuffer.size();
+  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
   gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
 
   BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
@@ -252,8 +252,9 @@ void updateExtensionWithJsonNumericProperty(
   // Create a new buffer for this property.
   size_t bufferIndex = gltf.buffers.size();
   Buffer& buffer = gltf.buffers.emplace_back();
-  buffer.byteLength = sizeof(T) * featureTable.count;
-  buffer.cesium.data.resize(buffer.byteLength);
+  buffer.byteLength =
+      static_cast<int64_t>(sizeof(T) * static_cast<size_t>(featureTable.count));
+  buffer.cesium.data.resize(static_cast<size_t>(buffer.byteLength));
 
   size_t bufferViewIndex = gltf.bufferViews.size();
   BufferView& bufferView = gltf.bufferViews.emplace_back();
@@ -279,7 +280,7 @@ void updateExtensionWithJsonBoolProperty(
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
-  std::vector<std::byte> data(featureTable.count / 8 + 1);
+  std::vector<std::byte> data(static_cast<size_t>(featureTable.count / 8 + 1));
   const auto& jsonArray = propertyValue.GetArray();
   for (rapidjson::SizeType i = 0; i < jsonArray.Size(); ++i) {
     bool value = jsonArray[i].GetBool();
@@ -291,7 +292,7 @@ void updateExtensionWithJsonBoolProperty(
 
   size_t bufferIndex = gltf.buffers.size();
   Buffer& buffer = gltf.buffers.emplace_back();
-  buffer.byteLength = data.size();
+  buffer.byteLength = static_cast<int64_t>(data.size());
   buffer.cesium.data = std::move(data);
 
   BufferView& bufferView = gltf.bufferViews.emplace_back();
@@ -325,8 +326,8 @@ void updateNumericDynamicArrayProperty(
       ++value;
     }
 
-    prevOffset +=
-        static_cast<OffsetType>(jsonArrayMember.Size() * sizeof(ValueType));
+    prevOffset = static_cast<OffsetType>(
+        prevOffset + jsonArrayMember.Size() * sizeof(ValueType));
   }
 
   *offsetValue = prevOffset;
@@ -355,13 +356,14 @@ void updateNumericArrayProperty(
     }
 
     Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-    gltfValueBuffer.byteLength = valueBuffer.size();
+    gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
     gltfValueBuffer.cesium.data = std::move(valueBuffer);
 
     BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
     gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
     gltfValueBufferView.byteOffset = 0;
-    gltfValueBufferView.byteLength = gltfValueBuffer.cesium.data.size();
+    gltfValueBufferView.byteLength =
+        static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
 
     classProperty.type = "ARRAY";
     classProperty.componentType = convertProperttTypeToString(
@@ -383,7 +385,7 @@ void updateNumericArrayProperty(
   PropertyType offsetType = PropertyType::None;
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> offsetBuffer;
-  if (isInRangeForSignedInteger<uint8_t>(totalSize * sizeof(uint8_t))) {
+  if (isInRangeForUnsignedInteger<uint8_t>(totalSize * sizeof(uint8_t))) {
     updateNumericDynamicArrayProperty<TRapidjson, ValueType, uint8_t>(
         valueBuffer,
         offsetBuffer,
@@ -417,23 +419,25 @@ void updateNumericArrayProperty(
   }
 
   Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-  gltfValueBuffer.byteLength = valueBuffer.size();
+  gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
   gltfValueBuffer.cesium.data = std::move(valueBuffer);
 
   BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
   gltfValueBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
   gltfValueBufferView.byteOffset = 0;
-  gltfValueBufferView.byteLength = gltfValueBuffer.cesium.data.size();
+  gltfValueBufferView.byteLength =
+      static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
   int32_t valueBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = offsetBuffer.size();
+  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
   gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
 
   BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
   gltfOffsetBufferView.buffer = static_cast<int32_t>(gltf.buffers.size() - 1);
   gltfOffsetBufferView.byteOffset = 0;
-  gltfOffsetBufferView.byteLength = gltfOffsetBuffer.cesium.data.size();
+  gltfOffsetBufferView.byteLength =
+      static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
   int32_t offsetBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "ARRAY";
@@ -465,7 +469,7 @@ void copyJsonStringArrayProperty(
           offsetBuffer.data() + offsetIndex * sizeof(OffsetType),
           &offset,
           sizeof(OffsetType));
-      offset += byteLength;
+      offset = static_cast<OffsetType>(offset + byteLength);
       ++offsetIndex;
     }
   }
@@ -486,8 +490,8 @@ void copyArrayOffsetBufferForStringArrayProperty(
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   for (const auto& arrayMember : propertyValue.GetArray()) {
     *offset = prevOffset;
-    prevOffset +=
-        static_cast<OffsetType>(arrayMember.Size() * sizeof(OffsetType));
+    prevOffset = static_cast<OffsetType>(
+        prevOffset + arrayMember.Size() * sizeof(OffsetType));
     ++offset;
   }
 
@@ -549,7 +553,7 @@ void updateStringArrayProperty(
 
   // create gltf value buffer view
   Buffer& gltfValueBuffer = gltf.buffers.emplace_back();
-  gltfValueBuffer.byteLength = valueBuffer.size();
+  gltfValueBuffer.byteLength = static_cast<int64_t>(valueBuffer.size());
   gltfValueBuffer.cesium.data = std::move(valueBuffer);
 
   BufferView& gltfValueBufferView = gltf.bufferViews.emplace_back();
@@ -562,7 +566,7 @@ void updateStringArrayProperty(
 
   // create gltf string offset buffer view
   Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
-  gltfOffsetBuffer.byteLength = offsetBuffer.size();
+  gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
   gltfOffsetBuffer.cesium.data = std::move(offsetBuffer);
 
   BufferView& gltfOffsetBufferView = gltf.bufferViews.emplace_back();
@@ -618,7 +622,8 @@ void updateStringArrayProperty(
 
   // create gltf array offset buffer view
   Buffer& gltfArrayOffsetBuffer = gltf.buffers.emplace_back();
-  gltfArrayOffsetBuffer.byteLength = arrayOffsetBuffer.size();
+  gltfArrayOffsetBuffer.byteLength =
+      static_cast<int64_t>(arrayOffsetBuffer.size());
   gltfArrayOffsetBuffer.cesium.data = std::move(arrayOffsetBuffer);
 
   BufferView& gltfArrayOffsetBufferView = gltf.bufferViews.emplace_back();
@@ -958,7 +963,8 @@ void updateExtensionWithBinaryProperty(
   bufferView.buffer = gltfBufferIndex;
   bufferView.byteOffset = gltfBufferOffset;
   bufferView.byteStride = 0;
-  bufferView.byteLength = typeSize * componentCount * featureTable.count;
+  bufferView.byteLength = static_cast<int64_t>(
+      typeSize * componentCount * static_cast<size_t>(featureTable.count));
 
   featureTableProperty.bufferView =
       static_cast<int32_t>(gltf.bufferViews.size() - 1);
@@ -1070,14 +1076,14 @@ void upgradeBatchTableToFeatureMetadata(
 
   // re-arrange binary property buffer
   if (!batchTableBinaryData.empty()) {
-    Buffer& buffer = gltf.buffers[gltfBufferIndex];
+    Buffer& buffer = gltf.buffers[static_cast<size_t>(gltfBufferIndex)];
     buffer.byteLength = gltfBufferOffset;
-    buffer.cesium.data.resize(gltfBufferOffset);
+    buffer.cesium.data.resize(static_cast<size_t>(gltfBufferOffset));
     for (const BinaryProperty& binaryProperty : binaryProperties) {
       std::memcpy(
           buffer.cesium.data.data() + binaryProperty.gltfByteOffset,
           batchTableBinaryData.data() + binaryProperty.b3dmByteOffset,
-          binaryProperty.byteLength);
+          static_cast<size_t>(binaryProperty.byteLength));
     }
   }
 

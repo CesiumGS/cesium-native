@@ -1,7 +1,9 @@
 #include "CesiumGltf/MetadataPropertyView.h"
 #include "catch2/catch.hpp"
 #include <bitset>
+#include <climits>
 #include <cstddef>
+#include <cstring>
 #include <gsl/span>
 #include <vector>
 
@@ -62,8 +64,8 @@ static void checkDynamicArray(
 template <typename T>
 static void checkFixedArray(
     const std::vector<T>& data,
-    int64_t componentCount,
-    int64_t instanceCount) {
+    size_t componentCount,
+    size_t instanceCount) {
   std::vector<std::byte> buffer;
   buffer.resize(data.size() * sizeof(T));
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));

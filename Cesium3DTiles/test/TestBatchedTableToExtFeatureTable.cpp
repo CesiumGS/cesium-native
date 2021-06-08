@@ -28,23 +28,25 @@ static void checkScalarProperty(
   // retrieve value buffer
   const FeatureTableProperty& featureTableProperty =
       featureTable.properties.at(propertyName);
-  const BufferView& valueBufferView =
-      model.bufferViews.at(featureTableProperty.bufferView);
-  const Buffer& valueBuffer = model.buffers.at(valueBufferView.buffer);
+  const BufferView& valueBufferView = model.bufferViews.at(
+      static_cast<size_t>(featureTableProperty.bufferView));
+  const Buffer& valueBuffer =
+      model.buffers.at(static_cast<size_t>(valueBufferView.buffer));
   gsl::span<const std::byte> values(
       valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
-      valueBufferView.byteLength);
+      static_cast<size_t>(valueBufferView.byteLength));
 
   // retrieve string offset buffer if expected type is string
   PropertyType offsetType = PropertyType::None;
   gsl::span<const std::byte> stringOffsetValues;
   if (expectedPropertyType == "STRING") {
-    const BufferView& offsetBufferView =
-        model.bufferViews.at(featureTableProperty.stringOffsetBufferView);
-    const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
+    const BufferView& offsetBufferView = model.bufferViews.at(
+        static_cast<size_t>(featureTableProperty.stringOffsetBufferView));
+    const Buffer& offsetBuffer =
+        model.buffers.at(static_cast<size_t>(offsetBufferView.buffer));
     stringOffsetValues = gsl::span<const std::byte>(
         offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
-        offsetBufferView.byteLength);
+        static_cast<size_t>(offsetBufferView.byteLength));
 
     offsetType = CesiumGltf::convertStringToPropertyType(
         featureTableProperty.offsetType);
@@ -56,7 +58,7 @@ static void checkScalarProperty(
       stringOffsetValues,
       offsetType,
       0,
-      featureTable.count);
+      static_cast<size_t>(featureTable.count));
 
   // check buffer size is correct
   REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
@@ -91,12 +93,13 @@ static void checkArrayProperty(
 
   const FeatureTableProperty& featureTableProperty =
       featureTable.properties.at(propertyName);
-  const BufferView& valueBufferView =
-      model.bufferViews.at(featureTableProperty.bufferView);
-  const Buffer& valueBuffer = model.buffers.at(valueBufferView.buffer);
+  const BufferView& valueBufferView = model.bufferViews.at(
+      static_cast<size_t>(featureTableProperty.bufferView));
+  const Buffer& valueBuffer =
+      model.buffers.at(static_cast<size_t>(valueBufferView.buffer));
   gsl::span<const std::byte> values(
       valueBuffer.cesium.data.data() + valueBufferView.byteOffset,
-      valueBufferView.byteLength);
+      static_cast<size_t>(valueBufferView.byteLength));
 
   // retrieve offset type
   PropertyType offsetType = PropertyType::None;
@@ -109,23 +112,25 @@ static void checkArrayProperty(
   // retrieve array offset buffer
   gsl::span<const std::byte> arrayOffsetValues;
   if (featureTableProperty.arrayOffsetBufferView >= 0) {
-    const BufferView& offsetBufferView =
-        model.bufferViews.at(featureTableProperty.arrayOffsetBufferView);
-    const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
+    const BufferView& offsetBufferView = model.bufferViews.at(
+        static_cast<size_t>(featureTableProperty.arrayOffsetBufferView));
+    const Buffer& offsetBuffer =
+        model.buffers.at(static_cast<size_t>(offsetBufferView.buffer));
     arrayOffsetValues = gsl::span<const std::byte>(
         offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
-        offsetBufferView.byteLength);
+        static_cast<size_t>(offsetBufferView.byteLength));
   }
 
   // retrieve string offset buffer if expected type is string
   gsl::span<const std::byte> stringOffsetValues;
   if (featureTableProperty.stringOffsetBufferView >= 0) {
-    const BufferView& offsetBufferView =
-        model.bufferViews.at(featureTableProperty.stringOffsetBufferView);
-    const Buffer& offsetBuffer = model.buffers.at(offsetBufferView.buffer);
+    const BufferView& offsetBufferView = model.bufferViews.at(
+        static_cast<size_t>(featureTableProperty.stringOffsetBufferView));
+    const Buffer& offsetBuffer =
+        model.buffers.at(static_cast<size_t>(offsetBufferView.buffer));
     stringOffsetValues = gsl::span<const std::byte>(
         offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
-        offsetBufferView.byteLength);
+        static_cast<size_t>(offsetBufferView.byteLength));
   }
 
   MetadataPropertyView<MetaArrayView<PropertyViewType>> propertyView(
@@ -134,7 +139,7 @@ static void checkArrayProperty(
       stringOffsetValues,
       offsetType,
       expectedComponentCount,
-      featureTable.count);
+      static_cast<size_t>(featureTable.count));
 
   REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < expected.size(); ++i) {
