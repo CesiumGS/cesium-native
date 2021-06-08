@@ -49,6 +49,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _loadsInProgress(0),
       _tilesBeingLoaded(),
+      _loadingIDs(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
@@ -77,6 +78,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _loadsInProgress(0),
       _tilesBeingLoaded(),
+      _loadingIDs(),
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false) {
@@ -124,8 +126,9 @@ Tileset::~Tileset() {
     }
   }
 
-  for (size_t i = 0; i < this->_tilesBeingLoaded.size(); ++i) {
-    TRACE_ASYNC_END(("Loading Slot " + std::to_string(i)).c_str(), i + 1);
+  for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
+    int64_t id = this->_loadingIDs[i];
+    TRACE_ASYNC_END(("Tileset Loading Slot " + std::to_string(id)).c_str(), id);
   }
 }
 
@@ -401,7 +404,8 @@ int64_t Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
 
     if (it != this->_tilesBeingLoaded.end()) {
       *it = pTile;
-      loaderID = it - this->_tilesBeingLoaded.begin() + 1;
+      int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
+      loaderID = this->_loadingIDs[loaderIndex];
 
       TRACE_ASYNC_BEGIN(
           TileIdUtilities::createTileIdString(pTile->getTileID()).c_str(),
@@ -1769,20 +1773,28 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 }
 
 void Tileset::_processLoadQueue() {
+  if (this->_tilesBeingLoaded.size() != this->_options.maximumSimultaneousTileLoads) {
+    this->_tilesBeingLoaded.resize(this->_options.maximumSimultaneousTileLoads, nullptr);
+    this->_loadingIDs.resize(this->_options.maximumSimultaneousTileLoads, 0);
+    
+    for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
+      int64_t id = Profiler::instance().allocateID();
+      this->_loadingIDs[i] = id;
+      TRACE_ASYNC_BEGIN(("Tileset Loading Slot " + std::to_string(id)).c_str(), id);
+    }
+  }
+
   Tileset::processQueue(
       this->_loadQueueHigh,
       this->_loadsInProgress,
-      this->_tilesBeingLoaded,
       this->_options.maximumSimultaneousTileLoads);
   Tileset::processQueue(
       this->_loadQueueMedium,
       this->_loadsInProgress,
-      this->_tilesBeingLoaded,
       this->_options.maximumSimultaneousTileLoads);
   Tileset::processQueue(
       this->_loadQueueLow,
       this->_loadsInProgress,
-      this->_tilesBeingLoaded,
       this->_options.maximumSimultaneousTileLoads);
 }
 
@@ -1930,17 +1942,9 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
 /*static*/ void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
     std::atomic<uint32_t>& loadsInProgress,
-    std::vector<Tile*>& tilesLoading,
     uint32_t maximumLoadsInProgress) {
   if (loadsInProgress >= maximumLoadsInProgress) {
     return;
-  }
-
-  if (tilesLoading.size() != maximumLoadsInProgress) {
-    tilesLoading.resize(maximumLoadsInProgress, nullptr);
-    for (size_t i = 0; i < tilesLoading.size(); ++i) {
-      TRACE_ASYNC_BEGIN(("Loading Slot " + std::to_string(i)).c_str(), i + 1);
-    }
   }
 
   std::sort(queue.begin(), queue.end());

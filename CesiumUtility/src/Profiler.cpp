@@ -8,7 +8,7 @@ Profiler& Profiler::instance() {
 
 /*static*/ thread_local int64_t Profiler::_threadEnlistedID = -1;
 
-Profiler::Profiler() : _output{}, _numTraces{0}, _lock{} {}
+Profiler::Profiler() : _output{}, _numTraces{0}, _lock{}, _lastAllocatedID(0) {}
 
 Profiler::~Profiler() { endTracing(); }
 
@@ -72,6 +72,10 @@ void Profiler::writeAsyncTrace(
 void Profiler::enlist(int64_t id) { Profiler::_threadEnlistedID = id; }
 
 int64_t Profiler::getEnlistedID() const { return Profiler::_threadEnlistedID; }
+
+int64_t Profiler::allocateID() {
+  return ++this->_lastAllocatedID;
+}
 
 void Profiler::endTracing() {
   this->_output << "]}";

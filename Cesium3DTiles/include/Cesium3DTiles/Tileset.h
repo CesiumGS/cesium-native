@@ -554,6 +554,7 @@ private:
   std::vector<LoadRecord> _loadQueueLow;
   std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
   std::vector<Tile*> _tilesBeingLoaded;
+  std::vector<int64_t> _loadingIDs;
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -583,7 +584,6 @@ private:
   static void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       std::atomic<uint32_t>& loadsInProgress,
-      std::vector<Tile*>& tilesLoading,
       uint32_t maximumLoadsInProgress);
 
   Tileset(const Tileset& rhs) = delete;

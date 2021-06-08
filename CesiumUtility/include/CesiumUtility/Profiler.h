@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <fstream>
 #include <mutex>
@@ -35,7 +36,8 @@
  * @brief Enlist the current thread into an async process for the duration of
  * the current scope.
  */
-#define TRACE_ASYNC_ENLIST(id) CesiumUtility::ScopedEnlist TRACE_NAME_AUX2(tracerEnlist, __LINE__)(id);
+#define TRACE_ASYNC_ENLIST(id)                                                 \
+  CesiumUtility::ScopedEnlist TRACE_NAME_AUX2(tracerEnlist, __LINE__)(id);
 #else
 #define LAMBDA_CAPTURE_TRACE_START(name)
 #define LAMBDA_CAPTURE_TRACE_END(name)
@@ -71,6 +73,8 @@ public:
   void enlist(int64_t id);
   int64_t getEnlistedID() const;
 
+  int64_t allocateID();
+
   void endTracing();
 
 private:
@@ -79,6 +83,7 @@ private:
   std::ofstream _output;
   uint32_t _numTraces;
   std::mutex _lock;
+  std::atomic<int64_t> _lastAllocatedID;
   static thread_local int64_t _threadEnlistedID;
 };
 
