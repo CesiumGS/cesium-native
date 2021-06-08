@@ -192,7 +192,7 @@ private:
     size_t totalBits = nextOffset - currentOffset;
     gsl::span<const std::byte> buffer(
         _valueBuffer.data() + currentOffset / 8,
-        (totalBits / 8 + 1));
+        (nextOffset / 8 - currentOffset / 8 + 1));
     return MetaArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 

@@ -1003,5 +1003,17 @@ TEST_CASE("Upgrade dynamic json number array") {
         0);
   }
 
-  SECTION("Boolean") {}
+  SECTION("Boolean") {
+    // clang-format off
+    std::vector<std::vector<bool>> expected{
+      {true, true, false, true, false, false, true},
+      {true, false},
+      {false, true, true, false},
+      {false, true, true},
+      {true, true, true, true, false, false}
+    };
+    // clang-format on
+
+    createTestForArrayJson(expected, "BOOLEAN", 0);
+  }
 }
