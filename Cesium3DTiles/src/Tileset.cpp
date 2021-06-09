@@ -1181,8 +1181,14 @@ static bool isCompletelyClipped(
   // Iterate through all clipping polygons.
   for (size_t i = 0; i < cartographicSelections.size(); ++i) {
     const CartographicSelection& selection = cartographicSelections[i];
-
     if (!selection.isForCulling()) {
+      continue;
+    }
+
+    const std::optional<GlobeRectangle>& polygonBoundingRectangle =
+        selection.getBoundingRectangle();
+    if (!polygonBoundingRectangle ||
+        !pRectangle->intersect(*polygonBoundingRectangle)) {
       continue;
     }
 
