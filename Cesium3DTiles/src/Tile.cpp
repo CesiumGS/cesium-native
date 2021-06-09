@@ -249,12 +249,6 @@ void Tile::loadContent() {
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.future.value())
-      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
-        TRACE_ASYNC_BEGIN(
-            "waiting for worker thread",
-            Profiler::instance().getEnlistedID());
-        return std::move(pRequest);
-      })
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
@@ -263,10 +257,6 @@ void Tile::loadContent() {
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            TRACE_ASYNC_END(
-                "waiting for worker thread",
-                Profiler::instance().getEnlistedID());
-
             TRACE("loadContent worker thread");
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -340,16 +330,7 @@ void Tile::loadContent() {
 
             return result;
           })
-      .thenImmediately([](LoadResult&& loadResult) {
-        TRACE_ASYNC_BEGIN(
-            "waiting for main thread",
-            Profiler::instance().getEnlistedID());
-        return std::move(loadResult);
-      })
       .thenInMainThread([this](LoadResult&& loadResult) {
-        TRACE_ASYNC_END(
-            "waiting for main thread",
-            Profiler::instance().getEnlistedID());
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(
@@ -358,9 +339,6 @@ void Tile::loadContent() {
         this->setState(loadResult.state);
       })
       .catchInMainThread([this](const std::exception& e) {
-        TRACE_ASYNC_END(
-            "waiting for main thread",
-            Profiler::instance().getEnlistedID());
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
         this->getTileset()->notifyTileDoneLoading(

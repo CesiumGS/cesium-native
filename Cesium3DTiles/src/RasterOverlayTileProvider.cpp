@@ -477,13 +477,11 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
         TRACE_ASYNC_END2("requestAsset");
-        TRACE_ASYNC_BEGIN2("waiting for worker thread");
         return std::move(pRequest);
       })
       .thenInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            TRACE_ASYNC_END2("waiting for worker thread");
             TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
@@ -638,28 +636,18 @@ void RasterOverlayTileProvider::doLoad(
   TRACE_ASYNC_ENLIST(loadID);
 
   this->loadTileImage(tile.getID())
-      .thenImmediately([](LoadedRasterOverlayImage&& loadedImage) {
-        TRACE_ASYNC_BEGIN2("waiting for worker thread");
-        return std::move(loadedImage);
-      })
       .thenInWorkerThread(
           [tileId = tile.getID(),
            pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger =
                this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
-            TRACE_ASYNC_END2("waiting for worker thread");
             return createLoadResultFromLoadedImage(
                 tileId,
                 pPrepareRendererResources,
                 pLogger,
                 std::move(loadedImage));
           })
-      .thenImmediately([](LoadResult&& result) {
-        TRACE_ASYNC_BEGIN2("waiting for main thread");
-        return std::move(result);
-      })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
-        TRACE_ASYNC_END2("waiting for main thread");
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
         tile._tileCredits = std::move(result.credits);
@@ -671,7 +659,6 @@ void RasterOverlayTileProvider::doLoad(
       })
       .catchInMainThread(
           [this, &tile, isThrottledLoad](const std::exception& /*e*/) {
-            TRACE_ASYNC_END2("waiting for main thread");
             tile._pRendererResources = nullptr;
             tile._image = {};
             tile._tileCredits = {};

@@ -81,12 +81,18 @@ template <class Func> auto unwrapFuture(Func&& f) {
       TaskUnwrapper<Func>>::type::unwrap(std::forward<Func>(f));
 }
 
-template <class Func, class T> auto withTracing(Func&& f) {
+template <class Func, class T>
+auto withTracing(const char* tracingName, Func&& f) {
 #if TRACING_ENABLED
   int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-  return [tracingID, f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
+  return [tracingID,
+          tracingName,
+          f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
              T&& result) mutable {
     TRACE_ASYNC_ENLIST(tracingID);
+    if (tracingName && tracingID >= 0) {
+      TRACE_ASYNC_END(tracingName, tracingID);
+    }
     return f(std::move(result));
   };
 #else
@@ -94,11 +100,16 @@ template <class Func, class T> auto withTracing(Func&& f) {
 #endif
 }
 
-template <class Func> auto withTracing(Func&& f) {
+template <class Func> auto withTracing(const char* tracingName, Func&& f) {
 #if TRACING_ENABLED
   int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-  return [tracingID, f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
+  return [tracingID,
+          tracingName,
+          f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
     TRACE_ASYNC_ENLIST(tracingID);
+    if (tracingName && tracingID >= 0) {
+      TRACE_ASYNC_END(tracingName, tracingID);
+    }
     return f();
   };
 #else
@@ -143,10 +154,32 @@ public:
   Future<typename Impl::RemoveFuture<
       typename std::invoke_result<Func, T>::type>::type>
   thenInWorkerThread(Func&& f) && {
+    // When tracing is enabled, we measure the time between scheduling and
+    // dispatching of the work.
+#if TRACING_ENABLED
+    static const char* tracingName = "waiting for worker thread";
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+#endif
+
     return Future<typename Impl::RemoveFuture<
         typename std::invoke_result<Func, T>::type>::type>(
         this->_pSchedulers,
-        _task.then(*this->_pSchedulers, Impl::withTracing<Func, T>(std::forward<Func>(f))));
+        this->_task
+#if TRACING_ENABLED
+            .then(
+                async::inline_scheduler(),
+                [tracingID](T&& value) mutable {
+                  if (tracingID >= 0) {
+                    TRACE_ASYNC_BEGIN(tracingName, tracingID);
+                  }
+                  return std::move(value);
+                })
+#endif
+            .then(
+                *this->_pSchedulers,
+                Impl::withTracing<Func, T>(
+                    tracingName,
+                    std::forward<Func>(f))));
   }
 
   /**
@@ -168,12 +201,32 @@ public:
   Future<typename Impl::RemoveFuture<
       typename std::invoke_result<Func, T>::type>::type>
   thenInMainThread(Func&& f) && {
+    // When tracing is enabled, we measure the time between scheduling and
+    // dispatching of the work.
+#if TRACING_ENABLED
+    static const char* tracingName = "waiting for main thread";
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+#endif
+
     return Future<typename Impl::RemoveFuture<
         typename std::invoke_result<Func, T>::type>::type>(
         this->_pSchedulers,
-        _task.then(
-            this->_pSchedulers->mainThreadScheduler,
-            Impl::withTracing<Func, T>(std::forward<Func>(f))));
+        this->_task
+#if TRACING_ENABLED
+            .then(
+                async::inline_scheduler(),
+                [tracingID](T&& value) mutable {
+                  if (tracingID >= 0) {
+                    TRACE_ASYNC_BEGIN(tracingName, tracingID);
+                  }
+                  return std::move(value);
+                })
+#endif
+            .then(
+                this->_pSchedulers->mainThreadScheduler,
+                Impl::withTracing<Func, T>(
+                    tracingName,
+                    std::forward<Func>(f))));
   }
 
   /**
@@ -201,7 +254,7 @@ public:
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::withTracing<Func, T>(std::forward<Func>(f))));
+            Impl::withTracing<Func, T>(nullptr, std::forward<Func>(f))));
   }
 
   /**
@@ -223,7 +276,14 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <class Func> Future<T> catchInMainThread(Func&& f) && {
-    auto catcher = [f = Impl::withTracing<Func, std::exception>(std::forward<Func>(f))](async::task<T>&& t) mutable {
+    // When tracing is enabled, we measure the time between scheduling and
+    // dispatching of the work.
+#if TRACING_ENABLED
+    static const char* tracingName = "waiting for main thread catch";
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+#endif
+
+    auto catcher = [f = std::forward<Func>(f)](async::task<T>&& t) mutable {
       try {
         return t.get();
       } catch (std::exception& e) {
@@ -235,7 +295,22 @@ public:
 
     return Future<T>(
         this->_pSchedulers,
-        _task.then(this->_pSchedulers->mainThreadScheduler, catcher));
+        _task
+#if TRACING_ENABLED
+            .then(
+                async::inline_scheduler(),
+                [tracingID](async::task<T>&& t) mutable {
+                  if (tracingID >= 0) {
+                    TRACE_ASYNC_BEGIN(tracingName, tracingID);
+                  }
+                  return std::move(t);
+                })
+#endif
+            .then(
+                this->_pSchedulers->mainThreadScheduler,
+                Impl::withTracing<decltype(catcher), async::task<T>>(
+                    tracingName,
+                    std::move(catcher))));
   }
 
   /**
@@ -347,12 +422,20 @@ public:
   Future<typename Impl::RemoveFuture<
       typename std::invoke_result<Func>::type>::type>
   runInWorkerThread(Func&& f) const {
+#if TRACING_ENABLED
+    static const char* tracingName = "waiting for worker thread";
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    if (tracingID >= 0) {
+      TRACE_ASYNC_BEGIN(tracingName, tracingID);
+    }
+#endif
+
     return Future<typename Impl::RemoveFuture<
         typename std::invoke_result<Func>::type>::type>(
         this->_pSchedulers,
         async::spawn(
             *this->_pSchedulers,
-            Impl::withTracing<Func>(std::forward<Func>(f))));
+            Impl::withTracing<Func>(tracingName, std::forward<Func>(f))));
   }
 
   /**
@@ -374,12 +457,20 @@ public:
   Future<typename Impl::RemoveFuture<
       typename std::invoke_result<Func>::type>::type>
   runInMainThread(Func&& f) const {
+#if TRACING_ENABLED
+    static const char* tracingName = "waiting for main thread";
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    if (tracingID >= 0) {
+      TRACE_ASYNC_BEGIN(tracingName, tracingID);
+    }
+#endif
+
     return Future<typename Impl::RemoveFuture<
         typename std::invoke_result<Func>::type>::type>(
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThreadScheduler,
-            Impl::withTracing<Func>(std::forward<Func>(f))));
+            Impl::withTracing<Func>(tracingName, std::forward<Func>(f))));
   }
 
   /**
