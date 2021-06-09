@@ -45,6 +45,11 @@ void Profiler::writeAsyncTrace(
     char type,
     int64_t id) {
 
+  if (id < 0) {
+    // Ignore async tracing without a valid async ID.
+    return;
+  }
+
   std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
   int64_t microseconds =
       std::chrono::time_point_cast<std::chrono::microseconds>(time)
@@ -74,9 +79,7 @@ void Profiler::enlist(int64_t id) { Profiler::_threadEnlistedID = id; }
 
 int64_t Profiler::getEnlistedID() const { return Profiler::_threadEnlistedID; }
 
-int64_t Profiler::allocateID() {
-  return ++this->_lastAllocatedID;
-}
+int64_t Profiler::allocateID() { return ++this->_lastAllocatedID; }
 
 void Profiler::endTracing() {
   this->_output << "]}";
@@ -117,8 +120,7 @@ void ScopedTrace::reset() {
         std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint)
             .time_since_epoch()
             .count();
-    profiler.writeTrace(
-        {this->_name, start, end - start, this->_threadId});
+    profiler.writeTrace({this->_name, start, end - start, this->_threadId});
   }
 }
 
@@ -128,12 +130,13 @@ ScopedTrace::~ScopedTrace() {
   }
 }
 
-ScopedEnlist::ScopedEnlist(int64_t id) {
+ScopedEnlist::ScopedEnlist(int64_t id)
+    : _previousID(CesiumUtility::Profiler::instance().getEnlistedID()) {
   CesiumUtility::Profiler::instance().enlist(id);
 }
 
 ScopedEnlist::~ScopedEnlist() {
-  CesiumUtility::Profiler::instance().enlist(-1);
+  CesiumUtility::Profiler::instance().enlist(this->_previousID);
 }
 
 } // namespace CesiumUtility

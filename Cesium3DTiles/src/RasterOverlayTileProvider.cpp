@@ -471,14 +471,8 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::vector<IAssetAccessor::THeader>& headers,
     const LoadTileImageFromUrlOptions& options) const {
 
-  TRACE_ASYNC_BEGIN("requestAsset");
-
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
-        TRACE_ASYNC_END("requestAsset");
-        return std::move(pRequest);
-      })
       .thenInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {

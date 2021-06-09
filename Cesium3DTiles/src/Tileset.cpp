@@ -128,7 +128,9 @@ Tileset::~Tileset() {
 
   for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
     int64_t id = this->_loadingIDs[i];
-    TRACE_ASYNC_END_ID(("Tileset Loading Slot " + std::to_string(id)).c_str(), id);
+    TRACE_ASYNC_END_ID(
+        ("Tileset Loading Slot " + std::to_string(id)).c_str(),
+        id);
   }
 }
 
@@ -473,20 +475,13 @@ Tileset::RequestTileContentResult Tileset::requestTileContent(Tile& tile) {
 
   int64_t loaderID = this->notifyTileStartLoading(&tile);
 
-  TRACE_ASYNC_BEGIN_ID("requestAsset", loaderID);
+  TRACE_ASYNC_ENLIST(loaderID);
 
   return RequestTileContentResult{
-      this->getExternals()
-          .pAssetAccessor
-          ->requestAsset(
-              this->getAsyncSystem(),
-              url,
-              tile.getContext()->requestHeaders)
-          .thenImmediately(
-              [loaderID](std::shared_ptr<IAssetRequest>&& pRequest) {
-                TRACE_ASYNC_END_ID("requestAsset", loaderID);
-                return pRequest;
-              }),
+      this->getExternals().pAssetAccessor->requestAsset(
+          this->getAsyncSystem(),
+          url,
+          tile.getContext()->requestHeaders),
       loaderID};
 }
 
@@ -1773,14 +1768,19 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 }
 
 void Tileset::_processLoadQueue() {
-  if (this->_tilesBeingLoaded.size() != this->_options.maximumSimultaneousTileLoads) {
-    this->_tilesBeingLoaded.resize(this->_options.maximumSimultaneousTileLoads, nullptr);
+  if (this->_tilesBeingLoaded.size() !=
+      this->_options.maximumSimultaneousTileLoads) {
+    this->_tilesBeingLoaded.resize(
+        this->_options.maximumSimultaneousTileLoads,
+        nullptr);
     this->_loadingIDs.resize(this->_options.maximumSimultaneousTileLoads, 0);
-    
+
     for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
       int64_t id = Profiler::instance().allocateID();
       this->_loadingIDs[i] = id;
-      TRACE_ASYNC_BEGIN_ID(("Tileset Loading Slot " + std::to_string(id)).c_str(), id);
+      TRACE_ASYNC_BEGIN_ID(
+          ("Tileset Loading Slot " + std::to_string(id)).c_str(),
+          id);
     }
   }
 

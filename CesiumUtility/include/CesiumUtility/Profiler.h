@@ -119,6 +119,9 @@ class ScopedEnlist {
 public:
   explicit ScopedEnlist(int64_t id);
   ~ScopedEnlist();
+
+private:
+  int64_t _previousID;
 };
 
 } // namespace CesiumUtility
