@@ -14,6 +14,21 @@
 using namespace CesiumGltf;
 using namespace Cesium3DTiles;
 
+static size_t getOffsetTypeSize(PropertyType offsetType) {
+  switch (offsetType) {
+  case PropertyType::Uint8:
+    return sizeof(uint8_t);
+  case PropertyType::Uint16:
+    return sizeof(uint16_t);
+  case PropertyType::Uint32:
+    return sizeof(uint32_t);
+  case PropertyType::Uint64:
+    return sizeof(uint64_t);
+  default:
+    return 0;
+  }
+}
+
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkScalarProperty(
     const Model& model,
@@ -103,10 +118,12 @@ static void checkArrayProperty(
 
   // retrieve offset type
   PropertyType offsetType = PropertyType::None;
+  size_t offsetSize = 0;
   if (featureTableProperty.arrayOffsetBufferView >= 0 ||
       featureTableProperty.stringOffsetBufferView >= 0) {
     offsetType = CesiumGltf::convertStringToPropertyType(
         featureTableProperty.offsetType);
+    offsetSize = getOffsetTypeSize(offsetType);
   }
 
   // retrieve array offset buffer
@@ -119,6 +136,11 @@ static void checkArrayProperty(
     arrayOffsetValues = gsl::span<const std::byte>(
         offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
         static_cast<size_t>(offsetBufferView.byteLength));
+
+    // check the size of the offset buffer is correct
+    REQUIRE(
+        (arrayOffsetValues.size() / offsetSize) ==
+        static_cast<size_t>(featureTable.count + 1));
   }
 
   // retrieve string offset buffer if expected type is string
@@ -131,6 +153,14 @@ static void checkArrayProperty(
     stringOffsetValues = gsl::span<const std::byte>(
         offsetBuffer.cesium.data.data() + offsetBufferView.byteOffset,
         static_cast<size_t>(offsetBufferView.byteLength));
+
+    // check the size of the string offset buffer is correct
+    size_t numOfStrings = 0;
+    for (const auto& strArray : expected) {
+      numOfStrings += strArray.size();
+    }
+
+    REQUIRE((stringOffsetValues.size() / offsetSize) == numOfStrings + 1);
   }
 
   MetadataPropertyView<MetaArrayView<PropertyViewType>> propertyView(
@@ -149,7 +179,6 @@ static void checkArrayProperty(
     }
 
     for (size_t j = 0; j < expected[i].size(); ++j) {
-      PropertyViewType v = val[j];
       if constexpr (
           std::is_same_v<ExpectedType, float> ||
           std::is_same_v<ExpectedType, double>) {
@@ -157,7 +186,6 @@ static void checkArrayProperty(
       } else {
         REQUIRE(val[j] == expected[i][j]);
       }
-      (void)(v);
     }
   }
 }
