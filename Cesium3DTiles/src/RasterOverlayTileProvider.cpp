@@ -471,12 +471,12 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::vector<IAssetAccessor::THeader>& headers,
     const LoadTileImageFromUrlOptions& options) const {
 
-  TRACE_ASYNC_BEGIN2("requestAsset");
+  TRACE_ASYNC_BEGIN("requestAsset");
 
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
-        TRACE_ASYNC_END2("requestAsset");
+        TRACE_ASYNC_END("requestAsset");
         return std::move(pRequest);
       })
       .thenInWorkerThread(
@@ -687,7 +687,7 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
       for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
         int64_t id = Profiler::instance().allocateID();
         this->_loadingIDs[i] = id;
-        TRACE_ASYNC_BEGIN(
+        TRACE_ASYNC_BEGIN_ID(
             ("Overlay Loading Slot " + std::to_string(id)).c_str(),
             id);
       }
@@ -705,7 +705,7 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
       int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
       loaderID = this->_loadingIDs[loaderIndex];
 
-      TRACE_ASYNC_BEGIN(
+      TRACE_ASYNC_BEGIN_ID(
           ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
               .c_str(),
           loaderID);
@@ -729,7 +729,7 @@ void RasterOverlayTileProvider::finalizeTileLoad(
         this->_tilesBeingLoaded.end(),
         &tile);
     if (it != this->_tilesBeingLoaded.end()) {
-      TRACE_ASYNC_END(
+      TRACE_ASYNC_END_ID(
           ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
               .c_str(),
           this->_loadingIDs[it - this->_tilesBeingLoaded.begin()]);

@@ -91,7 +91,7 @@ auto withTracing(const char* tracingName, Func&& f) {
              T&& result) mutable {
     TRACE_ASYNC_ENLIST(tracingID);
     if (tracingName && tracingID >= 0) {
-      TRACE_ASYNC_END(tracingName, tracingID);
+      TRACE_ASYNC_END_ID(tracingName, tracingID);
     }
     return f(std::move(result));
   };
@@ -108,7 +108,7 @@ template <class Func> auto withTracing(const char* tracingName, Func&& f) {
           f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
     TRACE_ASYNC_ENLIST(tracingID);
     if (tracingName && tracingID >= 0) {
-      TRACE_ASYNC_END(tracingName, tracingID);
+      TRACE_ASYNC_END_ID(tracingName, tracingID);
     }
     return f();
   };
@@ -170,7 +170,7 @@ public:
                 async::inline_scheduler(),
                 [tracingID](T&& value) mutable {
                   if (tracingID >= 0) {
-                    TRACE_ASYNC_BEGIN(tracingName, tracingID);
+                    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
                   }
                   return std::move(value);
                 })
@@ -217,7 +217,7 @@ public:
                 async::inline_scheduler(),
                 [tracingID](T&& value) mutable {
                   if (tracingID >= 0) {
-                    TRACE_ASYNC_BEGIN(tracingName, tracingID);
+                    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
                   }
                   return std::move(value);
                 })
@@ -301,7 +301,7 @@ public:
                 async::inline_scheduler(),
                 [tracingID](async::task<T>&& t) mutable {
                   if (tracingID >= 0) {
-                    TRACE_ASYNC_BEGIN(tracingName, tracingID);
+                    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
                   }
                   return std::move(t);
                 })
@@ -426,7 +426,7 @@ public:
     static const char* tracingName = "waiting for worker thread";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
     if (tracingID >= 0) {
-      TRACE_ASYNC_BEGIN(tracingName, tracingID);
+      TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
     }
 #endif
 
@@ -461,7 +461,7 @@ public:
     static const char* tracingName = "waiting for main thread";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
     if (tracingID >= 0) {
-      TRACE_ASYNC_BEGIN(tracingName, tracingID);
+      TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
     }
 #endif
 
