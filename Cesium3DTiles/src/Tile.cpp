@@ -117,11 +117,10 @@ bool Tile::isRenderable() const noexcept {
 }
 
 static void applyCustomMasks(
-  CesiumGltf::Model& model,
-  const BoundingVolume& boundingVolume,
-  const std::set<std::string>& customMaskNames,
-  const std::vector<CartographicSelection>& cartographicSelections
-) {
+    CesiumGltf::Model& model,
+    const BoundingVolume& boundingVolume,
+    const std::set<std::string>& customMaskNames,
+    const std::vector<CartographicSelection>& cartographicSelections) {
   const CesiumGeospatial::GlobeRectangle* pRectangle =
       Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
 
@@ -135,36 +134,29 @@ static void applyCustomMasks(
       // create source image
       size_t maskImageId = model.images.size();
       model.images.emplace_back();
-      CesiumGltf::Image& maskImage =
-          model.images[maskImageId];
+      CesiumGltf::Image& maskImage = model.images[maskImageId];
       maskImage.cesium.width = 256;
       maskImage.cesium.height = 256;
       maskImage.cesium.channels = 1;
       maskImage.cesium.bytesPerChannel = 1;
       maskImage.cesium.pixelData.resize(65536);
-      
-      std::memset(
-          maskImage.cesium.pixelData.data(),
-          0,
-          65536);
-      
+
+      std::memset(maskImage.cesium.pixelData.data(), 0, 65536);
+
       // TODO: this is naive approach, use line-triangle
       // intersections to rasterize one row at a time
       // NOTE: also completely ignores antimeridian (really these
       // calculations should be normalized to the first vertex)
       // TODO: extend this to non-clipping-specific selections
       for (const CartographicSelection& selection : cartographicSelections) {
-        
+
         if (selection.getTargetTextureName() != customMaskName) {
           continue;
         }
 
-        const std::vector<glm::dvec2>& vertices =
-            selection.getVertices();
-        const std::vector<uint32_t>& indices =
-            selection.getIndices();
-        for (size_t triangle = 0; triangle < indices.size() / 3;
-            ++triangle) {
+        const std::vector<glm::dvec2>& vertices = selection.getVertices();
+        const std::vector<uint32_t>& indices = selection.getIndices();
+        for (size_t triangle = 0; triangle < indices.size() / 3; ++triangle) {
           const glm::dvec2& a = vertices[indices[3 * triangle]];
           const glm::dvec2& b = vertices[indices[3 * triangle + 1]];
           const glm::dvec2& c = vertices[indices[3 * triangle + 2]];
@@ -177,13 +169,11 @@ static void applyCustomMasks(
           glm::dvec2 ca_perp(-ca.y, ca.x);
 
           for (size_t j = 0; j < 256; ++j) {
-            double pixelY =
-                pRectangle->getSouth() +
-                rectangleHeight * (double(j) + 0.5) / 256.0;
+            double pixelY = pRectangle->getSouth() +
+                            rectangleHeight * (double(j) + 0.5) / 256.0;
             for (size_t i = 0; i < 256; ++i) {
-              double pixelX =
-                  pRectangle->getWest() +
-                  rectangleWidth * (double(i) + 0.5) / 256.0;
+              double pixelX = pRectangle->getWest() +
+                              rectangleWidth * (double(i) + 0.5) / 256.0;
               glm::dvec2 v(pixelX, pixelY);
 
               glm::dvec2 av = v - a;
@@ -195,9 +185,9 @@ static void applyCustomMasks(
 
               // will determine in or out, irrespective of winding
               if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
-                  v_proj_bc_perp >= 0.0) ||
+                   v_proj_bc_perp >= 0.0) ||
                   (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
-                  v_proj_bc_perp <= 0.0)) {
+                   v_proj_bc_perp <= 0.0)) {
                 maskImage.cesium.pixelData[256 * j + i] =
                     static_cast<std::byte>(0xff);
               }
@@ -209,22 +199,17 @@ static void applyCustomMasks(
       // create sampler parameters
       size_t maskSamplerId = model.samplers.size();
       model.samplers.emplace_back();
-      CesiumGltf::Sampler& maskSampler =
-          model.samplers[maskSamplerId];
-      maskSampler.magFilter =
-          CesiumGltf::Sampler::MagFilter::LINEAR;
+      CesiumGltf::Sampler& maskSampler = model.samplers[maskSamplerId];
+      maskSampler.magFilter = CesiumGltf::Sampler::MagFilter::LINEAR;
       maskSampler.minFilter =
           CesiumGltf::Sampler::MinFilter::LINEAR_MIPMAP_NEAREST;
-      maskSampler.wrapS =
-          CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
-      maskSampler.wrapT =
-          CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
+      maskSampler.wrapS = CesiumGltf::Sampler::WrapS::CLAMP_TO_EDGE;
+      maskSampler.wrapT = CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
 
       // create texture
       size_t maskTextureId = model.textures.size();
       model.textures.emplace_back();
-      CesiumGltf::Texture& maskTexture =
-          model.textures[maskTextureId];
+      CesiumGltf::Texture& maskTexture = model.textures[maskTextureId];
       maskTexture.sampler = int32_t(maskSamplerId);
       maskTexture.source = int32_t(maskImageId);
 
@@ -405,8 +390,7 @@ void Tile::loadContent() {
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
-           cartographicSelections =
-               tileset.getOptions().cartographicSelections,
+           cartographicSelections = tileset.getOptions().cartographicSelections,
            customMaskNames,
            gltfUpAxis,
            pPrepareRendererResources =

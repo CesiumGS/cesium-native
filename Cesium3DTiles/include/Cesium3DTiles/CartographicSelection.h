@@ -4,8 +4,8 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include <glm/vec2.hpp>
 #include <optional>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Cesium3DTiles {
 
