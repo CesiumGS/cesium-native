@@ -327,7 +327,7 @@ private:
    *
    * @param pRequest The request for which the response was received.
    */
-  void
+  CesiumAsync::Future<void>
   _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
   struct LoadResult {
@@ -355,7 +355,7 @@ private:
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
-  void _loadTilesetJson(
+  CesiumAsync::Future<void> _loadTilesetJson(
       const std::string& url,
       const std::vector<std::pair<std::string, std::string>>& headers =
           std::vector<std::pair<std::string, std::string>>(),

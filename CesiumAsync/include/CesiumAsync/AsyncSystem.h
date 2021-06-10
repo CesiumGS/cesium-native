@@ -61,12 +61,20 @@ template <class Func> struct TaskUnwrapper {
   }
 };
 
+template <typename Func, typename T> struct ContinuationReturnType {
+  typedef typename std::invoke_result<Func, T>::type type;
+};
+
+template <typename Func> struct ContinuationReturnType<Func, void> {
+  typedef typename std::invoke_result<Func>::type type;
+};
+
 template <class Func, class T> auto unwrapFuture(Func&& f) {
   return std::conditional<
       std::is_same<
-          typename std::invoke_result<Func, T>::type,
+          typename ContinuationReturnType<Func, T>::type,
           typename Impl::RemoveFuture<
-              typename std::invoke_result<Func, T>::type>::type>::value,
+              typename ContinuationReturnType<Func, T>::type>::type>::value,
       IdentityUnwrapper<Func>,
       ParameterizedTaskUnwrapper<Func, T>>::type::unwrap(std::forward<Func>(f));
 }
@@ -81,41 +89,46 @@ template <class Func> auto unwrapFuture(Func&& f) {
       TaskUnwrapper<Func>>::type::unwrap(std::forward<Func>(f));
 }
 
-template <class Func, class T>
-auto withTracing(const char* tracingName, Func&& f) {
+template <typename Func, typename T> struct WithTracing {
+  static auto wrap(const char* tracingName, Func&& f) {
 #if TRACING_ENABLED
-  int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-  return [tracingID,
-          tracingName,
-          f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
-             T&& result) mutable {
-    TRACE_ASYNC_ENLIST(tracingID);
-    if (tracingName) {
-      TRACE_ASYNC_END_ID(tracingName, tracingID);
-    }
-    return f(std::move(result));
-  };
-#else
-  return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
-#endif
-}
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
 
-template <class Func> auto withTracing(const char* tracingName, Func&& f) {
-#if TRACING_ENABLED
-  int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-  return [tracingID,
-          tracingName,
-          f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
-    TRACE_ASYNC_ENLIST(tracingID);
-    if (tracingName) {
-      TRACE_ASYNC_END_ID(tracingName, tracingID);
-    }
-    return f();
-  };
+    return [tracingID,
+            tracingName,
+            f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
+               T&& result) mutable {
+      TRACE_ASYNC_ENLIST(tracingID);
+      if (tracingName) {
+        TRACE_ASYNC_END_ID(tracingName, tracingID);
+      }
+      return f(std::move(result));
+    };
 #else
-  return Impl::unwrapFuture<Func>(std::forward<Func>(f));
+    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
 #endif
-}
+  }
+};
+
+template <typename Func> struct WithTracing<Func, void> {
+  static auto wrap(const char* tracingName, Func&& f) {
+#if TRACING_ENABLED
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+
+    return [tracingID,
+            tracingName,
+            f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
+      TRACE_ASYNC_ENLIST(tracingID);
+      if (tracingName) {
+        TRACE_ASYNC_END_ID(tracingName, tracingID);
+      }
+      return f();
+    };
+#else
+    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+#endif
+  }
+};
 
 //! @endcond
 // End omitting doxgen warnings for Impl namespace
@@ -168,14 +181,14 @@ public:
 #if TRACING_ENABLED
             .then(
                 async::inline_scheduler(),
-                [tracingID](T&& value) mutable {
+                [tracingID](T&& value) {
                   TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
                   return std::move(value);
                 })
 #endif
             .then(
                 *this->_pSchedulers,
-                Impl::withTracing<Func, T>(
+                Impl::WithTracing<Func, T>::wrap(
                     tracingName,
                     std::forward<Func>(f))));
   }
@@ -213,14 +226,14 @@ public:
 #if TRACING_ENABLED
             .then(
                 async::inline_scheduler(),
-                [tracingID](T&& value) mutable {
+                [tracingID](T&& value) {
                   TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
                   return std::move(value);
                 })
 #endif
             .then(
                 this->_pSchedulers->mainThreadScheduler,
-                Impl::withTracing<Func, T>(
+                Impl::WithTracing<Func, T>::wrap(
                     tracingName,
                     std::forward<Func>(f))));
   }
@@ -242,15 +255,20 @@ public:
    * @return A future that resolves after the supplied function completes.
    */
   template <class Func>
-  Future<typename Impl::RemoveFuture<
-      typename std::invoke_result<Func, T>::type>::type>
+  Future<typename Impl::ContinuationReturnType<Func, T>::type>
   thenImmediately(Func&& f) && {
+    // using ContinuationReturnType = typename Impl::RemoveFuture<
+    //     typename std::invoke_result<Func, T>::type>::type;
+    // return Future<typename Impl::ContinuationReturnType<Func, T>::type>(
+    //     this->_pSchedulers,
+    //     async::make_task(ContinuationReturnType<Func, T>::type()));
+
     return Future<typename Impl::RemoveFuture<
-        typename std::invoke_result<Func, T>::type>::type>(
+        typename Impl::ContinuationReturnType<Func, T>::type>::type>(
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::withTracing<Func, T>(nullptr, std::forward<Func>(f))));
+            Impl::WithTracing<Func, T>::wrap(nullptr, std::forward<Func>(f))));
   }
 
   /**
@@ -295,14 +313,14 @@ public:
 #if TRACING_ENABLED
             .then(
                 async::inline_scheduler(),
-                [tracingID](async::task<T>&& t) mutable {
+                [tracingID](async::task<T>&& t) {
                   TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
                   return std::move(t);
                 })
 #endif
             .then(
                 this->_pSchedulers->mainThreadScheduler,
-                Impl::withTracing<decltype(catcher), async::task<T>>(
+                Impl::WithTracing<decltype(catcher), async::task<T>>::wrap(
                     tracingName,
                     std::move(catcher))));
   }
@@ -427,7 +445,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             *this->_pSchedulers,
-            Impl::withTracing<Func>(tracingName, std::forward<Func>(f))));
+            Impl::WithTracing<Func, void>::wrap(tracingName, std::forward<Func>(f))));
   }
 
   /**
@@ -460,7 +478,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThreadScheduler,
-            Impl::withTracing<Func>(tracingName, std::forward<Func>(f))));
+            Impl::WithTracing<Func, T>::wrap(tracingName, std::forward<Func>(f))));
   }
 
   /**
