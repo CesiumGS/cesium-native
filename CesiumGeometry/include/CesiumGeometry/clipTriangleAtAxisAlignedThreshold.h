@@ -30,12 +30,15 @@ struct InterpolatedVertex {
    */
   double t;
 
-  bool operator==(const InterpolatedVertex& u) const {
-    return this->first == u.first && this->second == u.second &&
-           std::fabs(this->t - u.t) <= std::numeric_limits<double>::epsilon();
+  constexpr bool operator==(const InterpolatedVertex& other) const noexcept {
+    return this->first == other.first && this->second == other.second &&
+           std::fabs(this->t - other.t) <=
+               std::numeric_limits<double>::epsilon();
   }
 
-  bool operator!=(const InterpolatedVertex& u) const { return !(*this == u); }
+  constexpr bool operator!=(const InterpolatedVertex& other) const noexcept {
+    return !(*this == other);
+  }
 };
 
 /**
