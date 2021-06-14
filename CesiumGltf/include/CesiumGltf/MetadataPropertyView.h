@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/MetaArrayView.h"
 #include "CesiumGltf/PropertyType.h"
+#include "CesiumGltf/PropertyTypeTraits.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -10,49 +11,6 @@
 #include <type_traits>
 
 namespace CesiumGltf {
-namespace Impl {
-template <typename... T> struct IsNumeric;
-template <typename T> struct IsNumeric<T> : std::false_type {};
-template <> struct IsNumeric<uint8_t> : std::true_type {};
-template <> struct IsNumeric<int8_t> : std::true_type {};
-template <> struct IsNumeric<uint16_t> : std::true_type {};
-template <> struct IsNumeric<int16_t> : std::true_type {};
-template <> struct IsNumeric<uint32_t> : std::true_type {};
-template <> struct IsNumeric<int32_t> : std::true_type {};
-template <> struct IsNumeric<uint64_t> : std::true_type {};
-template <> struct IsNumeric<int64_t> : std::true_type {};
-template <> struct IsNumeric<float> : std::true_type {};
-template <> struct IsNumeric<double> : std::true_type {};
-
-template <typename... T> struct IsBoolean;
-template <typename T> struct IsBoolean<T> : std::false_type {};
-template <> struct IsBoolean<bool> : std::true_type {};
-
-template <typename... T> struct IsString;
-template <typename T> struct IsString<T> : std::false_type {};
-template <> struct IsString<std::string_view> : std::true_type {};
-
-template <typename... T> struct IsNumericArray;
-template <typename T> struct IsNumericArray<T> : std::false_type {};
-template <typename T> struct IsNumericArray<MetaArrayView<T>> {
-  static constexpr bool value = IsNumeric<T>::value;
-};
-
-template <typename... T> struct IsBooleanArray;
-template <typename T> struct IsBooleanArray<T> : std::false_type {};
-template <> struct IsBooleanArray<MetaArrayView<bool>> : std::true_type {};
-
-template <typename... T> struct IsStringArray;
-template <typename T> struct IsStringArray<T> : std::false_type {};
-template <>
-struct IsStringArray<MetaArrayView<std::string_view>> : std::true_type {};
-
-template <typename T> struct ArrayType;
-template <typename T> struct ArrayType<CesiumGltf::MetaArrayView<T>> {
-  using type = T;
-};
-} // namespace Impl
-
 template <typename ElementType> class MetadataPropertyView {
 public:
   MetadataPropertyView(
@@ -71,28 +29,27 @@ public:
         _instanceCount{instanceCount} {}
 
   ElementType operator[](size_t instance) const {
-    if constexpr (Impl::IsNumeric<ElementType>::value) {
+    if constexpr (IsNumeric<ElementType>::value) {
       return getNumeric(instance);
     }
 
-    if constexpr (Impl::IsBoolean<ElementType>::value) {
+    if constexpr (IsBoolean<ElementType>::value) {
       return getBoolean(instance);
     }
 
-    if constexpr (Impl::IsString<ElementType>::value) {
+    if constexpr (IsString<ElementType>::value) {
       return getString(instance);
     }
 
-    if constexpr (Impl::IsNumericArray<ElementType>::value) {
-      return getNumericArray<typename Impl::ArrayType<ElementType>::type>(
-          instance);
+    if constexpr (IsNumericArray<ElementType>::value) {
+      return getNumericArray<typename ArrayType<ElementType>::type>(instance);
     }
 
-    if constexpr (Impl::IsBooleanArray<ElementType>::value) {
+    if constexpr (IsBooleanArray<ElementType>::value) {
       return getBooleanArray(instance);
     }
 
-    if constexpr (Impl::IsStringArray<ElementType>::value) {
+    if constexpr (IsStringArray<ElementType>::value) {
       return getStringArray(instance);
     }
   }
