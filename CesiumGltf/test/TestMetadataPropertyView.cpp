@@ -1,4 +1,4 @@
-#include "CesiumGltf/MetadataPropertyView.h"
+#include "CesiumGltf/PropertyView.h"
 #include "catch2/catch.hpp"
 #include <bitset>
 #include <climits>
@@ -12,7 +12,7 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   data.resize(expected.size() * sizeof(T));
   std::memcpy(data.data(), expected.data(), data.size());
 
-  CesiumGltf::MetadataPropertyView<T> property(
+  CesiumGltf::PropertyView<T> property(
       gsl::span<const std::byte>(data.data(), data.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -41,7 +41,7 @@ static void checkDynamicArray(
   offsetBuffer.resize(offset.size() * sizeof(E));
   std::memcpy(offsetBuffer.data(), offset.data(), offset.size() * sizeof(E));
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetaArrayView<T>> property(
+  CesiumGltf::PropertyView<CesiumGltf::ArrayView<T>> property(
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       gsl::span<const std::byte>(),
@@ -51,7 +51,7 @@ static void checkDynamicArray(
 
   size_t expectedIdx = 0;
   for (size_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetaArrayView<T> vals = property[i];
+    CesiumGltf::ArrayView<T> vals = property[i];
     for (size_t j = 0; j < vals.size(); ++j) {
       REQUIRE(vals[j] == data[expectedIdx]);
       ++expectedIdx;
@@ -70,7 +70,7 @@ static void checkFixedArray(
   buffer.resize(data.size() * sizeof(T));
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetaArrayView<T>> property(
+  CesiumGltf::PropertyView<CesiumGltf::ArrayView<T>> property(
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -80,7 +80,7 @@ static void checkFixedArray(
 
   size_t expectedIdx = 0;
   for (size_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetaArrayView<T> vals = property[i];
+    CesiumGltf::ArrayView<T> vals = property[i];
     for (size_t j = 0; j < vals.size(); ++j) {
       REQUIRE(vals[j] == data[expectedIdx]);
       ++expectedIdx;
@@ -123,7 +123,7 @@ TEST_CASE("Check boolean value") {
   std::memcpy(data.data(), &val, sizeof(val));
 
   size_t instanceCount = sizeof(unsigned long) * CHAR_BIT;
-  CesiumGltf::MetadataPropertyView<bool> property(
+  CesiumGltf::PropertyView<bool> property(
       gsl::span<const std::byte>(data.data(), data.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -172,7 +172,7 @@ TEST_CASE("Check string value") {
       &currentOffset,
       sizeof(uint32_t));
 
-  CesiumGltf::MetadataPropertyView<std::string_view> property(
+  CesiumGltf::PropertyView<std::string_view> property(
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
@@ -366,18 +366,17 @@ TEST_CASE("Check fixed array of string") {
       &currentOffset,
       sizeof(uint32_t));
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetaArrayView<std::string_view>>
-      property(
-          gsl::span<const std::byte>(buffer.data(), buffer.size()),
-          gsl::span<const std::byte>(),
-          gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-          CesiumGltf::PropertyType::Uint32,
-          3,
-          strings.size() / 3);
+  CesiumGltf::PropertyView<CesiumGltf::ArrayView<std::string_view>> property(
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(),
+      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+      CesiumGltf::PropertyType::Uint32,
+      3,
+      strings.size() / 3);
 
   size_t expectedIdx = 0;
   for (size_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetaArrayView<std::string_view> vals = property[i];
+    CesiumGltf::ArrayView<std::string_view> vals = property[i];
     for (size_t j = 0; j < vals.size(); ++j) {
       std::string_view v = vals[j];
       REQUIRE(v == strings[expectedIdx]);
@@ -435,20 +434,19 @@ TEST_CASE("Check dynamic array of string") {
       &currentOffset,
       sizeof(uint32_t));
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetaArrayView<std::string_view>>
-      property(
-          gsl::span<const std::byte>(buffer.data(), buffer.size()),
-          gsl::span<const std::byte>(
-              reinterpret_cast<const std::byte*>(arrayOffset.data()),
-              arrayOffset.size() * sizeof(uint32_t)),
-          gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-          CesiumGltf::PropertyType::Uint32,
-          0,
-          3);
+  CesiumGltf::PropertyView<CesiumGltf::ArrayView<std::string_view>> property(
+      gsl::span<const std::byte>(buffer.data(), buffer.size()),
+      gsl::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(arrayOffset.data()),
+          arrayOffset.size() * sizeof(uint32_t)),
+      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+      CesiumGltf::PropertyType::Uint32,
+      0,
+      3);
 
   size_t expectedIdx = 0;
   for (size_t i = 0; i < property.size(); ++i) {
-    CesiumGltf::MetaArrayView<std::string_view> vals = property[i];
+    CesiumGltf::ArrayView<std::string_view> vals = property[i];
     for (size_t j = 0; j < vals.size(); ++j) {
       std::string_view v = vals[j];
       REQUIRE(v == strings[expectedIdx]);
@@ -465,7 +463,7 @@ TEST_CASE("Check fixed array of boolean") {
       static_cast<std::byte>(0b11111010),
       static_cast<std::byte>(0b11100111)};
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetaArrayView<bool>> property(
+  CesiumGltf::PropertyView<CesiumGltf::ArrayView<bool>> property(
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -475,7 +473,7 @@ TEST_CASE("Check fixed array of boolean") {
 
   REQUIRE(property.size() == 2);
 
-  CesiumGltf::MetaArrayView<bool> val0 = property[0];
+  CesiumGltf::ArrayView<bool> val0 = property[0];
   REQUIRE(val0.size() == 12);
   REQUIRE(static_cast<int>(val0[0]) == 1);
   REQUIRE(static_cast<int>(val0[1]) == 1);
@@ -490,7 +488,7 @@ TEST_CASE("Check fixed array of boolean") {
   REQUIRE(static_cast<int>(val0[10]) == 0);
   REQUIRE(static_cast<int>(val0[11]) == 1);
 
-  CesiumGltf::MetaArrayView<bool> val1 = property[1];
+  CesiumGltf::ArrayView<bool> val1 = property[1];
   REQUIRE(static_cast<int>(val1[0]) == 1);
   REQUIRE(static_cast<int>(val1[1]) == 1);
   REQUIRE(static_cast<int>(val1[2]) == 1);
@@ -514,7 +512,7 @@ TEST_CASE("Check dynamic array of boolean") {
 
   std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetaArrayView<bool>> property(
+  CesiumGltf::PropertyView<CesiumGltf::ArrayView<bool>> property(
       gsl::span<const std::byte>(buffer.data(), buffer.size()),
       gsl::span<const std::byte>(
           reinterpret_cast<const std::byte*>(offsetBuffer.data()),
@@ -526,13 +524,13 @@ TEST_CASE("Check dynamic array of boolean") {
 
   REQUIRE(property.size() == 3);
 
-  CesiumGltf::MetaArrayView<bool> val0 = property[0];
+  CesiumGltf::ArrayView<bool> val0 = property[0];
   REQUIRE(val0.size() == 3);
   REQUIRE(static_cast<int>(val0[0]) == 1);
   REQUIRE(static_cast<int>(val0[1]) == 1);
   REQUIRE(static_cast<int>(val0[2]) == 1);
 
-  CesiumGltf::MetaArrayView<bool> val1 = property[1];
+  CesiumGltf::ArrayView<bool> val1 = property[1];
   REQUIRE(val1.size() == 9);
   REQUIRE(static_cast<int>(val1[0]) == 1);
   REQUIRE(static_cast<int>(val1[1]) == 0);
@@ -544,7 +542,7 @@ TEST_CASE("Check dynamic array of boolean") {
   REQUIRE(static_cast<int>(val1[7]) == 0);
   REQUIRE(static_cast<int>(val1[8]) == 1);
 
-  CesiumGltf::MetaArrayView<bool> val2 = property[2];
+  CesiumGltf::ArrayView<bool> val2 = property[2];
   REQUIRE(val2.size() == 16);
   REQUIRE(static_cast<int>(val2[0]) == 1);
   REQUIRE(static_cast<int>(val2[1]) == 1);

@@ -175,8 +175,7 @@ gsl::span<const std::byte> FeatureTableView::getOffsetBufferSafe(
   return offsetBuffer;
 }
 
-std::optional<MetadataPropertyView<bool>>
-FeatureTableView::getBooleanPropertyValues(
+std::optional<PropertyView<bool>> FeatureTableView::getBooleanPropertyValues(
     const std::string& propertyName,
     const FeatureTableProperty& featureTableProperty) const {
   const ClassProperty* classProperty = getClassProperty(propertyName);
@@ -200,7 +199,7 @@ FeatureTableView::getBooleanPropertyValues(
     return std::nullopt;
   }
 
-  return MetadataPropertyView<bool>(
+  return PropertyView<bool>(
       valueBuffer,
       gsl::span<const std::byte>(),
       gsl::span<const std::byte>(),
@@ -209,7 +208,7 @@ FeatureTableView::getBooleanPropertyValues(
       _featureTable->count);
 }
 
-std::optional<MetadataPropertyView<std::string_view>>
+std::optional<PropertyView<std::string_view>>
 FeatureTableView::getStringPropertyValues(
     const std::string& propertyName,
     const FeatureTableProperty& featureTableProperty) const {
@@ -244,7 +243,7 @@ FeatureTableView::getStringPropertyValues(
     return std::nullopt;
   }
 
-  return MetadataPropertyView<std::string_view>(
+  return PropertyView<std::string_view>(
       valueBuffer,
       gsl::span<const std::byte>(),
       offsetBuffer,
@@ -253,7 +252,7 @@ FeatureTableView::getStringPropertyValues(
       _featureTable->count);
 }
 
-std::optional<MetadataPropertyView<MetaArrayView<bool>>>
+std::optional<PropertyView<ArrayView<bool>>>
 FeatureTableView::getBooleanArrayPropertyValues(
     const std::string& propertyName,
     const FeatureTableProperty& featureTableProperty) const {
@@ -294,7 +293,7 @@ FeatureTableView::getBooleanArrayPropertyValues(
       return std::nullopt;
     }
 
-    return MetadataPropertyView<MetaArrayView<bool>>(
+    return PropertyView<ArrayView<bool>>(
         valueBuffer,
         gsl::span<const std::byte>(),
         gsl::span<const std::byte>(),
@@ -320,7 +319,7 @@ FeatureTableView::getBooleanArrayPropertyValues(
     return std::nullopt;
   }
 
-  return MetadataPropertyView<MetaArrayView<bool>>(
+  return PropertyView<ArrayView<bool>>(
       valueBuffer,
       offsetBuffer,
       gsl::span<const std::byte>(),
@@ -329,7 +328,7 @@ FeatureTableView::getBooleanArrayPropertyValues(
       _featureTable->count);
 }
 
-std::optional<MetadataPropertyView<MetaArrayView<std::string_view>>>
+std::optional<PropertyView<ArrayView<std::string_view>>>
 FeatureTableView::getStringArrayPropertyValues(
     const std::string& propertyName,
     const FeatureTableProperty& featureTableProperty) const {
@@ -388,7 +387,7 @@ FeatureTableView::getStringArrayPropertyValues(
       return std::nullopt;
     }
 
-    return MetadataPropertyView<MetaArrayView<std::string_view>>(
+    return PropertyView<ArrayView<std::string_view>>(
         valueBuffer,
         gsl::span<const std::byte>(),
         stringOffsetBuffer,
@@ -444,7 +443,7 @@ FeatureTableView::getStringArrayPropertyValues(
     return std::nullopt;
   }
 
-  return MetadataPropertyView<MetaArrayView<std::string_view>>(
+  return PropertyView<ArrayView<std::string_view>>(
       valueBuffer,
       arrayOffsetBuffer,
       stringOffsetBuffer,

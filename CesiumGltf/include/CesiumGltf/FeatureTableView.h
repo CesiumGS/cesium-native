@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
+#include "CesiumGltf/PropertyView.h"
 #include <optional>
 
 namespace CesiumGltf {
@@ -14,7 +14,7 @@ public:
   const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
   template <typename T>
-  std::optional<MetadataPropertyView<T>>
+  std::optional<PropertyView<T>>
   getPropertyValues(const std::string& propertyName) const {
     auto featureTablePropertyIter =
         _featureTable->properties.find(propertyName);
@@ -54,7 +54,7 @@ public:
 
 private:
   template <typename T>
-  std::optional<MetadataPropertyView<T>> getNumericPropertyValues(
+  std::optional<PropertyView<T>> getNumericPropertyValues(
       const std::string& propertyName,
       const FeatureTableProperty& featureTableProperty) const {
     const ClassProperty* classProperty = getClassProperty(propertyName);
@@ -81,7 +81,7 @@ private:
       return std::nullopt;
     }
 
-    return MetadataPropertyView<T>(
+    return PropertyView<T>(
         valueBuffer,
         gsl::span<const std::byte>(),
         gsl::span<const std::byte>(),
@@ -90,17 +90,16 @@ private:
         _featureTable->count);
   }
 
-  std::optional<MetadataPropertyView<bool>> getBooleanPropertyValues(
+  std::optional<PropertyView<bool>> getBooleanPropertyValues(
       const std::string& propertyName,
       const FeatureTableProperty& featureTableProperty) const;
 
-  std::optional<MetadataPropertyView<std::string_view>> getStringPropertyValues(
+  std::optional<PropertyView<std::string_view>> getStringPropertyValues(
       const std::string& propertyName,
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
-  std::optional<MetadataPropertyView<MetaArrayView<T>>>
-  getNumericArrayPropertyValues(
+  std::optional<PropertyView<ArrayView<T>>> getNumericArrayPropertyValues(
       const std::string& propertyName,
       const FeatureTableProperty& featureTableProperty) const {
     const ClassProperty* classProperty = getClassProperty(propertyName);
@@ -147,7 +146,7 @@ private:
         return std::nullopt;
       }
 
-      return MetadataPropertyView<MetaArrayView<T>>(
+      return PropertyView<ArrayView<T>>(
           valueBuffer,
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
@@ -173,7 +172,7 @@ private:
       return std::nullopt;
     }
 
-    return MetadataPropertyView<MetaArrayView<T>>(
+    return PropertyView<ArrayView<T>>(
         valueBuffer,
         offsetBuffer,
         gsl::span<const std::byte>(),
@@ -182,12 +181,11 @@ private:
         _featureTable->count);
   }
 
-  std::optional<MetadataPropertyView<MetaArrayView<bool>>>
-  getBooleanArrayPropertyValues(
+  std::optional<PropertyView<ArrayView<bool>>> getBooleanArrayPropertyValues(
       const std::string& propertyName,
       const FeatureTableProperty& featureTableProperty) const;
 
-  std::optional<MetadataPropertyView<MetaArrayView<std::string_view>>>
+  std::optional<PropertyView<ArrayView<std::string_view>>>
   getStringArrayPropertyValues(
       const std::string& propertyName,
       const FeatureTableProperty& featureTableProperty) const;

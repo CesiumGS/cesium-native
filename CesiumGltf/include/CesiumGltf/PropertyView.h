@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/MetaArrayView.h"
+#include "CesiumGltf/ArrayView.h"
 #include "CesiumGltf/PropertyType.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include <cassert>
@@ -11,9 +11,9 @@
 #include <type_traits>
 
 namespace CesiumGltf {
-template <typename ElementType> class MetadataPropertyView {
+template <typename ElementType> class PropertyView {
 public:
-  MetadataPropertyView(
+  PropertyView(
       gsl::span<const std::byte> valueBuffer,
       gsl::span<const std::byte> arrayOffsetBuffer,
       gsl::span<const std::byte> stringOffsetBuffer,
@@ -80,14 +80,13 @@ private:
         (nextOffset - currentOffset));
   }
 
-  template <typename T>
-  MetaArrayView<T> getNumericArray(size_t instance) const {
+  template <typename T> ArrayView<T> getNumericArray(size_t instance) const {
     if (_componentCount > 0) {
       gsl::span<const T> vals(
           reinterpret_cast<const T*>(
               _valueBuffer.data() + instance * _componentCount * sizeof(T)),
           _componentCount);
-      return MetaArrayView{vals};
+      return ArrayView{vals};
     }
 
     size_t currentOffset =
@@ -99,15 +98,15 @@ private:
     gsl::span<const T> vals(
         reinterpret_cast<const T*>(_valueBuffer.data() + currentOffset),
         (nextOffset - currentOffset) / sizeof(T));
-    return MetaArrayView{vals};
+    return ArrayView{vals};
   }
 
-  MetaArrayView<std::string_view> getStringArray(size_t instance) const {
+  ArrayView<std::string_view> getStringArray(size_t instance) const {
     if (_componentCount > 0) {
       gsl::span<const std::byte> offsetVals(
           _stringOffsetBuffer.data() + instance * _componentCount * _offsetSize,
           (_componentCount + 1) * _offsetSize);
-      return MetaArrayView<std::string_view>(
+      return ArrayView<std::string_view>(
           _valueBuffer,
           offsetVals,
           _offsetType,
@@ -123,21 +122,21 @@ private:
     gsl::span<const std::byte> offsetVals(
         _stringOffsetBuffer.data() + currentOffset,
         (nextOffset - currentOffset + _offsetSize));
-    return MetaArrayView<std::string_view>(
+    return ArrayView<std::string_view>(
         _valueBuffer,
         offsetVals,
         _offsetType,
         (nextOffset - currentOffset) / _offsetSize);
   }
 
-  MetaArrayView<bool> getBooleanArray(size_t instance) const {
+  ArrayView<bool> getBooleanArray(size_t instance) const {
     if (_componentCount > 0) {
       size_t offsetBits = _componentCount * instance;
       size_t nextOffsetBits = _componentCount * (instance + 1);
       gsl::span<const std::byte> buffer(
           _valueBuffer.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return MetaArrayView<bool>(buffer, offsetBits % 8, _componentCount);
+      return ArrayView<bool>(buffer, offsetBits % 8, _componentCount);
     }
 
     size_t currentOffset =
@@ -151,7 +150,7 @@ private:
     gsl::span<const std::byte> buffer(
         _valueBuffer.data() + currentOffset / 8,
         (nextOffset / 8 - currentOffset / 8 + 1));
-    return MetaArrayView<bool>(buffer, currentOffset % 8, totalBits);
+    return ArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
   static size_t getOffsetSize(PropertyType offsetType) {

@@ -1,7 +1,7 @@
 #include "Batched3DModelContent.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
-#include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "CesiumGltf/PropertyView.h"
 #include "catch2/catch.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -67,7 +67,7 @@ static void checkScalarProperty(
         featureTableProperty.offsetType);
   }
 
-  MetadataPropertyView<PropertyViewType> propertyView(
+  PropertyView<PropertyViewType> propertyView(
       values,
       gsl::span<const std::byte>(),
       stringOffsetValues,
@@ -163,7 +163,7 @@ static void checkArrayProperty(
     REQUIRE((stringOffsetValues.size() / offsetSize) == numOfStrings + 1);
   }
 
-  MetadataPropertyView<MetaArrayView<PropertyViewType>> propertyView(
+  PropertyView<ArrayView<PropertyViewType>> propertyView(
       values,
       arrayOffsetValues,
       stringOffsetValues,
@@ -173,7 +173,7 @@ static void checkArrayProperty(
 
   REQUIRE(propertyView.size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < expected.size(); ++i) {
-    MetaArrayView<PropertyViewType> val = propertyView[i];
+    ArrayView<PropertyViewType> val = propertyView[i];
     if (expectedComponentCount > 0) {
       REQUIRE(val.size() == expectedComponentCount);
     }
