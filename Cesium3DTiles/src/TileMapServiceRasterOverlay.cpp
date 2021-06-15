@@ -1,7 +1,7 @@
 #include "Cesium3DTiles/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
-#include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetAccessor.h"
@@ -16,7 +16,7 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTiles {
 
-class TileMapServiceTileProvider final : public RasterOverlayTileProvider {
+class TileMapServiceTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   TileMapServiceTileProvider(
       RasterOverlay& owner,
@@ -36,7 +36,7 @@ public:
       uint32_t height,
       uint32_t minimumLevel,
       uint32_t maximumLevel)
-      : RasterOverlayTileProvider(
+      : QuadtreeRasterOverlayTileProvider(
             owner,
             asyncSystem,
             pAssetAccessor,
@@ -58,7 +58,7 @@ public:
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) override {
     std::string url = CesiumUtility::Uri::resolve(
         this->_url,
         std::to_string(tileID.level) + "/" + std::to_string(tileID.x) + "/" +

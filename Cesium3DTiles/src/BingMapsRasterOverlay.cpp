@@ -1,7 +1,7 @@
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
-#include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetAccessor.h"
@@ -78,7 +78,7 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "r4EZKsn7qVA+0Fc+D/ytOIedA+EDnXjD8MDfDIWYercK8oE+WuPtA8fGAWA5kA/0fwpdN1P/"
     "sv/SAAAAAElFTkSuQmCC\" title=\"Bing Imagery\"/></a>";
 
-class BingMapsTileProvider final : public RasterOverlayTileProvider {
+class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
       RasterOverlay& owner,
@@ -97,7 +97,7 @@ public:
       uint32_t minimumLevel,
       uint32_t maximumLevel,
       const std::string& culture)
-      : RasterOverlayTileProvider(
+      : QuadtreeRasterOverlayTileProvider(
             owner,
             asyncSystem,
             pAssetAccessor,
@@ -143,7 +143,7 @@ public:
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) override {
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         this->_urlTemplate,
         [this, &tileID](const std::string& key) {
