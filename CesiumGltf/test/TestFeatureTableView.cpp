@@ -1,5 +1,6 @@
 #include "CesiumGltf/FeatureTableView.h"
 #include "catch2/catch.hpp"
+#include <cstring>
 
 using namespace CesiumGltf;
 
@@ -103,9 +104,38 @@ TEST_CASE("Test numeric properties") {
     REQUIRE(uint32Property == std::nullopt);
   }
 
-  SECTION("Wrong buffer view index") {}
+  SECTION("Wrong buffer view index") {
+    featureTableProperty.bufferView = -1;
+    std::optional<PropertyView<uint32_t>> uint32Property =
+        view.getPropertyValues<uint32_t>("TestClassProperty");
+    REQUIRE(uint32Property == std::nullopt);
+  }
 
-  SECTION("Wrong buffer size") {}
+  SECTION("Buffer view points outside of the real buffer length") {
+    valueBuffer.cesium.data.resize(12);
+    std::optional<PropertyView<uint32_t>> uint32Property =
+        view.getPropertyValues<uint32_t>("TestClassProperty");
+    REQUIRE(uint32Property == std::nullopt);
+  }
 
-  SECTION("Buffer view offset is not a multiple of 8") {}
+  SECTION("Buffer view offset is not a multiple of 8") {
+    valueBufferView.byteOffset = 1;
+    std::optional<PropertyView<uint32_t>> uint32Property =
+        view.getPropertyValues<uint32_t>("TestClassProperty");
+    REQUIRE(uint32Property == std::nullopt);
+  }
+
+  SECTION("Buffer view length isn't multiple of sizeof(T)") {
+    valueBufferView.byteLength = 13;
+    std::optional<PropertyView<uint32_t>> uint32Property =
+        view.getPropertyValues<uint32_t>("TestClassProperty");
+    REQUIRE(uint32Property == std::nullopt);
+  }
+
+  SECTION("Buffer view length doesn't match with featureTableCount") {
+    valueBufferView.byteLength = 12;
+    std::optional<PropertyView<uint32_t>> uint32Property =
+        view.getPropertyValues<uint32_t>("TestClassProperty");
+    REQUIRE(uint32Property == std::nullopt);
+  }
 }
