@@ -1,5 +1,6 @@
 #include "CesiumGltf/FeatureTableView.h"
 #include "catch2/catch.hpp"
+#include <bitset>
 #include <cstring>
 
 using namespace CesiumGltf;
@@ -139,3 +140,87 @@ TEST_CASE("Test numeric properties") {
     REQUIRE(uint32Property == std::nullopt);
   }
 }
+
+TEST_CASE("Test boolean properties") {
+  Model model;
+
+  // store property value
+  uint64_t instanceCount = 21;
+  std::vector<bool> expected;
+  std::vector<uint8_t> values;
+  values.resize(3);
+  for (size_t i = 0; i < instanceCount; ++i) {
+    if (i % 2 == 0) {
+      expected.emplace_back(true);
+    } else {
+      expected.emplace_back(false);
+    }
+
+    uint8_t expectedValue = expected.back();
+    size_t byteIndex = i / 8;
+    size_t bitIndex = i % 8;
+    values[byteIndex] = (expectedValue << bitIndex) | values[byteIndex];
+  }
+
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.cesium.data.resize(values.size());
+  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
+  std::memcpy(
+      valueBuffer.cesium.data.data(),
+      values.data(),
+      valueBuffer.cesium.data.size());
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "BOOLEAN";
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(instanceCount);
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.bufferView =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "BOOLEAN");
+  REQUIRE(classProperty->componentCount == std::nullopt);
+  REQUIRE(classProperty->componentType.isNull());
+
+  SECTION("Access correct type") {
+    std::optional<PropertyView<bool>> boolProperty =
+        view.getPropertyValues<bool>("TestClassProperty");
+    REQUIRE(boolProperty != std::nullopt);
+    REQUIRE(boolProperty->size() == instanceCount);
+    for (size_t i = 0; i < boolProperty->size(); ++i) {
+      bool expectedValue = expected[i];
+      REQUIRE((*boolProperty)[i] == expectedValue);
+    }
+  }
+
+  SECTION("Buffer size doesn't match with feature table count") {
+    featureTable.count = 66;
+    std::optional<PropertyView<bool>> boolProperty =
+        view.getPropertyValues<bool>("TestClassProperty");
+    REQUIRE(boolProperty == std::nullopt);
+  }
+}
+
+TEST_CASE("Test string property") {}
