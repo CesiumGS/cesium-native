@@ -636,7 +636,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
           {{"Content-Type", "application/json"},
            {"Accept", "application/json"}},
           payload)
-      .thenInWorkerThread([asyncSystem, pAssetAccessor, ionApiUrl](
+      .thenImmediatelyInWorkerThread([asyncSystem, pAssetAccessor, ionApiUrl](
                               std::shared_ptr<IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {

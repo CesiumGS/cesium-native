@@ -473,7 +473,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread(
+      .thenImmediatelyInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             TRACE("load image");
@@ -630,7 +630,7 @@ void RasterOverlayTileProvider::doLoad(
   TRACE_ASYNC_ENLIST(loadID);
 
   this->loadTileImage(tile.getID())
-      .thenInWorkerThread(
+      .thenImmediatelyInWorkerThread(
           [tileId = tile.getID(),
            pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger =

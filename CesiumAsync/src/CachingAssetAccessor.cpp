@@ -132,7 +132,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
             if (!cacheLookup) {
               // No cache item found, request directly from the server
               return pAssetAccessor->requestAsset(asyncSystem, url, headers)
-                  .thenInWorkerThread([pCacheDatabase,
+                  .thenImmediatelyInWorkerThread([pCacheDatabase,
                                        pLogger](std::shared_ptr<IAssetRequest>&&
                                                     pCompletedRequest) {
                     const IAssetResponse* pResponse =
@@ -182,7 +182,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
               }
 
               return pAssetAccessor->requestAsset(asyncSystem, url, newHeaders)
-                  .thenInWorkerThread([cacheItem = std::move(cacheItem),
+                  .thenImmediatelyInWorkerThread([cacheItem = std::move(cacheItem),
                                        pCacheDatabase,
                                        pLogger](std::shared_ptr<IAssetRequest>&&
                                                     pCompletedRequest) mutable {

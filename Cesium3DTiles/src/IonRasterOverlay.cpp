@@ -41,7 +41,7 @@ IonRasterOverlay::createTileProvider(
   pOwner = pOwner ? pOwner : this;
 
   return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
-      .thenInWorkerThread(
+      .thenImmediatelyInWorkerThread(
           [pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlay> {
             const IAssetResponse* pResponse = pRequest->response();
@@ -123,7 +123,7 @@ IonRasterOverlay::createTileProvider(
                          pCreditSystem,
                          pPrepareRendererResources,
                          pLogger](
-                            std::unique_ptr<RasterOverlay> pAggregatedOverlay) {
+                            std::unique_ptr<RasterOverlay>&& pAggregatedOverlay) {
         // Handle the case that the code above bails out with an error,
         // returning a nullptr.
         if (pAggregatedOverlay) {
