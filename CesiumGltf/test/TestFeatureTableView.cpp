@@ -3,7 +3,7 @@
 
 using namespace CesiumGltf;
 
-TEST_CASE("Test numeric properties read properly") {
+TEST_CASE("Test numeric properties") {
   Model model;
 
   // store property value
@@ -50,6 +50,16 @@ TEST_CASE("Test numeric properties read properly") {
   REQUIRE(classProperty->componentCount == std::nullopt);
   REQUIRE(classProperty->componentType.isNull());
 
+  SECTION("Access correct type") {
+    std::optional<PropertyView<uint32_t>> uint32Property =
+        view.getPropertyValues<uint32_t>("TestClassProperty");
+    REQUIRE(uint32Property != std::nullopt);
+
+    for (size_t i = 0; i < uint32Property->size(); ++i) {
+      REQUIRE((*uint32Property)[i] == values[i]);
+    }
+  }
+
   SECTION("Access wrong type") {
     std::optional<PropertyView<bool>> boolInvalid =
         view.getPropertyValues<bool>("TestClassProperty");
@@ -86,13 +96,16 @@ TEST_CASE("Test numeric properties read properly") {
     REQUIRE(stringArrayInvalid == std::nullopt);
   }
 
-  SECTION("Access correct type") {
+  SECTION("Wrong buffer index") {
+    valueBufferView.buffer = 2;
     std::optional<PropertyView<uint32_t>> uint32Property =
         view.getPropertyValues<uint32_t>("TestClassProperty");
-    REQUIRE(uint32Property != std::nullopt);
-
-    for (size_t i = 0; i < uint32Property->size(); ++i) {
-      REQUIRE((*uint32Property)[i] == values[i]);
-    }
+    REQUIRE(uint32Property == std::nullopt);
   }
+
+  SECTION("Wrong buffer view index") {}
+
+  SECTION("Wrong buffer size") {}
+
+  SECTION("Buffer view offset is not a multiple of 8") {}
 }

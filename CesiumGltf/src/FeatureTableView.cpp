@@ -120,7 +120,7 @@ FeatureTableView::getBufferSafe(int32_t bufferViewIdx) const {
 
   return gsl::span<const std::byte>(
       buffer->cesium.data.data() + bufferView->byteOffset,
-      bufferView->byteLength);
+      static_cast<size_t>(bufferView->byteLength));
 }
 
 gsl::span<const std::byte> FeatureTableView::getOffsetBufferSafe(
@@ -176,13 +176,8 @@ gsl::span<const std::byte> FeatureTableView::getOffsetBufferSafe(
 }
 
 std::optional<PropertyView<bool>> FeatureTableView::getBooleanPropertyValues(
-    const std::string& propertyName,
+    const ClassProperty* classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  const ClassProperty* classProperty = getClassProperty(propertyName);
-  if (!classProperty) {
-    return std::nullopt;
-  }
-
   if (classProperty->type != "BOOLEAN") {
     return std::nullopt;
   }
@@ -205,18 +200,13 @@ std::optional<PropertyView<bool>> FeatureTableView::getBooleanPropertyValues(
       gsl::span<const std::byte>(),
       PropertyType::None,
       0,
-      _featureTable->count);
+      static_cast<size_t>(_featureTable->count));
 }
 
 std::optional<PropertyView<std::string_view>>
 FeatureTableView::getStringPropertyValues(
-    const std::string& propertyName,
+    const ClassProperty* classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  const ClassProperty* classProperty = getClassProperty(propertyName);
-  if (!classProperty) {
-    return std::nullopt;
-  }
-
   if (classProperty->type != "STRING") {
     return std::nullopt;
   }
@@ -237,7 +227,7 @@ FeatureTableView::getStringPropertyValues(
       featureTableProperty.stringOffsetBufferView,
       offsetType,
       valueBuffer.size(),
-      _featureTable->count,
+      static_cast<size_t>(_featureTable->count),
       false);
   if (offsetBuffer.empty()) {
     return std::nullopt;
@@ -249,18 +239,13 @@ FeatureTableView::getStringPropertyValues(
       offsetBuffer,
       offsetType,
       0,
-      _featureTable->count);
+      static_cast<size_t>(_featureTable->count));
 }
 
 std::optional<PropertyView<ArrayView<bool>>>
 FeatureTableView::getBooleanArrayPropertyValues(
-    const std::string& propertyName,
+    const ClassProperty* classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  const ClassProperty* classProperty = getClassProperty(propertyName);
-  if (!classProperty) {
-    return std::nullopt;
-  }
-
   if (classProperty->type != "ARRAY") {
     return std::nullopt;
   }
@@ -276,7 +261,7 @@ FeatureTableView::getBooleanArrayPropertyValues(
     return std::nullopt;
   }
 
-  size_t componentCount = classProperty->componentCount.value_or(0);
+  int64_t componentCount = classProperty->componentCount.value_or(0);
   if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
     return std::nullopt;
   }
@@ -298,8 +283,8 @@ FeatureTableView::getBooleanArrayPropertyValues(
         gsl::span<const std::byte>(),
         gsl::span<const std::byte>(),
         PropertyType::None,
-        componentCount,
-        _featureTable->count);
+        static_cast<size_t>(componentCount),
+        static_cast<size_t>(_featureTable->count));
   }
 
   // dynamic array
@@ -313,7 +298,7 @@ FeatureTableView::getBooleanArrayPropertyValues(
       featureTableProperty.arrayOffsetBufferView,
       offsetType,
       valueBuffer.size(),
-      _featureTable->count,
+      static_cast<size_t>(_featureTable->count),
       true);
   if (offsetBuffer.empty()) {
     return std::nullopt;
@@ -325,18 +310,13 @@ FeatureTableView::getBooleanArrayPropertyValues(
       gsl::span<const std::byte>(),
       offsetType,
       0,
-      _featureTable->count);
+      static_cast<size_t>(_featureTable->count));
 }
 
 std::optional<PropertyView<ArrayView<std::string_view>>>
 FeatureTableView::getStringArrayPropertyValues(
-    const std::string& propertyName,
+    const ClassProperty* classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  const ClassProperty* classProperty = getClassProperty(propertyName);
-  if (!classProperty) {
-    return std::nullopt;
-  }
-
   if (classProperty->type != "ARRAY") {
     return std::nullopt;
   }
@@ -354,7 +334,7 @@ FeatureTableView::getStringArrayPropertyValues(
   }
 
   // check fixed or dynamic array
-  size_t componentCount = classProperty->componentCount.value_or(0);
+  int64_t componentCount = classProperty->componentCount.value_or(0);
   if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
     return std::nullopt;
   }
@@ -381,7 +361,7 @@ FeatureTableView::getStringArrayPropertyValues(
         featureTableProperty.stringOffsetBufferView,
         offsetType,
         valueBuffer.size(),
-        _featureTable->count * componentCount,
+        static_cast<size_t>(_featureTable->count * componentCount),
         false);
     if (stringOffsetBuffer.empty()) {
       return std::nullopt;
@@ -392,8 +372,8 @@ FeatureTableView::getStringArrayPropertyValues(
         gsl::span<const std::byte>(),
         stringOffsetBuffer,
         PropertyType::None,
-        componentCount,
-        _featureTable->count);
+        static_cast<size_t>(componentCount),
+        static_cast<size_t>(_featureTable->count));
   }
 
   // dynamic array
@@ -416,25 +396,29 @@ FeatureTableView::getStringArrayPropertyValues(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        _featureTable->count);
+        static_cast<size_t>(_featureTable->count));
+    break;
   case PropertyType::Uint16:
     isValid = checkStringArrayOffsetBuffer<uint16_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        _featureTable->count);
+        static_cast<size_t>(_featureTable->count));
+    break;
   case PropertyType::Uint32:
     isValid = checkStringArrayOffsetBuffer<uint32_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        _featureTable->count);
+        static_cast<size_t>(_featureTable->count));
+    break;
   case PropertyType::Uint64:
     isValid = checkStringArrayOffsetBuffer<uint64_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        _featureTable->count);
+        static_cast<size_t>(_featureTable->count));
+    break;
   default:
     break;
   }
@@ -449,6 +433,6 @@ FeatureTableView::getStringArrayPropertyValues(
       stringOffsetBuffer,
       offsetType,
       0,
-      _featureTable->count);
+      static_cast<size_t>(_featureTable->count));
 }
 } // namespace CesiumGltf

@@ -16,6 +16,15 @@ public:
   template <typename T>
   std::optional<PropertyView<T>>
   getPropertyValues(const std::string& propertyName) const {
+    if (_featureTable->count < 0) {
+      return std::nullopt;
+    }
+
+    const ClassProperty* classProperty = getClassProperty(propertyName);
+    if (!classProperty) {
+      return std::nullopt;
+    }
+
     auto featureTablePropertyIter =
         _featureTable->properties.find(propertyName);
     if (featureTablePropertyIter == _featureTable->properties.end()) {
@@ -26,42 +35,37 @@ public:
         featureTablePropertyIter->second;
 
     if constexpr (IsNumeric<T>::value) {
-      return getNumericPropertyValues<T>(propertyName, featureTableProperty);
+      return getNumericPropertyValues<T>(classProperty, featureTableProperty);
     }
 
     if constexpr (IsBoolean<T>::value) {
-      return getBooleanPropertyValues(propertyName, featureTableProperty);
+      return getBooleanPropertyValues(classProperty, featureTableProperty);
     }
 
     if constexpr (IsString<T>::value) {
-      return getStringPropertyValues(propertyName, featureTableProperty);
+      return getStringPropertyValues(classProperty, featureTableProperty);
     }
 
     if constexpr (IsNumericArray<T>::value) {
       return getNumericArrayPropertyValues<typename ArrayType<T>::type>(
-          propertyName,
+          classProperty,
           featureTableProperty);
     }
 
     if constexpr (IsBooleanArray<T>::value) {
-      return getBooleanArrayPropertyValues(propertyName, featureTableProperty);
+      return getBooleanArrayPropertyValues(classProperty, featureTableProperty);
     }
 
     if constexpr (IsStringArray<T>::value) {
-      return getStringArrayPropertyValues(propertyName, featureTableProperty);
+      return getStringArrayPropertyValues(classProperty, featureTableProperty);
     }
   }
 
 private:
   template <typename T>
   std::optional<PropertyView<T>> getNumericPropertyValues(
-      const std::string& propertyName,
+      const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    const ClassProperty* classProperty = getClassProperty(propertyName);
-    if (!classProperty) {
-      return std::nullopt;
-    }
-
     PropertyType type = convertStringToPropertyType(classProperty->type);
     if (TypeToPropertyType<T>::value != static_cast<uint32_t>(type)) {
       return std::nullopt;
@@ -91,22 +95,17 @@ private:
   }
 
   std::optional<PropertyView<bool>> getBooleanPropertyValues(
-      const std::string& propertyName,
+      const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   std::optional<PropertyView<std::string_view>> getStringPropertyValues(
-      const std::string& propertyName,
+      const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
   std::optional<PropertyView<ArrayView<T>>> getNumericArrayPropertyValues(
-      const std::string& propertyName,
+      const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    const ClassProperty* classProperty = getClassProperty(propertyName);
-    if (!classProperty) {
-      return std::nullopt;
-    }
-
     if (classProperty->type != "ARRAY") {
       return std::nullopt;
     }
@@ -131,7 +130,7 @@ private:
       return std::nullopt;
     }
 
-    size_t componentCount = classProperty->componentCount.value_or(0);
+    int64_t componentCount = classProperty->componentCount.value_or(0);
     if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
       return std::nullopt;
     }
@@ -142,7 +141,8 @@ private:
 
     // fixed array
     if (componentCount > 0) {
-      if (valueBuffer.size() != _featureTable->count * componentCount) {
+      if (valueBuffer.size() !=
+          static_cast<size_t>(_featureTable->count * componentCount)) {
         return std::nullopt;
       }
 
@@ -151,8 +151,8 @@ private:
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
           PropertyType::None,
-          componentCount,
-          _featureTable->count);
+          static_cast<size_t>(componentCount),
+          static_cast<size_t>(_featureTable->count));
     }
 
     // dynamic array
@@ -166,7 +166,7 @@ private:
         featureTableProperty.arrayOffsetBufferView,
         offsetType,
         valueBuffer.size(),
-        _featureTable->count,
+        static_cast<size_t>(_featureTable->count),
         false);
     if (offsetBuffer.empty()) {
       return std::nullopt;
@@ -178,16 +178,16 @@ private:
         gsl::span<const std::byte>(),
         offsetType,
         0,
-        _featureTable->count);
+        static_cast<size_t>(_featureTable->count));
   }
 
   std::optional<PropertyView<ArrayView<bool>>> getBooleanArrayPropertyValues(
-      const std::string& propertyName,
+      const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   std::optional<PropertyView<ArrayView<std::string_view>>>
   getStringArrayPropertyValues(
-      const std::string& propertyName,
+      const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   gsl::span<const std::byte> getBufferSafe(int32_t bufferViewIdx) const;
