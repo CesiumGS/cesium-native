@@ -7,22 +7,18 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTiles {
-  
+
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     RasterOverlay& owner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-    : RasterOverlayTileProvider(
-      owner,
-      asyncSystem,
-      pAssetAccessor
-    ),
-    _coverageRectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
-    _minimumLevel(0),
-    _maximumLevel(0),
-    _imageWidth(1),
-    _imageHeight(1),
-    _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(
+    : RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor),
+      _coverageRectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
+      _minimumLevel(0),
+      _maximumLevel(0),
+      _imageWidth(1),
+      _imageHeight(1),
+      _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(
           CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0),
           1,
           1)) {
@@ -45,20 +41,19 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     uint32_t imageWidth,
     uint32_t imageHeight) noexcept
     : RasterOverlayTileProvider(
-      owner,
-      asyncSystem,
-      pAssetAccessor,
-      credit,
-      pPrepareRendererResources,
-      pLogger,
-      projection
-    ),
-    _coverageRectangle(coverageRectangle),
-    _minimumLevel(minimumLevel),
-    _maximumLevel(maximumLevel),
-    _imageWidth(imageWidth),
-    _imageHeight(imageHeight),
-    _tilingScheme(tilingScheme) {}
+          owner,
+          asyncSystem,
+          pAssetAccessor,
+          credit,
+          pPrepareRendererResources,
+          pLogger,
+          projection),
+      _coverageRectangle(coverageRectangle),
+      _minimumLevel(minimumLevel),
+      _maximumLevel(maximumLevel),
+      _imageWidth(imageWidth),
+      _imageHeight(imageHeight),
+      _tilingScheme(tilingScheme) {}
 
 void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
@@ -355,8 +350,9 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     }
   }
 }
-  
-bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(const CesiumGeometry::QuadtreeTileID& tileID) const {
+
+bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(
+    const CesiumGeometry::QuadtreeTileID& tileID) const {
   return tileID.level < this->_maximumLevel;
 }
 
@@ -383,7 +379,7 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   return static_cast<uint32_t>(rounded);
 }
 
-CesiumGeometry::Rectangle 
+CesiumGeometry::Rectangle
 QuadtreeRasterOverlayTileProvider::getImageryRectangle(
     const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile) {
   return this->_tilingScheme.tileToRectangle(rasterTile->getID());

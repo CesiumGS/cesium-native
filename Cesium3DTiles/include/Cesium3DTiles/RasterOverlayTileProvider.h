@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RasterizedPolygonsOverlay.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
@@ -11,6 +10,7 @@
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
+#include "RasterizedPolygonsOverlay.h"
 #include <optional>
 #include <spdlog/fwd.h>
 #include <unordered_map>
@@ -233,16 +233,17 @@ public:
   /**
    * @brief Get the imagery rectangle for the given raster tile
    */
-  virtual CesiumGeometry::Rectangle 
-  getImageryRectangle(const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile) = 0;
+  virtual CesiumGeometry::Rectangle getImageryRectangle(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile) = 0;
 
   /**
-   * @brief Whether the given raster tile has more detail. 
-   * 
-   * If so its children may be subdivided to use the more detailed raster 
+   * @brief Whether the given raster tile has more detail.
+   *
+   * If so its children may be subdivided to use the more detailed raster
    * tiles.
    */
-  virtual bool hasMoreDetailsAvailable(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
+  virtual bool hasMoreDetailsAvailable(
+      const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.

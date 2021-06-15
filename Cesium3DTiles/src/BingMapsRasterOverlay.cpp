@@ -1,7 +1,7 @@
 #include "Cesium3DTiles/BingMapsRasterOverlay.h"
 #include "Cesium3DTiles/CreditSystem.h"
-#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
+#include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetAccessor.h"

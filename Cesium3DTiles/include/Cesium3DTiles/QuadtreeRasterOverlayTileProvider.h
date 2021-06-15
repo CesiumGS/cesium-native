@@ -1,23 +1,25 @@
 #pragma once
 
+#include "Cesium3DTiles/CreditSystem.h"
+#include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
-#include "Cesium3DTiles/IPrepareRendererResources.h"
-#include "Cesium3DTiles/CreditSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include <memory>
 
 namespace Cesium3DTiles {
 
-class CESIUM3DTILES_API QuadtreeRasterOverlayTileProvider : public RasterOverlayTileProvider {
+class CESIUM3DTILES_API QuadtreeRasterOverlayTileProvider
+    : public RasterOverlayTileProvider {
 
 public:
   QuadtreeRasterOverlayTileProvider(
-    RasterOverlay& owner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) noexcept;
+      RasterOverlay& owner,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>&
+          pAssetAccessor) noexcept;
 
   /**
    * @brief Creates a new instance.
@@ -39,19 +41,20 @@ public:
    * @param imageHeight The image height.
    */
   QuadtreeRasterOverlayTileProvider(
-    RasterOverlay& owner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    std::optional<Credit> credit,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const CesiumGeospatial::Projection& projection,
-    const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
-    const CesiumGeometry::Rectangle& coverageRectangle,
-    uint32_t minimumLevel,
-    uint32_t maximumLevel,
-    uint32_t imageWidth,
-    uint32_t imageHeight) noexcept;
+      RasterOverlay& owner,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      std::optional<Credit> credit,
+      const std::shared_ptr<IPrepareRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+      const CesiumGeometry::Rectangle& coverageRectangle,
+      uint32_t minimumLevel,
+      uint32_t maximumLevel,
+      uint32_t imageWidth,
+      uint32_t imageHeight) noexcept;
 
   /**
    * @brief Map raster tiles to geometry tile.
@@ -79,16 +82,18 @@ public:
   /**
    * @brief Get the imagery rectangle for the given raster tile
    */
-  virtual CesiumGeometry::Rectangle
-  getImageryRectangle(const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile) override;
+  virtual CesiumGeometry::Rectangle getImageryRectangle(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile)
+      override;
 
   /**
-   * @brief Whether the given raster tile has more detail. 
-   * 
-   * If so its children may be subdivided to use the more detailed raster 
+   * @brief Whether the given raster tile has more detail.
+   *
+   * If so its children may be subdivided to use the more detailed raster
    * tiles.
    */
-  virtual bool hasMoreDetailsAvailable(const CesiumGeometry::QuadtreeTileID& tileID) const override;
+  virtual bool hasMoreDetailsAvailable(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override;
 
   /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
@@ -139,7 +144,7 @@ public:
   uint32_t computeLevelFromGeometricError(
       double geometricError,
       const glm::dvec2& position) const noexcept;
-  
+
 private:
   CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;

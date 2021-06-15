@@ -1,16 +1,16 @@
 #pragma once
 
+#include "Cesium3DTiles/CartographicSelection.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlay.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
-#include "Cesium3DTiles/CartographicSelection.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/Projection.h"
+#include <memory>
 #include <spdlog/fwd.h>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace Cesium3DTiles {
 
@@ -40,4 +40,4 @@ private:
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };
-} // namespace Cesium3DTiles 
+} // namespace Cesium3DTiles

@@ -26,7 +26,8 @@ RasterMappedTo3DTile::update(Tile& tile) {
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
                    this->_pReadyTile->getOverlay()
-                    .getTileProvider()->hasMoreDetailsAvailable(this->_pReadyTile->getID())
+                       .getTileProvider()
+                       ->hasMoreDetailsAvailable(this->_pReadyTile->getID())
                ? MoreDetailAvailable::Yes
                : MoreDetailAvailable::No;
   }
@@ -139,7 +140,8 @@ RasterMappedTo3DTile::update(Tile& tile) {
   }
   return !this->_originalFailed && this->_pReadyTile &&
                  this->_pReadyTile->getOverlay()
-                  .getTileProvider()->hasMoreDetailsAvailable(this->_pReadyTile->getID())
+                     .getTileProvider()
+                     ->hasMoreDetailsAvailable(this->_pReadyTile->getID())
              ? MoreDetailAvailable::Yes
              : MoreDetailAvailable::No;
 }
@@ -179,7 +181,8 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
       *this->_pReadyTile->getOverlay().getTileProvider();
   CesiumGeometry::Rectangle geometryRectangle =
       projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
-  CesiumGeometry::Rectangle imageryRectangle = tileProvider.getImageryRectangle(this->_pReadyTile);
+  CesiumGeometry::Rectangle imageryRectangle =
+      tileProvider.getImageryRectangle(this->_pReadyTile);
 
   double terrainWidth = geometryRectangle.computeWidth();
   double terrainHeight = geometryRectangle.computeHeight();
