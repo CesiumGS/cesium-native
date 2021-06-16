@@ -3,6 +3,7 @@
 #include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
 #include "CesiumAsync/Impl/CatchFunction.h"
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
+#include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Profiler.h"
 #include <variant>
 
@@ -131,6 +132,15 @@ public:
         this->_pSchedulers->immediatelyInWorkerThreadScheduler,
         "waiting for worker thread",
         std::move(f));
+  }
+
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, T>
+  thenInThreadPool(const ThreadPool& threadPool, Func&& f) && {
+    return std::move(*this).thenWithScheduler(
+        *threadPool._pScheduler,
+        "waiting for thread pool thread",
+        std::forward<Func>(f));
   }
 
   /**

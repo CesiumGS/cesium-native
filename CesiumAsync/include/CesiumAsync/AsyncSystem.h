@@ -1,15 +1,14 @@
 #pragma once
 
 #include "CesiumAsync/Future.h"
+#include "CesiumAsync/Impl/ContinuationFutureType.h"
 #include "CesiumAsync/Impl/RemoveFuture.h"
 #include "CesiumAsync/Impl/WithTracing.h"
 #include "CesiumAsync/Impl/cesium-async++.h"
 #include "CesiumAsync/Library.h"
+#include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Profiler.h"
 #include <memory>
-#include <string>
-#include <variant>
-#include <vector>
 
 namespace CesiumAsync {
 class ITaskProcessor;
@@ -82,18 +81,15 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func>
-  Future<typename Impl::RemoveFuture<
-      typename std::invoke_result<Func>::type>::type>
-  runInWorkerThread(Func&& f) const {
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, void> runInWorkerThread(Func&& f) const {
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for worker thread";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
     TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
 #endif
 
-    return Future<typename Impl::RemoveFuture<
-        typename std::invoke_result<Func>::type>::type>(
+    return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->workerThreadScheduler,
@@ -117,22 +113,37 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func>
-  Future<typename Impl::RemoveFuture<
-      typename std::invoke_result<Func>::type>::type>
-  runInMainThread(Func&& f) const {
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, void> runInMainThread(Func&& f) const {
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for main thread";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
     TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
 #endif
 
-    return Future<typename Impl::RemoveFuture<
-        typename std::invoke_result<Func>::type>::type>(
+    return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThreadScheduler,
-            Impl::WithTracing<Func, T>::wrap(
+            Impl::WithTracing<Func, void>::wrap(
+                tracingName,
+                std::forward<Func>(f))));
+  }
+
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, void>
+  runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
+#if TRACING_ENABLED
+    static const char* tracingName = "waiting for thread pool";
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
+#endif
+
+    return Impl::ContinuationFutureType_t<Func, void>(
+        this->_pSchedulers,
+        async::spawn(
+            *threadPool._pScheduler,
+            Impl::WithTracing<Func, void>::wrap(
                 tracingName,
                 std::forward<Func>(f))));
   }
@@ -160,6 +171,14 @@ public:
    * The tasks are run in the calling thread.
    */
   void dispatchMainThreadTasks();
+
+  /**
+   * @brief Creates a new thread pool that can be used to run continuations.
+   *
+   * @param numberOfThreads The number of threads in the pool.
+   * @return The thread pool.
+   */
+  ThreadPool createThreadPool(int32_t numberOfThreads) const;
 
 private:
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;

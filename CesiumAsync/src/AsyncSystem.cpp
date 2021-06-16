@@ -21,6 +21,10 @@ void AsyncSystem::dispatchMainThreadTasks() {
   this->_pSchedulers->endInMainThread();
 }
 
+ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {
+  return ThreadPool(numberOfThreads);
+}
+
 namespace Impl {
 
 void ImmediatelyInMainThreadScheduler::schedule(async::task_run_handle t) {

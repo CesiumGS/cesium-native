@@ -3,6 +3,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/ICacheDatabase.h"
+#include "CesiumAsync/ThreadPool.h"
 #include <atomic>
 #include <cstddef>
 #include <memory>
@@ -34,6 +35,7 @@ public:
    * {@link ICacheDatabase::prune} of old cached results from the database.
    */
   CachingAssetAccessor(
+      const AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<ICacheDatabase>& pCacheDatabase,
@@ -62,5 +64,6 @@ private:
   std::shared_ptr<spdlog::logger> _pLogger;
   std::shared_ptr<IAssetAccessor> _pAssetAccessor;
   std::shared_ptr<ICacheDatabase> _pCacheDatabase;
+  ThreadPool _cacheThreadPool;
 };
 } // namespace CesiumAsync

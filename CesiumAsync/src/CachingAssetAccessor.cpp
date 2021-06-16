@@ -87,6 +87,7 @@ static std::unique_ptr<IAssetRequest>
 updateCacheItem(CacheItem&& cacheItem, const IAssetRequest& request);
 
 CachingAssetAccessor::CachingAssetAccessor(
+    const AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<ICacheDatabase>& pCacheDatabase,
@@ -95,7 +96,8 @@ CachingAssetAccessor::CachingAssetAccessor(
       _requestSinceLastPrune(0),
       _pLogger(pLogger),
       _pAssetAccessor(pAssetAccessor),
-      _pCacheDatabase(pCacheDatabase) {}
+      _pCacheDatabase(pCacheDatabase),
+      _cacheThreadPool(asyncSystem.createThreadPool(1)) {}
 
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 
@@ -114,25 +116,32 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
         CesiumUtility::Profiler::instance().allocateID();
     TRACE_ASYNC_ENLIST(pruneTraceID);
 #endif
-    asyncSystem.runInWorkerThread([this]() { this->_pCacheDatabase->prune(); });
+    asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {
+      this->_pCacheDatabase->prune();
+    });
   }
 
   TRACE_ASYNC_BEGIN("requestAsset (cached)");
 
+  ThreadPool& threadPool = this->_cacheThreadPool;
+
   return asyncSystem
-      .runInWorkerThread(
+      .runInThreadPool(
+          this->_cacheThreadPool,
           [asyncSystem,
            pAssetAccessor = this->_pAssetAccessor,
            pCacheDatabase = this->_pCacheDatabase,
            pLogger = this->_pLogger,
            url,
-           headers]() -> Future<std::shared_ptr<IAssetRequest>> {
+           headers,
+           threadPool]() -> Future<std::shared_ptr<IAssetRequest>> {
             std::optional<CacheItem> cacheLookup =
                 pCacheDatabase->getEntry(url);
             if (!cacheLookup) {
               // No cache item found, request directly from the server
               return pAssetAccessor->requestAsset(asyncSystem, url, headers)
-                  .thenImmediatelyInWorkerThread(
+                  .thenInThreadPool(
+                      threadPool,
                       [pCacheDatabase, pLogger](
                           std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
                         const IAssetResponse* pResponse =
@@ -185,7 +194,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
               }
 
               return pAssetAccessor->requestAsset(asyncSystem, url, newHeaders)
-                  .thenImmediatelyInWorkerThread(
+                  .thenInThreadPool(
+                      threadPool,
                       [cacheItem = std::move(cacheItem),
                        pCacheDatabase,
                        pLogger](std::shared_ptr<IAssetRequest>&&
