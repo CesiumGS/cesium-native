@@ -637,7 +637,8 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
            {"Accept", "application/json"}},
           payload)
       .thenImmediatelyInWorkerThread([asyncSystem, pAssetAccessor, ionApiUrl](
-                              std::shared_ptr<IAssetRequest>&& pRequest) {
+                                         std::shared_ptr<IAssetRequest>&&
+                                             pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
           throw std::runtime_error("The server did not return a response.");

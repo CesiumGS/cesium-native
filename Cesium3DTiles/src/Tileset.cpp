@@ -108,9 +108,7 @@ Tileset::Tileset(
             e.what());
         this->notifyTileDoneLoading(nullptr, 0);
       })
-      .thenImmediately([]() {
-        TRACE_ASYNC_END("Tileset from ion startup");
-      });
+      .thenImmediately([]() { TRACE_ASYNC_END("Tileset from ion startup"); });
 }
 
 Tileset::~Tileset() {
@@ -143,7 +141,8 @@ Tileset::~Tileset() {
   }
 }
 
-Future<void> Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
+Future<void>
+Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
     SPDLOG_LOGGER_ERROR(

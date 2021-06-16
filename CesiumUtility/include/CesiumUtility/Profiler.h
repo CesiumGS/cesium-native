@@ -24,20 +24,20 @@
 #define LAMBDA_CAPTURE_TRACE_END(name) TRACE_NAME_AUX2(tracer, name).reset();
 #define TRACE(name)                                                            \
   CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name);
-#define TRACE_INIT(filename)                                                  \
+#define TRACE_INIT(filename)                                                   \
   CesiumUtility::Profiler::instance().startTracing(filename);
 #define TRACE_SHUTDOWN() CesiumUtility::Profiler::instance().endTracing();
-#define TRACE_ASYNC_BEGIN_ID(name, id)                                            \
+#define TRACE_ASYNC_BEGIN_ID(name, id)                                         \
   CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'b', id);
-#define TRACE_ASYNC_END_ID(name, id)                                              \
+#define TRACE_ASYNC_END_ID(name, id)                                           \
   CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'e', id);
-#define TRACE_ASYNC_BEGIN(name)                                                      \
+#define TRACE_ASYNC_BEGIN(name)                                                \
   CesiumUtility::Profiler::instance().writeAsyncTrace(                         \
       "cesium",                                                                \
       name,                                                                    \
       'b',                                                                     \
       CesiumUtility::Profiler::instance().getEnlistedID());
-#define TRACE_ASYNC_END(name)                                                        \
+#define TRACE_ASYNC_END(name)                                                  \
   CesiumUtility::Profiler::instance().writeAsyncTrace(                         \
       "cesium",                                                                \
       name,                                                                    \

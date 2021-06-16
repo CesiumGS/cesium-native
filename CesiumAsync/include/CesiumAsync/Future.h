@@ -10,8 +10,8 @@ namespace CesiumAsync {
 
 namespace Impl {
 
-template <class Func, class R> struct ParameterizedTaskUnwrapper;
-template <class Func> struct TaskUnwrapper;
+template <typename Func, typename R> struct ParameterizedTaskUnwrapper;
+template <typename Func> struct TaskUnwrapper;
 
 } // namespace Impl
 
@@ -21,7 +21,7 @@ template <class Func> struct TaskUnwrapper;
  *
  * @tparam T The type of the value.
  */
-template <class T> class Future final {
+template <typename T> class Future final {
 public:
   /**
    * @brief Move constructor
@@ -46,9 +46,8 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func>
-  Future<typename Impl::ContinuationFutureType<Func, T>::type>
-  thenInWorkerThread(Func&& f) && {
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
         this->_pSchedulers->workerThreadScheduler,
         "waiting for worker thread",
@@ -70,17 +69,16 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func>
-  Future<typename Impl::ContinuationFutureType<Func, T>::type>
-  thenInMainThread(Func&& f) && {
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
         this->_pSchedulers->mainThreadScheduler,
         "waiting for main thread",
         std::forward<Func>(f));
   }
 
-  template <class Func>
-  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, T>
   thenImmediatelyInMainThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
         this->_pSchedulers->immediatelyInMainThreadScheduler,
@@ -104,10 +102,9 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func>
-  Future<typename Impl::ContinuationFutureType<Func, T>::type>
-  thenImmediately(Func&& f) && {
-    return Future<typename Impl::ContinuationFutureType<Func, T>::type>(
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, T> thenImmediately(Func&& f) && {
+    return Impl::ContinuationFutureType_t<Func, T>(
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
@@ -127,8 +124,8 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func>
-  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  template <typename Func>
+  Impl::ContinuationFutureType_t<Func, T>
   thenImmediatelyInWorkerThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
         this->_pSchedulers->immediatelyInWorkerThreadScheduler,
@@ -154,17 +151,16 @@ public:
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <class Func> Future<T> catchInMainThread(Func&& f) && {
+  template <typename Func> Future<T> catchInMainThread(Func&& f) && {
     return std::move(*this).catchWithScheduler(
         this->_pSchedulers->mainThreadScheduler,
         std::forward<Func>(f));
   }
 
-  template <class Func, class Scheduler>
-  Future<typename Impl::ContinuationFutureType<Func, std::exception>::type>
+  template <typename Func, typename Scheduler>
+  Impl::ContinuationFutureType_t<Func, std::exception>
   catchWithScheduler(Scheduler& scheduler, Func&& f) && {
-    return Future<
-        typename Impl::ContinuationFutureType<Func, std::exception>::type>(
+    return Impl::ContinuationFutureType_t<Func, std::exception>(
         this->_pSchedulers,
         this->_task.then(
             async::inline_scheduler(),
@@ -201,9 +197,8 @@ private:
       async::task<T>&& task) noexcept
       : _pSchedulers(pSchedulers), _task(std::move(task)) {}
 
-  template <class Func, class Scheduler>
-  Future<typename Impl::ContinuationFutureType<Func, T>::type>
-  thenWithScheduler(
+  template <typename Func, typename Scheduler>
+  Impl::ContinuationFutureType_t<Func, T> thenWithScheduler(
       Scheduler& scheduler,
       const char* tracingName,
       Func&& f) && {
@@ -225,7 +220,7 @@ private:
     auto& task = this->_task;
 #endif
 
-    return Future<typename Impl::ContinuationFutureType<Func, T>::type>(
+    return Impl::ContinuationFutureType_t<Func, T>(
         this->_pSchedulers,
         task.then(
             scheduler,
@@ -239,11 +234,12 @@ private:
 
   friend class AsyncSystem;
 
-  template <class Func, class R> friend struct Impl::ParameterizedTaskUnwrapper;
+  template <typename Func, typename R>
+  friend struct Impl::ParameterizedTaskUnwrapper;
 
-  template <class Func> friend struct Impl::TaskUnwrapper;
+  template <typename Func> friend struct Impl::TaskUnwrapper;
 
-  template <class R> friend class Future;
+  template <typename R> friend class Future;
 };
 
 } // namespace CesiumAsync

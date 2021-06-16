@@ -117,28 +117,27 @@ IonRasterOverlay::createTileProvider(
                                         "accessToken",
                                         ""))});
           })
-      .thenInMainThread([asyncSystem,
-                         pOwner,
-                         pAssetAccessor,
-                         pCreditSystem,
-                         pPrepareRendererResources,
-                         pLogger](
-                            std::unique_ptr<RasterOverlay>&& pAggregatedOverlay) {
-        // Handle the case that the code above bails out with an error,
-        // returning a nullptr.
-        if (pAggregatedOverlay) {
-          return pAggregatedOverlay->createTileProvider(
-              asyncSystem,
-              pAssetAccessor,
-              pCreditSystem,
-              pPrepareRendererResources,
-              pLogger,
-              pOwner);
-        }
-        return asyncSystem
-            .createResolvedFuture<std::unique_ptr<RasterOverlayTileProvider>>(
-                nullptr);
-      });
+      .thenInMainThread(
+          [asyncSystem,
+           pOwner,
+           pAssetAccessor,
+           pCreditSystem,
+           pPrepareRendererResources,
+           pLogger](std::unique_ptr<RasterOverlay>&& pAggregatedOverlay) {
+            // Handle the case that the code above bails out with an error,
+            // returning a nullptr.
+            if (pAggregatedOverlay) {
+              return pAggregatedOverlay->createTileProvider(
+                  asyncSystem,
+                  pAssetAccessor,
+                  pCreditSystem,
+                  pPrepareRendererResources,
+                  pLogger,
+                  pOwner);
+            }
+            return asyncSystem.createResolvedFuture<
+                std::unique_ptr<RasterOverlayTileProvider>>(nullptr);
+          });
 }
 
 } // namespace Cesium3DTiles
