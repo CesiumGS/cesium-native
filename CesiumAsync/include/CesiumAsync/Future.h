@@ -1,0 +1,249 @@
+#pragma once
+
+#include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
+#include "CesiumAsync/Impl/CatchFunction.h"
+#include "CesiumAsync/Impl/ContinuationFutureType.h"
+#include "CesiumUtility/Profiler.h"
+#include <variant>
+
+namespace CesiumAsync {
+
+namespace Impl {
+
+template <class Func, class R> struct ParameterizedTaskUnwrapper;
+template <class Func> struct TaskUnwrapper;
+
+} // namespace Impl
+
+/**
+ * @brief A value that will be available in the future, as produced by
+ * {@link AsyncSystem}.
+ *
+ * @tparam T The type of the value.
+ */
+template <class T> class Future final {
+public:
+  /**
+   * @brief Move constructor
+   */
+  Future(Future<T>&& rhs) noexcept
+      : _pSchedulers(std::move(rhs._pSchedulers)),
+        _task(std::move(rhs._task)) {}
+
+  Future(const Future<T>& rhs) = delete;
+  Future<T>& operator=(const Future<T>& rhs) = delete;
+
+  /**
+   * @brief Registers a continuation function to be invoked in a worker thread
+   * when this Future resolves, and invalidates this Future.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * Even if the previous Future resolves
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func>
+  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  thenInWorkerThread(Func&& f) && {
+    return std::move(*this).thenWithScheduler(
+        this->_pSchedulers->workerThreadScheduler,
+        "waiting for worker thread",
+        std::forward<Func>(f));
+  }
+
+  /**
+   * @brief Registers a continuation function to be invoked in the main thread
+   * when this Future resolves, and invalidates this Future.
+   *
+   * The supplied function will not be invoked immediately, even if this method
+   * is called from the main thread. Instead, it will be queued and invoked the
+   * next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func>
+  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  thenInMainThread(Func&& f) && {
+    return std::move(*this).thenWithScheduler(
+        this->_pSchedulers->mainThreadScheduler,
+        "waiting for main thread",
+        std::forward<Func>(f));
+  }
+
+  template <class Func>
+  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  thenImmediatelyInMainThread(Func&& f) && {
+    return std::move(*this).thenWithScheduler(
+        this->_pSchedulers->immediatelyInMainThreadScheduler,
+        "waiting for main thread",
+        std::forward<Func>(f));
+  }
+
+  /**
+   * @brief Registers a continuation function to be invoked immediately in
+   * whichever thread causes the Future to be resolved, and invalidates this
+   * Future.
+   *
+   * If the Future is already resolved, the supplied function will be called
+   * immediately in the calling thread and this method will not return until
+   * that function does.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func>
+  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  thenImmediately(Func&& f) && {
+    return Future<typename Impl::ContinuationFutureType<Func, T>::type>(
+        this->_pSchedulers,
+        _task.then(
+            async::inline_scheduler(),
+            Impl::WithTracing<Func, T>::wrap(nullptr, std::forward<Func>(f))));
+  }
+
+  /**
+   * @brief Registers a continuation function to be invoked in a worker thread
+   * when this Future resolves, and invalidates this Future.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * Unlike {@link thenInWorkerThread},
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func>
+  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  thenImmediatelyInWorkerThread(Func&& f) && {
+    return std::move(*this).thenWithScheduler(
+        this->_pSchedulers->immediatelyInWorkerThreadScheduler,
+        "waiting for worker thread",
+        std::move(f));
+  }
+
+  /**
+   * @brief Registers a continuation function to be invoked in the main thread
+   * when this Future rejects, and invalidates this Future.
+   *
+   * The supplied function will not be invoked immediately, even if this method
+   * is called from the main thread. Instead, it will be queued and invoked the
+   * next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * Any `then` continuations chained after this one will be invoked with the
+   * return value of the catch callback.
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <class Func> Future<T> catchInMainThread(Func&& f) && {
+    return std::move(*this).catchWithScheduler(
+        this->_pSchedulers->mainThreadScheduler,
+        std::forward<Func>(f));
+  }
+
+  template <class Func, class Scheduler>
+  Future<typename Impl::ContinuationFutureType<Func, std::exception>::type>
+  catchWithScheduler(Scheduler& scheduler, Func&& f) && {
+    return Future<
+        typename Impl::ContinuationFutureType<Func, std::exception>::type>(
+        this->_pSchedulers,
+        this->_task.then(
+            async::inline_scheduler(),
+            Impl::CatchFunction<Func, T, Scheduler>{
+                scheduler,
+                std::forward<Func>(f),
+                this->_pSchedulers->pTaskProcessor}));
+  }
+
+  /**
+   * @brief Waits for the future to resolve or reject and returns the result.
+   *
+   * This method must not be called from the main thread, the one that calls
+   * {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
+   * deadlock because the main thread tasks will never complete while this
+   * method is blocking the main thread.
+   *
+   * @return The value if the future resolves successfully, or the exception if
+   * it rejects.
+   */
+  std::variant<T, std::exception> wait() {
+    try {
+      return this->_task.get();
+    } catch (std::exception& e) {
+      return e;
+    } catch (...) {
+      return std::runtime_error("Unknown exception.");
+    }
+  }
+
+private:
+  Future(
+      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      async::task<T>&& task) noexcept
+      : _pSchedulers(pSchedulers), _task(std::move(task)) {}
+
+  template <class Func, class Scheduler>
+  Future<typename Impl::ContinuationFutureType<Func, T>::type>
+  thenWithScheduler(
+      Scheduler& scheduler,
+      const char* tracingName,
+      Func&& f) && {
+    // It would be nice if tracingName were a template parameter instead of a
+    // function parameter, but that triggers a bug in VS2017. It was previously
+    // a bug in VS2019, too, but has been fixed there:
+    // https://developercommunity.visualstudio.com/t/internal-compiler-error-when-compiling-a-template-1/534210
+#if TRACING_ENABLED
+    // When tracing is enabled, we measure the time between scheduling and
+    // dispatching of the work.
+    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    auto task = this->_task.then(
+        async::inline_scheduler(),
+        [tracingID, tracingName](T&& value) {
+          TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
+          return std::move(value);
+        });
+#else
+    auto& task = this->_task;
+#endif
+
+    return Future<typename Impl::ContinuationFutureType<Func, T>::type>(
+        this->_pSchedulers,
+        task.then(
+            scheduler,
+            Impl::WithTracing<Func, T>::wrap(
+                tracingName,
+                std::forward<Func>(f))));
+  }
+
+  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  async::task<T> _task;
+
+  friend class AsyncSystem;
+
+  template <class Func, class R> friend struct Impl::ParameterizedTaskUnwrapper;
+
+  template <class Func> friend struct Impl::TaskUnwrapper;
+
+  template <class R> friend class Future;
+};
+
+} // namespace CesiumAsync
