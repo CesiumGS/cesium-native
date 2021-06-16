@@ -324,4 +324,23 @@ TEST_CASE("Test string property") {
         view.getPropertyValues<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
+
+  SECTION("Offset values are not sorted ascending") {
+    uint32_t* offset =
+        reinterpret_cast<uint32_t*>(offsetBuffer.cesium.data.data());
+    offset[2] = static_cast<uint32_t>(valueBuffer.byteLength + 4);
+    std::optional<PropertyView<std::string_view>> stringProperty =
+        view.getPropertyValues<std::string_view>("TestClassProperty");
+    REQUIRE(stringProperty == std::nullopt);
+  }
+
+  SECTION("Offset value points outside of value buffer") {
+    uint32_t* offset =
+        reinterpret_cast<uint32_t*>(offsetBuffer.cesium.data.data());
+    offset[featureTable.count] =
+        static_cast<uint32_t>(valueBuffer.byteLength + 4);
+    std::optional<PropertyView<std::string_view>> stringProperty =
+        view.getPropertyValues<std::string_view>("TestClassProperty");
+    REQUIRE(stringProperty == std::nullopt);
+  }
 }
