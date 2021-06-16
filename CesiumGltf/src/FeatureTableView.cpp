@@ -13,7 +13,7 @@ static bool checkOffsetBuffer(
   }
 
   size_t size = offsetBuffer.size() / sizeof(T);
-  if (size < instanceCount + 1) {
+  if (size != instanceCount + 1) {
     return false;
   }
 
@@ -22,7 +22,7 @@ static bool checkOffsetBuffer(
       size);
 
   for (size_t i = 1; i < offsetValues.size(); ++i) {
-    if (offsetValues[i] > offsetValues[i - 1]) {
+    if (offsetValues[i] < offsetValues[i - 1]) {
       return false;
     }
   }

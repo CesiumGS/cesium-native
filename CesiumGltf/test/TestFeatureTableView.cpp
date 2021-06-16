@@ -223,4 +223,105 @@ TEST_CASE("Test boolean properties") {
   }
 }
 
-TEST_CASE("Test string property") {}
+TEST_CASE("Test string property") {
+  Model model;
+
+  std::vector<std::string> expected{"What's up", "Test_0", "Test_1", "", ""};
+  size_t totalBytes = 0;
+  for (const std::string& expectedValue : expected) {
+    totalBytes += expectedValue.size();
+  }
+
+  std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint32_t));
+  std::vector<std::byte> values(totalBytes);
+  uint32_t* offsetValue = reinterpret_cast<uint32_t*>(offsets.data());
+  for (size_t i = 0; i < expected.size(); ++i) {
+    const std::string& expectedValue = expected[i];
+    std::memcpy(
+        values.data() + offsetValue[i],
+        expectedValue.c_str(),
+        expectedValue.size());
+    offsetValue[i + 1] =
+        offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
+  }
+
+  // store property value
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.byteLength = static_cast<int64_t>(values.size());
+  valueBuffer.cesium.data = std::move(values);
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+  int32_t valueBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // store string offset buffer
+  Buffer& offsetBuffer = model.buffers.emplace_back();
+  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+  offsetBuffer.cesium.data = std::move(offsets);
+
+  BufferView& offsetBufferView = model.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  offsetBufferView.byteOffset = 0;
+  offsetBufferView.byteLength = offsetBuffer.byteLength;
+  int32_t offsetBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "STRING";
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(expected.size());
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.offsetType = "UINT32";
+  featureTableProperty.bufferView = valueBufferViewIdx;
+  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "STRING");
+  REQUIRE(classProperty->componentCount == std::nullopt);
+  REQUIRE(classProperty->componentType.isNull());
+
+  SECTION("Access correct type") {
+    std::optional<PropertyView<std::string_view>> stringProperty =
+        view.getPropertyValues<std::string_view>("TestClassProperty");
+    REQUIRE(stringProperty != std::nullopt);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      REQUIRE((*stringProperty)[i] == expected[i]);
+    }
+  }
+
+  SECTION("Wrong offset type") {
+    featureTableProperty.offsetType = "UINT8";
+    std::optional<PropertyView<std::string_view>> stringProperty =
+        view.getPropertyValues<std::string_view>("TestClassProperty");
+    REQUIRE(stringProperty == std::nullopt);
+
+    featureTableProperty.offsetType = "UINT64";
+    stringProperty =
+        view.getPropertyValues<std::string_view>("TestClassProperty");
+    REQUIRE(stringProperty == std::nullopt);
+
+    featureTableProperty.offsetType = "NONSENSE";
+    stringProperty =
+        view.getPropertyValues<std::string_view>("TestClassProperty");
+    REQUIRE(stringProperty == std::nullopt);
+  }
+}
