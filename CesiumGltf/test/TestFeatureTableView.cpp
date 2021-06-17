@@ -159,7 +159,8 @@ TEST_CASE("Test boolean properties") {
     uint8_t expectedValue = expected.back();
     size_t byteIndex = i / 8;
     size_t bitIndex = i % 8;
-    values[byteIndex] = (expectedValue << bitIndex) | values[byteIndex];
+    values[byteIndex] =
+        static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
   }
 
   Buffer& valueBuffer = model.buffers.emplace_back();
@@ -342,5 +343,98 @@ TEST_CASE("Test string property") {
     std::optional<PropertyView<std::string_view>> stringProperty =
         view.getPropertyValues<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
+  }
+}
+
+TEST_CASE("Test fixed numeric array") {
+  Model model;
+
+  // store property value
+  std::vector<uint32_t> values =
+      {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
+  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
+  std::memcpy(
+      valueBuffer.cesium.data.data(),
+      values.data(),
+      valueBuffer.cesium.data.size());
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "ARRAY";
+  testClassProperty.componentType = "UINT32";
+  testClassProperty.componentCount = 3;
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(
+      values.size() / testClassProperty.componentCount.value());
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.bufferView =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->componentCount == 3);
+  REQUIRE(classProperty->componentType.getString() == "UINT32");
+
+  SECTION("Access the right type") {
+    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
+        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    REQUIRE(arrayProperty != std::nullopt);
+
+    for (size_t i = 0; i < arrayProperty->size(); ++i) {
+      ArrayView<uint32_t> member = (*arrayProperty)[i];
+      for (size_t j = 0; j < member.size(); ++j) {
+        REQUIRE(member[j] == values[i * 3 + j]);
+      }
+    }
+  }
+
+  SECTION("Wrong component type") {
+    testClassProperty.componentType = "UINT8";
+    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
+        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    REQUIRE(arrayProperty == std::nullopt);
+  }
+
+  SECTION("Buffer size is a multiple of type size") {
+    valueBufferView.byteLength = 13;
+    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
+        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    REQUIRE(arrayProperty == std::nullopt);
+  }
+
+  SECTION("Negative component count") {
+    testClassProperty.componentCount = -1;
+    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
+        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    REQUIRE(arrayProperty == std::nullopt);
+  }
+
+  SECTION("Value buffer doesn't fit into feature table count") {
+    testClassProperty.componentCount = 55;
+    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
+        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    REQUIRE(arrayProperty == std::nullopt);
   }
 }

@@ -135,14 +135,15 @@ private:
       return std::nullopt;
     }
 
-    if (componentCount == 0 && featureTableProperty.arrayOffsetBufferView < 0) {
+    if (componentCount <= 0 && featureTableProperty.arrayOffsetBufferView < 0) {
       return std::nullopt;
     }
 
     // fixed array
     if (componentCount > 0) {
       if (valueBuffer.size() !=
-          static_cast<size_t>(_featureTable->count * componentCount)) {
+          static_cast<size_t>(
+              _featureTable->count * componentCount * sizeof(T))) {
         return std::nullopt;
       }
 
