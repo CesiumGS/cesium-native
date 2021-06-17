@@ -381,7 +381,8 @@ TEST_CASE("Test fixed numeric array") {
   FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
   featureTable.classProperty = "TestClass";
   featureTable.count = static_cast<int64_t>(
-      values.size() / testClassProperty.componentCount.value());
+      values.size() /
+      static_cast<size_t>(testClassProperty.componentCount.value()));
 
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
@@ -438,3 +439,5 @@ TEST_CASE("Test fixed numeric array") {
     REQUIRE(arrayProperty == std::nullopt);
   }
 }
+
+TEST_CASE("Test dynamic numeric array") {}
