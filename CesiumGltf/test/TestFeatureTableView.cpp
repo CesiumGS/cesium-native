@@ -440,4 +440,106 @@ TEST_CASE("Test fixed numeric array") {
   }
 }
 
-TEST_CASE("Test dynamic numeric array") {}
+TEST_CASE("Test dynamic numeric array") {
+  Model model;
+
+  // store property value
+  std::vector<std::vector<uint16_t>> expected{
+      {12, 33, 11, 344, 112, 444, 1},
+      {},
+      {},
+      {122, 23, 333, 12},
+      {},
+      {333, 311, 22, 34},
+      {},
+      {33, 1888, 233, 33019}};
+  size_t numOfElements = 0;
+  for (const auto& expectedMember : expected) {
+    numOfElements += expectedMember.size();
+  }
+
+  std::vector<std::byte> values(numOfElements * sizeof(uint16_t));
+  std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint64_t));
+  uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
+  for (size_t i = 0; i < expected.size(); ++i) {
+    std::memcpy(
+        values.data() + offsetValue[i],
+        expected[i].data(),
+        expected[i].size() * sizeof(uint16_t));
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size() * sizeof(uint16_t);
+  }
+
+  // store property value
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.byteLength = static_cast<int64_t>(values.size());
+  valueBuffer.cesium.data = std::move(values);
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+  int32_t valueBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // store string offset buffer
+  Buffer& offsetBuffer = model.buffers.emplace_back();
+  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+  offsetBuffer.cesium.data = std::move(offsets);
+
+  BufferView& offsetBufferView = model.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  offsetBufferView.byteOffset = 0;
+  offsetBufferView.byteLength = offsetBuffer.byteLength;
+  int32_t offsetBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "ARRAY";
+  testClassProperty.componentType = "UINT16";
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(expected.size());
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.bufferView = valueBufferViewIdx;
+  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.offsetType = "UINT64";
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->componentType.getString() == "UINT16");
+
+  SECTION("Access the correct type") {
+    std::optional<PropertyView<ArrayView<uint16_t>>> property =
+        view.getPropertyValues<ArrayView<uint16_t>>("TestClassProperty");
+    REQUIRE(property != std::nullopt);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      ArrayView<uint16_t> valueMember = (*property)[i];
+      REQUIRE(valueMember.size() == expected[i].size());
+      for (size_t j = 0; j < expected[i].size(); ++j) {
+        REQUIRE(expected[i][j] == valueMember[j]);
+      }
+    }
+  }
+
+  SECTION("Component count and offset buffer appear at the same time") {
+    testClassProperty.componentCount = 3;
+    std::optional<PropertyView<ArrayView<uint16_t>>> property =
+        view.getPropertyValues<ArrayView<uint16_t>>("TestClassProperty");
+    REQUIRE(property == std::nullopt);
+  }
+}
