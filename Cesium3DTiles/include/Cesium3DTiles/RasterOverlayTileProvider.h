@@ -9,6 +9,7 @@
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include "RasterizedPolygonsOverlay.h"
+#include <memory>
 #include <optional>
 #include <spdlog/fwd.h>
 #include <unordered_map>
@@ -218,14 +219,14 @@ public:
   virtual void mapRasterTilesToGeometryTile(
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
+      std::vector<std::unique_ptr<RasterMappedTo3DTile>>& outputRasterTiles,
       std::optional<size_t> outputIndex = std::nullopt) = 0;
 
   /** @copydoc mapRasterTilesToGeometryTile */
   virtual void mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
+      std::vector<std::unique_ptr<RasterMappedTo3DTile>>& outputRasterTiles,
       std::optional<size_t> outputIndex = std::nullopt) = 0;
 
   /**

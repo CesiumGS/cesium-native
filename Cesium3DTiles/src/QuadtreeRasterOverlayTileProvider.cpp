@@ -1,5 +1,6 @@
 
 #include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
+#include "Cesium3DTiles/QuadtreeRasterMappedTo3DTile.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 
 using namespace CesiumAsync;
@@ -58,7 +59,8 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
 void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError,
-    std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
+    std::vector<std::unique_ptr<Cesium3DTiles::RasterMappedTo3DTile>>&
+        outputRasterTiles,
     std::optional<size_t> outputIndex) {
   this->mapRasterTilesToGeometryTile(
       projectRectangleSimple(this->getProjection(), geometryRectangle),
@@ -70,10 +72,11 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError,
-    std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
+    std::vector<std::unique_ptr<Cesium3DTiles::RasterMappedTo3DTile>>&
+        outputRasterTiles,
     std::optional<size_t> outputIndex) {
   if (this->_pPlaceholder) {
-    outputRasterTiles.push_back(RasterMappedTo3DTile(
+    outputRasterTiles.push_back(std::make_unique<QuadtreeRasterMappedTo3DTile>(
         this->_pPlaceholder.get(),
         CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)));
     return;
@@ -344,8 +347,9 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
               static_cast<
                   std::vector<RasterMappedTo3DTile>::iterator::difference_type>(
                   realOutputIndex),
-          pTile,
-          texCoordsRectangle);
+          std::make_unique<QuadtreeRasterMappedTo3DTile>(
+              pTile,
+              texCoordsRectangle));
       ++realOutputIndex;
     }
   }

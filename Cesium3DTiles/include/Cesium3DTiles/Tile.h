@@ -451,12 +451,13 @@ public:
   /**
    * @brief Returns the raster overlay tiles that have been mapped to this tile.
    */
-  std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept {
+  std::vector<std::unique_ptr<RasterMappedTo3DTile>>&
+  getMappedRasterTiles() noexcept {
     return this->_rasterTiles;
   }
 
   /** @copydoc Tile::getMappedRasterTiles() */
-  const std::vector<RasterMappedTo3DTile>&
+  const std::vector<std::unique_ptr<RasterMappedTo3DTile>>&
   getMappedRasterTiles() const noexcept {
     return this->_rasterTiles;
   }
@@ -584,7 +585,7 @@ private:
   TileSelectionState _lastSelectionState;
 
   // Overlays
-  std::vector<RasterMappedTo3DTile> _rasterTiles;
+  std::vector<std::unique_ptr<RasterMappedTo3DTile>> _rasterTiles;
 
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
 

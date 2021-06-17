@@ -367,10 +367,15 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
 
     // per-tile credits
     for (auto& tile : result.tilesToRenderThisFrame) {
-      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
-          tile->getMappedRasterTiles();
-      for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
-        RasterOverlayTile* pRasterOverlayTile = mappedRasterTile.getReadyTile();
+      const std::vector<std::unique_ptr<RasterMappedTo3DTile>>&
+          mappedRasterTiles = tile->getMappedRasterTiles();
+      for (const std::unique_ptr<RasterMappedTo3DTile>& mappedRasterTile :
+           mappedRasterTiles) {
+        if (!mappedRasterTile) {
+          continue;
+        }
+        RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile->getReadyTile();
         if (pRasterOverlayTile != nullptr) {
           for (Credit credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
@@ -1969,8 +1974,12 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
 }
 
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
-  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
-    const RasterOverlayTile* pLoading = mapped.getLoadingTile();
+  for (const std::unique_ptr<RasterMappedTo3DTile>& mapped :
+       tile.getMappedRasterTiles()) {
+    if (!mapped) {
+      continue;
+    }
+    const RasterOverlayTile* pLoading = mapped->getLoadingTile();
     if (pLoading &&
         pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
       return true;
