@@ -1,5 +1,6 @@
 #include "CesiumGltf/FeatureTableView.h"
 #include "catch2/catch.hpp"
+#include "glm/common.hpp"
 #include <bitset>
 #include <cstring>
 
@@ -541,5 +542,108 @@ TEST_CASE("Test dynamic numeric array") {
     std::optional<PropertyView<ArrayView<uint16_t>>> property =
         view.getPropertyValues<ArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(property == std::nullopt);
+  }
+}
+
+TEST_CASE("Test fixed boolean array") {
+  Model model;
+
+  // store property value
+  std::vector<bool> expected = {
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true};
+  std::vector<uint8_t> values;
+  size_t requiredBytesSize = static_cast<size_t>(
+      glm::ceil(static_cast<double>(expected.size()) / 8.0));
+  values.resize(requiredBytesSize);
+  for (size_t i = 0; i < expected.size(); ++i) {
+    uint8_t expectedValue = expected[i];
+    size_t byteIndex = i / 8;
+    size_t bitIndex = i % 8;
+    values[byteIndex] =
+        static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
+  }
+
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.cesium.data.resize(values.size());
+  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
+  std::memcpy(
+      valueBuffer.cesium.data.data(),
+      values.data(),
+      valueBuffer.cesium.data.size());
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "ARRAY";
+  testClassProperty.componentType = "BOOLEAN";
+  testClassProperty.componentCount = 3;
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(
+      expected.size() /
+      static_cast<size_t>(testClassProperty.componentCount.value()));
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.bufferView =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->componentCount == 3);
+  REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
+
+  SECTION("Access correct type") {
+    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
+        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    REQUIRE(boolProperty != std::nullopt);
+    REQUIRE(boolProperty->size() == static_cast<size_t>(featureTable.count));
+    for (size_t i = 0; i < boolProperty->size(); ++i) {
+      ArrayView<bool> valueMember = (*boolProperty)[i];
+      for (size_t j = 0; j < valueMember.size(); ++j) {
+        REQUIRE(valueMember[j] == expected[i * 3 + j]);
+      }
+    }
+  }
+
+  SECTION("Value buffer doesn't have enough required bytes") {
+    testClassProperty.componentCount = 11;
+    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
+        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    REQUIRE(boolProperty == std::nullopt);
+  }
+
+  SECTION("Component count is negative") {
+    testClassProperty.componentCount = -1;
+    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
+        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    REQUIRE(boolProperty == std::nullopt);
   }
 }

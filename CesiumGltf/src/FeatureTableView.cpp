@@ -266,7 +266,7 @@ FeatureTableView::getBooleanArrayPropertyValues(
     return std::nullopt;
   }
 
-  if (componentCount == 0 && featureTableProperty.arrayOffsetBufferView < 0) {
+  if (componentCount <= 0 && featureTableProperty.arrayOffsetBufferView < 0) {
     return std::nullopt;
   }
 
