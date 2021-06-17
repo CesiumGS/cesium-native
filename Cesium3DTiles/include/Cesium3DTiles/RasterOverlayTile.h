@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Cesium3DTiles/TileID.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/Rectangle.h"
 #include "CesiumGltf/Model.h"
 #include <vector>
 
@@ -84,11 +85,14 @@ public:
    * Otherwise, the state will become {@link LoadState `Failed`}.
    *
    * @param overlay The {@link RasterOverlay}.
-   * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for this tile.
+   * @param tileID The {@link TileID} for this tile.
+   * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
+   * the imagery rectange for this tile.
    */
   RasterOverlayTile(
       RasterOverlay& overlay,
-      const CesiumGeometry::QuadtreeTileID& tileID);
+      const TileID& tileID,
+      const CesiumGeometry::Rectangle& imageryRectangle);
 
   /** @brief Default destructor. */
   ~RasterOverlayTile();
@@ -104,11 +108,16 @@ public:
   const RasterOverlay& getOverlay() const noexcept { return *this->_pOverlay; }
 
   /**
-   * @brief Returns the {@link CesiumGeometry::QuadtreeTileID} that was given
-   * during construction.
+   * @brief Returns the {@link TileID} that was given during construction.
    */
-  const CesiumGeometry::QuadtreeTileID& getID() const noexcept {
-    return this->_tileID;
+  const TileID& getID() const noexcept { return this->_tileID; }
+
+  /**
+   * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the
+   * imagery rectangle.
+   */
+  const CesiumGeometry::Rectangle& getImageryRectangle() {
+    return this->_imageryRectangle;
   }
 
   /**
@@ -181,7 +190,8 @@ private:
   void setState(LoadState newState);
 
   RasterOverlay* _pOverlay;
-  CesiumGeometry::QuadtreeTileID _tileID;
+  TileID _tileID;
+  CesiumGeometry::Rectangle _imageryRectangle;
   std::vector<Credit> _tileCredits;
   LoadState _state;
   CesiumGltf::ImageCesium _image;

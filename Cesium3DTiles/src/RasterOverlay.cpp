@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 
 using namespace CesiumAsync;
@@ -20,7 +21,7 @@ public:
             pAssetAccessor) {}
 
   virtual CesiumAsync::Future<Cesium3DTiles::LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& /* tileID */) override {
+  loadTileImage(const Cesium3DTiles::TileID& /* tileID */) override {
     return this->getAsyncSystem()
         .createResolvedFuture<Cesium3DTiles::LoadedRasterOverlayImage>({});
   }
@@ -38,14 +39,8 @@ public:
       std::vector<Cesium3DTiles::RasterMappedTo3DTile>& /*outputRasterTiles*/,
       std::optional<size_t> /*outputIndex = std::nullopt*/) override {}
 
-  virtual CesiumGeometry::Rectangle getImageryRectangle(
-      const CesiumUtility::IntrusivePointer<
-          Cesium3DTiles::RasterOverlayTile>& /*rasterTile*/) override {
-    return CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0);
-  }
-
   virtual bool hasMoreDetailsAvailable(
-      const CesiumGeometry::QuadtreeTileID& /*tileID*/) const override {
+      const Cesium3DTiles::TileID& /*tileID*/) const override {
     return false;
   }
 };

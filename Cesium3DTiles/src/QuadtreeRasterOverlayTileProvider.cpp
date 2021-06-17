@@ -333,7 +333,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
       CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
-          this->getTile(QuadtreeTileID(imageryLevel, i, j));
+          this->getTile(QuadtreeTileID(imageryLevel, i, j), imageryRectangle);
 
       if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
         this->loadTileThrottled(*pTile);
@@ -352,8 +352,11 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 }
 
 bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(
-    const CesiumGeometry::QuadtreeTileID& tileID) const {
-  return tileID.level < this->_maximumLevel;
+    const TileID& tileID) const {
+  const CesiumGeometry::QuadtreeTileID* quadtreeTileID =
+      std::get_if<CesiumGeometry::QuadtreeTileID>(&tileID);
+  return quadtreeTileID != nullptr &&
+         quadtreeTileID->level < this->_maximumLevel;
 }
 
 uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
@@ -377,11 +380,5 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   double level = glm::log2(twoToTheLevelPower);
   double rounded = glm::max(glm::round(level), 0.0);
   return static_cast<uint32_t>(rounded);
-}
-
-CesiumGeometry::Rectangle
-QuadtreeRasterOverlayTileProvider::getImageryRectangle(
-    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile) {
-  return this->_tilingScheme.tileToRectangle(rasterTile->getID());
 }
 } // namespace Cesium3DTiles

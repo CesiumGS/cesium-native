@@ -3,9 +3,12 @@
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/Tile.h"
+#include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "TileUtilities.h"
+#include <optional>
+#include <variant>
 
 namespace Cesium3DTiles {
 
@@ -33,22 +36,28 @@ RasterMappedTo3DTile::update(Tile& tile) {
   }
 
   // If the loading tile has failed, try its parent.
-  while (this->_pLoadingTile &&
-         this->_pLoadingTile->getState() ==
-             RasterOverlayTile::LoadState::Failed &&
-         this->_pLoadingTile->getID().level > 0) {
+  const CesiumGeometry::QuadtreeTileID* quadtreeTileID;
+  while (this->_pLoadingTile && this->_pLoadingTile->getState() ==
+                                    RasterOverlayTile::LoadState::Failed) {
+
+    quadtreeTileID = std::get_if<CesiumGeometry::QuadtreeTileID>(
+        &this->_pLoadingTile->getID());
+    if (!quadtreeTileID || quadtreeTileID->level == 0) {
+      break;
+    }
+
     // Note when our original tile fails to load so that we don't report more
     // data available. This means - by design - we won't refine past a failed
     // tile.
     this->_originalFailed = true;
 
-    CesiumGeometry::QuadtreeTileID thisID = this->_pLoadingTile->getID();
     CesiumGeometry::QuadtreeTileID parentID(
-        thisID.level - 1,
-        thisID.x >> 1,
-        thisID.y >> 1);
-    this->_pLoadingTile =
-        this->_pLoadingTile->getOverlay().getTileProvider()->getTile(parentID);
+        quadtreeTileID->level - 1,
+        quadtreeTileID->x >> 1,
+        quadtreeTileID->y >> 1);
+    this->_pLoadingTile = this->_pLoadingTile->getOverlay()
+                              .getTileProvider()
+                              ->getTileWithoutCreating(parentID);
   }
 
   // If the loading tile is now ready, make it the ready tile.
@@ -80,16 +89,24 @@ RasterMappedTo3DTile::update(Tile& tile) {
         *this->_pLoadingTile->getOverlay().getTileProvider();
 
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate;
-    CesiumGeometry::QuadtreeTileID id = this->_pLoadingTile->getID();
-    while (id.level > 0) {
-      --id.level;
-      id.x >>= 1;
-      id.y >>= 1;
+    const CesiumGeometry::QuadtreeTileID* currentID =
+        std::get_if<CesiumGeometry::QuadtreeTileID>(
+            &this->_pLoadingTile->getID());
+    if (currentID) {
+      CesiumGeometry::QuadtreeTileID id(
+          currentID->level,
+          currentID->x,
+          currentID->y);
+      while (id.level > 0) {
+        --id.level;
+        id.x >>= 1;
+        id.y >>= 1;
 
-      pCandidate = tileProvider.getTileWithoutCreating(id);
-      if (pCandidate &&
-          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
-        break;
+        pCandidate = tileProvider.getTileWithoutCreating(id);
+        if (pCandidate &&
+            pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
+          break;
+        }
       }
     }
 
@@ -182,7 +199,7 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
   CesiumGeometry::Rectangle geometryRectangle =
       projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
   CesiumGeometry::Rectangle imageryRectangle =
-      tileProvider.getImageryRectangle(this->_pReadyTile);
+      this->_pReadyTile->getImageryRectangle();
 
   double terrainWidth = geometryRectangle.computeWidth();
   double terrainHeight = geometryRectangle.computeHeight();

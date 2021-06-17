@@ -1898,6 +1898,8 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
   struct Operation {
     const TileContext& context;
 
+    std::string operator()(const uint32_t& /*tileID*/) { return std::string(); }
+
     std::string operator()(const std::string& url) { return url; }
 
     std::string operator()(const QuadtreeTileID& quadtreeID) {

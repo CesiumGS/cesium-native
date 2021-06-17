@@ -57,15 +57,19 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _throttledTilesCurrentlyLoading(0) {}
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
-RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
+RasterOverlayTileProvider::getTile(
+    const TileID& id,
+    const CesiumGeometry::Rectangle& imageryRectangle) {
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
       this->getTileWithoutCreating(id);
   if (pTile) {
     return pTile;
   }
 
-  std::unique_ptr<RasterOverlayTile> pNew =
-      std::make_unique<RasterOverlayTile>(this->getOwner(), id);
+  std::unique_ptr<RasterOverlayTile> pNew = std::make_unique<RasterOverlayTile>(
+      this->getOwner(),
+      id,
+      imageryRectangle);
 
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pResult = pNew.get();
   this->_tiles[id] = std::move(pNew);
@@ -73,8 +77,7 @@ RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
 }
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
-RasterOverlayTileProvider::getTileWithoutCreating(
-    const CesiumGeometry::QuadtreeTileID& id) {
+RasterOverlayTileProvider::getTileWithoutCreating(const TileID& id) {
   auto it = this->_tiles.find(id);
   if (it != this->_tiles.end()) {
     return it->second.get();
@@ -215,7 +218,7 @@ struct LoadResult {
  * @return The `LoadResult`
  */
 static LoadResult createLoadResultFromLoadedImage(
-    const CesiumGeometry::QuadtreeTileID& tileId,
+    const TileID& tileId,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     LoadedRasterOverlayImage&& loadedImage) {

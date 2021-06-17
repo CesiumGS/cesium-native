@@ -5,6 +5,7 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumUtility/IntrusivePointer.h"
 #include <memory>
 #include <string>
 
@@ -87,6 +88,7 @@ class CESIUM3DTILES_API RasterizedPolygonsTileProvider final
 private:
   std::vector<CartographicSelection> _polygons;
   std::string _textureTargetName;
+  uint32_t _currentTileID;
 
 public:
   RasterizedPolygonsTileProvider(
@@ -108,26 +110,55 @@ public:
             pLogger,
             projection),
         _textureTargetName(textureTargetName),
-        _polygons(polygons) {}
+        _polygons(polygons),
+        _currentTileID(0) {}
 
-  virtual CesiumGeometry::Rectangle getImageryRectangle(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile)
-      override {
-    //??
+  virtual void mapRasterTilesToGeometryTile(
+      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
+      double targetGeometricError,
+      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
+      std::optional<size_t> outputIndex) override {
+    this->mapRasterTilesToGeometryTile(
+        projectRectangleSimple(this->getProjection(), geometryRectangle),
+        targetGeometricError,
+        outputRasterTiles,
+        outputIndex);
   }
 
-  virtual bool hasMoreDetailsAvailable(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual void mapRasterTilesToGeometryTile(
+      const CesiumGeometry::Rectangle& geometryRectangle,
+      double /*targetGeometricError*/,
+      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
+      std::optional<size_t> /*outputIndex*/) override {
+    if (this->_pPlaceholder) {
+      outputRasterTiles.push_back(RasterMappedTo3DTile(
+          this->_pPlaceholder.get(),
+          CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)));
+      return;
+    }
+
+    uint32_t tileID = this->_currentTileID++;
+
+    outputRasterTiles.push_back(RasterMappedTo3DTile(
+        CesiumUtility::IntrusivePointer<RasterOverlayTile>(
+            this->getTile(tileID, geometryRectangle)),
+        geometryRectangle));
+  }
+
+  virtual bool
+  hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {
     return false; // always true or always false??
   }
 
-protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) override {
+  loadTileImage(const TileID& tileID) override {
+    CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
+        this->getTileWithoutCreating(tileID);
     CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
-            this->getImageryRectangle(this->getTile(tileID)));
+            pTile ? pTile->getImageryRectangle()
+                  : CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0));
     LoadedRasterOverlayImage resultImage;
     CesiumGltf::ImageCesium image;
     rasterizePolygons(
@@ -157,20 +188,21 @@ CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
 RasterizedPolygonsOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* pOwner) {
+    RasterOverlay* /*pOwner*/) {
   return asyncSystem.createResolvedFuture(
-      std::make_unique<RasterizedPolygonsTileProvider>(
-          *this,
-          asyncSystem,
-          pAssetAccessor,
-          pPrepareRendererResources,
-          pLogger,
-          this->_projection,
-          this->_textureTargetName,
-          this->_polygons));
+      (std::unique_ptr<RasterOverlayTileProvider>)
+          std::make_unique<RasterizedPolygonsTileProvider>(
+              *this,
+              asyncSystem,
+              pAssetAccessor,
+              pPrepareRendererResources,
+              pLogger,
+              this->_projection,
+              this->_textureTargetName,
+              this->_polygons));
 }
 
 } // namespace Cesium3DTiles

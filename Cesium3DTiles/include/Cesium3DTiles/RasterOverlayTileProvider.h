@@ -5,8 +5,6 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
@@ -191,21 +189,21 @@ public:
    * @brief Returns the {@link RasterOverlayTile} with the given ID, creating it
    * if necessary.
    *
-   * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
+   * @param id The {@link TileID} of the tile to obtain.
    * @return The tile.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTile(const CesiumGeometry::QuadtreeTileID& id);
+  getTile(const TileID& id, const CesiumGeometry::Rectangle& imageryRectangle);
 
   /**
    * @brief Returns the {@link RasterOverlayTile} with the given ID, or
    * `nullptr` if there is no such tile.
    *
-   * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
+   * @param id The {@link TileID} of the tile to obtain.
    * @return The tile, or `nullptr`.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTileWithoutCreating(const CesiumGeometry::QuadtreeTileID& id);
+  getTileWithoutCreating(const TileID& id);
 
   /**
    * @brief Map raster tiles to geometry tile.
@@ -231,19 +229,12 @@ public:
       std::optional<size_t> outputIndex = std::nullopt) = 0;
 
   /**
-   * @brief Get the imagery rectangle for the given raster tile
-   */
-  virtual CesiumGeometry::Rectangle getImageryRectangle(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile) = 0;
-
-  /**
    * @brief Whether the given raster tile has more detail.
    *
    * If so its children may be subdivided to use the more detailed raster
    * tiles.
    */
-  virtual bool hasMoreDetailsAvailable(
-      const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
+  virtual bool hasMoreDetailsAvailable(const TileID& tileID) const = 0;
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.
@@ -321,7 +312,7 @@ protected:
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) = 0;
+  loadTileImage(const TileID& tileID) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -370,10 +361,7 @@ protected:
   std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
-  std::unordered_map<
-      CesiumGeometry::QuadtreeTileID,
-      std::unique_ptr<RasterOverlayTile>>
-      _tiles;
+  std::unordered_map<TileID, std::unique_ptr<RasterOverlayTile>> _tiles;
   std::unique_ptr<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;

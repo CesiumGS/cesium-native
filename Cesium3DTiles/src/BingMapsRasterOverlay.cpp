@@ -17,6 +17,7 @@
 #include <rapidjson/pointer.h>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -143,30 +144,40 @@ public:
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) override {
+  loadTileImage(const TileID& tileID) override {
+    const CesiumGeometry::QuadtreeTileID* quadtreeTileID =
+        std::get_if<CesiumGeometry::QuadtreeTileID>(&tileID);
+    if (!quadtreeTileID) {
+      LoadedRasterOverlayImage loadErrorResult;
+      loadErrorResult.errors.push_back(
+          "Bing Maps raster overlay recieved a non-quadtree tile id");
+      return this->getAsyncSystem().createResolvedFuture(
+          std::move(loadErrorResult));
+    }
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         this->_urlTemplate,
-        [this, &tileID](const std::string& key) {
+        [this, &quadtreeTileID](const std::string& key) {
           if (key == "quadkey") {
             return BingMapsTileProvider::tileXYToQuadKey(
-                tileID.level,
-                tileID.x,
-                tileID.computeInvertedY(this->getTilingScheme()));
+                quadtreeTileID->level,
+                quadtreeTileID->x,
+                quadtreeTileID->computeInvertedY(this->getTilingScheme()));
           }
           if (key == "subdomain") {
-            size_t subdomainIndex =
-                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
+            size_t subdomainIndex = (quadtreeTileID->level + quadtreeTileID->x +
+                                     quadtreeTileID->y) %
+                                    this->_subdomains.size();
             return this->_subdomains[subdomainIndex];
           }
           return key;
         });
 
     // Cesium levels start at 0, Bing levels start at 1
-    unsigned int bingTileLevel = tileID.level + 1;
+    unsigned int bingTileLevel = quadtreeTileID->level + 1;
     CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
-            this->getTilingScheme().tileToRectangle(tileID));
+            this->getTilingScheme().tileToRectangle(*quadtreeTileID));
 
     LoadTileImageFromUrlOptions options;
     options.allowEmptyImages = true;

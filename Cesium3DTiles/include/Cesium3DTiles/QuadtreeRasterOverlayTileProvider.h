@@ -4,10 +4,12 @@
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/TileID.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include <memory>
+#include <optional>
 
 namespace Cesium3DTiles {
 
@@ -80,20 +82,12 @@ public:
       std::optional<size_t> outputIndex = std::nullopt) override;
 
   /**
-   * @brief Get the imagery rectangle for the given raster tile
-   */
-  virtual CesiumGeometry::Rectangle getImageryRectangle(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& rasterTile)
-      override;
-
-  /**
    * @brief Whether the given raster tile has more detail.
    *
    * If so its children may be subdivided to use the more detailed raster
    * tiles.
    */
-  virtual bool hasMoreDetailsAvailable(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override;
+  virtual bool hasMoreDetailsAvailable(const TileID& tileID) const override;
 
   /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
