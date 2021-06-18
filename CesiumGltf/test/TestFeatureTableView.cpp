@@ -647,3 +647,114 @@ TEST_CASE("Test fixed boolean array") {
     REQUIRE(boolProperty == std::nullopt);
   }
 }
+
+TEST_CASE("Test dynamic bool array") {
+  Model model;
+
+  // store property value
+  std::vector<std::vector<bool>> expected{
+      {true, false, true, true, false, true, true},
+      {},
+      {},
+      {},
+      {false, false, false, false},
+      {true, false, true},
+      {false},
+      {true, true, true, true, true, false, false}};
+  size_t numOfElements = 0;
+  for (const auto& expectedMember : expected) {
+    numOfElements += expectedMember.size();
+  }
+
+  size_t requiredBytesSize =
+      static_cast<size_t>(glm::ceil(static_cast<double>(numOfElements) / 8.0));
+  std::vector<std::byte> values(requiredBytesSize);
+  std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint64_t));
+  uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
+  size_t indexSoFar = 0;
+  for (size_t i = 0; i < expected.size(); ++i) {
+    for (size_t j = 0; j < expected[i].size(); ++j) {
+      uint8_t expectedValue = expected[i][j];
+      size_t byteIndex = indexSoFar / 8;
+      size_t bitIndex = indexSoFar % 8;
+      values[byteIndex] = static_cast<std::byte>(
+          (expectedValue << bitIndex) | static_cast<int>(values[byteIndex]));
+      ++indexSoFar;
+    }
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
+  }
+
+  // store property value
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.byteLength = static_cast<int64_t>(values.size());
+  valueBuffer.cesium.data = std::move(values);
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+  int32_t valueBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // store string offset buffer
+  Buffer& offsetBuffer = model.buffers.emplace_back();
+  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+  offsetBuffer.cesium.data = std::move(offsets);
+
+  BufferView& offsetBufferView = model.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  offsetBufferView.byteOffset = 0;
+  offsetBufferView.byteLength = offsetBuffer.byteLength;
+  int32_t offsetBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "ARRAY";
+  testClassProperty.componentType = "BOOLEAN";
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(expected.size());
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.bufferView = valueBufferViewIdx;
+  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.offsetType = "UINT64";
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
+
+  SECTION("Access correct type") {
+    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
+        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    REQUIRE(boolProperty != std::nullopt);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      ArrayView<bool> arrayMember = (*boolProperty)[i];
+      REQUIRE(arrayMember.size() == expected[i].size());
+      for (size_t j = 0; j < expected[i].size(); ++j) {
+        REQUIRE(expected[i][j] == arrayMember[j]);
+      }
+    }
+  }
+
+  SECTION("Component count and array offset appear at the same time") {
+    testClassProperty.componentCount = 3;
+    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
+        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    REQUIRE(boolProperty == std::nullopt);
+  }
+}
