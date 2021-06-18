@@ -893,3 +893,131 @@ TEST_CASE("Test fixed array of string") {
     REQUIRE(stringProperty == std::nullopt);
   }
 }
+
+TEST_CASE("Test dynamic array of string") {
+  Model model;
+
+  std::vector<std::vector<std::string>> expected{
+      {"What's up"},
+      {"Breaking news!!! Aliens no longer attacks the US first",
+       "But they still abduct my cows! Those milk thiefs! 👽 🐮"},
+      {"I'm not crazy. My mother had me tested 🤪",
+       "I love you, meat bags! ❤️",
+       "Book in the freezer"}};
+
+  size_t totalBytes = 0;
+  size_t numOfElements = 0;
+  for (const auto& expectedValues : expected) {
+    for (const auto& value : expectedValues) {
+      totalBytes += value.size();
+    }
+
+    numOfElements += expectedValues.size();
+  }
+
+  std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint32_t));
+  std::vector<std::byte> stringOffsets((numOfElements + 1) * sizeof(uint32_t));
+  std::vector<std::byte> values(totalBytes);
+  uint32_t* offsetValue = reinterpret_cast<uint32_t*>(offsets.data());
+  uint32_t* stringOffsetValue =
+      reinterpret_cast<uint32_t*>(stringOffsets.data());
+  size_t strOffsetIdx = 0;
+  for (size_t i = 0; i < expected.size(); ++i) {
+    for (size_t j = 0; j < expected[i].size(); ++j) {
+      const std::string& expectedValue = expected[i][j];
+      std::memcpy(
+          values.data() + stringOffsetValue[strOffsetIdx],
+          expectedValue.c_str(),
+          expectedValue.size());
+
+      stringOffsetValue[strOffsetIdx + 1] =
+          stringOffsetValue[strOffsetIdx] +
+          static_cast<uint32_t>(expectedValue.size());
+      ++strOffsetIdx;
+    }
+
+    offsetValue[i + 1] =
+        offsetValue[i] +
+        static_cast<uint32_t>(expected[i].size() * sizeof(uint32_t));
+  }
+
+  // store property value
+  Buffer& valueBuffer = model.buffers.emplace_back();
+  valueBuffer.byteLength = static_cast<int64_t>(values.size());
+  valueBuffer.cesium.data = std::move(values);
+
+  BufferView& valueBufferView = model.bufferViews.emplace_back();
+  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  valueBufferView.byteOffset = 0;
+  valueBufferView.byteLength = valueBuffer.byteLength;
+  int32_t valueBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // store array offset buffer
+  Buffer& offsetBuffer = model.buffers.emplace_back();
+  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+  offsetBuffer.cesium.data = std::move(offsets);
+
+  BufferView& offsetBufferView = model.bufferViews.emplace_back();
+  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  offsetBufferView.byteOffset = 0;
+  offsetBufferView.byteLength = offsetBuffer.byteLength;
+  int32_t offsetBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // store string offset buffer
+  Buffer& strOffsetBuffer = model.buffers.emplace_back();
+  strOffsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
+  strOffsetBuffer.cesium.data = std::move(stringOffsets);
+
+  BufferView& strOffsetBufferView = model.bufferViews.emplace_back();
+  strOffsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  strOffsetBufferView.byteOffset = 0;
+  strOffsetBufferView.byteLength = strOffsetBuffer.byteLength;
+  int32_t strOffsetBufferViewIdx =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  // setup metadata
+  ModelEXT_feature_metadata& metadata =
+      model.addExtension<ModelEXT_feature_metadata>();
+
+  // setup schema
+  Schema& schema = metadata.schema.emplace();
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = "ARRAY";
+  testClassProperty.componentType = "STRING";
+
+  // setup feature table
+  FeatureTable& featureTable = metadata.featureTables["TestFeatureTable"];
+  featureTable.classProperty = "TestClass";
+  featureTable.count = static_cast<int64_t>(expected.size());
+
+  // setup feature table property
+  FeatureTableProperty& featureTableProperty =
+      featureTable.properties["TestClassProperty"];
+  featureTableProperty.offsetType = "UINT32";
+  featureTableProperty.bufferView = valueBufferViewIdx;
+  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.stringOffsetBufferView = strOffsetBufferViewIdx;
+
+  // test feature table view
+  FeatureTableView view(&model, &featureTable);
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty->type == "ARRAY");
+  REQUIRE(classProperty->componentType.getString() == "STRING");
+
+  SECTION("Access correct type") {
+    std::optional<PropertyView<ArrayView<std::string_view>>> stringProperty =
+        view.getPropertyValues<ArrayView<std::string_view>>(
+            "TestClassProperty");
+    REQUIRE(stringProperty != std::nullopt);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      ArrayView<std::string_view> stringArray = (*stringProperty)[i];
+      for (size_t j = 0; j < expected[i].size(); ++j) {
+        REQUIRE(stringArray[j] == expected[i][j]);
+      }
+    }
+  }
+}

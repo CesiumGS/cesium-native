@@ -52,7 +52,7 @@ static bool checkStringArrayOffsetBuffer(
   if (!checkOffsetBuffer<T>(
           stringOffsetBuffer,
           valueBufferSize,
-          value[instanceCount - 1] / sizeof(T),
+          value[instanceCount] / sizeof(T),
           false)) {
     return false;
   }
