@@ -71,14 +71,14 @@ public:
   virtual void mapRasterTilesToGeometryTile(
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError,
-      std::vector<std::unique_ptr<RasterMappedTo3DTile>>& outputRasterTiles,
+      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
       std::optional<size_t> outputIndex = std::nullopt) override;
 
   /** @copydoc mapRasterTilesToGeometryTile */
   virtual void mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError,
-      std::vector<std::unique_ptr<RasterMappedTo3DTile>>& outputRasterTiles,
+      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
       std::optional<size_t> outputIndex = std::nullopt) override;
 
   /**

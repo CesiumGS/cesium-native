@@ -37,26 +37,20 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
 void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   // Remove all mappings of this overlay to geometry tiles.
-  auto removeCondition =
-      [pOverlay](const std::unique_ptr<RasterMappedTo3DTile>& mapped) {
-        return (
-            !mapped ||
-            (mapped->getLoadingTile() &&
-             &mapped->getLoadingTile()->getOverlay() == pOverlay) ||
-            (mapped->getReadyTile() &&
-             &mapped->getReadyTile()->getOverlay() == pOverlay));
-      };
+  auto removeCondition = [pOverlay](const RasterMappedTo3DTile& mapped) {
+    return (
+        (mapped.getLoadingTile() &&
+         &mapped.getLoadingTile()->getOverlay() == pOverlay) ||
+        (mapped.getReadyTile() &&
+         &mapped.getReadyTile()->getOverlay() == pOverlay));
+  };
 
   this->_pTileset->forEachLoadedTile([&removeCondition](Tile& tile) {
-    std::vector<std::unique_ptr<RasterMappedTo3DTile>>& mapped =
-        tile.getMappedRasterTiles();
+    std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-    for (const std::unique_ptr<RasterMappedTo3DTile>& rasterTile : mapped) {
-      if (!rasterTile) {
-        continue;
-      }
+    for (RasterMappedTo3DTile& rasterTile : mapped) {
       if (removeCondition(rasterTile)) {
-        rasterTile->detachFromTile(tile);
+        rasterTile.detachFromTile(tile);
       }
     }
 

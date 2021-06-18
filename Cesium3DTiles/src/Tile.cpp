@@ -107,9 +107,8 @@ bool Tile::isRenderable() const noexcept {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
-          [](const std::unique_ptr<RasterMappedTo3DTile>& rasterTile) {
-            return rasterTile != nullptr &&
-                   rasterTile->getReadyTile() != nullptr;
+          [](const RasterMappedTo3DTile& rasterTile) {
+            return rasterTile.getReadyTile() != nullptr;
           });
     }
   }
@@ -233,12 +232,8 @@ void Tile::loadContent() {
   if (this->getState() != LoadState::Unloaded) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
-    for (const std::unique_ptr<RasterMappedTo3DTile>& mapped :
-         this->getMappedRasterTiles()) {
-      if (!mapped) {
-        continue;
-      }
-      RasterOverlayTile* pLoading = mapped->getLoadingTile();
+    for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+      RasterOverlayTile* pLoading = mapped.getLoadingTile();
       if (pLoading &&
           pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
         RasterOverlayTileProvider* pProvider =
@@ -284,7 +279,7 @@ void Tile::loadContent() {
     // Map raster tiles to a new vector first, and then replace the old one.
     // Doing it in this order ensures that tiles that are already loaded and
     // that we still need are not freed too soon.
-    std::vector<std::unique_ptr<RasterMappedTo3DTile>> newRasterTiles;
+    std::vector<RasterMappedTo3DTile> newRasterTiles;
 
     for (auto& overlay : overlays) {
       overlay->getTileProvider()->mapRasterTilesToGeometryTile(
@@ -818,13 +813,9 @@ void Tile::update(
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
-      const std::unique_ptr<RasterMappedTo3DTile>& mappedRasterTile =
-          this->_rasterTiles[i];
+      RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
 
-      if (!mappedRasterTile) {
-        continue;
-      }
-      RasterOverlayTile* pLoadingTile = mappedRasterTile->getLoadingTile();
+      RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
       if (pLoadingTile && pLoadingTile->getState() ==
                               RasterOverlayTile::LoadState::Placeholder) {
         RasterOverlayTileProvider* pProvider =
@@ -852,7 +843,7 @@ void Tile::update(
       }
 
       RasterMappedTo3DTile::MoreDetailAvailable moreDetailAvailable =
-          mappedRasterTile->update(*this);
+          mappedRasterTile.update(*this);
       moreRasterDetailAvailable |=
           moreDetailAvailable == RasterMappedTo3DTile::MoreDetailAvailable::Yes;
     }

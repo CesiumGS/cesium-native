@@ -9,9 +9,6 @@
 #include <memory>
 #include <string>
 
-// tmp
-#include "Cesium3DTiles/QuadtreeRasterMappedTo3DTile.h"
-
 namespace Cesium3DTiles {
 namespace {
 void rasterizePolygons(
@@ -119,8 +116,7 @@ public:
   virtual void mapRasterTilesToGeometryTile(
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError,
-      std::vector<std::unique_ptr<Cesium3DTiles::RasterMappedTo3DTile>>&
-          outputRasterTiles,
+      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
       std::optional<size_t> outputIndex) override {
     this->mapRasterTilesToGeometryTile(
         projectRectangleSimple(this->getProjection(), geometryRectangle),
@@ -132,20 +128,18 @@ public:
   virtual void mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double /*targetGeometricError*/,
-      std::vector<std::unique_ptr<Cesium3DTiles::RasterMappedTo3DTile>>&
-          outputRasterTiles,
+      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
       std::optional<size_t> /*outputIndex*/) override {
     if (this->_pPlaceholder) {
-      outputRasterTiles.push_back(
-          std::make_unique<QuadtreeRasterMappedTo3DTile>(
-              this->_pPlaceholder.get(),
-              CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)));
+      outputRasterTiles.push_back(RasterMappedTo3DTile(
+          this->_pPlaceholder.get(),
+          CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)));
       return;
     }
 
     uint32_t tileID = this->_currentTileID++;
 
-    outputRasterTiles.push_back(std::make_unique<QuadtreeRasterMappedTo3DTile>(
+    outputRasterTiles.push_back(RasterMappedTo3DTile(
         CesiumUtility::IntrusivePointer<RasterOverlayTile>(
             this->getTile(tileID, geometryRectangle)),
         geometryRectangle));

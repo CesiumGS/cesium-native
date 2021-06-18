@@ -16,7 +16,7 @@ class Tile;
  * imagery data that is given as {@link RasterOverlayTile} instances
  * to the 2D region that is covered by the tile geometry.
  */
-class RasterMappedTo3DTile {
+class RasterMappedTo3DTile final {
 public:
   /**
    * @brief The states indicating whether the raster tile is attached to the
@@ -51,8 +51,6 @@ public:
   RasterMappedTo3DTile(
       const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
       const CesiumGeometry::Rectangle& textureCoordinateRectangle);
-
-  virtual ~RasterMappedTo3DTile() {}
 
   /**
    * @brief Returns a {@link RasterOverlayTile} that serves as a placeholder
@@ -190,7 +188,7 @@ public:
    * @param tile The owner tile.
    * @return The {@link MoreDetailAvailable} state.
    */
-  virtual MoreDetailAvailable update(Tile& tile) noexcept = 0;
+  MoreDetailAvailable update(Tile& tile);
 
   /**
    * @brief Detach the raster from the given tile.
@@ -199,7 +197,7 @@ public:
 
   // void attachToTile(Tile& tile);
 
-protected:
+private:
   void computeTranslationAndScale(Tile& tile);
 
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
