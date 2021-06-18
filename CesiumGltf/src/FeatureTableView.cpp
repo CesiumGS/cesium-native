@@ -339,7 +339,7 @@ FeatureTableView::getStringArrayPropertyValues(
     return std::nullopt;
   }
 
-  if (componentCount == 0 && featureTableProperty.arrayOffsetBufferView < 0) {
+  if (componentCount <= 0 && featureTableProperty.arrayOffsetBufferView < 0) {
     return std::nullopt;
   }
 
@@ -371,7 +371,7 @@ FeatureTableView::getStringArrayPropertyValues(
         valueBuffer,
         gsl::span<const std::byte>(),
         stringOffsetBuffer,
-        PropertyType::None,
+        offsetType,
         static_cast<size_t>(componentCount),
         static_cast<size_t>(_featureTable->count));
   }
