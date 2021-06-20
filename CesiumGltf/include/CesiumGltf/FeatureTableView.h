@@ -4,6 +4,7 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
 #include "CesiumGltf/PropertyView.h"
+#include "glm/common.hpp"
 #include <optional>
 
 namespace CesiumGltf {
@@ -46,14 +47,10 @@ public:
       return getStringPropertyValues(classProperty, featureTableProperty);
     }
 
-    if constexpr (IsNumericArray<T>::value) {
+    if constexpr (IsNumericArray<T>::value || IsBooleanArray<T>::value) {
       return getNumericArrayPropertyValues<typename ArrayType<T>::type>(
           classProperty,
           featureTableProperty);
-    }
-
-    if constexpr (IsBooleanArray<T>::value) {
-      return getBooleanArrayPropertyValues(classProperty, featureTableProperty);
     }
 
     if constexpr (IsStringArray<T>::value) {
@@ -141,9 +138,16 @@ private:
 
     // fixed array
     if (componentCount > 0) {
-      if (valueBuffer.size() !=
-          static_cast<size_t>(
-              _featureTable->count * componentCount * sizeof(T))) {
+      size_t maxRequiredBytes = 0;
+      if constexpr (IsBoolean<T>::value) {
+        maxRequiredBytes = static_cast<size_t>(glm::ceil(
+            static_cast<double>(_featureTable->count * componentCount) / 8.0));
+      } else {
+        maxRequiredBytes = static_cast<size_t>(
+            _featureTable->count * componentCount * sizeof(T));
+      }
+
+      if (valueBuffer.size() < maxRequiredBytes) {
         return std::nullopt;
       }
 
@@ -163,12 +167,13 @@ private:
       return std::nullopt;
     }
 
+    constexpr bool checkBitsSize = IsBoolean<T>::value;
     gsl::span<const std::byte> offsetBuffer = getOffsetBufferSafe(
         featureTableProperty.arrayOffsetBufferView,
         offsetType,
         valueBuffer.size(),
         static_cast<size_t>(_featureTable->count),
-        false);
+        checkBitsSize);
     if (offsetBuffer.empty()) {
       return std::nullopt;
     }
@@ -181,10 +186,6 @@ private:
         0,
         static_cast<size_t>(_featureTable->count));
   }
-
-  std::optional<PropertyView<ArrayView<bool>>> getBooleanArrayPropertyValues(
-      const ClassProperty* classProperty,
-      const FeatureTableProperty& featureTableProperty) const;
 
   std::optional<PropertyView<ArrayView<std::string_view>>>
   getStringArrayPropertyValues(

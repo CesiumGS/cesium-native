@@ -1,5 +1,4 @@
 #include "CesiumGltf/FeatureTableView.h"
-#include "glm/common.hpp"
 
 namespace CesiumGltf {
 template <typename T>
@@ -237,77 +236,6 @@ FeatureTableView::getStringPropertyValues(
       valueBuffer,
       gsl::span<const std::byte>(),
       offsetBuffer,
-      offsetType,
-      0,
-      static_cast<size_t>(_featureTable->count));
-}
-
-std::optional<PropertyView<ArrayView<bool>>>
-FeatureTableView::getBooleanArrayPropertyValues(
-    const ClassProperty* classProperty,
-    const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty->type != "ARRAY") {
-    return std::nullopt;
-  }
-
-  if (!classProperty->componentType.isString() ||
-      classProperty->componentType.getString() != "BOOLEAN") {
-    return std::nullopt;
-  }
-
-  gsl::span<const std::byte> valueBuffer =
-      getBufferSafe(featureTableProperty.bufferView);
-  if (valueBuffer.empty()) {
-    return std::nullopt;
-  }
-
-  int64_t componentCount = classProperty->componentCount.value_or(0);
-  if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
-    return std::nullopt;
-  }
-
-  if (componentCount <= 0 && featureTableProperty.arrayOffsetBufferView < 0) {
-    return std::nullopt;
-  }
-
-  // fixed array
-  if (componentCount > 0) {
-    size_t maxRequiredBytes = static_cast<size_t>(glm::ceil(
-        static_cast<double>(_featureTable->count * componentCount) / 8.0));
-    if (valueBuffer.size() < maxRequiredBytes) {
-      return std::nullopt;
-    }
-
-    return PropertyView<ArrayView<bool>>(
-        valueBuffer,
-        gsl::span<const std::byte>(),
-        gsl::span<const std::byte>(),
-        PropertyType::None,
-        static_cast<size_t>(componentCount),
-        static_cast<size_t>(_featureTable->count));
-  }
-
-  // dynamic array
-  PropertyType offsetType =
-      convertOffsetStringToPropertyType(featureTableProperty.offsetType);
-  if (offsetType == PropertyType::None) {
-    return std::nullopt;
-  }
-
-  gsl::span<const std::byte> offsetBuffer = getOffsetBufferSafe(
-      featureTableProperty.arrayOffsetBufferView,
-      offsetType,
-      valueBuffer.size(),
-      static_cast<size_t>(_featureTable->count),
-      true);
-  if (offsetBuffer.empty()) {
-    return std::nullopt;
-  }
-
-  return PropertyView<ArrayView<bool>>(
-      valueBuffer,
-      offsetBuffer,
-      gsl::span<const std::byte>(),
       offsetType,
       0,
       static_cast<size_t>(_featureTable->count));
