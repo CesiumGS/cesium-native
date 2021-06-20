@@ -6,6 +6,9 @@
 #include <type_traits>
 
 namespace CesiumGltf {
+/**
+ * @brief Check if a C++ type can be represented as a numeric property type
+ */
 template <typename... T> struct IsMetadataNumeric;
 template <typename T> struct IsMetadataNumeric<T> : std::false_type {};
 template <> struct IsMetadataNumeric<uint8_t> : std::true_type {};
@@ -19,37 +22,61 @@ template <> struct IsMetadataNumeric<int64_t> : std::true_type {};
 template <> struct IsMetadataNumeric<float> : std::true_type {};
 template <> struct IsMetadataNumeric<double> : std::true_type {};
 
+/**
+ * @brief Check if a C++ type can be represented as a boolean property type
+ */
 template <typename... T> struct IsMetadataBoolean;
 template <typename T> struct IsMetadataBoolean<T> : std::false_type {};
 template <> struct IsMetadataBoolean<bool> : std::true_type {};
 
+/**
+ * @brief Check if a C++ type can be represented as a string property type
+ */
 template <typename... T> struct IsMetadataString;
 template <typename T> struct IsMetadataString<T> : std::false_type {};
 template <> struct IsMetadataString<std::string_view> : std::true_type {};
 
+/**
+ * @brief Check if a C++ type can be represented as an array of number property
+ * type
+ */
 template <typename... T> struct IsMetadataNumericArray;
 template <typename T> struct IsMetadataNumericArray<T> : std::false_type {};
 template <typename T> struct IsMetadataNumericArray<MetadataArrayView<T>> {
   static constexpr bool value = IsMetadataNumeric<T>::value;
 };
 
+/**
+ * @brief Check if a C++ type can be represented as an array of boolean property
+ * type
+ */
 template <typename... T> struct IsMetadataBooleanArray;
 template <typename T> struct IsMetadataBooleanArray<T> : std::false_type {};
 template <>
 struct IsMetadataBooleanArray<MetadataArrayView<bool>> : std::true_type {};
 
+/**
+ * @brief Check if a C++ type can be represented as an array of string property
+ * type
+ */
 template <typename... T> struct IsMetadataStringArray;
 template <typename T> struct IsMetadataStringArray<T> : std::false_type {};
 template <>
 struct IsMetadataStringArray<MetadataArrayView<std::string_view>>
     : std::true_type {};
 
+/**
+ * @brief Retrieve the component type of a metadata array
+ */
 template <typename T> struct MetadataArrayType;
 template <typename T>
 struct MetadataArrayType<CesiumGltf::MetadataArrayView<T>> {
   using type = T;
 };
 
+/**
+ * @brief Convert a C++ type to PropertyType
+ */
 template <typename T> struct TypeToPropertyType;
 
 template <> struct TypeToPropertyType<uint8_t> {
