@@ -174,34 +174,6 @@ gsl::span<const std::byte> FeatureTableView::getOffsetBufferSafe(
   return offsetBuffer;
 }
 
-std::optional<PropertyView<bool>> FeatureTableView::getBooleanPropertyValues(
-    const ClassProperty* classProperty,
-    const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty->type != "BOOLEAN") {
-    return std::nullopt;
-  }
-
-  gsl::span<const std::byte> valueBuffer =
-      getBufferSafe(featureTableProperty.bufferView);
-  if (valueBuffer.empty()) {
-    return std::nullopt;
-  }
-
-  size_t maxRequiredBytes = static_cast<size_t>(
-      glm::ceil(static_cast<double>(_featureTable->count) / 8.0));
-  if (valueBuffer.size() < maxRequiredBytes) {
-    return std::nullopt;
-  }
-
-  return PropertyView<bool>(
-      valueBuffer,
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      PropertyType::None,
-      0,
-      static_cast<size_t>(_featureTable->count));
-}
-
 std::optional<PropertyView<std::string_view>>
 FeatureTableView::getStringPropertyValues(
     const ClassProperty* classProperty,

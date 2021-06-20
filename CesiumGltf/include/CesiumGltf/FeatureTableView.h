@@ -35,12 +35,8 @@ public:
     const FeatureTableProperty& featureTableProperty =
         featureTablePropertyIter->second;
 
-    if constexpr (IsNumeric<T>::value) {
+    if constexpr (IsNumeric<T>::value || IsBoolean<T>::value) {
       return getNumericPropertyValues<T>(classProperty, featureTableProperty);
-    }
-
-    if constexpr (IsBoolean<T>::value) {
-      return getBooleanPropertyValues(classProperty, featureTableProperty);
     }
 
     if constexpr (IsString<T>::value) {
@@ -78,7 +74,15 @@ private:
       return std::nullopt;
     }
 
-    if (valueBuffer.size() < _featureTable->count * sizeof(T)) {
+    size_t maxRequiredBytes = 0;
+    if (IsBoolean<T>::value) {
+      maxRequiredBytes = static_cast<size_t>(
+          glm::ceil(static_cast<double>(_featureTable->count) / 8.0));
+    } else {
+      maxRequiredBytes = _featureTable->count * sizeof(T);
+    }
+
+    if (valueBuffer.size() < maxRequiredBytes) {
       return std::nullopt;
     }
 
@@ -90,10 +94,6 @@ private:
         0,
         _featureTable->count);
   }
-
-  std::optional<PropertyView<bool>> getBooleanPropertyValues(
-      const ClassProperty* classProperty,
-      const FeatureTableProperty& featureTableProperty) const;
 
   std::optional<PropertyView<std::string_view>> getStringPropertyValues(
       const ClassProperty* classProperty,
