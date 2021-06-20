@@ -81,8 +81,8 @@ MetadataFeatureTableView::MetadataFeatureTableView(
   }
 }
 
-const ClassProperty*
-MetadataFeatureTableView::getClassProperty(const std::string& propertyName) const {
+const ClassProperty* MetadataFeatureTableView::getClassProperty(
+    const std::string& propertyName) const {
   if (_class == nullptr) {
     return nullptr;
   }

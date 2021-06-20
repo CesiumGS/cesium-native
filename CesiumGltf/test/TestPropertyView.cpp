@@ -366,13 +366,15 @@ TEST_CASE("Check fixed array of string") {
       &currentOffset,
       sizeof(uint32_t));
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<std::string_view>> property(
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-      CesiumGltf::PropertyType::Uint32,
-      3,
-      strings.size() / 3);
+  CesiumGltf::MetadataPropertyView<
+      CesiumGltf::MetadataArrayView<std::string_view>>
+      property(
+          gsl::span<const std::byte>(buffer.data(), buffer.size()),
+          gsl::span<const std::byte>(),
+          gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+          CesiumGltf::PropertyType::Uint32,
+          3,
+          strings.size() / 3);
 
   size_t expectedIdx = 0;
   for (size_t i = 0; i < property.size(); ++i) {
@@ -434,15 +436,17 @@ TEST_CASE("Check dynamic array of string") {
       &currentOffset,
       sizeof(uint32_t));
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<std::string_view>> property(
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(
-          reinterpret_cast<const std::byte*>(arrayOffset.data()),
-          arrayOffset.size() * sizeof(uint32_t)),
-      gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
-      CesiumGltf::PropertyType::Uint32,
-      0,
-      3);
+  CesiumGltf::MetadataPropertyView<
+      CesiumGltf::MetadataArrayView<std::string_view>>
+      property(
+          gsl::span<const std::byte>(buffer.data(), buffer.size()),
+          gsl::span<const std::byte>(
+              reinterpret_cast<const std::byte*>(arrayOffset.data()),
+              arrayOffset.size() * sizeof(uint32_t)),
+          gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
+          CesiumGltf::PropertyType::Uint32,
+          0,
+          3);
 
   size_t expectedIdx = 0;
   for (size_t i = 0; i < property.size(); ++i) {
@@ -463,13 +467,14 @@ TEST_CASE("Check fixed array of boolean") {
       static_cast<std::byte>(0b11111010),
       static_cast<std::byte>(0b11100111)};
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<bool>> property(
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(),
-      gsl::span<const std::byte>(),
-      CesiumGltf::PropertyType::Uint32,
-      12,
-      2);
+  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<bool>>
+      property(
+          gsl::span<const std::byte>(buffer.data(), buffer.size()),
+          gsl::span<const std::byte>(),
+          gsl::span<const std::byte>(),
+          CesiumGltf::PropertyType::Uint32,
+          12,
+          2);
 
   REQUIRE(property.size() == 2);
 
@@ -512,15 +517,16 @@ TEST_CASE("Check dynamic array of boolean") {
 
   std::vector<uint32_t> offsetBuffer{0, 3, 12, 28};
 
-  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<bool>> property(
-      gsl::span<const std::byte>(buffer.data(), buffer.size()),
-      gsl::span<const std::byte>(
-          reinterpret_cast<const std::byte*>(offsetBuffer.data()),
-          offsetBuffer.size() * sizeof(uint32_t)),
-      gsl::span<const std::byte>(),
-      CesiumGltf::PropertyType::Uint32,
-      0,
-      3);
+  CesiumGltf::MetadataPropertyView<CesiumGltf::MetadataArrayView<bool>>
+      property(
+          gsl::span<const std::byte>(buffer.data(), buffer.size()),
+          gsl::span<const std::byte>(
+              reinterpret_cast<const std::byte*>(offsetBuffer.data()),
+              offsetBuffer.size() * sizeof(uint32_t)),
+          gsl::span<const std::byte>(),
+          CesiumGltf::PropertyType::Uint32,
+          0,
+          3);
 
   REQUIRE(property.size() == 3);
 

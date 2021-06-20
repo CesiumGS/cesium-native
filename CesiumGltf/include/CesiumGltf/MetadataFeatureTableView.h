@@ -102,7 +102,8 @@ private:
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
-  std::optional<MetadataPropertyView<MetadataArrayView<T>>> getPrimitiveArrayPropertyValues(
+  std::optional<MetadataPropertyView<MetadataArrayView<T>>>
+  getPrimitiveArrayPropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     if (classProperty->type != "ARRAY") {

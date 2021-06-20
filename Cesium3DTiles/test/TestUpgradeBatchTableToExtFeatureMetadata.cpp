@@ -1,6 +1,6 @@
 #include "Batched3DModelContent.h"
-#include "CesiumGltf/MetadataFeatureTableView.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
+#include "CesiumGltf/MetadataFeatureTableView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyView.h"
 #include "catch2/catch.hpp"
@@ -61,8 +61,9 @@ static void checkArrayProperty(
   }
 
   MetadataFeatureTableView view(&model, &featureTable);
-  std::optional<MetadataPropertyView<MetadataArrayView<PropertyViewType>>> propertyView =
-      view.getPropertyView<MetadataArrayView<PropertyViewType>>(propertyName);
+  std::optional<MetadataPropertyView<MetadataArrayView<PropertyViewType>>>
+      propertyView = view.getPropertyView<MetadataArrayView<PropertyViewType>>(
+          propertyName);
   REQUIRE(propertyView->size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < expected.size(); ++i) {
     MetadataArrayView<PropertyViewType> val = propertyView->get(i);

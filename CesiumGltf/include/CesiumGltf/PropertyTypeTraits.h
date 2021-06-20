@@ -100,7 +100,8 @@ template <> struct TypeToPropertyType<std::string_view> {
   static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::String);
 };
 
-template <typename T> struct TypeToPropertyType<CesiumGltf::MetadataArrayView<T>> {
+template <typename T>
+struct TypeToPropertyType<CesiumGltf::MetadataArrayView<T>> {
   static constexpr uint32_t value =
       static_cast<uint32_t>(PropertyType::Array) | TypeToPropertyType<T>::value;
 };
