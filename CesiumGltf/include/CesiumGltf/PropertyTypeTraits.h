@@ -6,44 +6,47 @@
 #include <type_traits>
 
 namespace CesiumGltf {
-template <typename... T> struct IsNumeric;
-template <typename T> struct IsNumeric<T> : std::false_type {};
-template <> struct IsNumeric<uint8_t> : std::true_type {};
-template <> struct IsNumeric<int8_t> : std::true_type {};
-template <> struct IsNumeric<uint16_t> : std::true_type {};
-template <> struct IsNumeric<int16_t> : std::true_type {};
-template <> struct IsNumeric<uint32_t> : std::true_type {};
-template <> struct IsNumeric<int32_t> : std::true_type {};
-template <> struct IsNumeric<uint64_t> : std::true_type {};
-template <> struct IsNumeric<int64_t> : std::true_type {};
-template <> struct IsNumeric<float> : std::true_type {};
-template <> struct IsNumeric<double> : std::true_type {};
+template <typename... T> struct IsMetadataNumeric;
+template <typename T> struct IsMetadataNumeric<T> : std::false_type {};
+template <> struct IsMetadataNumeric<uint8_t> : std::true_type {};
+template <> struct IsMetadataNumeric<int8_t> : std::true_type {};
+template <> struct IsMetadataNumeric<uint16_t> : std::true_type {};
+template <> struct IsMetadataNumeric<int16_t> : std::true_type {};
+template <> struct IsMetadataNumeric<uint32_t> : std::true_type {};
+template <> struct IsMetadataNumeric<int32_t> : std::true_type {};
+template <> struct IsMetadataNumeric<uint64_t> : std::true_type {};
+template <> struct IsMetadataNumeric<int64_t> : std::true_type {};
+template <> struct IsMetadataNumeric<float> : std::true_type {};
+template <> struct IsMetadataNumeric<double> : std::true_type {};
 
-template <typename... T> struct IsBoolean;
-template <typename T> struct IsBoolean<T> : std::false_type {};
-template <> struct IsBoolean<bool> : std::true_type {};
+template <typename... T> struct IsMetadataBoolean;
+template <typename T> struct IsMetadataBoolean<T> : std::false_type {};
+template <> struct IsMetadataBoolean<bool> : std::true_type {};
 
-template <typename... T> struct IsString;
-template <typename T> struct IsString<T> : std::false_type {};
-template <> struct IsString<std::string_view> : std::true_type {};
+template <typename... T> struct IsMetadataString;
+template <typename T> struct IsMetadataString<T> : std::false_type {};
+template <> struct IsMetadataString<std::string_view> : std::true_type {};
 
-template <typename... T> struct IsNumericArray;
-template <typename T> struct IsNumericArray<T> : std::false_type {};
-template <typename T> struct IsNumericArray<MetadataArrayView<T>> {
-  static constexpr bool value = IsNumeric<T>::value;
+template <typename... T> struct IsMetadataNumericArray;
+template <typename T> struct IsMetadataNumericArray<T> : std::false_type {};
+template <typename T> struct IsMetadataNumericArray<MetadataArrayView<T>> {
+  static constexpr bool value = IsMetadataNumeric<T>::value;
 };
 
-template <typename... T> struct IsBooleanArray;
-template <typename T> struct IsBooleanArray<T> : std::false_type {};
-template <> struct IsBooleanArray<MetadataArrayView<bool>> : std::true_type {};
-
-template <typename... T> struct IsStringArray;
-template <typename T> struct IsStringArray<T> : std::false_type {};
+template <typename... T> struct IsMetadataBooleanArray;
+template <typename T> struct IsMetadataBooleanArray<T> : std::false_type {};
 template <>
-struct IsStringArray<MetadataArrayView<std::string_view>> : std::true_type {};
+struct IsMetadataBooleanArray<MetadataArrayView<bool>> : std::true_type {};
 
-template <typename T> struct ArrayType;
-template <typename T> struct ArrayType<CesiumGltf::MetadataArrayView<T>> {
+template <typename... T> struct IsMetadataStringArray;
+template <typename T> struct IsMetadataStringArray<T> : std::false_type {};
+template <>
+struct IsMetadataStringArray<MetadataArrayView<std::string_view>>
+    : std::true_type {};
+
+template <typename T> struct MetadataArrayType;
+template <typename T>
+struct MetadataArrayType<CesiumGltf::MetadataArrayView<T>> {
   using type = T;
 };
 

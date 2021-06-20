@@ -29,27 +29,28 @@ public:
         _instanceCount{instanceCount} {}
 
   ElementType get(size_t instance) const {
-    if constexpr (IsNumeric<ElementType>::value) {
+    if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumeric(instance);
     }
 
-    if constexpr (IsBoolean<ElementType>::value) {
+    if constexpr (IsMetadataBoolean<ElementType>::value) {
       return getBoolean(instance);
     }
 
-    if constexpr (IsString<ElementType>::value) {
+    if constexpr (IsMetadataString<ElementType>::value) {
       return getString(instance);
     }
 
-    if constexpr (IsNumericArray<ElementType>::value) {
-      return getNumericArray<typename ArrayType<ElementType>::type>(instance);
+    if constexpr (IsMetadataNumericArray<ElementType>::value) {
+      return getNumericArray<typename MetadataArrayType<ElementType>::type>(
+          instance);
     }
 
-    if constexpr (IsBooleanArray<ElementType>::value) {
+    if constexpr (IsMetadataBooleanArray<ElementType>::value) {
       return getBooleanArray(instance);
     }
 
-    if constexpr (IsStringArray<ElementType>::value) {
+    if constexpr (IsMetadataStringArray<ElementType>::value) {
       return getStringArray(instance);
     }
   }

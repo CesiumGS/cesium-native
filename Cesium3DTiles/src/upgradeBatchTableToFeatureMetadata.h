@@ -18,7 +18,7 @@ namespace Cesium3DTiles {
  * @param pLogger
  * @param gltf
  * @param featureTable
- * @param batchTableJsonData
+ * @param batchTableJson
  * @param batchTableBinaryData
  */
 void upgradeBatchTableToFeatureMetadata(

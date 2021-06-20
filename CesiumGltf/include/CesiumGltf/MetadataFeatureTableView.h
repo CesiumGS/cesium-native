@@ -37,21 +37,23 @@ public:
     const FeatureTableProperty& featureTableProperty =
         featureTablePropertyIter->second;
 
-    if constexpr (IsNumeric<T>::value || IsBoolean<T>::value) {
+    if constexpr (IsMetadataNumeric<T>::value || IsMetadataBoolean<T>::value) {
       return getPrimitivePropertyValues<T>(classProperty, featureTableProperty);
     }
 
-    if constexpr (IsString<T>::value) {
+    if constexpr (IsMetadataString<T>::value) {
       return getStringPropertyValues(classProperty, featureTableProperty);
     }
 
-    if constexpr (IsNumericArray<T>::value || IsBooleanArray<T>::value) {
-      return getPrimitiveArrayPropertyValues<typename ArrayType<T>::type>(
+    if constexpr (
+        IsMetadataNumericArray<T>::value || IsMetadataBooleanArray<T>::value) {
+      return getPrimitiveArrayPropertyValues<
+          typename MetadataArrayType<T>::type>(
           classProperty,
           featureTableProperty);
     }
 
-    if constexpr (IsStringArray<T>::value) {
+    if constexpr (IsMetadataStringArray<T>::value) {
       return getStringArrayPropertyValues(classProperty, featureTableProperty);
     }
   }
@@ -77,7 +79,7 @@ private:
     }
 
     size_t maxRequiredBytes = 0;
-    if (IsBoolean<T>::value) {
+    if (IsMetadataBoolean<T>::value) {
       maxRequiredBytes = static_cast<size_t>(
           glm::ceil(static_cast<double>(_featureTable->count) / 8.0));
     } else {
@@ -142,7 +144,7 @@ private:
     // fixed array
     if (componentCount > 0) {
       size_t maxRequiredBytes = 0;
-      if constexpr (IsBoolean<T>::value) {
+      if constexpr (IsMetadataBoolean<T>::value) {
         maxRequiredBytes = static_cast<size_t>(glm::ceil(
             static_cast<double>(_featureTable->count * componentCount) / 8.0));
       } else {
@@ -170,7 +172,7 @@ private:
       return std::nullopt;
     }
 
-    constexpr bool checkBitsSize = IsBoolean<T>::value;
+    constexpr bool checkBitsSize = IsMetadataBoolean<T>::value;
     gsl::span<const std::byte> offsetBuffer = getOffsetBufferSafe(
         featureTableProperty.arrayOffsetBufferView,
         offsetType,
