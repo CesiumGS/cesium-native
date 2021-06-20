@@ -1,7 +1,5 @@
 #include "CesiumGltf/FeatureTableView.h"
 #include "catch2/catch.hpp"
-#include "glm/common.hpp"
-#include <bitset>
 #include <cstring>
 
 using namespace CesiumGltf;

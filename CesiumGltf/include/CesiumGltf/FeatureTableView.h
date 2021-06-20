@@ -36,7 +36,7 @@ public:
         featureTablePropertyIter->second;
 
     if constexpr (IsNumeric<T>::value || IsBoolean<T>::value) {
-      return getNumericPropertyValues<T>(classProperty, featureTableProperty);
+      return getPrimitivePropertyValues<T>(classProperty, featureTableProperty);
     }
 
     if constexpr (IsString<T>::value) {
@@ -44,7 +44,7 @@ public:
     }
 
     if constexpr (IsNumericArray<T>::value || IsBooleanArray<T>::value) {
-      return getNumericArrayPropertyValues<typename ArrayType<T>::type>(
+      return getPrimitiveArrayPropertyValues<typename ArrayType<T>::type>(
           classProperty,
           featureTableProperty);
     }
@@ -56,7 +56,7 @@ public:
 
 private:
   template <typename T>
-  std::optional<PropertyView<T>> getNumericPropertyValues(
+  std::optional<PropertyView<T>> getPrimitivePropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     PropertyType type = convertStringToPropertyType(classProperty->type);
@@ -100,7 +100,7 @@ private:
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
-  std::optional<PropertyView<ArrayView<T>>> getNumericArrayPropertyValues(
+  std::optional<PropertyView<ArrayView<T>>> getPrimitiveArrayPropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     if (classProperty->type != "ARRAY") {
