@@ -1,4 +1,4 @@
-#include "CesiumGltf/PropertyView.h"
+#include "CesiumGltf/MetadataPropertyView.h"
 #include "catch2/catch.hpp"
 #include <bitset>
 #include <climits>
