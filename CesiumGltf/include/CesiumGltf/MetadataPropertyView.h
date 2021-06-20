@@ -11,8 +11,29 @@
 #include <type_traits>
 
 namespace CesiumGltf {
+/**
+ * @brief A view on the data of the FeatureTableProperty
+ *
+ * It provides utility to retrieve the actual data stored in the
+ * {@link FeatureTableProperty::bufferView} like an array of elements.
+ * Data of each instance can be accessed through the {@link get(size_t instance)} method
+ *
+ * @param ElementType must be uin8_t, int8_t, uint16_t, int16_t,
+ * uint32_t, int32_t, uint64_t, int64_t, bool, std::string_view, and
+ * MetadataArrayView<T> with T must be one of the types mentioned above
+ */
 template <typename ElementType> class MetadataPropertyView {
 public:
+  /**
+   * @brief Construct a new instance pointing to the data specified by
+   * FeatureTableProperty
+   * @param valueBuffer The raw buffer specified by {@link FeatureTableProperty::bufferView}
+   * @param arrayOffsetBuffer The raw buffer specified by {@link FeatureTableProperty::arrayOffsetBufferView}
+   * @param stringOffsetBuffer The raw buffer specified by {@link FeatureTableProperty::stringOffsetBufferView}
+   * @param offsetType The offset type of the arrayOffsetBuffer and stringOffsetBuffer that is specified by {@link FeatureTableProperty::offsetType}
+   * @param componentCount The number of elements for fixed array value which is specified by {@link FeatureTableProperty::componentCount}
+   * @param instanceCount The number of instances specified by {@link FeatureTable::count}
+   */
   MetadataPropertyView(
       gsl::span<const std::byte> valueBuffer,
       gsl::span<const std::byte> arrayOffsetBuffer,
@@ -28,6 +49,11 @@ public:
         _componentCount{componentCount},
         _instanceCount{instanceCount} {}
 
+  /**
+   * @brief Get the value of an instance of the FeatureTable.
+   * @param instance The instance index
+   * @return The value of the instance
+   */
   ElementType get(size_t instance) const {
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumeric(instance);
@@ -55,6 +81,10 @@ public:
     }
   }
 
+  /**
+   * @brief Get the number of instances in the FeatureTable
+   * @return The number of instances in the FeatureTable
+   */
   size_t size() const { return _instanceCount; }
 
 private:
