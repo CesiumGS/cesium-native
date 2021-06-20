@@ -59,7 +59,7 @@ TEST_CASE("Test numeric properties") {
     REQUIRE(uint32Property != std::nullopt);
 
     for (size_t i = 0; i < uint32Property->size(); ++i) {
-      REQUIRE((*uint32Property)[i] == values[i]);
+      REQUIRE(uint32Property->get(i) == values[i]);
     }
   }
 
@@ -213,7 +213,7 @@ TEST_CASE("Test boolean properties") {
     REQUIRE(boolProperty->size() == instanceCount);
     for (size_t i = 0; i < boolProperty->size(); ++i) {
       bool expectedValue = expected[i];
-      REQUIRE((*boolProperty)[i] == expectedValue);
+      REQUIRE(boolProperty->get(i) == expectedValue);
     }
   }
 
@@ -306,7 +306,7 @@ TEST_CASE("Test string property") {
         view.getPropertyValues<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      REQUIRE((*stringProperty)[i] == expected[i]);
+      REQUIRE(stringProperty->get(i) == expected[i]);
     }
   }
 
@@ -405,7 +405,7 @@ TEST_CASE("Test fixed numeric array") {
     REQUIRE(arrayProperty != std::nullopt);
 
     for (size_t i = 0; i < arrayProperty->size(); ++i) {
-      ArrayView<uint32_t> member = (*arrayProperty)[i];
+      ArrayView<uint32_t> member = arrayProperty->get(i);
       for (size_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[i * 3 + j]);
       }
@@ -529,7 +529,7 @@ TEST_CASE("Test dynamic numeric array") {
         view.getPropertyValues<ArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(property != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      ArrayView<uint16_t> valueMember = (*property)[i];
+      ArrayView<uint16_t> valueMember = property->get(i);
       REQUIRE(valueMember.size() == expected[i].size());
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == valueMember[j]);
@@ -626,7 +626,7 @@ TEST_CASE("Test fixed boolean array") {
     REQUIRE(boolProperty != std::nullopt);
     REQUIRE(boolProperty->size() == static_cast<size_t>(featureTable.count));
     for (size_t i = 0; i < boolProperty->size(); ++i) {
-      ArrayView<bool> valueMember = (*boolProperty)[i];
+      ArrayView<bool> valueMember = boolProperty->get(i);
       for (size_t j = 0; j < valueMember.size(); ++j) {
         REQUIRE(valueMember[j] == expected[i * 3 + j]);
       }
@@ -743,7 +743,7 @@ TEST_CASE("Test dynamic bool array") {
         view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      ArrayView<bool> arrayMember = (*boolProperty)[i];
+      ArrayView<bool> arrayMember = boolProperty->get(i);
       REQUIRE(arrayMember.size() == expected[i].size());
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == arrayMember[j]);
@@ -853,17 +853,17 @@ TEST_CASE("Test fixed array of string") {
     REQUIRE(stringProperty != std::nullopt);
     REQUIRE(stringProperty->size() == 3);
 
-    ArrayView<std::string_view> v0 = (*stringProperty)[0];
+    ArrayView<std::string_view> v0 = stringProperty->get(0);
     REQUIRE(v0.size() == 2);
     REQUIRE(v0[0] == "What's up");
     REQUIRE(v0[1] == "Breaking news!!! Aliens no longer attacks the US first");
 
-    ArrayView<std::string_view> v1 = (*stringProperty)[1];
+    ArrayView<std::string_view> v1 = stringProperty->get(1);
     REQUIRE(v1.size() == 2);
     REQUIRE(v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
     REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
-    ArrayView<std::string_view> v2 = (*stringProperty)[2];
+    ArrayView<std::string_view> v2 = stringProperty->get(2);
     REQUIRE(v2.size() == 2);
     REQUIRE(v2[0] == "I love you, meat bags! ❤️");
     REQUIRE(v2[1] == "Book in the freezer");
@@ -1014,7 +1014,7 @@ TEST_CASE("Test dynamic array of string") {
             "TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      ArrayView<std::string_view> stringArray = (*stringProperty)[i];
+      ArrayView<std::string_view> stringArray = stringProperty->get(i);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(stringArray[j] == expected[i][j]);
       }

@@ -36,9 +36,9 @@ static void checkScalarProperty(
     if constexpr (
         std::is_same_v<PropertyViewType, float> ||
         std::is_same_v<PropertyViewType, double>) {
-      REQUIRE((*propertyView)[i] == Approx(expected[i]));
+      REQUIRE(propertyView->get(i) == Approx(expected[i]));
     } else {
-      REQUIRE((*propertyView)[i] == expected[i]);
+      REQUIRE(propertyView->get(i) == expected[i]);
     }
   }
 }
@@ -66,7 +66,7 @@ static void checkArrayProperty(
       view.getPropertyValues<ArrayView<PropertyViewType>>(propertyName);
   REQUIRE(propertyView->size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < expected.size(); ++i) {
-    ArrayView<PropertyViewType> val = (*propertyView)[i];
+    ArrayView<PropertyViewType> val = propertyView->get(i);
     if (expectedComponentCount > 0) {
       REQUIRE(val.size() == expectedComponentCount);
     }

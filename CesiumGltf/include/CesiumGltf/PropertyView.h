@@ -28,7 +28,7 @@ public:
         _componentCount{componentCount},
         _instanceCount{instanceCount} {}
 
-  ElementType operator[](size_t instance) const {
+  ElementType get(size_t instance) const {
     if constexpr (IsNumeric<ElementType>::value) {
       return getNumeric(instance);
     }
