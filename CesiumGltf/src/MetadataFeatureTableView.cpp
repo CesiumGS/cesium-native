@@ -63,6 +63,9 @@ MetadataFeatureTableView::MetadataFeatureTableView(
     const Model* model,
     const FeatureTable* featureTable)
     : _model{model}, _featureTable{featureTable}, _class{nullptr} {
+  assert(model != nullptr && "model must not be nullptr");
+  assert(featureTable != nullptr && "featureTable must not be nullptr");
+
   const ModelEXT_feature_metadata* metadata =
       model->getExtension<ModelEXT_feature_metadata>();
   assert(

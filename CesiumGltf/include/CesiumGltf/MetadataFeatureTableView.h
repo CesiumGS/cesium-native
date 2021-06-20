@@ -8,14 +8,45 @@
 #include <optional>
 
 namespace CesiumGltf {
+/**
+ * @brief Utility to retrieve the data of FeatureTable
+ *
+ * This should be used to get {@link MetadataPropertyView} of a property since
+ * it will validate the EXT_Feature_Metadata format to make sure {@link MetadataPropertyView}
+ * not access out of bound
+ */
 class MetadataFeatureTableView {
 public:
+  /**
+   * @brief Create an instance of MetadataFeatureTableView
+   * @param model The Gltf Model that stores featureTable data
+   * @param featureTable The FeatureTable that will be used to retrieve the data
+   * from
+   */
   MetadataFeatureTableView(
       const Model* model,
       const FeatureTable* featureTable);
 
+  /**
+   * @brief Find the {@link ClassProperty} which stores the type information of a property based on the property name
+   * @param propertyName The name of the property to retrieve type info
+   * @return ClassProperty of a property. Return nullptr if no property is found
+   */
   const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
+  /**
+   * @brief Get MetadataPropertyView to view the data stored in the
+   * FeatureTableProperty.
+   *
+   * This method will validate the EXT_Feature_Metadata format to ensure
+   * MetadataPropertyView retrieve the correct data. T must be uin8_t, int8_t,
+   * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, bool,
+   * std::string_view, and MetadataArrayView<T> with T must be one of the types
+   * mentioned above
+   *
+   * @param propertyName The name of the property to retrieve data from
+   * @return ClassProperty of a property. Return nullptr if no property is found
+   */
   template <typename T>
   std::optional<MetadataPropertyView<T>>
   getPropertyView(const std::string& propertyName) const {
