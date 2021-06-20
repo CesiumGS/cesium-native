@@ -195,11 +195,27 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
             static_cast<size_t>(
                 batchTableStart + header.batchTableJsonByteLength),
             header.batchTableBinaryByteLength);
+
+        rapidjson::Document batchTableJson;
+        batchTableJson.Parse(
+            reinterpret_cast<const char*>(batchTableJsonData.data()),
+            batchTableJsonData.size());
+        if (batchTableJson.HasParseError()) {
+          SPDLOG_LOGGER_WARN(
+              pLogger,
+              "Error when parsing batch table JSON, error code {} at byte "
+              "offset "
+              "{}. Skip parsing metadata",
+              batchTableJson.GetParseError(),
+              batchTableJson.GetErrorOffset());
+          return pResult;
+        }
+
         upgradeBatchTableToFeatureMetadata(
             pLogger,
             gltf,
             featureTable,
-            batchTableJsonData,
+            batchTableJson,
             batchTableBinaryData);
       }
     }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/ArrayView.h"
+#include "CesiumGltf/MetadataArrayView.h"
 #include "CesiumGltf/PropertyType.h"
 #include <cstdint>
 #include <type_traits>
@@ -29,21 +29,21 @@ template <> struct IsString<std::string_view> : std::true_type {};
 
 template <typename... T> struct IsNumericArray;
 template <typename T> struct IsNumericArray<T> : std::false_type {};
-template <typename T> struct IsNumericArray<ArrayView<T>> {
+template <typename T> struct IsNumericArray<MetadataArrayView<T>> {
   static constexpr bool value = IsNumeric<T>::value;
 };
 
 template <typename... T> struct IsBooleanArray;
 template <typename T> struct IsBooleanArray<T> : std::false_type {};
-template <> struct IsBooleanArray<ArrayView<bool>> : std::true_type {};
+template <> struct IsBooleanArray<MetadataArrayView<bool>> : std::true_type {};
 
 template <typename... T> struct IsStringArray;
 template <typename T> struct IsStringArray<T> : std::false_type {};
 template <>
-struct IsStringArray<ArrayView<std::string_view>> : std::true_type {};
+struct IsStringArray<MetadataArrayView<std::string_view>> : std::true_type {};
 
 template <typename T> struct ArrayType;
-template <typename T> struct ArrayType<CesiumGltf::ArrayView<T>> {
+template <typename T> struct ArrayType<CesiumGltf::MetadataArrayView<T>> {
   using type = T;
 };
 
@@ -100,7 +100,7 @@ template <> struct TypeToPropertyType<std::string_view> {
   static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::String);
 };
 
-template <typename T> struct TypeToPropertyType<CesiumGltf::ArrayView<T>> {
+template <typename T> struct TypeToPropertyType<CesiumGltf::MetadataArrayView<T>> {
   static constexpr uint32_t value =
       static_cast<uint32_t>(PropertyType::Array) | TypeToPropertyType<T>::value;
 };

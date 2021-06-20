@@ -8,15 +8,17 @@
 #include <optional>
 
 namespace CesiumGltf {
-class FeatureTableView {
+class MetadataFeatureTableView {
 public:
-  FeatureTableView(const Model* model, const FeatureTable* featureTable);
+  MetadataFeatureTableView(
+      const Model* model,
+      const FeatureTable* featureTable);
 
   const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
   template <typename T>
-  std::optional<PropertyView<T>>
-  getPropertyValues(const std::string& propertyName) const {
+  std::optional<MetadataPropertyView<T>>
+  getPropertyView(const std::string& propertyName) const {
     if (_featureTable->count < 0) {
       return std::nullopt;
     }
@@ -56,7 +58,7 @@ public:
 
 private:
   template <typename T>
-  std::optional<PropertyView<T>> getPrimitivePropertyValues(
+  std::optional<MetadataPropertyView<T>> getPrimitivePropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     PropertyType type = convertStringToPropertyType(classProperty->type);
@@ -86,7 +88,7 @@ private:
       return std::nullopt;
     }
 
-    return PropertyView<T>(
+    return MetadataPropertyView<T>(
         valueBuffer,
         gsl::span<const std::byte>(),
         gsl::span<const std::byte>(),
@@ -95,12 +97,12 @@ private:
         _featureTable->count);
   }
 
-  std::optional<PropertyView<std::string_view>> getStringPropertyValues(
+  std::optional<MetadataPropertyView<std::string_view>> getStringPropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
-  std::optional<PropertyView<ArrayView<T>>> getPrimitiveArrayPropertyValues(
+  std::optional<MetadataPropertyView<MetadataArrayView<T>>> getPrimitiveArrayPropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     if (classProperty->type != "ARRAY") {
@@ -151,7 +153,7 @@ private:
         return std::nullopt;
       }
 
-      return PropertyView<ArrayView<T>>(
+      return MetadataPropertyView<MetadataArrayView<T>>(
           valueBuffer,
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
@@ -178,7 +180,7 @@ private:
       return std::nullopt;
     }
 
-    return PropertyView<ArrayView<T>>(
+    return MetadataPropertyView<MetadataArrayView<T>>(
         valueBuffer,
         offsetBuffer,
         gsl::span<const std::byte>(),
@@ -187,7 +189,7 @@ private:
         static_cast<size_t>(_featureTable->count));
   }
 
-  std::optional<PropertyView<ArrayView<std::string_view>>>
+  std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
   getStringArrayPropertyValues(
       const ClassProperty* classProperty,
       const FeatureTableProperty& featureTableProperty) const;

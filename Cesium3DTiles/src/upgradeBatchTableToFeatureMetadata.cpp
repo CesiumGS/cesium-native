@@ -1128,7 +1128,7 @@ void upgradeBatchTableToFeatureMetadata(
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumGltf::Model& gltf,
     const rapidjson::Document& featureTableJson,
-    const gsl::span<const std::byte>& batchTableJsonData,
+    const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData) {
 
   // Parse the b3dm batch table and convert it to the EXT_feature_metadata
@@ -1148,20 +1148,6 @@ void upgradeBatchTableToFeatureMetadata(
   }
 
   int64_t batchLength = batchLengthIt->value.GetInt64();
-
-  rapidjson::Document document;
-  document.Parse(
-      reinterpret_cast<const char*>(batchTableJsonData.data()),
-      batchTableJsonData.size());
-  if (document.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Error when parsing batch table JSON, error code {} at byte offset "
-        "{}",
-        document.GetParseError(),
-        document.GetErrorOffset());
-    return;
-  }
 
   // Add the binary part of the batch table - if any - to the glTF as a buffer.
   // We will reallign this buffer later on
@@ -1187,8 +1173,8 @@ void upgradeBatchTableToFeatureMetadata(
   featureTable.classProperty = "default";
 
   // Convert each regular property in the batch table
-  for (auto propertyIt = document.MemberBegin();
-       propertyIt != document.MemberEnd();
+  for (auto propertyIt = batchTableJson.MemberBegin();
+       propertyIt != batchTableJson.MemberEnd();
        ++propertyIt) {
     std::string name = propertyIt->name.GetString();
     ClassProperty& classProperty =

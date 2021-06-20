@@ -1,4 +1,4 @@
-#include "CesiumGltf/FeatureTableView.h"
+#include "CesiumGltf/MetadataFeatureTableView.h"
 
 namespace CesiumGltf {
 template <typename T>
@@ -59,7 +59,7 @@ static bool checkStringArrayOffsetBuffer(
   return true;
 }
 
-FeatureTableView::FeatureTableView(
+MetadataFeatureTableView::MetadataFeatureTableView(
     const Model* model,
     const FeatureTable* featureTable)
     : _model{model}, _featureTable{featureTable}, _class{nullptr} {
@@ -82,7 +82,7 @@ FeatureTableView::FeatureTableView(
 }
 
 const ClassProperty*
-FeatureTableView::getClassProperty(const std::string& propertyName) const {
+MetadataFeatureTableView::getClassProperty(const std::string& propertyName) const {
   if (_class == nullptr) {
     return nullptr;
   }
@@ -96,7 +96,7 @@ FeatureTableView::getClassProperty(const std::string& propertyName) const {
 }
 
 gsl::span<const std::byte>
-FeatureTableView::getBufferSafe(int32_t bufferViewIdx) const {
+MetadataFeatureTableView::getBufferSafe(int32_t bufferViewIdx) const {
   const BufferView* bufferView =
       _model->getSafe(&_model->bufferViews, bufferViewIdx);
   if (!bufferView) {
@@ -122,7 +122,7 @@ FeatureTableView::getBufferSafe(int32_t bufferViewIdx) const {
       static_cast<size_t>(bufferView->byteLength));
 }
 
-gsl::span<const std::byte> FeatureTableView::getOffsetBufferSafe(
+gsl::span<const std::byte> MetadataFeatureTableView::getOffsetBufferSafe(
     int32_t bufferViewIdx,
     PropertyType offsetType,
     size_t valueBufferSize,
@@ -174,8 +174,8 @@ gsl::span<const std::byte> FeatureTableView::getOffsetBufferSafe(
   return offsetBuffer;
 }
 
-std::optional<PropertyView<std::string_view>>
-FeatureTableView::getStringPropertyValues(
+std::optional<MetadataPropertyView<std::string_view>>
+MetadataFeatureTableView::getStringPropertyValues(
     const ClassProperty* classProperty,
     const FeatureTableProperty& featureTableProperty) const {
   if (classProperty->type != "STRING") {
@@ -204,7 +204,7 @@ FeatureTableView::getStringPropertyValues(
     return std::nullopt;
   }
 
-  return PropertyView<std::string_view>(
+  return MetadataPropertyView<std::string_view>(
       valueBuffer,
       gsl::span<const std::byte>(),
       offsetBuffer,
@@ -213,8 +213,8 @@ FeatureTableView::getStringPropertyValues(
       static_cast<size_t>(_featureTable->count));
 }
 
-std::optional<PropertyView<ArrayView<std::string_view>>>
-FeatureTableView::getStringArrayPropertyValues(
+std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+MetadataFeatureTableView::getStringArrayPropertyValues(
     const ClassProperty* classProperty,
     const FeatureTableProperty& featureTableProperty) const {
   if (classProperty->type != "ARRAY") {
@@ -267,7 +267,7 @@ FeatureTableView::getStringArrayPropertyValues(
       return std::nullopt;
     }
 
-    return PropertyView<ArrayView<std::string_view>>(
+    return MetadataPropertyView<MetadataArrayView<std::string_view>>(
         valueBuffer,
         gsl::span<const std::byte>(),
         stringOffsetBuffer,
@@ -327,7 +327,7 @@ FeatureTableView::getStringArrayPropertyValues(
     return std::nullopt;
   }
 
-  return PropertyView<ArrayView<std::string_view>>(
+  return MetadataPropertyView<MetadataArrayView<std::string_view>>(
       valueBuffer,
       arrayOffsetBuffer,
       stringOffsetBuffer,

@@ -1,4 +1,4 @@
-#include "CesiumGltf/FeatureTableView.h"
+#include "CesiumGltf/MetadataFeatureTableView.h"
 #include "catch2/catch.hpp"
 #include <cstring>
 
@@ -44,7 +44,7 @@ TEST_CASE("Test numeric properties") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "UINT32");
@@ -52,8 +52,8 @@ TEST_CASE("Test numeric properties") {
   REQUIRE(classProperty->componentType.isNull());
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property != std::nullopt);
 
     for (size_t i = 0; i < uint32Property->size(); ++i) {
@@ -62,80 +62,82 @@ TEST_CASE("Test numeric properties") {
   }
 
   SECTION("Access wrong type") {
-    std::optional<PropertyView<bool>> boolInvalid =
-        view.getPropertyValues<bool>("TestClassProperty");
+    std::optional<MetadataPropertyView<bool>> boolInvalid =
+        view.getPropertyView<bool>("TestClassProperty");
     REQUIRE(boolInvalid == std::nullopt);
 
-    std::optional<PropertyView<uint8_t>> uint8Invalid =
-        view.getPropertyValues<uint8_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint8_t>> uint8Invalid =
+        view.getPropertyView<uint8_t>("TestClassProperty");
     REQUIRE(uint8Invalid == std::nullopt);
 
-    std::optional<PropertyView<int32_t>> int32Invalid =
-        view.getPropertyValues<int32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<int32_t>> int32Invalid =
+        view.getPropertyView<int32_t>("TestClassProperty");
     REQUIRE(int32Invalid == std::nullopt);
 
-    std::optional<PropertyView<uint64_t>> unt64Invalid =
-        view.getPropertyValues<uint64_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint64_t>> unt64Invalid =
+        view.getPropertyView<uint64_t>("TestClassProperty");
     REQUIRE(unt64Invalid == std::nullopt);
 
-    std::optional<PropertyView<std::string_view>> stringInvalid =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+    std::optional<MetadataPropertyView<std::string_view>> stringInvalid =
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringInvalid == std::nullopt);
 
-    std::optional<PropertyView<ArrayView<uint32_t>>> uint32ArrayInvalid =
-        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
+        uint32ArrayInvalid = view.getPropertyView<MetadataArrayView<uint32_t>>(
+            "TestClassProperty");
     REQUIRE(uint32ArrayInvalid == std::nullopt);
 
-    std::optional<PropertyView<ArrayView<bool>>> boolArrayInvalid =
-        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<bool>>>
+        boolArrayInvalid =
+            view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolArrayInvalid == std::nullopt);
 
-    std::optional<PropertyView<ArrayView<std::string_view>>>
+    std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
         stringArrayInvalid =
-            view.getPropertyValues<ArrayView<std::string_view>>(
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
                 "TestClassProperty");
     REQUIRE(stringArrayInvalid == std::nullopt);
   }
 
   SECTION("Wrong buffer index") {
     valueBufferView.buffer = 2;
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Wrong buffer view index") {
     featureTableProperty.bufferView = -1;
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view points outside of the real buffer length") {
     valueBuffer.cesium.data.resize(12);
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view offset is not a multiple of 8") {
     valueBufferView.byteOffset = 1;
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view length isn't multiple of sizeof(T)") {
     valueBufferView.byteLength = 13;
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view length doesn't match with featureTableCount") {
     valueBufferView.byteLength = 12;
-    std::optional<PropertyView<uint32_t>> uint32Property =
-        view.getPropertyValues<uint32_t>("TestClassProperty");
+    std::optional<MetadataPropertyView<uint32_t>> uint32Property =
+        view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 }
@@ -197,7 +199,7 @@ TEST_CASE("Test boolean properties") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "BOOLEAN");
@@ -205,8 +207,8 @@ TEST_CASE("Test boolean properties") {
   REQUIRE(classProperty->componentType.isNull());
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<bool>> boolProperty =
-        view.getPropertyValues<bool>("TestClassProperty");
+    std::optional<MetadataPropertyView<bool>> boolProperty =
+        view.getPropertyView<bool>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
     REQUIRE(boolProperty->size() == instanceCount);
     for (size_t i = 0; i < boolProperty->size(); ++i) {
@@ -217,8 +219,8 @@ TEST_CASE("Test boolean properties") {
 
   SECTION("Buffer size doesn't match with feature table count") {
     featureTable.count = 66;
-    std::optional<PropertyView<bool>> boolProperty =
-        view.getPropertyValues<bool>("TestClassProperty");
+    std::optional<MetadataPropertyView<bool>> boolProperty =
+        view.getPropertyView<bool>("TestClassProperty");
     REQUIRE(boolProperty == std::nullopt);
   }
 }
@@ -292,7 +294,7 @@ TEST_CASE("Test string property") {
   featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "STRING");
@@ -300,8 +302,8 @@ TEST_CASE("Test string property") {
   REQUIRE(classProperty->componentType.isNull());
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<std::string_view>> stringProperty =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+    std::optional<MetadataPropertyView<std::string_view>> stringProperty =
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
       REQUIRE(stringProperty->get(i) == expected[i]);
@@ -310,18 +312,18 @@ TEST_CASE("Test string property") {
 
   SECTION("Wrong offset type") {
     featureTableProperty.offsetType = "UINT8";
-    std::optional<PropertyView<std::string_view>> stringProperty =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+    std::optional<MetadataPropertyView<std::string_view>> stringProperty =
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
 
     featureTableProperty.offsetType = "UINT64";
     stringProperty =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
 
     featureTableProperty.offsetType = "NONSENSE";
     stringProperty =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 
@@ -329,8 +331,8 @@ TEST_CASE("Test string property") {
     uint32_t* offset =
         reinterpret_cast<uint32_t*>(offsetBuffer.cesium.data.data());
     offset[2] = static_cast<uint32_t>(valueBuffer.byteLength + 4);
-    std::optional<PropertyView<std::string_view>> stringProperty =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+    std::optional<MetadataPropertyView<std::string_view>> stringProperty =
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 
@@ -339,8 +341,8 @@ TEST_CASE("Test string property") {
         reinterpret_cast<uint32_t*>(offsetBuffer.cesium.data.data());
     offset[featureTable.count] =
         static_cast<uint32_t>(valueBuffer.byteLength + 4);
-    std::optional<PropertyView<std::string_view>> stringProperty =
-        view.getPropertyValues<std::string_view>("TestClassProperty");
+    std::optional<MetadataPropertyView<std::string_view>> stringProperty =
+        view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 }
@@ -390,7 +392,7 @@ TEST_CASE("Test fixed numeric array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
@@ -398,12 +400,13 @@ TEST_CASE("Test fixed numeric array") {
   REQUIRE(classProperty->componentType.getString() == "UINT32");
 
   SECTION("Access the right type") {
-    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
-        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
+        arrayProperty = view.getPropertyView<MetadataArrayView<uint32_t>>(
+            "TestClassProperty");
     REQUIRE(arrayProperty != std::nullopt);
 
     for (size_t i = 0; i < arrayProperty->size(); ++i) {
-      ArrayView<uint32_t> member = arrayProperty->get(i);
+      MetadataArrayView<uint32_t> member = arrayProperty->get(i);
       for (size_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[i * 3 + j]);
       }
@@ -412,29 +415,33 @@ TEST_CASE("Test fixed numeric array") {
 
   SECTION("Wrong component type") {
     testClassProperty.componentType = "UINT8";
-    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
-        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
+        arrayProperty = view.getPropertyView<MetadataArrayView<uint32_t>>(
+            "TestClassProperty");
     REQUIRE(arrayProperty == std::nullopt);
   }
 
   SECTION("Buffer size is a multiple of type size") {
     valueBufferView.byteLength = 13;
-    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
-        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
+        arrayProperty = view.getPropertyView<MetadataArrayView<uint32_t>>(
+            "TestClassProperty");
     REQUIRE(arrayProperty == std::nullopt);
   }
 
   SECTION("Negative component count") {
     testClassProperty.componentCount = -1;
-    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
-        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
+        arrayProperty = view.getPropertyView<MetadataArrayView<uint32_t>>(
+            "TestClassProperty");
     REQUIRE(arrayProperty == std::nullopt);
   }
 
   SECTION("Value buffer doesn't fit into feature table count") {
     testClassProperty.componentCount = 55;
-    std::optional<PropertyView<ArrayView<uint32_t>>> arrayProperty =
-        view.getPropertyValues<ArrayView<uint32_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
+        arrayProperty = view.getPropertyView<MetadataArrayView<uint32_t>>(
+            "TestClassProperty");
     REQUIRE(arrayProperty == std::nullopt);
   }
 }
@@ -516,18 +523,18 @@ TEST_CASE("Test dynamic numeric array") {
   featureTableProperty.offsetType = "UINT64";
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
   REQUIRE(classProperty->componentType.getString() == "UINT16");
 
   SECTION("Access the correct type") {
-    std::optional<PropertyView<ArrayView<uint16_t>>> property =
-        view.getPropertyValues<ArrayView<uint16_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint16_t>>> property =
+        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(property != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      ArrayView<uint16_t> valueMember = property->get(i);
+      MetadataArrayView<uint16_t> valueMember = property->get(i);
       REQUIRE(valueMember.size() == expected[i].size());
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == valueMember[j]);
@@ -537,8 +544,8 @@ TEST_CASE("Test dynamic numeric array") {
 
   SECTION("Component count and offset buffer appear at the same time") {
     testClassProperty.componentCount = 3;
-    std::optional<PropertyView<ArrayView<uint16_t>>> property =
-        view.getPropertyValues<ArrayView<uint16_t>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<uint16_t>>> property =
+        view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(property == std::nullopt);
   }
 }
@@ -611,7 +618,7 @@ TEST_CASE("Test fixed boolean array") {
       static_cast<int32_t>(model.bufferViews.size() - 1);
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
@@ -619,12 +626,12 @@ TEST_CASE("Test fixed boolean array") {
   REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
-        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<bool>>> boolProperty =
+        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
     REQUIRE(boolProperty->size() == static_cast<size_t>(featureTable.count));
     for (size_t i = 0; i < boolProperty->size(); ++i) {
-      ArrayView<bool> valueMember = boolProperty->get(i);
+      MetadataArrayView<bool> valueMember = boolProperty->get(i);
       for (size_t j = 0; j < valueMember.size(); ++j) {
         REQUIRE(valueMember[j] == expected[i * 3 + j]);
       }
@@ -633,15 +640,15 @@ TEST_CASE("Test fixed boolean array") {
 
   SECTION("Value buffer doesn't have enough required bytes") {
     testClassProperty.componentCount = 11;
-    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
-        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<bool>>> boolProperty =
+        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty == std::nullopt);
   }
 
   SECTION("Component count is negative") {
     testClassProperty.componentCount = -1;
-    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
-        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<bool>>> boolProperty =
+        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty == std::nullopt);
   }
 }
@@ -730,18 +737,18 @@ TEST_CASE("Test dynamic bool array") {
   featureTableProperty.offsetType = "UINT64";
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
   REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
-        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<bool>>> boolProperty =
+        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      ArrayView<bool> arrayMember = boolProperty->get(i);
+      MetadataArrayView<bool> arrayMember = boolProperty->get(i);
       REQUIRE(arrayMember.size() == expected[i].size());
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == arrayMember[j]);
@@ -751,8 +758,8 @@ TEST_CASE("Test dynamic bool array") {
 
   SECTION("Component count and array offset appear at the same time") {
     testClassProperty.componentCount = 3;
-    std::optional<PropertyView<ArrayView<bool>>> boolProperty =
-        view.getPropertyValues<ArrayView<bool>>("TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<bool>>> boolProperty =
+        view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty == std::nullopt);
   }
 }
@@ -837,7 +844,7 @@ TEST_CASE("Test fixed array of string") {
   featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
@@ -845,23 +852,24 @@ TEST_CASE("Test fixed array of string") {
   REQUIRE(classProperty->componentType.getString() == "STRING");
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<ArrayView<std::string_view>>> stringProperty =
-        view.getPropertyValues<ArrayView<std::string_view>>(
-            "TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+        stringProperty =
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
+                "TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     REQUIRE(stringProperty->size() == 3);
 
-    ArrayView<std::string_view> v0 = stringProperty->get(0);
+    MetadataArrayView<std::string_view> v0 = stringProperty->get(0);
     REQUIRE(v0.size() == 2);
     REQUIRE(v0[0] == "What's up");
     REQUIRE(v0[1] == "Breaking news!!! Aliens no longer attacks the US first");
 
-    ArrayView<std::string_view> v1 = stringProperty->get(1);
+    MetadataArrayView<std::string_view> v1 = stringProperty->get(1);
     REQUIRE(v1.size() == 2);
     REQUIRE(v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
     REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
-    ArrayView<std::string_view> v2 = stringProperty->get(2);
+    MetadataArrayView<std::string_view> v2 = stringProperty->get(2);
     REQUIRE(v2.size() == 2);
     REQUIRE(v2[0] == "I love you, meat bags! ❤️");
     REQUIRE(v2[1] == "Book in the freezer");
@@ -869,25 +877,28 @@ TEST_CASE("Test fixed array of string") {
 
   SECTION("Component count is negative") {
     testClassProperty.componentCount = -1;
-    std::optional<PropertyView<ArrayView<std::string_view>>> stringProperty =
-        view.getPropertyValues<ArrayView<std::string_view>>(
-            "TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+        stringProperty =
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
+                "TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 
   SECTION("Offset type is unknown") {
     featureTableProperty.offsetType = "INT8";
-    std::optional<PropertyView<ArrayView<std::string_view>>> stringProperty =
-        view.getPropertyValues<ArrayView<std::string_view>>(
-            "TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+        stringProperty =
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
+                "TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 
   SECTION("string offset buffer doesn't exist") {
     featureTableProperty.stringOffsetBufferView = -1;
-    std::optional<PropertyView<ArrayView<std::string_view>>> stringProperty =
-        view.getPropertyValues<ArrayView<std::string_view>>(
-            "TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+        stringProperty =
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
+                "TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 }
@@ -1000,19 +1011,20 @@ TEST_CASE("Test dynamic array of string") {
   featureTableProperty.stringOffsetBufferView = strOffsetBufferViewIdx;
 
   // test feature table view
-  FeatureTableView view(&model, &featureTable);
+  MetadataFeatureTableView view(&model, &featureTable);
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
   REQUIRE(classProperty->componentType.getString() == "STRING");
 
   SECTION("Access correct type") {
-    std::optional<PropertyView<ArrayView<std::string_view>>> stringProperty =
-        view.getPropertyValues<ArrayView<std::string_view>>(
-            "TestClassProperty");
+    std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+        stringProperty =
+            view.getPropertyView<MetadataArrayView<std::string_view>>(
+                "TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      ArrayView<std::string_view> stringArray = stringProperty->get(i);
+      MetadataArrayView<std::string_view> stringArray = stringProperty->get(i);
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(stringArray[j] == expected[i][j]);
       }

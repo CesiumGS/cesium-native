@@ -25,7 +25,7 @@ void upgradeBatchTableToFeatureMetadata(
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumGltf::Model& gltf,
     const rapidjson::Document& featureTable,
-    const gsl::span<const std::byte>& batchTableJsonData,
+    const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData);
 
 } // namespace Cesium3DTiles

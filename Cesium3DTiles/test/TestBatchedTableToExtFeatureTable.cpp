@@ -1,11 +1,10 @@
 #include "Batched3DModelContent.h"
-#include "CesiumGltf/FeatureTableView.h"
+#include "CesiumGltf/MetadataFeatureTableView.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyView.h"
 #include "catch2/catch.hpp"
 #include "rapidjson/document.h"
-#include "rapidjson/writer.h"
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
 #include <filesystem>
@@ -28,9 +27,9 @@ static void checkScalarProperty(
   REQUIRE(property.componentType.isNull());
   REQUIRE(property.componentCount == std::nullopt);
 
-  FeatureTableView view(&model, &featureTable);
-  std::optional<PropertyView<PropertyViewType>> propertyView =
-      view.getPropertyValues<PropertyViewType>(propertyName);
+  MetadataFeatureTableView view(&model, &featureTable);
+  std::optional<MetadataPropertyView<PropertyViewType>> propertyView =
+      view.getPropertyView<PropertyViewType>(propertyName);
   REQUIRE(propertyView->size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < propertyView->size(); ++i) {
     if constexpr (
@@ -61,12 +60,12 @@ static void checkArrayProperty(
         static_cast<int64_t>(expectedComponentCount));
   }
 
-  FeatureTableView view(&model, &featureTable);
-  std::optional<PropertyView<ArrayView<PropertyViewType>>> propertyView =
-      view.getPropertyValues<ArrayView<PropertyViewType>>(propertyName);
+  MetadataFeatureTableView view(&model, &featureTable);
+  std::optional<MetadataPropertyView<MetadataArrayView<PropertyViewType>>> propertyView =
+      view.getPropertyView<MetadataArrayView<PropertyViewType>>(propertyName);
   REQUIRE(propertyView->size() == static_cast<size_t>(featureTable.count));
   for (size_t i = 0; i < expected.size(); ++i) {
-    ArrayView<PropertyViewType> val = propertyView->get(i);
+    MetadataArrayView<PropertyViewType> val = propertyView->get(i);
     if (expectedComponentCount > 0) {
       REQUIRE(val.size() == expectedComponentCount);
     }
@@ -99,8 +98,8 @@ static void createTestForArrayJson(
       batchLength,
       featureTableJson.GetAllocator());
 
-  rapidjson::Document jsonBatchTable;
-  jsonBatchTable.SetObject();
+  rapidjson::Document batchTableJson;
+  batchTableJson.SetObject();
   rapidjson::Value fixedArrayProperties(rapidjson::kArrayType);
   for (size_t i = 0; i < expected.size(); ++i) {
     rapidjson::Value innerArray(rapidjson::kArrayType);
@@ -110,35 +109,25 @@ static void createTestForArrayJson(
         value.SetString(
             expected[i][j].c_str(),
             static_cast<rapidjson::SizeType>(expected[i][j].size()),
-            jsonBatchTable.GetAllocator());
-        innerArray.PushBack(value, jsonBatchTable.GetAllocator());
+            batchTableJson.GetAllocator());
+        innerArray.PushBack(value, batchTableJson.GetAllocator());
       } else {
-        innerArray.PushBack(expected[i][j], jsonBatchTable.GetAllocator());
+        innerArray.PushBack(expected[i][j], batchTableJson.GetAllocator());
       }
     }
-    fixedArrayProperties.PushBack(innerArray, jsonBatchTable.GetAllocator());
+    fixedArrayProperties.PushBack(innerArray, batchTableJson.GetAllocator());
   }
 
-  jsonBatchTable.AddMember(
+  batchTableJson.AddMember(
       "fixedArrayProp",
       fixedArrayProperties,
-      jsonBatchTable.GetAllocator());
-
-  rapidjson::StringBuffer buffer;
-  buffer.Clear();
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  jsonBatchTable.Accept(writer);
-
-  std::string strJsonData = buffer.GetString();
-  gsl::span<const std::byte> jsonData(
-      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
-      strJsonData.size());
+      batchTableJson.GetAllocator());
 
   upgradeBatchTableToFeatureMetadata(
       spdlog::default_logger(),
       model,
       featureTableJson,
-      jsonData,
+      batchTableJson,
       gsl::span<const std::byte>());
 
   ModelEXT_feature_metadata* metadata =
@@ -567,33 +556,24 @@ TEST_CASE("Upgrade bool json to boolean binary") {
 
   std::vector<bool> expected =
       {true, false, true, true, false, true, false, true, false, true};
-  rapidjson::Document jsonBatchTable;
-  jsonBatchTable.SetObject();
+  rapidjson::Document batchTableJson;
+  batchTableJson.SetObject();
   rapidjson::Value boolProperties(rapidjson::kArrayType);
   for (size_t i = 0; i < expected.size(); ++i) {
     boolProperties.PushBack(
         rapidjson::Value(static_cast<bool>(expected[i])),
-        jsonBatchTable.GetAllocator());
+        batchTableJson.GetAllocator());
   }
-  jsonBatchTable.AddMember(
+  batchTableJson.AddMember(
       "boolProp",
       boolProperties,
-      jsonBatchTable.GetAllocator());
+      batchTableJson.GetAllocator());
 
-  rapidjson::StringBuffer buffer;
-  buffer.Clear();
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  jsonBatchTable.Accept(writer);
-
-  std::string strJsonData = buffer.GetString();
-  gsl::span<const std::byte> jsonData(
-      reinterpret_cast<const std::byte*>(strJsonData.c_str()),
-      strJsonData.size());
   upgradeBatchTableToFeatureMetadata(
       spdlog::default_logger(),
       model,
       featureTableJson,
-      jsonData,
+      batchTableJson,
       gsl::span<const std::byte>());
 
   ModelEXT_feature_metadata* metadata =
