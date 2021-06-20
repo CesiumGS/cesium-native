@@ -23,7 +23,7 @@ enum class PropertyType {
   Array = 1 << 13,
 };
 
-std::string convertProperttTypeToString(CesiumGltf::PropertyType type);
+std::string convertPropertyTypeToString(CesiumGltf::PropertyType type);
 
 PropertyType convertStringToPropertyType(const std::string& str);
 

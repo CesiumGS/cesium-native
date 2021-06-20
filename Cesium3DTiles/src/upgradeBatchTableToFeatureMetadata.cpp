@@ -368,7 +368,7 @@ void updateNumericArrayProperty(
         static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
 
     classProperty.type = "ARRAY";
-    classProperty.componentType = convertProperttTypeToString(
+    classProperty.componentType = convertPropertyTypeToString(
         static_cast<PropertyType>(TypeToPropertyType<ValueType>::value));
     classProperty.componentCount = *compatibleTypes.minComponentCount;
 
@@ -441,12 +441,12 @@ void updateNumericArrayProperty(
   int32_t offsetBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "ARRAY";
-  classProperty.componentType = convertProperttTypeToString(
+  classProperty.componentType = convertPropertyTypeToString(
       static_cast<PropertyType>(TypeToPropertyType<ValueType>::value));
 
   featureTableProperty.bufferView = valueBufferIdx;
   featureTableProperty.arrayOffsetBufferView = offsetBufferIdx;
-  featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+  featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
 }
 
 template <typename OffsetType>
@@ -584,7 +584,7 @@ void updateStringArrayProperty(
 
     featureTableProperty.bufferView = valueBufferViewIdx;
     featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
-    featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+    featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
     return;
   }
 
@@ -640,7 +640,7 @@ void updateStringArrayProperty(
   featureTableProperty.bufferView = valueBufferViewIdx;
   featureTableProperty.arrayOffsetBufferView = arrayOffsetBufferViewIdx;
   featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
-  featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+  featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
 }
 
 template <typename OffsetType>
@@ -783,7 +783,7 @@ void updateBooleanArrayProperty(
 
   featureTableProperty.bufferView = valueBufferIdx;
   featureTableProperty.arrayOffsetBufferView = offsetBufferIdx;
-  featureTableProperty.offsetType = convertProperttTypeToString(offsetType);
+  featureTableProperty.offsetType = convertPropertyTypeToString(offsetType);
 }
 
 void updateExtensionWithArrayProperty(

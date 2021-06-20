@@ -1,7 +1,7 @@
 #include "CesiumGltf/PropertyType.h"
 
 namespace CesiumGltf {
-std::string convertProperttTypeToString(CesiumGltf::PropertyType type) {
+std::string convertPropertyTypeToString(CesiumGltf::PropertyType type) {
   switch (type) {
   case PropertyType::None:
     return "NONE";
