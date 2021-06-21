@@ -3,7 +3,7 @@
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -50,7 +50,7 @@ ModelReaderResult readJsonModel(
     const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
-  TRACE("CesiumGltf::ModelReader::readJsonModel");
+  CESIUM_TRACE("CesiumGltf::ModelReader::readJsonModel");
 
   ModelJsonHandler modelHandler(context);
   ReadJsonResult<Model> jsonResult = JsonReader::readJson(data, modelHandler);
@@ -86,7 +86,7 @@ std::string toMagicString(uint32_t i) {
 ModelReaderResult readBinaryModel(
     const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
-  TRACE("CesiumGltf::ModelReader::readBinaryModel");
+  CESIUM_TRACE("CesiumGltf::ModelReader::readBinaryModel");
 
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
@@ -218,7 +218,7 @@ void postprocess(
   }
 
   if (options.decodeEmbeddedImages) {
-    TRACE("CesiumGltf::decodeEmbeddedImages")
+    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages")
     for (Image& image : model.images) {
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
@@ -349,7 +349,7 @@ ModelReaderResult GltfReader::readModel(
 
 ImageReaderResult
 GltfReader::readImage(const gsl::span<const std::byte>& data) const {
-  TRACE("CesiumGltf::readImage");
+  CESIUM_TRACE("CesiumGltf::readImage");
 
   ImageReaderResult result;
 
@@ -368,7 +368,7 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) const {
       &channelsInFile,
       image.channels);
   if (pImage) {
-    TRACE(
+    CESIUM_TRACE(
         "copy image " + std::to_string(image.width) + "x" +
         std::to_string(image.height) + "x" + std::to_string(image.channels) +
         "x" + std::to_string(image.bytesPerChannel));

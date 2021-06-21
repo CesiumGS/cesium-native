@@ -7,7 +7,7 @@
 #include "CesiumAsync/Impl/cesium-async++.h"
 #include "CesiumAsync/Library.h"
 #include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include <memory>
 
 namespace CesiumAsync {
@@ -86,7 +86,7 @@ public:
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for worker thread";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
+    CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
 #endif
 
     return Impl::ContinuationFutureType_t<Func, void>(
@@ -118,7 +118,7 @@ public:
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for main thread";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
+    CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
 #endif
 
     return Impl::ContinuationFutureType_t<Func, void>(
@@ -136,7 +136,7 @@ public:
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for thread pool";
     int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
-    TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
+    CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
 #endif
 
     return Impl::ContinuationFutureType_t<Func, void>(

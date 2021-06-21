@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CesiumAsync/Impl/unwrapFuture.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 
 namespace CesiumAsync {
 namespace Impl {
@@ -17,9 +17,9 @@ template <typename Func, typename T> struct WithTracing {
             tracingName,
             f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
                T&& result) mutable {
-      TRACE_ASYNC_ENLIST(tracingID);
+      CESIUM_TRACE_ASYNC_ENLIST(tracingID);
       if (tracingName) {
-        TRACE_ASYNC_END_ID(tracingName, tracingID);
+        CESIUM_TRACE_END_ID(tracingName, tracingID);
       }
       return f(std::move(result));
     };
@@ -37,9 +37,9 @@ template <typename Func> struct WithTracing<Func, void> {
     return [tracingID,
             tracingName,
             f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
-      TRACE_ASYNC_ENLIST(tracingID);
+      CESIUM_TRACE_ASYNC_ENLIST(tracingID);
       if (tracingName) {
-        TRACE_ASYNC_END_ID(tracingName, tracingID);
+        CESIUM_TRACE_END_ID(tracingName, tracingID);
       }
       return f();
     };

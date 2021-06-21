@@ -7,7 +7,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -238,7 +238,7 @@ void Tile::loadContent() {
     return;
   }
 
-  TRACE_ASYNC_ENLIST(maybeRequestFuture.loaderID);
+  CESIUM_TRACE_ASYNC_ENLIST(maybeRequestFuture.loaderID);
 
   struct LoadResult {
     LoadState state;
@@ -257,7 +257,7 @@ void Tile::loadContent() {
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            TRACE("loadContent worker thread");
+            CESIUM_TRACE("loadContent worker thread");
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               SPDLOG_LOGGER_ERROR(
@@ -313,7 +313,7 @@ void Tile::loadContent() {
                     projections);
 
                 if (pPrepareRendererResources) {
-                  TRACE("prepareInLoadThread");
+                  CESIUM_TRACE("prepareInLoadThread");
                   const glm::dmat4& transform = loadInput.tileTransform;
                   pRendererResources =
                       pPrepareRendererResources->prepareInLoadThread(
@@ -814,7 +814,7 @@ void Tile::upsampleParent(
   Tileset* pTileset = this->getTileset();
   int64_t loaderID = pTileset->notifyTileStartLoading(this);
 
-  TRACE_ASYNC_ENLIST(loaderID);
+  CESIUM_TRACE_ASYNC_ENLIST(loaderID);
 
   struct LoadResult {
     LoadState state;

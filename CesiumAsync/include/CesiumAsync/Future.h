@@ -4,7 +4,7 @@
 #include "CesiumAsync/Impl/CatchFunction.h"
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
 #include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include <variant>
 
 namespace CesiumAsync {
@@ -223,7 +223,7 @@ private:
     auto task = this->_task.then(
         async::inline_scheduler(),
         [tracingID, tracingName](T&& value) {
-          TRACE_ASYNC_BEGIN_ID(tracingName, tracingID);
+          CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
           return std::move(value);
         });
 #else

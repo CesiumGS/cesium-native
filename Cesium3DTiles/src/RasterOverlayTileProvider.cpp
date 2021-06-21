@@ -7,7 +7,7 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGltf/GltfReader.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
@@ -476,7 +476,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
       .thenImmediatelyInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            TRACE("load image");
+            CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
@@ -593,7 +593,7 @@ static LoadResult createLoadResultFromLoadedImage(
       static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
   if (image.width > 0 && image.height > 0 &&
       image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
-    TRACE(
+    CESIUM_TRACE(
         "Prepare Raster " + std::to_string(image.width) + "x" +
         std::to_string(image.height) + "x" + std::to_string(image.channels) +
         "x" + std::to_string(image.bytesPerChannel));
@@ -627,7 +627,7 @@ void RasterOverlayTileProvider::doLoad(
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
   int64_t loadID = this->beginTileLoad(tile, isThrottledLoad);
-  TRACE_ASYNC_ENLIST(loadID);
+  CESIUM_TRACE_ASYNC_ENLIST(loadID);
 
   this->loadTileImage(tile.getID())
       .thenImmediatelyInWorkerThread(
@@ -681,7 +681,7 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
       for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
         int64_t id = Profiler::instance().allocateID();
         this->_loadingIDs[i] = id;
-        TRACE_ASYNC_BEGIN_ID(
+        CESIUM_TRACE_BEGIN_ID(
             ("Overlay Loading Slot " + std::to_string(id)).c_str(),
             id);
       }
@@ -699,7 +699,7 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
       int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
       loaderID = this->_loadingIDs[loaderIndex];
 
-      TRACE_ASYNC_BEGIN_ID(
+      CESIUM_TRACE_BEGIN_ID(
           ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
               .c_str(),
           loaderID);
@@ -723,7 +723,7 @@ void RasterOverlayTileProvider::finalizeTileLoad(
         this->_tilesBeingLoaded.end(),
         &tile);
     if (it != this->_tilesBeingLoaded.end()) {
-      TRACE_ASYNC_END_ID(
+      CESIUM_TRACE_END_ID(
           ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
               .c_str(),
           this->_loadingIDs[it - this->_tilesBeingLoaded.begin()]);

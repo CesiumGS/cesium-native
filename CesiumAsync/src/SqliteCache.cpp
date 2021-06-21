@@ -1,6 +1,6 @@
 #include "CesiumAsync/SqliteCache.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include "rapidjson/document.h"
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/writer.h"
@@ -289,7 +289,7 @@ SqliteCache::SqliteCache(
 SqliteCache::~SqliteCache() = default;
 
 std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
-  TRACE("SqliteCache::getEntry");
+  CESIUM_TRACE("SqliteCache::getEntry");
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 
   // get entry based on key
@@ -438,7 +438,7 @@ bool SqliteCache::storeEntry(
     uint16_t statusCode,
     const HttpHeaders& responseHeaders,
     const gsl::span<const std::byte>& responseData) {
-  TRACE("SqliteCache::storeEntry");
+  CESIUM_TRACE("SqliteCache::storeEntry");
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 
   // cache the request with the key
@@ -586,7 +586,7 @@ bool SqliteCache::storeEntry(
 }
 
 bool SqliteCache::prune() {
-  TRACE("SqliteCache::prune");
+  CESIUM_TRACE("SqliteCache::prune");
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 
   int64_t totalItems = 0;

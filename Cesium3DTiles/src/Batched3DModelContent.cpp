@@ -1,7 +1,7 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
-#include "CesiumUtility/Profiler.h"
+#include "CesiumUtility/Tracing.h"
 #include <cstddef>
 #include <rapidjson/document.h>
 #include <stdexcept>
@@ -85,7 +85,7 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
                              "include a B3DM header.");
   }
 
-  TRACE("Cesium3DTiles::Batched3DModelContent::load")
+  CESIUM_TRACE("Cesium3DTiles::Batched3DModelContent::load")
   const B3dmHeader* pHeader = reinterpret_cast<const B3dmHeader*>(data.data());
 
   B3dmHeader header = *pHeader;

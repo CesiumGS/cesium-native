@@ -114,14 +114,14 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
 #if TRACING_ENABLED
     static const int64_t pruneTraceID =
         CesiumUtility::Profiler::instance().allocateID();
-    TRACE_ASYNC_ENLIST(pruneTraceID);
+    CESIUM_TRACE_ASYNC_ENLIST(pruneTraceID);
 #endif
     asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {
       this->_pCacheDatabase->prune();
     });
   }
 
-  TRACE_ASYNC_BEGIN("requestAsset (cached)");
+  CESIUM_TRACE_BEGIN("requestAsset (cached)");
 
   ThreadPool& threadPool = this->_cacheThreadPool;
 
@@ -248,7 +248,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
             return asyncSystem.createResolvedFuture(std::move(pRequest));
           })
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
-        TRACE_ASYNC_END("requestAsset (cached)");
+        CESIUM_TRACE_END("requestAsset (cached)");
         return pRequest;
       });
 }
