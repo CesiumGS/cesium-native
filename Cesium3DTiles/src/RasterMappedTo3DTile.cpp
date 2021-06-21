@@ -36,28 +36,20 @@ RasterMappedTo3DTile::update(Tile& tile) {
   }
 
   // If the loading tile has failed, try its parent.
-  const CesiumGeometry::QuadtreeTileID* quadtreeTileID;
   while (this->_pLoadingTile && this->_pLoadingTile->getState() ==
                                     RasterOverlayTile::LoadState::Failed) {
-
-    quadtreeTileID = std::get_if<CesiumGeometry::QuadtreeTileID>(
-        &this->_pLoadingTile->getID());
-    if (!quadtreeTileID || quadtreeTileID->level == 0) {
-      break;
-    }
-
     // Note when our original tile fails to load so that we don't report more
     // data available. This means - by design - we won't refine past a failed
     // tile.
-    this->_originalFailed = true;
+    std::optional<TileID> parentTileId =
+        TileIdUtilities::getParentTileID(this->_pLoadingTile->getID());
 
-    CesiumGeometry::QuadtreeTileID parentID(
-        quadtreeTileID->level - 1,
-        quadtreeTileID->x >> 1,
-        quadtreeTileID->y >> 1);
-    this->_pLoadingTile = this->_pLoadingTile->getOverlay()
-                              .getTileProvider()
-                              ->getTileWithoutCreating(parentID);
+    this->_originalFailed = true;
+    this->_pLoadingTile = parentTileId
+                              ? this->_pLoadingTile->getOverlay()
+                                    .getTileProvider()
+                                    ->getTileWithoutCreating(*parentTileId)
+                              : nullptr;
   }
 
   // If the loading tile is now ready, make it the ready tile.
@@ -85,28 +77,22 @@ RasterMappedTo3DTile::update(Tile& tile) {
 
   // Find the closest ready ancestor tile.
   if (this->_pLoadingTile) {
-    RasterOverlayTileProvider& tileProvider =
-        *this->_pLoadingTile->getOverlay().getTileProvider();
+    CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate =
+        this->_pLoadingTile;
+    while (pCandidate) {
+      std::optional<TileID> parentTileId =
+          TileIdUtilities::getParentTileID(pCandidate->getID());
+      if (!parentTileId) {
+        break;
+      }
 
-    CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate;
-    const CesiumGeometry::QuadtreeTileID* currentID =
-        std::get_if<CesiumGeometry::QuadtreeTileID>(
-            &this->_pLoadingTile->getID());
-    if (currentID) {
-      CesiumGeometry::QuadtreeTileID id(
-          currentID->level,
-          currentID->x,
-          currentID->y);
-      while (id.level > 0) {
-        --id.level;
-        id.x >>= 1;
-        id.y >>= 1;
+      pCandidate =
+          pCandidate->getOverlay().getTileProvider()->getTileWithoutCreating(
+              *parentTileId);
 
-        pCandidate = tileProvider.getTileWithoutCreating(id);
-        if (pCandidate &&
-            pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
-          break;
-        }
+      if (pCandidate &&
+          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
+        break;
       }
     }
 

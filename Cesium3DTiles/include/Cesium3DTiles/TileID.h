@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "CesiumGeometry/OctreeTileID.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -55,6 +56,11 @@ struct CESIUM3DTILES_API TileIdUtilities {
    * @return The string
    */
   static std::string createTileIdString(const TileID& tileId);
+
+  /**
+   * @brief Returns the parent {@link TileID} if one exists.
+   */
+  static std::optional<TileID> getParentTileID(const TileID& tileId);
 };
 
 } // namespace Cesium3DTiles
