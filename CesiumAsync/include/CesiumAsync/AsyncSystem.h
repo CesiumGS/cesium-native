@@ -60,12 +60,34 @@ public:
    */
   AsyncSystem(const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept;
 
+  /**
+   * @brief Creates a new Future by immediately invoking a function and giving
+   * it the opportunity to resolve or reject a {@link Promise}.
+   *
+   * The {@link Promise} passed to the callback `f` may be resolved or rejected
+   * asynchronously, even after the function has returned.
+   *
+   * If the callback `f` throws an exception, the `Future` will be rejected.
+   *
+   * @tparam T The type that the Future resolves to.
+   * @tparam Func The type of the callback function.
+   * @param f The callback function to invoke immediately to create the Future.
+   * @return A Future that will resolve when the callback function resolves the
+   * supplied Promise.
+   */
   template <typename T, typename Func> Future<T> createFuture(Func&& f) const {
     std::shared_ptr<async::event_task<T>> pEvent =
         std::make_shared<async::event_task<T>>();
 
     Promise<T> promise(pEvent);
-    f(promise);
+
+    try {
+      f(promise);
+    } catch (std::exception& e) {
+      promise.reject(std::move(e));
+    } catch (...) {
+      promise.reject(std::exception("Unknown error"));
+    }
 
     return Future<T>(this->_pSchedulers, pEvent->get_task());
   }
@@ -130,6 +152,15 @@ public:
                 std::forward<Func>(f))));
   }
 
+  /**
+   * @brief Runs a function in a thread pool, returning a promise that resolves
+   * when the function completes.
+   *
+   * @tparam Func The type of the function.
+   * @param threadPool The thread pool in which to run the function.
+   * @param f The function to run.
+   * @return A future that resolves after the supplied function completes.
+   */
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, void>
   runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
@@ -151,9 +182,9 @@ public:
   /**
    * @brief Creates a future that is already resolved.
    *
-   * @tparam T The type of the future
-   * @param value The value for the future
-   * @return The future
+   * @tparam T The type of the future.
+   * @param value The value for the future.
+   * @return The future.
    */
   template <typename T> Future<T> createResolvedFuture(T&& value) const {
     return Future<T>(
@@ -161,6 +192,11 @@ public:
         async::make_task<T>(std::forward<T>(value)));
   }
 
+  /**
+   * @brief Creates a future that is already resolved and resolves to no value.
+   *
+   * @return The future.
+   */
   Future<void> createResolvedFuture() const {
     return Future<void>(this->_pSchedulers, async::make_task());
   }

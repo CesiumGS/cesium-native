@@ -6,6 +6,13 @@
 
 namespace CesiumAsync {
 
+/**
+ * @brief A thread pool created by {@link AsyncSystem::createThreadPool}.
+ *
+ * This object has no public methods, but can be used with
+ * {@link AsyncSystem::runInThreadPool} and
+ * {@link Future::thenInThreadPool}.
+ */
 class CESIUMASYNC_API ThreadPool {
 private:
   ThreadPool(int32_t numberOfThreads);
