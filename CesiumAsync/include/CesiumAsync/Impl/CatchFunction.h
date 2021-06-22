@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumAsync/Impl/unwrapFuture.h"
+
 namespace CesiumAsync {
 namespace Impl {
 // Begin omitting doxgen warnings for Impl namespace

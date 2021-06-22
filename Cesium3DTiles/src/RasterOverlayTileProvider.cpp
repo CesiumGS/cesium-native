@@ -672,8 +672,9 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
 
   ++this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
-    int32_t maxLoads =
-        this->getOwner().getOptions().maximumSimultaneousTileLoads;
+    size_t maxLoads = size_t(std::max(
+        this->getOwner().getOptions().maximumSimultaneousTileLoads,
+        0));
     if (this->_tilesBeingLoaded.size() != maxLoads) {
       this->_tilesBeingLoaded.resize(maxLoads, nullptr);
       this->_loadingIDs.resize(maxLoads, 0);
@@ -697,7 +698,7 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
     if (it != this->_tilesBeingLoaded.end()) {
       *it = &tile;
       int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
-      loaderID = this->_loadingIDs[loaderIndex];
+      loaderID = this->_loadingIDs[size_t(loaderIndex)];
 
       CESIUM_TRACE_BEGIN_ID(
           ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))

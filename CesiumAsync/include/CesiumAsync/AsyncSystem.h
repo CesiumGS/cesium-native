@@ -86,7 +86,7 @@ public:
     } catch (std::exception& e) {
       promise.reject(std::move(e));
     } catch (...) {
-      promise.reject(std::exception("Unknown error"));
+      promise.reject(std::runtime_error("Unknown error"));
     }
 
     return Future<T>(this->_pSchedulers, pEvent->get_task());

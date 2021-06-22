@@ -247,7 +247,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
           })
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
         CESIUM_TRACE_END("requestAsset (cached)");
-        return pRequest;
+        return std::move(pRequest);
       });
 }
 

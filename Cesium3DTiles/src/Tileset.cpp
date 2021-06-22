@@ -414,7 +414,7 @@ int64_t Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
     if (it != this->_tilesBeingLoaded.end()) {
       *it = pTile;
       int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
-      loaderID = this->_loadingIDs[loaderIndex];
+      loaderID = this->_loadingIDs[size_t(loaderIndex)];
 
       CESIUM_TRACE_BEGIN_ID(
           TileIdUtilities::createTileIdString(pTile->getTileID()).c_str(),

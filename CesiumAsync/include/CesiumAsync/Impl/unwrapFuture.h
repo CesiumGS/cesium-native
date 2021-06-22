@@ -1,5 +1,8 @@
 #pragma once
 
+#include "CesiumAsync/Impl/ContinuationFutureType.h"
+#include "CesiumAsync/Impl/ContinuationReturnType.h"
+
 namespace CesiumAsync {
 namespace Impl {
 // Begin omitting doxgen warnings for Impl namespace
@@ -25,8 +28,8 @@ template <class Func, class T> auto unwrapFuture(Func&& f) {
   return std::conditional<
       std::is_same<
           typename ContinuationReturnType<Func, T>::type,
-          RemoveFuture<typename ContinuationFutureType<Func, T>::type>::type>::
-          value,
+          typename RemoveFuture<
+              typename ContinuationFutureType<Func, T>::type>::type>::value,
       IdentityUnwrapper<Func>,
       ParameterizedTaskUnwrapper<Func, T>>::type::unwrap(std::forward<Func>(f));
 }
@@ -35,7 +38,7 @@ template <class Func> auto unwrapFuture(Func&& f) {
   return std::conditional<
       std::is_same<
           typename ContinuationReturnType<Func, void>::type,
-          RemoveFuture<
+          typename RemoveFuture<
               typename ContinuationFutureType<Func, void>::type>::type>::value,
       IdentityUnwrapper<Func>,
       TaskUnwrapper<Func>>::type::unwrap(std::forward<Func>(f));
