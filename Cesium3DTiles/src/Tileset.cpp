@@ -529,7 +529,7 @@ Future<void> Tileset::_loadTilesetJson(
 
   return this->getExternals()
       .pAssetAccessor->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenImmediatelyInWorkerThread(
+      .thenInWorkerThread(
           [pLogger = this->_externals.pLogger,
            pContext = std::move(pContext),
            useWaterMask = this->getOptions().contentOptions.enableWaterMask](

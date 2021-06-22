@@ -65,7 +65,7 @@ void WorkerThreadScheduler::schedule(async::task_run_handle t) {
 }
 
 void ImmediatelyInWorkerThreadScheduler::schedule(async::task_run_handle t) {
-  // Are we already in the worker thread?
+  // Are we already in a worker thread?
   const std::vector<AsyncSystemSchedulers*>& inWorker =
       AsyncSystemSchedulers::schedulersInWorkerThread;
   if (std::find(inWorker.begin(), inWorker.end(), this->_pSchedulers) !=
@@ -73,7 +73,7 @@ void ImmediatelyInWorkerThreadScheduler::schedule(async::task_run_handle t) {
     // Yes, run this task directly.
     t.run();
   } else {
-    // No, schedule this thread in the worker thread.
+    // No, schedule this thread in a worker thread.
     this->_pSchedulers->workerThreadScheduler.schedule(std::move(t));
   }
 }

@@ -473,7 +473,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
-      .thenImmediatelyInWorkerThread(
+      .thenInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("load image");
@@ -630,7 +630,7 @@ void RasterOverlayTileProvider::doLoad(
   CESIUM_TRACE_ASYNC_ENLIST(loadID);
 
   this->loadTileImage(tile.getID())
-      .thenImmediatelyInWorkerThread(
+      .thenInWorkerThread(
           [tileId = tile.getID(),
            pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger =

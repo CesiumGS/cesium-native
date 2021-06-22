@@ -41,7 +41,12 @@ public:
    * If the function itself returns a `Future`, the function will not be
    * considered complete until that returned `Future` also resolves.
    *
-   * Even if the previous Future resolves
+   * If this Future is resolved from a designated worker thread, the
+   * continuation function will be invoked immediately rather than in a
+   * separate task. Similarly, if the Future is already resolved when
+   * `thenInWorkerThread` is called from a designated worker thread, the
+   * continuation function will be invoked immediately before this
+   * method returns.
    *
    * @tparam Func The type of the function.
    * @param f The function.
@@ -50,7 +55,7 @@ public:
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->workerThreadScheduler,
+        this->_pSchedulers->immediatelyInWorkerThreadScheduler,
         "waiting for worker thread",
         std::forward<Func>(f));
   }
@@ -59,9 +64,12 @@ public:
    * @brief Registers a continuation function to be invoked in the main thread
    * when this Future resolves, and invalidates this Future.
    *
-   * The supplied function will not be invoked immediately, even if this method
-   * is called from the main thread. Instead, it will be queued and invoked the
-   * next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
+   * If this Future is resolved from the main thread, the
+   * continuation function will be invoked immediately rather than queued for
+   * later execution in the main thread. Similarly, if the Future is already
+   * resolved when `thenInMainThread` is called from the main thread, the
+   * continuation function will be invoked immediately before this
+   * method returns.
    *
    * If the function itself returns a `Future`, the function will not be
    * considered complete until that returned `Future` also resolves.
@@ -72,15 +80,6 @@ public:
    */
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) && {
-    return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->mainThreadScheduler,
-        "waiting for main thread",
-        std::forward<Func>(f));
-  }
-
-  template <typename Func>
-  Impl::ContinuationFutureType_t<Func, T>
-  thenImmediatelyInMainThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
         this->_pSchedulers->immediatelyInMainThreadScheduler,
         "waiting for main thread",
@@ -113,27 +112,23 @@ public:
   }
 
   /**
-   * @brief Registers a continuation function to be invoked in a worker thread
+   * @brief Registers a continuation function to be invoked in a thread pool
    * when this Future resolves, and invalidates this Future.
    *
    * If the function itself returns a `Future`, the function will not be
    * considered complete until that returned `Future` also resolves.
    *
-   * Unlike {@link thenInWorkerThread},
+   * If this Future is resolved from a thread pool thread, the
+   * continuation function will be invoked immediately rather than in a
+   * separate task. Similarly, if the Future is already resolved when
+   * `thenInThreadPool` is called from a designated thread pool thread, the
+   * continuation function will be invoked immediately before this
+   * method returns.
    *
    * @tparam Func The type of the function.
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */
-  template <typename Func>
-  Impl::ContinuationFutureType_t<Func, T>
-  thenImmediatelyInWorkerThread(Func&& f) && {
-    return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->immediatelyInWorkerThreadScheduler,
-        "waiting for worker thread",
-        std::move(f));
-  }
-
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, T>
   thenInThreadPool(const ThreadPool& threadPool, Func&& f) && {
@@ -147,9 +142,12 @@ public:
    * @brief Registers a continuation function to be invoked in the main thread
    * when this Future rejects, and invalidates this Future.
    *
-   * The supplied function will not be invoked immediately, even if this method
-   * is called from the main thread. Instead, it will be queued and invoked the
-   * next time {@link AsyncSystem::dispatchMainThreadTasks} is called.
+   * If this Future is rejected from the main thread, the
+   * continuation function will be invoked immediately rather than queued for
+   * later execution in the main thread. Similarly, if the Future is already
+   * rejected when `catchInMainThread` is called from the main thread, the
+   * continuation function will be invoked immediately before this
+   * method returns.
    *
    * If the function itself returns a `Future`, the function will not be
    * considered complete until that returned `Future` also resolves.
@@ -163,21 +161,8 @@ public:
    */
   template <typename Func> Future<T> catchInMainThread(Func&& f) && {
     return std::move(*this).catchWithScheduler(
-        this->_pSchedulers->mainThreadScheduler,
+        this->_pSchedulers->immediatelyInMainThreadScheduler,
         std::forward<Func>(f));
-  }
-
-  template <typename Func, typename Scheduler>
-  Impl::ContinuationFutureType_t<Func, std::exception>
-  catchWithScheduler(Scheduler& scheduler, Func&& f) && {
-    return Impl::ContinuationFutureType_t<Func, std::exception>(
-        this->_pSchedulers,
-        this->_task.then(
-            async::inline_scheduler(),
-            Impl::CatchFunction<Func, T, Scheduler>{
-                scheduler,
-                std::forward<Func>(f),
-                this->_pSchedulers->pTaskProcessor}));
   }
 
   /**
@@ -239,6 +224,19 @@ private:
             Impl::WithTracing<Func, T>::wrap(
                 tracingName,
                 std::forward<Func>(f))));
+  }
+
+  template <typename Func, typename Scheduler>
+  Impl::ContinuationFutureType_t<Func, std::exception>
+  catchWithScheduler(Scheduler& scheduler, Func&& f) && {
+    return Impl::ContinuationFutureType_t<Func, std::exception>(
+        this->_pSchedulers,
+        this->_task.then(
+            async::inline_scheduler(),
+            Impl::CatchFunction<Func, T, Scheduler>{
+                scheduler,
+                std::forward<Func>(f),
+                this->_pSchedulers->pTaskProcessor}));
   }
 
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;

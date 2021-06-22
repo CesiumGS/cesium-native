@@ -136,7 +136,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                             : std::nullopt;
 
   return pAssetAccessor->requestAsset(asyncSystem, xmlUrl, this->_headers)
-      .thenImmediatelyInWorkerThread(
+      .thenInWorkerThread(
           [pOwner,
            asyncSystem,
            pAssetAccessor,

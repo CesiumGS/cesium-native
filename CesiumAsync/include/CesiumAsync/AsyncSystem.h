@@ -93,11 +93,15 @@ public:
   }
 
   /**
-   * @brief Runs a function in a worker thread, returning a promise that
+   * @brief Runs a function in a worker thread, returning a Future that
    * resolves when the function completes.
    *
    * If the function itself returns a `Future`, the function will not be
    * considered complete until that returned `Future` also resolves.
+   *
+   * If this method is called from a designated worker thread, the
+   * callback will be invoked immediately and complete before this function
+   * returns.
    *
    * @tparam Func The type of the function.
    * @param f The function.
@@ -116,22 +120,21 @@ public:
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
-            this->_pSchedulers->workerThreadScheduler,
+            this->_pSchedulers->immediatelyInWorkerThreadScheduler,
             Impl::WithTracing<Func, void>::wrap(
                 tracingName,
                 std::forward<Func>(f))));
   }
 
   /**
-   * @brief Runs a function in the main thread, returning a promise that
+   * @brief Runs a function in the main thread, returning a Future that
    * resolves when the function completes.
-   *
-   * The supplied function will not be called immediately, even if this method
-   * is invoked from the main thread. Instead, it will be queued and called the
-   * next time {@link dispatchMainThreadTasks} is called.
    *
    * If the function itself returns a `Future`, the function will not be
    * considered complete until that returned `Future` also resolves.
+   *
+   * If this method is called from the main thread, the callback will be invoked
+   * immediately and complete before this function returns.
    *
    * @tparam Func The type of the function.
    * @param f The function.
@@ -157,7 +160,7 @@ public:
   }
 
   /**
-   * @brief Runs a function in a thread pool, returning a promise that resolves
+   * @brief Runs a function in a thread pool, returning a Future that resolves
    * when the function completes.
    *
    * @tparam Func The type of the function.

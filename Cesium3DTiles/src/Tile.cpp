@@ -249,7 +249,7 @@ void Tile::loadContent() {
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.future.value())
-      .thenImmediatelyInWorkerThread(
+      .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
            gltfUpAxis,
