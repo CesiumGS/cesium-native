@@ -112,8 +112,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
     this->_requestSinceLastPrune = 0;
 
 #if TRACING_ENABLED
-    static const int64_t pruneTraceID =
-        CesiumUtility::Profiler::instance().allocateID();
+    static const int64_t pruneTraceID = CESIUM_TRACE_ALLOCATE_ASYNC_ID();
     CESIUM_TRACE_ASYNC_ENLIST(pruneTraceID);
 #endif
     asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {

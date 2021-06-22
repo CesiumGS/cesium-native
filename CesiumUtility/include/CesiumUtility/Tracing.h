@@ -26,13 +26,12 @@
  * @param filename The path and named of the file in which to record traces.
  */
 #define CESIUM_TRACE_INIT(filename)                                            \
-  CesiumUtility::Profiler::instance().startTracing(filename);
+  CesiumUtility::Tracer::instance().startTracing(filename)
 
 /**
  * @brief Shuts down tracing and closes the JSON tracing file.
  */
-#define CESIUM_TRACE_SHUTDOWN()                                                \
-  CesiumUtility::Profiler::instance().endTracing();
+#define CESIUM_TRACE_SHUTDOWN() CesiumUtility::Tracer::instance().endTracing()
 
 /**
  * @brief Measures and records the time spent in the current scope.
@@ -45,7 +44,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE(name)                                                     \
-  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name);
+  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name)
 
 /**
  * @brief Begins measuring an operation which may span scopes and even threads.
@@ -78,11 +77,11 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN(name)                                               \
-  CesiumUtility::Profiler::instance().writeAsyncTrace(                         \
+  CesiumUtility::Tracer::instance().writeAsyncTrace(                           \
       "cesium",                                                                \
       name,                                                                    \
       'b',                                                                     \
-      CesiumUtility::Profiler::instance().getEnlistedID());
+      CesiumUtility::Tracer::instance().getEnlistedID())
 
 /**
  * @brief Ends measuring an operation which may span scopes and even threads.
@@ -94,11 +93,11 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END(name)                                                 \
-  CesiumUtility::Profiler::instance().writeAsyncTrace(                         \
+  CesiumUtility::Tracer::instance().writeAsyncTrace(                           \
       "cesium",                                                                \
       name,                                                                    \
       'e',                                                                     \
-      CesiumUtility::Profiler::instance().getEnlistedID());
+      CesiumUtility::Tracer::instance().getEnlistedID())
 
 /**
  * @brief Allocates an ID for a new asynchronous process.
@@ -112,48 +111,72 @@
  * {@link CESIUM_TRACE_BEGIN}, and {@link CESIUM_TRACE_END} will automatically
  * create events that are part of this async process.
  */
-#define CESIUM_ALLOCATE_ASYNC_ID()                                             \
-  CesiumUtility::Profiler::instance().allocateID();
+#define CESIUM_TRACE_ALLOCATE_ASYNC_ID()                                       \
+  CesiumUtility::Tracer::instance().allocateID()
+
+/**
+ * @brief Gets the ID of the async process that the calling thread is currently
+ * enlisted in.
+ *
+ * A new async process ID can be allocated with
+ * {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID}, and the current thread can be enlisted
+ * into the process with {@link CESIUM_TRACE_ASYNC_ENLIST}.
+ *
+ * @return The ID of the async process, or -1 if the current thread is not
+ * enlisted in an async process.
+ */
+#define CESIUM_TRACE_CURRENT_ASYNC_ID()                                        \
+  CesiumUtility::Tracer::instance().getEnlistedID()
 
 /**
  * @brief Enlist the current thread into an async process for the duration of
  * the current scope.
  *
- * Async IDs are allocated with {@link CESIUM_ALLOCATE_ASYNC_ID}. Once a thread
- * is enlisted into an async ID, all tracing operations that don't explicitly
- * take an ID are automatically associated with this ID for the duration of the
- * scope.
+ * Async IDs are allocated with {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID}. Once a
+ * thread is enlisted into an async ID, all tracing operations that don't
+ * explicitly take an ID are automatically associated with this ID for the
+ * duration of the scope.
  */
 #define CESIUM_TRACE_ASYNC_ENLIST(id)                                          \
-  CesiumUtility::ScopedEnlist TRACE_NAME_AUX2(tracerEnlist, __LINE__)(id);
+  CesiumUtility::ScopedEnlist TRACE_NAME_AUX2(tracerEnlist, __LINE__)(id)
+
+/**
+ * @brief Starts a new async process by allocating an ID for it and enlisting
+ * the current thread into the process for the current scope.
+ *
+ * This is equivalent to calling {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID} and
+ * then passing the return value to {@link CESIUM_TRACE_ASYNC_ENLIST}.
+ */
+#define CESIUM_TRACE_NEW_ASYNC()                                               \
+  CESIUM_TRACE_ASYNC_ENLIST(CESIUM_TRACE_ALLOCATE_ASYNC_ID())
 
 /**
  * @brief Begins measuring an operation for a particular async ID.
  *
  * This operation is identical to {@link CESIUM_TRACE_BEGIN} except that the
  * operation it measures is explicitly tied to a particular async ID allocated
- * with {@link CESIUM_ALLOCATE_ASYNC_ID} rather than using the ambient async
+ * with {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID} rather than using the ambient async
  * ID, or the current thread ID if the thread is not enlisted into into an
  * async process.
  *
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN_ID(name, id)                                        \
-  CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'b', id);
+  CesiumUtility::Tracer::instance().writeAsyncTrace("cesium", name, 'b', id)
 
 /**
  * @brief Ends measuring an operation for a particular async ID.
  *
  * This operation is identical to {@link CESIUM_TRACE_END} except that the
  * operation it measures is explicitly tied to a particular async ID allocated
- * with {@link CESIUM_ALLOCATE_ASYNC_ID} rather than using the ambient async
+ * with {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID} rather than using the ambient async
  * ID, or the current thread ID if the thread is not enlisted into into an
  * async process.
  *
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END_ID(name, id)                                          \
-  CesiumUtility::Profiler::instance().writeAsyncTrace("cesium", name, 'e', id);
+  CesiumUtility::Tracer::instance().writeAsyncTrace("cesium", name, 'e', id)
 
 #else
 #define CESIUM_TRACE_INIT(filename)
@@ -161,7 +184,7 @@
 #define CESIUM_TRACE(name)
 #define CESIUM_TRACE_BEGIN(name)
 #define CESIUM_TRACE_END(name)
-#define CESIUM_ALLOCATE_ASYNC_ID()
+#define CESIUM_TRACE_ALLOCATE_ASYNC_ID() -1
 #define CESIUM_TRACE_ASYNC_ENLIST(id)
 #define CESIUM_TRACE_BEGIN_ID(name, id)
 #define CESIUM_TRACE_END_ID(name, id)
@@ -175,11 +198,11 @@ struct Trace {
   std::thread::id threadID;
 };
 
-class Profiler {
+class Tracer {
 public:
-  static Profiler& instance();
+  static Tracer& instance();
 
-  ~Profiler();
+  ~Tracer();
 
   void startTracing(const std::string& filePath = "trace.json");
 
@@ -197,7 +220,7 @@ public:
   void endTracing();
 
 private:
-  Profiler();
+  Tracer();
 
   std::ofstream _output;
   uint32_t _numTraces;

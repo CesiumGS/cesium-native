@@ -219,7 +219,7 @@ private:
 #if TRACING_ENABLED
     // When tracing is enabled, we measure the time between scheduling and
     // dispatching of the work.
-    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
     auto task = this->_task.then(
         async::inline_scheduler(),
         [tracingID, tracingName](T&& value) {

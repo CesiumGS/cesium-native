@@ -218,7 +218,7 @@ void postprocess(
   }
 
   if (options.decodeEmbeddedImages) {
-    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages")
+    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
     for (Image& image : model.images) {
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);

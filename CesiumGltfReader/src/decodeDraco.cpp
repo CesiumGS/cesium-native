@@ -25,7 +25,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     ModelReaderResult& readModel,
     MeshPrimitive& /* primitive */,
     KHR_draco_mesh_compression& draco) {
-  CESIUM_TRACE("CesiumGltf::decodeBufferViewToDracoMesh")
+  CESIUM_TRACE("CesiumGltf::decodeBufferViewToDracoMesh");
   Model& model = readModel.model.value();
 
   BufferView* pBufferView =
@@ -94,7 +94,7 @@ void copyDecodedIndices(
     ModelReaderResult& readModel,
     MeshPrimitive& primitive,
     draco::Mesh* pMesh) {
-  CESIUM_TRACE("CesiumGltf::copyDecodedIndices")
+  CESIUM_TRACE("CesiumGltf::copyDecodedIndices");
   Model& model = readModel.model.value();
 
   if (primitive.indices < 0) {
@@ -202,7 +202,7 @@ void copyDecodedAttribute(
     Accessor* pAccessor,
     const draco::Mesh* pMesh,
     const draco::PointAttribute* pAttribute) {
-  CESIUM_TRACE("CesiumGltf::copyDecodedAttribute")
+  CESIUM_TRACE("CesiumGltf::copyDecodedAttribute");
   Model& model = readModel.model.value();
 
   if (pAccessor->count > pMesh->num_points()) {
@@ -268,7 +268,7 @@ void decodePrimitive(
     ModelReaderResult& readModel,
     MeshPrimitive& primitive,
     KHR_draco_mesh_compression& draco) {
-  CESIUM_TRACE("CesiumGltf::decodePrimitive")
+  CESIUM_TRACE("CesiumGltf::decodePrimitive");
   Model& model = readModel.model.value();
 
   std::unique_ptr<draco::Mesh> pMesh =
@@ -322,7 +322,7 @@ void decodePrimitive(
 namespace CesiumGltf {
 
 void decodeDraco(CesiumGltf::ModelReaderResult& readModel) {
-  CESIUM_TRACE("CesiumGltf::decodeDraco")
+  CESIUM_TRACE("CesiumGltf::decodeDraco");
   if (!readModel.model) {
     return;
   }

@@ -697,7 +697,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     const gsl::span<const std::byte>& data,
     bool enableWaterMask) {
 
-  CESIUM_TRACE("Cesium3DTiles::QuantizedMeshContent::load")
+  CESIUM_TRACE("Cesium3DTiles::QuantizedMeshContent::load");
 
   // TODO: use context plus tileID to compute the tile's rectangle, rather than
   // inferring it from the parent tile.

@@ -93,7 +93,7 @@ static bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
 Model upsampleGltfForRasterOverlays(
     const Model& parentModel,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
-  CESIUM_TRACE("upsampleGltfForRasterOverlays")
+  CESIUM_TRACE("upsampleGltfForRasterOverlays");
   Model result;
 
   // Copy the entire parent model except for the buffers, bufferViews, and
@@ -347,7 +347,7 @@ static void upsamplePrimitiveForRasterOverlays(
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID) {
-  CESIUM_TRACE("upsamplePrimitiveForRasterOverlays")
+  CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
 
   // Add up the per-vertex size of all attributes and create buffers,
   // bufferViews, and accessors
@@ -966,7 +966,7 @@ static void addSkirts(
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex) {
-  CESIUM_TRACE("addSkirts")
+  CESIUM_TRACE("addSkirts");
 
   glm::dvec3 center = currentSkirt.meshCenter;
   double shortestSkirtHeight =

@@ -62,7 +62,7 @@ TileContentLoadInput derive(
 
 std::unique_ptr<TileContentLoadResult>
 CompositeContent::load(const TileContentLoadInput& input) {
-  CESIUM_TRACE("Cesium3DTiles::CompositeContent::load")
+  CESIUM_TRACE("Cesium3DTiles::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const gsl::span<const std::byte>& data = input.data;
   const std::string& url = input.url;

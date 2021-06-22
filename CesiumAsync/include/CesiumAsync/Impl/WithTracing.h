@@ -11,7 +11,7 @@ namespace Impl {
 template <typename Func, typename T> struct WithTracing {
   static auto wrap(const char* tracingName, Func&& f) {
 #if TRACING_ENABLED
-    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
 
     return [tracingID,
             tracingName,
@@ -32,7 +32,7 @@ template <typename Func, typename T> struct WithTracing {
 template <typename Func> struct WithTracing<Func, void> {
   static auto wrap(const char* tracingName, Func&& f) {
 #if TRACING_ENABLED
-    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
 
     return [tracingID,
             tracingName,

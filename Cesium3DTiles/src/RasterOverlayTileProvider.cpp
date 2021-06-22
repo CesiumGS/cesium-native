@@ -679,7 +679,7 @@ int64_t RasterOverlayTileProvider::beginTileLoad(
       this->_loadingIDs.resize(maxLoads, 0);
 
       for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
-        int64_t id = Profiler::instance().allocateID();
+        int64_t id = CESIUM_TRACE_ALLOCATE_ASYNC_ID();
         this->_loadingIDs[i] = id;
         CESIUM_TRACE_BEGIN_ID(
             ("Overlay Loading Slot " + std::to_string(id)).c_str(),

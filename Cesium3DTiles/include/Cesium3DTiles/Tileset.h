@@ -173,7 +173,7 @@ public:
    * @brief Notifies the tileset that the given tile has finished loading and is
    * ready to render. This method may be called from any thread.
    */
-  void notifyTileDoneLoading(Tile* pTile, int64_t loaderID) noexcept;
+  void notifyTileDoneLoading(Tile* pTile) noexcept;
 
   /**
    * @brief Notifies the tileset that the given tile is about to be unloaded.

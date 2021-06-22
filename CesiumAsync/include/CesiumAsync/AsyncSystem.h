@@ -85,7 +85,7 @@ public:
   Impl::ContinuationFutureType_t<Func, void> runInWorkerThread(Func&& f) const {
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for worker thread";
-    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
     CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
 #endif
 
@@ -117,7 +117,7 @@ public:
   Impl::ContinuationFutureType_t<Func, void> runInMainThread(Func&& f) const {
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for main thread";
-    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
     CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
 #endif
 
@@ -135,7 +135,7 @@ public:
   runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for thread pool";
-    int64_t tracingID = CesiumUtility::Profiler::instance().getEnlistedID();
+    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
     CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
 #endif
 

@@ -1,23 +1,23 @@
 #include "CesiumUtility/Tracing.h"
 
 namespace CesiumUtility {
-Profiler& Profiler::instance() {
-  static Profiler instance;
+Tracer& Tracer::instance() {
+  static Tracer instance;
   return instance;
 }
 
-/*static*/ thread_local int64_t Profiler::_threadEnlistedID = -1;
+/*static*/ thread_local int64_t Tracer::_threadEnlistedID = -1;
 
-Profiler::Profiler() : _output{}, _numTraces{0}, _lock{}, _lastAllocatedID(0) {}
+Tracer::Tracer() : _output{}, _numTraces{0}, _lock{}, _lastAllocatedID(0) {}
 
-Profiler::~Profiler() { endTracing(); }
+Tracer::~Tracer() { endTracing(); }
 
-void Profiler::startTracing(const std::string& filePath) {
+void Tracer::startTracing(const std::string& filePath) {
   this->_output.open(filePath);
   this->_output << "{\"otherData\": {},\"traceEvents\":[";
 }
 
-void Profiler::writeTrace(const Trace& trace) {
+void Tracer::writeTrace(const Trace& trace) {
   std::lock_guard<std::mutex> lock(_lock);
   if (!this->_output) {
     return;
@@ -39,7 +39,7 @@ void Profiler::writeTrace(const Trace& trace) {
   this->_output << "}";
 }
 
-void Profiler::writeAsyncTrace(
+void Tracer::writeAsyncTrace(
     const char* category,
     const char* name,
     char type,
@@ -75,13 +75,13 @@ void Profiler::writeAsyncTrace(
   this->_output << "}";
 }
 
-void Profiler::enlist(int64_t id) { Profiler::_threadEnlistedID = id; }
+void Tracer::enlist(int64_t id) { Tracer::_threadEnlistedID = id; }
 
-int64_t Profiler::getEnlistedID() const { return Profiler::_threadEnlistedID; }
+int64_t Tracer::getEnlistedID() const { return Tracer::_threadEnlistedID; }
 
-int64_t Profiler::allocateID() { return ++this->_lastAllocatedID; }
+int64_t Tracer::allocateID() { return ++this->_lastAllocatedID; }
 
-void Profiler::endTracing() {
+void Tracer::endTracing() {
   this->_output << "]}";
   this->_output.close();
 }
@@ -91,7 +91,7 @@ ScopedTrace::ScopedTrace(const std::string& message)
       _startTime{std::chrono::steady_clock::now()},
       _threadId{std::this_thread::get_id()},
       _reset{false} {
-  Profiler& profiler = Profiler::instance();
+  Tracer& profiler = Tracer::instance();
   if (profiler.getEnlistedID() >= 0) {
     profiler.writeAsyncTrace(
         "cesium",
@@ -103,7 +103,7 @@ ScopedTrace::ScopedTrace(const std::string& message)
 
 void ScopedTrace::reset() {
   this->_reset = true;
-  Profiler& profiler = Profiler::instance();
+  Tracer& profiler = Tracer::instance();
   if (profiler.getEnlistedID() >= 0) {
     profiler.writeAsyncTrace(
         "cesium",
@@ -131,12 +131,12 @@ ScopedTrace::~ScopedTrace() {
 }
 
 ScopedEnlist::ScopedEnlist(int64_t id)
-    : _previousID(CesiumUtility::Profiler::instance().getEnlistedID()) {
-  CesiumUtility::Profiler::instance().enlist(id);
+    : _previousID(CesiumUtility::Tracer::instance().getEnlistedID()) {
+  CesiumUtility::Tracer::instance().enlist(id);
 }
 
 ScopedEnlist::~ScopedEnlist() {
-  CesiumUtility::Profiler::instance().enlist(this->_previousID);
+  CesiumUtility::Tracer::instance().enlist(this->_previousID);
 }
 
 } // namespace CesiumUtility

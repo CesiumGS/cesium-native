@@ -69,7 +69,7 @@ void RasterOverlay::createTileProvider(
     return;
   }
 
-  CESIUM_TRACE_ASYNC_ENLIST(CesiumUtility::Profiler::instance().allocateID());
+  CESIUM_TRACE_NEW_ASYNC();
   CESIUM_TRACE_BEGIN("createTileProvider");
 
   this->_pPlaceholder = std::make_unique<PlaceholderTileProvider>(

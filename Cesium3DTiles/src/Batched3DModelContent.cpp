@@ -85,7 +85,7 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
                              "include a B3DM header.");
   }
 
-  CESIUM_TRACE("Cesium3DTiles::Batched3DModelContent::load")
+  CESIUM_TRACE("Cesium3DTiles::Batched3DModelContent::load");
   const B3dmHeader* pHeader = reinterpret_cast<const B3dmHeader*>(data.data());
 
   B3dmHeader header = *pHeader;

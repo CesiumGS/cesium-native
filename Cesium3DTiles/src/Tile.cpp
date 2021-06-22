@@ -333,17 +333,13 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(
-            this,
-            Profiler::instance().getEnlistedID());
+        this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(
-            this,
-            Profiler::instance().getEnlistedID());
+        this->getTileset()->notifyTileDoneLoading(this);
         this->setState(LoadState::Failed);
 
         SPDLOG_LOGGER_ERROR(
@@ -857,17 +853,13 @@ void Tile::upsampleParent(
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-        this->getTileset()->notifyTileDoneLoading(
-            this,
-            Profiler::instance().getEnlistedID());
+        this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
       .catchInMainThread([this](const std::exception& /*e*/) {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
-        this->getTileset()->notifyTileDoneLoading(
-            this,
-            Profiler::instance().getEnlistedID());
+        this->getTileset()->notifyTileDoneLoading(this);
         this->setState(LoadState::Failed);
       });
 }
