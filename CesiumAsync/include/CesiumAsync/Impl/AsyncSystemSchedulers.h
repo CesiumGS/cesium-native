@@ -63,9 +63,9 @@ public:
   void startInWorkerThread();
   void endInWorkerThread();
 
-  // If an AsyncSystemSchedulers instance is found in these thread-local vectors,
-  // then the current thread is currently inside the "main thread" or a "worker
-  // thread" for that scheduler.
+  // If an AsyncSystemSchedulers instance is found in these thread-local
+  // vectors, then the current thread is currently inside the "main thread" or a
+  // "worker thread" for that scheduler.
   static thread_local std::vector<AsyncSystemSchedulers*>
       schedulersInMainThread;
   static thread_local std::vector<AsyncSystemSchedulers*>
