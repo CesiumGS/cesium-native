@@ -6,6 +6,7 @@
 
 * Added a performance tracing framework via `CESIUM_TRACE_*` macros.
 * Added `Future<T>::thenImmediately`.
+* Added `AsyncSystem::createThreadPool` and `Future<T>::thenInThreadPool`.
 * `Future<T>::thenInWorkerThread` and `Future<T>::thenInMainThread` now arrange for their continuations to be executed immediately when the Future is resolved, if the Future is resolved in the correct thread.
 * Moved all request cache database access to a dedicated thread, in order to free up worker threads for parallelizable work.
 
