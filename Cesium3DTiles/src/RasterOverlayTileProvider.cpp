@@ -626,7 +626,7 @@ void RasterOverlayTileProvider::doLoad(
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
-  int64_t loadID = this->beginTileLoad(tile, isThrottledLoad);
+  [[maybe_unused]] int64_t loadID = this->beginTileLoad(tile, isThrottledLoad);
   CESIUM_TRACE_ASYNC_ENLIST(loadID);
 
   this->loadTileImage(tile.getID())

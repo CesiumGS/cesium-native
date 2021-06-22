@@ -1,5 +1,14 @@
 # Change Log
 
+### v0.5.0 - ??
+
+##### Additions :tada:
+
+* Added a performance tracing framework via `CESIUM_TRACE_*` macros.
+* Added `Future<T>::thenImmediately`.
+* `Future<T>::thenInWorkerThread` and `Future<T>::thenInMainThread` now arrange for their continuations to be executed immediately when the Future is resolved, if the Future is resolved in the correct thread.
+* Moved all request cache database access to a dedicated thread, in order to free up worker threads for parallelizable work.
+
 ### v0.4.0 - 2021-06-01
 
 ##### Additions :tada:

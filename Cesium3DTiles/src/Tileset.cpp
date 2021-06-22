@@ -133,7 +133,7 @@ Tileset::~Tileset() {
   }
 
   for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
-    int64_t id = this->_loadingIDs[i];
+    [[maybe_unused]] int64_t id = this->_loadingIDs[i];
     CESIUM_TRACE_END_ID(
         ("Tileset Loading Slot " + std::to_string(id)).c_str(),
         id);

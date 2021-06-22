@@ -808,7 +808,7 @@ void Tile::upsampleParent(
   CesiumGltf::Model& parentModel = pParentContent->model.value();
 
   Tileset* pTileset = this->getTileset();
-  int64_t loaderID = pTileset->notifyTileStartLoading(this);
+  [[maybe_unused]] int64_t loaderID = pTileset->notifyTileStartLoading(this);
 
   CESIUM_TRACE_ASYNC_ENLIST(loaderID);
 

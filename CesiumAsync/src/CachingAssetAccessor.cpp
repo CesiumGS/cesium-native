@@ -111,7 +111,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
     // beyond _requestsPerCachePrune before this next line. That's ok.
     this->_requestSinceLastPrune = 0;
 
-#if TRACING_ENABLED
+#if CESIUM_TRACING_ENABLED
     static const int64_t pruneTraceID = CESIUM_TRACE_ALLOCATE_ASYNC_ID();
     CESIUM_TRACE_ASYNC_ENLIST(pruneTraceID);
 #endif

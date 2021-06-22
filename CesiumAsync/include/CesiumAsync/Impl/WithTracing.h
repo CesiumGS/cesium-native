@@ -9,8 +9,8 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 template <typename Func, typename T> struct WithTracing {
-  static auto wrap(const char* tracingName, Func&& f) {
-#if TRACING_ENABLED
+  static auto wrap([[maybe_unused]] const char* tracingName, Func&& f) {
+#if CESIUM_TRACING_ENABLED
     int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
 
     return [tracingID,
@@ -30,8 +30,8 @@ template <typename Func, typename T> struct WithTracing {
 };
 
 template <typename Func> struct WithTracing<Func, void> {
-  static auto wrap(const char* tracingName, Func&& f) {
-#if TRACING_ENABLED
+  static auto wrap([[maybe_unused]] const char* tracingName, Func&& f) {
+#if CESIUM_TRACING_ENABLED
     int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
 
     return [tracingID,
@@ -44,7 +44,7 @@ template <typename Func> struct WithTracing<Func, void> {
       return f();
     };
 #else
-    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
+    return Impl::unwrapFuture<Func>(std::forward<Func>(f));
 #endif
   }
 };

@@ -1,5 +1,7 @@
 #include "CesiumUtility/Tracing.h"
 
+#if CESIUM_TRACING_ENABLED
+
 namespace CesiumUtility {
 Tracer& Tracer::instance() {
   static Tracer instance;
@@ -150,3 +152,5 @@ ScopedEnlist::~ScopedEnlist() {
 }
 
 } // namespace CesiumUtility
+
+#endif // CESIUM_TRACING_ENABLED

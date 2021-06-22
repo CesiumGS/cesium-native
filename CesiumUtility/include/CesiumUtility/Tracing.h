@@ -9,15 +9,28 @@
 
 // If the build system doesn't enable the tracing support
 // consider it disabled by default.
-#ifndef TRACING_ENABLED
-#define TRACING_ENABLED 0
+#ifndef CESIUM_TRACING_ENABLED
+#define CESIUM_TRACING_ENABLED 0
 #endif
+
+#if !CESIUM_TRACING_ENABLED
+
+#define CESIUM_TRACE_INIT(filename)
+#define CESIUM_TRACE_SHUTDOWN()
+#define CESIUM_TRACE(name)
+#define CESIUM_TRACE_BEGIN(name)
+#define CESIUM_TRACE_END(name)
+#define CESIUM_TRACE_ALLOCATE_ASYNC_ID() -1
+#define CESIUM_TRACE_ASYNC_ENLIST(id)
+#define CESIUM_TRACE_NEW_ASYNC()
+#define CESIUM_TRACE_BEGIN_ID(name, id)
+#define CESIUM_TRACE_END_ID(name, id)
+
+#else
 
 // helper macros to avoid shadowing variables
 #define TRACE_NAME_AUX1(A, B) A##B
 #define TRACE_NAME_AUX2(A, B) TRACE_NAME_AUX1(A, B)
-
-#if TRACING_ENABLED
 
 /**
  * @brief Initializes the tracing framework and begins recording to a given JSON
@@ -178,19 +191,6 @@
 #define CESIUM_TRACE_END_ID(name, id)                                          \
   CesiumUtility::Tracer::instance().writeAsyncTrace("cesium", name, 'e', id)
 
-#else
-#define CESIUM_TRACE_INIT(filename)
-#define CESIUM_TRACE_SHUTDOWN()
-#define CESIUM_TRACE(name)
-#define CESIUM_TRACE_BEGIN(name)
-#define CESIUM_TRACE_END(name)
-#define CESIUM_TRACE_ALLOCATE_ASYNC_ID() -1
-#define CESIUM_TRACE_ASYNC_ENLIST(id)
-#define CESIUM_TRACE_NEW_ASYNC()
-#define CESIUM_TRACE_BEGIN_ID(name, id)
-#define CESIUM_TRACE_END_ID(name, id)
-#endif
-
 namespace CesiumUtility {
 struct Trace {
   std::string name;
@@ -256,3 +256,5 @@ private:
 };
 
 } // namespace CesiumUtility
+
+#endif // CESIUM_TRACING_ENABLED

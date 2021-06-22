@@ -201,7 +201,7 @@ private:
     // function parameter, but that triggers a bug in VS2017. It was previously
     // a bug in VS2019, too, but has been fixed there:
     // https://developercommunity.visualstudio.com/t/internal-compiler-error-when-compiling-a-template-1/534210
-#if TRACING_ENABLED
+#if CESIUM_TRACING_ENABLED
     // When tracing is enabled, we measure the time between scheduling and
     // dispatching of the work.
     int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
