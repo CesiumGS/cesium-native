@@ -87,7 +87,6 @@ static std::unique_ptr<IAssetRequest>
 updateCacheItem(CacheItem&& cacheItem, const IAssetRequest& request);
 
 CachingAssetAccessor::CachingAssetAccessor(
-    const AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<ICacheDatabase>& pCacheDatabase,
@@ -97,7 +96,7 @@ CachingAssetAccessor::CachingAssetAccessor(
       _pLogger(pLogger),
       _pAssetAccessor(pAssetAccessor),
       _pCacheDatabase(pCacheDatabase),
-      _cacheThreadPool(asyncSystem.createThreadPool(1)) {}
+      _cacheThreadPool(1) {}
 
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 

@@ -3,6 +3,7 @@
 #include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
 #include "CesiumAsync/Impl/CatchFunction.h"
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
+#include "CesiumAsync/Impl/FutureWaitResult.h"
 #include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Tracing.h"
 #include <variant>
@@ -176,9 +177,9 @@ public:
    * @return The value if the future resolves successfully, or the exception if
    * it rejects.
    */
-  std::variant<T, std::exception> wait() {
+  Impl::FutureWaitResult_t<T> wait() {
     try {
-      return this->_task.get();
+      return Impl::FutureWaitResult<T>::getFromTask(this->_task);
     } catch (std::exception& e) {
       return e;
     } catch (...) {

@@ -14,6 +14,9 @@ namespace CesiumAsync {
  * {@link Future::thenInThreadPool}.
  */
 class CESIUMASYNC_API ThreadPool {
+public:
+  ThreadPool(int32_t numberOfThreads);
+
 private:
   struct Scheduler {
     Scheduler(int32_t numberOfThreads);
@@ -21,7 +24,6 @@ private:
     async::threadpool_scheduler scheduler;
   };
 
-  ThreadPool(int32_t numberOfThreads);
   std::shared_ptr<Scheduler> _pScheduler;
 
   // If a Scheduler instance is found in this thread-local vector,

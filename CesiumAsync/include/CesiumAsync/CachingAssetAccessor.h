@@ -35,7 +35,6 @@ public:
    * {@link ICacheDatabase::prune} of old cached results from the database.
    */
   CachingAssetAccessor(
-      const AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<ICacheDatabase>& pCacheDatabase,
