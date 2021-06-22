@@ -108,7 +108,9 @@ public:
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for worker thread";
     int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
-    CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+    if (tracingID >= 0) {
+      CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+    }
 #endif
 
     return Impl::ContinuationFutureType_t<Func, void>(
@@ -140,7 +142,9 @@ public:
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for main thread";
     int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
-    CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+    if (tracingID >= 0) {
+      CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+    }
 #endif
 
     return Impl::ContinuationFutureType_t<Func, void>(
@@ -167,7 +171,9 @@ public:
 #if TRACING_ENABLED
     static const char* tracingName = "waiting for thread pool";
     int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
-    CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+    if (tracingID >= 0) {
+      CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+    }
 #endif
 
     return Impl::ContinuationFutureType_t<Func, void>(

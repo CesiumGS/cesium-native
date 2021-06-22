@@ -58,9 +58,9 @@
  * Extreme care must be taken to match calls to `CESIUM_TRACE_BEGIN` and
  * `CESIUM_TRACE_END`:
  *
- *   * Pared calls must use an identical `name`.
+ *   * Paired calls must use an identical `name`.
  *   * If either BEGIN or END is called from a thread enlisted into an async
- *     process, then both must be and it must be the same enlisted async ID in
+ *     process, then both must be, and it must be the same enlisted async ID in
  *     both cases. In this case BEGIN and END may be called from different
  *     threads.
  *   * If either BEGIN or END is called from a thread _not_ enlisted into an
@@ -68,7 +68,7 @@
  *     thread may be enlisted.
  *   * Paired calls must not be interleaved with other BEGIN/END calls for the
  *     same thread or async process ID. Other BEGIN/END pairs may be fully
- *     nested this one, but this pair must not END in between a nested
+ *     nested within this one, but this pair must not END in between a nested
  *     measurement's BEGIN and END calls.
  *
  * Failure to ensure the above may lead to generation of a trace file that the
@@ -186,6 +186,7 @@
 #define CESIUM_TRACE_END(name)
 #define CESIUM_TRACE_ALLOCATE_ASYNC_ID() -1
 #define CESIUM_TRACE_ASYNC_ENLIST(id)
+#define CESIUM_TRACE_NEW_ASYNC()
 #define CESIUM_TRACE_BEGIN_ID(name, id)
 #define CESIUM_TRACE_END_ID(name, id)
 #endif

@@ -18,7 +18,7 @@ template <typename Func, typename T> struct WithTracing {
             f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f))](
                T&& result) mutable {
       CESIUM_TRACE_ASYNC_ENLIST(tracingID);
-      if (tracingName) {
+      if (tracingName && tracingID >= 0) {
         CESIUM_TRACE_END_ID(tracingName, tracingID);
       }
       return f(std::move(result));
@@ -38,7 +38,7 @@ template <typename Func> struct WithTracing<Func, void> {
             tracingName,
             f = Impl::unwrapFuture<Func>(std::forward<Func>(f))]() mutable {
       CESIUM_TRACE_ASYNC_ENLIST(tracingID);
-      if (tracingName) {
+      if (tracingName && tracingID >= 0) {
         CESIUM_TRACE_END_ID(tracingName, tracingID);
       }
       return f();

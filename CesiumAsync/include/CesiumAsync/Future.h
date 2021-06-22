@@ -223,7 +223,9 @@ private:
     auto task = this->_task.then(
         async::inline_scheduler(),
         [tracingID, tracingName](T&& value) {
-          CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+          if (tracingID >= 0) {
+            CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+          }
           return std::move(value);
         });
 #else

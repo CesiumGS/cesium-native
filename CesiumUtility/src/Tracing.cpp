@@ -45,9 +45,15 @@ void Tracer::writeAsyncTrace(
     char type,
     int64_t id) {
 
+  bool isAsync = true;
   if (id < 0) {
-    // Ignore async tracing without a valid async ID.
-    return;
+    // Use a standard Duration event for slices without an async ID.
+    isAsync = false;
+    if (type == 'b') {
+      type = 'B';
+    } else if (type == 'e') {
+      type = 'E';
+    }
   }
 
   std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
@@ -67,7 +73,11 @@ void Tracer::writeAsyncTrace(
   }
   this->_output << "{";
   this->_output << "\"cat\":\"" << category << "\",";
-  this->_output << "\"id\":" << id << ",";
+  if (isAsync) {
+    this->_output << "\"id\":" << id << ",";
+  } else {
+    this->_output << "\"tid\":" << std::this_thread::get_id() << ",";
+  }
   this->_output << "\"name\":\"" << name << "\",";
   this->_output << "\"ph\":\"" << type << "\",";
   this->_output << "\"pid\":0,";
