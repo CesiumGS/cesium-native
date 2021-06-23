@@ -3,13 +3,9 @@
 #include "CesiumAsync/ICacheDatabase.h"
 #include <cstddef>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <spdlog/fwd.h>
 #include <string>
-
-struct sqlite3;
-struct sqlite3_stmt;
 
 namespace CesiumAsync {
 
@@ -34,6 +30,7 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& databaseName,
       uint64_t maxItems = 4096);
+  ~SqliteCache();
 
   /** @copydoc ICacheDatabase::getEntry*/
   virtual std::optional<CacheItem>
@@ -57,32 +54,7 @@ public:
   virtual bool clearAll() override;
 
 private:
-  struct DeleteSqliteConnection {
-    void operator()(sqlite3* pConnection) noexcept;
-  };
-
-  struct DeleteSqliteStatement {
-    void operator()(sqlite3_stmt* pStmt) noexcept;
-  };
-
-  using SqliteConnectionPtr = std::unique_ptr<sqlite3, DeleteSqliteConnection>;
-  using SqliteStatementPtr =
-      std::unique_ptr<sqlite3_stmt, DeleteSqliteStatement>;
-
-  static SqliteStatementPtr prepareStatement(
-      const SqliteConnectionPtr& pConnection,
-      const std::string& sql);
-
-  std::shared_ptr<spdlog::logger> _pLogger;
-  SqliteConnectionPtr _pConnection;
-  uint64_t _maxItems;
-  mutable std::mutex _mutex;
-  SqliteStatementPtr _getEntryStmtWrapper;
-  SqliteStatementPtr _updateLastAccessedTimeStmtWrapper;
-  SqliteStatementPtr _storeResponseStmtWrapper;
-  SqliteStatementPtr _totalItemsQueryStmtWrapper;
-  SqliteStatementPtr _deleteExpiredStmtWrapper;
-  SqliteStatementPtr _deleteLRUStmtWrapper;
-  SqliteStatementPtr _clearAllStmtWrapper;
+  struct Impl;
+  std::unique_ptr<Impl> _pImpl;
 };
 } // namespace CesiumAsync
