@@ -56,11 +56,13 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _tilingScheme(tilingScheme) {}
 
 void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
+    const TileID& geometryTileId,
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError,
     std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
     std::optional<size_t> outputIndex) {
   this->mapRasterTilesToGeometryTile(
+      geometryTileId,
       projectRectangleSimple(this->getProjection(), geometryRectangle),
       targetGeometricError,
       outputRasterTiles,
@@ -68,6 +70,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 }
 
 void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
+    const TileID& /*geometryTileId*/,
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError,
     std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
@@ -380,5 +383,13 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   double level = glm::log2(twoToTheLevelPower);
   double rounded = glm::max(glm::round(level), 0.0);
   return static_cast<uint32_t>(rounded);
+}
+
+CesiumAsync::Future<LoadedRasterOverlayImage>
+QuadtreeRasterOverlayTileProvider::loadTileImage(const TileID& /*tileId*/) {
+  LoadedRasterOverlayImage result;
+  result.errors.push_back("Error: `loadTileImage(TileID tileId)` called on "
+                          "QuadtreeRasterOverlayTileProvider");
+  return this->getAsyncSystem().createResolvedFuture(std::move(result));
 }
 } // namespace Cesium3DTiles

@@ -2,6 +2,7 @@
 #include "Cesium3DTiles/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
@@ -88,7 +89,6 @@ class CESIUM3DTILES_API RasterizedPolygonsTileProvider final
 private:
   std::vector<CartographicSelection> _polygons;
   std::string _textureTargetName;
-  uint32_t _currentTileID;
 
 public:
   RasterizedPolygonsTileProvider(
@@ -110,22 +110,34 @@ public:
             pLogger,
             projection),
         _textureTargetName(textureTargetName),
-        _polygons(polygons),
-        _currentTileID(0) {}
+        _polygons(polygons) {}
 
   virtual void mapRasterTilesToGeometryTile(
+      const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError,
       std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
       std::optional<size_t> outputIndex) override {
-    this->mapRasterTilesToGeometryTile(
-        projectRectangleSimple(this->getProjection(), geometryRectangle),
-        targetGeometricError,
-        outputRasterTiles,
-        outputIndex);
+
+    for (const CartographicSelection& polygon : this->_polygons) {
+      const std::optional<CesiumGeospatial::GlobeRectangle>& boundingRectangle =
+          polygon.getBoundingRectangle();
+      // TODO: should this intersection be tested on projected on unprojected
+      // rectangle?
+      if (boundingRectangle &&
+          geometryRectangle.intersect(*boundingRectangle)) {
+        this->mapRasterTilesToGeometryTile(
+            geometryTileId,
+            projectRectangleSimple(this->getProjection(), geometryRectangle),
+            targetGeometricError,
+            outputRasterTiles,
+            outputIndex);
+      }
+    }
   }
 
   virtual void mapRasterTilesToGeometryTile(
+      const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
       double /*targetGeometricError*/,
       std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
@@ -137,11 +149,9 @@ public:
       return;
     }
 
-    uint32_t tileID = this->_currentTileID++;
-
     outputRasterTiles.push_back(RasterMappedTo3DTile(
         CesiumUtility::IntrusivePointer<RasterOverlayTile>(
-            this->getTile(tileID, geometryRectangle)),
+            this->getTile(geometryTileId, geometryRectangle)),
         geometryRectangle));
   }
 
@@ -154,21 +164,24 @@ public:
   loadTileImage(const TileID& tileID) override {
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
         this->getTileWithoutCreating(tileID);
-    CesiumGeospatial::GlobeRectangle tileRectangle =
-        CesiumGeospatial::unprojectRectangleSimple(
-            this->getProjection(),
-            pTile ? pTile->getImageryRectangle()
-                  : CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0));
-    LoadedRasterOverlayImage resultImage;
-    CesiumGltf::ImageCesium image;
-    rasterizePolygons(
-        image,
-        tileRectangle,
-        this->_textureTargetName,
-        this->_polygons);
-    resultImage.image = image;
 
-    return this->_asyncSystem.createResolvedFuture(std::move(resultImage));
+    return this->_asyncSystem.runInWorkerThread(
+        [pTile = std::move(pTile),
+         &textureTargetName = this->_textureTargetName,
+         &polygons = this->_polygons,
+         &projection = this->_projection]() -> LoadedRasterOverlayImage {
+          CesiumGeospatial::GlobeRectangle tileRectangle =
+              CesiumGeospatial::unprojectRectangleSimple(
+                  projection,
+                  pTile ? pTile->getImageryRectangle()
+                        : CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0));
+
+          LoadedRasterOverlayImage resultImage;
+          CesiumGltf::ImageCesium image;
+          rasterizePolygons(image, tileRectangle, textureTargetName, polygons);
+          resultImage.image = std::move(image);
+          return std::move(resultImage);
+        });
   }
 };
 
@@ -177,7 +190,8 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     const std::vector<CartographicSelection>& polygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const CesiumGeospatial::Projection& projection)
-    : _textureTargetName(textureTargetName),
+    : RasterOverlay("CUSTOM_MASK_" + textureTargetName),
+      _textureTargetName(textureTargetName),
       _polygons(polygons),
       _ellipsoid(ellipsoid),
       _projection(projection) {}

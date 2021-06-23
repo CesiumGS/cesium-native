@@ -27,6 +27,7 @@ public:
   }
 
   virtual void mapRasterTilesToGeometryTile(
+      const Cesium3DTiles::TileID& /*geometryTileId*/,
       const CesiumGeospatial::GlobeRectangle& /*geometryRectangle*/,
       double /*targetGeometricError*/,
       std::vector<Cesium3DTiles::RasterMappedTo3DTile>& /*outputRasterTiles*/,
@@ -34,6 +35,7 @@ public:
 
   /** @copydoc mapRasterTilesToGeometryTile */
   virtual void mapRasterTilesToGeometryTile(
+      const Cesium3DTiles::TileID& /*geometryTileId*/,
       const CesiumGeometry::Rectangle& /*geometryRectangle*/,
       double /*targetGeometricError*/,
       std::vector<Cesium3DTiles::RasterMappedTo3DTile>& /*outputRasterTiles*/,
@@ -48,8 +50,11 @@ public:
 
 namespace Cesium3DTiles {
 
-RasterOverlay::RasterOverlay(const RasterOverlayOptions& options)
-    : _pPlaceholder(),
+RasterOverlay::RasterOverlay(
+    const std::string& name,
+    const RasterOverlayOptions& options)
+    : _name(name),
+      _pPlaceholder(),
       _pTileProvider(),
       _pSelf(),
       _isLoadingTileProvider(false),

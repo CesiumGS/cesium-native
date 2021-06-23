@@ -1,11 +1,13 @@
 #include "Cesium3DTiles/RasterMappedTo3DTile.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
+#include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/TilesetExternals.h"
+#include "Cesium3DTiles/spdlog-cesium.h"
 #include "TileUtilities.h"
 #include <optional>
 #include <variant>
@@ -44,12 +46,29 @@ RasterMappedTo3DTile::update(Tile& tile) {
     std::optional<TileID> parentTileId =
         TileIdUtilities::getParentTileID(this->_pLoadingTile->getID());
 
+    // determining a parent's imagery rectangle only works for quadtrees
+    // currently
+    const CesiumGeometry::QuadtreeTileID* quadtreeTileId =
+        parentTileId
+            ? std::get_if<CesiumGeometry::QuadtreeTileID>(&*parentTileId)
+            : nullptr;
+    Cesium3DTiles::QuadtreeRasterOverlayTileProvider* quadtreeProvider =
+        dynamic_cast<Cesium3DTiles::QuadtreeRasterOverlayTileProvider*>(
+            this->_pLoadingTile->getOverlay().getTileProvider());
+    std::optional<CesiumGeometry::Rectangle> parentImageryRectangle =
+        (quadtreeTileId && quadtreeProvider)
+            ? std::make_optional(
+                  quadtreeProvider->getTilingScheme().tileToRectangle(
+                      *quadtreeTileId))
+            : std::nullopt;
+
     this->_originalFailed = true;
-    this->_pLoadingTile = parentTileId
-                              ? this->_pLoadingTile->getOverlay()
-                                    .getTileProvider()
-                                    ->getTileWithoutCreating(*parentTileId)
-                              : nullptr;
+    this->_pLoadingTile =
+        parentTileId && parentImageryRectangle
+            ? this->_pLoadingTile->getOverlay().getTileProvider()->getTile(
+                  *parentTileId,
+                  *parentImageryRectangle)
+            : nullptr;
   }
 
   // If the loading tile is now ready, make it the ready tile.
@@ -83,6 +102,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
       std::optional<TileID> parentTileId =
           TileIdUtilities::getParentTileID(pCandidate->getID());
       if (!parentTileId) {
+        pCandidate = nullptr;
         break;
       }
 

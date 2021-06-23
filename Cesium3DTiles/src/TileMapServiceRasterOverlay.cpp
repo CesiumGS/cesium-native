@@ -89,7 +89,10 @@ TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
     const TileMapServiceRasterOverlayOptions& options)
-    : _url(url), _headers(headers), _options(options) {}
+    : RasterOverlay("TMS_" + url),
+      _url(url),
+      _headers(headers),
+      _options(options) {}
 
 TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
 

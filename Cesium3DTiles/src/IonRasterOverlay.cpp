@@ -10,6 +10,7 @@
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Uri.h"
 #include <rapidjson/document.h>
+#include <string>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -19,7 +20,9 @@ namespace Cesium3DTiles {
 IonRasterOverlay::IonRasterOverlay(
     uint32_t ionAssetID,
     const std::string& ionAccessToken)
-    : _ionAssetID(ionAssetID), _ionAccessToken(ionAccessToken) {}
+    : RasterOverlay("ION_" + std::to_string(ionAssetID)),
+      _ionAssetID(ionAssetID),
+      _ionAccessToken(ionAccessToken) {}
 
 IonRasterOverlay::~IonRasterOverlay() {}
 

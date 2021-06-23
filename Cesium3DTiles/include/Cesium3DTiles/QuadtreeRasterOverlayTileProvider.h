@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TileID.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
@@ -69,6 +70,7 @@ public:
    * @param outputIndex The output index.
    */
   virtual void mapRasterTilesToGeometryTile(
+      const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError,
       std::vector<RasterMappedTo3DTile>& outputRasterTiles,
@@ -76,6 +78,7 @@ public:
 
   /** @copydoc mapRasterTilesToGeometryTile */
   virtual void mapRasterTilesToGeometryTile(
+      const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError,
       std::vector<RasterMappedTo3DTile>& outputRasterTiles,
@@ -88,6 +91,9 @@ public:
    * tiles.
    */
   virtual bool hasMoreDetailsAvailable(const TileID& tileID) const override;
+
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(const TileID& tileId) override;
 
   /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this

@@ -283,6 +283,7 @@ void Tile::loadContent() {
 
     for (auto& overlay : overlays) {
       overlay->getTileProvider()->mapRasterTilesToGeometryTile(
+          this->getTileID(),
           *pRectangle,
           this->getGeometricError(),
           newRasterTiles);
@@ -326,6 +327,8 @@ void Tile::loadContent() {
     // }
 
     projections.insert("WEB_MERCATOR");
+    // TEMP
+    projections.insert("GEOGRAPHIC");
 
     // Add geographic texture coordinates for water mask
     if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
@@ -834,6 +837,7 @@ void Tile::update(
               Cesium3DTiles::Impl::obtainGlobeRectangle(
                   &this->getBoundingVolume());
           pProvider->mapRasterTilesToGeometryTile(
+              this->getTileID(),
               *pRectangle,
               this->getGeometricError(),
               this->_rasterTiles);

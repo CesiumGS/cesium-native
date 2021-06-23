@@ -216,6 +216,7 @@ public:
    * @param outputIndex The output index.
    */
   virtual void mapRasterTilesToGeometryTile(
+      const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError,
       std::vector<RasterMappedTo3DTile>& outputRasterTiles,
@@ -223,6 +224,7 @@ public:
 
   /** @copydoc mapRasterTilesToGeometryTile */
   virtual void mapRasterTilesToGeometryTile(
+      const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError,
       std::vector<RasterMappedTo3DTile>& outputRasterTiles,
