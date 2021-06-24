@@ -19,7 +19,15 @@ template <typename T> class Future;
  * @brief A system for managing asynchronous requests and tasks.
  *
  * Instances of this class may be safely and efficiently stored and passed
- * around by value.
+ * around by value. However, it is essential that the _last_ AsyncSystem
+ * instance be destroyed only after all continuations have run to completion.
+ * Otherwise, continuations may be scheduled using invalid scheduler instances,
+ * leading to a crash. Broadly, there are two ways to achieve this:
+ *
+ *   * Wait until all Futures complete before destroying the "owner" of the
+ *     AsyncSystem.
+ *   * Make the AsyncSystem a global or static local in order to extend its
+ *     lifetime all the way until program termination.
  */
 class CESIUMASYNC_API AsyncSystem final {
 public:
