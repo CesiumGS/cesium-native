@@ -36,7 +36,7 @@ Tileset::Tileset(
     const std::string& url,
     const TilesetOptions& options)
     : _externals(externals),
-      _asyncSystem(externals.pTaskProcessor),
+      _asyncSystem(externals.asyncSystem),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -65,7 +65,7 @@ Tileset::Tileset(
     const std::string& ionAccessToken,
     const TilesetOptions& options)
     : _externals(externals),
-      _asyncSystem(externals.pTaskProcessor),
+      _asyncSystem(externals.asyncSystem),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(

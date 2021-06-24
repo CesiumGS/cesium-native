@@ -2,6 +2,10 @@
 
 ### v0.5.0 - ??
 
+##### Breaking Changes :mega:
+
+* `TilesetExternals` now has an `AsyncSystem` instead of a shared pointer to an `ITaskProcessor`.
+
 ##### Additions :tada:
 
 * Added a performance tracing framework via `CESIUM_TRACE_*` macros.
