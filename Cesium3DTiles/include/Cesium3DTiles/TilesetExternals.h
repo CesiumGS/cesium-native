@@ -32,7 +32,7 @@ public:
 
   /**
    * @brief The async system to use to do work in threads.
-   * 
+   *
    * The tileset will automatically call
    * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} from
    * {@link Tileset::updateView}.
