@@ -61,6 +61,19 @@ void rasterizePolygons(
       const glm::dvec2& b = vertices[indices[3 * triangle + 1]];
       const glm::dvec2& c = vertices[indices[3 * triangle + 2]];
 
+      // TODO: deal with the corner cases here
+      double minX = glm::min(a.x, glm::min(b.x, c.x));
+      double minY = glm::min(a.y, glm::min(b.y, c.y));
+      double maxX = glm::max(a.x, glm::max(b.x, c.x));
+      double maxY = glm::max(a.y, glm::max(b.y, c.y));
+
+      CesiumGeospatial::GlobeRectangle triangleBounds(minX, minY, maxX, maxY);
+
+      // skip this triangle if it is entirely outside the tile bounds
+      if (!rectangle.intersect(triangleBounds)) {
+        continue;
+      }
+
       glm::dvec2 ab = b - a;
       glm::dvec2 ab_perp(-ab.y, ab.x);
       glm::dvec2 bc = c - b;
