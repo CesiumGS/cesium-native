@@ -21,10 +21,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(
           CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0),
           1,
-          1)) {
-  // Placeholders should never be removed.
-  this->_pPlaceholder->addReference();
-}
+          1)) {}
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     RasterOverlay& owner,

@@ -34,9 +34,18 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlay* pOwner) override;
 
+  const std::vector<CartographicSelection>& getPolygons() const {
+    return this->_polygons;
+  }
+
+  const std::vector<CartographicSelection>& getClippingPolygons() const {
+    return this->_clippingPolygons;
+  }
+
 private:
   std::string _textureTargetName;
   std::vector<CartographicSelection> _polygons;
+  std::vector<CartographicSelection> _clippingPolygons;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cesium3DTiles/CartographicSelection.h"
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/Tile.h"

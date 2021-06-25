@@ -10,6 +10,8 @@
 #include <memory>
 #include <string>
 
+#include "TileUtilities.h"
+
 namespace Cesium3DTiles {
 namespace {
 void rasterizePolygons(
@@ -17,6 +19,20 @@ void rasterizePolygons(
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const std::string& textureTargetName,
     const std::vector<CartographicSelection>& cartographicSelections) {
+
+  if (Cesium3DTiles::Impl::withinPolygons(rectangle, cartographicSelections)) {
+    image.width = 1;
+    image.height = 1;
+    image.channels = 1;
+    image.bytesPerChannel = 1;
+    image.pixelData.resize(1);
+
+    image.pixelData[0] = static_cast<std::byte>(0xff);
+
+    return;
+  }
+
+  // TODO: for tiles completely outside polygons also include 1 pixel texture
 
   double rectangleWidth = rectangle.computeWidth();
   double rectangleHeight = rectangle.computeHeight();
@@ -27,8 +43,6 @@ void rasterizePolygons(
   image.channels = 1;
   image.bytesPerChannel = 1;
   image.pixelData.resize(65536);
-
-  std::memset(image.pixelData.data(), 0, 65536);
 
   // TODO: this is naive approach, use line-triangle
   // intersections to rasterize one row at a time
@@ -122,7 +136,7 @@ public:
     for (const CartographicSelection& polygon : this->_polygons) {
       const std::optional<CesiumGeospatial::GlobeRectangle>& boundingRectangle =
           polygon.getBoundingRectangle();
-      // TODO: should this intersection be tested on projected on unprojected
+      // TODO: should this intersection be tested on projected or unprojected
       // rectangle?
       if (boundingRectangle &&
           geometryRectangle.intersect(*boundingRectangle)) {
@@ -152,7 +166,7 @@ public:
     outputRasterTiles.push_back(RasterMappedTo3DTile(
         CesiumUtility::IntrusivePointer<RasterOverlayTile>(
             this->getTile(geometryTileId, geometryRectangle)),
-        geometryRectangle));
+        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)));
   }
 
   virtual bool
@@ -194,7 +208,15 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
       _textureTargetName(textureTargetName),
       _polygons(polygons),
       _ellipsoid(ellipsoid),
-      _projection(projection) {}
+      _projection(projection) {
+  std::copy_if(
+      polygons.begin(),
+      polygons.end(),
+      std::back_inserter(this->_clippingPolygons),
+      [polygons](const CartographicSelection& polygon) {
+        return polygon.isForCulling();
+      });
+}
 
 RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() {}
 

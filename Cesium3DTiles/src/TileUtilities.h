@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Cesium3DTiles/BoundingVolume.h"
+#include "Cesium3DTiles/CartographicSelection.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include <vector>
 
 namespace Cesium3DTiles {
 namespace Impl {
@@ -28,6 +30,27 @@ namespace Impl {
  */
 const CesiumGeospatial::GlobeRectangle* obtainGlobeRectangle(
     const Cesium3DTiles::BoundingVolume* pBoundingVolume) noexcept;
-} // namespace Impl
 
+/**
+ * @brief Returns whether the tile is completely inside a polygon.
+ *
+ * @param boundingVolume The {@link Cesium3DTiles::BoundingVolume} of the tile.
+ * @param cartographicSelections The list of polygon selections to check.
+ * @return Whether the tile is completely inside a polygon.
+ */
+bool withinPolygons(
+    const BoundingVolume& boundingVolume,
+    const std::vector<CartographicSelection>& cartographicSelections) noexcept;
+
+/**
+ * @brief Returns whether the tile is completely inside a polygon.
+ *
+ * @param rectangle The {@link CesiumGeospatial::GlobeRectangle} of the tile.
+ * @param cartographicSelections The list of polygon selections to check.
+ * @return Whether the tile is completely inside a polygon.
+ */
+bool withinPolygons(
+    const CesiumGeospatial::GlobeRectangle& rectangle,
+    const std::vector<CartographicSelection>& cartographicSelections) noexcept;
+} // namespace Impl
 } // namespace Cesium3DTiles
