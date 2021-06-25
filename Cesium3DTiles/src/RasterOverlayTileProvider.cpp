@@ -42,9 +42,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0),
-      _tilesBeingLoaded(),
-      _loadingIDs() {
+      _throttledTilesCurrentlyLoading(0) {
   // Placeholders should never be removed.
   this->_pPlaceholder->addReference();
 }
@@ -79,9 +77,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0),
-      _tilesBeingLoaded(),
-      _loadingIDs() {}
+      _throttledTilesCurrentlyLoading(0) {}
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(const CesiumGeometry::QuadtreeTileID& id) {
@@ -452,6 +448,8 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
 }
 
 bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
+  CESIUM_TRACE_USE_ASYNC_SLOT(this->_loadingSlots);
+
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     return true;
   }
@@ -626,8 +624,7 @@ void RasterOverlayTileProvider::doLoad(
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
-  [[maybe_unused]] int64_t loadID = this->beginTileLoad(tile, isThrottledLoad);
-  CESIUM_TRACE_ASYNC_ENLIST(loadID);
+  this->beginTileLoad(tile, isThrottledLoad);
 
   this->loadTileImage(tile.getID())
       .thenInWorkerThread(
@@ -662,54 +659,16 @@ void RasterOverlayTileProvider::doLoad(
           });
 }
 
-int64_t RasterOverlayTileProvider::beginTileLoad(
+void RasterOverlayTileProvider::beginTileLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad) {
   // Keep this tile from being destroyed while it's loading.
   tile.addReference();
 
-  int64_t loaderID = -1;
-
   ++this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
-    size_t maxLoads = size_t(std::max(
-        this->getOwner().getOptions().maximumSimultaneousTileLoads,
-        0));
-    if (this->_tilesBeingLoaded.size() != maxLoads) {
-      this->_tilesBeingLoaded.resize(maxLoads, nullptr);
-      this->_loadingIDs.resize(maxLoads, 0);
-
-      for (size_t i = 0; i < this->_loadingIDs.size(); ++i) {
-        int64_t id = CESIUM_TRACE_ALLOCATE_ASYNC_ID();
-        this->_loadingIDs[i] = id;
-        CESIUM_TRACE_BEGIN_ID(
-            ("Overlay Loading Slot " + std::to_string(id)).c_str(),
-            id);
-      }
-    }
-
     ++this->_throttledTilesCurrentlyLoading;
-
-    auto it = std::find(
-        this->_tilesBeingLoaded.begin(),
-        this->_tilesBeingLoaded.end(),
-        nullptr);
-
-    if (it != this->_tilesBeingLoaded.end()) {
-      *it = &tile;
-      int64_t loaderIndex = it - this->_tilesBeingLoaded.begin();
-      loaderID = this->_loadingIDs[size_t(loaderIndex)];
-
-      CESIUM_TRACE_BEGIN_ID(
-          ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
-              .c_str(),
-          loaderID);
-    } else {
-      SPDLOG_WARN("Could not find an overlay slot");
-    }
   }
-
-  return loaderID;
 }
 
 void RasterOverlayTileProvider::finalizeTileLoad(
@@ -718,21 +677,6 @@ void RasterOverlayTileProvider::finalizeTileLoad(
   --this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
     --this->_throttledTilesCurrentlyLoading;
-
-    auto it = std::find(
-        this->_tilesBeingLoaded.begin(),
-        this->_tilesBeingLoaded.end(),
-        &tile);
-    if (it != this->_tilesBeingLoaded.end()) {
-      CESIUM_TRACE_END_ID(
-          ("Overlay " + TileIdUtilities::createTileIdString(tile.getID()))
-              .c_str(),
-          this->_loadingIDs[it - this->_tilesBeingLoaded.begin()]);
-
-      *it = nullptr;
-    } else {
-      SPDLOG_WARN("Loading overlay tile not found");
-    }
   }
 
   // Release the reference we held during load to prevent

@@ -1,12 +1,5 @@
 #pragma once
 
-#include <atomic>
-#include <chrono>
-#include <fstream>
-#include <mutex>
-#include <string>
-#include <thread>
-
 // If the build system doesn't enable the tracing support
 // consider it disabled by default.
 #ifndef CESIUM_TRACING_ENABLED
@@ -21,12 +14,29 @@
 #define CESIUM_TRACE_BEGIN(name)
 #define CESIUM_TRACE_END(name)
 #define CESIUM_TRACE_ALLOCATE_ASYNC_ID() -1
+#define CESIUM_TRACE_CURRENT_ASYNC_SLOT() nullptr
 #define CESIUM_TRACE_ASYNC_ENLIST(id)
 #define CESIUM_TRACE_NEW_ASYNC()
 #define CESIUM_TRACE_BEGIN_ID(name, id)
 #define CESIUM_TRACE_END_ID(name, id)
+#define CESIUM_TRACE_DECLARE_ASYNC_SLOTS(id, name)
+#define CESIUM_TRACE_USE_ASYNC_SLOT(slotID)
+#define CESIUM_TRACE_LAMBDA_CAPTURE()
+#define CESIUM_TRACE_ASYNC_ENLIST_CAPTURED()
+#define CESIUM_TRACE_THREAD_IS_ENLISTED() false
+#define CESIUM_TRACE_BEGIN_IF_ENLISTED(name)
+#define CESIUM_TRACE_END_IF_ENLISTED(name)
 
 #else
+
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <fstream>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 // helper macros to avoid shadowing variables
 #define TRACE_NAME_AUX1(A, B) A##B
@@ -57,7 +67,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE(name)                                                     \
-  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(tracer, __LINE__)(name)
+  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(cesiumTrace, __LINE__)(name)
 
 /**
  * @brief Begins measuring an operation which may span scopes and even threads.
@@ -94,7 +104,7 @@
       "cesium",                                                                \
       name,                                                                    \
       'b',                                                                     \
-      CesiumUtility::Tracer::instance().getEnlistedID())
+      CesiumUtility::Tracer::instance().getEnlistedSlotReference())
 
 /**
  * @brief Ends measuring an operation which may span scopes and even threads.
@@ -110,7 +120,7 @@
       "cesium",                                                                \
       name,                                                                    \
       'e',                                                                     \
-      CesiumUtility::Tracer::instance().getEnlistedID())
+      CesiumUtility::Tracer::instance().getEnlistedSlotReference())
 
 /**
  * @brief Allocates an ID for a new asynchronous process.
@@ -138,8 +148,8 @@
  * @return The ID of the async process, or -1 if the current thread is not
  * enlisted in an async process.
  */
-#define CESIUM_TRACE_CURRENT_ASYNC_ID()                                        \
-  CesiumUtility::Tracer::instance().getEnlistedID()
+#define CESIUM_TRACE_CURRENT_ASYNC_SLOT()                                      \
+  CesiumUtility::Tracer::instance().getEnlistedSlotReference()
 
 /**
  * @brief Enlist the current thread into an async process for the duration of
@@ -151,7 +161,7 @@
  * duration of the scope.
  */
 #define CESIUM_TRACE_ASYNC_ENLIST(id)                                          \
-  CesiumUtility::ScopedEnlist TRACE_NAME_AUX2(tracerEnlist, __LINE__)(id)
+  CesiumUtility::SlotReference TRACE_NAME_AUX2(cesiumTraceEnlist, __LINE__)(id)
 
 /**
  * @brief Starts a new async process by allocating an ID for it and enlisting
@@ -191,13 +201,48 @@
 #define CESIUM_TRACE_END_ID(name, id)                                          \
   CesiumUtility::Tracer::instance().writeAsyncTrace("cesium", name, 'e', id)
 
+#define CESIUM_TRACE_DECLARE_ASYNC_SLOTS(id, name)                             \
+  CesiumUtility::TraceAsyncSlots id { name }
+#define CESIUM_TRACE_USE_ASYNC_SLOT(slotID)                                    \
+  CesiumUtility::SlotReference TRACE_NAME_AUX2(                                \
+      cesiumTraceEnlistSlot,                                                   \
+      __LINE__)(slotID, __FILE__, __LINE__);
+
+#define CESIUM_TRACE_LAMBDA_CAPTURE()                                          \
+  tracingSlot = CesiumUtility::LambdaCaptureSlot(                              \
+      CESIUM_TRACE_CURRENT_ASYNC_SLOT(),                                       \
+      __FILE__,                                                                \
+      __LINE__)
+
+#define CESIUM_TRACE_ASYNC_ENLIST_CAPTURED()                                   \
+  CESIUM_TRACE_USE_ASYNC_SLOT(tracingSlot)
+
+#define CESIUM_TRACE_THREAD_IS_ENLISTED()                                      \
+  CESIUM_TRACE_CURRENT_ASYNC_SLOT() != nullptr
+
+#define CESIUM_TRACE_BEGIN_IF_ENLISTED(name)                                   \
+  if (CESIUM_TRACE_THREAD_IS_ENLISTED()) {                                     \
+    CESIUM_TRACE_BEGIN(name);                                                  \
+  }
+
+#define CESIUM_TRACE_END_IF_ENLISTED(name)                                     \
+  if (CESIUM_TRACE_THREAD_IS_ENLISTED()) {                                     \
+    CESIUM_TRACE_END(name);                                                    \
+  }
+
 namespace CesiumUtility {
+
+// The following are internal classes used by the tracing framework, do not use
+// directly.
+
 struct Trace {
   std::string name;
   int64_t start;
   int64_t duration;
   std::thread::id threadID;
 };
+
+struct SlotReference;
 
 class Tracer {
 public:
@@ -212,9 +257,15 @@ public:
       const char* category,
       const char* name,
       char type,
+      SlotReference* pSlot);
+  void writeAsyncTrace(
+      const char* category,
+      const char* name,
+      char type,
       int64_t id);
-  void enlist(int64_t id);
-  int64_t getEnlistedID() const;
+  void enlist(SlotReference& slotReference);
+  void unEnlist(SlotReference& slotReference);
+  SlotReference* getEnlistedSlotReference() const;
 
   int64_t allocateID();
 
@@ -227,10 +278,9 @@ private:
   uint32_t _numTraces;
   std::mutex _lock;
   std::atomic<int64_t> _lastAllocatedID;
-  static thread_local int64_t _threadEnlistedID;
+  static thread_local std::vector<SlotReference*> _threadEnlistedSlots;
 };
 
-// Internal class used by CESIUM_TRACE and TRACE_LOG do not use directly
 class ScopedTrace {
 public:
   explicit ScopedTrace(const std::string& message);
@@ -248,11 +298,79 @@ private:
 
 class ScopedEnlist {
 public:
-  explicit ScopedEnlist(int64_t id);
+  explicit ScopedEnlist(size_t index);
   ~ScopedEnlist();
+};
 
-private:
-  int64_t _previousID;
+struct TraceAsyncSlots {
+  struct Slot {
+    Slot(int64_t id_, bool inUse_)
+        : id(id_), referenceCount(0), inUse(inUse_) {}
+
+    int64_t id;
+    int32_t referenceCount;
+    bool inUse;
+  };
+
+  TraceAsyncSlots(const char* name);
+  ~TraceAsyncSlots();
+
+  void addReference(size_t index) noexcept;
+  void releaseReference(size_t index) noexcept;
+
+  std::string name;
+  std::vector<Slot> slots;
+  std::mutex mutex;
+
+  size_t acquireSlot();
+};
+
+struct SlotReference;
+
+struct LambdaCaptureSlot {
+  LambdaCaptureSlot(const SlotReference* pRhs, const char* file, int32_t line);
+  LambdaCaptureSlot(LambdaCaptureSlot&& rhs) noexcept;
+  LambdaCaptureSlot(const LambdaCaptureSlot& rhs) noexcept;
+  ~LambdaCaptureSlot();
+  LambdaCaptureSlot& operator=(const LambdaCaptureSlot& rhs) noexcept;
+  LambdaCaptureSlot& operator=(LambdaCaptureSlot&& rhs) noexcept;
+
+  TraceAsyncSlots* pSlots;
+  size_t index;
+  const char* file;
+  int32_t line;
+};
+
+// An RAII object to reference an async operation slot.
+// When the last instance associated with a particular slot index is destroyed,
+// the slot is released.
+struct SlotReference {
+  SlotReference(
+      TraceAsyncSlots& slots,
+      const char* file = nullptr,
+      int32_t line = -1) noexcept;
+  SlotReference(
+      TraceAsyncSlots& slots,
+      size_t index,
+      const char* file = nullptr,
+      int32_t line = -1) noexcept;
+  SlotReference(
+      const LambdaCaptureSlot& lambdaCapture,
+      const char* file = nullptr,
+      int32_t line = -1) noexcept;
+  SlotReference(const SlotReference& rhs) = delete;
+  SlotReference(SlotReference&& rhs) = delete;
+  ~SlotReference() noexcept;
+
+  SlotReference& operator=(const SlotReference& rhs) = delete;
+  SlotReference& operator=(SlotReference&& rhs) = delete;
+
+  operator bool() const noexcept;
+
+  TraceAsyncSlots* pSlots;
+  size_t index;
+  const char* file;
+  int32_t line;
 };
 
 } // namespace CesiumUtility

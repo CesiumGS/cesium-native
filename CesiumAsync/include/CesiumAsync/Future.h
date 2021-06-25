@@ -206,12 +206,12 @@ private:
 #if CESIUM_TRACING_ENABLED
     // When tracing is enabled, we measure the time between scheduling and
     // dispatching of the work.
-    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
     auto task = this->_task.then(
         async::inline_scheduler(),
-        [tracingID, tracingName](T&& value) {
-          if (tracingID >= 0) {
-            CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
+        [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE()](T&& value) mutable {
+          CESIUM_TRACE_ASYNC_ENLIST_CAPTURED();
+          if (tracingName) {
+            CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
           }
           return std::move(value);
         });

@@ -118,12 +118,8 @@ public:
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, void> runInWorkerThread(Func&& f) const {
     static const char* tracingName = "waiting for worker thread";
-#if CESIUM_TRACING_ENABLED
-    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
-    if (tracingID >= 0) {
-      CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
-    }
-#endif
+
+    CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
 
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
@@ -151,12 +147,8 @@ public:
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, void> runInMainThread(Func&& f) const {
     static const char* tracingName = "waiting for main thread";
-#if CESIUM_TRACING_ENABLED
-    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
-    if (tracingID >= 0) {
-      CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
-    }
-#endif
+
+    CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
 
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
@@ -180,12 +172,8 @@ public:
   Impl::ContinuationFutureType_t<Func, void>
   runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
     static const char* tracingName = "waiting for thread pool";
-#if CESIUM_TRACING_ENABLED
-    int64_t tracingID = CESIUM_TRACE_CURRENT_ASYNC_ID();
-    if (tracingID >= 0) {
-      CESIUM_TRACE_BEGIN_ID(tracingName, tracingID);
-    }
-#endif
+
+    CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
 
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,

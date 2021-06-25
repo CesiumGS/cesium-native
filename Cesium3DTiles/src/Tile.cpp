@@ -211,10 +211,11 @@ void Tile::loadContent() {
     }
   }
 
-  Tileset::RequestTileContentResult maybeRequestFuture =
-      tileset.requestTileContent(*this);
+  std::optional<
+      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+      maybeRequestFuture = tileset.requestTileContent(*this);
 
-  if (!maybeRequestFuture.future) {
+  if (!maybeRequestFuture) {
     // There is no content to load. But we may need to upsample.
 
     const UpsampledQuadtreeNode* pSubdivided =
@@ -238,8 +239,6 @@ void Tile::loadContent() {
     return;
   }
 
-  CESIUM_TRACE_ASYNC_ENLIST(maybeRequestFuture.loaderID);
-
   struct LoadResult {
     LoadState state;
     std::unique_ptr<TileContentLoadResult> pContent;
@@ -248,7 +247,7 @@ void Tile::loadContent() {
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
-  std::move(maybeRequestFuture.future.value())
+  std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            projections = std::move(projections),
@@ -808,9 +807,7 @@ void Tile::upsampleParent(
   CesiumGltf::Model& parentModel = pParentContent->model.value();
 
   Tileset* pTileset = this->getTileset();
-  [[maybe_unused]] int64_t loaderID = pTileset->notifyTileStartLoading(this);
-
-  CESIUM_TRACE_ASYNC_ENLIST(loaderID);
+  pTileset->notifyTileStartLoading(this);
 
   struct LoadResult {
     LoadState state;

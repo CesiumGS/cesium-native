@@ -395,7 +395,7 @@ private:
    * @param tile The tile that is starting to load.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  int64_t beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
   /**
    * @brief Finalizes loading of a tile.
@@ -429,8 +429,7 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
-  std::vector<RasterOverlayTile*> _tilesBeingLoaded;
-  std::vector<int64_t> _loadingIDs;
+  CESIUM_TRACE_DECLARE_ASYNC_SLOTS(_loadingSlots, "Raster Overlay Tile Loading Slot");
 
   static CesiumGltf::GltfReader _gltfReader;
 };

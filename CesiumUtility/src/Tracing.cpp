@@ -1,4 +1,6 @@
 #include "CesiumUtility/Tracing.h"
+#include <algorithm>
+#include <cassert>
 
 #if CESIUM_TRACING_ENABLED
 
@@ -8,7 +10,8 @@ Tracer& Tracer::instance() {
   return instance;
 }
 
-/*static*/ thread_local int64_t Tracer::_threadEnlistedID = -1;
+/*static*/ thread_local std::vector<SlotReference*>
+    Tracer::_threadEnlistedSlots{};
 
 Tracer::Tracer() : _output{}, _numTraces{0}, _lock{}, _lastAllocatedID(0) {}
 
@@ -39,6 +42,22 @@ void Tracer::writeTrace(const Trace& trace) {
   this->_output << "\"tid\":" << trace.threadID << ",";
   this->_output << "\"ts\":" << trace.start;
   this->_output << "}";
+}
+
+void Tracer::writeAsyncTrace(
+    const char* category,
+    const char* name,
+    char type,
+    SlotReference* pSlot) {
+
+  int64_t id = -1;
+
+  if (pSlot && *pSlot) {
+    std::scoped_lock lock(pSlot->pSlots->mutex);
+    id = pSlot->pSlots->slots[pSlot->index].id;
+  }
+
+  this->writeAsyncTrace(category, name, type, id);
 }
 
 void Tracer::writeAsyncTrace(
@@ -87,9 +106,30 @@ void Tracer::writeAsyncTrace(
   this->_output << "}";
 }
 
-void Tracer::enlist(int64_t id) { Tracer::_threadEnlistedID = id; }
+void Tracer::enlist(SlotReference& slotReference) {
+  if (!slotReference.pSlots) {
+    return;
+  }
 
-int64_t Tracer::getEnlistedID() const { return Tracer::_threadEnlistedID; }
+  Tracer::_threadEnlistedSlots.emplace_back(&slotReference);
+}
+
+void Tracer::unEnlist([[maybe_unused]] SlotReference& slotReference) {
+  if (!slotReference.pSlots) {
+    return;
+  }
+
+  assert(
+      Tracer::_threadEnlistedSlots.size() > 0 &&
+      Tracer::_threadEnlistedSlots.back() == &slotReference);
+  Tracer::_threadEnlistedSlots.pop_back();
+}
+
+SlotReference* Tracer::getEnlistedSlotReference() const {
+  return Tracer::_threadEnlistedSlots.empty()
+             ? nullptr
+             : Tracer::_threadEnlistedSlots.back();
+}
 
 int64_t Tracer::allocateID() { return ++this->_lastAllocatedID; }
 
@@ -104,24 +144,20 @@ ScopedTrace::ScopedTrace(const std::string& message)
       _threadId{std::this_thread::get_id()},
       _reset{false} {
   Tracer& profiler = Tracer::instance();
-  if (profiler.getEnlistedID() >= 0) {
-    profiler.writeAsyncTrace(
-        "cesium",
-        _name.c_str(),
-        'b',
-        profiler.getEnlistedID());
+
+  SlotReference* pSlot = profiler.getEnlistedSlotReference();
+  if (pSlot != nullptr) {
+    profiler.writeAsyncTrace("cesium", _name.c_str(), 'b', pSlot);
   }
 }
 
 void ScopedTrace::reset() {
   this->_reset = true;
   Tracer& profiler = Tracer::instance();
-  if (profiler.getEnlistedID() >= 0) {
-    profiler.writeAsyncTrace(
-        "cesium",
-        _name.c_str(),
-        'e',
-        profiler.getEnlistedID());
+
+  SlotReference* pSlot = profiler.getEnlistedSlotReference();
+  if (pSlot != nullptr) {
+    profiler.writeAsyncTrace("cesium", _name.c_str(), 'e', pSlot);
   } else {
     auto endTimePoint = std::chrono::steady_clock::now();
     int64_t start = std::chrono::time_point_cast<std::chrono::microseconds>(
@@ -142,13 +178,167 @@ ScopedTrace::~ScopedTrace() {
   }
 }
 
-ScopedEnlist::ScopedEnlist(int64_t id)
-    : _previousID(CesiumUtility::Tracer::instance().getEnlistedID()) {
-  CesiumUtility::Tracer::instance().enlist(id);
+TraceAsyncSlots::TraceAsyncSlots(const char* name_) : name(name_) {}
+
+TraceAsyncSlots::~TraceAsyncSlots() {
+  std::scoped_lock lock(this->mutex);
+  for (auto& slot : this->slots) {
+    assert(!slot.inUse);
+    CESIUM_TRACE_END_ID(
+        (this->name + " " + std::to_string(slot.id)).c_str(),
+        slot.id);
+  }
 }
 
-ScopedEnlist::~ScopedEnlist() {
-  CesiumUtility::Tracer::instance().enlist(this->_previousID);
+void TraceAsyncSlots::addReference(size_t index) noexcept {
+  std::scoped_lock lock(this->mutex);
+  ++this->slots[index].referenceCount;
+}
+
+void TraceAsyncSlots::releaseReference(size_t index) noexcept {
+  std::scoped_lock lock(this->mutex);
+  Slot& slot = this->slots[index];
+  assert(slot.referenceCount > 0);
+  --slot.referenceCount;
+  if (slot.referenceCount == 0) {
+    slot.inUse = false;
+  }
+}
+
+size_t TraceAsyncSlots::acquireSlot() {
+  std::scoped_lock lock(this->mutex);
+
+  auto it =
+      std::find_if(this->slots.begin(), this->slots.end(), [](auto& slot) {
+        return slot.inUse == false;
+      });
+
+  if (it != this->slots.end()) {
+    it->inUse = true;
+    return size_t(it - this->slots.begin());
+  } else {
+    Slot slot{CESIUM_TRACE_ALLOCATE_ASYNC_ID(), true};
+    CESIUM_TRACE_BEGIN_ID(
+        (this->name + " " + std::to_string(slot.id)).c_str(),
+        slot.id);
+    this->slots.emplace_back(slot);
+    return size_t(this->slots.size() - 1);
+  }
+}
+
+LambdaCaptureSlot::LambdaCaptureSlot(
+    const SlotReference* pRhs,
+    const char* file_,
+    int32_t line_)
+    : pSlots(nullptr), index(0), file(file_), line(line_) {
+  if (pRhs) {
+    this->pSlots = pRhs->pSlots;
+    this->index = pRhs->index;
+
+    if (this->pSlots) {
+      this->pSlots->addReference(this->index);
+    }
+  }
+}
+
+LambdaCaptureSlot::LambdaCaptureSlot(const LambdaCaptureSlot& rhs) noexcept
+    : pSlots(rhs.pSlots), index(rhs.index), file(rhs.file), line(rhs.line) {
+  if (this->pSlots) {
+    this->pSlots->addReference(this->index);
+  }
+}
+
+LambdaCaptureSlot::LambdaCaptureSlot(LambdaCaptureSlot&& rhs) noexcept
+    : pSlots(rhs.pSlots), index(rhs.index), file(rhs.file), line(rhs.line) {
+  rhs.pSlots = nullptr;
+  rhs.index = 0;
+}
+
+LambdaCaptureSlot::~LambdaCaptureSlot() {
+  if (this->pSlots) {
+    this->pSlots->releaseReference(this->index);
+  }
+}
+
+LambdaCaptureSlot&
+LambdaCaptureSlot::operator=(const LambdaCaptureSlot& rhs) noexcept {
+  if (rhs.pSlots) {
+    rhs.pSlots->addReference(rhs.index);
+  }
+  if (this->pSlots) {
+    this->pSlots->releaseReference(this->index);
+  }
+
+  this->pSlots = rhs.pSlots;
+  this->index = rhs.index;
+  this->file = rhs.file;
+  this->line = rhs.line;
+
+  return *this;
+}
+
+LambdaCaptureSlot&
+LambdaCaptureSlot::operator=(LambdaCaptureSlot&& rhs) noexcept {
+  if (this->pSlots) {
+    this->pSlots->releaseReference(this->index);
+  }
+
+  this->pSlots = rhs.pSlots;
+  this->index = rhs.index;
+
+  rhs.pSlots = nullptr;
+  rhs.index = 0;
+
+  return *this;
+}
+
+SlotReference::SlotReference(
+    TraceAsyncSlots& slots_,
+    const char* file,
+    int32_t line) noexcept
+    : SlotReference(slots_, slots_.acquireSlot(), file, line) {}
+
+SlotReference::SlotReference(
+    TraceAsyncSlots& slots_,
+    size_t index_,
+    const char* file_,
+    int32_t line_) noexcept
+    : pSlots(&slots_), index(index_), file(file_), line(line_) {
+  this->pSlots->addReference(this->index);
+  Tracer::instance().enlist(*this);
+}
+
+SlotReference::SlotReference(
+    const LambdaCaptureSlot& lambdaCapture,
+    const char* file_,
+    int32_t line_) noexcept
+    : pSlots(lambdaCapture.pSlots),
+      index(lambdaCapture.index),
+      file(file_),
+      line(line_) {
+  if (this->pSlots) {
+    this->pSlots->addReference(this->index);
+    Tracer::instance().enlist(*this);
+  }
+}
+
+// SlotReference::SlotReference(const SlotReference& rhs) noexcept
+//     : pSlots(rhs.pSlots), index(rhs.index) {
+//   if (this->pSlots) {
+//     this->pSlots->addReference(this->index);
+//     Tracer::instance().enlist(*this);
+//   }
+// }
+
+SlotReference::~SlotReference() noexcept {
+  if (this->pSlots) {
+    Tracer::instance().unEnlist(*this);
+    this->pSlots->releaseReference(this->index);
+  }
+}
+
+SlotReference::operator bool() const noexcept {
+  return this->pSlots != nullptr;
 }
 
 } // namespace CesiumUtility

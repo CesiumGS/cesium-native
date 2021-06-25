@@ -167,7 +167,7 @@ public:
    * @brief Notifies the tileset that the given tile has started loading.
    * This method may be called from any thread.
    */
-  int64_t notifyTileStartLoading(Tile* pTile) noexcept;
+  void notifyTileStartLoading(Tile* pTile) noexcept;
 
   /**
    * @brief Notifies the tileset that the given tile has finished loading and is
@@ -201,13 +201,6 @@ public:
       const TileContext& context,
       const std::shared_ptr<spdlog::logger>& pLogger);
 
-  struct RequestTileContentResult {
-    std::optional<
-        CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
-        future;
-    int64_t loaderID;
-  };
-
   /**
    * @brief Request to load the content for the given tile.
    *
@@ -217,7 +210,9 @@ public:
    * @return A future that resolves when the content response is received, or
    * std::nullopt if this Tile has no content to load.
    */
-  RequestTileContentResult requestTileContent(Tile& tile);
+  std::optional<
+      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+  requestTileContent(Tile& tile);
 
   /**
    * @brief Add the given {@link TileContext} to this tile set.
@@ -553,8 +548,6 @@ private:
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
   std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
-  std::vector<Tile*> _tilesBeingLoaded;
-  std::vector<int64_t> _loadingIDs;
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -576,12 +569,14 @@ private:
    */
   CesiumGeometry::Axis _gltfUpAxis;
 
+  CESIUM_TRACE_DECLARE_ASYNC_SLOTS(_loadingSlots, "Tileset Loading Slot");
+
   static void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
       const ViewState& viewState,
       Tile& tile,
       double distance);
-  static void processQueue(
+  void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
