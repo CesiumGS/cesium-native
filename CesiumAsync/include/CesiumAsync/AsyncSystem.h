@@ -119,7 +119,7 @@ public:
   Impl::ContinuationFutureType_t<Func, void> runInWorkerThread(Func&& f) const {
     static const char* tracingName = "waiting for worker thread";
 
-    CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
+    CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
@@ -148,7 +148,7 @@ public:
   Impl::ContinuationFutureType_t<Func, void> runInMainThread(Func&& f) const {
     static const char* tracingName = "waiting for main thread";
 
-    CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
+    CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
@@ -173,7 +173,7 @@ public:
   runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
     static const char* tracingName = "waiting for thread pool";
 
-    CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
+    CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
 
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,

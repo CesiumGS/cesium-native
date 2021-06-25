@@ -208,10 +208,10 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE()](T&& value) mutable {
-          CESIUM_TRACE_ASYNC_ENLIST_CAPTURED();
+        [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& value) mutable {
+          CESIUM_TRACE_USE_CAPTURED_TRACK();
           if (tracingName) {
-            CESIUM_TRACE_BEGIN_IF_ENLISTED(tracingName);
+            CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
           }
           return std::move(value);
         });

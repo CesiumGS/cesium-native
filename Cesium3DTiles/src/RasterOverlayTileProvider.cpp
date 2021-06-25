@@ -448,7 +448,7 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
 }
 
 bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  CESIUM_TRACE_USE_ASYNC_SLOT(this->_loadingSlots);
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     return true;

@@ -13,10 +13,10 @@ template <typename Func, typename T> struct WithTracing {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
             f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f)),
-            CESIUM_TRACE_LAMBDA_CAPTURE()](T&& result) mutable {
-      CESIUM_TRACE_ASYNC_ENLIST_CAPTURED();
+            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& result) mutable {
+      CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
-        CESIUM_TRACE_END_IF_ENLISTED(tracingName);
+        CESIUM_TRACE_END_IN_TRACK(tracingName);
       }
       return f(std::move(result));
     };
@@ -31,10 +31,10 @@ template <typename Func> struct WithTracing<Func, void> {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
             f = Impl::unwrapFuture<Func>(std::forward<Func>(f)),
-            CESIUM_TRACE_LAMBDA_CAPTURE()]() mutable {
-      CESIUM_TRACE_ASYNC_ENLIST_CAPTURED();
+            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()]() mutable {
+      CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
-        CESIUM_TRACE_END_IF_ENLISTED(tracingName);
+        CESIUM_TRACE_END_IN_TRACK(tracingName);
       }
       return f();
     };

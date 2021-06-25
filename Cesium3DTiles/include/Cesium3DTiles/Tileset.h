@@ -569,7 +569,7 @@ private:
    */
   CesiumGeometry::Axis _gltfUpAxis;
 
-  CESIUM_TRACE_DECLARE_ASYNC_SLOTS(_loadingSlots, "Tileset Loading Slot");
+  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
   static void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,

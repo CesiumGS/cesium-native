@@ -69,7 +69,7 @@ void RasterOverlay::createTileProvider(
     return;
   }
 
-  CESIUM_TRACE_BEGIN_IF_ENLISTED("createTileProvider");
+  CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
 
   this->_pPlaceholder = std::make_unique<PlaceholderTileProvider>(
       *this,
@@ -89,7 +89,7 @@ void RasterOverlay::createTileProvider(
           [this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
             this->_pTileProvider = std::move(pProvider);
             this->_isLoadingTileProvider = false;
-            CESIUM_TRACE_END_IF_ENLISTED("createTileProvider");
+            CESIUM_TRACE_END_IN_TRACK("createTileProvider");
           })
       .catchInMainThread([this, pLogger](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
@@ -98,7 +98,7 @@ void RasterOverlay::createTileProvider(
             e.what());
         this->_pTileProvider.reset();
         this->_isLoadingTileProvider = false;
-        CESIUM_TRACE_END_IF_ENLISTED("createTileProvider");
+        CESIUM_TRACE_END_IN_TRACK("createTileProvider");
       });
 }
 

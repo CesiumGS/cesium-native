@@ -110,13 +110,13 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
     // beyond _requestsPerCachePrune before this next line. That's ok.
     this->_requestSinceLastPrune = 0;
 
-    CESIUM_TRACE_USE_ASYNC_SLOT(this->_pruneSlots);
+    CESIUM_TRACE_USE_TRACK_SET(this->_pruneSlots);
     asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {
       this->_pCacheDatabase->prune();
     });
   }
 
-  CESIUM_TRACE_BEGIN_IF_ENLISTED("requestAsset (cached)");
+  CESIUM_TRACE_BEGIN_IN_TRACK("requestAsset (cached)");
 
   ThreadPool& threadPool = this->_cacheThreadPool;
 
@@ -243,7 +243,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
             return asyncSystem.createResolvedFuture(std::move(pRequest));
           })
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
-        CESIUM_TRACE_END_IF_ENLISTED("requestAsset (cached)");
+        CESIUM_TRACE_END_IN_TRACK("requestAsset (cached)");
         return std::move(pRequest);
       });
 }

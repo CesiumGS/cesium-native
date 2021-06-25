@@ -22,7 +22,7 @@ void Tracer::startTracing(const std::string& filePath) {
   this->_output << "{\"otherData\": {},\"traceEvents\":[";
 }
 
-void Tracer::writeTrace(const Trace& trace) {
+void Tracer::writeCompleteEvent(const Trace& trace) {
   std::lock_guard<std::mutex> lock(_lock);
   if (!this->_output) {
     return;
@@ -44,23 +44,34 @@ void Tracer::writeTrace(const Trace& trace) {
   this->_output << "}";
 }
 
-void Tracer::writeAsyncTrace(
-    const char* category,
-    const char* name,
-    char type,
-    SlotReference* pSlot) {
-
-  int64_t id = -1;
-
-  if (pSlot && *pSlot) {
-    std::scoped_lock lock(pSlot->pSlots->mutex);
-    id = pSlot->pSlots->slots[pSlot->index].id;
-  }
-
-  this->writeAsyncTrace(category, name, type, id);
+void Tracer::writeAsyncEventBegin(const char* name, int64_t id) {
+  this->writeAsyncEvent("cesium", name, 'b', id);
 }
 
-void Tracer::writeAsyncTrace(
+void Tracer::writeAsyncEventBegin(const char* name) {
+  this->writeAsyncEventBegin(name, this->getIDFromEnlistedSlotReference());
+}
+
+void Tracer::writeAsyncEventEnd(const char* name, int64_t id) {
+  this->writeAsyncEvent("cesium", name, 'e', id);
+}
+
+void Tracer::writeAsyncEventEnd(const char* name) {
+  this->writeAsyncEventEnd(name, this->getIDFromEnlistedSlotReference());
+}
+
+int64_t Tracer::getIDFromEnlistedSlotReference() const {
+  const SlotReference* pSlot =
+      CesiumUtility::Tracer::instance().getEnlistedSlotReference();
+  if (pSlot && *pSlot) {
+    std::scoped_lock lock(pSlot->pSlots->mutex);
+    return pSlot->pSlots->slots[pSlot->index].id;
+  } else {
+    return -1;
+  }
+}
+
+void Tracer::writeAsyncEvent(
     const char* category,
     const char* name,
     char type,
@@ -143,21 +154,14 @@ ScopedTrace::ScopedTrace(const std::string& message)
       _startTime{std::chrono::steady_clock::now()},
       _threadId{std::this_thread::get_id()},
       _reset{false} {
-  Tracer& profiler = Tracer::instance();
-
-  SlotReference* pSlot = profiler.getEnlistedSlotReference();
-  if (pSlot != nullptr) {
-    profiler.writeAsyncTrace("cesium", _name.c_str(), 'b', pSlot);
-  }
+  CESIUM_TRACE_BEGIN_IN_TRACK(_name.c_str());
 }
 
 void ScopedTrace::reset() {
   this->_reset = true;
-  Tracer& profiler = Tracer::instance();
 
-  SlotReference* pSlot = profiler.getEnlistedSlotReference();
-  if (pSlot != nullptr) {
-    profiler.writeAsyncTrace("cesium", _name.c_str(), 'e', pSlot);
+  if (CesiumUtility::Tracer::instance().getEnlistedSlotReference() != nullptr) {
+    CESIUM_TRACE_END(_name.c_str());
   } else {
     auto endTimePoint = std::chrono::steady_clock::now();
     int64_t start = std::chrono::time_point_cast<std::chrono::microseconds>(
@@ -168,7 +172,8 @@ void ScopedTrace::reset() {
         std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint)
             .time_since_epoch()
             .count();
-    profiler.writeTrace({this->_name, start, end - start, this->_threadId});
+    Tracer::instance().writeCompleteEvent(
+        {this->_name, start, end - start, this->_threadId});
   }
 }
 
@@ -184,7 +189,7 @@ TraceAsyncSlots::~TraceAsyncSlots() {
   std::scoped_lock lock(this->mutex);
   for (auto& slot : this->slots) {
     assert(!slot.inUse);
-    CESIUM_TRACE_END_ID(
+    Tracer::instance().writeAsyncEventEnd(
         (this->name + " " + std::to_string(slot.id)).c_str(),
         slot.id);
   }
@@ -217,23 +222,22 @@ size_t TraceAsyncSlots::acquireSlot() {
     it->inUse = true;
     return size_t(it - this->slots.begin());
   } else {
-    Slot slot{CESIUM_TRACE_ALLOCATE_ASYNC_ID(), true};
-    CESIUM_TRACE_BEGIN_ID(
+    Slot slot{CesiumUtility::Tracer::instance().allocateID(), true};
+    CesiumUtility::Tracer::instance().writeAsyncEventBegin(
         (this->name + " " + std::to_string(slot.id)).c_str(),
         slot.id);
+    size_t index = this->slots.size();
     this->slots.emplace_back(slot);
-    return size_t(this->slots.size() - 1);
+    return index;
   }
 }
 
-LambdaCaptureSlot::LambdaCaptureSlot(
-    const SlotReference* pRhs,
-    const char* file_,
-    int32_t line_)
+LambdaCaptureSlot::LambdaCaptureSlot(const char* file_, int32_t line_)
     : pSlots(nullptr), index(0), file(file_), line(line_) {
-  if (pRhs) {
-    this->pSlots = pRhs->pSlots;
-    this->index = pRhs->index;
+  const SlotReference* pSlot = Tracer::instance().getEnlistedSlotReference();
+  if (pSlot) {
+    this->pSlots = pSlot->pSlots;
+    this->index = pSlot->index;
 
     if (this->pSlots) {
       this->pSlots->addReference(this->index);

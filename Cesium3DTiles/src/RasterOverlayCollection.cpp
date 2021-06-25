@@ -17,7 +17,7 @@ RasterOverlayCollection::~RasterOverlayCollection() {
 }
 
 void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
-  CESIUM_TRACE_USE_ASYNC_SLOT(this->_loadingSlots);
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   RasterOverlay* pOverlayRaw = pOverlay.get();
   this->_overlays.push_back(std::move(pOverlay));

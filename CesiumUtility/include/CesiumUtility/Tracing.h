@@ -13,19 +13,15 @@
 #define CESIUM_TRACE(name)
 #define CESIUM_TRACE_BEGIN(name)
 #define CESIUM_TRACE_END(name)
-#define CESIUM_TRACE_ALLOCATE_ASYNC_ID() -1
 #define CESIUM_TRACE_CURRENT_ASYNC_SLOT() nullptr
 #define CESIUM_TRACE_ASYNC_ENLIST(id)
 #define CESIUM_TRACE_NEW_ASYNC()
-#define CESIUM_TRACE_BEGIN_ID(name, id)
-#define CESIUM_TRACE_END_ID(name, id)
-#define CESIUM_TRACE_DECLARE_ASYNC_SLOTS(id, name)
-#define CESIUM_TRACE_USE_ASYNC_SLOT(slotID)
-#define CESIUM_TRACE_LAMBDA_CAPTURE()
-#define CESIUM_TRACE_ASYNC_ENLIST_CAPTURED()
-#define CESIUM_TRACE_THREAD_IS_ENLISTED() false
-#define CESIUM_TRACE_BEGIN_IF_ENLISTED(name)
-#define CESIUM_TRACE_END_IF_ENLISTED(name)
+#define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)
+#define CESIUM_TRACE_USE_TRACK_SET(slotID)
+#define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()
+#define CESIUM_TRACE_USE_CAPTURED_TRACK()
+#define CESIUM_TRACE_BEGIN_IN_TRACK(name)
+#define CESIUM_TRACE_END_IN_TRACK(name)
 
 #else
 
@@ -70,20 +66,20 @@
   CesiumUtility::ScopedTrace TRACE_NAME_AUX2(cesiumTrace, __LINE__)(name)
 
 /**
- * @brief Begins measuring an operation which may span scopes and even threads.
+ * @brief Begins measuring an operation which may span scope but not threads.
  *
  * Begins measuring the time of an operation which completes with a
  * corresponding call to {@link CESIUM_TRACE_END}. If the calling thread is
- * enlisted in an async process ({@link CESIUM_TRACE_ASYNC_ENLIST}), the
- * time is recorded against the async process. Otherwise, is is recorded
- * against the current thread.
+ * operating in a track ({@link CESIUM_TRACE_USE_TRACK_SET}), the
+ * time is recorded in the track. Otherwise, is is recorded against the current
+ * thread.
  *
  * Extreme care must be taken to match calls to `CESIUM_TRACE_BEGIN` and
  * `CESIUM_TRACE_END`:
  *
  *   * Paired calls must use an identical `name`.
- *   * If either BEGIN or END is called from a thread enlisted into an async
- *     process, then both must be, and it must be the same enlisted async ID in
+ *   * If either BEGIN or END is called from a thread operating in a track,
+ *     then both must be, and it must be the same track in
  *     both cases. In this case BEGIN and END may be called from different
  *     threads.
  *   * If either BEGIN or END is called from a thread _not_ enlisted into an
@@ -100,14 +96,10 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN(name)                                               \
-  CesiumUtility::Tracer::instance().writeAsyncTrace(                           \
-      "cesium",                                                                \
-      name,                                                                    \
-      'b',                                                                     \
-      CesiumUtility::Tracer::instance().getEnlistedSlotReference())
+  CesiumUtility::Tracer::instance().writeAsyncEventBegin(name)
 
 /**
- * @brief Ends measuring an operation which may span scopes and even threads.
+ * @brief Ends measuring an operation which may span scopes but not threads.
  *
  * Finishes measuring the time of an operation that began with a call to
  * {@link CESIUM_TRACE_BEGIN}. See the documentation for that macro for more
@@ -116,119 +108,94 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END(name)                                                 \
-  CesiumUtility::Tracer::instance().writeAsyncTrace(                           \
-      "cesium",                                                                \
-      name,                                                                    \
-      'e',                                                                     \
-      CesiumUtility::Tracer::instance().getEnlistedSlotReference())
+  CesiumUtility::Tracer::instance().writeAsyncEventEnd(name)
 
 /**
- * @brief Allocates an ID for a new asynchronous process.
- *
- * This ID is used to identify an operation that may span multiple threads.
- * It may be supplied to {@link CESIUM_TRACE_BEGIN_ID} and
- * {@link CESIUM_TRACE_END_ID} to explicitly trace a part of an async process
- * across threads.  It may also be passed to {@link CESIUM_TRACE_ASYNC_ENLIST}
- * to set this async ID as the "ambient" async process for the current thread
- * and scope, in which case calls to {@link CESIUM_TRACE},
- * {@link CESIUM_TRACE_BEGIN}, and {@link CESIUM_TRACE_END} will automatically
- * create events that are part of this async process.
- */
-#define CESIUM_TRACE_ALLOCATE_ASYNC_ID()                                       \
-  CesiumUtility::Tracer::instance().allocateID()
-
-/**
- * @brief Gets the ID of the async process that the calling thread is currently
- * enlisted in.
- *
- * A new async process ID can be allocated with
- * {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID}, and the current thread can be enlisted
- * into the process with {@link CESIUM_TRACE_ASYNC_ENLIST}.
- *
- * @return The ID of the async process, or -1 if the current thread is not
- * enlisted in an async process.
- */
-#define CESIUM_TRACE_CURRENT_ASYNC_SLOT()                                      \
-  CesiumUtility::Tracer::instance().getEnlistedSlotReference()
-
-/**
- * @brief Enlist the current thread into an async process for the duration of
- * the current scope.
- *
- * Async IDs are allocated with {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID}. Once a
- * thread is enlisted into an async ID, all tracing operations that don't
- * explicitly take an ID are automatically associated with this ID for the
- * duration of the scope.
- */
-#define CESIUM_TRACE_ASYNC_ENLIST(id)                                          \
-  CesiumUtility::SlotReference TRACE_NAME_AUX2(cesiumTraceEnlist, __LINE__)(id)
-
-/**
- * @brief Starts a new async process by allocating an ID for it and enlisting
- * the current thread into the process for the current scope.
- *
- * This is equivalent to calling {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID} and
- * then passing the return value to {@link CESIUM_TRACE_ASYNC_ENLIST}.
- */
-#define CESIUM_TRACE_NEW_ASYNC()                                               \
-  CESIUM_TRACE_ASYNC_ENLIST(CESIUM_TRACE_ALLOCATE_ASYNC_ID())
-
-/**
- * @brief Begins measuring an operation for a particular async ID.
- *
- * This operation is identical to {@link CESIUM_TRACE_BEGIN} except that the
- * operation it measures is explicitly tied to a particular async ID allocated
- * with {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID} rather than using the ambient async
- * ID, or the current thread ID if the thread is not enlisted into into an
- * async process.
- *
+ * @brief Begins measuring an operation that may span both scopes and threads.
+ * 
+ * This macro is identical to {@link CESIUM_TRACE_BEGIN} except that it does
+ * nothing if the calling thread and scope are not operating as part of a
+ * track. This allows it to be safely used to measure operations that span
+ * threads. Use {@link CESIUM_TRACE_USE_TRACK_SET} to use a track from a set.
+ * 
  * @param name The name of the measured operation.
  */
-#define CESIUM_TRACE_BEGIN_ID(name, id)                                        \
-  CesiumUtility::Tracer::instance().writeAsyncTrace("cesium", name, 'b', id)
-
-/**
- * @brief Ends measuring an operation for a particular async ID.
- *
- * This operation is identical to {@link CESIUM_TRACE_END} except that the
- * operation it measures is explicitly tied to a particular async ID allocated
- * with {@link CESIUM_TRACE_ALLOCATE_ASYNC_ID} rather than using the ambient async
- * ID, or the current thread ID if the thread is not enlisted into into an
- * async process.
- *
- * @param name The name of the measured operation.
- */
-#define CESIUM_TRACE_END_ID(name, id)                                          \
-  CesiumUtility::Tracer::instance().writeAsyncTrace("cesium", name, 'e', id)
-
-#define CESIUM_TRACE_DECLARE_ASYNC_SLOTS(id, name)                             \
-  CesiumUtility::TraceAsyncSlots id { name }
-#define CESIUM_TRACE_USE_ASYNC_SLOT(slotID)                                    \
-  CesiumUtility::SlotReference TRACE_NAME_AUX2(                                \
-      cesiumTraceEnlistSlot,                                                   \
-      __LINE__)(slotID, __FILE__, __LINE__);
-
-#define CESIUM_TRACE_LAMBDA_CAPTURE()                                          \
-  tracingSlot = CesiumUtility::LambdaCaptureSlot(                              \
-      CESIUM_TRACE_CURRENT_ASYNC_SLOT(),                                       \
-      __FILE__,                                                                \
-      __LINE__)
-
-#define CESIUM_TRACE_ASYNC_ENLIST_CAPTURED()                                   \
-  CESIUM_TRACE_USE_ASYNC_SLOT(tracingSlot)
-
-#define CESIUM_TRACE_THREAD_IS_ENLISTED()                                      \
-  CESIUM_TRACE_CURRENT_ASYNC_SLOT() != nullptr
-
-#define CESIUM_TRACE_BEGIN_IF_ENLISTED(name)                                   \
-  if (CESIUM_TRACE_THREAD_IS_ENLISTED()) {                                     \
+#define CESIUM_TRACE_BEGIN_IN_TRACK(name)                                      \
+  if (CesiumUtility::Tracer::instance().getEnlistedSlotReference() !=          \
+      nullptr) {                                                               \
     CESIUM_TRACE_BEGIN(name);                                                  \
   }
 
-#define CESIUM_TRACE_END_IF_ENLISTED(name)                                     \
-  if (CESIUM_TRACE_THREAD_IS_ENLISTED()) {                                     \
+/**
+ * @brief Ends measuring an operation that may span both scopes and threads.
+ * 
+ * This macro is identical to {@link CESIUM_TRACE_END} except that it does
+ * nothing if the calling thread and scope are not operating as part of a
+ * track. This allows it to be safely used to measure operations that span
+ * threads. Use {@link CESIUM_TRACE_USE_TRACK_SET} to use a track from a set.
+ * 
+ * @param name The name of the measured operation.
+ */
+#define CESIUM_TRACE_END_IN_TRACK(name)                                        \
+  if (CesiumUtility::Tracer::instance().getEnlistedSlotReference() !=          \
+      nullptr) {                                                               \
     CESIUM_TRACE_END(name);                                                    \
   }
+
+/**
+ * @brief Declares a set of tracing tracks as a field inside a class.
+ *
+ * A track is a sequential process that may take place across multiple threads.
+ * An instance of a class may have multiple such tracks running simultaneously.
+ * For example, a single 3D Tiles tile will load in a particular track, while
+ * other tiles will be loading in other parallel tracks in the same set.
+ *
+ * Note that when the track set is destroyed, an assertion will check that no
+ * tracks are still in progress.
+ *
+ * @param id The name of the field to hold the track set.
+ * @param name A human-friendly name for this set of tracks.
+ */
+#define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)                               \
+  CesiumUtility::TraceAsyncSlots id { name }
+
+/**
+ * @brief Begins using a track set in this thread.
+ *
+ * The calling thread will be allocated a track from the track set, and will
+ * continue using it for the remainder of the current scope. In addition, if
+ * the thread starts an async operation using {@link CesiumAsync::AsyncSystem},
+ * all continuations of that async operation will use the same track as well.
+ *
+ * @param id The ID (field name) of the track set declared with
+ *           {@link CESIUM_TRACE_DECLARE_TRACK_SET}.
+ */
+#define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
+  CesiumUtility::SlotReference TRACE_NAME_AUX2(                                \
+      cesiumTraceEnlistSlot,                                                   \
+      __LINE__)(id, __FILE__, __LINE__);
+
+/**
+ * @brief Capture the current tracing track for a lambda, so that the lambda may
+ * use the same track.
+ *
+ * This macro should be used in a lambda's capture list to capture the track of
+ * the current thread so that the lambda (which may execute in a different
+ * thread) can use the same track by executing
+ * {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
+ */
+#define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()                                    \
+  tracingSlot = CesiumUtility::LambdaCaptureSlot(__FILE__, __LINE__)
+
+/**
+ * @brief Uses a captured track for the current thread and the current scope.
+ *
+ * This macro should be used as the first line in a lambda that should inherit
+ * the tracing track of the thread that created it. The lambda's capture list
+ * must also contain {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
+ */
+#define CESIUM_TRACE_USE_CAPTURED_TRACK()                                      \
+  CESIUM_TRACE_USE_TRACK_SET(tracingSlot)
 
 namespace CesiumUtility {
 
@@ -252,17 +219,12 @@ public:
 
   void startTracing(const std::string& filePath = "trace.json");
 
-  void writeTrace(const Trace& trace);
-  void writeAsyncTrace(
-      const char* category,
-      const char* name,
-      char type,
-      SlotReference* pSlot);
-  void writeAsyncTrace(
-      const char* category,
-      const char* name,
-      char type,
-      int64_t id);
+  void writeCompleteEvent(const Trace& trace);
+  void writeAsyncEventBegin(const char* name, int64_t id);
+  void writeAsyncEventBegin(const char* name);
+  void writeAsyncEventEnd(const char* name, int64_t id);
+  void writeAsyncEventEnd(const char* name);
+
   void enlist(SlotReference& slotReference);
   void unEnlist(SlotReference& slotReference);
   SlotReference* getEnlistedSlotReference() const;
@@ -273,6 +235,13 @@ public:
 
 private:
   Tracer();
+
+  int64_t getIDFromEnlistedSlotReference() const;
+  void writeAsyncEvent(
+      const char* category,
+      const char* name,
+      char type,
+      int64_t id);
 
   std::ofstream _output;
   uint32_t _numTraces;
@@ -328,7 +297,7 @@ struct TraceAsyncSlots {
 struct SlotReference;
 
 struct LambdaCaptureSlot {
-  LambdaCaptureSlot(const SlotReference* pRhs, const char* file, int32_t line);
+  LambdaCaptureSlot(const char* file, int32_t line);
   LambdaCaptureSlot(LambdaCaptureSlot&& rhs) noexcept;
   LambdaCaptureSlot(const LambdaCaptureSlot& rhs) noexcept;
   ~LambdaCaptureSlot();
