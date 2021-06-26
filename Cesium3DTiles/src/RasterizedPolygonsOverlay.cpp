@@ -114,8 +114,8 @@ class CESIUM3DTILES_API RasterizedPolygonsTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
-  std::vector<CartographicSelection> _polygons;
   std::string _textureTargetName;
+  std::vector<CartographicSelection> _polygons;
 
 public:
   RasterizedPolygonsTileProvider(
@@ -207,7 +207,7 @@ public:
           CesiumGltf::ImageCesium image;
           rasterizePolygons(image, tileRectangle, textureTargetName, polygons);
           resultImage.image = std::move(image);
-          return std::move(resultImage);
+          return resultImage;
         });
   }
 };
