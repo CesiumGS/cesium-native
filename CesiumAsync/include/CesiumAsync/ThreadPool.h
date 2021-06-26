@@ -30,6 +30,19 @@ private:
   // then the current thread is currently inside this thread pool.
   static thread_local std::vector<Scheduler*> schedulersInThreadPoolThread;
 
+  static auto createPreRun(ThreadPool::Scheduler* pScheduler) {
+    return [pScheduler]() {
+      ThreadPool::schedulersInThreadPoolThread.push_back(pScheduler);
+    };
+  }
+
+  static auto createPostRun(ThreadPool::Scheduler* pScheduler) {
+    return [pScheduler]() {
+      assert(ThreadPool::schedulersInThreadPoolThread.back() == pScheduler);
+      ThreadPool::schedulersInThreadPoolThread.pop_back();
+    };
+  }
+
   template <typename T> friend class Future;
   friend class AsyncSystem;
 };
