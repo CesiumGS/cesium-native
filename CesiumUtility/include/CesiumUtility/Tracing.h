@@ -123,8 +123,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN_IN_TRACK(name)                                      \
-  if (CesiumUtility::Impl::Tracer::instance().getEnlistedSlotReference() !=    \
-      nullptr) {                                                               \
+  if (CesiumUtility::Impl::TrackReference::current() != nullptr) {             \
     CESIUM_TRACE_BEGIN(name);                                                  \
   }
 
@@ -139,8 +138,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END_IN_TRACK(name)                                        \
-  if (CesiumUtility::Impl::Tracer::instance().getEnlistedSlotReference() !=    \
-      nullptr) {                                                               \
+  if (CesiumUtility::Impl::TrackReference::current() != nullptr) {             \
     CESIUM_TRACE_END(name);                                                    \
   }
 
@@ -159,7 +157,7 @@
  * @param name A human-friendly name for this set of tracks.
  */
 #define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)                               \
-  CesiumUtility::Impl::TraceAsyncSlots id { name }
+  CesiumUtility::Impl::TrackSet id { name }
 
 /**
  * @brief Begins using a track set in this thread.
@@ -173,9 +171,9 @@
  *           {@link CESIUM_TRACE_DECLARE_TRACK_SET}.
  */
 #define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
-  CesiumUtility::Impl::SlotReference TRACE_NAME_AUX2(                          \
+  CesiumUtility::Impl::TrackReference TRACE_NAME_AUX2(                         \
       cesiumTraceEnlistSlot,                                                   \
-      __LINE__)(id, __FILE__, __LINE__);
+      __LINE__)(id);
 
 /**
  * @brief Capture the current tracing track for a lambda, so that the lambda may
@@ -187,7 +185,7 @@
  * {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
  */
 #define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()                                    \
-  tracingSlot = CesiumUtility::Impl::LambdaCaptureSlot(__FILE__, __LINE__)
+  tracingSlot = CesiumUtility::Impl::LambdaCaptureTrack()
 
 /**
  * @brief Uses a captured track for the current thread and the current scope.
@@ -212,7 +210,7 @@ struct Trace {
   std::thread::id threadID;
 };
 
-struct SlotReference;
+class TrackReference;
 
 class Tracer {
 public:
@@ -221,6 +219,7 @@ public:
   ~Tracer();
 
   void startTracing(const std::string& filePath = "trace.json");
+  void endTracing();
 
   void writeCompleteEvent(const Trace& trace);
   void writeAsyncEventBegin(const char* name, int64_t id);
@@ -228,18 +227,12 @@ public:
   void writeAsyncEventEnd(const char* name, int64_t id);
   void writeAsyncEventEnd(const char* name);
 
-  void enlist(SlotReference& slotReference);
-  void unEnlist(SlotReference& slotReference);
-  SlotReference* getEnlistedSlotReference() const;
-
-  int64_t allocateID();
-
-  void endTracing();
+  int64_t allocateTrackID();
 
 private:
   Tracer();
 
-  int64_t getIDFromEnlistedSlotReference() const;
+  int64_t getCurrentThreadTrackID() const;
   void writeAsyncEvent(
       const char* category,
       const char* name,
@@ -250,16 +243,19 @@ private:
   uint32_t _numTraces;
   std::mutex _lock;
   std::atomic<int64_t> _lastAllocatedID;
-  static thread_local std::vector<SlotReference*> _threadEnlistedSlots;
 };
 
 class ScopedTrace {
 public:
   explicit ScopedTrace(const std::string& message);
+  ~ScopedTrace();
 
   void reset();
 
-  ~ScopedTrace();
+  ScopedTrace(const ScopedTrace& rhs) = delete;
+  ScopedTrace(ScopedTrace&& rhs) = delete;
+  ScopedTrace& operator=(const ScopedTrace& rhs) = delete;
+  ScopedTrace& operator=(ScopedTrace&& rhs) = delete;
 
 private:
   std::string _name;
@@ -268,15 +264,20 @@ private:
   bool _reset;
 };
 
-class ScopedEnlist {
+class TrackSet {
 public:
-  explicit ScopedEnlist(size_t index);
-  ~ScopedEnlist();
-};
+  explicit TrackSet(const char* name);
+  ~TrackSet();
 
-struct TraceAsyncSlots {
-  struct Slot {
-    Slot(int64_t id_, bool inUse_)
+  size_t acquireTrack();
+  void addReference(size_t trackIndex) noexcept;
+  void releaseReference(size_t trackIndex) noexcept;
+
+  int64_t getTracingID(size_t trackIndex) noexcept;
+
+private:
+  struct Track {
+    Track(int64_t id_, bool inUse_)
         : id(id_), referenceCount(0), inUse(inUse_) {}
 
     int64_t id;
@@ -284,65 +285,57 @@ struct TraceAsyncSlots {
     bool inUse;
   };
 
-  TraceAsyncSlots(const char* name);
-  ~TraceAsyncSlots();
-
-  void addReference(size_t index) noexcept;
-  void releaseReference(size_t index) noexcept;
-
   std::string name;
-  std::vector<Slot> slots;
+  std::vector<Track> slots;
   std::mutex mutex;
-
-  size_t acquireSlot();
 };
 
-struct SlotReference;
+class LambdaCaptureTrack {
+public:
+  LambdaCaptureTrack();
+  LambdaCaptureTrack(LambdaCaptureTrack&& rhs) noexcept;
+  LambdaCaptureTrack(const LambdaCaptureTrack& rhs) noexcept;
+  ~LambdaCaptureTrack();
+  LambdaCaptureTrack& operator=(const LambdaCaptureTrack& rhs) noexcept;
+  LambdaCaptureTrack& operator=(LambdaCaptureTrack&& rhs) noexcept;
 
-struct LambdaCaptureSlot {
-  LambdaCaptureSlot(const char* file, int32_t line);
-  LambdaCaptureSlot(LambdaCaptureSlot&& rhs) noexcept;
-  LambdaCaptureSlot(const LambdaCaptureSlot& rhs) noexcept;
-  ~LambdaCaptureSlot();
-  LambdaCaptureSlot& operator=(const LambdaCaptureSlot& rhs) noexcept;
-  LambdaCaptureSlot& operator=(LambdaCaptureSlot&& rhs) noexcept;
-
-  TraceAsyncSlots* pSlots;
+private:
+  TrackSet* pSlots;
   size_t index;
-  const char* file;
-  int32_t line;
+
+  friend class TrackReference;
 };
 
-// An RAII object to reference an async operation slot.
-// When the last instance associated with a particular slot index is destroyed,
-// the slot is released.
-struct SlotReference {
-  SlotReference(
-      TraceAsyncSlots& slots,
-      const char* file = nullptr,
-      int32_t line = -1) noexcept;
-  SlotReference(
-      TraceAsyncSlots& slots,
-      size_t index,
-      const char* file = nullptr,
-      int32_t line = -1) noexcept;
-  SlotReference(
-      const LambdaCaptureSlot& lambdaCapture,
-      const char* file = nullptr,
-      int32_t line = -1) noexcept;
-  SlotReference(const SlotReference& rhs) = delete;
-  SlotReference(SlotReference&& rhs) = delete;
-  ~SlotReference() noexcept;
+// An RAII object to reference an async operation track.
+// When the last instance associated with a particular track index is destroyed,
+// the track is released back to the track set.
+class TrackReference {
+public:
+  static TrackReference* current();
 
-  SlotReference& operator=(const SlotReference& rhs) = delete;
-  SlotReference& operator=(SlotReference&& rhs) = delete;
+  TrackReference(TrackSet& slots) noexcept;
+  TrackReference(TrackSet& slots, size_t index) noexcept;
+  TrackReference(const LambdaCaptureTrack& lambdaCapture) noexcept;
+  ~TrackReference() noexcept;
 
   operator bool() const noexcept;
+  int64_t getTracingID() const noexcept;
 
-  TraceAsyncSlots* pSlots;
+  TrackReference(const TrackReference& rhs) = delete;
+  TrackReference(TrackReference&& rhs) = delete;
+  TrackReference& operator=(const TrackReference& rhs) = delete;
+  TrackReference& operator=(TrackReference&& rhs) = delete;
+
+private:
+  void enlistCurrentThread();
+  void dismissCurrentThread();
+
+  TrackSet* pSlots;
   size_t index;
-  const char* file;
-  int32_t line;
+
+  static thread_local std::vector<TrackReference*> _threadEnlistedTracks;
+
+  friend class LambdaCaptureTrack;
 };
 
 } // namespace Impl

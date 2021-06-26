@@ -12,16 +12,16 @@ Tracer& Tracer::instance() {
   return instance;
 }
 
-/*static*/ thread_local std::vector<SlotReference*>
-    Tracer::_threadEnlistedSlots{};
-
-Tracer::Tracer() : _output{}, _numTraces{0}, _lock{}, _lastAllocatedID(0) {}
-
 Tracer::~Tracer() { endTracing(); }
 
 void Tracer::startTracing(const std::string& filePath) {
   this->_output.open(filePath);
   this->_output << "{\"otherData\": {},\"traceEvents\":[";
+}
+
+void Tracer::endTracing() {
+  this->_output << "]}";
+  this->_output.close();
 }
 
 void Tracer::writeCompleteEvent(const Trace& trace) {
@@ -51,7 +51,7 @@ void Tracer::writeAsyncEventBegin(const char* name, int64_t id) {
 }
 
 void Tracer::writeAsyncEventBegin(const char* name) {
-  this->writeAsyncEventBegin(name, this->getIDFromEnlistedSlotReference());
+  this->writeAsyncEventBegin(name, this->getCurrentThreadTrackID());
 }
 
 void Tracer::writeAsyncEventEnd(const char* name, int64_t id) {
@@ -59,17 +59,16 @@ void Tracer::writeAsyncEventEnd(const char* name, int64_t id) {
 }
 
 void Tracer::writeAsyncEventEnd(const char* name) {
-  this->writeAsyncEventEnd(name, this->getIDFromEnlistedSlotReference());
+  this->writeAsyncEventEnd(name, this->getCurrentThreadTrackID());
 }
 
-int64_t Tracer::getIDFromEnlistedSlotReference() const {
-  const SlotReference* pSlot = Tracer::instance().getEnlistedSlotReference();
-  if (pSlot && *pSlot) {
-    std::scoped_lock lock(pSlot->pSlots->mutex);
-    return pSlot->pSlots->slots[pSlot->index].id;
-  } else {
-    return -1;
-  }
+int64_t Tracer::allocateTrackID() { return ++this->_lastAllocatedID; }
+
+Tracer::Tracer() : _output{}, _numTraces{0}, _lock{}, _lastAllocatedID(0) {}
+
+int64_t Tracer::getCurrentThreadTrackID() const {
+  const TrackReference* pTrack = TrackReference::current();
+  return pTrack->getTracingID();
 }
 
 void Tracer::writeAsyncEvent(
@@ -118,38 +117,6 @@ void Tracer::writeAsyncEvent(
   this->_output << "}";
 }
 
-void Tracer::enlist(SlotReference& slotReference) {
-  if (!slotReference.pSlots) {
-    return;
-  }
-
-  Tracer::_threadEnlistedSlots.emplace_back(&slotReference);
-}
-
-void Tracer::unEnlist([[maybe_unused]] SlotReference& slotReference) {
-  if (!slotReference.pSlots) {
-    return;
-  }
-
-  assert(
-      Tracer::_threadEnlistedSlots.size() > 0 &&
-      Tracer::_threadEnlistedSlots.back() == &slotReference);
-  Tracer::_threadEnlistedSlots.pop_back();
-}
-
-SlotReference* Tracer::getEnlistedSlotReference() const {
-  return Tracer::_threadEnlistedSlots.empty()
-             ? nullptr
-             : Tracer::_threadEnlistedSlots.back();
-}
-
-int64_t Tracer::allocateID() { return ++this->_lastAllocatedID; }
-
-void Tracer::endTracing() {
-  this->_output << "]}";
-  this->_output.close();
-}
-
 ScopedTrace::ScopedTrace(const std::string& message)
     : _name{message},
       _startTime{std::chrono::steady_clock::now()},
@@ -158,10 +125,16 @@ ScopedTrace::ScopedTrace(const std::string& message)
   CESIUM_TRACE_BEGIN_IN_TRACK(_name.c_str());
 }
 
+ScopedTrace::~ScopedTrace() {
+  if (!this->_reset) {
+    this->reset();
+  }
+}
+
 void ScopedTrace::reset() {
   this->_reset = true;
 
-  if (Tracer::instance().getEnlistedSlotReference() != nullptr) {
+  if (TrackReference::current() != nullptr) {
     CESIUM_TRACE_END(_name.c_str());
   } else {
     auto endTimePoint = std::chrono::steady_clock::now();
@@ -178,15 +151,9 @@ void ScopedTrace::reset() {
   }
 }
 
-ScopedTrace::~ScopedTrace() {
-  if (!this->_reset) {
-    this->reset();
-  }
-}
+TrackSet::TrackSet(const char* name_) : name(name_) {}
 
-TraceAsyncSlots::TraceAsyncSlots(const char* name_) : name(name_) {}
-
-TraceAsyncSlots::~TraceAsyncSlots() {
+TrackSet::~TrackSet() {
   std::scoped_lock lock(this->mutex);
   for (auto& slot : this->slots) {
     assert(!slot.inUse);
@@ -196,22 +163,7 @@ TraceAsyncSlots::~TraceAsyncSlots() {
   }
 }
 
-void TraceAsyncSlots::addReference(size_t index) noexcept {
-  std::scoped_lock lock(this->mutex);
-  ++this->slots[index].referenceCount;
-}
-
-void TraceAsyncSlots::releaseReference(size_t index) noexcept {
-  std::scoped_lock lock(this->mutex);
-  Slot& slot = this->slots[index];
-  assert(slot.referenceCount > 0);
-  --slot.referenceCount;
-  if (slot.referenceCount == 0) {
-    slot.inUse = false;
-  }
-}
-
-size_t TraceAsyncSlots::acquireSlot() {
+size_t TrackSet::acquireTrack() {
   std::scoped_lock lock(this->mutex);
 
   auto it =
@@ -223,7 +175,7 @@ size_t TraceAsyncSlots::acquireSlot() {
     it->inUse = true;
     return size_t(it - this->slots.begin());
   } else {
-    Slot slot{Tracer::instance().allocateID(), true};
+    Track slot{Tracer::instance().allocateTrackID(), true};
     Tracer::instance().writeAsyncEventBegin(
         (this->name + " " + std::to_string(slot.id)).c_str(),
         slot.id);
@@ -233,9 +185,31 @@ size_t TraceAsyncSlots::acquireSlot() {
   }
 }
 
-LambdaCaptureSlot::LambdaCaptureSlot(const char* file_, int32_t line_)
-    : pSlots(nullptr), index(0), file(file_), line(line_) {
-  const SlotReference* pSlot = Tracer::instance().getEnlistedSlotReference();
+void TrackSet::addReference(size_t trackIndex) noexcept {
+  std::scoped_lock lock(this->mutex);
+  ++this->slots[trackIndex].referenceCount;
+}
+
+void TrackSet::releaseReference(size_t trackIndex) noexcept {
+  std::scoped_lock lock(this->mutex);
+  Track& slot = this->slots[trackIndex];
+  assert(slot.referenceCount > 0);
+  --slot.referenceCount;
+  if (slot.referenceCount == 0) {
+    slot.inUse = false;
+  }
+}
+
+int64_t TrackSet::getTracingID(size_t trackIndex) noexcept {
+  std::scoped_lock lock(this->mutex);
+  if (trackIndex >= this->slots.size()) {
+    return -1;
+  }
+  return this->slots[trackIndex].id;
+}
+
+LambdaCaptureTrack::LambdaCaptureTrack() : pSlots(nullptr), index(0) {
+  const TrackReference* pSlot = TrackReference::current();
   if (pSlot) {
     this->pSlots = pSlot->pSlots;
     this->index = pSlot->index;
@@ -246,27 +220,27 @@ LambdaCaptureSlot::LambdaCaptureSlot(const char* file_, int32_t line_)
   }
 }
 
-LambdaCaptureSlot::LambdaCaptureSlot(const LambdaCaptureSlot& rhs) noexcept
-    : pSlots(rhs.pSlots), index(rhs.index), file(rhs.file), line(rhs.line) {
+LambdaCaptureTrack::LambdaCaptureTrack(const LambdaCaptureTrack& rhs) noexcept
+    : pSlots(rhs.pSlots), index(rhs.index) {
   if (this->pSlots) {
     this->pSlots->addReference(this->index);
   }
 }
 
-LambdaCaptureSlot::LambdaCaptureSlot(LambdaCaptureSlot&& rhs) noexcept
-    : pSlots(rhs.pSlots), index(rhs.index), file(rhs.file), line(rhs.line) {
+LambdaCaptureTrack::LambdaCaptureTrack(LambdaCaptureTrack&& rhs) noexcept
+    : pSlots(rhs.pSlots), index(rhs.index) {
   rhs.pSlots = nullptr;
   rhs.index = 0;
 }
 
-LambdaCaptureSlot::~LambdaCaptureSlot() {
+LambdaCaptureTrack::~LambdaCaptureTrack() {
   if (this->pSlots) {
     this->pSlots->releaseReference(this->index);
   }
 }
 
-LambdaCaptureSlot&
-LambdaCaptureSlot::operator=(const LambdaCaptureSlot& rhs) noexcept {
+LambdaCaptureTrack&
+LambdaCaptureTrack::operator=(const LambdaCaptureTrack& rhs) noexcept {
   if (rhs.pSlots) {
     rhs.pSlots->addReference(rhs.index);
   }
@@ -276,14 +250,12 @@ LambdaCaptureSlot::operator=(const LambdaCaptureSlot& rhs) noexcept {
 
   this->pSlots = rhs.pSlots;
   this->index = rhs.index;
-  this->file = rhs.file;
-  this->line = rhs.line;
 
   return *this;
 }
 
-LambdaCaptureSlot&
-LambdaCaptureSlot::operator=(LambdaCaptureSlot&& rhs) noexcept {
+LambdaCaptureTrack&
+LambdaCaptureTrack::operator=(LambdaCaptureTrack&& rhs) noexcept {
   if (this->pSlots) {
     this->pSlots->releaseReference(this->index);
   }
@@ -297,53 +269,69 @@ LambdaCaptureSlot::operator=(LambdaCaptureSlot&& rhs) noexcept {
   return *this;
 }
 
-SlotReference::SlotReference(
-    TraceAsyncSlots& slots_,
-    const char* file,
-    int32_t line) noexcept
-    : SlotReference(slots_, slots_.acquireSlot(), file, line) {}
+/*static*/ thread_local std::vector<TrackReference*>
+    TrackReference::_threadEnlistedTracks{};
 
-SlotReference::SlotReference(
-    TraceAsyncSlots& slots_,
-    size_t index_,
-    const char* file_,
-    int32_t line_) noexcept
-    : pSlots(&slots_), index(index_), file(file_), line(line_) {
-  this->pSlots->addReference(this->index);
-  Tracer::instance().enlist(*this);
+/*static*/ TrackReference* TrackReference::current() {
+  return TrackReference::_threadEnlistedTracks.empty()
+             ? nullptr
+             : TrackReference::_threadEnlistedTracks.back();
 }
 
-SlotReference::SlotReference(
-    const LambdaCaptureSlot& lambdaCapture,
-    const char* file_,
-    int32_t line_) noexcept
-    : pSlots(lambdaCapture.pSlots),
-      index(lambdaCapture.index),
-      file(file_),
-      line(line_) {
+TrackReference::TrackReference(TrackSet& slots_) noexcept
+    : TrackReference(slots_, slots_.acquireTrack()) {}
+
+TrackReference::TrackReference(TrackSet& slots_, size_t index_) noexcept
+    : pSlots(&slots_), index(index_) {
+  this->pSlots->addReference(this->index);
+  this->enlistCurrentThread();
+}
+
+TrackReference::TrackReference(const LambdaCaptureTrack& lambdaCapture) noexcept
+    : pSlots(lambdaCapture.pSlots), index(lambdaCapture.index) {
   if (this->pSlots) {
     this->pSlots->addReference(this->index);
-    Tracer::instance().enlist(*this);
+    this->enlistCurrentThread();
   }
 }
 
-// SlotReference::SlotReference(const SlotReference& rhs) noexcept
-//     : pSlots(rhs.pSlots), index(rhs.index) {
-//   if (this->pSlots) {
-//     this->pSlots->addReference(this->index);
-//     Tracer::instance().enlist(*this);
-//   }
-// }
-
-SlotReference::~SlotReference() noexcept {
+TrackReference::~TrackReference() noexcept {
   if (this->pSlots) {
-    Tracer::instance().unEnlist(*this);
+    this->dismissCurrentThread();
     this->pSlots->releaseReference(this->index);
   }
 }
 
-SlotReference::operator bool() const noexcept {
+TrackReference::operator bool() const noexcept {
   return this->pSlots != nullptr;
+}
+
+int64_t TrackReference::getTracingID() const noexcept {
+  if (this->pSlots) {
+    return this->pSlots->getTracingID(this->index);
+  } else {
+    return -1;
+  }
+}
+
+void TrackReference::enlistCurrentThread() {
+  if (!this->pSlots) {
+    return;
+  }
+
+  TrackReference::_threadEnlistedTracks.emplace_back(this);
+}
+
+void TrackReference::dismissCurrentThread() {
+  if (!this->pSlots) {
+    return;
+  }
+
+  assert(
+      TrackReference::_threadEnlistedTracks.size() > 0 &&
+      TrackReference::_threadEnlistedTracks.back() == this);
+
+  TrackReference::_threadEnlistedTracks.pop_back();
 }
 
 } // namespace Impl
