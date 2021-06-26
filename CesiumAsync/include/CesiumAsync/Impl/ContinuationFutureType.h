@@ -12,9 +12,8 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 template <typename Func, typename T> struct ContinuationFutureType {
-  typedef Future<typename RemoveFuture<
-      typename ContinuationReturnType<Func, T>::type>::type>
-      type;
+  using type = Future<typename RemoveFuture<
+      typename ContinuationReturnType<Func, T>::type>::type>;
 };
 
 template <typename Func, typename T>
