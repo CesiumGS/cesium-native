@@ -427,8 +427,8 @@ private:
       _tiles;
   std::unique_ptr<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
-  int32_t _totalTilesCurrentlyLoading;
-  int32_t _throttledTilesCurrentlyLoading;
+  uint32_t _totalTilesCurrentlyLoading;
+  uint32_t _throttledTilesCurrentlyLoading;
 
   static CesiumGltf::GltfReader _gltfReader;
 };

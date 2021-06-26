@@ -21,7 +21,7 @@ struct CESIUM3DTILES_API RasterOverlayOptions {
    * @brief The maximum number of overlay tiles that may simultaneously be in
    * the process of loading.
    */
-  int32_t maximumSimultaneousTileLoads = 20;
+  uint32_t maximumSimultaneousTileLoads = 20;
 };
 
 /**
