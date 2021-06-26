@@ -318,7 +318,7 @@ public:
   /**
    * @brief Get the per-TileProvider {@link Credit} if one exists.
    */
-  const std::optional<Credit> getCredit() const noexcept { return _credit; }
+  const std::optional<Credit>& getCredit() const noexcept { return _credit; }
 
   /**
    * @brief Loads a tile immediately, without throttling requests.
