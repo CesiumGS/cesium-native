@@ -45,12 +45,13 @@
  * @param filename The path and named of the file in which to record traces.
  */
 #define CESIUM_TRACE_INIT(filename)                                            \
-  CesiumUtility::Tracer::instance().startTracing(filename)
+  CesiumUtility::Impl::Tracer::instance().startTracing(filename)
 
 /**
  * @brief Shuts down tracing and closes the JSON tracing file.
  */
-#define CESIUM_TRACE_SHUTDOWN() CesiumUtility::Tracer::instance().endTracing()
+#define CESIUM_TRACE_SHUTDOWN()                                                \
+  CesiumUtility::Impl::Tracer::instance().endTracing()
 
 /**
  * @brief Measures and records the time spent in the current scope.
@@ -63,7 +64,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE(name)                                                     \
-  CesiumUtility::ScopedTrace TRACE_NAME_AUX2(cesiumTrace, __LINE__)(name)
+  CesiumUtility::Impl::ScopedTrace TRACE_NAME_AUX2(cesiumTrace, __LINE__)(name)
 
 /**
  * @brief Begins measuring an operation which may span scope but not threads.
@@ -81,12 +82,13 @@
  *   * If either BEGIN or END is called from a thread operating in a track,
  *     then both must be, and it must be the same track in
  *     both cases. In this case BEGIN and END may be called from different
- *     threads.
- *   * If either BEGIN or END is called from a thread _not_ enlisted into an
- *     async process, then both must be called from the same thread and neither
- *     thread may be enlisted.
+ *     threads. However, it safer to use {@link CESIUM_TRACE_BEGIN_IN_TRACK}
+ *     in this scenario.
+ *   * If either BEGIN or END is called from a thread _not_ enlisted into a
+ *     track, then both must be called from the same thread and neither
+ *     thread may be in a track.
  *   * Paired calls must not be interleaved with other BEGIN/END calls for the
- *     same thread or async process ID. Other BEGIN/END pairs may be fully
+ *     same thread or track. Other BEGIN/END pairs may be fully
  *     nested within this one, but this pair must not END in between a nested
  *     measurement's BEGIN and END calls.
  *
@@ -96,7 +98,7 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN(name)                                               \
-  CesiumUtility::Tracer::instance().writeAsyncEventBegin(name)
+  CesiumUtility::Impl::Tracer::instance().writeAsyncEventBegin(name)
 
 /**
  * @brief Ends measuring an operation which may span scopes but not threads.
@@ -108,36 +110,36 @@
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END(name)                                                 \
-  CesiumUtility::Tracer::instance().writeAsyncEventEnd(name)
+  CesiumUtility::Impl::Tracer::instance().writeAsyncEventEnd(name)
 
 /**
  * @brief Begins measuring an operation that may span both scopes and threads.
- * 
+ *
  * This macro is identical to {@link CESIUM_TRACE_BEGIN} except that it does
  * nothing if the calling thread and scope are not operating as part of a
  * track. This allows it to be safely used to measure operations that span
  * threads. Use {@link CESIUM_TRACE_USE_TRACK_SET} to use a track from a set.
- * 
+ *
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_BEGIN_IN_TRACK(name)                                      \
-  if (CesiumUtility::Tracer::instance().getEnlistedSlotReference() !=          \
+  if (CesiumUtility::Impl::Tracer::instance().getEnlistedSlotReference() !=    \
       nullptr) {                                                               \
     CESIUM_TRACE_BEGIN(name);                                                  \
   }
 
 /**
  * @brief Ends measuring an operation that may span both scopes and threads.
- * 
+ *
  * This macro is identical to {@link CESIUM_TRACE_END} except that it does
  * nothing if the calling thread and scope are not operating as part of a
  * track. This allows it to be safely used to measure operations that span
  * threads. Use {@link CESIUM_TRACE_USE_TRACK_SET} to use a track from a set.
- * 
+ *
  * @param name The name of the measured operation.
  */
 #define CESIUM_TRACE_END_IN_TRACK(name)                                        \
-  if (CesiumUtility::Tracer::instance().getEnlistedSlotReference() !=          \
+  if (CesiumUtility::Impl::Tracer::instance().getEnlistedSlotReference() !=    \
       nullptr) {                                                               \
     CESIUM_TRACE_END(name);                                                    \
   }
@@ -157,7 +159,7 @@
  * @param name A human-friendly name for this set of tracks.
  */
 #define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)                               \
-  CesiumUtility::TraceAsyncSlots id { name }
+  CesiumUtility::Impl::TraceAsyncSlots id { name }
 
 /**
  * @brief Begins using a track set in this thread.
@@ -171,7 +173,7 @@
  *           {@link CESIUM_TRACE_DECLARE_TRACK_SET}.
  */
 #define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
-  CesiumUtility::SlotReference TRACE_NAME_AUX2(                                \
+  CesiumUtility::Impl::SlotReference TRACE_NAME_AUX2(                          \
       cesiumTraceEnlistSlot,                                                   \
       __LINE__)(id, __FILE__, __LINE__);
 
@@ -185,7 +187,7 @@
  * {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
  */
 #define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()                                    \
-  tracingSlot = CesiumUtility::LambdaCaptureSlot(__FILE__, __LINE__)
+  tracingSlot = CesiumUtility::Impl::LambdaCaptureSlot(__FILE__, __LINE__)
 
 /**
  * @brief Uses a captured track for the current thread and the current scope.
@@ -198,6 +200,7 @@
   CESIUM_TRACE_USE_TRACK_SET(tracingSlot)
 
 namespace CesiumUtility {
+namespace Impl {
 
 // The following are internal classes used by the tracing framework, do not use
 // directly.
@@ -342,6 +345,7 @@ struct SlotReference {
   int32_t line;
 };
 
+} // namespace Impl
 } // namespace CesiumUtility
 
 #endif // CESIUM_TRACING_ENABLED

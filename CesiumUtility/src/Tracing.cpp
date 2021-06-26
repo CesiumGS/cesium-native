@@ -5,6 +5,8 @@
 #if CESIUM_TRACING_ENABLED
 
 namespace CesiumUtility {
+namespace Impl {
+
 Tracer& Tracer::instance() {
   static Tracer instance;
   return instance;
@@ -61,8 +63,7 @@ void Tracer::writeAsyncEventEnd(const char* name) {
 }
 
 int64_t Tracer::getIDFromEnlistedSlotReference() const {
-  const SlotReference* pSlot =
-      CesiumUtility::Tracer::instance().getEnlistedSlotReference();
+  const SlotReference* pSlot = Tracer::instance().getEnlistedSlotReference();
   if (pSlot && *pSlot) {
     std::scoped_lock lock(pSlot->pSlots->mutex);
     return pSlot->pSlots->slots[pSlot->index].id;
@@ -160,7 +161,7 @@ ScopedTrace::ScopedTrace(const std::string& message)
 void ScopedTrace::reset() {
   this->_reset = true;
 
-  if (CesiumUtility::Tracer::instance().getEnlistedSlotReference() != nullptr) {
+  if (Tracer::instance().getEnlistedSlotReference() != nullptr) {
     CESIUM_TRACE_END(_name.c_str());
   } else {
     auto endTimePoint = std::chrono::steady_clock::now();
@@ -222,8 +223,8 @@ size_t TraceAsyncSlots::acquireSlot() {
     it->inUse = true;
     return size_t(it - this->slots.begin());
   } else {
-    Slot slot{CesiumUtility::Tracer::instance().allocateID(), true};
-    CesiumUtility::Tracer::instance().writeAsyncEventBegin(
+    Slot slot{Tracer::instance().allocateID(), true};
+    Tracer::instance().writeAsyncEventBegin(
         (this->name + " " + std::to_string(slot.id)).c_str(),
         slot.id);
     size_t index = this->slots.size();
@@ -345,6 +346,7 @@ SlotReference::operator bool() const noexcept {
   return this->pSlots != nullptr;
 }
 
+} // namespace Impl
 } // namespace CesiumUtility
 
 #endif // CESIUM_TRACING_ENABLED
