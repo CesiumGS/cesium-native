@@ -10,6 +10,7 @@
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
+#include <cassert>
 #include <optional>
 #include <spdlog/fwd.h>
 #include <unordered_map>
@@ -300,6 +301,7 @@ public:
    * @brief Returns the number of tiles that are currently loading.
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
+    assert(this->_totalTilesCurrentlyLoading > -1);
     return this->_totalTilesCurrentlyLoading;
   }
 
@@ -427,8 +429,8 @@ private:
       _tiles;
   std::unique_ptr<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
-  uint32_t _totalTilesCurrentlyLoading;
-  uint32_t _throttledTilesCurrentlyLoading;
+  int32_t _totalTilesCurrentlyLoading;
+  int32_t _throttledTilesCurrentlyLoading;
 
   static CesiumGltf::GltfReader _gltfReader;
 };
