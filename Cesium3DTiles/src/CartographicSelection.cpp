@@ -18,9 +18,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
 
   const glm::dvec2& point0 = polygon[0];
 
-  using Coord = double;
-  using N = uint32_t;
-  using Point = std::array<Coord, 2>;
+  using Point = std::array<double, 2>;
 
   std::vector<std::vector<Point>> localPolygons;
 
@@ -45,7 +43,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
 
   localPolygons.push_back(localPolygon);
 
-  indices = mapbox::earcut<N>(localPolygons);
+  indices = mapbox::earcut<uint32_t>(localPolygons);
   return indices;
 }
 
