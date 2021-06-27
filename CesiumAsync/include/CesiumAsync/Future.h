@@ -57,7 +57,7 @@ public:
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->immediatelyInWorkerThreadScheduler,
+        this->_pSchedulers->workerThread.immediate,
         "waiting for worker thread",
         std::forward<Func>(f));
   }
@@ -83,7 +83,7 @@ public:
   template <typename Func>
   Impl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) && {
     return std::move(*this).thenWithScheduler(
-        this->_pSchedulers->immediatelyInMainThreadScheduler,
+        this->_pSchedulers->mainThread.immediate,
         "waiting for main thread",
         std::forward<Func>(f));
   }
@@ -135,7 +135,7 @@ public:
   Impl::ContinuationFutureType_t<Func, T>
   thenInThreadPool(const ThreadPool& threadPool, Func&& f) && {
     return std::move(*this).thenWithScheduler(
-        *threadPool._pScheduler,
+        threadPool._pScheduler->immediate,
         "waiting for thread pool thread",
         std::forward<Func>(f));
   }
@@ -163,7 +163,7 @@ public:
    */
   template <typename Func> Future<T> catchInMainThread(Func&& f) && {
     return std::move(*this).catchWithScheduler(
-        this->_pSchedulers->immediatelyInMainThreadScheduler,
+        this->_pSchedulers->mainThread.immediate,
         std::forward<Func>(f));
   }
 
@@ -237,8 +237,7 @@ private:
             async::inline_scheduler(),
             Impl::CatchFunction<Func, T, Scheduler>{
                 scheduler,
-                std::forward<Func>(f),
-                this->_pSchedulers->pTaskProcessor}));
+                std::forward<Func>(f)}));
   }
 
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;

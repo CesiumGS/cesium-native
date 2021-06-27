@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumAsync/Impl/ImmediateScheduler.h"
 #include "CesiumAsync/Impl/cesium-async++.h"
 #include "CesiumAsync/Library.h"
 #include <memory>
@@ -21,26 +22,20 @@ private:
   struct Scheduler {
     Scheduler(int32_t numberOfThreads);
     void schedule(async::task_run_handle t);
+
+    Impl::ImmediateScheduler<Scheduler> immediate{this};
+
     async::threadpool_scheduler scheduler;
   };
 
   std::shared_ptr<Scheduler> _pScheduler;
 
-  // If a Scheduler instance is found in this thread-local vector,
-  // then the current thread is currently inside this thread pool.
-  static thread_local std::vector<Scheduler*> schedulersInThreadPoolThread;
-
   static auto createPreRun(ThreadPool::Scheduler* pScheduler) {
-    return [pScheduler]() {
-      ThreadPool::schedulersInThreadPoolThread.push_back(pScheduler);
-    };
+    return [pScheduler]() { return pScheduler->immediate.markBegin(); };
   }
 
   static auto createPostRun(ThreadPool::Scheduler* pScheduler) {
-    return [pScheduler]() {
-      assert(ThreadPool::schedulersInThreadPoolThread.back() == pScheduler);
-      ThreadPool::schedulersInThreadPoolThread.pop_back();
-    };
+    return [pScheduler]() { return pScheduler->immediate.markEnd(); };
   }
 
   template <typename T> friend class Future;

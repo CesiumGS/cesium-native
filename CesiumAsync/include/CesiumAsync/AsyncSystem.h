@@ -124,7 +124,7 @@ public:
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
-            this->_pSchedulers->immediatelyInWorkerThreadScheduler,
+            this->_pSchedulers->workerThread.immediate,
             Impl::WithTracing<Func, void>::wrap(
                 tracingName,
                 std::forward<Func>(f))));
@@ -153,7 +153,7 @@ public:
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
-            this->_pSchedulers->mainThreadScheduler,
+            this->_pSchedulers->mainThread.immediate,
             Impl::WithTracing<Func, void>::wrap(
                 tracingName,
                 std::forward<Func>(f))));
@@ -178,7 +178,7 @@ public:
     return Impl::ContinuationFutureType_t<Func, void>(
         this->_pSchedulers,
         async::spawn(
-            *threadPool._pScheduler,
+            threadPool._pScheduler->immediate,
             Impl::WithTracing<Func, void>::wrap(
                 tracingName,
                 std::forward<Func>(f))));

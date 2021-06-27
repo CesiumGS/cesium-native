@@ -10,7 +10,6 @@ namespace Impl {
 template <typename Func, typename T, typename Scheduler> struct CatchFunction {
   Scheduler& scheduler;
   Func f;
-  std::shared_ptr<ITaskProcessor> pTaskProcessor;
 
   decltype(auto) operator()(async::task<T>&& t) {
     try {
@@ -31,7 +30,6 @@ template <typename Func, typename Scheduler>
 struct CatchFunction<Func, void, Scheduler> {
   Scheduler& scheduler;
   Func f;
-  std::shared_ptr<ITaskProcessor> pTaskProcessor;
 
   decltype(auto) operator()(async::task<void>&& t) {
     try {

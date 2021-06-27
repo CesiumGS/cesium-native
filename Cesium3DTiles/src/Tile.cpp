@@ -211,9 +211,8 @@ void Tile::loadContent() {
     }
   }
 
-  std::optional<
-      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
-      maybeRequestFuture = tileset.requestTileContent(*this);
+  std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
+      tileset.requestTileContent(*this);
 
   if (!maybeRequestFuture) {
     // There is no content to load. But we may need to upsample.

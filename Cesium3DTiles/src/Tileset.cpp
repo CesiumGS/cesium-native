@@ -92,8 +92,7 @@ Tileset::Tileset(
 
   this->_externals.pAssetAccessor->requestAsset(this->_asyncSystem, ionUrl)
       .thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
-        Future<void> result = this->_handleAssetResponse(std::move(pRequest));
-        return result;
+        return this->_handleAssetResponse(std::move(pRequest));
       })
       .catchInMainThread([this, &ionAssetID](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
