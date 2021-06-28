@@ -8,42 +8,24 @@
 
 using namespace CesiumGltf;
 
-AccessorSparseJsonHandler::AccessorSparseJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
-      _count(),
-      _indices(context),
-      _values(context) {}
+AccessorSparseJsonHandler::AccessorSparseJsonHandler(const ReaderContext& context) noexcept : ExtensibleObjectJsonHandler(context), _count(), _indices(context), _values(context) {}
 
-void AccessorSparseJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    AccessorSparse* pObject) {
+void AccessorSparseJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, AccessorSparse* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyAccessorSparse(
-      AccessorSparse::TypeName,
-      str,
-      *this->_pObject);
+  return this->readObjectKeyAccessorSparse(AccessorSparse::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler*
-AccessorSparseJsonHandler::readObjectKeyAccessorSparse(
-    const std::string& objectType,
-    const std::string_view& str,
-    AccessorSparse& o) {
+CesiumJsonReader::IJsonHandler* AccessorSparseJsonHandler::readObjectKeyAccessorSparse(const std::string& objectType, const std::string_view& str, AccessorSparse& o) {
   using namespace std::string_literals;
 
-  if ("count"s == str)
-    return property("count", this->_count, o.count);
-  if ("indices"s == str)
-    return property("indices", this->_indices, o.indices);
-  if ("values"s == str)
-    return property("values", this->_values, o.values);
+  if ("count"s == str) return property("count", this->_count, o.count);
+  if ("indices"s == str) return property("indices", this->_indices, o.indices);
+  if ("values"s == str) return property("values", this->_values, o.values);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

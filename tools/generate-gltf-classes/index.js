@@ -7,13 +7,13 @@ const generate = require("./generate");
 const argv = yargs.options({
   schema: {
     alias: "s",
-    description: "The path to the glTF 2.0 JSONSchema files.",
+    description: "The path to the 3D Tiles JSONSchema files.",
     demandOption: true,
     type: "string"
   },
   output: {
     alias: "o",
-    description: "The output directory for the generated glTF class files.",
+    description: "The output directory for the generated 3D Tiles class files.",
     demandOption: true,
     type: "string"
   },
@@ -38,7 +38,7 @@ const argv = yargs.options({
 }).argv;
 
 const schemaCache = new SchemaCache(argv.schema, argv.extensions);
-const modelSchema = schemaCache.load("glTF.schema.json");
+const modelSchema = schemaCache.load("tileset.schema.json");
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 

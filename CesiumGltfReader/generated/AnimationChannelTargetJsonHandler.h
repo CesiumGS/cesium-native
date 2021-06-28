@@ -8,40 +8,34 @@
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct AnimationChannelTarget;
+  struct ReaderContext;
+  struct AnimationChannelTarget;
 
-class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
-public:
-  using ValueType = AnimationChannelTarget;
-
-  AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, AnimationChannelTarget* pObject);
-
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-
-protected:
-  IJsonHandler* readObjectKeyAnimationChannelTarget(
-      const std::string& objectType,
-      const std::string_view& str,
-      AnimationChannelTarget& o);
-
-private:
-  class PathJsonHandler : public CesiumJsonReader::JsonHandler {
+  class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
   public:
-    PathJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(
-        CesiumJsonReader::IJsonHandler* pParent,
-        AnimationChannelTarget::Path* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
+    using ValueType = AnimationChannelTarget;
+
+    AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, AnimationChannelTarget* pObject);
+
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+  protected:
+    IJsonHandler* readObjectKeyAnimationChannelTarget(const std::string& objectType, const std::string_view& str, AnimationChannelTarget& o);
 
   private:
-    AnimationChannelTarget::Path* _pEnum = nullptr;
-  };
+    class PathJsonHandler : public CesiumJsonReader::JsonHandler {
+    public:
+      PathJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+      void reset(CesiumJsonReader::IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum);
+      virtual CesiumJsonReader::IJsonHandler* readString(const std::string_view& str) override;
 
-  AnimationChannelTarget* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _node;
-  PathJsonHandler _path;
-};
-} // namespace CesiumGltf
+    private:
+      AnimationChannelTarget::Path* _pEnum = nullptr;
+    };
+
+    AnimationChannelTarget* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _node;
+    PathJsonHandler _path;
+  };
+}

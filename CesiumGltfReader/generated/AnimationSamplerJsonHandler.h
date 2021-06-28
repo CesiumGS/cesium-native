@@ -8,41 +8,35 @@
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct AnimationSampler;
+  struct ReaderContext;
+  struct AnimationSampler;
 
-class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
-public:
-  using ValueType = AnimationSampler;
-
-  AnimationSamplerJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
-
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-
-protected:
-  IJsonHandler* readObjectKeyAnimationSampler(
-      const std::string& objectType,
-      const std::string_view& str,
-      AnimationSampler& o);
-
-private:
-  class InterpolationJsonHandler : public CesiumJsonReader::JsonHandler {
+  class AnimationSamplerJsonHandler : public ExtensibleObjectJsonHandler {
   public:
-    InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(
-        CesiumJsonReader::IJsonHandler* pParent,
-        AnimationSampler::Interpolation* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
+    using ValueType = AnimationSampler;
+
+    AnimationSamplerJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
+
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+  protected:
+    IJsonHandler* readObjectKeyAnimationSampler(const std::string& objectType, const std::string_view& str, AnimationSampler& o);
 
   private:
-    AnimationSampler::Interpolation* _pEnum = nullptr;
-  };
+    class InterpolationJsonHandler : public CesiumJsonReader::JsonHandler {
+    public:
+      InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+      void reset(CesiumJsonReader::IJsonHandler* pParent, AnimationSampler::Interpolation* pEnum);
+      virtual CesiumJsonReader::IJsonHandler* readString(const std::string_view& str) override;
 
-  AnimationSampler* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
-  InterpolationJsonHandler _interpolation;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
-};
-} // namespace CesiumGltf
+    private:
+      AnimationSampler::Interpolation* _pEnum = nullptr;
+    };
+
+    AnimationSampler* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
+    InterpolationJsonHandler _interpolation;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
+  };
+}

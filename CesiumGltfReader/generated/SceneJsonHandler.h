@@ -8,28 +8,24 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Scene;
+  struct ReaderContext;
+  struct Scene;
 
-class SceneJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Scene;
+  class SceneJsonHandler : public NamedObjectJsonHandler {
+  public:
+    using ValueType = Scene;
 
-  SceneJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Scene* pObject);
+    SceneJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Scene* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyScene(
-      const std::string& objectType,
-      const std::string_view& str,
-      Scene& o);
+  protected:
+    IJsonHandler* readObjectKeyScene(const std::string& objectType, const std::string_view& str, Scene& o);
 
-private:
-  Scene* _pObject = nullptr;
-  CesiumJsonReader::
-      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
-          _nodes;
-};
-} // namespace CesiumGltf
+  private:
+
+    Scene* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _nodes;
+  };
+}

@@ -8,65 +8,42 @@
 
 using namespace CesiumGltf;
 
-AnimationChannelTargetJsonHandler::AnimationChannelTargetJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _node(), _path() {}
+AnimationChannelTargetJsonHandler::AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept : ExtensibleObjectJsonHandler(context), _node(), _path() {}
 
-void AnimationChannelTargetJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    AnimationChannelTarget* pObject) {
+void AnimationChannelTargetJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, AnimationChannelTarget* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-AnimationChannelTargetJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* AnimationChannelTargetJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyAnimationChannelTarget(
-      AnimationChannelTarget::TypeName,
-      str,
-      *this->_pObject);
+  return this->readObjectKeyAnimationChannelTarget(AnimationChannelTarget::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler*
-AnimationChannelTargetJsonHandler::readObjectKeyAnimationChannelTarget(
-    const std::string& objectType,
-    const std::string_view& str,
-    AnimationChannelTarget& o) {
+CesiumJsonReader::IJsonHandler* AnimationChannelTargetJsonHandler::readObjectKeyAnimationChannelTarget(const std::string& objectType, const std::string_view& str, AnimationChannelTarget& o) {
   using namespace std::string_literals;
 
-  if ("node"s == str)
-    return property("node", this->_node, o.node);
-  if ("path"s == str)
-    return property("path", this->_path, o.path);
+  if ("node"s == str) return property("node", this->_node, o.node);
+  if ("path"s == str) return property("path", this->_path, o.path);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void AnimationChannelTargetJsonHandler::PathJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParent,
-    AnimationChannelTarget::Path* pEnum) {
+void AnimationChannelTargetJsonHandler::PathJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParent, AnimationChannelTarget::Path* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-CesiumJsonReader::IJsonHandler*
-AnimationChannelTargetJsonHandler::PathJsonHandler::readString(
-    const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* AnimationChannelTargetJsonHandler::PathJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);
 
-  if ("translation"s == str)
-    *this->_pEnum = AnimationChannelTarget::Path::translation;
-  else if ("rotation"s == str)
-    *this->_pEnum = AnimationChannelTarget::Path::rotation;
-  else if ("scale"s == str)
-    *this->_pEnum = AnimationChannelTarget::Path::scale;
-  else if ("weights"s == str)
-    *this->_pEnum = AnimationChannelTarget::Path::weights;
-  else
-    return nullptr;
+  if ("translation"s == str) *this->_pEnum = AnimationChannelTarget::Path::translation;
+  else if ("rotation"s == str) *this->_pEnum = AnimationChannelTarget::Path::rotation;
+  else if ("scale"s == str) *this->_pEnum = AnimationChannelTarget::Path::scale;
+  else if ("weights"s == str) *this->_pEnum = AnimationChannelTarget::Path::weights;
+  else return nullptr;
 
   return this->parent();
 }

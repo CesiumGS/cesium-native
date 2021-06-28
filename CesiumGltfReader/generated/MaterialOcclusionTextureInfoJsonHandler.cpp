@@ -8,37 +8,22 @@
 
 using namespace CesiumGltf;
 
-MaterialOcclusionTextureInfoJsonHandler::
-    MaterialOcclusionTextureInfoJsonHandler(
-        const ReaderContext& context) noexcept
-    : TextureInfoJsonHandler(context), _strength() {}
+MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoJsonHandler(const ReaderContext& context) noexcept : TextureInfoJsonHandler(context), _strength() {}
 
-void MaterialOcclusionTextureInfoJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    MaterialOcclusionTextureInfo* pObject) {
+void MaterialOcclusionTextureInfoJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, MaterialOcclusionTextureInfo* pObject) {
   TextureInfoJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
-    const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMaterialOcclusionTextureInfo(
-      MaterialOcclusionTextureInfo::TypeName,
-      str,
-      *this->_pObject);
+  return this->readObjectKeyMaterialOcclusionTextureInfo(MaterialOcclusionTextureInfo::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::
-    readObjectKeyMaterialOcclusionTextureInfo(
-        const std::string& objectType,
-        const std::string_view& str,
-        MaterialOcclusionTextureInfo& o) {
+CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKeyMaterialOcclusionTextureInfo(const std::string& objectType, const std::string_view& str, MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
 
-  if ("strength"s == str)
-    return property("strength", this->_strength, o.strength);
+  if ("strength"s == str) return property("strength", this->_strength, o.strength);
 
   return this->readObjectKeyTextureInfo(objectType, str, *this->_pObject);
 }

@@ -9,39 +9,35 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Camera;
+  struct ReaderContext;
+  struct Camera;
 
-class CameraJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Camera;
-
-  CameraJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Camera* pObject);
-
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-
-protected:
-  IJsonHandler* readObjectKeyCamera(
-      const std::string& objectType,
-      const std::string_view& str,
-      Camera& o);
-
-private:
-  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
+  class CameraJsonHandler : public NamedObjectJsonHandler {
   public:
-    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(CesiumJsonReader::IJsonHandler* pParent, Camera::Type* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
+    using ValueType = Camera;
+
+    CameraJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Camera* pObject);
+
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+  protected:
+    IJsonHandler* readObjectKeyCamera(const std::string& objectType, const std::string_view& str, Camera& o);
 
   private:
-    Camera::Type* _pEnum = nullptr;
-  };
+    class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
+    public:
+      TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+      void reset(CesiumJsonReader::IJsonHandler* pParent, Camera::Type* pEnum);
+      virtual CesiumJsonReader::IJsonHandler* readString(const std::string_view& str) override;
 
-  Camera* _pObject = nullptr;
-  CameraOrthographicJsonHandler _orthographic;
-  CameraPerspectiveJsonHandler _perspective;
-  TypeJsonHandler _type;
-};
-} // namespace CesiumGltf
+    private:
+      Camera::Type* _pEnum = nullptr;
+    };
+
+    Camera* _pObject = nullptr;
+    CameraOrthographicJsonHandler _orthographic;
+    CameraPerspectiveJsonHandler _perspective;
+    TypeJsonHandler _type;
+  };
+}

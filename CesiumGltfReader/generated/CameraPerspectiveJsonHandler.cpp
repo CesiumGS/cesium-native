@@ -8,45 +8,25 @@
 
 using namespace CesiumGltf;
 
-CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
-      _aspectRatio(),
-      _yfov(),
-      _zfar(),
-      _znear() {}
+CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(const ReaderContext& context) noexcept : ExtensibleObjectJsonHandler(context), _aspectRatio(), _yfov(), _zfar(), _znear() {}
 
-void CameraPerspectiveJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    CameraPerspective* pObject) {
+void CameraPerspectiveJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CameraPerspective* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyCameraPerspective(
-      CameraPerspective::TypeName,
-      str,
-      *this->_pObject);
+  return this->readObjectKeyCameraPerspective(CameraPerspective::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler*
-CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
-    const std::string& objectType,
-    const std::string_view& str,
-    CameraPerspective& o) {
+CesiumJsonReader::IJsonHandler* CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(const std::string& objectType, const std::string_view& str, CameraPerspective& o) {
   using namespace std::string_literals;
 
-  if ("aspectRatio"s == str)
-    return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
-  if ("yfov"s == str)
-    return property("yfov", this->_yfov, o.yfov);
-  if ("zfar"s == str)
-    return property("zfar", this->_zfar, o.zfar);
-  if ("znear"s == str)
-    return property("znear", this->_znear, o.znear);
+  if ("aspectRatio"s == str) return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
+  if ("yfov"s == str) return property("yfov", this->_yfov, o.yfov);
+  if ("zfar"s == str) return property("zfar", this->_zfar, o.zfar);
+  if ("znear"s == str) return property("znear", this->_znear, o.znear);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

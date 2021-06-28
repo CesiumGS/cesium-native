@@ -9,31 +9,25 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Animation;
+  struct ReaderContext;
+  struct Animation;
 
-class AnimationJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Animation;
+  class AnimationJsonHandler : public NamedObjectJsonHandler {
+  public:
+    using ValueType = Animation;
 
-  AnimationJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Animation* pObject);
+    AnimationJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Animation* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAnimation(
-      const std::string& objectType,
-      const std::string_view& str,
-      Animation& o);
+  protected:
+    IJsonHandler* readObjectKeyAnimation(const std::string& objectType, const std::string_view& str, Animation& o);
 
-private:
-  Animation* _pObject = nullptr;
-  CesiumJsonReader::
-      ArrayJsonHandler<AnimationChannel, AnimationChannelJsonHandler>
-          _channels;
-  CesiumJsonReader::
-      ArrayJsonHandler<AnimationSampler, AnimationSamplerJsonHandler>
-          _samplers;
-};
-} // namespace CesiumGltf
+  private:
+
+    Animation* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<AnimationChannel, AnimationChannelJsonHandler> _channels;
+    CesiumJsonReader::ArrayJsonHandler<AnimationSampler, AnimationSamplerJsonHandler> _samplers;
+  };
+}

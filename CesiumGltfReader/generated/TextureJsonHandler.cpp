@@ -8,32 +8,23 @@
 
 using namespace CesiumGltf;
 
-TextureJsonHandler::TextureJsonHandler(const ReaderContext& context) noexcept
-    : NamedObjectJsonHandler(context), _sampler(), _source() {}
+TextureJsonHandler::TextureJsonHandler(const ReaderContext& context) noexcept : NamedObjectJsonHandler(context), _sampler(), _source() {}
 
-void TextureJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    Texture* pObject) {
+void TextureJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, Texture* pObject) {
   NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-TextureJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyTexture(Texture::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(
-    const std::string& objectType,
-    const std::string_view& str,
-    Texture& o) {
+CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(const std::string& objectType, const std::string_view& str, Texture& o) {
   using namespace std::string_literals;
 
-  if ("sampler"s == str)
-    return property("sampler", this->_sampler, o.sampler);
-  if ("source"s == str)
-    return property("source", this->_source, o.source);
+  if ("sampler"s == str) return property("sampler", this->_sampler, o.sampler);
+  if ("source"s == str) return property("source", this->_source, o.source);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

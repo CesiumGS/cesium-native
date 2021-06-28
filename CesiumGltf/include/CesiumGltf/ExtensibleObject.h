@@ -37,7 +37,7 @@ struct CESIUMGLTF_API ExtensibleObject {
    * @brief Gets a generic extension with the given name as a
    * {@link CesiumUtility::JsonValue}.
    *
-   * If the extension exists but has a static type, this method will retur
+   * If the extension exists but has a static type, this method will return
    * nullptr. Use {@link getExtension} to retrieve a statically-typed extension.
    *
    * @param extensionName The name of the extension.

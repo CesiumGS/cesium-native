@@ -1,0 +1,71 @@
+<svg width="297" height="210" xmlns="http://www.w3.org/2000/svg">
+
+ <metadata id="metadata4763">image/svg+xml</metadata>
+ <g>
+  <title>background</title>
+  <rect fill="none" id="canvas_background" height="402" width="582" y="-1" x="-1"/>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <g id="layer1">
+   <rect fill="#adf8ae" stroke="#00e01c" stroke-width="0.396422" stroke-miterlimit="4" stroke-dashoffset="0" id="rect4277" width="38.52861" height="5.33018" x="181.49701" y="139.20984"/>
+   <rect fill="#adf8ae" stroke="#00e01c" stroke-width="0.324037" stroke-miterlimit="4" stroke-dashoffset="0" y="145.50191" x="181.74408" height="5.121404" width="26.792225" id="rect4605"/>
+   <rect fill="#bac9ff" stroke="#483cff" stroke-width="0.352778" stroke-miterlimit="4" stroke-dashoffset="0" y="96.46732" x="182.83849" height="6.543739" width="6.069832" id="rect4275"/>
+   <rect fill="#bac9ff" stroke="#483cff" stroke-width="0.345448" stroke-miterlimit="4" stroke-dashoffset="0" id="rect4273" width="32.305542" height="6.350293" x="220.61293" y="102.18938"/>
+   <rect fill="#bac9ff" stroke="#483cff" stroke-width="0.345448" stroke-miterlimit="4" stroke-dashoffset="0" y="91.22621" x="213.0237" height="6.350293" width="32.305542" id="rect4605-7"/>
+   <rect fill="#ffb5b5" stroke="#ff3c3c" stroke-width="0.352778" stroke-miterlimit="4" stroke-dashoffset="0" id="rect4271" width="5.587283" height="6.397725" x="199.39998" y="54.99889"/>
+   <rect fill="#ffb5b5" stroke="#ff3c3c" stroke-width="0.352778" stroke-miterlimit="4" stroke-dashoffset="0" y="49.44753" x="232.65097" height="6.249771" width="16.96694" id="rect4605-7-60"/>
+   <rect y="-55.512455" x="560.74097" height="828.4314" width="1207.4247" id="rect5315"/>{"extensions" : {"3DTILES_batch_table_hierarchy" : {"classes" : [{"name" : "Wall","length" : 6,"instances" : {"wall_color" : ["blue", "pink", "green", "lime", "black", "brown"],"wall_windows" : [2, 4, 4, 2, 0, 3]}},{"name" : "Building","length" : 3,"instances" : {"building_name" : ["building_0", "building_1", "building_2"],"building_id" : [0, 1, 2],"building_address" : ["10 Main St", "12 Main St", "14 Main St"]}},{"name" : "Block","length" : 1,"instances" : {"block_lat_long" : [[0.12, 0.543]],"block_district" : ["central"]}}],"instancesLength" : 10,"classIds" : [0, 0, 0, 0, 0, 0, 1, 1, 1, 2],"parentIds" : [6, 6, 7, 7, 8, 8, 9, 9, 9, 9]}}}
+   <rect fill="#f1f1f1" stroke="#000000" stroke-width="0.55362" stroke-miterlimit="4" stroke-dashoffset="0" y="30.26103" x="5.006834" height="123.23843" width="94.243698" id="rect4699"/>
+   <rect fill="#eba4a4" stroke-width="0.578402" stroke-miterlimit="4" stroke-dashoffset="0" y="97.77026" x="16.937031" height="20.067095" width="18.824919" id="rect6547"/>
+   <rect fill="#9ca732" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" y="89.04082" x="44.375301" height="28.889723" width="18.824919" id="rect6547-0"/>
+   <rect fill="#745a24" stroke-width="0.614702" stroke-miterlimit="4" stroke-dashoffset="0" y="95.07925" x="71.69043" height="22.6649" width="18.824919" id="rect6547-0-9"/>
+   <rect fill="#5fb7ea" stroke-width="0.578402" stroke-miterlimit="4" stroke-dashoffset="0" y="77.6622" x="16.937031" height="20.067095" width="18.824919" id="rect6547-7"/>
+   <rect fill="#15601c" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" y="60.4662" x="44.375301" height="28.889723" width="18.824919" id="rect6547-0-3"/>
+   <rect fill="#292929" stroke-width="0.614702" stroke-miterlimit="4" stroke-dashoffset="0" y="72.32539" x="71.69043" height="22.6649" width="18.824919" id="rect6547-0-9-8"/>
+   <rect fill="#e4e4e4" fill-opacity="0.413044" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="82.48668" x="20.17449" height="4.421435" width="4.489457" id="rect6669"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="82.48668" x="27.309763" height="4.421435" width="4.489457" id="rect6669-8"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="101.38358" x="20.174494" height="4.421435" width="4.489457" id="rect6669-1"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="101.38358" x="27.309763" height="4.421435" width="4.489457" id="rect6669-8-7"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="108.45081" x="20.174494" height="4.421435" width="4.489457" id="rect6669-87-6"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="108.45081" x="27.309763" height="4.421435" width="4.489457" id="rect6669-8-2-1"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="92.17355" x="47.099102" height="4.421435" width="4.489457" id="rect6669-1-2"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="98.18246" x="47.099102" height="4.421435" width="4.489457" id="rect6669-8-7-9"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="63.62514" x="47.229839" height="4.421435" width="4.489457" id="rect6669-9"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="63.62514" x="54.365135" height="4.421435" width="4.489457" id="rect6669-8-5"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="70.69237" x="47.229839" height="4.421435" width="4.489457" id="rect6669-9-3"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="70.69237" x="54.365135" height="4.421435" width="4.489457" id="rect6669-8-5-4"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="96.13757" x="74.657265" height="4.421435" width="4.489457" id="rect6669-1-1"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="96.13757" x="79.146721" height="4.421435" width="4.489457" id="rect6669-8-7-6"/>
+   <rect fill="#e4e4e4" fill-opacity="0.392157" stroke="#212121" stroke-width="0.358189" stroke-miterlimit="4" stroke-dashoffset="0" y="96.13757" x="83.636177" height="4.421435" width="4.489457" id="rect6669-8-7-6-2"/>
+   <rect fill="#ffe680" stroke="#000000" stroke-width="0.362" stroke-miterlimit="4" stroke-dashoffset="0" y="114.45972" x="12.562684" height="7.082643" width="7.082643" id="rect5204-60"/>
+   <rect y="626.89874" x="513.15747" height="72.225906" width="107.58125" id="rect5200-4"/>1
+   <rect fill="#ffe680" stroke="#000000" stroke-width="0.362" stroke-miterlimit="4" stroke-dashoffset="0" y="87.79817" x="12.562684" height="7.082643" width="7.082643" id="rect5204-60-5"/>
+   <rect y="626.89874" x="513.15747" height="72.225906" width="107.58125" id="rect5200-4-6"/>0
+   <rect fill="#ffe680" stroke="#fd0000" stroke-width="0.662" stroke-miterlimit="4" stroke-dashoffset="0" y="114.45972" x="41.870308" height="7.082643" width="7.082643" id="rect5204-60-9"/>
+   <rect y="626.89874" x="513.15747" height="72.225906" width="107.58125" id="rect5200-4-9"/>3
+   <rect fill="#ffe680" stroke="#000000" stroke-width="0.362" stroke-miterlimit="4" stroke-dashoffset="0" y="78.2733" x="41.870308" height="7.082643" width="7.082643" id="rect5204-60-9-5"/>
+   <rect y="626.89874" x="513.15747" height="72.225906" width="107.58125" id="rect5200-4-9-1"/>2
+   <rect fill="#ffe680" stroke="#000000" stroke-width="0.362" stroke-miterlimit="4" stroke-dashoffset="0" y="114.45972" x="69.590469" height="7.082643" width="7.082643" id="rect5204-60-9-50"/>
+   <rect y="626.89874" x="513.15747" height="72.225906" width="107.58125" id="rect5200-4-9-9"/>5
+   <rect fill="#ffe680" stroke="#000000" stroke-width="0.362" stroke-miterlimit="4" stroke-dashoffset="0" y="81.44826" x="69.590469" height="7.082643" width="7.082643" id="rect5204-60-9-50-6"/>
+   <rect y="626.89874" x="513.15747" height="72.225906" width="107.58125" id="rect5200-4-9-9-1"/>4
+   <path fill="none" stroke="#ff0707" stroke-width="0.627103" stroke-miterlimit="4" id="path7059" d="m45.81702,124.34479c26.04292,23.86449 83.68684,21.94069 113.49577,38.98021"/>
+   <circle fill="none" stroke="#f60000" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" r="3.491155" cy="174.00811" cx="179.489238" id="path5331"/>
+   <path fill="none" stroke="#ff0000" stroke-width="0.71" stroke-miterlimit="4" id="path4702" d="m159.23414,160.62558l0.44894,3.26436l-3.10967,0.20134"/>
+   <circle fill="none" stroke="#f60000" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" r="3.491155" cy="178.84353" cx="182.009988" id="path5331-1"/>
+   <path stroke="#0035f6" fill="none" stroke-width="0.826611" stroke-miterlimit="4" id="path7125" d="m182.851254,183.85061c11.99738,17.94682 22.560526,5.16871 21.655292,1.24634"/>
+   <path fill="none" stroke="#0035f6" stroke-width="0.71" stroke-miterlimit="4" id="path4702-3" d="m202.94329,185.95571l1.88065,-1.46332l1.54421,1.97988"/>
+   <circle fill="none" stroke="#0035f6" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" r="3.491155" cy="174.10101" cx="206.68304" id="path5331-1-2"/>
+   <circle fill="none" stroke="#0035f6" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" r="3.491155" cy="179.116" cx="209.0177" id="path5331-1-2-5"/>
+   <circle fill="none" stroke="#00ca03" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" r="3.491155" cy="173.9856" cx="220.61151" id="path5331-1-2-4"/>
+   <circle fill="none" stroke="#00ca03" stroke-width="0.694" stroke-miterlimit="4" stroke-dashoffset="0" r="3.491155" cy="179.15106" cx="222.21187" id="path5331-1-2-4-0"/>
+   <path fill="none" stroke="#00ca03" stroke-width="0.76394" stroke-miterlimit="4" id="path7125-3" d="m211.99396,184.71702c2.36219,7.81671 9.05583,7.29154 10.02701,0.62385"/>
+   <path fill="#00ce00" fill-opacity="0.101961" stroke="#00ca03" stroke-width="0.774853" stroke-miterlimit="4" id="path4702-3-7" d="m223.26999,187.27967l-1.24902,-1.9388l-2.08078,1.36293"/>
+   <rect y="618.8175" x="67.680222" height="63.63961" width="341.43155" id="rect4754"/>Labeled bybatchId
+   <rect y="625.5072" x="845.31012" height="42.838345" width="141.96428" id="rect7368"/>
+   <path fill="none" stroke="#ed9b00" stroke-width="0.7" stroke-miterlimit="4" id="path7378" d="m229.39429,180.66169c8.65457,-2.06398 2.85752,-8.61497 -2.88897,-7.26903"/>
+   <path fill="#00ce00" fill-opacity="0.101961" stroke="#ed9b00" stroke-width="0.71" stroke-miterlimit="4" id="path4702-3-7-2" d="m228.17767,175.09137l-1.67235,-1.69871l1.38335,-1.87707"/>
+   <rect fill="#ed9b00" stroke="#000000" stroke-width="0.377953" stroke-miterlimit="4" y="584.12677" x="869.28943" height="58.821449" width="138.77635" id="rect7399"/>Traversal stops</g>
+ </g>
+</svg>

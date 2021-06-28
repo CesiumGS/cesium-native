@@ -8,30 +8,26 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Skin;
+  struct ReaderContext;
+  struct Skin;
 
-class SkinJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Skin;
+  class SkinJsonHandler : public NamedObjectJsonHandler {
+  public:
+    using ValueType = Skin;
 
-  SkinJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Skin* pObject);
+    SkinJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Skin* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeySkin(
-      const std::string& objectType,
-      const std::string_view& str,
-      Skin& o);
+  protected:
+    IJsonHandler* readObjectKeySkin(const std::string& objectType, const std::string_view& str, Skin& o);
 
-private:
-  Skin* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _inverseBindMatrices;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _skeleton;
-  CesiumJsonReader::
-      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
-          _joints;
-};
-} // namespace CesiumGltf
+  private:
+
+    Skin* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _inverseBindMatrices;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _skeleton;
+    CesiumJsonReader::ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _joints;
+  };
+}

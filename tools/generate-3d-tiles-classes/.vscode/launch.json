@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/index.js",
+            "args": [
+                "--schema", "../../extern/3d-tiles/specification/schema/",
+                "--output", "test_output/tileset",
+                "--writerOutput", "test_output/writer",
+                "--extensions", "../../extern/3d-tiles/extensions/",
+                "--config", "3d-tiles.json"
+            ]
+        }
+    ]
+}

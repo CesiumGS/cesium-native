@@ -8,15 +8,16 @@
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief The root nodes of a scene.
- */
-struct CESIUMGLTF_API Scene final : public NamedObject {
-  static inline constexpr const char* TypeName = "Scene";
+    /**
+     * @brief The root nodes of a scene.
+     */
+    struct CESIUMGLTF_API Scene final : public NamedObject {
+        static inline constexpr const char* TypeName = "Scene";
 
-  /**
-   * @brief The indices of each root node.
-   */
-  std::vector<int32_t> nodes;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The indices of each root node.
+         */
+        std::vector<int32_t> nodes;
+
+    };
+}

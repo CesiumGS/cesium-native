@@ -7,28 +7,24 @@
 #include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct MaterialOcclusionTextureInfo;
+  struct ReaderContext;
+  struct MaterialOcclusionTextureInfo;
 
-class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
-public:
-  using ValueType = MaterialOcclusionTextureInfo;
+  class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
+  public:
+    using ValueType = MaterialOcclusionTextureInfo;
 
-  MaterialOcclusionTextureInfoJsonHandler(
-      const ReaderContext& context) noexcept;
-  void
-  reset(IJsonHandler* pParentHandler, MaterialOcclusionTextureInfo* pObject);
+    MaterialOcclusionTextureInfoJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, MaterialOcclusionTextureInfo* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(
-      const std::string& objectType,
-      const std::string_view& str,
-      MaterialOcclusionTextureInfo& o);
+  protected:
+    IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(const std::string& objectType, const std::string_view& str, MaterialOcclusionTextureInfo& o);
 
-private:
-  MaterialOcclusionTextureInfo* _pObject = nullptr;
-  CesiumJsonReader::DoubleJsonHandler _strength;
-};
-} // namespace CesiumGltf
+  private:
+
+    MaterialOcclusionTextureInfo* _pObject = nullptr;
+    CesiumJsonReader::DoubleJsonHandler _strength;
+  };
+}

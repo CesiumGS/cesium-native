@@ -8,55 +8,30 @@
 
 using namespace CesiumGltf;
 
-NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept
-    : NamedObjectJsonHandler(context),
-      _camera(),
-      _children(),
-      _skin(),
-      _matrix(),
-      _mesh(),
-      _rotation(),
-      _scale(),
-      _translation(),
-      _weights() {}
+NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept : NamedObjectJsonHandler(context), _camera(), _children(), _skin(), _matrix(), _mesh(), _rotation(), _scale(), _translation(), _weights() {}
 
-void NodeJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    Node* pObject) {
+void NodeJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, Node* pObject) {
   NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-NodeJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyNode(Node::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(
-    const std::string& objectType,
-    const std::string_view& str,
-    Node& o) {
+CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(const std::string& objectType, const std::string_view& str, Node& o) {
   using namespace std::string_literals;
 
-  if ("camera"s == str)
-    return property("camera", this->_camera, o.camera);
-  if ("children"s == str)
-    return property("children", this->_children, o.children);
-  if ("skin"s == str)
-    return property("skin", this->_skin, o.skin);
-  if ("matrix"s == str)
-    return property("matrix", this->_matrix, o.matrix);
-  if ("mesh"s == str)
-    return property("mesh", this->_mesh, o.mesh);
-  if ("rotation"s == str)
-    return property("rotation", this->_rotation, o.rotation);
-  if ("scale"s == str)
-    return property("scale", this->_scale, o.scale);
-  if ("translation"s == str)
-    return property("translation", this->_translation, o.translation);
-  if ("weights"s == str)
-    return property("weights", this->_weights, o.weights);
+  if ("camera"s == str) return property("camera", this->_camera, o.camera);
+  if ("children"s == str) return property("children", this->_children, o.children);
+  if ("skin"s == str) return property("skin", this->_skin, o.skin);
+  if ("matrix"s == str) return property("matrix", this->_matrix, o.matrix);
+  if ("mesh"s == str) return property("mesh", this->_mesh, o.mesh);
+  if ("rotation"s == str) return property("rotation", this->_rotation, o.rotation);
+  if ("scale"s == str) return property("scale", this->_scale, o.scale);
+  if ("translation"s == str) return property("translation", this->_translation, o.translation);
+  if ("weights"s == str) return property("weights", this->_weights, o.weights);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }

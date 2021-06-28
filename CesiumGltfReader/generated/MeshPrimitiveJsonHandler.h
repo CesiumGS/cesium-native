@@ -10,38 +10,28 @@
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct MeshPrimitive;
+  struct ReaderContext;
+  struct MeshPrimitive;
 
-class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
-public:
-  using ValueType = MeshPrimitive;
+  class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = MeshPrimitive;
 
-  MeshPrimitiveJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, MeshPrimitive* pObject);
+    MeshPrimitiveJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, MeshPrimitive* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyMeshPrimitive(
-      const std::string& objectType,
-      const std::string_view& str,
-      MeshPrimitive& o);
+  protected:
+    IJsonHandler* readObjectKeyMeshPrimitive(const std::string& objectType, const std::string_view& str, MeshPrimitive& o);
 
-private:
-  MeshPrimitive* _pObject = nullptr;
-  CesiumJsonReader::DictionaryJsonHandler<
-      int32_t,
-      CesiumJsonReader::IntegerJsonHandler<int32_t>>
-      _attributes;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
-  CesiumJsonReader::IntegerJsonHandler<MeshPrimitive::Mode> _mode;
-  CesiumJsonReader::ArrayJsonHandler<
-      std::unordered_map<std::string, int32_t>,
-      CesiumJsonReader::DictionaryJsonHandler<
-          int32_t,
-          CesiumJsonReader::IntegerJsonHandler<int32_t>>>
-      _targets;
-};
-} // namespace CesiumGltf
+  private:
+
+    MeshPrimitive* _pObject = nullptr;
+    CesiumJsonReader::DictionaryJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _attributes;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
+    CesiumJsonReader::IntegerJsonHandler<MeshPrimitive::Mode> _mode;
+    CesiumJsonReader::ArrayJsonHandler<std::unordered_map<std::string, int32_t>, CesiumJsonReader::DictionaryJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>> _targets;
+  };
+}

@@ -8,27 +8,25 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Buffer;
+  struct ReaderContext;
+  struct Buffer;
 
-class BufferJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Buffer;
+  class BufferJsonHandler : public NamedObjectJsonHandler {
+  public:
+    using ValueType = Buffer;
 
-  BufferJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Buffer* pObject);
+    BufferJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Buffer* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyBuffer(
-      const std::string& objectType,
-      const std::string_view& str,
-      Buffer& o);
+  protected:
+    IJsonHandler* readObjectKeyBuffer(const std::string& objectType, const std::string_view& str, Buffer& o);
 
-private:
-  Buffer* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _uri;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
-};
-} // namespace CesiumGltf
+  private:
+
+    Buffer* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _uri;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
+  };
+}

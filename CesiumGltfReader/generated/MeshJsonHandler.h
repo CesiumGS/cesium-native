@@ -9,30 +9,25 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Mesh;
+  struct ReaderContext;
+  struct Mesh;
 
-class MeshJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Mesh;
+  class MeshJsonHandler : public NamedObjectJsonHandler {
+  public:
+    using ValueType = Mesh;
 
-  MeshJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Mesh* pObject);
+    MeshJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Mesh* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyMesh(
-      const std::string& objectType,
-      const std::string_view& str,
-      Mesh& o);
+  protected:
+    IJsonHandler* readObjectKeyMesh(const std::string& objectType, const std::string_view& str, Mesh& o);
 
-private:
-  Mesh* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<MeshPrimitive, MeshPrimitiveJsonHandler>
-      _primitives;
-  CesiumJsonReader::
-      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
-          _weights;
-};
-} // namespace CesiumGltf
+  private:
+
+    Mesh* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<MeshPrimitive, MeshPrimitiveJsonHandler> _primitives;
+    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _weights;
+  };
+}

@@ -7,29 +7,27 @@
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Asset;
+  struct ReaderContext;
+  struct Asset;
 
-class AssetJsonHandler : public ExtensibleObjectJsonHandler {
-public:
-  using ValueType = Asset;
+  class AssetJsonHandler : public ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = Asset;
 
-  AssetJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Asset* pObject);
+    AssetJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Asset* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAsset(
-      const std::string& objectType,
-      const std::string_view& str,
-      Asset& o);
+  protected:
+    IJsonHandler* readObjectKeyAsset(const std::string& objectType, const std::string_view& str, Asset& o);
 
-private:
-  Asset* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _copyright;
-  CesiumJsonReader::StringJsonHandler _generator;
-  CesiumJsonReader::StringJsonHandler _version;
-  CesiumJsonReader::StringJsonHandler _minVersion;
-};
-} // namespace CesiumGltf
+  private:
+
+    Asset* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _copyright;
+    CesiumJsonReader::StringJsonHandler _generator;
+    CesiumJsonReader::StringJsonHandler _version;
+    CesiumJsonReader::StringJsonHandler _minVersion;
+  };
+}

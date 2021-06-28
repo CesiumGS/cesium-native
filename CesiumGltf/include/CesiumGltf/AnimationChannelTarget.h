@@ -7,44 +7,34 @@
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief The index of the node and TRS property that an animation channel
- * targets.
- */
-struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
-  static inline constexpr const char* TypeName = "AnimationChannelTarget";
+    /**
+     * @brief The index of the node and TRS property that an animation channel targets.
+     */
+    struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
+        static inline constexpr const char* TypeName = "AnimationChannelTarget";
 
-  /**
-   * @brief The name of the node's TRS property to modify, or the "weights" of
-   * the Morph Targets it instantiates. For the "translation" property, the
-   * values that are provided by the sampler are the translation along the x, y,
-   * and z axes. For the "rotation" property, the values are a quaternion in the
-   * order (x, y, z, w), where w is the scalar. For the "scale" property, the
-   * values are the scaling factors along the x, y, and z axes.
-   */
-  enum class Path {
-    translation,
+        /**
+         * @brief The name of the node's TRS property to modify, or the "weights" of the Morph Targets it instantiates. For the "translation" property, the values that are provided by the sampler are the translation along the x, y, and z axes. For the "rotation" property, the values are a quaternion in the order (x, y, z, w), where w is the scalar. For the "scale" property, the values are the scaling factors along the x, y, and z axes.
+         */
+        enum class Path {
+            translation,
 
-    rotation,
+            rotation,
 
-    scale,
+            scale,
 
-    weights
-  };
+            weights
+        };
 
-  /**
-   * @brief The index of the node to target.
-   */
-  int32_t node = -1;
+        /**
+         * @brief The index of the node to target.
+         */
+        int32_t node = -1;
 
-  /**
-   * @brief The name of the node's TRS property to modify, or the "weights" of
-   * the Morph Targets it instantiates. For the "translation" property, the
-   * values that are provided by the sampler are the translation along the x, y,
-   * and z axes. For the "rotation" property, the values are a quaternion in the
-   * order (x, y, z, w), where w is the scalar. For the "scale" property, the
-   * values are the scaling factors along the x, y, and z axes.
-   */
-  Path path = Path();
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The name of the node's TRS property to modify, or the "weights" of the Morph Targets it instantiates. For the "translation" property, the values that are provided by the sampler are the translation along the x, y, and z axes. For the "rotation" property, the values are a quaternion in the order (x, y, z, w), where w is the scalar. For the "scale" property, the values are the scaling factors along the x, y, and z axes.
+         */
+        Path path = Path();
+
+    };
+}

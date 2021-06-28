@@ -8,60 +8,41 @@
 
 using namespace CesiumGltf;
 
-CameraJsonHandler::CameraJsonHandler(const ReaderContext& context) noexcept
-    : NamedObjectJsonHandler(context),
-      _orthographic(context),
-      _perspective(context),
-      _type() {}
+CameraJsonHandler::CameraJsonHandler(const ReaderContext& context) noexcept : NamedObjectJsonHandler(context), _orthographic(context), _perspective(context), _type() {}
 
-void CameraJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    Camera* pObject) {
+void CameraJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, Camera* pObject) {
   NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-CameraJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyCamera(Camera::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
-    const std::string& objectType,
-    const std::string_view& str,
-    Camera& o) {
+CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKeyCamera(const std::string& objectType, const std::string_view& str, Camera& o) {
   using namespace std::string_literals;
 
-  if ("orthographic"s == str)
-    return property("orthographic", this->_orthographic, o.orthographic);
-  if ("perspective"s == str)
-    return property("perspective", this->_perspective, o.perspective);
-  if ("type"s == str)
-    return property("type", this->_type, o.type);
+  if ("orthographic"s == str) return property("orthographic", this->_orthographic, o.orthographic);
+  if ("perspective"s == str) return property("perspective", this->_perspective, o.perspective);
+  if ("type"s == str) return property("type", this->_type, o.type);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void CameraJsonHandler::TypeJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParent,
-    Camera::Type* pEnum) {
+void CameraJsonHandler::TypeJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParent, Camera::Type* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-CesiumJsonReader::IJsonHandler*
-CameraJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* CameraJsonHandler::TypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);
 
-  if ("perspective"s == str)
-    *this->_pEnum = Camera::Type::perspective;
-  else if ("orthographic"s == str)
-    *this->_pEnum = Camera::Type::orthographic;
-  else
-    return nullptr;
+  if ("perspective"s == str) *this->_pEnum = Camera::Type::perspective;
+  else if ("orthographic"s == str) *this->_pEnum = Camera::Type::orthographic;
+  else return nullptr;
 
   return this->parent();
 }

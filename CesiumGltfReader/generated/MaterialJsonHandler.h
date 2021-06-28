@@ -14,47 +14,40 @@
 #include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Material;
+  struct ReaderContext;
+  struct Material;
 
-class MaterialJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Material;
-
-  MaterialJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Material* pObject);
-
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-
-protected:
-  IJsonHandler* readObjectKeyMaterial(
-      const std::string& objectType,
-      const std::string_view& str,
-      Material& o);
-
-private:
-  class AlphaModeJsonHandler : public CesiumJsonReader::JsonHandler {
+  class MaterialJsonHandler : public NamedObjectJsonHandler {
   public:
-    AlphaModeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void
-    reset(CesiumJsonReader::IJsonHandler* pParent, Material::AlphaMode* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
+    using ValueType = Material;
+
+    MaterialJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Material* pObject);
+
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+  protected:
+    IJsonHandler* readObjectKeyMaterial(const std::string& objectType, const std::string_view& str, Material& o);
 
   private:
-    Material::AlphaMode* _pEnum = nullptr;
-  };
+    class AlphaModeJsonHandler : public CesiumJsonReader::JsonHandler {
+    public:
+      AlphaModeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+      void reset(CesiumJsonReader::IJsonHandler* pParent, Material::AlphaMode* pEnum);
+      virtual CesiumJsonReader::IJsonHandler* readString(const std::string_view& str) override;
 
-  Material* _pObject = nullptr;
-  MaterialPBRMetallicRoughnessJsonHandler _pbrMetallicRoughness;
-  MaterialNormalTextureInfoJsonHandler _normalTexture;
-  MaterialOcclusionTextureInfoJsonHandler _occlusionTexture;
-  TextureInfoJsonHandler _emissiveTexture;
-  CesiumJsonReader::
-      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
-          _emissiveFactor;
-  AlphaModeJsonHandler _alphaMode;
-  CesiumJsonReader::DoubleJsonHandler _alphaCutoff;
-  CesiumJsonReader::BoolJsonHandler _doubleSided;
-};
-} // namespace CesiumGltf
+    private:
+      Material::AlphaMode* _pEnum = nullptr;
+    };
+
+    Material* _pObject = nullptr;
+    MaterialPBRMetallicRoughnessJsonHandler _pbrMetallicRoughness;
+    MaterialNormalTextureInfoJsonHandler _normalTexture;
+    MaterialOcclusionTextureInfoJsonHandler _occlusionTexture;
+    TextureInfoJsonHandler _emissiveTexture;
+    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _emissiveFactor;
+    AlphaModeJsonHandler _alphaMode;
+    CesiumJsonReader::DoubleJsonHandler _alphaCutoff;
+    CesiumJsonReader::BoolJsonHandler _doubleSided;
+  };
+}

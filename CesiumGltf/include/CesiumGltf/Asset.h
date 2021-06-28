@@ -8,31 +8,31 @@
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief Metadata about the glTF asset.
- */
-struct CESIUMGLTF_API Asset final : public ExtensibleObject {
-  static inline constexpr const char* TypeName = "Asset";
+    /**
+     * @brief Metadata about the glTF asset.
+     */
+    struct CESIUMGLTF_API Asset final : public ExtensibleObject {
+        static inline constexpr const char* TypeName = "Asset";
 
-  /**
-   * @brief A copyright message suitable for display to credit the content
-   * creator.
-   */
-  std::optional<std::string> copyright;
+        /**
+         * @brief A copyright message suitable for display to credit the content creator.
+         */
+        std::optional<std::string> copyright;
 
-  /**
-   * @brief Tool that generated this glTF model.  Useful for debugging.
-   */
-  std::optional<std::string> generator;
+        /**
+         * @brief Tool that generated this glTF model.  Useful for debugging.
+         */
+        std::optional<std::string> generator;
 
-  /**
-   * @brief The glTF version that this asset targets.
-   */
-  std::string version;
+        /**
+         * @brief The glTF version that this asset targets.
+         */
+        std::string version;
 
-  /**
-   * @brief The minimum glTF version that this asset targets.
-   */
-  std::optional<std::string> minVersion;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The minimum glTF version that this asset targets.
+         */
+        std::optional<std::string> minVersion;
+
+    };
+}

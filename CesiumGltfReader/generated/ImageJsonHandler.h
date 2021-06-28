@@ -9,39 +9,35 @@
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct Image;
+  struct ReaderContext;
+  struct Image;
 
-class ImageJsonHandler : public NamedObjectJsonHandler {
-public:
-  using ValueType = Image;
-
-  ImageJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Image* pObject);
-
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
-
-protected:
-  IJsonHandler* readObjectKeyImage(
-      const std::string& objectType,
-      const std::string_view& str,
-      Image& o);
-
-private:
-  class MimeTypeJsonHandler : public CesiumJsonReader::JsonHandler {
+  class ImageJsonHandler : public NamedObjectJsonHandler {
   public:
-    MimeTypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(CesiumJsonReader::IJsonHandler* pParent, Image::MimeType* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
+    using ValueType = Image;
+
+    ImageJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Image* pObject);
+
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+
+  protected:
+    IJsonHandler* readObjectKeyImage(const std::string& objectType, const std::string_view& str, Image& o);
 
   private:
-    Image::MimeType* _pEnum = nullptr;
-  };
+    class MimeTypeJsonHandler : public CesiumJsonReader::JsonHandler {
+    public:
+      MimeTypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+      void reset(CesiumJsonReader::IJsonHandler* pParent, Image::MimeType* pEnum);
+      virtual CesiumJsonReader::IJsonHandler* readString(const std::string_view& str) override;
 
-  Image* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _uri;
-  MimeTypeJsonHandler _mimeType;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
-};
-} // namespace CesiumGltf
+    private:
+      Image::MimeType* _pEnum = nullptr;
+    };
+
+    Image* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _uri;
+    MimeTypeJsonHandler _mimeType;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+  };
+}

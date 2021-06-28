@@ -8,57 +8,41 @@
 
 using namespace CesiumGltf;
 
-ImageJsonHandler::ImageJsonHandler(const ReaderContext& context) noexcept
-    : NamedObjectJsonHandler(context), _uri(), _mimeType(), _bufferView() {}
+ImageJsonHandler::ImageJsonHandler(const ReaderContext& context) noexcept : NamedObjectJsonHandler(context), _uri(), _mimeType(), _bufferView() {}
 
-void ImageJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    Image* pObject) {
+void ImageJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, Image* pObject) {
   NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-ImageJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
   return this->readObjectKeyImage(Image::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKeyImage(
-    const std::string& objectType,
-    const std::string_view& str,
-    Image& o) {
+CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKeyImage(const std::string& objectType, const std::string_view& str, Image& o) {
   using namespace std::string_literals;
 
-  if ("uri"s == str)
-    return property("uri", this->_uri, o.uri);
-  if ("mimeType"s == str)
-    return property("mimeType", this->_mimeType, o.mimeType);
-  if ("bufferView"s == str)
-    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("uri"s == str) return property("uri", this->_uri, o.uri);
+  if ("mimeType"s == str) return property("mimeType", this->_mimeType, o.mimeType);
+  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void ImageJsonHandler::MimeTypeJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParent,
-    Image::MimeType* pEnum) {
+void ImageJsonHandler::MimeTypeJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParent, Image::MimeType* pEnum) {
   JsonHandler::reset(pParent);
   this->_pEnum = pEnum;
 }
 
-CesiumJsonReader::IJsonHandler*
-ImageJsonHandler::MimeTypeJsonHandler::readString(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* ImageJsonHandler::MimeTypeJsonHandler::readString(const std::string_view& str) {
   using namespace std::string_literals;
 
   assert(this->_pEnum);
 
-  if ("image/jpeg"s == str)
-    *this->_pEnum = Image::MimeType::image_jpeg;
-  else if ("image/png"s == str)
-    *this->_pEnum = Image::MimeType::image_png;
-  else
-    return nullptr;
+  if ("image/jpeg"s == str) *this->_pEnum = Image::MimeType::image_jpeg;
+  else if ("image/png"s == str) *this->_pEnum = Image::MimeType::image_png;
+  else return nullptr;
 
   return this->parent();
 }

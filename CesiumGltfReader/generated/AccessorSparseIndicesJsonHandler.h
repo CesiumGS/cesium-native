@@ -8,29 +8,26 @@
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
-struct AccessorSparseIndices;
+  struct ReaderContext;
+  struct AccessorSparseIndices;
 
-class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
-public:
-  using ValueType = AccessorSparseIndices;
+  class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = AccessorSparseIndices;
 
-  AccessorSparseIndicesJsonHandler(const ReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, AccessorSparseIndices* pObject);
+    AccessorSparseIndicesJsonHandler(const ReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, AccessorSparseIndices* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAccessorSparseIndices(
-      const std::string& objectType,
-      const std::string_view& str,
-      AccessorSparseIndices& o);
+  protected:
+    IJsonHandler* readObjectKeyAccessorSparseIndices(const std::string& objectType, const std::string_view& str, AccessorSparseIndices& o);
 
-private:
-  AccessorSparseIndices* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
-  CesiumJsonReader::IntegerJsonHandler<AccessorSparseIndices::ComponentType>
-      _componentType;
-};
-} // namespace CesiumGltf
+  private:
+
+    AccessorSparseIndices* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+    CesiumJsonReader::IntegerJsonHandler<AccessorSparseIndices::ComponentType> _componentType;
+  };
+}

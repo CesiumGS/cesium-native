@@ -8,42 +8,24 @@
 
 using namespace CesiumGltf;
 
-AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
-      _bufferView(),
-      _byteOffset(),
-      _componentType() {}
+AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(const ReaderContext& context) noexcept : ExtensibleObjectJsonHandler(context), _bufferView(), _byteOffset(), _componentType() {}
 
-void AccessorSparseIndicesJsonHandler::reset(
-    CesiumJsonReader::IJsonHandler* pParentHandler,
-    AccessorSparseIndices* pObject) {
+void AccessorSparseIndicesJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, AccessorSparseIndices* pObject) {
   ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler*
-AccessorSparseIndicesJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler* AccessorSparseIndicesJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyAccessorSparseIndices(
-      AccessorSparseIndices::TypeName,
-      str,
-      *this->_pObject);
+  return this->readObjectKeyAccessorSparseIndices(AccessorSparseIndices::TypeName, str, *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler*
-AccessorSparseIndicesJsonHandler::readObjectKeyAccessorSparseIndices(
-    const std::string& objectType,
-    const std::string_view& str,
-    AccessorSparseIndices& o) {
+CesiumJsonReader::IJsonHandler* AccessorSparseIndicesJsonHandler::readObjectKeyAccessorSparseIndices(const std::string& objectType, const std::string_view& str, AccessorSparseIndices& o) {
   using namespace std::string_literals;
 
-  if ("bufferView"s == str)
-    return property("bufferView", this->_bufferView, o.bufferView);
-  if ("byteOffset"s == str)
-    return property("byteOffset", this->_byteOffset, o.byteOffset);
-  if ("componentType"s == str)
-    return property("componentType", this->_componentType, o.componentType);
+  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("componentType"s == str) return property("componentType", this->_componentType, o.componentType);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
