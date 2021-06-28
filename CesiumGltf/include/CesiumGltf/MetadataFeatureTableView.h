@@ -59,6 +59,218 @@ public:
       return std::nullopt;
     }
 
+    return getPropertyViewImpl<T>(propertyName, classProperty);
+  }
+
+  template <typename Callback>
+  void
+  getPropertyView(const std::string& propertyName, Callback&& callback) const {
+    const ClassProperty* classProperty = getClassProperty(propertyName);
+    if (!classProperty) {
+      return;
+    }
+
+    PropertyType type = convertStringToPropertyType(classProperty->type);
+    PropertyType componentType = PropertyType::None;
+    if (classProperty->componentType.isString()) {
+      componentType =
+          convertStringToPropertyType(classProperty->componentType.getString());
+    }
+
+    if (type != PropertyType::Array) {
+      getScalarPropertyViewImpl(
+          propertyName,
+          classProperty,
+          type,
+          std::forward<Callback>(callback));
+    } else {
+      getArrayPropertyViewImpl(
+          propertyName,
+          classProperty,
+          type,
+          std::forward<Callback>(callback));
+    }
+  }
+
+  template <typename Callback> void forEachProperty(Callback&& callback) const {
+    for (const auto& property : this->_class->properties) {
+      getPropertyView(property.first, std::forward<Callback>(callback));
+    }
+  }
+
+private:
+  template <typename Callback>
+  void getArrayPropertyViewImpl(
+      const std::string& propertyName,
+      const ClassProperty* classProperty,
+      PropertyType type,
+      Callback&& callback) const {
+    switch (type) {
+    case PropertyType::Int8:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<int8_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Uint8:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<uint8_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Int16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<int16_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Uint16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<uint16_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Int32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<int32_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Uint32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<uint32_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Int64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<int64_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Uint64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<uint64_t>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Float32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<float>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Float64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<double>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::Boolean:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<bool>>(
+              propertyName,
+              classProperty));
+      break;
+    case PropertyType::String:
+      callback(
+          propertyName,
+          getPropertyViewImpl<MetadataArrayView<std::string_view>>(
+              propertyName,
+              classProperty));
+      break;
+    default:
+      break;
+    }
+  }
+
+  template <typename Callback>
+  void getScalarPropertyViewImpl(
+      const std::string& propertyName,
+      const ClassProperty* classProperty,
+      PropertyType type,
+      Callback&& callback) const {
+    switch (type) {
+    case PropertyType::Int8:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int8_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Uint8:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint8_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Int16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int16_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Uint16:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint16_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Int32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int32_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Uint32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint32_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Int64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<int64_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Uint64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<uint64_t>(propertyName, classProperty));
+      break;
+    case PropertyType::Float32:
+      callback(
+          propertyName,
+          getPropertyViewImpl<float>(propertyName, classProperty));
+      break;
+    case PropertyType::Float64:
+      callback(
+          propertyName,
+          getPropertyViewImpl<double>(propertyName, classProperty));
+      break;
+    case PropertyType::Boolean:
+      callback(
+          propertyName,
+          getPropertyViewImpl<bool>(propertyName, classProperty));
+      break;
+    case PropertyType::String:
+      callback(
+          propertyName,
+          getPropertyViewImpl<std::string_view>(propertyName, classProperty));
+      break;
+    default:
+      break;
+    }
+  }
+
+  template <typename T>
+  std::optional<MetadataPropertyView<T>> getPropertyViewImpl(
+      const std::string& propertyName,
+      const ClassProperty* classProperty) const {
     auto featureTablePropertyIter =
         _featureTable->properties.find(propertyName);
     if (featureTablePropertyIter == _featureTable->properties.end()) {
@@ -89,7 +301,6 @@ public:
     }
   }
 
-private:
   template <typename T>
   std::optional<MetadataPropertyView<T>> getPrimitivePropertyValues(
       const ClassProperty* classProperty,
