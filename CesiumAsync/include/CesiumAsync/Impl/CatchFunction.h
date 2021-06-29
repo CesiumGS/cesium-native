@@ -11,7 +11,7 @@ template <typename Func, typename T, typename Scheduler> struct CatchFunction {
   Scheduler& scheduler;
   Func f;
 
-  decltype(auto) operator()(async::task<T>&& t) {
+  async::task<T> operator()(async::task<T>&& t) {
     try {
       return async::make_task(t.get());
     } catch (std::exception& e) {
@@ -31,7 +31,7 @@ struct CatchFunction<Func, void, Scheduler> {
   Scheduler& scheduler;
   Func f;
 
-  decltype(auto) operator()(async::task<void>&& t) {
+  async::task<void> operator()(async::task<void>&& t) {
     try {
       t.get();
       return async::make_task();

@@ -13,15 +13,12 @@
 #define CESIUM_TRACE(name)
 #define CESIUM_TRACE_BEGIN(name)
 #define CESIUM_TRACE_END(name)
-#define CESIUM_TRACE_CURRENT_ASYNC_SLOT() nullptr
-#define CESIUM_TRACE_ASYNC_ENLIST(id)
-#define CESIUM_TRACE_NEW_ASYNC()
-#define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)
-#define CESIUM_TRACE_USE_TRACK_SET(slotID)
-#define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK() tracingSlot = false
-#define CESIUM_TRACE_USE_CAPTURED_TRACK()
 #define CESIUM_TRACE_BEGIN_IN_TRACK(name)
 #define CESIUM_TRACE_END_IN_TRACK(name)
+#define CESIUM_TRACE_DECLARE_TRACK_SET(id, name)
+#define CESIUM_TRACE_USE_TRACK_SET(id)
+#define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK() tracingTrack = false
+#define CESIUM_TRACE_USE_CAPTURED_TRACK()
 
 #else
 
@@ -172,7 +169,7 @@
  */
 #define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
   CesiumUtility::Impl::TrackReference TRACE_NAME_AUX2(                         \
-      cesiumTraceEnlistSlot,                                                   \
+      cesiumTraceEnlistTrack,                                                  \
       __LINE__)(id);
 
 /**
@@ -185,7 +182,7 @@
  * {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
  */
 #define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()                                    \
-  tracingSlot = CesiumUtility::Impl::LambdaCaptureTrack()
+  tracingTrack = CesiumUtility::Impl::LambdaCaptureTrack()
 
 /**
  * @brief Uses a captured track for the current thread and the current scope.
@@ -195,7 +192,7 @@
  * must also contain {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
  */
 #define CESIUM_TRACE_USE_CAPTURED_TRACK()                                      \
-  CESIUM_TRACE_USE_TRACK_SET(tracingSlot)
+  CESIUM_TRACE_USE_TRACK_SET(tracingTrack)
 
 namespace CesiumUtility {
 namespace Impl {
@@ -286,7 +283,7 @@ private:
   };
 
   std::string name;
-  std::vector<Track> slots;
+  std::vector<Track> tracks;
   std::mutex mutex;
 };
 
@@ -300,7 +297,7 @@ public:
   LambdaCaptureTrack& operator=(LambdaCaptureTrack&& rhs) noexcept;
 
 private:
-  TrackSet* pSlots;
+  TrackSet* pSet;
   size_t index;
 
   friend class TrackReference;
@@ -313,8 +310,8 @@ class TrackReference {
 public:
   static TrackReference* current();
 
-  TrackReference(TrackSet& slots) noexcept;
-  TrackReference(TrackSet& slots, size_t index) noexcept;
+  TrackReference(TrackSet& set) noexcept;
+  TrackReference(TrackSet& set, size_t index) noexcept;
   TrackReference(const LambdaCaptureTrack& lambdaCapture) noexcept;
   ~TrackReference() noexcept;
 
@@ -330,7 +327,7 @@ private:
   void enlistCurrentThread();
   void dismissCurrentThread();
 
-  TrackSet* pSlots;
+  TrackSet* pSet;
   size_t index;
 
   static thread_local std::vector<TrackReference*> _threadEnlistedTracks;
