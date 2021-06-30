@@ -3,6 +3,7 @@
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
+#include "CesiumUtility/Tracing.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -49,6 +50,8 @@ ModelReaderResult readJsonModel(
     const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
+  CESIUM_TRACE("CesiumGltf::ModelReader::readJsonModel");
+
   ModelJsonHandler modelHandler(context);
   ReadJsonResult<Model> jsonResult = JsonReader::readJson(data, modelHandler);
 
@@ -83,6 +86,8 @@ std::string toMagicString(uint32_t i) {
 ModelReaderResult readBinaryModel(
     const ReaderContext& context,
     const gsl::span<const std::byte>& data) {
+  CESIUM_TRACE("CesiumGltf::ModelReader::readBinaryModel");
+
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
     return {std::nullopt, {"Too short to be a valid GLB."}, {}};
   }
@@ -213,6 +218,7 @@ void postprocess(
   }
 
   if (options.decodeEmbeddedImages) {
+    CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
     for (Image& image : model.images) {
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
@@ -343,6 +349,8 @@ ModelReaderResult GltfReader::readModel(
 
 ImageReaderResult
 GltfReader::readImage(const gsl::span<const std::byte>& data) const {
+  CESIUM_TRACE("CesiumGltf::readImage");
+
   ImageReaderResult result;
 
   result.image.emplace();
@@ -360,6 +368,10 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) const {
       &channelsInFile,
       image.channels);
   if (pImage) {
+    CESIUM_TRACE(
+        "copy image " + std::to_string(image.width) + "x" +
+        std::to_string(image.height) + "x" + std::to_string(image.channels) +
+        "x" + std::to_string(image.bytesPerChannel));
     // std::uint8_t is not implicitly convertible to std::byte, so we must use
     // reinterpret_cast to (safely) force the conversion.
     const auto lastByte =

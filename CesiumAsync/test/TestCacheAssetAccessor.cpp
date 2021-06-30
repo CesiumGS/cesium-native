@@ -145,10 +145,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == true);
     }
 
@@ -184,10 +186,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == true);
     }
   }
@@ -223,10 +227,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
@@ -260,10 +266,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
@@ -297,10 +305,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
@@ -334,10 +344,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
@@ -369,10 +381,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
@@ -405,10 +419,12 @@ TEST_CASE("Test the condition of caching the request") {
           std::make_shared<MockTaskProcessor>();
 
       AsyncSystem asyncSystem(mockTaskProcessor);
-      cacheAssetAccessor->requestAsset(
-          asyncSystem,
-          "test.com",
-          std::vector<IAssetAccessor::THeader>{});
+      cacheAssetAccessor
+          ->requestAsset(
+              asyncSystem,
+              "test.com",
+              std::vector<IAssetAccessor::THeader>{})
+          .wait();
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
   }
@@ -444,10 +460,12 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
         std::make_shared<MockTaskProcessor>();
 
     AsyncSystem asyncSystem(mockTaskProcessor);
-    cacheAssetAccessor->requestAsset(
-        asyncSystem,
-        "test.com",
-        std::vector<IAssetAccessor::THeader>{});
+    cacheAssetAccessor
+        ->requestAsset(
+            asyncSystem,
+            "test.com",
+            std::vector<IAssetAccessor::THeader>{})
+        .wait();
     REQUIRE(mockCacheDatabase->storeResponseCall == true);
     REQUIRE(
         mockCacheDatabase->storeRequestParam->expiryTime - std::time(nullptr) ==
@@ -483,10 +501,12 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
         std::make_shared<MockTaskProcessor>();
 
     AsyncSystem asyncSystem(mockTaskProcessor);
-    cacheAssetAccessor->requestAsset(
-        asyncSystem,
-        "test.com",
-        std::vector<IAssetAccessor::THeader>{});
+    cacheAssetAccessor
+        ->requestAsset(
+            asyncSystem,
+            "test.com",
+            std::vector<IAssetAccessor::THeader>{})
+        .wait();
     REQUIRE(mockCacheDatabase->storeResponseCall == true);
     REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime == 1634801280);
   }
@@ -525,7 +545,7 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread(
+        .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
               REQUIRE(completedRequest->url() == "test.com");
@@ -545,8 +565,8 @@ TEST_CASE("Test serving cache item") {
               REQUIRE(!ResponseCacheControl::parseFromResponseHeaders(
                            response->headers())
                            .has_value());
-            });
-    asyncSystem.dispatchMainThreadTasks();
+            })
+        .wait();
   }
 
   SECTION("Successfully retrieve cache item") {
@@ -605,7 +625,7 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread(
+        .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
               REQUIRE(completedRequest->url() == "cache.com");
@@ -637,8 +657,8 @@ TEST_CASE("Test serving cache item") {
               REQUIRE(cacheControl->proxyRevalidate() == false);
               REQUIRE(cacheControl->maxAge() == 100);
               REQUIRE(cacheControl->sharedMaxAge() == 0);
-            });
-    asyncSystem.dispatchMainThreadTasks();
+            })
+        .wait();
   }
 
   SECTION("Retrieve outdated cache item and cache control mandates "
@@ -698,7 +718,7 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread(
+        .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
               REQUIRE(completedRequest->url() == "cache.com");
@@ -734,8 +754,8 @@ TEST_CASE("Test serving cache item") {
               REQUIRE(cacheControl->proxyRevalidate() == false);
               REQUIRE(cacheControl->maxAge() == 300);
               REQUIRE(cacheControl->sharedMaxAge() == 0);
-            });
-    asyncSystem.dispatchMainThreadTasks();
+            })
+        .wait();
   }
 
   SECTION("Cache should serve validation response from the server directly if "
@@ -794,7 +814,7 @@ TEST_CASE("Test serving cache item") {
             asyncSystem,
             "test.com",
             std::vector<IAssetAccessor::THeader>{})
-        .thenInMainThread(
+        .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
               REQUIRE(completedRequest->url() == "test.com");
@@ -813,7 +833,7 @@ TEST_CASE("Test serving cache item") {
               REQUIRE(!ResponseCacheControl::parseFromResponseHeaders(
                            response->headers())
                            .has_value());
-            });
-    asyncSystem.dispatchMainThreadTasks();
+            })
+        .wait();
   }
 }

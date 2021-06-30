@@ -39,6 +39,7 @@ target_include_directories(
 
 target_link_libraries(CesiumAsync
     PUBLIC
+        CesiumUtility
         GSL
         Async++
     PRIVATE
@@ -53,4 +54,9 @@ target_link_libraries_system(CesiumAsync PUBLIC
 install(TARGETS CesiumAsync
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumAsync
+)
+
+install(
+    DIRECTORY include/CesiumAsync/Impl
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumAsync
 )
