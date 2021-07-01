@@ -437,11 +437,17 @@ std::optional<CesiumGltf::ImageCesium> RasterMappedTo3DTile::blitRasters() {
   image.pixelData.resize(
       image.width * image.height * image.channels * image.bytesPerChannel);
 
+  // Texture coordinates range from South (0.0) to North (1.0).
+  // But pixels in images are stored in North (0) to South (imageHeight - 1)
+  // order.
+
   for (int32_t j = 0; j < image.height; ++j) {
-    double v = 1.0 - double(j) / double(image.height);
+    // Use the texture coordinate for the _center_ of each pixel.
+    // And adjust for the flipped direction of texture coordinates and pixels.
+    double v = 1.0 - ((double(j) + 0.5) / double(image.height));
 
     for (int32_t i = 0; i < image.width; ++i) {
-      glm::dvec2 uv(double(i) / double(image.width), v);
+      glm::dvec2 uv((double(i) + 0.5) / double(image.width), v);
 
       for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
 
@@ -454,8 +460,6 @@ std::optional<CesiumGltf::ImageCesium> RasterMappedTo3DTile::blitRasters() {
               //rasterToCombine._scale;
               uv * rasterToCombine._scale + rasterToCombine._translation;
 
-          srcUv.y = 1.0 - srcUv.y;
-
           // TODO: remove?
           if (srcUv.x < 0.0 || srcUv.x > 1.0 || srcUv.y < 0.0 ||
               srcUv.y > 1.0) {
@@ -464,14 +468,14 @@ std::optional<CesiumGltf::ImageCesium> RasterMappedTo3DTile::blitRasters() {
 
           glm::dvec2 srcPixel(
               srcUv.x * srcImage.width,
-              srcUv.y * srcImage.height);
+              (1.0 - srcUv.y) * srcImage.height);
 
           // TODO: do a sanity check of these transformedUvs
           // TODO: check if bilerp is needed here, is there any aliasing?
           uint32_t srcPixelX = static_cast<uint32_t>(
-              glm::clamp(glm::round(srcPixel.x), 0.0, double(srcImage.width)));
+              glm::clamp(glm::floor(srcPixel.x), 0.0, double(srcImage.width)));
           uint32_t srcPixelY = static_cast<uint32_t>(
-              glm::clamp(glm::round(srcPixel.y), 0.0, double(srcImage.height)));
+              glm::clamp(glm::floor(srcPixel.y), 0.0, double(srcImage.height)));
 
           const std::byte* pSrcPixelValue =
               srcImage.pixelData.data() +
