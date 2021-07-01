@@ -52,32 +52,25 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {}
 
-void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
+RastersMappedTo3DTile QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const TileID& geometryTileId,
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-    double targetGeometricError,
-    std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
-    std::optional<size_t> outputIndex) {
-  this->mapRasterTilesToGeometryTile(
+    double targetGeometricError) {
+  return this->mapRasterTilesToGeometryTile(
       geometryTileId,
       projectRectangleSimple(this->getProjection(), geometryRectangle),
-      targetGeometricError,
-      outputRasterTiles,
-      outputIndex);
+      targetGeometricError);
 }
 
-void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
+RastersMappedTo3DTile QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const TileID& /*geometryTileId*/,
     const CesiumGeometry::Rectangle& geometryRectangle,
-    double targetGeometricError,
-    std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
-    std::optional<size_t> /*outputIndex*/) {
+    double targetGeometricError) {
   if (this->_pPlaceholder) {
-    outputRasterTiles.push_back(
-        RasterMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+    return
+        RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
             this->_pPlaceholder.get(),
-            CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
-    return;
+            CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
   }
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
@@ -173,7 +166,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // Because of the intersection, we should always have valid tile coordinates.
   // But give up if we don't.
   if (!southwestTileCoordinatesOpt || !northeastTileCoordinatesOpt) {
-    return;
+    return RastersMappedTo3DTile({});
   }
 
   QuadtreeTileID southwestTileCoordinates = southwestTileCoordinatesOpt.value();
@@ -347,7 +340,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       outputRasterTiles.emplace(
           outputRasterTiles.begin() +
               static_cast<
-                  std::vector<RasterMappedTo3DTile>::iterator::difference_type>(
+                  std::vector<RastersMappedTo3DTile>::iterator::difference_type>(
                   realOutputIndex),
           pTile,
           texCoordsRectangle);
@@ -355,7 +348,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     }
   }
 
-  outputRasterTiles.push_back(RasterMappedTo3DTile(rastersToCombine));
+  return RastersMappedTo3DTile(rastersToCombine);
 }
 
 bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(

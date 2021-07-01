@@ -9,7 +9,7 @@
 namespace Cesium3DTiles {
 
 class Tile;
-class RasterMappedTo3DTile;
+class RastersMappedTo3DTile;
 
 /**
  * @brief A {@link RasterOverlayTile} that will be combined with others to
@@ -64,7 +64,7 @@ private:
   glm::dvec2 _scale;
   bool _originalFailed;
 
-  friend class RasterMappedTo3DTile;
+  friend class RastersMappedTo3DTile;
 };
 
 /**
@@ -74,7 +74,7 @@ private:
  * imagery data that is given as {@link RasterOverlayTile} instances
  * to the 2D region that is covered by the tile geometry.
  */
-class RasterMappedTo3DTile final {
+class RastersMappedTo3DTile final {
 public:
   /**
    * @brief The states indicating whether the raster tile is attached to the
@@ -104,7 +104,7 @@ public:
    * @param rastersToCombine The raster tiles that need to be combined together
    * to form the final output texture.
    */
-  RasterMappedTo3DTile(const std::vector<RasterToCombine>& rastersToCombine);
+  RastersMappedTo3DTile(const std::vector<RasterToCombine>& rastersToCombine);
 
   /**
    * @brief Returns the list of rasters that are to be combined and mapped to

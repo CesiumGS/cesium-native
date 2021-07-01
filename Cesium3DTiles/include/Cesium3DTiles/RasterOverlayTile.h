@@ -20,7 +20,7 @@ class RasterOverlayTileProvider;
  * an associated image, which us used as an imagery overlay
  * for tile geometry. The connection between the imagery data
  * and the actual tile geometry is established via the
- * {@link RasterMappedTo3DTile} class, which combines a
+ * {@link RastersMappedTo3DTile} class, which combines a
  * raster overlay tile with texture coordinates, to map the
  * image on the geometry of a {@link Tile}.
  */
@@ -186,7 +186,7 @@ public:
 
 private:
   friend class RasterOverlayTileProvider;
-  friend class RasterMappedTo3DTile;
+  friend class RastersMappedTo3DTile;
 
   void setState(LoadState newState);
 

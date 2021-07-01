@@ -66,23 +66,19 @@ public:
    *
    * @param geometryRectangle The rectangle.
    * @param targetGeometricError The geometric error.
-   * @param outputRasterTiles The raster tiles.
-   * @param outputIndex The output index.
+   * @return A single raster tile combining the given rasters into the 
+   * geometry tile's rectangle. 
    */
-  virtual void mapRasterTilesToGeometryTile(
+  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex = std::nullopt) override;
+      double targetGeometricError) override;
 
   /** @copydoc mapRasterTilesToGeometryTile */
-  virtual void mapRasterTilesToGeometryTile(
+  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex = std::nullopt) override;
+      double targetGeometricError) override;
 
   /**
    * @brief Whether the given raster tile has more detail.

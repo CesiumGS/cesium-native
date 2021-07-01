@@ -3,7 +3,7 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/TileContext.h"
 #include "Cesium3DTiles/TileID.h"
@@ -451,12 +451,12 @@ public:
   /**
    * @brief Returns the raster overlay tiles that have been mapped to this tile.
    */
-  std::vector<RasterMappedTo3DTile>& getMappedRasterTiles() noexcept {
+  std::vector<RastersMappedTo3DTile>& getMappedRasterTiles() noexcept {
     return this->_rasterTiles;
   }
 
   /** @copydoc Tile::getMappedRasterTiles() */
-  const std::vector<RasterMappedTo3DTile>&
+  const std::vector<RastersMappedTo3DTile>&
   getMappedRasterTiles() const noexcept {
     return this->_rasterTiles;
   }
@@ -584,7 +584,7 @@ private:
   TileSelectionState _lastSelectionState;
 
   // Overlays
-  std::vector<RasterMappedTo3DTile> _rasterTiles;
+  std::vector<RastersMappedTo3DTile> _rasterTiles;
 
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
 

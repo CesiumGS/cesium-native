@@ -28,17 +28,17 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   // Add this overlay to existing geometry tiles.
   this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
     // The tile rectangle doesn't matter for a placeholder.
-    pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
+    tile.getMappedRasterTiles().push_back(
+      pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
         "",
         CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
-        tile.getGeometricError(),
-        tile.getMappedRasterTiles());
+        tile.getGeometricError()));
   });
 }
 
 void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   // Remove all mappings of this overlay to geometry tiles.
-  auto removeCondition = [pOverlay](const RasterMappedTo3DTile& mapped) {
+  auto removeCondition = [pOverlay](const RastersMappedTo3DTile& mapped) {
     for (const RasterToCombine& rasterToCombine :
          mapped.getRastersToCombine()) {
       if ((rasterToCombine.getLoadingTile() &&
@@ -53,9 +53,9 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   };
 
   this->_pTileset->forEachLoadedTile([&removeCondition](Tile& tile) {
-    std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
+    std::vector<RastersMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-    for (RasterMappedTo3DTile& rasterTile : mapped) {
+    for (RastersMappedTo3DTile& rasterTile : mapped) {
       if (removeCondition(rasterTile)) {
         rasterTile.detachFromTile(tile);
       }

@@ -1,4 +1,4 @@
-#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "Cesium3DTiles/IPrepareRendererResources.h"
 #include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
@@ -24,7 +24,7 @@ RasterToCombine::RasterToCombine(
       _scale(1.0, 1.0),
       _originalFailed(false) {}
 
-RasterMappedTo3DTile::RasterMappedTo3DTile(
+RastersMappedTo3DTile::RastersMappedTo3DTile(
     const std::vector<RasterToCombine>& rastersToCombine)
     : _rastersToCombine(rastersToCombine),
       _combinedTile(nullptr),
@@ -32,8 +32,8 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _textureCoordinateID(0),
       _state(AttachmentState::Unattached) {}
 
-RasterMappedTo3DTile::MoreDetailAvailable
-RasterMappedTo3DTile::update(Tile& tile) {
+RastersMappedTo3DTile::MoreDetailAvailable
+RastersMappedTo3DTile::update(Tile& tile) {
   if (this->getState() == AttachmentState::Attached) {
     for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
       if (!rasterToCombine._originalFailed && rasterToCombine._pReadyTile) {
@@ -157,7 +157,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
         // Attach the ready tile if it's not already attached.
         if (pReadyTile &&
             this->getState() ==
-       RasterMappedTo3DTile::AttachmentState::Unattached) {
+       RastersMappedTo3DTile::AttachmentState::Unattached) {
           pReadyTile->loadInMainThread();
           recombineRasters = true;
           /*
@@ -266,7 +266,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
 
               if (combinedTile &&
                   this->getState() ==
-                      RasterMappedTo3DTile::AttachmentState::Unattached) {*/
+                      RastersMappedTo3DTile::AttachmentState::Unattached) {*/
               combinedTile->loadInMainThread();
 
               externals.pPrepareRendererResources->attachRasterInMainThread(
@@ -310,7 +310,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
   return MoreDetailAvailable::No;
 }
 
-void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
+void RastersMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   if (this->getState() == AttachmentState::Unattached) {
     return;
   }
@@ -330,7 +330,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   this->_state = AttachmentState::Unattached;
 }
 
-/*static*/ void RasterMappedTo3DTile::computeTranslationAndScale(
+/*static*/ void RastersMappedTo3DTile::computeTranslationAndScale(
     RasterToCombine& rasterToCombine,
     const Tile& tile) {
   if (!rasterToCombine._pReadyTile) {
@@ -363,7 +363,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   rasterToCombine._scale = glm::dvec2(scaleX, scaleY);
 }
 
-bool RasterMappedTo3DTile::anyLoading() const noexcept {
+bool RastersMappedTo3DTile::anyLoading() const noexcept {
   for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
     if (rasterToCombine._pLoadingTile) {
       return true;
@@ -372,7 +372,7 @@ bool RasterMappedTo3DTile::anyLoading() const noexcept {
   return false;
 }
 
-bool RasterMappedTo3DTile::allReady() const noexcept {
+bool RastersMappedTo3DTile::allReady() const noexcept {
   for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
     if (!rasterToCombine._pReadyTile) {
       return false;
@@ -381,7 +381,7 @@ bool RasterMappedTo3DTile::allReady() const noexcept {
   return !this->_rastersToCombine.empty();
 }
 
-bool RasterMappedTo3DTile::hasPlaceholder() const noexcept {
+bool RastersMappedTo3DTile::hasPlaceholder() const noexcept {
   for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
     if (rasterToCombine._pLoadingTile &&
         rasterToCombine._pLoadingTile->getState() ==
@@ -397,7 +397,7 @@ bool RasterMappedTo3DTile::hasPlaceholder() const noexcept {
 // while being engine-agnostic.
 // TODO: probably can simplify dramatically by ignoring cases where there is
 // discrepancy between channels count or bytesPerChannel between the rasters
-std::optional<CesiumGltf::ImageCesium> RasterMappedTo3DTile::blitRasters() {
+std::optional<CesiumGltf::ImageCesium> RastersMappedTo3DTile::blitRasters() {
   if (!this->allReady()) {
     return std::nullopt;
   }

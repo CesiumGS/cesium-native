@@ -1,5 +1,5 @@
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
 #include "Cesium3DTiles/TileID.h"
@@ -26,20 +26,19 @@ public:
         .createResolvedFuture<Cesium3DTiles::LoadedRasterOverlayImage>({});
   }
 
-  virtual void mapRasterTilesToGeometryTile(
+  virtual Cesium3DTiles::RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const Cesium3DTiles::TileID& /*geometryTileId*/,
       const CesiumGeospatial::GlobeRectangle& /*geometryRectangle*/,
-      double /*targetGeometricError*/,
-      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& /*outputRasterTiles*/,
-      std::optional<size_t> /*outputIndex = std::nullopt*/) override {}
+      double /*targetGeometricError*/) override {
+    return Cesium3DTiles::RastersMappedTo3DTile({});
+  }
 
-  /** @copydoc mapRasterTilesToGeometryTile */
-  virtual void mapRasterTilesToGeometryTile(
+  virtual Cesium3DTiles::RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const Cesium3DTiles::TileID& /*geometryTileId*/,
       const CesiumGeometry::Rectangle& /*geometryRectangle*/,
-      double /*targetGeometricError*/,
-      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& /*outputRasterTiles*/,
-      std::optional<size_t> /*outputIndex = std::nullopt*/) override {}
+      double /*targetGeometricError*/) override {
+    return Cesium3DTiles::RastersMappedTo3DTile({});
+  }
 
   virtual bool hasMoreDetailsAvailable(
       const Cesium3DTiles::TileID& /*tileID*/) const override {

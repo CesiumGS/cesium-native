@@ -2,7 +2,7 @@
 #include "Cesium3DTiles/CartographicSelection.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
-#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "Cesium3DTiles/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTiles/TileID.h"
@@ -369,9 +369,9 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
 
     // per-tile credits
     for (auto& tile : result.tilesToRenderThisFrame) {
-      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+      const std::vector<RastersMappedTo3DTile>& mappedRasterTiles =
           tile->getMappedRasterTiles();
-      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+      for (const RastersMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
         const std::shared_ptr<RasterOverlayTile>& pRasterOverlayTile =
             mappedRasterTile.getCombinedTile();
         if (pRasterOverlayTile != nullptr) {
@@ -1852,7 +1852,7 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
 }
 
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
-  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+  for (const RastersMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     if (mapped.anyLoading()) {
       return true;
     }

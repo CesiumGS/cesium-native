@@ -107,7 +107,7 @@ bool Tile::isRenderable() const noexcept {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
-          [](const RasterMappedTo3DTile& rasterTile) {
+          [](const RastersMappedTo3DTile& rasterTile) {
             return rasterTile.getCombinedTile() != nullptr;
           });
     }
@@ -232,7 +232,7 @@ void Tile::loadContent() {
   if (this->getState() != LoadState::Unloaded) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+    for (RastersMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
       for (RasterToCombine& rasterToCombine : mapped.getRastersToCombine()) {
         CesiumUtility::IntrusivePointer<RasterOverlayTile> pLoading =
             rasterToCombine.getLoadingTile();
@@ -282,14 +282,14 @@ void Tile::loadContent() {
     // Map raster tiles to a new vector first, and then replace the old one.
     // Doing it in this order ensures that tiles that are already loaded and
     // that we still need are not freed too soon.
-    std::vector<RasterMappedTo3DTile> newRasterTiles;
+    std::vector<RastersMappedTo3DTile> newRasterTiles;
 
     for (auto& overlay : overlays) {
-      overlay->getTileProvider()->mapRasterTilesToGeometryTile(
+      newRasterTiles.push_back(
+        overlay->getTileProvider()->mapRasterTilesToGeometryTile(
           this->getTileID(),
           *pRectangle,
-          this->getGeometricError(),
-          newRasterTiles);
+          this->getGeometricError()));
     }
 
     this->_rasterTiles = std::move(newRasterTiles);
@@ -303,7 +303,7 @@ void Tile::loadContent() {
 
     // uint32_t projectionID = 0;
 
-    // for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
+    // for (RastersMappedTo3DTile& mappedTile : this->_rasterTiles) {
     //     std::shared_ptr<RasterOverlayTile> pTile =
     //     mappedTile.getLoadingTile(); if (!pTile) {
     //         pTile = mappedTile.getReadyTile();
@@ -819,7 +819,7 @@ void Tile::update(
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
-      RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
+      RastersMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
       const std::vector<RasterToCombine>& rastersToCombine =
           mappedRasterTile.getRastersToCombine();
       if (!rastersToCombine.empty() && rastersToCombine[0].getLoadingTile() &&
@@ -834,27 +834,27 @@ void Tile::update(
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
               static_cast<
-                  std::vector<RasterMappedTo3DTile>::iterator::difference_type>(
+                  std::vector<RastersMappedTo3DTile>::iterator::difference_type>(
                   i));
           --i;
 
           const CesiumGeospatial::GlobeRectangle* pRectangle =
               Cesium3DTiles::Impl::obtainGlobeRectangle(
                   &this->getBoundingVolume());
-          pProvider->mapRasterTilesToGeometryTile(
+          this->_rasterTiles.push_back(
+            pProvider->mapRasterTilesToGeometryTile(
               this->getTileID(),
               *pRectangle,
-              this->getGeometricError(),
-              this->_rasterTiles);
+              this->getGeometricError()));
         }
 
         continue;
       }
 
-      RasterMappedTo3DTile::MoreDetailAvailable moreDetailAvailable =
+      RastersMappedTo3DTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
       moreRasterDetailAvailable |=
-          moreDetailAvailable == RasterMappedTo3DTile::MoreDetailAvailable::Yes;
+          moreDetailAvailable == RastersMappedTo3DTile::MoreDetailAvailable::Yes;
     }
 
     // If this tile still has no children after it's done loading, but it does

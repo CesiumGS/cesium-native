@@ -20,6 +20,7 @@ void rasterizePolygons(
     const std::string& textureTargetName,
     const std::vector<CartographicSelection>& cartographicSelections) {
 
+  // create a 1x1 mask if the rectangle is completely inside a polygon
   if (Cesium3DTiles::Impl::withinPolygons(rectangle, cartographicSelections)) {
     image.width = 1;
     image.height = 1;
@@ -32,7 +33,27 @@ void rasterizePolygons(
     return;
   }
 
-  // TODO: for tiles completely outside polygons also include 1 pixel texture
+  bool completelyOutsidePolygons = true;
+  for (const CartographicSelection& selection : cartographicSelections) {
+    const std::optional<CesiumGeospatial::GlobeRectangle>& boundingRectangle =
+        selection.getBoundingRectangle();
+
+    if (boundingRectangle && rectangle.intersect(*boundingRectangle)) {
+      completelyOutsidePolygons = false;
+      break;
+    }
+  }
+
+  // create a 1x1 mask if the rectangle is completely outside all polygons
+  if (completelyOutsidePolygons) {
+    image.width = 1;
+    image.height = 1;
+    image.channels = 1;
+    image.bytesPerChannel = 1;
+    image.pixelData.resize(1);
+
+    return;
+  }
 
   double rectangleWidth = rectangle.computeWidth();
   double rectangleHeight = rectangle.computeHeight();
@@ -83,7 +104,7 @@ void rasterizePolygons(
 
       for (size_t j = 0; j < 256; ++j) {
         double pixelY =
-            rectangle.getSouth() + rectangleHeight * (double(j) + 0.5) / 256.0;
+            rectangle.getSouth() + rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
         for (size_t i = 0; i < 256; ++i) {
           double pixelX =
               rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / 256.0;
@@ -139,44 +160,28 @@ public:
         _textureTargetName(textureTargetName),
         _polygons(polygons) {}
 
-  virtual void mapRasterTilesToGeometryTile(
+  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex) override {
-
-    for (const CartographicSelection& polygon : this->_polygons) {
-      const std::optional<CesiumGeospatial::GlobeRectangle>& boundingRectangle =
-          polygon.getBoundingRectangle();
-      // TODO: should this intersection be tested on projected or unprojected
-      // rectangle?
-      if (boundingRectangle &&
-          geometryRectangle.intersect(*boundingRectangle)) {
-        this->mapRasterTilesToGeometryTile(
-            geometryTileId,
-            projectRectangleSimple(this->getProjection(), geometryRectangle),
-            targetGeometricError,
-            outputRasterTiles,
-            outputIndex);
-      }
+      double targetGeometricError) override {
+    
+    if (this->_pPlaceholder) {
+      return
+          RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+              this->_pPlaceholder.get(),
+              CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
     }
+
+    return this->mapRasterTilesToGeometryTile(
+              geometryTileId,
+              projectRectangleSimple(this->getProjection(), geometryRectangle),
+              targetGeometricError);
   }
 
-  virtual void mapRasterTilesToGeometryTile(
+  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
-      double /*targetGeometricError*/,
-      std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> /*outputIndex*/) override {
-    if (this->_pPlaceholder) {
-      outputRasterTiles.push_back(
-          RasterMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
-              this->_pPlaceholder.get(),
-              CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
-      return;
-    }
-
+      double /*targetGeometricError*/) override {
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
         this->getTile(geometryTileId, geometryRectangle);
 
@@ -184,10 +189,10 @@ public:
       this->loadTileThrottled(*pTile);
     }
 
-    outputRasterTiles.push_back(
-        RasterMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+    return
+        RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
             pTile,
-            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))})));
+            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
   }
 
   virtual bool

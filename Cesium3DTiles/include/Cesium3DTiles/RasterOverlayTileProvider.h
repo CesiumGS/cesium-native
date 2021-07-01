@@ -3,7 +3,7 @@
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/Gltf.h"
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/RasterMappedTo3DTile.h"
+#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGltf/GltfReader.h"
@@ -212,23 +212,19 @@ public:
    *
    * @param geometryRectangle The rectangle.
    * @param targetGeometricError The geometric error.
-   * @param outputRasterTiles The raster tiles.
-   * @param outputIndex The output index.
+   * @return A single raster tile combining the given rasters into the 
+   * geometry tile's rectangle. 
    */
-  virtual void mapRasterTilesToGeometryTile(
+  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex = std::nullopt) = 0;
+      double targetGeometricErrorss) = 0;
 
   /** @copydoc mapRasterTilesToGeometryTile */
-  virtual void mapRasterTilesToGeometryTile(
+  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex = std::nullopt) = 0;
+      double targetGeometricError) = 0;
 
   /**
    * @brief Whether the given raster tile has more detail.
