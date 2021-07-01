@@ -147,9 +147,7 @@ void Tile::loadContent() {
   // aligned like geographic or web mercator, because we won't know our raster
   // rectangle until we can project each vertex.
 
-  // Accumulate needed projections by name to avoid duplicates. For now they
-  // can only be "WEB_MERCATOR" or "GEOGRAPHIC".
-  std::set<std::string> projections;
+  std::unordered_set<CesiumGeospatial::Projection> projections;
 
   // TODO: determine the GlobeRectangle for non-region based bounding volumes
   const CesiumGeospatial::GlobeRectangle* pRectangle =
@@ -172,6 +170,7 @@ void Tile::loadContent() {
               this->getTileID(),
               *pRectangle,
               this->getGeometricError()));
+      projections.insert(overlay->getTileProvider()->getProjection());
     }
 
     this->_rasterTiles = std::move(newRasterTiles);
@@ -211,13 +210,9 @@ void Tile::loadContent() {
     //     }
     // }
 
-    projections.insert("WEB_MERCATOR");
-    // TEMP
-    projections.insert("GEOGRAPHIC");
-
     // Add geographic texture coordinates for water mask
     if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
-      projections.insert("GEOGRAPHIC");
+      projections.insert(CesiumGeospatial::GeographicProjection());
     }
   }
 
@@ -764,7 +759,7 @@ void Tile::setState(LoadState value) noexcept {
 Tile::generateTextureCoordinates(
     CesiumGltf::Model& model,
     const BoundingVolume& boundingVolume,
-    const std::set<std::string>& projections) {
+    const std::unordered_set<CesiumGeospatial::Projection>& projections) {
   std::optional<CesiumGeospatial::BoundingRegion> result;
 
   // Generate texture coordinates for each projection.
@@ -772,23 +767,14 @@ Tile::generateTextureCoordinates(
     const CesiumGeospatial::GlobeRectangle* pRectangle =
         Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
     if (pRectangle) {
-      for (const std::string& projectionName : projections) {
-        Projection projection;
-        if (projectionName == "WEB_MERCATOR") {
-          projection = WebMercatorProjection();
-        } else if (projectionName == "GEOGRAPHIC") {
-          projection = GeographicProjection();
-        } else {
-          continue;
-        }
-
+      for (const CesiumGeospatial::Projection& projection : projections) {
         CesiumGeometry::Rectangle rectangle =
             projectRectangleSimple(projection, *pRectangle);
 
         CesiumGeospatial::BoundingRegion boundingRegion =
             GltfContent::createRasterOverlayTextureCoordinates(
                 model,
-                projectionName,
+                CesiumGeospatial::getProjectionName(projection),
                 projection,
                 rectangle);
         if (result) {
@@ -803,7 +789,7 @@ Tile::generateTextureCoordinates(
   return result;
 }
 
-void Tile::upsampleParent(std::set<std::string>&& projections) {
+void Tile::upsampleParent(std::unordered_set<CesiumGeospatial::Projection>&& projections) {
   Tile* pParent = this->getParent();
   const UpsampledQuadtreeNode* pSubdividedParentID =
       std::get_if<UpsampledQuadtreeNode>(&this->getTileID());

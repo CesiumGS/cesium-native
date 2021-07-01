@@ -3,6 +3,7 @@
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include <variant>
+#include <string>
 
 namespace CesiumGeospatial {
 
@@ -16,6 +17,11 @@ namespace CesiumGeospatial {
  * @see WebMercatorProjection
  */
 typedef std::variant<GeographicProjection, WebMercatorProjection> Projection;
+
+/**
+ * @brief Get the name of this projection. 
+ */
+std::string getProjectionName(const Projection& projection);
 
 /**
  * @brief Projects a position on the globe using the given {@link Projection}.
@@ -87,3 +93,20 @@ double computeApproximateConversionFactorToMetersNearPosition(
     const glm::dvec2& position);
 
 } // namespace CesiumGeospatial
+
+namespace std {
+  /**
+   * @brief A hash function for {@link CesiumGeospatial::Projection} objects.
+   */
+  template <> struct hash<CesiumGeospatial::Projection> {
+
+    /**
+     * @brief A specialization of the `std::hash` template for
+     * {@link CesiumGeospatial::Projection} objects.
+     */
+    size_t operator()(const CesiumGeospatial::Projection& projection) const noexcept {
+      return projection.index();
+    }
+  };
+} // namespace std
+

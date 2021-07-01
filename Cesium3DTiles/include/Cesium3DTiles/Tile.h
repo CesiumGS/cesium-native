@@ -17,7 +17,7 @@
 #include <gsl/span>
 #include <memory>
 #include <optional>
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -549,7 +549,7 @@ private:
   generateTextureCoordinates(
       CesiumGltf::Model& model,
       const BoundingVolume& boundingVolume,
-      const std::set<std::string>& projections);
+      const std::unordered_set<CesiumGeospatial::Projection>& projections);
 
   /**
    * @brief Upsample the parent of this tile.
@@ -557,7 +557,7 @@ private:
    * This method should only be called when this tile's parent is already
    * loaded.
    */
-  void upsampleParent(std::set<std::string>&& projections);
+  void upsampleParent(std::unordered_set<CesiumGeospatial::Projection>&& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;
