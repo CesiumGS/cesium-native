@@ -108,7 +108,7 @@ bool Tile::isRenderable() const noexcept {
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
           [](const RasterMappedTo3DTile& rasterTile) {
-            return rasterTile.getReadyTile() != nullptr;
+            return rasterTile.getCombinedTile() != nullptr;
           });
     }
   }
@@ -233,13 +233,16 @@ void Tile::loadContent() {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
-      RasterOverlayTile* pLoading = mapped.getLoadingTile();
-      if (pLoading &&
-          pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
-        RasterOverlayTileProvider* pProvider =
-            pLoading->getOverlay().getTileProvider();
-        if (pProvider) {
-          pProvider->loadTileThrottled(*pLoading);
+      for (RasterToCombine& rasterToCombine : mapped.getRastersToCombine()) {
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pLoading = 
+            rasterToCombine.getLoadingTile();
+        if (pLoading &&
+            pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+          RasterOverlayTileProvider* pProvider =
+              pLoading->getOverlay().getTileProvider();
+          if (pProvider) {
+            pProvider->loadTileThrottled(*pLoading);
+          }
         }
       }
     }
@@ -817,12 +820,13 @@ void Tile::update(
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
       RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
-
-      RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-      if (pLoadingTile && pLoadingTile->getState() ==
-                              RasterOverlayTile::LoadState::Placeholder) {
+      const std::vector<RasterToCombine>& rastersToCombine = 
+          mappedRasterTile.getRastersToCombine();
+      if (!rastersToCombine.empty() &&
+          rastersToCombine[0].getLoadingTile() && 
+          mappedRasterTile.hasPlaceholder()) {
         RasterOverlayTileProvider* pProvider =
-            pLoadingTile->getOverlay().getTileProvider();
+            rastersToCombine[0].getLoadingTile()->getOverlay().getTileProvider();
 
         // Try to replace this placeholder with real tiles.
         if (!pProvider->isPlaceholder()) {

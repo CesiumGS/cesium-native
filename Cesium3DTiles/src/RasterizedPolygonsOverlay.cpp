@@ -171,15 +171,23 @@ public:
       std::optional<size_t> /*outputIndex*/) override {
     if (this->_pPlaceholder) {
       outputRasterTiles.push_back(RasterMappedTo3DTile(
+        std::vector<RasterToCombine>({RasterToCombine(
           this->_pPlaceholder.get(),
-          CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)));
+          CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
       return;
     }
 
+    CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
+        this->getTile(geometryTileId, geometryRectangle);
+
+    if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
+      this->loadTileThrottled(*pTile);
+    }
+
     outputRasterTiles.push_back(RasterMappedTo3DTile(
-        CesiumUtility::IntrusivePointer<RasterOverlayTile>(
-            this->getTile(geometryTileId, geometryRectangle)),
-        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)));
+      std::vector<RasterToCombine>({RasterToCombine(
+        pTile,
+        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))})));
   }
 
   virtual bool

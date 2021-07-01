@@ -186,6 +186,7 @@ public:
 
 private:
   friend class RasterOverlayTileProvider;
+  friend class RasterMappedTo3DTile;
 
   void setState(LoadState newState);
 

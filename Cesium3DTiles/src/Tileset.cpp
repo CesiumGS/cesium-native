@@ -371,8 +371,9 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
     for (auto& tile : result.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           tile->getMappedRasterTiles();
-      for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
-        RasterOverlayTile* pRasterOverlayTile = mappedRasterTile.getReadyTile();
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const std::shared_ptr<RasterOverlayTile>& pRasterOverlayTile = 
+            mappedRasterTile.getCombinedTile();
         if (pRasterOverlayTile != nullptr) {
           for (Credit credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
@@ -1852,9 +1853,7 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
 
 static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
-    const RasterOverlayTile* pLoading = mapped.getLoadingTile();
-    if (pLoading &&
-        pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+    if (mapped.anyLoading()) {
       return true;
     }
   }

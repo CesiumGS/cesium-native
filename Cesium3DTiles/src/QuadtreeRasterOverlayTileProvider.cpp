@@ -71,11 +71,12 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError,
     std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
-    std::optional<size_t> outputIndex) {
+    std::optional<size_t> /*outputIndex*/) {
   if (this->_pPlaceholder) {
     outputRasterTiles.push_back(RasterMappedTo3DTile(
+      std::vector<RasterToCombine>({RasterToCombine(
         this->_pPlaceholder.get(),
-        CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)));
+        CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
     return;
   }
 
@@ -228,8 +229,8 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
       std::nullopt;
 
-  size_t realOutputIndex =
-      outputIndex ? outputIndex.value() : outputRasterTiles.size();
+  //size_t realOutputIndex =
+  //    outputIndex ? outputIndex.value() : outputRasterTiles.size();
 
   double minU;
   double maxU = 0.0;
@@ -264,6 +265,8 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   //         terrainRectangle.getSouth()) / terrainRectangle.computeHeight()
   //     );
   // }
+
+  std::vector<RasterToCombine> rastersToCombine;
 
   double initialMaxV = maxV;
 
@@ -339,6 +342,8 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
         this->loadTileThrottled(*pTile);
       }
 
+      rastersToCombine.push_back(RasterToCombine(pTile, texCoordsRectangle));
+      /*
       outputRasterTiles.emplace(
           outputRasterTiles.begin() +
               static_cast<
@@ -346,9 +351,11 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
                   realOutputIndex),
           pTile,
           texCoordsRectangle);
-      ++realOutputIndex;
+      ++realOutputIndex;*/
     }
   }
+
+  outputRasterTiles.push_back(RasterMappedTo3DTile(rastersToCombine));
 }
 
 bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(

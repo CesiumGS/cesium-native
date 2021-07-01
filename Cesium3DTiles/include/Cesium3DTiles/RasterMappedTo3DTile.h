@@ -3,11 +3,72 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumUtility/IntrusivePointer.h"
+#include <vector>
 #include <memory>
 
 namespace Cesium3DTiles {
 
 class Tile;
+class RasterMappedTo3DTile;
+
+
+/**
+ * @brief A {@link RasterOverlayTile} that will be combined with others to
+ * form a single output texture.
+ */
+class RasterToCombine final {
+public:
+  /**
+   * @brief Creates a new instance.
+   * 
+   * @param pRasterTile The {@link RasterOverlayTile} to combine with others.
+   * @param textureCoordinateRectangle The texture coordinate rectangle that 
+   * indicates the region that is covered by the raster overlay tile.
+   */
+  RasterToCombine(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
+      const CesiumGeometry::Rectangle textureCoordinateRectangle);
+
+  // TODO add back doxygen comments here
+
+  const CesiumUtility::IntrusivePointer<RasterOverlayTile>& getLoadingTile() const {
+    return this->_pLoadingTile;
+  }
+
+  CesiumUtility::IntrusivePointer<RasterOverlayTile>& getLoadingTile() {
+    return this->_pLoadingTile;
+  }
+
+  const CesiumUtility::IntrusivePointer<RasterOverlayTile>& getReadyTile() const {
+    return this->_pReadyTile;
+  }
+  
+  CesiumUtility::IntrusivePointer<RasterOverlayTile>& getReadyTile() {
+    return this->_pReadyTile;
+  }
+
+  const CesiumGeometry::Rectangle& getTextureCoordinateRectangle() const {
+    return this->_textureCoordinateRectangle;
+  }
+
+  const glm::dvec2& getTranslation() const {
+    return this->_translation;
+  }
+
+  const glm::dvec2& getScale() const {
+    return this->_scale;
+  }
+
+private:
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
+  CesiumGeometry::Rectangle _textureCoordinateRectangle;
+  glm::dvec2 _translation;
+  glm::dvec2 _scale;
+  bool _originalFailed;
+
+  friend class RasterMappedTo3DTile;
+};
 
 /**
  * @brief The result of applying a {@link RasterOverlayTile} to geometry.
@@ -42,47 +103,27 @@ public:
 
   /**
    * @brief Creates a new instance.
-   *
-   * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the
-   * geometry.
-   * @param textureCoordinateRectangle The texture coordinate rectangle that
-   * indicates the region that is covered by the raster overlay tile.
+   * 
+   * @param rastersToCombine The raster tiles that need to be combined together
+   * to form the final output texture.
    */
-  RasterMappedTo3DTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
-      const CesiumGeometry::Rectangle& textureCoordinateRectangle);
+  RasterMappedTo3DTile(const std::vector<RasterToCombine>& rastersToCombine);
 
   /**
-   * @brief Returns a {@link RasterOverlayTile} that serves as a placeholder
-   * while loading.
-   *
-   * The caller has to check the exact state of this tile, using
-   * {@link Tile::getState}.
-   *
-   * @return The placeholder tile while loading, or `nullptr`.
+   * @brief Returns the list of rasters that are to be combined and mapped to 
+   * the geometry tile.
+   * 
+   * @return The list of raster tiles to be combined.
    */
-  RasterOverlayTile* getLoadingTile() noexcept {
-    return this->_pLoadingTile.get();
-  }
-
-  /** @copydoc getLoadingTile */
-  const RasterOverlayTile* getLoadingTile() const noexcept {
-    return this->_pLoadingTile.get();
+  const std::vector<RasterToCombine> getRastersToCombine() const {
+    return this->_rastersToCombine;
   }
 
   /**
-   * @brief Returns the {@link RasterOverlayTile} that represents the imagery
-   * data.
-   *
-   * This will be `nullptr` when the tile data has not yet been loaded.
-   *
-   * @return The tile, or `nullptr`.
+   * @copydoc getRastersToCombine 
    */
-  RasterOverlayTile* getReadyTile() noexcept { return this->_pReadyTile.get(); }
-
-  /** @copydoc getReadyTile */
-  const RasterOverlayTile* getReadyTile() const noexcept {
-    return this->_pReadyTile.get();
+  std::vector<RasterToCombine> getRastersToCombine() {
+    return this->_rastersToCombine;
   }
 
   /**
@@ -125,36 +166,21 @@ public:
   }
 
   /**
-   * @brief Returns the translation that converts between texture coordinates
-   * and world coordinates.
-   *
-   * The translation and {@link getScale} are computed from the region
-   * that is covered by the tile geometry (in the coordinates that are
-   * specific for the projection that is used by the tile provider)
-   * and the {@link getTextureCoordinateRectangle}.
-   *
-   * @returns The translation.
-   */
-  const glm::dvec2& getTranslation() const noexcept {
-    return this->_translation;
-  }
-
-  /**
-   * @brief Returns the scaling that converts between texture coordinates and
-   * world coordinates.
-   *
-   * @see getTranslation
-   *
-   * @returns The scaling.
-   */
-  const glm::dvec2& getScale() const noexcept { return this->_scale; }
-
-  /**
    * @brief Returns the {@link AttachmentState}.
    *
    * This function is not supposed to be called by clients.
    */
   AttachmentState getState() const noexcept { return this->_state; }
+
+  /**
+   * @brief Returns the {@link RasterOverlayTile} that is the combination of
+   * all provided rasters.
+   * 
+   * @return The combined raster overlay tile. 
+   */
+  const std::shared_ptr<RasterOverlayTile>& getCombinedTile() const noexcept {
+    return this->_combinedTile;
+  }
 
   /**
    * @brief Tile availability states.
@@ -197,17 +223,32 @@ public:
 
   // void attachToTile(Tile& tile);
 
-private:
-  void computeTranslationAndScale(Tile& tile);
+  /**
+   * @brief Whether any of the rasters-to-combine have a loading tile.
+   */
+  bool anyLoading() const noexcept;
 
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
+  /**
+   * @brief Whether all of the rasters-to-combine have a ready tile. 
+   */
+  bool allReady() const noexcept;
+
+  /**
+   * @brief Whether any of the loading tiles are placeholders
+   */
+  bool hasPlaceholder() const noexcept;
+
+private:
+  static void computeTranslationAndScale(
+      RasterToCombine& rasterToCombine,
+      const Tile& tile);
+  std::optional<CesiumGltf::ImageCesium> blitRasters();
+
+  std::vector<RasterToCombine> _rastersToCombine;
   uint32_t _textureCoordinateID;
   CesiumGeometry::Rectangle _textureCoordinateRectangle;
-  glm::dvec2 _translation;
-  glm::dvec2 _scale;
   AttachmentState _state;
-  bool _originalFailed;
+  std::shared_ptr<RasterOverlayTile> _combinedTile;
 };
 
 } // namespace Cesium3DTiles
