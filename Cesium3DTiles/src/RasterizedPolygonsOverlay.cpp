@@ -103,8 +103,8 @@ void rasterizePolygons(
       glm::dvec2 ca_perp(-ca.y, ca.x);
 
       for (size_t j = 0; j < 256; ++j) {
-        double pixelY =
-            rectangle.getSouth() + rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
+        double pixelY = rectangle.getSouth() +
+                        rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
         for (size_t i = 0; i < 256; ++i) {
           double pixelX =
               rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / 256.0;
@@ -164,18 +164,18 @@ public:
       const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError) override {
-    
+
     if (this->_pPlaceholder) {
-      return
-          RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+      return RastersMappedTo3DTile(
+          std::vector<RasterToCombine>({RasterToCombine(
               this->_pPlaceholder.get(),
               CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
     }
 
     return this->mapRasterTilesToGeometryTile(
-              geometryTileId,
-              projectRectangleSimple(this->getProjection(), geometryRectangle),
-              targetGeometricError);
+        geometryTileId,
+        projectRectangleSimple(this->getProjection(), geometryRectangle),
+        targetGeometricError);
   }
 
   virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
@@ -189,10 +189,9 @@ public:
       this->loadTileThrottled(*pTile);
     }
 
-    return
-        RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
-            pTile,
-            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
+    return RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+        pTile,
+        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
   }
 
   virtual bool

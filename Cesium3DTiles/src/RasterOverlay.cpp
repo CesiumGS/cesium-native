@@ -1,7 +1,7 @@
 #include "Cesium3DTiles/RasterOverlay.h"
-#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/RasterOverlayTileProvider.h"
+#include "Cesium3DTiles/RastersMappedTo3DTile.h"
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 

@@ -29,10 +29,10 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
   this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
     // The tile rectangle doesn't matter for a placeholder.
     tile.getMappedRasterTiles().push_back(
-      pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
-        "",
-        CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
-        tile.getGeometricError()));
+        pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
+            "",
+            CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
+            tile.getGeometricError()));
   });
 }
 

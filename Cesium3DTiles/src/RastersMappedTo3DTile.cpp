@@ -457,7 +457,7 @@ std::optional<CesiumGltf::ImageCesium> RastersMappedTo3DTile::blitRasters() {
 
           glm::dvec2 srcUv =
               //(uv - rasterToCombine._translation / rasterToCombine._scale) *
-              //rasterToCombine._scale;
+              // rasterToCombine._scale;
               uv * rasterToCombine._scale + rasterToCombine._translation;
 
           // TODO: remove?

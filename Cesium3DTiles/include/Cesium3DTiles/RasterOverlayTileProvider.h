@@ -212,8 +212,8 @@ public:
    *
    * @param geometryRectangle The rectangle.
    * @param targetGeometricError The geometric error.
-   * @return A single raster tile combining the given rasters into the 
-   * geometry tile's rectangle. 
+   * @return A single raster tile combining the given rasters into the
+   * geometry tile's rectangle.
    */
   virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,

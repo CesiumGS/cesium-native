@@ -286,10 +286,10 @@ void Tile::loadContent() {
 
     for (auto& overlay : overlays) {
       newRasterTiles.push_back(
-        overlay->getTileProvider()->mapRasterTilesToGeometryTile(
-          this->getTileID(),
-          *pRectangle,
-          this->getGeometricError()));
+          overlay->getTileProvider()->mapRasterTilesToGeometryTile(
+              this->getTileID(),
+              *pRectangle,
+              this->getGeometricError()));
     }
 
     this->_rasterTiles = std::move(newRasterTiles);
@@ -833,16 +833,14 @@ void Tile::update(
         if (!pProvider->isPlaceholder()) {
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
-              static_cast<
-                  std::vector<RastersMappedTo3DTile>::iterator::difference_type>(
-                  i));
+              static_cast<std::vector<
+                  RastersMappedTo3DTile>::iterator::difference_type>(i));
           --i;
 
           const CesiumGeospatial::GlobeRectangle* pRectangle =
               Cesium3DTiles::Impl::obtainGlobeRectangle(
                   &this->getBoundingVolume());
-          this->_rasterTiles.push_back(
-            pProvider->mapRasterTilesToGeometryTile(
+          this->_rasterTiles.push_back(pProvider->mapRasterTilesToGeometryTile(
               this->getTileID(),
               *pRectangle,
               this->getGeometricError()));
@@ -854,7 +852,8 @@ void Tile::update(
       RastersMappedTo3DTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
       moreRasterDetailAvailable |=
-          moreDetailAvailable == RastersMappedTo3DTile::MoreDetailAvailable::Yes;
+          moreDetailAvailable ==
+          RastersMappedTo3DTile::MoreDetailAvailable::Yes;
     }
 
     // If this tile still has no children after it's done loading, but it does

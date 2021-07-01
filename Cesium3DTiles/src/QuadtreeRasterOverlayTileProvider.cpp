@@ -52,7 +52,8 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {}
 
-RastersMappedTo3DTile QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
+RastersMappedTo3DTile
+QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const TileID& geometryTileId,
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError) {
@@ -62,15 +63,15 @@ RastersMappedTo3DTile QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometr
       targetGeometricError);
 }
 
-RastersMappedTo3DTile QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
+RastersMappedTo3DTile
+QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const TileID& /*geometryTileId*/,
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
   if (this->_pPlaceholder) {
-    return
-        RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
-            this->_pPlaceholder.get(),
-            CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
+    return RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+        this->_pPlaceholder.get(),
+        CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
   }
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
