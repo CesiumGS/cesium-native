@@ -39,12 +39,12 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   // Remove all mappings of this overlay to geometry tiles.
   auto removeCondition = [pOverlay](const RasterMappedTo3DTile& mapped) {
-    for (const RasterToCombine& rasterToCombine : 
-            mapped.getRastersToCombine()) {
+    for (const RasterToCombine& rasterToCombine :
+         mapped.getRastersToCombine()) {
       if ((rasterToCombine.getLoadingTile() &&
-          &rasterToCombine.getLoadingTile()->getOverlay() == pOverlay) ||
+           &rasterToCombine.getLoadingTile()->getOverlay() == pOverlay) ||
           (rasterToCombine.getReadyTile() &&
-          &rasterToCombine.getReadyTile()->getOverlay() == pOverlay)) {
+           &rasterToCombine.getReadyTile()->getOverlay() == pOverlay)) {
         return true;
       }
     }

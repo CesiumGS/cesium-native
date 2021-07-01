@@ -234,7 +234,7 @@ void Tile::loadContent() {
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
       for (RasterToCombine& rasterToCombine : mapped.getRastersToCombine()) {
-        CesiumUtility::IntrusivePointer<RasterOverlayTile> pLoading = 
+        CesiumUtility::IntrusivePointer<RasterOverlayTile> pLoading =
             rasterToCombine.getLoadingTile();
         if (pLoading &&
             pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
@@ -820,13 +820,14 @@ void Tile::update(
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
       RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
-      const std::vector<RasterToCombine>& rastersToCombine = 
+      const std::vector<RasterToCombine>& rastersToCombine =
           mappedRasterTile.getRastersToCombine();
-      if (!rastersToCombine.empty() &&
-          rastersToCombine[0].getLoadingTile() && 
+      if (!rastersToCombine.empty() && rastersToCombine[0].getLoadingTile() &&
           mappedRasterTile.hasPlaceholder()) {
-        RasterOverlayTileProvider* pProvider =
-            rastersToCombine[0].getLoadingTile()->getOverlay().getTileProvider();
+        RasterOverlayTileProvider* pProvider = rastersToCombine[0]
+                                                   .getLoadingTile()
+                                                   ->getOverlay()
+                                                   .getTileProvider();
 
         // Try to replace this placeholder with real tiles.
         if (!pProvider->isPlaceholder()) {

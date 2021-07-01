@@ -170,10 +170,10 @@ public:
       std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
       std::optional<size_t> /*outputIndex*/) override {
     if (this->_pPlaceholder) {
-      outputRasterTiles.push_back(RasterMappedTo3DTile(
-        std::vector<RasterToCombine>({RasterToCombine(
-          this->_pPlaceholder.get(),
-          CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
+      outputRasterTiles.push_back(
+          RasterMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+              this->_pPlaceholder.get(),
+              CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
       return;
     }
 
@@ -184,10 +184,10 @@ public:
       this->loadTileThrottled(*pTile);
     }
 
-    outputRasterTiles.push_back(RasterMappedTo3DTile(
-      std::vector<RasterToCombine>({RasterToCombine(
-        pTile,
-        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))})));
+    outputRasterTiles.push_back(
+        RasterMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+            pTile,
+            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))})));
   }
 
   virtual bool

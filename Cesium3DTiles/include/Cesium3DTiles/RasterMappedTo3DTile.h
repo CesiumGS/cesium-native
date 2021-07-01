@@ -3,14 +3,13 @@
 #include "Cesium3DTiles/RasterOverlayTile.h"
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumUtility/IntrusivePointer.h"
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace Cesium3DTiles {
 
 class Tile;
 class RasterMappedTo3DTile;
-
 
 /**
  * @brief A {@link RasterOverlayTile} that will be combined with others to
@@ -20,9 +19,9 @@ class RasterToCombine final {
 public:
   /**
    * @brief Creates a new instance.
-   * 
+   *
    * @param pRasterTile The {@link RasterOverlayTile} to combine with others.
-   * @param textureCoordinateRectangle The texture coordinate rectangle that 
+   * @param textureCoordinateRectangle The texture coordinate rectangle that
    * indicates the region that is covered by the raster overlay tile.
    */
   RasterToCombine(
@@ -31,7 +30,8 @@ public:
 
   // TODO add back doxygen comments here
 
-  const CesiumUtility::IntrusivePointer<RasterOverlayTile>& getLoadingTile() const {
+  const CesiumUtility::IntrusivePointer<RasterOverlayTile>&
+  getLoadingTile() const {
     return this->_pLoadingTile;
   }
 
@@ -39,10 +39,11 @@ public:
     return this->_pLoadingTile;
   }
 
-  const CesiumUtility::IntrusivePointer<RasterOverlayTile>& getReadyTile() const {
+  const CesiumUtility::IntrusivePointer<RasterOverlayTile>&
+  getReadyTile() const {
     return this->_pReadyTile;
   }
-  
+
   CesiumUtility::IntrusivePointer<RasterOverlayTile>& getReadyTile() {
     return this->_pReadyTile;
   }
@@ -51,13 +52,9 @@ public:
     return this->_textureCoordinateRectangle;
   }
 
-  const glm::dvec2& getTranslation() const {
-    return this->_translation;
-  }
+  const glm::dvec2& getTranslation() const { return this->_translation; }
 
-  const glm::dvec2& getScale() const {
-    return this->_scale;
-  }
+  const glm::dvec2& getScale() const { return this->_scale; }
 
 private:
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
@@ -103,16 +100,16 @@ public:
 
   /**
    * @brief Creates a new instance.
-   * 
+   *
    * @param rastersToCombine The raster tiles that need to be combined together
    * to form the final output texture.
    */
   RasterMappedTo3DTile(const std::vector<RasterToCombine>& rastersToCombine);
 
   /**
-   * @brief Returns the list of rasters that are to be combined and mapped to 
+   * @brief Returns the list of rasters that are to be combined and mapped to
    * the geometry tile.
-   * 
+   *
    * @return The list of raster tiles to be combined.
    */
   const std::vector<RasterToCombine> getRastersToCombine() const {
@@ -120,7 +117,7 @@ public:
   }
 
   /**
-   * @copydoc getRastersToCombine 
+   * @copydoc getRastersToCombine
    */
   std::vector<RasterToCombine> getRastersToCombine() {
     return this->_rastersToCombine;
@@ -175,8 +172,8 @@ public:
   /**
    * @brief Returns the {@link RasterOverlayTile} that is the combination of
    * all provided rasters.
-   * 
-   * @return The combined raster overlay tile. 
+   *
+   * @return The combined raster overlay tile.
    */
   const std::shared_ptr<RasterOverlayTile>& getCombinedTile() const noexcept {
     return this->_combinedTile;
@@ -229,7 +226,7 @@ public:
   bool anyLoading() const noexcept;
 
   /**
-   * @brief Whether all of the rasters-to-combine have a ready tile. 
+   * @brief Whether all of the rasters-to-combine have a ready tile.
    */
   bool allReady() const noexcept;
 

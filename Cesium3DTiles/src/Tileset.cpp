@@ -372,7 +372,7 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           tile->getMappedRasterTiles();
       for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
-        const std::shared_ptr<RasterOverlayTile>& pRasterOverlayTile = 
+        const std::shared_ptr<RasterOverlayTile>& pRasterOverlayTile =
             mappedRasterTile.getCombinedTile();
         if (pRasterOverlayTile != nullptr) {
           for (Credit credit : pRasterOverlayTile->getCredits()) {

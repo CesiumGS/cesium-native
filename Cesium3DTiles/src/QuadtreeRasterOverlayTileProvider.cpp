@@ -73,10 +73,10 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     std::vector<Cesium3DTiles::RasterMappedTo3DTile>& outputRasterTiles,
     std::optional<size_t> /*outputIndex*/) {
   if (this->_pPlaceholder) {
-    outputRasterTiles.push_back(RasterMappedTo3DTile(
-      std::vector<RasterToCombine>({RasterToCombine(
-        this->_pPlaceholder.get(),
-        CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
+    outputRasterTiles.push_back(
+        RasterMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+            this->_pPlaceholder.get(),
+            CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
     return;
   }
 
@@ -229,7 +229,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
       std::nullopt;
 
-  //size_t realOutputIndex =
+  // size_t realOutputIndex =
   //    outputIndex ? outputIndex.value() : outputRasterTiles.size();
 
   double minU;
