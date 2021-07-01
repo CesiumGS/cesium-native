@@ -180,12 +180,6 @@ struct CESIUM3DTILES_API TilesetOptions {
   bool renderTilesUnderCamera = true;
 
   /**
-   * List of 2D polygon selections given in longitude-latitude. Each
-   * selection will be rasterized onto the {@link Tileset} as textures.
-   */
-  std::vector<CartographicSelection> cartographicSelections;
-
-  /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content
    * and construction of Gltf models.
    */

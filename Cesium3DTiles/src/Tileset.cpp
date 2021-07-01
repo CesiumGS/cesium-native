@@ -1,5 +1,4 @@
 #include "Cesium3DTiles/Tileset.h"
-#include "Cesium3DTiles/CartographicSelection.h"
 #include "Cesium3DTiles/CreditSystem.h"
 #include "Cesium3DTiles/ExternalTilesetContent.h"
 #include "Cesium3DTiles/RasterOverlayTile.h"
