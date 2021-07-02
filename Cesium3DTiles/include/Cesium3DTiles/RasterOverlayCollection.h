@@ -69,6 +69,7 @@ public:
 private:
   Tileset* _pTileset;
   std::vector<std::unique_ptr<RasterOverlay>> _overlays;
+  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot");
 };
 
 } // namespace Cesium3DTiles

@@ -1,5 +1,6 @@
 #include "Cesium3DTiles/RasterOverlayCollection.h"
 #include "Cesium3DTiles/Tileset.h"
+#include "CesiumUtility/Tracing.h"
 
 namespace Cesium3DTiles {
 
@@ -16,6 +17,8 @@ RasterOverlayCollection::~RasterOverlayCollection() {
 }
 
 void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+
   RasterOverlay* pOverlayRaw = pOverlay.get();
   this->_overlays.push_back(std::move(pOverlay));
   pOverlayRaw->createTileProvider(

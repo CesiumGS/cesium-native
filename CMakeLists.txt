@@ -6,6 +6,13 @@ project(cesium-native
     LANGUAGES CXX
 )
 
+option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
+option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
+
+if (CESIUM_TRACING_ENABLED)
+    add_compile_definitions(CESIUM_TRACING_ENABLED=1)
+endif()
+
 # Add Modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 

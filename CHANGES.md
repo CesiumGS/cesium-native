@@ -1,17 +1,32 @@
 # Change Log
 
-### v?.?.? - ????-??-??
+### v0.5.0 - 2021-07-01
 
 ##### Breaking Changes :mega:
+
+* `TilesetExternals` now has an `AsyncSystem` instead of a shared pointer to an `ITaskProcessor`.
+
+##### Additions :tada:
+
+* Added a performance tracing framework via `CESIUM_TRACE_*` macros.
+* Added `Future<T>::thenImmediately`.
+* Added `AsyncSystem::createThreadPool` and `Future<T>::thenInThreadPool`.
+* `Future<T>::thenInWorkerThread` and `Future<T>::thenInMainThread` now arrange for their continuations to be executed immediately when the Future is resolved, if the Future is resolved in the correct thread.
+* Moved all request cache database access to a dedicated thread, in order to free up worker threads for parallelizable work.
+
+### v0.4.0 - 2021-06-01
 
 ##### Additions :tada:
 
 - Added `Cesium3DTiles::TileIdUtilities` with a `createTileIdString` function to create logging/debugging strings for `TileID` objects.
 - Accessing the same Bing Maps layer multiple times in a single application run now reuses the same Bing Maps session instead of starting a new one each time.
+- Added a configure-time build option, `PRIVATE_CESIUM_SQLITE`, to rename all `sqlite3*` symbols to `cesium_sqlite3*`.
 
 ##### Fixes :wrench:
 
 - Matched draco's decoded indices to gltf primitive if indices attribute does not match with the decompressed indices.
+- `createAccessorView` now creates an (invalid) `AccessorView` with a standard numeric type on error, rather than creating `AccessorView<nullptr_t>`. This makes it easier to use a simple lambda as the callback.
+- Disabled `HTTPLIB_USE_ZLIB_IF_AVAILABLE` and `HTTPLIB_USE_OPENSSL_IF_AVAILABLE` because these libraries are not required for our use for cpp-httplib and they cause problems on some systems.
 
 ### v0.3.1 - 2021-05-13
 

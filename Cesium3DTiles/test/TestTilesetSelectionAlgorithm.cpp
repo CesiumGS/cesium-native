@@ -141,7 +141,7 @@ TEST_CASE("Test replace refinement for render") {
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
-      std::make_shared<SimpleTaskProcessor>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -537,7 +537,7 @@ TEST_CASE("Test additive refinement") {
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
-      std::make_shared<SimpleTaskProcessor>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -694,7 +694,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
-      std::make_shared<SimpleTaskProcessor>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load

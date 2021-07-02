@@ -95,7 +95,8 @@ CachingAssetAccessor::CachingAssetAccessor(
       _requestSinceLastPrune(0),
       _pLogger(pLogger),
       _pAssetAccessor(pAssetAccessor),
-      _pCacheDatabase(pCacheDatabase) {}
+      _pCacheDatabase(pCacheDatabase),
+      _cacheThreadPool(1) {}
 
 CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
 
@@ -109,113 +110,141 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
     // beyond _requestsPerCachePrune before this next line. That's ok.
     this->_requestSinceLastPrune = 0;
 
-    asyncSystem.runInWorkerThread([this]() { this->_pCacheDatabase->prune(); });
+    CESIUM_TRACE_USE_TRACK_SET(this->_pruneSlots);
+    asyncSystem.runInThreadPool(this->_cacheThreadPool, [this]() {
+      this->_pCacheDatabase->prune();
+    });
   }
 
-  return asyncSystem.runInWorkerThread(
-      [asyncSystem,
-       pAssetAccessor = this->_pAssetAccessor,
-       pCacheDatabase = this->_pCacheDatabase,
-       pLogger = this->_pLogger,
-       url,
-       headers]() -> Future<std::shared_ptr<IAssetRequest>> {
-        std::optional<CacheItem> cacheLookup = pCacheDatabase->getEntry(url);
-        if (!cacheLookup) {
-          // No cache item found, request directly from the server
-          return pAssetAccessor->requestAsset(asyncSystem, url, headers)
-              .thenInWorkerThread(
-                  [pCacheDatabase, pLogger](
-                      std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
-                    const IAssetResponse* pResponse =
-                        pCompletedRequest->response();
-                    if (!pResponse) {
-                      return std::move(pCompletedRequest);
-                    }
+  CESIUM_TRACE_BEGIN_IN_TRACK("requestAsset (cached)");
 
-                    std::optional<ResponseCacheControl> cacheControl =
-                        ResponseCacheControl::parseFromResponseHeaders(
-                            pResponse->headers());
+  ThreadPool& threadPool = this->_cacheThreadPool;
 
-                    if (pResponse &&
-                        shouldCacheRequest(*pCompletedRequest, cacheControl)) {
-                      pCacheDatabase->storeEntry(
-                          calculateCacheKey(*pCompletedRequest),
-                          calculateExpiryTime(*pCompletedRequest, cacheControl),
-                          pCompletedRequest->url(),
-                          pCompletedRequest->method(),
-                          pCompletedRequest->headers(),
-                          pResponse->statusCode(),
-                          pResponse->headers(),
-                          pResponse->data());
-                    }
+  return asyncSystem
+      .runInThreadPool(
+          this->_cacheThreadPool,
+          [asyncSystem,
+           pAssetAccessor = this->_pAssetAccessor,
+           pCacheDatabase = this->_pCacheDatabase,
+           pLogger = this->_pLogger,
+           url,
+           headers,
+           threadPool]() -> Future<std::shared_ptr<IAssetRequest>> {
+            std::optional<CacheItem> cacheLookup =
+                pCacheDatabase->getEntry(url);
+            if (!cacheLookup) {
+              // No cache item found, request directly from the server
+              return pAssetAccessor->requestAsset(asyncSystem, url, headers)
+                  .thenInThreadPool(
+                      threadPool,
+                      [pCacheDatabase, pLogger](
+                          std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
+                        const IAssetResponse* pResponse =
+                            pCompletedRequest->response();
+                        if (!pResponse) {
+                          return std::move(pCompletedRequest);
+                        }
 
-                    return std::move(pCompletedRequest);
-                  });
-        }
+                        std::optional<ResponseCacheControl> cacheControl =
+                            ResponseCacheControl::parseFromResponseHeaders(
+                                pResponse->headers());
 
-        CacheItem& cacheItem = cacheLookup.value();
+                        if (pResponse && shouldCacheRequest(
+                                             *pCompletedRequest,
+                                             cacheControl)) {
+                          pCacheDatabase->storeEntry(
+                              calculateCacheKey(*pCompletedRequest),
+                              calculateExpiryTime(
+                                  *pCompletedRequest,
+                                  cacheControl),
+                              pCompletedRequest->url(),
+                              pCompletedRequest->method(),
+                              pCompletedRequest->headers(),
+                              pResponse->statusCode(),
+                              pResponse->headers(),
+                              pResponse->data());
+                        }
 
-        if (shouldRevalidateCache(cacheItem)) {
-          // Cache is stale and needs revalidation
-          std::vector<THeader> newHeaders = headers;
-          const CacheResponse& cacheResponse = cacheItem.cacheResponse;
-          const HttpHeaders& responseHeaders = cacheResponse.headers;
-          HttpHeaders::const_iterator lastModifiedHeader =
-              responseHeaders.find("Last-Modified");
-          HttpHeaders::const_iterator etagHeader = responseHeaders.find("Etag");
-          if (etagHeader != responseHeaders.end()) {
-            newHeaders.emplace_back("If-None-Match", etagHeader->second);
-          } else if (lastModifiedHeader != responseHeaders.end()) {
-            newHeaders.emplace_back(
-                "If-Modified-Since",
-                lastModifiedHeader->second);
-          }
+                        return std::move(pCompletedRequest);
+                      });
+            }
 
-          return pAssetAccessor->requestAsset(asyncSystem, url, newHeaders)
-              .thenInWorkerThread([cacheItem = std::move(cacheItem),
-                                   pCacheDatabase,
-                                   pLogger](std::shared_ptr<IAssetRequest>&&
-                                                pCompletedRequest) mutable {
-                if (!pCompletedRequest) {
-                  return std::move(pCompletedRequest);
-                }
+            CacheItem& cacheItem = cacheLookup.value();
 
-                std::shared_ptr<IAssetRequest> pRequestToStore;
-                if (pCompletedRequest->response()->statusCode() ==
-                    304) { // status Not-Modified
-                  pRequestToStore =
-                      updateCacheItem(std::move(cacheItem), *pCompletedRequest);
-                } else {
-                  pRequestToStore = pCompletedRequest;
-                }
+            if (shouldRevalidateCache(cacheItem)) {
+              // Cache is stale and needs revalidation
+              std::vector<THeader> newHeaders = headers;
+              const CacheResponse& cacheResponse = cacheItem.cacheResponse;
+              const HttpHeaders& responseHeaders = cacheResponse.headers;
+              HttpHeaders::const_iterator lastModifiedHeader =
+                  responseHeaders.find("Last-Modified");
+              HttpHeaders::const_iterator etagHeader =
+                  responseHeaders.find("Etag");
+              if (etagHeader != responseHeaders.end()) {
+                newHeaders.emplace_back("If-None-Match", etagHeader->second);
+              } else if (lastModifiedHeader != responseHeaders.end()) {
+                newHeaders.emplace_back(
+                    "If-Modified-Since",
+                    lastModifiedHeader->second);
+              }
 
-                const IAssetResponse* pResponseToStore =
-                    pRequestToStore->response();
-                std::optional<ResponseCacheControl> cacheControl =
-                    ResponseCacheControl::parseFromResponseHeaders(
-                        pResponseToStore->headers());
+              return pAssetAccessor->requestAsset(asyncSystem, url, newHeaders)
+                  .thenInThreadPool(
+                      threadPool,
+                      [cacheItem = std::move(cacheItem),
+                       pCacheDatabase,
+                       pLogger](std::shared_ptr<IAssetRequest>&&
+                                    pCompletedRequest) mutable {
+                        if (!pCompletedRequest) {
+                          return std::move(pCompletedRequest);
+                        }
 
-                if (shouldCacheRequest(*pRequestToStore, cacheControl)) {
+                        std::shared_ptr<IAssetRequest> pRequestToStore;
+                        if (pCompletedRequest->response()->statusCode() ==
+                            304) { // status Not-Modified
+                          pRequestToStore = updateCacheItem(
+                              std::move(cacheItem),
+                              *pCompletedRequest);
+                        } else {
+                          pRequestToStore = pCompletedRequest;
+                        }
 
-                  pCacheDatabase->storeEntry(
-                      calculateCacheKey(*pRequestToStore),
-                      calculateExpiryTime(*pRequestToStore, cacheControl),
-                      pRequestToStore->url(),
-                      pRequestToStore->method(),
-                      pRequestToStore->headers(),
-                      pResponseToStore->statusCode(),
-                      pResponseToStore->headers(),
-                      pResponseToStore->data());
-                }
+                        const IAssetResponse* pResponseToStore =
+                            pRequestToStore->response();
+                        std::optional<ResponseCacheControl> cacheControl =
+                            ResponseCacheControl::parseFromResponseHeaders(
+                                pResponseToStore->headers());
 
-                return pRequestToStore;
-              });
-        }
+                        if (shouldCacheRequest(
+                                *pRequestToStore,
+                                cacheControl)) {
 
-        // Good cache item that doesn't need to be revalidated, just return it.
-        std::shared_ptr<IAssetRequest> pRequest =
-            std::make_shared<CacheAssetRequest>(std::move(cacheItem));
-        return asyncSystem.createResolvedFuture(std::move(pRequest));
+                          pCacheDatabase->storeEntry(
+                              calculateCacheKey(*pRequestToStore),
+                              calculateExpiryTime(
+                                  *pRequestToStore,
+                                  cacheControl),
+                              pRequestToStore->url(),
+                              pRequestToStore->method(),
+                              pRequestToStore->headers(),
+                              pResponseToStore->statusCode(),
+                              pResponseToStore->headers(),
+                              pResponseToStore->data());
+                        }
+
+                        return pRequestToStore;
+                      });
+            }
+
+            // Good cache item that doesn't need to be revalidated, just return
+            // it.
+            std::shared_ptr<IAssetRequest> pRequest =
+                std::make_shared<CacheAssetRequest>(std::move(cacheItem));
+            return asyncSystem.createResolvedFuture(std::move(pRequest));
+          })
+      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
+        CESIUM_TRACE_END_IN_TRACK("requestAsset (cached)");
+        return std::move(pRequest);
       });
 }
 
