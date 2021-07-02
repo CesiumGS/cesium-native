@@ -25,11 +25,14 @@ RasterToCombine::RasterToCombine(
       _originalFailed(false) {}
 
 RastersMappedTo3DTile::RastersMappedTo3DTile(
+    RasterOverlayTileProvider& owner,
     const std::vector<RasterToCombine>& rastersToCombine)
-    : _rastersToCombine(rastersToCombine),
-      _combinedTile(nullptr),
-      _textureCoordinateRectangle(0.0, 0.0, 1.0, 1.0),
+    : _pOwner(&owner),
+      _rastersToCombine(rastersToCombine),
+      _pCombinedTile(nullptr),
+      _pAncestorRaster(nullptr),
       _textureCoordinateID(0),
+      _textureCoordinateRectangle(0.0, 0.0, 1.0, 1.0),
       _state(AttachmentState::Unattached) {}
 
 RastersMappedTo3DTile::MoreDetailAvailable
@@ -37,9 +40,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
   if (this->getState() == AttachmentState::Attached) {
     for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
       if (!rasterToCombine._originalFailed && rasterToCombine._pReadyTile) {
-        const RasterOverlayTileProvider* provider =
-            rasterToCombine._pReadyTile->getOverlay().getTileProvider();
-        if (provider && provider->hasMoreDetailsAvailable(
+        if (this->_pOwner->hasMoreDetailsAvailable(
                             rasterToCombine._pReadyTile->getID())) {
           return MoreDetailAvailable::Yes;
         }
@@ -47,6 +48,17 @@ RastersMappedTo3DTile::update(Tile& tile) {
     }
     return MoreDetailAvailable::No;
   }
+
+  if (!this->_pOwner) {
+    return MoreDetailAvailable::No;
+  }
+  
+  RasterOverlay& overlay = this->_pOwner->getOwner();
+  const CesiumGeospatial::GlobeRectangle* pGeometryGlobeRectangle =
+      Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+  CesiumGeometry::Rectangle geometryRectangle = projectRectangleSimple(
+      this->_pOwner->getProjection(),
+      *pGeometryGlobeRectangle);
 
   // we need to re-combine rasters if any have changed
   bool recombineRasters = false;
@@ -74,7 +86,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
               : nullptr;
       Cesium3DTiles::QuadtreeRasterOverlayTileProvider* quadtreeProvider =
           dynamic_cast<Cesium3DTiles::QuadtreeRasterOverlayTileProvider*>(
-              pLoadingTile->getOverlay().getTileProvider());
+              this->_pOwner);
       std::optional<CesiumGeometry::Rectangle> parentImageryRectangle =
           (quadtreeTileId && quadtreeProvider)
               ? std::make_optional(
@@ -95,29 +107,19 @@ RastersMappedTo3DTile::update(Tile& tile) {
     if (pLoadingTile &&
         pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded) {
 
-      recombineRasters = true;
-      /*
-      // Unattach the old tile
-      if (pReadyTile && this->getState() != AttachmentState::Unattached) {
-        TilesetExternals& externals = tile.getTileset()->getExternals();
-        externals.pPrepareRendererResources->detachRasterInMainThread(
-            tile,
-            this->getTextureCoordinateID(),
-            *pReadyTile,
-            pReadyTile->getRendererResources(),
-            this->getTextureCoordinateRectangle());
-        this->_state = AttachmentState::Unattached;
-      }
-      */
-
       // Mark the loading tile ready.
       pReadyTile = pLoadingTile;
       pLoadingTile = nullptr;
 
       // Compute the translation and scale for the new tile.
-      this->computeTranslationAndScale(rasterToCombine, tile);
+      computeTranslationAndScale(
+          geometryRectangle,
+          rasterToCombine._pReadyTile->_imageryRectangle,
+          rasterToCombine._translation,
+          rasterToCombine._scale);
     }
 
+    // probably don't need this part any more?
     // Find the closest ready ancestor tile.
     if (pLoadingTile) {
       CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate =
@@ -130,9 +132,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
           break;
         }
 
-        pCandidate =
-            pCandidate->getOverlay().getTileProvider()->getTileWithoutCreating(
-                *parentTileId);
+        pCandidate = this->_pOwner->getTileWithoutCreating(*parentTileId);
 
         if (pCandidate &&
             pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
@@ -149,95 +149,115 @@ RastersMappedTo3DTile::update(Tile& tile) {
         recombineRasters = true;
 
         // Compute the translation and scale for the new tile.
-        this->computeTranslationAndScale(rasterToCombine, tile);
+        computeTranslationAndScale(
+            geometryRectangle,
+            rasterToCombine._pReadyTile->_imageryRectangle, 
+            rasterToCombine._translation,
+            rasterToCombine._scale);
       }
     }
-
-    /*
-        // Attach the ready tile if it's not already attached.
-        if (pReadyTile &&
-            this->getState() ==
-       RastersMappedTo3DTile::AttachmentState::Unattached) {
-          pReadyTile->loadInMainThread();
-          recombineRasters = true;
-          /*
-          TilesetExternals& externals = tile.getTileset()->getExternals();
-          externals.pPrepareRendererResources->attachRasterInMainThread(
-              tile,
-              this->getTextureCoordinateID(),
-              *pReadyTile,
-              pReadyTile->getRendererResources(),
-              this->getTextureCoordinateRectangle(),
-              this->getTranslation(),
-              this->getScale());
-          * /
-          // TODO: change attachment states to make more sense after the current
-       changes? this->_state = pLoadingTile ?
-       AttachmentState::TemporarilyAttached : AttachmentState::Attached;
-        }*/
   }
 
-  const CesiumGeospatial::GlobeRectangle* pGeometryRectangle =
-      Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+  /* BUGGY BEGIN */ // possibly crashy, also doesn't seem to always work
+  // All the raster tiles aren't ready yet, so find an ancestor gometry tile 
+  // with an already blitted raster we can use.
+  if (this->_state != AttachmentState::Attached && this->anyLoading()) {
 
-  // TODO: show parents in meantime while rasters are loading/blitting
-  // re-blit the rasters together
-  if (this->allReady() && !this->anyLoading() && pGeometryRectangle &&
-      this->_state == AttachmentState::Unattached) {
-    for (RasterToCombine& rasterToCombine : this->_rastersToCombine) {
-      this->computeTranslationAndScale(rasterToCombine, tile);
-    }
-    // is it safe to just assume all the rasters come from the same overlay?
-    RasterOverlay& overlay =
-        this->_rastersToCombine[0]._pReadyTile->getOverlay();
-    CesiumGeometry::Rectangle geometryRectangle = projectRectangleSimple(
-        overlay.getTileProvider()->getProjection(),
-        *pGeometryRectangle);
-    if (!this->_combinedTile) {
-      this->_combinedTile = std::make_shared<RasterOverlayTile>(
-          overlay,
-          tile.getTileID(),
-          geometryRectangle);
-      // remove?
-      // this->_combinedTile->addReference();
-    }
+    Tile* ancestor = tile.getParent();
+    std::shared_ptr<RasterOverlayTile> pAncestorRaster;
+    bool candidateFound = false;
+    bool noCloserAncestorFound = false;
+    while (ancestor) {
 
-    /* THINK MORE ABOUT HOW TO KNOW WHEN TO DO THIS
-        // Unattach the old tile
-        if (this->_combinedTile && this->getState() !=
-       AttachmentState::Unattached) { TilesetExternals& externals =
-       tile.getTileset()->getExternals();
-          externals.pPrepareRendererResources->detachRasterInMainThread(
-              tile,
-              this->getTextureCoordinateID(),
-              *this->_combinedTile,
-              this->_combinedTile->getRendererResources(),
-              this->getTextureCoordinateRectangle());
-          this->_state = AttachmentState::Unattached;
+      for (const RastersMappedTo3DTile& mapped : ancestor->getMappedRasterTiles()) {
+        if (this->_pAncestorRaster && mapped._pCombinedTile == this->_pAncestorRaster) {
+          noCloserAncestorFound;
+          break;
         }
-    */
 
-    // don't let any other texture attach while we are attaching
-    this->_state = AttachmentState::TemporarilyAttached;
+        if (mapped._pCombinedTile && &mapped._pCombinedTile->getOverlay() == &overlay &&
+            mapped._state == AttachmentState::Attached) {          
+          pAncestorRaster = mapped._pCombinedTile;
+          candidateFound = true; 
+          break;
+        }
+      }
+      
+      if (noCloserAncestorFound || candidateFound) {
+        break;
+      }
+
+      ancestor = ancestor->getParent();
+    }
+
+    if (!noCloserAncestorFound && candidateFound) {
+      glm::dvec2 translation;
+      glm::dvec2 scale;
+
+      computeTranslationAndScale(
+        geometryRectangle,
+        pAncestorRaster->_imageryRectangle,
+        translation,
+        scale);
+
+      if (this->_pAncestorRaster && this->_state != AttachmentState::Unattached) {
+        tile.getTileset()->getExternals().pPrepareRendererResources
+            ->detachRasterInMainThread(
+                  tile,
+                  this->getTextureCoordinateID(),
+                  *this->_pAncestorRaster,
+                  this->_pAncestorRaster->getRendererResources(),
+                  this->getTextureCoordinateRectangle());
+
+        this->_pAncestorRaster = nullptr;
+        this->_state = AttachmentState::Unattached;
+      }
+
+      this->_pAncestorRaster = pAncestorRaster;
+
+      tile.getTileset()->getExternals().pPrepareRendererResources->
+          attachRasterInMainThread(
+            tile,
+            this->getTextureCoordinateID(),
+            *this->_pAncestorRaster,
+            this->_pAncestorRaster->getRendererResources(),
+            this->getTextureCoordinateRectangle(),
+            translation,
+            scale);
+
+      this->_state = AttachmentState::TemporarilyAttached;
+    }
+  }
+  /* BUGGY END */
+
+  // blit the rasters together
+  if (!this->_pCombinedTile && this->allReady() && !this->anyLoading() && 
+      pGeometryGlobeRectangle && this->_state != AttachmentState::Attached) {
+    
+    this->_pCombinedTile = std::make_shared<RasterOverlayTile>(
+        overlay,
+        tile.getTileID(),
+        geometryRectangle);
 
     for (RasterToCombine& rasterToCombine : this->_rastersToCombine) {
       rasterToCombine._pReadyTile->addReference();
     }
 
-    // is this safe?
+    // is any of this safe?
     // how does the next update() call know not to reblit?
-    // fix race condition on _combinedTile (use
+    // fix race condition on _pCombinedTile (use
     // RasterOverlayTileProvider::LoadResult)
     tile.getTileset()
         ->getAsyncSystem()
-        .runInWorkerThread([this,
-                            &externals = tile.getTileset()->getExternals(),
-                            combinedTile = this->_combinedTile]() {
-          std::optional<CesiumGltf::ImageCesium> image = this->blitRasters();
+        .runInWorkerThread([&externals = tile.getTileset()->getExternals(),
+                            // makes copy of shared_ptr
+                            combinedTile = this->_pCombinedTile,
+                            &rastersToCombine = this->_rastersToCombine]() {
+          std::optional<CesiumGltf::ImageCesium> image = blitRasters(rastersToCombine);
           if (image) {
             combinedTile->_state = RasterOverlayTile::LoadState::Loaded;
             combinedTile->_image = std::move(*image);
-            // this->_combinedTile->_credits = ...
+            // combinedTile->_credits = ...
             combinedTile->_pRendererResources =
                 externals.pPrepareRendererResources->prepareRasterInLoadThread(
                     *image);
@@ -246,29 +266,35 @@ RastersMappedTo3DTile::update(Tile& tile) {
             combinedTile->_pRendererResources = nullptr;
           }
 
+          // TODO: needed?
           return std::move(combinedTile);
         })
+        // TODO: is there a chance "this" is deleted by this point??
         .thenInMainThread(
             [this, &tile, &externals = tile.getTileset()->getExternals()](
                 std::shared_ptr<RasterOverlayTile>&& combinedTile) {
+              // ?? if this is needed what should be done about the load-thread raster preparation
+              // (currently no preparation actually takes place in the load thread...)
+              if (!this) {
+                return;
+              }
+
+              combinedTile->loadInMainThread();
+
               // Unattach the old tile
-              /*
-              if (combinedTile && this->getState() !=
-              AttachmentState::Unattached) {
+              if (this->_pAncestorRaster && this->getState() !=
+                      AttachmentState::Unattached) {
                 externals.pPrepareRendererResources->detachRasterInMainThread(
                     tile,
                     this->getTextureCoordinateID(),
-                    *combinedTile,
-                    combinedTile->getRendererResources(),
+                    *this->_pAncestorRaster,
+                    this->_pAncestorRaster->getRendererResources(),
                     this->getTextureCoordinateRectangle());
+
+                this->_pAncestorRaster = nullptr;
                 this->_state = AttachmentState::Unattached;
               }
-
-              if (combinedTile &&
-                  this->getState() ==
-                      RastersMappedTo3DTile::AttachmentState::Unattached) {*/
-              combinedTile->loadInMainThread();
-
+              
               externals.pPrepareRendererResources->attachRasterInMainThread(
                   tile,
                   this->getTextureCoordinateID(),
@@ -278,18 +304,15 @@ RastersMappedTo3DTile::update(Tile& tile) {
                   glm::dvec2(0.0, 0.0),
                   glm::dvec2(1.0, 1.0));
 
-              this->_state = this->anyLoading()
-                                 ? AttachmentState::TemporarilyAttached
-                                 : AttachmentState::Attached;
+              this->_state = AttachmentState::Attached;
 
               for (RasterToCombine& rasterToCombine : this->_rastersToCombine) {
                 rasterToCombine._pReadyTile->releaseReference();
               }
-              //}
             })
         .catchInMainThread([this, &tile](const std::exception& /*e*/) {
-          this->_combinedTile->_state = RasterOverlayTile::LoadState::Failed;
-          this->_combinedTile->_pRendererResources = nullptr;
+          this->_pCombinedTile->_state = RasterOverlayTile::LoadState::Failed;
+          this->_pCombinedTile->_pRendererResources = nullptr;
         });
   }
 
@@ -299,9 +322,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
 
   for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
     if (!rasterToCombine._originalFailed && rasterToCombine._pReadyTile) {
-      const RasterOverlayTileProvider* provider =
-          rasterToCombine._pReadyTile->getOverlay().getTileProvider();
-      if (provider && provider->hasMoreDetailsAvailable(
+      if (this->_pOwner && this->_pOwner->hasMoreDetailsAvailable(
                           rasterToCombine._pReadyTile->getID())) {
         return MoreDetailAvailable::Yes;
       }
@@ -315,7 +336,7 @@ void RastersMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
     return;
   }
 
-  if (!this->_combinedTile) {
+  if (!this->_pCombinedTile) {
     return;
   }
 
@@ -323,44 +344,30 @@ void RastersMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   externals.pPrepareRendererResources->detachRasterInMainThread(
       tile,
       this->getTextureCoordinateID(),
-      *this->_combinedTile,
-      this->_combinedTile->getRendererResources(),
+      *this->_pCombinedTile,
+      this->_pCombinedTile->getRendererResources(),
       this->getTextureCoordinateRectangle());
 
   this->_state = AttachmentState::Unattached;
 }
 
 /*static*/ void RastersMappedTo3DTile::computeTranslationAndScale(
-    RasterToCombine& rasterToCombine,
-    const Tile& tile) {
-  if (!rasterToCombine._pReadyTile) {
-    return;
-  }
-
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
-  if (!pRectangle) {
-    return;
-  }
-
-  RasterOverlayTileProvider& tileProvider =
-      *rasterToCombine._pReadyTile->getOverlay().getTileProvider();
-  CesiumGeometry::Rectangle geometryRectangle =
-      projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
-  CesiumGeometry::Rectangle imageryRectangle =
-      rasterToCombine._pReadyTile->getImageryRectangle();
+    const CesiumGeometry::Rectangle& geometryRectangle,
+    const CesiumGeometry::Rectangle& imageryRectangle,
+    glm::dvec2& translation,
+    glm::dvec2& scale) {
 
   double terrainWidth = geometryRectangle.computeWidth();
   double terrainHeight = geometryRectangle.computeHeight();
 
   double scaleX = terrainWidth / imageryRectangle.computeWidth();
   double scaleY = terrainHeight / imageryRectangle.computeHeight();
-  rasterToCombine._translation = glm::dvec2(
+  translation = glm::dvec2(
       (scaleX * (geometryRectangle.minimumX - imageryRectangle.minimumX)) /
           terrainWidth,
       (scaleY * (geometryRectangle.minimumY - imageryRectangle.minimumY)) /
           terrainHeight);
-  rasterToCombine._scale = glm::dvec2(scaleX, scaleY);
+  scale = glm::dvec2(scaleX, scaleY);
 }
 
 bool RastersMappedTo3DTile::anyLoading() const noexcept {
@@ -397,20 +404,22 @@ bool RastersMappedTo3DTile::hasPlaceholder() const noexcept {
 // while being engine-agnostic.
 // TODO: probably can simplify dramatically by ignoring cases where there is
 // discrepancy between channels count or bytesPerChannel between the rasters
-std::optional<CesiumGltf::ImageCesium> RastersMappedTo3DTile::blitRasters() {
-  if (!this->allReady()) {
-    return std::nullopt;
-  }
+/*static*/ std::optional<CesiumGltf::ImageCesium> RastersMappedTo3DTile::blitRasters(
+    const std::vector<RasterToCombine>& rastersToCombine) {
 
   double pixelsWidth = 1.0;
   double pixelsHeight = 1.0;
   int32_t bytesPerChannel = 1;
   int32_t channels = 1;
-  for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
+  for (const RasterToCombine& rasterToCombine : rastersToCombine) {
+
+    if (rasterToCombine._pReadyTile == nullptr) {
+      return std::nullopt;
+    }
+
     const CesiumGltf::ImageCesium& rasterImage =
         rasterToCombine._pReadyTile->getImage();
 
-    // TODO: should scale divide or multiply here?
     double rasterPixelsWidth = rasterImage.width * rasterToCombine._scale.x;
     double rasterPixelsHeight = rasterImage.height * rasterToCombine._scale.y;
 
@@ -449,7 +458,7 @@ std::optional<CesiumGltf::ImageCesium> RastersMappedTo3DTile::blitRasters() {
     for (int32_t i = 0; i < image.width; ++i) {
       glm::dvec2 uv((double(i) + 0.5) / double(image.width), v);
 
-      for (const RasterToCombine& rasterToCombine : this->_rastersToCombine) {
+      for (const RasterToCombine& rasterToCombine : rastersToCombine) {
 
         if (rasterToCombine._textureCoordinateRectangle.contains(uv)) {
           const CesiumGltf::ImageCesium& srcImage =

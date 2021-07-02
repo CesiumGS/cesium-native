@@ -10,6 +10,7 @@ namespace Cesium3DTiles {
 
 class Tile;
 class RastersMappedTo3DTile;
+class RasterOverlayTileProvider;
 
 /**
  * @brief A {@link RasterOverlayTile} that will be combined with others to
@@ -101,10 +102,13 @@ public:
   /**
    * @brief Creates a new instance.
    *
+   * @param pOwner The {@link RasterOverlayTileProvider} that created this.
    * @param rastersToCombine The raster tiles that need to be combined together
    * to form the final output texture.
    */
-  RastersMappedTo3DTile(const std::vector<RasterToCombine>& rastersToCombine);
+  RastersMappedTo3DTile(
+      RasterOverlayTileProvider& owner,
+      const std::vector<RasterToCombine>& rastersToCombine);
 
   /**
    * @brief Returns the list of rasters that are to be combined and mapped to
@@ -176,7 +180,7 @@ public:
    * @return The combined raster overlay tile.
    */
   const std::shared_ptr<RasterOverlayTile>& getCombinedTile() const noexcept {
-    return this->_combinedTile;
+    return this->_pCombinedTile;
   }
 
   /**
@@ -237,15 +241,20 @@ public:
 
 private:
   static void computeTranslationAndScale(
-      RasterToCombine& rasterToCombine,
-      const Tile& tile);
-  std::optional<CesiumGltf::ImageCesium> blitRasters();
+      const CesiumGeometry::Rectangle& geometryRectangle,
+      const CesiumGeometry::Rectangle& imageryRectangle,
+      glm::dvec2& translation,
+      glm::dvec2& scale);
+  static std::optional<CesiumGltf::ImageCesium> blitRasters(
+      const std::vector<RasterToCombine>& rastersToCombine);
 
+  RasterOverlayTileProvider* _pOwner;
   std::vector<RasterToCombine> _rastersToCombine;
+  std::shared_ptr<RasterOverlayTile> _pCombinedTile;
+  std::shared_ptr<RasterOverlayTile> _pAncestorRaster;
   uint32_t _textureCoordinateID;
   CesiumGeometry::Rectangle _textureCoordinateRectangle;
   AttachmentState _state;
-  std::shared_ptr<RasterOverlayTile> _combinedTile;
 };
 
 } // namespace Cesium3DTiles

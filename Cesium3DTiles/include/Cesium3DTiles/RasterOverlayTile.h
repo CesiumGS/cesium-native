@@ -116,7 +116,7 @@ public:
    * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the
    * imagery rectangle.
    */
-  const CesiumGeometry::Rectangle& getImageryRectangle() {
+  const CesiumGeometry::Rectangle& getImageryRectangle() const {
     return this->_imageryRectangle;
   }
 

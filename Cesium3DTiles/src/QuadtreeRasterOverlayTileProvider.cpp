@@ -69,7 +69,9 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
   if (this->_pPlaceholder) {
-    return RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+    return RastersMappedTo3DTile(
+      *this,
+      std::vector<RasterToCombine>({RasterToCombine(
         this->_pPlaceholder.get(),
         CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
   }
@@ -167,7 +169,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // Because of the intersection, we should always have valid tile coordinates.
   // But give up if we don't.
   if (!southwestTileCoordinatesOpt || !northeastTileCoordinatesOpt) {
-    return RastersMappedTo3DTile({});
+    return RastersMappedTo3DTile(*this, {});
   }
 
   QuadtreeTileID southwestTileCoordinates = southwestTileCoordinatesOpt.value();
@@ -349,7 +351,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     }
   }
 
-  return RastersMappedTo3DTile(rastersToCombine);
+  return RastersMappedTo3DTile(*this, rastersToCombine);
 }
 
 bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(

@@ -30,14 +30,14 @@ public:
       const Cesium3DTiles::TileID& /*geometryTileId*/,
       const CesiumGeospatial::GlobeRectangle& /*geometryRectangle*/,
       double /*targetGeometricError*/) override {
-    return Cesium3DTiles::RastersMappedTo3DTile({});
+    return Cesium3DTiles::RastersMappedTo3DTile(*this, {});
   }
 
   virtual Cesium3DTiles::RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const Cesium3DTiles::TileID& /*geometryTileId*/,
       const CesiumGeometry::Rectangle& /*geometryRectangle*/,
       double /*targetGeometricError*/) override {
-    return Cesium3DTiles::RastersMappedTo3DTile({});
+    return Cesium3DTiles::RastersMappedTo3DTile(*this, {});
   }
 
   virtual bool hasMoreDetailsAvailable(

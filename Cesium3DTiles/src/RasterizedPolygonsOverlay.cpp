@@ -167,6 +167,7 @@ public:
 
     if (this->_pPlaceholder) {
       return RastersMappedTo3DTile(
+          *this,
           std::vector<RasterToCombine>({RasterToCombine(
               this->_pPlaceholder.get(),
               CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
@@ -189,7 +190,7 @@ public:
       this->loadTileThrottled(*pTile);
     }
 
-    return RastersMappedTo3DTile(std::vector<RasterToCombine>({RasterToCombine(
+    return RastersMappedTo3DTile(*this, std::vector<RasterToCombine>({RasterToCombine(
         pTile,
         CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
   }
