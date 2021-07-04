@@ -4,8 +4,8 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
-#include "catch2/catch.hpp"
 #include "upsampleGltfForRasterOverlays.h"
+#include <catch2/catch.hpp>
 #include <cstring>
 #include <glm/trigonometric.hpp>
 #include <vector>

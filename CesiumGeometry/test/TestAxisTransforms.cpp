@@ -1,6 +1,6 @@
 #include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumUtility/Math.h"
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 
 TEST_CASE("AxisTransforms convert the axes correctly") {
 
