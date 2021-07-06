@@ -46,11 +46,12 @@ TEST_CASE("AsyncSystem") {
 
     auto future =
         asyncSystem.runInMainThread([&executed]() { executed = true; });
-    CHECK(asyncSystem.dispatchZeroOrOneMainThreadTask() == true);
-    future.wait();
 
-    CHECK(pTaskProcessor->tasksStarted == 0);
+    CHECK(!executed);
+    bool taskDispatched = asyncSystem.dispatchZeroOrOneMainThreadTask();
+    CHECK(taskDispatched);
     CHECK(executed);
+    CHECK(pTaskProcessor->tasksStarted == 0);
   }
 
   SECTION("main thread continuations are run when instructed") {
@@ -58,11 +59,12 @@ TEST_CASE("AsyncSystem") {
 
     auto future = asyncSystem.createResolvedFuture().thenInMainThread(
         [&executed]() { executed = true; });
-    CHECK(asyncSystem.dispatchZeroOrOneMainThreadTask() == true);
-    future.wait();
 
-    CHECK(pTaskProcessor->tasksStarted == 0);
+    CHECK(!executed);
+    bool taskDispatched = asyncSystem.dispatchZeroOrOneMainThreadTask();
+    CHECK(taskDispatched);
     CHECK(executed);
+    CHECK(pTaskProcessor->tasksStarted == 0);
   }
 
   SECTION("worker continuations following a worker run immediately") {
@@ -87,12 +89,13 @@ TEST_CASE("AsyncSystem") {
         asyncSystem.runInMainThread([&executed1]() { executed1 = true; })
             .thenInMainThread([&executed2]() { executed2 = true; });
 
-    CHECK(asyncSystem.dispatchZeroOrOneMainThreadTask() == true);
-    future.wait();
-
-    CHECK(pTaskProcessor->tasksStarted == 0);
+    CHECK(!executed1);
+    CHECK(!executed2);
+    bool taskDispatched = asyncSystem.dispatchZeroOrOneMainThreadTask();
+    CHECK(taskDispatched);
     CHECK(executed1);
     CHECK(executed2);
+    CHECK(pTaskProcessor->tasksStarted == 0);
   }
 
   SECTION("worker continuations following a thread pool thread run as a "
@@ -120,11 +123,140 @@ TEST_CASE("AsyncSystem") {
 
     asyncSystem
         .runInWorkerThread([asyncSystem, &executed]() {
-          return asyncSystem.createResolvedFuture().thenInWorkerThread(
+          auto future = asyncSystem.createResolvedFuture().thenInWorkerThread(
               [&executed]() { executed = true; });
+
+          // The above continuation should be complete by the time the
+          // `thenInWorkerThread` returns.
+          CHECK(executed);
+
+          return future;
         })
         .wait();
 
     CHECK(pTaskProcessor->tasksStarted == 1);
+    CHECK(executed);
+  }
+
+  SECTION("can pass move-only objects between continuations") {
+    auto future =
+        asyncSystem
+            .runInWorkerThread([]() { return std::make_unique<int>(42); })
+            .thenInWorkerThread(
+                [](std::unique_ptr<int>&& pResult) { return *pResult; });
+    auto result = future.wait();
+    int* pResult = std::get_if<int>(&result);
+    REQUIRE(pResult);
+    CHECK(*pResult == 42);
+  }
+
+  SECTION("an exception thrown in a continuation rejects the future") {
+    auto future = asyncSystem.runInWorkerThread(
+        []() { throw std::runtime_error("test"); });
+
+    auto result = future.wait();
+    std::exception* pResult = std::get_if<std::exception>(&result);
+    REQUIRE(pResult);
+    CHECK(std::string(pResult->what()) == "test");
+  }
+
+  SECTION("an exception thrown in createFuture rejects the future") {
+    auto future = asyncSystem.createFuture<int>(
+        [](const auto& /*promise*/) { throw std::runtime_error("test"); });
+
+    auto result = future.wait();
+    std::exception* pResult = std::get_if<std::exception>(&result);
+    REQUIRE(pResult);
+    CHECK(std::string(pResult->what()) == "test");
+  }
+
+  SECTION("createFuture promise may resolve immediately") {
+    auto future = asyncSystem.createFuture<int>(
+        [](const auto& promise) { promise.resolve(42); });
+
+    auto result = future.wait();
+    int* pResult = std::get_if<int>(&result);
+    REQUIRE(pResult);
+    CHECK(*pResult == 42);
+  }
+
+  SECTION("createFuture promise may resolve later") {
+    auto future = asyncSystem.createFuture<int>([](const auto& promise) {
+      std::thread([promise]() {
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(10ms);
+        promise.resolve(42);
+      }).detach();
+    });
+
+    auto result = future.wait();
+    int* pResult = std::get_if<int>(&result);
+    REQUIRE(pResult);
+    CHECK(*pResult == 42);
+  }
+
+  SECTION("rejected promise invokes catch instead of then") {
+    auto future = asyncSystem
+                      .createFuture<int>([](const auto& promise) {
+                        promise.reject(std::runtime_error("test"));
+                      })
+                      .thenInMainThread([](int /*x*/) {
+                        // This should not be invoked.
+                        CHECK(false);
+                        return 1;
+                      })
+                      .catchInMainThread([](std::exception&& e) {
+                        CHECK(std::string(e.what()) == "test");
+                        return 2;
+                      });
+
+    asyncSystem.dispatchZeroOrOneMainThreadTask();
+    auto result = future.wait();
+    int* pResult = std::get_if<int>(&result);
+    REQUIRE(pResult);
+    CHECK(*pResult == 2);
+  }
+
+  SECTION("then after returning catch is invoked") {
+    auto future = asyncSystem
+                      .createFuture<int>([](const auto& promise) {
+                        promise.reject(std::runtime_error("test"));
+                      })
+                      .catchInMainThread([](std::exception&& e) {
+                        CHECK(std::string(e.what()) == "test");
+                        return 2;
+                      })
+                      .thenInMainThread([](int x) {
+                        CHECK(x == 2);
+                        return 3;
+                      });
+
+    asyncSystem.dispatchZeroOrOneMainThreadTask();
+    auto result = future.wait();
+    int* pResult = std::get_if<int>(&result);
+    REQUIRE(pResult);
+    CHECK(*pResult == 3);
+  }
+
+  SECTION("then after throwing catch is not invoked") {
+    auto future = asyncSystem
+                      .createFuture<int>([](const auto& promise) {
+                        promise.reject(std::runtime_error("test"));
+                      })
+                      .catchInMainThread([](std::exception&& e) -> int {
+                        CHECK(std::string(e.what()) == "test");
+                        throw std::runtime_error("second");
+                      })
+                      .thenInMainThread([](int /*x*/) {
+                        // Should not be called
+                        CHECK(false);
+                        return 3;
+                      });
+
+    asyncSystem.dispatchZeroOrOneMainThreadTask();
+    auto result = future.wait();
+    std::exception* pResult = std::get_if<std::exception>(&result);
+    REQUIRE(pResult);
+    CHECK(std::string(pResult->what()) == "second");
   }
 }
