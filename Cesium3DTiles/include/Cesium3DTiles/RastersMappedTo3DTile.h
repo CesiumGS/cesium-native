@@ -111,6 +111,20 @@ public:
       const std::vector<RasterToCombine>& rastersToCombine);
 
   /**
+   * @brief Returns the {@link RasterOverlayTileProvider} that owns this.
+   */
+  const RasterOverlayTileProvider* getOwner() const {
+    return this->_pOwner;
+  }
+
+  /**
+   * @copydoc getOwner
+   */
+  RasterOverlayTileProvider* getOwner() {
+    return this->_pOwner;
+  }
+
+  /**
    * @brief Returns the list of rasters that are to be combined and mapped to
    * the geometry tile.
    *

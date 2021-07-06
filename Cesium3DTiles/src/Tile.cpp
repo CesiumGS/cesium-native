@@ -670,14 +670,8 @@ void Tile::update(
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
       RastersMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
-      const std::vector<RasterToCombine>& rastersToCombine =
-          mappedRasterTile.getRastersToCombine();
-      if (!rastersToCombine.empty() && rastersToCombine[0].getLoadingTile() &&
-          mappedRasterTile.hasPlaceholder()) {
-        RasterOverlayTileProvider* pProvider = rastersToCombine[0]
-                                                   .getLoadingTile()
-                                                   ->getOverlay()
-                                                   .getTileProvider();
+      if (mappedRasterTile.hasPlaceholder()) {
+        RasterOverlayTileProvider* pProvider = mappedRasterTile.getOwner();
 
         // Try to replace this placeholder with real tiles.
         if (!pProvider->isPlaceholder()) {

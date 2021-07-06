@@ -7,7 +7,6 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/TilesetExternals.h"
-#include "Cesium3DTiles/spdlog-cesium.h"
 #include "TileUtilities.h"
 #include <optional>
 #include <variant>
@@ -60,8 +59,6 @@ RastersMappedTo3DTile::update(Tile& tile) {
       this->_pOwner->getProjection(),
       *pGeometryGlobeRectangle);
 
-  // we need to re-combine rasters if any have changed
-  bool recombineRasters = false;
   for (RasterToCombine& rasterToCombine : this->_rastersToCombine) {
     CesiumUtility::IntrusivePointer<RasterOverlayTile>& pLoadingTile =
         rasterToCombine._pLoadingTile;
@@ -146,8 +143,6 @@ RastersMappedTo3DTile::update(Tile& tile) {
 
         pReadyTile = pCandidate;
 
-        recombineRasters = true;
-
         // Compute the translation and scale for the new tile.
         computeTranslationAndScale(
             geometryRectangle,
@@ -158,13 +153,12 @@ RastersMappedTo3DTile::update(Tile& tile) {
     }
   }
 
-  /* BUGGY BEGIN */ // possibly crashy, also doesn't seem to always work
   // All the raster tiles aren't ready yet, so find an ancestor gometry tile 
   // with an already blitted raster we can use.
   if (this->_state != AttachmentState::Attached && this->anyLoading()) {
 
     Tile* ancestor = tile.getParent();
-    std::shared_ptr<RasterOverlayTile> pAncestorRaster;
+    std::shared_ptr<RasterOverlayTile> pCandidate;
     bool candidateFound = false;
     bool noCloserAncestorFound = false;
     while (ancestor) {
@@ -177,7 +171,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
 
         if (mapped._pCombinedTile && &mapped._pCombinedTile->getOverlay() == &overlay &&
             mapped._state == AttachmentState::Attached) {          
-          pAncestorRaster = mapped._pCombinedTile;
+          pCandidate = mapped._pCombinedTile;
           candidateFound = true; 
           break;
         }
@@ -196,7 +190,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
 
       computeTranslationAndScale(
         geometryRectangle,
-        pAncestorRaster->_imageryRectangle,
+        pCandidate->_imageryRectangle,
         translation,
         scale);
 
@@ -213,7 +207,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
         this->_state = AttachmentState::Unattached;
       }
 
-      this->_pAncestorRaster = pAncestorRaster;
+      this->_pAncestorRaster = pCandidate;
 
       tile.getTileset()->getExternals().pPrepareRendererResources->
           attachRasterInMainThread(
@@ -228,7 +222,6 @@ RastersMappedTo3DTile::update(Tile& tile) {
       this->_state = AttachmentState::TemporarilyAttached;
     }
   }
-  /* BUGGY END */
 
   // blit the rasters together
   if (!this->_pCombinedTile && this->allReady() && !this->anyLoading() && 
