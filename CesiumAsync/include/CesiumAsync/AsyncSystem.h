@@ -56,6 +56,16 @@ public:
       this->_pEvent->set_exception(std::make_exception_ptr(error));
     }
 
+    /**
+     * @brief Will be called when the task failed.
+     *
+     * @param error The error, captured with `std::current_exception`, that
+     * caused the task to fail.
+     */
+    void reject(const std::exception_ptr& error) const {
+      this->_pEvent->set_exception(error);
+    }
+
   private:
     std::shared_ptr<async::event_task<T>> _pEvent;
   };

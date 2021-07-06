@@ -144,40 +144,25 @@ TEST_CASE("AsyncSystem") {
             .runInWorkerThread([]() { return std::make_unique<int>(42); })
             .thenInWorkerThread(
                 [](std::unique_ptr<int>&& pResult) { return *pResult; });
-    auto result = future.wait();
-    int* pResult = std::get_if<int>(&result);
-    REQUIRE(pResult);
-    CHECK(*pResult == 42);
+    CHECK(future.wait() == 42);
   }
 
   SECTION("an exception thrown in a continuation rejects the future") {
     auto future = asyncSystem.runInWorkerThread(
         []() { throw std::runtime_error("test"); });
-
-    auto result = future.wait();
-    std::exception* pResult = std::get_if<std::exception>(&result);
-    REQUIRE(pResult);
-    CHECK(std::string(pResult->what()) == "test");
+    CHECK_THROWS_WITH(future.wait(), "test");
   }
 
   SECTION("an exception thrown in createFuture rejects the future") {
     auto future = asyncSystem.createFuture<int>(
         [](const auto& /*promise*/) { throw std::runtime_error("test"); });
-
-    auto result = future.wait();
-    std::exception* pResult = std::get_if<std::exception>(&result);
-    REQUIRE(pResult);
-    CHECK(std::string(pResult->what()) == "test");
+    CHECK_THROWS_WITH(future.wait(), "test");
   }
 
   SECTION("createFuture promise may resolve immediately") {
     auto future = asyncSystem.createFuture<int>(
         [](const auto& promise) { promise.resolve(42); });
-
-    auto result = future.wait();
-    int* pResult = std::get_if<int>(&result);
-    REQUIRE(pResult);
-    CHECK(*pResult == 42);
+    CHECK(future.wait() == 42);
   }
 
   SECTION("createFuture promise may resolve later") {
@@ -188,11 +173,7 @@ TEST_CASE("AsyncSystem") {
         promise.resolve(42);
       }).detach();
     });
-
-    auto result = future.wait();
-    int* pResult = std::get_if<int>(&result);
-    REQUIRE(pResult);
-    CHECK(*pResult == 42);
+    CHECK(future.wait() == 42);
   }
 
   SECTION("rejected promise invokes catch instead of then") {
@@ -211,10 +192,7 @@ TEST_CASE("AsyncSystem") {
                       });
 
     asyncSystem.dispatchZeroOrOneMainThreadTask();
-    auto result = future.wait();
-    int* pResult = std::get_if<int>(&result);
-    REQUIRE(pResult);
-    CHECK(*pResult == 2);
+    CHECK(future.wait() == 2);
   }
 
   SECTION("then after returning catch is invoked") {
@@ -232,10 +210,7 @@ TEST_CASE("AsyncSystem") {
                       });
 
     asyncSystem.dispatchZeroOrOneMainThreadTask();
-    auto result = future.wait();
-    int* pResult = std::get_if<int>(&result);
-    REQUIRE(pResult);
-    CHECK(*pResult == 3);
+    CHECK(future.wait() == 3);
   }
 
   SECTION("then after throwing catch is not invoked") {
@@ -254,9 +229,6 @@ TEST_CASE("AsyncSystem") {
                       });
 
     asyncSystem.dispatchZeroOrOneMainThreadTask();
-    auto result = future.wait();
-    std::exception* pResult = std::get_if<std::exception>(&result);
-    REQUIRE(pResult);
-    CHECK(std::string(pResult->what()) == "second");
+    CHECK_THROWS_WITH(future.wait(), "second");
   }
 }

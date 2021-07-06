@@ -3,7 +3,6 @@
 #include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
 #include "CesiumAsync/Impl/CatchFunction.h"
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
-#include "CesiumAsync/Impl/FutureWaitResult.h"
 #include "CesiumAsync/Impl/WithTracing.h"
 #include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Tracing.h"
@@ -175,18 +174,10 @@ public:
    * deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
-   * @return The value if the future resolves successfully, or the exception if
-   * it rejects.
+   * @return The value if the future resolves successfully.
+   * @throws An exception if the future rejected.
    */
-  Impl::FutureWaitResult_t<T> wait() {
-    try {
-      return Impl::FutureWaitResult<T>::getFromTask(this->_task);
-    } catch (std::exception& e) {
-      return e;
-    } catch (...) {
-      return std::runtime_error("Unknown exception.");
-    }
-  }
+  T wait() { return this->_task.get(); }
 
 private:
   Future(

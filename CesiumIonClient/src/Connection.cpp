@@ -196,42 +196,36 @@ static std::string createAuthorizationErrorHtml(
             return;
           }
 
-          std::variant<Connection, std::exception> result =
-              Connection::completeTokenExchange(
-                  asyncSystem,
-                  pAssetAccessor,
-                  clientID,
-                  ionApiUrl,
-                  code,
-                  redirectUrl,
-                  codeVerifier)
-                  .wait();
+          try {
+            Connection connection = Connection::completeTokenExchange(
+                                        asyncSystem,
+                                        pAssetAccessor,
+                                        clientID,
+                                        ionApiUrl,
+                                        code,
+                                        redirectUrl,
+                                        codeVerifier)
+                                        .wait();
 
-          struct Operation {
-            const std::string& friendlyApplicationName;
-            httplib::Response& response;
-            const AsyncSystem::Promise<Connection>& promise;
-
-            void operator()(Connection& connection) {
-              response.set_content(
-                  createSuccessHtml(friendlyApplicationName),
-                  "text/html");
-              promise.resolve(std::move(connection));
-            }
-
-            void operator()(std::exception& exception) {
-              response.set_content(
-                  createAuthorizationErrorHtml(
-                      friendlyApplicationName,
-                      exception),
-                  "text/html");
-              promise.reject(std::move(exception));
-            }
-          };
-
-          std::visit(
-              Operation{friendlyApplicationName, response, promise},
-              result);
+            response.set_content(
+                createSuccessHtml(friendlyApplicationName),
+                "text/html");
+            promise.resolve(std::move(connection));
+          } catch (std::exception& exception) {
+            response.set_content(
+                createAuthorizationErrorHtml(
+                    friendlyApplicationName,
+                    exception),
+                "text/html");
+            promise.reject(std::current_exception());
+          } catch (...) {
+            response.set_content(
+                createAuthorizationErrorHtml(
+                    friendlyApplicationName,
+                    std::runtime_error("Unknown error")),
+                "text/html");
+            promise.reject(std::current_exception());
+          }
         });
 
     // TODO: Make this process cancelable, and shut down the server when it's
