@@ -1,5 +1,15 @@
 # Change Log
 
+### Next Release - ?
+
+##### Additions :tada:
+
+- Added `AsyncSystem::dispatchZeroOrOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented `.then` functions from being used on a `Future<void>` when CESIUM_TRACING_ENABLED was ON.
+
 ### v0.5.0 - 2021-07-01
 
 ##### Breaking Changes :mega:
