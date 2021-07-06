@@ -9,16 +9,17 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 template <typename Func, typename T> struct WithTracing {
-  static auto begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
+  static auto
+  begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
-    return [tracingName,
-            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& result) mutable {
-      CESIUM_TRACE_USE_CAPTURED_TRACK();
-      if (tracingName) {
-        CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
-      }
-      return std::move(result);
-    };
+    return
+        [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& result) mutable {
+          CESIUM_TRACE_USE_CAPTURED_TRACK();
+          if (tracingName) {
+            CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
+          }
+          return std::move(result);
+        };
 #else
     return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
 #endif
@@ -42,10 +43,10 @@ template <typename Func, typename T> struct WithTracing {
 };
 
 template <typename Func> struct WithTracing<Func, void> {
-  static auto begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
+  static auto
+  begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
-    return [tracingName,
-            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()]() mutable {
+    return [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()]() mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
         CESIUM_TRACE_END_IN_TRACK(tracingName);
