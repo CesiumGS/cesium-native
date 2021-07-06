@@ -14,14 +14,23 @@ template <typename Func, typename T, typename Scheduler> struct CatchFunction {
   async::task<T> operator()(async::task<T>&& t) {
     try {
       return async::make_task(t.get());
-    } catch (std::exception& e) {
-      return async::make_task(e).then(
-          scheduler,
-          unwrapFuture<Func, std::exception>(std::move(f)));
     } catch (...) {
-      return async::make_task<std::exception>(
-                 std::runtime_error("Unknown exception"))
-          .then(scheduler, unwrapFuture<Func, std::exception>(std::move(f)));
+      // Make an exception_ptr task, then scheduler to a wrapper around f that
+      // throws it, catches it, and calls f with a reference to it.
+      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) mutable {
+        try {
+          std::rethrow_exception(e);
+        } catch (std::exception& e) {
+          return f(std::move(e));
+        } catch (...) {
+          return f(std::runtime_error("Unknown exception"));
+        }
+      };
+      return async::make_task(std::current_exception())
+          .then(
+              scheduler,
+              unwrapFuture<decltype(ptrToException), std::exception_ptr>(
+                  std::move(ptrToException)));
     }
   }
 };
@@ -35,14 +44,23 @@ struct CatchFunction<Func, void, Scheduler> {
     try {
       t.get();
       return async::make_task();
-    } catch (std::exception& e) {
-      return async::make_task(e).then(
-          scheduler,
-          unwrapFuture<Func, std::exception>(std::move(f)));
     } catch (...) {
-      return async::make_task<std::exception>(
-                 std::runtime_error("Unknown exception"))
-          .then(scheduler, unwrapFuture<Func, std::exception>(std::move(f)));
+      // Make an exception_ptr task, then scheduler to a wrapper around f that
+      // throws it, catches it, and calls f with a reference to it.
+      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) mutable {
+        try {
+          std::rethrow_exception(e);
+        } catch (std::exception& e) {
+          return f(std::move(e));
+        } catch (...) {
+          return f(std::runtime_error("Unknown exception"));
+        }
+      };
+      return async::make_task(std::current_exception())
+          .then(
+              scheduler,
+              unwrapFuture<decltype(ptrToException), std::exception_ptr>(
+                  std::move(ptrToException)));
     }
   }
 };
