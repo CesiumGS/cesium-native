@@ -2,6 +2,10 @@
 
 ### Next Release - ?
 
+##### Breaking Changes :mega:
+
+- `Future<T>::wait` now returns the resolved value and throws if the Future rejected, rather than returning a `std::variant` and slicing the exception to `std::exception`.
+
 ##### Additions :tada:
 
 - Added `AsyncSystem::dispatchZeroOrOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
