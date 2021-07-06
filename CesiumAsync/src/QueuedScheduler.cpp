@@ -18,3 +18,16 @@ void QueuedScheduler::dispatchQueuedContinuations() {
 
   this->immediate.markEnd();
 }
+
+bool QueuedScheduler::dispatchZeroOrOneContinuation() {
+  this->immediate.markBegin();
+
+  try {
+    bool result = this->_scheduler.try_run_one_task();
+    this->immediate.markEnd();
+    return result;
+  } catch (...) {
+    this->immediate.markEnd();
+    throw;
+  }
+}

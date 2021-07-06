@@ -10,6 +10,7 @@ class QueuedScheduler {
 public:
   void schedule(async::task_run_handle t);
   void dispatchQueuedContinuations();
+  bool dispatchZeroOrOneContinuation();
 
   ImmediateScheduler<QueuedScheduler> immediate{this};
 

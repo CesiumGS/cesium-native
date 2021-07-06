@@ -12,6 +12,10 @@ void AsyncSystem::dispatchMainThreadTasks() {
   this->_pSchedulers->mainThread.dispatchQueuedContinuations();
 }
 
+bool AsyncSystem::dispatchZeroOrOneMainThreadTask() {
+  return this->_pSchedulers->mainThread.dispatchZeroOrOneContinuation();
+}
+
 ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {
   return ThreadPool(numberOfThreads);
 }

@@ -110,7 +110,7 @@ public:
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::WithTracing<Func, T>::wrap(nullptr, std::forward<Func>(f))));
+            Impl::WithTracing<Func, T>::end(nullptr, std::forward<Func>(f))));
   }
 
   /**
@@ -208,13 +208,7 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& value) mutable {
-          CESIUM_TRACE_USE_CAPTURED_TRACK();
-          if (tracingName) {
-            CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
-          }
-          return std::move(value);
-        });
+        Impl::WithTracing<Func, T>::begin(tracingName, std::forward<Func>(f)));
 #else
     auto& task = this->_task;
 #endif
@@ -223,7 +217,7 @@ private:
         this->_pSchedulers,
         task.then(
             scheduler,
-            Impl::WithTracing<Func, T>::wrap(
+            Impl::WithTracing<Func, T>::end(
                 tracingName,
                 std::forward<Func>(f))));
   }

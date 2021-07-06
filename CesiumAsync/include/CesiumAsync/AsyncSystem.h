@@ -125,7 +125,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->workerThread.immediate,
-            Impl::WithTracing<Func, void>::wrap(
+            Impl::WithTracing<Func, void>::end(
                 tracingName,
                 std::forward<Func>(f))));
   }
@@ -154,7 +154,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThread.immediate,
-            Impl::WithTracing<Func, void>::wrap(
+            Impl::WithTracing<Func, void>::end(
                 tracingName,
                 std::forward<Func>(f))));
   }
@@ -179,7 +179,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             threadPool._pScheduler->immediate,
-            Impl::WithTracing<Func, void>::wrap(
+            Impl::WithTracing<Func, void>::end(
                 tracingName,
                 std::forward<Func>(f))));
   }
@@ -212,6 +212,17 @@ public:
    * The tasks are run in the calling thread.
    */
   void dispatchMainThreadTasks();
+
+  /**
+   * @brief Runs a single waiting task that is currently queued for the main
+   * thread, if there is one.
+   *
+   * The task is run in the calling thread.
+   *
+   * @return true A single task was executed.
+   * @return false No task was executed because none are waiting.
+   */
+  bool dispatchZeroOrOneMainThreadTask();
 
   /**
    * @brief Creates a new thread pool that can be used to run continuations.
