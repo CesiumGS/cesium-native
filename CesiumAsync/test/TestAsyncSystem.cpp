@@ -71,9 +71,24 @@ TEST_CASE("AsyncSystem") {
     bool executed1 = false;
     bool executed2 = false;
 
-    asyncSystem.runInWorkerThread([&executed1]() { executed1 = true; })
-        .thenInWorkerThread([&executed2]() { executed2 = true; })
-        .wait();
+    // Use a mutex to ensure the first continuation can't complete
+    // before we attach our second. Because as long as that's true,
+    // we should only one task get started even though there are two
+    // worker continuations.
+    std::mutex m;
+    m.lock();
+
+    auto future = asyncSystem
+                      .runInWorkerThread([&executed1, &m]() {
+                        std::scoped_lock lock(m);
+                        executed1 = true;
+                      })
+                      .thenInWorkerThread([&executed2, &m]() {
+                        std::scoped_lock lock(m);
+                        executed2 = true;
+                      });
+    m.unlock();
+    future.wait();
 
     CHECK(pTaskProcessor->tasksStarted == 1);
     CHECK(executed1);
