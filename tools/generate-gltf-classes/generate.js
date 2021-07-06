@@ -46,7 +46,7 @@ function generate(options, schema) {
         #pragma once
 
         ${headers.map((header) => `#include ${header}`).join("\n")}
-        
+
         namespace CesiumGltf {
             /**
              * @brief ${schema.description}
@@ -77,7 +77,7 @@ function generate(options, schema) {
   const readerHeaders = lodash.uniq(
     [
       `"CesiumGltf/ReaderContext.h"`,
-      `"${base}JsonHandler.h"`, 
+      `"${base}JsonHandler.h"`,
       ...lodash.flatten(properties.map((property) => property.readerHeaders))
     ]
   );
@@ -152,10 +152,10 @@ function generate(options, schema) {
               ${base}JsonHandler::reportWarning(warning, std::move(context));
             }
             ` : ""}
-          
+
           protected:
             IJsonHandler* readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o);
-    
+
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
 
@@ -221,7 +221,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
                   .first->second;
           this->reset(
               pParentHandler,
-              &std::any_cast<${name}&>(value));  
+              &std::any_cast<${name}&>(value));
         }
         ` : ""}
 
@@ -241,8 +241,13 @@ function generateReaderOptionsInitializerList(properties, varName) {
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
   `;
 
-  const readerSourceOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.cpp");
-  fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
+  if (options.oneHandlerFile) {
+    const readerSourceOutputPath = path.join(readerHeaderOutputDir, "GeneratedJsonHandlers.cpp");
+    fs.appendFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
+  } else {
+    const readerSourceOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.cpp");
+    fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
+  }
 
   return lodash.uniq(
     lodash.flatten(properties.map((property) => property.schemas))
