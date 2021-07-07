@@ -17,8 +17,8 @@
 #include <gsl/span>
 #include <memory>
 #include <optional>
-#include <unordered_set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace Cesium3DTiles {
@@ -557,7 +557,8 @@ private:
    * This method should only be called when this tile's parent is already
    * loaded.
    */
-  void upsampleParent(std::unordered_set<CesiumGeospatial::Projection>&& projections);
+  void upsampleParent(
+      std::unordered_set<CesiumGeospatial::Projection>&& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;

@@ -70,10 +70,10 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     double targetGeometricError) {
   if (this->_pPlaceholder) {
     return RastersMappedTo3DTile(
-      *this,
-      std::vector<RasterToCombine>({RasterToCombine(
-        this->_pPlaceholder.get(),
-        CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
+        *this,
+        std::vector<RasterToCombine>({RasterToCombine(
+            this->_pPlaceholder.get(),
+            CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
   }
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();

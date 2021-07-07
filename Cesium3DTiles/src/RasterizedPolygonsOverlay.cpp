@@ -190,9 +190,11 @@ public:
       this->loadTileThrottled(*pTile);
     }
 
-    return RastersMappedTo3DTile(*this, std::vector<RasterToCombine>({RasterToCombine(
-        pTile,
-        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
+    return RastersMappedTo3DTile(
+        *this,
+        std::vector<RasterToCombine>({RasterToCombine(
+            pTile,
+            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
   }
 
   virtual bool

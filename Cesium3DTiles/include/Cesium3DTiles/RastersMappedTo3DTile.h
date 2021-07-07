@@ -113,16 +113,12 @@ public:
   /**
    * @brief Returns the {@link RasterOverlayTileProvider} that owns this.
    */
-  const RasterOverlayTileProvider* getOwner() const {
-    return this->_pOwner;
-  }
+  const RasterOverlayTileProvider* getOwner() const { return this->_pOwner; }
 
   /**
    * @copydoc getOwner
    */
-  RasterOverlayTileProvider* getOwner() {
-    return this->_pOwner;
-  }
+  RasterOverlayTileProvider* getOwner() { return this->_pOwner; }
 
   /**
    * @brief Returns the list of rasters that are to be combined and mapped to
@@ -259,8 +255,8 @@ private:
       const CesiumGeometry::Rectangle& imageryRectangle,
       glm::dvec2& translation,
       glm::dvec2& scale);
-  static std::optional<CesiumGltf::ImageCesium> blitRasters(
-      const std::vector<RasterToCombine>& rastersToCombine);
+  static std::optional<CesiumGltf::ImageCesium>
+  blitRasters(const std::vector<RasterToCombine>& rastersToCombine);
 
   RasterOverlayTileProvider* _pOwner;
   std::vector<RasterToCombine> _rastersToCombine;
