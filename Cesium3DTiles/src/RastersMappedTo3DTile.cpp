@@ -482,9 +482,9 @@ RastersMappedTo3DTile::blitRasters(
 
           // TODO: do a sanity check of these transformedUvs
           // TODO: check if bilerp is needed here, is there any aliasing?
-          uint32_t srcPixelX = static_cast<uint32_t>(
+          int32_t srcPixelX = static_cast<int32_t>(
               glm::clamp(glm::floor(srcPixel.x), 0.0, double(srcImage.width)));
-          uint32_t srcPixelY = static_cast<uint32_t>(
+          int32_t srcPixelY = static_cast<int32_t>(
               glm::clamp(glm::floor(srcPixel.y), 0.0, double(srcImage.height)));
 
           const std::byte* pSrcPixelValue =
