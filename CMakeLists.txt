@@ -89,7 +89,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 function(configure_cesium_library targetName)
     if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
+        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /Zc:__cplusplus)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
     endif()
@@ -114,6 +114,8 @@ function(configure_cesium_library targetName)
             ${targetName}
             PRIVATE
                 ${capitalizedTargetName}_BUILDING
+            PUBLIC
+                _SILENCE_CXX17_RESULT_OF_DEPRECATION_WARNING=1
         )
 
         if (${CESIUM_CXX_STANDARD} STREQUAL "14")
