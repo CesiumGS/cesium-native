@@ -74,12 +74,12 @@ TEST_CASE("AsyncSystem") {
     Promise<void> promise = asyncSystem.createPromise<void>();
     Future<void> trigger = promise.getFuture();
 
-    auto future =
-        trigger.thenInWorkerThread([&executed1]() { executed1 = true; })
-            .thenInWorkerThread([&executed2]() { executed2 = true; });
+    auto future = std::move(trigger)
+                      .thenInWorkerThread([&executed1]() { executed1 = true; })
+                      .thenInWorkerThread([&executed2]() { executed2 = true; });
 
     // Now that both continuations are attached, set the chain in motion.
-    trigger.resolve();
+    promise.resolve();
     future.wait();
 
     CHECK(pTaskProcessor->tasksStarted == 1);

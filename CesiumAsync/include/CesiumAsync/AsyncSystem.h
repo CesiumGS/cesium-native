@@ -74,6 +74,32 @@ private:
   friend class AsyncSystem;
 };
 
+// Specialization for promises that resolve to no value.
+template <> class Promise<void> {
+public:
+  void resolve() const { this->_pEvent->set(); }
+  template <typename TException> void reject(TException error) const {
+    this->_pEvent->set_exception(std::make_exception_ptr(error));
+  }
+  void reject(const std::exception_ptr& error) const {
+    this->_pEvent->set_exception(error);
+  }
+  Future<void> getFuture() const {
+    return Future<void>(this->_pSchedulers, this->_pEvent->get_task());
+  }
+
+private:
+  Promise(
+      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<async::event_task<void>>& pEvent)
+      : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
+
+  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<async::event_task<void>> _pEvent;
+
+  friend class AsyncSystem;
+};
+
 /**
  * @brief A system for managing asynchronous requests and tasks.
  *
