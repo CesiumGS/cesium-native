@@ -9,6 +9,7 @@
 ##### Additions :tada:
 
 - Added `AsyncSystem::dispatchZeroOrOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
+- Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.
 
 ##### Fixes :wrench:
 
