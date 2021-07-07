@@ -272,12 +272,11 @@ RastersMappedTo3DTile::update(Tile& tile) {
         .thenInMainThread(
             [this, &tile, &externals = tile.getTileset()->getExternals()](
                 std::shared_ptr<RasterOverlayTile>&& combinedTile) {
-              // ?? if this is needed what should be done about the load-thread
-              // raster preparation (currently no preparation actually takes
-              // place in the load thread...)
-              if (!this) {
-                return;
-              }
+              // is it possible for "this" to be deleted before this lambda
+              // gets invoked??
+              //if (!this) {
+              //  return;
+              //}
 
               combinedTile->loadInMainThread();
 
@@ -310,7 +309,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
                 rasterToCombine._pReadyTile->releaseReference();
               }
             })
-        .catchInMainThread([this, &tile](const std::exception& /*e*/) {
+        .catchInMainThread([this](const std::exception& /*e*/) {
           this->_pCombinedTile->_state = RasterOverlayTile::LoadState::Failed;
           this->_pCombinedTile->_pRendererResources = nullptr;
         });
