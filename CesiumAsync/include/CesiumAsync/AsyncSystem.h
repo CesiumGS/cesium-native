@@ -52,7 +52,7 @@ public:
      *
      * @param error The error that caused the task to fail.
      */
-    void reject(std::exception&& error) const {
+    template <typename TException> void reject(TException error) const {
       this->_pEvent->set_exception(std::make_exception_ptr(error));
     }
 
@@ -101,10 +101,8 @@ public:
 
     try {
       f(promise);
-    } catch (std::exception& e) {
-      promise.reject(std::move(e));
     } catch (...) {
-      promise.reject(std::runtime_error("Unknown error"));
+      promise.reject(std::current_exception());
     }
 
     return Future<T>(this->_pSchedulers, pEvent->get_task());
