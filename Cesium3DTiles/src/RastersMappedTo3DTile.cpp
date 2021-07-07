@@ -274,7 +274,7 @@ RastersMappedTo3DTile::update(Tile& tile) {
                 std::shared_ptr<RasterOverlayTile>&& combinedTile) {
               // is it possible for "this" to be deleted before this lambda
               // gets invoked??
-              //if (!this) {
+              // if (!this) {
               //  return;
               //}
 
