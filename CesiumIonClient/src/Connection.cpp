@@ -98,144 +98,135 @@ static std::string createAuthorizationErrorHtml(
     std::function<void(const std::string&)>&& openUrlCallback,
     const std::string& ionApiUrl,
     const std::string& ionAuthorizeUrl) {
-  return asyncSystem.createFuture<Connection>([&asyncSystem,
-                                               &pAssetAccessor,
-                                               &friendlyApplicationName,
-                                               &clientID,
-                                               &redirectPath,
-                                               &scopes,
-                                               &ionApiUrl,
-                                               &ionAuthorizeUrl,
-                                               &openUrlCallback](
-                                                  auto& promise) {
-    std::shared_ptr<httplib::Server> pServer =
-        std::make_shared<httplib::Server>();
-    int port = pServer->bind_to_any_port("127.0.0.1");
 
-    std::string redirectUrl =
-        Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
+  auto promise = asyncSystem.createPromise<Connection>();
 
-    duthomhas::csprng rng;
-    std::vector<uint8_t> stateBytes(32, 0);
-    rng(stateBytes);
+  std::shared_ptr<httplib::Server> pServer =
+      std::make_shared<httplib::Server>();
+  int port = pServer->bind_to_any_port("127.0.0.1");
 
-    std::string state = encodeBase64(stateBytes);
+  std::string redirectUrl =
+      Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
 
-    std::vector<uint8_t> codeVerifierBytes(32, 0);
-    rng(codeVerifierBytes);
+  duthomhas::csprng rng;
+  std::vector<uint8_t> stateBytes(32, 0);
+  rng(stateBytes);
 
-    std::string codeVerifier = encodeBase64(codeVerifierBytes);
+  std::string state = encodeBase64(stateBytes);
 
-    std::vector<uint8_t> hashedChallengeBytes(picosha2::k_digest_size);
-    picosha2::hash256(codeVerifier, hashedChallengeBytes);
-    std::string hashedChallenge = encodeBase64(hashedChallengeBytes);
+  std::vector<uint8_t> codeVerifierBytes(32, 0);
+  rng(codeVerifierBytes);
 
-    std::string authorizeUrl = ionAuthorizeUrl;
-    authorizeUrl = Uri::addQuery(authorizeUrl, "response_type", "code");
-    authorizeUrl =
-        Uri::addQuery(authorizeUrl, "client_id", std::to_string(clientID));
-    authorizeUrl =
-        Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, " "));
-    authorizeUrl = Uri::addQuery(authorizeUrl, "redirect_uri", redirectUrl);
-    authorizeUrl = Uri::addQuery(authorizeUrl, "state", state);
-    authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge_method", "S256");
-    authorizeUrl =
-        Uri::addQuery(authorizeUrl, "code_challenge", hashedChallenge);
+  std::string codeVerifier = encodeBase64(codeVerifierBytes);
 
-    // TODO: state and code_challenge
+  std::vector<uint8_t> hashedChallengeBytes(picosha2::k_digest_size);
+  picosha2::hash256(codeVerifier, hashedChallengeBytes);
+  std::string hashedChallenge = encodeBase64(hashedChallengeBytes);
 
-    pServer->Get(
-        redirectPath.c_str(),
-        redirectPath.size(),
-        [promise,
-         pServer,
-         asyncSystem,
-         pAssetAccessor,
-         friendlyApplicationName,
-         clientID,
-         ionApiUrl,
-         redirectUrl,
-         expectedState = state,
-         codeVerifier](
-            const httplib::Request& request,
-            httplib::Response& response) {
-          pServer->stop();
+  std::string authorizeUrl = ionAuthorizeUrl;
+  authorizeUrl = Uri::addQuery(authorizeUrl, "response_type", "code");
+  authorizeUrl =
+      Uri::addQuery(authorizeUrl, "client_id", std::to_string(clientID));
+  authorizeUrl =
+      Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, " "));
+  authorizeUrl = Uri::addQuery(authorizeUrl, "redirect_uri", redirectUrl);
+  authorizeUrl = Uri::addQuery(authorizeUrl, "state", state);
+  authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge_method", "S256");
+  authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge", hashedChallenge);
 
-          std::string error = request.get_param_value("error");
-          std::string errorDescription =
-              request.get_param_value("error_description");
-          if (!error.empty()) {
-            std::string errorMessage = "Error";
-            std::string errorDescriptionMessage = "An unknown error occurred";
-            if (error == "access_denied") {
-              errorMessage = "Access denied";
-            }
-            if (!errorDescription.empty()) {
-              errorDescriptionMessage = errorDescription;
-            }
-            response.set_content(
-                createGenericErrorHtml(
-                    friendlyApplicationName,
-                    errorMessage,
-                    errorDescriptionMessage),
-                "text/html");
-            promise.reject(std::runtime_error("Received an error message"));
-            return;
+  // TODO: state and code_challenge
+
+  pServer->Get(
+      redirectPath.c_str(),
+      redirectPath.size(),
+      [promise,
+       pServer,
+       asyncSystem,
+       pAssetAccessor,
+       friendlyApplicationName,
+       clientID,
+       ionApiUrl,
+       redirectUrl,
+       expectedState = state,
+       codeVerifier](
+          const httplib::Request& request,
+          httplib::Response& response) {
+        pServer->stop();
+
+        std::string error = request.get_param_value("error");
+        std::string errorDescription =
+            request.get_param_value("error_description");
+        if (!error.empty()) {
+          std::string errorMessage = "Error";
+          std::string errorDescriptionMessage = "An unknown error occurred";
+          if (error == "access_denied") {
+            errorMessage = "Access denied";
           }
-
-          std::string code = request.get_param_value("code");
-          std::string state = request.get_param_value("state");
-          if (state != expectedState) {
-            response.set_content(
-                createGenericErrorHtml(
-                    friendlyApplicationName,
-                    "Invalid state",
-                    "The redirection received an invalid state"),
-                "text/html");
-            promise.reject(std::runtime_error("Received an invalid state."));
-            return;
+          if (!errorDescription.empty()) {
+            errorDescriptionMessage = errorDescription;
           }
+          response.set_content(
+              createGenericErrorHtml(
+                  friendlyApplicationName,
+                  errorMessage,
+                  errorDescriptionMessage),
+              "text/html");
+          promise.reject(std::runtime_error("Received an error message"));
+          return;
+        }
 
-          try {
-            Connection connection = Connection::completeTokenExchange(
-                                        asyncSystem,
-                                        pAssetAccessor,
-                                        clientID,
-                                        ionApiUrl,
-                                        code,
-                                        redirectUrl,
-                                        codeVerifier)
-                                        .wait();
+        std::string code = request.get_param_value("code");
+        std::string state = request.get_param_value("state");
+        if (state != expectedState) {
+          response.set_content(
+              createGenericErrorHtml(
+                  friendlyApplicationName,
+                  "Invalid state",
+                  "The redirection received an invalid state"),
+              "text/html");
+          promise.reject(std::runtime_error("Received an invalid state."));
+          return;
+        }
 
-            response.set_content(
-                createSuccessHtml(friendlyApplicationName),
-                "text/html");
-            promise.resolve(std::move(connection));
-          } catch (std::exception& exception) {
-            response.set_content(
-                createAuthorizationErrorHtml(
-                    friendlyApplicationName,
-                    exception),
-                "text/html");
-            promise.reject(std::current_exception());
-          } catch (...) {
-            response.set_content(
-                createAuthorizationErrorHtml(
-                    friendlyApplicationName,
-                    std::runtime_error("Unknown error")),
-                "text/html");
-            promise.reject(std::current_exception());
-          }
-        });
+        try {
+          Connection connection = Connection::completeTokenExchange(
+                                      asyncSystem,
+                                      pAssetAccessor,
+                                      clientID,
+                                      ionApiUrl,
+                                      code,
+                                      redirectUrl,
+                                      codeVerifier)
+                                      .wait();
 
-    // TODO: Make this process cancelable, and shut down the server when it's
-    // canceled.
-    std::thread([pServer, authorizeUrl]() {
-      pServer->listen_after_bind();
-    }).detach();
+          response.set_content(
+              createSuccessHtml(friendlyApplicationName),
+              "text/html");
+          promise.resolve(std::move(connection));
+        } catch (std::exception& exception) {
+          response.set_content(
+              createAuthorizationErrorHtml(friendlyApplicationName, exception),
+              "text/html");
+          promise.reject(std::current_exception());
+        } catch (...) {
+          response.set_content(
+              createAuthorizationErrorHtml(
+                  friendlyApplicationName,
+                  std::runtime_error("Unknown error")),
+              "text/html");
+          promise.reject(std::current_exception());
+        }
+      });
 
-    openUrlCallback(authorizeUrl);
-  });
+  // TODO: Make this process cancelable, and shut down the server when it's
+  // canceled.
+  std::thread([pServer, authorizeUrl]() {
+    pServer->listen_after_bind();
+  }).detach();
+
+  openUrlCallback(authorizeUrl);
+
+  return promise.getFuture();
 }
 
 Connection::Connection(

@@ -15,6 +15,65 @@ class ITaskProcessor;
 
 template <typename T> class Future;
 
+class AsyncSystem;
+
+/**
+ * @brief A promise that can be resolved or rejected by an asynchronous task.
+ *
+ * @tparam T The type of the object that the promise will be resolved with.
+ */
+template <typename T> class Promise {
+public:
+  /**
+   * @brief Will be called when the task completed successfully.
+   *
+   * @param value The value that was computed by the asynchronous task.
+   */
+  void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
+
+  /**
+   * @brief Will be called when the task failed.
+   *
+   * @param error The error that caused the task to fail.
+   */
+  template <typename TException> void reject(TException error) const {
+    this->_pEvent->set_exception(std::make_exception_ptr(error));
+  }
+
+  /**
+   * @brief Will be called when the task failed.
+   *
+   * @param error The error, captured with `std::current_exception`, that
+   * caused the task to fail.
+   */
+  void reject(const std::exception_ptr& error) const {
+    this->_pEvent->set_exception(error);
+  }
+
+  /**
+   * @brief Gets the Future that resolves or rejects when this Promise is
+   * resolved or rejected.
+   *
+   * This method may only be called once.
+   *
+   * @return The future.
+   */
+  Future<T> getFuture() const {
+    return Future<T>(this->_pSchedulers, this->_pEvent->get_task());
+  }
+
+private:
+  Promise(
+      const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
+      const std::shared_ptr<async::event_task<T>>& pEvent)
+      : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
+
+  std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
+  std::shared_ptr<async::event_task<T>> _pEvent;
+
+  friend class AsyncSystem;
+};
+
 /**
  * @brief A system for managing asynchronous requests and tasks.
  *
@@ -32,45 +91,6 @@ template <typename T> class Future;
 class CESIUMASYNC_API AsyncSystem final {
 public:
   /**
-   * @brief A promise that can be resolved or rejected by an asynchronous task.
-   *
-   * @tparam T The type of the object that the promise will be resolved with.
-   */
-  template <typename T> struct Promise {
-    Promise(const std::shared_ptr<async::event_task<T>>& pEvent)
-        : _pEvent(pEvent) {}
-
-    /**
-     * @brief Will be called when the task completed successfully.
-     *
-     * @param value The value that was computed by the asynchronous task.
-     */
-    void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
-
-    /**
-     * @brief Will be called when the task failed.
-     *
-     * @param error The error that caused the task to fail.
-     */
-    template <typename TException> void reject(TException error) const {
-      this->_pEvent->set_exception(std::make_exception_ptr(error));
-    }
-
-    /**
-     * @brief Will be called when the task failed.
-     *
-     * @param error The error, captured with `std::current_exception`, that
-     * caused the task to fail.
-     */
-    void reject(const std::exception_ptr& error) const {
-      this->_pEvent->set_exception(error);
-    }
-
-  private:
-    std::shared_ptr<async::event_task<T>> _pEvent;
-  };
-
-  /**
    * @brief Constructs a new instance.
    *
    * @param pTaskProcessor The interface used to run tasks in background
@@ -85,7 +105,11 @@ public:
    * The {@link Promise} passed to the callback `f` may be resolved or rejected
    * asynchronously, even after the function has returned.
    *
-   * If the callback `f` throws an exception, the `Future` will be rejected.
+   * This method is very similar to {@link AsyncSystem::createPromise}, except
+   * that that method returns the Promise directly. The advantage of using this
+   * method instead is that it is more exception-safe.  If the callback `f`
+   * throws an exception, the `Future` will be rejected automatically and the
+   * exception will not escape the callback.
    *
    * @tparam T The type that the Future resolves to.
    * @tparam Func The type of the callback function.
@@ -97,7 +121,7 @@ public:
     std::shared_ptr<async::event_task<T>> pEvent =
         std::make_shared<async::event_task<T>>();
 
-    Promise<T> promise(pEvent);
+    Promise<T> promise(this->_pSchedulers, pEvent);
 
     try {
       f(promise);
@@ -106,6 +130,25 @@ public:
     }
 
     return Future<T>(this->_pSchedulers, pEvent->get_task());
+  }
+
+  /**
+   * @brief Create a Promise that can be used at a later time to resolve or
+   * reject a Future.
+   *
+   * Use {@link Promise<T>::getFuture} to get the Future that is resolved
+   * or rejected when this Promise is resolved or rejected.
+   *
+   * Consider using {@link AsyncSystem::createFuture} instead of this method.
+   *
+   * @tparam T The type that is provided when resolving the Promise and the type
+   * that the associated Future resolves to. Future.
+   * @return The Promise.
+   */
+  template <typename T> Promise<T> createPromise() const {
+    return Promise<T>(
+        this->_pSchedulers,
+        std::make_shared<async::event_task<T>>());
   }
 
   /**
