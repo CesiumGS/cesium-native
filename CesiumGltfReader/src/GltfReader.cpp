@@ -267,7 +267,7 @@ public:
             .first->second;
     JsonObjectJsonHandler::reset(
         pParentHandler,
-        &std::any_cast<JsonValue&>(value));
+        std::any_cast<JsonValue>(&value));
   }
 
   virtual IJsonHandler* readNull() override {

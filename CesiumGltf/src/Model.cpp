@@ -187,7 +187,8 @@ void Model::merge(Model&& rhs) {
   } else if (pRhsDefaultScene) {
     // Create a new default scene that has all the root nodes in
     // the default scene of either model.
-    Scene& newScene = this->scenes.emplace_back();
+    this->scenes.emplace_back();
+    Scene& newScene = this->scenes.back();
 
     // Refresh the scene pointers potentially invalidated by the above.
     pThisDefaultScene = Model::getSafe(&this->scenes, this->scene);

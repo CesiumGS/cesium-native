@@ -33,11 +33,22 @@ endif()
 add_subdirectory(modp_b64)
 
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
-set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib") 
+set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
 set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "Don't use OpenSSL")
 add_subdirectory(cpp-httplib)
 
 add_subdirectory(magic_enum)
+
+if (${CESIUM_CXX_STANDARD} STREQUAL "14")
+  set(OPTIONAL_BUILD_TESTS OFF)
+  add_subdirectory(optional)
+
+  add_subdirectory(variant)
+
+  add_subdirectory("string-view-lite")
+
+  add_subdirectory("any-lite")
+endif()
 
 # CSPRNG's CMake setup is old school, and it really only has one source
 # file, so set up a library manually here.

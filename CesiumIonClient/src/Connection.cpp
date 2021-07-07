@@ -32,7 +32,7 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
   size_t count = modp_b64_encode_len(bytes.size());
   std::string result(count, 0);
   size_t actualLength = modp_b64_encode(
-      result.data(),
+      const_cast<char*>(result.data()),
       reinterpret_cast<const char*>(bytes.data()),
       bytes.size());
   result.resize(actualLength);

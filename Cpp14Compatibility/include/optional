@@ -1,0 +1,10 @@
+#pragma once
+
+#include <tl/optional.hpp>
+
+namespace std {
+  using tl::optional;
+  using tl::make_optional;
+  using tl::nullopt_t;
+  using tl::nullopt;
+}

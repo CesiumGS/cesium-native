@@ -10,9 +10,13 @@ set(cesium_native_targets
     CesiumGeospatial
     CesiumGltf
     CesiumGltfReader
-    CesiumGltfWriter
     CesiumUtility
 )
+
+# CesiumGltfWriter currently requires C++17 due to the use of magic_enum
+if (NOT ${CESIUM_CXX_STANDARD} STREQUAL "14")
+  set(cesium_native_targets ${cesium_native_targets} CesiumGltfWriter)
+endif()
 
 set(test_sources "")
 set(test_headers "")

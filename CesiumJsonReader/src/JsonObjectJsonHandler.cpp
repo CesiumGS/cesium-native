@@ -67,7 +67,8 @@ IJsonHandler* JsonObjectJsonHandler::readObjectStart() {
   JsonValue& current = *this->_stack.back();
   JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
   if (pArray) {
-    JsonValue& newObject = pArray->emplace_back(JsonValue::Object());
+    pArray->emplace_back(JsonValue::Object());
+    JsonValue& newObject = pArray->back();
     this->_stack.emplace_back(&newObject);
   } else {
     current = JsonValue::Object();
@@ -95,7 +96,8 @@ IJsonHandler* JsonObjectJsonHandler::readArrayStart() {
   JsonValue& current = *this->_stack.back();
   JsonValue::Array* pArray = std::get_if<JsonValue::Array>(&current.value);
   if (pArray) {
-    JsonValue& newArray = pArray->emplace_back(JsonValue::Array());
+    pArray->emplace_back(JsonValue::Array());
+    JsonValue& newArray = pArray->back();
     this->_stack.emplace_back(&newArray);
   } else {
     current = JsonValue::Array();

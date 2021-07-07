@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumUtility/Compiler.h"
+
 /**
  * @brief Utility classes for Cesium
  */

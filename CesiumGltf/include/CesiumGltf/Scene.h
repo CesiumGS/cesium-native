@@ -12,7 +12,7 @@ namespace CesiumGltf {
  * @brief The root nodes of a scene.
  */
 struct CESIUMGLTF_API Scene final : public NamedObject {
-  static inline constexpr const char* TypeName = "Scene";
+  static constexpr const char* TypeName = "Scene";
 
   /**
    * @brief The indices of each root node.

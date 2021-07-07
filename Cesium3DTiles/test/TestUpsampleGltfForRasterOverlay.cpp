@@ -98,7 +98,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
   // create position
   model.bufferViews.emplace_back();
-  BufferView& positionBufferView = model.bufferViews.emplace_back();
+  model.bufferViews.emplace_back();
+  BufferView& positionBufferView = model.bufferViews.back();
   positionBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
   positionBufferView.byteOffset = 0;
   positionBufferView.byteLength = positionsBufferSize;
@@ -117,7 +118,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
   // create uv
   model.bufferViews.emplace_back();
-  BufferView& uvBufferView = model.bufferViews.emplace_back();
+  model.bufferViews.emplace_back();
+  BufferView& uvBufferView = model.bufferViews.back();
   uvBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
   uvBufferView.byteOffset = positionsBufferSize;
   uvBufferView.byteLength = uvsBufferSize;
@@ -134,7 +136,8 @@ TEST_CASE("Test upsample tile without skirts") {
 
   // create indices
   model.bufferViews.emplace_back();
-  BufferView& indicesBufferView = model.bufferViews.emplace_back();
+  model.bufferViews.emplace_back();
+  BufferView& indicesBufferView = model.bufferViews.back();
   indicesBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
   indicesBufferView.byteOffset = positionsBufferSize + uvsBufferSize;
   indicesBufferView.byteLength = indicesBufferSize;

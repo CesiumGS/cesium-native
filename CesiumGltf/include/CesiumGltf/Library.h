@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumUtility/Compiler.h"
+
 /**
  * @brief Classes for working with [glTF](https://www.khronos.org/gltf/) models.
  */

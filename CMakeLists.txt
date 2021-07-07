@@ -6,6 +6,7 @@ project(cesium-native
     LANGUAGES CXX
 )
 
+set(CESIUM_CXX_STANDARD 17 CACHE STRING "The C++ version standard to use. Supports 14 or 17.")
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 
@@ -94,7 +95,7 @@ function(configure_cesium_library targetName)
     endif()
 
     set_target_properties(${targetName} PROPERTIES
-        CXX_STANDARD 17
+        CXX_STANDARD ${CESIUM_CXX_STANDARD}
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
     )
@@ -115,9 +116,10 @@ function(configure_cesium_library targetName)
                 ${capitalizedTargetName}_BUILDING
         )
 
-
+        if (${CESIUM_CXX_STANDARD} STREQUAL "14")
+          target_link_libraries(${targetName} PUBLIC Cpp14Compatibility)
+        endif()
     endif()
-
 endfunction()
 
 
@@ -128,17 +130,25 @@ add_subdirectory(extern EXCLUDE_FROM_ALL)
 set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 
+if (${CESIUM_CXX_STANDARD} STREQUAL "14")
+  add_subdirectory(Cpp14Compatibility)
+endif()
+
 # Public Targets
 add_subdirectory(CesiumUtility)
 add_subdirectory(CesiumGltf)
 add_subdirectory(CesiumGeometry)
 add_subdirectory(CesiumGeospatial)
 add_subdirectory(CesiumJsonReader)
-add_subdirectory(CesiumGltfWriter)
 add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)
 add_subdirectory(CesiumIonClient)
+
+# CesiumGltfWriter currently requires C++17 due to the use of magic_enum
+if (NOT ${CESIUM_CXX_STANDARD} STREQUAL "14")
+  add_subdirectory(CesiumGltfWriter)
+endif()
 
 # Private Targets
 # enable_testing() MUST be called before add_subdirectory or no tests

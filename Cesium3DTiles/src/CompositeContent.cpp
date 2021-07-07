@@ -23,8 +23,8 @@ struct InnerHeader {
 };
 #pragma pack(pop)
 
-static_assert(sizeof(CmptHeader) == 16);
-static_assert(sizeof(InnerHeader) == 12);
+static_assert(sizeof(CmptHeader) == 16, "CMPT header must be 16 bytes");
+static_assert(sizeof(InnerHeader) == 12, "CMPT inner header must be 12 bytes");
 } // namespace
 
 namespace Cesium3DTiles {

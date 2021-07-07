@@ -199,7 +199,7 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        Impl::WithTracing<Func, T>::begin(tracingName, std::forward<Func>(f)));
+        Impl::WithTracing<Func, T>::begin(tracingName));
 #else
     auto& task = this->_task;
 #endif

@@ -13,7 +13,7 @@ namespace CesiumGltf {
  * @brief Geometry to be rendered with the given material.
  */
 struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
-  static inline constexpr const char* TypeName = "MeshPrimitive";
+  static constexpr const char* TypeName = "MeshPrimitive";
 
   /**
    * @brief The type of primitives to render.

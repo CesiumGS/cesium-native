@@ -9,9 +9,8 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 template <typename Func, typename T> struct WithTracing {
-  static auto
-  begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
+  static auto begin(const char* tracingName) {
     return
         [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& result) mutable {
           CESIUM_TRACE_USE_CAPTURED_TRACK();
@@ -20,12 +19,10 @@ template <typename Func, typename T> struct WithTracing {
           }
           return std::move(result);
         };
-#else
-    return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
-#endif
   }
+#endif
 
-  static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
+  static auto end(const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
             f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f)),
@@ -37,27 +34,25 @@ template <typename Func, typename T> struct WithTracing {
       return f(std::move(result));
     };
 #else
+    (void)tracingName;
     return Impl::unwrapFuture<Func, T>(std::forward<Func>(f));
 #endif
   }
 };
 
 template <typename Func> struct WithTracing<Func, void> {
-  static auto
-  begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
+  static auto begin(const char* tracingName) {
     return [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()]() mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
         CESIUM_TRACE_END_IN_TRACK(tracingName);
       }
     };
-#else
-    return Impl::unwrapFuture<Func>(std::forward<Func>(f));
-#endif
   }
+#endif
 
-  static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
+  static auto end(const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
             f = Impl::unwrapFuture<Func>(std::forward<Func>(f)),
@@ -69,6 +64,7 @@ template <typename Func> struct WithTracing<Func, void> {
       return f();
     };
 #else
+    (void)tracingName;
     return Impl::unwrapFuture<Func>(std::forward<Func>(f));
 #endif
   }

@@ -135,10 +135,12 @@ void copyDecodedIndices(
   }
 
   pIndicesAccessor->bufferView = static_cast<int32_t>(model.bufferViews.size());
-  BufferView& indicesBufferView = model.bufferViews.emplace_back();
+  model.bufferViews.emplace_back();
+  BufferView& indicesBufferView = model.bufferViews.back();
 
   indicesBufferView.buffer = static_cast<int32_t>(model.buffers.size());
-  Buffer& indicesBuffer = model.buffers.emplace_back();
+  model.buffers.emplace_back();
+  Buffer& indicesBuffer = model.buffers.back();
 
   int64_t indexBytes = pIndicesAccessor->computeByteSizeOfComponent();
   int64_t indicesBytes = pIndicesAccessor->count * indexBytes;
@@ -151,7 +153,9 @@ void copyDecodedIndices(
   indicesBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
   pIndicesAccessor->type = Accessor::Type::SCALAR;
 
-  static_assert(sizeof(draco::PointIndex) == sizeof(uint32_t));
+  static_assert(
+      sizeof(draco::PointIndex) == sizeof(uint32_t),
+      "draco::PointIndex is not a uint32");
 
   const uint32_t* pSourceIndices =
       reinterpret_cast<const uint32_t*>(&pMesh->face(draco::FaceIndex(0))[0]);
@@ -213,10 +217,12 @@ void copyDecodedAttribute(
   }
 
   pAccessor->bufferView = static_cast<int32_t>(model.bufferViews.size());
-  BufferView& bufferView = model.bufferViews.emplace_back();
+  model.bufferViews.emplace_back();
+  BufferView& bufferView = model.bufferViews.back();
 
   bufferView.buffer = static_cast<int32_t>(model.buffers.size());
-  Buffer& buffer = model.buffers.emplace_back();
+  model.buffers.emplace_back();
+  Buffer& buffer = model.buffers.back();
 
   int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
   int64_t stride = numberOfComponents * pAccessor->computeByteSizeOfComponent();

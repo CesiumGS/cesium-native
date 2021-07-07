@@ -1,0 +1,11 @@
+#pragma once
+
+#include <mpark/variant.hpp>
+
+namespace std {
+  using mpark::variant;
+  using mpark::get_if;
+  using mpark::get;
+  using mpark::holds_alternative;
+  using mpark::visit;
+}

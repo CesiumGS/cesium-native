@@ -497,7 +497,7 @@ static void addSkirts(
       [&uvsAndHeights](auto lhs, auto rhs) {
         return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;
       });
-  westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
+  westEdgeIndices = gsl::span<E>(sortEdgeIndices.data(), westVertexCount);
   addSkirt(
       ellipsoid,
       center,
@@ -528,7 +528,7 @@ static void addSkirts(
       [&uvsAndHeights](auto lhs, auto rhs) {
         return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;
       });
-  southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
+  southEdgeIndices = gsl::span<E>(sortEdgeIndices.data(), southVertexCount);
   addSkirt(
       ellipsoid,
       center,
@@ -559,7 +559,7 @@ static void addSkirts(
       [&uvsAndHeights](auto lhs, auto rhs) {
         return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;
       });
-  eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
+  eastEdgeIndices = gsl::span<E>(sortEdgeIndices.data(), eastVertexCount);
   addSkirt(
       ellipsoid,
       center,
@@ -590,7 +590,7 @@ static void addSkirts(
       [&uvsAndHeights](auto lhs, auto rhs) {
         return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x;
       });
-  northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
+  northEdgeIndices = gsl::span<E>(sortEdgeIndices.data(), northVertexCount);
   addSkirt(
       ellipsoid,
       center,
@@ -975,7 +975,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   pResult->model.emplace();
   CesiumGltf::Model& model = pResult->model.value();
 
-  CesiumGltf::Material& material = model.materials.emplace_back();
+  model.materials.emplace_back();
+  CesiumGltf::Material& material = model.materials.back();
   CesiumGltf::MaterialPBRMetallicRoughness& pbr =
       material.pbrMetallicRoughness.emplace();
   pbr.metallicFactor = 0.0;

@@ -11,7 +11,7 @@ namespace CesiumGltf {
  * @brief Texture sampler properties for filtering and wrapping modes.
  */
 struct CESIUMGLTF_API Sampler final : public NamedObject {
-  static inline constexpr const char* TypeName = "Sampler";
+  static constexpr const char* TypeName = "Sampler";
 
   /**
    * @brief Magnification filter.

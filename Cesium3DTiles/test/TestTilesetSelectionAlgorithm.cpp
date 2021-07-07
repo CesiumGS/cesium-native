@@ -14,6 +14,9 @@
 #include <fstream>
 #include <glm/mat4x4.hpp>
 
+// TODO: fix compilation problems with C++14 caused by missing std::filesystem
+#if __cplusplus >= 201703L
+
 using namespace CesiumAsync;
 using namespace Cesium3DTiles;
 using namespace CesiumGeospatial;
@@ -759,3 +762,5 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     REQUIRE(result.culledTilesVisited == 0);
   }
 }
+
+#endif // __cplusplus >= 201703L

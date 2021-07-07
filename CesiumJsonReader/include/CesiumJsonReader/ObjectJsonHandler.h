@@ -5,6 +5,25 @@
 #include <optional>
 
 namespace CesiumJsonReader {
+
+namespace Impl {
+template <typename TAccessor, typename TOwner, typename TValue>
+struct ResetAccessor {
+  static void go(TAccessor& accessor, TOwner& owner, TValue& value) {
+    accessor.reset(&owner, &value);
+  }
+};
+
+template <typename TAccessor, typename TOwner, typename TOptionalValue>
+struct ResetAccessor<TAccessor, TOwner, std::optional<TOptionalValue>> {
+  static void
+  go(TAccessor& accessor, TOwner& owner, std::optional<TOptionalValue>& value) {
+    value.emplace();
+    accessor.reset(&owner, &value.value());
+  }
+};
+} // namespace Impl
+
 class CESIUMJSONREADER_API ObjectJsonHandler : public JsonHandler {
 public:
   ObjectJsonHandler() : JsonHandler() {}
@@ -20,14 +39,10 @@ protected:
   IJsonHandler*
   property(const char* currentKey, TAccessor& accessor, TProperty& value) {
     this->_currentKey = currentKey;
-
-    if constexpr (isOptional<TProperty>::value) {
-      value.emplace();
-      accessor.reset(this, &value.value());
-    } else {
-      accessor.reset(this, &value);
-    }
-
+    Impl::ResetAccessor<TAccessor, ObjectJsonHandler, TProperty>::go(
+        accessor,
+        *this,
+        value);
     return &accessor;
   }
 

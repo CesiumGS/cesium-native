@@ -13,9 +13,8 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API KHR_draco_mesh_compression final
     : public ExtensibleObject {
-  static inline constexpr const char* TypeName = "KHR_draco_mesh_compression";
-  static inline constexpr const char* ExtensionName =
-      "KHR_draco_mesh_compression";
+  static constexpr const char* TypeName = "KHR_draco_mesh_compression";
+  static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
 
   /**
    * @brief The index of the bufferView.

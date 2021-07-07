@@ -1,0 +1,8 @@
+#pragma once
+
+#include <nonstd/any.hpp>
+
+namespace std {
+  using nonstd::any;
+  using nonstd::any_cast;
+}

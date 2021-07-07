@@ -8,11 +8,11 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 template <typename Func, typename T> struct ContinuationReturnType {
-  using type = typename std::invoke_result<Func, T>::type;
+  using type = typename std::result_of<Func(T)>::type;
 };
 
 template <typename Func> struct ContinuationReturnType<Func, void> {
-  using type = typename std::invoke_result<Func>::type;
+  using type = typename std::result_of<Func()>::type;
 };
 
 //! @endcond

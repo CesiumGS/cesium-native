@@ -11,6 +11,9 @@
 #include <rapidjson/reader.h>
 #include <string>
 
+// TODO: fix compilation problems with C++14 caused by missing std::filesystem
+#if __cplusplus >= 201703L
+
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
@@ -54,8 +57,9 @@ TEST_CASE("CesiumGltf::GltfReader") {
       "        {\"POSITION\": 10, \"NORMAL\": 11}"s + "      ]"s + "    }]"s +
       "  }],"s + "  \"surprise\":{\"foo\":true}"s + "}"s;
   CesiumGltf::GltfReader reader;
-  ModelReaderResult result = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  ModelReaderResult result = reader.readModel(gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(s.c_str()),
+      s.size()));
   CHECK(result.errors.empty());
   REQUIRE(result.model.has_value());
 
@@ -307,3 +311,5 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   auto& zeroExtensions = withoutCustomExt.model->extensions;
   REQUIRE(zeroExtensions.empty());
 }
+
+#endif // __cplusplus >= 201703L

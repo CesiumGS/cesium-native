@@ -195,9 +195,9 @@ public:
   JsonValue(std::initializer_list<std::pair<const std::string, JsonValue>> v)
       : value(std::map<std::string, JsonValue>(v)) {}
 
-  [[nodiscard]] const JsonValue*
+  CESIUM_NODISCARD const JsonValue*
   getValuePtrForKey(const std::string& key) const;
-  [[nodiscard]] JsonValue* getValuePtrForKey(const std::string& key);
+  CESIUM_NODISCARD JsonValue* getValuePtrForKey(const std::string& key);
 
   /**
    * @brief Gets a typed value corresponding to the given key in the
@@ -266,7 +266,8 @@ public:
       typename std::enable_if<
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
-  [[nodiscard]] To getSafeNumericalValueForKey(const std::string& key) const {
+  CESIUM_NODISCARD To
+  getSafeNumericalValueForKey(const std::string& key) const {
     const Object& pObject = std::get<Object>(this->value);
     const auto it = pObject.find(key);
     if (it == pObject.end()) {
@@ -297,7 +298,7 @@ public:
       typename std::enable_if<
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
-  [[nodiscard]] To getSafeNumericalValueOrDefaultForKey(
+  CESIUM_NODISCARD To getSafeNumericalValueOrDefaultForKey(
       const std::string& key,
       To defaultValue) const {
     const Object& pObject = std::get<Object>(this->value);
@@ -315,7 +316,7 @@ public:
    * @return true if this value contains the key. false if it is not an object
    * or does not contain the given key.
    */
-  [[nodiscard]] inline bool hasKey(const std::string& key) const {
+  CESIUM_NODISCARD inline bool hasKey(const std::string& key) const {
     const Object* pObject = std::get_if<Object>(&this->value);
     if (!pObject) {
       return false;
@@ -338,7 +339,7 @@ public:
       typename std::enable_if<
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
-  [[nodiscard]] To getSafeNumber() const {
+  CESIUM_NODISCARD To getSafeNumber() const {
     const std::uint64_t* uInt = std::get_if<std::uint64_t>(&this->value);
     if (uInt) {
       return gsl::narrow<To>(*uInt);
@@ -369,7 +370,7 @@ public:
       typename std::enable_if<
           std::is_integral<To>::value ||
           std::is_floating_point<To>::value>::type* = nullptr>
-  [[nodiscard]] To getSafeNumberOrDefault(To defaultValue) const noexcept {
+  CESIUM_NODISCARD To getSafeNumberOrDefault(To defaultValue) const noexcept {
     const std::uint64_t* uInt = std::get_if<std::uint64_t>(&this->value);
     if (uInt) {
       return losslessNarrowOrDefault<To>(*uInt, defaultValue);
@@ -395,7 +396,7 @@ public:
    * JsonValue::Object
    */
 
-  [[nodiscard]] inline const JsonValue::Object& getObject() const {
+  CESIUM_NODISCARD inline const JsonValue::Object& getObject() const {
     return std::get<JsonValue::Object>(this->value);
   }
 
@@ -405,7 +406,7 @@ public:
    * @throws std::bad_variant_access if the underlying type is not a
    * JsonValue::String
    */
-  [[nodiscard]] inline const JsonValue::String& getString() const {
+  CESIUM_NODISCARD inline const JsonValue::String& getString() const {
     return std::get<String>(this->value);
   }
 
@@ -415,7 +416,7 @@ public:
    * @throws std::bad_variant_access if the underlying type is not a
    * JsonValue::Array
    */
-  [[nodiscard]] inline const JsonValue::Array& getArray() const {
+  CESIUM_NODISCARD inline const JsonValue::Array& getArray() const {
     return std::get<JsonValue::Array>(this->value);
   }
 
@@ -425,7 +426,7 @@ public:
    * @throws std::bad_variant_access if the underlying type is not a
    * JsonValue::Bool
    */
-  [[nodiscard]] inline bool getBool() const {
+  CESIUM_NODISCARD inline bool getBool() const {
     return std::get<bool>(this->value);
   }
 
@@ -434,7 +435,7 @@ public:
    * @return The double.
    * @throws std::bad_variant_access if the underlying type is not a double
    */
-  [[nodiscard]] inline double getDouble() const {
+  CESIUM_NODISCARD inline double getDouble() const {
     return std::get<double>(this->value);
   }
 
@@ -444,7 +445,7 @@ public:
    * @throws std::bad_variant_access if the underlying type is not a
    * std::uint64_t
    */
-  [[nodiscard]] std::uint64_t getUint64() const {
+  CESIUM_NODISCARD std::uint64_t getUint64() const {
     return std::get<std::uint64_t>(this->value);
   }
 
@@ -454,7 +455,7 @@ public:
    * @throws std::bad_variant_access if the underlying type is not a
    * std::int64_t
    */
-  [[nodiscard]] std::int64_t getInt64() const {
+  CESIUM_NODISCARD std::int64_t getInt64() const {
     return std::get<std::int64_t>(this->value);
   }
 
@@ -462,7 +463,7 @@ public:
    * @brief Gets the bool from the value or returns defaultValue
    * @return The bool or defaultValue if this->value is not a bool.
    */
-  [[nodiscard]] inline bool getBoolOrDefault(bool defaultValue) const {
+  CESIUM_NODISCARD inline bool getBoolOrDefault(bool defaultValue) const {
     const auto* v = std::get_if<bool>(&this->value);
     if (v) {
       return *v;
@@ -475,7 +476,7 @@ public:
    * @brief Gets the string from the value or returns defaultValue
    * @return The string or defaultValue if this->value is not a string.
    */
-  [[nodiscard]] inline const JsonValue::String
+  CESIUM_NODISCARD inline const JsonValue::String
   getStringOrDefault(String defaultValue) const {
     const auto* v = std::get_if<JsonValue::String>(&this->value);
     if (v) {
@@ -489,7 +490,7 @@ public:
    * @brief Gets the double from the value or returns defaultValue
    * @return The double or defaultValue if this->value is not a double.
    */
-  [[nodiscard]] inline double getDoubleOrDefault(double defaultValue) const {
+  CESIUM_NODISCARD inline double getDoubleOrDefault(double defaultValue) const {
     const auto* v = std::get_if<double>(&this->value);
     if (v) {
       return *v;
@@ -502,7 +503,7 @@ public:
    * @brief Gets the uint64_t from the value or returns defaultValue
    * @return The uint64_t or defaultValue if this->value is not a uint64_t.
    */
-  [[nodiscard]] inline std::uint64_t
+  CESIUM_NODISCARD inline std::uint64_t
   getUint64OrDefault(std::uint64_t defaultValue) const {
     const auto* v = std::get_if<std::uint64_t>(&this->value);
     if (v) {
@@ -516,7 +517,7 @@ public:
    * @brief Gets the int64_t from the value or returns defaultValue
    * @return The int64_t or defaultValue if this->value is not a int64_t.
    */
-  [[nodiscard]] inline std::int64_t
+  CESIUM_NODISCARD inline std::int64_t
   getInt64OrDefault(std::int64_t defaultValue) const {
     const auto* v = std::get_if<std::int64_t>(&this->value);
     if (v) {
@@ -529,7 +530,7 @@ public:
   /**
    * @brief Returns whether this value is a `null` value.
    */
-  [[nodiscard]] inline bool isNull() const noexcept {
+  CESIUM_NODISCARD inline bool isNull() const noexcept {
     return std::holds_alternative<Null>(this->value);
   }
 
@@ -538,56 +539,56 @@ public:
    * `std::int64_t`. Use this function in conjunction with `getNumber` for
    *  safely casting to arbitrary types
    */
-  [[nodiscard]] inline bool isNumber() const noexcept {
+  CESIUM_NODISCARD inline bool isNumber() const noexcept {
     return isDouble() || isUint64() || isInt64();
   }
 
   /**
    * @brief Returns whether this value is a `Bool` value.
    */
-  [[nodiscard]] inline bool isBool() const noexcept {
+  CESIUM_NODISCARD inline bool isBool() const noexcept {
     return std::holds_alternative<Bool>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `String` value.
    */
-  [[nodiscard]] inline bool isString() const noexcept {
+  CESIUM_NODISCARD inline bool isString() const noexcept {
     return std::holds_alternative<String>(this->value);
   }
 
   /**
    * @brief Returns whether this value is an `Object` value.
    */
-  [[nodiscard]] inline bool isObject() const noexcept {
+  CESIUM_NODISCARD inline bool isObject() const noexcept {
     return std::holds_alternative<Object>(this->value);
   }
 
   /**
    * @brief Returns whether this value is an `Array` value.
    */
-  [[nodiscard]] inline bool isArray() const noexcept {
+  CESIUM_NODISCARD inline bool isArray() const noexcept {
     return std::holds_alternative<Array>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `double` value.
    */
-  [[nodiscard]] inline bool isDouble() const noexcept {
+  CESIUM_NODISCARD inline bool isDouble() const noexcept {
     return std::holds_alternative<double>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `std::uint64_t` value.
    */
-  [[nodiscard]] inline bool isUint64() const noexcept {
+  CESIUM_NODISCARD inline bool isUint64() const noexcept {
     return std::holds_alternative<std::uint64_t>(this->value);
   }
 
   /**
    * @brief Returns whether this value is a `std::int64_t` value.
    */
-  [[nodiscard]] inline bool isInt64() const noexcept {
+  CESIUM_NODISCARD inline bool isInt64() const noexcept {
     return std::holds_alternative<std::int64_t>(this->value);
   }
 

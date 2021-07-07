@@ -67,7 +67,8 @@ static int generateOverlayTextureCoordinates(
   std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
 
   int uvBufferId = static_cast<int>(buffers.size());
-  CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
+  buffers.emplace_back();
+  CesiumGltf::Buffer& uvBuffer = buffers.back();
 
   int uvBufferViewId = static_cast<int>(bufferViews.size());
   bufferViews.emplace_back();

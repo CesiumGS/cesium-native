@@ -38,7 +38,7 @@ void KHR_draco_mesh_compressionJsonHandler::reset(
           .first->second;
   this->reset(
       pParentHandler,
-      &std::any_cast<KHR_draco_mesh_compression&>(value));
+      std::any_cast<KHR_draco_mesh_compression>(&value));
 }
 
 CesiumJsonReader::IJsonHandler*

@@ -46,14 +46,14 @@ function generate(options, schema) {
         #pragma once
 
         ${headers.map((header) => `#include ${header}`).join("\n")}
-        
+
         namespace CesiumGltf {
             /**
              * @brief ${schema.description}
              */
             struct CESIUMGLTF_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
-                static inline constexpr const char* TypeName = "${name}";
-                ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+                static constexpr const char* TypeName = "${name}";
+                ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
                 ${indent(localTypes.join("\n\n"), 16)}
 
@@ -77,7 +77,7 @@ function generate(options, schema) {
   const readerHeaders = lodash.uniq(
     [
       `"CesiumGltf/ReaderContext.h"`,
-      `"${base}JsonHandler.h"`, 
+      `"${base}JsonHandler.h"`,
       ...lodash.flatten(properties.map((property) => property.readerHeaders))
     ]
   );
@@ -102,7 +102,7 @@ function generate(options, schema) {
           public:
             using ValueType = ${name};
 
-            ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+            ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
             ${name}JsonHandler(const ReaderContext& context) noexcept;
             void reset(IJsonHandler* pParentHandler, ${name}* pObject);
@@ -152,10 +152,10 @@ function generate(options, schema) {
               ${base}JsonHandler::reportWarning(warning, std::move(context));
             }
             ` : ""}
-          
+
           protected:
             IJsonHandler* readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${name}& o);
-    
+
           private:
             ${indent(readerLocalTypes.join("\n\n"), 12)}
 
@@ -221,7 +221,7 @@ function generateReaderOptionsInitializerList(properties, varName) {
                   .first->second;
           this->reset(
               pParentHandler,
-              &std::any_cast<${name}&>(value));  
+              std::any_cast<${name}>(&value));
         }
         ` : ""}
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumUtility/Compiler.h"
+
 /**
  * @brief Classes for reading JSON.
  */

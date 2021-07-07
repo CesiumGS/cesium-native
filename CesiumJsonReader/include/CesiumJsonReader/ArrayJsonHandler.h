@@ -60,7 +60,8 @@ public:
     }
 
     assert(this->_pArray);
-    T& o = this->_pArray->emplace_back();
+    this->_pArray->emplace_back();
+    T& o = this->_pArray->back();
     this->_objectHandler.reset(this, &o);
     return this->_objectHandler.readObjectStart();
   }

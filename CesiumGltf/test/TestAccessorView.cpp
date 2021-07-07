@@ -7,17 +7,20 @@ TEST_CASE("AccessorView construct and read example") {
   auto anyOldFunctionToGetAModel = []() {
     CesiumGltf::Model model;
 
-    CesiumGltf::Accessor& accessor = model.accessors.emplace_back();
+    model.accessors.emplace_back();
+    CesiumGltf::Accessor& accessor = model.accessors.back();
     accessor.bufferView = 0;
     accessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
     accessor.type = CesiumGltf::Accessor::Type::VEC3;
     accessor.count = 1;
 
-    CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+    model.bufferViews.emplace_back();
+    CesiumGltf::BufferView& bufferView = model.bufferViews.back();
     bufferView.buffer = 0;
     bufferView.byteLength = accessor.count * int64_t(sizeof(float)) * 3;
 
-    CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+    model.buffers.emplace_back();
+    CesiumGltf::Buffer& buffer = model.buffers.back();
     buffer.byteLength = bufferView.byteLength;
     buffer.cesium.data.resize(size_t(buffer.byteLength));
 
@@ -43,7 +46,8 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
 
   Model model;
 
-  Buffer& buffer = model.buffers.emplace_back();
+  model.buffers.emplace_back();
+  Buffer& buffer = model.buffers.back();
   buffer.cesium.data.resize(4);
   buffer.cesium.data[0] = std::byte(1);
   buffer.cesium.data[1] = std::byte(2);
@@ -51,11 +55,13 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
   buffer.cesium.data[3] = std::byte(4);
   buffer.byteLength = int64_t(buffer.cesium.data.size());
 
-  BufferView& bufferView = model.bufferViews.emplace_back();
+  model.bufferViews.emplace_back();
+  BufferView& bufferView = model.bufferViews.back();
   bufferView.buffer = 0;
   bufferView.byteLength = buffer.byteLength;
 
-  Accessor& accessor = model.accessors.emplace_back();
+  model.accessors.emplace_back();
+  Accessor& accessor = model.accessors.back();
   accessor.bufferView = 0;
   accessor.count = 1;
 
