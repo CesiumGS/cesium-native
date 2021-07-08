@@ -64,7 +64,7 @@ jobs:
       env:
         - CC=clang-9
         - CXX=clang++-9
-      script:
-        - cmake --build . --config Debug -DCESIUM_CXX_STANDARD=14
-        - ctest -V
-        - cmake --build . --config Debug --target cesium-native-docs
+      before_script:
+        - mkdir -p build
+        - cd build
+        - cmake .. -DCESIUM_CXX_STANDARD=14
