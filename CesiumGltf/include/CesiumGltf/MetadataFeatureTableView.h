@@ -35,8 +35,8 @@ public:
   const ClassProperty* getClassProperty(const std::string& propertyName) const;
 
   /**
-   * @brief Get MetadataPropertyView to view the data stored in the
-   * FeatureTableProperty.
+   * @brief Get MetadataPropertyView to view the data of a property stored in
+   * the FeatureTable.
    *
    * This method will validate the EXT_Feature_Metadata format to ensure
    * MetadataPropertyView retrieve the correct data. T must be uin8_t, int8_t,
@@ -62,6 +62,23 @@ public:
     return getPropertyViewImpl<T>(propertyName, classProperty);
   }
 
+  /**
+   * @brief Get MetadataPropertyView through a callback that accepts property
+   * name and std::optional<MetadataPropertyView<T>> to view the data of a
+   * property stored in the FeatureTable.
+   *
+   * This method will validate the EXT_Feature_Metadata format to ensure
+   * MetadataPropertyView retrieve the correct data. T must be uin8_t, int8_t,
+   * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, bool,
+   * std::string_view, and MetadataArrayView<T> with T must be one of the types
+   * mentioned above. If the property is invalid, std::nullopt will be passed
+   * to the callback. Otherwise, a valid property view will be passed to the
+   * callback
+   *
+   * @param propertyName The name of the property to retrieve data from
+   * @tparam callback A callback function that accepts property name and
+   * std::optional<MetadataPropertyView<T>>
+   */
   template <typename Callback>
   void
   getPropertyView(const std::string& propertyName, Callback&& callback) const {
@@ -92,6 +109,24 @@ public:
     }
   }
 
+  /**
+   * @brief Get MetadataPropertyView for each property in the FeatureTable
+   * through a callback that accepts property name and
+   * std::optional<MetadataPropertyView<T>> to view the data stored in the
+   * FeatureTableProperty.
+   *
+   * This method will validate the EXT_Feature_Metadata format to ensure
+   * MetadataPropertyView retrieve the correct data. T must be uin8_t, int8_t,
+   * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, bool,
+   * std::string_view, and MetadataArrayView<T> with T must be one of the types
+   * mentioned above. If the property is invalid, std::nullopt will be passed
+   * to the callback. Otherwise, a valid property view will be passed to the
+   * callback
+   *
+   * @param propertyName The name of the property to retrieve data from
+   * @tparam callback A callback function that accepts property name and
+   * std::optional<MetadataPropertyView<T>>
+   */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
     for (const auto& property : this->_class->properties) {
       getPropertyView(property.first, std::forward<Callback>(callback));
