@@ -6,7 +6,7 @@ project(cesium-native
     LANGUAGES CXX
 )
 
-set(CESIUM_CXX_STANDARD 17 CACHE STRING "The C++ version standard to use. Supports 14 or 17.")
+set(CESIUM_CXX_STANDARD 17 CACHE STRING "The C++ version standard to use. Supports 14 or 17. This option will be removed in the future and cesium-native will only support C++17.")
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 

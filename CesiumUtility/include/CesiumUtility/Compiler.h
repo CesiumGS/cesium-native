@@ -3,14 +3,12 @@
 #if __cplusplus >= 201703L
 
 #define CESIUM_NODISCARD [[nodiscard]]
-#define CESIUM_UNUSED [[maybe_unused]]
 
 #else
 
 #include <type_traits>
 
 #define CESIUM_NODISCARD
-#define CESIUM_UNUSED
 
 namespace std {
 
