@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumJsonWriter {
 
 class PrettyJsonWriter : public JsonWriter {
   rapidjson::StringBuffer _prettyBuffer;
@@ -72,4 +72,4 @@ public:
   std::string_view toStringView() override;
   std::vector<std::byte> toBytes() override;
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonWriter

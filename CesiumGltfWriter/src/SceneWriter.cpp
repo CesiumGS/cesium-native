@@ -1,9 +1,9 @@
 #include "SceneWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 void CesiumGltf::writeScene(
     const std::vector<Scene>& scenes,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (scenes.empty()) {
     return;

@@ -1,7 +1,7 @@
 #pragma once
-#include "JsonWriter.h"
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumGltf/Asset.h>
 
 namespace CesiumGltf {
-void writeAsset(const Asset& asset, CesiumGltf::JsonWriter& jsonWriter);
+void writeAsset(const Asset& asset, CesiumJsonWriter::JsonWriter& jsonWriter);
 }

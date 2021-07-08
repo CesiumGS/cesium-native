@@ -1,10 +1,10 @@
-#include "PrettyJsonWriter.h"
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <algorithm>
 #include <iterator>
 #include <string>
 #include <string_view>
 
-namespace CesiumGltf {
+namespace CesiumJsonWriter {
 PrettyJsonWriter::PrettyJsonWriter() {
   auto writer = rapidjson::PrettyWriter<rapidjson::StringBuffer>(_prettyBuffer);
   writer.SetFormatOptions(
@@ -161,4 +161,4 @@ std::vector<std::byte> PrettyJsonWriter::toBytes() {
   std::copy(view.begin(), view.end(), u8Pointer);
   return result;
 }
-} // namespace CesiumGltf
+} // namespace CesiumJsonWriter
