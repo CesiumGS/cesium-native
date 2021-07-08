@@ -17,7 +17,7 @@ class KHR_draco_mesh_compressionJsonHandler
 public:
   using ValueType = KHR_draco_mesh_compression;
 
-  static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
+  static const char* ExtensionName;
 
   KHR_draco_mesh_compressionJsonHandler(const ReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, KHR_draco_mesh_compression* pObject);

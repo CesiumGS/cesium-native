@@ -148,11 +148,10 @@ public:
   void registerExtension(const std::string& extensionName) {
     auto it =
         this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
-    it->second.insert_or_assign(
-        TExtended::TypeName,
+    it->second[TExtended::TypeName] =
         ExtensionReaderFactory([](const ReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
-        }));
+        });
   }
 
   /**
@@ -170,11 +169,10 @@ public:
         this->_extensions
             .emplace(TExtensionHandler::ExtensionName, ObjectTypeToHandler())
             .first;
-    it->second.insert_or_assign(
-        TExtended::TypeName,
+    it->second[TExtended::TypeName] =
         ExtensionHandlerFactory([](const ReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
-        }));
+        });
   }
 
   /**

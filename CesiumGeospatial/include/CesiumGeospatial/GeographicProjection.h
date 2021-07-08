@@ -29,11 +29,7 @@ public:
    * ranging from -PI to PI radians longitude and
    * from -PI/2 to +PI/2 radians latitude.
    */
-  static constexpr GlobeRectangle MAXIMUM_GLOBE_RECTANGLE = GlobeRectangle(
-      -CesiumUtility::Math::ONE_PI,
-      -CesiumUtility::Math::PI_OVER_TWO,
-      CesiumUtility::Math::ONE_PI,
-      CesiumUtility::Math::PI_OVER_TWO);
+  static const GlobeRectangle MAXIMUM_GLOBE_RECTANGLE;
 
   /**
    * @brief Computes the maximum rectangle that can be covered with this

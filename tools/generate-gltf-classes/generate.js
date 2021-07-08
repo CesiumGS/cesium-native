@@ -102,7 +102,7 @@ function generate(options, schema) {
           public:
             using ValueType = ${name};
 
-            ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+            ${thisConfig.extensionName ? `static const char* ExtensionName;` : ""}
 
             ${name}JsonHandler(const ReaderContext& context) noexcept;
             void reset(IJsonHandler* pParentHandler, ${name}* pObject);
@@ -201,6 +201,8 @@ function generateReaderOptionsInitializerList(properties, varName) {
         #include <string>
 
         using namespace CesiumGltf;
+
+        ${thisConfig.extensionName ? `const char* ${name}JsonHandler::ExtensionName = "${thisConfig.extensionName}";` : ""}
 
         ${name}JsonHandler::${name}JsonHandler(const ReaderContext& context) noexcept : ${base}JsonHandler(context)${generateReaderOptionsInitializerList(properties, 'context')} {}
 

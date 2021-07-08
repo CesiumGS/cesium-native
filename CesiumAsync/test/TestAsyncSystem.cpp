@@ -8,7 +8,7 @@ using namespace CesiumAsync;
 
 class MockTaskProcessor : public ITaskProcessor {
 public:
-  std::atomic<int32_t> tasksStarted = 0;
+  std::atomic<int32_t> tasksStarted{0};
 
   virtual void startTask(std::function<void()> f) {
     ++tasksStarted;

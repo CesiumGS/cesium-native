@@ -4,6 +4,12 @@
 
 namespace CesiumGeospatial {
 
+const GlobeRectangle GeographicProjection::MAXIMUM_GLOBE_RECTANGLE(
+    -CesiumUtility::Math::ONE_PI,
+    -CesiumUtility::Math::PI_OVER_TWO,
+    CesiumUtility::Math::ONE_PI,
+    CesiumUtility::Math::PI_OVER_TWO);
+
 GeographicProjection::GeographicProjection(const Ellipsoid& ellipsoid) noexcept
     : _ellipsoid(ellipsoid),
       _semimajorAxis(ellipsoid.getMaximumRadius()),

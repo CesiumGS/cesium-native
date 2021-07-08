@@ -8,6 +8,9 @@
 
 using namespace CesiumGltf;
 
+const char* KHR_draco_mesh_compressionJsonHandler::ExtensionName =
+    "KHR_draco_mesh_compression";
+
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
     const ReaderContext& context) noexcept
     : ExtensibleObjectJsonHandler(context), _bufferView(), _attributes() {}
