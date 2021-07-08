@@ -16,13 +16,16 @@ namespace std {
 
 enum class byte : unsigned char {};
 
+// MSVC already has these templates, even in C++14.
+#ifndef _MSC_VER
 template <class T>
 constexpr typename std::add_const<T>::type& as_const(T& t) noexcept {
   return t;
 }
 
 template <class T, class U>
-inline constexpr bool is_same_v = is_same<T, U>::value;
+constexpr bool is_same_v = is_same<T, U>::value;
+#endif
 
 } // namespace std
 
