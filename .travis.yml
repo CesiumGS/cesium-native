@@ -52,3 +52,19 @@ jobs:
       env:
         - CC=clang-10
         - CXX=clang++-10
+    - name: Linux + C++14 on Clang 9
+      os: linux
+      dist: focal
+      install:
+        - sudo apt-get update
+        -  # Workaround for an apparent Ubuntu package problem.
+        -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
+        - sudo apt-get install -yq --allow-downgrades libc6=2.31-0ubuntu9.2 libc6-dev=2.31-0ubuntu9.2
+        - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --allow-downgrades --allow-remove-essential --allow-change-held-packages install clang-9 cmake doxygen
+      env:
+        - CC=clang-9
+        - CXX=clang++-9
+      script:
+        - cmake --build . --config Debug -DCESIUM_CXX_STANDARD=14
+        - ctest -V
+        - cmake --build . --config Debug --target cesium-native-docs
