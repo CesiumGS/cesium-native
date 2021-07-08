@@ -23,8 +23,7 @@ constexpr typename std::add_const<T>::type& as_const(T& t) noexcept {
   return t;
 }
 
-template <class T, class U>
-constexpr bool is_same_v = is_same<T, U>::value;
+template <class T, class U> constexpr bool is_same_v = is_same<T, U>::value;
 #endif
 
 } // namespace std
