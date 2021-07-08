@@ -1,18 +1,18 @@
 #include "MaterialWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
 #include <CesiumGltf/Texture.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <cassert>
 #include <magic_enum.hpp>
 #include <vector>
 
 void writePbrMetallicRoughness(
     const CesiumGltf::MaterialPBRMetallicRoughness& pbr,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("pbrMetallicRoughness");
   j.StartObject();
@@ -40,24 +40,24 @@ void writePbrMetallicRoughness(
     }
 
     if (!pbr.baseColorTexture->extensions.empty()) {
-      writeExtensions(pbr.baseColorTexture->extensions, j);
+      CesiumGltf::writeExtensions(pbr.baseColorTexture->extensions, j);
     }
 
     if (!pbr.baseColorTexture->extras.empty()) {
       j.Key("extras");
-      CesiumGltf::writeJsonValue(pbr.baseColorTexture->extras, j);
+      CesiumJsonWriter::writeJsonValue(pbr.baseColorTexture->extras, j);
     }
 
     j.EndObject();
   }
 
   if (!pbr.extensions.empty()) {
-    writeExtensions(pbr.extensions, j);
+    CesiumGltf::writeExtensions(pbr.extensions, j);
   }
 
   if (!pbr.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(pbr.extras, j);
+    CesiumJsonWriter::writeJsonValue(pbr.extras, j);
   }
 
   j.EndObject();
@@ -65,7 +65,7 @@ void writePbrMetallicRoughness(
 
 void writeNormalTexture(
     const CesiumGltf::MaterialNormalTextureInfo& normalTexture,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("normalTextureInfo");
   j.StartObject();
@@ -82,12 +82,12 @@ void writeNormalTexture(
   }
 
   if (!normalTexture.extensions.empty()) {
-    writeExtensions(normalTexture.extensions, j);
+    CesiumGltf::writeExtensions(normalTexture.extensions, j);
   }
 
   if (!normalTexture.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(normalTexture.extras, j);
+    CesiumJsonWriter::writeJsonValue(normalTexture.extras, j);
   }
 
   j.EndObject();
@@ -95,7 +95,7 @@ void writeNormalTexture(
 
 void writeOcclusionTexture(
     const CesiumGltf::MaterialOcclusionTextureInfo& occlusionTexture,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("occlusionTexture");
   j.StartObject();
@@ -114,12 +114,12 @@ void writeOcclusionTexture(
   }
 
   if (!occlusionTexture.extensions.empty()) {
-    writeExtensions(occlusionTexture.extensions, j);
+    CesiumGltf::writeExtensions(occlusionTexture.extensions, j);
   }
 
   if (!occlusionTexture.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(occlusionTexture.extras, j);
+    CesiumJsonWriter::writeJsonValue(occlusionTexture.extras, j);
   }
 
   j.EndObject();
@@ -127,7 +127,7 @@ void writeOcclusionTexture(
 
 void writeEmissiveTexture(
     const CesiumGltf::TextureInfo& emissiveTexture,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("emissiveTexture");
   j.StartObject();
@@ -138,12 +138,12 @@ void writeEmissiveTexture(
   }
 
   if (!emissiveTexture.extensions.empty()) {
-    writeExtensions(emissiveTexture.extensions, j);
+    CesiumGltf::writeExtensions(emissiveTexture.extensions, j);
   }
 
   if (!emissiveTexture.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(emissiveTexture.extras, j);
+    CesiumJsonWriter::writeJsonValue(emissiveTexture.extras, j);
   }
 
   j.EndObject();
@@ -151,7 +151,7 @@ void writeEmissiveTexture(
 
 void CesiumGltf::writeMaterial(
     const std::vector<Material>& materials,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (materials.empty()) {
     return;
   }
@@ -207,7 +207,7 @@ void CesiumGltf::writeMaterial(
     }
 
     if (!material.extensions.empty()) {
-      writeExtensions(material.extensions, j);
+      CesiumGltf::writeExtensions(material.extensions, j);
     }
 
     if (!material.extras.empty()) {

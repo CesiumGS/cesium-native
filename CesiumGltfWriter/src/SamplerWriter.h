@@ -1,10 +1,10 @@
 #pragma once
-#include "JsonWriter.h"
 #include <CesiumGltf/Sampler.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <vector>
 
 namespace CesiumGltf {
 void writeSampler(
     const std::vector<Sampler>& samplers,
-    CesiumGltf::JsonWriter& jsonWriter);
+    CesiumJsonWriter::JsonWriter& jsonWriter);
 }

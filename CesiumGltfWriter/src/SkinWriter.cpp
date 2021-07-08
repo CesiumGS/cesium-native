@@ -1,9 +1,9 @@
 #include "SkinWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 void CesiumGltf::writeSkin(
     const std::vector<Skin>& skins,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (skins.empty()) {
     return;

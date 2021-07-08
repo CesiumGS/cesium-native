@@ -9,7 +9,7 @@
 #include <string_view>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumJsonWriter {
 class JsonWriter {
   rapidjson::StringBuffer _compactBuffer;
   std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> compact;
@@ -71,4 +71,4 @@ public:
   virtual std::string_view toStringView();
   virtual std::vector<std::byte> toBytes();
 };
-} // namespace CesiumGltf
+} // namespace CesiumJsonWriter
