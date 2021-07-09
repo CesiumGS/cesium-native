@@ -8,11 +8,11 @@
 #include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
-#include "catch2/catch.hpp"
-#include "glm/mat4x4.hpp"
+#include <catch2/catch.hpp>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <glm/mat4x4.hpp>
 
 using namespace CesiumAsync;
 using namespace Cesium3DTiles;
