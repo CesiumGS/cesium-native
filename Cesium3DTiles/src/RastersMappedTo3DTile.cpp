@@ -205,10 +205,9 @@ RastersMappedTo3DTile::update(Tile& tile) {
         tile.getTileID(),
         geometryRectangle);
 
-    /*
     for (RasterToCombine& rasterToCombine : *this->_pRastersToCombine) {
       rasterToCombine._pReadyTile->addReference();
-    }*/
+    }
 
     // is any of this safe?
     // how does the next update() call know not to reblit?
@@ -220,6 +219,10 @@ RastersMappedTo3DTile::update(Tile& tile) {
                             // makes copy of shared_ptr
                             combinedTile = this->_pCombinedTile,
                             pRastersToCombine = this->_pRastersToCombine]() {
+          // I think there's a race condition here when the ready tiles are
+          // deleted due to the tile provider being deleted. Maybe the
+          // individual rasters shouldn't be RasterOverlayTiles so that the
+          // RastersMappedTo3DTile alone has control of the raster's lifetime
           std::optional<CesiumGltf::ImageCesium> image =
               blitRasters(pRastersToCombine);
           if (image) {
@@ -248,8 +251,8 @@ RastersMappedTo3DTile::update(Tile& tile) {
 
               // why does this sometimes become null even when this->_pOwner
               // isn't null?
-              if (this->_pCombinedTile &&
-                  this->_pCombinedTile->getOverlay().getTileProvider()) {
+              if (this->_pCombinedTile && this->_pCombinedTile->_pOverlay &&
+                  this->_pCombinedTile->_pOverlay->getTileProvider()) {
 
                 this->_pCombinedTile->loadInMainThread();
 
@@ -278,13 +281,13 @@ RastersMappedTo3DTile::update(Tile& tile) {
 
                 this->_state = AttachmentState::Attached;
               }
-              /*
+
               if (this->_pRastersToCombine) {
                 for (RasterToCombine& rasterToCombine :
-              *this->_pRastersToCombine) {
+                     *this->_pRastersToCombine) {
                   rasterToCombine._pReadyTile->releaseReference();
                 }
-              }*/
+              }
             })
         .catchInMainThread([this](const std::exception& /*e*/) {
           this->_pCombinedTile->_state = RasterOverlayTile::LoadState::Failed;

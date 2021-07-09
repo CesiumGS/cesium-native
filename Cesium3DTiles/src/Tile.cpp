@@ -130,7 +130,7 @@ void Tile::loadContent() {
       }
 
       for (RasterToCombine& rasterToCombine : *pRastersToCombine) {
-        CesiumUtility::IntrusivePointer<RasterOverlayTile> pLoading =
+        CesiumUtility::IntrusivePointer<RasterOverlayTile>& pLoading =
             rasterToCombine.getLoadingTile();
         if (pLoading &&
             pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
