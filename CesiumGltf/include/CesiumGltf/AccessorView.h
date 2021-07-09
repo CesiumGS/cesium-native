@@ -347,7 +347,7 @@ struct AccessorTypes {
 
 namespace Impl {
 template <typename TCallback, typename TElement>
-std::result_of_t<TCallback(AccessorView<AccessorTypes::SCALAR<TElement>>)>
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<TElement>>>
 createAccessorView(
     const Model& model,
     const Accessor& accessor,
@@ -397,7 +397,7 @@ createAccessorView(
  * @return The value returned by the callback.
  */
 template <typename TCallback>
-std::result_of_t<TCallback(AccessorView<AccessorTypes::SCALAR<float>>)>
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<float>>>
 createAccessorView(
     const Model& model,
     const Accessor& accessor,
@@ -456,7 +456,7 @@ createAccessorView(
  * @return The value returned by the callback.
  */
 template <typename TCallback>
-std::result_of_t<TCallback(AccessorView<AccessorTypes::SCALAR<float>>)>
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::SCALAR<float>>>
 createAccessorView(
     const Model& model,
     int32_t accessorIndex,

@@ -24,6 +24,16 @@ constexpr typename std::add_const<T>::type& as_const(T& t) noexcept {
 template <class T, class U> constexpr bool is_same_v = is_same<T, U>::value;
 #endif
 
+// Implement invoke_result in terms of result_of.
+// See https://en.cppreference.com/w/cpp/types/result_of#Notes
+template <typename F, typename... ArgTypes>
+struct invoke_result {
+  using type = typename std::result_of<F&&(ArgTypes&&...)>::type;
+};
+
+template <typename F, typename... ArgTypes>
+using invoke_result_t = typename invoke_result<F, ArgTypes...>::type;
+
 } // namespace std
 
 #endif

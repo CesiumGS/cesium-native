@@ -114,8 +114,6 @@ function(configure_cesium_library targetName)
             ${targetName}
             PRIVATE
                 ${capitalizedTargetName}_BUILDING
-            PUBLIC
-                _SILENCE_CXX17_RESULT_OF_DEPRECATION_WARNING=1
         )
 
         if (${CESIUM_CXX_STANDARD} STREQUAL "14")
