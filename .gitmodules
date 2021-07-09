@@ -58,3 +58,6 @@
 [submodule "extern/any-lite"]
 	path = extern/any-lite
 	url = https://github.com/martinmoene/any-lite.git
+[submodule "extern/filesystem"]
+	path = extern/filesystem
+	url = https://github.com/gulrak/filesystem.git

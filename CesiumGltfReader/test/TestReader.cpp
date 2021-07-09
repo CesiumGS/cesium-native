@@ -11,9 +11,6 @@
 #include <rapidjson/reader.h>
 #include <string>
 
-// TODO: fix compilation problems with C++14 caused by missing std::filesystem
-#if __cplusplus >= 201703L
-
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
@@ -127,8 +124,9 @@ TEST_CASE("Nested extras serializes properly") {
   )";
 
   CesiumGltf::GltfReader reader;
-  ModelReaderResult result = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  ModelReaderResult result = reader.readModel(gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(s.c_str()),
+      s.size()));
 
   REQUIRE(result.errors.empty());
   REQUIRE(result.model.has_value());
@@ -178,7 +176,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   ReadModelOptions options;
   CesiumGltf::GltfReader reader;
   ModelReaderResult modelResult = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(s.c_str()),
+          s.size()),
       options);
 
   REQUIRE(modelResult.errors.empty());
@@ -206,7 +206,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       ExtensionState::JsonOnly);
 
   ModelReaderResult modelResult2 = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(s.c_str()),
+          s.size()),
       options);
 
   REQUIRE(modelResult2.errors.empty());
@@ -241,7 +243,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       ExtensionState::Disabled);
 
   ModelReaderResult modelResult3 = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(s.c_str()),
+          s.size()),
       options);
 
   REQUIRE(modelResult3.errors.empty());
@@ -278,7 +282,9 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   ReadModelOptions options;
   CesiumGltf::GltfReader reader;
   ModelReaderResult withCustomExtModel = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(s.c_str()),
+          s.size()),
       options);
 
   REQUIRE(withCustomExtModel.errors.empty());
@@ -305,11 +311,11 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   reader.setExtensionState("B", ExtensionState::Disabled);
 
   ModelReaderResult withoutCustomExt = reader.readModel(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      gsl::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(s.c_str()),
+          s.size()),
       options);
 
   auto& zeroExtensions = withoutCustomExt.model->extensions;
   REQUIRE(zeroExtensions.empty());
 }
-
-#endif // __cplusplus >= 201703L

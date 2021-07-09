@@ -48,6 +48,8 @@ if (${CESIUM_CXX_STANDARD} STREQUAL "14")
   add_subdirectory("string-view-lite")
 
   add_subdirectory("any-lite")
+
+  add_subdirectory(filesystem)
 endif()
 
 # CSPRNG's CMake setup is old school, and it really only has one source

@@ -20,4 +20,5 @@ target_link_libraries(
     mpark_variant
     "string-view-lite"
     "any-lite"
+    ghc_filesystem
 )
