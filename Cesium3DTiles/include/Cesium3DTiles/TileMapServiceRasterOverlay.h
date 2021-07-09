@@ -100,12 +100,14 @@ public:
   /**
    * @brief Creates a new instance.
    *
+   * @param name The user-given name of this overlay layer.
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
    * @param options The {@link TileMapServiceRasterOverlayOptions}.
    */
   TileMapServiceRasterOverlay(
+      const std::string& name,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers =
           std::vector<CesiumAsync::IAssetAccessor::THeader>(),

@@ -224,12 +224,13 @@ private:
 };
 
 BingMapsRasterOverlay::BingMapsRasterOverlay(
+    const std::string& name,
     const std::string& url,
     const std::string& key,
     const std::string& mapStyle,
     const std::string& culture,
     const Ellipsoid& ellipsoid)
-    : RasterOverlay("BING_" + mapStyle),
+    : RasterOverlay(name),
       _url(url),
       _key(key),
       _mapStyle(mapStyle),

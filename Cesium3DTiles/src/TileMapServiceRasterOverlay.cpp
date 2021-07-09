@@ -86,13 +86,11 @@ private:
 };
 
 TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
+    const std::string& name,
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
     const TileMapServiceRasterOverlayOptions& options)
-    : RasterOverlay("TMS_" + url),
-      _url(url),
-      _headers(headers),
-      _options(options) {}
+    : RasterOverlay(name), _url(url), _headers(headers), _options(options) {}
 
 TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
 

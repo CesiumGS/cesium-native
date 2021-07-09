@@ -120,16 +120,21 @@ void Tile::loadContent() {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RastersMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
-      for (RasterToCombine& rasterToCombine : mapped.getRastersToCombine()) {
+      std::shared_ptr<std::vector<RasterToCombine>>& pRastersToCombine =
+          mapped.getRastersToCombine();
+
+      RasterOverlayTileProvider* pProvider = mapped.getOwner();
+
+      if (!pRastersToCombine || !pProvider) {
+        continue;
+      }
+
+      for (RasterToCombine& rasterToCombine : *pRastersToCombine) {
         CesiumUtility::IntrusivePointer<RasterOverlayTile> pLoading =
             rasterToCombine.getLoadingTile();
         if (pLoading &&
             pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
-          RasterOverlayTileProvider* pProvider =
-              pLoading->getOverlay().getTileProvider();
-          if (pProvider) {
-            pProvider->loadTileThrottled(*pLoading);
-          }
+          pProvider->loadTileThrottled(*pLoading);
         }
       }
     }
@@ -664,26 +669,26 @@ void Tile::update(
     }
   }
 
+  const CesiumGeospatial::GlobeRectangle* pRectangle =
+      Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+
   if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays()) {
+      this->getTileset()->supportsRasterOverlays() && pRectangle) {
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
       RastersMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
-      if (mappedRasterTile.hasPlaceholder()) {
+      if (mappedRasterTile.isPlaceholder()) {
         RasterOverlayTileProvider* pProvider = mappedRasterTile.getOwner();
 
         // Try to replace this placeholder with real tiles.
-        if (!pProvider->isPlaceholder()) {
+        if (pProvider && !pProvider->isPlaceholder()) {
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
               static_cast<std::vector<
                   RastersMappedTo3DTile>::iterator::difference_type>(i));
           --i;
 
-          const CesiumGeospatial::GlobeRectangle* pRectangle =
-              Cesium3DTiles::Impl::obtainGlobeRectangle(
-                  &this->getBoundingVolume());
           this->_rasterTiles.push_back(pProvider->mapRasterTilesToGeometryTile(
               this->getTileID(),
               *pRectangle,

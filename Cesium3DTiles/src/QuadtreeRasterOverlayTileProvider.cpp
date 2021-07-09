@@ -71,9 +71,10 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   if (this->_pPlaceholder) {
     return RastersMappedTo3DTile(
         *this,
-        std::vector<RasterToCombine>({RasterToCombine(
-            this->_pPlaceholder.get(),
-            CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
+        std::make_shared<std::vector<RasterToCombine>>(
+            std::vector<RasterToCombine>({RasterToCombine(
+                this->_pPlaceholder.get(),
+                CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
   }
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
@@ -262,7 +263,8 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   //     );
   // }
 
-  std::vector<RasterToCombine> rastersToCombine;
+  std::shared_ptr<std::vector<RasterToCombine>> pRastersToCombine =
+      std::make_shared<std::vector<RasterToCombine>>();
 
   double initialMaxV = maxV;
 
@@ -338,7 +340,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
         this->loadTileThrottled(*pTile);
       }
 
-      rastersToCombine.push_back(RasterToCombine(pTile, texCoordsRectangle));
+      pRastersToCombine->push_back(RasterToCombine(pTile, texCoordsRectangle));
       /*
       outputRasterTiles.emplace(
           outputRasterTiles.begin() +
@@ -351,7 +353,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     }
   }
 
-  return RastersMappedTo3DTile(*this, rastersToCombine);
+  return RastersMappedTo3DTile(*this, std::move(pRastersToCombine));
 }
 
 bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(

@@ -135,7 +135,6 @@ class CESIUM3DTILES_API RasterizedPolygonsTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
-  std::string _textureTargetName;
   std::vector<CartographicSelection> _polygons;
 
 public:
@@ -147,7 +146,6 @@ public:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
-      const std::string& textureTargetName,
       const std::vector<CartographicSelection>& polygons)
       : RasterOverlayTileProvider(
             owner,
@@ -157,21 +155,12 @@ public:
             pPrepareRendererResources,
             pLogger,
             projection),
-        _textureTargetName(textureTargetName),
         _polygons(polygons) {}
 
   virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
       const TileID& geometryTileId,
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError) override {
-
-    if (this->_pPlaceholder) {
-      return RastersMappedTo3DTile(
-          *this,
-          std::vector<RasterToCombine>({RasterToCombine(
-              this->_pPlaceholder.get(),
-              CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))}));
-    }
 
     return this->mapRasterTilesToGeometryTile(
         geometryTileId,
@@ -183,6 +172,16 @@ public:
       const TileID& geometryTileId,
       const CesiumGeometry::Rectangle& geometryRectangle,
       double /*targetGeometricError*/) override {
+
+    if (this->_pPlaceholder) {
+      return RastersMappedTo3DTile(
+          *this,
+          std::make_shared<std::vector<RasterToCombine>>(
+              std::vector<RasterToCombine>({RasterToCombine(
+                  this->_pPlaceholder.get(),
+                  CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
+    }
+
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
         this->getTile(geometryTileId, geometryRectangle);
 
@@ -192,9 +191,10 @@ public:
 
     return RastersMappedTo3DTile(
         *this,
-        std::vector<RasterToCombine>({RasterToCombine(
-            pTile,
-            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))}));
+        std::make_shared<std::vector<RasterToCombine>>(
+            std::vector<RasterToCombine>({RasterToCombine(
+                pTile,
+                CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))})));
   }
 
   virtual bool
@@ -204,12 +204,21 @@ public:
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const TileID& tileID) override {
+    if (!this->_pOwner) {
+      LoadedRasterOverlayImage result;
+      result.errors.push_back(
+          "RasterizedPolygonsOverlay deleted before the tile's image could be \
+          rasterized");
+      return this->_asyncSystem.createResolvedFuture<LoadedRasterOverlayImage>(
+          std::move(result));
+    }
+
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
         this->getTileWithoutCreating(tileID);
 
     return this->_asyncSystem.runInWorkerThread(
         [pTile = std::move(pTile),
-         &textureTargetName = this->_textureTargetName,
+         &name = this->_pOwner->getName(),
          &polygons = this->_polygons,
          &projection = this->_projection]() -> LoadedRasterOverlayImage {
           CesiumGeospatial::GlobeRectangle tileRectangle =
@@ -220,7 +229,7 @@ public:
 
           LoadedRasterOverlayImage resultImage;
           CesiumGltf::ImageCesium image;
-          rasterizePolygons(image, tileRectangle, textureTargetName, polygons);
+          rasterizePolygons(image, tileRectangle, name, polygons);
           resultImage.image = std::move(image);
           return resultImage;
         });
@@ -228,12 +237,11 @@ public:
 };
 
 RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
-    const std::string& textureTargetName,
+    const std::string& name,
     const std::vector<CartographicSelection>& polygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const CesiumGeospatial::Projection& projection)
-    : RasterOverlay("CUSTOM_MASK_" + textureTargetName),
-      _textureTargetName(textureTargetName),
+    : RasterOverlay(name),
       _polygons(polygons),
       _ellipsoid(ellipsoid),
       _projection(projection) {
@@ -255,7 +263,10 @@ RasterizedPolygonsOverlay::createTileProvider(
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterOverlay* /*pOwner*/) {
+    RasterOverlay* pOwner) {
+
+  pOwner = pOwner ? pOwner : this;
+
   return asyncSystem.createResolvedFuture(
       (std::unique_ptr<RasterOverlayTileProvider>)
           std::make_unique<RasterizedPolygonsTileProvider>(
@@ -265,7 +276,6 @@ RasterizedPolygonsOverlay::createTileProvider(
               pPrepareRendererResources,
               pLogger,
               this->_projection,
-              this->_textureTargetName,
               this->_polygons));
 }
 

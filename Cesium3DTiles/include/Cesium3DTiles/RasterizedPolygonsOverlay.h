@@ -18,7 +18,7 @@ class CESIUM3DTILES_API RasterizedPolygonsOverlay final : public RasterOverlay {
 
 public:
   RasterizedPolygonsOverlay(
-      const std::string& textureTargetName,
+      const std::string& name,
       const std::vector<CartographicSelection>& polygons,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
       const CesiumGeospatial::Projection& projection);
@@ -43,7 +43,6 @@ public:
   }
 
 private:
-  std::string _textureTargetName;
   std::vector<CartographicSelection> _polygons;
   std::vector<CartographicSelection> _clippingPolygons;
   CesiumGeospatial::Ellipsoid _ellipsoid;

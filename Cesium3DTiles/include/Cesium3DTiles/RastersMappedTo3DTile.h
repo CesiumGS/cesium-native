@@ -108,7 +108,7 @@ public:
    */
   RastersMappedTo3DTile(
       RasterOverlayTileProvider& owner,
-      const std::vector<RasterToCombine>& rastersToCombine);
+      const std::shared_ptr<std::vector<RasterToCombine>>& pRastersToCombine);
 
   /**
    * @brief Returns the {@link RasterOverlayTileProvider} that owns this.
@@ -126,15 +126,16 @@ public:
    *
    * @return The list of raster tiles to be combined.
    */
-  const std::vector<RasterToCombine> getRastersToCombine() const {
-    return this->_rastersToCombine;
+  const std::shared_ptr<std::vector<RasterToCombine>>&
+  getRastersToCombine() const {
+    return this->_pRastersToCombine;
   }
 
   /**
    * @copydoc getRastersToCombine
    */
-  std::vector<RasterToCombine> getRastersToCombine() {
-    return this->_rastersToCombine;
+  std::shared_ptr<std::vector<RasterToCombine>>& getRastersToCombine() {
+    return this->_pRastersToCombine;
   }
 
   /**
@@ -245,9 +246,9 @@ public:
   bool allReady() const noexcept;
 
   /**
-   * @brief Whether any of the loading tiles are placeholders
+   * @brief Whether this is a placeholder
    */
-  bool hasPlaceholder() const noexcept;
+  bool isPlaceholder() const noexcept;
 
 private:
   static void computeTranslationAndScale(
@@ -255,11 +256,11 @@ private:
       const CesiumGeometry::Rectangle& imageryRectangle,
       glm::dvec2& translation,
       glm::dvec2& scale);
-  static std::optional<CesiumGltf::ImageCesium>
-  blitRasters(const std::vector<RasterToCombine>& rastersToCombine);
+  static std::optional<CesiumGltf::ImageCesium> blitRasters(
+      const std::shared_ptr<std::vector<RasterToCombine>>& pRastersToCombine);
 
   RasterOverlayTileProvider* _pOwner;
-  std::vector<RasterToCombine> _rastersToCombine;
+  std::shared_ptr<std::vector<RasterToCombine>> _pRastersToCombine;
   std::shared_ptr<RasterOverlayTile> _pCombinedTile;
   std::shared_ptr<RasterOverlayTile> _pAncestorRaster;
   uint32_t _textureCoordinateID;

@@ -23,10 +23,14 @@ public:
    * imagery data that was obtained from the Cesium ion asset
    * with the given ID, accessed with the given access token.
    *
+   * @param name The user-given name of this overlay layer.
    * @param ionAssetID The asset ID.
    * @param ionAccessToken The access token.
    */
-  IonRasterOverlay(uint32_t ionAssetID, const std::string& ionAccessToken);
+  IonRasterOverlay(
+      const std::string& name,
+      uint32_t ionAssetID,
+      const std::string& ionAccessToken);
   virtual ~IonRasterOverlay() override;
 
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
