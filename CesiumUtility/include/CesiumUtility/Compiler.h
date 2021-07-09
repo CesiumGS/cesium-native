@@ -1,6 +1,12 @@
 #pragma once
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#define CESIUM_CXX_17 1
+#else
+#define CESIUM_CXX_17 0
+#endif
+
+#if CESIUM_CXX_17
 
 #define CESIUM_NODISCARD [[nodiscard]]
 

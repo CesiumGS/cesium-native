@@ -89,7 +89,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 function(configure_cesium_library targetName)
     if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /Zc:__cplusplus)
+        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
     endif()
@@ -132,6 +132,13 @@ set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 
 if (${CESIUM_CXX_STANDARD} STREQUAL "14")
   add_subdirectory(Cpp14Compatibility)
+
+  # Install the required third-party libraries as well
+  install(DIRECTORY extern/optional/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(DIRECTORY extern/variant/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(DIRECTORY "extern/string-view-lite/include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(DIRECTORY "extern/any-lite/include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(DIRECTORY "extern/filesystem/include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
 # Public Targets

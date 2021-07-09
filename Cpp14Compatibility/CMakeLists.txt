@@ -22,3 +22,8 @@ target_link_libraries(
     "any-lite"
     ghc_filesystem
 )
+
+install(TARGETS Cpp14Compatibility
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cpp14Compatibility
+)

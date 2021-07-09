@@ -154,7 +154,7 @@ void ScopedTrace::reset() {
 TrackSet::TrackSet(const char* name_) : name(name_) {}
 
 TrackSet::~TrackSet() {
-  std::scoped_lock lock(this->mutex);
+  std::lock_guard lock(this->mutex);
   for (auto& track : this->tracks) {
     assert(!track.inUse);
     Tracer::instance().writeAsyncEventEnd(
@@ -164,7 +164,7 @@ TrackSet::~TrackSet() {
 }
 
 size_t TrackSet::acquireTrack() {
-  std::scoped_lock lock(this->mutex);
+  std::lock_guard lock(this->mutex);
 
   auto it =
       std::find_if(this->tracks.begin(), this->tracks.end(), [](auto& track) {
@@ -186,12 +186,12 @@ size_t TrackSet::acquireTrack() {
 }
 
 void TrackSet::addReference(size_t trackIndex) noexcept {
-  std::scoped_lock lock(this->mutex);
+  std::lock_guard lock(this->mutex);
   ++this->tracks[trackIndex].referenceCount;
 }
 
 void TrackSet::releaseReference(size_t trackIndex) noexcept {
-  std::scoped_lock lock(this->mutex);
+  std::lock_guard lock(this->mutex);
   Track& track = this->tracks[trackIndex];
   assert(track.referenceCount > 0);
   --track.referenceCount;
@@ -201,7 +201,7 @@ void TrackSet::releaseReference(size_t trackIndex) noexcept {
 }
 
 int64_t TrackSet::getTracingID(size_t trackIndex) noexcept {
-  std::scoped_lock lock(this->mutex);
+  std::lock_guard lock(this->mutex);
   if (trackIndex >= this->tracks.size()) {
     return -1;
   }
