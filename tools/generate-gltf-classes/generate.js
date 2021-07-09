@@ -243,8 +243,13 @@ function generateReaderOptionsInitializerList(properties, varName) {
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
   `;
 
-  const readerSourceOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.cpp");
-  fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
+  if (options.oneHandlerFile) {
+    const readerSourceOutputPath = path.join(readerHeaderOutputDir, "GeneratedJsonHandlers.cpp");
+    fs.appendFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
+  } else {
+    const readerSourceOutputPath = path.join(readerHeaderOutputDir, name + "JsonHandler.cpp");
+    fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
+  }
 
   return lodash.uniq(
     lodash.flatten(properties.map((property) => property.schemas))
