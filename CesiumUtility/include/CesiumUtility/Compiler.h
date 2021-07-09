@@ -26,9 +26,8 @@ template <class T, class U> constexpr bool is_same_v = is_same<T, U>::value;
 
 // Implement invoke_result in terms of result_of.
 // See https://en.cppreference.com/w/cpp/types/result_of#Notes
-template <typename F, typename... ArgTypes>
-struct invoke_result {
-  using type = typename std::result_of<F&&(ArgTypes&&...)>::type;
+template <typename F, typename... ArgTypes> struct invoke_result {
+  using type = typename std::result_of<F && (ArgTypes && ...)>::type;
 };
 
 template <typename F, typename... ArgTypes>
