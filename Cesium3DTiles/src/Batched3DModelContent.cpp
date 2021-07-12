@@ -174,52 +174,49 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
   std::unique_ptr<TileContentLoadResult> pResult =
       GltfContent::load(pLogger, url, glbData);
 
-  if (pResult->model) {
+  if (pResult->model && header.featureTableJsonByteLength > 0) {
     CesiumGltf::Model& gltf = pResult->model.value();
 
-    if (header.featureTableJsonByteLength > 0) {
-      gsl::span<const std::byte> featureTableJsonData =
-          data.subspan(headerLength, header.featureTableJsonByteLength);
-      rapidjson::Document featureTable =
-          parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
+    gsl::span<const std::byte> featureTableJsonData =
+        data.subspan(headerLength, header.featureTableJsonByteLength);
+    rapidjson::Document featureTable =
+        parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 
-      int64_t batchTableStart = headerLength +
-                                header.featureTableJsonByteLength +
-                                header.featureTableBinaryByteLength;
-      int64_t batchTableLength =
-          header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
+    int64_t batchTableStart = headerLength + header.featureTableJsonByteLength +
+                              header.featureTableBinaryByteLength;
+    int64_t batchTableLength =
+        header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
 
-      if (batchTableLength > 0) {
-        gsl::span<const std::byte> batchTableJsonData = data.subspan(
-            static_cast<size_t>(batchTableStart),
-            header.batchTableJsonByteLength);
-        gsl::span<const std::byte> batchTableBinaryData = data.subspan(
-            static_cast<size_t>(
-                batchTableStart + header.batchTableJsonByteLength),
-            header.batchTableBinaryByteLength);
+    if (batchTableLength > 0) {
+      gsl::span<const std::byte> batchTableJsonData = data.subspan(
+          static_cast<size_t>(batchTableStart),
+          header.batchTableJsonByteLength);
+      gsl::span<const std::byte> batchTableBinaryData = data.subspan(
+          static_cast<size_t>(
+              batchTableStart + header.batchTableJsonByteLength),
+          header.batchTableBinaryByteLength);
 
-        rapidjson::Document batchTableJson;
-        batchTableJson.Parse(
-            reinterpret_cast<const char*>(batchTableJsonData.data()),
-            batchTableJsonData.size());
-        if (batchTableJson.HasParseError()) {
-          SPDLOG_LOGGER_WARN(
-              pLogger,
-              "Error when parsing batch table JSON, error code {} at byte "
-              "offset "
-              "{}. Skip parsing metadata",
-              batchTableJson.GetParseError(),
-              batchTableJson.GetErrorOffset());
-          return pResult;
-        }
-
-        upgradeBatchTableToFeatureMetadata(
+      rapidjson::Document batchTableJson;
+      batchTableJson.Parse(
+          reinterpret_cast<const char*>(batchTableJsonData.data()),
+          batchTableJsonData.size());
+      if (batchTableJson.HasParseError()) {
+        SPDLOG_LOGGER_WARN(
             pLogger,
-            gltf,
-            featureTable,
-            batchTableJson,
-            batchTableBinaryData);
+            "Error when parsing batch table JSON, error code {} at byte "
+            "offset "
+            "{}. Skip parsing metadata",
+            batchTableJson.GetParseError(),
+            batchTableJson.GetErrorOffset());
+        return pResult;
       }
+
+      upgradeBatchTableToFeatureMetadata(
+          pLogger,
+          gltf,
+          featureTable,
+          batchTableJson,
+          batchTableBinaryData);
     }
   }
 
