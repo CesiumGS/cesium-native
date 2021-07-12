@@ -261,7 +261,6 @@ void updateExtensionWithJsonNumericProperty(
   BufferView& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = int32_t(bufferIndex);
   bufferView.byteOffset = 0;
-  bufferView.byteStride = sizeof(T);
   bufferView.byteLength = buffer.byteLength;
 
   featureTableProperty.bufferView = int32_t(bufferViewIndex);
@@ -300,7 +299,6 @@ void updateExtensionWithJsonBoolProperty(
   BufferView& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = static_cast<int32_t>(bufferIndex);
   bufferView.byteOffset = 0;
-  bufferView.byteStride = 0;
   bufferView.byteLength = buffer.byteLength;
 
   featureTableProperty.bufferView =
@@ -1109,7 +1107,6 @@ void updateExtensionWithBinaryProperty(
   auto& bufferView = gltf.bufferViews.emplace_back();
   bufferView.buffer = gltfBufferIndex;
   bufferView.byteOffset = gltfBufferOffset;
-  bufferView.byteStride = 0;
   bufferView.byteLength = static_cast<int64_t>(
       typeSize * componentCount * static_cast<size_t>(featureTable.count));
 
