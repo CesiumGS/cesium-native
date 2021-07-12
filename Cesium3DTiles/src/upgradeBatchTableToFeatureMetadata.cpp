@@ -900,9 +900,6 @@ void updateExtensionWithJsonProperty(
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
 
-  // Guess at the type of the property from the type of the first JSON element.
-  // If we later find nulls or a different type, we'll start over and convert
-  // everything to strings.
   if (propertyValue.Empty() || propertyValue.Size() < featureTable.count) {
     // No property to infer the type from, so assume string.
     updateExtensionWithJsonStringProperty(
