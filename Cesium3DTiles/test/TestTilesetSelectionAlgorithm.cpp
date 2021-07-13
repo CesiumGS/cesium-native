@@ -72,7 +72,7 @@ static void initializeTileset(Tileset& tileset) {
       horizontalFieldOfView,
       verticalFieldOfView);
 
-  tileset.updateView(viewState);
+  tileset.updateView({viewState});
 }
 
 static ViewState zoomToTileset(const Tileset& tileset) {
@@ -185,7 +185,7 @@ TEST_CASE("Test replace refinement for render") {
     // Check 1st and 2nd frame. Root should meet sse and render. No transitions
     // are expected here
     for (int frame = 0; frame < 2; ++frame) {
-      ViewUpdateResult result = tileset.updateView(zoomOutViewState);
+      ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
       // Check tile state. Ensure root meet sse
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -243,7 +243,7 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, so it goes to children. But because
     // children haven't started loading, root should be rendered.
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
       // Children begin loading as well
@@ -270,7 +270,7 @@ TEST_CASE("Test replace refinement for render") {
     // rendered. Root should be rendered instead. Children should have failed
     // load states
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -315,7 +315,7 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, but none of the children finish
     // loading. So we will render root
     {
-      ViewUpdateResult result = tileset.updateView(zoomInViewState);
+      ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -348,7 +348,7 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. All the children finish loading, so they are ready to be
     // rendered (except ll.b3dm tile since it doesn't meet sse)
     {
-      ViewUpdateResult result = tileset.updateView(zoomInViewState);
+      ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -404,7 +404,7 @@ TEST_CASE("Test replace refinement for render") {
           viewState.getHorizontalFieldOfView(),
           viewState.getVerticalFieldOfView());
 
-      ViewUpdateResult result = tileset.updateView(zoomOutViewState);
+      ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -453,7 +453,7 @@ TEST_CASE("Test replace refinement for render") {
     // none of the children are loaded, root will be rendered instead and
     // children transition from unloaded to loading in the mean time
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -480,7 +480,7 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. Children are finished loading and ready to be rendered. Root
     // shouldn't be rendered in this frame
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // check tile states
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -568,7 +568,7 @@ TEST_CASE("Test additive refinement") {
     // 1st frame. Root will get rendered first and 5 of its children are loading
     // since they meet sse
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // root is rendered first
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -602,7 +602,7 @@ TEST_CASE("Test additive refinement") {
 
     // 2nd frame
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // root is rendered first
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -653,7 +653,7 @@ TEST_CASE("Test additive refinement") {
 
     // 3rd frame. All the children finish loading. All should be rendered now
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 7);
 
@@ -722,7 +722,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // 1st frame. Root doesn't meet sse, so load children. But they are
   // non-renderable, so render root only
   {
-    ViewUpdateResult result = tileset.updateView(viewState);
+    ViewUpdateResult result = tileset.updateView({viewState});
 
     for (const Tile& child : root->getChildren()) {
       CHECK(child.getState() == Tile::LoadState::ContentLoading);
@@ -741,7 +741,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // 2nd frame. Root doesn't meet sse, so load children. But they are
   // non-renderable, so render root only
   {
-    ViewUpdateResult result = tileset.updateView(viewState);
+    ViewUpdateResult result = tileset.updateView({viewState});
 
     REQUIRE(root->isRenderable());
     for (const Tile& child : root->getChildren()) {

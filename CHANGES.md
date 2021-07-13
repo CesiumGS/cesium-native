@@ -5,9 +5,11 @@
 ##### Breaking Changes :mega:
 
 * `TilesetExternals` now has an `AsyncSystem` instead of a shared pointer to an `ITaskProcessor`.
+* `Tileset::updateView` and `Tileset::updateViewOffline` now take `std::vector<ViewState>` instead of a single `ViewState`.
 
 ##### Additions :tada:
 
+* Added support for multiple frustums in the `Tileset` selection algorithm.
 * Added a performance tracing framework via `CESIUM_TRACE_*` macros.
 * Added `Future<T>::thenImmediately`.
 * Added `AsyncSystem::createThreadPool` and `Future<T>::thenInThreadPool`.
