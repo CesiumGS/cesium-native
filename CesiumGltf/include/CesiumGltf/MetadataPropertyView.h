@@ -19,8 +19,8 @@ namespace CesiumGltf {
  * Data of each instance can be accessed through the {@link get(size_t instance)} method
  *
  * @param ElementType must be uin8_t, int8_t, uint16_t, int16_t,
- * uint32_t, int32_t, uint64_t, int64_t, bool, std::string_view, and
- * MetadataArrayView<T> with T must be one of the types mentioned above
+ * uint32_t, int32_t, uint64_t, int64_t, float, double, bool, std::string_view,
+ * and MetadataArrayView<T> with T must be one of the types mentioned above
  */
 template <typename ElementType> class MetadataPropertyView {
 public:
