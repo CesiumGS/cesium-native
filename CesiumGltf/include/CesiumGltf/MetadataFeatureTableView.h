@@ -24,8 +24,8 @@ public:
    * from
    */
   MetadataFeatureTableView(
-      const Model* model,
-      const FeatureTable* featureTable);
+      const Model* pModel,
+      const FeatureTable* pFeatureTable);
 
   /**
    * @brief Find the {@link ClassProperty} which stores the type information of a property based on the property name
@@ -50,16 +50,16 @@ public:
   template <typename T>
   std::optional<MetadataPropertyView<T>>
   getPropertyView(const std::string& propertyName) const {
-    if (_featureTable->count < 0) {
+    if (_pFeatureTable->count < 0) {
       return std::nullopt;
     }
 
-    const ClassProperty* classProperty = getClassProperty(propertyName);
-    if (!classProperty) {
+    const ClassProperty* pClassProperty = getClassProperty(propertyName);
+    if (!pClassProperty) {
       return std::nullopt;
     }
 
-    return getPropertyViewImpl<T>(propertyName, classProperty);
+    return getPropertyViewImpl<T>(propertyName, *pClassProperty);
   }
 
   /**
@@ -82,28 +82,28 @@ public:
   template <typename Callback>
   void
   getPropertyView(const std::string& propertyName, Callback&& callback) const {
-    const ClassProperty* classProperty = getClassProperty(propertyName);
-    if (!classProperty) {
+    const ClassProperty* pClassProperty = getClassProperty(propertyName);
+    if (!pClassProperty) {
       return;
     }
 
-    PropertyType type = convertStringToPropertyType(classProperty->type);
+    PropertyType type = convertStringToPropertyType(pClassProperty->type);
     PropertyType componentType = PropertyType::None;
-    if (classProperty->componentType.isString()) {
-      componentType =
-          convertStringToPropertyType(classProperty->componentType.getString());
+    if (pClassProperty->componentType.isString()) {
+      componentType = convertStringToPropertyType(
+          pClassProperty->componentType.getString());
     }
 
     if (type != PropertyType::Array) {
       getScalarPropertyViewImpl(
           propertyName,
-          classProperty,
+          *pClassProperty,
           type,
           std::forward<Callback>(callback));
     } else {
       getArrayPropertyViewImpl(
           propertyName,
-          classProperty,
+          *pClassProperty,
           type,
           std::forward<Callback>(callback));
     }
@@ -128,7 +128,7 @@ public:
    * std::optional<MetadataPropertyView<T>>
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
-    for (const auto& property : this->_class->properties) {
+    for (const auto& property : this->_pClass->properties) {
       getPropertyView(property.first, std::forward<Callback>(callback));
     }
   }
@@ -137,7 +137,7 @@ private:
   template <typename Callback>
   void getArrayPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty* classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       Callback&& callback) const {
     switch (type) {
@@ -233,7 +233,7 @@ private:
   template <typename Callback>
   void getScalarPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty* classProperty,
+      const ClassProperty& classProperty,
       PropertyType type,
       Callback&& callback) const {
     switch (type) {
@@ -305,10 +305,10 @@ private:
   template <typename T>
   std::optional<MetadataPropertyView<T>> getPropertyViewImpl(
       const std::string& propertyName,
-      const ClassProperty* classProperty) const {
+      const ClassProperty& classProperty) const {
     auto featureTablePropertyIter =
-        _featureTable->properties.find(propertyName);
-    if (featureTablePropertyIter == _featureTable->properties.end()) {
+        _pFeatureTable->properties.find(propertyName);
+    if (featureTablePropertyIter == _pFeatureTable->properties.end()) {
       return std::nullopt;
     }
 
@@ -338,9 +338,9 @@ private:
 
   template <typename T>
   std::optional<MetadataPropertyView<T>> getPrimitivePropertyValues(
-      const ClassProperty* classProperty,
+      const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    PropertyType type = convertStringToPropertyType(classProperty->type);
+    PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != static_cast<uint32_t>(type)) {
       return std::nullopt;
     }
@@ -358,9 +358,9 @@ private:
     size_t maxRequiredBytes = 0;
     if (IsMetadataBoolean<T>::value) {
       maxRequiredBytes = static_cast<size_t>(
-          glm::ceil(static_cast<double>(_featureTable->count) / 8.0));
+          glm::ceil(static_cast<double>(_pFeatureTable->count) / 8.0));
     } else {
-      maxRequiredBytes = _featureTable->count * sizeof(T);
+      maxRequiredBytes = _pFeatureTable->count * sizeof(T);
     }
 
     if (valueBuffer.size() < maxRequiredBytes) {
@@ -373,28 +373,28 @@ private:
         gsl::span<const std::byte>(),
         PropertyType::None,
         0,
-        _featureTable->count);
+        _pFeatureTable->count);
   }
 
   std::optional<MetadataPropertyView<std::string_view>> getStringPropertyValues(
-      const ClassProperty* classProperty,
+      const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
   std::optional<MetadataPropertyView<MetadataArrayView<T>>>
   getPrimitiveArrayPropertyValues(
-      const ClassProperty* classProperty,
+      const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    if (classProperty->type != "ARRAY") {
+    if (classProperty.type != "ARRAY") {
       return std::nullopt;
     }
 
-    if (!classProperty->componentType.isString()) {
+    if (!classProperty.componentType.isString()) {
       return std::nullopt;
     }
 
     PropertyType componentType =
-        convertStringToPropertyType(classProperty->componentType.getString());
+        convertStringToPropertyType(classProperty.componentType.getString());
     if (TypeToPropertyType<T>::value != static_cast<uint32_t>(componentType)) {
       return std::nullopt;
     }
@@ -409,7 +409,7 @@ private:
       return std::nullopt;
     }
 
-    int64_t componentCount = classProperty->componentCount.value_or(0);
+    int64_t componentCount = classProperty.componentCount.value_or(0);
     if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
       return std::nullopt;
     }
@@ -423,10 +423,10 @@ private:
       size_t maxRequiredBytes = 0;
       if constexpr (IsMetadataBoolean<T>::value) {
         maxRequiredBytes = static_cast<size_t>(glm::ceil(
-            static_cast<double>(_featureTable->count * componentCount) / 8.0));
+            static_cast<double>(_pFeatureTable->count * componentCount) / 8.0));
       } else {
         maxRequiredBytes = static_cast<size_t>(
-            _featureTable->count * componentCount * sizeof(T));
+            _pFeatureTable->count * componentCount * sizeof(T));
       }
 
       if (valueBuffer.size() < maxRequiredBytes) {
@@ -439,7 +439,7 @@ private:
           gsl::span<const std::byte>(),
           PropertyType::None,
           static_cast<size_t>(componentCount),
-          static_cast<size_t>(_featureTable->count));
+          static_cast<size_t>(_pFeatureTable->count));
     }
 
     // dynamic array
@@ -454,7 +454,7 @@ private:
         featureTableProperty.arrayOffsetBufferView,
         offsetType,
         valueBuffer.size(),
-        static_cast<size_t>(_featureTable->count),
+        static_cast<size_t>(_pFeatureTable->count),
         checkBitsSize);
     if (offsetBuffer.empty()) {
       return std::nullopt;
@@ -466,12 +466,12 @@ private:
         gsl::span<const std::byte>(),
         offsetType,
         0,
-        static_cast<size_t>(_featureTable->count));
+        static_cast<size_t>(_pFeatureTable->count));
   }
 
   std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
   getStringArrayPropertyValues(
-      const ClassProperty* classProperty,
+      const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   gsl::span<const std::byte> getBufferSafe(int32_t bufferViewIdx) const;
@@ -483,8 +483,8 @@ private:
       size_t instanceCount,
       bool checkBitsSize) const;
 
-  const Model* _model;
-  const FeatureTable* _featureTable;
-  const Class* _class;
+  const Model* _pModel;
+  const FeatureTable* _pFeatureTable;
+  const Class* _pClass;
 };
 } // namespace CesiumGltf

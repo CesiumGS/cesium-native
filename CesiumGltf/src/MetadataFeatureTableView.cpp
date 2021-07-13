@@ -47,11 +47,11 @@ static bool checkStringArrayOffsetBuffer(
     return false;
   }
 
-  const T* value = reinterpret_cast<const T*>(arrayOffsetBuffer.data());
+  const T* pValue = reinterpret_cast<const T*>(arrayOffsetBuffer.data());
   if (!checkOffsetBuffer<T>(
           stringOffsetBuffer,
           valueBufferSize,
-          value[instanceCount] / sizeof(T),
+          pValue[instanceCount] / sizeof(T),
           false)) {
     return false;
   }
@@ -60,38 +60,38 @@ static bool checkStringArrayOffsetBuffer(
 }
 
 MetadataFeatureTableView::MetadataFeatureTableView(
-    const Model* model,
-    const FeatureTable* featureTable)
-    : _model{model}, _featureTable{featureTable}, _class{nullptr} {
-  assert(model != nullptr && "model must not be nullptr");
-  assert(featureTable != nullptr && "featureTable must not be nullptr");
+    const Model* pModel,
+    const FeatureTable* pFeatureTable)
+    : _pModel{pModel}, _pFeatureTable{pFeatureTable}, _pClass{nullptr} {
+  assert(pModel != nullptr && "model must not be nullptr");
+  assert(pFeatureTable != nullptr && "featureTable must not be nullptr");
 
-  const ModelEXT_feature_metadata* metadata =
-      model->getExtension<ModelEXT_feature_metadata>();
+  const ModelEXT_feature_metadata* pMetadata =
+      pModel->getExtension<ModelEXT_feature_metadata>();
   assert(
-      metadata != nullptr &&
+      pMetadata != nullptr &&
       "Model must contain ModelEXT_feature_metadata to use FeatureTableView");
 
-  const std::optional<Schema>& schema = metadata->schema;
+  const std::optional<Schema>& schema = pMetadata->schema;
   assert(
       schema != std::nullopt &&
       "ModelEXT_feature_metadata must contain Schema to use FeatureTableView");
 
   auto classIter =
-      schema->classes.find(_featureTable->classProperty.value_or(""));
+      schema->classes.find(_pFeatureTable->classProperty.value_or(""));
   if (classIter != schema->classes.end()) {
-    _class = &classIter->second;
+    _pClass = &classIter->second;
   }
 }
 
 const ClassProperty* MetadataFeatureTableView::getClassProperty(
     const std::string& propertyName) const {
-  if (_class == nullptr) {
+  if (_pClass == nullptr) {
     return nullptr;
   }
 
-  auto propertyIter = _class->properties.find(propertyName);
-  if (propertyIter == _class->properties.end()) {
+  auto propertyIter = _pClass->properties.find(propertyName);
+  if (propertyIter == _pClass->properties.end()) {
     return nullptr;
   }
 
@@ -100,29 +100,30 @@ const ClassProperty* MetadataFeatureTableView::getClassProperty(
 
 gsl::span<const std::byte>
 MetadataFeatureTableView::getBufferSafe(int32_t bufferViewIdx) const {
-  const BufferView* bufferView =
-      _model->getSafe(&_model->bufferViews, bufferViewIdx);
-  if (!bufferView) {
+  const BufferView* pBufferView =
+      _pModel->getSafe(&_pModel->bufferViews, bufferViewIdx);
+  if (!pBufferView) {
     return {};
   }
 
-  const Buffer* buffer = _model->getSafe(&_model->buffers, bufferView->buffer);
-  if (!buffer) {
+  const Buffer* pBuffer =
+      _pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
+  if (!pBuffer) {
     return {};
   }
 
-  if (bufferView->byteOffset % 8 != 0) {
+  if (pBufferView->byteOffset % 8 != 0) {
     return {};
   }
 
-  if (bufferView->byteOffset + bufferView->byteLength >
-      static_cast<int64_t>(buffer->cesium.data.size())) {
+  if (pBufferView->byteOffset + pBufferView->byteLength >
+      static_cast<int64_t>(pBuffer->cesium.data.size())) {
     return {};
   }
 
   return gsl::span<const std::byte>(
-      buffer->cesium.data.data() + bufferView->byteOffset,
-      static_cast<size_t>(bufferView->byteLength));
+      pBuffer->cesium.data.data() + pBufferView->byteOffset,
+      static_cast<size_t>(pBufferView->byteLength));
 }
 
 gsl::span<const std::byte> MetadataFeatureTableView::getOffsetBufferSafe(
@@ -179,9 +180,9 @@ gsl::span<const std::byte> MetadataFeatureTableView::getOffsetBufferSafe(
 
 std::optional<MetadataPropertyView<std::string_view>>
 MetadataFeatureTableView::getStringPropertyValues(
-    const ClassProperty* classProperty,
+    const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty->type != "STRING") {
+  if (classProperty.type != "STRING") {
     return std::nullopt;
   }
 
@@ -201,7 +202,7 @@ MetadataFeatureTableView::getStringPropertyValues(
       featureTableProperty.stringOffsetBufferView,
       offsetType,
       valueBuffer.size(),
-      static_cast<size_t>(_featureTable->count),
+      static_cast<size_t>(_pFeatureTable->count),
       false);
   if (offsetBuffer.empty()) {
     return std::nullopt;
@@ -213,19 +214,19 @@ MetadataFeatureTableView::getStringPropertyValues(
       offsetBuffer,
       offsetType,
       0,
-      static_cast<size_t>(_featureTable->count));
+      static_cast<size_t>(_pFeatureTable->count));
 }
 
 std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
 MetadataFeatureTableView::getStringArrayPropertyValues(
-    const ClassProperty* classProperty,
+    const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty->type != "ARRAY") {
+  if (classProperty.type != "ARRAY") {
     return std::nullopt;
   }
 
-  if (!classProperty->componentType.isString() ||
-      classProperty->componentType.getString() != "STRING") {
+  if (!classProperty.componentType.isString() ||
+      classProperty.componentType.getString() != "STRING") {
     return std::nullopt;
   }
 
@@ -237,7 +238,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   // check fixed or dynamic array
-  int64_t componentCount = classProperty->componentCount.value_or(0);
+  int64_t componentCount = classProperty.componentCount.value_or(0);
   if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
     return std::nullopt;
   }
@@ -264,7 +265,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
         featureTableProperty.stringOffsetBufferView,
         offsetType,
         valueBuffer.size(),
-        static_cast<size_t>(_featureTable->count * componentCount),
+        static_cast<size_t>(_pFeatureTable->count * componentCount),
         false);
     if (stringOffsetBuffer.empty()) {
       return std::nullopt;
@@ -276,7 +277,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
         stringOffsetBuffer,
         offsetType,
         static_cast<size_t>(componentCount),
-        static_cast<size_t>(_featureTable->count));
+        static_cast<size_t>(_pFeatureTable->count));
   }
 
   // dynamic array
@@ -299,28 +300,28 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        static_cast<size_t>(_featureTable->count));
+        static_cast<size_t>(_pFeatureTable->count));
     break;
   case PropertyType::Uint16:
     isValid = checkStringArrayOffsetBuffer<uint16_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        static_cast<size_t>(_featureTable->count));
+        static_cast<size_t>(_pFeatureTable->count));
     break;
   case PropertyType::Uint32:
     isValid = checkStringArrayOffsetBuffer<uint32_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        static_cast<size_t>(_featureTable->count));
+        static_cast<size_t>(_pFeatureTable->count));
     break;
   case PropertyType::Uint64:
     isValid = checkStringArrayOffsetBuffer<uint64_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
-        static_cast<size_t>(_featureTable->count));
+        static_cast<size_t>(_pFeatureTable->count));
     break;
   default:
     break;
@@ -336,6 +337,6 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
       stringOffsetBuffer,
       offsetType,
       0,
-      static_cast<size_t>(_featureTable->count));
+      static_cast<size_t>(_pFeatureTable->count));
 }
 } // namespace CesiumGltf
