@@ -5,10 +5,10 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
-#include "glm/glm.hpp"
-#include "rapidjson/writer.h"
+#include <glm/glm.hpp>
 #include <map>
 #include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 #include <type_traits>
 
 using namespace CesiumGltf;

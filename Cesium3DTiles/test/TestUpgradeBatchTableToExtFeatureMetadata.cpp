@@ -3,11 +3,11 @@
 #include "CesiumGltf/MetadataFeatureTableView.h"
 #include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "catch2/catch.hpp"
-#include "rapidjson/document.h"
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
+#include <catch2/catch.hpp>
 #include <filesystem>
+#include <rapidjson/document.h>
 #include <set>
 #include <spdlog/spdlog.h>
 
