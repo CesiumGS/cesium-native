@@ -214,7 +214,7 @@ MetadataFeatureTableView::getStringPropertyValues(
       offsetBuffer,
       offsetType,
       0,
-      static_cast<size_t>(_pFeatureTable->count));
+      _pFeatureTable->count);
 }
 
 std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
@@ -276,8 +276,8 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
         gsl::span<const std::byte>(),
         stringOffsetBuffer,
         offsetType,
-        static_cast<size_t>(componentCount),
-        static_cast<size_t>(_pFeatureTable->count));
+        componentCount,
+        _pFeatureTable->count);
   }
 
   // dynamic array
@@ -337,6 +337,6 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
       stringOffsetBuffer,
       offsetType,
       0,
-      static_cast<size_t>(_pFeatureTable->count));
+      _pFeatureTable->count);
 }
 } // namespace CesiumGltf

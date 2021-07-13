@@ -20,7 +20,7 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
       0,
       expected.size());
 
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == expected[i]);
   }
 }
@@ -50,7 +50,7 @@ static void checkDynamicArray(
       instanceCount);
 
   size_t expectedIdx = 0;
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<T> vals = property.get(i);
     for (size_t j = 0; j < vals.size(); ++j) {
       REQUIRE(vals[j] == data[expectedIdx]);
@@ -79,7 +79,7 @@ static void checkFixedArray(
       instanceCount);
 
   size_t expectedIdx = 0;
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<T> vals = property.get(i);
     for (size_t j = 0; j < vals.size(); ++j) {
       REQUIRE(vals[j] == data[expectedIdx]);
@@ -130,7 +130,7 @@ TEST_CASE("Check boolean value") {
       CesiumGltf::PropertyType::None,
       0,
       instanceCount);
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == bits[i]);
   }
 }
@@ -179,7 +179,7 @@ TEST_CASE("Check string value") {
       CesiumGltf::PropertyType::Uint32,
       0,
       strings.size());
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == strings[i]);
   }
 }
@@ -377,7 +377,7 @@ TEST_CASE("Check fixed array of string") {
           strings.size() / 3);
 
   size_t expectedIdx = 0;
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<std::string_view> vals = property.get(i);
     for (size_t j = 0; j < vals.size(); ++j) {
       std::string_view v = vals[j];
@@ -449,7 +449,7 @@ TEST_CASE("Check dynamic array of string") {
           3);
 
   size_t expectedIdx = 0;
-  for (size_t i = 0; i < property.size(); ++i) {
+  for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<std::string_view> vals = property.get(i);
     for (size_t j = 0; j < vals.size(); ++j) {
       std::string_view v = vals[j];

@@ -56,7 +56,7 @@ TEST_CASE("Test numeric properties") {
         view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property != std::nullopt);
 
-    for (size_t i = 0; i < uint32Property->size(); ++i) {
+    for (int64_t i = 0; i < uint32Property->size(); ++i) {
       REQUIRE(uint32Property->get(i) == values[i]);
     }
   }
@@ -146,11 +146,11 @@ TEST_CASE("Test boolean properties") {
   Model model;
 
   // store property value
-  uint64_t instanceCount = 21;
+  int64_t instanceCount = 21;
   std::vector<bool> expected;
   std::vector<uint8_t> values;
   values.resize(3);
-  for (size_t i = 0; i < instanceCount; ++i) {
+  for (int64_t i = 0; i < instanceCount; ++i) {
     if (i % 2 == 0) {
       expected.emplace_back(true);
     } else {
@@ -211,7 +211,7 @@ TEST_CASE("Test boolean properties") {
         view.getPropertyView<bool>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
     REQUIRE(boolProperty->size() == instanceCount);
-    for (size_t i = 0; i < boolProperty->size(); ++i) {
+    for (int64_t i = 0; i < boolProperty->size(); ++i) {
       bool expectedValue = expected[i];
       REQUIRE(boolProperty->get(i) == expectedValue);
     }
@@ -405,7 +405,7 @@ TEST_CASE("Test fixed numeric array") {
             "TestClassProperty");
     REQUIRE(arrayProperty != std::nullopt);
 
-    for (size_t i = 0; i < arrayProperty->size(); ++i) {
+    for (int64_t i = 0; i < arrayProperty->size(); ++i) {
       MetadataArrayView<uint32_t> member = arrayProperty->get(i);
       for (size_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[i * 3 + j]);
@@ -629,8 +629,8 @@ TEST_CASE("Test fixed boolean array") {
     std::optional<MetadataPropertyView<MetadataArrayView<bool>>> boolProperty =
         view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
-    REQUIRE(boolProperty->size() == static_cast<size_t>(featureTable.count));
-    for (size_t i = 0; i < boolProperty->size(); ++i) {
+    REQUIRE(boolProperty->size() == featureTable.count);
+    for (int64_t i = 0; i < boolProperty->size(); ++i) {
       MetadataArrayView<bool> valueMember = boolProperty->get(i);
       for (size_t j = 0; j < valueMember.size(); ++j) {
         REQUIRE(valueMember[j] == expected[i * 3 + j]);

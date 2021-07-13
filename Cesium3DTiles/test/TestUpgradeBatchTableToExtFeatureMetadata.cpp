@@ -30,8 +30,8 @@ static void checkScalarProperty(
   MetadataFeatureTableView view(&model, &featureTable);
   std::optional<MetadataPropertyView<PropertyViewType>> propertyView =
       view.getPropertyView<PropertyViewType>(propertyName);
-  REQUIRE(propertyView->size() == static_cast<size_t>(featureTable.count));
-  for (size_t i = 0; i < propertyView->size(); ++i) {
+  REQUIRE(propertyView->size() == featureTable.count);
+  for (int64_t i = 0; i < propertyView->size(); ++i) {
     if constexpr (
         std::is_same_v<PropertyViewType, float> ||
         std::is_same_v<PropertyViewType, double>) {
@@ -64,7 +64,7 @@ static void checkArrayProperty(
   std::optional<MetadataPropertyView<MetadataArrayView<PropertyViewType>>>
       propertyView = view.getPropertyView<MetadataArrayView<PropertyViewType>>(
           propertyName);
-  REQUIRE(propertyView->size() == static_cast<size_t>(featureTable.count));
+  REQUIRE(propertyView->size() == featureTable.count);
   for (size_t i = 0; i < expected.size(); ++i) {
     MetadataArrayView<PropertyViewType> val = propertyView->get(i);
     if (expectedComponentCount > 0) {

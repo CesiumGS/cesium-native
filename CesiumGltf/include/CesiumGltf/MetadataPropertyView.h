@@ -16,7 +16,7 @@ namespace CesiumGltf {
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link FeatureTableProperty::bufferView} like an array of elements.
- * Data of each instance can be accessed through the {@link get(size_t instance)} method
+ * Data of each instance can be accessed through the {@link get(int64_t instance)} method
  *
  * @param ElementType must be uin8_t, int8_t, uint16_t, int16_t,
  * uint32_t, int32_t, uint64_t, int64_t, float, double, bool, std::string_view,
@@ -39,8 +39,8 @@ public:
       gsl::span<const std::byte> arrayOffsetBuffer,
       gsl::span<const std::byte> stringOffsetBuffer,
       PropertyType offsetType,
-      size_t componentCount,
-      size_t instanceCount)
+      int64_t componentCount,
+      int64_t instanceCount)
       : _valueBuffer{valueBuffer},
         _arrayOffsetBuffer{arrayOffsetBuffer},
         _stringOffsetBuffer{stringOffsetBuffer},
@@ -54,7 +54,7 @@ public:
    * @param instance The instance index
    * @return The value of the instance
    */
-  ElementType get(size_t instance) const {
+  ElementType get(int64_t instance) const {
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumeric(instance);
     }
@@ -85,21 +85,21 @@ public:
    * @brief Get the number of instances in the FeatureTable
    * @return The number of instances in the FeatureTable
    */
-  size_t size() const { return _instanceCount; }
+  int64_t size() const { return _instanceCount; }
 
 private:
-  ElementType getNumeric(size_t instance) const {
+  ElementType getNumeric(int64_t instance) const {
     return reinterpret_cast<const ElementType*>(_valueBuffer.data())[instance];
   }
 
-  bool getBoolean(size_t instance) const {
-    size_t byteIndex = instance / 8;
-    size_t bitIndex = instance % 8;
+  bool getBoolean(int64_t instance) const {
+    int64_t byteIndex = instance / 8;
+    int64_t bitIndex = instance % 8;
     int bitValue = static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 
-  std::string_view getString(size_t instance) const {
+  std::string_view getString(int64_t instance) const {
     size_t currentOffset =
         getOffsetFromOffsetBuffer(instance, _stringOffsetBuffer, _offsetType);
     size_t nextOffset = getOffsetFromOffsetBuffer(
@@ -112,7 +112,7 @@ private:
   }
 
   template <typename T>
-  MetadataArrayView<T> getNumericArray(size_t instance) const {
+  MetadataArrayView<T> getNumericArray(int64_t instance) const {
     if (_componentCount > 0) {
       gsl::span<const T> vals(
           reinterpret_cast<const T*>(
@@ -133,7 +133,7 @@ private:
     return MetadataArrayView{vals};
   }
 
-  MetadataArrayView<std::string_view> getStringArray(size_t instance) const {
+  MetadataArrayView<std::string_view> getStringArray(int64_t instance) const {
     if (_componentCount > 0) {
       gsl::span<const std::byte> offsetVals(
           _stringOffsetBuffer.data() + instance * _componentCount * _offsetSize,
@@ -161,7 +161,7 @@ private:
         (nextOffset - currentOffset) / _offsetSize);
   }
 
-  MetadataArrayView<bool> getBooleanArray(size_t instance) const {
+  MetadataArrayView<bool> getBooleanArray(int64_t instance) const {
     if (_componentCount > 0) {
       size_t offsetBits = _componentCount * instance;
       size_t nextOffsetBits = _componentCount * (instance + 1);
@@ -185,7 +185,7 @@ private:
     return MetadataArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
-  static size_t getOffsetSize(PropertyType offsetType) {
+  static int64_t getOffsetSize(PropertyType offsetType) {
     switch (offsetType) {
     case CesiumGltf::PropertyType::Uint8:
       return sizeof(uint8_t);
@@ -239,8 +239,8 @@ private:
   gsl::span<const std::byte> _arrayOffsetBuffer;
   gsl::span<const std::byte> _stringOffsetBuffer;
   PropertyType _offsetType;
-  size_t _offsetSize;
-  size_t _componentCount;
-  size_t _instanceCount;
+  int64_t _offsetSize;
+  int64_t _componentCount;
+  int64_t _instanceCount;
 };
 } // namespace CesiumGltf
