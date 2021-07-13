@@ -18,6 +18,7 @@
 #include "CesiumUtility/Uri.h"
 #include "TileUtilities.h"
 #include "calcQuadtreeMaxGeometricError.h"
+#include <algorithm>
 #include <cstddef>
 #include <glm/common.hpp>
 #include <optional>
@@ -269,14 +270,15 @@ static double computeFogDensity(
   return density;
 }
 
-const ViewUpdateResult& Tileset::updateViewOffline(const ViewState& viewState) {
+const ViewUpdateResult&
+Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   std::vector<Tile*> tilesRenderedPrevFrame =
       this->_updateResult.tilesToRenderThisFrame;
 
-  this->updateView(viewState);
+  this->updateView(frustums);
   while (this->_loadsInProgress > 0) {
     this->_externals.pAssetAccessor->tick();
-    this->updateView(viewState);
+    this->updateView(frustums);
   }
 
   std::unordered_set<Tile*> uniqueTilesToRenderedThisFrame(
@@ -295,7 +297,8 @@ const ViewUpdateResult& Tileset::updateViewOffline(const ViewState& viewState) {
   return this->_updateResult;
 }
 
-const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
+const ViewUpdateResult&
+Tileset::updateView(const std::vector<ViewState>& frustums) {
   this->_asyncSystem.dispatchMainThreadTasks();
 
   int32_t previousFrameNumber = this->_previousFrameNumber;
@@ -321,18 +324,11 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
         "Only quantized-mesh terrain tilesets currently support overlays.");
   }
 
-  double fogDensity =
-      computeFogDensity(this->_options.fogDensityTable, viewState);
-
   this->_loadQueueHigh.clear();
   this->_loadQueueMedium.clear();
   this->_loadQueueLow.clear();
 
-  FrameState frameState{
-      viewState,
-      previousFrameNumber,
-      currentFrameNumber,
-      fogDensity};
+  FrameState frameState{frustums, previousFrameNumber, currentFrameNumber};
 
   this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
 
@@ -1201,12 +1197,28 @@ static bool isVisibleFromCamera(
  * @param fogDensity The fog density
  * @return Whether the tile is visible in the fog
  */
-static bool isVisibleInFog(double distance, double fogDensity) {
-  if (fogDensity <= 0.0) {
-    return true;
+static bool isVisibleInFog(
+    const std::vector<ViewState>& frustums,
+    const std::vector<double>& distances,
+    const std::vector<FogDensityAtHeight>& fogDensityTable) {
+
+  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+    const ViewState& frustum = frustums[i];
+    const double& distance = distances[i];
+
+    double fogDensity = computeFogDensity(fogDensityTable, frustum);
+
+    if (fogDensity <= 0.0) {
+      return true;
+    }
+
+    double fogScalar = distance * fogDensity;
+    if (glm::exp(-(fogScalar * fogScalar)) > 0.0) {
+      return true;
+    }
   }
-  double fogScalar = distance * fogDensity;
-  return glm::exp(-(fogScalar * fogScalar)) > 0.0;
+
+  return false;
 }
 
 // Visits a tile for possible rendering. When we call this function with a tile:
@@ -1224,18 +1236,30 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
   this->_markTileVisited(tile);
 
+  const Tileset* pTileset = tile.getTileset();
+  if (!pTileset) {
+    return TraversalDetails();
+  }
+
   // whether we should visit this tile
   bool shouldVisit = true;
   // whether this tile was culled (Note: we might still want to visit it)
   bool culled = false;
 
   const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-  const ViewState& viewState = frameState.viewState;
+  const std::vector<ViewState>& frustums = frameState.frustums;
 
-  if (!isVisibleFromCamera(
-          frameState.viewState,
-          boundingVolume,
-          this->_options.renderTilesUnderCamera)) {
+  if (std::none_of(
+          frustums.begin(),
+          frustums.end(),
+          [boundingVolume,
+           renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
+              const ViewState& frustum) {
+            return isVisibleFromCamera(
+                frustum,
+                boundingVolume,
+                renderTilesUnderCamera);
+          })) {
     // this tile is off-screen so it is a culled tile
     culled = true;
     if (this->_options.enableFrustumCulling) {
@@ -1244,12 +1268,23 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     }
   }
 
-  double distance = sqrt(glm::max(
-      viewState.computeDistanceSquaredToBoundingVolume(boundingVolume),
-      0.0));
+  const std::vector<FogDensityAtHeight>& fogDensityTable =
+      pTileset->getOptions().fogDensityTable;
+  std::vector<double> distances(frustums.size());
+
+  std::transform(
+      frustums.begin(),
+      frustums.end(),
+      distances.begin(),
+      [boundingVolume](const ViewState& frustum) -> double {
+        return glm::sqrt(glm::max(
+            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
+            0.0));
+      });
 
   // if we are still considering visiting this tile, check for fog occlusion
-  if (shouldVisit && !isVisibleInFog(distance, frameState.fogDensity)) {
+  if (shouldVisit &&
+      !isVisibleInFog(frameState.frustums, distances, fogDensityTable)) {
     // this tile is occluded by fog so it is a culled tile
     culled = true;
     if (this->_options.enableFogCulling) {
@@ -1266,11 +1301,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
     // Preload this culled sibling if requested.
     if (this->_options.preloadSiblings) {
-      addTileToLoadQueue(
-          this->_loadQueueLow,
-          frameState.viewState,
-          tile,
-          distance);
+      addTileToLoadQueue(this->_loadQueueLow, frustums, tile, distances);
     }
 
     ++result.tilesCulled;
@@ -1283,7 +1314,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       depth,
       ancestorMeetsSse,
       tile,
-      distance,
+      distances,
       culled,
       result);
 }
@@ -1293,7 +1324,7 @@ static bool isLeaf(const Tile& tile) { return tile.getChildren().empty(); }
 Tileset::TraversalDetails Tileset::_renderLeaf(
     const FrameState& frameState,
     Tile& tile,
-    double distance,
+    const std::vector<double>& distances,
     ViewUpdateResult& result) {
 
   TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
@@ -1304,9 +1335,9 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   result.tilesToRenderThisFrame.push_back(&tile);
   addTileToLoadQueue(
       this->_loadQueueMedium,
-      frameState.viewState,
+      frameState.frustums,
       tile,
-      distance);
+      distances);
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = tile.isRenderable();
@@ -1321,7 +1352,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     const FrameState& frameState,
     Tile& tile,
-    double distance) {
+    const std::vector<double>& distances) {
   if (!this->_options.forbidHoles) {
     return false;
   }
@@ -1339,25 +1370,37 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
       // irrelevant; we can't display any of them until all are loaded, anyway.
       addTileToLoadQueue(
           this->_loadQueueMedium,
-          frameState.viewState,
+          frameState.frustums,
           child,
-          distance);
+          distances);
     }
   }
   return waitingForChildren;
 }
 
 bool Tileset::_meetsSse(
-    const ViewState& viewState,
+    const std::vector<ViewState>& frustums,
     const Tile& tile,
-    double distance,
+    const std::vector<double>& distances,
     bool culled) const {
-  // Does this tile meet the screen-space error?
-  double sse =
-      viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
+
+  double largestSse = 0.0;
+
+  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+    const ViewState& frustum = frustums[i];
+    const double& distance = distances[i];
+
+    // Does this tile meet the screen-space error?
+    double sse =
+        frustum.computeScreenSpaceError(tile.getGeometricError(), distance);
+    if (sse > largestSse) {
+      largestSse = sse;
+    }
+  }
+
   return culled ? !this->_options.enforceCulledScreenSpaceError ||
-                      sse < this->_options.culledScreenSpaceError
-                : sse < this->_options.maximumScreenSpaceError;
+                      largestSse < this->_options.culledScreenSpaceError
+                : largestSse < this->_options.maximumScreenSpaceError;
 }
 
 /**
@@ -1446,16 +1489,16 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
     const FrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result,
-    double distance) {
+    const std::vector<double>& distances) {
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
     result.tilesToRenderThisFrame.push_back(&tile);
     addTileToLoadQueue(
         this->_loadQueueMedium,
-        frameState.viewState,
+        frameState.frustums,
         tile,
-        distance);
+        distances);
     return true;
   }
 
@@ -1474,7 +1517,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     size_t loadIndexMedium,
     size_t loadIndexHigh,
     bool queuedForLoad,
-    double distance) {
+    const std::vector<double>& distances) {
   TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
   std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
@@ -1539,9 +1582,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
     if (!queuedForLoad) {
       addTileToLoadQueue(
           this->_loadQueueMedium,
-          frameState.viewState,
+          frameState.frustums,
           tile,
-          distance);
+          distances);
     }
 
     traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -1566,7 +1609,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
                            // children!
     Tile& tile,
-    double distance,
+    const std::vector<double>& distances,
     bool culled,
     ViewUpdateResult& result) {
   ++result.tilesVisited;
@@ -1578,12 +1621,12 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    return _renderLeaf(frameState, tile, distance, result);
+    return _renderLeaf(frameState, tile, distances, result);
   }
 
-  bool meetsSse = _meetsSse(frameState.viewState, tile, distance, culled);
+  bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
   bool waitingForChildren =
-      _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distance);
+      _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
 
   if (meetsSse || ancestorMeetsSse || waitingForChildren) {
     // This tile (or an ancestor) is the one we want to render this frame, but
@@ -1608,9 +1651,9 @@ Tileset::TraversalDetails Tileset::_visitTile(
       if (meetsSse && !ancestorMeetsSse) {
         addTileToLoadQueue(
             this->_loadQueueMedium,
-            frameState.viewState,
+            frameState.frustums,
             tile,
-            distance);
+            distances);
       }
       return _renderInnerTile(frameState, tile, result);
     }
@@ -1631,16 +1674,16 @@ Tileset::TraversalDetails Tileset::_visitTile(
     if (meetsSse) {
       addTileToLoadQueue(
           this->_loadQueueHigh,
-          frameState.viewState,
+          frameState.frustums,
           tile,
-          distance);
+          distances);
     }
   }
 
   // Refine!
 
   bool queuedForLoad =
-      _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distance);
+      _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distances);
 
   size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
   size_t loadIndexLow = this->_loadQueueLow.size();
@@ -1684,7 +1727,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         loadIndexMedium,
         loadIndexHigh,
         queuedForLoad,
-        distance);
+        distances);
   } else {
     if (tile.getRefine() != TileRefine::Add) {
       markTileNonRendered(frameState.lastFrameNumber, tile, result);
@@ -1697,9 +1740,9 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if (this->_options.preloadAncestors && !queuedForLoad) {
     addTileToLoadQueue(
         this->_loadQueueLow,
-        frameState.viewState,
+        frameState.frustums,
         tile,
-        distance);
+        distances);
   }
 
   return traversalDetails;
@@ -1868,24 +1911,34 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
 
 /*static*/ void Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
-    const ViewState& viewState,
+    const std::vector<ViewState>& frustums,
     Tile& tile,
-    double distance) {
+    const std::vector<double>& distances) {
   if (tile.getState() == Tile::LoadState::Unloaded ||
       anyRasterOverlaysNeedLoading(tile)) {
-    double loadPriority = 0.0;
 
-    glm::dvec3 tileDirection =
-        getBoundingVolumeCenter(tile.getBoundingVolume()) -
-        viewState.getPosition();
-    double magnitude = glm::length(tileDirection);
-    if (magnitude >= CesiumUtility::Math::EPSILON5) {
-      tileDirection /= magnitude;
-      loadPriority =
-          (1.0 - glm::dot(tileDirection, viewState.getDirection())) * distance;
+    glm::dvec3 boundingVolumeCenter =
+        getBoundingVolumeCenter(tile.getBoundingVolume());
+
+    double maxLoadPriority = 0.0;
+    for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+      const ViewState& frustum = frustums[i];
+      const double& distance = distances[i];
+
+      glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
+      double magnitude = glm::length(tileDirection);
+
+      if (magnitude >= CesiumUtility::Math::EPSILON5) {
+        tileDirection /= magnitude;
+        double loadPriority =
+            (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
+        if (loadPriority > maxLoadPriority) {
+          maxLoadPriority = loadPriority;
+        }
+      }
     }
 
-    loadQueue.push_back({&tile, loadPriority});
+    loadQueue.push_back({&tile, maxLoadPriority});
   }
 }
 
