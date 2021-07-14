@@ -48,7 +48,7 @@ TEST_CASE("AsyncSystem") {
         asyncSystem.runInMainThread([&executed]() { executed = true; });
 
     CHECK(!executed);
-    bool taskDispatched = asyncSystem.dispatchZeroOrOneMainThreadTask();
+    bool taskDispatched = asyncSystem.dispatchOneMainThreadTask();
     CHECK(taskDispatched);
     CHECK(executed);
     CHECK(pTaskProcessor->tasksStarted == 0);
@@ -61,7 +61,7 @@ TEST_CASE("AsyncSystem") {
         [&executed]() { executed = true; });
 
     CHECK(!executed);
-    bool taskDispatched = asyncSystem.dispatchZeroOrOneMainThreadTask();
+    bool taskDispatched = asyncSystem.dispatchOneMainThreadTask();
     CHECK(taskDispatched);
     CHECK(executed);
     CHECK(pTaskProcessor->tasksStarted == 0);
@@ -98,7 +98,7 @@ TEST_CASE("AsyncSystem") {
 
     CHECK(!executed1);
     CHECK(!executed2);
-    bool taskDispatched = asyncSystem.dispatchZeroOrOneMainThreadTask();
+    bool taskDispatched = asyncSystem.dispatchOneMainThreadTask();
     CHECK(taskDispatched);
     CHECK(executed1);
     CHECK(executed2);
@@ -198,7 +198,7 @@ TEST_CASE("AsyncSystem") {
                         return 2;
                       });
 
-    asyncSystem.dispatchZeroOrOneMainThreadTask();
+    asyncSystem.dispatchOneMainThreadTask();
     CHECK(future.wait() == 2);
   }
 
@@ -216,7 +216,7 @@ TEST_CASE("AsyncSystem") {
                         return 3;
                       });
 
-    asyncSystem.dispatchZeroOrOneMainThreadTask();
+    asyncSystem.dispatchOneMainThreadTask();
     CHECK(future.wait() == 3);
   }
 
@@ -235,7 +235,7 @@ TEST_CASE("AsyncSystem") {
                         return 3;
                       });
 
-    asyncSystem.dispatchZeroOrOneMainThreadTask();
+    asyncSystem.dispatchOneMainThreadTask();
     CHECK_THROWS_WITH(future.wait(), "second");
   }
 }

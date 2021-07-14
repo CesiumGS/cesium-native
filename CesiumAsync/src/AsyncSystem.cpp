@@ -12,7 +12,7 @@ void AsyncSystem::dispatchMainThreadTasks() {
   this->_pSchedulers->mainThread.dispatchQueuedContinuations();
 }
 
-bool AsyncSystem::dispatchZeroOrOneMainThreadTask() {
+bool AsyncSystem::dispatchOneMainThreadTask() {
   return this->_pSchedulers->mainThread.dispatchZeroOrOneContinuation();
 }
 

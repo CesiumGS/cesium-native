@@ -292,14 +292,15 @@ public:
 
   /**
    * @brief Runs a single waiting task that is currently queued for the main
-   * thread, if there is one.
+   * thread. If there are no tasks waiting, it returns immediately without
+   * running any tasks.
    *
    * The task is run in the calling thread.
    *
    * @return true A single task was executed.
    * @return false No task was executed because none are waiting.
    */
-  bool dispatchZeroOrOneMainThreadTask();
+  bool dispatchOneMainThreadTask();
 
   /**
    * @brief Creates a new thread pool that can be used to run continuations.
