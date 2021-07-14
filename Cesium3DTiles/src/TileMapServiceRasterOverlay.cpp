@@ -58,22 +58,13 @@ public:
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const TileID& tileID) override {
-    const CesiumGeometry::QuadtreeTileID* quadtreeTileID =
-        std::get_if<CesiumGeometry::QuadtreeTileID>(&tileID);
-    if (!quadtreeTileID) {
-      LoadedRasterOverlayImage loadErrorResult;
-      loadErrorResult.errors.push_back(
-          "Tile Map Service raster overlay recieved a non-quadtree tile id");
-      return this->getAsyncSystem().createResolvedFuture(
-          std::move(loadErrorResult));
-    }
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override {
     std::string url = CesiumUtility::Uri::resolve(
         this->_url,
-        std::to_string(quadtreeTileID->level) + "/" +
-            std::to_string(quadtreeTileID->x) + "/" +
-            std::to_string(quadtreeTileID->y) + this->_fileExtension,
+        std::to_string(tileID.level) + "/" +
+            std::to_string(tileID.x) + "/" +
+            std::to_string(tileID.y) + this->_fileExtension,
         true);
 
     return this->loadTileImageFromUrl(url, this->_headers, {});

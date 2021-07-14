@@ -58,46 +58,20 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(
-    const TileID& id,
-    const CesiumGeometry::Rectangle& imageryRectangle) {
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
-      this->getTileWithoutCreating(id);
-  if (pTile) {
-    return pTile;
-  }
-
-  std::unique_ptr<RasterOverlayTile> pNew = std::make_unique<RasterOverlayTile>(
+    const CesiumGeometry::Rectangle& imageryRectangle,
+    double targetGeometricError) {
+  return {new RasterOverlayTile(
       this->getOwner(),
-      id,
-      imageryRectangle);
-
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> pResult = pNew.get();
-  this->_tiles[id] = std::move(pNew);
-  return pResult;
-}
-
-CesiumUtility::IntrusivePointer<RasterOverlayTile>
-RasterOverlayTileProvider::getTileWithoutCreating(const TileID& id) {
-  auto it = this->_tiles.find(id);
-  if (it != this->_tiles.end()) {
-    return it->second.get();
-  }
-
-  return nullptr;
+      targetGeometricError,
+      imageryRectangle)};
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   assert(pTile->getReferenceCount() == 0);
 
-  auto it = this->_tiles.find(pTile->getID());
-  assert(it != this->_tiles.end());
-  assert(it->second.get() == pTile);
-
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 
   RasterOverlay& overlay = pTile->getOverlay();
-
-  this->_tiles.erase(it);
 
   if (overlay.isBeingDestroyed()) {
     overlay.destroySafely(nullptr);
@@ -279,7 +253,7 @@ void RasterOverlayTileProvider::doLoad(
 
   this->beginTileLoad(tile, isThrottledLoad);
 
-  this->loadTileImage(tile.getID())
+  this->loadTileImage(tile)
       .thenInWorkerThread(
           [tileId = tile.getID(),
            pPrepareRendererResources = this->getPrepareRendererResources(),

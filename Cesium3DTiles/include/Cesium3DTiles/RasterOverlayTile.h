@@ -62,6 +62,28 @@ public:
   };
 
   /**
+   * @brief Tile availability states.
+   *
+   * Values of this enumeration are returned by {@link update}, which
+   * in turn is called by {@link Tile::update}. These values are used
+   * to determine whether a leaf tile has been reached, but the
+   * associated raster tiles are not yet the most detailed ones that
+   * are available.
+   */
+  enum class MoreDetailAvailable {
+
+    /** @brief There are no more detailed raster tiles. */
+    No = 0,
+
+    /** @brief There are more detailed raster tiles. */
+    Yes = 1,
+
+    /** @brief It is not known whether more detailed raster tiles are available.
+     */
+    Unknown = 2
+  };
+
+  /**
    * @brief Constructs a placeholder tile for the tile provider.
    *
    * The {@link getState} of this instance will always be
@@ -91,7 +113,7 @@ public:
    */
   RasterOverlayTile(
       RasterOverlay& overlay,
-      const TileID& tileID,
+      double targetGeometricError,
       const CesiumGeometry::Rectangle& imageryRectangle);
 
   /** @brief Default destructor. */
@@ -108,16 +130,15 @@ public:
   const RasterOverlay& getOverlay() const noexcept { return *this->_pOverlay; }
 
   /**
-   * @brief Returns the {@link TileID} that was given during construction.
+   * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
+   * of this tile in the raster overlay's projected coordinates.
    */
-  const TileID& getID() const noexcept { return this->_tileID; }
+  const CesiumGeometry::Rectangle& getRectangle() const {
+    return this->_rectangle;
+  }
 
-  /**
-   * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the
-   * imagery rectangle.
-   */
-  const CesiumGeometry::Rectangle& getImageryRectangle() const {
-    return this->_imageryRectangle;
+  double getTargetGeometricError() const {
+    return this->_targetGeometricError;
   }
 
   /**
@@ -169,6 +190,8 @@ public:
     this->_pRendererResources = pValue;
   }
 
+  MoreDetailAvailable isMoreDetailAvailable() const { return this->_moreDetailAvailable; }
+
   /**
    * @brief Adds a counted reference to this instance.
    */
@@ -191,12 +214,13 @@ private:
   void setState(LoadState newState);
 
   RasterOverlay* _pOverlay;
-  TileID _tileID;
-  CesiumGeometry::Rectangle _imageryRectangle;
+  double _targetGeometricError;
+  CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;
   LoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
   uint32_t _references;
+  MoreDetailAvailable _moreDetailAvailable;
 };
 } // namespace Cesium3DTiles

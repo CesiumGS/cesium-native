@@ -115,25 +115,91 @@ bool Tile::isRenderable() const noexcept {
   return false;
 }
 
+namespace {
+void mapRasterOverlaysToTile(
+    Tile& tile,
+    const RasterOverlayCollection& overlays,
+    std::unordered_set<CesiumGeospatial::Projection>& projections) {
+
+  assert(this->_rasterTiles.empty());
+
+  const GlobeRectangle* pRectangle =
+      Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+  if (!pRectangle) {
+    return;
+  }
+
+  for (const auto& pOverlay : overlays) {
+    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
+
+    // Project the globe rectangle to the raster's coordinate system.
+    // TODO: we can compute a much more precise projected rectangle by
+    //       projecting each vertex, but that would require us to have
+    //       geometry first.
+    Rectangle overlayRectangle =
+        projectRectangleSimple(pProvider->getProjection(), *pRectangle);
+
+    IntrusivePointer<RasterOverlayTile> pRaster =
+        pOverlay->getTileProvider()->getTile(overlayRectangle);
+    if (pTile) {
+      tile._rasterTiles.emplace_back(pRaster, Rectangle(0.0, 0.0, 1.0, 1.0));
+      projections.insert(pProvider->getProjection());
+    }
+  }
+
+  // Find the unique projections; we'll create texture coordinates for each
+  // later.
+  // TODO: actually find the unique projections, instead of assuming there's
+  // only one projection and it's Web Mercator. The code below mostly works,
+  // except that we don't currently have a way to add texture coordinates to
+  // already-loaded tiles that didn't have them originally.
+
+  // uint32_t projectionID = 0;
+
+  // for (RastersMappedTo3DTile& mappedTile : this->_rasterTiles) {
+  //     std::shared_ptr<RasterOverlayTile> pTile =
+  //     mappedTile.getLoadingTile(); if (!pTile) {
+  //         pTile = mappedTile.getReadyTile();
+  //         if (!pTile) {
+  //             continue;
+  //         }
+  //     }
+
+  //     const CesiumGeospatial::Projection& projection =
+  //     pTile->getOverlay().getTileProvider()->getProjection();
+
+  //     auto existingCoordinatesIt = std::find(projections.begin(),
+  //     projections.end(), projection); if (existingCoordinatesIt ==
+  //     projections.end()) {
+  //         projections.push_back(projection);
+
+  //         mappedTile.setTextureCoordinateID(projectionID);
+  //         ++projectionID;
+  //     } else {
+  //         // Use previously-added texture coordinates.
+  //         mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt
+  //         - projections.begin()));
+  //     }
+  // }
+
+  // Add geographic texture coordinates for water mask
+  if (tile.getTileset()->getOptions().contentOptions.enableWaterMask) {
+    projections.insert(CesiumGeospatial::GeographicProjection());
+  }
+}
+} // namespace
+
 void Tile::loadContent() {
   if (this->getState() != LoadState::Unloaded) {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
-    for (RastersMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
-      std::shared_ptr<std::vector<RasterToCombine>>& pRastersToCombine =
-          mapped.getRastersToCombine();
-
-      RasterOverlayTileProvider* pProvider = mapped.getOwner();
-
-      if (!pRastersToCombine || !pProvider) {
-        continue;
-      }
-
-      for (RasterToCombine& rasterToCombine : *pRastersToCombine) {
-        CesiumUtility::IntrusivePointer<RasterOverlayTile>& pLoading =
-            rasterToCombine.getLoadingTile();
-        if (pLoading &&
-            pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+    for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+      RasterOverlayTile* pLoading = mapped.getLoadingTile();
+      if (pLoading &&
+          pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
+        RasterOverlayTileProvider* pProvider =
+            pLoading->getOverlay().getTileProvider();
+        if (pProvider) {
           pProvider->loadTileThrottled(*pLoading);
         }
       }
@@ -154,71 +220,9 @@ void Tile::loadContent() {
 
   std::unordered_set<CesiumGeospatial::Projection> projections;
 
-  // TODO: determine the GlobeRectangle for non-region based bounding volumes
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTiles::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
-
   if (pRectangle && tileset.supportsRasterOverlays()) {
-    // Map overlays to this tile.
     RasterOverlayCollection& overlays = tileset.getOverlays();
-    // gsl::span<RasterOverlayTileProvider*> providers =
-    // overlays.getTileProviders();
-
-    // Map raster tiles to a new vector first, and then replace the old one.
-    // Doing it in this order ensures that tiles that are already loaded and
-    // that we still need are not freed too soon.
-    std::vector<RastersMappedTo3DTile> newRasterTiles;
-
-    for (auto& overlay : overlays) {
-      newRasterTiles.push_back(
-          overlay->getTileProvider()->mapRasterTilesToGeometryTile(
-              this->getTileID(),
-              *pRectangle,
-              this->getGeometricError()));
-      projections.insert(overlay->getTileProvider()->getProjection());
-    }
-
-    this->_rasterTiles = std::move(newRasterTiles);
-
-    // Find the unique projections; we'll create texture coordinates for each
-    // later.
-    // TODO: actually find the unique projections, instead of assuming there's
-    // only one projection and it's Web Mercator. The code below mostly works,
-    // except that we don't currently have a way to add texture coordinates to
-    // already-loaded tiles that didn't have them originally.
-
-    // uint32_t projectionID = 0;
-
-    // for (RastersMappedTo3DTile& mappedTile : this->_rasterTiles) {
-    //     std::shared_ptr<RasterOverlayTile> pTile =
-    //     mappedTile.getLoadingTile(); if (!pTile) {
-    //         pTile = mappedTile.getReadyTile();
-    //         if (!pTile) {
-    //             continue;
-    //         }
-    //     }
-
-    //     const CesiumGeospatial::Projection& projection =
-    //     pTile->getOverlay().getTileProvider()->getProjection();
-
-    //     auto existingCoordinatesIt = std::find(projections.begin(),
-    //     projections.end(), projection); if (existingCoordinatesIt ==
-    //     projections.end()) {
-    //         projections.push_back(projection);
-
-    //         mappedTile.setTextureCoordinateID(projectionID);
-    //         ++projectionID;
-    //     } else {
-    //         // Use previously-added texture coordinates.
-    //         mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt
-    //         - projections.begin()));
-    //     }
-    // }
-
-    // Add geographic texture coordinates for water mask
-    if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
-      projections.insert(CesiumGeospatial::GeographicProjection());
-    }
+    mapRasterOverlaysToTile(*this, overlays, projections);
   }
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =

@@ -13,22 +13,28 @@ namespace Cesium3DTiles {
 
 RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
     : _pOverlay(&overlay),
-      _tileID(CesiumGeometry::QuadtreeTileID(0, 0, 0)),
+      _targetGeometricError(0.0),
       _imageryRectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
+      _tileCredits(),
       _state(LoadState::Placeholder),
+      _image(),
       _pRendererResources(nullptr),
-      _references(0) {}
+      _references(0),
+      _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
 RasterOverlayTile::RasterOverlayTile(
     RasterOverlay& overlay,
-    const TileID& tileID,
+    double targetGeometricError,
     const CesiumGeometry::Rectangle& imageryRectangle)
     : _pOverlay(&overlay),
-      _tileID(tileID),
+      _targetGeometricError(targetGeometricError),
       _imageryRectangle(imageryRectangle),
+      _tileCredits(),
       _state(LoadState::Unloaded),
+      _image(),
       _pRendererResources(nullptr),
-      _references(0) {}
+      _references(0),
+      _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
 RasterOverlayTile::~RasterOverlayTile() {
   RasterOverlayTileProvider* pTileProvider = this->_pOverlay->getTileProvider();

@@ -5,6 +5,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 
@@ -52,30 +53,24 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {}
 
-RastersMappedTo3DTile
+std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
-    const TileID& geometryTileId,
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError) {
   return this->mapRasterTilesToGeometryTile(
-      geometryTileId,
       projectRectangleSimple(this->getProjection(), geometryRectangle),
       targetGeometricError);
 }
 
-RastersMappedTo3DTile
+std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
-    const TileID& /*geometryTileId*/,
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
   if (this->_pPlaceholder) {
-    return RastersMappedTo3DTile(
-        *this,
-        std::make_shared<std::vector<RasterToCombine>>(
-            std::vector<RasterToCombine>({RasterToCombine(
-                this->_pPlaceholder.get(),
-                CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
+    return {this->_pPlaceholder.get()};
   }
+
+  std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>> result;
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
@@ -170,7 +165,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // Because of the intersection, we should always have valid tile coordinates.
   // But give up if we don't.
   if (!southwestTileCoordinatesOpt || !northeastTileCoordinatesOpt) {
-    return RastersMappedTo3DTile(*this, {});
+    return result;
   }
 
   QuadtreeTileID southwestTileCoordinates = southwestTileCoordinatesOpt.value();
@@ -334,26 +329,17 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
       CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
-          this->getTile(QuadtreeTileID(imageryLevel, i, j), imageryRectangle);
+          this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
 
       if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
         this->loadTileThrottled(*pTile);
       }
 
-      pRastersToCombine->push_back(RasterToCombine(pTile, texCoordsRectangle));
-      /*
-      outputRasterTiles.emplace(
-          outputRasterTiles.begin() +
-              static_cast<
-                  std::vector<RastersMappedTo3DTile>::iterator::difference_type>(
-                  realOutputIndex),
-          pTile,
-          texCoordsRectangle);
-      ++realOutputIndex;*/
+      result.emplace_back(pTile);
     }
   }
 
-  return RastersMappedTo3DTile(*this, std::move(pRastersToCombine));
+  return result;
 }
 
 bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(
@@ -388,7 +374,20 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
-QuadtreeRasterOverlayTileProvider::loadTileImage(const TileID& /*tileId*/) {
+QuadtreeRasterOverlayTileProvider::loadTileImage(
+    const RasterOverlayTile& overlayTile) {
+  // Figure out which quadtree level we need, and which tiles from that level.
+  // Load each needed tile (or pull it from cache).
+  // If any tiles fail to load, use a parent (or ancestor) instead.
+  // If _all_ tiles fail to load, we probably don't need this tile at all.
+  //  exception: the parent geometry tile doesn't have the most detailed
+  //  available overlay tile. But we can't tell that here. Here we just fail.
+  std::vector<IntrusivePointer<RasterOverlayTile>> tiles =
+      this->mapRasterTilesToGeometryTile(
+          overlayTile.getRectangle(),
+          overlayTile.getTargetGeometricError());
+
+  
   LoadedRasterOverlayImage result;
   result.errors.push_back("Error: `loadTileImage(TileID tileId)` called on "
                           "QuadtreeRasterOverlayTileProvider");

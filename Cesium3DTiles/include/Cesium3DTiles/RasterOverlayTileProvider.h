@@ -94,7 +94,7 @@ class CESIUM3DTILES_API RasterOverlayTileProvider {
 public:
   /**
    * Constructs a placeholder tile provider.
-   *
+   * 
    * @param owner The raster overlay that owns this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
@@ -193,38 +193,7 @@ public:
    * @return The tile.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTile(const TileID& id, const CesiumGeometry::Rectangle& imageryRectangle);
-
-  /**
-   * @brief Returns the {@link RasterOverlayTile} with the given ID, or
-   * `nullptr` if there is no such tile.
-   *
-   * @param id The {@link TileID} of the tile to obtain.
-   * @return The tile, or `nullptr`.
-   */
-  CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTileWithoutCreating(const TileID& id);
-
-  /**
-   * @brief Map raster tiles to geometry tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param geometryRectangle The rectangle.
-   * @param targetGeometricError The geometric error.
-   * @return A single raster tile combining the given rasters into the
-   * geometry tile's rectangle.
-   */
-  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-      const TileID& geometryTileId,
-      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricErrorss) = 0;
-
-  /** @copydoc mapRasterTilesToGeometryTile */
-  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-      const TileID& geometryTileId,
-      const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError) = 0;
+  getTile(const CesiumGeometry::Rectangle& imageryRectangle, double targetGeometricError);
 
   /**
    * @brief Whether the given raster tile has more detail.
@@ -310,7 +279,7 @@ protected:
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const TileID& tileID) = 0;
+  loadTileImage(const RasterOverlayTile& overlayTile) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.

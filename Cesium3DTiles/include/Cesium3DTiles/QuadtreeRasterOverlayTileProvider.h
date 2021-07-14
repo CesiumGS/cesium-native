@@ -60,27 +60,6 @@ public:
       uint32_t imageHeight) noexcept;
 
   /**
-   * @brief Map raster tiles to geometry tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param geometryRectangle The rectangle.
-   * @param targetGeometricError The geometric error.
-   * @return A single raster tile combining the given rasters into the
-   * geometry tile's rectangle.
-   */
-  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-      const TileID& geometryTileId,
-      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError) override;
-
-  /** @copydoc mapRasterTilesToGeometryTile */
-  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-      const TileID& geometryTileId,
-      const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError) override;
-
-  /**
    * @brief Whether the given raster tile has more detail.
    *
    * If so its children may be subdivided to use the more detailed raster
@@ -89,7 +68,7 @@ public:
   virtual bool hasMoreDetailsAvailable(const TileID& tileID) const override;
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const TileID& tileId) override;
+  loadTileImage(const RasterOverlayTile& overlayTile) override;
 
   /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
@@ -141,7 +120,35 @@ public:
       double geometricError,
       const glm::dvec2& position) const noexcept;
 
+protected:
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
+
 private:
+  CesiumUtility::IntrusivePointer<RasterOverlayTile>
+  getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
+
+  /**
+   * @brief Map raster tiles to geometry tile.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @param geometryRectangle The rectangle.
+   * @param targetGeometricError The geometric error.
+   * @return A single raster tile combining the given rasters into the
+   * geometry tile's rectangle.
+   */
+  std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  mapRasterTilesToGeometryTile(
+      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
+      double targetGeometricError);
+
+  /** @copydoc mapRasterTilesToGeometryTile */
+  std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  mapRasterTilesToGeometryTile(
+      const CesiumGeometry::Rectangle& geometryRectangle,
+      double targetGeometricError);
+
   CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;
