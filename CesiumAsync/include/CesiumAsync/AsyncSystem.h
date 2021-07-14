@@ -202,9 +202,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->workerThread.immediate,
-            Impl::WithTracing<Func, void>::end(
-                tracingName,
-                std::forward<Func>(f))));
+            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
   }
 
   /**
@@ -231,9 +229,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThread.immediate,
-            Impl::WithTracing<Func, void>::end(
-                tracingName,
-                std::forward<Func>(f))));
+            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
   }
 
   /**
@@ -256,9 +252,7 @@ public:
         this->_pSchedulers,
         async::spawn(
             threadPool._pScheduler->immediate,
-            Impl::WithTracing<Func, void>::end(
-                tracingName,
-                std::forward<Func>(f))));
+            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
   }
 
   /**

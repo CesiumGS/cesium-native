@@ -8,7 +8,8 @@ namespace Impl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
-template <typename Func, typename T> struct WithTracing {
+template <typename T> struct WithTracing {
+  template <typename Func>
   static auto
   begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
@@ -25,6 +26,7 @@ template <typename Func, typename T> struct WithTracing {
 #endif
   }
 
+  template <typename Func>
   static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
@@ -42,7 +44,8 @@ template <typename Func, typename T> struct WithTracing {
   }
 };
 
-template <typename Func> struct WithTracing<Func, void> {
+template <> struct WithTracing<void> {
+  template <typename Func>
   static auto
   begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
@@ -57,6 +60,7 @@ template <typename Func> struct WithTracing<Func, void> {
 #endif
   }
 
+  template <typename Func>
   static auto end([[maybe_unused]] const char* tracingName, Func&& f) {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,

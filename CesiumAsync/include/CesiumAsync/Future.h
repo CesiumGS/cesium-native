@@ -12,8 +12,8 @@ namespace CesiumAsync {
 
 namespace Impl {
 
-template <typename Func, typename R> struct ParameterizedTaskUnwrapper;
-template <typename Func> struct TaskUnwrapper;
+template <typename R> struct ParameterizedTaskUnwrapper;
+struct TaskUnwrapper;
 
 } // namespace Impl
 
@@ -109,7 +109,7 @@ public:
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::WithTracing<Func, T>::end(nullptr, std::forward<Func>(f))));
+            Impl::WithTracing<T>::end(nullptr, std::forward<Func>(f))));
   }
 
   /**
@@ -199,7 +199,7 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        Impl::WithTracing<Func, T>::begin(tracingName, std::forward<Func>(f)));
+        Impl::WithTracing<T>::begin(tracingName, std::forward<Func>(f)));
 #else
     auto& task = this->_task;
 #endif
@@ -208,9 +208,7 @@ private:
         this->_pSchedulers,
         task.then(
             scheduler,
-            Impl::WithTracing<Func, T>::end(
-                tracingName,
-                std::forward<Func>(f))));
+            Impl::WithTracing<T>::end(tracingName, std::forward<Func>(f))));
   }
 
   template <typename Func, typename Scheduler>
@@ -230,10 +228,10 @@ private:
 
   friend class AsyncSystem;
 
-  template <typename Func, typename R>
+  template <typename R>
   friend struct Impl::ParameterizedTaskUnwrapper;
 
-  template <typename Func> friend struct Impl::TaskUnwrapper;
+  friend struct Impl::TaskUnwrapper;
 
   template <typename R> friend class Future;
   template <typename R> friend class Promise;
