@@ -228,8 +228,7 @@ private:
 
   friend class AsyncSystem;
 
-  template <typename R>
-  friend struct Impl::ParameterizedTaskUnwrapper;
+  template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
 
   friend struct Impl::TaskUnwrapper;
 

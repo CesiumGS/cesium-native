@@ -9,20 +9,19 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 struct IdentityUnwrapper {
-  template <typename Func>
-  static Func unwrap(Func&& f) { return std::forward<Func>(f); }
+  template <typename Func> static Func unwrap(Func&& f) {
+    return std::forward<Func>(f);
+  }
 };
 
 template <typename T> struct ParameterizedTaskUnwrapper {
-  template <typename Func>
-  static auto unwrap(Func&& f) {
+  template <typename Func> static auto unwrap(Func&& f) {
     return [f = std::forward<Func>(f)](T&& t) { return f(std::move(t))._task; };
   }
 };
 
 struct TaskUnwrapper {
-  template <typename Func>
-  static auto unwrap(Func&& f) {
+  template <typename Func> static auto unwrap(Func&& f) {
     return [f = std::forward<Func>(f)]() { return f()._task; };
   }
 };
