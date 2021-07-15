@@ -88,7 +88,7 @@ template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void createTestForArrayJson(
     const std::vector<std::vector<ExpectedType>>& expected,
     const std::string& expectedComponentType,
-    size_t componentCount) {
+    int64_t componentCount) {
   Model model;
 
   rapidjson::Document featureTableJson;
