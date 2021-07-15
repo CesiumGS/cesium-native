@@ -441,7 +441,7 @@ TEST_CASE("Test fixed numeric array") {
 
     for (int64_t i = 0; i < arrayProperty->size(); ++i) {
       MetadataArrayView<uint32_t> member = arrayProperty->get(i);
-      for (size_t j = 0; j < member.size(); ++j) {
+      for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[i * 3 + j]);
       }
     }
@@ -574,7 +574,7 @@ TEST_CASE("Test dynamic numeric array") {
     REQUIRE(property != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
       MetadataArrayView<uint16_t> valueMember = property->get(i);
-      REQUIRE(valueMember.size() == expected[i].size());
+      REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == valueMember[j]);
       }
@@ -674,7 +674,7 @@ TEST_CASE("Test fixed boolean array") {
     REQUIRE(boolProperty->size() == featureTable.count);
     for (int64_t i = 0; i < boolProperty->size(); ++i) {
       MetadataArrayView<bool> valueMember = boolProperty->get(i);
-      for (size_t j = 0; j < valueMember.size(); ++j) {
+      for (int64_t j = 0; j < valueMember.size(); ++j) {
         REQUIRE(valueMember[j] == expected[i * 3 + j]);
       }
     }
@@ -796,7 +796,7 @@ TEST_CASE("Test dynamic bool array") {
     REQUIRE(boolProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
       MetadataArrayView<bool> arrayMember = boolProperty->get(i);
-      REQUIRE(arrayMember.size() == expected[i].size());
+      REQUIRE(arrayMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
         REQUIRE(expected[i][j] == arrayMember[j]);
       }

@@ -35,9 +35,9 @@ static void checkScalarProperty(
     if constexpr (
         std::is_same_v<PropertyViewType, float> ||
         std::is_same_v<PropertyViewType, double>) {
-      REQUIRE(propertyView->get(i) == Approx(expected[i]));
+      REQUIRE(propertyView->get(i) == Approx(expected[static_cast<size_t>(i)]));
     } else {
-      REQUIRE(propertyView->get(i) == expected[i]);
+      REQUIRE(propertyView->get(i) == expected[static_cast<size_t>(i)]);
     }
   }
 }
@@ -48,7 +48,7 @@ static void checkArrayProperty(
     const FeatureTable& featureTable,
     const Class& metaClass,
     const std::string& propertyName,
-    size_t expectedComponentCount,
+    int64_t expectedComponentCount,
     const std::string& expectedComponentType,
     const std::vector<std::vector<ExpectedType>>& expected) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
@@ -66,7 +66,8 @@ static void checkArrayProperty(
           propertyName);
   REQUIRE(propertyView->size() == featureTable.count);
   for (size_t i = 0; i < expected.size(); ++i) {
-    MetadataArrayView<PropertyViewType> val = propertyView->get(i);
+    MetadataArrayView<PropertyViewType> val =
+        propertyView->get(static_cast<int64_t>(i));
     if (expectedComponentCount > 0) {
       REQUIRE(val.size() == expectedComponentCount);
     }
@@ -75,9 +76,9 @@ static void checkArrayProperty(
       if constexpr (
           std::is_same_v<ExpectedType, float> ||
           std::is_same_v<ExpectedType, double>) {
-        REQUIRE(val[j] == Approx(expected[i][j]));
+        REQUIRE(val[static_cast<int64_t>(j)] == Approx(expected[i][j]));
       } else {
-        REQUIRE(val[j] == expected[i][j]);
+        REQUIRE(val[static_cast<int64_t>(j)] == expected[i][j]);
       }
     }
   }

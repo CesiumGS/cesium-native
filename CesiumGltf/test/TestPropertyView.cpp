@@ -52,7 +52,7 @@ static void checkDynamicArray(
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<T> vals = property.get(i);
-    for (size_t j = 0; j < vals.size(); ++j) {
+    for (int64_t j = 0; j < vals.size(); ++j) {
       REQUIRE(vals[j] == data[expectedIdx]);
       ++expectedIdx;
     }
@@ -81,7 +81,7 @@ static void checkFixedArray(
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<T> vals = property.get(i);
-    for (size_t j = 0; j < vals.size(); ++j) {
+    for (int64_t j = 0; j < vals.size(); ++j) {
       REQUIRE(vals[j] == data[expectedIdx]);
       ++expectedIdx;
     }
@@ -379,7 +379,7 @@ TEST_CASE("Check fixed array of string") {
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<std::string_view> vals = property.get(i);
-    for (size_t j = 0; j < vals.size(); ++j) {
+    for (int64_t j = 0; j < vals.size(); ++j) {
       std::string_view v = vals[j];
       REQUIRE(v == strings[expectedIdx]);
       ++expectedIdx;
@@ -451,7 +451,7 @@ TEST_CASE("Check dynamic array of string") {
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
     CesiumGltf::MetadataArrayView<std::string_view> vals = property.get(i);
-    for (size_t j = 0; j < vals.size(); ++j) {
+    for (int64_t j = 0; j < vals.size(); ++j) {
       std::string_view v = vals[j];
       REQUIRE(v == strings[expectedIdx]);
       ++expectedIdx;

@@ -11,11 +11,11 @@ public:
   MetadataArrayView(gsl::span<const ElementType> buffer)
       : _valueBuffer{buffer} {}
 
-  const ElementType& operator[](size_t index) const {
+  const ElementType& operator[](int64_t index) const {
     return _valueBuffer[index];
   }
 
-  size_t size() const { return _valueBuffer.size(); }
+  int64_t size() const { return static_cast<int64_t>(_valueBuffer.size()); }
 
 private:
   gsl::span<const ElementType> _valueBuffer;
@@ -25,26 +25,26 @@ template <> class MetadataArrayView<bool> {
 public:
   MetadataArrayView(
       gsl::span<const std::byte> buffer,
-      size_t bitOffset,
-      size_t instanceCount)
+      int64_t bitOffset,
+      int64_t instanceCount)
       : _valueBuffer{buffer},
         _bitOffset{bitOffset},
         _instanceCount{instanceCount} {}
 
-  bool operator[](size_t index) const {
+  bool operator[](int64_t index) const {
     index += _bitOffset;
-    size_t byteIndex = index / 8;
-    size_t bitIndex = index % 8;
+    int64_t byteIndex = index / 8;
+    int64_t bitIndex = index % 8;
     int bitValue = static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 
-  size_t size() const { return _instanceCount; }
+  int64_t size() const { return _instanceCount; }
 
 private:
   gsl::span<const std::byte> _valueBuffer;
-  size_t _bitOffset;
-  size_t _instanceCount;
+  int64_t _bitOffset;
+  int64_t _instanceCount;
 };
 
 template <> class MetadataArrayView<std::string_view> {
@@ -53,13 +53,13 @@ public:
       gsl::span<const std::byte> buffer,
       gsl::span<const std::byte> offsetBuffer,
       PropertyType offsetType,
-      size_t size)
+      int64_t size)
       : _valueBuffer{buffer},
         _offsetBuffer{offsetBuffer},
         _offsetType{offsetType},
         _size{size} {}
 
-  std::string_view operator[](size_t index) const {
+  std::string_view operator[](int64_t index) const {
     size_t currentOffset =
         getOffsetFromOffsetBuffer(index, _offsetBuffer, _offsetType);
     size_t nextOffset =
@@ -69,7 +69,7 @@ public:
         (nextOffset - currentOffset));
   }
 
-  size_t size() const { return _size; }
+  int64_t size() const { return _size; }
 
 private:
   static size_t getOffsetFromOffsetBuffer(
@@ -109,6 +109,6 @@ private:
   gsl::span<const std::byte> _valueBuffer;
   gsl::span<const std::byte> _offsetBuffer;
   PropertyType _offsetType;
-  size_t _size;
+  int64_t _size;
 };
 } // namespace CesiumGltf
