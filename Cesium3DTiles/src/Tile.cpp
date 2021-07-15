@@ -8,6 +8,7 @@
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
 #include "CesiumGeospatial/Transforms.h"
+#include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 #include <cstddef>
@@ -15,6 +16,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTiles {
@@ -227,6 +229,7 @@ void Tile::loadContent() {
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
+
   if (!maybeRequestFuture) {
     // There is no content to load. But we may need to upsample.
 
@@ -268,6 +271,7 @@ void Tile::loadContent() {
                tileset.getExternals().pPrepareRendererResources,
            pLogger = tileset.getExternals().pLogger](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            CESIUM_TRACE("loadContent worker thread");
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               SPDLOG_LOGGER_ERROR(
@@ -325,6 +329,7 @@ void Tile::loadContent() {
                     projections);
 
                 if (pPrepareRendererResources) {
+                  CESIUM_TRACE("prepareInLoadThread");
                   const glm::dmat4& transform = loadInput.tileTransform;
                   pRendererResources =
                       pPrepareRendererResources->prepareInLoadThread(

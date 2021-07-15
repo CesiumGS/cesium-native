@@ -3,7 +3,7 @@ language: cpp
 before_script:
   - mkdir -p build
   - cd build
-  - cmake ..
+  - cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..
 script:
   - cmake --build . --config Debug
   - ctest -V

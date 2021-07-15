@@ -7,11 +7,13 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGltf/GltfReader.h"
+#include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 
@@ -83,6 +85,8 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
 }
 
 bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     return true;
   }
@@ -92,7 +96,7 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
     return false;
   }
 
-  doLoad(tile, true);
+  this->doLoad(tile, true);
   return true;
 }
 
@@ -101,11 +105,13 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
     const LoadTileImageFromUrlOptions& options) const {
+
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
           [url, options = options](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
@@ -222,6 +228,10 @@ static LoadResult createLoadResultFromLoadedImage(
       static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
   if (image.width > 0 && image.height > 0 &&
       image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
+    CESIUM_TRACE(
+        "Prepare Raster " + std::to_string(image.width) + "x" +
+        std::to_string(image.height) + "x" + std::to_string(image.channels) +
+        "x" + std::to_string(image.bytesPerChannel));
     void* pRendererResources =
         pPrepareRendererResources->prepareRasterInLoadThread(image);
 

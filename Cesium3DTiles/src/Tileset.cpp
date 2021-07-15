@@ -17,6 +17,7 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
+#include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/Uri.h"
 #include "TileUtilities.h"
 #include "calcQuadtreeMaxGeometricError.h"
@@ -40,7 +41,7 @@ Tileset::Tileset(
     const std::string& url,
     const TilesetOptions& options)
     : _externals(externals),
-      _asyncSystem(externals.pTaskProcessor),
+      _asyncSystem(externals.asyncSystem),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -56,6 +57,7 @@ Tileset::Tileset(
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
       _gltfUpAxis(CesiumGeometry::Axis::Y) {
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
   ++this->_loadsInProgress;
   this->_loadTilesetJson(url);
 }
@@ -66,7 +68,7 @@ Tileset::Tileset(
     const std::string& ionAccessToken,
     const TilesetOptions& options)
     : _externals(externals),
-      _asyncSystem(externals.pTaskProcessor),
+      _asyncSystem(externals.asyncSystem),
       _userCredit(
           (options.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -82,6 +84,9 @@ Tileset::Tileset(
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false) {
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
+  CESIUM_TRACE_BEGIN_IN_TRACK("Tileset from ion startup");
+
   std::string ionUrl = "https://api.cesium.com/v1/assets/" +
                        std::to_string(ionAssetID) + "/endpoint";
   if (!ionAccessToken.empty()) {
@@ -92,7 +97,7 @@ Tileset::Tileset(
 
   this->_externals.pAssetAccessor->requestAsset(this->_asyncSystem, ionUrl)
       .thenInMainThread([this](std::shared_ptr<IAssetRequest>&& pRequest) {
-        this->_handleAssetResponse(std::move(pRequest));
+        return this->_handleAssetResponse(std::move(pRequest));
       })
       .catchInMainThread([this, &ionAssetID](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
@@ -101,7 +106,9 @@ Tileset::Tileset(
             ionAssetID,
             e.what());
         this->notifyTileDoneLoading(nullptr);
-      });
+      })
+      .thenImmediately(
+          []() { CESIUM_TRACE_END_IN_TRACK("Tileset from ion startup"); });
 }
 
 Tileset::~Tileset() {
@@ -127,7 +134,8 @@ Tileset::~Tileset() {
   }
 }
 
-void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
+Future<void>
+Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
     SPDLOG_LOGGER_ERROR(
@@ -135,7 +143,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         "No response received for asset request {}",
         pRequest->url());
     this->notifyTileDoneLoading(nullptr);
-    return;
+    return this->getAsyncSystem().createResolvedFuture();
   }
 
   if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
@@ -145,7 +153,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         pResponse->statusCode(),
         pRequest->url());
     this->notifyTileDoneLoading(nullptr);
-    return;
+    return this->getAsyncSystem().createResolvedFuture();
   }
 
   gsl::span<const std::byte> data = pResponse->data();
@@ -160,7 +168,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         "offset {}",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
-    return;
+    return this->getAsyncSystem().createResolvedFuture();
   }
 
   if (this->_externals.pCreditSystem) {
@@ -201,7 +209,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
         "Received unsupported asset response type: {}",
         type);
     this->notifyTileDoneLoading(nullptr);
-    return;
+    return this->getAsyncSystem().createResolvedFuture();
   }
 
   auto pContext = std::make_unique<TileContext>();
@@ -213,7 +221,7 @@ void Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
   pContext->failedTileCallback = [this](Tile& failedTile) {
     return this->_onIonTileFailed(failedTile);
   };
-  this->_loadTilesetJson(
+  return this->_loadTilesetJson(
       pContext->baseUrl,
       pContext->requestHeaders,
       std::move(pContext));
@@ -387,8 +395,13 @@ const ViewUpdateResult& Tileset::updateView(const ViewState& viewState) {
   return result;
 }
 
-void Tileset::notifyTileStartLoading(Tile* /*pTile*/) noexcept {
+void Tileset::notifyTileStartLoading(Tile* pTile) noexcept {
   ++this->_loadsInProgress;
+
+  if (pTile) {
+    CESIUM_TRACE_BEGIN_IN_TRACK(
+        TileIdUtilities::createTileIdString(pTile->getTileID()).c_str());
+  }
 }
 
 void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
@@ -397,6 +410,9 @@ void Tileset::notifyTileDoneLoading(Tile* pTile) noexcept {
 
   if (pTile) {
     this->_tileDataBytes += pTile->computeByteSize();
+
+    CESIUM_TRACE_END_IN_TRACK(
+        TileIdUtilities::createTileIdString(pTile->getTileID()).c_str());
   }
 }
 
@@ -422,7 +438,7 @@ void Tileset::loadTilesFromJson(
       pLogger);
 }
 
-std::optional<Future<std::shared_ptr<IAssetRequest>>>
+std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
 Tileset::requestTileContent(Tile& tile) {
   std::string url = this->getResolvedContentUrl(tile);
   if (url.empty()) {
@@ -464,7 +480,7 @@ int64_t Tileset::getTotalDataBytes() const noexcept {
   return bytes;
 }
 
-void Tileset::_loadTilesetJson(
+Future<void> Tileset::_loadTilesetJson(
     const std::string& url,
     const std::vector<std::pair<std::string, std::string>>& headers,
     std::unique_ptr<TileContext>&& pContext) {
@@ -473,7 +489,9 @@ void Tileset::_loadTilesetJson(
   }
   pContext->pTileset = this;
 
-  this->getExternals()
+  CESIUM_TRACE_BEGIN_IN_TRACK("Load tileset.json");
+
+  return this->getExternals()
       .pAssetAccessor->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
           [pLogger = this->_externals.pLogger,
@@ -491,6 +509,7 @@ void Tileset::_loadTilesetJson(
         this->addContext(std::move(loadResult.pContext));
         this->_pRootTile = std::move(loadResult.pRootTile);
         this->notifyTileDoneLoading(nullptr);
+        CESIUM_TRACE_END_IN_TRACK("Load tileset.json");
       })
       .catchInMainThread([this, url](const std::exception& e) {
         SPDLOG_LOGGER_ERROR(
@@ -500,6 +519,7 @@ void Tileset::_loadTilesetJson(
             e.what());
         this->_pRootTile.reset();
         this->notifyTileDoneLoading(nullptr);
+        CESIUM_TRACE_END_IN_TRACK("Load tileset.json");
       });
 }
 
@@ -1734,15 +1754,15 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 }
 
 void Tileset::_processLoadQueue() {
-  Tileset::processQueue(
+  this->processQueue(
       this->_loadQueueHigh,
       this->_loadsInProgress,
       this->_options.maximumSimultaneousTileLoads);
-  Tileset::processQueue(
+  this->processQueue(
       this->_loadQueueMedium,
       this->_loadsInProgress,
       this->_options.maximumSimultaneousTileLoads);
-  Tileset::processQueue(
+  this->processQueue(
       this->_loadQueueLow,
       this->_loadsInProgress,
       this->_options.maximumSimultaneousTileLoads);
@@ -1889,7 +1909,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
   }
 }
 
-/*static*/ void Tileset::processQueue(
+void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
     std::atomic<uint32_t>& loadsInProgress,
     uint32_t maximumLoadsInProgress) {
@@ -1900,8 +1920,8 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
   std::sort(queue.begin(), queue.end());
 
   for (LoadRecord& record : queue) {
+    CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
     record.pTile->loadContent();
-
     if (loadsInProgress >= maximumLoadsInProgress) {
       break;
     }

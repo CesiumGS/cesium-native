@@ -9,25 +9,15 @@ AsyncSystem::AsyncSystem(
           std::make_shared<Impl::AsyncSystemSchedulers>(pTaskProcessor)) {}
 
 void AsyncSystem::dispatchMainThreadTasks() {
-  this->_pSchedulers->mainThreadScheduler.run_all_tasks();
+  this->_pSchedulers->mainThread.dispatchQueuedContinuations();
 }
 
-namespace Impl {
-AsyncSystemSchedulers::AsyncSystemSchedulers(
-    std::shared_ptr<ITaskProcessor> pTaskProcessor_)
-    : pTaskProcessor(std::move(pTaskProcessor_)) {}
-
-void AsyncSystemSchedulers::schedule(async::task_run_handle t) {
-  struct Receiver {
-    async::task_run_handle taskHandle;
-  };
-
-  std::shared_ptr<Receiver> pReceiver = std::make_shared<Receiver>();
-  pReceiver->taskHandle = std::move(t);
-
-  this->pTaskProcessor->startTask(
-      [pReceiver]() mutable { pReceiver->taskHandle.run(); });
+bool AsyncSystem::dispatchOneMainThreadTask() {
+  return this->_pSchedulers->mainThread.dispatchZeroOrOneContinuation();
 }
-} // namespace Impl
+
+ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {
+  return ThreadPool(numberOfThreads);
+}
 
 } // namespace CesiumAsync

@@ -2,7 +2,7 @@
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
 #include "ResponseCacheControl.h"
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include <cstddef>
 #include <spdlog/spdlog.h>
 

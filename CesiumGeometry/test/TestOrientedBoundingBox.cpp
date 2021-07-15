@@ -1,6 +1,6 @@
 #include "Cesium3DTiles/ViewState.h"
 #include "CesiumGeometry/OrientedBoundingBox.h"
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <optional>

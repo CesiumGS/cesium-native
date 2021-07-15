@@ -9,6 +9,7 @@
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include "RasterizedPolygonsOverlay.h"
+#include <cassert>
 #include <optional>
 #include <spdlog/fwd.h>
 #include <unordered_map>
@@ -94,7 +95,7 @@ class CESIUM3DTILES_API RasterOverlayTileProvider {
 public:
   /**
    * Constructs a placeholder tile provider.
-   * 
+   *
    * @param owner The raster overlay that owns this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
@@ -192,8 +193,9 @@ public:
    * @param id The {@link TileID} of the tile to obtain.
    * @return The tile.
    */
-  CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTile(const CesiumGeometry::Rectangle& imageryRectangle, double targetGeometricError);
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
+      const CesiumGeometry::Rectangle& imageryRectangle,
+      double targetGeometricError);
 
   /**
    * @brief Whether the given raster tile has more detail.
@@ -212,6 +214,7 @@ public:
    * @brief Returns the number of tiles that are currently loading.
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
+    assert(this->_totalTilesCurrentlyLoading > -1);
     return this->_totalTilesCurrentlyLoading;
   }
 
@@ -230,7 +233,7 @@ public:
   /**
    * @brief Get the per-TileProvider {@link Credit} if one exists.
    */
-  const std::optional<Credit> getCredit() const noexcept { return _credit; }
+  const std::optional<Credit>& getCredit() const noexcept { return _credit; }
 
   /**
    * @brief Loads a tile immediately, without throttling requests.
@@ -333,6 +336,9 @@ protected:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
+  CESIUM_TRACE_DECLARE_TRACK_SET(
+      _loadingSlots,
+      "Raster Overlay Tile Loading Slot");
 
   static CesiumGltf::GltfReader _gltfReader;
 };
