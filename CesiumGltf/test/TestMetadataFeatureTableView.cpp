@@ -169,8 +169,8 @@ TEST_CASE("Test boolean properties") {
     uint8_t expectedValue = expected.back();
     int64_t byteIndex = i / 8;
     int64_t bitIndex = i % 8;
-    values[byteIndex] =
-        static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
+    values[static_cast<size_t>(byteIndex)] = static_cast<uint8_t>(
+        (expectedValue << bitIndex) | values[static_cast<size_t>(byteIndex)]);
   }
 
   // Create buffers in the scope, so that tests below don't accidentally refer

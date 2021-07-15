@@ -1045,9 +1045,10 @@ void updateExtensionWithBinaryProperty(
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
-  if (gltfBufferIndex < 0) {
-    return;
-  }
+  assert(
+      gltfBufferIndex >= 0 &&
+      "gltfBufferIndex is negative. Need to allocate buffer before "
+      "convert the binary property");
 
   const auto& byteOffsetIt = propertyValue.FindMember("byteOffset");
   if (byteOffsetIt == propertyValue.MemberEnd() ||
