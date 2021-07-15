@@ -131,7 +131,7 @@ add_subdirectory(CesiumJsonWriter)
 add_subdirectory(CesiumGltfWriter)
 add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumAsync)
-add_subdirectory(Cesium3DTiles)
+add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
 
 # Private Targets
