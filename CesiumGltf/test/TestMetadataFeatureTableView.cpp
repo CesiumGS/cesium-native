@@ -9,18 +9,28 @@ TEST_CASE("Test numeric properties") {
 
   // store property value
   std::vector<uint32_t> values = {12, 34, 30, 11, 34, 34, 11, 33, 122, 33};
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
-  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
-  std::memcpy(
-      valueBuffer.cesium.data.data(),
-      values.data(),
-      valueBuffer.cesium.data.size());
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
+  // Construct buffers in the scope to make sure that tests below doesn't use
+  // the temp variables. Use index to access the buffer and buffer view instead
+  size_t valueBufferIndex = 0;
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
+    valueBufferIndex = model.buffers.size() - 1;
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -40,8 +50,7 @@ TEST_CASE("Test numeric properties") {
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.bufferView =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+  featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
@@ -100,7 +109,7 @@ TEST_CASE("Test numeric properties") {
   }
 
   SECTION("Wrong buffer index") {
-    valueBufferView.buffer = 2;
+    model.bufferViews[valueBufferViewIndex].buffer = 2;
     std::optional<MetadataPropertyView<uint32_t>> uint32Property =
         view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
@@ -114,28 +123,28 @@ TEST_CASE("Test numeric properties") {
   }
 
   SECTION("Buffer view points outside of the real buffer length") {
-    valueBuffer.cesium.data.resize(12);
+    model.buffers[valueBufferIndex].cesium.data.resize(12);
     std::optional<MetadataPropertyView<uint32_t>> uint32Property =
         view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view offset is not a multiple of 8") {
-    valueBufferView.byteOffset = 1;
+    model.bufferViews[valueBufferViewIndex].byteOffset = 1;
     std::optional<MetadataPropertyView<uint32_t>> uint32Property =
         view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view length isn't multiple of sizeof(T)") {
-    valueBufferView.byteLength = 13;
+    model.bufferViews[valueBufferViewIndex].byteLength = 13;
     std::optional<MetadataPropertyView<uint32_t>> uint32Property =
         view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
   }
 
   SECTION("Buffer view length doesn't match with featureTableCount") {
-    valueBufferView.byteLength = 12;
+    model.bufferViews[valueBufferViewIndex].byteLength = 12;
     std::optional<MetadataPropertyView<uint32_t>> uint32Property =
         view.getPropertyView<uint32_t>("TestClassProperty");
     REQUIRE(uint32Property == std::nullopt);
@@ -164,18 +173,23 @@ TEST_CASE("Test boolean properties") {
         static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
   }
 
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.cesium.data.resize(values.size());
-  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
-  std::memcpy(
-      valueBuffer.cesium.data.data(),
-      values.data(),
-      valueBuffer.cesium.data.size());
+  // Create buffers in the scope, so that tests below don't accidentally refer
+  // to temp variable. Use index instead if the buffer is needed
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size());
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -247,29 +261,41 @@ TEST_CASE("Test string property") {
         offsetValue[i] + static_cast<uint32_t>(expectedValue.size());
   }
 
-  // store property value
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.byteLength = static_cast<int64_t>(values.size());
-  valueBuffer.cesium.data = std::move(values);
+  // Create buffers in the scope, so that tests below don't accidentally refer
+  // to temp variable. Use index instead if the buffer is needed.
+  // Store property value
+  size_t valueBufferIndex = 0;
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.byteLength = static_cast<int64_t>(values.size());
+    valueBuffer.cesium.data = std::move(values);
+    valueBufferIndex = model.buffers.size() - 1;
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
-  int32_t valueBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(valueBufferIndex);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
-  // store string offset buffer
-  Buffer& offsetBuffer = model.buffers.emplace_back();
-  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-  offsetBuffer.cesium.data = std::move(offsets);
+  // Create buffers in the scope, so that tests below don't accidentally refer
+  // to temp variable. Use index instead if the buffer is needed.
+  // Store string offset buffer
+  size_t offsetBufferIndex = 0;
+  size_t offsetBufferViewIndex = 0;
+  {
+    Buffer& offsetBuffer = model.buffers.emplace_back();
+    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+    offsetBuffer.cesium.data = std::move(offsets);
+    offsetBufferIndex = model.buffers.size() - 1;
 
-  BufferView& offsetBufferView = model.bufferViews.emplace_back();
-  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  offsetBufferView.byteOffset = 0;
-  offsetBufferView.byteLength = offsetBuffer.byteLength;
-  int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& offsetBufferView = model.bufferViews.emplace_back();
+    offsetBufferView.buffer = static_cast<int32_t>(offsetBufferIndex);
+    offsetBufferView.byteOffset = 0;
+    offsetBufferView.byteLength = offsetBuffer.byteLength;
+    offsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -290,8 +316,9 @@ TEST_CASE("Test string property") {
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.offsetType = "UINT32";
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
+  featureTableProperty.stringOffsetBufferView =
+      static_cast<int32_t>(offsetBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
@@ -328,19 +355,20 @@ TEST_CASE("Test string property") {
   }
 
   SECTION("Offset values are not sorted ascending") {
-    uint32_t* offset =
-        reinterpret_cast<uint32_t*>(offsetBuffer.cesium.data.data());
-    offset[2] = static_cast<uint32_t>(valueBuffer.byteLength + 4);
+    uint32_t* offset = reinterpret_cast<uint32_t*>(
+        model.buffers[offsetBufferIndex].cesium.data.data());
+    offset[2] =
+        static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
     std::optional<MetadataPropertyView<std::string_view>> stringProperty =
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
   }
 
   SECTION("Offset value points outside of value buffer") {
-    uint32_t* offset =
-        reinterpret_cast<uint32_t*>(offsetBuffer.cesium.data.data());
+    uint32_t* offset = reinterpret_cast<uint32_t*>(
+        model.buffers[offsetBufferIndex].cesium.data.data());
     offset[featureTable.count] =
-        static_cast<uint32_t>(valueBuffer.byteLength + 4);
+        static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
     std::optional<MetadataPropertyView<std::string_view>> stringProperty =
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty == std::nullopt);
@@ -353,18 +381,24 @@ TEST_CASE("Test fixed numeric array") {
   // store property value
   std::vector<uint32_t> values =
       {12, 34, 30, 11, 34, 34, 11, 33, 122, 33, 223, 11};
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
-  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
-  std::memcpy(
-      valueBuffer.cesium.data.data(),
-      values.data(),
-      valueBuffer.cesium.data.size());
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size() * sizeof(uint32_t));
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
+
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -422,7 +456,7 @@ TEST_CASE("Test fixed numeric array") {
   }
 
   SECTION("Buffer size is a multiple of type size") {
-    valueBufferView.byteLength = 13;
+    model.bufferViews[valueBufferViewIndex].byteLength = 13;
     std::optional<MetadataPropertyView<MetadataArrayView<uint32_t>>>
         arrayProperty = view.getPropertyView<MetadataArrayView<uint32_t>>(
             "TestClassProperty");
@@ -476,28 +510,32 @@ TEST_CASE("Test dynamic numeric array") {
   }
 
   // store property value
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.byteLength = static_cast<int64_t>(values.size());
-  valueBuffer.cesium.data = std::move(values);
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.byteLength = static_cast<int64_t>(values.size());
+    valueBuffer.cesium.data = std::move(values);
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
-  int32_t valueBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // store string offset buffer
-  Buffer& offsetBuffer = model.buffers.emplace_back();
-  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-  offsetBuffer.cesium.data = std::move(offsets);
+  size_t offsetBufferViewIndex = 0;
+  {
+    Buffer& offsetBuffer = model.buffers.emplace_back();
+    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+    offsetBuffer.cesium.data = std::move(offsets);
 
-  BufferView& offsetBufferView = model.bufferViews.emplace_back();
-  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  offsetBufferView.byteOffset = 0;
-  offsetBufferView.byteLength = offsetBuffer.byteLength;
-  int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& offsetBufferView = model.bufferViews.emplace_back();
+    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    offsetBufferView.byteOffset = 0;
+    offsetBufferView.byteLength = offsetBuffer.byteLength;
+    offsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -518,8 +556,9 @@ TEST_CASE("Test dynamic numeric array") {
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
+  featureTableProperty.arrayOffsetBufferView =
+      static_cast<int32_t>(offsetBufferViewIndex);
   featureTableProperty.offsetType = "UINT64";
 
   // test feature table view
@@ -579,18 +618,21 @@ TEST_CASE("Test fixed boolean array") {
         static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
   }
 
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.cesium.data.resize(values.size());
-  valueBuffer.byteLength = static_cast<int64_t>(valueBuffer.cesium.data.size());
-  std::memcpy(
-      valueBuffer.cesium.data.data(),
-      values.data(),
-      valueBuffer.cesium.data.size());
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.cesium.data.resize(values.size());
+    valueBuffer.byteLength =
+        static_cast<int64_t>(valueBuffer.cesium.data.size());
+    std::memcpy(
+        valueBuffer.cesium.data.data(),
+        values.data(),
+        valueBuffer.cesium.data.size());
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -690,28 +732,32 @@ TEST_CASE("Test dynamic bool array") {
   }
 
   // store property value
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.byteLength = static_cast<int64_t>(values.size());
-  valueBuffer.cesium.data = std::move(values);
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.byteLength = static_cast<int64_t>(values.size());
+    valueBuffer.cesium.data = std::move(values);
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
-  int32_t valueBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // store string offset buffer
-  Buffer& offsetBuffer = model.buffers.emplace_back();
-  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-  offsetBuffer.cesium.data = std::move(offsets);
+  size_t offsetBufferViewIndex = 0;
+  {
+    Buffer& offsetBuffer = model.buffers.emplace_back();
+    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+    offsetBuffer.cesium.data = std::move(offsets);
 
-  BufferView& offsetBufferView = model.bufferViews.emplace_back();
-  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  offsetBufferView.byteOffset = 0;
-  offsetBufferView.byteLength = offsetBuffer.byteLength;
-  int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& offsetBufferView = model.bufferViews.emplace_back();
+    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    offsetBufferView.byteOffset = 0;
+    offsetBufferView.byteLength = offsetBuffer.byteLength;
+    offsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -732,8 +778,9 @@ TEST_CASE("Test dynamic bool array") {
   // setup feature table property
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
+  featureTableProperty.arrayOffsetBufferView =
+      static_cast<int32_t>(offsetBufferViewIndex);
   featureTableProperty.offsetType = "UINT64";
 
   // test feature table view
@@ -794,28 +841,32 @@ TEST_CASE("Test fixed array of string") {
   }
 
   // store property value
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.byteLength = static_cast<int64_t>(values.size());
-  valueBuffer.cesium.data = std::move(values);
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.byteLength = static_cast<int64_t>(values.size());
+    valueBuffer.cesium.data = std::move(values);
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
-  int32_t valueBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // store string offset buffer
-  Buffer& offsetBuffer = model.buffers.emplace_back();
-  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-  offsetBuffer.cesium.data = std::move(offsets);
+  size_t offsetBufferViewIndex = 0;
+  {
+    Buffer& offsetBuffer = model.buffers.emplace_back();
+    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+    offsetBuffer.cesium.data = std::move(offsets);
 
-  BufferView& offsetBufferView = model.bufferViews.emplace_back();
-  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  offsetBufferView.byteOffset = 0;
-  offsetBufferView.byteLength = offsetBuffer.byteLength;
-  int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& offsetBufferView = model.bufferViews.emplace_back();
+    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    offsetBufferView.byteOffset = 0;
+    offsetBufferView.byteLength = offsetBuffer.byteLength;
+    offsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -840,8 +891,9 @@ TEST_CASE("Test fixed array of string") {
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.offsetType = "UINT32";
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.stringOffsetBufferView = offsetBufferViewIdx;
+  featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
+  featureTableProperty.stringOffsetBufferView =
+      static_cast<int32_t>(offsetBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
@@ -951,40 +1003,46 @@ TEST_CASE("Test dynamic array of string") {
   }
 
   // store property value
-  Buffer& valueBuffer = model.buffers.emplace_back();
-  valueBuffer.byteLength = static_cast<int64_t>(values.size());
-  valueBuffer.cesium.data = std::move(values);
+  size_t valueBufferViewIndex = 0;
+  {
+    Buffer& valueBuffer = model.buffers.emplace_back();
+    valueBuffer.byteLength = static_cast<int64_t>(values.size());
+    valueBuffer.cesium.data = std::move(values);
 
-  BufferView& valueBufferView = model.bufferViews.emplace_back();
-  valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  valueBufferView.byteOffset = 0;
-  valueBufferView.byteLength = valueBuffer.byteLength;
-  int32_t valueBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& valueBufferView = model.bufferViews.emplace_back();
+    valueBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    valueBufferView.byteOffset = 0;
+    valueBufferView.byteLength = valueBuffer.byteLength;
+    valueBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // store array offset buffer
-  Buffer& offsetBuffer = model.buffers.emplace_back();
-  offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
-  offsetBuffer.cesium.data = std::move(offsets);
+  size_t offsetBufferViewIndex = 0;
+  {
+    Buffer& offsetBuffer = model.buffers.emplace_back();
+    offsetBuffer.byteLength = static_cast<int64_t>(offsets.size());
+    offsetBuffer.cesium.data = std::move(offsets);
 
-  BufferView& offsetBufferView = model.bufferViews.emplace_back();
-  offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  offsetBufferView.byteOffset = 0;
-  offsetBufferView.byteLength = offsetBuffer.byteLength;
-  int32_t offsetBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& offsetBufferView = model.bufferViews.emplace_back();
+    offsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    offsetBufferView.byteOffset = 0;
+    offsetBufferView.byteLength = offsetBuffer.byteLength;
+    offsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // store string offset buffer
-  Buffer& strOffsetBuffer = model.buffers.emplace_back();
-  strOffsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
-  strOffsetBuffer.cesium.data = std::move(stringOffsets);
+  size_t strOffsetBufferViewIndex = 0;
+  {
+    Buffer& strOffsetBuffer = model.buffers.emplace_back();
+    strOffsetBuffer.byteLength = static_cast<int64_t>(stringOffsets.size());
+    strOffsetBuffer.cesium.data = std::move(stringOffsets);
 
-  BufferView& strOffsetBufferView = model.bufferViews.emplace_back();
-  strOffsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
-  strOffsetBufferView.byteOffset = 0;
-  strOffsetBufferView.byteLength = strOffsetBuffer.byteLength;
-  int32_t strOffsetBufferViewIdx =
-      static_cast<int32_t>(model.bufferViews.size() - 1);
+    BufferView& strOffsetBufferView = model.bufferViews.emplace_back();
+    strOffsetBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    strOffsetBufferView.byteOffset = 0;
+    strOffsetBufferView.byteLength = strOffsetBuffer.byteLength;
+    strOffsetBufferViewIndex = model.bufferViews.size() - 1;
+  }
 
   // setup metadata
   ModelEXT_feature_metadata& metadata =
@@ -1006,9 +1064,11 @@ TEST_CASE("Test dynamic array of string") {
   FeatureTableProperty& featureTableProperty =
       featureTable.properties["TestClassProperty"];
   featureTableProperty.offsetType = "UINT32";
-  featureTableProperty.bufferView = valueBufferViewIdx;
-  featureTableProperty.arrayOffsetBufferView = offsetBufferViewIdx;
-  featureTableProperty.stringOffsetBufferView = strOffsetBufferViewIdx;
+  featureTableProperty.bufferView = static_cast<int32_t>(valueBufferViewIndex);
+  featureTableProperty.arrayOffsetBufferView =
+      static_cast<int32_t>(offsetBufferViewIndex);
+  featureTableProperty.stringOffsetBufferView =
+      static_cast<int32_t>(strOffsetBufferViewIndex);
 
   // test feature table view
   MetadataFeatureTableView view(&model, &featureTable);
