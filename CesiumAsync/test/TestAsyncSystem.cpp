@@ -334,4 +334,43 @@ TEST_CASE("AsyncSystem") {
     last.wait();
     CHECK(rejected);
   }
+
+  SECTION("conversion to SharedFuture") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture.thenInWorkerThread([&executed1](int value) {
+      CHECK(value == 1);
+      CHECK(!executed1);
+      return 2;
+    }).thenImmediately([&executed1](int value) {
+      CHECK(value == 2);
+      CHECK(!executed1);
+      executed1 = true;
+      return 10;
+    });
+
+    bool executed2 = false;
+    auto two = sharedFuture.thenInWorkerThread([&executed2](int value) {
+      CHECK(value == 1);
+      CHECK(!executed2);
+      return 2;
+    }).thenImmediately([&executed2](int value) {
+      CHECK(value == 2);
+      CHECK(!executed2);
+      executed2 = true;
+      return 11;
+    });
+
+    promise.resolve(1);
+
+    int value1 = one.wait();
+    int value2 = two.wait();
+
+    CHECK(executed1);
+    CHECK(executed2);
+    CHECK(value1 == 10);
+    CHECK(value2 == 11);
+  }
 }
