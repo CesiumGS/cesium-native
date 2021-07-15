@@ -30,7 +30,7 @@ static void checkDynamicArray(
     const std::vector<T>& data,
     const std::vector<E> offset,
     CesiumGltf::PropertyType offsetType,
-    size_t instanceCount) {
+    int64_t instanceCount) {
   // copy data to buffer
   std::vector<std::byte> buffer;
   buffer.resize(data.size() * sizeof(T));
@@ -64,8 +64,8 @@ static void checkDynamicArray(
 template <typename T>
 static void checkFixedArray(
     const std::vector<T>& data,
-    size_t componentCount,
-    size_t instanceCount) {
+    int64_t componentCount,
+    int64_t instanceCount) {
   std::vector<std::byte> buffer;
   buffer.resize(data.size() * sizeof(T));
   std::memcpy(buffer.data(), data.data(), data.size() * sizeof(T));
