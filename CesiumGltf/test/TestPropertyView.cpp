@@ -18,10 +18,10 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
       gsl::span<const std::byte>(),
       CesiumGltf::PropertyType::None,
       0,
-      expected.size());
+      static_cast<int64_t>(expected.size()));
 
   for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == expected[i]);
+    REQUIRE(property.get(i) == expected[static_cast<size_t>(i)]);
   }
 }
 
@@ -131,7 +131,7 @@ TEST_CASE("Check boolean value") {
       0,
       instanceCount);
   for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == bits[i]);
+    REQUIRE(property.get(i) == bits[static_cast<size_t>(i)]);
   }
 }
 
@@ -178,9 +178,9 @@ TEST_CASE("Check string value") {
       gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
       CesiumGltf::PropertyType::Uint32,
       0,
-      strings.size());
+      static_cast<int64_t>(strings.size()));
   for (int64_t i = 0; i < property.size(); ++i) {
-    REQUIRE(property.get(i) == strings[i]);
+    REQUIRE(property.get(i) == strings[static_cast<size_t>(i)]);
   }
 }
 
@@ -374,7 +374,7 @@ TEST_CASE("Check fixed array of string") {
           gsl::span<const std::byte>(offsetBuffer.data(), offsetBuffer.size()),
           CesiumGltf::PropertyType::Uint32,
           3,
-          strings.size() / 3);
+          static_cast<int64_t>(strings.size() / 3));
 
   size_t expectedIdx = 0;
   for (int64_t i = 0; i < property.size(); ++i) {
