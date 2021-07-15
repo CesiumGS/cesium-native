@@ -1126,6 +1126,11 @@ void upgradeBatchTableToFeatureMetadata(
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData) {
 
+  // Check to make sure a char of rapidjson is 1 byte
+  static_assert(
+      sizeof(rapidjson::Value::Ch) == 1,
+      "RapidJson::Value::Ch is not 1 byte");
+
   // Parse the b3dm batch table and convert it to the EXT_feature_metadata
   // extension.
 
