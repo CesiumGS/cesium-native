@@ -252,13 +252,14 @@ TEST_CASE("AsyncSystem") {
     auto all = asyncSystem.all(std::move(futures));
 
     bool resolved = false;
-    auto last = std::move(all).thenImmediately([&resolved](std::vector<int>&& result) {
-      CHECK(result.size() == 3);
-      CHECK(result[0] == 1);
-      CHECK(result[1] == 2);
-      CHECK(result[2] == 3);
-      resolved = true;
-    });
+    auto last =
+        std::move(all).thenImmediately([&resolved](std::vector<int>&& result) {
+          CHECK(result.size() == 3);
+          CHECK(result[0] == 1);
+          CHECK(result[1] == 2);
+          CHECK(result[2] == 3);
+          resolved = true;
+        });
 
     three.resolve(3);
     one.resolve(1);
