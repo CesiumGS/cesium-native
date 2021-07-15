@@ -66,7 +66,7 @@ TEST_CASE("Test numeric properties") {
     REQUIRE(uint32Property != std::nullopt);
 
     for (int64_t i = 0; i < uint32Property->size(); ++i) {
-      REQUIRE(uint32Property->get(i) == values[i]);
+      REQUIRE(uint32Property->get(i) == values[static_cast<size_t>(i)]);
     }
   }
 
@@ -167,8 +167,8 @@ TEST_CASE("Test boolean properties") {
     }
 
     uint8_t expectedValue = expected.back();
-    size_t byteIndex = i / 8;
-    size_t bitIndex = i % 8;
+    int64_t byteIndex = i / 8;
+    int64_t bitIndex = i % 8;
     values[byteIndex] =
         static_cast<uint8_t>((expectedValue << bitIndex) | values[byteIndex]);
   }
@@ -226,7 +226,7 @@ TEST_CASE("Test boolean properties") {
     REQUIRE(boolProperty != std::nullopt);
     REQUIRE(boolProperty->size() == instanceCount);
     for (int64_t i = 0; i < boolProperty->size(); ++i) {
-      bool expectedValue = expected[i];
+      bool expectedValue = expected[static_cast<size_t>(i)];
       REQUIRE(boolProperty->get(i) == expectedValue);
     }
   }
@@ -333,7 +333,7 @@ TEST_CASE("Test string property") {
         view.getPropertyView<std::string_view>("TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      REQUIRE(stringProperty->get(i) == expected[i]);
+      REQUIRE(stringProperty->get(static_cast<int64_t>(i)) == expected[i]);
     }
   }
 
@@ -442,7 +442,7 @@ TEST_CASE("Test fixed numeric array") {
     for (int64_t i = 0; i < arrayProperty->size(); ++i) {
       MetadataArrayView<uint32_t> member = arrayProperty->get(i);
       for (int64_t j = 0; j < member.size(); ++j) {
-        REQUIRE(member[j] == values[i * 3 + j]);
+        REQUIRE(member[j] == values[static_cast<size_t>(i * 3 + j)]);
       }
     }
   }
@@ -573,10 +573,11 @@ TEST_CASE("Test dynamic numeric array") {
         view.getPropertyView<MetadataArrayView<uint16_t>>("TestClassProperty");
     REQUIRE(property != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<uint16_t> valueMember = property->get(i);
+      MetadataArrayView<uint16_t> valueMember =
+          property->get(static_cast<int64_t>(i));
       REQUIRE(valueMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
-        REQUIRE(expected[i][j] == valueMember[j]);
+        REQUIRE(expected[i][j] == valueMember[static_cast<int64_t>(j)]);
       }
     }
   }
@@ -675,7 +676,7 @@ TEST_CASE("Test fixed boolean array") {
     for (int64_t i = 0; i < boolProperty->size(); ++i) {
       MetadataArrayView<bool> valueMember = boolProperty->get(i);
       for (int64_t j = 0; j < valueMember.size(); ++j) {
-        REQUIRE(valueMember[j] == expected[i * 3 + j]);
+        REQUIRE(valueMember[j] == expected[static_cast<size_t>(i * 3 + j)]);
       }
     }
   }
@@ -795,10 +796,11 @@ TEST_CASE("Test dynamic bool array") {
         view.getPropertyView<MetadataArrayView<bool>>("TestClassProperty");
     REQUIRE(boolProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<bool> arrayMember = boolProperty->get(i);
+      MetadataArrayView<bool> arrayMember =
+          boolProperty->get(static_cast<int64_t>(i));
       REQUIRE(arrayMember.size() == static_cast<int64_t>(expected[i].size()));
       for (size_t j = 0; j < expected[i].size(); ++j) {
-        REQUIRE(expected[i][j] == arrayMember[j]);
+        REQUIRE(expected[i][j] == arrayMember[static_cast<int64_t>(j)]);
       }
     }
   }
@@ -1084,9 +1086,10 @@ TEST_CASE("Test dynamic array of string") {
                 "TestClassProperty");
     REQUIRE(stringProperty != std::nullopt);
     for (size_t i = 0; i < expected.size(); ++i) {
-      MetadataArrayView<std::string_view> stringArray = stringProperty->get(i);
+      MetadataArrayView<std::string_view> stringArray =
+          stringProperty->get(static_cast<int64_t>(i));
       for (size_t j = 0; j < expected[i].size(); ++j) {
-        REQUIRE(stringArray[j] == expected[i][j]);
+        REQUIRE(stringArray[static_cast<int64_t>(j)] == expected[i][j]);
       }
     }
   }
