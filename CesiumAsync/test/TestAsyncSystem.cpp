@@ -283,14 +283,15 @@ TEST_CASE("AsyncSystem") {
 
     bool rejected = false;
 
-    auto last =
-        std::move(all).thenImmediately([](std::vector<int>&& /*result*/) {
-          // Should not happen.
-          CHECK(false);
-        }).catchImmediately([&rejected](std::exception&& e) {
-          CHECK(std::string(e.what()) == "2");
-          rejected = true;
-        });
+    auto last = std::move(all)
+                    .thenImmediately([](std::vector<int>&& /*result*/) {
+                      // Should not happen.
+                      CHECK(false);
+                    })
+                    .catchImmediately([&rejected](std::exception&& e) {
+                      CHECK(std::string(e.what()) == "2");
+                      rejected = true;
+                    });
 
     three.resolve(3);
     one.resolve(1);
@@ -300,7 +301,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(rejected);
   }
 
-  SECTION("When multiple futures in an 'all' reject, the data from the first rejection in the list is used") {
+  SECTION("When multiple futures in an 'all' reject, the data from the first "
+          "rejection in the list is used") {
     auto one = asyncSystem.createPromise<int>();
     auto two = asyncSystem.createPromise<int>();
     auto three = asyncSystem.createPromise<int>();
@@ -314,15 +316,16 @@ TEST_CASE("AsyncSystem") {
 
     bool rejected = false;
 
-    auto last =
-        std::move(all).thenImmediately([](std::vector<int>&& /*result*/) {
-          // Should not happen.
-          CHECK(false);
-        }).catchImmediately([&rejected](std::exception&& e) {
-          CHECK(std::string(e.what()) == "1");
-          CHECK(!rejected);
-          rejected = true;
-        });
+    auto last = std::move(all)
+                    .thenImmediately([](std::vector<int>&& /*result*/) {
+                      // Should not happen.
+                      CHECK(false);
+                    })
+                    .catchImmediately([&rejected](std::exception&& e) {
+                      CHECK(std::string(e.what()) == "1");
+                      CHECK(!rejected);
+                      rejected = true;
+                    });
 
     three.reject(std::runtime_error("3"));
     one.reject(std::runtime_error("1"));
