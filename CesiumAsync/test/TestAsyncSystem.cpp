@@ -268,4 +268,67 @@ TEST_CASE("AsyncSystem") {
     last.wait();
     CHECK(resolved);
   }
+
+  SECTION("Future returned by 'all' rejects when any Future rejects") {
+    auto one = asyncSystem.createPromise<int>();
+    auto two = asyncSystem.createPromise<int>();
+    auto three = asyncSystem.createPromise<int>();
+
+    std::vector<Future<int>> futures;
+    futures.emplace_back(one.getFuture());
+    futures.emplace_back(two.getFuture());
+    futures.emplace_back(three.getFuture());
+
+    auto all = asyncSystem.all(std::move(futures));
+
+    bool rejected = false;
+
+    auto last =
+        std::move(all).thenImmediately([](std::vector<int>&& /*result*/) {
+          // Should not happen.
+          CHECK(false);
+        }).catchImmediately([&rejected](std::exception&& e) {
+          CHECK(std::string(e.what()) == "2");
+          rejected = true;
+        });
+
+    three.resolve(3);
+    one.resolve(1);
+    two.reject(std::runtime_error("2"));
+
+    last.wait();
+    CHECK(rejected);
+  }
+
+  SECTION("When multiple futures in an 'all' reject, the data from the first rejection in the list is used") {
+    auto one = asyncSystem.createPromise<int>();
+    auto two = asyncSystem.createPromise<int>();
+    auto three = asyncSystem.createPromise<int>();
+
+    std::vector<Future<int>> futures;
+    futures.emplace_back(one.getFuture());
+    futures.emplace_back(two.getFuture());
+    futures.emplace_back(three.getFuture());
+
+    auto all = asyncSystem.all(std::move(futures));
+
+    bool rejected = false;
+
+    auto last =
+        std::move(all).thenImmediately([](std::vector<int>&& /*result*/) {
+          // Should not happen.
+          CHECK(false);
+        }).catchImmediately([&rejected](std::exception&& e) {
+          CHECK(std::string(e.what()) == "1");
+          CHECK(!rejected);
+          rejected = true;
+        });
+
+    three.reject(std::runtime_error("3"));
+    one.reject(std::runtime_error("1"));
+    two.reject(std::runtime_error("2"));
+
+    last.wait();
+    CHECK(rejected);
+  }
 }

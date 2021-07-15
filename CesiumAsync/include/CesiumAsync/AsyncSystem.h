@@ -171,37 +171,23 @@ public:
             Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
   }
 
-  // template <typename TIterator>
-  // Future<std::vector<T>> all(TIterator& begin, TIterator& end) const {
-  //   async::when_all(begin, end);
-  // }
-
-  // template <typename T, typename TIterator> struct FutureToTaskIterator {
-  //   using value_type = async::task<T>;
-
-  //   TIterator _iterator;
-
-  //   FutureToTaskIterator(const TIterator& iterator_) : _iterator(iterator) {}
-  //   TIterator& operator++() {
-  //     TIterator next = _iterator;
-  //     ++next;
-  //     return FutureToTaskIterator<TIterator>(next);
-  //   }
-
-  //   async::task<T>& operator*() const noexcept { return _iterator->_task; }
-  //   async::task<T>* operator->() const noexcept { return &_iterator->_task; }
-
-  //   bool operator==(const FutureToTaskIterator<T, TIterator>& rhs) const {
-  //     return _iterator == rhs._iterator;
-  //   }
-  // };
-
-  // template <typename T, typename TIterator>
-  // static FutureToTaskIterator<T, TIterator>
-  // unwrapIterator(const TIterator& iterator) {
-  //   return FutureToTaskIterator<T, TIterator>(iterator);
-  // }
-
+  /**
+   * @brief Creates a Future that resolves when every Future in a vector
+   * resolves, and rejects when any Future in the vector rejects.
+   *
+   * If any of the Futures rejects, the returned Future rejects as well. The
+   * exception included in the rejection will be from the first Future in the
+   * vector that rejects.
+   *
+   * To get detailed rejection information from each of the Futures,
+   * attach a `catchInMainThread` continuation prior to passing the
+   * list into `all`.
+   *
+   * @tparam T The type that each Future resolves to.
+   * @param futures The list of futures.
+   * @return A Future that resolves when all the given Futures resolve, and
+   * rejects when any Future in the vector rejects.
+   */
   template <typename T>
   Future<std::vector<T>> all(std::vector<Future<T>>&& futures) const {
     std::vector<async::task<T>> tasks;
