@@ -171,6 +171,66 @@ public:
             Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
   }
 
+  // template <typename TIterator>
+  // Future<std::vector<T>> all(TIterator& begin, TIterator& end) const {
+  //   async::when_all(begin, end);
+  // }
+
+  // template <typename T, typename TIterator> struct FutureToTaskIterator {
+  //   using value_type = async::task<T>;
+
+  //   TIterator _iterator;
+
+  //   FutureToTaskIterator(const TIterator& iterator_) : _iterator(iterator) {}
+  //   TIterator& operator++() {
+  //     TIterator next = _iterator;
+  //     ++next;
+  //     return FutureToTaskIterator<TIterator>(next);
+  //   }
+
+  //   async::task<T>& operator*() const noexcept { return _iterator->_task; }
+  //   async::task<T>* operator->() const noexcept { return &_iterator->_task; }
+
+  //   bool operator==(const FutureToTaskIterator<T, TIterator>& rhs) const {
+  //     return _iterator == rhs._iterator;
+  //   }
+  // };
+
+  // template <typename T, typename TIterator>
+  // static FutureToTaskIterator<T, TIterator>
+  // unwrapIterator(const TIterator& iterator) {
+  //   return FutureToTaskIterator<T, TIterator>(iterator);
+  // }
+
+  template <typename T>
+  Future<std::vector<T>> all(std::vector<Future<T>>&& futures) const {
+    std::vector<async::task<T>> tasks;
+    tasks.reserve(futures.size());
+
+    for (auto it = futures.begin(); it != futures.end(); ++it) {
+      tasks.emplace_back(std::move(it->_task));
+    }
+
+    futures.clear();
+
+    async::task<std::vector<T>> task =
+        async::when_all(tasks.begin(), tasks.end())
+            .then(
+                async::inline_scheduler(),
+                [](std::vector<async::task<T>>&& tasks) {
+                  // Get all the results. If any tasks rejected, we'll bail with
+                  // an exception.
+                  std::vector<T> results;
+                  results.reserve(tasks.size());
+
+                  for (auto it = tasks.begin(); it != tasks.end(); ++it) {
+                    results.emplace_back(it->get());
+                  }
+                  return results;
+                });
+    return Future<std::vector<T>>(this->_pSchedulers, std::move(task));
+  }
+
   /**
    * @brief Creates a future that is already resolved.
    *

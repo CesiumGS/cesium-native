@@ -238,4 +238,33 @@ TEST_CASE("AsyncSystem") {
     asyncSystem.dispatchOneMainThreadTask();
     CHECK_THROWS_WITH(future.wait(), "second");
   }
+
+  SECTION("Future returned by all resolves when all given Futures resolve") {
+    auto one = asyncSystem.createPromise<int>();
+    auto two = asyncSystem.createPromise<int>();
+    auto three = asyncSystem.createPromise<int>();
+
+    std::vector<Future<int>> futures;
+    futures.emplace_back(one.getFuture());
+    futures.emplace_back(two.getFuture());
+    futures.emplace_back(three.getFuture());
+
+    auto all = asyncSystem.all(std::move(futures));
+
+    bool resolved = false;
+    auto last = std::move(all).thenImmediately([&resolved](std::vector<int>&& result) {
+      CHECK(result.size() == 3);
+      CHECK(result[0] == 1);
+      CHECK(result[1] == 2);
+      CHECK(result[2] == 3);
+      resolved = true;
+    });
+
+    three.resolve(3);
+    one.resolve(1);
+    two.resolve(2);
+
+    last.wait();
+    CHECK(resolved);
+  }
 }
