@@ -7,27 +7,11 @@ void QueuedScheduler::schedule(async::task_run_handle t) {
 }
 
 void QueuedScheduler::dispatchQueuedContinuations() {
-  this->immediate.markBegin();
-
-  try {
-    this->_scheduler.run_all_tasks();
-  } catch (...) {
-    this->immediate.markEnd();
-    throw;
-  }
-
-  this->immediate.markEnd();
+  auto scope = this->immediate.scope();
+  this->_scheduler.run_all_tasks();
 }
 
 bool QueuedScheduler::dispatchZeroOrOneContinuation() {
-  this->immediate.markBegin();
-
-  try {
-    bool result = this->_scheduler.try_run_one_task();
-    this->immediate.markEnd();
-    return result;
-  } catch (...) {
-    this->immediate.markEnd();
-    throw;
-  }
+  auto scope = this->immediate.scope();
+  return this->_scheduler.try_run_one_task();
 }
