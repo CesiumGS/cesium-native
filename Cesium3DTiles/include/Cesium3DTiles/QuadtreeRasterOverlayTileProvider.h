@@ -121,11 +121,11 @@ public:
       const glm::dvec2& position) const noexcept;
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
-  CesiumUtility::IntrusivePointer<RasterOverlayTile>
+  CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**
@@ -138,13 +138,13 @@ private:
    * @return A single raster tile combining the given rasters into the
    * geometry tile's rectangle.
    */
-  std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError);
 
   /** @copydoc mapRasterTilesToGeometryTile */
-  std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError);

@@ -53,7 +53,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {}
 
-std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError) {
@@ -62,7 +62,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       targetGeometricError);
 }
 
-std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>>
+std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
@@ -70,7 +70,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     return {this->_pPlaceholder.get()};
   }
 
-  std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTile>> result;
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>> result;
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
@@ -328,12 +328,12 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
       CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
-      CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
+      CesiumAsync::SharedFuture<LoadedRasterOverlayImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
 
-      if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
-        this->loadTileThrottled(*pTile);
-      }
+      // if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
+      //   this->loadTileThrottled(*pTile);
+      // }
 
       result.emplace_back(pTile);
     }
@@ -382,12 +382,20 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
   // If _all_ tiles fail to load, we probably don't need this tile at all.
   //  exception: the parent geometry tile doesn't have the most detailed
   //  available overlay tile. But we can't tell that here. Here we just fail.
-  std::vector<IntrusivePointer<RasterOverlayTile>> tiles =
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>> tiles =
       this->mapRasterTilesToGeometryTile(
           overlayTile.getRectangle(),
           overlayTile.getTargetGeometricError());
 
-  
+  return this->_asyncSystem.all(tiles)
+      .thenInWorkerThread([](std::vector<LoadedRasterOverlayImage>&& images) {
+        // TODO: detect when _all_ images are from an ancestor, because then we
+        // can discard this image.
+
+      })
+      .catchImmediately(
+          [](std::exception&& e) { return LoadedRasterOverlayImage(); });
+
   LoadedRasterOverlayImage result;
   result.errors.push_back("Error: `loadTileImage(TileID tileId)` called on "
                           "QuadtreeRasterOverlayTileProvider");
