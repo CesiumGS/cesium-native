@@ -43,6 +43,7 @@ private:
   std::shared_ptr<Scheduler> _pScheduler;
 
   template <typename T> friend class Future;
+  template <typename T> friend class SharedFuture;
   friend class AsyncSystem;
 };
 
