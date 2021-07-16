@@ -17,6 +17,12 @@ template <typename T> struct RemoveFuture<async::task<T>> { typedef T type; };
 template <typename T> struct RemoveFuture<const async::task<T>> {
   typedef T type;
 };
+template <typename T> struct RemoveFuture<async::shared_task<T>> {
+  typedef T type;
+};
+template <typename T> struct RemoveFuture<const async::shared_task<T>> {
+  typedef T type;
+};
 
 //! @endcond
 // End omitting doxgen warnings for Impl namespace

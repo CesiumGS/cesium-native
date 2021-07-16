@@ -12,6 +12,7 @@
 - Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.
 - Added `AsyncSystem::catchImmediately` to catch a Future rejection immediately in any thread.
 - Added `AsyncSystem::all` to create a Future that resolves when a list of Futures resolve.
+- Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 
 ##### Fixes :wrench:
 

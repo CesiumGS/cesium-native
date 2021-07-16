@@ -25,18 +25,48 @@ public:
     }
   }
 
-  void markBegin() {
-    std::vector<TScheduler*>& inSuitable =
-        ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
-    inSuitable.push_back(this->_pScheduler);
-  }
+  class SchedulerScope {
+  public:
+    SchedulerScope(TScheduler* pScheduler = nullptr) : _pScheduler(pScheduler) {
+      if (this->_pScheduler) {
+        std::vector<TScheduler*>& inSuitable =
+            ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
+        inSuitable.push_back(this->_pScheduler);
+      }
+    }
 
-  void markEnd() {
-    std::vector<TScheduler*>& inSuitable =
-        ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
-    assert(inSuitable.back() == this->_pScheduler);
-    inSuitable.pop_back();
-  }
+    ~SchedulerScope() noexcept { this->reset(); }
+
+    SchedulerScope(SchedulerScope&& rhs) noexcept
+        : _pScheduler(rhs._pScheduler) {
+      rhs._pScheduler = nullptr;
+    }
+
+    SchedulerScope& operator=(SchedulerScope&& rhs) noexcept {
+      std::swap(this->_pScheduler, rhs._pScheduler);
+      return *this;
+    }
+
+    void reset() {
+      if (this->_pScheduler) {
+        std::vector<TScheduler*>& inSuitable =
+            ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
+        assert(!inSuitable.empty());
+        assert(inSuitable.back() == this->_pScheduler);
+        inSuitable.pop_back();
+
+        this->_pScheduler = nullptr;
+      }
+    }
+
+    SchedulerScope(const SchedulerScope&) = delete;
+    SchedulerScope& operator=(const SchedulerScope&) = delete;
+
+  private:
+    TScheduler* _pScheduler;
+  };
+
+  SchedulerScope scope() { return SchedulerScope(this->_pScheduler); }
 
 private:
   TScheduler* _pScheduler;
