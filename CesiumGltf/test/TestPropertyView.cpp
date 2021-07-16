@@ -129,7 +129,7 @@ TEST_CASE("Check boolean value") {
       gsl::span<const std::byte>(),
       CesiumGltf::PropertyType::None,
       0,
-      instanceCount);
+      static_cast<int64_t>(instanceCount));
   for (int64_t i = 0; i < property.size(); ++i) {
     REQUIRE(property.get(i) == bits[static_cast<size_t>(i)]);
   }
@@ -191,7 +191,7 @@ TEST_CASE("Check fixed numeric array") {
         210, 211, 3, 42, 
         122, 22, 1, 45};
     // clang-format on
-    checkFixedArray(data, 4, data.size() / 4);
+    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
   }
 
   SECTION("Fixed array of 3 int8_ts") {
@@ -202,7 +202,7 @@ TEST_CASE("Check fixed numeric array") {
         5, 6, -22, 
         5, 6, 1};
     // clang-format on
-    checkFixedArray(data, 3, data.size() / 3);
+    checkFixedArray(data, 3, static_cast<int64_t>(data.size() / 3));
   }
 
   SECTION("Fixed array of 4 int16_ts") {
@@ -213,7 +213,7 @@ TEST_CASE("Check fixed numeric array") {
         119, 30, 51, 200, 
         22000, -500, 6000, 1};
     // clang-format on
-    checkFixedArray(data, 4, data.size() / 4);
+    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
   }
 
   SECTION("Fixed array of 6 uint32_ts") {
@@ -224,7 +224,7 @@ TEST_CASE("Check fixed numeric array") {
         119, 30, 51, 200, 12534, 11,
         22000, 500, 6000, 1, 3, 7};
     // clang-format on
-    checkFixedArray(data, 6, data.size() / 6);
+    checkFixedArray(data, 6, static_cast<int64_t>(data.size() / 6));
   }
 
   SECTION("Fixed array of 2 int32_ts") {
@@ -233,7 +233,7 @@ TEST_CASE("Check fixed numeric array") {
         122, 12, 
         3, 44};
     // clang-format on
-    checkFixedArray(data, 2, data.size() / 2);
+    checkFixedArray(data, 2, static_cast<int64_t>(data.size() / 2));
   }
 
   SECTION("Fixed array of 4 uint64_ts") {
@@ -242,7 +242,7 @@ TEST_CASE("Check fixed numeric array") {
         10022, 120000, 2422, 1111, 
         3, 440000, 333, 1455};
     // clang-format on
-    checkFixedArray(data, 4, data.size() / 4);
+    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
   }
 
   SECTION("Fixed array of 4 int64_ts") {
@@ -251,7 +251,7 @@ TEST_CASE("Check fixed numeric array") {
         10022, -120000, 2422, 1111, 
         3, 440000, -333, 1455};
     // clang-format on
-    checkFixedArray(data, 4, data.size() / 4);
+    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
   }
 
   SECTION("Fixed array of 4 floats") {
@@ -260,7 +260,7 @@ TEST_CASE("Check fixed numeric array") {
         10.022f, -12.43f, 242.2f, 1.111f, 
         3.333f, 440000.1f, -33.3f, 14.55f};
     // clang-format on
-    checkFixedArray(data, 4, data.size() / 4);
+    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
   }
 
   SECTION("Fixed array of 4 double") {
@@ -269,7 +269,7 @@ TEST_CASE("Check fixed numeric array") {
         10.022, -12.43, 242.2, 1.111, 
         3.333, 440000.1, -33.3, 14.55};
     // clang-format on
-    checkFixedArray(data, 4, data.size() / 4);
+    checkFixedArray(data, 4, static_cast<int64_t>(data.size() / 4));
   }
 }
 
