@@ -240,6 +240,8 @@ private:
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
   async::shared_task<T> _task;
 
+  friend class AsyncSystem;
+
   template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
 
   friend struct Impl::TaskUnwrapper;

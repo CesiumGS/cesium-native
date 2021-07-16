@@ -424,4 +424,51 @@ TEST_CASE("AsyncSystem") {
     CHECK(result[0] == 10);
     CHECK(result[1] == 11);
   }
+
+  SECTION("can join two shared futures") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed1);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed1);
+                     executed1 = true;
+                     return 10;
+                   });
+
+    bool executed2 = false;
+    auto two = sharedFuture
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed2);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed2);
+                     executed2 = true;
+                     return 11;
+                   });
+
+    std::vector<SharedFuture<int>> futures;
+    futures.emplace_back(std::move(one).share());
+    futures.emplace_back(std::move(two).share());
+    auto joined = asyncSystem.all(std::move(futures));
+
+    promise.resolve(1);
+
+    std::vector<int> result = joined.wait();
+    CHECK(executed1);
+    CHECK(executed2);
+    CHECK(result.size() == 2);
+    CHECK(result[0] == 10);
+    CHECK(result[1] == 11);
+  }
 }
