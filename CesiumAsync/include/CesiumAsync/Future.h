@@ -263,6 +263,7 @@ private:
   friend struct Impl::TaskUnwrapper;
 
   template <typename R> friend class Future;
+  template <typename R> friend class SharedFuture;
   template <typename R> friend class Promise;
 };
 

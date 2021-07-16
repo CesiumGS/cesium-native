@@ -340,28 +340,32 @@ TEST_CASE("AsyncSystem") {
     auto sharedFuture = promise.getFuture().share();
 
     bool executed1 = false;
-    auto one = sharedFuture.thenInWorkerThread([&executed1](int value) {
-      CHECK(value == 1);
-      CHECK(!executed1);
-      return 2;
-    }).thenImmediately([&executed1](int value) {
-      CHECK(value == 2);
-      CHECK(!executed1);
-      executed1 = true;
-      return 10;
-    });
+    auto one = sharedFuture
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed1);
+                     return 2;
+                   })
+                   .thenImmediately([&executed1](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed1);
+                     executed1 = true;
+                     return 10;
+                   });
 
     bool executed2 = false;
-    auto two = sharedFuture.thenInWorkerThread([&executed2](int value) {
-      CHECK(value == 1);
-      CHECK(!executed2);
-      return 2;
-    }).thenImmediately([&executed2](int value) {
-      CHECK(value == 2);
-      CHECK(!executed2);
-      executed2 = true;
-      return 11;
-    });
+    auto two = sharedFuture
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed2);
+                     return 2;
+                   })
+                   .thenImmediately([&executed2](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed2);
+                     executed2 = true;
+                     return 11;
+                   });
 
     promise.resolve(1);
 
