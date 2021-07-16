@@ -205,6 +205,15 @@ public:
    */
   T wait() { return this->_task.get(); }
 
+  /**
+   * @brief Creates a version of this future that can be shared, meaning that
+   * its value may be accessed multiple times and multiple continuations may be
+   * attached to it.
+   *
+   * Calling this method invalidates the original Future.
+   *
+   * @return The `SharedFuture`.
+   */
   SharedFuture<T> share() && {
     return SharedFuture<T>(this->_pSchedulers, this->_task.share());
   }
