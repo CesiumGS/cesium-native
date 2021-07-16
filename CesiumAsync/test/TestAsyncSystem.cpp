@@ -346,7 +346,7 @@ TEST_CASE("AsyncSystem") {
                      CHECK(!executed1);
                      return 2;
                    })
-                   .thenImmediately([&executed1](int value) {
+                   .thenInWorkerThread([&executed1](int value) {
                      CHECK(value == 2);
                      CHECK(!executed1);
                      executed1 = true;
@@ -360,7 +360,7 @@ TEST_CASE("AsyncSystem") {
                      CHECK(!executed2);
                      return 2;
                    })
-                   .thenImmediately([&executed2](int value) {
+                   .thenInWorkerThread([&executed2](int value) {
                      CHECK(value == 2);
                      CHECK(!executed2);
                      executed2 = true;
@@ -376,5 +376,52 @@ TEST_CASE("AsyncSystem") {
     CHECK(executed2);
     CHECK(value1 == 10);
     CHECK(value2 == 11);
+  }
+
+  SECTION("can join two chains originating with a shared future") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed1);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed1);
+                     executed1 = true;
+                     return 10;
+                   });
+
+    bool executed2 = false;
+    auto two = sharedFuture
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed2);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed2);
+                     executed2 = true;
+                     return 11;
+                   });
+
+    std::vector<Future<int>> futures;
+    futures.emplace_back(std::move(one));
+    futures.emplace_back(std::move(two));
+    auto joined = asyncSystem.all(std::move(futures));
+
+    promise.resolve(1);
+
+    std::vector<int> result = joined.wait();
+    CHECK(executed1);
+    CHECK(executed2);
+    CHECK(result.size() == 2);
+    CHECK(result[0] == 10);
+    CHECK(result[1] == 11);
   }
 }
