@@ -81,6 +81,11 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
 }
 
 void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
+  if (this->_pPlaceholder) {
+    // Refuse to load placeholders.
+    return;
+  }
+
   this->doLoad(tile, false);
 }
 

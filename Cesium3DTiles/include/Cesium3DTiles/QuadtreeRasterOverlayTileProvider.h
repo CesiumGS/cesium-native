@@ -14,6 +14,10 @@
 
 namespace Cesium3DTiles {
 
+struct LoadedQuadtreeImage : public LoadedRasterOverlayImage {
+  CesiumGeometry::QuadtreeTileID id;
+};
+
 class CESIUM3DTILES_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 
@@ -121,11 +125,11 @@ public:
       const glm::dvec2& position) const noexcept;
 
 protected:
-  virtual CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<LoadedQuadtreeImage>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
-  CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
+  CesiumAsync::SharedFuture<LoadedQuadtreeImage>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**
@@ -138,13 +142,13 @@ private:
    * @return A single raster tile combining the given rasters into the
    * geometry tile's rectangle.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
+  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError);
 
   /** @copydoc mapRasterTilesToGeometryTile */
-  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
+  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError);
