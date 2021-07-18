@@ -21,7 +21,8 @@ static void checkScalarProperty(
     const Class& metaClass,
     const std::string& propertyName,
     const std::string& expectedPropertyType,
-    const std::vector<ExpectedType>& expected) {
+    const std::vector<ExpectedType>& expected,
+    size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedPropertyType);
   REQUIRE(property.componentType.isNull());
@@ -32,6 +33,7 @@ static void checkScalarProperty(
       view.getPropertyView<PropertyViewType>(propertyName);
   REQUIRE(propertyView != std::nullopt);
   REQUIRE(propertyView->size() == featureTable.count);
+  REQUIRE(propertyView->size() == static_cast<int64_t>(expectedTotalInstances));
   for (int64_t i = 0; i < propertyView->size(); ++i) {
     if constexpr (
         std::is_same_v<PropertyViewType, float> ||
@@ -53,7 +55,8 @@ static void checkArrayProperty(
     const std::string& propertyName,
     int64_t expectedComponentCount,
     const std::string& expectedComponentType,
-    const std::vector<std::vector<ExpectedType>>& expected) {
+    const std::vector<std::vector<ExpectedType>>& expected,
+    size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
   REQUIRE(property.componentType.getString() == expectedComponentType);
@@ -68,7 +71,8 @@ static void checkArrayProperty(
       propertyView = view.getPropertyView<MetadataArrayView<PropertyViewType>>(
           propertyName);
   REQUIRE(propertyView->size() == featureTable.count);
-  for (size_t i = 0; i < expected.size(); ++i) {
+  REQUIRE(propertyView->size() == static_cast<int64_t>(expectedTotalInstances));
+  for (size_t i = 0; i < expectedTotalInstances; ++i) {
     MetadataArrayView<PropertyViewType> val =
         propertyView->get(static_cast<int64_t>(i));
     if (expectedComponentCount > 0) {
@@ -90,13 +94,14 @@ static void checkArrayProperty(
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void createTestForScalarJson(
     const std::vector<ExpectedType>& expected,
-    const std::string& expectedPropertyType) {
+    const std::string& expectedPropertyType,
+    size_t totalInstances) {
   Model model;
 
   rapidjson::Document featureTableJson;
   featureTableJson.SetObject();
   rapidjson::Value batchLength(rapidjson::kNumberType);
-  batchLength.SetUint64(expected.size());
+  batchLength.SetUint64(totalInstances);
   featureTableJson.AddMember(
       "BATCH_LENGTH",
       batchLength,
@@ -152,20 +157,22 @@ static void createTestForScalarJson(
       defaultClass,
       "scalarProp",
       expectedPropertyType,
-      expected);
+      expected,
+      totalInstances);
 }
 
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void createTestForArrayJson(
     const std::vector<std::vector<ExpectedType>>& expected,
     const std::string& expectedComponentType,
-    int64_t componentCount) {
+    int64_t componentCount,
+    size_t totalInstances) {
   Model model;
 
   rapidjson::Document featureTableJson;
   featureTableJson.SetObject();
   rapidjson::Value batchLength(rapidjson::kNumberType);
-  batchLength.SetUint64(expected.size());
+  batchLength.SetUint64(totalInstances);
   featureTableJson.AddMember(
       "BATCH_LENGTH",
       batchLength,
@@ -226,7 +233,8 @@ static void createTestForArrayJson(
       "fixedArrayProp",
       componentCount,
       expectedComponentType,
-      expected);
+      expected,
+      totalInstances);
 }
 
 TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
@@ -344,7 +352,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         defaultClass,
         "id",
         "INT8",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -365,7 +374,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         defaultClass,
         "Height",
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -386,7 +396,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         defaultClass,
         "Longitude",
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -407,7 +418,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
         defaultClass,
         "Latitude",
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 }
 
@@ -447,7 +459,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         defaultClass,
         "id",
         "INT8",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -468,7 +481,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         defaultClass,
         "Height",
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -489,7 +503,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         defaultClass,
         "Longitude",
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -510,7 +525,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         defaultClass,
         "Latitude",
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -521,7 +537,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         defaultClass,
         "code",
         "UINT8",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -546,7 +563,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
         "cartographic",
         3,
         "FLOAT64",
-        expected);
+        expected,
+        expected.size());
   }
 }
 
@@ -592,7 +610,8 @@ TEST_CASE("Upgrade json nested json metadata to string") {
         defaultClass,
         "info",
         "STRING",
-        expected);
+        expected,
+        expected.size());
   }
 
   {
@@ -611,7 +630,8 @@ TEST_CASE("Upgrade json nested json metadata to string") {
         "rooms",
         3,
         "STRING",
-        expected);
+        expected,
+        expected.size());
   }
 }
 
@@ -674,7 +694,8 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       defaultClass,
       "boolProp",
       "BOOLEAN",
-      expected);
+      expected,
+      expected.size());
 }
 
 TEST_CASE("Upgrade fixed json number array") {
@@ -689,7 +710,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT8";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("uint8_t") {
@@ -703,7 +724,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT8";
-    createTestForArrayJson(expected, expectedComponentType, 5);
+    createTestForArrayJson(expected, expectedComponentType, 5, expected.size());
   }
 
   SECTION("int16_t") {
@@ -717,7 +738,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT16";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("uint16_t") {
@@ -731,7 +752,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT16";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("int32_t") {
@@ -745,7 +766,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT32";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("uint32_t") {
@@ -759,7 +780,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT32";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("int64_t") {
@@ -773,7 +794,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT64";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("uint64_t") {
@@ -787,7 +808,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT64";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("double") {
@@ -801,7 +822,7 @@ TEST_CASE("Upgrade fixed json number array") {
     // clang-format on
 
     std::string expectedComponentType = "FLOAT64";
-    createTestForArrayJson(expected, expectedComponentType, 4);
+    createTestForArrayJson(expected, expectedComponentType, 4, expected.size());
   }
 
   SECTION("string") {
@@ -817,7 +838,8 @@ TEST_CASE("Upgrade fixed json number array") {
     createTestForArrayJson<std::string, std::string_view>(
         expected,
         "STRING",
-        4);
+        4,
+        expected.size());
   }
 
   SECTION("Boolean") {
@@ -830,7 +852,7 @@ TEST_CASE("Upgrade fixed json number array") {
     };
     // clang-format on
 
-    createTestForArrayJson(expected, "BOOLEAN", 6);
+    createTestForArrayJson(expected, "BOOLEAN", 6, expected.size());
   }
 }
 
@@ -846,7 +868,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT8";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("uint8_t") {
@@ -860,7 +882,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT8";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("int16_t") {
@@ -874,7 +896,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT16";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("uint16_t") {
@@ -888,7 +910,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT16";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("int32_t") {
@@ -902,7 +924,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT32";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("uint32_t") {
@@ -916,7 +938,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT32";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("int64_t") {
@@ -930,7 +952,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "INT64";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("uint64_t") {
@@ -944,7 +966,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "UINT64";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("double") {
@@ -958,7 +980,7 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     std::string expectedComponentType = "FLOAT64";
-    createTestForArrayJson(expected, expectedComponentType, 0);
+    createTestForArrayJson(expected, expectedComponentType, 0, expected.size());
   }
 
   SECTION("string") {
@@ -974,7 +996,8 @@ TEST_CASE("Upgrade dynamic json number array") {
     createTestForArrayJson<std::string, std::string_view>(
         expected,
         "STRING",
-        0);
+        0,
+        expected.size());
   }
 
   SECTION("Boolean") {
@@ -988,23 +1011,139 @@ TEST_CASE("Upgrade dynamic json number array") {
     };
     // clang-format on
 
-    createTestForArrayJson(expected, "BOOLEAN", 0);
+    createTestForArrayJson(expected, "BOOLEAN", 0, expected.size());
   }
 }
 
 TEST_CASE("Upgrade scalar json") {
   SECTION("Uint32") {
     std::vector<uint32_t> expected{32, 45, 21, 65, 78};
-    createTestForScalarJson<uint32_t, int8_t>(expected, "INT8");
+    createTestForScalarJson<uint32_t, int8_t>(
+        expected,
+        "INT8",
+        expected.size());
   }
 
   SECTION("Boolean") {
     std::vector<bool> expected{true, false, true, false, true, true, false};
-    createTestForScalarJson(expected, "BOOLEAN");
+    createTestForScalarJson(expected, "BOOLEAN", expected.size());
   }
 
   SECTION("String") {
     std::vector<std::string> expected{"Test 0", "Test 1", "Test 2", "Test 3"};
-    createTestForScalarJson<std::string, std::string_view>(expected, "STRING");
+    createTestForScalarJson<std::string, std::string_view>(
+        expected,
+        "STRING",
+        expected.size());
+  }
+}
+
+TEST_CASE("Cannot write pass batch length table") {
+  SECTION("Numeric") {
+    std::vector<uint32_t> expected{32, 45, 21, 65, 78, 20, 33, 12};
+    createTestForScalarJson<uint32_t, int8_t>(expected, "INT8", 4);
+  }
+
+  SECTION("Boolean") {
+    std::vector<bool> expected{true, false, true, false, true, true, false};
+    createTestForScalarJson(expected, "BOOLEAN", 4);
+  }
+
+  SECTION("String") {
+    std::vector<std::string>
+        expected{"Test 0", "Test 1", "Test 2", "Test 3", "Test 4"};
+    createTestForScalarJson<std::string, std::string_view>(
+        expected,
+        "STRING",
+        3);
+  }
+
+  SECTION("Fixed number array") {
+    // clang-format off
+    std::vector<std::vector<uint64_t>> expected {
+      {0, 1, 4, 1},
+      {1244, 13223302036854775807u, 1222, 544662},
+      {123, 10, 122, 334},
+      {13, 45, 122, 94},
+      {11, 22, 3, 13223302036854775807u}};
+    // clang-format on
+
+    std::string expectedComponentType = "UINT64";
+    createTestForArrayJson(expected, expectedComponentType, 4, 2);
+  }
+
+  SECTION("Fixed boolean array") {
+    // clang-format off
+    std::vector<std::vector<bool>> expected{
+      {true, true, false},
+      {true, false, true},
+      {false, true, true},
+      {false, true, true},
+    };
+    // clang-format on
+
+    createTestForArrayJson(expected, "BOOLEAN", 3, 2);
+  }
+
+  SECTION("Fixed string array") {
+    // clang-format off
+    std::vector<std::vector<std::string>> expected{
+      {"Test0", "Test1", "Test2", "Test4"},
+      {"Test5", "Test6", "Test7", "Test8"},
+      {"Test9", "Test10", "Test11", "Test12"},
+      {"Test13", "Test14", "Test15", "Test16"},
+    };
+    // clang-format on
+
+    createTestForArrayJson<std::string, std::string_view>(
+        expected,
+        "STRING",
+        4,
+        2);
+  }
+
+  SECTION("Dynamic number array") {
+    // clang-format off
+    std::vector<std::vector<int32_t>> expected {
+      {0, 1},
+      {1244, -500000, 1222, 544662},
+      {123, -10},
+      {13},
+      {11, 22, 3, 2147483647, 12233}};
+    // clang-format on
+
+    std::string expectedComponentType = "INT32";
+    createTestForArrayJson(expected, expectedComponentType, 0, 3);
+  }
+
+  SECTION("Dynamic boolean array") {
+    // clang-format off
+    std::vector<std::vector<bool>> expected{
+      {true, true, false, true, false, false, true},
+      {true, false},
+      {false, true, true, false},
+      {false, true, true},
+      {true, true, false, false}
+    };
+    // clang-format on
+
+    createTestForArrayJson(expected, "BOOLEAN", 0, 2);
+  }
+
+  SECTION("Dynamic string array") {
+    // clang-format off
+    std::vector<std::vector<std::string>> expected{
+      {"This is Test", "Another Test"},
+      {"Good morning", "How you doing?", "The book in the freezer", "Batman beats superman", ""},
+      {"Test9", "Test10", "", "Test12", ""},
+      {"Test13", ""},
+    };
+    // clang-format on
+
+    createTestForArrayJson<std::string, std::string_view>(
+        expected,
+        "STRING",
+        0,
+        2);
   }
 }
