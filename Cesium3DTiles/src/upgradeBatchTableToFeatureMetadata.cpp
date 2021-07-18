@@ -155,17 +155,22 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& /*featureTable*/,
+    FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
+  assert(propertyValue.Size() >= featureTable.count);
+
   rapidjson::StringBuffer rapidjsonStrBuffer;
   std::vector<uint64_t> rapidjsonOffsets;
-  rapidjsonOffsets.reserve(propertyValue.Size() + 1);
+  rapidjsonOffsets.reserve(featureTable.count + 1);
   rapidjsonOffsets.emplace_back(0);
-  for (const auto& v : propertyValue.GetArray()) {
+
+  auto it = propertyValue.Begin();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
     rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
-    v.Accept(writer);
+    it->Accept(writer);
     rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
+    ++it;
   }
 
   uint64_t totalSize = rapidjsonOffsets.back();
@@ -238,6 +243,7 @@ void updateExtensionWithJsonNumericProperty(
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue,
     const std::string& typeName) {
+  assert(propertyValue.Size() >= featureTable.count);
 
   classProperty.type = typeName;
 
@@ -256,12 +262,12 @@ void updateExtensionWithJsonNumericProperty(
 
   featureTableProperty.bufferView = int32_t(bufferViewIndex);
 
-  assert(propertyValue.Size() == featureTable.count);
   T* p = reinterpret_cast<T*>(buffer.cesium.data.data());
-
-  for (auto it = propertyValue.Begin(); it != propertyValue.End(); ++it) {
+  auto it = propertyValue.Begin();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
     *p = static_cast<T>(it->Get<TRapidJson>());
     ++p;
+    ++it;
   }
 }
 
@@ -271,10 +277,14 @@ void updateExtensionWithJsonBoolProperty(
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
+  assert(propertyValue.Size() >= featureTable.count);
+
   std::vector<std::byte> data(static_cast<size_t>(
       glm::ceil(static_cast<double>(featureTable.count) / 8.0)));
   const auto& jsonArray = propertyValue.GetArray();
-  for (rapidjson::SizeType i = 0; i < jsonArray.Size(); ++i) {
+  for (rapidjson::SizeType i = 0;
+       i < static_cast<rapidjson::SizeType>(featureTable.count);
+       ++i) {
     bool value = jsonArray[i].GetBool();
     size_t byteIndex = i / 8;
     size_t bitIndex = i % 8;
@@ -303,13 +313,17 @@ void copyNumericDynamicArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
+    const FeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
-  offsetBuffer.resize(sizeof(OffsetType) * (propertyValue.Size() + 1));
+  offsetBuffer.resize(sizeof(OffsetType) * (featureTable.count + 1));
   ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
   OffsetType* offsetValue = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
-  for (const auto& jsonArrayMember : propertyValue.GetArray()) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& jsonArrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
     *offsetValue = prevOffset;
     ++offsetValue;
     for (const auto& valueJson : jsonArrayMember.GetArray()) {
@@ -329,17 +343,21 @@ void updateNumericArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTableProperty& featureTableProperty,
+    const FeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
+  assert(propertyValue.Size() >= featureTable.count);
   const auto& jsonOuterArray = propertyValue.GetArray();
 
   // check if it's a fixed array
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
     size_t numOfValues =
-        jsonOuterArray.Size() * *compatibleTypes.minComponentCount;
+        featureTable.count * *compatibleTypes.minComponentCount;
     std::vector<std::byte> valueBuffer(sizeof(ValueType) * numOfValues);
     ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
-    for (const auto& jsonArrayMember : jsonOuterArray) {
+    for (int64_t i = 0; i < featureTable.count; ++i) {
+      const auto& jsonArrayMember =
+          jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
       for (const auto& valueJson : jsonArrayMember.GetArray()) {
         *value = static_cast<ValueType>(valueJson.Get<TRapidjson>());
         ++value;
@@ -369,7 +387,9 @@ void updateNumericArrayProperty(
 
   // total size of value buffer
   size_t numOfElements = 0;
-  for (const auto& jsonArrayMember : jsonOuterArray) {
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& jsonArrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
     numOfElements += jsonArrayMember.Size();
   }
 
@@ -382,6 +402,7 @@ void updateNumericArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(maxOffsetValue)) {
@@ -389,6 +410,7 @@ void updateNumericArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(maxOffsetValue)) {
@@ -396,6 +418,7 @@ void updateNumericArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(maxOffsetValue)) {
@@ -403,6 +426,7 @@ void updateNumericArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint64;
   }
@@ -444,12 +468,16 @@ void copyStringArrayBuffers(
     std::vector<std::byte>& offsetBuffer,
     size_t totalByteLength,
     size_t numOfString,
+    const FeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   valueBuffer.resize(totalByteLength);
   offsetBuffer.resize((numOfString + 1) * sizeof(OffsetType));
   OffsetType offset = 0;
   size_t offsetIndex = 0;
-  for (const auto& arrayMember : propertyValue.GetArray()) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& arrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
     for (const auto& str : arrayMember.GetArray()) {
       OffsetType byteLength = static_cast<OffsetType>(
           str.GetStringLength() * sizeof(rapidjson::Value::Ch));
@@ -472,12 +500,15 @@ void copyStringArrayBuffers(
 template <typename OffsetType>
 void copyArrayOffsetBufferForStringArrayProperty(
     std::vector<std::byte>& offsetBuffer,
-    size_t totalInstances,
+    const FeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   OffsetType prevOffset = 0;
-  offsetBuffer.resize((totalInstances + 1) * sizeof(OffsetType));
+  offsetBuffer.resize((featureTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
-  for (const auto& arrayMember : propertyValue.GetArray()) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& arrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
     *offset = prevOffset;
     prevOffset = static_cast<OffsetType>(
         prevOffset + arrayMember.Size() * sizeof(OffsetType));
@@ -491,11 +522,17 @@ void updateStringArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTableProperty& featureTableProperty,
+    const FeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
+  assert(propertyValue.Size() >= featureTable.count);
+
   size_t numOfString = 0;
   size_t totalChars = 0;
-  for (const auto& arrayMember : propertyValue.GetArray()) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& arrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
     numOfString += arrayMember.Size();
     for (const auto& str : arrayMember.GetArray()) {
       totalChars += str.GetStringLength();
@@ -512,6 +549,7 @@ void updateStringArrayProperty(
         offsetBuffer,
         totalByteLength,
         numOfString,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalByteLength)) {
@@ -520,6 +558,7 @@ void updateStringArrayProperty(
         offsetBuffer,
         totalByteLength,
         numOfString,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalByteLength)) {
@@ -528,6 +567,7 @@ void updateStringArrayProperty(
         offsetBuffer,
         totalByteLength,
         numOfString,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint32;
   } else if (isInRangeForUnsignedInteger<uint64_t>(totalByteLength)) {
@@ -536,6 +576,7 @@ void updateStringArrayProperty(
         offsetBuffer,
         totalByteLength,
         numOfString,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint64;
   }
@@ -578,31 +619,30 @@ void updateStringArrayProperty(
   }
 
   // dynamic array of string needs array offset buffer
-  size_t totalInstances = propertyValue.Size();
   std::vector<std::byte> arrayOffsetBuffer;
   switch (offsetType) {
   case PropertyType::Uint8:
     copyArrayOffsetBufferForStringArrayProperty<uint8_t>(
         arrayOffsetBuffer,
-        totalInstances,
+        featureTable,
         propertyValue);
     break;
   case PropertyType::Uint16:
     copyArrayOffsetBufferForStringArrayProperty<uint16_t>(
         arrayOffsetBuffer,
-        totalInstances,
+        featureTable,
         propertyValue);
     break;
   case PropertyType::Uint32:
     copyArrayOffsetBufferForStringArrayProperty<uint32_t>(
         arrayOffsetBuffer,
-        totalInstances,
+        featureTable,
         propertyValue);
     break;
   case PropertyType::Uint64:
     copyArrayOffsetBufferForStringArrayProperty<uint64_t>(
         arrayOffsetBuffer,
-        totalInstances,
+        featureTable,
         propertyValue);
     break;
   default:
@@ -637,15 +677,20 @@ void copyBooleanArrayBuffers(
     std::vector<std::byte>& valueBuffer,
     std::vector<std::byte>& offsetBuffer,
     size_t numOfElements,
+    const FeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   size_t currentIndex = 0;
   size_t totalByteLength =
       static_cast<size_t>(glm::ceil(static_cast<double>(numOfElements) / 8.0));
   valueBuffer.resize(totalByteLength);
-  offsetBuffer.resize((propertyValue.Size() + 1) * sizeof(OffsetType));
+  offsetBuffer.resize((featureTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
-  for (const auto& arrayMember : propertyValue.GetArray()) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& arrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
+
     *offset = prevOffset;
     ++offset;
     prevOffset = static_cast<OffsetType>(prevOffset + arrayMember.Size());
@@ -666,17 +711,23 @@ void updateBooleanArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
     FeatureTableProperty& featureTableProperty,
+    const FeatureTable& featureTable,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
+  assert(propertyValue.Size() >= featureTable.count);
+
   // fixed array of boolean
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
     size_t numOfElements =
-        propertyValue.Size() * compatibleTypes.minComponentCount.value();
+        featureTable.count * compatibleTypes.minComponentCount.value();
     size_t totalByteLength = static_cast<size_t>(
         glm::ceil(static_cast<double>(numOfElements) / 8.0));
     std::vector<std::byte> valueBuffer(totalByteLength);
     size_t currentIndex = 0;
-    for (const auto& arrayMember : propertyValue.GetArray()) {
+    const auto& jsonOuterArray = propertyValue.GetArray();
+    for (int64_t i = 0; i < featureTable.count; ++i) {
+      const auto& arrayMember =
+          jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
       for (const auto& data : arrayMember.GetArray()) {
         bool value = data.GetBool();
         size_t byteIndex = currentIndex / 8;
@@ -708,7 +759,10 @@ void updateBooleanArrayProperty(
 
   // dynamic array of boolean
   size_t numOfElements = 0;
-  for (const auto& arrayMember : propertyValue.GetArray()) {
+  const auto& jsonOuterArray = propertyValue.GetArray();
+  for (int64_t i = 0; i < featureTable.count; ++i) {
+    const auto& arrayMember =
+        jsonOuterArray[static_cast<rapidjson::SizeType>(i)];
     numOfElements += arrayMember.Size();
   }
 
@@ -720,6 +774,7 @@ void updateBooleanArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint8;
   } else if (isInRangeForUnsignedInteger<uint16_t>(numOfElements)) {
@@ -727,6 +782,7 @@ void updateBooleanArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint16;
   } else if (isInRangeForUnsignedInteger<uint32_t>(numOfElements)) {
@@ -734,6 +790,7 @@ void updateBooleanArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint32;
   } else {
@@ -741,6 +798,7 @@ void updateBooleanArrayProperty(
         valueBuffer,
         offsetBuffer,
         numOfElements,
+        featureTable,
         propertyValue);
     offsetType = PropertyType::Uint64;
   }
@@ -778,16 +836,19 @@ void updateBooleanArrayProperty(
 void updateExtensionWithArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& /*featureTable*/,
+    FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
+  assert(propertyValue.Size() >= featureTable.count);
+
   switch (*compatibleTypes.componentType) {
   case PropertyType::Boolean:
     updateBooleanArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -796,6 +857,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -804,6 +866,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -812,6 +875,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -820,6 +884,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -828,6 +893,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -836,6 +902,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -844,6 +911,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -852,6 +920,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -860,6 +929,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -868,6 +938,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
@@ -876,6 +947,7 @@ void updateExtensionWithArrayProperty(
         gltf,
         classProperty,
         featureTableProperty,
+        featureTable,
         compatibleTypes,
         propertyValue);
     break;
