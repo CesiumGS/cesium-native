@@ -30,6 +30,7 @@ static void checkScalarProperty(
   MetadataFeatureTableView view(&model, &featureTable);
   std::optional<MetadataPropertyView<PropertyViewType>> propertyView =
       view.getPropertyView<PropertyViewType>(propertyName);
+  REQUIRE(propertyView != std::nullopt);
   REQUIRE(propertyView->size() == featureTable.count);
   for (int64_t i = 0; i < propertyView->size(); ++i) {
     if constexpr (

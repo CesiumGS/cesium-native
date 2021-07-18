@@ -67,28 +67,18 @@ template <typename T> bool isInRangeForUnsignedInteger(uint64_t value) {
 
 template <typename OffsetType>
 void copyStringBuffer(
-    uint64_t totalSize,
-    const std::vector<rapidjson::StringBuffer>& rapidjsonStrBuffers,
+    const rapidjson::StringBuffer& rapidjsonStrBuffer,
+    const std::vector<uint64_t>& rapidjsonOffsets,
     std::vector<std::byte>& buffer,
     std::vector<std::byte>& offsetBuffer) {
-  OffsetType stringOffset = 0;
-  buffer.resize(totalSize);
-  offsetBuffer.resize(sizeof(OffsetType) * (rapidjsonStrBuffers.size() + 1));
-  OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
-  for (const rapidjson::StringBuffer& rapidjsonBuffer : rapidjsonStrBuffers) {
-    size_t bufferLength = rapidjsonBuffer.GetSize();
-    if (bufferLength != 0) {
-      std::memcpy(
-          buffer.data() + stringOffset,
-          rapidjsonBuffer.GetString(),
-          bufferLength);
-      *offset = stringOffset;
-      stringOffset = static_cast<OffsetType>(stringOffset + bufferLength);
-      ++offset;
-    }
-  }
+  buffer.resize(rapidjsonStrBuffer.GetLength());
+  std::memcpy(buffer.data(), rapidjsonStrBuffer.GetString(), buffer.size());
 
-  *offset = stringOffset;
+  offsetBuffer.resize(sizeof(OffsetType) * rapidjsonOffsets.size());
+  OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
+  for (size_t i = 0; i < rapidjsonOffsets.size(); ++i) {
+    offset[i] = static_cast<OffsetType>(rapidjsonOffsets[i]);
+  }
 }
 
 CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
@@ -168,43 +158,44 @@ void updateExtensionWithJsonStringProperty(
     FeatureTable& /*featureTable*/,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
-  uint64_t totalSize = 0;
-  std::vector<rapidjson::StringBuffer> rapidjsonStrBuffers;
-  rapidjsonStrBuffers.reserve(propertyValue.Size());
+  rapidjson::StringBuffer rapidjsonStrBuffer;
+  std::vector<uint64_t> rapidjsonOffsets;
+  rapidjsonOffsets.reserve(propertyValue.Size() + 1);
+  rapidjsonOffsets.emplace_back(0);
   for (const auto& v : propertyValue.GetArray()) {
-    rapidjson::StringBuffer& buffer = rapidjsonStrBuffers.emplace_back();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
     v.Accept(writer);
-    totalSize += buffer.GetSize();
+    rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
   }
 
+  uint64_t totalSize = rapidjsonOffsets.back();
   std::vector<std::byte> buffer;
   std::vector<std::byte> offsetBuffer;
   if (isInRangeForUnsignedInteger<uint8_t>(totalSize)) {
     copyStringBuffer<uint8_t>(
-        totalSize,
-        rapidjsonStrBuffers,
+        rapidjsonStrBuffer,
+        rapidjsonOffsets,
         buffer,
         offsetBuffer);
     featureTableProperty.offsetType = "UINT8";
   } else if (isInRangeForUnsignedInteger<uint16_t>(totalSize)) {
     copyStringBuffer<uint16_t>(
-        totalSize,
-        rapidjsonStrBuffers,
+        rapidjsonStrBuffer,
+        rapidjsonOffsets,
         buffer,
         offsetBuffer);
     featureTableProperty.offsetType = "UINT16";
   } else if (isInRangeForUnsignedInteger<uint32_t>(totalSize)) {
     copyStringBuffer<uint32_t>(
-        totalSize,
-        rapidjsonStrBuffers,
+        rapidjsonStrBuffer,
+        rapidjsonOffsets,
         buffer,
         offsetBuffer);
     featureTableProperty.offsetType = "UINT32";
   } else {
     copyStringBuffer<uint64_t>(
-        totalSize,
-        rapidjsonStrBuffers,
+        rapidjsonStrBuffer,
+        rapidjsonOffsets,
         buffer,
         offsetBuffer);
     featureTableProperty.offsetType = "UINT64";
