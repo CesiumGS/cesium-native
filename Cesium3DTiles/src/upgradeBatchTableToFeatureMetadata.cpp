@@ -167,8 +167,21 @@ void updateExtensionWithJsonStringProperty(
 
   auto it = propertyValue.Begin();
   for (int64_t i = 0; i < featureTable.count; ++i) {
-    rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
-    it->Accept(writer);
+    if (!it->IsString()) {
+      // Everything else that is not string will be serialized by json
+      rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
+      it->Accept(writer);
+    } else {
+      // Because serialized string json will add double quotations in the buffer
+      // which is not needed by us, we will manually add the string to the
+      // buffer
+      const auto& rapidjsonStr = it->GetString();
+      rapidjsonStrBuffer.Reserve(it->GetStringLength());
+      for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
+        rapidjsonStrBuffer.PutUnsafe(rapidjsonStr[j]);
+      }
+    }
+
     rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
     ++it;
   }

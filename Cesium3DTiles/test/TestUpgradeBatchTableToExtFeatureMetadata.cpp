@@ -38,7 +38,9 @@ static void checkScalarProperty(
         std::is_same_v<PropertyViewType, double>) {
       REQUIRE(propertyView->get(i) == Approx(expected[static_cast<size_t>(i)]));
     } else {
-      REQUIRE(propertyView->get(i) == expected[static_cast<size_t>(i)]);
+      REQUIRE(
+          static_cast<ExpectedType>(propertyView->get(i)) ==
+          expected[static_cast<size_t>(i)]);
     }
   }
 }
@@ -83,6 +85,74 @@ static void checkArrayProperty(
       }
     }
   }
+}
+
+template <typename ExpectedType, typename PropertyViewType = ExpectedType>
+static void createTestForScalarJson(
+    const std::vector<ExpectedType>& expected,
+    const std::string& expectedPropertyType) {
+  Model model;
+
+  rapidjson::Document featureTableJson;
+  featureTableJson.SetObject();
+  rapidjson::Value batchLength(rapidjson::kNumberType);
+  batchLength.SetUint64(expected.size());
+  featureTableJson.AddMember(
+      "BATCH_LENGTH",
+      batchLength,
+      featureTableJson.GetAllocator());
+
+  rapidjson::Document batchTableJson;
+  batchTableJson.SetObject();
+  rapidjson::Value scalarProperty(rapidjson::kArrayType);
+  for (size_t i = 0; i < expected.size(); ++i) {
+    if constexpr (std::is_same_v<ExpectedType, std::string>) {
+      rapidjson::Value value(rapidjson::kStringType);
+      value.SetString(
+          expected[i].c_str(),
+          static_cast<rapidjson::SizeType>(expected[i].size()),
+          batchTableJson.GetAllocator());
+      scalarProperty.PushBack(value, batchTableJson.GetAllocator());
+    } else {
+      scalarProperty.PushBack(expected[i], batchTableJson.GetAllocator());
+    }
+  }
+
+  batchTableJson.AddMember(
+      "scalarProp",
+      scalarProperty,
+      batchTableJson.GetAllocator());
+
+  upgradeBatchTableToFeatureMetadata(
+      spdlog::default_logger(),
+      model,
+      featureTableJson,
+      batchTableJson,
+      gsl::span<const std::byte>());
+
+  ModelEXT_feature_metadata* metadata =
+      model.getExtension<ModelEXT_feature_metadata>();
+  REQUIRE(metadata != nullptr);
+
+  std::optional<Schema> schema = metadata->schema;
+  REQUIRE(schema != std::nullopt);
+
+  const std::unordered_map<std::string, Class>& classes = schema->classes;
+  REQUIRE(classes.size() == 1);
+
+  const Class& defaultClass = classes.at("default");
+  const std::unordered_map<std::string, ClassProperty>& properties =
+      defaultClass.properties;
+  REQUIRE(properties.size() == 1);
+
+  const FeatureTable& featureTable = metadata->featureTables["default"];
+  checkScalarProperty<ExpectedType, PropertyViewType>(
+      model,
+      featureTable,
+      defaultClass,
+      "scalarProp",
+      expectedPropertyType,
+      expected);
 }
 
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
@@ -919,5 +989,22 @@ TEST_CASE("Upgrade dynamic json number array") {
     // clang-format on
 
     createTestForArrayJson(expected, "BOOLEAN", 0);
+  }
+}
+
+TEST_CASE("Upgrade scalar json") {
+  SECTION("Uint32") {
+    std::vector<uint32_t> expected{32, 45, 21, 65, 78};
+    createTestForScalarJson<uint32_t, int8_t>(expected, "INT8");
+  }
+
+  SECTION("Boolean") {
+    std::vector<bool> expected{true, false, true, false, true, true, false};
+    createTestForScalarJson(expected, "BOOLEAN");
+  }
+
+  SECTION("String") {
+    std::vector<std::string> expected{"Test 0", "Test 1", "Test 2", "Test 3"};
+    createTestForScalarJson<std::string, std::string_view>(expected, "STRING");
   }
 }
