@@ -1044,7 +1044,9 @@ void updateExtensionWithBinaryProperty(
     ClassProperty& classProperty,
     FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
-    const rapidjson::Value& propertyValue) {
+    const std::string& propertyName,
+    const rapidjson::Value& propertyValue,
+    const std::shared_ptr<spdlog::logger>& pLogger) {
   assert(
       gltfBufferIndex >= 0 &&
       "gltfBufferIndex is negative. Need to allocate buffer before "
@@ -1053,17 +1055,31 @@ void updateExtensionWithBinaryProperty(
   const auto& byteOffsetIt = propertyValue.FindMember("byteOffset");
   if (byteOffsetIt == propertyValue.MemberEnd() ||
       !byteOffsetIt->value.IsInt64()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Skip convert {}. The binary property doesn't have required "
+        "byteOffset.",
+        propertyName);
     return;
   }
 
   const auto& componentTypeIt = propertyValue.FindMember("componentType");
   if (componentTypeIt == propertyValue.MemberEnd() ||
       !componentTypeIt->value.IsString()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Skip convert {}. The binary property doesn't have required "
+        "componentType.",
+        propertyName);
     return;
   }
 
   const auto& typeIt = propertyValue.FindMember("type");
   if (typeIt == propertyValue.MemberEnd() || !typeIt->value.IsString()) {
+    SPDLOG_LOGGER_WARN(
+        pLogger,
+        "Skip convert {}. The binary property doesn't have required type.",
+        propertyName);
     return;
   }
 
@@ -1202,7 +1218,9 @@ void upgradeBatchTableToFeatureMetadata(
           classProperty,
           featureTable,
           featureTableProperty,
-          propertyValue);
+          name,
+          propertyValue,
+          pLogger);
       gltfBufferOffset += roundUp(binaryProperty.byteLength, 8);
     }
   }
