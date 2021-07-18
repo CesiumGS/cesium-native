@@ -341,7 +341,7 @@ private:
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != static_cast<uint32_t>(type)) {
+    if (TypeToPropertyType<T>::value != type) {
       return std::nullopt;
     }
 
@@ -395,7 +395,7 @@ private:
 
     PropertyType componentType =
         convertStringToPropertyType(classProperty.componentType.getString());
-    if (TypeToPropertyType<T>::value != static_cast<uint32_t>(componentType)) {
+    if (TypeToPropertyType<T>::value != componentType) {
       return std::nullopt;
     }
 

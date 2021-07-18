@@ -80,60 +80,69 @@ struct MetadataArrayType<CesiumGltf::MetadataArrayView<T>> {
 template <typename T> struct TypeToPropertyType;
 
 template <> struct TypeToPropertyType<uint8_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Uint8);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Uint8;
 };
 
 template <> struct TypeToPropertyType<int8_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Int8);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Int8;
 };
 
 template <> struct TypeToPropertyType<uint16_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Uint16);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Uint16;
 };
 
 template <> struct TypeToPropertyType<int16_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Int16);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Int16;
 };
 
 template <> struct TypeToPropertyType<uint32_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Uint32);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Uint32;
 };
 
 template <> struct TypeToPropertyType<int32_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Int32);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Int32;
 };
 
 template <> struct TypeToPropertyType<uint64_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Uint64);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Uint64;
 };
 
 template <> struct TypeToPropertyType<int64_t> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::Int64);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Int64;
 };
 
 template <> struct TypeToPropertyType<float> {
-  static constexpr uint32_t value =
-      static_cast<uint32_t>(PropertyType::Float32);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Float32;
 };
 
 template <> struct TypeToPropertyType<double> {
-  static constexpr uint32_t value =
-      static_cast<uint32_t>(PropertyType::Float64);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Float64;
 };
 
 template <> struct TypeToPropertyType<bool> {
-  static constexpr uint32_t value =
-      static_cast<uint32_t>(PropertyType::Boolean);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::Boolean;
 };
 
 template <> struct TypeToPropertyType<std::string_view> {
-  static constexpr uint32_t value = static_cast<uint32_t>(PropertyType::String);
+  static constexpr PropertyType component = PropertyType::None;
+  static constexpr PropertyType value = PropertyType::String;
 };
 
 template <typename T>
 struct TypeToPropertyType<CesiumGltf::MetadataArrayView<T>> {
-  static constexpr uint32_t value =
-      static_cast<uint32_t>(PropertyType::Array) | TypeToPropertyType<T>::value;
+  static constexpr PropertyType component = TypeToPropertyType<T>::value;
+  static constexpr PropertyType value = PropertyType::Array;
 };
 
 } // namespace CesiumGltf

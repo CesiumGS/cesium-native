@@ -66,14 +66,16 @@ TEST_CASE("Test PropertyTypeTrait") {
   }
 
   SECTION("TypeToPropertyType") {
-    uint32_t value = CesiumGltf::TypeToPropertyType<uint32_t>::value;
-    REQUIRE(value == static_cast<uint32_t>(CesiumGltf::PropertyType::Uint32));
+    CesiumGltf::PropertyType value =
+        CesiumGltf::TypeToPropertyType<uint32_t>::value;
+    REQUIRE(value == CesiumGltf::PropertyType::Uint32);
 
+    auto component = CesiumGltf::TypeToPropertyType<
+        CesiumGltf::MetadataArrayView<uint32_t>>::component;
     value = CesiumGltf::TypeToPropertyType<
         CesiumGltf::MetadataArrayView<uint32_t>>::value;
-    uint32_t expected =
-        static_cast<uint32_t>(CesiumGltf::PropertyType::Uint32) |
-        static_cast<uint32_t>(CesiumGltf::PropertyType::Array);
+    CesiumGltf::PropertyType expected = CesiumGltf::PropertyType::Array;
     REQUIRE(value == expected);
+    REQUIRE(component == CesiumGltf::PropertyType::Uint32);
   }
 }
