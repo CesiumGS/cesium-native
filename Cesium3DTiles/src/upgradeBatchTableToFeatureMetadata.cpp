@@ -162,7 +162,7 @@ void updateExtensionWithJsonStringProperty(
 
   rapidjson::StringBuffer rapidjsonStrBuffer;
   std::vector<uint64_t> rapidjsonOffsets;
-  rapidjsonOffsets.reserve(featureTable.count + 1);
+  rapidjsonOffsets.reserve(static_cast<size_t>(featureTable.count + 1));
   rapidjsonOffsets.emplace_back(0);
 
   auto it = propertyValue.Begin();
@@ -316,7 +316,8 @@ void copyNumericDynamicArrayBuffers(
     const FeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   valueBuffer.resize(sizeof(ValueType) * numOfElements);
-  offsetBuffer.resize(sizeof(OffsetType) * (featureTable.count + 1));
+  offsetBuffer.resize(
+      sizeof(OffsetType) * static_cast<size_t>(featureTable.count + 1));
   ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
   OffsetType* offsetValue = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
@@ -351,8 +352,8 @@ void updateNumericArrayProperty(
 
   // check if it's a fixed array
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
-    size_t numOfValues =
-        featureTable.count * *compatibleTypes.minComponentCount;
+    size_t numOfValues = static_cast<size_t>(featureTable.count) *
+                         *compatibleTypes.minComponentCount;
     std::vector<std::byte> valueBuffer(sizeof(ValueType) * numOfValues);
     ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
     for (int64_t i = 0; i < featureTable.count; ++i) {
@@ -503,7 +504,8 @@ void copyArrayOffsetBufferForStringArrayProperty(
     const FeatureTable& featureTable,
     const rapidjson::Value& propertyValue) {
   OffsetType prevOffset = 0;
-  offsetBuffer.resize((featureTable.count + 1) * sizeof(OffsetType));
+  offsetBuffer.resize(
+      static_cast<size_t>(featureTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   const auto& jsonOuterArray = propertyValue.GetArray();
   for (int64_t i = 0; i < featureTable.count; ++i) {
@@ -683,7 +685,8 @@ void copyBooleanArrayBuffers(
   size_t totalByteLength =
       static_cast<size_t>(glm::ceil(static_cast<double>(numOfElements) / 8.0));
   valueBuffer.resize(totalByteLength);
-  offsetBuffer.resize((featureTable.count + 1) * sizeof(OffsetType));
+  offsetBuffer.resize(
+      static_cast<size_t>(featureTable.count + 1) * sizeof(OffsetType));
   OffsetType* offset = reinterpret_cast<OffsetType*>(offsetBuffer.data());
   OffsetType prevOffset = 0;
   const auto& jsonOuterArray = propertyValue.GetArray();
@@ -718,8 +721,8 @@ void updateBooleanArrayProperty(
 
   // fixed array of boolean
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
-    size_t numOfElements =
-        featureTable.count * compatibleTypes.minComponentCount.value();
+    size_t numOfElements = static_cast<size_t>(
+        featureTable.count * compatibleTypes.minComponentCount.value());
     size_t totalByteLength = static_cast<size_t>(
         glm::ceil(static_cast<double>(numOfElements) / 8.0));
     std::vector<std::byte> valueBuffer(totalByteLength);
