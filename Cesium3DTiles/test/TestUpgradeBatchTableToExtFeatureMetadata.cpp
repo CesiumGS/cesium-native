@@ -784,13 +784,15 @@ TEST_CASE("Upgrade fixed json number array") {
   }
 
   SECTION("int64_t") {
+    // those the max positive number is only uint32_t. However, due to negative
+    // number, it is upgraded to int64_t
     // clang-format off
     std::vector<std::vector<int64_t>> expected {
       {0, 1, 4, 1},
-      {1244, -9223372036854775807, 1222, 544662},
+      {1244, -922, 1222, 54},
       {123, 10, 122, 334},
       {13, 45, 122, 94},
-      {11, 22, 3, 9223372036854775807}};
+      {11, 22, 3, 3147483647}};
     // clang-format on
 
     std::string expectedComponentType = "INT64";
