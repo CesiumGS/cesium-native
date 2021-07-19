@@ -209,6 +209,7 @@ MetadataFeatureTableView::getStringPropertyValues(
   }
 
   return MetadataPropertyView<std::string_view>(
+      MetadataPropertyViewStatus::Valid,
       valueBuffer,
       gsl::span<const std::byte>(),
       offsetBuffer,
@@ -272,6 +273,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
     }
 
     return MetadataPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::Valid,
         valueBuffer,
         gsl::span<const std::byte>(),
         stringOffsetBuffer,
@@ -332,6 +334,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   return MetadataPropertyView<MetadataArrayView<std::string_view>>(
+      MetadataPropertyViewStatus::Valid,
       valueBuffer,
       arrayOffsetBuffer,
       stringOffsetBuffer,

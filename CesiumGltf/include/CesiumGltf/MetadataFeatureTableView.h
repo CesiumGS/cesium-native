@@ -368,6 +368,7 @@ private:
     }
 
     return MetadataPropertyView<T>(
+        MetadataPropertyViewStatus::Valid,
         valueBuffer,
         gsl::span<const std::byte>(),
         gsl::span<const std::byte>(),
@@ -434,6 +435,7 @@ private:
       }
 
       return MetadataPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::Valid,
           valueBuffer,
           gsl::span<const std::byte>(),
           gsl::span<const std::byte>(),
@@ -461,6 +463,7 @@ private:
     }
 
     return MetadataPropertyView<MetadataArrayView<T>>(
+        MetadataPropertyViewStatus::Valid,
         valueBuffer,
         offsetBuffer,
         gsl::span<const std::byte>(),

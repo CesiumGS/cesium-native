@@ -11,6 +11,16 @@
 #include <type_traits>
 
 namespace CesiumGltf {
+enum class MetadataPropertyViewStatus {
+  Valid,
+  InvalidValueBufferViewIndex,
+  InvalidArrayOffsetBufferViewIndex,
+  InvalidStringOffsetBufferViewIndex,
+  InvalidValueBufferIndex,
+  InvalidArrayOffsetBufferIndex,
+  InvalidStringOffsetBufferIndex,
+};
+
 /**
  * @brief A view on the data of the FeatureTableProperty
  *
@@ -35,13 +45,15 @@ public:
    * @param instanceCount The number of instances specified by {@link FeatureTable::count}
    */
   MetadataPropertyView(
+      MetadataPropertyViewStatus status,
       gsl::span<const std::byte> valueBuffer,
       gsl::span<const std::byte> arrayOffsetBuffer,
       gsl::span<const std::byte> stringOffsetBuffer,
       PropertyType offsetType,
       int64_t componentCount,
       int64_t instanceCount)
-      : _valueBuffer{valueBuffer},
+      : _status{status},
+        _valueBuffer{valueBuffer},
         _arrayOffsetBuffer{arrayOffsetBuffer},
         _stringOffsetBuffer{stringOffsetBuffer},
         _offsetType{offsetType},
@@ -50,11 +62,27 @@ public:
         _instanceCount{instanceCount} {}
 
   /**
+   * @brief Gets the status of this property view.
+   *
+   * Indicates whether the view accurately reflects the property's data, or
+   * whether an error occurred.
+   */
+  MetadataPropertyViewStatus status() const noexcept { return _status; }
+
+  /**
    * @brief Get the value of an instance of the FeatureTable.
    * @param instance The instance index
    * @return The value of the instance
    */
   ElementType get(int64_t instance) const {
+    assert(
+        _status == MetadataPropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
+    assert(
+        size() > 0 &&
+        "Check the size() of the view to make sure it's not empty");
+    assert(instance >= 0 && "instance index must be positive");
+
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumeric(instance);
     }
@@ -235,6 +263,7 @@ private:
     }
   }
 
+  MetadataPropertyViewStatus _status;
   gsl::span<const std::byte> _valueBuffer;
   gsl::span<const std::byte> _arrayOffsetBuffer;
   gsl::span<const std::byte> _stringOffsetBuffer;
