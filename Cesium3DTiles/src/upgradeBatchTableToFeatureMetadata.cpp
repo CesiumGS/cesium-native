@@ -122,8 +122,8 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
       type.isUint32 &= isInRangeForSignedInteger<uint32_t>(value);
       type.isInt64 &= true;
       type.isUint64 &= value >= 0;
-      type.isFloat32 &= value >= -2e24 && value <= 2e24;
-      type.isFloat64 &= value >= -2e53 && value <= 2e53;
+      type.isFloat32 &= it->IsLosslessFloat();
+      type.isFloat64 &= it->IsLosslessDouble();
       type.isBool = false;
       type.isArray = false;
     } else if (it->IsUint64()) {
