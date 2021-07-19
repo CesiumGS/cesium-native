@@ -6,7 +6,7 @@
 
 namespace Cesium3DTiles {
 
-CullingVolume createCullingVolume(
+CullingVolume createPerspectiveCullingVolume(
     const glm::dvec3& position,
     const glm::dvec3& direction,
     const glm::dvec3& up,
@@ -63,6 +63,33 @@ CullingVolume createCullingVolume(
   normal = glm::normalize(normal);
 
   CesiumGeometry::Plane topPlane(normal, -glm::dot(normal, position));
+
+  return {leftPlane, rightPlane, topPlane, bottomPlane};
+}
+
+CullingVolume createOrthographicCullingVolume(
+    const glm::dvec3& position,
+    const glm::dvec3& direction,
+    const glm::dvec3& up,
+    const double orthographicWidth,
+    const double orthographicHeight) noexcept {
+
+  double halfWidth = 0.5 * orthographicWidth;
+  double halfHeight = 0.5 * orthographicHeight;
+
+  glm::dvec3 right = glm::cross(direction, up);
+
+  // Left Plane
+  CesiumGeometry::Plane leftPlane(position - halfWidth * right, right);
+
+  // Right Plane
+  CesiumGeometry::Plane rightPlane(position + halfWidth * right, -right);
+
+  // Top Plane
+  CesiumGeometry::Plane topPlane(position + halfHeight * up, -up);
+
+  // Bottom Plane
+  CesiumGeometry::Plane bottomPlane(position - halfHeight * up, up);
 
   return {leftPlane, rightPlane, topPlane, bottomPlane};
 }
