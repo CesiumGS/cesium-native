@@ -24,62 +24,30 @@ class CESIUM3DTILES_API ViewState final {
   // TODO: Add support for orthographic and off-center perspective frustums
 public:
   /**
-   * @brief The frustum type type to use with the {@link ViewState}
-   */
-  enum class FrustumType { Perspective, Orthographic };
-
-  /**
    * @brief Creates a new instance of a view state.
    *
-   * @param frustumType The frustum type of the camera.
    * @param position The position of the eye point of the camera.
    * @param direction The view direction vector of the camera.
    * @param up The up vector of the camera.
    * @param viewportSize The size of the viewport, in pixels.
    * @param horizontalFieldOfView The horizontal field-of-view (opening)
-   * angle of the camera, in radians. Only applicable when using perspective
-   * projection.
+   * angle of the camera, in radians.
    * @param verticalFieldOfView The vertical field-of-view (opening)
-   * angle of the camera, in radians. Only applicable when using perspective
-   * projection.
-   * @param orthographicWidth The width in meters of the orthographic frustum.
-   * Only applicable when using orthographic projection.
-   * @param orthographicHeight The height in meters of the orthographic frustum.
-   * Only applicable when using orthographic projection.
+   * angle of the camera, in radians.
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position}
    * from the cartesian position.
    * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
    */
   static ViewState create(
-      const FrustumType& frutumType,
       const glm::dvec3& position,
       const glm::dvec3& direction,
       const glm::dvec3& up,
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
-      double orthographicWidth,
-      double orthographicHeight,
       const CesiumGeospatial::Ellipsoid& ellipsoid =
           CesiumGeospatial::Ellipsoid::WGS84);
-
-  static CullingVolume createCullingVolume(
-      const FrustumType& frustumType,
-      const glm::dvec3& position,
-      const glm::dvec3& direction,
-      const glm::dvec3& up,
-      double horizontalFieldOfView,
-      double verticalFieldOfView,
-      double orthographicWidth,
-      double orthographicHeight);
-
-  /**
-   * @brief Gets the frustum type of the camera.
-   */
-  const FrustumType& getFrustumType() const noexcept {
-    return this->_frustumType;
-  }
 
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
@@ -132,22 +100,6 @@ public:
   }
 
   /**
-   * @brief Gets the width in meters of the orthographic frustum. Only relevant
-   * when the `frustumType` is `FrustumType::Orthographic`.
-   */
-  double getOrthographicWidth() const noexcept {
-    return this->_orthographicWidth;
-  }
-
-  /**
-   * @brief Gets the height in meters of the orthographic frustum. Only
-   * relevant when the `frustumType` is `FrustumType::Orthographic`.
-   */
-  double getOrthographicHeight() const noexcept {
-    return this->_orthographicHeight;
-  }
-
-  /**
    * @brief Returns whether the given {@link BoundingVolume} is visible for this
    * camera
    *
@@ -193,44 +145,31 @@ private:
   /**
    * @brief Creates a new instance.
    *
-   * @param frustumType The frustum type of the camera.
    * @param position The position of the eye point of the camera.
    * @param direction The view direction vector of the camera.
    * @param up The up vector of the camera.
    * @param viewportSize The size of the viewport, in pixels.
    * @param horizontalFieldOfView The horizontal field-of-view (opening)
-   * angle of the camera, in radians. Only applicable when using perspective
-   * projection.
+   * angle of the camera, in radians.
    * @param verticalFieldOfView The vertical field-of-view (opening)
-   * angle of the camera, in radians. Only applicable when using perspective
-   * projection
-   * @param orthographicWidth The width in meters of the orthographic frustum.
-   * Only applicable when using orthographic projection.
-   * @param orthographicHeight The height in meters of the orthographic frustum.
-   * Only applicable when using orthographic projection.
+   * angle of the camera, in radians.
    */
   ViewState(
-      const FrustumType& frustumType,
       const glm::dvec3& position,
       const glm::dvec3& direction,
       const glm::dvec3& up,
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
-      double orthographicWidth,
-      double orthographicHeight,
       const std::optional<CesiumGeospatial::Cartographic>&
           positionCartographic);
 
-  const FrustumType _frustumType;
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
   const glm::dvec3 _up;
   const glm::dvec2 _viewportSize;
   const double _horizontalFieldOfView;
   const double _verticalFieldOfView;
-  const double _orthographicWidth;
-  const double _orthographicHeight;
 
   const double _sseDenominator;
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
