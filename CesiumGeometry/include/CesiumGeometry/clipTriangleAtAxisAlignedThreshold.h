@@ -29,16 +29,6 @@ struct InterpolatedVertex {
    * which to interpolate.
    */
   double t;
-
-  constexpr bool operator==(const InterpolatedVertex& other) const noexcept {
-    return this->first == other.first && this->second == other.second &&
-           std::fabs(this->t - other.t) <=
-               std::numeric_limits<double>::epsilon();
-  }
-
-  constexpr bool operator!=(const InterpolatedVertex& other) const noexcept {
-    return !(*this == other);
-  }
 };
 
 /**
@@ -47,7 +37,7 @@ struct InterpolatedVertex {
  * It may either be a simple index referring to an existing vertex,
  * or an interpolation between two vertices.
  */
-using TriangleClipVertex = std::variant<int, InterpolatedVertex>;
+typedef std::variant<int, InterpolatedVertex> TriangleClipVertex;
 
 /**
  * @brief Splits a 2D triangle at given axis-aligned threshold value and returns

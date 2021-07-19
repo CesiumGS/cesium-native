@@ -8,11 +8,11 @@
 #include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
-#include <catch2/catch.hpp>
+#include "catch2/catch.hpp"
+#include "glm/mat4x4.hpp"
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
-#include <glm/mat4x4.hpp>
 
 using namespace CesiumAsync;
 using namespace Cesium3DTiles;
@@ -153,7 +153,7 @@ TEST_CASE("Test replace refinement for render") {
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
-      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      std::make_shared<SimpleTaskProcessor>(),
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -549,7 +549,7 @@ TEST_CASE("Test additive refinement") {
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
-      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      std::make_shared<SimpleTaskProcessor>(),
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load
@@ -706,7 +706,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   TilesetExternals tilesetExternals{
       mockAssetAccessor,
       std::make_shared<SimplePrepareRendererResource>(),
-      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      std::make_shared<SimpleTaskProcessor>(),
       nullptr};
 
   // create tileset and call updateView() to give it a chance to load

@@ -1,6 +1,6 @@
 #include "CesiumGeometry/Plane.h"
 #include "CesiumGeospatial/Ellipsoid.h"
-#include <catch2/catch.hpp>
+#include "catch2/catch.hpp"
 #include <glm/geometric.hpp>
 
 using namespace CesiumGeometry;

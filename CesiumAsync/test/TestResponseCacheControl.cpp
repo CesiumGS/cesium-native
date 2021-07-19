@@ -1,5 +1,5 @@
 #include "ResponseCacheControl.h"
-#include <catch2/catch.hpp>
+#include "catch2/catch.hpp"
 
 using namespace CesiumAsync;
 

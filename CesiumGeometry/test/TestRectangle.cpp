@@ -1,6 +1,6 @@
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumUtility/Math.h"
-#include <catch2/catch.hpp>
+#include "catch2/catch.hpp"
 
 TEST_CASE("Rectangle::computeSignedDistance") {
   struct TestCase {

@@ -1,5 +1,5 @@
+#include "catch2/catch.hpp"
 #include <CesiumUtility/JsonValue.h>
-#include <catch2/catch.hpp>
 #include <cstdint>
 #include <limits>
 

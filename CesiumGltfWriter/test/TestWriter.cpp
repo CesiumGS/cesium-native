@@ -5,11 +5,11 @@
 #include "CesiumGltf/Node.h"
 #include "CesiumGltf/Scene.h"
 #include "CesiumGltf/Writer.h"
+#include "catch2/catch.hpp"
 #include <CesiumGltf/GltfReader.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <algorithm>
-#include <catch2/catch.hpp>
 #include <cstddef>
 #include <gsl/span>
 #include <string>

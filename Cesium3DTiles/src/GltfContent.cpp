@@ -3,7 +3,6 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
 #include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
 #include <stdexcept>
 
@@ -20,7 +19,6 @@ GltfContent::load(const TileContentLoadInput& input) {
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const gsl::span<const std::byte>& data) {
-  CESIUM_TRACE("Cesium3DTiles::GltfContent::load");
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
 
@@ -61,7 +59,6 @@ static int generateOverlayTextureCoordinates(
     double& north,
     double& minimumHeight,
     double& maximumHeight) {
-  CESIUM_TRACE("Cesium3DTiles::GltfContent::generateOverlayTextureCoordinates");
   std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
   std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
   std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
@@ -189,8 +186,6 @@ GltfContent::createRasterOverlayTextureCoordinates(
     const std::string& projectionName,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& rectangle) {
-  CESIUM_TRACE(
-      "Cesium3DTiles::GltfContent::createRasterOverlayTextureCoordinates");
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 

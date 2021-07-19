@@ -6,7 +6,6 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/Uri.h"
 #include "SkirtMeshMetadata.h"
 #include "calcQuadtreeMaxGeometricError.h"
@@ -696,9 +695,6 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     const std::string& url,
     const gsl::span<const std::byte>& data,
     bool enableWaterMask) {
-
-  CESIUM_TRACE("Cesium3DTiles::QuantizedMeshContent::load");
-
   // TODO: use context plus tileID to compute the tile's rectangle, rather than
   // inferring it from the parent tile.
   const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
