@@ -322,7 +322,7 @@ private:
    *
    * @param pRequest The request for which the response was received.
    */
-  void
+  CesiumAsync::Future<void>
   _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
   struct LoadResult {
@@ -350,7 +350,7 @@ private:
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
 
-  void _loadTilesetJson(
+  CesiumAsync::Future<void> _loadTilesetJson(
       const std::string& url,
       const std::vector<std::pair<std::string, std::string>>& headers =
           std::vector<std::pair<std::string, std::string>>(),
@@ -547,7 +547,7 @@ private:
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
-  std::atomic<uint32_t> _loadsInProgress;
+  std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -569,12 +569,14 @@ private:
    */
   CesiumGeometry::Axis _gltfUpAxis;
 
+  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
+
   static void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
       const ViewState& viewState,
       Tile& tile,
       double distance);
-  static void processQueue(
+  void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);

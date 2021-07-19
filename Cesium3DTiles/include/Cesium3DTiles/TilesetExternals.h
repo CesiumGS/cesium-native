@@ -31,9 +31,13 @@ public:
   std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources;
 
   /**
-   * @brief An external {@link CesiumAsync::ITaskProcessor}
+   * @brief The async system to use to do work in threads.
+   *
+   * The tileset will automatically call
+   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} from
+   * {@link Tileset::updateView}.
    */
-  std::shared_ptr<CesiumAsync::ITaskProcessor> pTaskProcessor;
+  CesiumAsync::AsyncSystem asyncSystem;
 
   /**
    * @brief An external {@link CreditSystem} that can be used to manage credit

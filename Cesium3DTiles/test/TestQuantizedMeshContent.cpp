@@ -5,7 +5,7 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumUtility/Math.h"
 #include "QuantizedMeshContent.h"
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include <glm/glm.hpp>
 
 using namespace Cesium3DTiles;
