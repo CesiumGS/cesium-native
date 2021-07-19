@@ -34,11 +34,6 @@ const argv = yargs.options({
     description: "The path to the configuration options controlling code generation, expressed in a JSON file.",
     demandOption: true,
     type: "string"
-  },
-  oneHandlerFile: {
-    description: "Generate all the JSON handler implementations into a single file, GeneratedJsonHandlers.cpp.",
-    type: "bool",
-    default: true
   }
 }).argv;
 
@@ -47,17 +42,8 @@ const modelSchema = schemaCache.load("glTF.schema.json");
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
-if (argv.oneHandlerFile) {
-  // Clear the handler implementation file, and then we'll append to it in `generate`.
-  const readerHeaderOutputDir = path.join(argv.readerOutput, "generated");
-  fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
-  const readerSourceOutputPath = path.join(readerHeaderOutputDir, "GeneratedJsonHandlers.cpp");
-  fs.writeFileSync(readerSourceOutputPath, "", "utf-8");
-}
-
 const options = {
   schemaCache,
-  oneHandlerFile: argv.oneHandlerFile,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
   config: config,

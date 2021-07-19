@@ -8,42 +8,40 @@ namespace Impl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
-struct IdentityUnwrapper {
-  template <typename Func> static Func unwrap(Func&& f) {
-    return std::forward<Func>(f);
+template <class Func> struct IdentityUnwrapper {
+  static Func unwrap(Func&& f) { return std::forward<Func>(f); }
+};
+
+template <class Func, class T> struct ParameterizedTaskUnwrapper {
+  static auto unwrap(Func&& f) {
+    return [f = std::move(f)](T&& t) { return f(std::forward<T>(t))._task; };
   }
 };
 
-template <typename T> struct ParameterizedTaskUnwrapper {
-  template <typename Func> static auto unwrap(Func&& f) {
-    return [f = std::forward<Func>(f)](T&& t) { return f(std::move(t))._task; };
+template <class Func> struct TaskUnwrapper {
+  static auto unwrap(Func&& f) {
+    return [f = std::move(f)]() { return f()._task; };
   }
 };
 
-struct TaskUnwrapper {
-  template <typename Func> static auto unwrap(Func&& f) {
-    return [f = std::forward<Func>(f)]() { return f()._task; };
-  }
-};
-
-template <typename Func, typename T> auto unwrapFuture(Func&& f) {
+template <class Func, class T> auto unwrapFuture(Func&& f) {
   return std::conditional<
       std::is_same<
           typename ContinuationReturnType<Func, T>::type,
           typename RemoveFuture<
               typename ContinuationFutureType<Func, T>::type>::type>::value,
-      IdentityUnwrapper,
-      ParameterizedTaskUnwrapper<T>>::type::unwrap(std::forward<Func>(f));
+      IdentityUnwrapper<Func>,
+      ParameterizedTaskUnwrapper<Func, T>>::type::unwrap(std::forward<Func>(f));
 }
 
-template <typename Func> auto unwrapFuture(Func&& f) {
+template <class Func> auto unwrapFuture(Func&& f) {
   return std::conditional<
       std::is_same<
           typename ContinuationReturnType<Func, void>::type,
           typename RemoveFuture<
               typename ContinuationFutureType<Func, void>::type>::type>::value,
-      IdentityUnwrapper,
-      TaskUnwrapper>::type::unwrap(std::forward<Func>(f));
+      IdentityUnwrapper<Func>,
+      TaskUnwrapper<Func>>::type::unwrap(std::forward<Func>(f));
 }
 
 //! @endcond

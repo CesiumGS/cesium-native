@@ -6,7 +6,6 @@
 #include "CesiumAsync/Impl/WithTracing.h"
 #include "CesiumAsync/Impl/cesium-async++.h"
 #include "CesiumAsync/Library.h"
-#include "CesiumAsync/Promise.h"
 #include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Tracing.h"
 #include <memory>
@@ -14,7 +13,7 @@
 namespace CesiumAsync {
 class ITaskProcessor;
 
-class AsyncSystem;
+template <typename T> class Future;
 
 /**
  * @brief A system for managing asynchronous requests and tasks.
@@ -33,6 +32,35 @@ class AsyncSystem;
 class CESIUMASYNC_API AsyncSystem final {
 public:
   /**
+   * @brief A promise that can be resolved or rejected by an asynchronous task.
+   *
+   * @tparam T The type of the object that the promise will be resolved with.
+   */
+  template <typename T> struct Promise {
+    Promise(const std::shared_ptr<async::event_task<T>>& pEvent)
+        : _pEvent(pEvent) {}
+
+    /**
+     * @brief Will be called when the task completed successfully.
+     *
+     * @param value The value that was computed by the asynchronous task.
+     */
+    void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
+
+    /**
+     * @brief Will be called when the task failed.
+     *
+     * @param error The error that caused the task to fail.
+     */
+    void reject(std::exception&& error) const {
+      this->_pEvent->set_exception(std::make_exception_ptr(error));
+    }
+
+  private:
+    std::shared_ptr<async::event_task<T>> _pEvent;
+  };
+
+  /**
    * @brief Constructs a new instance.
    *
    * @param pTaskProcessor The interface used to run tasks in background
@@ -47,11 +75,7 @@ public:
    * The {@link Promise} passed to the callback `f` may be resolved or rejected
    * asynchronously, even after the function has returned.
    *
-   * This method is very similar to {@link AsyncSystem::createPromise}, except
-   * that that method returns the Promise directly. The advantage of using this
-   * method instead is that it is more exception-safe.  If the callback `f`
-   * throws an exception, the `Future` will be rejected automatically and the
-   * exception will not escape the callback.
+   * If the callback `f` throws an exception, the `Future` will be rejected.
    *
    * @tparam T The type that the Future resolves to.
    * @tparam Func The type of the callback function.
@@ -63,34 +87,17 @@ public:
     std::shared_ptr<async::event_task<T>> pEvent =
         std::make_shared<async::event_task<T>>();
 
-    Promise<T> promise(this->_pSchedulers, pEvent);
+    Promise<T> promise(pEvent);
 
     try {
       f(promise);
+    } catch (std::exception& e) {
+      promise.reject(std::move(e));
     } catch (...) {
-      promise.reject(std::current_exception());
+      promise.reject(std::runtime_error("Unknown error"));
     }
 
     return Future<T>(this->_pSchedulers, pEvent->get_task());
-  }
-
-  /**
-   * @brief Create a Promise that can be used at a later time to resolve or
-   * reject a Future.
-   *
-   * Use {@link Promise<T>::getFuture} to get the Future that is resolved
-   * or rejected when this Promise is resolved or rejected.
-   *
-   * Consider using {@link AsyncSystem::createFuture} instead of this method.
-   *
-   * @tparam T The type that is provided when resolving the Promise and the type
-   * that the associated Future resolves to. Future.
-   * @return The Promise.
-   */
-  template <typename T> Promise<T> createPromise() const {
-    return Promise<T>(
-        this->_pSchedulers,
-        std::make_shared<async::event_task<T>>());
   }
 
   /**
@@ -118,7 +125,9 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->workerThread.immediate,
-            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
+            Impl::WithTracing<Func, void>::wrap(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -145,7 +154,9 @@ public:
         this->_pSchedulers,
         async::spawn(
             this->_pSchedulers->mainThread.immediate,
-            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
+            Impl::WithTracing<Func, void>::wrap(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -168,53 +179,9 @@ public:
         this->_pSchedulers,
         async::spawn(
             threadPool._pScheduler->immediate,
-            Impl::WithTracing<void>::end(tracingName, std::forward<Func>(f))));
-  }
-
-  /**
-   * @brief Creates a Future that resolves when every Future in a vector
-   * resolves, and rejects when any Future in the vector rejects.
-   *
-   * If any of the Futures rejects, the returned Future rejects as well. The
-   * exception included in the rejection will be from the first Future in the
-   * vector that rejects.
-   *
-   * To get detailed rejection information from each of the Futures,
-   * attach a `catchInMainThread` continuation prior to passing the
-   * list into `all`.
-   *
-   * @tparam T The type that each Future resolves to.
-   * @param futures The list of futures.
-   * @return A Future that resolves when all the given Futures resolve, and
-   * rejects when any Future in the vector rejects.
-   */
-  template <typename T>
-  Future<std::vector<T>> all(std::vector<Future<T>>&& futures) const {
-    std::vector<async::task<T>> tasks;
-    tasks.reserve(futures.size());
-
-    for (auto it = futures.begin(); it != futures.end(); ++it) {
-      tasks.emplace_back(std::move(it->_task));
-    }
-
-    futures.clear();
-
-    async::task<std::vector<T>> task =
-        async::when_all(tasks.begin(), tasks.end())
-            .then(
-                async::inline_scheduler(),
-                [](std::vector<async::task<T>>&& tasks) {
-                  // Get all the results. If any tasks rejected, we'll bail with
-                  // an exception.
-                  std::vector<T> results;
-                  results.reserve(tasks.size());
-
-                  for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-                    results.emplace_back(it->get());
-                  }
-                  return results;
-                });
-    return Future<std::vector<T>>(this->_pSchedulers, std::move(task));
+            Impl::WithTracing<Func, void>::wrap(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   /**
@@ -245,18 +212,6 @@ public:
    * The tasks are run in the calling thread.
    */
   void dispatchMainThreadTasks();
-
-  /**
-   * @brief Runs a single waiting task that is currently queued for the main
-   * thread. If there are no tasks waiting, it returns immediately without
-   * running any tasks.
-   *
-   * The task is run in the calling thread.
-   *
-   * @return true A single task was executed.
-   * @return false No task was executed because none are waiting.
-   */
-  bool dispatchOneMainThreadTask();
 
   /**
    * @brief Creates a new thread pool that can be used to run continuations.
