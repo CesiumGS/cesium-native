@@ -1,45 +1,39 @@
 #pragma once
 
 #include "CesiumGeometry/Plane.h"
+#include <vector>
 
 namespace Cesium3DTiles {
 
 /**
- * @brief A culling volume, defined by four planes.
+ * @brief A culling volume, defined by a list of planes.
  *
  * The planes describe the culling volume that may be created for
  * the view frustum of a camera. The normals of these planes will
  * point inwards.
  */
-struct CullingVolume final {
+class CullingVolume final {
+private:
+  /**
+   * @brief The list of planes defining the culling volume.
+   */
+  const std::vector<CesiumGeometry::Plane> _planes;
+
+public:
+  /**
+   * @brief Constructs an instance.
+   *
+   * @param planes The planes that will define this culling volume. They should
+   * define a convex volume with their normals pointed inward.
+   */
+  CullingVolume(const std::vector<CesiumGeometry::Plane>& planes);
 
   /**
-   * @brief The left plane of the culling volume.
-   *
-   * Defaults to (0,0,1), with a distance of 0.
+   * @brief Gets the planes that define this culling volume.
    */
-  CesiumGeometry::Plane leftPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
-
-  /**
-   * @brief The right plane of the culling volume.
-   *
-   * Defaults to (0,0,1), with a distance of 0.
-   */
-  CesiumGeometry::Plane rightPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
-
-  /**
-   * @brief The top plane of the culling volume.
-   *
-   * Defaults to (0,0,1), with a distance of 0.
-   */
-  CesiumGeometry::Plane topPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
-
-  /**
-   * @brief The bottom plane of the culling volume.
-   *
-   * Defaults to (0,0,1), with a distance of 0.
-   */
-  CesiumGeometry::Plane bottomPlane{glm::dvec3(0.0, 0.0, 1.0), 0.0};
+  const std::vector<CesiumGeometry::Plane>& getPlanes() const noexcept {
+    return this->_planes;
+  }
 };
 
 /**

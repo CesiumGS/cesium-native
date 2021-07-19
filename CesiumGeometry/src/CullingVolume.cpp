@@ -64,7 +64,7 @@ CullingVolume createPerspectiveCullingVolume(
 
   CesiumGeometry::Plane topPlane(normal, -glm::dot(normal, position));
 
-  return {leftPlane, rightPlane, topPlane, bottomPlane};
+  return CullingVolume({leftPlane, rightPlane, topPlane, bottomPlane});
 }
 
 CullingVolume createOrthographicCullingVolume(
@@ -91,6 +91,18 @@ CullingVolume createOrthographicCullingVolume(
   // Bottom Plane
   CesiumGeometry::Plane bottomPlane(position - halfHeight * up, up);
 
-  return {leftPlane, rightPlane, topPlane, bottomPlane};
+  // Far Plane
+  CesiumGeometry::Plane farPlane(
+      glm::dvec3(0.0, 0.0, 0.0),
+      glm::normalize(position));
+
+  // Back Plane
+  // CesiumGeometry::Plane backPlane(position, direction);
+
+  return CullingVolume(
+      {leftPlane, rightPlane, topPlane, bottomPlane, farPlane});
 }
+
+CullingVolume::CullingVolume(const std::vector<CesiumGeometry::Plane>& planes)
+    : _planes(planes) {}
 } // namespace Cesium3DTiles

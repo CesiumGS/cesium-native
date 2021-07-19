@@ -57,7 +57,7 @@ namespace Cesium3DTiles {
         orthographicWidth,
         orthographicHeight);
   } else {
-    return CullingVolume();
+    return CullingVolume({});
   }
 }
 
@@ -97,25 +97,11 @@ template <class T>
 static bool isBoundingVolumeVisible(
     const T& boundingVolume,
     const CullingVolume& cullingVolume) noexcept {
-  CullingResult left = boundingVolume.intersectPlane(cullingVolume.leftPlane);
-  if (left == CullingResult::Outside) {
-    return false;
-  }
 
-  CullingResult right = boundingVolume.intersectPlane(cullingVolume.rightPlane);
-  if (right == CullingResult::Outside) {
-    return false;
-  }
-
-  CullingResult top = boundingVolume.intersectPlane(cullingVolume.topPlane);
-  if (top == CullingResult::Outside) {
-    return false;
-  }
-
-  CullingResult bottom =
-      boundingVolume.intersectPlane(cullingVolume.bottomPlane);
-  if (bottom == CullingResult::Outside) {
-    return false;
+  for (const CesiumGeometry::Plane& plane : cullingVolume.getPlanes()) {
+    if (boundingVolume.intersectPlane(plane) == CullingResult::Outside) {
+      return false;
+    }
   }
 
   return true;
