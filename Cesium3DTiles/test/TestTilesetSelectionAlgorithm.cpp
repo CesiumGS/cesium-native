@@ -65,12 +65,15 @@ static void initializeTileset(Tileset& tileset) {
   double verticalFieldOfView =
       std::atan(std::tan(horizontalFieldOfView * 0.5) / aspectRatio) * 2.0;
   ViewState viewState = ViewState::create(
+      ViewState::FrustumType::Perspective,
       viewPosition,
       glm::normalize(viewFocus - viewPosition),
       viewUp,
       viewPortSize,
       horizontalFieldOfView,
-      verticalFieldOfView);
+      verticalFieldOfView,
+      0.0,
+      0.0);
 
   tileset.updateView({viewState});
 }
@@ -99,12 +102,15 @@ static ViewState zoomToTileset(const Tileset& tileset) {
   double verticalFieldOfView =
       std::atan(std::tan(horizontalFieldOfView * 0.5) / aspectRatio) * 2.0;
   return ViewState::create(
+      ViewState::FrustumType::Perspective,
       viewPosition,
       glm::normalize(viewFocus - viewPosition),
       viewUp,
       viewPortSize,
       horizontalFieldOfView,
-      verticalFieldOfView);
+      verticalFieldOfView,
+      0.0,
+      0.0);
 }
 
 TEST_CASE("Test replace refinement for render") {
@@ -175,12 +181,15 @@ TEST_CASE("Test replace refinement for render") {
     glm::dvec3 zoomOutPosition =
         viewState.getPosition() - viewState.getDirection() * 2500.0;
     ViewState zoomOutViewState = ViewState::create(
+        viewState.getFrustumType(),
         zoomOutPosition,
         viewState.getDirection(),
         viewState.getUp(),
         viewState.getViewportSize(),
         viewState.getHorizontalFieldOfView(),
-        viewState.getVerticalFieldOfView());
+        viewState.getVerticalFieldOfView(),
+        viewState.getOrthographicWidth(),
+        viewState.getOrthographicHeight());
 
     // Check 1st and 2nd frame. Root should meet sse and render. No transitions
     // are expected here
@@ -301,12 +310,15 @@ TEST_CASE("Test replace refinement for render") {
     glm::dvec3 zoomInPosition =
         viewState.getPosition() + viewState.getDirection() * 200.0;
     ViewState zoomInViewState = ViewState::create(
+        viewState.getFrustumType(),
         zoomInPosition,
         viewState.getDirection(),
         viewState.getUp(),
         viewState.getViewportSize(),
         viewState.getHorizontalFieldOfView(),
-        viewState.getVerticalFieldOfView());
+        viewState.getVerticalFieldOfView(),
+        viewState.getOrthographicWidth(),
+        viewState.getOrthographicHeight());
 
     // remove the ll.b3dm (one of the root's children) request to replicate
     // network failure
@@ -397,12 +409,15 @@ TEST_CASE("Test replace refinement for render") {
       glm::dvec3 zoomOutPosition =
           viewState.getPosition() - viewState.getDirection() * 100.0;
       ViewState zoomOutViewState = ViewState::create(
+          viewState.getFrustumType(),
           zoomOutPosition,
           viewState.getDirection(),
           viewState.getUp(),
           viewState.getViewportSize(),
           viewState.getHorizontalFieldOfView(),
-          viewState.getVerticalFieldOfView());
+          viewState.getVerticalFieldOfView(),
+          viewState.getOrthographicWidth(),
+          viewState.getOrthographicHeight());
 
       ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
