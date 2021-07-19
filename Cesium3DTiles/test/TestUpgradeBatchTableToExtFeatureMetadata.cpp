@@ -784,7 +784,7 @@ TEST_CASE("Upgrade fixed json number array") {
   }
 
   SECTION("int64_t") {
-    // those the max positive number is only uint32_t. However, due to negative
+    // though the max positive number is only uint32_t. However, due to negative
     // number, it is upgraded to int64_t
     // clang-format off
     std::vector<std::vector<int64_t>> expected {
