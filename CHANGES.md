@@ -1,5 +1,22 @@
 # Change Log
 
+### Next Release - ?
+
+##### Breaking Changes :mega:
+
+- `Future<T>::wait` now returns the resolved value and throws if the Future rejected, rather than returning a `std::variant` and slicing the exception to `std::exception`.
+
+##### Additions :tada:
+
+- Added `AsyncSystem::dispatchOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
+- Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.
+- Added `AsyncSystem::catchImmediately` to catch a Future rejection immediately in any thread.
+- Added `AsyncSystem::all` to create a Future that resolves when a list of Futures resolve.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented `.then` functions from being used on a `Future<void>` when CESIUM_TRACING_ENABLED was ON.
+
 ### v0.5.0 - 2021-07-01
 
 ##### Breaking Changes :mega:
