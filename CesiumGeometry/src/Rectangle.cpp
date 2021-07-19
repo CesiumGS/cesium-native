@@ -55,4 +55,12 @@ Rectangle::intersect(const Rectangle& other) const noexcept {
   return Rectangle(left, bottom, right, top);
 }
 
+Rectangle Rectangle::computeUnion(const Rectangle& other) const noexcept {
+  return Rectangle(
+      glm::min(this->minimumX, other.minimumX),
+      glm::min(this->minimumY, other.minimumY),
+      glm::min(this->maximumX, other.maximumX),
+      glm::min(this->maximumY, other.maximumX));
+}
+
 } // namespace CesiumGeometry

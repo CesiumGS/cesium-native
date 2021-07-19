@@ -54,7 +54,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {}
 
-std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError) {
@@ -63,11 +63,11 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       targetGeometricError);
 }
 
-std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> result;
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>> result;
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
@@ -325,7 +325,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
       CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
-      CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
+      CesiumAsync::SharedFuture<LoadedRasterOverlayImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
 
       // if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
@@ -405,72 +405,26 @@ void blitImage(
     return;
   }
 
-  size_t bytesPerPixel = target.bytesPerChannel * target.channels;
-  size_t bytesToCopyPerRow = bytesPerPixel * sourceWidth;
+  size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
+  size_t bytesToCopyPerRow = bytesPerPixel * size_t(sourceWidth);
 
-  size_t bytesPerSourceRow = bytesPerPixel * source.width;
-  size_t bytesPerTargetRow = bytesPerPixel * target.width;
+  size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
+  size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
 
   // Position both pointers at the start of the first row.
   std::byte* pTarget = target.pixelData.data();
   const std::byte* pSource = source.pixelData.data();
-  pTarget += targetY * bytesPerTargetRow + targetX * bytesPerPixel;
-  pSource += sourceY * bytesPerSourceRow + sourceX * bytesPerPixel;
+  pTarget +=
+      size_t(targetY) * bytesPerTargetRow + size_t(targetX) * bytesPerPixel;
+  pSource +=
+      size_t(sourceY) * bytesPerSourceRow + size_t(sourceX) * bytesPerPixel;
 
   // Copy each row
-  for (size_t j = 0; j < sourceHeight; ++j) {
+  for (size_t j = 0; j < size_t(sourceHeight); ++j) {
     std::memcpy(pTarget, pSource, bytesToCopyPerRow);
     pTarget += bytesPerTargetRow;
     pSource += bytesPerSourceRow;
   }
-}
-
-struct Overlap {
-  int32_t targetX;
-  int32_t targetY;
-  int32_t sourceX;
-  int32_t sourceY;
-  int32_t width;
-  int32_t height;
-};
-
-Overlap computePixelOverlap(
-    const Rectangle& targetRectangle,
-    const Rectangle& sourceRectangle,
-    int32_t sourceWidth,
-    int32_t sourceHeight) {
-
-  std::optional<Rectangle> overlap = targetRectangle.intersect(sourceRectangle);
-  if (!overlap) {
-    return {0, 0, 0, 0, 0, 0};
-  }
-
-  // Find the dimensions of the target image. They're chosen so that pixels are
-  // the same size in both images.
-  int32_t targetWidth = static_cast<int32_t>(glm::ceil(
-      (targetRectangle.computeWidth() * sourceWidth) /
-      sourceRectangle.computeWidth()));
-  int32_t targetHeight = static_cast<int32_t>(glm::ceil(
-      (targetRectangle.computeWidth() * sourceWidth) /
-      sourceRectangle.computeWidth()));
-
-  // The computed target width and height will often be a little bigger than the
-  // original targetRectangle.
-
-  // Find the position of the upper left corner of the overlap in the target
-  // image. We should compute integer coordinates, but round to be sure.
-  // int32_t targetX = overlap->minimumX / targetRectangle
-
-  // Find the number of pixels of this source image that overlap the target
-  // rectangle. Round up.
-  int32_t width = static_cast<int32_t>(glm::ceil(
-      (overlap->computeWidth() / sourceRectangle.computeWidth()) *
-      sourceWidth));
-  int32_t height = static_cast<int32_t>(glm::ceil(
-      (overlap->computeHeight() / sourceRectangle.computeHeight()) *
-      sourceHeight));
-
-  //
 }
 
 // Copy part of a source image to part of a target image.
@@ -482,12 +436,47 @@ void blitImage(
     const Rectangle& targetRectangle,
     const ImageCesium& source,
     const Rectangle& sourceRectangle) {
-
   std::optional<Rectangle> overlap = targetRectangle.intersect(sourceRectangle);
   if (!overlap) {
     // No overlap, nothing to do.
     return;
   }
+
+  // Pixel coordinates are measured from the top left.
+  // Projected rectangles are measured from the bottom left.
+
+  int32_t targetX = static_cast<int32_t>(glm::floor(
+      target.width * (overlap->minimumX - targetRectangle.minimumX) /
+      targetRectangle.computeWidth()));
+  int32_t targetY = static_cast<int32_t>(glm::floor(
+      target.height * (targetRectangle.maximumY - overlap->maximumY) /
+      targetRectangle.computeHeight()));
+
+  int32_t sourceX = static_cast<int32_t>(glm::floor(
+      source.width * (overlap->minimumX - sourceRectangle.minimumX) /
+      sourceRectangle.computeWidth()));
+  int32_t sourceY = static_cast<int32_t>(glm::floor(
+      source.height * (sourceRectangle.maximumY - overlap->maximumY) /
+      sourceRectangle.computeHeight()));
+
+  int32_t sourceMaxX = static_cast<int32_t>(glm::ceil(
+      source.width * (overlap->maximumX - sourceRectangle.minimumX) /
+      sourceRectangle.computeWidth()));
+  int32_t sourceMaxY = static_cast<int32_t>(glm::ceil(
+      source.height * (sourceRectangle.maximumY - overlap->minimumY) /
+      sourceRectangle.computeHeight()));
+  int32_t sourceWidth = sourceMaxX - sourceX - 1;
+  int32_t sourceHeight = sourceMaxY - sourceY - 1;
+
+  blitImage(
+      target,
+      targetX,
+      targetY,
+      source,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight);
 }
 
 // TODO: find a way to do this type of thing on the GPU
@@ -495,132 +484,239 @@ void blitImage(
 // resources while being engine-agnostic.
 // TODO: probably can simplify dramatically by ignoring cases where there is
 // discrepancy between channels count or bytesPerChannel between the rasters
-std::optional<CesiumGltf::ImageCesium> blitRasters(
-    const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
-    const CesiumGeospatial::Projection& projection,
-    const CesiumGeometry::Rectangle& targetRectangle,
-    std::vector<LoadedQuadtreeImage>& rastersToCombine) {
+// std::optional<CesiumGltf::ImageCesium> blitRasters(
+//     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+//     const CesiumGeospatial::Projection& projection,
+//     const CesiumGeometry::Rectangle& targetRectangle,
+//     std::vector<LoadedQuadtreeImage>& rastersToCombine) {
 
-  double targetWidth = targetRectangle.computeWidth();
-  double targetHeight = targetRectangle.computeHeight();
+//   double targetWidth = targetRectangle.computeWidth();
+//   double targetHeight = targetRectangle.computeHeight();
 
-  int32_t pixelsWidth = 0;
-  int32_t pixelsHeight = 0;
-  int32_t bytesPerChannel = 1;
-  int32_t channels = 1;
+//   int32_t pixelsWidth = 0;
+//   int32_t pixelsHeight = 0;
+//   int32_t bytesPerChannel = 1;
+//   int32_t channels = 1;
 
-  for (const LoadedQuadtreeImage& rasterToCombine : rastersToCombine) {
-    if (!rasterToCombine.image) {
+//   for (const LoadedQuadtreeImage& rasterToCombine : rastersToCombine) {
+//     if (!rasterToCombine.image) {
+//       continue;
+//     }
+
+//     Rectangle imageRectangle =
+//     tilingScheme.tileToRectangle(rasterToCombine.id);
+
+//     std::optional<Rectangle> overlap =
+//         targetRectangle.intersect(imageRectangle);
+
+//     // There should always be an overlap, otherwise why is this image here at
+//     // all?
+//     assert(overlap.has_value());
+
+//     // Find the number of pixels of this source image that overlap the target
+//     // rectangle. Round up.
+//     const CesiumGltf::ImageCesium& rasterImage = *rasterToCombine.image;
+//     int32_t width = static_cast<int32_t>(glm::ceil(
+//         (overlap->computeWidth() / imageRectangle.computeWidth()) *
+//         rasterImage.width));
+//     int32_t height = static_cast<int32_t>(glm::ceil(
+//         (overlap->computeHeight() / imageRectangle.computeHeight()) *
+//         rasterImage.height));
+
+//     pixelsWidth += width;
+//     pixelsHeight += height;
+
+//     if (rasterImage.bytesPerChannel > bytesPerChannel) {
+//       bytesPerChannel = rasterImage.bytesPerChannel;
+//     }
+//     if (rasterImage.channels > channels) {
+//       channels = rasterImage.channels;
+//     }
+//   }
+
+//   CesiumGltf::ImageCesium image;
+//   image.bytesPerChannel = bytesPerChannel;
+//   image.channels = channels;
+//   image.width = static_cast<int32_t>(glm::ceil(pixelsWidth));
+//   image.height = static_cast<int32_t>(glm::ceil(pixelsHeight));
+//   image.pixelData.resize(static_cast<size_t>(
+//       image.width * image.height * image.channels * image.bytesPerChannel));
+
+//   // Texture coordinates range from South (0.0) to North (1.0).
+//   // But pixels in images are stored in North (0) to South (imageHeight - 1)
+//   // order.
+
+//   for (int32_t j = 0; j < image.height; ++j) {
+//     // Use the texture coordinate for the _center_ of each pixel.
+//     // And adjust for the flipped direction of texture coordinates and
+//     pixels. double v = 1.0 - ((double(j) + 0.5) / double(image.height));
+
+//     for (int32_t i = 0; i < image.width; ++i) {
+//       glm::dvec2 uv((double(i) + 0.5) / double(image.width), v);
+
+//       for (const RasterToCombine& rasterToCombine : *pRastersToCombine) {
+
+//         if (rasterToCombine._textureCoordinateRectangle.contains(uv)) {
+//           const CesiumGltf::ImageCesium& srcImage =
+//               rasterToCombine._pReadyTile->getImage();
+
+//           glm::dvec2 srcUv =
+//               uv * rasterToCombine._scale + rasterToCombine._translation;
+
+//           // TODO: remove?
+//           if (srcUv.x < 0.0 || srcUv.x > 1.0 || srcUv.y < 0.0 ||
+//               srcUv.y > 1.0) {
+//             continue;
+//           }
+
+//           glm::dvec2 srcPixel(
+//               srcUv.x * srcImage.width,
+//               (1.0 - srcUv.y) * srcImage.height);
+
+//           int32_t srcPixelX = static_cast<int32_t>(
+//               glm::clamp(glm::floor(srcPixel.x), 0.0,
+//               double(srcImage.width)));
+//           int32_t srcPixelY = static_cast<int32_t>(
+//               glm::clamp(glm::floor(srcPixel.y), 0.0,
+//               double(srcImage.height)));
+
+//           const std::byte* pSrcPixelValue =
+//               srcImage.pixelData.data() +
+//               static_cast<size_t>(
+//                   srcImage.channels * srcImage.bytesPerChannel *
+//                   (srcImage.width * srcPixelY + srcPixelX));
+
+//           std::byte* pTargetPixel =
+//               image.pixelData.data() +
+//               channels * bytesPerChannel * (image.width * j + i);
+
+//           for (int32_t channel = 0; channel < srcImage.channels; ++channel) {
+//             std::memcpy(
+//                 pTargetPixel +
+//                     static_cast<size_t>(
+//                         channel * bytesPerChannel +
+//                         (bytesPerChannel - srcImage.bytesPerChannel)),
+//                 pSrcPixelValue +
+//                     static_cast<size_t>(channel * srcImage.bytesPerChannel),
+//                 static_cast<size_t>(srcImage.bytesPerChannel));
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   return image;
+// }
+
+struct CombinedImageMeasurements {
+  Rectangle rectangle;
+  int32_t widthPixels;
+  int32_t heightPixels;
+  int32_t channels;
+  int32_t bytesPerChannel;
+};
+
+CombinedImageMeasurements
+measureCombinedImage(const std::vector<LoadedRasterOverlayImage>& images) {
+  auto it = std::find_if(
+      images.begin(),
+      images.end(),
+      [](const LoadedRasterOverlayImage& loaded) {
+        return loaded.image && loaded.image->width > 0 &&
+               loaded.image->height > 0;
+      });
+  if (it == images.end()) {
+    // There are no images to combine.
+    return CombinedImageMeasurements{Rectangle(), 0, 0, 0, 0};
+  }
+
+  const LoadedRasterOverlayImage& first = *it;
+  const ImageCesium& firstImage = first.image.value();
+
+  double projectedWidthPerPixel =
+      first.rectangle.computeWidth() / firstImage.width;
+  double projectedHeightPerPixel =
+      first.rectangle.computeHeight() / firstImage.height;
+
+  Rectangle combinedRectangle = first.rectangle;
+
+  // Assumption: all images have pixels with the same width and height in
+  // projected units. This might prove false with esoteric projections that,
+  // for example, change tiling scheme or projection parameters as latitude
+  // increases. But we're not currently handling that kind of scenario.
+  for (; it != images.end(); ++it) {
+    const LoadedRasterOverlayImage& loaded = *it;
+    if (!loaded.image || loaded.image->width <= 0 ||
+        loaded.image->height <= 0) {
       continue;
     }
 
-    Rectangle imageRectangle = tilingScheme.tileToRectangle(rasterToCombine.id);
+    // Make sure the assumption above holds to within 1/1000 of a pixel.
+    assert(Math::equalsEpsilon(
+        loaded.rectangle.computeWidth() / loaded.image->width,
+        projectedWidthPerPixel,
+        Math::EPSILON3 / loaded.image->width));
+    assert(Math::equalsEpsilon(
+        loaded.rectangle.computeHeight() / loaded.image->height,
+        projectedHeightPerPixel,
+        Math::EPSILON3 / loaded.image->height));
 
-    std::optional<Rectangle> overlap =
-        targetRectangle.intersect(imageRectangle);
+    // Also make sure all images have the same format.
+    assert(loaded.image->channels == firstImage.channels);
+    assert(loaded.image->bytesPerChannel == firstImage.bytesPerChannel);
 
-    // There should always be an overlap, otherwise why is this image here at
-    // all?
-    assert(overlap.has_value());
-
-    // Find the number of pixels of this source image that overlap the target
-    // rectangle. Round up.
-    const CesiumGltf::ImageCesium& rasterImage = *rasterToCombine.image;
-    int32_t width = static_cast<int32_t>(glm::ceil(
-        (overlap->computeWidth() / imageRectangle.computeWidth()) *
-        rasterImage.width));
-    int32_t height = static_cast<int32_t>(glm::ceil(
-        (overlap->computeHeight() / imageRectangle.computeHeight()) *
-        rasterImage.height));
-
-    pixelsWidth += width;
-    pixelsHeight += height;
-
-    if (rasterImage.bytesPerChannel > bytesPerChannel) {
-      bytesPerChannel = rasterImage.bytesPerChannel;
-    }
-    if (rasterImage.channels > channels) {
-      channels = rasterImage.channels;
-    }
+    // Find the bounds of the combined image.
+    combinedRectangle = combinedRectangle.computeUnion(loaded.rectangle);
   }
 
-  CesiumGltf::ImageCesium image;
-  image.bytesPerChannel = bytesPerChannel;
-  image.channels = channels;
-  image.width = static_cast<int32_t>(glm::ceil(pixelsWidth));
-  image.height = static_cast<int32_t>(glm::ceil(pixelsHeight));
-  image.pixelData.resize(static_cast<size_t>(
-      image.width * image.height * image.channels * image.bytesPerChannel));
+  // Compute the pixel dimensions needed for the combined image.
+  int32_t combinedWidthPixels = static_cast<int32_t>(
+      glm::ceil(combinedRectangle.computeWidth() / projectedWidthPerPixel));
+  int32_t combinedHeightPixels = static_cast<int32_t>(
+      glm::ceil(combinedRectangle.computeHeight() / projectedHeightPerPixel));
 
-  // Texture coordinates range from South (0.0) to North (1.0).
-  // But pixels in images are stored in North (0) to South (imageHeight - 1)
-  // order.
+  return CombinedImageMeasurements{
+      combinedRectangle,
+      combinedWidthPixels,
+      combinedHeightPixels,
+      firstImage.channels,
+      firstImage.bytesPerChannel};
+}
 
-  for (int32_t j = 0; j < image.height; ++j) {
-    // Use the texture coordinate for the _center_ of each pixel.
-    // And adjust for the flipped direction of texture coordinates and pixels.
-    double v = 1.0 - ((double(j) + 0.5) / double(image.height));
+LoadedRasterOverlayImage combineImages(
+    const Projection& /* projection */,
+    std::vector<LoadedRasterOverlayImage>&& images) {
+  CombinedImageMeasurements measurements = measureCombinedImage(images);
 
-    for (int32_t i = 0; i < image.width; ++i) {
-      glm::dvec2 uv((double(i) + 0.5) / double(image.width), v);
+  LoadedRasterOverlayImage result;
+  result.rectangle = measurements.rectangle;
+  result.moreDetailAvailable = false;
 
-      for (const RasterToCombine& rasterToCombine : *pRastersToCombine) {
+  ImageCesium& target = result.image.emplace();
+  target.bytesPerChannel = measurements.bytesPerChannel;
+  target.channels = measurements.channels;
+  target.width = measurements.widthPixels;
+  target.height = measurements.heightPixels;
+  target.pixelData.resize(size_t(
+      target.width * target.height * target.channels * target.bytesPerChannel));
 
-        if (rasterToCombine._textureCoordinateRectangle.contains(uv)) {
-          const CesiumGltf::ImageCesium& srcImage =
-              rasterToCombine._pReadyTile->getImage();
-
-          glm::dvec2 srcUv =
-              uv * rasterToCombine._scale + rasterToCombine._translation;
-
-          // TODO: remove?
-          if (srcUv.x < 0.0 || srcUv.x > 1.0 || srcUv.y < 0.0 ||
-              srcUv.y > 1.0) {
-            continue;
-          }
-
-          glm::dvec2 srcPixel(
-              srcUv.x * srcImage.width,
-              (1.0 - srcUv.y) * srcImage.height);
-
-          int32_t srcPixelX = static_cast<int32_t>(
-              glm::clamp(glm::floor(srcPixel.x), 0.0, double(srcImage.width)));
-          int32_t srcPixelY = static_cast<int32_t>(
-              glm::clamp(glm::floor(srcPixel.y), 0.0, double(srcImage.height)));
-
-          const std::byte* pSrcPixelValue =
-              srcImage.pixelData.data() +
-              static_cast<size_t>(
-                  srcImage.channels * srcImage.bytesPerChannel *
-                  (srcImage.width * srcPixelY + srcPixelX));
-
-          std::byte* pTargetPixel =
-              image.pixelData.data() +
-              channels * bytesPerChannel * (image.width * j + i);
-
-          for (int32_t channel = 0; channel < srcImage.channels; ++channel) {
-            std::memcpy(
-                pTargetPixel +
-                    static_cast<size_t>(
-                        channel * bytesPerChannel +
-                        (bytesPerChannel - srcImage.bytesPerChannel)),
-                pSrcPixelValue +
-                    static_cast<size_t>(channel * srcImage.bytesPerChannel),
-                static_cast<size_t>(srcImage.bytesPerChannel));
-          }
-        }
-      }
+  for (auto it = images.begin(); it != images.end(); ++it) {
+    if (!it->image) {
+      continue;
     }
+    blitImage(target, result.rectangle, *it->image, it->rectangle);
   }
 
-  return image;
+  // TODO: detect when _all_ images are from an ancestor, because then
+  // we can discard this image.
+  return result;
 }
 
 } // namespace
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
 QuadtreeRasterOverlayTileProvider::loadTileImage(
-    const RasterOverlayTile& overlayTile) {
+    RasterOverlayTile& overlayTile) {
 
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
@@ -628,23 +724,18 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
   // If _all_ tiles fail to load, we probably don't need this tile at all.
   //  exception: the parent geometry tile doesn't have the most detailed
   //  available overlay tile. But we can't tell that here. Here we just fail.
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles =
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>> tiles =
       this->mapRasterTilesToGeometryTile(
           overlayTile.getRectangle(),
           overlayTile.getTargetGeometricError());
 
   return this->_asyncSystem.all(std::move(tiles))
-      .thenInWorkerThread(
-          [](std::vector<LoadedRasterOverlayImage>&& /* images */) {
-            // TODO: detect when _all_ images are from an ancestor, because then
-            // we can discard this image.
-          })
+      .thenInWorkerThread([projection = this->getProjection()](
+                              std::vector<LoadedRasterOverlayImage>&& images) {
+        return combineImages(projection, std::move(images));
+      })
       .catchImmediately(
           [](std::exception&& /* e */) { return LoadedRasterOverlayImage(); });
-
-  LoadedRasterOverlayImage result;
-  result.errors.push_back("Error: `loadTileImage(TileID tileId)` called on "
-                          "QuadtreeRasterOverlayTileProvider");
-  return this->getAsyncSystem().createResolvedFuture(std::move(result));
 }
+
 } // namespace Cesium3DTiles

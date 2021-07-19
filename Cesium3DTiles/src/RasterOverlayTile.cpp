@@ -14,7 +14,7 @@ namespace Cesium3DTiles {
 RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
     : _pOverlay(&overlay),
       _targetGeometricError(0.0),
-      _imageryRectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
+      _rectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
       _tileCredits(),
       _state(LoadState::Placeholder),
       _image(),
@@ -25,10 +25,10 @@ RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
 RasterOverlayTile::RasterOverlayTile(
     RasterOverlay& overlay,
     double targetGeometricError,
-    const CesiumGeometry::Rectangle& imageryRectangle)
+    const CesiumGeometry::Rectangle& rectangle)
     : _pOverlay(&overlay),
       _targetGeometricError(targetGeometricError),
-      _imageryRectangle(imageryRectangle),
+      _rectangle(rectangle),
       _tileCredits(),
       _state(LoadState::Unloaded),
       _image(),

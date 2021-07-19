@@ -13,6 +13,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumGltf;
 using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
@@ -121,9 +122,11 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
                   std::nullopt,
+                  std::move(options.rectangle),
                   std::move(options.credits),
                   {"Image request for " + url + " failed."},
-                  {}};
+                  {},
+                  options.moreDetailAvailable};
             }
 
             if (pResponse->statusCode() < 200 ||
@@ -133,24 +136,30 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                                     " for " + url;
               return LoadedRasterOverlayImage{
                   std::nullopt,
+                  std::move(options.rectangle),
                   std::move(options.credits),
                   {message},
-                  {}};
+                  {},
+                  options.moreDetailAvailable};
             }
 
             if (pResponse->data().empty()) {
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
                     CesiumGltf::ImageCesium(),
+                    std::move(options.rectangle),
                     std::move(options.credits),
                     {},
-                    {}};
+                    {},
+                    options.moreDetailAvailable};
               }
               return LoadedRasterOverlayImage{
                   std::nullopt,
+                  std::move(options.rectangle),
                   std::move(options.credits),
                   {"Image response for " + url + " is empty."},
-                  {}};
+                  {},
+                  options.moreDetailAvailable};
             }
 
             gsl::span<const std::byte> data = pResponse->data();
@@ -167,9 +176,11 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             return LoadedRasterOverlayImage{
                 loadedImage.image,
+                std::move(options.rectangle),
                 std::move(options.credits),
                 std::move(loadedImage.errors),
-                std::move(loadedImage.warnings)};
+                std::move(loadedImage.warnings),
+                options.moreDetailAvailable};
           });
 }
 
@@ -203,7 +214,6 @@ struct LoadResult {
  * @return The `LoadResult`
  */
 static LoadResult createLoadResultFromLoadedImage(
-    const TileID& tileId,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     LoadedRasterOverlayImage&& loadedImage) {
@@ -211,7 +221,8 @@ static LoadResult createLoadResultFromLoadedImage(
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load image for tile {}:\n- {}",
-        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
+        "TODO",
+        // Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
         CesiumUtility::joinToString(loadedImage.errors, "\n- "));
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Failed;
@@ -222,7 +233,8 @@ static LoadResult createLoadResultFromLoadedImage(
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Warnings while loading image for tile {}:\n- {}",
-        Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
+        "TODO",
+        // Cesium3DTiles::TileIdUtilities::createTileIdString(tileId),
         CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
   }
 
@@ -270,12 +282,10 @@ void RasterOverlayTileProvider::doLoad(
 
   this->loadTileImage(tile)
       .thenInWorkerThread(
-          [tileId = tile.getID(),
-           pPrepareRendererResources = this->getPrepareRendererResources(),
+          [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger =
                this->getLogger()](LoadedRasterOverlayImage&& loadedImage) {
             return createLoadResultFromLoadedImage(
-                tileId,
                 pPrepareRendererResources,
                 pLogger,
                 std::move(loadedImage));

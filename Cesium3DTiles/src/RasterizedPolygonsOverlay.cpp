@@ -157,53 +157,13 @@ public:
             projection),
         _polygons(polygons) {}
 
-  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-      const TileID& geometryTileId,
-      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError) override {
-
-    return this->mapRasterTilesToGeometryTile(
-        geometryTileId,
-        projectRectangleSimple(this->getProjection(), geometryRectangle),
-        targetGeometricError);
-  }
-
-  virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-      const TileID& geometryTileId,
-      const CesiumGeometry::Rectangle& geometryRectangle,
-      double /*targetGeometricError*/) override {
-
-    if (this->_pPlaceholder) {
-      return RastersMappedTo3DTile(
-          *this,
-          std::make_shared<std::vector<RasterToCombine>>(
-              std::vector<RasterToCombine>({RasterToCombine(
-                  this->_pPlaceholder.get(),
-                  CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0))})));
-    }
-
-    CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
-        this->getTile(geometryTileId, geometryRectangle);
-
-    if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
-      this->loadTileThrottled(*pTile);
-    }
-
-    return RastersMappedTo3DTile(
-        *this,
-        std::make_shared<std::vector<RasterToCombine>>(
-            std::vector<RasterToCombine>({RasterToCombine(
-                pTile,
-                CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0))})));
-  }
-
   virtual bool
   hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {
     return false; // always true or always false??
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const TileID& tileID) override {
+  loadTileImage(RasterOverlayTile& overlayTile) override {
     if (!this->_pOwner) {
       LoadedRasterOverlayImage result;
       result.errors.push_back(
@@ -213,18 +173,16 @@ public:
           std::move(result));
     }
 
-    CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
-        this->getTileWithoutCreating(tileID);
-
     return this->_asyncSystem.runInWorkerThread(
-        [pTile = std::move(pTile),
+        [pTile =
+             CesiumUtility::IntrusivePointer<RasterOverlayTile>(&overlayTile),
          &name = this->_pOwner->getName(),
          &polygons = this->_polygons,
          &projection = this->_projection]() -> LoadedRasterOverlayImage {
           CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(
                   projection,
-                  pTile ? pTile->getImageryRectangle()
+                  pTile ? pTile->getRectangle()
                         : CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0));
 
           LoadedRasterOverlayImage resultImage;

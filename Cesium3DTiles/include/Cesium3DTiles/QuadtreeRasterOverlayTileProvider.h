@@ -14,10 +14,6 @@
 
 namespace Cesium3DTiles {
 
-struct LoadedQuadtreeImage : public LoadedRasterOverlayImage {
-  CesiumGeometry::QuadtreeTileID id;
-};
-
 class CESIUM3DTILES_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 
@@ -72,7 +68,7 @@ public:
   virtual bool hasMoreDetailsAvailable(const TileID& tileID) const override;
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const RasterOverlayTile& overlayTile) override;
+  loadTileImage(RasterOverlayTile& overlayTile) override;
 
   /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
@@ -125,11 +121,11 @@ public:
       const glm::dvec2& position) const noexcept;
 
 protected:
-  virtual CesiumAsync::Future<LoadedQuadtreeImage>
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
-  CesiumAsync::SharedFuture<LoadedQuadtreeImage>
+  CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**
@@ -142,13 +138,13 @@ private:
    * @return A single raster tile combining the given rasters into the
    * geometry tile's rectangle.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeospatial::GlobeRectangle& geometryRectangle,
       double targetGeometricError);
 
   /** @copydoc mapRasterTilesToGeometryTile */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError);
@@ -159,5 +155,9 @@ private:
   uint32_t _imageWidth;
   uint32_t _imageHeight;
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
+  std::unordered_map<
+      CesiumGeometry::QuadtreeTileID,
+      CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
+      _tileCache;
 };
 } // namespace Cesium3DTiles

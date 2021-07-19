@@ -62,12 +62,14 @@ protected:
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
     std::string url = CesiumUtility::Uri::resolve(
         this->_url,
-        std::to_string(tileID.level) + "/" +
-            std::to_string(tileID.x) + "/" +
+        std::to_string(tileID.level) + "/" + std::to_string(tileID.x) + "/" +
             std::to_string(tileID.y) + this->_fileExtension,
         true);
 
-    return this->loadTileImageFromUrl(url, this->_headers, {});
+    LoadTileImageFromUrlOptions options;
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+    return this->loadTileImageFromUrl(url, this->_headers, options);
   }
 
 private:

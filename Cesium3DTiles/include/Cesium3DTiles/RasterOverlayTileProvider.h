@@ -24,7 +24,6 @@ class IPrepareRendererResources;
  * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
  */
 struct CESIUM3DTILES_API LoadedRasterOverlayImage {
-
   /**
    * @brief The loaded image.
    *
@@ -32,6 +31,14 @@ struct CESIUM3DTILES_API LoadedRasterOverlayImage {
    * the `errors` vector will contain the corresponding error messages.
    */
   std::optional<CesiumGltf::ImageCesium> image;
+
+  /**
+   * @brief The projected rectangle defining the bounds of this image.
+   *
+   * The rectangle extends from the left side of the leftmost pixel to the
+   * right side of the rightmost pixel, and similar for the vertical direction.
+   */
+  CesiumGeometry::Rectangle rectangle;
 
   /**
    * @brief The {@link Credit} objects that decribe the attributions that
@@ -53,6 +60,12 @@ struct CESIUM3DTILES_API LoadedRasterOverlayImage {
   // always be empty, but it might contain warnings in the future,
   // when other image types or loaders are used.
   std::vector<std::string> warnings;
+
+  /**
+   * @brief Whether more detailed data, beyond this image, is available within
+   * the bounds of this image.
+   */
+  bool moreDetailAvailable;
 };
 
 /**
@@ -60,12 +73,24 @@ struct CESIUM3DTILES_API LoadedRasterOverlayImage {
  */
 struct LoadTileImageFromUrlOptions {
   /**
+   * @brief The rectangle definining the bounds of the image being loaded,
+   * expressed in the {@link RasterOverlayTileProvider}'s projection.
+   */
+  CesiumGeometry::Rectangle rectangle = {};
+
+  /**
    * @brief The credits to display with this tile.
    *
    * This property is copied verbatim to the
    * {@link LoadedRasterOverlayImage::credits} property.
    */
   std::vector<Credit> credits = {};
+
+  /**
+   * @brief Whether more detailed data, beyond this image, is available within
+   * the bounds of this image.
+   */
+  bool moreDetailAvailable = true;
 
   /**
    * @brief Whether empty (zero length) images are accepted as a valid
@@ -282,7 +307,7 @@ protected:
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const RasterOverlayTile& overlayTile) = 0;
+  loadTileImage(RasterOverlayTile& overlayTile) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -294,7 +319,8 @@ protected:
    * @param options Additional options for the load process.
    * @return A future that resolves to the image or error information.
    */
-  CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
+  CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImageFromUrl(
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
       const LoadTileImageFromUrlOptions& options = {}) const;

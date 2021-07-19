@@ -6,48 +6,43 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 
 using namespace CesiumAsync;
+using namespace Cesium3DTiles;
 
 namespace {
-class PlaceholderTileProvider
-    : public Cesium3DTiles::RasterOverlayTileProvider {
+class PlaceholderTileProvider : public RasterOverlayTileProvider {
 public:
   PlaceholderTileProvider(
-      Cesium3DTiles::RasterOverlay& owner,
+      RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-      : Cesium3DTiles::RasterOverlayTileProvider(
-            owner,
-            asyncSystem,
-            pAssetAccessor) {}
+      : RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor) {}
 
-  virtual CesiumAsync::Future<Cesium3DTiles::LoadedRasterOverlayImage>
-  loadTileImage(const Cesium3DTiles::TileID& /* tileID */) override {
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(RasterOverlayTile& /* overlayTile */) override {
     return this->getAsyncSystem()
-        .createResolvedFuture<Cesium3DTiles::LoadedRasterOverlayImage>({});
+        .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
 
-  // virtual Cesium3DTiles::RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-  //     const Cesium3DTiles::TileID& /*geometryTileId*/,
+  // virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
+  //     const TileID& /*geometryTileId*/,
   //     const CesiumGeospatial::GlobeRectangle& /*geometryRectangle*/,
   //     double /*targetGeometricError*/) override {
-  //   return Cesium3DTiles::RastersMappedTo3DTile(*this, {});
+  //   return RastersMappedTo3DTile(*this, {});
   // }
 
-  // virtual Cesium3DTiles::RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-  //     const Cesium3DTiles::TileID& /*geometryTileId*/,
+  // virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
+  //     const TileID& /*geometryTileId*/,
   //     const CesiumGeometry::Rectangle& /*geometryRectangle*/,
   //     double /*targetGeometricError*/) override {
-  //   return Cesium3DTiles::RastersMappedTo3DTile(*this, {});
+  //   return RastersMappedTo3DTile(*this, {});
   // }
 
-  virtual bool hasMoreDetailsAvailable(
-      const Cesium3DTiles::TileID& /*tileID*/) const override {
+  virtual bool
+  hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {
     return false;
   }
 };
 } // namespace
-
-namespace Cesium3DTiles {
 
 RasterOverlay::RasterOverlay(
     const std::string& name,
@@ -147,5 +142,3 @@ void RasterOverlay::destroySafely(
     this->_pSelf.reset();
   }
 }
-
-} // namespace Cesium3DTiles

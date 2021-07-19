@@ -2,6 +2,8 @@
 #include "Cesium3DTiles/Tileset.h"
 #include "CesiumUtility/Tracing.h"
 
+using namespace CesiumGeometry;
+
 namespace Cesium3DTiles {
 
 RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept
@@ -30,26 +32,27 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   // Add this overlay to existing geometry tiles.
   this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
-    // The tile rectangle doesn't matter for a placeholder.
-    tile.getMappedRasterTiles().push_back(
-        pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
-            tile.getTileID(),
-            CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
-            tile.getGeometricError()));
+    // The tile rectangle and geometric error don't matter for a placeholder.
+    tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
+        pOverlayRaw->getPlaceholder()->getTile(Rectangle(), 0.0),
+        Rectangle()));
   });
 }
 
 void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   // Remove all mappings of this overlay to geometry tiles.
-  auto removeCondition = [pOverlay](const RastersMappedTo3DTile& mapped) {
-    const RasterOverlayTileProvider* pProvider = mapped.getOwner();
-    return pProvider && &pProvider->getOwner() == pOverlay;
+  auto removeCondition = [pOverlay](const RasterMappedTo3DTile& mapped) {
+    return (
+        (mapped.getLoadingTile() &&
+         &mapped.getLoadingTile()->getOverlay() == pOverlay) ||
+        (mapped.getReadyTile() &&
+         &mapped.getReadyTile()->getOverlay() == pOverlay));
   };
 
   this->_pTileset->forEachLoadedTile([&removeCondition](Tile& tile) {
-    std::vector<RastersMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
+    std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-    for (RastersMappedTo3DTile& rasterTile : mapped) {
+    for (RasterMappedTo3DTile& rasterTile : mapped) {
       if (removeCondition(rasterTile)) {
         rasterTile.detachFromTile(tile);
       }
