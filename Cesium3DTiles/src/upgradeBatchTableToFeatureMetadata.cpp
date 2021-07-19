@@ -14,9 +14,24 @@
 using namespace CesiumGltf;
 
 namespace {
+struct MaskedType {
+  bool isInt8 = true;
+  bool isUint8 = true;
+  bool isInt16 = true;
+  bool isUint16 = true;
+  bool isInt32 = true;
+  bool isUint32 = true;
+  bool isInt64 = true;
+  bool isUint64 = true;
+  bool isFloat32 = true;
+  bool isFloat64 = true;
+  bool isBool = true;
+  bool isArray = true;
+};
+
 struct CompatibleTypes {
-  PropertyType type;
-  std::optional<PropertyType> componentType;
+  MaskedType type;
+  std::optional<MaskedType> componentType;
   std::optional<uint32_t> minComponentCount;
   std::optional<uint32_t> maxComponentCount;
 };
@@ -82,74 +97,112 @@ void copyStringBuffer(
 }
 
 CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
-  CompatibleTypes result{};
-
+  MaskedType type;
+  std::optional<MaskedType> componentType;
+  std::optional<uint32_t> minComponentCount;
+  std::optional<uint32_t> maxComponentCount;
   for (auto it = propertyValue.Begin(); it != propertyValue.End(); ++it) {
     if (it->IsBool()) {
       // Should we allow conversion of bools to numeric 0 or 1? Nah.
-      result.type = PropertyType::Boolean;
+      type.isInt8 = type.isUint8 = false;
+      type.isInt16 = type.isUint16 = false;
+      type.isInt32 = type.isUint32 = false;
+      type.isInt64 = type.isUint64 = false;
+      type.isFloat32 = false;
+      type.isFloat64 = false;
+      type.isBool = true;
+      type.isArray = false;
     } else if (it->IsInt64()) {
       int64_t value = it->GetInt64();
-      if (isInRangeForSignedInteger<int8_t>(value) &&
-          result.type <= PropertyType::Int8) {
-        result.type = PropertyType::Int8;
-      } else if (
-          isInRangeForSignedInteger<uint8_t>(value) &&
-          result.type <= PropertyType::Uint8) {
-        result.type = PropertyType::Uint8;
-      } else if (
-          isInRangeForSignedInteger<int16_t>(value) &&
-          result.type <= PropertyType::Int16) {
-        result.type = PropertyType::Int16;
-      } else if (
-          isInRangeForSignedInteger<uint16_t>(value) &&
-          result.type <= PropertyType::Uint16) {
-        result.type = PropertyType::Uint16;
-      } else if (
-          isInRangeForSignedInteger<int32_t>(value) &&
-          result.type <= PropertyType::Int32) {
-        result.type = PropertyType::Int32;
-      } else if (
-          isInRangeForSignedInteger<uint32_t>(value) &&
-          result.type <= PropertyType::Uint32) {
-        result.type = PropertyType::Uint32;
-      } else if (result.type <= PropertyType::Int64) {
-        result.type = PropertyType::Int64;
-      }
+      type.isInt8 &= isInRangeForSignedInteger<int8_t>(value);
+      type.isUint8 &= isInRangeForSignedInteger<uint8_t>(value);
+      type.isInt16 &= isInRangeForSignedInteger<int16_t>(value);
+      type.isUint16 &= isInRangeForSignedInteger<uint16_t>(value);
+      type.isInt32 &= isInRangeForSignedInteger<int32_t>(value);
+      type.isUint32 &= isInRangeForSignedInteger<uint32_t>(value);
+      type.isInt64 &= true;
+      type.isUint64 &= value >= 0;
+      type.isFloat32 &= value >= -2e24 && value <= 2e24;
+      type.isFloat64 &= value >= -2e53 && value <= 2e53;
+      type.isBool = false;
+      type.isArray = false;
     } else if (it->IsUint64()) {
-      result.type = PropertyType::Uint64;
+      // Only uint64_t can represent a value that fits in a uint64_t but not in
+      // an int64_t.
+      type.isInt8 = type.isUint8 = false;
+      type.isInt16 = type.isUint16 = false;
+      type.isInt32 = type.isUint32 = false;
+      type.isInt64 = false;
+      type.isUint64 = true;
+      type.isFloat32 = false;
+      type.isFloat64 = false;
+      type.isBool = false;
+      type.isArray = false;
     } else if (it->IsLosslessFloat()) {
-      result.type = PropertyType::Float32;
+      type.isInt8 = type.isUint8 = false;
+      type.isInt16 = type.isUint16 = false;
+      type.isInt32 = type.isUint32 = false;
+      type.isInt64 = type.isUint64 = false;
+      type.isFloat32 = true;
+      type.isFloat64 = true;
+      type.isBool = false;
+      type.isArray = false;
     } else if (it->IsDouble()) {
-      result.type = PropertyType::Float64;
-    } else if (
-        it->IsArray() && !it->Begin()->IsArray() &&
-        (result.type == PropertyType::None ||
-         result.type == PropertyType::Array)) {
-      auto memberResult = findCompatibleTypes(*it);
-
-      result.type = PropertyType::Array;
-      if (!result.componentType || result.componentType < memberResult.type) {
-        result.componentType = memberResult.type;
+      type.isInt8 = type.isUint8 = false;
+      type.isInt16 = type.isUint16 = false;
+      type.isInt32 = type.isUint32 = false;
+      type.isInt64 = type.isUint64 = false;
+      type.isFloat32 = false;
+      type.isFloat64 = true;
+      type.isBool = false;
+      type.isArray = false;
+    } else if (it->IsArray()) {
+      type.isInt8 = type.isUint8 = false;
+      type.isInt16 = type.isUint16 = false;
+      type.isInt32 = type.isUint32 = false;
+      type.isInt64 = type.isUint64 = false;
+      type.isFloat32 = false;
+      type.isFloat64 = false;
+      type.isBool = false;
+      type.isArray &= true;
+      CompatibleTypes currentComponentType = findCompatibleTypes(*it);
+      if (!componentType) {
+        componentType = currentComponentType.type;
+      } else {
+        componentType->isInt8 &= currentComponentType.type.isInt8;
+        componentType->isUint8 &= currentComponentType.type.isUint8;
+        componentType->isInt16 &= currentComponentType.type.isInt16;
+        componentType->isUint16 &= currentComponentType.type.isUint16;
+        componentType->isInt32 &= currentComponentType.type.isInt32;
+        componentType->isUint32 &= currentComponentType.type.isUint32;
+        componentType->isInt64 &= currentComponentType.type.isInt64;
+        componentType->isUint64 &= currentComponentType.type.isUint64;
+        componentType->isFloat32 &= currentComponentType.type.isFloat32;
+        componentType->isFloat64 &= currentComponentType.type.isFloat64;
+        componentType->isBool &= currentComponentType.type.isBool;
+        componentType->isArray &= currentComponentType.type.isArray;
       }
 
-      result.maxComponentCount =
-          result.maxComponentCount
-              ? glm::max(*result.maxComponentCount, it->Size())
-              : it->Size();
-      result.minComponentCount =
-          result.minComponentCount
-              ? glm::min(*result.minComponentCount, it->Size())
-              : it->Size();
+      maxComponentCount = maxComponentCount
+                              ? glm::max(*maxComponentCount, it->Size())
+                              : it->Size();
+      minComponentCount = minComponentCount
+                              ? glm::min(*minComponentCount, it->Size())
+                              : it->Size();
     } else {
-      // A string, null, or something else. So convert to string
-      result = CompatibleTypes{};
-      result.type = PropertyType::String;
-      break;
+      // A string, null, or something else.
+      type.isInt8 = type.isUint8 = false;
+      type.isInt16 = type.isUint16 = false;
+      type.isInt32 = type.isUint32 = false;
+      type.isInt64 = type.isUint64 = false;
+      type.isFloat32 = false;
+      type.isFloat64 = false;
+      type.isBool = false;
+      type.isArray = false;
     }
   }
 
-  return result;
+  return {type, componentType, minComponentCount, maxComponentCount};
 }
 
 void updateExtensionWithJsonStringProperty(
@@ -858,8 +911,7 @@ void updateExtensionWithArrayProperty(
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
 
-  switch (*compatibleTypes.componentType) {
-  case PropertyType::Boolean:
+  if (compatibleTypes.componentType->isBool) {
     updateBooleanArrayProperty(
         gltf,
         classProperty,
@@ -867,8 +919,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Int8:
+  } else if (compatibleTypes.componentType->isInt8) {
     updateNumericArrayProperty<int32_t, int8_t>(
         gltf,
         classProperty,
@@ -876,8 +927,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Uint8:
+  } else if (compatibleTypes.componentType->isUint8) {
     updateNumericArrayProperty<uint32_t, uint8_t>(
         gltf,
         classProperty,
@@ -885,8 +935,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Int16:
+  } else if (compatibleTypes.componentType->isInt16) {
     updateNumericArrayProperty<int32_t, int16_t>(
         gltf,
         classProperty,
@@ -894,8 +943,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Uint16:
+  } else if (compatibleTypes.componentType->isUint16) {
     updateNumericArrayProperty<uint32_t, uint16_t>(
         gltf,
         classProperty,
@@ -903,8 +951,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Int32:
+  } else if (compatibleTypes.componentType->isInt32) {
     updateNumericArrayProperty<int32_t, int32_t>(
         gltf,
         classProperty,
@@ -912,8 +959,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Uint32:
+  } else if (compatibleTypes.componentType->isUint32) {
     updateNumericArrayProperty<uint32_t, uint32_t>(
         gltf,
         classProperty,
@@ -921,8 +967,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Int64:
+  } else if (compatibleTypes.componentType->isInt64) {
     updateNumericArrayProperty<int64_t, int64_t>(
         gltf,
         classProperty,
@@ -930,8 +975,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Uint64:
+  } else if (compatibleTypes.componentType->isUint64) {
     updateNumericArrayProperty<uint64_t, uint64_t>(
         gltf,
         classProperty,
@@ -939,8 +983,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Float32:
+  } else if (compatibleTypes.componentType->isFloat32) {
     updateNumericArrayProperty<float, float>(
         gltf,
         classProperty,
@@ -948,8 +991,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::Float64:
+  } else if (compatibleTypes.componentType->isFloat64) {
     updateNumericArrayProperty<double, double>(
         gltf,
         classProperty,
@@ -957,8 +999,7 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  case PropertyType::String:
+  } else {
     updateStringArrayProperty(
         gltf,
         classProperty,
@@ -966,9 +1007,6 @@ void updateExtensionWithArrayProperty(
         featureTable,
         compatibleTypes,
         propertyValue);
-    break;
-  default:
-    break;
   }
 }
 
@@ -993,17 +1031,14 @@ void updateExtensionWithJsonProperty(
   // Figure out which types we can use for this data.
   // Use the smallest type we can, and prefer signed to unsigned.
   CompatibleTypes compatibleTypes = findCompatibleTypes(propertyValue);
-
-  switch (compatibleTypes.type) {
-  case PropertyType::Boolean:
+  if (compatibleTypes.type.isBool) {
     updateExtensionWithJsonBoolProperty(
         gltf,
         classProperty,
         featureTable,
         featureTableProperty,
         propertyValue);
-    break;
-  case PropertyType::Int8:
+  } else if (compatibleTypes.type.isInt8) {
     updateExtensionWithJsonNumericProperty<int8_t, int32_t>(
         gltf,
         classProperty,
@@ -1011,8 +1046,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT8");
-    break;
-  case PropertyType::Uint8:
+  } else if (compatibleTypes.type.isUint8) {
     updateExtensionWithJsonNumericProperty<uint8_t, uint32_t>(
         gltf,
         classProperty,
@@ -1020,8 +1054,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT8");
-    break;
-  case PropertyType::Int16:
+  } else if (compatibleTypes.type.isInt16) {
     updateExtensionWithJsonNumericProperty<int16_t, int32_t>(
         gltf,
         classProperty,
@@ -1029,8 +1062,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT16");
-    break;
-  case PropertyType::Uint16:
+  } else if (compatibleTypes.type.isUint16) {
     updateExtensionWithJsonNumericProperty<uint16_t, uint32_t>(
         gltf,
         classProperty,
@@ -1038,8 +1070,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT16");
-    break;
-  case PropertyType::Int32:
+  } else if (compatibleTypes.type.isInt32) {
     updateExtensionWithJsonNumericProperty<int32_t>(
         gltf,
         classProperty,
@@ -1047,8 +1078,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT32");
-    break;
-  case PropertyType::Uint32:
+  } else if (compatibleTypes.type.isUint32) {
     updateExtensionWithJsonNumericProperty<uint32_t>(
         gltf,
         classProperty,
@@ -1056,8 +1086,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT32");
-    break;
-  case PropertyType::Int64:
+  } else if (compatibleTypes.type.isInt64) {
     updateExtensionWithJsonNumericProperty<int64_t>(
         gltf,
         classProperty,
@@ -1065,8 +1094,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "INT64");
-    break;
-  case PropertyType::Uint64:
+  } else if (compatibleTypes.type.isUint64) {
     updateExtensionWithJsonNumericProperty<uint64_t>(
         gltf,
         classProperty,
@@ -1074,8 +1102,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "UINT64");
-    break;
-  case PropertyType::Float32:
+  } else if (compatibleTypes.type.isFloat32) {
     updateExtensionWithJsonNumericProperty<float>(
         gltf,
         classProperty,
@@ -1083,8 +1110,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "FLOAT32");
-    break;
-  case PropertyType::Float64:
+  } else if (compatibleTypes.type.isFloat64) {
     updateExtensionWithJsonNumericProperty<double>(
         gltf,
         classProperty,
@@ -1092,16 +1118,7 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         propertyValue,
         "FLOAT64");
-    break;
-  case PropertyType::String:
-    updateExtensionWithJsonStringProperty(
-        gltf,
-        classProperty,
-        featureTable,
-        featureTableProperty,
-        propertyValue);
-    break;
-  case PropertyType::Array:
+  } else if (compatibleTypes.type.isArray) {
     updateExtensionWithArrayProperty(
         gltf,
         classProperty,
@@ -1109,9 +1126,13 @@ void updateExtensionWithJsonProperty(
         featureTableProperty,
         compatibleTypes,
         propertyValue);
-    break;
-  default:
-    break;
+  } else {
+    updateExtensionWithJsonStringProperty(
+        gltf,
+        classProperty,
+        featureTable,
+        featureTableProperty,
+        propertyValue);
   }
 }
 
