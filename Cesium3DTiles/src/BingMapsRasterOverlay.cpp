@@ -143,8 +143,8 @@ public:
   virtual ~BingMapsTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override {
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         this->_urlTemplate,
         [this, &tileID](const std::string& key) {

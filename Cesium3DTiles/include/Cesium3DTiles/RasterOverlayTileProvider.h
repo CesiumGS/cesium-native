@@ -319,8 +319,7 @@ protected:
    * @param options Additional options for the load process.
    * @return A future that resolves to the image or error information.
    */
-  CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImageFromUrl(
+  CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
       const LoadTileImageFromUrlOptions& options = {}) const;

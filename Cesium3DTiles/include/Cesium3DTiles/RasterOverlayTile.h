@@ -137,9 +137,7 @@ public:
     return this->_rectangle;
   }
 
-  double getTargetGeometricError() const {
-    return this->_targetGeometricError;
-  }
+  double getTargetGeometricError() const { return this->_targetGeometricError; }
 
   /**
    * @brief Returns the current {@link LoadState}.
@@ -190,7 +188,9 @@ public:
     this->_pRendererResources = pValue;
   }
 
-  MoreDetailAvailable isMoreDetailAvailable() const { return this->_moreDetailAvailable; }
+  MoreDetailAvailable isMoreDetailAvailable() const {
+    return this->_moreDetailAvailable;
+  }
 
   /**
    * @brief Adds a counted reference to this instance.

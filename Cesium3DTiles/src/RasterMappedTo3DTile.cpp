@@ -110,7 +110,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
   if (this->_pLoadingTile) {
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate;
 
-    Tile* pTile = tile.getParent();
+    pTile = tile.getParent();
     while (pTile) {
       pCandidate = findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
       if (pCandidate &&
@@ -208,7 +208,8 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
       *this->_pReadyTile->getOverlay().getTileProvider();
   CesiumGeometry::Rectangle geometryRectangle =
       projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
-  CesiumGeometry::Rectangle imageryRectangle = this->_pReadyTile->getRectangle();
+  CesiumGeometry::Rectangle imageryRectangle =
+      this->_pReadyTile->getRectangle();
 
   double terrainWidth = geometryRectangle.computeWidth();
   double terrainHeight = geometryRectangle.computeHeight();
