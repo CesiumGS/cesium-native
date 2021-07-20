@@ -28,15 +28,19 @@ private:
     async::threadpool_scheduler scheduler;
   };
 
-  std::shared_ptr<Scheduler> _pScheduler;
-
   static auto createPreRun(ThreadPool::Scheduler* pScheduler) {
-    return [pScheduler]() { return pScheduler->immediate.markBegin(); };
+    return
+        [pScheduler]() { ThreadPool::_scope = pScheduler->immediate.scope(); };
   }
 
-  static auto createPostRun(ThreadPool::Scheduler* pScheduler) {
-    return [pScheduler]() { return pScheduler->immediate.markEnd(); };
+  static auto createPostRun() {
+    return []() { ThreadPool::_scope.reset(); };
   }
+
+  static thread_local Impl::ImmediateScheduler<Scheduler>::SchedulerScope
+      _scope;
+
+  std::shared_ptr<Scheduler> _pScheduler;
 
   template <typename T> friend class Future;
   friend class AsyncSystem;

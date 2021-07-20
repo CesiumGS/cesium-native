@@ -21,15 +21,7 @@ void TaskScheduler::schedule(async::task_run_handle t) {
   pReceiver->taskHandle = std::move(t);
 
   this->_pTaskProcessor->startTask([this, pReceiver]() mutable {
-    this->immediate.markBegin();
-
-    try {
-      pReceiver->taskHandle.run();
-    } catch (...) {
-      this->immediate.markEnd();
-      throw;
-    }
-
-    this->immediate.markEnd();
+    auto scope = this->immediate.scope();
+    pReceiver->taskHandle.run();
   });
 }
