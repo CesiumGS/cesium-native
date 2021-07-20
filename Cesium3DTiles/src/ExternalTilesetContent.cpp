@@ -11,6 +11,7 @@ namespace Cesium3DTiles {
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 ExternalTilesetContent::load(
     const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
     const TileContentLoadInput& input) {
   return asyncSystem.createResolvedFuture(load(
       input.pLogger,

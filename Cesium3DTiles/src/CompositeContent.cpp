@@ -66,6 +66,7 @@ TileContentLoadInput derive(
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 CompositeContent::load(
     const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const TileContentLoadInput& input) {
   CESIUM_TRACE("Cesium3DTiles::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
@@ -139,6 +140,7 @@ CompositeContent::load(
 
     innerTiles.push_back(std::move(TileContentFactory::createContent(
         asyncSystem,
+        pAssetAccessor,
         derive(input, innerData))));
   }
 

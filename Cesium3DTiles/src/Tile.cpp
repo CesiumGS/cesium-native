@@ -278,6 +278,7 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
       .thenInWorkerThread(
           [this,
            asyncSystem,
+           pAssetAccessor = tileset.getExternals().pAssetAccessor,
            loadInput = std::move(loadInput),
            handleLoadResult,
            handleLoadError,
@@ -322,7 +323,10 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
             loadInput.contentType = pResponse->contentType();
             loadInput.url = pRequest->url();
             // std::unique_ptr<TileContentLoadResult> pContent =
-            TileContentFactory::createContent(asyncSystem, loadInput)
+            TileContentFactory::createContent(
+                asyncSystem,
+                pAssetAccessor,
+                loadInput)
                 .thenInWorkerThread(
                     [httpStatusCode = pResponse->statusCode(),
                      gltfUpAxis = std::move(gltfUpAxis),

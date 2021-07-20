@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/TileContentLoadResult.h"
 #include "Cesium3DTiles/TileContentLoader.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetAccessor.h"
 #include <cstddef>
 
 namespace Cesium3DTiles {
@@ -26,6 +27,7 @@ public:
    */
   CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
       const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const TileContentLoadInput& input) override;
 
   /**

@@ -93,6 +93,8 @@ public:
    * If a matching loader is found, it will be applied to the given
    * input, and the result will be returned.
    *
+   * @param asyncSystem The async system to use.
+   * @param pAssetAccessor The asset accessor to use if needed.
    * @param input The {@link TileContentLoadInput}.
    * @return The {@link TileContentLoadResult}, or `nullptr` if there is
    * no loader registered for the magic header of the given
@@ -101,6 +103,7 @@ public:
   static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   createContent(
       const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const TileContentLoadInput& input);
 
 private:

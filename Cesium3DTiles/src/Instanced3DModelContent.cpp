@@ -1,6 +1,8 @@
 #include "Instanced3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include <cstddef>
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
@@ -253,15 +255,13 @@ void parseFeatureTable(
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 Instanced3DModelContent::load(
     const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const TileContentLoadInput& input) {
-  return asyncSystem.createResolvedFuture(
-      load(input.pLogger, input.url, input.data));
-}
 
-std::unique_ptr<TileContentLoadResult> Instanced3DModelContent::load(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& url,
-    const gsl::span<const std::byte>& data) {
+  const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
+  const std::string& url = input.url;
+  const gsl::span<const std::byte>& data = input.data;
+
   // TODO: actually use the i3dm payload
   if (data.size() < sizeof(I3dmHeader)) {
     throw std::runtime_error("The I3DM is invalid because it is too small to "
@@ -310,18 +310,33 @@ std::unique_ptr<TileContentLoadResult> Instanced3DModelContent::load(
           featureTableBinaryData);
     }
 
-    return pResult;
+    return asyncSystem.createResolvedFuture(std::move(pResult));
   }
 
-  std::string externalGltfUri(
+  std::string externalGltfUriRelative(
       reinterpret_cast<char const*>(data.data() + gltfStart),
       gltfEnd - gltfStart);
+
+  std::string externalGltfUri = url + externalGltfUriRelative;
 
   SPDLOG_LOGGER_ERROR(pLogger, "EXTERNAL GLTF: {}", externalGltfUri);
 
   // TODO: actually support gltf from URI source (also support pointing to
   // deferred asset)
-  return nullptr;
-}
+  return pAssetAccessor->requestAsset(asyncSystem, externalGltfUri)
+      .thenInWorkerThread(
+          [pLogger, externalGltfUri](
+              const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest) {
+            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+            if (pResponse) {
+              return GltfContent::load(
+                  pLogger,
+                  externalGltfUri,
+                  pResponse->data());
+            }
 
+            return std::unique_ptr<TileContentLoadResult>(nullptr);
+          });
+  //.catchInMainThread()
+}
 } // namespace Cesium3DTiles

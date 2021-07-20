@@ -29,6 +29,7 @@ public:
    */
   CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
       const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const TileContentLoadInput& input) override;
 
 private:
