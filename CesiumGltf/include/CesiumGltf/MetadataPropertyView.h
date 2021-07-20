@@ -11,24 +11,113 @@
 #include <type_traits>
 
 namespace CesiumGltf {
+/**
+ * @brief Indicates the status of a property view.
+ *
+ * The {@link MetadataPropertyView} constructor always completes successfully. However,
+ * it may not always reflect the actual content of the {@link FeatureTableProperty}, but
+ * instead indicate that its {@link MetadataPropertyView::size} is 0. This enumeration
+ * provides the reason.
+ */
 enum class MetadataPropertyViewStatus {
+  /**
+   * @brief This property view is valid and ready to use.
+   */
   Valid,
+
+  /**
+   * @brief This property view does not exist in the FeatureTable.
+   */
   InvalidPropertyNotExist,
+
+  /**
+   * @brief This property view does not have a correct type with what is
+   * specified in {@link ClassProperty::type}.
+   */
   InvalidTypeMismatch,
+
+  /**
+   * @brief This property view does not have a valid value buffer view index.
+   */
   InvalidValueBufferViewIndex,
+
+  /**
+   * @brief This array property view does not have a valid array offset buffer
+   * view index.
+   */
   InvalidArrayOffsetBufferViewIndex,
+
+  /**
+   * @brief This string property view does not have a valid string offset buffer
+   * view index.
+   */
   InvalidStringOffsetBufferViewIndex,
+
+  /**
+   * @brief This property view has a valid value buffer view index, but buffer
+   * view specifies an invalid buffer index
+   */
   InvalidValueBufferIndex,
+
+  /**
+   * @brief This property view has a valid array string buffer view index, but
+   * buffer view specifies an invalid buffer index
+   */
   InvalidArrayOffsetBufferIndex,
+
+  /**
+   * @brief This property view has a valid string offset buffer view index, but
+   * buffer view specifies an invalid buffer index
+   */
   InvalidStringOffsetBufferIndex,
+
+  /**
+   * @brief This property view has buffer view's offset not aligned by 8 bytes
+   */
   InvalidBufferViewNotAligned8Bytes,
+
+  /**
+   * @brief This property view has an out-of-bound buffer view
+   */
   InvalidBufferViewOutOfBound,
+
+  /**
+   * @brief This property view has an invalid buffer view's length which is not
+   * a multiple of the size of its type or offset type
+   */
   InvalidBufferViewSizeNotDivisibleByTypeSize,
+
+  /**
+   * @brief This property view has an invalid buffer view's length which cannot
+   * fit all the instances of the feature table
+   */
   InvalidBufferViewSizeNotFitInstanceCount,
+
+  /**
+   * @brief This array property view has both component count and offset buffer
+   * view
+   */
   InvalidArrayComponentCountAndOffsetBufferCoexist,
+
+  /**
+   * @brief This array property view doesn't have either component count or
+   * offset buffer view
+   */
   InvalidArrayComponentCountOrOffsetBufferNotExist,
+
+  /**
+   * @brief This property view have an unknown offset type
+   */
   InvalidOffsetType,
+
+  /**
+   * @brief This property view has offset values not sorted ascendingly
+   */
   InvalidOffsetValuesNotSortedAscending,
+
+  /**
+   * @brief This property view has an offset point to an out of bound value
+   */
   InvalidOffsetValuePointsToOutOfBoundBuffer
 };
 
