@@ -370,6 +370,19 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   return static_cast<uint32_t>(rounded);
 }
 
+CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
+QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
+    const CesiumGeometry::QuadtreeTileID& tileID) {
+  auto it = this->_tileCache.find(tileID);
+  if (it != this->_tileCache.end()) {
+    return it->second;
+  }
+
+  Future<LoadedRasterOverlayImage> future = this->loadQuadtreeTileImage(tileID);
+  return this->_tileCache.emplace(tileID, std::move(future).share())
+      .first->second;
+}
+
 namespace {
 
 // Copies a rectangle of a source image into another image.
