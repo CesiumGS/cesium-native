@@ -30,7 +30,9 @@ void TileContentFactory::registerContentType(
 }
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-TileContentFactory::createContent(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
+TileContentFactory::createContent(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const TileContentLoadInput& input) {
 
   const gsl::span<const std::byte>& data = input.data;
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
@@ -72,7 +74,8 @@ TileContentFactory::createContent(const CesiumAsync::AsyncSystem& asyncSystem, c
       "'{}'.",
       baseContentType,
       magic);
-  return asyncSystem.createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
+  return asyncSystem
+      .createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 
 /**

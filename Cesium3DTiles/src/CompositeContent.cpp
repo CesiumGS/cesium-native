@@ -3,12 +3,12 @@
 #include "Cesium3DTiles/TileContentFactory.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumUtility/Tracing.h"
+#include <chrono>
 #include <cstddef>
+#include <functional>
 #include <rapidjson/document.h>
 #include <stdexcept>
-#include <functional>
 #include <thread>
-#include <chrono>
 
 namespace {
 #pragma pack(push, 1)
@@ -64,7 +64,9 @@ TileContentLoadInput derive(
 } // namespace
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
+CompositeContent::load(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const TileContentLoadInput& input) {
   CESIUM_TRACE("Cesium3DTiles::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const gsl::span<const std::byte>& data = input.data;
@@ -75,7 +77,8 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
         pLogger,
         "Composite tile {} must be at least 16 bytes.",
         url);
-    return asyncSystem.createResolvedFuture(std::unique_ptr<TileContentLoadResult>(nullptr));
+    return asyncSystem.createResolvedFuture(
+        std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
   const CmptHeader* pHeader = reinterpret_cast<const CmptHeader*>(data.data());
@@ -83,7 +86,8 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Composite tile does not have the expected magic vaue 'cmpt'.");
-    return asyncSystem.createResolvedFuture(std::unique_ptr<TileContentLoadResult>(nullptr));
+    return asyncSystem.createResolvedFuture(
+        std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
   if (pHeader->version != 1) {
@@ -91,7 +95,8 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
         pLogger,
         "Unsupported composite tile version {}.",
         pHeader->version);
-    return asyncSystem.createResolvedFuture(std::unique_ptr<TileContentLoadResult>(nullptr));
+    return asyncSystem.createResolvedFuture(
+        std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
   if (pHeader->byteLength > data.size()) {
@@ -100,13 +105,16 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
         "Composite tile byteLength is {} but only {} bytes are available.",
         pHeader->byteLength,
         data.size());
-    return asyncSystem.createResolvedFuture(std::unique_ptr<TileContentLoadResult>(nullptr));
+    return asyncSystem.createResolvedFuture(
+        std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
-  std::vector<CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>> innerTiles(pHeader->tilesLength);
+  std::vector<CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>>
+      innerTiles;
   uint32_t pos = sizeof(CmptHeader);
 
-  for (uint32_t i = 0; i < pHeader->tilesLength && pos < pHeader->byteLength; ++i) {
+  for (uint32_t i = 0; i < pHeader->tilesLength && pos < pHeader->byteLength;
+       ++i) {
     if (pos + sizeof(InnerHeader) > pHeader->byteLength) {
       SPDLOG_LOGGER_WARN(
           pLogger,
@@ -129,54 +137,49 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
 
     pos += pInner->byteLength;
 
-    innerTiles.push_back( 
-        TileContentFactory::createContent(
-          asyncSystem, 
-          derive(input, innerData)));
+    innerTiles.push_back(std::move(TileContentFactory::createContent(
+        asyncSystem,
+        derive(input, innerData))));
   }
 
   return asyncSystem
-    // TODO: How dubious is this exactly?
-    .runInWorkerThread(
-      [&unresolvedFutures]() -> int {
-        while (unresolvedFutures > 0) {
-          std::this_thread::yield();//(std::chrono::milliseconds(10));
-        }
-        return 0;
-      })
-    .thenInMainThread(
-      [&pLogger,
-       &innerTiles,
-       tilesLength = pHeader->tilesLength](int) mutable -> std::unique_ptr<TileContentLoadResult> {
-        
-        if (innerTiles.empty()) {
-          if (tilesLength > 0) {
-            SPDLOG_LOGGER_WARN(
-                pLogger,
-                "Composite tile does not contain any loadable inner tiles.");
-          }
-          return std::make_unique<TileContentLoadResult>();
-        }
-        if (innerTiles.size() == 1) {
-          return std::move(innerTiles[0]);
-        }
+      // TODO: How dubious is this exactly?
+      .all(std::move(innerTiles))
+      .thenInMainThread(
+          [&pLogger, tilesLength = pHeader->tilesLength](
+              std::vector<std::unique_ptr<TileContentLoadResult>>&&
+                  innerTilesResult) -> std::unique_ptr<TileContentLoadResult> {
+            if (innerTilesResult.empty()) {
+              if (tilesLength > 0) {
+                SPDLOG_LOGGER_WARN(
+                    pLogger,
+                    "Composite tile does not contain any loadable inner "
+                    "tiles.");
+              }
+              return std::unique_ptr<TileContentLoadResult>(nullptr);
+            }
+            if (innerTilesResult.size() == 1) {
+              return std::move(innerTilesResult[0]);
+            }
 
-        std::unique_ptr<TileContentLoadResult> pResult = std::move(innerTiles[0]);
+            std::unique_ptr<TileContentLoadResult> pResult =
+                std::move(innerTilesResult[0]);
 
-        for (size_t i = 1; i < innerTiles.size(); ++i) {
-          if (innerTiles[i]->model) {
-            continue;
-          }
+            for (size_t i = 1; i < innerTilesResult.size(); ++i) {
+              if (!innerTilesResult[i] || !innerTilesResult[i]->model) {
+                continue;
+              }
 
-          if (pResult->model) {
-            pResult->model.value().merge(std::move(innerTiles[i]->model.value()));
-          } else {
-            pResult->model = std::move(innerTiles[i]->model);
-          }
-        }
+              if (pResult->model) {
+                pResult->model.value().merge(
+                    std::move(innerTilesResult[i]->model.value()));
+              } else {
+                pResult->model = std::move(innerTilesResult[i]->model);
+              }
+            }
 
-        return std::move(pResult);
-      });
+            return std::move(pResult);
+          });
 }
 
 } // namespace Cesium3DTiles

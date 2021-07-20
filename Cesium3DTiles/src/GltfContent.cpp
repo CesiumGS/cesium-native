@@ -11,9 +11,11 @@ namespace Cesium3DTiles {
 
 /*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
 
-CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-GltfContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) {
-  return asyncSystem.createResolvedFuture(load(input.pLogger, input.url, input.data));
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const TileContentLoadInput& input) {
+  return asyncSystem.createResolvedFuture(
+      load(input.pLogger, input.url, input.data));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(

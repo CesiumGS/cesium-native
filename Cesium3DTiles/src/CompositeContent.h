@@ -20,8 +20,9 @@ class Tileset;
  */
 class CESIUM3DTILES_API CompositeContent final : public TileContentLoader {
 public:
-  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-  load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) override;
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const TileContentLoadInput& input) override;
 };
 
 } // namespace Cesium3DTiles

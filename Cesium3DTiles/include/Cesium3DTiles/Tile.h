@@ -9,8 +9,8 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TileSelectionState.h"
-#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>

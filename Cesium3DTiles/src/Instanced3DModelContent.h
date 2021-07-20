@@ -19,7 +19,8 @@ class Tileset;
 /**
  * @brief Creates a {@link TileContentLoadResult} from I3DM data.
  */
-class CESIUM3DTILES_API Instanced3DModelContent final : public TileContentLoader {
+class CESIUM3DTILES_API Instanced3DModelContent final
+    : public TileContentLoader {
 public:
   /**
    * @copydoc TileContentLoader::load
@@ -27,8 +28,9 @@ public:
    * The result will only contain the `model`. Other fields will be
    * empty or have default values.
    */
-  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-  load(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input) override;
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const TileContentLoadInput& input) override;
 
 private:
   /**
