@@ -13,12 +13,23 @@
 namespace CesiumGltf {
 enum class MetadataPropertyViewStatus {
   Valid,
+  InvalidPropertyNotExist,
+  InvalidTypeMismatch,
   InvalidValueBufferViewIndex,
   InvalidArrayOffsetBufferViewIndex,
   InvalidStringOffsetBufferViewIndex,
   InvalidValueBufferIndex,
   InvalidArrayOffsetBufferIndex,
   InvalidStringOffsetBufferIndex,
+  InvalidBufferViewNotAligned8Bytes,
+  InvalidBufferViewOutOfBound,
+  InvalidBufferViewSizeNotDivisibleByTypeSize,
+  InvalidBufferViewSizeNotFitInstanceCount,
+  InvalidArrayComponentCountAndOffsetBufferCoexist,
+  InvalidArrayComponentCountOrOffsetBufferNotExist,
+  InvalidOffsetType,
+  InvalidOffsetValuesNotSortedAscending,
+  InvalidOffsetValuePointsToOutOfBoundBuffer
 };
 
 /**

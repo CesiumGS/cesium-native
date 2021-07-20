@@ -4,7 +4,7 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
-#include "glm/common.hpp"
+#include <glm/common.hpp>
 #include <optional>
 
 namespace CesiumGltf {
@@ -48,15 +48,17 @@ public:
    * @return ClassProperty of a property. Return nullptr if no property is found
    */
   template <typename T>
-  std::optional<MetadataPropertyView<T>>
+  MetadataPropertyView<T>
   getPropertyView(const std::string& propertyName) const {
     if (_pFeatureTable->count < 0) {
-      return std::nullopt;
+      return createInvalidPropertyView<T>(
+          MetadataPropertyViewStatus::InvalidPropertyNotExist);
     }
 
     const ClassProperty* pClassProperty = getClassProperty(propertyName);
     if (!pClassProperty) {
-      return std::nullopt;
+      return createInvalidPropertyView<T>(
+          MetadataPropertyViewStatus::InvalidPropertyNotExist);
     }
 
     return getPropertyViewImpl<T>(propertyName, *pClassProperty);
@@ -303,13 +305,14 @@ private:
   }
 
   template <typename T>
-  std::optional<MetadataPropertyView<T>> getPropertyViewImpl(
+  MetadataPropertyView<T> getPropertyViewImpl(
       const std::string& propertyName,
       const ClassProperty& classProperty) const {
     auto featureTablePropertyIter =
         _pFeatureTable->properties.find(propertyName);
     if (featureTablePropertyIter == _pFeatureTable->properties.end()) {
-      return std::nullopt;
+      return createInvalidPropertyView<T>(
+          MetadataPropertyViewStatus::InvalidPropertyNotExist);
     }
 
     const FeatureTableProperty& featureTableProperty =
@@ -337,22 +340,25 @@ private:
   }
 
   template <typename T>
-  std::optional<MetadataPropertyView<T>> getPrimitivePropertyValues(
+  MetadataPropertyView<T> getPrimitivePropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
-      return std::nullopt;
+      return createInvalidPropertyView<T>(
+          MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
-    gsl::span<const std::byte> valueBuffer =
-        getBufferSafe(featureTableProperty.bufferView);
-    if (valueBuffer.empty()) {
-      return std::nullopt;
+    gsl::span<const std::byte> valueBuffer;
+    auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
+    if (status != MetadataPropertyViewStatus::Valid) {
+      return createInvalidPropertyView<T>(status);
     }
 
     if (valueBuffer.size() % sizeof(T) != 0) {
-      return std::nullopt;
+      return createInvalidPropertyView<T>(
+          MetadataPropertyViewStatus::
+              InvalidBufferViewSizeNotDivisibleByTypeSize);
     }
 
     size_t maxRequiredBytes = 0;
@@ -364,7 +370,8 @@ private:
     }
 
     if (valueBuffer.size() < maxRequiredBytes) {
-      return std::nullopt;
+      return createInvalidPropertyView<T>(
+          MetadataPropertyViewStatus::InvalidBufferViewSizeNotFitInstanceCount);
     }
 
     return MetadataPropertyView<T>(
@@ -377,46 +384,54 @@ private:
         _pFeatureTable->count);
   }
 
-  std::optional<MetadataPropertyView<std::string_view>> getStringPropertyValues(
+  MetadataPropertyView<std::string_view> getStringPropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
   template <typename T>
-  std::optional<MetadataPropertyView<MetadataArrayView<T>>>
-  getPrimitiveArrayPropertyValues(
+  MetadataPropertyView<MetadataArrayView<T>> getPrimitiveArrayPropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
     if (classProperty.type != "ARRAY") {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
     if (!classProperty.componentType.isString()) {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
     PropertyType componentType =
         convertStringToPropertyType(classProperty.componentType.getString());
     if (TypeToPropertyType<T>::value != componentType) {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
-    gsl::span<const std::byte> valueBuffer =
-        getBufferSafe(featureTableProperty.bufferView);
-    if (valueBuffer.empty()) {
-      return std::nullopt;
+    gsl::span<const std::byte> valueBuffer;
+    auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
+    if (status != MetadataPropertyViewStatus::Valid) {
+      return createInvalidPropertyView<MetadataArrayView<T>>(status);
     }
 
     if (valueBuffer.size() % sizeof(T) != 0) {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::
+              InvalidBufferViewSizeNotDivisibleByTypeSize);
     }
 
     int64_t componentCount = classProperty.componentCount.value_or(0);
     if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::
+              InvalidArrayComponentCountAndOffsetBufferCoexist);
     }
 
     if (componentCount <= 0 && featureTableProperty.arrayOffsetBufferView < 0) {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::
+              InvalidArrayComponentCountOrOffsetBufferNotExist);
     }
 
     // fixed array
@@ -431,7 +446,9 @@ private:
       }
 
       if (valueBuffer.size() < maxRequiredBytes) {
-        return std::nullopt;
+        return createInvalidPropertyView<MetadataArrayView<T>>(
+            MetadataPropertyViewStatus::
+                InvalidBufferViewSizeNotFitInstanceCount);
       }
 
       return MetadataPropertyView<MetadataArrayView<T>>(
@@ -448,18 +465,21 @@ private:
     PropertyType offsetType =
         convertOffsetStringToPropertyType(featureTableProperty.offsetType);
     if (offsetType == PropertyType::None) {
-      return std::nullopt;
+      return createInvalidPropertyView<MetadataArrayView<T>>(
+          MetadataPropertyViewStatus::InvalidOffsetType);
     }
 
     constexpr bool checkBitsSize = IsMetadataBoolean<T>::value;
-    gsl::span<const std::byte> offsetBuffer = getOffsetBufferSafe(
+    gsl::span<const std::byte> offsetBuffer;
+    status = getOffsetBufferSafe(
         featureTableProperty.arrayOffsetBufferView,
         offsetType,
         valueBuffer.size(),
         static_cast<size_t>(_pFeatureTable->count),
-        checkBitsSize);
-    if (offsetBuffer.empty()) {
-      return std::nullopt;
+        checkBitsSize,
+        offsetBuffer);
+    if (status != MetadataPropertyViewStatus::Valid) {
+      return createInvalidPropertyView<MetadataArrayView<T>>(status);
     }
 
     return MetadataPropertyView<MetadataArrayView<T>>(
@@ -472,19 +492,35 @@ private:
         static_cast<size_t>(_pFeatureTable->count));
   }
 
-  std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+  MetadataPropertyView<MetadataArrayView<std::string_view>>
   getStringArrayPropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const;
 
-  gsl::span<const std::byte> getBufferSafe(int32_t bufferViewIdx) const;
+  MetadataPropertyViewStatus getBufferSafe(
+      int32_t bufferViewIdx,
+      gsl::span<const std::byte>& buffer) const;
 
-  gsl::span<const std::byte> getOffsetBufferSafe(
+  MetadataPropertyViewStatus getOffsetBufferSafe(
       int32_t bufferViewIdx,
       PropertyType offsetType,
       size_t valueBufferSize,
       size_t instanceCount,
-      bool checkBitsSize) const;
+      bool checkBitsSize,
+      gsl::span<const std::byte>& offsetBuffer) const;
+
+  template <typename T>
+  static MetadataPropertyView<T>
+  createInvalidPropertyView(MetadataPropertyViewStatus invalidStatus) {
+    return MetadataPropertyView<T>(
+        invalidStatus,
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        gsl::span<const std::byte>(),
+        PropertyType::None,
+        0,
+        0);
+  }
 
   const Model* _pModel;
   const FeatureTable* _pFeatureTable;

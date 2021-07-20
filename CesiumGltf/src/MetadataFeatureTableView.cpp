@@ -2,18 +2,19 @@
 
 namespace CesiumGltf {
 template <typename T>
-static bool checkOffsetBuffer(
+static MetadataPropertyViewStatus checkOffsetBuffer(
     const gsl::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
     bool checkBitSize) {
   if (offsetBuffer.size() % sizeof(T) != 0) {
-    return false;
+    return MetadataPropertyViewStatus::
+        InvalidBufferViewSizeNotDivisibleByTypeSize;
   }
 
   size_t size = offsetBuffer.size() / sizeof(T);
   if (size != instanceCount + 1) {
-    return false;
+    return MetadataPropertyViewStatus::InvalidBufferViewSizeNotFitInstanceCount;
   }
 
   gsl::span<const T> offsetValues(
@@ -22,41 +23,48 @@ static bool checkOffsetBuffer(
 
   for (size_t i = 1; i < offsetValues.size(); ++i) {
     if (offsetValues[i] < offsetValues[i - 1]) {
-      return false;
+      return MetadataPropertyViewStatus::InvalidOffsetValuesNotSortedAscending;
     }
   }
 
   if (!checkBitSize) {
-    return offsetValues.back() <= valueBufferSize;
+    if (offsetValues.back() <= valueBufferSize) {
+      return MetadataPropertyViewStatus::Valid;
+    } else {
+      return MetadataPropertyViewStatus::
+          InvalidOffsetValuePointsToOutOfBoundBuffer;
+    }
   }
 
-  return offsetValues.back() / 8 <= valueBufferSize;
+  if (offsetValues.back() / 8 <= valueBufferSize) {
+    return MetadataPropertyViewStatus::Valid;
+  } else {
+    return MetadataPropertyViewStatus::
+        InvalidOffsetValuePointsToOutOfBoundBuffer;
+  }
 }
 
 template <typename T>
-static bool checkStringArrayOffsetBuffer(
+static MetadataPropertyViewStatus checkStringArrayOffsetBuffer(
     const gsl::span<const std::byte>& arrayOffsetBuffer,
     const gsl::span<const std::byte>& stringOffsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount) {
-  if (!checkOffsetBuffer<T>(
-          arrayOffsetBuffer,
-          stringOffsetBuffer.size(),
-          instanceCount,
-          false)) {
-    return false;
+  auto status = checkOffsetBuffer<T>(
+      arrayOffsetBuffer,
+      stringOffsetBuffer.size(),
+      instanceCount,
+      false);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return status;
   }
 
   const T* pValue = reinterpret_cast<const T*>(arrayOffsetBuffer.data());
-  if (!checkOffsetBuffer<T>(
-          stringOffsetBuffer,
-          valueBufferSize,
-          pValue[instanceCount] / sizeof(T),
-          false)) {
-    return false;
-  }
-
-  return true;
+  return checkOffsetBuffer<T>(
+      stringOffsetBuffer,
+      valueBufferSize,
+      pValue[instanceCount] / sizeof(T),
+      false);
 }
 
 MetadataFeatureTableView::MetadataFeatureTableView(
@@ -98,114 +106,119 @@ const ClassProperty* MetadataFeatureTableView::getClassProperty(
   return &propertyIter->second;
 }
 
-gsl::span<const std::byte>
-MetadataFeatureTableView::getBufferSafe(int32_t bufferViewIdx) const {
+MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
+    int32_t bufferViewIdx,
+    gsl::span<const std::byte>& buffer) const {
+  buffer = {};
+
   const BufferView* pBufferView =
       _pModel->getSafe(&_pModel->bufferViews, bufferViewIdx);
   if (!pBufferView) {
-    return {};
+    return MetadataPropertyViewStatus::InvalidValueBufferViewIndex;
   }
 
   const Buffer* pBuffer =
       _pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
   if (!pBuffer) {
-    return {};
+    return MetadataPropertyViewStatus::InvalidValueBufferIndex;
   }
 
   if (pBufferView->byteOffset % 8 != 0) {
-    return {};
+    return MetadataPropertyViewStatus::InvalidBufferViewNotAligned8Bytes;
   }
 
   if (pBufferView->byteOffset + pBufferView->byteLength >
       static_cast<int64_t>(pBuffer->cesium.data.size())) {
-    return {};
+    return MetadataPropertyViewStatus::InvalidBufferViewOutOfBound;
   }
 
-  return gsl::span<const std::byte>(
+  buffer = gsl::span<const std::byte>(
       pBuffer->cesium.data.data() + pBufferView->byteOffset,
       static_cast<size_t>(pBufferView->byteLength));
+  return MetadataPropertyViewStatus::Valid;
 }
 
-gsl::span<const std::byte> MetadataFeatureTableView::getOffsetBufferSafe(
+MetadataPropertyViewStatus MetadataFeatureTableView::getOffsetBufferSafe(
     int32_t bufferViewIdx,
     PropertyType offsetType,
     size_t valueBufferSize,
     size_t instanceCount,
-    bool checkBitsSize) const {
-  gsl::span<const std::byte> offsetBuffer = getBufferSafe(bufferViewIdx);
-  if (offsetBuffer.empty()) {
-    return {};
+    bool checkBitsSize,
+    gsl::span<const std::byte>& offsetBuffer) const {
+  auto status = getBufferSafe(bufferViewIdx, offsetBuffer);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return status;
   }
 
-  bool isValid = false;
   switch (offsetType) {
   case PropertyType::Uint8:
-    isValid = checkOffsetBuffer<uint8_t>(
+    status = checkOffsetBuffer<uint8_t>(
         offsetBuffer,
         valueBufferSize,
         instanceCount,
         checkBitsSize);
     break;
   case PropertyType::Uint16:
-    isValid = checkOffsetBuffer<uint16_t>(
+    status = checkOffsetBuffer<uint16_t>(
         offsetBuffer,
         valueBufferSize,
         instanceCount,
         checkBitsSize);
     break;
   case PropertyType::Uint32:
-    isValid = checkOffsetBuffer<uint32_t>(
+    status = checkOffsetBuffer<uint32_t>(
         offsetBuffer,
         valueBufferSize,
         instanceCount,
         checkBitsSize);
     break;
   case PropertyType::Uint64:
-    isValid = checkOffsetBuffer<uint64_t>(
+    status = checkOffsetBuffer<uint64_t>(
         offsetBuffer,
         valueBufferSize,
         instanceCount,
         checkBitsSize);
     break;
   default:
+    status = MetadataPropertyViewStatus::InvalidOffsetType;
     break;
   }
 
-  if (!isValid) {
-    return {};
-  }
-
-  return offsetBuffer;
+  return status;
 }
 
-std::optional<MetadataPropertyView<std::string_view>>
+MetadataPropertyView<std::string_view>
 MetadataFeatureTableView::getStringPropertyValues(
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
   if (classProperty.type != "STRING") {
-    return std::nullopt;
+    return createInvalidPropertyView<std::string_view>(
+        MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
 
-  gsl::span<const std::byte> valueBuffer =
-      getBufferSafe(featureTableProperty.bufferView);
-  if (valueBuffer.empty()) {
-    return std::nullopt;
+  gsl::span<const std::byte> valueBuffer;
+  auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return createInvalidPropertyView<std::string_view>(status);
   }
 
   PropertyType offsetType =
       convertOffsetStringToPropertyType(featureTableProperty.offsetType);
   if (offsetType == PropertyType::None) {
-    return std::nullopt;
+    return createInvalidPropertyView<std::string_view>(
+        MetadataPropertyViewStatus::InvalidOffsetType);
   }
 
-  gsl::span<const std::byte> offsetBuffer = getOffsetBufferSafe(
+  gsl::span<const std::byte> offsetBuffer;
+  status = getOffsetBufferSafe(
       featureTableProperty.stringOffsetBufferView,
       offsetType,
       valueBuffer.size(),
       static_cast<size_t>(_pFeatureTable->count),
-      false);
-  if (offsetBuffer.empty()) {
-    return std::nullopt;
+      false,
+      offsetBuffer);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return createInvalidPropertyView<std::string_view>(status);
   }
 
   return MetadataPropertyView<std::string_view>(
@@ -218,58 +231,70 @@ MetadataFeatureTableView::getStringPropertyValues(
       _pFeatureTable->count);
 }
 
-std::optional<MetadataPropertyView<MetadataArrayView<std::string_view>>>
+MetadataPropertyView<MetadataArrayView<std::string_view>>
 MetadataFeatureTableView::getStringArrayPropertyValues(
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
   if (classProperty.type != "ARRAY") {
-    return std::nullopt;
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
 
   if (!classProperty.componentType.isString() ||
       classProperty.componentType.getString() != "STRING") {
-    return std::nullopt;
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
 
   // get value buffer
-  gsl::span<const std::byte> valueBuffer =
-      getBufferSafe(featureTableProperty.bufferView);
-  if (valueBuffer.empty()) {
-    return std::nullopt;
+  gsl::span<const std::byte> valueBuffer;
+  auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        status);
   }
 
   // check fixed or dynamic array
   int64_t componentCount = classProperty.componentCount.value_or(0);
   if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
-    return std::nullopt;
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::
+            InvalidArrayComponentCountAndOffsetBufferCoexist);
   }
 
   if (componentCount <= 0 && featureTableProperty.arrayOffsetBufferView < 0) {
-    return std::nullopt;
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::
+            InvalidArrayComponentCountOrOffsetBufferNotExist);
   }
 
   // get offset type
   PropertyType offsetType =
       convertOffsetStringToPropertyType(featureTableProperty.offsetType);
   if (offsetType == PropertyType::None) {
-    return std::nullopt;
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::InvalidOffsetType);
   }
 
   // get string offset buffer
   if (featureTableProperty.stringOffsetBufferView < 0) {
-    return std::nullopt;
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        MetadataPropertyViewStatus::InvalidStringOffsetBufferViewIndex);
   }
 
   // fixed array
   if (componentCount > 0) {
-    gsl::span<const std::byte> stringOffsetBuffer = getOffsetBufferSafe(
+    gsl::span<const std::byte> stringOffsetBuffer;
+    status = getOffsetBufferSafe(
         featureTableProperty.stringOffsetBufferView,
         offsetType,
         valueBuffer.size(),
         static_cast<size_t>(_pFeatureTable->count * componentCount),
-        false);
-    if (stringOffsetBuffer.empty()) {
-      return std::nullopt;
+        false,
+        stringOffsetBuffer);
+    if (status != MetadataPropertyViewStatus::Valid) {
+      return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+          status);
     }
 
     return MetadataPropertyView<MetadataArrayView<std::string_view>>(
@@ -283,54 +308,61 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   // dynamic array
-  gsl::span<const std::byte> stringOffsetBuffer =
-      getBufferSafe(featureTableProperty.stringOffsetBufferView);
-  if (stringOffsetBuffer.empty()) {
-    return std::nullopt;
+  gsl::span<const std::byte> stringOffsetBuffer;
+  status = getBufferSafe(
+      featureTableProperty.stringOffsetBufferView,
+      stringOffsetBuffer);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        status);
   }
 
-  gsl::span<const std::byte> arrayOffsetBuffer =
-      getBufferSafe(featureTableProperty.arrayOffsetBufferView);
-  if (arrayOffsetBuffer.empty()) {
-    return std::nullopt;
+  gsl::span<const std::byte> arrayOffsetBuffer;
+  status = getBufferSafe(
+      featureTableProperty.arrayOffsetBufferView,
+      arrayOffsetBuffer);
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        status);
   }
 
-  bool isValid = false;
   switch (offsetType) {
   case PropertyType::Uint8:
-    isValid = checkStringArrayOffsetBuffer<uint8_t>(
+    status = checkStringArrayOffsetBuffer<uint8_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
         static_cast<size_t>(_pFeatureTable->count));
     break;
   case PropertyType::Uint16:
-    isValid = checkStringArrayOffsetBuffer<uint16_t>(
+    status = checkStringArrayOffsetBuffer<uint16_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
         static_cast<size_t>(_pFeatureTable->count));
     break;
   case PropertyType::Uint32:
-    isValid = checkStringArrayOffsetBuffer<uint32_t>(
+    status = checkStringArrayOffsetBuffer<uint32_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
         static_cast<size_t>(_pFeatureTable->count));
     break;
   case PropertyType::Uint64:
-    isValid = checkStringArrayOffsetBuffer<uint64_t>(
+    status = checkStringArrayOffsetBuffer<uint64_t>(
         arrayOffsetBuffer,
         stringOffsetBuffer,
         valueBuffer.size(),
         static_cast<size_t>(_pFeatureTable->count));
     break;
   default:
+    status = MetadataPropertyViewStatus::InvalidOffsetType;
     break;
   }
 
-  if (!isValid) {
-    return std::nullopt;
+  if (status != MetadataPropertyViewStatus::Valid) {
+    return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
+        status);
   }
 
   return MetadataPropertyView<MetadataArrayView<std::string_view>>(
