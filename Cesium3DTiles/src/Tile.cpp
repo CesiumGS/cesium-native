@@ -108,8 +108,8 @@ bool Tile::isRenderable() const noexcept {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
-          [](const RastersMappedTo3DTile& rasterTile) {
-            return rasterTile.getCombinedTile() != nullptr;
+          [](const RasterMappedTo3DTile& rasterTile) {
+            return rasterTile.getReadyTile() != nullptr;
           });
     }
   }
@@ -123,7 +123,7 @@ void mapRasterOverlaysToTile(
     const RasterOverlayCollection& overlays,
     std::unordered_set<CesiumGeospatial::Projection>& projections) {
 
-  assert(this->_rasterTiles.empty());
+  assert(tile.getMappedRasterTiles().empty());
 
   const GlobeRectangle* pRectangle =
       Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
@@ -142,9 +142,11 @@ void mapRasterOverlaysToTile(
         projectRectangleSimple(pProvider->getProjection(), *pRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
-        pOverlay->getTileProvider()->getTile(overlayRectangle);
-    if (pTile) {
-      tile._rasterTiles.emplace_back(pRaster, Rectangle(0.0, 0.0, 1.0, 1.0));
+        pOverlay->getTileProvider()->getTile(overlayRectangle, 0.0);
+    if (pRaster) {
+      tile.getMappedRasterTiles().emplace_back(
+          pRaster,
+          Rectangle(0.0, 0.0, 1.0, 1.0));
       projections.insert(pProvider->getProjection());
     }
   }
@@ -222,7 +224,7 @@ void Tile::loadContent() {
 
   std::unordered_set<CesiumGeospatial::Projection> projections;
 
-  if (pRectangle && tileset.supportsRasterOverlays()) {
+  if (tileset.supportsRasterOverlays()) {
     RasterOverlayCollection& overlays = tileset.getOverlays();
     mapRasterOverlaysToTile(*this, overlays, projections);
   }
@@ -686,32 +688,37 @@ void Tile::update(
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
-      RastersMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
-      if (mappedRasterTile.isPlaceholder()) {
-        RasterOverlayTileProvider* pProvider = mappedRasterTile.getOwner();
+      RasterMappedTo3DTile& mappedRasterTile = this->_rasterTiles[i];
+
+      RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
+      if (pLoadingTile && pLoadingTile->getState() ==
+                              RasterOverlayTile::LoadState::Placeholder) {
+        RasterOverlayTileProvider* pProvider =
+            pLoadingTile->getOverlay().getTileProvider();
 
         // Try to replace this placeholder with real tiles.
         if (pProvider && !pProvider->isPlaceholder()) {
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
-              static_cast<std::vector<
-                  RastersMappedTo3DTile>::iterator::difference_type>(i));
+              static_cast<
+                  std::vector<RasterMappedTo3DTile>::iterator::difference_type>(
+                  i));
           --i;
 
-          this->_rasterTiles.push_back(pProvider->mapRasterTilesToGeometryTile(
-              this->getTileID(),
-              *pRectangle,
-              this->getGeometricError()));
+          Rectangle projectedRectangle =
+              projectRectangleSimple(pProvider->getProjection(), *pRectangle);
+          CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
+              pProvider->getTile(projectedRectangle, this->getGeometricError());
+          this->_rasterTiles.emplace_back(pTile, Rectangle());
         }
 
         continue;
       }
 
-      RastersMappedTo3DTile::MoreDetailAvailable moreDetailAvailable =
+      RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
       moreRasterDetailAvailable |=
-          moreDetailAvailable ==
-          RastersMappedTo3DTile::MoreDetailAvailable::Yes;
+          moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
     }
 
     // If this tile still has no children after it's done loading, but it does

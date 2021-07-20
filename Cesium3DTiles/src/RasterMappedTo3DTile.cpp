@@ -7,6 +7,37 @@
 #include "Cesium3DTiles/TilesetExternals.h"
 #include "TileUtilities.h"
 
+using namespace CesiumUtility;
+using namespace Cesium3DTiles;
+
+namespace {
+
+// Find the given overlay in the given tile.
+RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
+  std::vector<RasterMappedTo3DTile>& tiles = tile.getMappedRasterTiles();
+  auto parentTileIt = std::find_if(
+      tiles.begin(),
+      tiles.end(),
+      [&overlay](RasterMappedTo3DTile& raster) {
+        return raster.getReadyTile() &&
+               &raster.getReadyTile()->getOverlay() == &overlay;
+      });
+  if (parentTileIt != tiles.end()) {
+    RasterMappedTo3DTile& mapped = *parentTileIt;
+
+    // Prefer the loading tile if there is one.
+    if (mapped.getLoadingTile()) {
+      return mapped.getLoadingTile();
+    } else {
+      return mapped.getReadyTile();
+    }
+  }
+
+  return nullptr;
+}
+
+} // namespace
+
 namespace Cesium3DTiles {
 
 RasterMappedTo3DTile::RasterMappedTo3DTile(
@@ -44,16 +75,12 @@ RasterMappedTo3DTile::update(Tile& tile) {
 
     pTile = pTile->getParent();
     if (pTile) {
-      // Find this overlay in the parent tile.
-      //this->_pLoadingTile =
+      RasterOverlayTile* pOverlayTile =
+          findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
+      if (pOverlayTile) {
+        this->_pLoadingTile = pOverlayTile;
+      }
     }
-    CesiumGeometry::QuadtreeTileID thisID = this->_pLoadingTile->getID();
-    CesiumGeometry::QuadtreeTileID parentID(
-        thisID.level - 1,
-        thisID.x >> 1,
-        thisID.y >> 1);
-    this->_pLoadingTile =
-        this->_pLoadingTile->getOverlay().getTileProvider()->getTile(parentID);
   }
 
   // If the loading tile is now ready, make it the ready tile.
@@ -81,21 +108,16 @@ RasterMappedTo3DTile::update(Tile& tile) {
 
   // Find the closest ready ancestor tile.
   if (this->_pLoadingTile) {
-    RasterOverlayTileProvider& tileProvider =
-        *this->_pLoadingTile->getOverlay().getTileProvider();
-
     CesiumUtility::IntrusivePointer<RasterOverlayTile> pCandidate;
-    CesiumGeometry::QuadtreeTileID id = this->_pLoadingTile->getID();
-    while (id.level > 0) {
-      --id.level;
-      id.x >>= 1;
-      id.y >>= 1;
 
-      pCandidate = tileProvider.getTileWithoutCreating(id);
+    Tile* pTile = tile.getParent();
+    while (pTile) {
+      pCandidate = findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
       if (pCandidate &&
           pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
         break;
       }
+      pTile = pTile->getParent();
     }
 
     if (pCandidate &&
@@ -141,15 +163,14 @@ RasterMappedTo3DTile::update(Tile& tile) {
   // TODO: check more precise raster overlay tile availability, rather than just
   // max level?
   if (this->_pLoadingTile) {
-    return MoreDetailAvailable::Unknown;
+    return RasterOverlayTile::MoreDetailAvailable::Unknown;
   }
-  return !this->_originalFailed && this->_pReadyTile &&
-                 this->_pReadyTile->getID().level <
-                     this->_pReadyTile->getOverlay()
-                         .getTileProvider()
-                         ->getMaximumLevel()
-             ? MoreDetailAvailable::Yes
-             : MoreDetailAvailable::No;
+
+  if (!this->_originalFailed && this->_pReadyTile) {
+    return this->_pReadyTile->isMoreDetailAvailable();
+  } else {
+    return RasterOverlayTile::MoreDetailAvailable::No;
+  }
 }
 
 void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
@@ -187,9 +208,7 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
       *this->_pReadyTile->getOverlay().getTileProvider();
   CesiumGeometry::Rectangle geometryRectangle =
       projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
-  CesiumGeometry::Rectangle imageryRectangle =
-      tileProvider.getTilingScheme().tileToRectangle(
-          this->_pReadyTile->getID());
+  CesiumGeometry::Rectangle imageryRectangle = this->_pReadyTile->getRectangle();
 
   double terrainWidth = geometryRectangle.computeWidth();
   double terrainHeight = geometryRectangle.computeHeight();

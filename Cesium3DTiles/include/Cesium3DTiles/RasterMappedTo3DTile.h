@@ -53,13 +53,12 @@ public:
       const CesiumGeometry::Rectangle& textureCoordinateRectangle);
 
   /**
-   * @brief Returns a {@link RasterOverlayTile} that serves as a placeholder
-   * while loading.
+   * @brief Returns a {@link RasterOverlayTile} that is currently loading.
    *
    * The caller has to check the exact state of this tile, using
    * {@link Tile::getState}.
    *
-   * @return The placeholder tile while loading, or `nullptr`.
+   * @return The tile that is loading, or `nullptr`.
    */
   RasterOverlayTile* getLoadingTile() noexcept {
     return this->_pLoadingTile.get();
@@ -72,7 +71,7 @@ public:
 
   /**
    * @brief Returns the {@link RasterOverlayTile} that represents the imagery
-   * data.
+   * data that is ready to render.
    *
    * This will be `nullptr` when the tile data has not yet been loaded.
    *
