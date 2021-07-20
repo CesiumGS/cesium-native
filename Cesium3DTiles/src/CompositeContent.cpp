@@ -103,64 +103,36 @@ CompositeContent::load(const CesiumAsync::AsyncSystem& asyncSystem, const TileCo
     return asyncSystem.createResolvedFuture(std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
-  std::vector<std::unique_ptr<TileContentLoadResult>> innerTiles(pHeader->tilesLength);
-
+  std::vector<CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>> innerTiles(pHeader->tilesLength);
   uint32_t pos = sizeof(CmptHeader);
-  uint32_t unresolvedFutures = 0;
 
-  std::function<CesiumAsync::Future<void>(uint32_t)> processInnerContent = 
-      [&pLogger, 
-       &asyncSystem,
-       &unresolvedFutures,
-       &data, 
-       &input,
-       tilesLength = pHeader->tilesLength,
-       &innerTiles,
-       &pos,
-       byteLength = data.size()](uint32_t index) mutable -> CesiumAsync::Future<void> {
-    if (pos + sizeof(InnerHeader) > byteLength) {
+  for (uint32_t i = 0; i < pHeader->tilesLength && pos < pHeader->byteLength; ++i) {
+    if (pos + sizeof(InnerHeader) > pHeader->byteLength) {
       SPDLOG_LOGGER_WARN(
           pLogger,
           "Composite tile ends before all embedded tiles could be read.");
-      pos = static_cast<uint32_t>(byteLength);
-      return asyncSystem.createResolvedFuture();
+      pos = static_cast<uint32_t>(pHeader->byteLength);
+      break;
     }
 
     const InnerHeader* pInner =
         reinterpret_cast<const InnerHeader*>(data.data() + pos);
-    if (pos + pInner->byteLength > byteLength) {
+    if (pos + pInner->byteLength > pHeader->byteLength) {
       SPDLOG_LOGGER_WARN(
           pLogger,
           "Composite tile ends before all embedded tiles could be read.");
-      pos = static_cast<uint32_t>(byteLength);
-      return asyncSystem.createResolvedFuture();
+      pos = static_cast<uint32_t>(pHeader->byteLength);
+      break;
     }
 
     gsl::span<const std::byte> innerData(data.data() + pos, pInner->byteLength);
 
     pos += pInner->byteLength;
 
-    return 
-      TileContentFactory::createContent(asyncSystem, derive(input, innerData))
-      .thenInMainThread(
-        [&asyncSystem,
-         &pLogger,
-         &innerTiles, 
-         &unresolvedFutures, 
-         tilesLength](std::unique_ptr<TileContentLoadResult> pInnerLoadResult) mutable -> void {
-          if (pInnerLoadResult) {
-            innerTiles.emplace_back(std::move(pInnerLoadResult));
-          }
-          --unresolvedFutures;
-        });
-  };
-
-  if (tilesLength > 0) {
-    CesiumAsync::Future<void> innerTilesResult = processInnerContent()
-    for (uint32_t i = 1; i < pHeader->tilesLength && pos < pHeader->byteLength; ++i) {
-      unresolvedFutures++;
-      innerTilesResult = processInnerContent(i);
-    }
+    innerTiles.push_back( 
+        TileContentFactory::createContent(
+          asyncSystem, 
+          derive(input, innerData)));
   }
 
   return asyncSystem

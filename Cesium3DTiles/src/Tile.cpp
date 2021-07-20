@@ -319,54 +319,62 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
             loadInput.data = pResponse->data();
             loadInput.contentType = pResponse->contentType();
             loadInput.url = pRequest->url();
-            std::unique_ptr<TileContentLoadResult> pContent =
-                TileContentFactory::createContent(asyncSystem, loadInput);
+            //std::unique_ptr<TileContentLoadResult> pContent =
+            TileContentFactory::createContent(asyncSystem, loadInput).thenInWorkerThread(
+                [httpStatusCode = pResponse->statusCode(),
+                 gltfUpAxis = std::move(gltfUpAxis),
+                 loadInput = std::move(loadInput),
+                 projections = std::move(projections),
+                 pPrepareRendererResources = std::move(pPrepareRendererResources)
+                ] (std::unique_ptr<TileContentLoadResult>&& pContent) {
 
-            void* pRendererResources = nullptr;
-            if (pContent) {
-              pContent->httpStatusCode = pResponse->statusCode();
+              void* pRendererResources = nullptr;
+              if (pContent) {
+                pContent->httpStatusCode = httpStatusCode;
 
-              if (pContent->model) {
+                if (pContent->model) {
 
-                // TODO The `extras` are currently the only way to pass
-                // arbitrary information to the consumer, so the up-axis
-                // is stored here:
-                pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
+                  // TODO The `extras` are currently the only way to pass
+                  // arbitrary information to the consumer, so the up-axis
+                  // is stored here:
+                  pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
 
-                const BoundingVolume& boundingVolume =
-                    loadInput.tileBoundingVolume;
-                Tile::generateTextureCoordinates(
-                    pContent->model.value(),
-                    boundingVolume,
-                    projections);
+                  const BoundingVolume& boundingVolume =
+                      loadInput.tileBoundingVolume;
+                  Tile::generateTextureCoordinates(
+                      pContent->model.value(),
+                      boundingVolume,
+                      projections);
 
-                if (pPrepareRendererResources) {
-                  CESIUM_TRACE("prepareInLoadThread");
-                  const glm::dmat4& transform = loadInput.tileTransform;
-                  pRendererResources =
-                      pPrepareRendererResources->prepareInLoadThread(
-                          pContent->model.value(),
-                          transform);
+                  if (pPrepareRendererResources) {
+                    CESIUM_TRACE("prepareInLoadThread");
+                    const glm::dmat4& transform = loadInput.tileTransform;
+                    pRendererResources =
+                        pPrepareRendererResources->prepareInLoadThread(
+                            pContent->model.value(),
+                            transform);
+                  }
                 }
+              }
 
-                LoadResult result;
-                result.state = LoadState::ContentLoaded;
-                result.pContent = std::move(pContent);
-                result.pRendererResources = pRendererResources;
+              LoadResult result;
+              result.state = LoadState::ContentLoaded;
+              result.pContent = std::move(pContent);
+              result.pRendererResources = pRendererResources;
 
-                return result;
-              })
-              .thenInMainThread(handleLoadResult)
-              .catchInMainThread(handleLoadError);
-
-          return LoadResult{
-            LoadState::ContentLoading,
-            std::make_unique<TileContentLoadResult>(),
-            nullptr
-          };
-        })
-        .thenInMainThread(handleLoadResult)
-        .catchInMainThread(handleLoadError);
+              return result;
+            })
+            .thenInMainThread(handleLoadResult)
+            .catchInMainThread(handleLoadError);
+          
+            return LoadResult{
+              LoadState::ContentLoading,
+              std::make_unique<TileContentLoadResult>(),
+              nullptr
+            };
+          })
+          .thenInMainThread(handleLoadResult)
+          .catchInMainThread(handleLoadError);
 }
 
 bool Tile::unloadContent() noexcept {
