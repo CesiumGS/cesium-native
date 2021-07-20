@@ -41,12 +41,10 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
 namespace Cesium3DTiles {
 
 RasterMappedTo3DTile::RasterMappedTo3DTile(
-    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
-    const CesiumGeometry::Rectangle& textureCoordinateRectangle)
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile)
     : _pLoadingTile(pRasterTile),
       _pReadyTile(nullptr),
       _textureCoordinateID(0),
-      _textureCoordinateRectangle(textureCoordinateRectangle),
       _translation(0.0, 0.0),
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
@@ -94,7 +92,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
           this->getTextureCoordinateID(),
           *this->_pReadyTile,
           this->_pReadyTile->getRendererResources(),
-          this->getTextureCoordinateRectangle());
+          CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)); // TODO
       this->_state = AttachmentState::Unattached;
     }
 
@@ -130,7 +128,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
             this->getTextureCoordinateID(),
             *this->_pReadyTile,
             this->_pReadyTile->getRendererResources(),
-            this->getTextureCoordinateRectangle());
+            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)); // TODO
         this->_state = AttachmentState::Unattached;
       }
 
@@ -152,7 +150,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
         this->getTextureCoordinateID(),
         *this->_pReadyTile,
         this->_pReadyTile->getRendererResources(),
-        this->getTextureCoordinateRectangle(),
+        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0), // TODO
         this->getTranslation(),
         this->getScale());
 
@@ -188,7 +186,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
       this->getTextureCoordinateID(),
       *this->_pReadyTile,
       this->_pReadyTile->getRendererResources(),
-      this->getTextureCoordinateRectangle());
+      CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)); // TODO
 
   this->_state = AttachmentState::Unattached;
 }

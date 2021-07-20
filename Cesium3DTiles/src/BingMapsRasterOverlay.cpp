@@ -162,16 +162,19 @@ protected:
           return key;
         });
 
-    // Cesium levels start at 0, Bing levels start at 1
-    unsigned int bingTileLevel = tileID.level + 1;
+    LoadTileImageFromUrlOptions options;
+    options.allowEmptyImages = true;
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    std::vector<Credit>& tileCredits = options.credits;
+
     CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
-            this->getTilingScheme().tileToRectangle(tileID));
+            options.rectangle);
 
-    LoadTileImageFromUrlOptions options;
-    options.allowEmptyImages = true;
-    std::vector<Credit>& tileCredits = options.credits;
+    // Cesium levels start at 0, Bing levels start at 1
+    unsigned int bingTileLevel = tileID.level + 1;
 
     for (const CreditAndCoverageAreas& creditAndCoverageAreas : _credits) {
       for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {

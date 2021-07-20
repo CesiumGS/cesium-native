@@ -142,11 +142,10 @@ void mapRasterOverlaysToTile(
         projectRectangleSimple(pProvider->getProjection(), *pRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
-        pOverlay->getTileProvider()->getTile(overlayRectangle, 0.0);
+        pOverlay->getTileProvider()->getTile(overlayRectangle, tile.getGeometricError());
     if (pRaster) {
       tile.getMappedRasterTiles().emplace_back(
-          pRaster,
-          Rectangle(0.0, 0.0, 1.0, 1.0));
+          pRaster);
       projections.insert(pProvider->getProjection());
     }
   }
@@ -709,7 +708,7 @@ void Tile::update(
               projectRectangleSimple(pProvider->getProjection(), *pRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());
-          this->_rasterTiles.emplace_back(pTile, Rectangle());
+          this->_rasterTiles.emplace_back(pTile);
         }
 
         continue;

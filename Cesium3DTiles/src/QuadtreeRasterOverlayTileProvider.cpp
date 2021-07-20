@@ -478,8 +478,8 @@ void blitImage(
   int32_t sourceMaxY = static_cast<int32_t>(glm::ceil(
       source.height * (sourceRectangle.maximumY - overlap->minimumY) /
       sourceRectangle.computeHeight()));
-  int32_t sourceWidth = sourceMaxX - sourceX - 1;
-  int32_t sourceHeight = sourceMaxY - sourceY - 1;
+  int32_t sourceWidth = sourceMaxX - sourceX;
+  int32_t sourceHeight = sourceMaxY - sourceY;
 
   blitImage(
       target,

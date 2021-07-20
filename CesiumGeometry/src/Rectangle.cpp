@@ -59,8 +59,8 @@ Rectangle Rectangle::computeUnion(const Rectangle& other) const noexcept {
   return Rectangle(
       glm::min(this->minimumX, other.minimumX),
       glm::min(this->minimumY, other.minimumY),
-      glm::min(this->maximumX, other.maximumX),
-      glm::min(this->maximumY, other.maximumX));
+      glm::max(this->maximumX, other.maximumX),
+      glm::max(this->maximumY, other.maximumY));
 }
 
 } // namespace CesiumGeometry

@@ -63,6 +63,9 @@ CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(
     const CesiumGeometry::Rectangle& imageryRectangle,
     double targetGeometricError) {
+  if (this->_pPlaceholder) {
+    return this->_pPlaceholder.get();
+  }
   return {new RasterOverlayTile(
       this->getOwner(),
       targetGeometricError,

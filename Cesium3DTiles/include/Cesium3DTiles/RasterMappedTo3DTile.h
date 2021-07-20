@@ -45,12 +45,9 @@ public:
    *
    * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the
    * geometry.
-   * @param textureCoordinateRectangle The texture coordinate rectangle that
-   * indicates the region that is covered by the raster overlay tile.
    */
   RasterMappedTo3DTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
-      const CesiumGeometry::Rectangle& textureCoordinateRectangle);
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile);
 
   /**
    * @brief Returns a {@link RasterOverlayTile} that is currently loading.
@@ -106,21 +103,6 @@ public:
    */
   void setTextureCoordinateID(uint32_t textureCoordinateID) noexcept {
     this->_textureCoordinateID = textureCoordinateID;
-  }
-
-  /**
-   * @brief The texture coordinate range in which the raster is applied.
-   *
-   * This is part of a unit rectangle, where the rectangle
-   * `(minimumX, minimumY, maximumX, maximumY)` corresponds
-   * to the `(west, south, east, north)` of the tile region,
-   * and each coordinate is in the range `[0,1]`.
-   *
-   * @return The texture coordinate rectangle.
-   */
-  const CesiumGeometry::Rectangle&
-  getTextureCoordinateRectangle() const noexcept {
-    return this->_textureCoordinateRectangle;
   }
 
   /**
@@ -180,7 +162,6 @@ private:
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
   uint32_t _textureCoordinateID;
-  CesiumGeometry::Rectangle _textureCoordinateRectangle;
   glm::dvec2 _translation;
   glm::dvec2 _scale;
   AttachmentState _state;
