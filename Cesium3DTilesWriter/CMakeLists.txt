@@ -36,7 +36,6 @@ target_include_directories(
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated
 )
