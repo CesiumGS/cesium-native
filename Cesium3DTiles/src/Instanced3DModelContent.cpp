@@ -3,6 +3,8 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumUtility/Uri.h"
+#include "CesiumUtility/JsonValue.h"
 #include <cstddef>
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
@@ -55,11 +57,21 @@ void parseFeatureTable(
         rtcValue[2].GetDouble()};
   }
 
+  gltf.extensionsUsed.push_back("EXT_mesh_gpu_instancing");
+  gltf.extensionsRequired.push_back("EXT_mesh_gpu_instancing");
+
+  //gltf.extensions.emplace("EXT_mesh_gpu_instancing", )
+  for (CesiumGltf::Node& node : gltf.nodes) {
+    CesiumUtility::JsonValue instancingExtension;
+    instancingExtension.
+  }
+
   uint32_t instancesLength = 0;
   auto instancesLengthIt = document.FindMember("INSTANCES_LENGTH");
   if (instancesLengthIt != document.MemberEnd() &&
       instancesLengthIt->value.IsUint()) {
     instancesLength = instancesLengthIt->value.GetUint();
+    gltf.extras.emplace("INSTANCES_LENGTH", instancesLength);
   }
 
   // TODO: CATCH CASES WITH ILL FORMED I3DM
@@ -74,44 +86,57 @@ void parseFeatureTable(
   auto positionIt = document.FindMember("POSITION");
   auto positionQuantizedIt = document.FindMember("POSITION_QUANTIZED");
 
-  if (positionIt != document.MemberEnd() && positionIt->value.IsUint()) {
-    usingPositions = true;
-    positionsOffset = positionIt->value.GetUint();
+  if (positionIt != document.MemberEnd() && positionIt->value.IsObject()) {
+
+    auto byteOffsetIt = positionIt->value.FindMember("byteOffset");
+
+    if (byteOffsetIt != document.MemberEnd() && byteOffsetIt->value.IsUint()) {
+      usingPositions = true;
+      positionsOffset = byteOffsetIt->value.GetUint();
+    }
   } else if (
       positionQuantizedIt != document.MemberEnd() &&
-      positionQuantizedIt->value.IsUint()) {
-    usingPositions = true;
-    usingQuantizedPositions = true;
-    positionsOffset = positionQuantizedIt->value.GetUint();
-    auto quantizedVolumeOffsetIt =
-        document.FindMember("QUANTIZED_VOLUME_OFFSET");
-    auto quantizedVolumeScaleIt = document.FindMember("QUANTIZED_VOLUME_SCALE");
-    if (quantizedVolumeOffsetIt != document.MemberEnd() &&
-        quantizedVolumeOffsetIt->value.IsArray() &&
-        quantizedVolumeOffsetIt->value.Size() == 3 &&
-        quantizedVolumeOffsetIt->value[0].IsDouble() &&
-        quantizedVolumeOffsetIt->value[1].IsDouble() &&
-        quantizedVolumeOffsetIt->value[2].IsDouble() &&
-        quantizedVolumeScaleIt != document.MemberEnd() &&
-        quantizedVolumeScaleIt->value.IsArray() &&
-        quantizedVolumeScaleIt->value.Size() == 3 &&
-        quantizedVolumeScaleIt->value[0].IsDouble() &&
-        quantizedVolumeScaleIt->value[1].IsDouble() &&
-        quantizedVolumeScaleIt->value[2].IsDouble()) {
-      quantizedVolumeOffset = glm::dvec3(
-          quantizedVolumeOffsetIt->value[0].GetDouble(),
-          quantizedVolumeOffsetIt->value[1].GetDouble(),
-          quantizedVolumeOffsetIt->value[2].GetDouble());
-      quantizedVolumeScale = glm::dvec3(
-          quantizedVolumeScaleIt->value[0].GetDouble(),
-          quantizedVolumeScaleIt->value[1].GetDouble(),
-          quantizedVolumeScaleIt->value[2].GetDouble());
+      positionQuantizedIt->value.IsObject()) {
+
+    auto byteOffsetIt = 
+        positionQuantizedIt->value.FindMember("byteOffset");
+
+    if (byteOffsetIt != document.MemberEnd() && byteOffsetIt->value.IsUint()) {
+      usingPositions = true;
+      usingQuantizedPositions = true;
+      positionsOffset = byteOffsetIt->value.GetUint();
+      auto quantizedVolumeOffsetIt =
+          document.FindMember("QUANTIZED_VOLUME_OFFSET");
+      auto quantizedVolumeScaleIt = document.FindMember("QUANTIZED_VOLUME_SCALE");
+
+      if (quantizedVolumeOffsetIt != document.MemberEnd() &&
+          quantizedVolumeOffsetIt->value.IsArray() &&
+          quantizedVolumeOffsetIt->value.Size() == 3 &&
+          quantizedVolumeOffsetIt->value[0].IsDouble() &&
+          quantizedVolumeOffsetIt->value[1].IsDouble() &&
+          quantizedVolumeOffsetIt->value[2].IsDouble() &&
+          quantizedVolumeScaleIt != document.MemberEnd() &&
+          quantizedVolumeScaleIt->value.IsArray() &&
+          quantizedVolumeScaleIt->value.Size() == 3 &&
+          quantizedVolumeScaleIt->value[0].IsDouble() &&
+          quantizedVolumeScaleIt->value[1].IsDouble() &&
+          quantizedVolumeScaleIt->value[2].IsDouble()) {
+
+        quantizedVolumeOffset = glm::dvec3(
+            quantizedVolumeOffsetIt->value[0].GetDouble(),
+            quantizedVolumeOffsetIt->value[1].GetDouble(),
+            quantizedVolumeOffsetIt->value[2].GetDouble());
+        quantizedVolumeScale = glm::dvec3(
+            quantizedVolumeScaleIt->value[0].GetDouble(),
+            quantizedVolumeScaleIt->value[1].GetDouble(),
+            quantizedVolumeScaleIt->value[2].GetDouble());
+      }
     }
   }
 
   if (usingPositions) {
     size_t positionsByteStride =
-        3 * usingQuantizedPositions ? sizeof(uint16_t) : sizeof(float);
+        3 * (usingQuantizedPositions ? sizeof(uint16_t) : sizeof(float));
     size_t positionsBufferSize = instancesLength * positionsByteStride;
 
     size_t positionsBufferId = gltf.buffers.size();
@@ -159,20 +184,37 @@ void parseFeatureTable(
   bool usingNormals = false;
   bool usingOct32Normals = false;
 
-  if (normalUpIt != document.MemberEnd() && normalUpIt->value.IsUint() &&
-      normalRightIt != document.MemberEnd() && normalRightIt->value.IsUint()) {
-    usingNormals = true;
-    normalUpOffset = normalUpIt->value.GetUint();
-    normalRightOffset = normalRightIt->value.GetUint();
+  if (normalUpIt != document.MemberEnd() && normalUpIt->value.IsObject() &&
+      normalRightIt != document.MemberEnd() && normalRightIt->value.IsObject()) {
+
+    auto normalUpOffsetIt = normalUpIt->value.FindMember("byteOffset");
+    auto normalRightOffsetIt = normalRightIt->value.FindMember("byteOffset");
+
+    if (normalUpOffsetIt != document.MemberEnd() && normalUpOffsetIt->value.IsUint() &&
+        normalRightOffsetIt != document.MemberEnd() && normalRightOffsetIt->value.IsUint()) {
+      usingNormals = true;
+      normalUpOffset = normalUpOffsetIt->value.GetUint();
+      normalRightOffset = normalRightOffsetIt->value.GetUint();
+    }
   } else if (
       normalUpOct32pIt != document.MemberEnd() &&
-      normalUpOct32pIt->value.IsUint() &&
+      normalUpOct32pIt->value.IsObject() &&
       normalRightOct32pIt != document.MemberEnd() &&
-      normalRightOct32pIt->value.IsUint()) {
-    usingNormals = true;
-    usingOct32Normals = true;
-    normalUpOffset = normalUpOct32pIt->value.GetUint();
-    normalRightOffset = normalRightOct32pIt->value.GetUint();
+      normalRightOct32pIt->value.IsObject()) {
+
+    auto normalUpOffsetIt = normalUpOct32pIt->value.FindMember("byteOffset");
+    auto normalRightOffsetIt =
+        normalRightOct32pIt->value.FindMember("byteOffset");
+
+    if (normalUpOffsetIt != document.MemberEnd() &&
+        normalUpOffsetIt->value.IsUint() &&
+        normalRightOffsetIt != document.MemberEnd() &&
+        normalRightOffsetIt->value.IsUint()) {
+      usingNormals = true;
+      usingOct32Normals = true;
+      normalUpOffset = normalUpOffsetIt->value.GetUint();
+      normalRightOffset = normalRightOffsetIt->value.GetUint();
+    }
   }
 
   if (usingNormals) {
@@ -290,19 +332,20 @@ Instanced3DModelContent::load(
                              "glTF model is after the end of the entire I3DM.");
   }
 
+  gsl::span<const std::byte> featureTableJsonData =
+      data.subspan(headerLength, header.featureTableJsonByteLength);
+  gsl::span<const std::byte> featureTableBinaryData = data.subspan(
+      headerLength + header.featureTableJsonByteLength,
+      header.featureTableBinaryByteLength);
+
   if (header.gltfFormat) {
     gsl::span<const std::byte> glbData =
         data.subspan(gltfStart, gltfEnd - gltfStart);
     std::unique_ptr<TileContentLoadResult> pResult =
         GltfContent::load(pLogger, url, glbData);
 
-    if (pResult->model && header.featureTableJsonByteLength > 0) {
+    if (pResult->model) {
       CesiumGltf::Model& gltf = pResult->model.value();
-      gsl::span<const std::byte> featureTableJsonData =
-          data.subspan(headerLength, header.featureTableJsonByteLength);
-      gsl::span<const std::byte> featureTableBinaryData = data.subspan(
-          headerLength + header.featureTableJsonByteLength,
-          header.featureTableBinaryByteLength);
       parseFeatureTable(
           pLogger,
           gltf,
@@ -317,7 +360,8 @@ Instanced3DModelContent::load(
       reinterpret_cast<char const*>(data.data() + gltfStart),
       gltfEnd - gltfStart);
 
-  std::string externalGltfUri = url + externalGltfUriRelative;
+  std::string externalGltfUri = 
+      CesiumUtility::Uri::resolve(url, externalGltfUriRelative, true);
 
   SPDLOG_LOGGER_ERROR(pLogger, "EXTERNAL GLTF: {}", externalGltfUri);
 
@@ -325,18 +369,32 @@ Instanced3DModelContent::load(
   // deferred asset)
   return pAssetAccessor->requestAsset(asyncSystem, externalGltfUri)
       .thenInWorkerThread(
-          [pLogger, externalGltfUri](
+          [pLogger, 
+          externalGltfUri, 
+          featureTableJsonData, 
+          featureTableBinaryData](
               const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest) {
-            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
-            if (pResponse) {
-              return GltfContent::load(
-                  pLogger,
-                  externalGltfUri,
-                  pResponse->data());
-            }
+        const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+        if (pResponse) {
+          std::unique_ptr<TileContentLoadResult> pResult = 
+              GltfContent::load(
+                pLogger,
+                externalGltfUri,
+                pResponse->data());
 
-            return std::unique_ptr<TileContentLoadResult>(nullptr);
-          });
+          if (pResult->model) {
+            parseFeatureTable(
+              pLogger,
+              *pResult->model,
+              featureTableJsonData,
+              featureTableBinaryData);
+          }
+
+          return std::move(pResult);
+        }
+
+        return std::unique_ptr<TileContentLoadResult>(nullptr);
+      });
   //.catchInMainThread()
 }
 } // namespace Cesium3DTiles
