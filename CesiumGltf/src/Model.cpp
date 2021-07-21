@@ -1,4 +1,5 @@
 #include "CesiumGltf/Model.h"
+#include "CesiumGltf/EXT_mesh_gpu_instancing.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include <algorithm>
 
@@ -123,6 +124,14 @@ void Model::merge(Model&& rhs) {
     updateIndex(node.camera, firstCamera);
     updateIndex(node.skin, firstSkin);
     updateIndex(node.mesh, firstMesh);
+
+    EXT_mesh_gpu_instancing* pInstancing =
+        node.getExtension<EXT_mesh_gpu_instancing>();
+    if (pInstancing) {
+      for (auto& attribute : pInstancing->attributes) {
+        updateIndex(attribute.second, firstAccessor);
+      }
+    }
 
     for (auto& nodeIndex : node.children) {
       updateIndex(nodeIndex, firstNode);

@@ -104,6 +104,7 @@ public:
   createContent(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::vector<std::pair<std::string, std::string>>& requestHeaders,
       const TileContentLoadInput& input);
 
 private:

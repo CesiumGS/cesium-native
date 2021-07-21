@@ -4,6 +4,7 @@
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
 #include "CesiumUtility/Tracing.h"
+#include "EXT_mesh_gpu_instancingJsonHandler.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
@@ -324,6 +325,7 @@ GltfReader::GltfReader() {
   this->registerExtension<
       MeshPrimitive,
       KHR_draco_mesh_compressionJsonHandler>();
+  this->registerExtension<Model, EXT_mesh_gpu_instancingJsonHandler>();
 }
 
 void GltfReader::setExtensionState(

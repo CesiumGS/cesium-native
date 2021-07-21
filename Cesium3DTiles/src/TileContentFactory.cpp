@@ -33,6 +33,7 @@ CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::vector<std::pair<std::string, std::string>>& requestHeaders,
     const TileContentLoadInput& input) {
 
   const gsl::span<const std::byte>& data = input.data;
@@ -40,7 +41,8 @@ TileContentFactory::createContent(
 
   auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
   if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-    return itMagic->second->load(asyncSystem, pAssetAccessor, input);
+    return itMagic->second
+        ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
   }
 
   const std::string& contentType = input.contentType;
@@ -49,7 +51,8 @@ TileContentFactory::createContent(
   auto itContentType =
       TileContentFactory::_loadersByContentType.find(baseContentType);
   if (itContentType != TileContentFactory::_loadersByContentType.end()) {
-    return itContentType->second->load(asyncSystem, pAssetAccessor, input);
+    return itContentType->second
+        ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
   }
 
   // Determine if this is plausibly a JSON external tileset.
@@ -64,7 +67,8 @@ TileContentFactory::createContent(
     // Might be an external tileset, try loading it that way.
     itMagic = TileContentFactory::_loadersByMagic.find("json");
     if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-      return itMagic->second->load(asyncSystem, pAssetAccessor, input);
+      return itMagic->second
+          ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
     }
   }
 

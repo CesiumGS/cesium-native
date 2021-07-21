@@ -279,6 +279,7 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
           [this,
            asyncSystem,
            pAssetAccessor = tileset.getExternals().pAssetAccessor,
+           requestHeaders = this->getContext()->requestHeaders,
            loadInput = std::move(loadInput),
            handleLoadResult,
            handleLoadError,
@@ -326,6 +327,7 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
             TileContentFactory::createContent(
                 asyncSystem,
                 pAssetAccessor,
+                requestHeaders,
                 loadInput)
                 .thenInWorkerThread(
                     [httpStatusCode = pResponse->statusCode(),

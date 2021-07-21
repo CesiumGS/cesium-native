@@ -3,8 +3,9 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Uri.h"
+#include "CesiumGltf/EXT_mesh_gpu_instancing.h"
 #include "CesiumUtility/JsonValue.h"
+#include "CesiumUtility/Uri.h"
 #include <cstddef>
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
@@ -57,15 +58,6 @@ void parseFeatureTable(
         rtcValue[2].GetDouble()};
   }
 
-  gltf.extensionsUsed.push_back("EXT_mesh_gpu_instancing");
-  gltf.extensionsRequired.push_back("EXT_mesh_gpu_instancing");
-
-  //gltf.extensions.emplace("EXT_mesh_gpu_instancing", )
-  for (CesiumGltf::Node& node : gltf.nodes) {
-    CesiumUtility::JsonValue instancingExtension;
-    instancingExtension.
-  }
-
   uint32_t instancesLength = 0;
   auto instancesLengthIt = document.FindMember("INSTANCES_LENGTH");
   if (instancesLengthIt != document.MemberEnd() &&
@@ -73,6 +65,10 @@ void parseFeatureTable(
     instancesLength = instancesLengthIt->value.GetUint();
     gltf.extras.emplace("INSTANCES_LENGTH", instancesLength);
   }
+
+  size_t translationAccessorId = 0;
+  // size_t rotationsAccessorId;
+  // size_t scalesAccessorId;
 
   // TODO: CATCH CASES WITH ILL FORMED I3DM
   // TODO: actually use a proper extension (KHR_gpu_mesh_instancing?)
@@ -98,8 +94,7 @@ void parseFeatureTable(
       positionQuantizedIt != document.MemberEnd() &&
       positionQuantizedIt->value.IsObject()) {
 
-    auto byteOffsetIt = 
-        positionQuantizedIt->value.FindMember("byteOffset");
+    auto byteOffsetIt = positionQuantizedIt->value.FindMember("byteOffset");
 
     if (byteOffsetIt != document.MemberEnd() && byteOffsetIt->value.IsUint()) {
       usingPositions = true;
@@ -107,7 +102,8 @@ void parseFeatureTable(
       positionsOffset = byteOffsetIt->value.GetUint();
       auto quantizedVolumeOffsetIt =
           document.FindMember("QUANTIZED_VOLUME_OFFSET");
-      auto quantizedVolumeScaleIt = document.FindMember("QUANTIZED_VOLUME_SCALE");
+      auto quantizedVolumeScaleIt =
+          document.FindMember("QUANTIZED_VOLUME_SCALE");
 
       if (quantizedVolumeOffsetIt != document.MemberEnd() &&
           quantizedVolumeOffsetIt->value.IsArray() &&
@@ -156,7 +152,7 @@ void parseFeatureTable(
     positionsBufferView.byteStride = positionsByteStride;
     positionsBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-    size_t positionsAccessorId = gltf.accessors.size();
+    translationAccessorId = gltf.accessors.size();
     CesiumGltf::Accessor& positionsAccessor = gltf.accessors.emplace_back();
     positionsAccessor.bufferView = static_cast<int32_t>(positionsBufferViewId);
     positionsAccessor.byteOffset = 0;
@@ -166,130 +162,147 @@ void parseFeatureTable(
             : CesiumGltf::Accessor::ComponentType::FLOAT;
     positionsAccessor.count = int64_t(instancesLength);
     positionsAccessor.type = CesiumGltf::Accessor::Type::VEC3;
-
-    gltf.extras.emplace(
-        usingQuantizedPositions ? "INSTANCE_QUANTIZED_POSITIONS"
-                                : "INSTANCE_POSITIONS",
-        positionsAccessorId);
+    /*
+        gltf.extras.emplace(
+            usingQuantizedPositions ? "INSTANCE_QUANTIZED_POSITIONS"
+                                    : "INSTANCE_POSITIONS",
+            translationsAccessorId);*/
   }
 
-  uint32_t normalUpOffset = 0;
-  uint32_t normalRightOffset = 0;
+  gltf.extensionsUsed.push_back("EXT_mesh_gpu_instancing");
+  gltf.extensionsRequired.push_back("EXT_mesh_gpu_instancing");
 
-  auto normalUpIt = document.FindMember("NORMAL_UP");
-  auto normalRightIt = document.FindMember("NORMAL_RIGHT");
-  auto normalUpOct32pIt = document.FindMember("NORMAL_UP_OCT32P");
-  auto normalRightOct32pIt = document.FindMember("NORMAL_RIGHT_OCT32P");
+  for (CesiumGltf::Node& node : gltf.nodes) {
+    CesiumGltf::EXT_mesh_gpu_instancing instancingExtension;
+    instancingExtension.attributes.emplace(
+        "TRANSLATION",
+        static_cast<int32_t>(translationAccessorId));
 
-  bool usingNormals = false;
-  bool usingOct32Normals = false;
+    node.extensions.emplace("EXT_mesh_gpu_instancing", instancingExtension);
+  }
 
-  if (normalUpIt != document.MemberEnd() && normalUpIt->value.IsObject() &&
-      normalRightIt != document.MemberEnd() && normalRightIt->value.IsObject()) {
+  // uint32_t normalUpOffset = 0;
+  // uint32_t normalRightOffset = 0;
 
-    auto normalUpOffsetIt = normalUpIt->value.FindMember("byteOffset");
-    auto normalRightOffsetIt = normalRightIt->value.FindMember("byteOffset");
+  // ignoring normals for now, need to convert them to quaternions
 
-    if (normalUpOffsetIt != document.MemberEnd() && normalUpOffsetIt->value.IsUint() &&
-        normalRightOffsetIt != document.MemberEnd() && normalRightOffsetIt->value.IsUint()) {
-      usingNormals = true;
-      normalUpOffset = normalUpOffsetIt->value.GetUint();
-      normalRightOffset = normalRightOffsetIt->value.GetUint();
+  /*
+    auto normalUpIt = document.FindMember("NORMAL_UP");
+    auto normalRightIt = document.FindMember("NORMAL_RIGHT");
+    auto normalUpOct32pIt = document.FindMember("NORMAL_UP_OCT32P");
+    auto normalRightOct32pIt = document.FindMember("NORMAL_RIGHT_OCT32P");
+
+    bool usingNormals = false;
+    bool usingOct32Normals = false;
+
+    if (normalUpIt != document.MemberEnd() && normalUpIt->value.IsObject() &&
+        normalRightIt != document.MemberEnd() &&
+    normalRightIt->value.IsObject()) {
+
+      auto normalUpOffsetIt = normalUpIt->value.FindMember("byteOffset");
+      auto normalRightOffsetIt = normalRightIt->value.FindMember("byteOffset");
+
+      if (normalUpOffsetIt != document.MemberEnd() &&
+    normalUpOffsetIt->value.IsUint() && normalRightOffsetIt !=
+    document.MemberEnd() && normalRightOffsetIt->value.IsUint()) { usingNormals
+    = true; normalUpOffset = normalUpOffsetIt->value.GetUint();
+        normalRightOffset = normalRightOffsetIt->value.GetUint();
+      }
+    } else if (
+        normalUpOct32pIt != document.MemberEnd() &&
+        normalUpOct32pIt->value.IsObject() &&
+        normalRightOct32pIt != document.MemberEnd() &&
+        normalRightOct32pIt->value.IsObject()) {
+
+      auto normalUpOffsetIt = normalUpOct32pIt->value.FindMember("byteOffset");
+      auto normalRightOffsetIt =
+          normalRightOct32pIt->value.FindMember("byteOffset");
+
+      if (normalUpOffsetIt != document.MemberEnd() &&
+          normalUpOffsetIt->value.IsUint() &&
+          normalRightOffsetIt != document.MemberEnd() &&
+          normalRightOffsetIt->value.IsUint()) {
+        usingNormals = true;
+        usingOct32Normals = true;
+        normalUpOffset = normalUpOffsetIt->value.GetUint();
+        normalRightOffset = normalRightOffsetIt->value.GetUint();
+      }
     }
-  } else if (
-      normalUpOct32pIt != document.MemberEnd() &&
-      normalUpOct32pIt->value.IsObject() &&
-      normalRightOct32pIt != document.MemberEnd() &&
-      normalRightOct32pIt->value.IsObject()) {
 
-    auto normalUpOffsetIt = normalUpOct32pIt->value.FindMember("byteOffset");
-    auto normalRightOffsetIt =
-        normalRightOct32pIt->value.FindMember("byteOffset");
+    if (usingNormals) {
+      size_t normalByteStride =
+          usingOct32Normals ? 2 * sizeof(uint16_t) : 3 * sizeof(float);
+      size_t normalBufferSize = instancesLength * normalByteStride;
 
-    if (normalUpOffsetIt != document.MemberEnd() &&
-        normalUpOffsetIt->value.IsUint() &&
-        normalRightOffsetIt != document.MemberEnd() &&
-        normalRightOffsetIt->value.IsUint()) {
-      usingNormals = true;
-      usingOct32Normals = true;
-      normalUpOffset = normalUpOffsetIt->value.GetUint();
-      normalRightOffset = normalRightOffsetIt->value.GetUint();
-    }
-  }
+      size_t normalUpBufferId = gltf.buffers.size();
+      CesiumGltf::Buffer& normalUpBuffer = gltf.buffers.emplace_back();
+      normalUpBuffer.cesium.data.resize(normalBufferSize);
+      std::memcpy(
+          normalUpBuffer.cesium.data.data(),
+          featureTableBinaryData.data() + normalUpOffset,
+          normalBufferSize);
 
-  if (usingNormals) {
-    size_t normalByteStride =
-        usingOct32Normals ? 2 * sizeof(uint16_t) : 3 * sizeof(float);
-    size_t normalBufferSize = instancesLength * normalByteStride;
+      size_t normalUpBufferViewId = gltf.bufferViews.size();
+      CesiumGltf::BufferView& normalUpBufferView =
+          gltf.bufferViews.emplace_back();
+      normalUpBufferView.buffer = static_cast<int32_t>(normalUpBufferId);
+      normalUpBufferView.byteLength = normalBufferSize;
+      normalUpBufferView.byteOffset = 0;
+      normalUpBufferView.byteStride = normalByteStride;
+      normalUpBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-    size_t normalUpBufferId = gltf.buffers.size();
-    CesiumGltf::Buffer& normalUpBuffer = gltf.buffers.emplace_back();
-    normalUpBuffer.cesium.data.resize(normalBufferSize);
-    std::memcpy(
-        normalUpBuffer.cesium.data.data(),
-        featureTableBinaryData.data() + normalUpOffset,
-        normalBufferSize);
+      size_t normalUpAccessorId = gltf.accessors.size();
+      CesiumGltf::Accessor& normalUpAccessor = gltf.accessors.emplace_back();
+      normalUpAccessor.bufferView = static_cast<int32_t>(normalUpBufferViewId);
+      normalUpAccessor.byteOffset = 0;
+      normalUpAccessor.componentType =
+          usingOct32Normals ? CesiumGltf::Accessor::ComponentType::SHORT
+                            : CesiumGltf::Accessor::ComponentType::FLOAT;
+      normalUpAccessor.count = int64_t(instancesLength);
+      normalUpAccessor.type = usingOct32Normals
+                                  ? CesiumGltf::Accessor::Type::VEC2
+                                  : CesiumGltf::Accessor::Type::VEC3;
 
-    size_t normalUpBufferViewId = gltf.bufferViews.size();
-    CesiumGltf::BufferView& normalUpBufferView =
-        gltf.bufferViews.emplace_back();
-    normalUpBufferView.buffer = static_cast<int32_t>(normalUpBufferId);
-    normalUpBufferView.byteLength = normalBufferSize;
-    normalUpBufferView.byteOffset = 0;
-    normalUpBufferView.byteStride = normalByteStride;
-    normalUpBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+      gltf.extras.emplace(
+          usingOct32Normals ? "INSTANCE_NORMAL_UP_OCT32P" :
+    "INSTANCE_NORMAL_UP", normalUpAccessorId);
 
-    size_t normalUpAccessorId = gltf.accessors.size();
-    CesiumGltf::Accessor& normalUpAccessor = gltf.accessors.emplace_back();
-    normalUpAccessor.bufferView = static_cast<int32_t>(normalUpBufferViewId);
-    normalUpAccessor.byteOffset = 0;
-    normalUpAccessor.componentType =
-        usingOct32Normals ? CesiumGltf::Accessor::ComponentType::SHORT
-                          : CesiumGltf::Accessor::ComponentType::FLOAT;
-    normalUpAccessor.count = int64_t(instancesLength);
-    normalUpAccessor.type = usingOct32Normals
-                                ? CesiumGltf::Accessor::Type::VEC2
-                                : CesiumGltf::Accessor::Type::VEC3;
+      size_t normalRightBufferId = gltf.buffers.size();
+      CesiumGltf::Buffer& normalRightBuffer = gltf.buffers.emplace_back();
+      normalRightBuffer.cesium.data.resize(normalBufferSize);
+      std::memcpy(
+          normalRightBuffer.cesium.data.data(),
+          featureTableBinaryData.data() + normalRightOffset,
+          normalBufferSize);
 
-    gltf.extras.emplace(
-        usingOct32Normals ? "INSTANCE_NORMAL_UP_OCT32P" : "INSTANCE_NORMAL_UP",
-        normalUpAccessorId);
+      size_t normalRightBufferViewId = gltf.bufferViews.size();
+      CesiumGltf::BufferView& normalRightBufferView =
+          gltf.bufferViews.emplace_back();
+      normalRightBufferView.buffer = static_cast<int32_t>(normalRightBufferId);
+      normalRightBufferView.byteLength = normalBufferSize;
+      normalRightBufferView.byteOffset = 0;
+      normalRightBufferView.byteStride = normalByteStride;
+      normalRightBufferView.target =
+    CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-    size_t normalRightBufferId = gltf.buffers.size();
-    CesiumGltf::Buffer& normalRightBuffer = gltf.buffers.emplace_back();
-    normalRightBuffer.cesium.data.resize(normalBufferSize);
-    std::memcpy(
-        normalRightBuffer.cesium.data.data(),
-        featureTableBinaryData.data() + normalRightOffset,
-        normalBufferSize);
+      size_t normalRightAccessorId = gltf.accessors.size();
+      CesiumGltf::Accessor& normalRightAccessor = gltf.accessors.emplace_back();
+      normalRightAccessor.bufferView =
+          static_cast<int32_t>(normalRightBufferViewId);
+      normalRightAccessor.byteOffset = 0;
+      normalRightAccessor.componentType =
+          usingOct32Normals ? CesiumGltf::Accessor::ComponentType::SHORT
+                            : CesiumGltf::Accessor::ComponentType::FLOAT;
+      normalRightAccessor.count = int64_t(instancesLength);
+      normalRightAccessor.type = usingOct32Normals
+                                     ? CesiumGltf::Accessor::Type::VEC2
+                                     : CesiumGltf::Accessor::Type::VEC3;
 
-    size_t normalRightBufferViewId = gltf.bufferViews.size();
-    CesiumGltf::BufferView& normalRightBufferView =
-        gltf.bufferViews.emplace_back();
-    normalRightBufferView.buffer = static_cast<int32_t>(normalRightBufferId);
-    normalRightBufferView.byteLength = normalBufferSize;
-    normalRightBufferView.byteOffset = 0;
-    normalRightBufferView.byteStride = normalByteStride;
-    normalRightBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
-
-    size_t normalRightAccessorId = gltf.accessors.size();
-    CesiumGltf::Accessor& normalRightAccessor = gltf.accessors.emplace_back();
-    normalRightAccessor.bufferView =
-        static_cast<int32_t>(normalRightBufferViewId);
-    normalRightAccessor.byteOffset = 0;
-    normalRightAccessor.componentType =
-        usingOct32Normals ? CesiumGltf::Accessor::ComponentType::SHORT
-                          : CesiumGltf::Accessor::ComponentType::FLOAT;
-    normalRightAccessor.count = int64_t(instancesLength);
-    normalRightAccessor.type = usingOct32Normals
-                                   ? CesiumGltf::Accessor::Type::VEC2
-                                   : CesiumGltf::Accessor::Type::VEC3;
-
-    gltf.extras.emplace(
-        usingOct32Normals ? "INSTANCE_NORMAL_RIGHT_OCT32P"
-                          : "INSTANCE_NORMAL_RIGHT",
-        normalRightAccessorId);
-  }
+      gltf.extras.emplace(
+          usingOct32Normals ? "INSTANCE_NORMAL_RIGHT_OCT32P"
+                            : "INSTANCE_NORMAL_RIGHT",
+          normalRightAccessorId);
+    }*/
 }
 
 } // namespace
@@ -298,6 +311,7 @@ CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 Instanced3DModelContent::load(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::vector<std::pair<std::string, std::string>>& requestHeaders,
     const TileContentLoadInput& input) {
 
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
@@ -360,41 +374,43 @@ Instanced3DModelContent::load(
       reinterpret_cast<char const*>(data.data() + gltfStart),
       gltfEnd - gltfStart);
 
-  std::string externalGltfUri = 
-      CesiumUtility::Uri::resolve(url, externalGltfUriRelative, true);
+  std::string externalGltfUri =
+      CesiumUtility::Uri::resolve(url, externalGltfUriRelative, false);
 
   SPDLOG_LOGGER_ERROR(pLogger, "EXTERNAL GLTF: {}", externalGltfUri);
 
   // TODO: actually support gltf from URI source (also support pointing to
   // deferred asset)
-  return pAssetAccessor->requestAsset(asyncSystem, externalGltfUri)
+  return pAssetAccessor
+      ->requestAsset(asyncSystem, externalGltfUri, requestHeaders)
       .thenInWorkerThread(
-          [pLogger, 
-          externalGltfUri, 
-          featureTableJsonData, 
-          featureTableBinaryData](
+          [pLogger,
+           externalGltfUri,
+           featureTableJsonData,
+           featureTableBinaryData](
               const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest) {
-        const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
-        if (pResponse) {
-          std::unique_ptr<TileContentLoadResult> pResult = 
-              GltfContent::load(
-                pLogger,
-                externalGltfUri,
-                pResponse->data());
+            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
 
-          if (pResult->model) {
-            parseFeatureTable(
-              pLogger,
-              *pResult->model,
-              featureTableJsonData,
-              featureTableBinaryData);
-          }
+            if (pResponse) {
+              std::unique_ptr<TileContentLoadResult> pResult =
+                  GltfContent::load(
+                      pLogger,
+                      externalGltfUri,
+                      pResponse->data());
 
-          return std::move(pResult);
-        }
+              if (pResult->model) {
+                parseFeatureTable(
+                    pLogger,
+                    *pResult->model,
+                    featureTableJsonData,
+                    featureTableBinaryData);
+              }
 
-        return std::unique_ptr<TileContentLoadResult>(nullptr);
-      });
+              return std::move(pResult);
+            }
+
+            return std::unique_ptr<TileContentLoadResult>(nullptr);
+          });
   //.catchInMainThread()
 }
 } // namespace Cesium3DTiles
