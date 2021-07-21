@@ -31,6 +31,14 @@
             "attachTo": [
                 "mesh.primitive"
             ]
+        },
+        {
+            "className": "EXT_mesh_gpu_instancing",
+            "extensionName": "EXT_mesh_gpu_instancing",
+            "schema": "Vendor/EXT_mesh_gpu_instancing/schema/glTF.EXT_mesh_gpu_instancing.schema.json",
+            "attachTo": [
+                "node"
+            ]
         }
     ]
 }
