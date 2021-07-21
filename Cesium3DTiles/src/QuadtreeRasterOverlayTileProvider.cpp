@@ -434,9 +434,41 @@ void blitImage(
 
   // Copy each row
   for (size_t j = 0; j < size_t(sourceHeight); ++j) {
+    assert(pTarget < target.pixelData.data() + target.pixelData.size());
+    assert(pSource < source.pixelData.data() + source.pixelData.size());
+    assert(
+        pTarget + bytesToCopyPerRow <=
+        target.pixelData.data() + target.pixelData.size());
+    assert(
+        pSource + bytesToCopyPerRow <=
+        source.pixelData.data() + source.pixelData.size());
     std::memcpy(pTarget, pSource, bytesToCopyPerRow);
     pTarget += bytesPerTargetRow;
     pSource += bytesPerSourceRow;
+  }
+}
+
+// Rounds value up to the nearest integer. Unless it is less than tolerance
+// from the lower integer, in which case it rounds down instead.
+double roundUp(double value, double tolerance) {
+  double up = glm::ceil(value);
+  double down = glm::floor(value);
+  if (value - down < tolerance) {
+    return down;
+  } else {
+    return up;
+  }
+}
+
+// Rounds value down to the nearest integer. Unless it is less than tolerance
+// from the higher integer, in which case it rounds up instead.
+double roundDown(double value, double tolerance) {
+  double up = glm::ceil(value);
+  double down = glm::floor(value);
+  if (up - value < tolerance) {
+    return up;
+  } else {
+    return down;
   }
 }
 
@@ -458,26 +490,32 @@ void blitImage(
   // Pixel coordinates are measured from the top left.
   // Projected rectangles are measured from the bottom left.
 
-  int32_t targetX = static_cast<int32_t>(glm::floor(
+  int32_t targetX = static_cast<int32_t>(roundDown(
       target.width * (overlap->minimumX - targetRectangle.minimumX) /
-      targetRectangle.computeWidth()));
-  int32_t targetY = static_cast<int32_t>(glm::floor(
+      targetRectangle.computeWidth(), 1e-3));
+  targetX = glm::max(0, targetX);
+  int32_t targetY = static_cast<int32_t>(roundDown(
       target.height * (targetRectangle.maximumY - overlap->maximumY) /
-      targetRectangle.computeHeight()));
+      targetRectangle.computeHeight(), 1e-3));
+  targetY = glm::max(0, targetY);
 
-  int32_t sourceX = static_cast<int32_t>(glm::floor(
+  int32_t sourceX = static_cast<int32_t>(roundDown(
       source.width * (overlap->minimumX - sourceRectangle.minimumX) /
-      sourceRectangle.computeWidth()));
-  int32_t sourceY = static_cast<int32_t>(glm::floor(
+      sourceRectangle.computeWidth(), 1e-3));
+  sourceX = glm::max(0, sourceX);
+  int32_t sourceY = static_cast<int32_t>(roundDown(
       source.height * (sourceRectangle.maximumY - overlap->maximumY) /
-      sourceRectangle.computeHeight()));
+      sourceRectangle.computeHeight(), 1e-3));
+  sourceY = glm::max(0, sourceY);
 
-  int32_t sourceMaxX = static_cast<int32_t>(glm::ceil(
+  int32_t sourceMaxX = static_cast<int32_t>(roundUp(
       source.width * (overlap->maximumX - sourceRectangle.minimumX) /
-      sourceRectangle.computeWidth()));
-  int32_t sourceMaxY = static_cast<int32_t>(glm::ceil(
+      sourceRectangle.computeWidth(), 1e-3));
+  sourceMaxX = glm::min(sourceMaxX, source.width);
+  int32_t sourceMaxY = static_cast<int32_t>(roundUp(
       source.height * (sourceRectangle.maximumY - overlap->minimumY) /
-      sourceRectangle.computeHeight()));
+      sourceRectangle.computeHeight(), 1e-3));
+  sourceMaxY = glm::min(sourceMaxY, source.height);
   int32_t sourceWidth = sourceMaxX - sourceX;
   int32_t sourceHeight = sourceMaxY - sourceY;
 
@@ -629,8 +667,9 @@ struct CombinedImageMeasurements {
   int32_t bytesPerChannel;
 };
 
-CombinedImageMeasurements
-measureCombinedImage(const std::vector<LoadedRasterOverlayImage>& images) {
+CombinedImageMeasurements measureCombinedImage(
+    const Rectangle& targetRectangle,
+    const std::vector<LoadedRasterOverlayImage>& images) {
   auto it = std::find_if(
       images.begin(),
       images.end(),
@@ -651,7 +690,10 @@ measureCombinedImage(const std::vector<LoadedRasterOverlayImage>& images) {
   double projectedHeightPerPixel =
       first.rectangle.computeHeight() / firstImage.height;
 
-  Rectangle combinedRectangle = first.rectangle;
+  Rectangle combinedRectangle = targetRectangle;
+
+  // One thousandth of a pixel.
+  const double pixelTolerance = 0.001;
 
   // Assumption: all images have pixels with the same width and height in
   // projected units. This might prove false with esoteric projections that,
@@ -679,14 +721,43 @@ measureCombinedImage(const std::vector<LoadedRasterOverlayImage>& images) {
     assert(loaded.image->bytesPerChannel == firstImage.bytesPerChannel);
 
     // Find the bounds of the combined image.
-    combinedRectangle = combinedRectangle.computeUnion(loaded.rectangle);
+    // Intersect the loaded image's rectangle with the target rectangle.
+    std::optional<Rectangle> maybeIntersection =
+        targetRectangle.intersect(loaded.rectangle);
+    if (!maybeIntersection) {
+      continue;
+    }
+
+    Rectangle& intersection = *maybeIntersection;
+
+    // Expand this slightly so we don't wind up with partial pixels.
+    intersection.minimumX = roundDown(
+                                intersection.minimumX / projectedWidthPerPixel,
+                                pixelTolerance) *
+                            projectedWidthPerPixel;
+    intersection.minimumY = roundDown(
+                                intersection.minimumY / projectedHeightPerPixel,
+                                pixelTolerance) *
+                            projectedHeightPerPixel;
+    intersection.maximumX = roundUp(
+                                intersection.maximumX / projectedWidthPerPixel,
+                                pixelTolerance) *
+                            projectedWidthPerPixel;
+    intersection.maximumY = roundUp(
+                                intersection.maximumY / projectedHeightPerPixel,
+                                pixelTolerance) *
+                            projectedHeightPerPixel;
+
+    combinedRectangle = combinedRectangle.computeUnion(intersection);
   }
 
   // Compute the pixel dimensions needed for the combined image.
-  int32_t combinedWidthPixels = static_cast<int32_t>(
-      glm::ceil(combinedRectangle.computeWidth() / projectedWidthPerPixel));
-  int32_t combinedHeightPixels = static_cast<int32_t>(
-      glm::ceil(combinedRectangle.computeHeight() / projectedHeightPerPixel));
+  int32_t combinedWidthPixels = static_cast<int32_t>(roundUp(
+      combinedRectangle.computeWidth() / projectedWidthPerPixel,
+      pixelTolerance));
+  int32_t combinedHeightPixels = static_cast<int32_t>(roundUp(
+      combinedRectangle.computeHeight() / projectedHeightPerPixel,
+      pixelTolerance));
 
   return CombinedImageMeasurements{
       combinedRectangle,
@@ -697,9 +768,11 @@ measureCombinedImage(const std::vector<LoadedRasterOverlayImage>& images) {
 }
 
 LoadedRasterOverlayImage combineImages(
+    const Rectangle& targetRectangle,
     const Projection& /* projection */,
     std::vector<LoadedRasterOverlayImage>&& images) {
-  CombinedImageMeasurements measurements = measureCombinedImage(images);
+  CombinedImageMeasurements measurements =
+      measureCombinedImage(targetRectangle, images);
 
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
@@ -717,6 +790,7 @@ LoadedRasterOverlayImage combineImages(
     if (!it->image) {
       continue;
     }
+
     blitImage(target, result.rectangle, *it->image, it->rectangle);
   }
 
@@ -743,9 +817,10 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           overlayTile.getTargetGeometricError());
 
   return this->_asyncSystem.all(std::move(tiles))
-      .thenInWorkerThread([projection = this->getProjection()](
+      .thenInWorkerThread([projection = this->getProjection(),
+                           rectangle = overlayTile.getRectangle()](
                               std::vector<LoadedRasterOverlayImage>&& images) {
-        return combineImages(projection, std::move(images));
+        return combineImages(rectangle, projection, std::move(images));
       })
       .catchImmediately(
           [](std::exception&& /* e */) { return LoadedRasterOverlayImage(); });
