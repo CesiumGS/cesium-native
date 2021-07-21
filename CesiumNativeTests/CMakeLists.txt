@@ -5,6 +5,7 @@ configure_cesium_library(cesium-native-tests)
 # properties.
 set(cesium_native_targets
     Cesium3DTilesPipeline
+    Cesium3DTilesWriter
     CesiumAsync
     CesiumGeometry
     CesiumGeospatial
