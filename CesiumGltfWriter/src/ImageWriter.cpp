@@ -2,9 +2,9 @@
 #include "Base64URIDetector.h"
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
-#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <algorithm>
 #include <cstdint>
 

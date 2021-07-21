@@ -79,7 +79,8 @@ struct BingMapsStyle final {
  * @brief A {@link RasterOverlay} that uses Bing Maps as the source for the
  * imagery data.
  */
-class CESIUM3DTILESPIPELINE_API BingMapsRasterOverlay final : public RasterOverlay {
+class CESIUM3DTILESPIPELINE_API BingMapsRasterOverlay final
+    : public RasterOverlay {
 public:
   /**
    * @brief Creates a new instance.

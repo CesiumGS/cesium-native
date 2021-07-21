@@ -1,7 +1,7 @@
 #pragma once
-#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumGltf/Animation.h>
 #include <CesiumGltf/WriteModelResult.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <vector>
 
 namespace CesiumGltf {

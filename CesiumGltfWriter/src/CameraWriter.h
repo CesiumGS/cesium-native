@@ -1,6 +1,6 @@
 #pragma once
-#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumGltf/Camera.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 
 namespace CesiumGltf {
 void writeCamera(

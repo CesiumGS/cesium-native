@@ -1,9 +1,9 @@
 #pragma once
-#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/WriteModelResult.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <vector>
 
 namespace CesiumGltf {

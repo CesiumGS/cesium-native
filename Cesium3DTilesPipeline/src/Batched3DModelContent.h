@@ -18,7 +18,8 @@ class Tileset;
 /**
  * @brief Creates a {@link TileContentLoadResult} from B3DM data.
  */
-class CESIUM3DTILESPIPELINE_API Batched3DModelContent final : public TileContentLoader {
+class CESIUM3DTILESPIPELINE_API Batched3DModelContent final
+    : public TileContentLoader {
 public:
   /**
    * @copydoc TileContentLoader::load

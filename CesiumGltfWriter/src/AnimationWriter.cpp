@@ -1,8 +1,8 @@
 #include "AnimationWriter.h"
 #include "ExtensionWriter.h"
-#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <magic_enum.hpp>
 #include <stdexcept>
 #include <type_traits>

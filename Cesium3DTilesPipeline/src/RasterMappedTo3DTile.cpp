@@ -174,7 +174,8 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
   }
 
   const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTilesPipeline::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+      Cesium3DTilesPipeline::Impl::obtainGlobeRectangle(
+          &tile.getBoundingVolume());
   if (!pRectangle) {
     return;
   }

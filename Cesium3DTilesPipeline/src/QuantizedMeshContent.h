@@ -12,7 +12,8 @@ namespace Cesium3DTilesPipeline {
  * @brief Creates a {@link TileContentLoadResult} from `quantized-mesh-1.0`
  * data.
  */
-class CESIUM3DTILESPIPELINE_API QuantizedMeshContent final : public TileContentLoader {
+class CESIUM3DTILESPIPELINE_API QuantizedMeshContent final
+    : public TileContentLoader {
 public:
   static std::string CONTENT_TYPE;
 

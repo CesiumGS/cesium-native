@@ -1,9 +1,9 @@
 #include "BufferWriter.h"
-#include <CesiumJsonWriter/JsonWriter.h>
-#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/WriteModelResult.h>
+#include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>

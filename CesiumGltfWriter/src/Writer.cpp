@@ -4,12 +4,9 @@
 #include "AssetWriter.h"
 #include "ExtensionWriter.h"
 #include "ImageWriter.h"
-#include <CesiumJsonWriter/JsonObjectWriter.h>
-#include <CesiumJsonWriter/JsonWriter.h>
 #include "MaterialWriter.h"
 #include "MeshWriter.h"
 #include "NodeWriter.h"
-#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include "SamplerWriter.h"
 #include "SceneWriter.h"
 #include "SkinWriter.h"
@@ -21,6 +18,9 @@
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/Writer.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 #include <array>
 #include <cstdio>

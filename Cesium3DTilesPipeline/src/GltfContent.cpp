@@ -61,7 +61,8 @@ static int generateOverlayTextureCoordinates(
     double& north,
     double& minimumHeight,
     double& maximumHeight) {
-  CESIUM_TRACE("Cesium3DTilesPipeline::GltfContent::generateOverlayTextureCoordinates");
+  CESIUM_TRACE(
+      "Cesium3DTilesPipeline::GltfContent::generateOverlayTextureCoordinates");
   std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
   std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
   std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
@@ -189,8 +190,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
     uint32_t textureCoordinateID,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& rectangle) {
-  CESIUM_TRACE(
-      "Cesium3DTilesPipeline::GltfContent::createRasterOverlayTextureCoordinates");
+  CESIUM_TRACE("Cesium3DTilesPipeline::GltfContent::"
+               "createRasterOverlayTextureCoordinates");
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 

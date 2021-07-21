@@ -1,7 +1,7 @@
 #include "AssetWriter.h"
 #include "ExtensionWriter.h"
-#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumGltf/Asset.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 
 void CesiumGltf::writeAsset(
     const Asset& asset,

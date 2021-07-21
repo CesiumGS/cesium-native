@@ -147,7 +147,8 @@ void Tile::loadContent() {
   std::vector<Projection> projections;
 
   const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTilesPipeline::Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+      Cesium3DTilesPipeline::Impl::obtainGlobeRectangle(
+          &this->getBoundingVolume());
   if (pRectangle && tileset.supportsRasterOverlays()) {
     // Map overlays to this tile.
     RasterOverlayCollection& overlays = tileset.getOverlays();

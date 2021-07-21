@@ -1,8 +1,8 @@
 #include "NodeWriter.h"
 #include "ExtensionWriter.h"
+#include <CesiumGltf/Image.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <CesiumGltf/Image.h>
 #include <vector>
 
 const std::vector<double>

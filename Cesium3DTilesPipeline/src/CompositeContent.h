@@ -17,7 +17,8 @@ class Tileset;
 /**
  * @brief Creates a {@link TileContentLoadResult} from CMPT data.
  */
-class CESIUM3DTILESPIPELINE_API CompositeContent final : public TileContentLoader {
+class CESIUM3DTILESPIPELINE_API CompositeContent final
+    : public TileContentLoader {
 public:
   std::unique_ptr<TileContentLoadResult>
   load(const TileContentLoadInput& input) override;

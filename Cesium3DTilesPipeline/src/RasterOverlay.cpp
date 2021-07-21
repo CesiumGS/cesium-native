@@ -22,7 +22,8 @@ public:
   loadTileImage(
       const CesiumGeometry::QuadtreeTileID& /* tileID */) const override {
     return this->getAsyncSystem()
-        .createResolvedFuture<Cesium3DTilesPipeline::LoadedRasterOverlayImage>({});
+        .createResolvedFuture<Cesium3DTilesPipeline::LoadedRasterOverlayImage>(
+            {});
   }
 };
 } // namespace
