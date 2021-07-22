@@ -492,29 +492,35 @@ void blitImage(
 
   int32_t targetX = static_cast<int32_t>(roundDown(
       target.width * (overlap->minimumX - targetRectangle.minimumX) /
-      targetRectangle.computeWidth(), 1e-3));
+          targetRectangle.computeWidth(),
+      1e-3));
   targetX = glm::max(0, targetX);
   int32_t targetY = static_cast<int32_t>(roundDown(
       target.height * (targetRectangle.maximumY - overlap->maximumY) /
-      targetRectangle.computeHeight(), 1e-3));
+          targetRectangle.computeHeight(),
+      1e-3));
   targetY = glm::max(0, targetY);
 
   int32_t sourceX = static_cast<int32_t>(roundDown(
       source.width * (overlap->minimumX - sourceRectangle.minimumX) /
-      sourceRectangle.computeWidth(), 1e-3));
+          sourceRectangle.computeWidth(),
+      1e-3));
   sourceX = glm::max(0, sourceX);
   int32_t sourceY = static_cast<int32_t>(roundDown(
       source.height * (sourceRectangle.maximumY - overlap->maximumY) /
-      sourceRectangle.computeHeight(), 1e-3));
+          sourceRectangle.computeHeight(),
+      1e-3));
   sourceY = glm::max(0, sourceY);
 
   int32_t sourceMaxX = static_cast<int32_t>(roundUp(
       source.width * (overlap->maximumX - sourceRectangle.minimumX) /
-      sourceRectangle.computeWidth(), 1e-3));
+          sourceRectangle.computeWidth(),
+      1e-3));
   sourceMaxX = glm::min(sourceMaxX, source.width);
   int32_t sourceMaxY = static_cast<int32_t>(roundUp(
       source.height * (sourceRectangle.maximumY - overlap->minimumY) /
-      sourceRectangle.computeHeight(), 1e-3));
+          sourceRectangle.computeHeight(),
+      1e-3));
   sourceMaxY = glm::min(sourceMaxY, source.height);
   int32_t sourceWidth = sourceMaxX - sourceX;
   int32_t sourceHeight = sourceMaxY - sourceY;

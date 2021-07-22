@@ -142,10 +142,11 @@ void mapRasterOverlaysToTile(
         projectRectangleSimple(pProvider->getProjection(), *pRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
-        pOverlay->getTileProvider()->getTile(overlayRectangle, tile.getGeometricError());
+        pOverlay->getTileProvider()->getTile(
+            overlayRectangle,
+            tile.getGeometricError());
     if (pRaster) {
-      tile.getMappedRasterTiles().emplace_back(
-          pRaster);
+      tile.getMappedRasterTiles().emplace_back(pRaster);
       projections.insert(pProvider->getProjection());
 
       if (pRaster->getState() != RasterOverlayTile::LoadState::Placeholder) {
