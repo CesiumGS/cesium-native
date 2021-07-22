@@ -276,8 +276,7 @@ void Tile::loadContent(const CesiumAsync::AsyncSystem& asyncSystem) {
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
-          [this,
-           asyncSystem,
+          [asyncSystem,
            pAssetAccessor = tileset.getExternals().pAssetAccessor,
            requestHeaders = this->getContext()->requestHeaders,
            loadInput = std::move(loadInput),
