@@ -186,6 +186,7 @@ public:
                         : CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0));
 
           LoadedRasterOverlayImage resultImage;
+          resultImage.rectangle = pTile->getRectangle();
           CesiumGltf::ImageCesium image;
           rasterizePolygons(image, tileRectangle, name, polygons);
           resultImage.image = std::move(image);
