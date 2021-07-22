@@ -117,6 +117,20 @@ Model upsampleGltfForRasterOverlays(
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
 
+  // If the glTF has a name, update it with upsample info.
+  auto nameIt = result.extras.find("Cesium3DTiles_TileUrl");
+  if (nameIt != result.extras.end()) {
+    std::string name = nameIt->second.getStringOrDefault("");
+    std::string::size_type upsampledIndex = name.find(" upsampled");
+    if (upsampledIndex != std::string::npos) {
+      name = name.substr(0, upsampledIndex);
+    }
+    name += " upsampled L" + std::to_string(childID.tileID.level);
+    name += "-X" + std::to_string(childID.tileID.x);
+    name += "-Y" + std::to_string(childID.tileID.y);
+    nameIt->second = name;
+  }
+
   double maskTranslationX = 0.0;
   double maskTranslationY = 0.0;
   double maskScale = 0.0;

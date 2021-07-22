@@ -8,6 +8,14 @@ using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
+namespace {
+
+// One hundredth of a pixel. If we compute a rectangle that goes less than "this
+// much" into the next pixel, we'll ignore the extra.
+const double pixelTolerance = 0.01;
+
+} // namespace
+
 namespace Cesium3DTiles {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
@@ -493,34 +501,34 @@ void blitImage(
   int32_t targetX = static_cast<int32_t>(roundDown(
       target.width * (overlap->minimumX - targetRectangle.minimumX) /
           targetRectangle.computeWidth(),
-      1e-3));
+      pixelTolerance));
   targetX = glm::max(0, targetX);
   int32_t targetY = static_cast<int32_t>(roundDown(
       target.height * (targetRectangle.maximumY - overlap->maximumY) /
           targetRectangle.computeHeight(),
-      1e-3));
+      pixelTolerance));
   targetY = glm::max(0, targetY);
 
   int32_t sourceX = static_cast<int32_t>(roundDown(
       source.width * (overlap->minimumX - sourceRectangle.minimumX) /
           sourceRectangle.computeWidth(),
-      1e-3));
+      pixelTolerance));
   sourceX = glm::max(0, sourceX);
   int32_t sourceY = static_cast<int32_t>(roundDown(
       source.height * (sourceRectangle.maximumY - overlap->maximumY) /
           sourceRectangle.computeHeight(),
-      1e-3));
+      pixelTolerance));
   sourceY = glm::max(0, sourceY);
 
   int32_t sourceMaxX = static_cast<int32_t>(roundUp(
       source.width * (overlap->maximumX - sourceRectangle.minimumX) /
           sourceRectangle.computeWidth(),
-      1e-3));
+      pixelTolerance));
   sourceMaxX = glm::min(sourceMaxX, source.width);
   int32_t sourceMaxY = static_cast<int32_t>(roundUp(
       source.height * (sourceRectangle.maximumY - overlap->minimumY) /
           sourceRectangle.computeHeight(),
-      1e-3));
+      pixelTolerance));
   sourceMaxY = glm::min(sourceMaxY, source.height);
   int32_t sourceWidth = sourceMaxX - sourceX;
   int32_t sourceHeight = sourceMaxY - sourceY;
@@ -698,9 +706,6 @@ CombinedImageMeasurements measureCombinedImage(
 
   Rectangle combinedRectangle = targetRectangle;
 
-  // One thousandth of a pixel.
-  const double pixelTolerance = 0.001;
-
   // Assumption: all images have pixels with the same width and height in
   // projected units. This might prove false with esoteric projections that,
   // for example, change tiling scheme or projection parameters as latitude
@@ -777,6 +782,7 @@ LoadedRasterOverlayImage combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
     std::vector<LoadedRasterOverlayImage>&& images) {
+
   CombinedImageMeasurements measurements =
       measureCombinedImage(targetRectangle, images);
 

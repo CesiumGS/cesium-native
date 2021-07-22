@@ -191,6 +191,7 @@ namespace {
 struct LoadResult {
   RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
   CesiumGltf::ImageCesium image = {};
+  CesiumGeometry::Rectangle rectangle = {};
   std::vector<Credit> credits = {};
   void* pRendererResources = nullptr;
 };
@@ -258,6 +259,7 @@ static LoadResult createLoadResultFromLoadedImage(
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Loaded;
     result.image = std::move(image);
+    result.rectangle = loadedImage.rectangle;
     result.credits = std::move(loadedImage.credits);
     result.pRendererResources = pRendererResources;
     return result;
@@ -294,6 +296,7 @@ void RasterOverlayTileProvider::doLoad(
                 std::move(loadedImage));
           })
       .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
+        tile._rectangle = result.rectangle;
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
         tile._tileCredits = std::move(result.credits);
