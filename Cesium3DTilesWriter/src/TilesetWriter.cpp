@@ -37,44 +37,6 @@ template <typename T>
     CesiumJsonWriter::JsonWriter& jsonWriter);
 
 /////////////////////////////////////////
-// Writer for Extension::AdditionalProperty
-/////////////////////////////////////////
-
-void write(
-    [[maybe_unused]] const Extension::AdditionalProperty& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter) {
-  jsonWriter.StartObject();
-
-  jsonWriter.EndObject();
-}
-
-/////////////////////////////////////////
-// Writer for Extension
-/////////////////////////////////////////
-
-void write(
-    [[maybe_unused]] const Extension& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter) {
-  jsonWriter.StartObject();
-
-  write(obj.additionalProperties, jsonWriter);
-
-  jsonWriter.EndObject();
-}
-
-/////////////////////////////////////////
-// Writer for Extras
-/////////////////////////////////////////
-
-void write(
-    [[maybe_unused]] const Extras& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter) {
-  jsonWriter.StartObject();
-
-  jsonWriter.EndObject();
-}
-
-/////////////////////////////////////////
 // Writer for Asset
 /////////////////////////////////////////
 
@@ -89,16 +51,6 @@ void write(
   if (obj.tilesetVersion.has_value()) {
     jsonWriter.Key("tilesetVersion");
     write(obj.tilesetVersion, jsonWriter);
-  }
-
-  if (obj.extensions.has_value()) {
-    jsonWriter.Key("extensions");
-    write(obj.extensions, jsonWriter);
-  }
-
-  if (obj.extras.has_value()) {
-    jsonWriter.Key("extras");
-    write(obj.extras, jsonWriter);
   }
 
   jsonWriter.EndObject();
@@ -128,16 +80,6 @@ void write(
     write(obj.sphere, jsonWriter);
   }
 
-  if (obj.extensions.has_value()) {
-    jsonWriter.Key("extensions");
-    write(obj.extensions, jsonWriter);
-  }
-
-  if (obj.extras.has_value()) {
-    jsonWriter.Key("extras");
-    write(obj.extras, jsonWriter);
-  }
-
   jsonWriter.EndObject();
 }
 
@@ -157,16 +99,6 @@ void write(
 
   jsonWriter.Key("uri");
   write(obj.uri, jsonWriter);
-
-  if (obj.extensions.has_value()) {
-    jsonWriter.Key("extensions");
-    write(obj.extensions, jsonWriter);
-  }
-
-  if (obj.extras.has_value()) {
-    jsonWriter.Key("extras");
-    write(obj.extras, jsonWriter);
-  }
 
   jsonWriter.EndObject();
 }
@@ -229,16 +161,6 @@ void write(
     write(obj.children, jsonWriter);
   }
 
-  if (obj.extensions.has_value()) {
-    jsonWriter.Key("extensions");
-    write(obj.extensions, jsonWriter);
-  }
-
-  if (obj.extras.has_value()) {
-    jsonWriter.Key("extras");
-    write(obj.extras, jsonWriter);
-  }
-
   jsonWriter.EndObject();
 }
 
@@ -256,16 +178,6 @@ void write(
 
   jsonWriter.Key("minimum");
   write(obj.minimum, jsonWriter);
-
-  if (obj.extensions.has_value()) {
-    jsonWriter.Key("extensions");
-    write(obj.extensions, jsonWriter);
-  }
-
-  if (obj.extras.has_value()) {
-    jsonWriter.Key("extras");
-    write(obj.extras, jsonWriter);
-  }
 
   jsonWriter.EndObject();
 }
@@ -315,16 +227,6 @@ void write(
   if (obj.extensionsRequired.has_value()) {
     jsonWriter.Key("extensionsRequired");
     write(obj.extensionsRequired, jsonWriter);
-  }
-
-  if (obj.extensions.has_value()) {
-    jsonWriter.Key("extensions");
-    write(obj.extensions, jsonWriter);
-  }
-
-  if (obj.extras.has_value()) {
-    jsonWriter.Key("extras");
-    write(obj.extras, jsonWriter);
   }
 
   jsonWriter.EndObject();
@@ -379,16 +281,6 @@ void write(
 }
 
 } // namespace
-
-void writeExtension(
-    const Extension& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter) {
-  write(obj, jsonWriter);
-}
-
-void writeExtras(const Extras& obj, CesiumJsonWriter::JsonWriter& jsonWriter) {
-  write(obj, jsonWriter);
-}
 
 void writeAsset(const Asset& obj, CesiumJsonWriter::JsonWriter& jsonWriter) {
   write(obj, jsonWriter);

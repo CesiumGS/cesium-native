@@ -10,10 +10,6 @@
 
 namespace Cesium3DTiles {
 
-void writeExtension(
-    const Extension& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter);
-void writeExtras(const Extras& obj, CesiumJsonWriter::JsonWriter& jsonWriter);
 void writeAsset(const Asset& obj, CesiumJsonWriter::JsonWriter& jsonWriter);
 void writeBoundingVolume(
     const BoundingVolume& obj,

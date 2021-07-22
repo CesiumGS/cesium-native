@@ -4,6 +4,7 @@
 
 #include "Library.h"
 
+#include <CesiumJsonReader/ExtensibleObject.h>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -13,64 +14,44 @@
 
 namespace Cesium3DTiles {
 
-struct CODEGEN_API Extension {
-  static inline constexpr const char* TypeName = "Extension";
-
-  struct CODEGEN_API AdditionalProperty {
-    static inline constexpr const char* TypeName =
-        "Extension::AdditionalProperty";
-  };
-
-  std::unordered_map<std::string, Extension::AdditionalProperty>
-      additionalProperties;
-};
-
-struct CODEGEN_API Extras {
-  static inline constexpr const char* TypeName = "Extras";
-};
-
-struct CODEGEN_API Asset {
+struct CODEGEN_API Asset : public CesiumJsonReader::ExtensibleObject {
   static inline constexpr const char* TypeName = "Asset";
+
+  Asset() : CesiumJsonReader::ExtensibleObject() {}
 
   std::string version;
 
   std::optional<std::string> tilesetVersion;
-
-  std::optional<Extension> extensions;
-
-  std::optional<Extras> extras;
 };
 
-struct CODEGEN_API BoundingVolume {
+struct CODEGEN_API BoundingVolume : public CesiumJsonReader::ExtensibleObject {
   static inline constexpr const char* TypeName = "BoundingVolume";
+
+  BoundingVolume() : CesiumJsonReader::ExtensibleObject() {}
 
   std::optional<std::vector<double>> box;
 
   std::optional<std::vector<double>> region;
 
   std::optional<std::vector<double>> sphere;
-
-  std::optional<Extension> extensions;
-
-  std::optional<Extras> extras;
 };
 
-struct CODEGEN_API Content {
+struct CODEGEN_API Content : public CesiumJsonReader::ExtensibleObject {
   static inline constexpr const char* TypeName = "Content";
+
+  Content() : CesiumJsonReader::ExtensibleObject() {}
 
   std::optional<BoundingVolume> boundingVolume;
 
   std::string uri;
-
-  std::optional<Extension> extensions;
-
-  std::optional<Extras> extras;
 };
 
-struct CODEGEN_API Tile {
+struct CODEGEN_API Tile : public CesiumJsonReader::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tile";
 
   enum class Refine { ADD, REPLACE };
+
+  Tile() : CesiumJsonReader::ExtensibleObject() {}
 
   BoundingVolume boundingVolume;
 
@@ -78,7 +59,7 @@ struct CODEGEN_API Tile {
 
   double geometricError;
 
-  std::optional<Tile::Refine> refine;
+  std::optional<Refine> refine;
 
   std::vector<double> transform =
       {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -86,36 +67,35 @@ struct CODEGEN_API Tile {
   std::optional<Content> content;
 
   std::optional<std::vector<Tile>> children;
-
-  std::optional<Extension> extensions;
-
-  std::optional<Extras> extras;
 };
 
-struct CODEGEN_API TilesetProperties {
+struct CODEGEN_API TilesetProperties
+    : public CesiumJsonReader::ExtensibleObject {
   static inline constexpr const char* TypeName = "TilesetProperties";
+
+  TilesetProperties() : CesiumJsonReader::ExtensibleObject() {}
 
   double maximum;
 
   double minimum;
-
-  std::optional<Extension> extensions;
-
-  std::optional<Extras> extras;
 };
 
-struct CODEGEN_API Tileset {
+struct CODEGEN_API Tileset : public CesiumJsonReader::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tileset";
 
-  struct CODEGEN_API Properties {
-    static inline constexpr const char* TypeName = "Tileset::Properties";
+  struct CODEGEN_API Properties : public CesiumJsonReader::ExtensibleObject {
+    static inline constexpr const char* TypeName = "Properties";
+
+    Properties() : CesiumJsonReader::ExtensibleObject() {}
 
     std::unordered_map<std::string, TilesetProperties> additionalProperties;
   };
 
+  Tileset() : CesiumJsonReader::ExtensibleObject() {}
+
   Asset asset;
 
-  std::optional<Tileset::Properties> properties;
+  std::optional<Properties> properties;
 
   double geometricError;
 
@@ -124,10 +104,6 @@ struct CODEGEN_API Tileset {
   std::optional<std::vector<std::string>> extensionsUsed;
 
   std::optional<std::vector<std::string>> extensionsRequired;
-
-  std::optional<Extension> extensions;
-
-  std::optional<Extras> extras;
 };
 
 } // namespace Cesium3DTiles

@@ -17,6 +17,11 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
+target_link_libraries(
+  Cesium3DTiles
+  INTERFACE CesiumJsonReader
+)
+
 install(TARGETS Cesium3DTiles
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles
