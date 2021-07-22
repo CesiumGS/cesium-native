@@ -147,7 +147,7 @@ void parseFeatureTable(
     CesiumGltf::BufferView& positionsBufferView =
         gltf.bufferViews.emplace_back();
     positionsBufferView.buffer = static_cast<int32_t>(positionsBufferId);
-    positionsBufferView.byteLength = positionsBufferSize;
+    positionsBufferView.byteLength = static_cast<int64_t>(positionsBufferSize);
     positionsBufferView.byteOffset = 0;
     positionsBufferView.byteStride = positionsByteStride;
     positionsBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
@@ -254,7 +254,7 @@ void parseFeatureTable(
     CesiumGltf::BufferView& rotationBufferView =
         gltf.bufferViews.emplace_back();
     rotationBufferView.buffer = static_cast<int32_t>(rotationBufferId);
-    rotationBufferView.byteLength = rotationBufferSize;
+    rotationBufferView.byteLength = static_cast<int64_t>(rotationBufferSize);
     rotationBufferView.byteOffset = 0;
     rotationBufferView.byteStride = rotationByteStride;
     rotationBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
@@ -386,7 +386,7 @@ Instanced3DModelContent::load(
                     featureTableBinaryData);
               }
 
-              return std::move(pResult);
+              return pResult;
             }
 
             return std::unique_ptr<TileContentLoadResult>(nullptr);
