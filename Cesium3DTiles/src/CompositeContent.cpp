@@ -139,11 +139,11 @@ CompositeContent::load(
 
     pos += pInner->byteLength;
 
-    innerTiles.push_back(std::move(TileContentFactory::createContent(
+    innerTiles.push_back(TileContentFactory::createContent(
         asyncSystem,
         pAssetAccessor,
         requestHeaders,
-        derive(input, innerData))));
+        derive(input, innerData)));
   }
 
   return asyncSystem
@@ -182,7 +182,7 @@ CompositeContent::load(
               }
             }
 
-            return std::move(pResult);
+            return pResult;
           });
 }
 
