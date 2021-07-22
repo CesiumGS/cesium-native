@@ -560,6 +560,17 @@ private:
   void upsampleParent(
       std::unordered_set<CesiumGeospatial::Projection>&& projections);
 
+  /**
+   * @brief Initiates loading of any overlays attached to this tile.
+   *
+   * This method should only be called when the tile is in the ContentLoading
+   * state and _rasterTiles is empty.
+   *
+   * @param projections On return the set of projections used by the overlays.
+   */
+  void
+  loadOverlays(std::unordered_set<CesiumGeospatial::Projection>& projections);
+
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;
   Tile* _pParent;

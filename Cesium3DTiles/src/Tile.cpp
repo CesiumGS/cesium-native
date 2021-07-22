@@ -228,11 +228,6 @@ void Tile::loadContent() {
 
   std::unordered_set<CesiumGeospatial::Projection> projections;
 
-  if (tileset.supportsRasterOverlays()) {
-    RasterOverlayCollection& overlays = tileset.getOverlays();
-    mapRasterOverlaysToTile(*this, overlays, projections);
-  }
-
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
 
@@ -245,6 +240,7 @@ void Tile::loadContent() {
       // We can't upsample this tile until its parent tile is done loading.
       if (this->getParent() &&
           this->getParent()->getState() == LoadState::Done) {
+        this->loadOverlays(projections);
         this->upsampleParent(std::move(projections));
       } else {
         // Try again later. Push the parent tile loading along if we can.
@@ -259,6 +255,8 @@ void Tile::loadContent() {
 
     return;
   }
+
+  this->loadOverlays(projections);
 
   struct LoadResult {
     LoadState state;
@@ -576,7 +574,14 @@ void Tile::update(
         this->setState(LoadState::Failed);
         break;
       case FailedTileAction::Retry:
-        this->setState(LoadState::Unloaded);
+        // Technically we don't need to completely unload the tile. We only
+        // need to re-request the tile content. But the transition from
+        // Unloaded -> LoadingContent does other things too (creating raster
+        // overlays for one thing), so we'll call unloadContent to keep our
+        // state machine sane (-ish). Refreshing an ion token could be a bit
+        // faster if we did smarter things here, but it's not worth the
+        // trouble.
+        this->unloadContent();
         break;
       case FailedTileAction::Wait:
         // Do nothing for now.
@@ -879,6 +884,19 @@ void Tile::upsampleParent(
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(LoadState::Failed);
       });
+}
+
+void Tile::loadOverlays(
+    std::unordered_set<CesiumGeospatial::Projection>& projections) {
+  assert(this->_rasterTiles.empty());
+  assert(this->_state == LoadState::ContentLoading);
+
+  Tileset* pTileset = this->getTileset();
+
+  if (pTileset->supportsRasterOverlays()) {
+    RasterOverlayCollection& overlays = pTileset->getOverlays();
+    mapRasterOverlaysToTile(*this, overlays, projections);
+  }
 }
 
 } // namespace Cesium3DTiles
