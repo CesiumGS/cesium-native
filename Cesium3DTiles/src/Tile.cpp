@@ -147,6 +147,10 @@ void mapRasterOverlaysToTile(
       tile.getMappedRasterTiles().emplace_back(
           pRaster);
       projections.insert(pProvider->getProjection());
+
+      if (pRaster->getState() != RasterOverlayTile::LoadState::Placeholder) {
+        pOverlay->getTileProvider()->loadTileThrottled(*pRaster);
+      }
     }
   }
 
