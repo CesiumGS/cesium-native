@@ -339,17 +339,22 @@ static void applyGltfUpTransformToNode(
     break;
   case CesiumGeometry::Axis::Y:
     axisTransform = CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+    break;
+  case CesiumGeometry::Axis::Z:
+    break;
     // no transform required for Axis::Z
   }
 
   // factor in gltf up-axis transform to the top-level nodes in each scene
   for (CesiumGltf::Scene& scene : gltf.scenes) {
     for (const int32_t& nodeId : scene.nodes) {
-      if (nodeId < 0 || nodeId >= gltf.nodes.size()) {
+      if (nodeId < 0 || static_cast<size_t>(nodeId) >= gltf.nodes.size()) {
         continue;
       }
 
-      applyGltfUpTransformToNode(gltf.nodes[nodeId], axisTransform);
+      applyGltfUpTransformToNode(
+          gltf.nodes[static_cast<size_t>(nodeId)],
+          axisTransform);
     }
   }
 
@@ -389,11 +394,11 @@ applyRtcCenterToNode(CesiumGltf::Node& node, const glm::dvec3& rtcCenter) {
   // factor in RTC_CENTER to the top-level nodes in each scene
   for (CesiumGltf::Scene& scene : gltf.scenes) {
     for (const int32_t& nodeId : scene.nodes) {
-      if (nodeId < 0 || nodeId >= gltf.nodes.size()) {
+      if (nodeId < 0 || static_cast<size_t>(nodeId) >= gltf.nodes.size()) {
         continue;
       }
 
-      applyRtcCenterToNode(gltf.nodes[nodeId], rtcCenter);
+      applyRtcCenterToNode(gltf.nodes[static_cast<size_t>(nodeId)], rtcCenter);
     }
   }
 
