@@ -232,9 +232,10 @@ private:
         this->_pSchedulers,
         this->_task.then(
             async::inline_scheduler(),
-            Impl::CatchFunction<Func, T, Scheduler>{
-                scheduler,
-                std::forward<Func>(f)}));
+            Impl::
+                CatchFunction<Func, T, Scheduler, const async::shared_task<T>&>{
+                    scheduler,
+                    std::forward<Func>(f)}));
   }
 
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
