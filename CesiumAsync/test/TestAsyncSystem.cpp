@@ -471,4 +471,23 @@ TEST_CASE("AsyncSystem") {
     CHECK(result[0] == 10);
     CHECK(result[1] == 11);
   }
+
+  SECTION("can catch from shared future") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture.catchImmediately([&executed1](std::exception&& e) {
+      executed1 = true;
+      CHECK(std::string(e.what()) == "reject!!");
+      return 2;
+    });
+
+    promise.reject(std::runtime_error("reject!!"));
+
+    int value1 = one.wait();
+
+    CHECK(executed1);
+    CHECK(value1 == 2);
+  }
 }

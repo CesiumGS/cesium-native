@@ -7,11 +7,16 @@ namespace Impl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
-template <typename Func, typename T, typename Scheduler> struct CatchFunction {
+template <
+    typename Func,
+    typename T,
+    typename Scheduler,
+    typename TaskParameter = async::task<T>&&>
+struct CatchFunction {
   Scheduler& scheduler;
   Func f;
 
-  async::task<T> operator()(async::task<T>&& t) {
+  async::task<T> operator()(TaskParameter t) {
     try {
       return async::make_task(t.get());
     } catch (...) {
@@ -35,12 +40,12 @@ template <typename Func, typename T, typename Scheduler> struct CatchFunction {
   }
 };
 
-template <typename Func, typename Scheduler>
-struct CatchFunction<Func, void, Scheduler> {
+template <typename Func, typename Scheduler, typename TaskParameter>
+struct CatchFunction<Func, void, Scheduler, TaskParameter> {
   Scheduler& scheduler;
   Func f;
 
-  async::task<void> operator()(async::task<void>&& t) {
+  async::task<void> operator()(TaskParameter t) {
     try {
       t.get();
       return async::make_task();
