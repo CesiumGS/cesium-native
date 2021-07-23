@@ -1,5 +1,11 @@
 # Change Log
 
+### Next Release - ?
+
+##### Additions :tada:
+
+* Added `CESIUM_COVERAGE_ENABLED` option to the build system.
+
 ### v0.5.0 - 2021-07-01
 
 ##### Breaking Changes :mega:
