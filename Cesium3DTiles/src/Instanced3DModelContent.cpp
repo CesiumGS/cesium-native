@@ -74,9 +74,9 @@ void parseFeatureTable(
 
   size_t translationAccessorId = 0;
   size_t rotationsAccessorId = 0;
-  // size_t scalesAccessorId = 0;
+  size_t scalesAccessorId = 0;
 
-  // TODO: CATCH CASES WITH ILL FORMED I3DM
+  // TODO: CATCH CORNER CASES WITH ILL FORMED I3DM
 
   uint32_t positionsOffset = 0;
   bool usingPositions = false;
@@ -273,11 +273,83 @@ void parseFeatureTable(
     rotationAccessor.type = CesiumGltf::Accessor::Type::VEC4;
   }
 
+  uint32_t scaleOffset = 0;
+
+  bool usingScale = false;
+  bool usingNonUniformedScale = false;
+
+  auto scaleIt = document.FindMember("SCALE");
+  auto nonUniformScaleIt = document.FindMember("SCALE_NON_UNIFORM");
+
+  if (scaleIt != document.MemberEnd() && scaleIt->value.IsObject()) {
+    auto scaleOffsetIt = scaleIt->value.FindMember("byteOffset");
+
+    if (scaleOffsetIt != document.MemberEnd() &&
+        scaleOffsetIt->value.GetUint()) {
+      usingScale = true;
+      scaleOffset = scaleOffsetIt->value.GetUint();
+    }
+  } else if (
+      nonUniformScaleIt != document.MemberEnd() &&
+      nonUniformScaleIt->value.IsObject()) {
+    auto scaleOffsetIt = nonUniformScaleIt->value.FindMember("byteOffset");
+
+    if (scaleOffsetIt != document.MemberEnd() &&
+        scaleOffsetIt->value.GetUint()) {
+      usingScale = true;
+      usingNonUniformedScale = true;
+      scaleOffset = scaleOffsetIt->value.GetUint();
+    }
+  }
+
+  if (usingScale) {
+    size_t scaleByteStride = sizeof(glm::vec3);
+    size_t scaleBufferSize = instancesLength * scaleByteStride;
+
+    size_t scaleBufferId = gltf.buffers.size();
+    CesiumGltf::Buffer& scaleBuffer = gltf.buffers.emplace_back();
+    scaleBuffer.byteLength = static_cast<int64_t>(scaleBufferSize);
+    scaleBuffer.cesium.data.resize(scaleBufferSize);
+
+    if (usingNonUniformedScale) {
+      std::memcpy(
+          scaleBuffer.cesium.data.data(),
+          featureTableBinaryData.data() + scaleOffset,
+          scaleBufferSize);
+    } else {
+      gsl::span<glm::vec3> scaleSpan(
+          reinterpret_cast<glm::vec3*>(scaleBuffer.cesium.data.data()),
+          instancesLength);
+      for (size_t i = 0; i < instancesLength; ++i) {
+        const float& scale = *reinterpret_cast<const float*>(
+            featureTableBinaryData.data() + scaleOffset + i * sizeof(float));
+        scaleSpan[i] = glm::vec3(scale, scale, scale);
+      }
+    }
+
+    size_t scaleBufferViewId = gltf.bufferViews.size();
+    CesiumGltf::BufferView& scaleBufferView = gltf.bufferViews.emplace_back();
+    scaleBufferView.buffer = static_cast<int32_t>(scaleBufferId);
+    scaleBufferView.byteLength = static_cast<int64_t>(scaleBufferSize);
+    scaleBufferView.byteOffset = 0;
+    scaleBufferView.byteStride = static_cast<int64_t>(scaleByteStride);
+    scaleBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+    scalesAccessorId = gltf.accessors.size();
+    CesiumGltf::Accessor& scaleAccessor = gltf.accessors.emplace_back();
+    scaleAccessor.bufferView = static_cast<int32_t>(scaleBufferViewId);
+    scaleAccessor.byteOffset = 0;
+    scaleAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+    scaleAccessor.count = instancesLength;
+    scaleAccessor.type = CesiumGltf::Accessor::Type::VEC3;
+  }
+
+  // TODO: parse batch id / batch table
+
   gltf.extensionsUsed.push_back("EXT_mesh_gpu_instancing");
   gltf.extensionsRequired.push_back("EXT_mesh_gpu_instancing");
 
   for (CesiumGltf::Node& node : gltf.nodes) {
-
     CesiumGltf::EXT_mesh_gpu_instancing instancingExtension;
     instancingExtension.attributes.emplace(
         "TRANSLATION",
@@ -285,6 +357,9 @@ void parseFeatureTable(
     instancingExtension.attributes.emplace(
         "ROTATION",
         static_cast<int32_t>(rotationsAccessorId));
+    instancingExtension.attributes.emplace(
+        "SCALE",
+        static_cast<int32_t>(scalesAccessorId));
 
     node.extensions.emplace("EXT_mesh_gpu_instancing", instancingExtension);
   }
