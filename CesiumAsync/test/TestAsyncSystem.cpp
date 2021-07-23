@@ -202,6 +202,21 @@ TEST_CASE("AsyncSystem") {
     CHECK(future.wait() == 2);
   }
 
+  SECTION("catch may chain to another futre") {
+    auto future = asyncSystem
+                      .createFuture<int>([](const auto& promise) {
+                        promise.reject(std::runtime_error("test"));
+                      })
+                      .catchInMainThread(
+                          [asyncSystem](std::exception&& e) -> Future<int> {
+                            CHECK(std::string(e.what()) == "test");
+                            return asyncSystem.createResolvedFuture(2);
+                          });
+
+    asyncSystem.dispatchOneMainThreadTask();
+    CHECK(future.wait() == 2);
+  }
+
   SECTION("then after returning catch is invoked") {
     auto future = asyncSystem
                       .createFuture<int>([](const auto& promise) {
