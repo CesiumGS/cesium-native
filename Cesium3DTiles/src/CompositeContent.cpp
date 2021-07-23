@@ -59,6 +59,7 @@ TileContentLoadInput derive(
       input.tileRefine,
       input.tileGeometricError,
       input.tileTransform,
+      input.gltfUpAxis,
       input.contentOptions);
 }
 } // namespace

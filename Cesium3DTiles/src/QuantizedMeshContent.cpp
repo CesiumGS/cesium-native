@@ -1,4 +1,5 @@
 #include "QuantizedMeshContent.h"
+#include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/Tile.h"
 #include "Cesium3DTiles/Tileset.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
@@ -1146,23 +1147,8 @@ QuantizedMeshContent::load(
   model.nodes.emplace_back();
   CesiumGltf::Node& node = model.nodes[0];
   node.mesh = 0;
-  node.matrix = {
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      -1.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      center.x,
-      center.z,
-      -center.y,
-      1.0};
+
+  GltfContent::applyRtcCenterToNodes(model, center);
 
   pResult->updatedBoundingVolume =
       BoundingRegion(rectangle, minimumHeight, maximumHeight);

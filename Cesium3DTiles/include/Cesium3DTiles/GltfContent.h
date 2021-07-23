@@ -8,9 +8,12 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumGeometry/Axis.h"
 #include "CesiumGltf/GltfReader.h"
+#include "CesiumGltf/Model.h"
 #include <cstddef>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <gsl/span>
 #include <spdlog/fwd.h>
 
@@ -72,6 +75,32 @@ public:
       uint32_t textureCoordinateID,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
+
+  /**
+   * @brief Apply the transform to nodes so that the up-axis of the given model
+   * is the Z-axis.
+   *
+   * By default, the up-axis of a glTF model will the the Y-axis.
+   *
+   * Depending on whether this value is CesiumGeometry::Axis::X, Y, or Z,
+   * the given matrix will be multiplied with a matrix that converts the
+   * respective axis to be the Z-axis, as required by the 3D Tiles standard.
+   *
+   * @param gltf The glTF model
+   * @param gltfUpAxis The matrix that will be multiplied with the transform
+   */
+  static void applyGltfUpTransformToNodes(
+      CesiumGltf::Model& gltf,
+      const CesiumGeometry::Axis& gltfUpAxis);
+
+  /**
+   * Propagate the RTC_CENTER translation to the top-level nodes in each scene.
+   *
+   * @param gltf The glTF model.
+   * @param rtcCenter The RTC_CENTER translation to apply.
+   */
+  static void
+  applyRtcCenterToNodes(CesiumGltf::Model& gltf, const glm::dvec3& rtcCenter);
 
 private:
   static CesiumGltf::GltfReader _gltfReader;

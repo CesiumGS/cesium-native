@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "Cesium3DTiles/TilesetOptions.h"
+#include "CesiumGeometry/Axis.h"
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -75,6 +76,8 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @param tileRefine The {@link TileRefine} strategy
    * @param tileGeometricError The geometric error of the tile
    * @param tileTransform The tile transform
+   * @param gltfUpAxis The up axis for the gltf.
+   * @param contentOptions Misceleneous options to control content parsing.
    */
   TileContentLoadInput(
       const std::shared_ptr<spdlog::logger> pLogger,
@@ -87,6 +90,7 @@ struct CESIUM3DTILES_API TileContentLoadInput {
       TileRefine tileRefine,
       double tileGeometricError,
       const glm::dmat4& tileTransform,
+      const CesiumGeometry::Axis& gltfUpAxis,
       const TilesetContentOptions& contentOptions);
 
   /**
@@ -150,6 +154,11 @@ struct CESIUM3DTILES_API TileContentLoadInput {
    * @brief The tile transform
    */
   glm::dmat4 tileTransform;
+
+  /**
+   * @brief The up axis for the gltf.
+   */
+  CesiumGeometry::Axis gltfUpAxis;
 
   /**
    * @brief Options for parsing content and creating Gltf models.

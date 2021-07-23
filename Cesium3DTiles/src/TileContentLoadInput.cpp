@@ -16,6 +16,7 @@ TileContentLoadInput::TileContentLoadInput(
       tileRefine(tile_.getRefine()),
       tileGeometricError(tile_.getGeometricError()),
       tileTransform(tile_.getTransform()),
+      gltfUpAxis(tile_.getContext()->pTileset->getGltfUpAxis()),
       contentOptions(
           tile_.getContext()->pTileset->getOptions().contentOptions) {}
 
@@ -35,6 +36,7 @@ TileContentLoadInput::TileContentLoadInput(
       tileRefine(tile_.getRefine()),
       tileGeometricError(tile_.getGeometricError()),
       tileTransform(tile_.getTransform()),
+      gltfUpAxis(tile_.getContext()->pTileset->getGltfUpAxis()),
       contentOptions(
           tile_.getContext()->pTileset->getOptions().contentOptions) {}
 
@@ -49,6 +51,7 @@ TileContentLoadInput::TileContentLoadInput(
     TileRefine tileRefine_,
     double tileGeometricError_,
     const glm::dmat4& tileTransform_,
+    const CesiumGeometry::Axis& gltfUpAxis_,
     const TilesetContentOptions& contentOptions_)
     : pLogger(pLogger_),
       data(data_),
@@ -60,4 +63,5 @@ TileContentLoadInput::TileContentLoadInput(
       tileRefine(tileRefine_),
       tileGeometricError(tileGeometricError_),
       tileTransform(tileTransform_),
+      gltfUpAxis(gltfUpAxis_),
       contentOptions(contentOptions_) {}

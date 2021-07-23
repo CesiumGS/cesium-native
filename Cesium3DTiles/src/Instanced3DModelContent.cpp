@@ -3,6 +3,7 @@
 #include "Cesium3DTiles/spdlog-cesium.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumGeometry/Axis.h"
 #include "CesiumGltf/EXT_mesh_gpu_instancing.h"
 #include "CesiumUtility/JsonValue.h"
 #include "CesiumUtility/Uri.h"
@@ -30,6 +31,7 @@ namespace {
 void parseFeatureTable(
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumGltf::Model& gltf,
+    const CesiumGeometry::Axis& gltfUpAxis,
     const gsl::span<const std::byte>& featureTableJsonData,
     const gsl::span<const std::byte>& featureTableBinaryData) {
 
@@ -47,16 +49,19 @@ void parseFeatureTable(
     return;
   }
 
+  GltfContent::applyGltfUpTransformToNodes(gltf, gltfUpAxis);
+
   auto rtcIt = document.FindMember("RTC_CENTER");
   if (rtcIt != document.MemberEnd() && rtcIt->value.IsArray() &&
       rtcIt->value.Size() == 3 && rtcIt->value[0].IsDouble() &&
       rtcIt->value[1].IsDouble() && rtcIt->value[2].IsDouble()) {
-    // Add the RTC_CENTER value to the glTF itself.
     rapidjson::Value& rtcValue = rtcIt->value;
-    gltf.extras["RTC_CENTER"] = {
+    glm::dvec3 rtcCenter(
         rtcValue[0].GetDouble(),
         rtcValue[1].GetDouble(),
-        rtcValue[2].GetDouble()};
+        rtcValue[2].GetDouble());
+
+    GltfContent::applyRtcCenterToNodes(gltf, rtcCenter);
   }
 
   uint32_t instancesLength = 0;
@@ -343,6 +348,7 @@ Instanced3DModelContent::load(
       parseFeatureTable(
           pLogger,
           gltf,
+          input.gltfUpAxis,
           featureTableJsonData,
           featureTableBinaryData);
     }
@@ -366,6 +372,7 @@ Instanced3DModelContent::load(
       .thenInWorkerThread(
           [pLogger,
            externalGltfUri,
+           gltfUpAxis = input.gltfUpAxis,
            featureTableJsonData,
            featureTableBinaryData](
               const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest) {
@@ -382,6 +389,7 @@ Instanced3DModelContent::load(
                 parseFeatureTable(
                     pLogger,
                     *pResult->model,
+                    gltfUpAxis,
                     featureTableJsonData,
                     featureTableBinaryData);
               }

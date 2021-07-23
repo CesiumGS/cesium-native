@@ -40,6 +40,7 @@ namespace {
 void parseFeatureTableJsonData(
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumGltf::Model& gltf,
+    const CesiumGeometry::Axis& gltfUpAxis,
     const gsl::span<const std::byte>& featureTableJsonData) {
   rapidjson::Document document;
   document.Parse(
@@ -55,16 +56,19 @@ void parseFeatureTableJsonData(
     return;
   }
 
+  GltfContent::applyGltfUpTransformToNodes(gltf, gltfUpAxis);
+
   auto rtcIt = document.FindMember("RTC_CENTER");
   if (rtcIt != document.MemberEnd() && rtcIt->value.IsArray() &&
       rtcIt->value.Size() == 3 && rtcIt->value[0].IsDouble() &&
       rtcIt->value[1].IsDouble() && rtcIt->value[2].IsDouble()) {
-    // Add the RTC_CENTER value to the glTF itself.
     rapidjson::Value& rtcValue = rtcIt->value;
-    gltf.extras["RTC_CENTER"] = {
+    glm::dvec3 rtcCenter(
         rtcValue[0].GetDouble(),
         rtcValue[1].GetDouble(),
-        rtcValue[2].GetDouble()};
+        rtcValue[2].GetDouble());
+
+    GltfContent::applyRtcCenterToNodes(gltf, rtcCenter);
   }
 }
 
@@ -77,11 +81,12 @@ Batched3DModelContent::load(
     const std::vector<std::pair<std::string, std::string>>& /*requestHeaders*/,
     const TileContentLoadInput& input) {
   return asyncSystem.createResolvedFuture(
-      load(input.pLogger, input.url, input.data));
+      load(input.pLogger, input.gltfUpAxis, input.url, input.data));
 }
 
 std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
     const std::shared_ptr<spdlog::logger>& pLogger,
+    const CesiumGeometry::Axis& gltfUpAxis,
     const std::string& url,
     const gsl::span<const std::byte>& data) {
   // TODO: actually use the b3dm payload
@@ -179,7 +184,7 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
     CesiumGltf::Model& gltf = pResult->model.value();
     gsl::span<const std::byte> featureTableJsonData =
         data.subspan(headerLength, header.featureTableJsonByteLength);
-    parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
+    parseFeatureTableJsonData(pLogger, gltf, gltfUpAxis, featureTableJsonData);
   }
 
   return pResult;

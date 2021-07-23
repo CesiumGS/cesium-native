@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/TileID.h"
 #include "Cesium3DTiles/TileRefine.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumGeometry/Axis.h"
 #include <cstddef>
 #include <memory>
 #include <spdlog/fwd.h>
@@ -46,6 +47,7 @@ private:
    */
   static std::unique_ptr<TileContentLoadResult> load(
       const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumGeometry::Axis& gltfUpAxis,
       const std::string& url,
       const gsl::span<const std::byte>& data);
 };

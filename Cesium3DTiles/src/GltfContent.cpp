@@ -1,11 +1,33 @@
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
+#include <glm/gtc/quaternion.hpp>
 #include <stdexcept>
+
+namespace {
+static constexpr std::array<double, 16> IDENTITY_MATRIX = {
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0};
+} // namespace
 
 namespace Cesium3DTiles {
 
@@ -281,4 +303,103 @@ GltfContent::createRasterOverlayTextureCoordinates(
       maximumHeight);
 }
 
+static void applyGltfUpTransformToNode(
+    CesiumGltf::Node& node,
+    const glm::dmat4& axisTransform) {
+
+  std::vector<double>& matrix = node.matrix;
+
+  if (matrix.size() == 16 &&
+      !std::equal(matrix.begin(), matrix.end(), IDENTITY_MATRIX.begin())) {
+    glm::dmat4& nodeMatrix = *reinterpret_cast<glm::dmat4*>(matrix.data());
+    nodeMatrix = axisTransform * nodeMatrix;
+
+  } else if (node.rotation.size() == 4) {
+    glm::dquat axisRotation = glm::dquat(glm::dmat3(axisTransform));
+    glm::dquat& nodeRotation =
+        *reinterpret_cast<glm::dquat*>(node.rotation.data());
+    // quaternion rotation order
+    // TODO: does this work??
+    nodeRotation *= axisRotation;
+  } else {
+    matrix.resize(16);
+    *reinterpret_cast<glm::dmat4*>(matrix.data()) = axisTransform;
+  }
+}
+
+/*static*/ void GltfContent::applyGltfUpTransformToNodes(
+    CesiumGltf::Model& gltf,
+    const CesiumGeometry::Axis& gltfUpAxis) {
+
+  glm::dmat4 axisTransform(1.0);
+
+  switch (gltfUpAxis) {
+  case CesiumGeometry::Axis::X:
+    axisTransform = CesiumGeometry::AxisTransforms::X_UP_TO_Z_UP;
+    break;
+  case CesiumGeometry::Axis::Y:
+    axisTransform = CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+    // no transform required for Axis::Z
+  }
+
+  // factor in gltf up-axis transform to the top-level nodes in each scene
+  for (CesiumGltf::Scene& scene : gltf.scenes) {
+    for (const int32_t& nodeId : scene.nodes) {
+      if (nodeId < 0 || nodeId >= gltf.nodes.size()) {
+        continue;
+      }
+
+      applyGltfUpTransformToNode(gltf.nodes[nodeId], axisTransform);
+    }
+  }
+
+  // if there are no scenes, assume the first node is the root
+  if (gltf.scenes.empty() && !gltf.nodes.empty()) {
+    applyGltfUpTransformToNode(gltf.nodes[0], axisTransform);
+  }
+}
+
+static void
+applyRtcCenterToNode(CesiumGltf::Node& node, const glm::dvec3& rtcCenter) {
+
+  std::vector<double>& matrix = node.matrix;
+
+  if (matrix.size() == 16 &&
+      !std::equal(matrix.begin(), matrix.end(), IDENTITY_MATRIX.begin())) {
+    matrix[12] += rtcCenter.x;
+    matrix[13] += rtcCenter.y;
+    matrix[14] += rtcCenter.z;
+
+  } else if (node.translation.size() == 3) {
+    node.translation[0] += rtcCenter.x;
+    node.translation[1] += rtcCenter.y;
+    node.translation[2] += rtcCenter.z;
+  } else {
+    matrix.resize(16);
+    glm::dmat4& nodeTransform = *reinterpret_cast<glm::dmat4*>(matrix.data());
+    nodeTransform = glm::dmat4(1.0);
+    nodeTransform[3] = glm::dvec4(rtcCenter, 1.0);
+  }
+}
+
+/*static*/ void GltfContent::applyRtcCenterToNodes(
+    CesiumGltf::Model& gltf,
+    const glm::dvec3& rtcCenter) {
+
+  // factor in RTC_CENTER to the top-level nodes in each scene
+  for (CesiumGltf::Scene& scene : gltf.scenes) {
+    for (const int32_t& nodeId : scene.nodes) {
+      if (nodeId < 0 || nodeId >= gltf.nodes.size()) {
+        continue;
+      }
+
+      applyRtcCenterToNode(gltf.nodes[nodeId], rtcCenter);
+    }
+  }
+
+  // if there are no scenes, assume the first node is the root
+  if (gltf.scenes.empty() && !gltf.nodes.empty()) {
+    applyRtcCenterToNode(gltf.nodes[0], rtcCenter);
+  }
+}
 } // namespace Cesium3DTiles
