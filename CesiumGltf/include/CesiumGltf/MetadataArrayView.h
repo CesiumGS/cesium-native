@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/PropertyType.h"
+#include "CesiumUtility/SpanHelper.h"
 #include <cassert>
 #include <cstddef>
 #include <gsl/span>
@@ -10,8 +11,7 @@ template <typename ElementType> class MetadataArrayView {
 public:
   MetadataArrayView(const gsl::span<const std::byte>& buffer)
       : _valueBuffer{
-            reinterpret_cast<const ElementType*>(buffer.data()),
-            buffer.size() / sizeof(ElementType)} {}
+            CesiumUtility::ReintepretCastSpan<const ElementType>(buffer)} {}
 
   const ElementType& operator[](int64_t index) const {
     return _valueBuffer[index];
