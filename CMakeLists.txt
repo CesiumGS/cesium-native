@@ -8,7 +8,7 @@ project(cesium-native
 
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
-option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" ON)
+option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
 
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
