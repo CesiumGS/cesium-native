@@ -242,11 +242,10 @@ private:
   template <typename T>
   MetadataArrayView<T> getNumericArray(int64_t instance) const {
     if (_componentCount > 0) {
-      gsl::span<const T> vals(
-          reinterpret_cast<const T*>(
-              _valueBuffer.data() + instance * _componentCount * sizeof(T)),
-          _componentCount);
-      return MetadataArrayView{vals};
+      gsl::span<const std::byte> vals(
+          _valueBuffer.data() + instance * _componentCount * sizeof(T),
+          _componentCount * sizeof(T));
+      return MetadataArrayView<T>{vals};
     }
 
     size_t currentOffset =
@@ -255,10 +254,10 @@ private:
         instance + 1,
         _arrayOffsetBuffer,
         _offsetType);
-    gsl::span<const T> vals(
-        reinterpret_cast<const T*>(_valueBuffer.data() + currentOffset),
-        (nextOffset - currentOffset) / sizeof(T));
-    return MetadataArrayView{vals};
+    gsl::span<const std::byte> vals(
+        _valueBuffer.data() + currentOffset,
+        (nextOffset - currentOffset));
+    return MetadataArrayView<T>{vals};
   }
 
   MetadataArrayView<std::string_view> getStringArray(int64_t instance) const {

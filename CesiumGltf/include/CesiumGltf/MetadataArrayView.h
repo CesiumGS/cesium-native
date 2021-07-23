@@ -8,8 +8,10 @@
 namespace CesiumGltf {
 template <typename ElementType> class MetadataArrayView {
 public:
-  MetadataArrayView(const gsl::span<const ElementType>& buffer)
-      : _valueBuffer{buffer} {}
+  MetadataArrayView(const gsl::span<const std::byte>& buffer)
+      : _valueBuffer{
+            reinterpret_cast<const ElementType*>(buffer.data()),
+            buffer.size() / sizeof(ElementType)} {}
 
   const ElementType& operator[](int64_t index) const {
     return _valueBuffer[index];
