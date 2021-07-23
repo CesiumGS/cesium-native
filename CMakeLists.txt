@@ -17,23 +17,15 @@ endif()
 # Add Modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 
-if (CESIUM_COVERAGE_ENABLED)
-    # Add a coverage target iff:
-    # - gcovr is available
-    # - g++ is the active compiler.
-    # This branch must occur before adding other targets, or gcovr
-    # won't be able to inject the necessary coverage information.
-    find_program(_gcovr "gcovr")
-    if(CMAKE_COMPILER_IS_GNUCXX AND _gcovr)
-        include(CodeCoverage)
-        append_coverage_compiler_flags()
-        setup_target_for_coverage_gcovr_html(
-            NAME cesium-native-tests-coverage
-            EXECUTABLE ctest -j ${PROCESSOR_COUNT}
-            EXCLUDE "${PROJECT_SOURCE_DIR}/extern/*" "${PROJECT_BINARY_DIR}"
-            DEPENDENCIES cesium-native-tests
-        )
-    endif()
+if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
+    include(CodeCoverage)
+    append_coverage_compiler_flags()
+    setup_target_for_coverage_gcovr_html(
+        NAME cesium-native-tests-coverage
+        EXECUTABLE ctest -j ${PROCESSOR_COUNT}
+        EXCLUDE "${PROJECT_SOURCE_DIR}/extern/*" "${PROJECT_BINARY_DIR}"
+        DEPENDENCIES cesium-native-tests
+    )
 endif()
 
 if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
