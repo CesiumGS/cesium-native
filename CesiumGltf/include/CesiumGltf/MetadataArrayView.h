@@ -11,7 +11,7 @@ template <typename ElementType> class MetadataArrayView {
 public:
   MetadataArrayView(const gsl::span<const std::byte>& buffer)
       : _valueBuffer{
-            CesiumUtility::ReintepretCastSpan<const ElementType>(buffer)} {}
+            CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
   const ElementType& operator[](int64_t index) const {
     return _valueBuffer[index];

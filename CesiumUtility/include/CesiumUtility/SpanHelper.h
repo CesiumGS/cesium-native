@@ -10,7 +10,7 @@ namespace CesiumUtility {
  * carefully
  */
 template <typename To, typename From>
-gsl::span<To> ReintepretCastSpan(const gsl::span<From>& from) {
+gsl::span<To> reintepretCastSpan(const gsl::span<From>& from) {
   return gsl::span<To>(
       reinterpret_cast<To*>(from.data()),
       from.size() * sizeof(From) / sizeof(To));

@@ -2,7 +2,7 @@
 #include "catch2/catch.hpp"
 #include <vector>
 
-TEST_CASE("Test ReintepretCastSpan") {
+TEST_CASE("reintepretCastSpan") {
   std::vector<std::byte> data(7 * sizeof(float));
   float* value = reinterpret_cast<float*>(data.data());
   value[0] = 0.0f;
@@ -15,7 +15,7 @@ TEST_CASE("Test ReintepretCastSpan") {
 
   gsl::span<std::byte> byteView(data.data(), data.size());
   gsl::span<float> floatView =
-      CesiumUtility::ReintepretCastSpan<float>(byteView);
+      CesiumUtility::reintepretCastSpan<float>(byteView);
   REQUIRE(floatView.size() == 7);
   REQUIRE(floatView[0] == 0.0f);
   REQUIRE(floatView[1] == 2.5f);
@@ -24,4 +24,12 @@ TEST_CASE("Test ReintepretCastSpan") {
   REQUIRE(floatView[4] == 0.7f);
   REQUIRE(floatView[5] == 1.0f);
   REQUIRE(floatView[6] == 2.9f);
+
+  std::vector<int32_t> intData{1, -1};
+  gsl::span<int32_t> intSpan = intData;
+  gsl::span<uint32_t> uintSpan =
+      CesiumUtility::reintepretCastSpan<uint32_t>(intSpan);
+  REQUIRE(uintSpan.size() == 2);
+  REQUIRE(uintSpan[0] == 1);
+  REQUIRE(uintSpan[1] == uint32_t(-1));
 }
