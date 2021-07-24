@@ -1296,6 +1296,12 @@ void upgradeBatchTableToFeatureMetadata(
        propertyIt != batchTableJson.MemberEnd();
        ++propertyIt) {
     std::string name = propertyIt->name.GetString();
+
+    // Don't interpret extensions or extras as a property.
+    if (name == "extensions" || name == "extras") {
+      continue;
+    }
+
     ClassProperty& classProperty =
         classDefinition.properties.emplace(name, ClassProperty()).first->second;
     classProperty.name = name;
