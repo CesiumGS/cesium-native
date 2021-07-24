@@ -8,6 +8,7 @@
 
 ##### Additions :tada:
 
+- Added `CESIUM_COVERAGE_ENABLED` option to the build system.
 - Added `AsyncSystem::dispatchOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
 - Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.
 
@@ -19,15 +20,15 @@
 
 ##### Breaking Changes :mega:
 
-* `TilesetExternals` now has an `AsyncSystem` instead of a shared pointer to an `ITaskProcessor`.
+- `TilesetExternals` now has an `AsyncSystem` instead of a shared pointer to an `ITaskProcessor`.
 
 ##### Additions :tada:
 
-* Added a performance tracing framework via `CESIUM_TRACE_*` macros.
-* Added `Future<T>::thenImmediately`.
-* Added `AsyncSystem::createThreadPool` and `Future<T>::thenInThreadPool`.
-* `Future<T>::thenInWorkerThread` and `Future<T>::thenInMainThread` now arrange for their continuations to be executed immediately when the Future is resolved, if the Future is resolved in the correct thread.
-* Moved all request cache database access to a dedicated thread, in order to free up worker threads for parallelizable work.
+- Added a performance tracing framework via `CESIUM_TRACE_*` macros.
+- Added `Future<T>::thenImmediately`.
+- Added `AsyncSystem::createThreadPool` and `Future<T>::thenInThreadPool`.
+- `Future<T>::thenInWorkerThread` and `Future<T>::thenInMainThread` now arrange for their continuations to be executed immediately when the Future is resolved, if the Future is resolved in the correct thread.
+- Moved all request cache database access to a dedicated thread, in order to free up worker threads for parallelizable work.
 
 ### v0.4.0 - 2021-06-01
 
@@ -59,8 +60,8 @@
   `CesiumGltf::writeModelAsEmbeddedBytes` and `CesiumGltf::writeModelAndExternalfiles`
   now use this struct for configuration.
 - Removed all exceptions in `WriterException.h`, warnings / errors are now reported in
- `WriteModelResult`, which is returned from `CesiumGltf::writeModelAsEmbeddedBytes` and
- `CesiumGltf::writeModelAndExternalFiles` instead.
+  `WriteModelResult`, which is returned from `CesiumGltf::writeModelAsEmbeddedBytes` and
+  `CesiumGltf::writeModelAndExternalFiles` instead.
 
 ##### Additions :tada:
 
