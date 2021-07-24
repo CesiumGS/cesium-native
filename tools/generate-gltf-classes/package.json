@@ -4,8 +4,8 @@
   "description": "Generate CesiumGltf C++ classes from the glTF spec.",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js --schema https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/2.0/schema/ --output test_output/model --readerOutput test_output/reader --extensions https://raw.githubusercontent.com/KhronosGroup/glTF/master/extensions/2.0/ --config glTF.json",
-    "generate": "node index.js --schema https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/2.0/schema/ --output ../../CesiumGltf --readerOutput ../../CesiumGltfReader --extensions https://raw.githubusercontent.com/KhronosGroup/glTF/master/extensions/2.0/ --config glTF.json"
+    "test": "node index.js --schema https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/specification/2.0/schema/ --output test_output/model --readerOutput test_output/reader --extensions https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/extensions/2.0/ --config glTF.json",
+    "generate": "node index.js --schema https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/specification/2.0/schema/ --output ../../CesiumGltf --readerOutput ../../CesiumGltfReader --extensions https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/extensions/2.0/ --config glTF.json"
   },
   "author": "CesiumGS, Inc.",
   "license": "UNLICENSED",

@@ -9,7 +9,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Sampler;
 
 class SamplerJsonHandler : public NamedObjectJsonHandler {
 public:

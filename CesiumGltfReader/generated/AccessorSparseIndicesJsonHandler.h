@@ -9,7 +9,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct AccessorSparseIndices;
 
 class AccessorSparseIndicesJsonHandler : public ExtensibleObjectJsonHandler {
 public:
