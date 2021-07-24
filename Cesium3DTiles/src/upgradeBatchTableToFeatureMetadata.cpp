@@ -5,6 +5,7 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
+#include "CesiumUtility/Tracing.h"
 #include <glm/glm.hpp>
 #include <map>
 #include <rapidjson/document.h>
@@ -1241,6 +1242,8 @@ void upgradeBatchTableToFeatureMetadata(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData) {
+
+  CESIUM_TRACE("upgradeBatchTableToFeatureMetadata");
 
   // Check to make sure a char of rapidjson is 1 byte
   static_assert(
