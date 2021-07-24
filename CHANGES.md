@@ -8,6 +8,8 @@
 
 ##### Additions :tada:
 
+- Added support for the `EXT_feature_metadata` glTF extension.
+- Added automatic conversion of the B3DM batch table to the `EXT_feature_metadata` extension.
 - Added `CESIUM_COVERAGE_ENABLED` option to the build system.
 - Added `AsyncSystem::dispatchOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
 - Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.

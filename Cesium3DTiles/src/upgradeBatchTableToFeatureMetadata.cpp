@@ -5,6 +5,7 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
+#include "CesiumUtility/Tracing.h"
 #include <glm/glm.hpp>
 #include <map>
 #include <rapidjson/document.h>
@@ -1242,6 +1243,8 @@ void upgradeBatchTableToFeatureMetadata(
     const rapidjson::Document& batchTableJson,
     const gsl::span<const std::byte>& batchTableBinaryData) {
 
+  CESIUM_TRACE("upgradeBatchTableToFeatureMetadata");
+
   // Check to make sure a char of rapidjson is 1 byte
   static_assert(
       sizeof(rapidjson::Value::Ch) == 1,
@@ -1293,6 +1296,12 @@ void upgradeBatchTableToFeatureMetadata(
        propertyIt != batchTableJson.MemberEnd();
        ++propertyIt) {
     std::string name = propertyIt->name.GetString();
+
+    // Don't interpret extensions or extras as a property.
+    if (name == "extensions" || name == "extras") {
+      continue;
+    }
+
     ClassProperty& classProperty =
         classDefinition.properties.emplace(name, ClassProperty()).first->second;
     classProperty.name = name;
