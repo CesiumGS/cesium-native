@@ -62,7 +62,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {}
 
-std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
+std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError) {
@@ -71,11 +71,11 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       targetGeometricError);
 }
 
-std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>>
+std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
-  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>> result;
+  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> result;
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
@@ -333,7 +333,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
       CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
 
-      CesiumAsync::SharedFuture<LoadedRasterOverlayImage> pTile =
+      CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
 
       // if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
@@ -378,7 +378,7 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   return static_cast<uint32_t>(rounded);
 }
 
-CesiumAsync::SharedFuture<LoadedRasterOverlayImage>
+CesiumAsync::SharedFuture<LoadedQuadtreeImage>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID) {
   auto it = this->_tileCache.find(tileID);
@@ -386,7 +386,42 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     return it->second;
   }
 
-  Future<LoadedRasterOverlayImage> future = this->loadQuadtreeTileImage(tileID);
+  Future<LoadedQuadtreeImage> future =
+      this->loadQuadtreeTileImage(tileID)
+          .catchImmediately([](std::exception&& e) {
+            // Turn an exception into an error.
+            LoadedRasterOverlayImage result;
+            result.errors.emplace_back(e.what());
+            return result;
+          })
+          .thenInMainThread([tileID, this](LoadedRasterOverlayImage&& loaded) {
+            if (loaded.image && loaded.errors.empty() &&
+                loaded.image->width > 0 && loaded.image->height > 0) {
+              // Successfully loaded, continue.
+              return this->getAsyncSystem().createResolvedFuture(
+                  LoadedQuadtreeImage(std::move(loaded)));
+            }
+
+            // Tile failed to load, try loading the parent tile instead.
+            if (tileID.level > this->getMinimumLevel()) {
+              QuadtreeTileID parentID(
+                  tileID.level - 1,
+                  tileID.x >> 1,
+                  tileID.y >> 1);
+              return this->getQuadtreeTile(parentID).thenImmediately(
+                  [rectangle =
+                       loaded.rectangle](const LoadedQuadtreeImage& image) {
+                    // TODO: can we avoid copying the image data?
+                    LoadedQuadtreeImage newImage(image);
+                    newImage.subset = rectangle;
+                    return newImage;
+                  });
+            }
+
+            // No parent available, so return the original failed result.
+            return this->getAsyncSystem().createResolvedFuture(
+                LoadedQuadtreeImage(std::move(loaded)));
+          });
   return this->_tileCache.emplace(tileID, std::move(future).share())
       .first->second;
 }
@@ -683,11 +718,11 @@ struct CombinedImageMeasurements {
 
 CombinedImageMeasurements measureCombinedImage(
     const Rectangle& targetRectangle,
-    const std::vector<LoadedRasterOverlayImage>& images) {
+    const std::vector<LoadedQuadtreeImage>& images) {
   auto it = std::find_if(
       images.begin(),
       images.end(),
-      [](const LoadedRasterOverlayImage& loaded) {
+      [](const LoadedQuadtreeImage& loaded) {
         return loaded.image && loaded.image->width > 0 &&
                loaded.image->height > 0;
       });
@@ -696,7 +731,7 @@ CombinedImageMeasurements measureCombinedImage(
     return CombinedImageMeasurements{Rectangle(), 0, 0, 0, 0};
   }
 
-  const LoadedRasterOverlayImage& first = *it;
+  const LoadedQuadtreeImage& first = *it;
   const ImageCesium& firstImage = first.image.value();
 
   double projectedWidthPerPixel =
@@ -711,7 +746,7 @@ CombinedImageMeasurements measureCombinedImage(
   // for example, change tiling scheme or projection parameters as latitude
   // increases. But we're not currently handling that kind of scenario.
   for (; it != images.end(); ++it) {
-    const LoadedRasterOverlayImage& loaded = *it;
+    const LoadedQuadtreeImage& loaded = *it;
     if (!loaded.image || loaded.image->width <= 0 ||
         loaded.image->height <= 0) {
       continue;
@@ -781,7 +816,7 @@ CombinedImageMeasurements measureCombinedImage(
 LoadedRasterOverlayImage combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
-    std::vector<LoadedRasterOverlayImage>&& images) {
+    std::vector<LoadedQuadtreeImage>&& images) {
 
   CombinedImageMeasurements measurements =
       measureCombinedImage(targetRectangle, images);
@@ -823,7 +858,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
   // If _all_ tiles fail to load, we probably don't need this tile at all.
   //  exception: the parent geometry tile doesn't have the most detailed
   //  available overlay tile. But we can't tell that here. Here we just fail.
-  std::vector<CesiumAsync::SharedFuture<LoadedRasterOverlayImage>> tiles =
+  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles =
       this->mapRasterTilesToGeometryTile(
           overlayTile.getRectangle(),
           overlayTile.getTargetGeometricError());
@@ -831,7 +866,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
   return this->_asyncSystem.all(std::move(tiles))
       .thenInWorkerThread([projection = this->getProjection(),
                            rectangle = overlayTile.getRectangle()](
-                              std::vector<LoadedRasterOverlayImage>&& images) {
+                              std::vector<LoadedQuadtreeImage>&& images) {
         return combineImages(rectangle, projection, std::move(images));
       })
       .catchImmediately(
