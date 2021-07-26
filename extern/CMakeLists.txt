@@ -15,10 +15,11 @@ if ((NOT TARGET draco) AND (NOT TARGET draco_static))
     if (MSVC)
       set(CESIUM_NATIVE_DRACO_LIBRARY draco)
     else()
-      set_target_properties(draco_static PROPERTIES OUTPUT_NAME "draco")
       set(CESIUM_NATIVE_DRACO_LIBRARY draco_static)
     endif()
 endif()
+
+set(CESIUM_NATIVE_DRACO_LIBRARY ${CESIUM_NATIVE_DRACO_LIBRARY} PARENT_SCOPE)
 
 if (NOT TARGET glm)
     add_subdirectory(glm GLM)
