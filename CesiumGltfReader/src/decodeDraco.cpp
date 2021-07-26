@@ -8,7 +8,7 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4127)
+#pragma warning(disable : 4127 4018 4804)
 #endif
 
 #include <draco/compression/decode.h>
