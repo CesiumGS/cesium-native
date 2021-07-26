@@ -12,8 +12,11 @@ add_subdirectory(uriparser)
 
 if ((NOT TARGET draco) AND (NOT TARGET draco_static))
     add_subdirectory(draco)
-    if (NOT MSVC)
-      add_library(draco ALIAS draco_static)
+    if (MSVC)
+      set(CESIUM_NATIVE_DRACO_LIBRARY draco)
+    else()
+      set_target_properties(draco_static PROPERTIES OUTPUT_NAME "draco")
+      set(CESIUM_NATIVE_DRACO_LIBRARY draco_static)
     endif()
 endif()
 
