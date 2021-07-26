@@ -10,7 +10,7 @@ option(URIPARSER_ENABLE_INSTALL "" on)
 option(URIPARSER_BUILD_TOOLS "" off)
 add_subdirectory(uriparser)
 
-if (NOT TARGET draco)
+if (NOT TARGET draco_static)
     add_subdirectory(draco)
 endif()
 
