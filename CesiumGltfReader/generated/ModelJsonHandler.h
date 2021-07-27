@@ -8,6 +8,7 @@
 #include "BufferJsonHandler.h"
 #include "BufferViewJsonHandler.h"
 #include "CameraJsonHandler.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
@@ -24,7 +25,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Model;
 
 class ModelJsonHandler : public ExtensibleObjectJsonHandler {
 public:

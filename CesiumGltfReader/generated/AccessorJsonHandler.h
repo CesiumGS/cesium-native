@@ -13,7 +13,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Accessor;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:

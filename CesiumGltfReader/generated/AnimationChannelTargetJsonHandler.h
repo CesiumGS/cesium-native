@@ -9,7 +9,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct AnimationChannelTarget;
 
 class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
 public:

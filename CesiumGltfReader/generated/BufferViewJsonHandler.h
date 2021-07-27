@@ -9,7 +9,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct BufferView;
 
 class BufferViewJsonHandler : public NamedObjectJsonHandler {
 public:

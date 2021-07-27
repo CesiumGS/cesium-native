@@ -8,6 +8,7 @@ project(cesium-native
 
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
+option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
 
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
@@ -16,15 +17,7 @@ endif()
 # Add Modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 
-# Add a coverage target iff:
-# - gcovr is available
-# - cesium-native is not being used as a git submodule
-# - g++ is the active compiler.
-# This branch must occur before adding other targets, or gcovr
-# won't be able to inject the necessary coverage information.
-get_directory_property(_is_being_used_as_submodule PARENT_DIRECTORY)
-find_program(_gcovr "gcovr")
-if(CMAKE_COMPILER_IS_GNUCXX AND _gcovr AND NOT _is_being_used_as_submodule)
+if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
     append_coverage_compiler_flags()
     setup_target_for_coverage_gcovr_html(

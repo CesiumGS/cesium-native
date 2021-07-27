@@ -3,7 +3,6 @@
 #include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
 #include "CesiumAsync/Impl/CatchFunction.h"
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
-#include "CesiumAsync/Impl/FutureWaitResult.h"
 #include "CesiumAsync/Impl/WithTracing.h"
 #include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Tracing.h"
@@ -13,8 +12,8 @@ namespace CesiumAsync {
 
 namespace Impl {
 
-template <typename Func, typename R> struct ParameterizedTaskUnwrapper;
-template <typename Func> struct TaskUnwrapper;
+template <typename R> struct ParameterizedTaskUnwrapper;
+struct TaskUnwrapper;
 
 } // namespace Impl
 
@@ -110,7 +109,7 @@ public:
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::WithTracing<Func, T>::wrap(nullptr, std::forward<Func>(f))));
+            Impl::WithTracing<T>::end(nullptr, std::forward<Func>(f))));
   }
 
   /**
@@ -175,18 +174,10 @@ public:
    * deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
-   * @return The value if the future resolves successfully, or the exception if
-   * it rejects.
+   * @return The value if the future resolves successfully.
+   * @throws An exception if the future rejected.
    */
-  Impl::FutureWaitResult_t<T> wait() {
-    try {
-      return Impl::FutureWaitResult<T>::getFromTask(this->_task);
-    } catch (std::exception& e) {
-      return e;
-    } catch (...) {
-      return std::runtime_error("Unknown exception.");
-    }
-  }
+  T wait() { return this->_task.get(); }
 
 private:
   Future(
@@ -208,13 +199,7 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](T&& value) mutable {
-          CESIUM_TRACE_USE_CAPTURED_TRACK();
-          if (tracingName) {
-            CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
-          }
-          return std::move(value);
-        });
+        Impl::WithTracing<T>::begin(tracingName, std::forward<Func>(f)));
 #else
     auto& task = this->_task;
 #endif
@@ -223,9 +208,7 @@ private:
         this->_pSchedulers,
         task.then(
             scheduler,
-            Impl::WithTracing<Func, T>::wrap(
-                tracingName,
-                std::forward<Func>(f))));
+            Impl::WithTracing<T>::end(tracingName, std::forward<Func>(f))));
   }
 
   template <typename Func, typename Scheduler>
@@ -245,12 +228,12 @@ private:
 
   friend class AsyncSystem;
 
-  template <typename Func, typename R>
-  friend struct Impl::ParameterizedTaskUnwrapper;
+  template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
 
-  template <typename Func> friend struct Impl::TaskUnwrapper;
+  friend struct Impl::TaskUnwrapper;
 
   template <typename R> friend class Future;
+  template <typename R> friend class Promise;
 };
 
 } // namespace CesiumAsync
