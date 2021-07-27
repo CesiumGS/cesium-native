@@ -13,7 +13,7 @@
 namespace CesiumJsonReader {
 
 /**
- * @brief The state of a glTF extension.
+ * @brief The state of an extension.
  */
 enum class ExtensionState {
   /**
@@ -45,9 +45,9 @@ enum class ExtensionState {
 class CESIUMJSONREADER_API ExtensionContext {
 public:
   /**
-   * @brief Registers an extension for a glTF object.
+   * @brief Registers an extension for an object.
    *
-   * @tparam TExtended The glTF object to extend.
+   * @tparam TExtended The object to extend.
    * @tparam TExtensionHandler The extension's
    * {@link CesiumJsonReader::JsonHandler}.
    * @param extensionName The name of the extension.
@@ -64,11 +64,11 @@ public:
   }
 
   /**
-   * @brief Registers an extension for a glTF object.
+   * @brief Registers an extension for an object.
    *
    * The extension name is obtained from `TExtensionHandler::ExtensionName`.
    *
-   * @tparam TExtended The glTF object to extend.
+   * @tparam TExtended The object to extend.
    * @tparam TExtensionHandler The extension's
    * {@link CesiumJsonReader::JsonHandler}.
    */
@@ -86,14 +86,14 @@ public:
   }
 
   /**
-   * @brief Enables or disables a glTF extension.
+   * @brief Enables or disables an extension.
    *
    * By default, all extensions are enabled. When an enabled extension is
-   * encountered in the source glTF, it is read into a statically-typed
+   * encountered in the source JSON, it is read into a statically-typed
    * extension class, if one is registered, or into a
    * {@link CesiumUtility::JsonValue} if not.
    *
-   * When a disabled extension is encountered in the source glTF, it is ignored
+   * When a disabled extension is encountered in the source JSON, it is ignored
    * completely.
    *
    * An extension may also be set to `ExtensionState::JsonOnly`, in which case

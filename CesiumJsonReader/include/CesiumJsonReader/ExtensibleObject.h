@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 /**
- * @brief The base class for objects in a glTF that have extensions and extras.
+ * @brief The base class for objects that have extensions and extras.
  */
 struct CESIUMJSONREADER_API ExtensibleObject {
   /**
