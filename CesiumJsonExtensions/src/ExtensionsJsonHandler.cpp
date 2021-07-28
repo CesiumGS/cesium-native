@@ -1,6 +1,7 @@
-#include "CesiumJsonReader/ExtensionsJsonHandler.h"
-#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonExtensions/ExtensionsJsonHandler.h"
+#include "CesiumJsonExtensions/ExtensionContext.h"
 
+using namespace CesiumJsonExtensions;
 using namespace CesiumJsonReader;
 
 void ExtensionsJsonHandler::reset(

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumJsonReader/IExtensionJsonHandler.h"
-#include "CesiumJsonReader/Library.h"
+#include "CesiumJsonExtensions/IExtensionJsonHandler.h"
+#include "CesiumJsonExtensions/Library.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace CesiumJsonReader {
+namespace CesiumJsonExtensions {
 
 /**
  * @brief The state of an extension.
@@ -42,7 +42,7 @@ enum class ExtensionState {
   Disabled
 };
 
-class CESIUMJSONREADER_API ExtensionContext {
+class CESIUMJSONEXTENSIONS_API ExtensionContext {
 public:
   /**
    * @brief Registers an extension for an object.
@@ -121,4 +121,4 @@ private:
   std::unordered_map<std::string, ExtensionState> _extensionStates;
 };
 
-} // namespace CesiumJsonReader
+} // namespace CesiumJsonExtensions

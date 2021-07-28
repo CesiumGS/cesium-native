@@ -1,17 +1,17 @@
 #pragma once
 
-#include "CesiumJsonReader/Library.h"
+#include "CesiumJsonExtensions/Library.h"
 #include "CesiumUtility/JsonValue.h"
 #include <any>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-namespace CesiumJsonReader {
+namespace CesiumJsonExtensions {
 /**
  * @brief The base class for objects that have extensions and extras.
  */
-struct CESIUMJSONREADER_API ExtensibleObject {
+struct CESIUMJSONEXTENSIONS_API ExtensibleObject {
   /**
    * @brief Gets an extension given its static type.
    *
@@ -70,4 +70,4 @@ struct CESIUMJSONREADER_API ExtensibleObject {
    */
   CesiumUtility::JsonValue::Object extras;
 };
-} // namespace CesiumJsonReader
+} // namespace CesiumJsonExtensions
