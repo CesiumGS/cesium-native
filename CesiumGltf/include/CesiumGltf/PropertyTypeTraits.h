@@ -37,7 +37,8 @@ template <> struct IsMetadataInteger<uint64_t> : std::true_type {};
 template <> struct IsMetadataInteger<int64_t> : std::true_type {};
 
 /**
- * @brief Check if a C++ type can be represented as a floating-point property type
+ * @brief Check if a C++ type can be represented as a floating-point property
+ * type
  */
 template <typename... T> struct IsMetadataFloating;
 template <typename T> struct IsMetadataFloating<T> : std::false_type {};
