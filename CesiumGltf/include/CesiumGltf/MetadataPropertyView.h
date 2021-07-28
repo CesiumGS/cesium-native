@@ -135,6 +135,19 @@ enum class MetadataPropertyViewStatus {
 template <typename ElementType> class MetadataPropertyView {
 public:
   /**
+   * @brief Constructs a new instance viewing a non-existent property.
+   */
+  MetadataPropertyView()
+      : _status{MetadataPropertyViewStatus::InvalidPropertyNotExist},
+        _valueBuffer{},
+        _arrayOffsetBuffer{},
+        _stringOffsetBuffer{},
+        _offsetType{},
+        _offsetSize{},
+        _componentCount{},
+        _instanceCount{} {}
+
+  /**
    * @brief Construct a new instance pointing to the data specified by
    * FeatureTableProperty
    * @param valueBuffer The raw buffer specified by {@link FeatureTableProperty::bufferView}
