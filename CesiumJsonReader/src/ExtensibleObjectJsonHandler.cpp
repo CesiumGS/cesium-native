@@ -7,7 +7,7 @@ using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
-    const ExtensionContext& context) noexcept
+    const ExtensionReaderContext& context) noexcept
     : ObjectJsonHandler(), _extras(), _extensions(context) {}
 
 void ExtensibleObjectJsonHandler::reset(

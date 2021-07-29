@@ -1,4 +1,4 @@
-#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonReader/ExtensionReaderContext.h"
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
@@ -71,7 +71,8 @@ public:
   }
 };
 
-std::unique_ptr<IExtensionJsonHandler> ExtensionContext::createExtensionHandler(
+std::unique_ptr<IExtensionJsonHandler>
+ExtensionReaderContext::createExtensionHandler(
     const std::string_view& extensionName,
     const std::string& extendedObjectType) const {
 

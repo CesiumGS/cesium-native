@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonReader/ExtensionReaderContext.h"
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 #include <CesiumUtility/ExtensibleObject.h>
@@ -10,7 +10,7 @@ namespace CesiumJsonReader {
 
 class ExtensionsJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
-  explicit ExtensionsJsonHandler(const ExtensionContext& context) noexcept
+  explicit ExtensionsJsonHandler(const ExtensionReaderContext& context) noexcept
       : ObjectJsonHandler(),
         _context(context),
         _pObject(nullptr),
@@ -24,7 +24,7 @@ public:
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 private:
-  const ExtensionContext& _context;
+  const ExtensionReaderContext& _context;
   CesiumUtility::ExtensibleObject* _pObject = nullptr;
   std::string _objectType;
   std::unique_ptr<IExtensionJsonHandler> _currentExtensionHandler;

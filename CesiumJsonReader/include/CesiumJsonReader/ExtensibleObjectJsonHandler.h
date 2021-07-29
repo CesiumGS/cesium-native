@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
-#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonReader/ExtensionReaderContext.h"
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
@@ -13,7 +13,7 @@ namespace CesiumJsonReader {
 class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
   explicit ExtensibleObjectJsonHandler(
-      const ExtensionContext& context) noexcept;
+      const ExtensionReaderContext& context) noexcept;
 
 protected:
   void reset(IJsonHandler* pParent, CesiumUtility::ExtensibleObject* pObject);

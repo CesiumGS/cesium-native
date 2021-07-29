@@ -42,7 +42,7 @@ enum class ExtensionState {
   Disabled
 };
 
-class CESIUMJSONREADER_API ExtensionContext {
+class CESIUMJSONREADER_API ExtensionReaderContext {
 public:
   /**
    * @brief Registers an extension for an object.
@@ -58,7 +58,7 @@ public:
         this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionReaderFactory([](const ExtensionContext& context) {
+        ExtensionReaderFactory([](const ExtensionReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -80,7 +80,7 @@ public:
             .first;
     it->second.insert_or_assign(
         TExtended::TypeName,
-        ExtensionHandlerFactory([](const ExtensionContext& context) {
+        ExtensionHandlerFactory([](const ExtensionReaderContext& context) {
           return std::make_unique<TExtensionHandler>(context);
         }));
   }
@@ -113,7 +113,7 @@ public:
 private:
   using ExtensionHandlerFactory =
       std::function<std::unique_ptr<IExtensionJsonHandler>(
-          const ExtensionContext&)>;
+          const ExtensionReaderContext&)>;
   using ObjectTypeToHandler = std::map<std::string, ExtensionHandlerFactory>;
   using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
