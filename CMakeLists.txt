@@ -158,7 +158,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async
 install(TARGETS spdlog)
 install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-install(TARGETS draco)
+install(TARGETS ${CESIUM_NATIVE_DRACO_LIBRARY})
 
 install(TARGETS sqlite3)
 

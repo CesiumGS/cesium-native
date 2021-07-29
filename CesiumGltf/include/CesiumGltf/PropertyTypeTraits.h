@@ -23,6 +23,29 @@ template <> struct IsMetadataNumeric<float> : std::true_type {};
 template <> struct IsMetadataNumeric<double> : std::true_type {};
 
 /**
+ * @brief Check if a C++ type can be represented as an integer property type
+ */
+template <typename... T> struct IsMetadataInteger;
+template <typename T> struct IsMetadataInteger<T> : std::false_type {};
+template <> struct IsMetadataInteger<uint8_t> : std::true_type {};
+template <> struct IsMetadataInteger<int8_t> : std::true_type {};
+template <> struct IsMetadataInteger<uint16_t> : std::true_type {};
+template <> struct IsMetadataInteger<int16_t> : std::true_type {};
+template <> struct IsMetadataInteger<uint32_t> : std::true_type {};
+template <> struct IsMetadataInteger<int32_t> : std::true_type {};
+template <> struct IsMetadataInteger<uint64_t> : std::true_type {};
+template <> struct IsMetadataInteger<int64_t> : std::true_type {};
+
+/**
+ * @brief Check if a C++ type can be represented as a floating-point property
+ * type
+ */
+template <typename... T> struct IsMetadataFloating;
+template <typename T> struct IsMetadataFloating<T> : std::false_type {};
+template <> struct IsMetadataFloating<float> : std::true_type {};
+template <> struct IsMetadataFloating<double> : std::true_type {};
+
+/**
  * @brief Check if a C++ type can be represented as a boolean property type
  */
 template <typename... T> struct IsMetadataBoolean;
