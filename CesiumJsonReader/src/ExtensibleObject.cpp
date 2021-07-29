@@ -1,6 +1,6 @@
-#include "CesiumJsonExtensions/ExtensibleObject.h"
+#include "CesiumJsonReader/ExtensibleObject.h"
 
-using namespace CesiumJsonExtensions;
+using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 JsonValue* ExtensibleObject::getGenericExtension(

@@ -1,9 +1,8 @@
-#include "CesiumJsonExtensions/ExtensionContext.h"
-#include "CesiumJsonExtensions/IExtensionJsonHandler.h"
-#include <CesiumJsonReader/JsonObjectJsonHandler.h>
-#include <CesiumJsonReader/JsonReader.h>
+#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonReader/IExtensionJsonHandler.h"
+#include "CesiumJsonReader/JsonObjectJsonHandler.h"
+#include "CesiumJsonReader/JsonReader.h"
 
-using namespace CesiumJsonExtensions;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 

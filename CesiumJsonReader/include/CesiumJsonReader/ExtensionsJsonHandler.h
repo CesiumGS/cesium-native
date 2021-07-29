@@ -1,11 +1,11 @@
 #pragma once
 
-#include "CesiumJsonExtensions/ExtensionContext.h"
-#include "CesiumJsonExtensions/IExtensionJsonHandler.h"
-#include <CesiumJsonReader/ObjectJsonHandler.h>
+#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonReader/IExtensionJsonHandler.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
 #include <memory>
 
-namespace CesiumJsonExtensions {
+namespace CesiumJsonReader {
 struct ExtensibleObject;
 
 class ExtensionsJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
@@ -30,4 +30,4 @@ private:
   std::unique_ptr<IExtensionJsonHandler> _currentExtensionHandler;
 };
 
-} // namespace CesiumJsonExtensions
+} // namespace CesiumJsonReader

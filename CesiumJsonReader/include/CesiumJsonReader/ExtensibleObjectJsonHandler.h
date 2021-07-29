@@ -1,13 +1,13 @@
 #pragma once
 
-#include "CesiumJsonExtensions/ExtensionContext.h"
-#include "CesiumJsonExtensions/ExtensionsJsonHandler.h"
-#include <CesiumJsonReader/DictionaryJsonHandler.h>
-#include <CesiumJsonReader/JsonObjectJsonHandler.h>
-#include <CesiumJsonReader/ObjectJsonHandler.h>
-#include <CesiumUtility/JsonValue.h>
+#include "CesiumJsonReader/DictionaryJsonHandler.h"
+#include "CesiumJsonReader/ExtensionContext.h"
+#include "CesiumJsonReader/ExtensionsJsonHandler.h"
+#include "CesiumJsonReader/JsonObjectJsonHandler.h"
+#include "CesiumJsonReader/ObjectJsonHandler.h"
+#include "CesiumUtility/JsonValue.h"
 
-namespace CesiumJsonExtensions {
+namespace CesiumJsonReader {
 struct ExtensibleObject;
 
 class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
@@ -29,4 +29,4 @@ private:
       _extras;
   ExtensionsJsonHandler _extensions;
 };
-} // namespace CesiumJsonExtensions
+} // namespace CesiumJsonReader
