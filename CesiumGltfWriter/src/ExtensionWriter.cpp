@@ -1,12 +1,12 @@
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumUtility/JsonValue.h>
 
 using namespace CesiumUtility;
 
 void CesiumGltf::writeExtensions(
     const std::unordered_map<std::string, std::any>& extensions,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (extensions.empty()) {
     return;
   }

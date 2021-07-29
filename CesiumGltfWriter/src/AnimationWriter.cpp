@@ -1,15 +1,15 @@
 #include "AnimationWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <magic_enum.hpp>
 #include <stdexcept>
 #include <type_traits>
 
 void writeAnimationChannel(
     const CesiumGltf::AnimationChannel& animationChannel,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.StartObject();
   j.Key("sampler");
@@ -25,12 +25,12 @@ void writeAnimationChannel(
     j.String(pathAsString.c_str());
 
     if (!animationChannel.target.extensions.empty()) {
-      writeExtensions(animationChannel.target.extensions, j);
+      CesiumGltf::writeExtensions(animationChannel.target.extensions, j);
     }
 
     if (!animationChannel.target.extras.empty()) {
       j.Key("extras");
-      CesiumGltf::writeJsonValue(animationChannel.target.extras, j);
+      CesiumJsonWriter::writeJsonValue(animationChannel.target.extras, j);
     }
   }
   j.EndObject();
@@ -38,7 +38,7 @@ void writeAnimationChannel(
 
 void writeAnimationSampler(
     const CesiumGltf::AnimationSampler& animationSampler,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
 
   j.StartObject();
@@ -49,12 +49,12 @@ void writeAnimationSampler(
   j.KeyPrimitive("output", animationSampler.output);
 
   if (!animationSampler.extensions.empty()) {
-    writeExtensions(animationSampler.extensions, j);
+    CesiumGltf::writeExtensions(animationSampler.extensions, j);
   }
 
   if (!animationSampler.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(animationSampler.extras, j);
+    CesiumJsonWriter::writeJsonValue(animationSampler.extras, j);
   }
 
   j.EndObject();
@@ -63,7 +63,7 @@ void writeAnimationSampler(
 void CesiumGltf::writeAnimation(
     CesiumGltf::WriteModelResult& result,
     const std::vector<Animation>& animations,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (animations.empty()) {
     return;

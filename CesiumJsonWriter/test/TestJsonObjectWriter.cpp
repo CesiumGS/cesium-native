@@ -1,5 +1,5 @@
-#include "JsonObjectWriter.h"
-#include "JsonWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <cstdint>
@@ -16,7 +16,7 @@ using Null = JsonValue::Null;
 
 TEST_CASE("TestJsonObjectWriter") {
   SECTION("[{}, {}, {}]") {
-    CesiumGltf::JsonWriter writer;
+    CesiumJsonWriter::JsonWriter writer;
     const auto extrasObject =
         Object{{"extras", Array{Object{}, Object{}, Object{}}}};
     writeJsonValue(extrasObject, writer);
@@ -24,7 +24,7 @@ TEST_CASE("TestJsonObjectWriter") {
   }
 
   SECTION("[0,1,2.5]") {
-    CesiumGltf::JsonWriter writer;
+    CesiumJsonWriter::JsonWriter writer;
     const auto extrasObject =
         Array{std::int64_t(0), std::uint64_t(1), double(2.5)};
     writeJsonValue(extrasObject, writer);
@@ -32,7 +32,7 @@ TEST_CASE("TestJsonObjectWriter") {
   }
 
   SECTION("[👀]") {
-    CesiumGltf::JsonWriter writer;
+    CesiumJsonWriter::JsonWriter writer;
     writer.StartArray();
     writeJsonValue(JsonValue("👀"), writer);
     writer.EndArray();
@@ -40,7 +40,7 @@ TEST_CASE("TestJsonObjectWriter") {
   }
 
   SECTION(R"("A": {"B": "C"{}})") {
-    CesiumGltf::JsonWriter writer;
+    CesiumJsonWriter::JsonWriter writer;
     // clang-format off
         const auto extrasObject = Object {{
             "extras", Object {{
@@ -58,7 +58,7 @@ TEST_CASE("TestJsonObjectWriter") {
   }
 
   SECTION(R"([[[1 -2,false,null,true,{"emojis": "😂👽🇵🇷"}]]])") {
-    CesiumGltf::JsonWriter writer;
+    CesiumJsonWriter::JsonWriter writer;
     // clang-format off
         const auto extrasObject = Object {{
             "extras", Array {{{
@@ -74,7 +74,7 @@ TEST_CASE("TestJsonObjectWriter") {
   }
 
   SECTION("Empty object is serialized correctly") {
-    CesiumGltf::JsonWriter writer;
+    CesiumJsonWriter::JsonWriter writer;
     writeJsonValue(Object{}, writer);
     REQUIRE(writer.toStringView() == "{}");
   }
