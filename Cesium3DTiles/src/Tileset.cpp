@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <glm/common.hpp>
+#include <limits>
 #include <optional>
 #include <rapidjson/document.h>
 #include <unordered_set>
@@ -1920,7 +1921,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
     glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());
 
-    double maxLoadPriority = 0.0;
+    double highestLoadPriority = std::numeric_limits<double>::max();
     for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
       const ViewState& frustum = frustums[i];
       const double& distance = distances[i];
@@ -1932,13 +1933,13 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
         tileDirection /= magnitude;
         double loadPriority =
             (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
-        if (loadPriority > maxLoadPriority) {
-          maxLoadPriority = loadPriority;
+        if (loadPriority < highestLoadPriority) {
+          highestLoadPriority = loadPriority;
         }
       }
     }
 
-    loadQueue.push_back({&tile, maxLoadPriority});
+    loadQueue.push_back({&tile, highestLoadPriority});
   }
 }
 
