@@ -29,7 +29,6 @@ public:
   std::unique_ptr<TileContentLoadResult>
   load(const TileContentLoadInput& input) override;
 
-private:
   /**
    * @brief Create a {@link TileContentLoadResult} from the given data.
    *

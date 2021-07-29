@@ -1,7 +1,9 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTiles/GltfContent.h"
 #include "Cesium3DTiles/spdlog-cesium.h"
+#include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumUtility/Tracing.h"
+#include "upgradeBatchTableToFeatureMetadata.h"
 #include <cstddef>
 #include <rapidjson/document.h>
 #include <stdexcept>
@@ -37,7 +39,7 @@ struct B3dmHeaderLegacy2 {
 
 namespace {
 
-void parseFeatureTableJsonData(
+rapidjson::Document parseFeatureTableJsonData(
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumGltf::Model& gltf,
     const gsl::span<const std::byte>& featureTableJsonData) {
@@ -52,7 +54,7 @@ void parseFeatureTableJsonData(
         "{}",
         document.GetParseError(),
         document.GetErrorOffset());
-    return;
+    return document;
   }
 
   auto rtcIt = document.FindMember("RTC_CENTER");
@@ -66,6 +68,8 @@ void parseFeatureTableJsonData(
         rtcValue[1].GetDouble(),
         rtcValue[2].GetDouble()};
   }
+
+  return document;
 }
 
 } // namespace
@@ -172,9 +176,48 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
 
   if (pResult->model && header.featureTableJsonByteLength > 0) {
     CesiumGltf::Model& gltf = pResult->model.value();
+
     gsl::span<const std::byte> featureTableJsonData =
         data.subspan(headerLength, header.featureTableJsonByteLength);
-    parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
+    rapidjson::Document featureTable =
+        parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
+
+    int64_t batchTableStart = headerLength + header.featureTableJsonByteLength +
+                              header.featureTableBinaryByteLength;
+    int64_t batchTableLength =
+        header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
+
+    if (batchTableLength > 0) {
+      gsl::span<const std::byte> batchTableJsonData = data.subspan(
+          static_cast<size_t>(batchTableStart),
+          header.batchTableJsonByteLength);
+      gsl::span<const std::byte> batchTableBinaryData = data.subspan(
+          static_cast<size_t>(
+              batchTableStart + header.batchTableJsonByteLength),
+          header.batchTableBinaryByteLength);
+
+      rapidjson::Document batchTableJson;
+      batchTableJson.Parse(
+          reinterpret_cast<const char*>(batchTableJsonData.data()),
+          batchTableJsonData.size());
+      if (batchTableJson.HasParseError()) {
+        SPDLOG_LOGGER_WARN(
+            pLogger,
+            "Error when parsing batch table JSON, error code {} at byte "
+            "offset "
+            "{}. Skip parsing metadata",
+            batchTableJson.GetParseError(),
+            batchTableJson.GetErrorOffset());
+        return pResult;
+      }
+
+      upgradeBatchTableToFeatureMetadata(
+          pLogger,
+          gltf,
+          featureTable,
+          batchTableJson,
+          batchTableBinaryData);
+    }
   }
 
   return pResult;

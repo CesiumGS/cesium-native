@@ -10,9 +10,16 @@ option(URIPARSER_ENABLE_INSTALL "" on)
 option(URIPARSER_BUILD_TOOLS "" off)
 add_subdirectory(uriparser)
 
-if (NOT TARGET draco)
+if ((NOT TARGET draco) AND (NOT TARGET draco_static))
     add_subdirectory(draco)
+    if (MSVC)
+      set(CESIUM_NATIVE_DRACO_LIBRARY draco)
+    else()
+      set(CESIUM_NATIVE_DRACO_LIBRARY draco_static)
+    endif()
 endif()
+
+set(CESIUM_NATIVE_DRACO_LIBRARY ${CESIUM_NATIVE_DRACO_LIBRARY} PARENT_SCOPE)
 
 if (NOT TARGET glm)
     add_subdirectory(glm GLM)
