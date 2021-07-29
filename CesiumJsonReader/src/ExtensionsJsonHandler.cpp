@@ -2,6 +2,7 @@
 #include "CesiumJsonReader/ExtensionContext.h"
 
 using namespace CesiumJsonReader;
+using namespace CesiumUtility;
 
 void ExtensionsJsonHandler::reset(
     IJsonHandler* pParent,

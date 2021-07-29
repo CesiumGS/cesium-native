@@ -1,10 +1,10 @@
 #include "CesiumJsonReader/ExtensibleObjectJsonHandler.h"
-#include "CesiumJsonReader/ExtensibleObject.h"
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 
 using namespace CesiumJsonReader;
+using namespace CesiumUtility;
 
 ExtensibleObjectJsonHandler::ExtensibleObjectJsonHandler(
     const ExtensionContext& context) noexcept

@@ -3,10 +3,10 @@
 #include "CesiumJsonReader/ExtensionContext.h"
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
+#include <CesiumUtility/ExtensibleObject.h>
 #include <memory>
 
 namespace CesiumJsonReader {
-struct ExtensibleObject;
 
 class ExtensionsJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
@@ -18,14 +18,14 @@ public:
 
   void reset(
       IJsonHandler* pParent,
-      ExtensibleObject* pObject,
+      CesiumUtility::ExtensibleObject* pObject,
       const std::string& objectType);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 private:
   const ExtensionContext& _context;
-  ExtensibleObject* _pObject = nullptr;
+  CesiumUtility::ExtensibleObject* _pObject = nullptr;
   std::string _objectType;
   std::unique_ptr<IExtensionJsonHandler> _currentExtensionHandler;
 };

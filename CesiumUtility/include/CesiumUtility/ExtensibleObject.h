@@ -1,17 +1,17 @@
 #pragma once
 
-#include "CesiumJsonReader/Library.h"
 #include "CesiumUtility/JsonValue.h"
+#include "CesiumUtility/Library.h"
 #include <any>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-namespace CesiumJsonReader {
+namespace CesiumUtility {
 /**
  * @brief The base class for objects that have extensions and extras.
  */
-struct CESIUMJSONREADER_API ExtensibleObject {
+struct CESIUMUTILITY_API ExtensibleObject {
   /**
    * @brief Gets an extension given its static type.
    *
@@ -44,12 +44,11 @@ struct CESIUMJSONREADER_API ExtensibleObject {
    * @return The generic extension, or nullptr if the generic extension doesn't
    * exist.
    */
-  const CesiumUtility::JsonValue*
+  const JsonValue*
   getGenericExtension(const std::string& extensionName) const noexcept;
 
   /** @copydoc ExtensibleObject::getGenericExtension */
-  CesiumUtility::JsonValue*
-  getGenericExtension(const std::string& extensionName) noexcept;
+  JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
 
   /**
    * @brief The extensions attached to this object.
@@ -68,6 +67,6 @@ struct CESIUMJSONREADER_API ExtensibleObject {
    * best practice, extras should be an Object rather than a primitive value for
    * best portability.
    */
-  CesiumUtility::JsonValue::Object extras;
+  JsonValue::Object extras;
 };
-} // namespace CesiumJsonReader
+} // namespace CesiumUtility

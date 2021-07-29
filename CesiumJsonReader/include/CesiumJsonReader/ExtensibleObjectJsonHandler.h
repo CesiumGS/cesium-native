@@ -5,10 +5,10 @@
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
-#include "CesiumUtility/JsonValue.h"
+#include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/JsonValue.h>
 
 namespace CesiumJsonReader {
-struct ExtensibleObject;
 
 class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:
@@ -16,11 +16,11 @@ public:
       const ExtensionContext& context) noexcept;
 
 protected:
-  void reset(IJsonHandler* pParent, ExtensibleObject* pObject);
+  void reset(IJsonHandler* pParent, CesiumUtility::ExtensibleObject* pObject);
   IJsonHandler* readObjectKeyExtensibleObject(
       const std::string& objectType,
       const std::string_view& str,
-      ExtensibleObject& o);
+      CesiumUtility::ExtensibleObject& o);
 
 private:
   CesiumJsonReader::DictionaryJsonHandler<
