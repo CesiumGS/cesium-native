@@ -9,9 +9,6 @@ namespace Cesium3DTiles {
 TileIdUtilities::createTileIdString(const TileID& tileId) {
 
   struct Operation {
-
-    std::string operator()(const uint32_t& id) { return std::to_string(id); }
-
     std::string operator()(const std::string& url) { return url; }
 
     std::string
@@ -45,11 +42,6 @@ TileIdUtilities::createTileIdString(const TileID& tileId) {
 /*static*/ std::optional<TileID>
 TileIdUtilities::getParentTileID(const TileID& tileId) {
   struct Operation {
-
-    std::optional<TileID> operator()(const uint32_t& /*id*/) {
-      return std::nullopt;
-    }
-
     std::optional<TileID> operator()(const std::string& /*url*/) {
       return std::nullopt;
     }

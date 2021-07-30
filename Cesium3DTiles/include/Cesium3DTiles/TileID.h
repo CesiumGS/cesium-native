@@ -32,7 +32,6 @@ namespace Cesium3DTiles {
  *   the parent tile's content.
  */
 typedef std::variant<
-    uint32_t,
     std::string,
     CesiumGeometry::QuadtreeTileID,
     CesiumGeometry::OctreeTileID,
