@@ -18,23 +18,22 @@ struct LoadedQuadtreeImage : public LoadedRasterOverlayImage {
   LoadedQuadtreeImage() = default;
 
   explicit LoadedQuadtreeImage(const LoadedRasterOverlayImage& rhs)
-      : LoadedRasterOverlayImage(rhs), subset(rhs.rectangle) {}
+      : LoadedRasterOverlayImage(rhs), subset() {}
 
   explicit LoadedQuadtreeImage(LoadedRasterOverlayImage&& rhs)
-      : LoadedRasterOverlayImage(std::move(rhs)), subset(this->rectangle) {}
+      : LoadedRasterOverlayImage(std::move(rhs)), subset() {}
 
   /**
    * @brief The subset of the total {@link LoadedRasterOverlayImage::rectangle}
    * in which this image should be used.
    *
-   * Normally, this property is identical to
-   * {@link LoadedRasterOverlayImage::rectangle}. However, when a quadtree tile
-   * is missing, we can use a parent or other ancestor image in its place. But
-   * when we do that, we only want to use a subset of the ancestor rather than
-   * the entire image, because parts of the ancestor outside the subset can
-   * and often will overlap with child tiles that _do_ exist.
+   * When a quadtree tile is missing, we can use a parent or other ancestor
+   * image in its place. But when we do that, we only want to use a subset of
+   * the ancestor rather than the entire image, because parts of the ancestor
+   * outside the subset can and often will overlap with child tiles that _do_
+   * exist. This property specifies the subset to use.
    */
-  CesiumGeometry::Rectangle subset;
+  std::optional<CesiumGeometry::Rectangle> subset;
 };
 
 class CESIUM3DTILES_API QuadtreeRasterOverlayTileProvider

@@ -1,6 +1,7 @@
 
 #include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include <stb_image_resize.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -433,6 +434,8 @@ void blitImage(
     ImageCesium& target,
     int32_t targetX,
     int32_t targetY,
+    int32_t targetWidth,
+    int32_t targetHeight,
     const ImageCesium& source,
     int32_t sourceX,
     int32_t sourceY,
@@ -447,8 +450,8 @@ void blitImage(
     return;
   }
 
-  if (targetX < 0 || targetY < 0 || (targetX + sourceWidth) > target.width ||
-      (targetY + sourceHeight) > target.height) {
+  if (targetX < 0 || targetY < 0 || (targetX + targetWidth) > target.width ||
+      (targetY + targetHeight) > target.height) {
     // Attempting to blit outside the bounds of the target image.
     assert(false);
     return;
@@ -475,19 +478,33 @@ void blitImage(
   pSource +=
       size_t(sourceY) * bytesPerSourceRow + size_t(sourceX) * bytesPerPixel;
 
-  // Copy each row
-  for (size_t j = 0; j < size_t(sourceHeight); ++j) {
-    assert(pTarget < target.pixelData.data() + target.pixelData.size());
-    assert(pSource < source.pixelData.data() + source.pixelData.size());
-    assert(
-        pTarget + bytesToCopyPerRow <=
-        target.pixelData.data() + target.pixelData.size());
-    assert(
-        pSource + bytesToCopyPerRow <=
-        source.pixelData.data() + source.pixelData.size());
-    std::memcpy(pTarget, pSource, bytesToCopyPerRow);
-    pTarget += bytesPerTargetRow;
-    pSource += bytesPerSourceRow;
+  if (sourceWidth == targetWidth && sourceHeight == targetHeight) {
+    // Simple, unscaled, byte-for-byte image copy.
+    for (size_t j = 0; j < size_t(sourceHeight); ++j) {
+      assert(pTarget < target.pixelData.data() + target.pixelData.size());
+      assert(pSource < source.pixelData.data() + source.pixelData.size());
+      assert(
+          pTarget + bytesToCopyPerRow <=
+          target.pixelData.data() + target.pixelData.size());
+      assert(
+          pSource + bytesToCopyPerRow <=
+          source.pixelData.data() + source.pixelData.size());
+      std::memcpy(pTarget, pSource, bytesToCopyPerRow);
+      pTarget += bytesPerTargetRow;
+      pSource += bytesPerSourceRow;
+    }
+  } else {
+    // Use STB to do the copy / scale
+    stbir_resize_uint8(
+        reinterpret_cast<const unsigned char*>(pSource),
+        sourceWidth,
+        sourceHeight,
+        int(bytesPerSourceRow),
+        reinterpret_cast<unsigned char*>(pTarget),
+        targetWidth,
+        targetHeight,
+        int(bytesPerTargetRow),
+        target.channels);
   }
 }
 
@@ -517,14 +534,16 @@ double roundDown(double value, double tolerance) {
 
 // Copy part of a source image to part of a target image.
 // The two rectangles are the extents of each image, and the part of the source
-// image where the source rectangle that overlaps the target rectangle is copied
-// to the target image.
+// image where the source subset rectangle overlaps the target rectangle is
+// copied to the target image.
 void blitImage(
     ImageCesium& target,
     const Rectangle& targetRectangle,
     const ImageCesium& source,
-    const Rectangle& sourceRectangle) {
-  std::optional<Rectangle> overlap = targetRectangle.intersect(sourceRectangle);
+    const Rectangle& sourceRectangle,
+    const std::optional<Rectangle>& sourceSubset) {
+  Rectangle sourceToCopy = sourceSubset.value_or(sourceRectangle);
+  std::optional<Rectangle> overlap = targetRectangle.intersect(sourceToCopy);
   if (!overlap) {
     // No overlap, nothing to do.
     return;
@@ -543,6 +562,19 @@ void blitImage(
           targetRectangle.computeHeight(),
       pixelTolerance));
   targetY = glm::max(0, targetY);
+
+  int32_t targetMaxX = static_cast<int32_t>(roundUp(
+      target.width * (overlap->maximumX - targetRectangle.minimumX) /
+          targetRectangle.computeWidth(),
+      pixelTolerance));
+  targetMaxX = glm::min(targetMaxX, target.width);
+  int32_t targetMaxY = static_cast<int32_t>(roundUp(
+      target.height * (targetRectangle.maximumY - overlap->minimumY) /
+          targetRectangle.computeHeight(),
+      pixelTolerance));
+  targetMaxY = glm::min(targetMaxY, target.height);
+  int32_t targetWidth = targetMaxX - targetX;
+  int32_t targetHeight = targetMaxY - targetY;
 
   int32_t sourceX = static_cast<int32_t>(roundDown(
       source.width * (overlap->minimumX - sourceRectangle.minimumX) /
@@ -572,6 +604,8 @@ void blitImage(
       target,
       targetX,
       targetY,
+      targetWidth,
+      targetHeight,
       source,
       sourceX,
       sourceY,
@@ -719,64 +753,68 @@ struct CombinedImageMeasurements {
 CombinedImageMeasurements measureCombinedImage(
     const Rectangle& targetRectangle,
     const std::vector<LoadedQuadtreeImage>& images) {
-  auto it = std::find_if(
-      images.begin(),
-      images.end(),
-      [](const LoadedQuadtreeImage& loaded) {
-        return loaded.image && loaded.image->width > 0 &&
-               loaded.image->height > 0;
-      });
-  if (it == images.end()) {
-    // There are no images to combine.
-    return CombinedImageMeasurements{Rectangle(), 0, 0, 0, 0};
-  }
+  // Find the image with the densest pixels, and use that to select the
+  // resolution of the target image.
 
-  const LoadedQuadtreeImage& first = *it;
-  const ImageCesium& firstImage = first.image.value();
-
-  double projectedWidthPerPixel =
-      first.rectangle.computeWidth() / firstImage.width;
-  double projectedHeightPerPixel =
-      first.rectangle.computeHeight() / firstImage.height;
-
-  Rectangle combinedRectangle = targetRectangle;
-
-  // Assumption: all images have pixels with the same width and height in
-  // projected units. This might prove false with esoteric projections that,
-  // for example, change tiling scheme or projection parameters as latitude
-  // increases. But we're not currently handling that kind of scenario.
-  for (; it != images.end(); ++it) {
-    const LoadedQuadtreeImage& loaded = *it;
+  // In a quadtree, all tiles within a single zoom level should have pixels with
+  // the same projected dimensions. However, some of our images may be from
+  // different levels. For example, if a child tile from a particular zoom level
+  // is not available, an ancestor tile with a lower resolution (larger pixel
+  // size) may be used instead. These ancestor tiles should have a pixel spacing
+  // that is an even multiple of the finest tiles.
+  double projectedWidthPerPixel = std::numeric_limits<double>::max();
+  double projectedHeightPerPixel = std::numeric_limits<double>::max();
+  int32_t channels = -1;
+  int32_t bytesPerChannel = -1;
+  for (const LoadedQuadtreeImage& loaded : images) {
     if (!loaded.image || loaded.image->width <= 0 ||
         loaded.image->height <= 0) {
       continue;
     }
 
-    // Make sure the assumption above holds to within 1/1000 of a pixel.
-    assert(Math::equalsEpsilon(
-        loaded.rectangle.computeWidth() / loaded.image->width,
+    projectedWidthPerPixel = glm::min(
         projectedWidthPerPixel,
-        Math::EPSILON3 / loaded.image->width));
-    assert(Math::equalsEpsilon(
-        loaded.rectangle.computeHeight() / loaded.image->height,
+        loaded.rectangle.computeWidth() / loaded.image->width);
+    projectedHeightPerPixel = glm::min(
         projectedHeightPerPixel,
-        Math::EPSILON3 / loaded.image->height));
+        loaded.rectangle.computeHeight() / loaded.image->height);
 
-    // Also make sure all images have the same format.
-    assert(loaded.image->channels == firstImage.channels);
-    assert(loaded.image->bytesPerChannel == firstImage.bytesPerChannel);
+    channels = glm::max(channels, loaded.image->channels);
+    bytesPerChannel = glm::max(bytesPerChannel, loaded.image->bytesPerChannel);
+  }
+
+  std::optional<Rectangle> combinedRectangle;
+
+  for (const LoadedQuadtreeImage& loaded : images) {
+    if (!loaded.image || loaded.image->width <= 0 ||
+        loaded.image->height <= 0) {
+      continue;
+    }
+
+    // The portion of the source that we actually need to copy.
+    Rectangle sourceSubset = loaded.subset.value_or(loaded.rectangle);
 
     // Find the bounds of the combined image.
     // Intersect the loaded image's rectangle with the target rectangle.
     std::optional<Rectangle> maybeIntersection =
-        targetRectangle.intersect(loaded.rectangle);
+        targetRectangle.intersect(sourceSubset);
     if (!maybeIntersection) {
+      // We really shouldn't have an image that doesn't overlap the target.
+      assert(false);
       continue;
     }
 
+    // If this source image has the desired format and pixel density, we can do
+    // a simple memcpy. Otherwise we'll need to resample it.
+    // double currentProjectedWidthPerPixel =
+    //     loaded.rectangle.computeWidth() / loaded.image->width;
+    // double currentProjectedHeightPerPixel =
+    //     loaded.rectangle.computeHeight() / loaded.image->height;
+
     Rectangle& intersection = *maybeIntersection;
 
-    // Expand this slightly so we don't wind up with partial pixels.
+    // Expand this slightly so we don't wind up with partial pixels in the
+    // target
     intersection.minimumX = roundDown(
                                 intersection.minimumX / projectedWidthPerPixel,
                                 pixelTolerance) *
@@ -794,23 +832,44 @@ CombinedImageMeasurements measureCombinedImage(
                                 pixelTolerance) *
                             projectedHeightPerPixel;
 
-    combinedRectangle = combinedRectangle.computeUnion(intersection);
+    if (combinedRectangle) {
+      combinedRectangle = combinedRectangle->computeUnion(intersection);
+    } else {
+      combinedRectangle = intersection;
+    }
+
+    // if (Math::equalsEpsilon(
+    //         currentProjectedWidthPerPixel,
+    //         projectedWidthPerPixel,
+    //         Math::EPSILON3 / loaded.image->width) &&
+    //     Math::equalsEpsilon(
+    //         currentProjectedHeightPerPixel,
+    //         projectedHeightPerPixel,
+    //         Math::EPSILON3 / loaded.image->height) &&
+    //     channels == loaded.image->channels &&
+    //     bytesPerChannel == loaded.image->bytesPerChannel) {
+
+    // }
+  }
+
+  if (!combinedRectangle) {
+    return CombinedImageMeasurements{targetRectangle, 0, 0, 0, 0};
   }
 
   // Compute the pixel dimensions needed for the combined image.
   int32_t combinedWidthPixels = static_cast<int32_t>(roundUp(
-      combinedRectangle.computeWidth() / projectedWidthPerPixel,
+      combinedRectangle->computeWidth() / projectedWidthPerPixel,
       pixelTolerance));
   int32_t combinedHeightPixels = static_cast<int32_t>(roundUp(
-      combinedRectangle.computeHeight() / projectedHeightPerPixel,
+      combinedRectangle->computeHeight() / projectedHeightPerPixel,
       pixelTolerance));
 
   return CombinedImageMeasurements{
-      combinedRectangle,
+      *combinedRectangle,
       combinedWidthPixels,
       combinedHeightPixels,
-      firstImage.channels,
-      firstImage.bytesPerChannel};
+      channels,
+      bytesPerChannel};
 }
 
 LoadedRasterOverlayImage combineImages(
@@ -821,9 +880,24 @@ LoadedRasterOverlayImage combineImages(
   CombinedImageMeasurements measurements =
       measureCombinedImage(targetRectangle, images);
 
+  size_t targetImageBytes = measurements.widthPixels *
+                            measurements.heightPixels * measurements.channels *
+                            measurements.bytesPerChannel;
+  if (targetImageBytes <= 0) {
+    // Target image has no pixels, so our work here is done.
+    return LoadedRasterOverlayImage{
+        std::nullopt,
+        targetRectangle,
+        {},
+        {},
+        {},
+        true // TODO
+    };
+  }
+
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
-  result.moreDetailAvailable = false;
+  result.moreDetailAvailable = true; // TODO
 
   ImageCesium& target = result.image.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;
@@ -838,7 +912,7 @@ LoadedRasterOverlayImage combineImages(
       continue;
     }
 
-    blitImage(target, result.rectangle, *it->image, it->rectangle);
+    blitImage(target, result.rectangle, *it->image, it->rectangle, it->subset);
   }
 
   // TODO: detect when _all_ images are from an ancestor, because then
