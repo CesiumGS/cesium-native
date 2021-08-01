@@ -75,12 +75,9 @@ static void initializeTileset(Tileset& tileset) {
   tileset.updateView({viewState});
 }
 
-static ViewState zoomToTileset(const Tileset& tileset) {
-  const Tile* root = tileset.getRootTile();
-  REQUIRE(root != nullptr);
-
+static ViewState zoomToTile(const Tile& tile) {
   const BoundingRegion* region =
-      std::get_if<BoundingRegion>(&root->getBoundingVolume());
+      std::get_if<BoundingRegion>(&tile.getBoundingVolume());
   REQUIRE(region != nullptr);
 
   const GlobeRectangle& rectangle = region->getRectangle();
@@ -105,6 +102,13 @@ static ViewState zoomToTileset(const Tileset& tileset) {
       viewPortSize,
       horizontalFieldOfView,
       verticalFieldOfView);
+}
+
+static ViewState zoomToTileset(const Tileset& tileset) {
+  const Tile* root = tileset.getRootTile();
+  REQUIRE(root != nullptr);
+
+  return zoomToTile(*root);
 }
 
 TEST_CASE("Test replace refinement for render") {
@@ -757,5 +761,155 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     REQUIRE(result.tilesLoadingHighPriority == 0);
     REQUIRE(result.tilesCulled == 0);
     REQUIRE(result.culledTilesVisited == 0);
+  }
+}
+
+TEST_CASE("Test multiple frustums") {
+  Cesium3DTiles::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
+  testDataPath = testDataPath / "ReplaceTileset";
+  std::vector<std::string> files{
+      "tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm",
+      "ll_ll.b3dm",
+  };
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  // check the tiles status
+  const Tile* root = tileset.getRootTile();
+  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  for (const auto& child : root->getChildren()) {
+    REQUIRE(child.getState() == Tile::LoadState::Unloaded);
+  }
+
+  // Zoom to tileset. Expect the root will not meet sse in this configure
+  ViewState viewState = zoomToTileset(tileset);
+
+  // Zoom out from the tileset a little bit to make sure the root meets sse
+  glm::dvec3 zoomOutPosition =
+      viewState.getPosition() - viewState.getDirection() * 2500.0;
+  ViewState zoomOutViewState = ViewState::create(
+      zoomOutPosition,
+      viewState.getDirection(),
+      viewState.getUp(),
+      viewState.getViewportSize(),
+      viewState.getHorizontalFieldOfView(),
+      viewState.getVerticalFieldOfView());
+
+  SECTION("The frustum with the highest SSE should be used for deciding to "
+          "refine") {
+
+    // frame 1
+    {
+      ViewUpdateResult result =
+          tileset.updateView({viewState, zoomOutViewState});
+
+      // Check tile state. Ensure root meets sse for only the zoomed out
+      // ViewState
+      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
+      REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
+      for (const auto& child : root->getChildren()) {
+        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+      }
+
+      // check result
+      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesLoadingMediumPriority == 4);
+      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+    }
+
+    // frame 2
+    {
+      ViewUpdateResult result =
+          tileset.updateView({viewState, zoomOutViewState});
+
+      // Check tile state. Ensure root meets sse for only the zoomed out
+      // ViewState
+      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
+      REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
+      for (const auto& child : root->getChildren()) {
+        REQUIRE(child.getState() == Tile::LoadState::Done);
+      }
+
+      // check result
+      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+
+      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+
+      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesLoadingMediumPriority == 0);
+      REQUIRE(result.tilesCulled == 0);
+    }
+  }
+
+  SECTION("Tiles should only be culled if all the cameras agree") {
+
+    REQUIRE(root->getChildren().size() > 0);
+    const Tile& firstChild = root->getChildren()[0];
+    ViewState zoomInViewState = zoomToTile(firstChild);
+
+    // frame 3
+    {
+      ViewUpdateResult result =
+          tileset.updateView({zoomInViewState});
+
+      // Check tile state. Ensure root meets sse for only the zoomed out
+      // ViewState
+      /*
+      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
+      REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
+      for (const auto& child : root->getChildren()) {
+        REQUIRE(child.getState() == Tile::LoadState::Done);
+      }*/
+
+      // check result
+      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+
+      //REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      //REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+
+      //REQUIRE(result.tilesVisited == 5);
+      //REQUIRE(result.tilesLoadingMediumPriority == 0);
+      //REQUIRE(result.tilesCulled == 0);
+    }
   }
 }
