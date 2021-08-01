@@ -8,6 +8,7 @@
 #include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
+#include <algorithm>
 #include <catch2/catch.hpp>
 #include <cstddef>
 #include <filesystem>
@@ -879,37 +880,61 @@ TEST_CASE("Test multiple frustums") {
     }
   }
 
-  SECTION("Tiles should only be culled if all the cameras agree") {
+  SECTION("Tiles should be culled if all the cameras agree") {
 
-    REQUIRE(root->getChildren().size() > 0);
+    REQUIRE(root->getChildren().size() == 4);
     const Tile& firstChild = root->getChildren()[0];
-    ViewState zoomInViewState = zoomToTile(firstChild);
+    const Tile& secondChild = root->getChildren()[1];
+    REQUIRE(firstChild.getChildren().size() == 1);
+    const Tile& grandChild = firstChild.getChildren()[0];
 
-    // frame 3
+    ViewState zoomToTileViewState = zoomToTile(firstChild);
+
+    // Expected to only contain the grand child
+    // (child of the first child of the root).
+    glm::dvec3 zoomInPosition = zoomToTileViewState.getPosition() +
+                                zoomToTileViewState.getDirection() * 250.0;
+    ViewState zoomInViewState1 = ViewState::create(
+        zoomInPosition,
+        zoomToTileViewState.getDirection(),
+        zoomToTileViewState.getUp(),
+        zoomToTileViewState.getViewportSize(),
+        0.5 * zoomToTileViewState.getHorizontalFieldOfView(),
+        0.5 * zoomToTileViewState.getVerticalFieldOfView());
+
+    zoomInPosition = zoomToTileViewState.getPosition() +
+                     glm::dvec3(15.0, 0, 0) +
+                     zoomToTileViewState.getDirection() * 243.0;
+    ViewState zoomInViewState2 = ViewState::create(
+        zoomInPosition,
+        zoomToTileViewState.getDirection(),
+        zoomToTileViewState.getUp(),
+        zoomToTileViewState.getViewportSize(),
+        0.5 * zoomToTileViewState.getHorizontalFieldOfView(),
+        0.5 * zoomToTileViewState.getVerticalFieldOfView());
+
+    // frame 3 & 4
     {
+      tileset.updateView({zoomInViewState1, zoomInViewState2});
       ViewUpdateResult result =
-          tileset.updateView({zoomInViewState});
-
-      // Check tile state. Ensure root meets sse for only the zoomed out
-      // ViewState
-      /*
-      REQUIRE(root->getState() == Tile::LoadState::Done);
-      REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
-      REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
-      for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::Done);
-      }*/
+          tileset.updateView({zoomInViewState1, zoomInViewState2});
 
       // check result
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == root);
-
-      //REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
-      //REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
-
-      //REQUIRE(result.tilesVisited == 5);
-      //REQUIRE(result.tilesLoadingMediumPriority == 0);
-      //REQUIRE(result.tilesCulled == 0);
+      // The grand child and the second child are the only ones rendered.
+      // The third and fourth children of the root are culled.
+      REQUIRE(result.tilesToRenderThisFrame.size() == 2);
+      REQUIRE(result.tilesVisited == 4);
+      REQUIRE(
+          std::find(
+              result.tilesToRenderThisFrame.begin(),
+              result.tilesToRenderThisFrame.end(),
+              &grandChild) != result.tilesToRenderThisFrame.end());
+      REQUIRE(
+          std::find(
+              result.tilesToRenderThisFrame.begin(),
+              result.tilesToRenderThisFrame.end(),
+              &secondChild) != result.tilesToRenderThisFrame.end());
+      REQUIRE(result.tilesCulled == 2);
     }
   }
 }
