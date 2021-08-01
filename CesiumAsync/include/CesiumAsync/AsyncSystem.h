@@ -172,6 +172,52 @@ public:
   }
 
   /**
+   * @brief Creates a Future that resolves when every Future in a vector
+   * resolves, and rejects when any Future in the vector rejects.
+   *
+   * If any of the Futures rejects, the returned Future rejects as well. The
+   * exception included in the rejection will be from the first Future in the
+   * vector that rejects.
+   *
+   * To get detailed rejection information from each of the Futures,
+   * attach a `catchInMainThread` continuation prior to passing the
+   * list into `all`.
+   *
+   * @tparam T The type that each Future resolves to.
+   * @param futures The list of futures.
+   * @return A Future that resolves when all the given Futures resolve, and
+   * rejects when any Future in the vector rejects.
+   */
+  template <typename T>
+  Future<std::vector<T>> all(std::vector<Future<T>>&& futures) const {
+    std::vector<async::task<T>> tasks;
+    tasks.reserve(futures.size());
+
+    for (auto it = futures.begin(); it != futures.end(); ++it) {
+      tasks.emplace_back(std::move(it->_task));
+    }
+
+    futures.clear();
+
+    async::task<std::vector<T>> task =
+        async::when_all(tasks.begin(), tasks.end())
+            .then(
+                async::inline_scheduler(),
+                [](std::vector<async::task<T>>&& tasks) {
+                  // Get all the results. If any tasks rejected, we'll bail with
+                  // an exception.
+                  std::vector<T> results;
+                  results.reserve(tasks.size());
+
+                  for (auto it = tasks.begin(); it != tasks.end(); ++it) {
+                    results.emplace_back(it->get());
+                  }
+                  return results;
+                });
+    return Future<std::vector<T>>(this->_pSchedulers, std::move(task));
+  }
+
+  /**
    * @brief Creates a future that is already resolved.
    *
    * @tparam T The type of the future.

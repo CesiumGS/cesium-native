@@ -13,6 +13,8 @@
 - Added `CESIUM_COVERAGE_ENABLED` option to the build system.
 - Added `AsyncSystem::dispatchOneMainThreadTask` to dispatch a single task, rather than all the tasks that are waiting.
 - Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.
+- Added `AsyncSystem::catchImmediately` to catch a Future rejection immediately in any thread.
+- Added `AsyncSystem::all` to create a Future that resolves when a list of Futures resolve.
 
 ##### Fixes :wrench:
 
