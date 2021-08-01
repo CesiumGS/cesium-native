@@ -1,6 +1,7 @@
 
 #include "Cesium3DTiles/QuadtreeRasterOverlayTileProvider.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumUtility/Math.h"
 #include <stb_image_resize.h>
 
 using namespace CesiumAsync;
@@ -508,30 +509,6 @@ void blitImage(
   }
 }
 
-// Rounds value up to the nearest integer. Unless it is less than tolerance
-// from the lower integer, in which case it rounds down instead.
-double roundUp(double value, double tolerance) {
-  double up = glm::ceil(value);
-  double down = glm::floor(value);
-  if (value - down < tolerance) {
-    return down;
-  } else {
-    return up;
-  }
-}
-
-// Rounds value down to the nearest integer. Unless it is less than tolerance
-// from the higher integer, in which case it rounds up instead.
-double roundDown(double value, double tolerance) {
-  double up = glm::ceil(value);
-  double down = glm::floor(value);
-  if (up - value < tolerance) {
-    return up;
-  } else {
-    return down;
-  }
-}
-
 // Copy part of a source image to part of a target image.
 // The two rectangles are the extents of each image, and the part of the source
 // image where the source subset rectangle overlaps the target rectangle is
@@ -552,23 +529,23 @@ void blitImage(
   // Pixel coordinates are measured from the top left.
   // Projected rectangles are measured from the bottom left.
 
-  int32_t targetX = static_cast<int32_t>(roundDown(
+  int32_t targetX = static_cast<int32_t>(Math::roundDown(
       target.width * (overlap->minimumX - targetRectangle.minimumX) /
           targetRectangle.computeWidth(),
       pixelTolerance));
   targetX = glm::max(0, targetX);
-  int32_t targetY = static_cast<int32_t>(roundDown(
+  int32_t targetY = static_cast<int32_t>(Math::roundDown(
       target.height * (targetRectangle.maximumY - overlap->maximumY) /
           targetRectangle.computeHeight(),
       pixelTolerance));
   targetY = glm::max(0, targetY);
 
-  int32_t targetMaxX = static_cast<int32_t>(roundUp(
+  int32_t targetMaxX = static_cast<int32_t>(Math::roundUp(
       target.width * (overlap->maximumX - targetRectangle.minimumX) /
           targetRectangle.computeWidth(),
       pixelTolerance));
   targetMaxX = glm::min(targetMaxX, target.width);
-  int32_t targetMaxY = static_cast<int32_t>(roundUp(
+  int32_t targetMaxY = static_cast<int32_t>(Math::roundUp(
       target.height * (targetRectangle.maximumY - overlap->minimumY) /
           targetRectangle.computeHeight(),
       pixelTolerance));
@@ -576,23 +553,23 @@ void blitImage(
   int32_t targetWidth = targetMaxX - targetX;
   int32_t targetHeight = targetMaxY - targetY;
 
-  int32_t sourceX = static_cast<int32_t>(roundDown(
+  int32_t sourceX = static_cast<int32_t>(Math::roundDown(
       source.width * (overlap->minimumX - sourceRectangle.minimumX) /
           sourceRectangle.computeWidth(),
       pixelTolerance));
   sourceX = glm::max(0, sourceX);
-  int32_t sourceY = static_cast<int32_t>(roundDown(
+  int32_t sourceY = static_cast<int32_t>(Math::roundDown(
       source.height * (sourceRectangle.maximumY - overlap->maximumY) /
           sourceRectangle.computeHeight(),
       pixelTolerance));
   sourceY = glm::max(0, sourceY);
 
-  int32_t sourceMaxX = static_cast<int32_t>(roundUp(
+  int32_t sourceMaxX = static_cast<int32_t>(Math::roundUp(
       source.width * (overlap->maximumX - sourceRectangle.minimumX) /
           sourceRectangle.computeWidth(),
       pixelTolerance));
   sourceMaxX = glm::min(sourceMaxX, source.width);
-  int32_t sourceMaxY = static_cast<int32_t>(roundUp(
+  int32_t sourceMaxY = static_cast<int32_t>(Math::roundUp(
       source.height * (sourceRectangle.maximumY - overlap->minimumY) /
           sourceRectangle.computeHeight(),
       pixelTolerance));
@@ -815,19 +792,19 @@ CombinedImageMeasurements measureCombinedImage(
 
     // Expand this slightly so we don't wind up with partial pixels in the
     // target
-    intersection.minimumX = roundDown(
+    intersection.minimumX = Math::roundDown(
                                 intersection.minimumX / projectedWidthPerPixel,
                                 pixelTolerance) *
                             projectedWidthPerPixel;
-    intersection.minimumY = roundDown(
+    intersection.minimumY = Math::roundDown(
                                 intersection.minimumY / projectedHeightPerPixel,
                                 pixelTolerance) *
                             projectedHeightPerPixel;
-    intersection.maximumX = roundUp(
+    intersection.maximumX = Math::roundUp(
                                 intersection.maximumX / projectedWidthPerPixel,
                                 pixelTolerance) *
                             projectedWidthPerPixel;
-    intersection.maximumY = roundUp(
+    intersection.maximumY = Math::roundUp(
                                 intersection.maximumY / projectedHeightPerPixel,
                                 pixelTolerance) *
                             projectedHeightPerPixel;
@@ -857,10 +834,10 @@ CombinedImageMeasurements measureCombinedImage(
   }
 
   // Compute the pixel dimensions needed for the combined image.
-  int32_t combinedWidthPixels = static_cast<int32_t>(roundUp(
+  int32_t combinedWidthPixels = static_cast<int32_t>(Math::roundUp(
       combinedRectangle->computeWidth() / projectedWidthPerPixel,
       pixelTolerance));
-  int32_t combinedHeightPixels = static_cast<int32_t>(roundUp(
+  int32_t combinedHeightPixels = static_cast<int32_t>(Math::roundUp(
       combinedRectangle->computeHeight() / projectedHeightPerPixel,
       pixelTolerance));
 
