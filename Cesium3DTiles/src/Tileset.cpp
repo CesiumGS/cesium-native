@@ -1281,8 +1281,13 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     this->_distancesStack.resize(this->_nextDistancesVector + 1);
   }
 
-  std::vector<double>& distances =
+  std::unique_ptr<std::vector<double>>& pDistances =
       this->_distancesStack[this->_nextDistancesVector];
+  if (!pDistances) {
+    pDistances = std::make_unique<std::vector<double>>();
+  }
+
+  std::vector<double>& distances = *pDistances;
   distances.resize(frustums.size());
   ++this->_nextDistancesVector;
 
