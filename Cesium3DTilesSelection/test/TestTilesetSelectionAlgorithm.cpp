@@ -766,9 +766,9 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 }
 
 TEST_CASE("Test multiple frustums") {
-  Cesium3DTiles::registerAllTileContentTypes();
+  Cesium3DTilesSelection::registerAllTileContentTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
