@@ -399,6 +399,7 @@ private:
    */
   struct FrameState {
     const std::vector<ViewState>& frustums;
+    std::vector<double> fogDensities;
     int32_t lastFrameNumber;
     int32_t currentFrameNumber;
   };

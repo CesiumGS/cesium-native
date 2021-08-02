@@ -329,9 +329,27 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
   this->_loadQueueMedium.clear();
   this->_loadQueueLow.clear();
 
-  FrameState frameState{frustums, previousFrameNumber, currentFrameNumber};
+  std::vector<double> fogDensities(frustums.size());
+  std::transform(
+      frustums.begin(),
+      frustums.end(),
+      fogDensities.begin(),
+      [&fogDensityTable =
+           this->_options.fogDensityTable](const ViewState& frustum) -> double {
+        return computeFogDensity(fogDensityTable, frustum);
+      });
 
-  this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
+  FrameState frameState{
+      frustums,
+      std::move(fogDensities),
+      previousFrameNumber,
+      currentFrameNumber};
+
+  if (!frustums.empty()) {
+    this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
+  } else {
+    result = ViewUpdateResult();
+  }
 
   result.tilesLoadingLowPriority =
       static_cast<uint32_t>(this->_loadQueueLow.size());
@@ -1198,28 +1216,13 @@ static bool isVisibleFromCamera(
  * @param fogDensity The fog density
  * @return Whether the tile is visible in the fog
  */
-static bool isVisibleInFog(
-    const std::vector<ViewState>& frustums,
-    const std::vector<double>& distances,
-    const std::vector<FogDensityAtHeight>& fogDensityTable) {
-
-  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
-    const ViewState& frustum = frustums[i];
-    const double& distance = distances[i];
-
-    double fogDensity = computeFogDensity(fogDensityTable, frustum);
-
-    if (fogDensity <= 0.0) {
-      return true;
-    }
-
-    double fogScalar = distance * fogDensity;
-    if (glm::exp(-(fogScalar * fogScalar)) > 0.0) {
-      return true;
-    }
+static bool isVisibleInFog(const double& distance, const double& fogDensity) {
+  if (fogDensity <= 0.0) {
+    return true;
   }
 
-  return false;
+  double fogScalar = distance * fogDensity;
+  return glm::exp(-(fogScalar * fogScalar)) > 0.0;
 }
 
 // Visits a tile for possible rendering. When we call this function with a tile:
@@ -1249,6 +1252,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   const BoundingVolume& boundingVolume = tile.getBoundingVolume();
   const std::vector<ViewState>& frustums = frameState.frustums;
+  const std::vector<double>& fogDensities = frameState.fogDensities;
 
   if (std::none_of(
           frustums.begin(),
@@ -1269,8 +1273,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     }
   }
 
-  const std::vector<FogDensityAtHeight>& fogDensityTable =
-      pTileset->getOptions().fogDensityTable;
   std::vector<double> distances(frustums.size());
 
   std::transform(
@@ -1284,13 +1286,26 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       });
 
   // if we are still considering visiting this tile, check for fog occlusion
-  if (shouldVisit &&
-      !isVisibleInFog(frameState.frustums, distances, fogDensityTable)) {
-    // this tile is occluded by fog so it is a culled tile
-    culled = true;
-    if (this->_options.enableFogCulling) {
-      // fog culling is enabled so we shouldn't visit this tile
-      shouldVisit = false;
+  if (shouldVisit) {
+    bool isFogCulled = true;
+
+    for (size_t i = 0; i < frustums.size(); ++i) {
+      const double& distance = distances[i];
+      const double& fogDensity = fogDensities[i];
+
+      if (isVisibleInFog(distance, fogDensity)) {
+        isFogCulled = false;
+        break;
+      }
+    }
+
+    if (isFogCulled) {
+      // this tile is occluded by fog so it is a culled tile
+      culled = true;
+      if (this->_options.enableFogCulling) {
+        // fog culling is enabled so we shouldn't visit this tile
+        shouldVisit = false;
+      }
     }
   }
 
