@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `Future<T>::wait` now returns the resolved value and throws if the Future rejected, rather than returning a `std::variant` and slicing the exception to `std::exception`.
+* `Tileset::updateView` and `Tileset::updateViewOffline` now take `std::vector<ViewState>` instead of a single `ViewState`.
 
 ##### Additions :tada:
 
@@ -15,6 +16,7 @@
 - Added `AsyncSystem::createPromise` to create a Promise directly, rather than via a callback as in `AsyncSystem::createFuture`.
 - Added `AsyncSystem::catchImmediately` to catch a Future rejection immediately in any thread.
 - Added `AsyncSystem::all` to create a Future that resolves when a list of Futures resolve.
+* Added support for multiple frustums in the `Tileset` selection algorithm.
 
 ##### Fixes :wrench:
 
