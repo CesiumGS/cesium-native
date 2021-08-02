@@ -1,6 +1,6 @@
 # Change Log
 
-### Next Release - ?
+### v0.6.0 - 2021-08-03
 
 ##### Breaking Changes :mega:
 
