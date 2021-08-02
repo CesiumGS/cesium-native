@@ -1309,8 +1309,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool isFogCulled = true;
 
     for (size_t i = 0; i < frustums.size(); ++i) {
-      const double& distance = distances[i];
-      const double& fogDensity = fogDensities[i];
+      double distance = distances[i];
+      double fogDensity = fogDensities[i];
 
       if (isVisibleInFog(distance, fogDensity)) {
         isFogCulled = false;
@@ -1423,7 +1423,7 @@ bool Tileset::_meetsSse(
 
   for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
     const ViewState& frustum = frustums[i];
-    const double& distance = distances[i];
+    double distance = distances[i];
 
     // Does this tile meet the screen-space error?
     double sse =
@@ -1958,7 +1958,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
     double highestLoadPriority = std::numeric_limits<double>::max();
     for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
       const ViewState& frustum = frustums[i];
-      const double& distance = distances[i];
+      double distance = distances[i];
 
       glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
       double magnitude = glm::length(tileDirection);
