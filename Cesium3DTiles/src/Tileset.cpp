@@ -53,7 +53,9 @@ Tileset::Tileset(
       _overlays(*this),
       _tileDataBytes(0),
       _supportsRasterOverlays(false),
-      _gltfUpAxis(CesiumGeometry::Axis::Y) {
+      _gltfUpAxis(CesiumGeometry::Axis::Y),
+      _distancesStack(),
+      _nextDistancesVector(0) {
   CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
   ++this->_loadsInProgress;
   this->_loadTilesetJson(url);
@@ -80,7 +82,9 @@ Tileset::Tileset(
       _loadsInProgress(0),
       _overlays(*this),
       _tileDataBytes(0),
-      _supportsRasterOverlays(false) {
+      _supportsRasterOverlays(false),
+      _distancesStack(),
+      _nextDistancesVector(0) {
   CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
   CESIUM_TRACE_BEGIN_IN_TRACK("Tileset from ion startup");
 
@@ -1273,7 +1277,22 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     }
   }
 
-  std::vector<double> distances(frustums.size());
+  if (this->_nextDistancesVector >= this->_distancesStack.size()) {
+    this->_distancesStack.resize(this->_nextDistancesVector + 1);
+  }
+
+  std::vector<double>& distances =
+      this->_distancesStack[this->_nextDistancesVector];
+  distances.resize(frustums.size());
+  ++this->_nextDistancesVector;
+
+  // Use a unique_ptr to ensure the _nextDistancesVector gets decrements when we
+  // leave this scope.
+  auto decrementNextDistancesVector = [this](std::vector<double>*) {
+    --this->_nextDistancesVector;
+  };
+  std::unique_ptr<std::vector<double>, decltype(decrementNextDistancesVector)>
+      autoDecrement(&distances, decrementNextDistancesVector);
 
   std::transform(
       frustums.begin(),

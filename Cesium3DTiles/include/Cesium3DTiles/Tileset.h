@@ -570,6 +570,11 @@ private:
    */
   CesiumGeometry::Axis _gltfUpAxis;
 
+  // Holds computed distances, to avoid allocating them on the heap during tile
+  // selection.
+  std::vector<std::vector<double>> _distancesStack;
+  size_t _nextDistancesVector;
+
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
   static void addTileToLoadQueue(
