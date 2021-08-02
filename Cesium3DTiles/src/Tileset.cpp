@@ -1216,7 +1216,7 @@ static bool isVisibleFromCamera(
  * @param fogDensity The fog density
  * @return Whether the tile is visible in the fog
  */
-static bool isVisibleInFog(const double& distance, const double& fogDensity) {
+static bool isVisibleInFog(double distance, double fogDensity) {
   if (fogDensity <= 0.0) {
     return true;
   }
