@@ -1,13 +1,13 @@
 #include "BufferViewWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <magic_enum.hpp>
 #include <stdexcept>
 #include <type_traits>
 
 void CesiumGltf::writeBufferView(
     const std::vector<BufferView>& bufferViews,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (bufferViews.empty()) {
     return;

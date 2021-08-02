@@ -4,13 +4,13 @@
 
 #include "AnimationChannelJsonHandler.h"
 #include "AnimationSamplerJsonHandler.h"
+#include "CesiumGltf/Animation.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Animation;
 
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:

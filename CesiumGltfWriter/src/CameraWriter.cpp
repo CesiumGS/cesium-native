@@ -1,10 +1,10 @@
 #include "CameraWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
-#include "JsonWriter.h"
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
 #include <CesiumGltf/CameraPerspective.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <cstdint>
 #include <magic_enum.hpp>
 #include <utility>
@@ -12,7 +12,7 @@
 
 void writeOrthographicCamera(
     const CesiumGltf::CameraOrthographic& cameraOrthographic,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("orthographic");
   j.StartObject();
@@ -26,12 +26,12 @@ void writeOrthographicCamera(
   j.Double(cameraOrthographic.znear);
 
   if (!cameraOrthographic.extensions.empty()) {
-    writeExtensions(cameraOrthographic.extensions, j);
+    CesiumGltf::writeExtensions(cameraOrthographic.extensions, j);
   }
 
   if (!cameraOrthographic.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(cameraOrthographic.extras, j);
+    CesiumJsonWriter::writeJsonValue(cameraOrthographic.extras, j);
   }
 
   j.EndObject();
@@ -39,7 +39,7 @@ void writeOrthographicCamera(
 
 void writePerspectiveCamera(
     const CesiumGltf::CameraPerspective& cameraPerspective,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("perspective");
   j.StartObject();
@@ -56,12 +56,12 @@ void writePerspectiveCamera(
   j.Double(cameraPerspective.znear);
 
   if (!cameraPerspective.extensions.empty()) {
-    writeExtensions(cameraPerspective.extensions, j);
+    CesiumGltf::writeExtensions(cameraPerspective.extensions, j);
   }
 
   if (!cameraPerspective.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(cameraPerspective.extras, j);
+    CesiumJsonWriter::writeJsonValue(cameraPerspective.extras, j);
   }
 
   j.EndObject();
@@ -69,7 +69,7 @@ void writePerspectiveCamera(
 
 void CesiumGltf::writeCamera(
     const std::vector<Camera>& cameras,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (cameras.empty()) {
     return;
   }

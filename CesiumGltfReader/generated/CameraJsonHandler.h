@@ -10,7 +10,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Camera;
 
 class CameraJsonHandler : public NamedObjectJsonHandler {
 public:

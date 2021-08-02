@@ -10,7 +10,9 @@ namespace CesiumJsonReader {
 template <typename T, typename THandler>
 class CESIUMJSONREADER_API DictionaryJsonHandler : public ObjectJsonHandler {
 public:
-  DictionaryJsonHandler() noexcept : ObjectJsonHandler(), _item() {}
+  template <typename... Ts>
+  DictionaryJsonHandler(Ts&&... args) noexcept
+      : ObjectJsonHandler(), _item(std::forward<Ts>(args)...) {}
 
   void reset(
       IJsonHandler* pParent,
