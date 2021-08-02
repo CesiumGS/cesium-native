@@ -5,8 +5,8 @@ configure_cesium_library(CesiumJsonWriter)
 cesium_glob_files(CESIUM_JSON_WRITER_SOURCES src/*.cpp)
 cesium_glob_files(CESIUM_JSON_WRITER_HEADERS src/*.h src/*.hpp)
 cesium_glob_files(CESIUM_JSON_WRITER_PUBLIC_HEADERS include/CesiumJsonWriter/*.h)
-cesium_glob_files(CESIUM_JSON_WRITER_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_JSON_WRITER_TEST_HEADERS test/*.h)
+cesium_glob_files(CESIUM_JSON_WRITER_TEST_SOURCES test/*.cpp test/schema/*.cpp)
+cesium_glob_files(CESIUM_JSON_WRITER_TEST_HEADERS test/*.h test/schema/*.h)
 
 set_target_properties(CesiumJsonWriter
     PROPERTIES

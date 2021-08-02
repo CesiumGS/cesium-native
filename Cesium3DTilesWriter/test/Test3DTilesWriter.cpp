@@ -1,11 +1,13 @@
 #include "Cesium3DTiles/TilesetWriter.h"
-#include <Cesium3DTiles/Tileset.h>
 #include <algorithm>
 #include <catch2/catch.hpp>
 #include <cstddef>
 #include <gsl/span>
 #include <rapidjson/document.h>
 #include <string>
+
+using namespace Cesium3DTiles;
+using namespace CesiumJsonWriter;
 
 TEST_CASE("Write 3D Tiles Tileset", "[3DTilesWriter]") {
   using namespace std::string_literals;
@@ -44,8 +46,9 @@ TEST_CASE("Write 3D Tiles Tileset", "[3DTilesWriter]") {
   ts.extensionsUsed = {"ext1", "ext2"};
   ts.properties = ps;
 
+  ExtensionWriterContext context;
   CesiumJsonWriter::JsonWriter jsonWriter;
-  writeTileset(ts, jsonWriter);
+  TilesetWriter::write(ts, jsonWriter, context);
 
   rapidjson::Document document;
   document.Parse(jsonWriter.toString().c_str());
@@ -114,4 +117,6 @@ TEST_CASE("Write 3D Tiles Tileset", "[3DTilesWriter]") {
   CHECK(child2["refine"] == "REPLACE");
   CHECK_FALSE(child2.HasMember("content"));
   CHECK_FALSE(child2.HasMember("children"));
+
+  CHECK_FALSE(document.HasMember("extensions"));
 }
