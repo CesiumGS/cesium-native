@@ -548,6 +548,7 @@ private:
   static std::optional<CesiumGeospatial::BoundingRegion>
   generateTextureCoordinates(
       CesiumGltf::Model& model,
+      const glm::dmat4& transform,
       const BoundingVolume& boundingVolume,
       const std::unordered_set<CesiumGeospatial::Projection>& projections);
 

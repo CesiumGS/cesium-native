@@ -196,16 +196,16 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
     return;
   }
 
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTiles::Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
-  if (!pRectangle) {
+  std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
+      getGlobeRectangle(tile.getBoundingVolume());
+  if (!maybeRectangle) {
     return;
   }
 
   RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
   CesiumGeometry::Rectangle geometryRectangle =
-      projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
+      projectRectangleSimple(tileProvider.getProjection(), *maybeRectangle);
   CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 

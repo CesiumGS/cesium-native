@@ -649,6 +649,7 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
         TileRefine::Replace,
         *pContext,
         pLogger);
+    supportsRasterOverlays = true;
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
@@ -1208,12 +1209,17 @@ static bool isVisibleFromCamera(
   if (!forceRenderTilesUnderCamera) {
     return false;
   }
+
   const std::optional<CesiumGeospatial::Cartographic>& position =
       viewState.getPositionCartographic();
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTiles::Impl::obtainGlobeRectangle(&boundingVolume);
-  if (position && pRectangle) {
-    return pRectangle->contains(position.value());
+
+  // TODO: it would be better to test a line pointing down (and up?) from the
+  // camera against the bounding volume itself, rather than transforming the
+  // bounding volume to a region.
+  std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
+      getGlobeRectangle(boundingVolume);
+  if (position && maybeRectangle) {
+    return maybeRectangle->contains(position.value());
   }
   return false;
 }

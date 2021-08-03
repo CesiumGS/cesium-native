@@ -123,10 +123,7 @@ getGlobeRectangle(const BoundingVolume& boundingVolume) {
     std::optional<GlobeRectangle>
     operator()(const OrientedBoundingBox& orientedBoundingBox) {
       const glm::dvec3& centerEcef = orientedBoundingBox.getCenter();
-      glm::dmat3 enuToEcef =
-          Transforms::eastNorthUpToFixedFrame(centerEcef /*, ellipsoid*/);
       const glm::dmat3& halfAxes = orientedBoundingBox.getHalfAxes();
-      glm::dmat3 obbToEnu = glm::affineInverse(enuToEcef) * halfAxes;
 
       constexpr glm::dvec3 obbVertices[] = {
           glm::dvec3(1.0, 1.0, 1.0),
@@ -138,60 +135,35 @@ getGlobeRectangle(const BoundingVolume& boundingVolume) {
           glm::dvec3(-1.0, -1.0, 1.0),
           glm::dvec3(-1.0, -1.0, -1.0)};
 
-      glm::dvec3 vert0Enu = obbToEnu * obbVertices[0];
-
-      int8_t eastmostIndex = 0;
-      double eastmostProjection = vert0Enu.x;
-      int8_t westmostIndex = 0;
-      double westmostProjection = vert0Enu.x;
-      int8_t northmostIndex = 0;
-      double northmostProjection = vert0Enu.y;
-      int8_t southmostIndex = 0;
-      double southmostProjection = vert0Enu.y;
-
-      for (int8_t i = 1; i < 8; ++i) {
-        glm::dvec3 vertEnu = obbToEnu * obbVertices[i];
-        if (vertEnu.x > eastmostProjection) {
-          eastmostProjection = vertEnu.x;
-          eastmostIndex = i;
-        }
-        if (vertEnu.x < westmostProjection) {
-          westmostProjection = vertEnu.x;
-          westmostIndex = i;
-        }
-        if (vertEnu.y > northmostProjection) {
-          northmostProjection = vertEnu.y;
-          northmostIndex = i;
-        }
-        if (vertEnu.y < southmostProjection) {
-          southmostProjection = vertEnu.y;
-          southmostIndex = i;
-        }
-      }
-
-      std::optional<Cartographic> east =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              halfAxes * obbVertices[eastmostIndex] + centerEcef);
-      std::optional<Cartographic> west =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              halfAxes * obbVertices[westmostIndex] + centerEcef);
-      // TODO: why do these have to be switched??
-      std::optional<Cartographic> north =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              halfAxes * obbVertices[southmostIndex] + centerEcef);
-      std::optional<Cartographic> south =
-          Ellipsoid::WGS84.cartesianToCartographic(
-              halfAxes * obbVertices[northmostIndex] + centerEcef);
-
-      if (!east || !west || !north || !south) {
+      glm::dvec3 vert0Ecef = centerEcef + halfAxes * obbVertices[0];
+      std::optional<Cartographic> c = Ellipsoid::WGS84.cartesianToCartographic(vert0Ecef);
+      if (!c) {
         return std::nullopt;
       }
 
+      double west = c->longitude;
+      double south = c->latitude;
+      double east = c->longitude;
+      double north = c->latitude;
+
+      for (int8_t i = 1; i < 8; ++i) {
+        glm::dvec3 vertEcef = centerEcef + halfAxes * obbVertices[i];
+        c = Ellipsoid::WGS84.cartesianToCartographic(vertEcef);
+        if (!c) {
+          return std::nullopt;
+        }
+
+        west = glm::min(west, c->longitude);
+        south = glm::min(south, c->latitude);
+        east = glm::max(east, c->longitude);
+        north = glm::max(north, c->latitude);
+      }
+
       return GlobeRectangle(
-          west->longitude,
-          south->latitude,
-          east->longitude,
-          north->latitude);
+          west,
+          south,
+          east,
+          north);
     }
 
     std::optional<GlobeRectangle>

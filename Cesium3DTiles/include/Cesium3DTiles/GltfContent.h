@@ -66,6 +66,7 @@ public:
    */
   static CesiumGeospatial::BoundingRegion createRasterOverlayTextureCoordinates(
       CesiumGltf::Model& gltf,
+      const glm::dmat4& transform,
       const std::string& projectionName,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
