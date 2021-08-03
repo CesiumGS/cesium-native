@@ -136,7 +136,8 @@ getGlobeRectangle(const BoundingVolume& boundingVolume) {
           glm::dvec3(-1.0, -1.0, -1.0)};
 
       glm::dvec3 vert0Ecef = centerEcef + halfAxes * obbVertices[0];
-      std::optional<Cartographic> c = Ellipsoid::WGS84.cartesianToCartographic(vert0Ecef);
+      std::optional<Cartographic> c =
+          Ellipsoid::WGS84.cartesianToCartographic(vert0Ecef);
       if (!c) {
         return std::nullopt;
       }
@@ -159,11 +160,7 @@ getGlobeRectangle(const BoundingVolume& boundingVolume) {
         north = glm::max(north, c->latitude);
       }
 
-      return GlobeRectangle(
-          west,
-          south,
-          east,
-          north);
+      return GlobeRectangle(west, south, east, north);
     }
 
     std::optional<GlobeRectangle>
