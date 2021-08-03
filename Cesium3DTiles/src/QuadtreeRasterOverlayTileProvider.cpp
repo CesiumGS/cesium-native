@@ -857,7 +857,7 @@ LoadedRasterOverlayImage combineImages(
   CombinedImageMeasurements measurements =
       measureCombinedImage(targetRectangle, images);
 
-  size_t targetImageBytes = measurements.widthPixels *
+  int32_t targetImageBytes = measurements.widthPixels *
                             measurements.heightPixels * measurements.channels *
                             measurements.bytesPerChannel;
   if (targetImageBytes <= 0) {
