@@ -1,0 +1,21 @@
+{
+  "name": "schema-gen",
+  "version": "1.0.0",
+  "description": "Generate cesium-native C++ classes from a JSON schema",
+  "main": "index.js",
+  "scripts": {
+    "3d-tiles": "node index.js --schema https://raw.githubusercontent.com/CesiumGS/3d-tiles/main/specification/schema/tileset.schema.json --output test_output --extensions https://raw.githubusercontent.com/CesiumGS/3d-tiles/3DTILES_tile_metadata/extensions/ --namespace Cesium3DTiles --config 3dTiles.json",
+    "gltf": "node index.js --schema https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/2.0/schema/glTF.schema.json --output test_output --extensions https://raw.githubusercontent.com/KhronosGroup/glTF/master/extensions/2.0/ --namespace CesiumGltf --config glTF.json"
+  },
+  "author": "CesiumGS, Inc.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "lodash": "^4.17.20",
+    "handlebars": "^4.7.7",
+    "sync-request": "^6.1.0",
+    "yargs": "^16.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1"
+  }
+}

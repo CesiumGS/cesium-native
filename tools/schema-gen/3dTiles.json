@@ -1,0 +1,15 @@
+{
+  "overrides": {
+    "properties.schema.json": {
+      "name": "TilesetProperties"
+    }
+  },
+
+  "extensions": [
+    {
+      "schema": "3DTILES_tile_metadata/schema/tileset.3DTILES_tile_metadata.schema.json",
+      "name": "3DTILES_tile_metadata"
+    }
+  ]
+}
+
