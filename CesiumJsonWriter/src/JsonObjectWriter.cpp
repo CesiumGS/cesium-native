@@ -1,23 +1,23 @@
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
-#include <JsonWriter.h>
 #include <functional>
 #include <stack>
 #include <utility>
 
-using namespace CesiumGltf;
+using namespace CesiumJsonWriter;
 using namespace CesiumUtility;
 using namespace rapidjson;
 
-void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j);
+void primitiveWriter(const JsonValue& item, CesiumJsonWriter::JsonWriter& j);
 void recursiveArrayWriter(
     const JsonValue::Array& array,
-    CesiumGltf::JsonWriter& j);
+    CesiumJsonWriter::JsonWriter& j);
 void recursiveObjectWriter(
     const JsonValue::Object& object,
-    CesiumGltf::JsonWriter& j);
+    CesiumJsonWriter::JsonWriter& j);
 
-void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j) {
+void primitiveWriter(const JsonValue& item, CesiumJsonWriter::JsonWriter& j) {
   if (item.isBool()) {
     j.Bool(item.getBool());
   }
@@ -45,7 +45,7 @@ void primitiveWriter(const JsonValue& item, CesiumGltf::JsonWriter& j) {
 
 void recursiveArrayWriter(
     const JsonValue::Array& array,
-    CesiumGltf::JsonWriter& j) {
+    CesiumJsonWriter::JsonWriter& j) {
   j.StartArray();
   for (const auto& item : array) {
     if (item.isArray()) {
@@ -65,7 +65,7 @@ void recursiveArrayWriter(
 
 void recursiveObjectWriter(
     const JsonValue::Object& object,
-    CesiumGltf::JsonWriter& j) {
+    CesiumJsonWriter::JsonWriter& j) {
 
   j.StartObject();
 
@@ -87,9 +87,9 @@ void recursiveObjectWriter(
   j.EndObject();
 }
 
-void CesiumGltf::writeJsonValue(
+void CesiumJsonWriter::writeJsonValue(
     const JsonValue& value,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (value.isArray()) {
     recursiveArrayWriter(std::get<JsonValue::Array>(value.value), jsonWriter);

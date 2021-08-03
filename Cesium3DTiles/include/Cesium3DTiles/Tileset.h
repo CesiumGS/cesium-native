@@ -147,22 +147,23 @@ public:
    * loading and ready to be rendered before returning the function. This method
    * is significantly slower than {@link Tileset::updateView} and should only be
    * used for capturing movie or non-realtime situation.
-   * @param viewState The {@link ViewState} that the view should be updated for
+   * @param frustums The {@link ViewState}s that the view should be updated for
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult& updateViewOffline(const ViewState& viewState);
+  const ViewUpdateResult&
+  updateViewOffline(const std::vector<ViewState>& frustums);
 
   /**
    * @brief Updates this view, returning the set of tiles to render in this
    * view.
-   * @param viewState The {@link ViewState} that the view should be updated for
+   * @param frustums The {@link ViewState}s that the view should be updated for
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult& updateView(const ViewState& viewState);
+  const ViewUpdateResult& updateView(const std::vector<ViewState>& frustums);
 
   /**
    * @brief Notifies the tileset that the given tile has started loading.
@@ -398,16 +399,16 @@ private:
    * passed on through the traversal.
    */
   struct FrameState {
-    const ViewState& viewState;
+    const std::vector<ViewState>& frustums;
+    std::vector<double> fogDensities;
     int32_t lastFrameNumber;
     int32_t currentFrameNumber;
-    double fogDensity;
   };
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
       Tile& tile,
-      double distance,
+      const std::vector<double>& distances,
       ViewUpdateResult& result);
   TraversalDetails _renderInnerTile(
       const FrameState& frameState,
@@ -428,14 +429,14 @@ private:
       size_t loadIndexMedium,
       size_t loadIndexHigh,
       bool queuedForLoad,
-      double distance);
+      const std::vector<double>& distances);
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
-      double distance,
+      const std::vector<double>& distances,
       bool culled,
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
@@ -470,7 +471,7 @@ private:
       const FrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result,
-      double distance);
+      const std::vector<double>& distances);
 
   /**
    * @brief Queues load of tiles that are _required_ to be loaded before the
@@ -495,11 +496,11 @@ private:
   bool _queueLoadOfChildrenRequiredForRefinement(
       const FrameState& frameState,
       Tile& tile,
-      double distance);
+      const std::vector<double>& distances);
   bool _meetsSse(
-      const ViewState& viewState,
+      const std::vector<ViewState>& frustums,
       const Tile& tile,
-      double distance,
+      const std::vector<double>& distances,
       bool culled) const;
 
   void _processLoadQueue();
@@ -570,13 +571,18 @@ private:
    */
   CesiumGeometry::Axis _gltfUpAxis;
 
+  // Holds computed distances, to avoid allocating them on the heap during tile
+  // selection.
+  std::vector<std::unique_ptr<std::vector<double>>> _distancesStack;
+  size_t _nextDistancesVector;
+
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
   static void addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
-      const ViewState& viewState,
+      const std::vector<ViewState>& frustums,
       Tile& tile,
-      double distance);
+      const std::vector<double>& distances);
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
       std::atomic<uint32_t>& loadsInProgress,

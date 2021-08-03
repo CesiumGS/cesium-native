@@ -1,11 +1,11 @@
 #include "SamplerWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <magic_enum.hpp>
 
 void CesiumGltf::writeSampler(
     const std::vector<Sampler>& samplers,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (samplers.empty()) {
     return;
   }

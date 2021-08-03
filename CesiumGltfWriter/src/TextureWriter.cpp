@@ -1,10 +1,10 @@
 #include "TextureWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 
 void CesiumGltf::writeTexture(
     const std::vector<Texture>& textures,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (textures.empty()) {
     return;
   }

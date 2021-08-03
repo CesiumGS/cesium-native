@@ -1,9 +1,9 @@
 #include "BufferWriter.h"
-#include "JsonWriter.h"
-#include "PrettyJsonWriter.h"
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/WriteModelResult.h>
+#include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
@@ -28,7 +28,7 @@ TEST_CASE(
 
   CesiumGltf::Buffer buffer;
   buffer.cesium.data = HELLO_WORLD_STR;
-  CesiumGltf::PrettyJsonWriter writer;
+  CesiumJsonWriter::PrettyJsonWriter writer;
 
   // Intentionally set an erroneous byte size, the writer should ignore it.
   // if a base64 conversion occured.
@@ -83,7 +83,7 @@ TEST_CASE(
     callbackInvoked = true;
   };
 
-  CesiumGltf::PrettyJsonWriter writer;
+  CesiumJsonWriter::PrettyJsonWriter writer;
 
   // Intentionally set an erroneous byte size, the writer should ignore it if
   // writing to an external file would occur.
@@ -127,7 +127,7 @@ TEST_CASE(
 TEST_CASE("Buffer that only has byteLength set is serialized correctly") {
   CesiumGltf::Buffer buffer;
   buffer.byteLength = 1234;
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
@@ -152,7 +152,7 @@ TEST_CASE("Buffer that only has byteLength set is serialized correctly") {
 TEST_CASE("URI zero CANNOT be set in GLB mode. (0th buffer is reserved as "
           "binary chunk).") {
   CesiumGltf::Buffer buffer;
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   buffer.uri = "literally anything here should trigger this error";
   writer.StartObject();
 
@@ -177,7 +177,7 @@ TEST_CASE("If uri is NOT set and buffer.cesium.data is NOT empty and "
           "AutoConvertDataToBase64 is NOT set, then user provided lambda with "
           "bufferIndex.bin name should be called") {
   CesiumGltf::Buffer buffer;
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   buffer.cesium.data = HELLO_WORLD_STR;
 
   bool callbackInvoked = false;
@@ -214,7 +214,7 @@ TEST_CASE("AmbiguiousDataSource error returned if buffer.uri is set to base64 "
   CesiumGltf::Buffer buffer;
   buffer.uri = "data:application/octet-stream;base64,SGVsbG9Xb3JsZCE=";
   buffer.cesium.data = HELLO_WORLD_STR;
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
@@ -239,7 +239,7 @@ TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
   buffer.uri = "data:application/octet-stream;base64,SGVsbG9Xb3JsZCE=";
   buffer.byteLength = static_cast<std::int64_t>(HELLO_WORLD_STR.size());
   buffer.name = "HelloWorldBuffer";
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
@@ -278,7 +278,7 @@ TEST_CASE("buffer.uri is passed through to final json string if appropriate") {
 TEST_CASE("base64 uri set but byte length not set") {
   CesiumGltf::Buffer buffer;
   buffer.uri = "data:application/octet-stream;base64,SGVsbG9Xb3JsZCE=";
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
@@ -301,7 +301,7 @@ TEST_CASE("If writing in GLB mode, buffer[0] automatically has its byteLength "
           "calculated based off buffer.cesium.data") {
   CesiumGltf::Buffer buffer;
   buffer.cesium.data = HELLO_WORLD_STR;
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
@@ -339,7 +339,7 @@ TEST_CASE("MissingDataSource error returned if ExternalFileURI detected and "
           "buffer.cesium.data is empty") {
   CesiumGltf::Buffer buffer;
   buffer.uri = "Foobar.bin";
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;
@@ -367,7 +367,7 @@ TEST_CASE("extras and extensions are detected and serialized") {
 
   buffer.extensions.emplace("key", testExtension);
 
-  CesiumGltf::JsonWriter writer;
+  CesiumJsonWriter::JsonWriter writer;
   writer.StartObject();
 
   CesiumGltf::WriteModelOptions options;

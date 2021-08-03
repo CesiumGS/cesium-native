@@ -1,9 +1,9 @@
 #pragma once
-#include "JsonWriter.h"
 #include <CesiumGltf/Camera.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 
 namespace CesiumGltf {
 void writeCamera(
     const std::vector<Camera>& cameras,
-    CesiumGltf::JsonWriter& jsonWriter);
+    CesiumJsonWriter::JsonWriter& jsonWriter);
 }

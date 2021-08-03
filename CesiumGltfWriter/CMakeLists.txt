@@ -9,7 +9,7 @@ cesium_glob_files(CESIUM_GLTF_WRITER_TEST_SOURCES test/*.cpp)
 cesium_glob_files(CESIUM_GLTF_WRITER_TEST_HEADERS test/*.h)
 
 set_target_properties(CesiumGltfWriter
-    PROPERTIES 
+    PROPERTIES
         TEST_SOURCES "${CESIUM_GLTF_WRITER_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_GLTF_WRITER_TEST_HEADERS}"
 )
@@ -42,9 +42,10 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/generated
 )
 
-target_link_libraries(CesiumGltfWriter 
-    PUBLIC 
-        CesiumGltf 
+target_link_libraries(CesiumGltfWriter
+    PUBLIC
+        CesiumGltf
+        CesiumJsonWriter
         modp_b64
     PRIVATE
         magic_enum
