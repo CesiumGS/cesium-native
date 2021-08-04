@@ -4,12 +4,9 @@
 #include "AssetWriter.h"
 #include "ExtensionWriter.h"
 #include "ImageWriter.h"
-#include "JsonObjectWriter.h"
-#include "JsonWriter.h"
 #include "MaterialWriter.h"
 #include "MeshWriter.h"
 #include "NodeWriter.h"
-#include "PrettyJsonWriter.h"
 #include "SamplerWriter.h"
 #include "SceneWriter.h"
 #include "SkinWriter.h"
@@ -21,6 +18,9 @@
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/Writer.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 #include <array>
 #include <cstdio>
@@ -58,12 +58,12 @@ WriteModelResult writeModel(
     const WriteGLTFCallback& writeGLTFCallback) {
 
   WriteModelResult result;
-  std::unique_ptr<JsonWriter> writer;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
-    writer = std::make_unique<PrettyJsonWriter>();
+    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
   } else {
-    writer = std::make_unique<JsonWriter>();
+    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
   writer->StartObject();
@@ -111,7 +111,7 @@ WriteModelResult writeModel(
   CesiumGltf::writeExtensions(model.extensions, *writer);
 
   if (!model.extras.empty()) {
-    writeJsonValue(model.extras, *writer);
+    CesiumJsonWriter::writeJsonValue(model.extras, *writer);
   }
 
   writer->EndObject();

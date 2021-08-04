@@ -1,16 +1,16 @@
 #include "AccessorSparseWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonWriter.h"
 #include <CesiumGltf/AccessorSparse.h>
 #include <CesiumGltf/AccessorSparseIndices.h>
 #include <CesiumGltf/AccessorSparseValues.h>
-#include <JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <magic_enum.hpp>
 #include <stdexcept>
 
 void writeAccessorSparseIndices(
     const CesiumGltf::AccessorSparseIndices& indices,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("indices");
   j.StartObject();
@@ -27,7 +27,7 @@ void writeAccessorSparseIndices(
           magic_enum::enum_integer(indices.componentType)));
 
   if (!indices.extensions.empty()) {
-    writeExtensions(indices.extensions, j);
+    CesiumGltf::writeExtensions(indices.extensions, j);
   }
 
   if (!indices.extras.empty()) {
@@ -38,7 +38,7 @@ void writeAccessorSparseIndices(
 
 void writeAccessorSparseValues(
     const CesiumGltf::AccessorSparseValues& values,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("values");
   j.StartObject();
@@ -50,7 +50,7 @@ void writeAccessorSparseValues(
   }
 
   if (!values.extensions.empty()) {
-    writeExtensions(values.extensions, j);
+    CesiumGltf::writeExtensions(values.extensions, j);
   }
 
   if (!values.extras.empty()) {
@@ -61,7 +61,7 @@ void writeAccessorSparseValues(
 
 void CesiumGltf::writeAccessorSparse(
     const AccessorSparse& accessorSparse,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.Key("sparse");
   j.StartObject();

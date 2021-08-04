@@ -1,10 +1,10 @@
-#include "JsonWriter.h"
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <algorithm>
 #include <iterator>
 #include <string>
 #include <string_view>
 
-namespace CesiumGltf {
+namespace CesiumJsonWriter {
 JsonWriter::JsonWriter()
     : compact(std::make_unique<rapidjson::Writer<rapidjson::StringBuffer>>(
           _compactBuffer)) {}
@@ -145,4 +145,4 @@ std::vector<std::byte> JsonWriter::toBytes() {
   return result;
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumJsonWriter

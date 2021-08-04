@@ -167,6 +167,31 @@ public:
   }
 
   /**
+   * @brief Registers a continuation function to be invoked immediately, and
+   * invalidates this Future.
+   *
+   * When this Future is rejected, the continuation function will be invoked
+   * in whatever thread does the rejection. Similarly, if the Future is already
+   * rejected when `catchImmediately` is called, the continuation function will
+   * be invoked immediately before this method returns.
+   *
+   * If the function itself returns a `Future`, the function will not be
+   * considered complete until that returned `Future` also resolves.
+   *
+   * Any `then` continuations chained after this one will be invoked with the
+   * return value of the catch callback.
+   *
+   * @tparam Func The type of the function.
+   * @param f The function.
+   * @return A future that resolves after the supplied function completes.
+   */
+  template <typename Func> Future<T> catchImmediately(Func&& f) && {
+    return std::move(*this).catchWithScheduler(
+        async::inline_scheduler(),
+        std::forward<Func>(f));
+  }
+
+  /**
    * @brief Waits for the future to resolve or reject and returns the result.
    *
    * This method must not be called from the main thread, the one that calls
