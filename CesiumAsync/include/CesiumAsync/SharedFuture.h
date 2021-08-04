@@ -222,7 +222,9 @@ private:
         this->_pSchedulers,
         task.then(
             scheduler,
-            Impl::WithTracingShared<T>::end(tracingName, std::forward<Func>(f))));
+            Impl::WithTracingShared<T>::end(
+                tracingName,
+                std::forward<Func>(f))));
   }
 
   template <typename Func, typename Scheduler>

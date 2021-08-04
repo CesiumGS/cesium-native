@@ -49,8 +49,8 @@ template <typename T> struct WithTracingShared {
   static auto
   begin([[maybe_unused]] const char* tracingName, [[maybe_unused]] Func&& f) {
 #if CESIUM_TRACING_ENABLED
-    return [tracingName, CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](
-               const T& result) mutable {
+    return [tracingName,
+            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](const T& result) mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
         CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
@@ -67,8 +67,7 @@ template <typename T> struct WithTracingShared {
 #if CESIUM_TRACING_ENABLED
     return [tracingName,
             f = Impl::unwrapFuture<Func, T>(std::forward<Func>(f)),
-            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](
-               const T& result) mutable {
+            CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()](const T& result) mutable {
       CESIUM_TRACE_USE_CAPTURED_TRACK();
       if (tracingName) {
         CESIUM_TRACE_END_IN_TRACK(tracingName);
