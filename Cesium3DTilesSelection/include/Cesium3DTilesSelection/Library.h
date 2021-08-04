@@ -6,7 +6,7 @@
 namespace Cesium3DTilesSelection {}
 
 #if defined(_WIN32) && defined(CESIUM_SHARED)
-#ifdef CESIUM3DTILES_BUILDING
+#ifdef CESIUM3DTILESSELECTION_BUILDING
 #define CESIUM3DTILESSELECTION_API __declspec(dllexport)
 #else
 #define CESIUM3DTILESSELECTION_API __declspec(dllimport)

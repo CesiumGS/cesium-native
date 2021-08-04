@@ -2,31 +2,31 @@ add_library(Cesium3DTilesSelection "")
 
 configure_cesium_library(Cesium3DTilesSelection)
 
-cesium_glob_files(CESIUM_3DTILES_PIPELINE_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_PIPELINE_HEADERS src/*.h src/*.hpp)
-cesium_glob_files(CESIUM_3DTILES_PIPELINE_PUBLIC_HEADERS include/Cesium3DTilesSelection/*.h include/Cesium3DTilesSelection/*.hpp)
-cesium_glob_files(CESIUM_3DTILES_PIPELINE_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_3DTILES_PIPELINE_TEST_HEADERS test/*.h test/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_SOURCES src/*.cpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_HEADERS src/*.h src/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS include/Cesium3DTilesSelection/*.h include/Cesium3DTilesSelection/*.hpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_SOURCES test/*.cpp)
+cesium_glob_files(CESIUM_3DTILES_SELECTION_TEST_HEADERS test/*.h test/*.hpp)
 
 set_target_properties(Cesium3DTilesSelection
     PROPERTIES
-        TEST_SOURCES "${CESIUM_3DTILES_PIPELINE_TEST_SOURCES}"
-        TEST_HEADERS "${CESIUM_3DTILES_PIPELINE_TEST_HEADERS}"
+        TEST_SOURCES "${CESIUM_3DTILES_SELECTION_TEST_SOURCES}"
+        TEST_HEADERS "${CESIUM_3DTILES_SELECTION_TEST_HEADERS}"
         TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
 )
 
 set_target_properties(Cesium3DTilesSelection
     PROPERTIES
-    PUBLIC_HEADER "${CESIUM_3DTILES_PIPELINE_PUBLIC_HEADERS}"
+    PUBLIC_HEADER "${CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS}"
 )
 
 target_sources(
     Cesium3DTilesSelection
     PRIVATE
-        ${CESIUM_3DTILES_PIPELINE_SOURCES}
-        ${CESIUM_3DTILES_PIPELINE_HEADERS}
+        ${CESIUM_3DTILES_SELECTION_SOURCES}
+        ${CESIUM_3DTILES_SELECTION_HEADERS}
     PUBLIC
-        ${CESIUM_3DTILES_PIPELINE_PUBLIC_HEADERS}
+        ${CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS}
 )
 
 target_include_directories(
