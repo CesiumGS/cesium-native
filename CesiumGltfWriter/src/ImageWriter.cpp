@@ -2,9 +2,9 @@
 #include "Base64URIDetector.h"
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <algorithm>
 #include <cstdint>
 
@@ -29,7 +29,7 @@ mimeTypeToExtensionString(CesiumGltf::Image::MimeType mimeType) noexcept {
 void CesiumGltf::writeImage(
     WriteModelResult& result,
     const std::vector<CesiumGltf::Image>& images,
-    CesiumGltf::JsonWriter& jsonWriter,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
     const WriteModelOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
   if (images.empty()) {

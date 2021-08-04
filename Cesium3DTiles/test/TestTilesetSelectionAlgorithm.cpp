@@ -8,6 +8,7 @@
 #include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
+#include <algorithm>
 #include <catch2/catch.hpp>
 #include <cstddef>
 #include <filesystem>
@@ -72,15 +73,12 @@ static void initializeTileset(Tileset& tileset) {
       horizontalFieldOfView,
       verticalFieldOfView);
 
-  tileset.updateView(viewState);
+  tileset.updateView({viewState});
 }
 
-static ViewState zoomToTileset(const Tileset& tileset) {
-  const Tile* root = tileset.getRootTile();
-  REQUIRE(root != nullptr);
-
+static ViewState zoomToTile(const Tile& tile) {
   const BoundingRegion* region =
-      std::get_if<BoundingRegion>(&root->getBoundingVolume());
+      std::get_if<BoundingRegion>(&tile.getBoundingVolume());
   REQUIRE(region != nullptr);
 
   const GlobeRectangle& rectangle = region->getRectangle();
@@ -105,6 +103,13 @@ static ViewState zoomToTileset(const Tileset& tileset) {
       viewPortSize,
       horizontalFieldOfView,
       verticalFieldOfView);
+}
+
+static ViewState zoomToTileset(const Tileset& tileset) {
+  const Tile* root = tileset.getRootTile();
+  REQUIRE(root != nullptr);
+
+  return zoomToTile(*root);
 }
 
 TEST_CASE("Test replace refinement for render") {
@@ -185,7 +190,7 @@ TEST_CASE("Test replace refinement for render") {
     // Check 1st and 2nd frame. Root should meet sse and render. No transitions
     // are expected here
     for (int frame = 0; frame < 2; ++frame) {
-      ViewUpdateResult result = tileset.updateView(zoomOutViewState);
+      ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
       // Check tile state. Ensure root meet sse
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -243,7 +248,7 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, so it goes to children. But because
     // children haven't started loading, root should be rendered.
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
       // Children begin loading as well
@@ -270,7 +275,7 @@ TEST_CASE("Test replace refinement for render") {
     // rendered. Root should be rendered instead. Children should have failed
     // load states
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -315,7 +320,7 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, but none of the children finish
     // loading. So we will render root
     {
-      ViewUpdateResult result = tileset.updateView(zoomInViewState);
+      ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -348,7 +353,7 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. All the children finish loading, so they are ready to be
     // rendered (except ll.b3dm tile since it doesn't meet sse)
     {
-      ViewUpdateResult result = tileset.updateView(zoomInViewState);
+      ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -404,7 +409,7 @@ TEST_CASE("Test replace refinement for render") {
           viewState.getHorizontalFieldOfView(),
           viewState.getVerticalFieldOfView());
 
-      ViewUpdateResult result = tileset.updateView(zoomOutViewState);
+      ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -453,7 +458,7 @@ TEST_CASE("Test replace refinement for render") {
     // none of the children are loaded, root will be rendered instead and
     // children transition from unloaded to loading in the mean time
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -480,7 +485,7 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. Children are finished loading and ready to be rendered. Root
     // shouldn't be rendered in this frame
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // check tile states
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -568,7 +573,7 @@ TEST_CASE("Test additive refinement") {
     // 1st frame. Root will get rendered first and 5 of its children are loading
     // since they meet sse
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // root is rendered first
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -602,7 +607,7 @@ TEST_CASE("Test additive refinement") {
 
     // 2nd frame
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       // root is rendered first
       REQUIRE(root->getState() == Tile::LoadState::Done);
@@ -653,7 +658,7 @@ TEST_CASE("Test additive refinement") {
 
     // 3rd frame. All the children finish loading. All should be rendered now
     {
-      ViewUpdateResult result = tileset.updateView(viewState);
+      ViewUpdateResult result = tileset.updateView({viewState});
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 7);
 
@@ -722,7 +727,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // 1st frame. Root doesn't meet sse, so load children. But they are
   // non-renderable, so render root only
   {
-    ViewUpdateResult result = tileset.updateView(viewState);
+    ViewUpdateResult result = tileset.updateView({viewState});
 
     for (const Tile& child : root->getChildren()) {
       CHECK(child.getState() == Tile::LoadState::ContentLoading);
@@ -741,7 +746,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // 2nd frame. Root doesn't meet sse, so load children. But they are
   // non-renderable, so render root only
   {
-    ViewUpdateResult result = tileset.updateView(viewState);
+    ViewUpdateResult result = tileset.updateView({viewState});
 
     REQUIRE(root->isRenderable());
     for (const Tile& child : root->getChildren()) {
@@ -757,5 +762,179 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     REQUIRE(result.tilesLoadingHighPriority == 0);
     REQUIRE(result.tilesCulled == 0);
     REQUIRE(result.culledTilesVisited == 0);
+  }
+}
+
+TEST_CASE("Test multiple frustums") {
+  Cesium3DTiles::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTiles_TEST_DATA_DIR;
+  testDataPath = testDataPath / "ReplaceTileset";
+  std::vector<std::string> files{
+      "tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm",
+      "ll_ll.b3dm",
+  };
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and call updateView() to give it a chance to load
+  Tileset tileset(tilesetExternals, "tileset.json");
+  initializeTileset(tileset);
+
+  // check the tiles status
+  const Tile* root = tileset.getRootTile();
+  REQUIRE(root->getState() == Tile::LoadState::ContentLoading);
+  for (const auto& child : root->getChildren()) {
+    REQUIRE(child.getState() == Tile::LoadState::Unloaded);
+  }
+
+  // Zoom to tileset. Expect the root will not meet sse in this configure
+  ViewState viewState = zoomToTileset(tileset);
+
+  // Zoom out from the tileset a little bit to make sure the root meets sse
+  glm::dvec3 zoomOutPosition =
+      viewState.getPosition() - viewState.getDirection() * 2500.0;
+  ViewState zoomOutViewState = ViewState::create(
+      zoomOutPosition,
+      viewState.getDirection(),
+      viewState.getUp(),
+      viewState.getViewportSize(),
+      viewState.getHorizontalFieldOfView(),
+      viewState.getVerticalFieldOfView());
+
+  SECTION("The frustum with the highest SSE should be used for deciding to "
+          "refine") {
+
+    // frame 1
+    {
+      ViewUpdateResult result =
+          tileset.updateView({viewState, zoomOutViewState});
+
+      // Check tile state. Ensure root meets sse for only the zoomed out
+      // ViewState
+      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
+      REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
+      for (const auto& child : root->getChildren()) {
+        REQUIRE(child.getState() == Tile::LoadState::ContentLoading);
+      }
+
+      // check result
+      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesLoadingMediumPriority == 4);
+      REQUIRE(result.tilesToRenderThisFrame.front() == root);
+    }
+
+    // frame 2
+    {
+      ViewUpdateResult result =
+          tileset.updateView({viewState, zoomOutViewState});
+
+      // Check tile state. Ensure root meets sse for only the zoomed out
+      // ViewState
+      REQUIRE(root->getState() == Tile::LoadState::Done);
+      REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
+      REQUIRE(doesTileMeetSSE(zoomOutViewState, *root, tileset));
+      for (const auto& child : root->getChildren()) {
+        REQUIRE(child.getState() == Tile::LoadState::Done);
+      }
+
+      // check result
+      REQUIRE(result.tilesToRenderThisFrame.size() == 4);
+
+      REQUIRE(result.tilesToNoLongerRenderThisFrame.size() == 1);
+      REQUIRE(result.tilesToNoLongerRenderThisFrame.front() == root);
+
+      REQUIRE(result.tilesVisited == 5);
+      REQUIRE(result.tilesLoadingMediumPriority == 0);
+      REQUIRE(result.tilesCulled == 0);
+    }
+  }
+
+  SECTION("Tiles should be culled if all the cameras agree") {
+
+    REQUIRE(root->getChildren().size() == 4);
+    const Tile& firstChild = root->getChildren()[0];
+    const Tile& secondChild = root->getChildren()[1];
+    REQUIRE(firstChild.getChildren().size() == 1);
+    const Tile& grandChild = firstChild.getChildren()[0];
+
+    ViewState zoomToTileViewState = zoomToTile(firstChild);
+
+    // Expected to only contain the grand child
+    // (child of the first child of the root).
+    glm::dvec3 zoomInPosition = zoomToTileViewState.getPosition() +
+                                zoomToTileViewState.getDirection() * 250.0;
+    ViewState zoomInViewState1 = ViewState::create(
+        zoomInPosition,
+        zoomToTileViewState.getDirection(),
+        zoomToTileViewState.getUp(),
+        zoomToTileViewState.getViewportSize(),
+        0.5 * zoomToTileViewState.getHorizontalFieldOfView(),
+        0.5 * zoomToTileViewState.getVerticalFieldOfView());
+
+    zoomInPosition = zoomToTileViewState.getPosition() +
+                     glm::dvec3(15.0, 0, 0) +
+                     zoomToTileViewState.getDirection() * 243.0;
+    ViewState zoomInViewState2 = ViewState::create(
+        zoomInPosition,
+        zoomToTileViewState.getDirection(),
+        zoomToTileViewState.getUp(),
+        zoomToTileViewState.getViewportSize(),
+        0.5 * zoomToTileViewState.getHorizontalFieldOfView(),
+        0.5 * zoomToTileViewState.getVerticalFieldOfView());
+
+    // frame 3 & 4
+    {
+      tileset.updateView({zoomInViewState1, zoomInViewState2});
+      ViewUpdateResult result =
+          tileset.updateView({zoomInViewState1, zoomInViewState2});
+
+      // check result
+      // The grand child and the second child are the only ones rendered.
+      // The third and fourth children of the root are culled.
+      REQUIRE(result.tilesToRenderThisFrame.size() == 2);
+      REQUIRE(result.tilesVisited == 4);
+      REQUIRE(
+          std::find(
+              result.tilesToRenderThisFrame.begin(),
+              result.tilesToRenderThisFrame.end(),
+              &grandChild) != result.tilesToRenderThisFrame.end());
+      REQUIRE(
+          std::find(
+              result.tilesToRenderThisFrame.begin(),
+              result.tilesToRenderThisFrame.end(),
+              &secondChild) != result.tilesToRenderThisFrame.end());
+      REQUIRE(result.tilesCulled == 2);
+    }
   }
 }

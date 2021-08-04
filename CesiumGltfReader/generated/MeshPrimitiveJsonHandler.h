@@ -11,7 +11,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct MeshPrimitive;
 
 class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
 public:

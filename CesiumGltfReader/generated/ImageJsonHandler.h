@@ -10,7 +10,6 @@
 
 namespace CesiumGltf {
 struct ReaderContext;
-struct Image;
 
 class ImageJsonHandler : public NamedObjectJsonHandler {
 public:

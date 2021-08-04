@@ -2,14 +2,14 @@
 #include "Base64URIDetector.h"
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
 #include <CesiumGltf/WriteModelOptions.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <string_view>
 
 void CesiumGltf::writeBuffer(
     WriteModelResult& result,
     const std::vector<Buffer>& buffers,
-    JsonWriter& jsonWriter,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
     const WriteModelOptions& options,
     WriteGLTFCallback writeGLTFCallback) {
   auto& j = jsonWriter;

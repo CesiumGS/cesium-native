@@ -1,8 +1,8 @@
 #include "NodeWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
-#include "JsonWriter.h"
 #include <CesiumGltf/Image.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <vector>
 
 const std::vector<double>
@@ -13,7 +13,7 @@ const std::vector<double> DEFAULT_TRANSLATION{0, 0, 0};
 
 void CesiumGltf::writeNode(
     const std::vector<Node>& nodes,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (nodes.empty()) {
     return;
   }

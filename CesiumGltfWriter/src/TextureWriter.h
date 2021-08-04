@@ -1,10 +1,10 @@
 #pragma once
-#include "JsonWriter.h"
 #include <CesiumGltf/Texture.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <vector>
 
 namespace CesiumGltf {
 void writeTexture(
     const std::vector<Texture>& textures,
-    CesiumGltf::JsonWriter& jsonWriter);
+    CesiumJsonWriter::JsonWriter& jsonWriter);
 }

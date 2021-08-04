@@ -1,15 +1,15 @@
 #include "MeshWriter.h"
 #include "ExtensionWriter.h"
-#include "JsonObjectWriter.h"
-#include "JsonWriter.h"
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <magic_enum.hpp>
 #include <vector>
 
 void writePrimitive(
     const CesiumGltf::MeshPrimitive& primitive,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
   j.StartObject();
 
@@ -52,19 +52,19 @@ void writePrimitive(
 
   if (!primitive.extensions.empty()) {
     j.Key("extensions");
-    writeExtensions(primitive.extensions, j);
+    CesiumGltf::writeExtensions(primitive.extensions, j);
   }
 
   if (!primitive.extras.empty()) {
     j.Key("extras");
-    CesiumGltf::writeJsonValue(primitive.extras, j);
+    CesiumJsonWriter::writeJsonValue(primitive.extras, j);
   }
   j.EndObject();
 }
 
 void CesiumGltf::writeMesh(
     const std::vector<Mesh>& meshes,
-    CesiumGltf::JsonWriter& jsonWriter) {
+    CesiumJsonWriter::JsonWriter& jsonWriter) {
 
   if (meshes.empty()) {
     return;
@@ -99,7 +99,7 @@ void CesiumGltf::writeMesh(
     }
 
     if (!mesh.extensions.empty()) {
-      writeExtensions(mesh.extensions, j);
+      CesiumGltf::writeExtensions(mesh.extensions, j);
     }
 
     if (!mesh.extras.empty()) {
