@@ -213,7 +213,7 @@ private:
     // dispatching of the work.
     auto task = this->_task.then(
         async::inline_scheduler(),
-        Impl::WithTracing<T>::begin(tracingName, std::forward<Func>(f)));
+        Impl::WithTracingShared<T>::begin(tracingName, std::forward<Func>(f)));
 #else
     auto& task = this->_task;
 #endif
@@ -222,7 +222,7 @@ private:
         this->_pSchedulers,
         task.then(
             scheduler,
-            Impl::WithTracing<T>::end(tracingName, std::forward<Func>(f))));
+            Impl::WithTracingShared<T>::end(tracingName, std::forward<Func>(f))));
   }
 
   template <typename Func, typename Scheduler>
