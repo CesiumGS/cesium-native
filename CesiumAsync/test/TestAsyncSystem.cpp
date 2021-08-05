@@ -202,6 +202,21 @@ TEST_CASE("AsyncSystem") {
     CHECK(future.wait() == 2);
   }
 
+  SECTION("catch may chain to another futre") {
+    auto future = asyncSystem
+                      .createFuture<int>([](const auto& promise) {
+                        promise.reject(std::runtime_error("test"));
+                      })
+                      .catchInMainThread(
+                          [asyncSystem](std::exception&& e) -> Future<int> {
+                            CHECK(std::string(e.what()) == "test");
+                            return asyncSystem.createResolvedFuture(2);
+                          });
+
+    asyncSystem.dispatchOneMainThreadTask();
+    CHECK(future.wait() == 2);
+  }
+
   SECTION("then after returning catch is invoked") {
     auto future = asyncSystem
                       .createFuture<int>([](const auto& promise) {
@@ -333,5 +348,161 @@ TEST_CASE("AsyncSystem") {
 
     last.wait();
     CHECK(rejected);
+  }
+
+  SECTION("conversion to SharedFuture") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed1);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed1);
+                     executed1 = true;
+                     return 10;
+                   });
+
+    bool executed2 = false;
+    auto two = sharedFuture
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed2);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed2);
+                     executed2 = true;
+                     return 11;
+                   });
+
+    promise.resolve(1);
+
+    int value1 = one.wait();
+    int value2 = two.wait();
+
+    CHECK(executed1);
+    CHECK(executed2);
+    CHECK(value1 == 10);
+    CHECK(value2 == 11);
+  }
+
+  SECTION("can join two chains originating with a shared future") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed1);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed1);
+                     executed1 = true;
+                     return 10;
+                   });
+
+    bool executed2 = false;
+    auto two = sharedFuture
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed2);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed2);
+                     executed2 = true;
+                     return 11;
+                   });
+
+    std::vector<Future<int>> futures;
+    futures.emplace_back(std::move(one));
+    futures.emplace_back(std::move(two));
+    auto joined = asyncSystem.all(std::move(futures));
+
+    promise.resolve(1);
+
+    std::vector<int> result = joined.wait();
+    CHECK(executed1);
+    CHECK(executed2);
+    CHECK(result.size() == 2);
+    CHECK(result[0] == 10);
+    CHECK(result[1] == 11);
+  }
+
+  SECTION("can join two shared futures") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed1);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed1](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed1);
+                     executed1 = true;
+                     return 10;
+                   });
+
+    bool executed2 = false;
+    auto two = sharedFuture
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 1);
+                     CHECK(!executed2);
+                     return 2;
+                   })
+                   .thenInWorkerThread([&executed2](int value) {
+                     CHECK(value == 2);
+                     CHECK(!executed2);
+                     executed2 = true;
+                     return 11;
+                   });
+
+    std::vector<SharedFuture<int>> futures;
+    futures.emplace_back(std::move(one).share());
+    futures.emplace_back(std::move(two).share());
+    auto joined = asyncSystem.all(std::move(futures));
+
+    promise.resolve(1);
+
+    std::vector<int> result = joined.wait();
+    CHECK(executed1);
+    CHECK(executed2);
+    CHECK(result.size() == 2);
+    CHECK(result[0] == 10);
+    CHECK(result[1] == 11);
+  }
+
+  SECTION("can catch from shared future") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    auto one = sharedFuture.catchImmediately([&executed1](std::exception&& e) {
+      executed1 = true;
+      CHECK(std::string(e.what()) == "reject!!");
+      return 2;
+    });
+
+    promise.reject(std::runtime_error("reject!!"));
+
+    int value1 = one.wait();
+
+    CHECK(executed1);
+    CHECK(value1 == 2);
   }
 }

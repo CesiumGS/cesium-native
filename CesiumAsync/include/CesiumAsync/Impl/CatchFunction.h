@@ -7,17 +7,22 @@ namespace Impl {
 // Begin omitting doxgen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
-template <typename Func, typename T, typename Scheduler> struct CatchFunction {
+template <
+    typename Func,
+    typename T,
+    typename Scheduler,
+    typename TaskParameter = async::task<T>&&>
+struct CatchFunction {
   Scheduler& scheduler;
   Func f;
 
-  async::task<T> operator()(async::task<T>&& t) {
+  async::task<T> operator()(TaskParameter t) {
     try {
       return async::make_task(t.get());
     } catch (...) {
       // Make an exception_ptr task, then scheduler to a wrapper around f that
       // throws it, catches it, and calls f with a reference to it.
-      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) mutable {
+      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) {
         try {
           std::rethrow_exception(e);
         } catch (std::exception& e) {
@@ -35,19 +40,19 @@ template <typename Func, typename T, typename Scheduler> struct CatchFunction {
   }
 };
 
-template <typename Func, typename Scheduler>
-struct CatchFunction<Func, void, Scheduler> {
+template <typename Func, typename Scheduler, typename TaskParameter>
+struct CatchFunction<Func, void, Scheduler, TaskParameter> {
   Scheduler& scheduler;
   Func f;
 
-  async::task<void> operator()(async::task<void>&& t) {
+  async::task<void> operator()(TaskParameter t) {
     try {
       t.get();
       return async::make_task();
     } catch (...) {
       // Make an exception_ptr task, then scheduler to a wrapper around f that
       // throws it, catches it, and calls f with a reference to it.
-      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) mutable {
+      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) {
         try {
           std::rethrow_exception(e);
         } catch (std::exception& e) {
