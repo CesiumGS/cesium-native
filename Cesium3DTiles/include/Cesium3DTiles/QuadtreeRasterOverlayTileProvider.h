@@ -9,6 +9,7 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include <list>
 #include <memory>
 #include <optional>
 
@@ -177,9 +178,17 @@ private:
   uint32_t _imageWidth;
   uint32_t _imageHeight;
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
+
+  // Tiles at the beginning of this list are the least recently used (oldest),
+  // while the tiles at the end are most recently used (newest).
+  using TileLeastRecentlyUsedList =
+      std::list<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>;
+  TileLeastRecentlyUsedList _tileLru;
+
+  // Allows a Future to be looked up by quadtree tile ID.
   std::unordered_map<
       CesiumGeometry::QuadtreeTileID,
-      CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
-      _tileCache;
+      TileLeastRecentlyUsedList::iterator>
+      _tileLookup;
 };
 } // namespace Cesium3DTiles

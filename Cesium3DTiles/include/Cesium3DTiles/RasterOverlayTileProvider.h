@@ -303,7 +303,7 @@ protected:
   /**
    * @brief Loads the image for a tile.
    *
-   * @param tileID The ID of the tile to load.
+   * @param overlayTile The overlay tile for which to load the image.
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>

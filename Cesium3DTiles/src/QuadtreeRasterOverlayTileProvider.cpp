@@ -383,9 +383,14 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
 CesiumAsync::SharedFuture<LoadedQuadtreeImage>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID) {
-  auto it = this->_tileCache.find(tileID);
-  if (it != this->_tileCache.end()) {
-    return it->second;
+  auto lookupIt = this->_tileLookup.find(tileID);
+  if (lookupIt != this->_tileLookup.end()) {
+    auto& cacheIt = lookupIt->second;
+
+    // Move this entry to the end, indicating it's most recently used.
+    this->_tileLru.splice(this->_tileLru.end(), this->_tileLru, cacheIt);
+
+    return *cacheIt;
   }
 
   Future<LoadedQuadtreeImage> future =
@@ -424,8 +429,11 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             return this->getAsyncSystem().createResolvedFuture(
                 LoadedQuadtreeImage(std::move(loaded)));
           });
-  return this->_tileCache.emplace(tileID, std::move(future).share())
-      .first->second;
+
+  auto newIt =
+      this->_tileLru.emplace(this->_tileLru.end(), std::move(future).share());
+  this->_tileLookup[tileID] = newIt;
+  return *newIt;
 }
 
 namespace {
