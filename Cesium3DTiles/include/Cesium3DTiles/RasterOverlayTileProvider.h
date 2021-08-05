@@ -348,7 +348,7 @@ private:
    */
   void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
-protected:
+private:
   RasterOverlay* _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;

@@ -164,29 +164,16 @@ public:
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
-    if (!this->_pOwner) {
-      LoadedRasterOverlayImage result;
-      result.errors.push_back(
-          "RasterizedPolygonsOverlay deleted before the tile's image could be \
-          rasterized");
-      return this->_asyncSystem.createResolvedFuture<LoadedRasterOverlayImage>(
-          std::move(result));
-    }
-
-    return this->_asyncSystem.runInWorkerThread(
-        [pTile =
-             CesiumUtility::IntrusivePointer<RasterOverlayTile>(&overlayTile),
-         &name = this->_pOwner->getName(),
+    return this->getAsyncSystem().runInWorkerThread(
+        [name = this->getOwner().getName(),
          &polygons = this->_polygons,
-         &projection = this->_projection]() -> LoadedRasterOverlayImage {
+         projection = this->getProjection(),
+         rectangle = overlayTile.getRectangle()]() -> LoadedRasterOverlayImage {
           CesiumGeospatial::GlobeRectangle tileRectangle =
-              CesiumGeospatial::unprojectRectangleSimple(
-                  projection,
-                  pTile ? pTile->getRectangle()
-                        : CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0));
+              CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
           LoadedRasterOverlayImage resultImage;
-          resultImage.rectangle = pTile->getRectangle();
+          resultImage.rectangle = rectangle;
           CesiumGltf::ImageCesium image;
           rasterizePolygons(image, tileRectangle, name, polygons);
           resultImage.image = std::move(image);

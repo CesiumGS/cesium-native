@@ -430,29 +430,31 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
 namespace {
 
+struct PixelRectangle {
+  int32_t x;
+  int32_t y;
+  int32_t width;
+  int32_t height;
+};
+
 // Copies a rectangle of a source image into another image.
 void blitImage(
     ImageCesium& target,
-    int32_t targetX,
-    int32_t targetY,
-    int32_t targetWidth,
-    int32_t targetHeight,
+    const PixelRectangle& targetPixels,
     const ImageCesium& source,
-    int32_t sourceX,
-    int32_t sourceY,
-    int32_t sourceWidth,
-    int32_t sourceHeight) {
+    const PixelRectangle& sourcePixels) {
 
-  if (sourceX < 0 || sourceY < 0 || sourceWidth < 0 || sourceHeight < 0 ||
-      (sourceX + sourceWidth) > source.width ||
-      (sourceY + sourceHeight) > source.height) {
+  if (sourcePixels.x < 0 || sourcePixels.y < 0 || sourcePixels.width < 0 ||
+      sourcePixels.height < 0 ||
+      (sourcePixels.x + sourcePixels.width) > source.width ||
+      (sourcePixels.y + sourcePixels.height) > source.height) {
     // Attempting to blit from outside the bounds of the source image.
     assert(false);
     return;
   }
 
-  if (targetX < 0 || targetY < 0 || (targetX + targetWidth) > target.width ||
-      (targetY + targetHeight) > target.height) {
+  if (targetPixels.x < 0 || targetPixels.y < 0 || (targetPixels.x + targetPixels.width) > target.width ||
+      (targetPixels.y + targetPixels.height) > target.height) {
     // Attempting to blit outside the bounds of the target image.
     assert(false);
     return;
@@ -466,7 +468,7 @@ void blitImage(
   }
 
   size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
-  size_t bytesToCopyPerRow = bytesPerPixel * size_t(sourceWidth);
+  size_t bytesToCopyPerRow = bytesPerPixel * size_t(sourcePixels.width);
 
   size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
   size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
@@ -475,13 +477,13 @@ void blitImage(
   std::byte* pTarget = target.pixelData.data();
   const std::byte* pSource = source.pixelData.data();
   pTarget +=
-      size_t(targetY) * bytesPerTargetRow + size_t(targetX) * bytesPerPixel;
+      size_t(targetPixels.y) * bytesPerTargetRow + size_t(targetPixels.x) * bytesPerPixel;
   pSource +=
-      size_t(sourceY) * bytesPerSourceRow + size_t(sourceX) * bytesPerPixel;
+      size_t(sourcePixels.y) * bytesPerSourceRow + size_t(sourcePixels.x) * bytesPerPixel;
 
-  if (sourceWidth == targetWidth && sourceHeight == targetHeight) {
+  if (sourcePixels.width == targetPixels.width && sourcePixels.height == targetPixels.height) {
     // Simple, unscaled, byte-for-byte image copy.
-    for (size_t j = 0; j < size_t(sourceHeight); ++j) {
+    for (size_t j = 0; j < size_t(sourcePixels.height); ++j) {
       assert(pTarget < target.pixelData.data() + target.pixelData.size());
       assert(pSource < source.pixelData.data() + source.pixelData.size());
       assert(
@@ -498,15 +500,47 @@ void blitImage(
     // Use STB to do the copy / scale
     stbir_resize_uint8(
         reinterpret_cast<const unsigned char*>(pSource),
-        sourceWidth,
-        sourceHeight,
+        sourcePixels.width,
+        sourcePixels.height,
         int(bytesPerSourceRow),
         reinterpret_cast<unsigned char*>(pTarget),
-        targetWidth,
-        targetHeight,
+        targetPixels.width,
+        targetPixels.height,
         int(bytesPerTargetRow),
         target.channels);
   }
+}
+
+PixelRectangle computePixelRectangle(
+    const ImageCesium& image,
+    const Rectangle& totalRectangle,
+    const Rectangle& partRectangle) {
+  // Pixel coordinates are measured from the top left.
+  // Projected rectangles are measured from the bottom left.
+
+  int32_t x = static_cast<int32_t>(Math::roundDown(
+      image.width * (partRectangle.minimumX - totalRectangle.minimumX) /
+          totalRectangle.computeWidth(),
+      pixelTolerance));
+  x = glm::max(0, x);
+  int32_t y = static_cast<int32_t>(Math::roundDown(
+      image.height * (totalRectangle.maximumY - partRectangle.maximumY) /
+          totalRectangle.computeHeight(),
+      pixelTolerance));
+  y = glm::max(0, y);
+
+  int32_t maxX = static_cast<int32_t>(Math::roundUp(
+      image.width * (partRectangle.maximumX - totalRectangle.minimumX) /
+          totalRectangle.computeWidth(),
+      pixelTolerance));
+  maxX = glm::min(maxX, image.width);
+  int32_t maxY = static_cast<int32_t>(Math::roundUp(
+      image.height * (totalRectangle.maximumY - partRectangle.minimumY) /
+          totalRectangle.computeHeight(),
+      pixelTolerance));
+  maxY = glm::min(maxY, image.height);
+
+  return PixelRectangle{x, y, maxX - x, maxY - y};
 }
 
 // Copy part of a source image to part of a target image.
@@ -529,65 +563,12 @@ void blitImage(
   // Pixel coordinates are measured from the top left.
   // Projected rectangles are measured from the bottom left.
 
-  int32_t targetX = static_cast<int32_t>(Math::roundDown(
-      target.width * (overlap->minimumX - targetRectangle.minimumX) /
-          targetRectangle.computeWidth(),
-      pixelTolerance));
-  targetX = glm::max(0, targetX);
-  int32_t targetY = static_cast<int32_t>(Math::roundDown(
-      target.height * (targetRectangle.maximumY - overlap->maximumY) /
-          targetRectangle.computeHeight(),
-      pixelTolerance));
-  targetY = glm::max(0, targetY);
+  PixelRectangle targetPixels =
+      computePixelRectangle(target, targetRectangle, *overlap);
+  PixelRectangle sourcePixels =
+      computePixelRectangle(source, sourceRectangle, *overlap);
 
-  int32_t targetMaxX = static_cast<int32_t>(Math::roundUp(
-      target.width * (overlap->maximumX - targetRectangle.minimumX) /
-          targetRectangle.computeWidth(),
-      pixelTolerance));
-  targetMaxX = glm::min(targetMaxX, target.width);
-  int32_t targetMaxY = static_cast<int32_t>(Math::roundUp(
-      target.height * (targetRectangle.maximumY - overlap->minimumY) /
-          targetRectangle.computeHeight(),
-      pixelTolerance));
-  targetMaxY = glm::min(targetMaxY, target.height);
-  int32_t targetWidth = targetMaxX - targetX;
-  int32_t targetHeight = targetMaxY - targetY;
-
-  int32_t sourceX = static_cast<int32_t>(Math::roundDown(
-      source.width * (overlap->minimumX - sourceRectangle.minimumX) /
-          sourceRectangle.computeWidth(),
-      pixelTolerance));
-  sourceX = glm::max(0, sourceX);
-  int32_t sourceY = static_cast<int32_t>(Math::roundDown(
-      source.height * (sourceRectangle.maximumY - overlap->maximumY) /
-          sourceRectangle.computeHeight(),
-      pixelTolerance));
-  sourceY = glm::max(0, sourceY);
-
-  int32_t sourceMaxX = static_cast<int32_t>(Math::roundUp(
-      source.width * (overlap->maximumX - sourceRectangle.minimumX) /
-          sourceRectangle.computeWidth(),
-      pixelTolerance));
-  sourceMaxX = glm::min(sourceMaxX, source.width);
-  int32_t sourceMaxY = static_cast<int32_t>(Math::roundUp(
-      source.height * (sourceRectangle.maximumY - overlap->minimumY) /
-          sourceRectangle.computeHeight(),
-      pixelTolerance));
-  sourceMaxY = glm::min(sourceMaxY, source.height);
-  int32_t sourceWidth = sourceMaxX - sourceX;
-  int32_t sourceHeight = sourceMaxY - sourceY;
-
-  blitImage(
-      target,
-      targetX,
-      targetY,
-      targetWidth,
-      targetHeight,
-      source,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight);
+  blitImage(target, targetPixels, source, sourcePixels);
 }
 
 // TODO: find a way to do this type of thing on the GPU
@@ -915,7 +896,8 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           overlayTile.getRectangle(),
           overlayTile.getTargetGeometricError());
 
-  return this->_asyncSystem.all(std::move(tiles))
+  return this->getAsyncSystem()
+      .all(std::move(tiles))
       .thenInWorkerThread([projection = this->getProjection(),
                            rectangle = overlayTile.getRectangle()](
                               std::vector<LoadedQuadtreeImage>&& images) {
