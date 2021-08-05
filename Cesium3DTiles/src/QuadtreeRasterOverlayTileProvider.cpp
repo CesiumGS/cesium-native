@@ -453,7 +453,8 @@ void blitImage(
     return;
   }
 
-  if (targetPixels.x < 0 || targetPixels.y < 0 || (targetPixels.x + targetPixels.width) > target.width ||
+  if (targetPixels.x < 0 || targetPixels.y < 0 ||
+      (targetPixels.x + targetPixels.width) > target.width ||
       (targetPixels.y + targetPixels.height) > target.height) {
     // Attempting to blit outside the bounds of the target image.
     assert(false);
@@ -476,12 +477,13 @@ void blitImage(
   // Position both pointers at the start of the first row.
   std::byte* pTarget = target.pixelData.data();
   const std::byte* pSource = source.pixelData.data();
-  pTarget +=
-      size_t(targetPixels.y) * bytesPerTargetRow + size_t(targetPixels.x) * bytesPerPixel;
-  pSource +=
-      size_t(sourcePixels.y) * bytesPerSourceRow + size_t(sourcePixels.x) * bytesPerPixel;
+  pTarget += size_t(targetPixels.y) * bytesPerTargetRow +
+             size_t(targetPixels.x) * bytesPerPixel;
+  pSource += size_t(sourcePixels.y) * bytesPerSourceRow +
+             size_t(sourcePixels.x) * bytesPerPixel;
 
-  if (sourcePixels.width == targetPixels.width && sourcePixels.height == targetPixels.height) {
+  if (sourcePixels.width == targetPixels.width &&
+      sourcePixels.height == targetPixels.height) {
     // Simple, unscaled, byte-for-byte image copy.
     for (size_t j = 0; j < size_t(sourcePixels.height); ++j) {
       assert(pTarget < target.pixelData.data() + target.pixelData.size());
@@ -571,135 +573,6 @@ void blitImage(
   blitImage(target, targetPixels, source, sourcePixels);
 }
 
-// TODO: find a way to do this type of thing on the GPU
-// Will need a well thought out interface to let cesium-native use GPU
-// resources while being engine-agnostic.
-// TODO: probably can simplify dramatically by ignoring cases where there is
-// discrepancy between channels count or bytesPerChannel between the rasters
-// std::optional<CesiumGltf::ImageCesium> blitRasters(
-//     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
-//     const CesiumGeospatial::Projection& projection,
-//     const CesiumGeometry::Rectangle& targetRectangle,
-//     std::vector<LoadedQuadtreeImage>& rastersToCombine) {
-
-//   double targetWidth = targetRectangle.computeWidth();
-//   double targetHeight = targetRectangle.computeHeight();
-
-//   int32_t pixelsWidth = 0;
-//   int32_t pixelsHeight = 0;
-//   int32_t bytesPerChannel = 1;
-//   int32_t channels = 1;
-
-//   for (const LoadedQuadtreeImage& rasterToCombine : rastersToCombine) {
-//     if (!rasterToCombine.image) {
-//       continue;
-//     }
-
-//     Rectangle imageRectangle =
-//     tilingScheme.tileToRectangle(rasterToCombine.id);
-
-//     std::optional<Rectangle> overlap =
-//         targetRectangle.intersect(imageRectangle);
-
-//     // There should always be an overlap, otherwise why is this image here at
-//     // all?
-//     assert(overlap.has_value());
-
-//     // Find the number of pixels of this source image that overlap the target
-//     // rectangle. Round up.
-//     const CesiumGltf::ImageCesium& rasterImage = *rasterToCombine.image;
-//     int32_t width = static_cast<int32_t>(glm::ceil(
-//         (overlap->computeWidth() / imageRectangle.computeWidth()) *
-//         rasterImage.width));
-//     int32_t height = static_cast<int32_t>(glm::ceil(
-//         (overlap->computeHeight() / imageRectangle.computeHeight()) *
-//         rasterImage.height));
-
-//     pixelsWidth += width;
-//     pixelsHeight += height;
-
-//     if (rasterImage.bytesPerChannel > bytesPerChannel) {
-//       bytesPerChannel = rasterImage.bytesPerChannel;
-//     }
-//     if (rasterImage.channels > channels) {
-//       channels = rasterImage.channels;
-//     }
-//   }
-
-//   CesiumGltf::ImageCesium image;
-//   image.bytesPerChannel = bytesPerChannel;
-//   image.channels = channels;
-//   image.width = static_cast<int32_t>(glm::ceil(pixelsWidth));
-//   image.height = static_cast<int32_t>(glm::ceil(pixelsHeight));
-//   image.pixelData.resize(static_cast<size_t>(
-//       image.width * image.height * image.channels * image.bytesPerChannel));
-
-//   // Texture coordinates range from South (0.0) to North (1.0).
-//   // But pixels in images are stored in North (0) to South (imageHeight - 1)
-//   // order.
-
-//   for (int32_t j = 0; j < image.height; ++j) {
-//     // Use the texture coordinate for the _center_ of each pixel.
-//     // And adjust for the flipped direction of texture coordinates and
-//     pixels. double v = 1.0 - ((double(j) + 0.5) / double(image.height));
-
-//     for (int32_t i = 0; i < image.width; ++i) {
-//       glm::dvec2 uv((double(i) + 0.5) / double(image.width), v);
-
-//       for (const RasterToCombine& rasterToCombine : *pRastersToCombine) {
-
-//         if (rasterToCombine._textureCoordinateRectangle.contains(uv)) {
-//           const CesiumGltf::ImageCesium& srcImage =
-//               rasterToCombine._pReadyTile->getImage();
-
-//           glm::dvec2 srcUv =
-//               uv * rasterToCombine._scale + rasterToCombine._translation;
-
-//           // TODO: remove?
-//           if (srcUv.x < 0.0 || srcUv.x > 1.0 || srcUv.y < 0.0 ||
-//               srcUv.y > 1.0) {
-//             continue;
-//           }
-
-//           glm::dvec2 srcPixel(
-//               srcUv.x * srcImage.width,
-//               (1.0 - srcUv.y) * srcImage.height);
-
-//           int32_t srcPixelX = static_cast<int32_t>(
-//               glm::clamp(glm::floor(srcPixel.x), 0.0,
-//               double(srcImage.width)));
-//           int32_t srcPixelY = static_cast<int32_t>(
-//               glm::clamp(glm::floor(srcPixel.y), 0.0,
-//               double(srcImage.height)));
-
-//           const std::byte* pSrcPixelValue =
-//               srcImage.pixelData.data() +
-//               static_cast<size_t>(
-//                   srcImage.channels * srcImage.bytesPerChannel *
-//                   (srcImage.width * srcPixelY + srcPixelX));
-
-//           std::byte* pTargetPixel =
-//               image.pixelData.data() +
-//               channels * bytesPerChannel * (image.width * j + i);
-
-//           for (int32_t channel = 0; channel < srcImage.channels; ++channel) {
-//             std::memcpy(
-//                 pTargetPixel +
-//                     static_cast<size_t>(
-//                         channel * bytesPerChannel +
-//                         (bytesPerChannel - srcImage.bytesPerChannel)),
-//                 pSrcPixelValue +
-//                     static_cast<size_t>(channel * srcImage.bytesPerChannel),
-//                 static_cast<size_t>(srcImage.bytesPerChannel));
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   return image;
-// }
-
 struct CombinedImageMeasurements {
   Rectangle rectangle;
   int32_t widthPixels;
@@ -762,13 +635,6 @@ CombinedImageMeasurements measureCombinedImage(
       continue;
     }
 
-    // If this source image has the desired format and pixel density, we can do
-    // a simple memcpy. Otherwise we'll need to resample it.
-    // double currentProjectedWidthPerPixel =
-    //     loaded.rectangle.computeWidth() / loaded.image->width;
-    // double currentProjectedHeightPerPixel =
-    //     loaded.rectangle.computeHeight() / loaded.image->height;
-
     Rectangle& intersection = *maybeIntersection;
 
     // Expand this slightly so we don't wind up with partial pixels in the
@@ -795,19 +661,6 @@ CombinedImageMeasurements measureCombinedImage(
     } else {
       combinedRectangle = intersection;
     }
-
-    // if (Math::equalsEpsilon(
-    //         currentProjectedWidthPerPixel,
-    //         projectedWidthPerPixel,
-    //         Math::EPSILON3 / loaded.image->width) &&
-    //     Math::equalsEpsilon(
-    //         currentProjectedHeightPerPixel,
-    //         projectedHeightPerPixel,
-    //         Math::EPSILON3 / loaded.image->height) &&
-    //     channels == loaded.image->channels &&
-    //     bytesPerChannel == loaded.image->bytesPerChannel) {
-
-    // }
   }
 
   if (!combinedRectangle) {
