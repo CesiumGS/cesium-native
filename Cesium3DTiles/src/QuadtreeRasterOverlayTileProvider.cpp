@@ -33,7 +33,10 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(
           CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0),
           1,
-          1)) {}
+          1)),
+      _tilesOldToRecent(),
+      _tileLookup(),
+      _cachedBytes(0) {}
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     RasterOverlay& owner,
@@ -62,7 +65,10 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _maximumLevel(maximumLevel),
       _imageWidth(imageWidth),
       _imageHeight(imageHeight),
-      _tilingScheme(tilingScheme) {}
+      _tilingScheme(tilingScheme),
+      _tilesOldToRecent(),
+      _tileLookup(),
+      _cachedBytes(0) {}
 
 std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
@@ -388,9 +394,12 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     auto& cacheIt = lookupIt->second;
 
     // Move this entry to the end, indicating it's most recently used.
-    this->_tileLru.splice(this->_tileLru.end(), this->_tileLru, cacheIt);
+    this->_tilesOldToRecent.splice(
+        this->_tilesOldToRecent.end(),
+        this->_tilesOldToRecent,
+        cacheIt);
 
-    return *cacheIt;
+    return cacheIt->future;
   }
 
   Future<LoadedQuadtreeImage> future =
@@ -402,9 +411,13 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             return result;
           })
           .thenInMainThread([tileID, this](LoadedRasterOverlayImage&& loaded) {
+            // TODO: do this immediately instead of in the main thread.
+            // Return a runInMainThread only if the tile failed (because we have
+            // to be in the main thread to start a new ancestor tile request).
             if (loaded.image && loaded.errors.empty() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
+              this->_cachedBytes += loaded.image->pixelData.size();
               return this->getAsyncSystem().createResolvedFuture(
                   LoadedQuadtreeImage(std::move(loaded)));
             }
@@ -421,6 +434,11 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                     // TODO: can we avoid copying the image data?
                     LoadedQuadtreeImage newImage(image);
                     newImage.subset = rectangle;
+
+                    // TODO: account for size of the ancestor, if we really do
+                    // need to copy it.
+                    // this->_cachedBytes += newImage.image->pixelData.size();`
+
                     return newImage;
                   });
             }
@@ -430,10 +448,14 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                 LoadedQuadtreeImage(std::move(loaded)));
           });
 
-  auto newIt =
-      this->_tileLru.emplace(this->_tileLru.end(), std::move(future).share());
+  auto newIt = this->_tilesOldToRecent.emplace(
+      this->_tilesOldToRecent.end(),
+      CacheEntry{tileID, std::move(future).share()});
   this->_tileLookup[tileID] = newIt;
-  return *newIt;
+
+  this->unloadCachedTiles();
+
+  return newIt->future;
 }
 
 namespace {
@@ -734,8 +756,6 @@ LoadedRasterOverlayImage combineImages(
     blitImage(target, result.rectangle, *it->image, it->rectangle, it->subset);
   }
 
-  // TODO: detect when _all_ images are from an ancestor, because then
-  // we can discard this image.
   return result;
 }
 
@@ -788,6 +808,41 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
       })
       .catchImmediately(
           [](std::exception&& /* e */) { return LoadedRasterOverlayImage(); });
+}
+
+void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
+  // The cache is big enough for 100 256x256, 4-channel tiles.
+  // TODO: make this configurable
+  const int64_t maxCacheBytes = 256 * 256 * 4 * 100;
+
+  if (this->_cachedBytes <= maxCacheBytes) {
+    return;
+  }
+
+  auto it = this->_tilesOldToRecent.begin();
+
+  while (it != this->_tilesOldToRecent.end() &&
+         this->_cachedBytes > maxCacheBytes) {
+    SharedFuture<LoadedQuadtreeImage>& future = it->future;
+    if (!future.isReady()) {
+      // Don't unload tiles that are still loading.
+      ++it;
+      continue;
+    }
+
+    // Guaranteed not to block because isReady returned true.
+    LoadedQuadtreeImage image = future.wait();
+
+    // Currently subset images aren't counted in the cached bytes.
+    // TODO: count subset images too.
+    if (!image.subset && image.image) {
+      this->_cachedBytes -= image.image->pixelData.size();
+      assert(this->_cachedBytes >= 0);
+    }
+
+    this->_tileLookup.erase(it->tileID);
+    it = this->_tilesOldToRecent.erase(it);
+  }
 }
 
 } // namespace Cesium3DTiles

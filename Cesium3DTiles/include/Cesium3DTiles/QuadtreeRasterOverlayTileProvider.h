@@ -172,6 +172,8 @@ private:
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError);
 
+  void unloadCachedTiles();
+
   CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;
@@ -179,16 +181,22 @@ private:
   uint32_t _imageHeight;
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
 
+  struct CacheEntry {
+    CesiumGeometry::QuadtreeTileID tileID;
+    CesiumAsync::SharedFuture<LoadedQuadtreeImage> future;
+  };
+
   // Tiles at the beginning of this list are the least recently used (oldest),
   // while the tiles at the end are most recently used (newest).
-  using TileLeastRecentlyUsedList =
-      std::list<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>;
-  TileLeastRecentlyUsedList _tileLru;
+  using TileLeastRecentlyUsedList = std::list<CacheEntry>;
+  TileLeastRecentlyUsedList _tilesOldToRecent;
 
   // Allows a Future to be looked up by quadtree tile ID.
   std::unordered_map<
       CesiumGeometry::QuadtreeTileID,
       TileLeastRecentlyUsedList::iterator>
       _tileLookup;
+
+  size_t _cachedBytes;
 };
 } // namespace Cesium3DTiles
