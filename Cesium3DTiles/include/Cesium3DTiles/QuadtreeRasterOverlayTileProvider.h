@@ -197,6 +197,6 @@ private:
       TileLeastRecentlyUsedList::iterator>
       _tileLookup;
 
-  size_t _cachedBytes;
+  std::atomic<int64_t> _cachedBytes;
 };
 } // namespace Cesium3DTiles

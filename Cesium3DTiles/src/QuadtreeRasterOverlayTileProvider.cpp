@@ -410,10 +410,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             result.errors.emplace_back(e.what());
             return result;
           })
-          .thenInMainThread([tileID, this](LoadedRasterOverlayImage&& loaded) {
-            // TODO: do this immediately instead of in the main thread.
-            // Return a runInMainThread only if the tile failed (because we have
-            // to be in the main thread to start a new ancestor tile request).
+          .thenImmediately([tileID, this](LoadedRasterOverlayImage&& loaded) {
             if (loaded.image && loaded.errors.empty() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
@@ -423,23 +420,28 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             }
 
             // Tile failed to load, try loading the parent tile instead.
+            // We can only initiate a new tile request from the main thread,
+            // though.
             if (tileID.level > this->getMinimumLevel()) {
-              QuadtreeTileID parentID(
-                  tileID.level - 1,
-                  tileID.x >> 1,
-                  tileID.y >> 1);
-              return this->getQuadtreeTile(parentID).thenImmediately(
-                  [rectangle =
-                       loaded.rectangle](const LoadedQuadtreeImage& image) {
-                    // TODO: can we avoid copying the image data?
-                    LoadedQuadtreeImage newImage(image);
-                    newImage.subset = rectangle;
+              return this->getAsyncSystem().runInMainThread(
+                  [tileID, this, loaded = std::move(loaded)]() {
+                    QuadtreeTileID parentID(
+                        tileID.level - 1,
+                        tileID.x >> 1,
+                        tileID.y >> 1);
+                    return this->getQuadtreeTile(parentID).thenImmediately(
+                        [rectangle = loaded.rectangle](
+                            const LoadedQuadtreeImage& image) {
+                          // TODO: can we avoid copying the image data?
+                          LoadedQuadtreeImage newImage(image);
+                          newImage.subset = rectangle;
 
-                    // TODO: account for size of the ancestor, if we really do
-                    // need to copy it.
-                    // this->_cachedBytes += newImage.image->pixelData.size();`
+                          // TODO: account for size of the ancestor, if we
+                          // really do need to copy it. this->_cachedBytes +=
+                          // newImage.image->pixelData.size();`
 
-                    return newImage;
+                          return newImage;
+                        });
                   });
             }
 
