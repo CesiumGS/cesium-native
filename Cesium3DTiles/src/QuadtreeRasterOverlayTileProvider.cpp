@@ -813,6 +813,8 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
 }
 
 void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
+  CESIUM_TRACE("QuadtreeRasterOverlayTileProvider::unloadCachedTiles");
+
   // The cache is big enough for 100 256x256, 4-channel tiles.
   // TODO: make this configurable
   const int64_t maxCacheBytes = 256 * 256 * 4 * 100;
@@ -833,7 +835,7 @@ void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
     }
 
     // Guaranteed not to block because isReady returned true.
-    LoadedQuadtreeImage image = future.wait();
+    const LoadedQuadtreeImage& image = future.wait();
 
     // Currently subset images aren't counted in the cached bytes.
     // TODO: count subset images too.
