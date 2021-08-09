@@ -193,7 +193,7 @@ public:
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
-  const T& wait() { return this->_task.get(); }
+  const T& wait() const { return this->_task.get(); }
 
   /**
    * @brief Determines if this future is already resolved or rejected.
@@ -256,6 +256,9 @@ private:
   friend class AsyncSystem;
 
   template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
+
+  template <typename Func, typename T>
+  friend auto Impl::futureFunctionToTaskFunction(Func&& f);
 
   friend struct Impl::TaskUnwrapper;
 

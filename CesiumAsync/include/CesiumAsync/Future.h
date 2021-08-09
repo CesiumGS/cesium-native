@@ -281,6 +281,9 @@ private:
 
   template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
 
+  template <typename Func, typename T>
+  friend auto Impl::futureFunctionToTaskFunction(Func&& f);
+
   friend struct Impl::TaskUnwrapper;
 
   template <typename R> friend class Future;
