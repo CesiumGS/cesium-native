@@ -4,7 +4,7 @@
 #include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
 
-namespace Cesium3DTiles {
+namespace Cesium3DTilesSelection {
 
 CullingVolume createCullingVolume(
     const glm::dvec3& position,
@@ -66,4 +66,4 @@ CullingVolume createCullingVolume(
 
   return {leftPlane, rightPlane, topPlane, bottomPlane};
 }
-} // namespace Cesium3DTiles
+} // namespace Cesium3DTilesSelection
