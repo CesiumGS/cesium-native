@@ -69,6 +69,13 @@ public:
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
 
+  /**
+   * @brief Fills in smooth normals for any primitives with missing normals.
+   *
+   * @param gltf The glTF model.
+   */
+  static void generateMissingNormalsSmooth(CesiumGltf::Model& gltf);
+
 private:
   static CesiumGltf::GltfReader _gltfReader;
 };

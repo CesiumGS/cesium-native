@@ -19,6 +19,18 @@ struct CESIUM3DTILES_API TilesetContentOptions {
    * water mask extension.
    */
   bool enableWaterMask = false;
+
+  /**
+   * @brief Whether to generate smooth normals when normals are missing in the
+   * Gltf.
+   *
+   * According to the Gltf spec: "When normals are not specified, client
+   * implementations should calculate flat normals." However, calculating flat
+   * normals requires duplicating vertices. This option allows the gltfs to be
+   * sent with explicit smooth normals when the original gltf was missing
+   * normals.
+   */
+  bool generateSmoothNormalsWhenNeeded = true;
 };
 
 /**
