@@ -10,7 +10,7 @@ class QuadtreeTilingScheme;
 /**
  * @brief Uniquely identifies a node in a quadtree.
  *
- * This is one form of a {@link Cesium3DTiles::TileID}.
+ * This is one form of a {@link Cesium3DTilesSelection::TileID}.
  *
  * The identifier is composed of the level (with 0 being the level of the root
  * tile), the x- and y-coordinate of the tile, referring to a grid coordinate
