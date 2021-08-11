@@ -308,9 +308,9 @@ static void generateNormals(
     size_t index1 = static_cast<size_t>(tIndex1);
     size_t index2 = static_cast<size_t>(tIndex2);
 
-    const glm::vec3& vertex0 = positionView[index0];
-    const glm::vec3& vertex1 = positionView[index1];
-    const glm::vec3& vertex2 = positionView[index2];
+    const glm::vec3& vertex0 = positionView[static_cast<int64_t>(index0)];
+    const glm::vec3& vertex1 = positionView[static_cast<int64_t>(index1)];
+    const glm::vec3& vertex2 = positionView[static_cast<int64_t>(index2)];
 
     glm::vec3 triangleNormal =
         glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
