@@ -815,37 +815,47 @@ void Tile::upsampleParent(
   };
 
   pTileset->getAsyncSystem()
-      .runInWorkerThread([&parentModel,
-                          transform = this->getTransform(),
-                          projections,
-                          pSubdividedParentID,
-                          boundingVolume = this->getBoundingVolume(),
-                          pPrepareRendererResources =
-                              pTileset->getExternals()
-                                  .pPrepareRendererResources]() {
-        std::unique_ptr<TileContentLoadResult> pContent =
-            std::make_unique<TileContentLoadResult>();
-        pContent->model =
-            upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
-        if (pContent->model) {
-          pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(
-              pContent->model.value(),
-              boundingVolume,
-              projections);
-        }
+      .runInWorkerThread(
+          [&parentModel,
+           transform = this->getTransform(),
+           projections,
+           pSubdividedParentID,
+           boundingVolume = this->getBoundingVolume(),
+           pPrepareRendererResources =
+               pTileset->getExternals().pPrepareRendererResources,
+           generateSmoothNormalsWhenNeeded =
+               pTileset->getOptions()
+                   .contentOptions.generateSmoothNormalsWhenNeeded]() {
+            std::unique_ptr<TileContentLoadResult> pContent =
+                std::make_unique<TileContentLoadResult>();
+            pContent->model = upsampleGltfForRasterOverlays(
+                parentModel,
+                *pSubdividedParentID);
+            if (pContent->model) {
+              pContent->updatedBoundingVolume =
+                  Tile::generateTextureCoordinates(
+                      pContent->model.value(),
+                      boundingVolume,
+                      projections);
+            }
 
-        void* pRendererResources = nullptr;
-        if (pContent->model && pPrepareRendererResources) {
-          pRendererResources = pPrepareRendererResources->prepareInLoadThread(
-              pContent->model.value(),
-              transform);
-        }
+            if (pContent->model && generateSmoothNormalsWhenNeeded) {
+              GltfContent::generateMissingNormalsSmooth(*pContent->model);
+            }
 
-        return LoadResult{
-            LoadState::ContentLoaded,
-            std::move(pContent),
-            pRendererResources};
-      })
+            void* pRendererResources = nullptr;
+            if (pContent->model && pPrepareRendererResources) {
+              pRendererResources =
+                  pPrepareRendererResources->prepareInLoadThread(
+                      pContent->model.value(),
+                      transform);
+            }
+
+            return LoadResult{
+                LoadState::ContentLoaded,
+                std::move(pContent),
+                pRendererResources};
+          })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
