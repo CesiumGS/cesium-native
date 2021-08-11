@@ -5,6 +5,7 @@
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
+#include <optional>
 #include <stdexcept>
 
 namespace Cesium3DTilesSelection {
@@ -283,12 +284,7 @@ static void generateNormals(
     CesiumGltf::Model& gltf,
     CesiumGltf::MeshPrimitive& primitive,
     const CesiumGltf::AccessorView<glm::vec3>& positionView,
-    const CesiumGltf::Accessor& indexAccessor) {
-
-  CesiumGltf::AccessorView<TIndex> indexView(gltf, indexAccessor);
-  if (indexView.status() != CesiumGltf::AccessorViewStatus::Valid) {
-    return;
-  }
+    const std::optional<CesiumGltf::Accessor>& indexAccessor) {
 
   size_t count = static_cast<size_t>(positionView.size());
   size_t normalBufferStride = sizeof(glm::vec3);
@@ -300,6 +296,7 @@ static void generateNormals(
       count);
   std::vector<uint8_t> trisPerVertex(count);
 
+  // Accumulates a smooth normal for each vertex over its connected triangles.
   auto smoothNormalsOverTriangle =
       [&positionView,
        &normals,
@@ -315,8 +312,9 @@ static void generateNormals(
     glm::vec3 triangleNormal =
         glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
 
-    // Average the vertex's normal over the normals of all the triangles
-    // it is connected to.
+    // Average the vertex's currently accumulated normal with the normal of the
+    // new triangle. This is a weighted average of n:1 where n is the number of
+    // triangles found to be connected to this vertex so far.
     normals[index0] = glm::normalize(
         (float)trisPerVertex[index0] * normals[index0] + triangleNormal);
     ++trisPerVertex[index0];
@@ -330,55 +328,102 @@ static void generateNormals(
     ++trisPerVertex[index2];
   };
 
-  switch (primitive.mode) {
-  case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-    for (int64_t i = 2; i < indexView.size(); i += 3) {
-      TIndex index0 = indexView[i - 2];
-      TIndex index1 = indexView[i - 1];
-      TIndex index2 = indexView[i];
-
-      smoothNormalsOverTriangle(index0, index1, index2);
-    }
-    break;
-
-  case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
-    for (int64_t i = 0; i < indexView.size() - 2; ++i) {
-      TIndex index0;
-      TIndex index1;
-      TIndex index2;
-
-      if (i % 2) {
-        index0 = indexView[i];
-        index1 = indexView[i + 2];
-        index2 = indexView[i + 1];
-      } else {
-        index0 = indexView[i];
-        index1 = indexView[i + 1];
-        index2 = indexView[i + 2];
-      }
-
-      smoothNormalsOverTriangle(index0, index1, index2);
-    }
-    break;
-
-  case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
-    if (indexView.size() < 3) {
+  if (indexAccessor) {
+    CesiumGltf::AccessorView<TIndex> indexView(gltf, *indexAccessor);
+    if (indexView.status() != CesiumGltf::AccessorViewStatus::Valid) {
       return;
     }
 
-    {
-      TIndex index0 = indexView[0];
-      for (int64_t i = 2; i < indexView.size(); ++i) {
+    switch (primitive.mode) {
+    case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
+      for (int64_t i = 2; i < indexView.size(); i += 3) {
+        TIndex index0 = indexView[i - 2];
         TIndex index1 = indexView[i - 1];
-        TIndex index2 = indexView[i - 2];
+        TIndex index2 = indexView[i];
 
         smoothNormalsOverTriangle(index0, index1, index2);
       }
-    }
-    break;
+      break;
 
-  default:
-    return;
+    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
+      for (int64_t i = 0; i < indexView.size() - 2; ++i) {
+        TIndex index0;
+        TIndex index1;
+        TIndex index2;
+
+        if (i % 2) {
+          index0 = indexView[i];
+          index1 = indexView[i + 2];
+          index2 = indexView[i + 1];
+        } else {
+          index0 = indexView[i];
+          index1 = indexView[i + 1];
+          index2 = indexView[i + 2];
+        }
+
+        smoothNormalsOverTriangle(index0, index1, index2);
+      }
+      break;
+
+    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
+      if (indexView.size() < 3) {
+        return;
+      }
+
+      {
+        TIndex index0 = indexView[0];
+        for (int64_t i = 2; i < indexView.size(); ++i) {
+          TIndex index1 = indexView[i - 1];
+          TIndex index2 = indexView[i];
+
+          smoothNormalsOverTriangle(index0, index1, index2);
+        }
+      }
+      break;
+
+    default:
+      return;
+    }
+
+  } else {
+
+    // No index buffer available, just use the vertex buffer sequentially.
+    switch (primitive.mode) {
+    case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
+      for (TIndex i = 2; i < static_cast<TIndex>(count); i += 3) {
+        smoothNormalsOverTriangle(i - 2, i - 1, i);
+      }
+      break;
+
+    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
+      for (TIndex i = 0; i < static_cast<TIndex>(count) - 2; ++i) {
+        TIndex index0;
+        TIndex index1;
+        TIndex index2;
+
+        if (i % 2) {
+          index0 = i;
+          index1 = i + 2;
+          index2 = i + 1;
+        } else {
+          index0 = i;
+          index1 = i + 1;
+          index2 = i + 2;
+        }
+
+        smoothNormalsOverTriangle(index0, index1, index2);
+      }
+      break;
+
+    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
+      for (TIndex i = 2; i < static_cast<TIndex>(count); ++i) {
+        smoothNormalsOverTriangle(0, i - 1, i);
+      }
+      break;
+
+    default:
+      return;
+    }
   }
 
   size_t normalBufferId = gltf.buffers.size();
@@ -411,26 +456,30 @@ static void generateNormals(
     CesiumGltf::Model& gltf,
     CesiumGltf::MeshPrimitive& primitive,
     const CesiumGltf::AccessorView<glm::vec3>& positionView,
-    const CesiumGltf::Accessor& indexAccessor) {
-  switch (indexAccessor.componentType) {
-  case CesiumGltf::Accessor::ComponentType::BYTE:
-    generateNormals<int8_t>(gltf, primitive, positionView, indexAccessor);
-    break;
-  case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
-    generateNormals<uint8_t>(gltf, primitive, positionView, indexAccessor);
-    break;
-  case CesiumGltf::Accessor::ComponentType::SHORT:
-    generateNormals<int16_t>(gltf, primitive, positionView, indexAccessor);
-    break;
-  case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
-    generateNormals<uint16_t>(gltf, primitive, positionView, indexAccessor);
-    break;
-  case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
-    generateNormals<uint32_t>(gltf, primitive, positionView, indexAccessor);
-    break;
-  case CesiumGltf::Accessor::ComponentType::FLOAT:
-    return;
-  };
+    const std::optional<CesiumGltf::Accessor>& indexAccessor) {
+  if (indexAccessor) {
+    switch (indexAccessor->componentType) {
+    case CesiumGltf::Accessor::ComponentType::BYTE:
+      generateNormals<int8_t>(gltf, primitive, positionView, indexAccessor);
+      break;
+    case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
+      generateNormals<uint8_t>(gltf, primitive, positionView, indexAccessor);
+      break;
+    case CesiumGltf::Accessor::ComponentType::SHORT:
+      generateNormals<int16_t>(gltf, primitive, positionView, indexAccessor);
+      break;
+    case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
+      generateNormals<uint16_t>(gltf, primitive, positionView, indexAccessor);
+      break;
+    case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
+      generateNormals<uint32_t>(gltf, primitive, positionView, indexAccessor);
+      break;
+    case CesiumGltf::Accessor::ComponentType::FLOAT:
+      return;
+    };
+  } else {
+    generateNormals<size_t>(gltf, primitive, positionView, std::nullopt);
+  }
 }
 
 /*static*/
@@ -465,8 +514,7 @@ void GltfContent::generateMissingNormalsSmooth(CesiumGltf::Model& gltf) {
 
         if (primitive.indices < 0 ||
             static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
-          // Create flat normals since vertices aren't shared between triangles.
-
+          generateNormals(gltf_, primitive, positionView, std::nullopt);
         } else {
           CesiumGltf::Accessor& indexAccessor =
               gltf_.accessors[static_cast<size_t>(primitive.indices)];
