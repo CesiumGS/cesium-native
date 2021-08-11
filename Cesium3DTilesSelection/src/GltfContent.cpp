@@ -290,22 +290,27 @@ static void generateNormals(
     return;
   }
 
+  size_t count = static_cast<size_t>(positionView.size());
   size_t normalBufferStride = sizeof(glm::vec3);
-  size_t normalBufferSize = positionView.size() * normalBufferStride;
+  size_t normalBufferSize = count * normalBufferStride;
 
   std::vector<std::byte> normalByteBuffer(normalBufferSize);
   gsl::span<glm::vec3> normals(
       reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
-      positionView.size());
-  std::vector<uint8_t> trisPerVertex(positionView.size());
+      count);
+  std::vector<uint8_t> trisPerVertex(count);
 
   auto smoothNormalsOverTriangle =
       [&positionView,
        &normals,
-       &trisPerVertex](TIndex index0, TIndex index1, TIndex index2) -> void {
-    const glm::vec3& vertex0 = positionView[static_cast<int64_t>(index0)];
-    const glm::vec3& vertex1 = positionView[static_cast<int64_t>(index1)];
-    const glm::vec3& vertex2 = positionView[static_cast<int64_t>(index2)];
+       &trisPerVertex](TIndex tIndex0, TIndex tIndex1, TIndex tIndex2) -> void {
+    size_t index0 = static_cast<size_t>(tIndex0);
+    size_t index1 = static_cast<size_t>(tIndex1);
+    size_t index2 = static_cast<size_t>(tIndex2);
+
+    const glm::vec3& vertex0 = positionView[index0];
+    const glm::vec3& vertex1 = positionView[index1];
+    const glm::vec3& vertex2 = positionView[index2];
 
     glm::vec3 triangleNormal =
         glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
@@ -327,7 +332,7 @@ static void generateNormals(
 
   switch (primitive.mode) {
   case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-    for (int64_t i = 2; i < static_cast<int64_t>(indexView.size()); i += 3) {
+    for (int64_t i = 2; i < indexView.size(); i += 3) {
       TIndex index0 = indexView[i - 2];
       TIndex index1 = indexView[i - 1];
       TIndex index2 = indexView[i];
@@ -337,7 +342,7 @@ static void generateNormals(
     break;
 
   case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
-    for (int64_t i = 0; i < static_cast<int64_t>(indexView.size()) - 2; ++i) {
+    for (int64_t i = 0; i < indexView.size() - 2; ++i) {
       TIndex index0;
       TIndex index1;
       TIndex index2;
@@ -363,7 +368,7 @@ static void generateNormals(
 
     {
       TIndex index0 = indexView[0];
-      for (int64_t i = 2; i < static_cast<int64_t>(indexView.size()); ++i) {
+      for (int64_t i = 2; i < indexView.size(); ++i) {
         TIndex index1 = indexView[i - 1];
         TIndex index2 = indexView[i - 2];
 
@@ -378,7 +383,7 @@ static void generateNormals(
 
   size_t normalBufferId = gltf.buffers.size();
   CesiumGltf::Buffer& normalBuffer = gltf.buffers.emplace_back();
-  normalBuffer.byteLength = normalBufferSize;
+  normalBuffer.byteLength = static_cast<int64_t>(normalBufferSize);
   normalBuffer.cesium.data = std::move(normalByteBuffer);
 
   size_t normalBufferViewId = gltf.bufferViews.size();
@@ -386,7 +391,7 @@ static void generateNormals(
   normalBufferView.buffer = static_cast<int32_t>(normalBufferId);
   normalBufferView.byteLength = static_cast<int64_t>(normalBufferSize);
   normalBufferView.byteOffset = 0;
-  normalBufferView.byteStride = normalBufferStride;
+  normalBufferView.byteStride = static_cast<int64_t>(normalBufferStride);
   normalBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
   size_t normalAccessorId = gltf.accessors.size();
@@ -459,12 +464,12 @@ void GltfContent::generateMissingNormalsSmooth(CesiumGltf::Model& gltf) {
         }
 
         if (primitive.indices < 0 ||
-            primitive.indices >= gltf_.accessors.size()) {
+            static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
           // Create flat normals since vertices aren't shared between triangles.
 
         } else {
           CesiumGltf::Accessor& indexAccessor =
-              gltf_.accessors[primitive.indices];
+              gltf_.accessors[static_cast<size_t>(primitive.indices)];
           generateNormals(gltf_, primitive, positionView, indexAccessor);
         }
       });
