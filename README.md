@@ -20,6 +20,8 @@ Currently Cesium Native is used to develop [Cesium for Unreal](https://github.co
 | Library | Description |
 | -- | -- |
 | **Cesium3DTilesSelection** | Runtime streaming, decoding, level of detail selection, culling, cache management, and decoding of 3D Tile. |
+| **Cesium3DTiles** | Lightweight structs and functions for working with 3D Tiles. |
+| **Cesium3DTilesWriter** | Writes 3D Tiles from JSON into statically-typed classs. |
 | **CesiumAsync** | Classes for multi-threaded asynchronous tasks. |
 | **CesiumGeometry** | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms. |
 | **CesiumGeospatial** | 3D geospatial math types and functions for ellipsoids, transforms, projections. |
