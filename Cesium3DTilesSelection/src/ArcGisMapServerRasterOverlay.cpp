@@ -71,10 +71,10 @@ protected:
       std::string url = CesiumUtility::Uri::resolve(
         this->_url,
         "tile/" + std::to_string(tileID.level) + "/" +
-        std::to_string(tileID.y) + "/" + std::to_string(tileID.x), true);
-      SPDLOG_LOGGER_ERROR(
-        _pLogger,
-        url);
+        std::to_string(tileID.computeInvertedY(this->getTilingScheme())) + "/" + std::to_string(tileID.x), true);
+      //SPDLOG_LOGGER_ERROR(
+      //  _pLogger,
+      //  url);
       return this->loadTileImageFromUrl(url, {}, {});
     }
     else {
@@ -187,7 +187,7 @@ ArcGisMapServerRasterOverlay::createTileProvider(
       uint32_t width = 256U;
       uint32_t height = 256U;
       uint32_t maximumLevel = 30U;
-      
+
       if (!tileInfo) {
         useTiles = false;
       }
@@ -243,19 +243,19 @@ ArcGisMapServerRasterOverlay::createTileProvider(
               projection = CesiumGeospatial::WebMercatorProjection();
               CesiumGeospatial::Ellipsoid ellipsoid =
                  options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
-              CesiumGeospatial::Cartographic sw = unprojectPosition(projection, glm::dvec3(
-                std::max(xmin->GetDouble(), ellipsoid.getMaximumRadius() * Math::ONE_PI * -1),
-                std::max(ymin->GetDouble(), ellipsoid.getMaximumRadius() * Math::ONE_PI * -1),
-                0.0));
-              CesiumGeospatial::Cartographic ne = unprojectPosition(projection, glm::dvec3(
-                std::min(xmax->GetDouble(), ellipsoid.getMaximumRadius() * Math::ONE_PI),
-                std::min(ymax->GetDouble(), ellipsoid.getMaximumRadius() * Math::ONE_PI),
-                0.0));
               rectangle = CesiumGeometry::Rectangle(
-                sw.longitude,
-                sw.latitude,
-                ne.longitude,
-                ne.latitude
+                  std::max(
+                      xmin->GetDouble(),
+                      ellipsoid.getMaximumRadius() * Math::ONE_PI * -1),
+                  std::max(
+                      ymin->GetDouble(),
+                      ellipsoid.getMaximumRadius() * Math::ONE_PI * -1),
+                  std::min(
+                      xmax->GetDouble(),
+                      ellipsoid.getMaximumRadius() * Math::ONE_PI),
+                  std::min(
+                      ymax->GetDouble(),
+                      ellipsoid.getMaximumRadius() * Math::ONE_PI)
               );
             }
             else if (fullExtent_spatialReference_wkid->GetInt() == 4326) {
@@ -271,7 +271,7 @@ ArcGisMapServerRasterOverlay::createTileProvider(
                 fullExtent_spatialReference_wkid->GetInt());
               return nullptr;
             }
-          } 
+          }
         }
         else {
           rectangle = options.coverageRectangle.value();
