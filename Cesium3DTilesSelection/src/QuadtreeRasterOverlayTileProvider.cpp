@@ -399,6 +399,20 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     return cacheIt->future;
   }
 
+  // We create this lambda here instead of where it's used below so that we
+  // don't need to pass `this` through a thenImmediately lambda, which would
+  // create the possibility of accidentally using this pointer to a
+  // non-thread-safe object from another thread and creating a (potentially very
+  // subtle) race condition.
+  auto loadParentTile = [tileID, this]() {
+    Rectangle rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    QuadtreeTileID parentID(tileID.level - 1, tileID.x >> 1, tileID.y >> 1);
+    return this->getQuadtreeTile(parentID).thenImmediately(
+        [rectangle](const LoadedQuadtreeImage& loaded) {
+          return LoadedQuadtreeImage{loaded.pLoaded, rectangle};
+        });
+  };
+
   Future<LoadedQuadtreeImage> future =
       this->loadQuadtreeTileImage(tileID)
           .catchImmediately([](std::exception&& e) {
@@ -407,42 +421,32 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             result.errors.emplace_back(e.what());
             return result;
           })
-          .thenImmediately([tileID, this](LoadedRasterOverlayImage&& loaded) {
+          .thenImmediately([&cachedBytes = this->_cachedBytes,
+                            currentLevel = tileID.level,
+                            minimumLevel = this->getMinimumLevel(),
+                            asyncSystem = this->getAsyncSystem(),
+                            loadParentTile = std::move(loadParentTile)](
+                               LoadedRasterOverlayImage&& loaded) {
             if (loaded.image && loaded.errors.empty() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
-              this->_cachedBytes += loaded.image->pixelData.size();
-              return this->getAsyncSystem().createResolvedFuture(
-                  LoadedQuadtreeImage{
-                      std::make_shared<LoadedRasterOverlayImage>(
-                          std::move(loaded)),
-                      std::nullopt});
+              cachedBytes += loaded.image->pixelData.size();
+              return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
+                  std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
+                  std::nullopt});
             }
 
             // Tile failed to load, try loading the parent tile instead.
             // We can only initiate a new tile request from the main thread,
             // though.
-            if (tileID.level > this->getMinimumLevel()) {
-              return this->getAsyncSystem().runInMainThread(
-                  [tileID, this, loaded = std::move(loaded)]() {
-                    QuadtreeTileID parentID(
-                        tileID.level - 1,
-                        tileID.x >> 1,
-                        tileID.y >> 1);
-                    return this->getQuadtreeTile(parentID).thenImmediately(
-                        [rectangle = loaded.rectangle](
-                            const LoadedQuadtreeImage& loaded) {
-                          return LoadedQuadtreeImage{loaded.pLoaded, rectangle};
-                        });
-                  });
+            if (currentLevel > minimumLevel) {
+              return asyncSystem.runInMainThread(loadParentTile);
+            } else {
+              // No parent available, so return the original failed result.
+              return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
+                  std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
+                  std::nullopt});
             }
-
-            // No parent available, so return the original failed result.
-            return this->getAsyncSystem().createResolvedFuture(
-                LoadedQuadtreeImage{
-                    std::make_shared<LoadedRasterOverlayImage>(
-                        std::move(loaded)),
-                    std::nullopt});
           });
 
   auto newIt = this->_tilesOldToRecent.emplace(

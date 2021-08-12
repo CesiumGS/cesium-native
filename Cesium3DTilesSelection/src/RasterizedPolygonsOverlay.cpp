@@ -21,7 +21,9 @@ void rasterizePolygons(
     const std::vector<CartographicSelection>& cartographicSelections) {
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
-  if (Cesium3DTilesSelection::Impl::withinPolygons(rectangle, cartographicSelections)) {
+  if (Cesium3DTilesSelection::Impl::withinPolygons(
+          rectangle,
+          cartographicSelections)) {
     image.width = 1;
     image.height = 1;
     image.channels = 1;

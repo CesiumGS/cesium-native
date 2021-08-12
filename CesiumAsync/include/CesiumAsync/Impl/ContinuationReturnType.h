@@ -11,8 +11,7 @@ namespace Impl {
 //! @cond Doxygen_Suppress
 
 template <typename Func, typename T, typename Enable = void>
-struct ContinuationReturnType {
-};
+struct ContinuationReturnType {};
 
 template <typename Func, typename T>
 struct ContinuationReturnType<
