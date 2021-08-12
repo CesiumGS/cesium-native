@@ -390,8 +390,8 @@ static void generateNormals(
     // No index buffer available, just use the vertex buffer sequentially.
     switch (primitive.mode) {
     case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-      for (TIndex i = 2; i < static_cast<TIndex>(count); i += 3) {
-        smoothNormalsOverTriangle(i - 2, i - 1, i);
+      for (TIndex i = 2; i < static_cast<TIndex>(count); i += TIndex(3)) {
+        smoothNormalsOverTriangle(i - TIndex(2), i - TIndex(1), i);
       }
       break;
 
@@ -403,12 +403,12 @@ static void generateNormals(
 
         if (i % 2) {
           index0 = i;
-          index1 = i + 2;
-          index2 = i + 1;
+          index1 = i + TIndex(2);
+          index2 = i + TIndex(1);
         } else {
           index0 = i;
-          index1 = i + 1;
-          index2 = i + 2;
+          index1 = i + TIndex(1);
+          index2 = i + TIndex(2);
         }
 
         smoothNormalsOverTriangle(index0, index1, index2);
@@ -417,7 +417,7 @@ static void generateNormals(
 
     case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
       for (TIndex i = 2; i < static_cast<TIndex>(count); ++i) {
-        smoothNormalsOverTriangle(0, i - 1, i);
+        smoothNormalsOverTriangle(0, i - TIndex(1), i);
       }
       break;
 
