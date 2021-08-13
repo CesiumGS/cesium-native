@@ -316,108 +316,73 @@ static void generateSmoothNormals(
     normals[index2] += triangleNormal;
   };
 
+  int64_t numIndices;
+  std::function<TIndex(int64_t)> getIndex;
+
+  // In the indexed case, the positions are accessed with the
+  // indices from the indexView. Otherwise, the elements are
+  // accessed directly.
   if (indexAccessor) {
     CesiumGltf::AccessorView<TIndex> indexView(gltf, *indexAccessor);
     if (indexView.status() != CesiumGltf::AccessorViewStatus::Valid) {
       return;
     }
-
-    switch (primitive.mode) {
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-      for (int64_t i = 2; i < indexView.size(); i += 3) {
-        TIndex index0 = indexView[i - 2];
-        TIndex index1 = indexView[i - 1];
-        TIndex index2 = indexView[i];
-
-        addTriangleNormalToVertexNormals(index0, index1, index2);
-      }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
-      for (int64_t i = 0; i < indexView.size() - 2; ++i) {
-        TIndex index0;
-        TIndex index1;
-        TIndex index2;
-
-        if (i % 2) {
-          index0 = indexView[i];
-          index1 = indexView[i + 2];
-          index2 = indexView[i + 1];
-        } else {
-          index0 = indexView[i];
-          index1 = indexView[i + 1];
-          index2 = indexView[i + 2];
-        }
-
-        addTriangleNormalToVertexNormals(index0, index1, index2);
-      }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
-      if (indexView.size() < 3) {
-        return;
-      }
-
-      {
-        TIndex index0 = indexView[0];
-        for (int64_t i = 2; i < indexView.size(); ++i) {
-          TIndex index1 = indexView[i - 1];
-          TIndex index2 = indexView[i];
-
-          addTriangleNormalToVertexNormals(index0, index1, index2);
-        }
-      }
-      break;
-
-    default:
-      return;
-    }
-
+    numIndices = indexView.size();
+    getIndex = [indexView](int64_t index) { return indexView[index]; };
   } else {
+    numIndices = int64_t(count);
+    getIndex = [](int64_t index) { return static_cast<TIndex>(index); };
+  }
 
-    // No index buffer available, just use the vertex buffer sequentially.
-    switch (primitive.mode) {
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-      for (size_t i = 2; i < count; i += 3) {
-        addTriangleNormalToVertexNormals(
-            static_cast<TIndex>(i - 2),
-            static_cast<TIndex>(i - 1),
-            static_cast<TIndex>(i));
+  switch (primitive.mode) {
+  case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
+    for (int64_t i = 2; i < numIndices; i += 3) {
+      TIndex index0 = getIndex(i - 2);
+      TIndex index1 = getIndex(i - 1);
+      TIndex index2 = getIndex(i);
+
+      addTriangleNormalToVertexNormals(index0, index1, index2);
+    }
+    break;
+
+  case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
+    for (int64_t i = 0; i < numIndices - 2; ++i) {
+      TIndex index0;
+      TIndex index1;
+      TIndex index2;
+
+      if (i % 2) {
+        index0 = getIndex(i);
+        index1 = getIndex(i + 2);
+        index2 = getIndex(i + 1);
+      } else {
+        index0 = getIndex(i);
+        index1 = getIndex(i + 1);
+        index2 = getIndex(i + 2);
       }
-      break;
 
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
-      for (size_t i = 0; i < count - 2; ++i) {
-        TIndex index0;
-        TIndex index1;
-        TIndex index2;
+      addTriangleNormalToVertexNormals(index0, index1, index2);
+    }
+    break;
 
-        if (i % 2) {
-          index0 = static_cast<TIndex>(i);
-          index1 = static_cast<TIndex>(i + 2);
-          index2 = static_cast<TIndex>(i + 1);
-        } else {
-          index0 = static_cast<TIndex>(i);
-          index1 = static_cast<TIndex>(i + 1);
-          index2 = static_cast<TIndex>(i + 2);
-        }
+  case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
+    if (numIndices < 3) {
+      return;
+    }
+
+    {
+      TIndex index0 = getIndex(0);
+      for (int64_t i = 2; i < numIndices; ++i) {
+        TIndex index1 = getIndex(i - 1);
+        TIndex index2 = getIndex(i);
 
         addTriangleNormalToVertexNormals(index0, index1, index2);
       }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
-      for (size_t i = 2; i < count; ++i) {
-        addTriangleNormalToVertexNormals(
-            0,
-            static_cast<TIndex>(i - 1),
-            static_cast<TIndex>(i));
-      }
-      break;
-
-    default:
-      return;
     }
+    break;
+
+  default:
+    return;
   }
 
   // normalizes the accumulated vertex normals
