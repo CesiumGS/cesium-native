@@ -294,13 +294,11 @@ static void generateNormals(
   gsl::span<glm::vec3> normals(
       reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
       count);
-  std::vector<uint8_t> trisPerVertex(count);
 
-  // Accumulates a smooth normal for each vertex over its connected triangles.
-  auto smoothNormalsOverTriangle =
+  // Add the triangle's normal to each of it's vertex's accumulated normal.
+  auto addTriangleNormalToVertexNormals =
       [&positionView,
-       &normals,
-       &trisPerVertex](TIndex tIndex0, TIndex tIndex1, TIndex tIndex2) -> void {
+       &normals](TIndex tIndex0, TIndex tIndex1, TIndex tIndex2) -> void {
     size_t index0 = static_cast<size_t>(tIndex0);
     size_t index1 = static_cast<size_t>(tIndex1);
     size_t index2 = static_cast<size_t>(tIndex2);
@@ -309,23 +307,13 @@ static void generateNormals(
     const glm::vec3& vertex1 = positionView[static_cast<int64_t>(index1)];
     const glm::vec3& vertex2 = positionView[static_cast<int64_t>(index2)];
 
-    glm::vec3 triangleNormal =
-        glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
+    glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
 
-    // Average the vertex's currently accumulated normal with the normal of the
-    // new triangle. This is a weighted average of n:1 where n is the number of
-    // triangles found to be connected to this vertex so far.
-    normals[index0] = glm::normalize(
-        (float)trisPerVertex[index0] * normals[index0] + triangleNormal);
-    ++trisPerVertex[index0];
-
-    normals[index1] = glm::normalize(
-        (float)trisPerVertex[index1] * normals[index1] + triangleNormal);
-    ++trisPerVertex[index1];
-
-    normals[index2] = glm::normalize(
-        (float)trisPerVertex[index2] * normals[index2] + triangleNormal);
-    ++trisPerVertex[index2];
+    // Add the triangle normal to each vertex's accumulated normal. At the end
+    // we will normalize the accumulated vertex normals to average.
+    normals[index0] += triangleNormal;
+    normals[index1] += triangleNormal;
+    normals[index2] += triangleNormal;
   };
 
   if (indexAccessor) {
@@ -341,7 +329,7 @@ static void generateNormals(
         TIndex index1 = indexView[i - 1];
         TIndex index2 = indexView[i];
 
-        smoothNormalsOverTriangle(index0, index1, index2);
+        addTriangleNormalToVertexNormals(index0, index1, index2);
       }
       break;
 
@@ -361,7 +349,7 @@ static void generateNormals(
           index2 = indexView[i + 2];
         }
 
-        smoothNormalsOverTriangle(index0, index1, index2);
+        addTriangleNormalToVertexNormals(index0, index1, index2);
       }
       break;
 
@@ -376,7 +364,7 @@ static void generateNormals(
           TIndex index1 = indexView[i - 1];
           TIndex index2 = indexView[i];
 
-          smoothNormalsOverTriangle(index0, index1, index2);
+          addTriangleNormalToVertexNormals(index0, index1, index2);
         }
       }
       break;
@@ -391,7 +379,7 @@ static void generateNormals(
     switch (primitive.mode) {
     case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
       for (TIndex i = 2; i < static_cast<TIndex>(count); i += TIndex(3)) {
-        smoothNormalsOverTriangle(i - TIndex(2), i - TIndex(1), i);
+        addTriangleNormalToVertexNormals(i - TIndex(2), i - TIndex(1), i);
       }
       break;
 
@@ -411,19 +399,24 @@ static void generateNormals(
           index2 = i + TIndex(2);
         }
 
-        smoothNormalsOverTriangle(index0, index1, index2);
+        addTriangleNormalToVertexNormals(index0, index1, index2);
       }
       break;
 
     case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
       for (TIndex i = 2; i < static_cast<TIndex>(count); ++i) {
-        smoothNormalsOverTriangle(0, i - TIndex(1), i);
+        addTriangleNormalToVertexNormals(0, i - TIndex(1), i);
       }
       break;
 
     default:
       return;
     }
+  }
+
+  // normalizes the accumulated vertex normals
+  for (size_t i = 0; i < count; ++i) {
+    normals[i] = glm::normalize(normals[i]);
   }
 
   size_t normalBufferId = gltf.buffers.size();
