@@ -7,6 +7,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
@@ -841,7 +842,7 @@ void Tile::upsampleParent(
             }
 
             if (pContent->model && generateSmoothNormalsWhenNeeded) {
-              GltfContent::generateMissingNormalsSmooth(*pContent->model);
+              pContent->model->generateMissingNormalsSmooth();
             }
 
             void* pRendererResources = nullptr;

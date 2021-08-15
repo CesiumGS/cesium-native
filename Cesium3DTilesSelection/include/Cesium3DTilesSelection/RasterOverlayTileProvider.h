@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/CreditSystem.h"
-#include "Cesium3DTilesSelection/Gltf.h"
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 #include "CesiumAsync/IAssetAccessor.h"

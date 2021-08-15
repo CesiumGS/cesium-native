@@ -2,6 +2,7 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
@@ -206,8 +207,13 @@ GltfContent::createRasterOverlayTextureCoordinates(
   double minimumHeight = std::numeric_limits<double>::max();
   double maximumHeight = std::numeric_limits<double>::lowest();
 
-  Gltf::forEachPrimitiveInScene(
-      gltf,
+  static glm::dmat4 gltfToCesiumAxes(
+      glm::dvec4(1.0, 0.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 1.0, 0.0),
+      glm::dvec4(0.0, -1.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 0.0, 1.0));
+
+  gltf.forEachPrimitiveInScene(
       -1,
       [&positionAccessorsToTextureCoordinateAccessor,
        &attributeName,
@@ -223,7 +229,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           CesiumGltf::Node& /*node*/,
           CesiumGltf::Mesh& /*mesh*/,
           CesiumGltf::MeshPrimitive& primitive,
-          const glm::dmat4& transform) {
+          const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {
           return;
@@ -248,6 +254,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
             primitive.attributes.end()) {
           return;
         }
+
+        glm::dmat4 transform = gltfToCesiumAxes * nodeTransform;
 
         // Generate new texture coordinates
         int nextTextureCoordinateAccessorIndex =
@@ -277,268 +285,5 @@ GltfContent::createRasterOverlayTextureCoordinates(
       CesiumGeospatial::GlobeRectangle(west, south, east, north),
       minimumHeight,
       maximumHeight);
-}
-
-template <typename TIndex>
-static void generateSmoothNormals(
-    CesiumGltf::Model& gltf,
-    CesiumGltf::MeshPrimitive& primitive,
-    const CesiumGltf::AccessorView<glm::vec3>& positionView,
-    const std::optional<CesiumGltf::Accessor>& indexAccessor) {
-
-  size_t count = static_cast<size_t>(positionView.size());
-  size_t normalBufferStride = sizeof(glm::vec3);
-  size_t normalBufferSize = count * normalBufferStride;
-
-  std::vector<std::byte> normalByteBuffer(normalBufferSize);
-  gsl::span<glm::vec3> normals(
-      reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
-      count);
-
-  // Add the triangle's normal to each of it's vertex's accumulated normal.
-  auto addTriangleNormalToVertexNormals =
-      [&positionView,
-       &normals](TIndex tIndex0, TIndex tIndex1, TIndex tIndex2) -> void {
-    size_t index0 = static_cast<size_t>(tIndex0);
-    size_t index1 = static_cast<size_t>(tIndex1);
-    size_t index2 = static_cast<size_t>(tIndex2);
-
-    const glm::vec3& vertex0 = positionView[static_cast<int64_t>(index0)];
-    const glm::vec3& vertex1 = positionView[static_cast<int64_t>(index1)];
-    const glm::vec3& vertex2 = positionView[static_cast<int64_t>(index2)];
-
-    glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
-
-    // Add the triangle normal to each vertex's accumulated normal. At the end
-    // we will normalize the accumulated vertex normals to average.
-    normals[index0] += triangleNormal;
-    normals[index1] += triangleNormal;
-    normals[index2] += triangleNormal;
-  };
-
-  if (indexAccessor) {
-    CesiumGltf::AccessorView<TIndex> indexView(gltf, *indexAccessor);
-    if (indexView.status() != CesiumGltf::AccessorViewStatus::Valid) {
-      return;
-    }
-
-    switch (primitive.mode) {
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-      for (int64_t i = 2; i < indexView.size(); i += 3) {
-        TIndex index0 = indexView[i - 2];
-        TIndex index1 = indexView[i - 1];
-        TIndex index2 = indexView[i];
-
-        addTriangleNormalToVertexNormals(index0, index1, index2);
-      }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
-      for (int64_t i = 0; i < indexView.size() - 2; ++i) {
-        TIndex index0;
-        TIndex index1;
-        TIndex index2;
-
-        if (i % 2) {
-          index0 = indexView[i];
-          index1 = indexView[i + 2];
-          index2 = indexView[i + 1];
-        } else {
-          index0 = indexView[i];
-          index1 = indexView[i + 1];
-          index2 = indexView[i + 2];
-        }
-
-        addTriangleNormalToVertexNormals(index0, index1, index2);
-      }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
-      if (indexView.size() < 3) {
-        return;
-      }
-
-      {
-        TIndex index0 = indexView[0];
-        for (int64_t i = 2; i < indexView.size(); ++i) {
-          TIndex index1 = indexView[i - 1];
-          TIndex index2 = indexView[i];
-
-          addTriangleNormalToVertexNormals(index0, index1, index2);
-        }
-      }
-      break;
-
-    default:
-      return;
-    }
-
-  } else {
-
-    // No index buffer available, just use the vertex buffer sequentially.
-    switch (primitive.mode) {
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLES:
-      for (size_t i = 2; i < count; i += 3) {
-        addTriangleNormalToVertexNormals(
-            static_cast<TIndex>(i - 2),
-            static_cast<TIndex>(i - 1),
-            static_cast<TIndex>(i));
-      }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP:
-      for (size_t i = 0; i < count - 2; ++i) {
-        TIndex index0;
-        TIndex index1;
-        TIndex index2;
-
-        if (i % 2) {
-          index0 = static_cast<TIndex>(i);
-          index1 = static_cast<TIndex>(i + 2);
-          index2 = static_cast<TIndex>(i + 1);
-        } else {
-          index0 = static_cast<TIndex>(i);
-          index1 = static_cast<TIndex>(i + 1);
-          index2 = static_cast<TIndex>(i + 2);
-        }
-
-        addTriangleNormalToVertexNormals(index0, index1, index2);
-      }
-      break;
-
-    case CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN:
-      for (size_t i = 2; i < count; ++i) {
-        addTriangleNormalToVertexNormals(
-            0,
-            static_cast<TIndex>(i - 1),
-            static_cast<TIndex>(i));
-      }
-      break;
-
-    default:
-      return;
-    }
-  }
-
-  // normalizes the accumulated vertex normals
-  for (size_t i = 0; i < count; ++i) {
-    normals[i] = glm::normalize(normals[i]);
-  }
-
-  size_t normalBufferId = gltf.buffers.size();
-  CesiumGltf::Buffer& normalBuffer = gltf.buffers.emplace_back();
-  normalBuffer.byteLength = static_cast<int64_t>(normalBufferSize);
-  normalBuffer.cesium.data = std::move(normalByteBuffer);
-
-  size_t normalBufferViewId = gltf.bufferViews.size();
-  CesiumGltf::BufferView& normalBufferView = gltf.bufferViews.emplace_back();
-  normalBufferView.buffer = static_cast<int32_t>(normalBufferId);
-  normalBufferView.byteLength = static_cast<int64_t>(normalBufferSize);
-  normalBufferView.byteOffset = 0;
-  normalBufferView.byteStride = static_cast<int64_t>(normalBufferStride);
-  normalBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
-
-  size_t normalAccessorId = gltf.accessors.size();
-  CesiumGltf::Accessor& normalAccessor = gltf.accessors.emplace_back();
-  normalAccessor.byteOffset = 0;
-  normalAccessor.bufferView = static_cast<int32_t>(normalBufferViewId);
-  normalAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-  normalAccessor.count = positionView.size();
-  normalAccessor.type = CesiumGltf::Accessor::Type::VEC3;
-
-  primitive.attributes.emplace(
-      "NORMAL",
-      static_cast<int32_t>(normalAccessorId));
-}
-
-static void generateSmoothNormals(
-    CesiumGltf::Model& gltf,
-    CesiumGltf::MeshPrimitive& primitive,
-    const CesiumGltf::AccessorView<glm::vec3>& positionView,
-    const std::optional<CesiumGltf::Accessor>& indexAccessor) {
-  if (indexAccessor) {
-    switch (indexAccessor->componentType) {
-    case CesiumGltf::Accessor::ComponentType::BYTE:
-      generateSmoothNormals<int8_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
-    case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
-      generateSmoothNormals<uint8_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
-    case CesiumGltf::Accessor::ComponentType::SHORT:
-      generateSmoothNormals<int16_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
-    case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
-      generateSmoothNormals<uint16_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
-    case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
-      generateSmoothNormals<uint32_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
-    case CesiumGltf::Accessor::ComponentType::FLOAT:
-      return;
-    };
-  } else {
-    generateSmoothNormals<size_t>(gltf, primitive, positionView, std::nullopt);
-  }
-}
-
-/*static*/
-void GltfContent::generateMissingNormalsSmooth(CesiumGltf::Model& gltf) {
-  Gltf::forEachPrimitiveInScene(
-      gltf,
-      -1,
-      [](CesiumGltf::Model& gltf_,
-         CesiumGltf::Node& /*node*/,
-         CesiumGltf::Mesh& /*mesh*/,
-         CesiumGltf::MeshPrimitive& primitive,
-         const glm::dmat4& /*transform*/) {
-        // if normals already exist, there is nothing to do
-        auto normalIt = primitive.attributes.find("NORMAL");
-        if (normalIt != primitive.attributes.end()) {
-          return;
-        }
-
-        // if positions do not exist, we cannot create normals.
-        auto positionIt = primitive.attributes.find("POSITION");
-        if (positionIt == primitive.attributes.end()) {
-          return;
-        }
-
-        int positionAccessorId = positionIt->second;
-        CesiumGltf::AccessorView<glm::vec3> positionView(
-            gltf_,
-            positionAccessorId);
-        if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
-          return;
-        }
-
-        if (primitive.indices < 0 ||
-            static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
-          generateSmoothNormals(gltf_, primitive, positionView, std::nullopt);
-        } else {
-          CesiumGltf::Accessor& indexAccessor =
-              gltf_.accessors[static_cast<size_t>(primitive.indices)];
-          generateSmoothNormals(gltf_, primitive, positionView, indexAccessor);
-        }
-      });
 }
 } // namespace Cesium3DTilesSelection
