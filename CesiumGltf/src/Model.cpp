@@ -549,6 +549,162 @@ void generateSmoothNormals(
     generateSmoothNormals<size_t>(gltf, primitive, positionView, std::nullopt);
   }
 }
+
+void generateFlatNormals(
+    Model& gltf,
+    MeshPrimitive& primitive,
+    AccessorView<glm::vec3>& positionView) {
+
+  size_t count = positionView.size();
+  size_t normalStride = sizeof(glm::vec3);
+  size_t normalBufferSize = count * normalStride;
+  std::vector<std::byte> normalByteBuffer(normalBufferSize);
+  gsl::span<glm::vec3> normals(
+      reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
+      count);
+
+  auto applyTriangleNormalToVertices =
+      [&positionView, &normals](int64_t i0, int64_t i1, int64_t i2) {
+        const glm::vec3& vertex0 = positionView[i0];
+        const glm::vec3& vertex1 = positionView[i1];
+        const glm::vec3& vertex2 = positionView[i2];
+
+        glm::vec3 triangleNormal =
+            glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
+
+        normals[i0] = triangleNormal;
+        normals[i1] = triangleNormal;
+        normals[i2] = triangleNormal;
+      };
+
+  switch (primitive.mode) {
+  case MeshPrimitive::Mode::TRIANGLES:
+    for (int64_t i = 2; i < static_cast<int64_t>(count); i += 3) {
+      applyTriangleNormalToVertices(i - 2, i - 1, i);
+    }
+    break;
+
+  case MeshPrimitive::Mode::TRIANGLE_STRIP:
+    for (int64_t i = 0; i < static_cast<int64_t>(count) - 2; ++i) {
+      if (i % 2) {
+        applyTriangleNormalToVertices(i, i + 2, i + 1);
+      } else {
+        applyTriangleNormalToVertices(i, i + 1, i + 2);
+      }
+    }
+    break;
+
+  case MeshPrimitive::Mode::TRIANGLE_FAN:
+    for (int64_t i = 2; i < static_cast<int64_t>(count); ++i) {
+      applyTriangleNormalToVertices(0, i - 1, i);
+    }
+    break;
+
+  default:
+    return;
+  }
+
+  size_t normalBufferId = gltf.buffers.size();
+  Buffer& normalBuffer = gltf.buffers.emplace_back();
+  normalBuffer.byteLength = static_cast<int64_t>(normalBufferSize);
+  normalBuffer.cesium.data = std::move(normalByteBuffer);
+
+  size_t normalBufferViewId = gltf.bufferViews.size();
+  BufferView& normalBufferView = gltf.bufferViews.emplace_back();
+  normalBufferView.buffer = static_cast<int32_t>(normalBufferId);
+  normalBufferView.byteLength = static_cast<int64_t>(normalBufferSize);
+  normalBufferView.byteOffset = 0;
+  normalBufferView.byteStride = static_cast<int64_t>(normalStride);
+  normalBufferView.target = BufferView::Target::ARRAY_BUFFER;
+
+  size_t normalAccessorId = gltf.accessors.size();
+  Accessor& normalAccessor = gltf.accessors.emplace_back();
+  normalAccessor.byteOffset = 0;
+  normalAccessor.bufferView = static_cast<int32_t>(normalBufferViewId);
+  normalAccessor.componentType = Accessor::ComponentType::FLOAT;
+  normalAccessor.count = positionView.size();
+  normalAccessor.type = Accessor::Type::VEC3;
+
+  primitive.attributes.emplace(
+      "NORMAL",
+      static_cast<int32_t>(normalAccessorId));
+}
+
+template <typename TIndex>
+void flattenIndices(
+    Model& gltf,
+    MeshPrimitive& primitive,
+    AccessorView<glm::vec3>& positionView,
+    const Accessor& indexAccessor) {
+
+  AccessorView<TIndex> indexView(gltf, indexAccessor);
+  if (indexView.status() != AccessorViewStatus::Valid) {
+    return;
+  }
+
+  size_t count = indexAccessor.count;
+  size_t positionStride = sizeof(glm::vec3);
+  size_t outPositionBufferSize = positionStride * count;
+  std::vector<std::byte> positionByteBuffer(outPositionBufferSize);
+  gsl::span<glm::vec3> outPositionBuffer(
+      reinterpret_cast<glm::vec3*>(positionByteBuffer.data()),
+      count);
+
+  for (size_t i = 0; i < count; ++i) {
+    outPositionBuffer[i] = positionView[indexView[i]];
+  }
+
+  size_t positionBufferId = gltf.buffers.size();
+  Buffer& positionBuffer = gltf.buffers.emplace_back();
+  positionBuffer.byteLength = static_cast<int64_t>(outPositionBufferSize);
+  positionBuffer.cesium.data = std::move(positionByteBuffer);
+
+  size_t positionBufferViewId = gltf.bufferViews.size();
+  BufferView& positionBufferView = gltf.bufferViews.emplace_back();
+  positionBufferView.buffer = static_cast<int32_t>(positionBufferId);
+  positionBufferView.byteLength = static_cast<int64_t>(outPositionBufferSize);
+  positionBufferView.byteOffset = 0;
+  positionBufferView.byteStride = static_cast<int64_t>(positionStride);
+  positionBufferView.target = BufferView::Target::ARRAY_BUFFER;
+
+  size_t positionAccessorId = gltf.accessors.size();
+  Accessor& positionAccessor = gltf.accessors.emplace_back();
+  positionAccessor.bufferView = static_cast<int32_t>(positionBufferViewId);
+  positionAccessor.byteOffset = 0;
+  positionAccessor.componentType = Accessor::ComponentType::FLOAT;
+  positionAccessor.count = static_cast<int64_t>(count);
+  positionAccessor.type = Accessor::Type::VEC3;
+
+  primitive.attributes["POSITION"] = static_cast<int32_t>(positionAccessorId);
+  primitive.indices = -1;
+}
+
+void flattenIndices(
+    Model& gltf,
+    MeshPrimitive& primitive,
+    AccessorView<glm::vec3>& positionView,
+    const Accessor& indexAccessor) {
+
+  switch (indexAccessor.componentType) {
+  case Accessor::ComponentType::BYTE:
+    flattenIndices<int8_t>(gltf, primitive, positionView, indexAccessor);
+    break;
+  case Accessor::ComponentType::UNSIGNED_BYTE:
+    flattenIndices<uint8_t>(gltf, primitive, positionView, indexAccessor);
+    break;
+  case Accessor::ComponentType::SHORT:
+    flattenIndices<int16_t>(gltf, primitive, positionView, indexAccessor);
+    break;
+  case Accessor::ComponentType::UNSIGNED_SHORT:
+    flattenIndices<uint16_t>(gltf, primitive, positionView, indexAccessor);
+    break;
+  case Accessor::ComponentType::UNSIGNED_INT:
+    flattenIndices<uint32_t>(gltf, primitive, positionView, indexAccessor);
+    break;
+  default:
+    return;
+  }
+}
 } // namespace
 
 void Model::generateMissingNormalsSmooth() {
@@ -584,6 +740,58 @@ void Model::generateMissingNormalsSmooth() {
           Accessor& indexAccessor =
               gltf_.accessors[static_cast<size_t>(primitive.indices)];
           generateSmoothNormals(gltf_, primitive, positionView, indexAccessor);
+        }
+      });
+}
+
+void Model::generateMissingNormalsFlat() {
+  forEachPrimitiveInScene(
+      -1,
+      [](Model& gltf_,
+         Node& /*node*/,
+         Mesh& /*mesh*/,
+         MeshPrimitive& primitive,
+         const glm::dmat4& /*transform*/) {
+        // if normals already exist, there is nothing to do
+        auto normalIt = primitive.attributes.find("NORMAL");
+        if (normalIt != primitive.attributes.end()) {
+          return;
+        }
+
+        // if positions do not exist, we cannot create normals.
+        auto positionIt = primitive.attributes.find("POSITION");
+        if (positionIt == primitive.attributes.end()) {
+          return;
+        }
+
+        int positionAccessorId = positionIt->second;
+        AccessorView<glm::vec3> positionView(gltf_, positionAccessorId);
+        if (positionView.status() != AccessorViewStatus::Valid) {
+          return;
+        }
+
+        if (primitive.indices < 0 ||
+            static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
+          generateFlatNormals(gltf_, primitive, positionView);
+        } else {
+          Accessor& indexAccessor =
+              gltf_.accessors[static_cast<size_t>(primitive.indices)];
+          flattenIndices(gltf_, primitive, positionView, indexAccessor);
+
+          // Recreate the position view since the positions buffer will have
+          // been changed.
+          positionIt = primitive.attributes.find("POSITION");
+          if (positionIt == primitive.attributes.end()) {
+            return;
+          }
+
+          positionAccessorId = positionIt->second;
+          positionView = AccessorView<glm::vec3>(gltf_, positionAccessorId);
+          if (positionView.status() != AccessorViewStatus::Valid) {
+            return;
+          }
+
+          generateFlatNormals(gltf_, primitive, positionView);
         }
       });
 }
