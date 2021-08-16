@@ -213,19 +213,6 @@ void Model::merge(Model&& rhs) {
 }
 
 namespace {
-// Initialize with a static function instead of inline to avoid an
-// internal compiler error in MSVC v14.27.29110.
-glm::dmat4 createGltfAxesToCesiumAxes() {
-  // https://github.com/CesiumGS/3d-tiles/tree/master/specification#gltf-transforms
-  return glm::dmat4(
-      glm::dvec4(1.0, 0.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 1.0, 0.0),
-      glm::dvec4(0.0, -1.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 0.0, 1.0));
-}
-
-glm::dmat4 gltfAxesToCesiumAxes = createGltfAxesToCesiumAxes();
-
 void forEachPrimitiveInMeshObject(
     const glm::dmat4x4& transform,
     const Model& model,
@@ -634,11 +621,16 @@ template <typename TIndex>
 void flattenIndices(
     Model& gltf,
     MeshPrimitive& primitive,
-    AccessorView<glm::vec3>& positionView,
+    Accessor& positionAccessor,
     const Accessor& indexAccessor) {
 
   AccessorView<TIndex> indexView(gltf, indexAccessor);
   if (indexView.status() != AccessorViewStatus::Valid) {
+    return;
+  }
+
+  AccessorView<glm::vec3> positionView(gltf, positionAccessor);
+  if (positionView.status() != AccessorViewStatus::Valid) {
     return;
   }
 
@@ -651,58 +643,44 @@ void flattenIndices(
       count);
 
   for (size_t i = 0; i < count; ++i) {
-    outPositionBuffer[i] = 
-        positionView[
-          static_cast<int64_t>(
-            indexView[static_cast<int64_t>(i)])];
+    outPositionBuffer[i] =
+        positionView[static_cast<int64_t>(indexView[static_cast<int64_t>(i)])];
   }
 
-  size_t positionBufferId = gltf.buffers.size();
-  Buffer& positionBuffer = gltf.buffers.emplace_back();
+  positionAccessor.count = static_cast<int64_t>(count);
+
+  BufferView& positionBufferView =
+      gltf.bufferViews[positionAccessor.bufferView];
+  positionBufferView.byteLength = static_cast<int64_t>(outPositionBufferSize);
+
+  Buffer& positionBuffer = gltf.buffers[positionBufferView.buffer];
   positionBuffer.byteLength = static_cast<int64_t>(outPositionBufferSize);
   positionBuffer.cesium.data = std::move(positionByteBuffer);
 
-  size_t positionBufferViewId = gltf.bufferViews.size();
-  BufferView& positionBufferView = gltf.bufferViews.emplace_back();
-  positionBufferView.buffer = static_cast<int32_t>(positionBufferId);
-  positionBufferView.byteLength = static_cast<int64_t>(outPositionBufferSize);
-  positionBufferView.byteOffset = 0;
-  positionBufferView.byteStride = static_cast<int64_t>(positionStride);
-  positionBufferView.target = BufferView::Target::ARRAY_BUFFER;
-
-  size_t positionAccessorId = gltf.accessors.size();
-  Accessor& positionAccessor = gltf.accessors.emplace_back();
-  positionAccessor.bufferView = static_cast<int32_t>(positionBufferViewId);
-  positionAccessor.byteOffset = 0;
-  positionAccessor.componentType = Accessor::ComponentType::FLOAT;
-  positionAccessor.count = static_cast<int64_t>(count);
-  positionAccessor.type = Accessor::Type::VEC3;
-
-  primitive.attributes["POSITION"] = static_cast<int32_t>(positionAccessorId);
   primitive.indices = -1;
 }
 
 void flattenIndices(
     Model& gltf,
     MeshPrimitive& primitive,
-    AccessorView<glm::vec3>& positionView,
+    Accessor& positionAccessor,
     const Accessor& indexAccessor) {
 
   switch (indexAccessor.componentType) {
   case Accessor::ComponentType::BYTE:
-    flattenIndices<int8_t>(gltf, primitive, positionView, indexAccessor);
+    flattenIndices<int8_t>(gltf, primitive, positionAccessor, indexAccessor);
     break;
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    flattenIndices<uint8_t>(gltf, primitive, positionView, indexAccessor);
+    flattenIndices<uint8_t>(gltf, primitive, positionAccessor, indexAccessor);
     break;
   case Accessor::ComponentType::SHORT:
-    flattenIndices<int16_t>(gltf, primitive, positionView, indexAccessor);
+    flattenIndices<int16_t>(gltf, primitive, positionAccessor, indexAccessor);
     break;
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    flattenIndices<uint16_t>(gltf, primitive, positionView, indexAccessor);
+    flattenIndices<uint16_t>(gltf, primitive, positionAccessor, indexAccessor);
     break;
   case Accessor::ComponentType::UNSIGNED_INT:
-    flattenIndices<uint32_t>(gltf, primitive, positionView, indexAccessor);
+    flattenIndices<uint32_t>(gltf, primitive, positionAccessor, indexAccessor);
     break;
   default:
     return;
@@ -768,33 +746,26 @@ void Model::generateMissingNormalsFlat() {
         }
 
         int positionAccessorId = positionIt->second;
-        AccessorView<glm::vec3> positionView(gltf_, positionAccessorId);
+        if (positionAccessorId < 0 ||
+            static_cast<size_t>(positionAccessorId) >= gltf_.accessors.size()) {
+          return;
+        }
+
+        Accessor& positionAccessor =
+            gltf_.accessors[static_cast<size_t>(positionAccessorId)];
+
+        if (primitive.indices >= 0 &&
+            static_cast<size_t>(primitive.indices) < gltf_.accessors.size()) {
+          Accessor& indexAccessor =
+              gltf_.accessors[static_cast<size_t>(primitive.indices)];
+          flattenIndices(gltf_, primitive, positionAccessor, indexAccessor);
+        }
+
+        AccessorView<glm::vec3> positionView(gltf_, positionAccessor);
         if (positionView.status() != AccessorViewStatus::Valid) {
           return;
         }
 
-        if (primitive.indices < 0 ||
-            static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
-          generateFlatNormals(gltf_, primitive, positionView);
-        } else {
-          Accessor& indexAccessor =
-              gltf_.accessors[static_cast<size_t>(primitive.indices)];
-          flattenIndices(gltf_, primitive, positionView, indexAccessor);
-
-          // Recreate the position view since the positions buffer will have
-          // been changed.
-          positionIt = primitive.attributes.find("POSITION");
-          if (positionIt == primitive.attributes.end()) {
-            return;
-          }
-
-          positionAccessorId = positionIt->second;
-          positionView = AccessorView<glm::vec3>(gltf_, positionAccessorId);
-          if (positionView.status() != AccessorViewStatus::Valid) {
-            return;
-          }
-
-          generateFlatNormals(gltf_, primitive, positionView);
-        }
+        generateFlatNormals(gltf_, primitive, positionView);
       });
 }
