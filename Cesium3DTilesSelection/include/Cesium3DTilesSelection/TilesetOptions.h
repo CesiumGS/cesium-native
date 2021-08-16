@@ -22,7 +22,7 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
 
   /**
    * @brief Whether to generate smooth normals when normals are missing in the
-   * Gltf.
+   * original Gltf.
    *
    * According to the Gltf spec: "When normals are not specified, client
    * implementations should calculate flat normals." However, calculating flat
@@ -30,7 +30,15 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * sent with explicit smooth normals when the original gltf was missing
    * normals.
    */
-  bool generateSmoothNormalsWhenNeeded = true;
+  bool generateMissingNormalsSmooth = false;
+
+  /**
+   * @brief Whether to generate flat normals when normals are missing in the
+   * original Gltf.
+   *
+   * Only applicable when {@link generateMissingNormalsSmooth} is false.
+   */
+  bool generateMissingNormalsFlat = false;
 };
 
 /**

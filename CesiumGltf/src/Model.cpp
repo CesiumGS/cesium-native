@@ -650,10 +650,11 @@ void flattenIndices(
   positionAccessor.count = static_cast<int64_t>(count);
 
   BufferView& positionBufferView =
-      gltf.bufferViews[positionAccessor.bufferView];
+      gltf.bufferViews[static_cast<size_t>(positionAccessor.bufferView)];
   positionBufferView.byteLength = static_cast<int64_t>(outPositionBufferSize);
 
-  Buffer& positionBuffer = gltf.buffers[positionBufferView.buffer];
+  Buffer& positionBuffer =
+      gltf.buffers[static_cast<size_t>(positionBufferView.buffer)];
   positionBuffer.byteLength = static_cast<int64_t>(outPositionBufferSize);
   positionBuffer.cesium.data = std::move(positionByteBuffer);
 

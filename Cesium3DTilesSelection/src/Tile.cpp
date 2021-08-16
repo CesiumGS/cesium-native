@@ -825,32 +825,38 @@ void Tile::upsampleParent(
            boundingVolume = this->getBoundingVolume(),
            pPrepareRendererResources =
                pTileset->getExternals().pPrepareRendererResources,
-           generateSmoothNormalsWhenNeeded =
+           generateMissingNormalsSmooth =
                pTileset->getOptions()
-                   .contentOptions.generateSmoothNormalsWhenNeeded]() {
+                   .contentOptions.generateMissingNormalsSmooth,
+           generateMissingNormalsFlat =
+               pTileset->getOptions()
+                   .contentOptions.generateMissingNormalsFlat]() {
             std::unique_ptr<TileContentLoadResult> pContent =
                 std::make_unique<TileContentLoadResult>();
             pContent->model = upsampleGltfForRasterOverlays(
                 parentModel,
                 *pSubdividedParentID);
+
+            void* pRendererResources = nullptr;
             if (pContent->model) {
               pContent->updatedBoundingVolume =
                   Tile::generateTextureCoordinates(
                       pContent->model.value(),
                       boundingVolume,
                       projections);
-            }
 
-            if (pContent->model && generateSmoothNormalsWhenNeeded) {
-              pContent->model->generateMissingNormalsSmooth();
-            }
+              if (generateMissingNormalsSmooth) {
+                pContent->model->generateMissingNormalsSmooth();
+              } else if (generateMissingNormalsFlat) {
+                pContent->model->generateMissingNormalsFlat();
+              }
 
-            void* pRendererResources = nullptr;
-            if (pContent->model && pPrepareRendererResources) {
-              pRendererResources =
-                  pPrepareRendererResources->prepareInLoadThread(
-                      pContent->model.value(),
-                      transform);
+              if (pPrepareRendererResources) {
+                pRendererResources =
+                    pPrepareRendererResources->prepareInLoadThread(
+                        pContent->model.value(),
+                        transform);
+              }
             }
 
             return LoadResult{
