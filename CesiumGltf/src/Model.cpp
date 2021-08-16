@@ -555,7 +555,7 @@ void generateFlatNormals(
     MeshPrimitive& primitive,
     AccessorView<glm::vec3>& positionView) {
 
-  size_t count = positionView.size();
+  size_t count = static_cast<size_t>(positionView.size());
   size_t normalStride = sizeof(glm::vec3);
   size_t normalBufferSize = count * normalStride;
   std::vector<std::byte> normalByteBuffer(normalBufferSize);
@@ -564,10 +564,10 @@ void generateFlatNormals(
       count);
 
   auto applyTriangleNormalToVertices =
-      [&positionView, &normals](int64_t i0, int64_t i1, int64_t i2) {
-        const glm::vec3& vertex0 = positionView[i0];
-        const glm::vec3& vertex1 = positionView[i1];
-        const glm::vec3& vertex2 = positionView[i2];
+      [&positionView, &normals](size_t i0, size_t i1, size_t i2) {
+        const glm::vec3& vertex0 = positionView[static_cast<int64_t>(i0)];
+        const glm::vec3& vertex1 = positionView[static_cast<int64_t>(i1)];
+        const glm::vec3& vertex2 = positionView[static_cast<int64_t>(i2)];
 
         glm::vec3 triangleNormal =
             glm::normalize(glm::cross(vertex1 - vertex0, vertex2 - vertex0));
@@ -579,13 +579,13 @@ void generateFlatNormals(
 
   switch (primitive.mode) {
   case MeshPrimitive::Mode::TRIANGLES:
-    for (int64_t i = 2; i < static_cast<int64_t>(count); i += 3) {
+    for (size_t i = 2; i < count; i += 3) {
       applyTriangleNormalToVertices(i - 2, i - 1, i);
     }
     break;
 
   case MeshPrimitive::Mode::TRIANGLE_STRIP:
-    for (int64_t i = 0; i < static_cast<int64_t>(count) - 2; ++i) {
+    for (size_t i = 0; i < count - 2; ++i) {
       if (i % 2) {
         applyTriangleNormalToVertices(i, i + 2, i + 1);
       } else {
@@ -595,7 +595,7 @@ void generateFlatNormals(
     break;
 
   case MeshPrimitive::Mode::TRIANGLE_FAN:
-    for (int64_t i = 2; i < static_cast<int64_t>(count); ++i) {
+    for (size_t i = 2; i < count; ++i) {
       applyTriangleNormalToVertices(0, i - 1, i);
     }
     break;
@@ -642,7 +642,7 @@ void flattenIndices(
     return;
   }
 
-  size_t count = indexAccessor.count;
+  size_t count = static_cast<size_t>(indexAccessor.count);
   size_t positionStride = sizeof(glm::vec3);
   size_t outPositionBufferSize = positionStride * count;
   std::vector<std::byte> positionByteBuffer(outPositionBufferSize);
@@ -651,7 +651,10 @@ void flattenIndices(
       count);
 
   for (size_t i = 0; i < count; ++i) {
-    outPositionBuffer[i] = positionView[indexView[i]];
+    outPositionBuffer[i] = 
+        positionView[
+          static_cast<int64_t>(
+            indexView[static_cast<int64_t>(i)])];
   }
 
   size_t positionBufferId = gltf.buffers.size();
