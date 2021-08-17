@@ -165,7 +165,7 @@ void mapRasterOverlaysToTile(
 
   // uint32_t projectionID = 0;
 
-  // for (RastersMappedTo3DTile& mappedTile : this->_rasterTiles) {
+  // for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
   //     std::shared_ptr<RasterOverlayTile> pTile =
   //     mappedTile.getLoadingTile(); if (!pTile) {
   //         pTile = mappedTile.getReadyTile();

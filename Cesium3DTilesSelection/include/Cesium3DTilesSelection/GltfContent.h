@@ -53,7 +53,7 @@ public:
    *
    * This is not supposed to be called by clients.
    *
-   * It will be called for all {@link RastersMappedTo3DTile} objects of a
+   * It will be called for all {@link RasterMappedTo3DTile} objects of a
    * {@link Tile}, and extend the accessors of the given glTF model with
    * accessors that contain the texture coordinate sets for different
    * projections. Further details are not specified here.

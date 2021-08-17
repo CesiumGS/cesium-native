@@ -3,7 +3,6 @@
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
-#include "Cesium3DTilesSelection/RastersMappedTo3DTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "CesiumAsync/AsyncSystem.h"

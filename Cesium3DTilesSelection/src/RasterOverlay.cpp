@@ -1,7 +1,6 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/RastersMappedTo3DTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
@@ -22,20 +21,6 @@ public:
     return this->getAsyncSystem()
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
-
-  // virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-  //     const TileID& /*geometryTileId*/,
-  //     const CesiumGeospatial::GlobeRectangle& /*geometryRectangle*/,
-  //     double /*targetGeometricError*/) override {
-  //   return RastersMappedTo3DTile(*this, {});
-  // }
-
-  // virtual RastersMappedTo3DTile mapRasterTilesToGeometryTile(
-  //     const TileID& /*geometryTileId*/,
-  //     const CesiumGeometry::Rectangle& /*geometryRectangle*/,
-  //     double /*targetGeometricError*/) override {
-  //   return RastersMappedTo3DTile(*this, {});
-  // }
 
   virtual bool
   hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {

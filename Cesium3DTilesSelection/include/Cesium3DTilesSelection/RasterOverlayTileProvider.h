@@ -8,7 +8,6 @@
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
-#include "RasterizedPolygonsOverlay.h"
 #include <cassert>
 #include <optional>
 #include <spdlog/fwd.h>
