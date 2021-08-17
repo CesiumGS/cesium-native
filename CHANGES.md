@@ -23,7 +23,6 @@
 - Added `AsyncSystem::catchImmediately` to catch a Future rejection immediately in any thread.
 - Added `AsyncSystem::all` to create a Future that resolves when a list of Futures resolve.
 - Added support for multiple frustums in the `Tileset` selection algorithm.
-- Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 
 ##### Fixes :wrench:
 
