@@ -138,7 +138,8 @@ public:
   }
 
   /**
-   * @brief Gets the geometric error value that this overlay tile is suitable for.
+   * @brief Gets the geometric error value that this overlay tile is suitable
+   * for.
    *
    * This is used to control which content (how highly detailed) the
    * {@link RasterOverlayTileProvider} uses within the bounds of this tile.

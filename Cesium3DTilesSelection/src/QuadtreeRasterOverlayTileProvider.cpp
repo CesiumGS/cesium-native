@@ -1,8 +1,8 @@
 
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumGltf/ImageManipulation.h"
 #include "CesiumUtility/Math.h"
-#include <stb_image_resize.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -460,88 +460,6 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 }
 
 namespace {
-struct PixelRectangle {
-  int32_t x;
-  int32_t y;
-  int32_t width;
-  int32_t height;
-};
-
-// Copies a rectangle of a source image into another image.
-void blitImage(
-    ImageCesium& target,
-    const PixelRectangle& targetPixels,
-    const ImageCesium& source,
-    const PixelRectangle& sourcePixels) {
-
-  if (sourcePixels.x < 0 || sourcePixels.y < 0 || sourcePixels.width < 0 ||
-      sourcePixels.height < 0 ||
-      (sourcePixels.x + sourcePixels.width) > source.width ||
-      (sourcePixels.y + sourcePixels.height) > source.height) {
-    // Attempting to blit from outside the bounds of the source image.
-    assert(false);
-    return;
-  }
-
-  if (targetPixels.x < 0 || targetPixels.y < 0 ||
-      (targetPixels.x + targetPixels.width) > target.width ||
-      (targetPixels.y + targetPixels.height) > target.height) {
-    // Attempting to blit outside the bounds of the target image.
-    assert(false);
-    return;
-  }
-
-  if (target.channels != source.channels ||
-      target.bytesPerChannel != source.bytesPerChannel) {
-    // Source and target image formats don't match; currently not supported.
-    assert(false);
-    return;
-  }
-
-  size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
-  size_t bytesToCopyPerRow = bytesPerPixel * size_t(sourcePixels.width);
-
-  size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
-  size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
-
-  // Position both pointers at the start of the first row.
-  std::byte* pTarget = target.pixelData.data();
-  const std::byte* pSource = source.pixelData.data();
-  pTarget += size_t(targetPixels.y) * bytesPerTargetRow +
-             size_t(targetPixels.x) * bytesPerPixel;
-  pSource += size_t(sourcePixels.y) * bytesPerSourceRow +
-             size_t(sourcePixels.x) * bytesPerPixel;
-
-  if (sourcePixels.width == targetPixels.width &&
-      sourcePixels.height == targetPixels.height) {
-    // Simple, unscaled, byte-for-byte image copy.
-    for (size_t j = 0; j < size_t(sourcePixels.height); ++j) {
-      assert(pTarget < target.pixelData.data() + target.pixelData.size());
-      assert(pSource < source.pixelData.data() + source.pixelData.size());
-      assert(
-          pTarget + bytesToCopyPerRow <=
-          target.pixelData.data() + target.pixelData.size());
-      assert(
-          pSource + bytesToCopyPerRow <=
-          source.pixelData.data() + source.pixelData.size());
-      std::memcpy(pTarget, pSource, bytesToCopyPerRow);
-      pTarget += bytesPerTargetRow;
-      pSource += bytesPerSourceRow;
-    }
-  } else {
-    // Use STB to do the copy / scale
-    stbir_resize_uint8(
-        reinterpret_cast<const unsigned char*>(pSource),
-        sourcePixels.width,
-        sourcePixels.height,
-        int(bytesPerSourceRow),
-        reinterpret_cast<unsigned char*>(pTarget),
-        targetPixels.width,
-        targetPixels.height,
-        int(bytesPerTargetRow),
-        target.channels);
-  }
-}
 
 PixelRectangle computePixelRectangle(
     const ImageCesium& image,
@@ -600,7 +518,7 @@ void blitImage(
   PixelRectangle sourcePixels =
       computePixelRectangle(source, sourceRectangle, *overlap);
 
-  blitImage(target, targetPixels, source, sourcePixels);
+  ImageManipulation::blitImage(target, targetPixels, source, sourcePixels);
 }
 
 struct CombinedImageMeasurements {
