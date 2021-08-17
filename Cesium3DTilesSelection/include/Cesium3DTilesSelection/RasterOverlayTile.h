@@ -64,11 +64,11 @@ public:
   /**
    * @brief Tile availability states.
    *
-   * Values of this enumeration are returned by {@link update}, which
-   * in turn is called by {@link Tile::update}. These values are used
-   * to determine whether a leaf tile has been reached, but the
-   * associated raster tiles are not yet the most detailed ones that
-   * are available.
+   * Values of this enumeration are returned by
+   * {@link RasterOverlayTile::update}, which in turn is called by
+   * {@link Tile::update}. These values are used to determine whether a leaf
+   * tile has been reached, but the associated raster tiles are not yet the
+   * most detailed ones that are available.
    */
   enum class MoreDetailAvailable {
 
@@ -137,6 +137,12 @@ public:
     return this->_rectangle;
   }
 
+  /**
+   * @brief Gets the geometric error value that this overlay tile is suitable for.
+   *
+   * This is used to control which content (how highly detailed) the
+   * {@link RasterOverlayTileProvider} uses within the bounds of this tile.
+   */
   double getTargetGeometricError() const { return this->_targetGeometricError; }
 
   /**

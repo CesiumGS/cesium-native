@@ -51,11 +51,6 @@ public:
   /**
    * @brief Gets the name of this overlay.
    */
-  std::string& getName() { return this->_name; }
-
-  /**
-   * @copydoc getName
-   */
   const std::string& getName() const { return this->_name; }
 
   /**
