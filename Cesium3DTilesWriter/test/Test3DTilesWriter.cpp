@@ -1,10 +1,11 @@
-#include "Cesium3DTiles/TilesetWriter.h"
+#include "Cesium3DTiles/WriterContext.h"
 #include <algorithm>
 #include <catch2/catch.hpp>
 #include <cstddef>
 #include <gsl/span>
 #include <iostream>
 #include <rapidjson/document.h>
+#include <sstream>
 #include <string>
 
 using namespace Cesium3DTiles;
@@ -47,12 +48,12 @@ TEST_CASE("Write 3D Tiles Tileset", "[3DTilesWriter]") {
   ts.extensionsUsed = {"ext1", "ext2"};
   ts.properties = ps;
 
-  ExtensionWriterContext context;
-  CesiumJsonWriter::JsonWriter jsonWriter;
-  TilesetWriter::write(ts, jsonWriter, context);
+  WriterContext context;
+  std::stringstream sstream;
+  context.writeTileset(sstream, ts);
 
   rapidjson::Document document;
-  document.Parse(jsonWriter.toString().c_str());
+  document.Parse(sstream.str().c_str());
 
   CHECK(document.IsObject());
   CHECK(document.HasMember("asset"));
@@ -146,13 +147,12 @@ TEST_CASE("Write 3D Tiles PntsFeatureTable", "[3DTilesWriter]") {
   pnts.RTC_CENTER = rtcCenter;
   pnts.QUANTIZED_VOLUME_OFFSET = qvo;
 
-  ExtensionWriterContext context;
-  CesiumJsonWriter::JsonWriter jsonWriter;
-  PntsFeatureTableWriter::write(pnts, jsonWriter, context);
+  WriterContext context;
+  std::stringstream sstream;
+  context.writePnts(sstream, pnts);
 
   rapidjson::Document document;
-  document.Parse(jsonWriter.toString().c_str());
-  std::cout << jsonWriter.toString() << "\n";
+  document.Parse(sstream.str().c_str());
 
   REQUIRE(document.IsObject());
   CHECK(document.HasMember("RTC_CENTER"));
