@@ -12,6 +12,7 @@ set_target_properties(CesiumJsonWriter
     PROPERTIES
         TEST_SOURCES "${CESIUM_JSON_WRITER_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_JSON_WRITER_TEST_HEADERS}"
+        PUBLIC_HEADER "${CESIUM_JSON_WRITER_PUBLIC_HEADERS}"
 )
 
 target_sources(

@@ -12,6 +12,7 @@ set_target_properties(Cesium3DTilesWriter
     PROPERTIES
         TEST_SOURCES "${CESIUM_3DTILES_WRITER_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_3DTILES_WRITER_TEST_HEADERS}"
+        PUBLIC_HEADER "${CESIUM_3DTILES_WRITER_PUBLIC_HEADERS}"
 )
 
 target_sources(
@@ -45,4 +46,9 @@ target_link_libraries(Cesium3DTilesWriter
         Cesium3DTiles
         CesiumJsonReader
         CesiumJsonWriter
+)
+
+install(TARGETS Cesium3DTilesWriter
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles
 )
