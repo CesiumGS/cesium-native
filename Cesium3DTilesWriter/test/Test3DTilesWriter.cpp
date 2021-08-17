@@ -3,6 +3,7 @@
 #include <catch2/catch.hpp>
 #include <cstddef>
 #include <gsl/span>
+#include <iostream>
 #include <rapidjson/document.h>
 #include <string>
 
@@ -119,4 +120,72 @@ TEST_CASE("Write 3D Tiles Tileset", "[3DTilesWriter]") {
   CHECK_FALSE(child2.HasMember("children"));
 
   CHECK_FALSE(document.HasMember("extensions"));
+}
+
+TEST_CASE("Write 3D Tiles PntsFeatureTable", "[3DTilesWriter]") {
+  using namespace std::string_literals;
+  using namespace Cesium3DTiles;
+
+  FeatureTable::BinaryBodyReference pos;
+  pos.byteOffset = 1234;
+  pos.componentType = FeatureTable::BinaryBodyReference::ComponentType::DOUBLE;
+
+  FeatureTable::BinaryBodyReference color;
+  pos.byteOffset = 5678;
+
+  FeatureTable::GlobalPropertyCartesian3 rtcCenter;
+  rtcCenter.v0 = FeatureTable::GlobalPropertyCartesian3::Variant0();
+  rtcCenter.v0->byteOffset = 9012;
+
+  FeatureTable::GlobalPropertyCartesian3 qvo;
+  qvo.v1 = {1.0, 2.0, 3.0};
+
+  PntsFeatureTable pnts;
+  pnts.POSITION = pos;
+  pnts.RGBA = color;
+  pnts.RTC_CENTER = rtcCenter;
+  pnts.QUANTIZED_VOLUME_OFFSET = qvo;
+
+  ExtensionWriterContext context;
+  CesiumJsonWriter::JsonWriter jsonWriter;
+  PntsFeatureTableWriter::write(pnts, jsonWriter, context);
+
+  rapidjson::Document document;
+  document.Parse(jsonWriter.toString().c_str());
+  std::cout << jsonWriter.toString() << "\n";
+
+  REQUIRE(document.IsObject());
+  CHECK(document.HasMember("RTC_CENTER"));
+  CHECK(document.HasMember("QUANTIZED_VOLUME_OFFSET"));
+  CHECK(document.HasMember("POSITION"));
+  CHECK(document.HasMember("RGBA"));
+  CHECK_FALSE(document.HasMember("POSITION_QUANTIZED"));
+  CHECK_FALSE(document.HasMember("RGB"));
+  CHECK_FALSE(document.HasMember("RGB565"));
+  CHECK_FALSE(document.HasMember("NORMAL"));
+  CHECK_FALSE(document.HasMember("NORMAL_OCT16P"));
+  CHECK_FALSE(document.HasMember("BATCH_ID"));
+  CHECK_FALSE(document.HasMember("POINTS_LENGTH"));
+  CHECK_FALSE(document.HasMember("QUANTIZED_VOLUME_SCALE"));
+  CHECK_FALSE(document.HasMember("CONSTANT_RGBA"));
+  CHECK_FALSE(document.HasMember("BATCH_LENGTH"));
+
+  const rapidjson::Value& posJson = document["POSITION"];
+  CHECK(posJson["byteOffset"] == pos.byteOffset);
+  CHECK(posJson["componentType"] == "DOUBLE");
+
+  const rapidjson::Value& colorJson = document["RGBA"];
+  CHECK(colorJson["byteOffset"] == color.byteOffset);
+  CHECK_FALSE(colorJson.HasMember("componentType"));
+
+  const rapidjson::Value& rtcJson = document["RTC_CENTER"];
+  CHECK(rtcJson.IsObject());
+  CHECK(rtcJson["byteOffset"] == rtcCenter.v0->byteOffset);
+
+  const rapidjson::Value& qvoJson = document["QUANTIZED_VOLUME_OFFSET"];
+  CHECK(qvoJson.IsArray());
+  CHECK(qvoJson.Size() == qvo.v1->size());
+  for (unsigned int i = 0; i < qvoJson.Size(); i++) {
+    CHECK(qvoJson[i] == qvo.v1->at(i));
+  }
 }
