@@ -269,3 +269,19 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   REQUIRE(writeResultGlb.warnings.empty());
   validateStructure(writeResultGlb.gltfAssetBytes);
 }
+
+
+TEST_CASE("Extras string can be serialized", "[GltfWriter]") {
+
+  auto model = generateTriangleModel();
+  model.extras["extrasKey"] = "extrasValue";
+
+  CesiumGltf::WriteModelOptions options;
+  options.exportType = CesiumGltf::GltfExportType::GLB;
+  options.autoConvertDataToBase64 = false;
+
+  const auto writeResultGlb =
+      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+  REQUIRE(writeResultGlb.errors.empty());
+  REQUIRE(writeResultGlb.warnings.empty());
+}
