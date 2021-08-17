@@ -31,14 +31,6 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * normals.
    */
   bool generateMissingNormalsSmooth = false;
-
-  /**
-   * @brief Whether to generate flat normals when normals are missing in the
-   * original Gltf.
-   *
-   * Only applicable when {@link generateMissingNormalsSmooth} is false.
-   */
-  bool generateMissingNormalsFlat = false;
 };
 
 /**

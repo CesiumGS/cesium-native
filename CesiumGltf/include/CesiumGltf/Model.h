@@ -78,13 +78,6 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   void generateMissingNormalsSmooth();
 
   /**
-   * @brief Fills in flat normals for any primitives with missing normals.
-   *
-   * Note that this requires flattening the index buffer if one exists.
-   */
-  void generateMissingNormalsFlat();
-
-  /**
    * @brief Safely gets the element with a given index, returning a default
    * instance if the index is outside the range.
    *

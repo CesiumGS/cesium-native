@@ -255,7 +255,10 @@ void Tile::loadContent() {
            gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
-           pLogger = tileset.getExternals().pLogger](
+           pLogger = tileset.getExternals().pLogger,
+           generateMissingNormalsSmooth =
+               tileset.getOptions()
+                   .contentOptions.generateMissingNormalsSmooth](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("loadContent worker thread");
             const IAssetResponse* pResponse = pRequest->response();
@@ -311,6 +314,10 @@ void Tile::loadContent() {
                     pContent->model.value(),
                     boundingVolume,
                     projections);
+
+                if (generateMissingNormalsSmooth) {
+                  pContent->model->generateMissingNormalsSmooth();
+                }
 
                 if (pPrepareRendererResources) {
                   CESIUM_TRACE("prepareInLoadThread");
@@ -817,53 +824,38 @@ void Tile::upsampleParent(
   };
 
   pTileset->getAsyncSystem()
-      .runInWorkerThread(
-          [&parentModel,
-           transform = this->getTransform(),
-           projections,
-           pSubdividedParentID,
-           boundingVolume = this->getBoundingVolume(),
-           pPrepareRendererResources =
-               pTileset->getExternals().pPrepareRendererResources,
-           generateMissingNormalsSmooth =
-               pTileset->getOptions()
-                   .contentOptions.generateMissingNormalsSmooth,
-           generateMissingNormalsFlat =
-               pTileset->getOptions()
-                   .contentOptions.generateMissingNormalsFlat]() {
-            std::unique_ptr<TileContentLoadResult> pContent =
-                std::make_unique<TileContentLoadResult>();
-            pContent->model = upsampleGltfForRasterOverlays(
-                parentModel,
-                *pSubdividedParentID);
+      .runInWorkerThread([&parentModel,
+                          transform = this->getTransform(),
+                          projections,
+                          pSubdividedParentID,
+                          boundingVolume = this->getBoundingVolume(),
+                          pPrepareRendererResources =
+                              pTileset->getExternals()
+                                  .pPrepareRendererResources]() {
+        std::unique_ptr<TileContentLoadResult> pContent =
+            std::make_unique<TileContentLoadResult>();
+        pContent->model =
+            upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
 
-            void* pRendererResources = nullptr;
-            if (pContent->model) {
-              pContent->updatedBoundingVolume =
-                  Tile::generateTextureCoordinates(
-                      pContent->model.value(),
-                      boundingVolume,
-                      projections);
+        if (pContent->model) {
+          pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(
+              pContent->model.value(),
+              boundingVolume,
+              projections);
+        }
 
-              if (generateMissingNormalsSmooth) {
-                pContent->model->generateMissingNormalsSmooth();
-              } else if (generateMissingNormalsFlat) {
-                pContent->model->generateMissingNormalsFlat();
-              }
+        void* pRendererResources = nullptr;
+        if (pContent->model && pPrepareRendererResources) {
+          pRendererResources = pPrepareRendererResources->prepareInLoadThread(
+              pContent->model.value(),
+              transform);
+        }
 
-              if (pPrepareRendererResources) {
-                pRendererResources =
-                    pPrepareRendererResources->prepareInLoadThread(
-                        pContent->model.value(),
-                        transform);
-              }
-            }
-
-            return LoadResult{
-                LoadState::ContentLoaded,
-                std::move(pContent),
-                pRendererResources};
-          })
+        return LoadResult{
+            LoadState::ContentLoaded,
+            std::move(pContent),
+            pRendererResources};
+      })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
