@@ -351,7 +351,34 @@ void Model::forEachPrimitiveInScene(
 
 namespace {
 template <typename TIndex>
-static void generateSmoothNormals(
+void addTriangleNormalToVertexNormals(
+    gsl::span<glm::vec3>& normals,
+    const AccessorView<glm::vec3>& positionView,
+    TIndex tIndex0,
+    TIndex tIndex1,
+    TIndex tIndex2) {
+
+  // Add the triangle's normal to each vertex's accumulated normal.
+
+  uint32_t index0 = static_cast<uint32_t>(tIndex0);
+  uint32_t index1 = static_cast<uint32_t>(tIndex1);
+  uint32_t index2 = static_cast<uint32_t>(tIndex2);
+
+  const glm::vec3& vertex0 = positionView[index0];
+  const glm::vec3& vertex1 = positionView[index1];
+  const glm::vec3& vertex2 = positionView[index2];
+
+  glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
+
+  // Add the triangle normal to each vertex's accumulated normal. At the end
+  // we will normalize the accumulated vertex normals to average.
+  normals[index0] += triangleNormal;
+  normals[index1] += triangleNormal;
+  normals[index2] += triangleNormal;
+}
+
+template <typename TIndex>
+void generateSmoothNormals(
     Model& gltf,
     MeshPrimitive& primitive,
     const AccessorView<glm::vec3>& positionView,
@@ -365,27 +392,6 @@ static void generateSmoothNormals(
   gsl::span<glm::vec3> normals(
       reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
       count);
-
-  // Add the triangle's normal to each of it's vertex's accumulated normal.
-  auto addTriangleNormalToVertexNormals =
-      [&positionView,
-       &normals](TIndex tIndex0, TIndex tIndex1, TIndex tIndex2) -> void {
-    uint32_t index0 = static_cast<uint32_t>(tIndex0);
-    uint32_t index1 = static_cast<uint32_t>(tIndex1);
-    uint32_t index2 = static_cast<uint32_t>(tIndex2);
-
-    const glm::vec3& vertex0 = positionView[index0];
-    const glm::vec3& vertex1 = positionView[index1];
-    const glm::vec3& vertex2 = positionView[index2];
-
-    glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
-
-    // Add the triangle normal to each vertex's accumulated normal. At the end
-    // we will normalize the accumulated vertex normals to average.
-    normals[index0] += triangleNormal;
-    normals[index1] += triangleNormal;
-    normals[index2] += triangleNormal;
-  };
 
   int64_t numIndices;
   std::function<TIndex(int64_t)> getIndex;
@@ -412,7 +418,12 @@ static void generateSmoothNormals(
       TIndex index1 = getIndex(i - 1);
       TIndex index2 = getIndex(i);
 
-      addTriangleNormalToVertexNormals(index0, index1, index2);
+      addTriangleNormalToVertexNormals<TIndex>(
+          normals,
+          positionView,
+          index0,
+          index1,
+          index2);
     }
     break;
 
@@ -432,7 +443,12 @@ static void generateSmoothNormals(
         index2 = getIndex(i + 2);
       }
 
-      addTriangleNormalToVertexNormals(index0, index1, index2);
+      addTriangleNormalToVertexNormals<TIndex>(
+          normals,
+          positionView,
+          index0,
+          index1,
+          index2);
     }
     break;
 
@@ -447,7 +463,12 @@ static void generateSmoothNormals(
         TIndex index1 = getIndex(i - 1);
         TIndex index2 = getIndex(i);
 
-        addTriangleNormalToVertexNormals(index0, index1, index2);
+        addTriangleNormalToVertexNormals<TIndex>(
+            normals,
+            positionView,
+            index0,
+            index1,
+            index2);
       }
     }
     break;
