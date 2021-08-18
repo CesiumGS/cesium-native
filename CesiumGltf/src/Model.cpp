@@ -2,6 +2,7 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include <algorithm>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
 #include <gsl/span>
 
@@ -229,22 +230,64 @@ void forEachPrimitiveInNodeObject(
     const Model& model,
     const Node& node,
     std::function<Model::ForEachPrimitiveInSceneConstCallback>& callback) {
+  static constexpr std::array<double, 16> identityMatrix = {
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0};
+
   glm::dmat4x4 nodeTransform = transform;
+  const std::vector<double>& matrix = node.matrix;
 
-  if (!node.matrix.empty()) {
-    const std::vector<double>& matrix = node.matrix;
+  if (node.matrix.size() == 16 &&
+      !std::equal(matrix.begin(), matrix.end(), identityMatrix.begin())) {
 
-    glm::dmat4x4 nodeTransformGltf(
-        glm::dvec4(matrix[0], matrix[1], matrix[2], matrix[3]),
-        glm::dvec4(matrix[4], matrix[5], matrix[6], matrix[7]),
-        glm::dvec4(matrix[8], matrix[9], matrix[10], matrix[11]),
-        glm::dvec4(matrix[12], matrix[13], matrix[14], matrix[15]));
+    const glm::dmat4& nodeTransformGltf =
+        *reinterpret_cast<const glm::dmat4*>(matrix.data());
 
     nodeTransform = nodeTransform * nodeTransformGltf;
   } else if (
       !node.translation.empty() || !node.rotation.empty() ||
       !node.scale.empty()) {
-    // TODO: handle this type of transformation
+
+    glm::dmat4 translation(1.0);
+    if (node.translation.size() == 3) {
+      translation[3] = glm::dvec4(
+          node.translation[0],
+          node.translation[1],
+          node.translation[2],
+          1.0);
+    }
+
+    glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
+    if (node.rotation.size() == 4) {
+      rotationQuat[0] = node.rotation[0];
+      rotationQuat[1] = node.rotation[1];
+      rotationQuat[2] = node.rotation[2];
+      rotationQuat[3] = node.rotation[3];
+    }
+
+    glm::dmat4 scale(1.0);
+    if (node.scale.size() == 3) {
+      scale[0].x = node.scale[0];
+      scale[1].y = node.scale[1];
+      scale[2].z = node.scale[2];
+    }
+
+    nodeTransform =
+        nodeTransform * translation * glm::dmat4(rotationQuat) * scale;
   }
 
   int meshId = node.mesh;
