@@ -2,9 +2,14 @@
 
 ### Next Release - ?
 
+##### Breaking Changes :mega:
+
+- Deleted `Cesium3DTilesSelection::Gltf` and moved functionality into `CesiumGltf::Model`. 
+
 ##### Additions :tada:
 
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
+- Added an option in `TilesetOptions::ContentOptions` to generate smooth normals when the original glTFs were missing normals.
 
 ### v0.6.0 - 2021-08-02
 
