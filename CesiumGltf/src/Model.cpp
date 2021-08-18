@@ -370,13 +370,13 @@ static void generateSmoothNormals(
   auto addTriangleNormalToVertexNormals =
       [&positionView,
        &normals](TIndex tIndex0, TIndex tIndex1, TIndex tIndex2) -> void {
-    size_t index0 = static_cast<size_t>(tIndex0);
-    size_t index1 = static_cast<size_t>(tIndex1);
-    size_t index2 = static_cast<size_t>(tIndex2);
+    uint32_t index0 = static_cast<uint32_t>(tIndex0);
+    uint32_t index1 = static_cast<uint32_t>(tIndex1);
+    uint32_t index2 = static_cast<uint32_t>(tIndex2);
 
-    const glm::vec3& vertex0 = positionView[static_cast<int64_t>(index0)];
-    const glm::vec3& vertex1 = positionView[static_cast<int64_t>(index1)];
-    const glm::vec3& vertex2 = positionView[static_cast<int64_t>(index2)];
+    const glm::vec3& vertex0 = positionView[index0];
+    const glm::vec3& vertex1 = positionView[index1];
+    const glm::vec3& vertex2 = positionView[index2];
 
     glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
 
@@ -494,22 +494,8 @@ void generateSmoothNormals(
     const std::optional<Accessor>& indexAccessor) {
   if (indexAccessor) {
     switch (indexAccessor->componentType) {
-    case Accessor::ComponentType::BYTE:
-      generateSmoothNormals<int8_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
     case Accessor::ComponentType::UNSIGNED_BYTE:
       generateSmoothNormals<uint8_t>(
-          gltf,
-          primitive,
-          positionView,
-          indexAccessor);
-      break;
-    case Accessor::ComponentType::SHORT:
-      generateSmoothNormals<int16_t>(
           gltf,
           primitive,
           positionView,
@@ -529,11 +515,15 @@ void generateSmoothNormals(
           positionView,
           indexAccessor);
       break;
-    case Accessor::ComponentType::FLOAT:
+    default:
       return;
     };
   } else {
-    generateSmoothNormals<size_t>(gltf, primitive, positionView, std::nullopt);
+    generateSmoothNormals<uint32_t>(
+        gltf,
+        primitive,
+        positionView,
+        std::nullopt);
   }
 }
 } // namespace
