@@ -213,6 +213,12 @@ TileMapServiceRasterOverlay::createTileProvider(
               }
             }
 
+            if (maximumLevel < minimumLevel && maximumLevel == 0) {
+              // Min and max levels unknown, so use defaults.
+              minimumLevel = 0;
+              maximumLevel = 25;
+            }
+
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
             CesiumGeospatial::Projection projection;
