@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "CompositeContent.h"
+#include "PointCloudContent.h"
 #include "QuantizedMeshContent.h"
 
 namespace Cesium3DTilesSelection {
@@ -20,6 +21,9 @@ void registerAllTileContentTypes() {
   TileContentFactory::registerMagic(
       "json",
       std::make_shared<ExternalTilesetContent>());
+  TileContentFactory::registerMagic(
+      "pnts",
+      std::make_shared<PointCloudContent>());
 
   TileContentFactory::registerContentType(
       QuantizedMeshContent::CONTENT_TYPE,

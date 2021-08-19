@@ -52,6 +52,7 @@ target_link_libraries(Cesium3DTilesSelection
     # PRIVATE
         tinyxml2
         uriparser
+        ${CESIUM_NATIVE_DRACO_LIBRARY}
 )
 
 install(TARGETS Cesium3DTilesSelection
