@@ -43,7 +43,6 @@ target_include_directories(
 target_link_libraries(Cesium3DTilesWriter
     PUBLIC
         Cesium3DTiles
-        CesiumJsonReader
         CesiumJsonWriter
 )
 
