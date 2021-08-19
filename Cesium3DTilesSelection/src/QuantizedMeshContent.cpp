@@ -1164,7 +1164,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       BoundingRegion(rectangle, minimumHeight, maximumHeight);
 
   if (pResult->model) {
-    pResult->model.value().extras["Cesium3DTilesSelection_TileUrl"] = url;
+    pResult->model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   return pResult;

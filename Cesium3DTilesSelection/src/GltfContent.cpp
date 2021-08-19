@@ -42,7 +42,7 @@ GltfContent::load(const TileContentLoadInput& input) {
   }
 
   if (loadedModel.model) {
-    loadedModel.model.value().extras["Cesium3DTilesSelection_TileUrl"] = url;
+    loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   pResult->model = std::move(loadedModel.model);
