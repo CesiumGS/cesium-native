@@ -692,11 +692,6 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
     RasterOverlayTile& overlayTile) {
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
-  // If any tiles fail to load, use a parent (or ancestor) instead.
-  // If _all_ tiles fail to load, we probably don't need this tile at all.
-  //  exception: the parent geometry tile doesn't have the most detailed
-  //  available overlay tile. But we can't tell that here. Here we just fail.
-  //  TODO: handle this exception somewhere
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles =
       this->mapRasterTilesToGeometryTile(
           overlayTile.getRectangle(),
@@ -721,6 +716,8 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
         if (!haveAnyUsefulImageData) {
           // For non-useful sets of images, just return an empty image,
           // signalling that the parent tile should be used instead.
+          // See https://github.com/CesiumGS/cesium-native/issues/316 for an
+          // edge case that is not yet handled.
           return LoadedRasterOverlayImage{
               ImageCesium(),
               Rectangle(),
@@ -731,9 +728,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
         }
 
         return combineImages(rectangle, projection, std::move(images));
-      })
-      .catchImmediately(
-          [](std::exception&& /* e */) { return LoadedRasterOverlayImage(); });
+      });
 }
 
 void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {

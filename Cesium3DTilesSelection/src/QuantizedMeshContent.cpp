@@ -699,8 +699,6 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshContent::load");
 
-  // TODO: use context plus tileID to compute the tile's rectangle, rather than
-  // inferring it from the parent tile.
   const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
   std::unique_ptr<TileContentLoadResult> pResult =
