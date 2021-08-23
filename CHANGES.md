@@ -4,7 +4,6 @@
 
 ##### Additions :tada:
 
-- Added `Future<T>::isReady`.
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 
 ### v0.6.0 - 2021-08-02

@@ -193,19 +193,7 @@ public:
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
-  const T& wait() const { return this->_task.get(); }
-
-  /**
-   * @brief Determines if this future is already resolved or rejected.
-   *
-   * If this method returns true, it is guaranteed that {@link wait} will
-   * not block but will instead immediately return a value or throw an
-   * exception.
-   *
-   * @return True if the future is already resolved or rejected and {@link wait}
-   * will not block; otherwise, false.
-   */
-  bool isReady() const { return this->_task.ready(); }
+  T wait() { return this->_task.get(); }
 
 private:
   SharedFuture(
