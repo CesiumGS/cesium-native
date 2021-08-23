@@ -12,6 +12,7 @@
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 - Added `Rectangle::computeUnion`.
 - Added `Math::roundUp` and `Math::roundDown`.
+- Added `ImageManipulation` class to `CesiumGltfReader`.
 
 ### v0.6.0 - 2021-08-02
 

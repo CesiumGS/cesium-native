@@ -8,10 +8,28 @@ namespace CesiumGltf {
 
 struct ImageCesium;
 
+/**
+ * @brief Specifies a rectangle of pixels in an image.
+ */
 struct PixelRectangle {
+  /**
+   * @brief The X coordinate of the top-left corner of the rectangle.
+   */
   int32_t x;
+
+  /**
+   * @brief The Y coordinate of the top-left corner of the rectangle.
+   */
   int32_t y;
+
+  /**
+   * @brief The total number of pixels in the horizontal direction.
+   */
   int32_t width;
+
+  /**
+   * @brief The total number of pixels in the vertical direction.
+   */
   int32_t height;
 };
 
@@ -44,20 +62,31 @@ public:
   /**
    * @brief Copies pixels from a source image to a target image.
    *
-   * If the source and target dimensions are not the same, the image is resized.
-   * Otherwise, the source pixels are exactly copied into the target.
+   * If the source and target dimensions are the same, the source pixels are
+   * copied exactly into the target. If not, the source image is scaled to fit
+   * the target rectangle.
    *
-   * The images must have the same number of channels and bytes per channel, and
-   * the provided rectangles must be valid for the images. If any of these
-   * constraints are violated, this function will assert in in debug builds and
-   * silently do nothing in release builds.
+   * The filtering algorithm for scaling is not specified, but can be assumed
+   * to provide reasonably good quality.
+   *
+   * The source and target images must have the same number of channels and same
+   * bytes per channel. If scaling is required, they must also use exactly 1
+   * byte per channel. If any of these requirements are violated, this function
+   * will return false and will not change any target pixels.
+   *
+   * The provided rectangles are validated to ensure that they fall within the
+   * range of the images. If they do not, this function will return false and
+   * will not change any pixels.
    *
    * @param target The image in which to write pixels.
    * @param targetPixels The pixels to write in the target.
    * @param source The image from which to read pixels.
    * @param sourcePixels The pixels to read from the target.
+   * @returns True if the source image was blitted successfully into the target,
+   * or false if the blit could not be completed due to invalid ranges or
+   * incompatible formats.
    */
-  static void blitImage(
+  static bool blitImage(
       ImageCesium& target,
       const PixelRectangle& targetPixels,
       const ImageCesium& source,

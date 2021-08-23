@@ -2,6 +2,8 @@
 #include "CesiumGltf/ImageCesium.h"
 #include <cassert>
 #include <cstring>
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
 using namespace CesiumGltf;
@@ -30,8 +32,7 @@ void ImageManipulation::unsafeBlitImage(
   }
 }
 
-// Copies a rectangle of a source image into another image.
-void ImageManipulation::blitImage(
+bool ImageManipulation::blitImage(
     ImageCesium& target,
     const PixelRectangle& targetPixels,
     const ImageCesium& source,
@@ -42,28 +43,32 @@ void ImageManipulation::blitImage(
       (sourcePixels.x + sourcePixels.width) > source.width ||
       (sourcePixels.y + sourcePixels.height) > source.height) {
     // Attempting to blit from outside the bounds of the source image.
-    assert(false);
-    return;
+    return false;
   }
 
   if (targetPixels.x < 0 || targetPixels.y < 0 ||
       (targetPixels.x + targetPixels.width) > target.width ||
       (targetPixels.y + targetPixels.height) > target.height) {
     // Attempting to blit outside the bounds of the target image.
-    assert(false);
-    return;
+    return false;
   }
 
   if (target.channels != source.channels ||
       target.bytesPerChannel != source.bytesPerChannel) {
     // Source and target image formats don't match; currently not supported.
-    assert(false);
-    return;
+    return false;
   }
 
   size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
   size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
   size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
+
+  size_t requiredTargetSize = size_t(targetPixels.height) * bytesPerTargetRow;
+  size_t requiredSourceSize = size_t(sourcePixels.height) * bytesPerSourceRow;
+  if (target.pixelData.size() < requiredTargetSize ||
+      source.pixelData.size() < requiredSourceSize) {
+    return false;
+  }
 
   // Position both pointers at the start of the first row.
   std::byte* pTarget = target.pixelData.data();
@@ -85,6 +90,11 @@ void ImageManipulation::blitImage(
         size_t(sourcePixels.height),
         bytesPerPixel);
   } else {
+    if (target.bytesPerChannel != 1) {
+      // We currently only support resizing images that use 1 byte per channel.
+      return false;
+    }
+
     // Use STB to do the copy / scale
     stbir_resize_uint8(
         reinterpret_cast<const unsigned char*>(pSource),
@@ -97,4 +107,6 @@ void ImageManipulation::blitImage(
         int(bytesPerTargetRow),
         target.channels);
   }
+
+  return true;
 }

@@ -61,7 +61,7 @@ bool withinPolygons(
     const std::optional<CesiumGeospatial::GlobeRectangle>&
         polygonBoundingRectangle = selection.getBoundingRectangle();
     if (!polygonBoundingRectangle ||
-        !rectangle.intersect(*polygonBoundingRectangle)) {
+        !rectangle.computeIntersection(*polygonBoundingRectangle)) {
       continue;
     }
 

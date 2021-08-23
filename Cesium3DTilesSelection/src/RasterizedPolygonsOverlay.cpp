@@ -40,7 +40,8 @@ void rasterizePolygons(
     const std::optional<CesiumGeospatial::GlobeRectangle>& boundingRectangle =
         selection.getBoundingRectangle();
 
-    if (boundingRectangle && rectangle.intersect(*boundingRectangle)) {
+    if (boundingRectangle &&
+        rectangle.computeIntersection(*boundingRectangle)) {
       completelyOutsidePolygons = false;
       break;
     }
@@ -93,7 +94,7 @@ void rasterizePolygons(
       CesiumGeospatial::GlobeRectangle triangleBounds(minX, minY, maxX, maxY);
 
       // skip this triangle if it is entirely outside the tile bounds
-      if (!rectangle.intersect(triangleBounds)) {
+      if (!rectangle.computeIntersection(triangleBounds)) {
         continue;
       }
 

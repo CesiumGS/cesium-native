@@ -103,12 +103,12 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // overlaps the geometry tile.  The RasterOverlayTileProvider and its tiling
   // scheme both have the opportunity to constrain the rectangle.
   CesiumGeometry::Rectangle imageryRectangle =
-      tilingSchemeRectangle.intersect(providerRectangle)
+      tilingSchemeRectangle.computeIntersection(providerRectangle)
           .value_or(tilingSchemeRectangle);
 
   CesiumGeometry::Rectangle intersection(0.0, 0.0, 0.0, 0.0);
   std::optional<CesiumGeometry::Rectangle> maybeIntersection =
-      geometryRectangle.intersect(imageryRectangle);
+      geometryRectangle.computeIntersection(imageryRectangle);
   if (maybeIntersection) {
     intersection = maybeIntersection.value();
   } else {
@@ -279,7 +279,8 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
     imageryRectangle = imageryTilingScheme.tileToRectangle(
         QuadtreeTileID(imageryLevel, i, southwestTileCoordinates.y));
-    clippedImageryRectangle = imageryRectangle.intersect(imageryBounds);
+    clippedImageryRectangle =
+        imageryRectangle.computeIntersection(imageryBounds);
 
     if (!clippedImageryRectangle) {
       continue;
@@ -312,7 +313,8 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
       imageryRectangle = imageryTilingScheme.tileToRectangle(
           QuadtreeTileID(imageryLevel, i, j));
-      clippedImageryRectangle = imageryRectangle.intersect(imageryBounds);
+      clippedImageryRectangle =
+          imageryRectangle.computeIntersection(imageryBounds);
 
       if (!clippedImageryRectangle) {
         continue;
@@ -504,7 +506,8 @@ void blitImage(
     const Rectangle& sourceRectangle,
     const std::optional<Rectangle>& sourceSubset) {
   Rectangle sourceToCopy = sourceSubset.value_or(sourceRectangle);
-  std::optional<Rectangle> overlap = targetRectangle.intersect(sourceToCopy);
+  std::optional<Rectangle> overlap =
+      targetRectangle.computeIntersection(sourceToCopy);
   if (!overlap) {
     // No overlap, nothing to do.
     return;
@@ -578,7 +581,7 @@ CombinedImageMeasurements measureCombinedImage(
     // Find the bounds of the combined image.
     // Intersect the loaded image's rectangle with the target rectangle.
     std::optional<Rectangle> maybeIntersection =
-        targetRectangle.intersect(sourceSubset);
+        targetRectangle.computeIntersection(sourceSubset);
     if (!maybeIntersection) {
       // We really shouldn't have an image that doesn't overlap the target.
       assert(false);
