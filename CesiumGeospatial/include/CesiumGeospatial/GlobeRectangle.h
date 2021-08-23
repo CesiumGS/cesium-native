@@ -175,7 +175,7 @@ public:
    * intersection.
    */
   std::optional<GlobeRectangle>
-  intersect(const GlobeRectangle& other) const noexcept;
+  computeIntersection(const GlobeRectangle& other) const noexcept;
 
   /**
    * @brief Computes the union of this globe rectangle with another.
