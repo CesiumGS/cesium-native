@@ -46,7 +46,7 @@ jobs:
       install:
         - ls /etc/apt/sources.list.d
         - cat /etc/apt/sources.list.d/*
-        - sudo add-apt-repository --remove ppa:rabbitmq/ppa
+        - sudo rm /etc/apt/sources.list.d/rabbitmq.list
         - sudo apt-get update
         -  # Workaround for an apparent Ubuntu package problem.
         -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
