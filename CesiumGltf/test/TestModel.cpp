@@ -4,6 +4,7 @@
 #include "catch2/catch.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -219,9 +220,12 @@ static Model createCubeGltf() {
 
                                       3, 2, 6, 3, 6, 7};
 
+  size_t vertexbyteStride = sizeof(glm::vec3);
+  size_t vertexbyteLength = 8 * vertexbyteStride;
+
   Buffer& vertexBuffer = model.buffers.emplace_back();
-  vertexBuffer.byteLength = static_cast<int64_t>(8 * sizeof(glm::vec3));
-  vertexBuffer.cesium.data.resize(vertexBuffer.byteLength);
+  vertexBuffer.byteLength = static_cast<int64_t>(vertexbyteLength);
+  vertexBuffer.cesium.data.resize(vertexbyteLength);
   std::memcpy(
       vertexBuffer.cesium.data.data(),
       &cubeVertices[0],
@@ -231,7 +235,7 @@ static Model createCubeGltf() {
   vertexBufferView.buffer = 0;
   vertexBufferView.byteLength = vertexBuffer.byteLength;
   vertexBufferView.byteOffset = 0;
-  vertexBufferView.byteStride = static_cast<int64_t>(sizeof(glm::vec3));
+  vertexBufferView.byteStride = static_cast<int64_t>(vertexbyteStride);
   vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   Accessor& vertexAccessor = model.accessors.emplace_back();
@@ -243,15 +247,12 @@ static Model createCubeGltf() {
 
   Buffer& indexBuffer = model.buffers.emplace_back();
   indexBuffer.byteLength = 36;
-  indexBuffer.cesium.data.resize(indexBuffer.byteLength);
-  std::memcpy(
-      indexBuffer.cesium.data.data(),
-      &cubeIndices[0],
-      indexBuffer.byteLength);
+  indexBuffer.cesium.data.resize(36);
+  std::memcpy(indexBuffer.cesium.data.data(), &cubeIndices[0], 36);
 
   BufferView& indexBufferView = model.bufferViews.emplace_back();
   indexBufferView.buffer = 1;
-  indexBufferView.byteLength = indexBuffer.byteLength;
+  indexBufferView.byteLength = 36;
   indexBufferView.byteOffset = 0;
   indexBufferView.byteStride = 1;
   indexBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
@@ -288,9 +289,12 @@ static Model createTriangleStrip() {
       glm::vec3(0.0f, 0.0f, -1.0f),
       glm::vec3(1.0f, 1.0f, -1.0f)};
 
+  size_t byteStride = sizeof(glm::vec3);
+  size_t byteLength = 4 * byteStride;
+
   Buffer& vertexBuffer = model.buffers.emplace_back();
-  vertexBuffer.byteLength = static_cast<int64_t>(4 * sizeof(glm::vec3));
-  vertexBuffer.cesium.data.resize(vertexBuffer.byteLength);
+  vertexBuffer.byteLength = static_cast<int64_t>(byteLength);
+  vertexBuffer.cesium.data.resize(byteLength);
   std::memcpy(
       vertexBuffer.cesium.data.data(),
       &vertices[0],
@@ -300,7 +304,7 @@ static Model createTriangleStrip() {
   vertexBufferView.buffer = 0;
   vertexBufferView.byteLength = vertexBuffer.byteLength;
   vertexBufferView.byteOffset = 0;
-  vertexBufferView.byteStride = static_cast<int64_t>(sizeof(glm::vec3));
+  vertexBufferView.byteStride = static_cast<int64_t>(byteStride);
   vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   Accessor& vertexAccessor = model.accessors.emplace_back();
@@ -336,9 +340,12 @@ static Model createTriangleFan() {
       glm::vec3(0.0f, 0.0f, -1.0f),
       glm::vec3(0.0f, 0.0f, 0.0f)};
 
+  size_t byteStride = sizeof(glm::vec3);
+  size_t byteLength = 6 * byteStride;
+
   Buffer& vertexBuffer = model.buffers.emplace_back();
-  vertexBuffer.byteLength = static_cast<int64_t>(6 * sizeof(glm::vec3));
-  vertexBuffer.cesium.data.resize(vertexBuffer.byteLength);
+  vertexBuffer.byteLength = static_cast<int64_t>(byteLength);
+  vertexBuffer.cesium.data.resize(byteLength);
   std::memcpy(
       vertexBuffer.cesium.data.data(),
       &vertices[0],
@@ -348,7 +355,7 @@ static Model createTriangleFan() {
   vertexBufferView.buffer = 0;
   vertexBufferView.byteLength = vertexBuffer.byteLength;
   vertexBufferView.byteOffset = 0;
-  vertexBufferView.byteStride = static_cast<int64_t>(sizeof(glm::vec3));
+  vertexBufferView.byteStride = static_cast<int64_t>(byteStride);
   vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   Accessor& vertexAccessor = model.accessors.emplace_back();
