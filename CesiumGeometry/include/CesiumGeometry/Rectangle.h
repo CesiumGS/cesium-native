@@ -190,7 +190,8 @@ struct CESIUMGEOMETRY_API Rectangle final {
    * @returns The intersection rectangle, or `std::nullopt` if there is no
    * intersection.
    */
-  std::optional<Rectangle> intersect(const Rectangle& other) const noexcept;
+  std::optional<Rectangle>
+  computeIntersection(const Rectangle& other) const noexcept;
 
   /**
    * @brief Computes the union of this rectangle with another.
