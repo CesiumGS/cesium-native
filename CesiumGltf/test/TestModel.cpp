@@ -229,7 +229,7 @@ static Model createCubeGltf() {
   std::memcpy(
       vertexBuffer.cesium.data.data(),
       &cubeVertices[0],
-      vertexBuffer.byteLength);
+      vertexbyteLength);
 
   BufferView& vertexBufferView = model.bufferViews.emplace_back();
   vertexBufferView.buffer = 0;
@@ -295,10 +295,7 @@ static Model createTriangleStrip() {
   Buffer& vertexBuffer = model.buffers.emplace_back();
   vertexBuffer.byteLength = static_cast<int64_t>(byteLength);
   vertexBuffer.cesium.data.resize(byteLength);
-  std::memcpy(
-      vertexBuffer.cesium.data.data(),
-      &vertices[0],
-      vertexBuffer.byteLength);
+  std::memcpy(vertexBuffer.cesium.data.data(), &vertices[0], byteLength);
 
   BufferView& vertexBufferView = model.bufferViews.emplace_back();
   vertexBufferView.buffer = 0;
@@ -346,10 +343,7 @@ static Model createTriangleFan() {
   Buffer& vertexBuffer = model.buffers.emplace_back();
   vertexBuffer.byteLength = static_cast<int64_t>(byteLength);
   vertexBuffer.cesium.data.resize(byteLength);
-  std::memcpy(
-      vertexBuffer.cesium.data.data(),
-      &vertices[0],
-      vertexBuffer.byteLength);
+  std::memcpy(vertexBuffer.cesium.data.data(), &vertices[0], byteLength);
 
   BufferView& vertexBufferView = model.bufferViews.emplace_back();
   vertexBufferView.buffer = 0;
