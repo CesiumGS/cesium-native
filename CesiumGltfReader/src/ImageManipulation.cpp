@@ -1,6 +1,7 @@
 #include "CesiumGltf/ImageManipulation.h"
 #include "CesiumGltf/ImageCesium.h"
 #include <cassert>
+#include <cstring>
 #include <stb_image_resize.h>
 
 using namespace CesiumGltf;
@@ -80,8 +81,8 @@ void ImageManipulation::blitImage(
         bytesPerTargetRow,
         pSource,
         bytesPerSourceRow,
-        sourcePixels.width,
-        sourcePixels.height,
+        size_t(sourcePixels.width),
+        size_t(sourcePixels.height),
         bytesPerPixel);
   } else {
     // Use STB to do the copy / scale
