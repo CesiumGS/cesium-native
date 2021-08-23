@@ -18,7 +18,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -550,7 +549,7 @@ private:
       CesiumGltf::Model& model,
       const glm::dmat4& transform,
       const BoundingVolume& boundingVolume,
-      const std::unordered_set<CesiumGeospatial::Projection>& projections);
+      const std::vector<CesiumGeospatial::Projection>& projections);
 
   /**
    * @brief Upsample the parent of this tile.
@@ -559,7 +558,7 @@ private:
    * loaded.
    */
   void upsampleParent(
-      std::unordered_set<CesiumGeospatial::Projection>&& projections);
+      std::vector<CesiumGeospatial::Projection>&& projections);
 
   /**
    * @brief Initiates loading of any overlays attached to this tile.
@@ -570,7 +569,7 @@ private:
    * @param projections On return the set of projections used by the overlays.
    */
   void
-  loadOverlays(std::unordered_set<CesiumGeospatial::Projection>& projections);
+  loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;

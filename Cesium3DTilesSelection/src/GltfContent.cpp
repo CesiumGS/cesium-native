@@ -188,7 +188,7 @@ static int generateOverlayTextureCoordinates(
 GltfContent::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
     const glm::dmat4& transform,
-    const std::string& projectionName,
+    int32_t textureCoordinateID,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& rectangle) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::"
@@ -196,7 +196,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 
-  std::string attributeName = "_CESIUMOVERLAY_" + projectionName;
+  std::string attributeName = "_CESIUMOVERLAY_" + std::to_string(textureCoordinateID);
 
   double west = CesiumUtility::Math::ONE_PI;
   double south = CesiumUtility::Math::PI_OVER_TWO;

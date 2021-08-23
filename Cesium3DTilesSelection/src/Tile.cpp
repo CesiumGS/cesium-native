@@ -119,10 +119,25 @@ bool Tile::isRenderable() const noexcept {
 }
 
 namespace {
+int32_t getTextureCoordinatesForProjection(
+    std::vector<CesiumGeospatial::Projection>& projections,
+    const Projection& projection) {
+  auto existingCoordinatesIt =
+      std::find(projections.begin(), projections.end(), projection);
+  if (existingCoordinatesIt == projections.end()) {
+    // New set of texture coordinates.
+    projections.push_back(projection);
+    return int32_t(projections.size()) - 1;
+  } else {
+    // Use previously-added texture coordinates.
+    return static_cast<int32_t>(existingCoordinatesIt - projections.begin());
+  }
+}
+
 void mapRasterOverlaysToTile(
     Tile& tile,
     const RasterOverlayCollection& overlays,
-    std::unordered_set<CesiumGeospatial::Projection>& projections) {
+    std::vector<CesiumGeospatial::Projection>& projections) {
 
   assert(tile.getMappedRasterTiles().empty());
 
@@ -132,6 +147,8 @@ void mapRasterOverlaysToTile(
     return;
   }
 
+  // Find the unique projections; we'll create texture coordinates for each
+  // later.
   for (const auto& pOverlay : overlays) {
     const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
 
@@ -147,8 +164,16 @@ void mapRasterOverlaysToTile(
             overlayRectangle,
             tile.getGeometricError());
     if (pRaster) {
-      tile.getMappedRasterTiles().emplace_back(pRaster);
-      projections.insert(pProvider->getProjection());
+      RasterMappedTo3DTile& mappedTile =
+          tile.getMappedRasterTiles().emplace_back(pRaster);
+
+      const CesiumGeospatial::Projection& projection =
+          pRaster->getOverlay().getTileProvider()->getProjection();
+
+      int32_t projectionID =
+          getTextureCoordinatesForProjection(projections, projection);
+
+      mappedTile.setTextureCoordinateID(projectionID);
 
       if (pRaster->getState() != RasterOverlayTile::LoadState::Placeholder) {
         pOverlay->getTileProvider()->loadTileThrottled(*pRaster);
@@ -156,44 +181,11 @@ void mapRasterOverlaysToTile(
     }
   }
 
-  // Find the unique projections; we'll create texture coordinates for each
-  // later.
-  // TODO: actually find the unique projections, instead of assuming there's
-  // only one projection and it's Web Mercator. The code below mostly works,
-  // except that we don't currently have a way to add texture coordinates to
-  // already-loaded tiles that didn't have them originally.
-
-  // uint32_t projectionID = 0;
-
-  // for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
-  //     std::shared_ptr<RasterOverlayTile> pTile =
-  //     mappedTile.getLoadingTile(); if (!pTile) {
-  //         pTile = mappedTile.getReadyTile();
-  //         if (!pTile) {
-  //             continue;
-  //         }
-  //     }
-
-  //     const CesiumGeospatial::Projection& projection =
-  //     pTile->getOverlay().getTileProvider()->getProjection();
-
-  //     auto existingCoordinatesIt = std::find(projections.begin(),
-  //     projections.end(), projection); if (existingCoordinatesIt ==
-  //     projections.end()) {
-  //         projections.push_back(projection);
-
-  //         mappedTile.setTextureCoordinateID(projectionID);
-  //         ++projectionID;
-  //     } else {
-  //         // Use previously-added texture coordinates.
-  //         mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt
-  //         - projections.begin()));
-  //     }
-  // }
-
-  // Add geographic texture coordinates for water mask
+  // Add geographic texture coordinates for water mask.
   if (tile.getTileset()->getOptions().contentOptions.enableWaterMask) {
-    projections.insert(CesiumGeospatial::GeographicProjection());
+    getTextureCoordinatesForProjection(
+        projections,
+        CesiumGeospatial::GeographicProjection());
   }
 }
 } // namespace
@@ -227,7 +219,7 @@ void Tile::loadContent() {
   // aligned like geographic or web mercator, because we won't know our raster
   // rectangle until we can project each vertex.
 
-  std::unordered_set<CesiumGeospatial::Projection> projections;
+  std::vector<CesiumGeospatial::Projection> projections;
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
@@ -790,7 +782,7 @@ Tile::generateTextureCoordinates(
     CesiumGltf::Model& model,
     const glm::dmat4& transform,
     const BoundingVolume& boundingVolume,
-    const std::unordered_set<CesiumGeospatial::Projection>& projections) {
+    const std::vector<CesiumGeospatial::Projection>& projections) {
   std::optional<CesiumGeospatial::BoundingRegion> result;
 
   // Generate texture coordinates for each projection.
@@ -798,7 +790,11 @@ Tile::generateTextureCoordinates(
     std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
         getGlobeRectangle(boundingVolume);
     if (maybeRectangle) {
-      for (const CesiumGeospatial::Projection& projection : projections) {
+      for (size_t i = 0; i < projections.size(); ++i) {
+        const Projection& projection = projections[i];
+
+        int textureCoordinateID = static_cast<int32_t>(i);
+
         CesiumGeometry::Rectangle rectangle =
             projectRectangleSimple(projection, *maybeRectangle);
 
@@ -806,7 +802,7 @@ Tile::generateTextureCoordinates(
             GltfContent::createRasterOverlayTextureCoordinates(
                 model,
                 transform,
-                CesiumGeospatial::getProjectionName(projection),
+                textureCoordinateID,
                 projection,
                 rectangle);
         if (result) {
@@ -822,7 +818,7 @@ Tile::generateTextureCoordinates(
 }
 
 void Tile::upsampleParent(
-    std::unordered_set<CesiumGeospatial::Projection>&& projections) {
+    std::vector<CesiumGeospatial::Projection>&& projections) {
   Tile* pParent = this->getParent();
   const UpsampledQuadtreeNode* pSubdividedParentID =
       std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
@@ -896,7 +892,7 @@ void Tile::upsampleParent(
 }
 
 void Tile::loadOverlays(
-    std::unordered_set<CesiumGeospatial::Projection>& projections) {
+    std::vector<CesiumGeospatial::Projection>& projections) {
   assert(this->_rasterTiles.empty());
   assert(this->_state == LoadState::ContentLoading);
 
