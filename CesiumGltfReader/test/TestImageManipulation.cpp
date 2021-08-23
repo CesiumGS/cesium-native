@@ -297,4 +297,19 @@ TEST_CASE("ImageManipulation::blitImage") {
         false);
     verifyTargetUnchanged();
   }
+
+  SECTION("returns false for a too-small target") {
+    target.pixelData.resize(10);
+    CHECK(
+        ImageManipulation::blitImage(target, targetRect, source, sourceRect) ==
+        false);
+  }
+
+  SECTION("returns false for a too-small source") {
+    source.pixelData.resize(10);
+    CHECK(
+        ImageManipulation::blitImage(target, targetRect, source, sourceRect) ==
+        false);
+    verifyTargetUnchanged();
+  }
 }

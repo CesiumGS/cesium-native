@@ -63,6 +63,13 @@ bool ImageManipulation::blitImage(
   size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
   size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
 
+  size_t requiredTargetSize = targetPixels.height * bytesPerTargetRow;
+  size_t requiredSourceSize = sourcePixels.height * bytesPerSourceRow;
+  if (target.pixelData.size() < requiredTargetSize ||
+      source.pixelData.size() < requiredSourceSize) {
+    return false;
+  }
+
   // Position both pointers at the start of the first row.
   std::byte* pTarget = target.pixelData.data();
   const std::byte* pSource = source.pixelData.data();

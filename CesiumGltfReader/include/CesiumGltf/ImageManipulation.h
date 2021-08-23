@@ -62,13 +62,21 @@ public:
   /**
    * @brief Copies pixels from a source image to a target image.
    *
-   * If the source and target dimensions are not the same, the image is resized.
-   * Otherwise, the source pixels are exactly copied into the target. Resizing
-   * is only supported when bytesPerChannel is 1.
+   * If the source and target dimensions are the same, the source pixels are
+   * copied exactly into the target. If not, the source image is scaled to fit
+   * the target rectangle.
    *
-   * The images must have the same number of channels and bytes per channel, and
-   * the provided rectangles must be valid for the images. If any of these
-   * constraints are violated, this function will return false and do nothing.
+   * The filtering algorithm for scaling is not specified, but can be assumed
+   * to provide reasonably good quality.
+   *
+   * The source and target images must have the same number of channels and same
+   * bytes per channel. If scaling is required, they must also use exactly 1
+   * byte per channel. If any of these requirements are violated, this function
+   * will return false and will not change any target pixels.
+   *
+   * The provided rectangles are validated to ensure that they fall within the
+   * range of the images. If they do not, this function will return false and
+   * will not change any pixels.
    *
    * @param target The image in which to write pixels.
    * @param targetPixels The pixels to write in the target.
