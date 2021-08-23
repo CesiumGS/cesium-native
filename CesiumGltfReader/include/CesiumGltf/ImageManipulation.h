@@ -9,7 +9,7 @@ namespace CesiumGltf {
 struct ImageCesium;
 
 /**
- * @brief Specifies a rectangle pixels in an image.
+ * @brief Specifies a rectangle of pixels in an image.
  */
 struct PixelRectangle {
   /**
