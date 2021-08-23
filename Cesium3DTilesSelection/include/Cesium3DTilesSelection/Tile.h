@@ -557,8 +557,7 @@ private:
    * This method should only be called when this tile's parent is already
    * loaded.
    */
-  void upsampleParent(
-      std::vector<CesiumGeospatial::Projection>&& projections);
+  void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
 
   /**
    * @brief Initiates loading of any overlays attached to this tile.
@@ -568,8 +567,7 @@ private:
    *
    * @param projections On return the set of projections used by the overlays.
    */
-  void
-  loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
+  void loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;
