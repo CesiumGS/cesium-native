@@ -42,7 +42,7 @@ Rectangle::computeSignedDistance(const glm::dvec2& position) const noexcept {
 }
 
 std::optional<Rectangle>
-Rectangle::intersect(const Rectangle& other) const noexcept {
+Rectangle::computeIntersection(const Rectangle& other) const noexcept {
   double left = glm::max(this->minimumX, other.minimumX);
   double bottom = glm::max(this->minimumY, other.minimumY);
   double right = glm::min(this->maximumX, other.maximumX);

@@ -40,8 +40,8 @@ bool GlobeRectangle::contains(const Cartographic& cartographic) const noexcept {
       latitude >= this->_south && latitude <= this->_north);
 }
 
-std::optional<GlobeRectangle>
-GlobeRectangle::intersect(const GlobeRectangle& other) const noexcept {
+std::optional<GlobeRectangle> GlobeRectangle::computeIntersection(
+    const GlobeRectangle& other) const noexcept {
   double rectangleEast = this->_east;
   double rectangleWest = this->_west;
 
