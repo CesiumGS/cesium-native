@@ -430,7 +430,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             if (loaded.image && loaded.errors.empty() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
-              cachedBytes += loaded.image->pixelData.size();
+              cachedBytes += int64_t(loaded.image->pixelData.size());
               return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
                   std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
                   std::nullopt});
@@ -765,7 +765,7 @@ void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
     // pointer goes out of scope, so reduce the cachedBytes accordingly.
     if (pImage.use_count() == 1) {
       if (pImage->image) {
-        this->_cachedBytes -= pImage->image->pixelData.size();
+        this->_cachedBytes -= int64_t(pImage->image->pixelData.size());
         assert(this->_cachedBytes >= 0);
       }
     }

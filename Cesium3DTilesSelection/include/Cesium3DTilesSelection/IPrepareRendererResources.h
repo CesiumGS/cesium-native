@@ -165,7 +165,7 @@ public:
    */
   virtual void attachRasterInMainThread(
       const Tile& tile,
-      uint32_t overlayTextureCoordinateID,
+      int32_t overlayTextureCoordinateID,
       const RasterOverlayTile& rasterTile,
       void* pMainThreadRendererResources,
       const CesiumGeometry::Rectangle& textureCoordinateRectangle,
@@ -188,7 +188,7 @@ public:
    */
   virtual void detachRasterInMainThread(
       const Tile& tile,
-      uint32_t overlayTextureCoordinateID,
+      int32_t overlayTextureCoordinateID,
       const RasterOverlayTile& rasterTile,
       void* pMainThreadRendererResources,
       const CesiumGeometry::Rectangle& textureCoordinateRectangle) noexcept = 0;

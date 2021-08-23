@@ -44,7 +44,7 @@ private:
 
   async::shared_task<T> _task;
 
-  template <typename Func, typename T>
+  template <typename Func, typename T2>
   friend auto Impl::futureFunctionToTaskFunction(Func&& f);
 };
 

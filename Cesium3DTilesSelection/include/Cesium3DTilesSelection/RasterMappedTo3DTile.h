@@ -90,7 +90,7 @@ public:
    *
    * @return The texture coordinate ID.
    */
-  uint32_t getTextureCoordinateID() const noexcept {
+  int32_t getTextureCoordinateID() const noexcept {
     return this->_textureCoordinateID;
   }
 
@@ -101,7 +101,7 @@ public:
    *
    * @param textureCoordinateID The ID.
    */
-  void setTextureCoordinateID(uint32_t textureCoordinateID) noexcept {
+  void setTextureCoordinateID(int32_t textureCoordinateID) noexcept {
     this->_textureCoordinateID = textureCoordinateID;
   }
 
@@ -161,7 +161,7 @@ private:
 
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
-  uint32_t _textureCoordinateID;
+  int32_t _textureCoordinateID;
   glm::dvec2 _translation;
   glm::dvec2 _scale;
   AttachmentState _state;

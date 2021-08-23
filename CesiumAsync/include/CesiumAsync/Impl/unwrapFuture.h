@@ -21,7 +21,7 @@ auto futureFunctionToTaskFunction(Func&& f) {
     if constexpr (isFuture<typename ContinuationReturnType<Func, T>::type>) {
       // And returning a Future
       return [f = std::forward<Func>(f)](const async::shared_task<T>& task) {
-        return f(SharedFutureResult<T>(t))._task;
+        return f(SharedFutureResult<T>(task))._task;
       };
     } else {
       // And returning a regular value

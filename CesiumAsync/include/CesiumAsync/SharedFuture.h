@@ -259,7 +259,7 @@ private:
 
   template <typename R> friend struct Impl::ParameterizedTaskUnwrapper;
 
-  template <typename Func, typename T>
+  template <typename Func, typename T2>
   friend auto Impl::futureFunctionToTaskFunction(Func&& f);
 
   friend struct Impl::TaskUnwrapper;
