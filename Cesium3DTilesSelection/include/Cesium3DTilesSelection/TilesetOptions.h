@@ -1,9 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/CartographicSelection.h"
 #include "Cesium3DTilesSelection/Library.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include <glm/glm.hpp>
 #include <optional>
 #include <string>
 #include <vector>

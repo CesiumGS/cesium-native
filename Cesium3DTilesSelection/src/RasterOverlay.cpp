@@ -1,7 +1,6 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 using namespace CesiumAsync;

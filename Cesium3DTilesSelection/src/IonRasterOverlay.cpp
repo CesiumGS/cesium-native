@@ -10,7 +10,6 @@
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Uri.h"
 #include <rapidjson/document.h>
-#include <string>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;

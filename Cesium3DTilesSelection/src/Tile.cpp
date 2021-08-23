@@ -318,7 +318,7 @@ void Tile::loadContent() {
             model.extras["gltfUpAxis"] = gltfUpAxis;
 
             const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
-            // TODO: apply gltf up axis and RTC_CENTEr
+            // TODO: apply gltf up axis and RTC_CENTER
             const glm::dmat4& transform = loadInput.tileTransform;
 
             Tile::generateTextureCoordinates(

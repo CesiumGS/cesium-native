@@ -18,7 +18,6 @@
 #include <rapidjson/pointer.h>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace {

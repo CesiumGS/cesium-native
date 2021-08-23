@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <glm/common.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 #include <limits>
 #include <optional>
 #include <rapidjson/document.h>
