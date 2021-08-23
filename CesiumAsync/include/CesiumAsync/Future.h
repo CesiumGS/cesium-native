@@ -203,7 +203,7 @@ public:
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
-  T wait() && { return this->_task.get(); }
+  T wait() { return this->_task.get(); }
 
   /**
    * @brief Determines if this future is already resolved or rejected.
