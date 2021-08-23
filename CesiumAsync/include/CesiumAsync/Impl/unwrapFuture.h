@@ -16,7 +16,17 @@ inline constexpr bool isFuture =
 
 template <typename Func, typename T>
 auto futureFunctionToTaskFunction(Func&& f) {
-  if constexpr (std::is_invocable_v<Func, SharedFutureResult<T>>) {
+  if constexpr (std::is_invocable_v<Func>) {
+    // Function taking no parameters
+    if constexpr (isFuture<typename ContinuationReturnType<Func, void>::type>) {
+      // And returning a Future
+      return
+          [f = std::forward<Func>(f)]() { return f()._task; };
+    } else {
+      // And returning a regular value
+      return std::forward<Func>(f);
+    }
+  } else if constexpr (std::is_invocable_v<Func, SharedFutureResult<T>>) {
     // Function taking a SharedFuture<T>
     if constexpr (isFuture<typename ContinuationReturnType<Func, T>::type>) {
       // And returning a Future
