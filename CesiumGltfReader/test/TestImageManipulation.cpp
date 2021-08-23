@@ -131,7 +131,9 @@ TEST_CASE("ImageManipulation::blitImage") {
   target.width = 15;
   target.height = 9;
   target.pixelData = std::vector<std::byte>(
-      target.width * target.height * target.channels * target.bytesPerChannel,
+      size_t(
+          target.width * target.height * target.channels *
+          target.bytesPerChannel),
       std::byte(1));
 
   ImageCesium source;
@@ -140,7 +142,9 @@ TEST_CASE("ImageManipulation::blitImage") {
   source.width = 10;
   source.height = 11;
   source.pixelData = std::vector<std::byte>(
-      source.width * source.height * source.channels * source.bytesPerChannel,
+      size_t(
+          source.width * source.height * source.channels *
+          source.bytesPerChannel),
       std::byte(2));
 
   PixelRectangle sourceRect;
@@ -163,19 +167,20 @@ TEST_CASE("ImageManipulation::blitImage") {
   };
 
   auto verifySuccessfulCopy = [&target, &targetRect]() {
-    for (size_t j = 0; j < target.height; ++j) {
-      bool copiedRow =
-          j >= targetRect.y && j < targetRect.y + targetRect.height;
+    for (size_t j = 0; j < size_t(target.height); ++j) {
+      bool copiedRow = j >= size_t(targetRect.y) &&
+                       j < size_t(targetRect.y + targetRect.height);
       size_t rowOffset =
-          j * target.width * target.bytesPerChannel * target.channels;
-      for (size_t i = 0; i < target.width; ++i) {
-        bool copiedColumn =
-            i >= targetRect.x && i < targetRect.x + targetRect.width;
+          j * size_t(target.width * target.bytesPerChannel * target.channels);
+      for (size_t i = 0; i < size_t(target.width); ++i) {
+        bool copiedColumn = i >= size_t(targetRect.x) &&
+                            i < size_t(targetRect.x + targetRect.width);
         std::byte expected =
             copiedRow && copiedColumn ? std::byte(2) : std::byte(1);
         size_t offset =
-            rowOffset + i * target.bytesPerChannel * target.channels;
-        for (size_t k = 0; k < target.channels * target.bytesPerChannel; ++k) {
+            rowOffset + i * size_t(target.bytesPerChannel * target.channels);
+        for (size_t k = 0; k < size_t(target.channels * target.bytesPerChannel);
+             ++k) {
           CHECK(target.pixelData[offset + k] == expected);
         }
       }
