@@ -2,10 +2,15 @@
 
 ### Next Release - ?
 
+##### Breaking Changes :mega:
+
+- Renamed `Rectangle::intersect` and `GlobeRectangle::intersect` to `computeIntersection`.
+
 ##### Additions :tada:
 
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 - Added `Math::roundUp` and `Math::roundDown`.
+- Added `Rectangle::computeUnion`.
 
 ### v0.6.0 - 2021-08-02
 
