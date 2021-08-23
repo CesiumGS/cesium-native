@@ -17,9 +17,11 @@ TEST_CASE("Test forEachPrimitive") {
 
   Model model;
 
-  Scene scene0;
+  model.scenes.resize(2);
   model.scene = 0;
-  Scene scene1;
+
+  Scene& scene0 = model.scenes[0];
+  Scene& scene1 = model.scenes[1];
 
   glm::dmat4 parentNodeMatrix(
       1.0,
@@ -59,36 +61,37 @@ TEST_CASE("Test forEachPrimitive") {
 
   glm::dmat4 expectedNodeTransform = parentNodeMatrix * childNodeMatrix;
 
-  Node node0;
-  Node node1;
+  model.nodes.resize(4);
+  Node& node0 = model.nodes[0];
+  Node& node1 = model.nodes[1];
+  Node& node2 = model.nodes[2];
+  Node& node3 = model.nodes[3];
+
   scene0.nodes = {0, 1};
-  Node node2;
+  scene1.nodes = {2};
+  node2.children = {3};
+
   std::memcpy(node2.matrix.data(), &parentNodeMatrix, sizeof(glm::dmat4));
   scene1.nodes = {2};
-  Node node3;
   std::memcpy(node3.matrix.data(), &childNodeMatrix, sizeof(glm::dmat4));
   node2.children = {3};
 
-  Mesh mesh0;
+  model.meshes.resize(3);
+  Mesh& mesh0 = model.meshes[0];
+  Mesh& mesh1 = model.meshes[1];
+  Mesh& mesh2 = model.meshes[2];
+
   node0.mesh = 0;
-  Mesh mesh1;
   node1.mesh = 1;
-  Mesh mesh2;
   node3.mesh = 2;
 
-  MeshPrimitive primitive0;
-  MeshPrimitive primitive1;
-  MeshPrimitive primitive2;
-  MeshPrimitive primitive3;
+  MeshPrimitive& primitive0 = mesh0.primitives.emplace_back();
 
-  mesh0.primitives = {std::move(primitive0)};
-  mesh1.primitives = {std::move(primitive1), std::move(primitive2)};
-  mesh2.primitives = {std::move(primitive3)};
+  mesh1.primitives.resize(2);
+  MeshPrimitive& primitive1 = mesh1.primitives[0];
+  MeshPrimitive& primitive2 = mesh1.primitives[1];
 
-  model.meshes = {std::move(mesh0), std::move(mesh1), std::move(mesh2)};
-  model.nodes =
-      {std::move(node0), std::move(node1), std::move(node2), std::move(node3)};
-  model.scenes = {std::move(scene0), std::move(scene1)};
+  MeshPrimitive& primitive3 = mesh2.primitives.emplace_back();
 
   SECTION("Check that the correct primitives are iterated over.") {
 
@@ -110,17 +113,17 @@ TEST_CASE("Test forEachPrimitive") {
         std::find(
             iteratedPrimitives.begin(),
             iteratedPrimitives.end(),
-            &model.meshes[0].primitives[0]) != iteratedPrimitives.end());
+            &primitive0) != iteratedPrimitives.end());
     REQUIRE(
         std::find(
             iteratedPrimitives.begin(),
             iteratedPrimitives.end(),
-            &model.meshes[1].primitives[0]) != iteratedPrimitives.end());
+            &primitive1) != iteratedPrimitives.end());
     REQUIRE(
         std::find(
             iteratedPrimitives.begin(),
             iteratedPrimitives.end(),
-            &model.meshes[1].primitives[1]) != iteratedPrimitives.end());
+            &primitive2) != iteratedPrimitives.end());
 
     iteratedPrimitives.clear();
 
@@ -140,17 +143,17 @@ TEST_CASE("Test forEachPrimitive") {
         std::find(
             iteratedPrimitives.begin(),
             iteratedPrimitives.end(),
-            &model.meshes[0].primitives[0]) != iteratedPrimitives.end());
+            &primitive0) != iteratedPrimitives.end());
     REQUIRE(
         std::find(
             iteratedPrimitives.begin(),
             iteratedPrimitives.end(),
-            &model.meshes[1].primitives[0]) != iteratedPrimitives.end());
+            &primitive1) != iteratedPrimitives.end());
     REQUIRE(
         std::find(
             iteratedPrimitives.begin(),
             iteratedPrimitives.end(),
-            &model.meshes[1].primitives[1]) != iteratedPrimitives.end());
+            &primitive2) != iteratedPrimitives.end());
 
     iteratedPrimitives.clear();
 
@@ -166,7 +169,7 @@ TEST_CASE("Test forEachPrimitive") {
         });
 
     REQUIRE(iteratedPrimitives.size() == 1);
-    REQUIRE(iteratedPrimitives[0] == &model.meshes[2].primitives[0]);
+    REQUIRE(iteratedPrimitives[0] == &primitive3);
   }
 
   SECTION("Check the node transform") {
@@ -260,53 +263,211 @@ static Model createCubeGltf() {
   indexAccessor.count = 36;
   indexAccessor.type = Accessor::Type::SCALAR;
 
-  Scene scene;
-  Node node;
-  Mesh mesh;
-  MeshPrimitive primitive;
+  Scene& scene = model.scenes.emplace_back();
+  Node& node = model.nodes.emplace_back();
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
 
   primitive.attributes.emplace("POSITION", 0);
   primitive.indices = 1;
   primitive.mode = MeshPrimitive::Mode::TRIANGLES;
 
-  mesh.primitives = {primitive};
-  node.mesh = 0;
+  model.scene = 0;
   scene.nodes = {0};
+  node.mesh = 0;
+
+  return model;
+}
+
+static Model createTriangleStrip() {
+  Model model;
+
+  std::vector<glm::vec3> vertices = {
+      glm::vec3(0.0f, 1.0f, 0.0f),
+      glm::vec3(1.0f, 0.0f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, 1.0f, -1.0f)};
+
+  Buffer& vertexBuffer = model.buffers.emplace_back();
+  vertexBuffer.byteLength = static_cast<int64_t>(4 * sizeof(glm::vec3));
+  vertexBuffer.cesium.data.resize(vertexBuffer.byteLength);
+  std::memcpy(
+      vertexBuffer.cesium.data.data(),
+      &vertices[0],
+      vertexBuffer.byteLength);
+
+  BufferView& vertexBufferView = model.bufferViews.emplace_back();
+  vertexBufferView.buffer = 0;
+  vertexBufferView.byteLength = vertexBuffer.byteLength;
+  vertexBufferView.byteOffset = 0;
+  vertexBufferView.byteStride = static_cast<int64_t>(sizeof(glm::vec3));
+  vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
+
+  Accessor& vertexAccessor = model.accessors.emplace_back();
+  vertexAccessor.bufferView = 0;
+  vertexAccessor.byteOffset = 0;
+  vertexAccessor.componentType = Accessor::ComponentType::FLOAT;
+  vertexAccessor.count = 4;
+  vertexAccessor.type = Accessor::Type::VEC3;
+
+  Scene& scene = model.scenes.emplace_back();
+  Node& node = model.nodes.emplace_back();
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+
+  primitive.attributes.emplace("POSITION", 0);
+  primitive.mode = MeshPrimitive::Mode::TRIANGLE_STRIP;
 
   model.scene = 0;
+  scene.nodes = {0};
+  node.mesh = 0;
 
-  model.scenes = {scene};
-  model.nodes = {node};
-  model.meshes = {mesh};
+  return model;
+}
+
+static Model createTriangleFan() {
+  Model model;
+
+  std::vector<glm::vec3> vertices = {
+      glm::vec3(0.5f, 1.0f, -0.5f),
+      glm::vec3(0.0f, 0.0f, 0.0f),
+      glm::vec3(1.0f, 0.0f, 0.0f),
+      glm::vec3(1.0f, 0.0f, -1.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f),
+      glm::vec3(0.0f, 0.0f, 0.0f)};
+
+  Buffer& vertexBuffer = model.buffers.emplace_back();
+  vertexBuffer.byteLength = static_cast<int64_t>(6 * sizeof(glm::vec3));
+  vertexBuffer.cesium.data.resize(vertexBuffer.byteLength);
+  std::memcpy(
+      vertexBuffer.cesium.data.data(),
+      &vertices[0],
+      vertexBuffer.byteLength);
+
+  BufferView& vertexBufferView = model.bufferViews.emplace_back();
+  vertexBufferView.buffer = 0;
+  vertexBufferView.byteLength = vertexBuffer.byteLength;
+  vertexBufferView.byteOffset = 0;
+  vertexBufferView.byteStride = static_cast<int64_t>(sizeof(glm::vec3));
+  vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
+
+  Accessor& vertexAccessor = model.accessors.emplace_back();
+  vertexAccessor.bufferView = 0;
+  vertexAccessor.byteOffset = 0;
+  vertexAccessor.componentType = Accessor::ComponentType::FLOAT;
+  vertexAccessor.count = 6;
+  vertexAccessor.type = Accessor::Type::VEC3;
+
+  Scene& scene = model.scenes.emplace_back();
+  Node& node = model.nodes.emplace_back();
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+
+  primitive.attributes.emplace("POSITION", 0);
+  primitive.mode = MeshPrimitive::Mode::TRIANGLE_FAN;
+
+  model.scene = 0;
+  scene.nodes = {0};
+  node.mesh = 0;
 
   return model;
 }
 
 TEST_CASE("Test smooth normal generation") {
-  Model model = createCubeGltf();
+  SECTION("Test normal generation TRIANGLES") {
+    Model model = createCubeGltf();
 
-  model.generateMissingNormalsSmooth();
+    model.generateMissingNormalsSmooth();
 
-  REQUIRE(model.meshes.size() == 1);
-  REQUIRE(model.meshes[0].primitives.size() == 1);
+    REQUIRE(model.scene == 0);
+    REQUIRE(model.scenes.size() == 1);
+    REQUIRE(model.scenes[0].nodes.size() == 1);
+    REQUIRE(model.scenes[0].nodes[0] == 0);
+    REQUIRE(model.nodes.size() == 1);
+    REQUIRE(model.nodes[0].mesh == 0);
+    REQUIRE(model.meshes.size() == 1);
+    REQUIRE(model.meshes[0].primitives.size() == 1);
 
-  MeshPrimitive& primitive = model.meshes[0].primitives[0];
-  auto normalIt = primitive.attributes.find("NORMAL");
-  REQUIRE(normalIt != primitive.attributes.end());
+    MeshPrimitive& primitive = model.meshes[0].primitives[0];
+    auto normalIt = primitive.attributes.find("NORMAL");
+    REQUIRE(normalIt != primitive.attributes.end());
 
-  AccessorView<glm::vec3> normalView(model, normalIt->second);
-  REQUIRE(normalView.status() == AccessorViewStatus::Valid);
-  REQUIRE(normalView.size() == 8);
+    AccessorView<glm::vec3> normalView(model, normalIt->second);
+    REQUIRE(normalView.status() == AccessorViewStatus::Valid);
+    REQUIRE(normalView.size() == 8);
 
-  const glm::vec3& vertex0Normal = normalView[0];
-  glm::vec3 expectedNormal(-1.0f, -1.0f, -1.0f);
-  expectedNormal = glm::normalize(expectedNormal);
+    const glm::vec3& vertex0Normal = normalView[0];
+    glm::vec3 expectedNormal(-1.0f, -1.0f, -1.0f);
+    expectedNormal = glm::normalize(expectedNormal);
 
-  REQUIRE(glm::abs(glm::dot(vertex0Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::abs(glm::dot(vertex0Normal, expectedNormal) - 1.0f) < 1e-6f);
 
-  const glm::vec3& vertex6Normal = normalView[6];
-  expectedNormal = glm::vec3(1.0f, 1.0f, 1.0f);
-  expectedNormal = glm::normalize(expectedNormal);
+    const glm::vec3& vertex6Normal = normalView[6];
+    expectedNormal = glm::vec3(1.0f, 1.0f, 1.0f);
+    expectedNormal = glm::normalize(expectedNormal);
 
-  REQUIRE(glm::abs(glm::dot(vertex6Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::abs(glm::dot(vertex6Normal, expectedNormal) - 1.0f) < 1e-6f);
+  }
+
+  SECTION("Test normal generation for TRIANGLE_STRIP") {
+    Model model = createTriangleStrip();
+
+    model.generateMissingNormalsSmooth();
+
+    REQUIRE(model.scene == 0);
+    REQUIRE(model.scenes.size() == 1);
+    REQUIRE(model.scenes[0].nodes.size() == 1);
+    REQUIRE(model.scenes[0].nodes[0] == 0);
+    REQUIRE(model.nodes.size() == 1);
+    REQUIRE(model.nodes[0].mesh == 0);
+    REQUIRE(model.meshes.size() == 1);
+    REQUIRE(model.meshes[0].primitives.size() == 1);
+
+    MeshPrimitive& primitive = model.meshes[0].primitives[0];
+    auto normalIt = primitive.attributes.find("NORMAL");
+    REQUIRE(normalIt != primitive.attributes.end());
+
+    AccessorView<glm::vec3> normalView(model, normalIt->second);
+    REQUIRE(normalView.status() == AccessorViewStatus::Valid);
+    REQUIRE(normalView.size() == 4);
+
+    const glm::vec3& vertex1Normal = normalView[1];
+    const glm::vec3& vertex2Normal = normalView[2];
+
+    glm::vec3 expectedNormal(0.0f, 1.0f, 0.0f);
+    expectedNormal = glm::normalize(expectedNormal);
+
+    REQUIRE(glm::abs(glm::dot(vertex1Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::abs(glm::dot(vertex2Normal, expectedNormal) - 1.0f) < 1e-6f);
+  }
+
+  SECTION("Test normal generation for TRIANGLE_STRIP") {
+    Model model = createTriangleFan();
+
+    model.generateMissingNormalsSmooth();
+
+    REQUIRE(model.scene == 0);
+    REQUIRE(model.scenes.size() == 1);
+    REQUIRE(model.scenes[0].nodes.size() == 1);
+    REQUIRE(model.scenes[0].nodes[0] == 0);
+    REQUIRE(model.nodes.size() == 1);
+    REQUIRE(model.nodes[0].mesh == 0);
+    REQUIRE(model.meshes.size() == 1);
+    REQUIRE(model.meshes[0].primitives.size() == 1);
+
+    MeshPrimitive& primitive = model.meshes[0].primitives[0];
+    auto normalIt = primitive.attributes.find("NORMAL");
+    REQUIRE(normalIt != primitive.attributes.end());
+
+    AccessorView<glm::vec3> normalView(model, normalIt->second);
+    REQUIRE(normalView.status() == AccessorViewStatus::Valid);
+    REQUIRE(normalView.size() == 6);
+
+    const glm::vec3& vertex0Normal = normalView[0];
+
+    glm::vec3 expectedNormal(0.0f, 1.0f, 0.0f);
+    expectedNormal = glm::normalize(expectedNormal);
+
+    REQUIRE(glm::abs(glm::dot(vertex0Normal, expectedNormal) - 1.0f) < 1e-6f);
+  }
 }
