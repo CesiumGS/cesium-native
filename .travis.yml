@@ -45,6 +45,7 @@ jobs:
       # on Clang 7, possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90397
       install:
         - ls /etc/apt/sources.list.d
+        - cat /etc/apt/sources.list.d/*
         - sudo apt-get update
         -  # Workaround for an apparent Ubuntu package problem.
         -  # See https://travis-ci.community/t/clang-10-was-recently-broken-on-linux-unmet-dependencies-for-clang-10-clang-tidy-10-valgrind/11527
