@@ -146,12 +146,38 @@ rapidjson::Document parseFeatureTable(
   size_t positionsByteStride = sizeof(glm::vec3);
   size_t positionsBufferSize = pointsLength * positionsByteStride;
 
-  size_t positionsBufferId = gltf.buffers.size();
-  CesiumGltf::Buffer& positionsBuffer = gltf.buffers.emplace_back();
-  positionsBuffer.cesium.data.resize(positionsBufferSize);
+  std::vector<std::byte> outPositionsBuffer(positionsBufferSize);
+  gsl::span<glm::vec3> outPositions(
+      reinterpret_cast<glm::vec3*>(outPositionsBuffer.data()),
+      pointsLength);
 
-  gsl::span<glm::vec3> outPositionsBuffer(
-      reinterpret_cast<glm::vec3*>(positionsBuffer.cesium.data.data()),
+  bool usingColors = false;
+  uint32_t colorsOffset = 0;
+
+  // TODO: look for other color formats as well
+  auto colorsIt = document.FindMember("RGB");
+  if (colorsIt != document.MemberEnd() && colorsIt->value.IsObject()) {
+    auto byteOffsetIt = colorsIt->value.FindMember("byteOffset");
+    ;
+    if (byteOffsetIt != colorsIt->value.MemberEnd() &&
+        byteOffsetIt->value.IsUint()) {
+      usingColors = true;
+      colorsOffset = byteOffsetIt->value.GetUint();
+    }
+  }
+
+  struct RGB24 {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+  };
+
+  size_t colorsByteStride = sizeof(RGB24);
+  size_t colorsBufferSize = pointsLength * colorsByteStride;
+
+  std::vector<std::byte> outColorsBuffer(colorsBufferSize);
+  gsl::span<RGB24> outColors(
+      reinterpret_cast<RGB24*>(outColorsBuffer.data()),
       pointsLength);
 
   // check if the point cloud is draco-compressed
@@ -183,6 +209,15 @@ rapidjson::Document parseFeatureTable(
             positionPropertyIt->value.IsInt()) {
 
           int32_t positionProperty = positionPropertyIt->value.GetInt();
+
+          std::optional<int32_t> colorProperty = std::nullopt;
+
+          auto colorPropertyIt = propertiesIt->value.FindMember("RGB");
+          if (colorPropertyIt != propertiesIt->value.MemberEnd() &&
+              colorPropertyIt->value.IsInt()) {
+            colorProperty = colorPropertyIt->value.GetInt();
+          }
+
           draco::Decoder decoder;
           draco::DecoderBuffer buffer;
           buffer.Init(
@@ -200,6 +235,7 @@ rapidjson::Document parseFeatureTable(
 
           const std::unique_ptr<draco::PointCloud>& pPointCloud =
               result.value();
+
           draco::PointAttribute* pPositionAttribute =
               pPointCloud->attribute(positionProperty);
 
@@ -213,15 +249,31 @@ rapidjson::Document parseFeatureTable(
             return document;
           }
 
-          draco::DataBuffer* decodedBuffer = pPositionAttribute->buffer();
+          draco::DataBuffer* decodedPositionBuffer =
+              pPositionAttribute->buffer();
           int64_t decodedPositionByteOffset = pPositionAttribute->byte_offset();
           int64_t decodedPositionByteStride = pPositionAttribute->byte_stride();
           for (uint32_t i = 0; i < pointsLength; ++i) {
-            outPositionsBuffer[i] = *reinterpret_cast<const glm::vec3*>(
-                decodedBuffer->data() + decodedPositionByteOffset +
+            outPositions[i] = *reinterpret_cast<const glm::vec3*>(
+                decodedPositionBuffer->data() + decodedPositionByteOffset +
                 decodedPositionByteStride * i);
           }
 
+          if (colorProperty) {
+            draco::PointAttribute* pColorAttribute =
+                pPointCloud->attribute(*colorProperty);
+
+            if (pColorAttribute) {
+              draco::DataBuffer* decodedColorBuffer = pColorAttribute->buffer();
+              int64_t decodedColorByteOffset = pColorAttribute->byte_offset();
+              int64_t decodedColorByteStride = pColorAttribute->byte_stride();
+              for (uint32_t i = 0; i < pointsLength; ++i) {
+                outColors[i] = *reinterpret_cast<const RGB24*>(
+                    decodedColorBuffer->data() + decodedColorByteOffset +
+                    decodedColorByteStride * i);
+              }
+            }
+          }
           usingDraco = true;
         }
       }
@@ -241,24 +293,34 @@ rapidjson::Document parseFeatureTable(
             quantizedPositionComponents[i]);
 
         // TODO: does this lose precision?
-        outPositionsBuffer[i / 3] =
+        outPositions[i / 3] =
             positionQuantized * glm::vec3(quantizedVolumeScale) / 65535.0f +
             glm::vec3(quantizedVolumeOffset);
       }
     } else {
       std::memcpy(
-          positionsBuffer.cesium.data.data(),
+          outPositionsBuffer.data(),
           featureTableBinaryData.data() + positionsOffset,
           positionsBufferSize);
     }
+
+    std::memcpy(
+        outColorsBuffer.data(),
+        featureTableBinaryData.data() + colorsOffset,
+        colorsBufferSize);
   }
+
+  size_t positionsBufferId = gltf.buffers.size();
+  CesiumGltf::Buffer& positionsBuffer = gltf.buffers.emplace_back();
+  positionsBuffer.byteLength = static_cast<int32_t>(positionsBufferSize);
+  positionsBuffer.cesium.data = std::move(outPositionsBuffer);
 
   size_t positionsBufferViewId = gltf.bufferViews.size();
   CesiumGltf::BufferView& positionsBufferView = gltf.bufferViews.emplace_back();
   positionsBufferView.buffer = static_cast<int32_t>(positionsBufferId);
   positionsBufferView.byteLength = static_cast<int64_t>(positionsBufferSize);
   positionsBufferView.byteOffset = 0;
-  positionsBufferView.byteStride = positionsByteStride;
+  positionsBufferView.byteStride = static_cast<int64_t>(positionsByteStride);
   positionsBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
   size_t positionAccessorId = gltf.accessors.size();
@@ -269,6 +331,28 @@ rapidjson::Document parseFeatureTable(
   positionsAccessor.count = int64_t(pointsLength);
   positionsAccessor.type = CesiumGltf::Accessor::Type::VEC3;
 
+  size_t colorsBufferId = gltf.buffers.size();
+  CesiumGltf::Buffer& colorsBuffer = gltf.buffers.emplace_back();
+  colorsBuffer.byteLength = static_cast<int32_t>(colorsBufferSize);
+  colorsBuffer.cesium.data = std::move(outColorsBuffer);
+
+  size_t colorsBufferViewId = gltf.bufferViews.size();
+  CesiumGltf::BufferView& colorsBufferView = gltf.bufferViews.emplace_back();
+  colorsBufferView.buffer = static_cast<int32_t>(colorsBufferId);
+  colorsBufferView.byteLength = static_cast<int64_t>(colorsBufferSize);
+  colorsBufferView.byteOffset = 0;
+  colorsBufferView.byteStride = static_cast<int64_t>(colorsByteStride);
+  colorsBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+  size_t colorAccessorId = gltf.accessors.size();
+  CesiumGltf::Accessor& colorAccessor = gltf.accessors.emplace_back();
+  colorAccessor.bufferView = static_cast<int32_t>(colorsBufferViewId);
+  colorAccessor.byteOffset = 0;
+  colorAccessor.componentType =
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE;
+  colorAccessor.count = int64_t(pointsLength);
+  colorAccessor.type = CesiumGltf::Accessor::Type::VEC3;
+
   // Create a single node, with a single mesh, with a single primitive.
   size_t meshId = gltf.meshes.size();
   CesiumGltf::Mesh& mesh = gltf.meshes.emplace_back();
@@ -277,6 +361,9 @@ rapidjson::Document parseFeatureTable(
   primitive.attributes.emplace(
       "POSITION",
       static_cast<int32_t>(positionAccessorId));
+
+  // TODO: send as regular vertex colors?
+  primitive.attributes.emplace("RGB", static_cast<int32_t>(colorAccessorId));
 
   CesiumGltf::Node& node = gltf.nodes.emplace_back();
   std::memcpy(
