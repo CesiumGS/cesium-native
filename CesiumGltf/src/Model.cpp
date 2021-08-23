@@ -214,22 +214,24 @@ void Model::merge(Model&& rhs) {
 }
 
 namespace {
+template <typename TCallback>
 void forEachPrimitiveInMeshObject(
     const glm::dmat4x4& transform,
     const Model& model,
     const Node& node,
     const Mesh& mesh,
-    std::function<Model::ForEachPrimitiveInSceneConstCallback>& callback) {
+    TCallback& callback) {
   for (const MeshPrimitive& primitive : mesh.primitives) {
     callback(model, node, mesh, primitive, transform);
   }
 }
 
+template <typename TCallback>
 void forEachPrimitiveInNodeObject(
     const glm::dmat4x4& transform,
     const Model& model,
     const Node& node,
-    std::function<Model::ForEachPrimitiveInSceneConstCallback>& callback) {
+    TCallback& callback) {
   static constexpr std::array<double, 16> identityMatrix = {
       1.0,
       0.0,
@@ -308,11 +310,12 @@ void forEachPrimitiveInNodeObject(
   }
 }
 
+template <typename TCallback>
 void forEachPrimitiveInSceneObject(
     const glm::dmat4x4& transform,
     const Model& model,
     const Scene& scene,
-    std::function<Model::ForEachPrimitiveInSceneConstCallback>& callback) {
+    TCallback& callback) {
   for (int nodeID : scene.nodes) {
     if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
       forEachPrimitiveInNodeObject(
