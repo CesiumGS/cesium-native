@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <glm/common.hpp>
+#include <glm/gtc/epsilon.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
@@ -13,6 +14,8 @@
 #include <vector>
 
 using namespace CesiumGltf;
+
+#define DEFAULT_EPSILON 1e-6f
 
 TEST_CASE("Test forEachPrimitive") {
 
@@ -401,13 +404,15 @@ TEST_CASE("Test smooth normal generation") {
     glm::vec3 expectedNormal(-1.0f, -1.0f, -1.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(glm::abs(glm::dot(vertex0Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
 
     const glm::vec3& vertex6Normal = normalView[6];
     expectedNormal = glm::vec3(1.0f, 1.0f, 1.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(glm::abs(glm::dot(vertex6Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex6Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 
   SECTION("Test normal generation for TRIANGLE_STRIP") {
@@ -438,8 +443,10 @@ TEST_CASE("Test smooth normal generation") {
     glm::vec3 expectedNormal(0.0f, 1.0f, 0.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(glm::abs(glm::dot(vertex1Normal, expectedNormal) - 1.0f) < 1e-6f);
-    REQUIRE(glm::abs(glm::dot(vertex2Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex1Normal, expectedNormal, DEFAULT_EPSILON)));
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex2Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 
   SECTION("Test normal generation for TRIANGLE_STRIP") {
@@ -469,6 +476,7 @@ TEST_CASE("Test smooth normal generation") {
     glm::vec3 expectedNormal(0.0f, 1.0f, 0.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(glm::abs(glm::dot(vertex0Normal, expectedNormal) - 1.0f) < 1e-6f);
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 }
