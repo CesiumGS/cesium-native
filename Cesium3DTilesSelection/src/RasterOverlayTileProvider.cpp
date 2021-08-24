@@ -116,8 +116,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [url, options = options](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+          [options](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
@@ -125,7 +124,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   std::nullopt,
                   std::move(options.rectangle),
                   std::move(options.credits),
-                  {"Image request for " + url + " failed."},
+                  {"Image request for " + pRequest->url() + " failed."},
                   {},
                   options.moreDetailAvailable};
             }
@@ -134,7 +133,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                 pResponse->statusCode() >= 300) {
               std::string message = "Image response code " +
                                     std::to_string(pResponse->statusCode()) +
-                                    " for " + url;
+                                    " for " + pRequest->url();
               return LoadedRasterOverlayImage{
                   std::nullopt,
                   std::move(options.rectangle),
@@ -158,7 +157,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   std::nullopt,
                   std::move(options.rectangle),
                   std::move(options.credits),
-                  {"Image response for " + url + " is empty."},
+                  {"Image response for " + pRequest->url() + " is empty."},
                   {},
                   options.moreDetailAvailable};
             }
@@ -169,10 +168,10 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                 RasterOverlayTileProvider::_gltfReader.readImage(data);
 
             if (!loadedImage.errors.empty()) {
-              loadedImage.errors.push_back("Image url: " + url);
+              loadedImage.errors.push_back("Image url: " + pRequest->url());
             }
             if (!loadedImage.warnings.empty()) {
-              loadedImage.warnings.push_back("Image url: " + url);
+              loadedImage.warnings.push_back("Image url: " + pRequest->url());
             }
 
             return LoadedRasterOverlayImage{

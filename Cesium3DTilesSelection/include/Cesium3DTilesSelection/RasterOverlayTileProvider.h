@@ -119,6 +119,8 @@ public:
   /**
    * Constructs a placeholder tile provider.
    *
+   * @see RasterOverlayTileProvider::isPlaceholder
+   *
    * @param owner The raster overlay that owns this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
@@ -133,7 +135,7 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param owner The {@link RasterOverlay}. May not be `nullptr`.
+   * @param owner The raster overlay that owns this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.

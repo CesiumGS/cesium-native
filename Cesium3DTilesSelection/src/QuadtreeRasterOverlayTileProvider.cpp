@@ -55,16 +55,6 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
 std::vector<CesiumAsync::SharedFuture<
     QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
-    const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-    double targetGeometricError) {
-  return this->mapRasterTilesToGeometryTile(
-      projectRectangleSimple(this->getProjection(), geometryRectangle),
-      targetGeometricError);
-}
-
-std::vector<CesiumAsync::SharedFuture<
-    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
-QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> result;
@@ -490,9 +480,6 @@ void blitImage(
     return;
   }
 
-  // Pixel coordinates are measured from the top left.
-  // Projected rectangles are measured from the bottom left.
-
   PixelRectangle targetPixels =
       computePixelRectangle(target, targetRectangle, *overlap);
   PixelRectangle sourcePixels =
@@ -724,7 +711,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
-  result.moreDetailAvailable = true; // TODO
+  result.moreDetailAvailable = false;
 
   ImageCesium& target = result.image.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;
@@ -739,6 +726,8 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     if (!loaded.image) {
       continue;
     }
+
+    result.moreDetailAvailable |= loaded.moreDetailAvailable;
 
     blitImage(
         target,
