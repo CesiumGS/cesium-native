@@ -7,9 +7,12 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
+#include "CesiumGeometry/AxisTransforms.h"
+#include "CesiumGeospatial/Transforms.h"
 #include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
+#include <cstddef>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -115,6 +118,78 @@ bool Tile::isRenderable() const noexcept {
   return false;
 }
 
+namespace {
+int32_t getTextureCoordinatesForProjection(
+    std::vector<CesiumGeospatial::Projection>& projections,
+    const Projection& projection) {
+  auto existingCoordinatesIt =
+      std::find(projections.begin(), projections.end(), projection);
+  if (existingCoordinatesIt == projections.end()) {
+    // New set of texture coordinates.
+    projections.push_back(projection);
+    return int32_t(projections.size()) - 1;
+  } else {
+    // Use previously-added texture coordinates.
+    return static_cast<int32_t>(existingCoordinatesIt - projections.begin());
+  }
+}
+
+void mapRasterOverlaysToTile(
+    Tile& tile,
+    const RasterOverlayCollection& overlays,
+    std::vector<CesiumGeospatial::Projection>& projections) {
+
+  assert(tile.getMappedRasterTiles().empty());
+
+  const CesiumGeospatial::GlobeRectangle* pRectangle =
+      Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+  if (!pRectangle) {
+    return;
+  }
+
+  // Find the unique projections; we'll create texture coordinates for each
+  // later.
+  for (const auto& pOverlay : overlays) {
+    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
+
+    // Project the globe rectangle to the raster's coordinate system.
+    // TODO: we can compute a much more precise projected rectangle by
+    //       projecting each vertex, but that would require us to have
+    //       geometry first.
+    Rectangle overlayRectangle =
+        projectRectangleSimple(pProvider->getProjection(), *pRectangle);
+
+    IntrusivePointer<RasterOverlayTile> pRaster =
+        pOverlay->getTileProvider()->getTile(
+            overlayRectangle,
+            tile.getGeometricError());
+    if (pRaster) {
+      RasterMappedTo3DTile& mappedTile =
+          tile.getMappedRasterTiles().emplace_back(pRaster);
+
+      const CesiumGeospatial::Projection& projection =
+          pRaster->getOverlay().getTileProvider()->getProjection();
+
+      int32_t projectionID =
+          getTextureCoordinatesForProjection(projections, projection);
+
+      mappedTile.setTextureCoordinateID(projectionID);
+
+      if (pRaster->getState() != RasterOverlayTile::LoadState::Placeholder) {
+        pOverlay->getTileProvider()->loadTileThrottled(*pRaster);
+      }
+    }
+  }
+
+  // Add geographic texture coordinates for water mask.
+  if (tile.getTileset()->getOptions().contentOptions.enableWaterMask) {
+    getTextureCoordinatesForProjection(
+        projections,
+        CesiumGeospatial::GeographicProjection());
+  }
+}
+} // namespace
+
 void Tile::loadContent() {
   if (this->getState() != LoadState::Unloaded) {
     // No need to load geometry, but give previously-throttled
@@ -144,73 +219,7 @@ void Tile::loadContent() {
   // aligned like geographic or web mercator, because we won't know our raster
   // rectangle until we can project each vertex.
 
-  std::vector<Projection> projections;
-
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTilesSelection::Impl::obtainGlobeRectangle(
-          &this->getBoundingVolume());
-  if (pRectangle && tileset.supportsRasterOverlays()) {
-    // Map overlays to this tile.
-    RasterOverlayCollection& overlays = tileset.getOverlays();
-    // gsl::span<RasterOverlayTileProvider*> providers =
-    // overlays.getTileProviders();
-
-    // Map raster tiles to a new vector first, and then replace the old one.
-    // Doing it in this order ensures that tiles that are already loaded and
-    // that we still need are not freed too soon.
-    std::vector<RasterMappedTo3DTile> newRasterTiles;
-
-    for (auto& overlay : overlays) {
-      overlay->getTileProvider()->mapRasterTilesToGeometryTile(
-          *pRectangle,
-          this->getGeometricError(),
-          newRasterTiles);
-    }
-
-    this->_rasterTiles = std::move(newRasterTiles);
-
-    // Find the unique projections; we'll create texture coordinates for each
-    // later.
-    // TODO: actually find the unique projections, instead of assuming there's
-    // only one projection and it's Web Mercator. The code below mostly works,
-    // except that we don't currently have a way to add texture coordinates to
-    // already-loaded tiles that didn't have them originally.
-
-    // uint32_t projectionID = 0;
-
-    // for (RasterMappedTo3DTile& mappedTile : this->_rasterTiles) {
-    //     std::shared_ptr<RasterOverlayTile> pTile =
-    //     mappedTile.getLoadingTile(); if (!pTile) {
-    //         pTile = mappedTile.getReadyTile();
-    //         if (!pTile) {
-    //             continue;
-    //         }
-    //     }
-
-    //     const CesiumGeospatial::Projection& projection =
-    //     pTile->getOverlay().getTileProvider()->getProjection();
-
-    //     auto existingCoordinatesIt = std::find(projections.begin(),
-    //     projections.end(), projection); if (existingCoordinatesIt ==
-    //     projections.end()) {
-    //         projections.push_back(projection);
-
-    //         mappedTile.setTextureCoordinateID(projectionID);
-    //         ++projectionID;
-    //     } else {
-    //         // Use previously-added texture coordinates.
-    //         mappedTile.setTextureCoordinateID(static_cast<uint32_t>(existingCoordinatesIt
-    //         - projections.begin()));
-    //     }
-    // }
-
-    projections.push_back(WebMercatorProjection());
-
-    // Only add geographic coordinates for the watermask, currently.
-    if (this->getTileset()->getOptions().contentOptions.enableWaterMask) {
-      projections.push_back(GeographicProjection());
-    }
-  }
+  std::vector<CesiumGeospatial::Projection> projections;
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
@@ -224,6 +233,7 @@ void Tile::loadContent() {
       // We can't upsample this tile until its parent tile is done loading.
       if (this->getParent() &&
           this->getParent()->getState() == LoadState::Done) {
+        this->loadOverlays(projections);
         this->upsampleParent(std::move(projections));
       } else {
         // Try again later. Push the parent tile loading along if we can.
@@ -239,6 +249,8 @@ void Tile::loadContent() {
     return;
   }
 
+  this->loadOverlays(projections);
+
   struct LoadResult {
     LoadState state;
     std::unique_ptr<TileContentLoadResult> pContent;
@@ -248,87 +260,90 @@ void Tile::loadContent() {
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
-      .thenInWorkerThread(
-          [loadInput = std::move(loadInput),
-           projections = std::move(projections),
-           gltfUpAxis,
-           pPrepareRendererResources =
-               tileset.getExternals().pPrepareRendererResources,
-           pLogger = tileset.getExternals().pLogger](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            CESIUM_TRACE("loadContent worker thread");
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = 0;
-              return LoadResult{
-                  LoadState::FailedTemporarily,
-                  std::move(pLoadResult),
-                  nullptr};
+      .thenInWorkerThread([loadInput = std::move(loadInput),
+                           projections = std::move(projections),
+                           gltfUpAxis,
+                           pPrepareRendererResources =
+                               tileset.getExternals().pPrepareRendererResources,
+                           pLogger = tileset.getExternals().pLogger](
+                              std::shared_ptr<IAssetRequest>&&
+                                  pRequest) mutable {
+        CESIUM_TRACE("loadContent worker thread");
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Did not receive a valid response for tile content {}",
+              pRequest->url());
+          auto pLoadResult = std::make_unique<TileContentLoadResult>();
+          pLoadResult->httpStatusCode = 0;
+          return LoadResult{
+              LoadState::FailedTemporarily,
+              std::move(pLoadResult),
+              nullptr};
+        }
+
+        if (pResponse->statusCode() != 0 &&
+            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Received status code {} for tile content {}",
+              pResponse->statusCode(),
+              pRequest->url());
+          auto pLoadResult = std::make_unique<TileContentLoadResult>();
+          pLoadResult->httpStatusCode = pResponse->statusCode();
+          return LoadResult{
+              LoadState::FailedTemporarily,
+              std::move(pLoadResult),
+              nullptr};
+        }
+
+        loadInput.data = pResponse->data();
+        loadInput.contentType = pResponse->contentType();
+        loadInput.url = pRequest->url();
+        std::unique_ptr<TileContentLoadResult> pContent =
+            TileContentFactory::createContent(loadInput);
+
+        void* pRendererResources = nullptr;
+        if (pContent) {
+          pContent->httpStatusCode = pResponse->statusCode();
+
+          if (pContent->model) {
+
+            CesiumGltf::Model& model = pContent->model.value();
+
+            // TODO The `extras` are currently the only way to pass
+            // arbitrary information to the consumer, so the up-axis
+            // is stored here:
+            model.extras["gltfUpAxis"] = gltfUpAxis;
+
+            const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
+            // TODO: apply gltf up axis and RTC_CENTER
+            const glm::dmat4& transform = loadInput.tileTransform;
+
+            Tile::generateTextureCoordinates(
+                model,
+                transform /** CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP*/,
+                boundingVolume,
+                projections);
+
+            if (pPrepareRendererResources) {
+              CESIUM_TRACE("prepareInLoadThread");
+              pRendererResources =
+                  pPrepareRendererResources->prepareInLoadThread(
+                      pContent->model.value(),
+                      transform);
             }
+          }
+        }
 
-            if (pResponse->statusCode() != 0 &&
-                (pResponse->statusCode() < 200 ||
-                 pResponse->statusCode() >= 300)) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Received status code {} for tile content {}",
-                  pResponse->statusCode(),
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = pResponse->statusCode();
-              return LoadResult{
-                  LoadState::FailedTemporarily,
-                  std::move(pLoadResult),
-                  nullptr};
-            }
+        LoadResult result;
+        result.state = LoadState::ContentLoaded;
+        result.pContent = std::move(pContent);
+        result.pRendererResources = pRendererResources;
 
-            loadInput.data = pResponse->data();
-            loadInput.contentType = pResponse->contentType();
-            loadInput.url = pRequest->url();
-            std::unique_ptr<TileContentLoadResult> pContent =
-                TileContentFactory::createContent(loadInput);
-
-            void* pRendererResources = nullptr;
-            if (pContent) {
-              pContent->httpStatusCode = pResponse->statusCode();
-
-              if (pContent->model) {
-
-                // TODO The `extras` are currently the only way to pass
-                // arbitrary information to the consumer, so the up-axis
-                // is stored here:
-                pContent->model.value().extras["gltfUpAxis"] = gltfUpAxis;
-
-                const BoundingVolume& boundingVolume =
-                    loadInput.tileBoundingVolume;
-                Tile::generateTextureCoordinates(
-                    pContent->model.value(),
-                    boundingVolume,
-                    projections);
-
-                if (pPrepareRendererResources) {
-                  CESIUM_TRACE("prepareInLoadThread");
-                  const glm::dmat4& transform = loadInput.tileTransform;
-                  pRendererResources =
-                      pPrepareRendererResources->prepareInLoadThread(
-                          pContent->model.value(),
-                          transform);
-                }
-              }
-            }
-
-            LoadResult result;
-            result.state = LoadState::ContentLoaded;
-            result.pContent = std::move(pContent);
-            result.pRendererResources = pRendererResources;
-
-            return result;
-          })
+        return result;
+      })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
@@ -553,7 +568,14 @@ void Tile::update(
         this->setState(LoadState::Failed);
         break;
       case FailedTileAction::Retry:
-        this->setState(LoadState::Unloaded);
+        // Technically we don't need to completely unload the tile. We only
+        // need to re-request the tile content. But the transition from
+        // Unloaded -> LoadingContent does other things too (creating raster
+        // overlays for one thing), so we'll call unloadContent to keep our
+        // state machine sane (-ish). Refreshing an ion token could be a bit
+        // faster if we did smarter things here, but it's not worth the
+        // trouble.
+        this->unloadContent();
         break;
       case FailedTileAction::Wait:
         // Do nothing for now.
@@ -661,8 +683,14 @@ void Tile::update(
     }
   }
 
+  const CesiumGeospatial::GlobeRectangle* pRectangle =
+      Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+  if (!pRectangle) {
+    return;
+  }
+
   if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays()) {
+      this->getTileset()->supportsRasterOverlays() && pRectangle) {
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
@@ -675,7 +703,7 @@ void Tile::update(
             pLoadingTile->getOverlay().getTileProvider();
 
         // Try to replace this placeholder with real tiles.
-        if (!pProvider->isPlaceholder()) {
+        if (pProvider && !pProvider->isPlaceholder()) {
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
               static_cast<
@@ -683,22 +711,21 @@ void Tile::update(
                   i));
           --i;
 
-          const CesiumGeospatial::GlobeRectangle* pRectangle =
-              Cesium3DTilesSelection::Impl::obtainGlobeRectangle(
-                  &this->getBoundingVolume());
-          pProvider->mapRasterTilesToGeometryTile(
-              *pRectangle,
-              this->getGeometricError(),
-              this->_rasterTiles);
+          Rectangle projectedRectangle = projectRectangleSimple(
+              pProvider->getProjection(),
+              *pRectangle);
+          CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
+              pProvider->getTile(projectedRectangle, this->getGeometricError());
+          this->_rasterTiles.emplace_back(pTile);
         }
 
         continue;
       }
 
-      RasterMappedTo3DTile::MoreDetailAvailable moreDetailAvailable =
+      RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
       moreRasterDetailAvailable |=
-          moreDetailAvailable == RasterMappedTo3DTile::MoreDetailAvailable::Yes;
+          moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
     }
 
     // If this tile still has no children after it's done loading, but it does
@@ -753,19 +780,20 @@ void Tile::setState(LoadState value) noexcept {
 /*static*/ std::optional<CesiumGeospatial::BoundingRegion>
 Tile::generateTextureCoordinates(
     CesiumGltf::Model& model,
+    const glm::dmat4& transform,
     const BoundingVolume& boundingVolume,
-    const std::vector<Projection>& projections) {
+    const std::vector<CesiumGeospatial::Projection>& projections) {
   std::optional<CesiumGeospatial::BoundingRegion> result;
 
   // Generate texture coordinates for each projection.
   if (!projections.empty()) {
     const CesiumGeospatial::GlobeRectangle* pRectangle =
-        Cesium3DTilesSelection::Impl::obtainGlobeRectangle(&boundingVolume);
-
+        Impl::obtainGlobeRectangle(&boundingVolume);
     if (pRectangle) {
       for (size_t i = 0; i < projections.size(); ++i) {
         const Projection& projection = projections[i];
-        uint32_t projectionID = static_cast<uint32_t>(i);
+
+        int textureCoordinateID = static_cast<int32_t>(i);
 
         CesiumGeometry::Rectangle rectangle =
             projectRectangleSimple(projection, *pRectangle);
@@ -773,7 +801,8 @@ Tile::generateTextureCoordinates(
         CesiumGeospatial::BoundingRegion boundingRegion =
             GltfContent::createRasterOverlayTextureCoordinates(
                 model,
-                projectionID,
+                transform,
+                textureCoordinateID,
                 projection,
                 rectangle);
         if (result) {
@@ -831,6 +860,7 @@ void Tile::upsampleParent(
         if (pContent->model) {
           pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(
               pContent->model.value(),
+              transform,
               boundingVolume,
               projections);
         }
@@ -859,6 +889,19 @@ void Tile::upsampleParent(
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(LoadState::Failed);
       });
+}
+
+void Tile::loadOverlays(
+    std::vector<CesiumGeospatial::Projection>& projections) {
+  assert(this->_rasterTiles.empty());
+  assert(this->_state == LoadState::ContentLoading);
+
+  Tileset* pTileset = this->getTileset();
+
+  if (pTileset->supportsRasterOverlays()) {
+    RasterOverlayCollection& overlays = pTileset->getOverlays();
+    mapRasterOverlaysToTile(*this, overlays, projections);
+  }
 }
 
 } // namespace Cesium3DTilesSelection

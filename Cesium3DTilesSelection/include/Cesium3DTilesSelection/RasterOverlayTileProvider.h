@@ -5,15 +5,12 @@
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 #include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include <cassert>
 #include <optional>
 #include <spdlog/fwd.h>
-#include <unordered_map>
 
 namespace Cesium3DTilesSelection {
 
@@ -25,7 +22,6 @@ class IPrepareRendererResources;
  * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
  */
 struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
-
   /**
    * @brief The loaded image.
    *
@@ -33,6 +29,14 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
    * the `errors` vector will contain the corresponding error messages.
    */
   std::optional<CesiumGltf::ImageCesium> image;
+
+  /**
+   * @brief The projected rectangle defining the bounds of this image.
+   *
+   * The rectangle extends from the left side of the leftmost pixel to the
+   * right side of the rightmost pixel, and similar for the vertical direction.
+   */
+  CesiumGeometry::Rectangle rectangle;
 
   /**
    * @brief The {@link Credit} objects that decribe the attributions that
@@ -54,6 +58,12 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
   // always be empty, but it might contain warnings in the future,
   // when other image types or loaders are used.
   std::vector<std::string> warnings;
+
+  /**
+   * @brief Whether more detailed data, beyond this image, is available within
+   * the bounds of this image.
+   */
+  bool moreDetailAvailable;
 };
 
 /**
@@ -61,12 +71,24 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
  */
 struct LoadTileImageFromUrlOptions {
   /**
+   * @brief The rectangle definining the bounds of the image being loaded,
+   * expressed in the {@link RasterOverlayTileProvider}'s projection.
+   */
+  CesiumGeometry::Rectangle rectangle = {};
+
+  /**
    * @brief The credits to display with this tile.
    *
    * This property is copied verbatim to the
    * {@link LoadedRasterOverlayImage::credits} property.
    */
   std::vector<Credit> credits = {};
+
+  /**
+   * @brief Whether more detailed data, beyond this image, is available within
+   * the bounds of this image.
+   */
+  bool moreDetailAvailable = true;
 
   /**
    * @brief Whether empty (zero length) images are accepted as a valid
@@ -121,12 +143,6 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    * @param projection The {@link CesiumGeospatial::Projection}.
-   * @param tilingScheme The {@link CesiumGeometry::QuadtreeTilingScheme}.
-   * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
-   * @param minimumLevel The minimum tile level.
-   * @param maximumLevel The maximum tile level.
-   * @param imageWidth The image width.
-   * @param imageHeight The image height.
    */
   RasterOverlayTileProvider(
       RasterOverlay& owner,
@@ -136,13 +152,7 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection,
-      const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
-      const CesiumGeometry::Rectangle& coverageRectangle,
-      uint32_t minimumLevel,
-      uint32_t maximumLevel,
-      uint32_t imageWidth,
-      uint32_t imageHeight) noexcept;
+      const CesiumGeospatial::Projection& projection) noexcept;
 
   /** @brief Default destructor. */
   virtual ~RasterOverlayTileProvider() {}
@@ -200,97 +210,23 @@ public:
   }
 
   /**
-   * @brief Returns the {@link CesiumGeometry::QuadtreeTilingScheme} of this
-   * instance.
-   */
-  const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept {
-    return this->_tilingScheme;
-  }
-
-  /**
-   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
-   * instance.
-   */
-  const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept {
-    return this->_coverageRectangle;
-  }
-
-  /**
-   * @brief Returns the minimum tile level of this instance.
-   */
-  uint32_t getMinimumLevel() const noexcept { return this->_minimumLevel; }
-
-  /**
-   * @brief Returns the maximum tile level of this instance.
-   */
-  uint32_t getMaximumLevel() const noexcept { return this->_maximumLevel; }
-
-  /**
-   * @brief Returns the image width of this instance.
-   */
-  uint32_t getWidth() const noexcept { return this->_imageWidth; }
-
-  /**
-   * @brief Returns the image height of this instance.
-   */
-  uint32_t getHeight() const noexcept { return this->_imageHeight; }
-
-  /**
    * @brief Returns the {@link RasterOverlayTile} with the given ID, creating it
    * if necessary.
    *
-   * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
+   * @param id The {@link TileID} of the tile to obtain.
    * @return The tile.
    */
-  CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTile(const CesiumGeometry::QuadtreeTileID& id);
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
+      const CesiumGeometry::Rectangle& imageryRectangle,
+      double targetGeometricError);
 
   /**
-   * @brief Returns the {@link RasterOverlayTile} with the given ID, or
-   * `nullptr` if there is no such tile.
+   * @brief Whether the given raster tile has more detail.
    *
-   * @param id The {@link CesiumGeometry::QuadtreeTileID} of the tile to obtain.
-   * @return The tile, or `nullptr`.
+   * If so its children may be subdivided to use the more detailed raster
+   * tiles.
    */
-  CesiumUtility::IntrusivePointer<RasterOverlayTile>
-  getTileWithoutCreating(const CesiumGeometry::QuadtreeTileID& id);
-
-  /**
-   * Computes the appropriate tile level of detail (zoom level) for a given
-   * geometric error near a given projected position. The position is required
-   * because coordinates in many projections will map to real-world meters
-   * differently in different parts of the globe.
-   *
-   * @param geometricError The geometric error for which to compute a level.
-   * @param position The projected position defining the area of interest.
-   * @return The level that is closest to the desired geometric error.
-   */
-  uint32_t computeLevelFromGeometricError(
-      double geometricError,
-      const glm::dvec2& position) const noexcept;
-
-  /**
-   * @brief Map raster tiles to geometry tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param geometryRectangle The rectangle.
-   * @param targetGeometricError The geometric error.
-   * @param outputRasterTiles The raster tiles.
-   * @param outputIndex The output index.
-   */
-  void mapRasterTilesToGeometryTile(
-      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex = std::nullopt);
-
-  /** @copydoc mapRasterTilesToGeometryTile */
-  void mapRasterTilesToGeometryTile(
-      const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError,
-      std::vector<RasterMappedTo3DTile>& outputRasterTiles,
-      std::optional<size_t> outputIndex = std::nullopt);
+  virtual bool hasMoreDetailsAvailable(const TileID& tileID) const = 0;
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.
@@ -365,11 +301,11 @@ protected:
   /**
    * @brief Loads the image for a tile.
    *
-   * @param tileID The ID of the tile to load.
+   * @param overlayTile The overlay tile for which to load the image.
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
+  loadTileImage(RasterOverlayTile& overlayTile) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -410,6 +346,7 @@ private:
    */
   void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
+private:
   RasterOverlay* _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
@@ -417,16 +354,6 @@ private:
   std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
-  CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
-  CesiumGeometry::Rectangle _coverageRectangle;
-  uint32_t _minimumLevel;
-  uint32_t _maximumLevel;
-  uint32_t _imageWidth;
-  uint32_t _imageHeight;
-  std::unordered_map<
-      CesiumGeometry::QuadtreeTileID,
-      std::unique_ptr<RasterOverlayTile>>
-      _tiles;
   std::unique_ptr<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;

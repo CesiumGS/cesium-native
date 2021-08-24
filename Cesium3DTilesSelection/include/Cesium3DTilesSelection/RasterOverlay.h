@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <spdlog/fwd.h>
+#include <string>
 
 namespace Cesium3DTilesSelection {
 
@@ -42,8 +43,15 @@ public:
    *
    * @param options The {@link RasterOverlayOptions} for this instance.
    */
-  RasterOverlay(const RasterOverlayOptions& options = RasterOverlayOptions());
+  RasterOverlay(
+      const std::string& name,
+      const RasterOverlayOptions& options = RasterOverlayOptions());
   virtual ~RasterOverlay();
+
+  /**
+   * @brief Gets the name of this overlay.
+   */
+  const std::string& getName() const { return this->_name; }
 
   /**
    * @brief Gets options for this overlay.
@@ -159,6 +167,7 @@ public:
   void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
 
 private:
+  std::string _name;
   std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
   std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;
   std::unique_ptr<RasterOverlay> _pSelf;

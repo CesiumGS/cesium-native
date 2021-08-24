@@ -2,6 +2,8 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "CesiumUtility/Tracing.h"
 
+using namespace CesiumGeometry;
+
 namespace Cesium3DTilesSelection {
 
 RasterOverlayCollection::RasterOverlayCollection(Tileset& tileset) noexcept
@@ -30,11 +32,11 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   // Add this overlay to existing geometry tiles.
   this->_pTileset->forEachLoadedTile([pOverlayRaw](Tile& tile) {
-    // The tile rectangle doesn't matter for a placeholder.
-    pOverlayRaw->getPlaceholder()->mapRasterTilesToGeometryTile(
-        CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
-        tile.getGeometricError(),
-        tile.getMappedRasterTiles());
+    // The tile rectangle and geometric error don't matter for a placeholder.
+    if (tile.getState() != Tile::LoadState::Unloaded) {
+      tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
+          pOverlayRaw->getPlaceholder()->getTile(Rectangle(), 0.0)));
+    }
   });
 }
 

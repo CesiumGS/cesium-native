@@ -12,6 +12,7 @@
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
 #include <spdlog/fwd.h>
+#include <string>
 
 namespace Cesium3DTilesSelection {
 
@@ -65,7 +66,8 @@ public:
    */
   static CesiumGeospatial::BoundingRegion createRasterOverlayTextureCoordinates(
       CesiumGltf::Model& gltf,
-      uint32_t textureCoordinateID,
+      const glm::dmat4& transform,
+      int32_t textureCoordinateID,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
 

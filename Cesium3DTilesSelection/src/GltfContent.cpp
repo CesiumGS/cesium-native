@@ -187,7 +187,8 @@ static int generateOverlayTextureCoordinates(
 /*static*/ CesiumGeospatial::BoundingRegion
 GltfContent::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
-    uint32_t textureCoordinateID,
+    const glm::dmat4& transform,
+    int32_t textureCoordinateID,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& rectangle) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::"
@@ -208,7 +209,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
   Gltf::forEachPrimitiveInScene(
       gltf,
       -1,
-      [&positionAccessorsToTextureCoordinateAccessor,
+      [&transform,
+       &positionAccessorsToTextureCoordinateAccessor,
        &attributeName,
        &projection,
        &rectangle,
@@ -222,7 +224,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           CesiumGltf::Node& /*node*/,
           CesiumGltf::Mesh& /*mesh*/,
           CesiumGltf::MeshPrimitive& primitive,
-          const glm::dmat4& transform) {
+          const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {
           return;
@@ -253,7 +255,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
             generateOverlayTextureCoordinates(
                 gltf_,
                 positionAccessorIndex,
-                transform,
+                transform * nodeTransform,
                 projection,
                 rectangle,
                 west,

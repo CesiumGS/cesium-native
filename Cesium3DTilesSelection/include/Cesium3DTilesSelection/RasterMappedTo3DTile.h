@@ -45,21 +45,17 @@ public:
    *
    * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the
    * geometry.
-   * @param textureCoordinateRectangle The texture coordinate rectangle that
-   * indicates the region that is covered by the raster overlay tile.
    */
   RasterMappedTo3DTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
-      const CesiumGeometry::Rectangle& textureCoordinateRectangle);
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile);
 
   /**
-   * @brief Returns a {@link RasterOverlayTile} that serves as a placeholder
-   * while loading.
+   * @brief Returns a {@link RasterOverlayTile} that is currently loading.
    *
    * The caller has to check the exact state of this tile, using
    * {@link Tile::getState}.
    *
-   * @return The placeholder tile while loading, or `nullptr`.
+   * @return The tile that is loading, or `nullptr`.
    */
   RasterOverlayTile* getLoadingTile() noexcept {
     return this->_pLoadingTile.get();
@@ -72,7 +68,7 @@ public:
 
   /**
    * @brief Returns the {@link RasterOverlayTile} that represents the imagery
-   * data.
+   * data that is ready to render.
    *
    * This will be `nullptr` when the tile data has not yet been loaded.
    *
@@ -94,7 +90,7 @@ public:
    *
    * @return The texture coordinate ID.
    */
-  uint32_t getTextureCoordinateID() const noexcept {
+  int32_t getTextureCoordinateID() const noexcept {
     return this->_textureCoordinateID;
   }
 
@@ -105,23 +101,8 @@ public:
    *
    * @param textureCoordinateID The ID.
    */
-  void setTextureCoordinateID(uint32_t textureCoordinateID) noexcept {
+  void setTextureCoordinateID(int32_t textureCoordinateID) noexcept {
     this->_textureCoordinateID = textureCoordinateID;
-  }
-
-  /**
-   * @brief The texture coordinate range in which the raster is applied.
-   *
-   * This is part of a unit rectangle, where the rectangle
-   * `(minimumX, minimumY, maximumX, maximumY)` corresponds
-   * to the `(west, south, east, north)` of the tile region,
-   * and each coordinate is in the range `[0,1]`.
-   *
-   * @return The texture coordinate rectangle.
-   */
-  const CesiumGeometry::Rectangle&
-  getTextureCoordinateRectangle() const noexcept {
-    return this->_textureCoordinateRectangle;
   }
 
   /**
@@ -157,28 +138,6 @@ public:
   AttachmentState getState() const noexcept { return this->_state; }
 
   /**
-   * @brief Tile availability states.
-   *
-   * Values of this enumeration are returned by {@link update}, which
-   * in turn is called by {@link Tile::update}. These values are used
-   * to determine whether a leaf tile has been reached, but the
-   * associated raster tiles are not yet the most detailed ones that
-   * are available.
-   */
-  enum class MoreDetailAvailable {
-
-    /** @brief There are no more detailed raster tiles. */
-    No = 0,
-
-    /** @brief There are more detailed raster tiles. */
-    Yes = 1,
-
-    /** @brief It is not known whether more detailed raster tiles are available.
-     */
-    Unknown = 2
-  };
-
-  /**
    * @brief Update this tile during the update of its owner.
    *
    * This is only supposed to be called by {@link Tile::update}. It
@@ -188,7 +147,7 @@ public:
    * @param tile The owner tile.
    * @return The {@link MoreDetailAvailable} state.
    */
-  MoreDetailAvailable update(Tile& tile);
+  RasterOverlayTile::MoreDetailAvailable update(Tile& tile);
 
   /**
    * @brief Detach the raster from the given tile.
@@ -202,8 +161,7 @@ private:
 
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
-  uint32_t _textureCoordinateID;
-  CesiumGeometry::Rectangle _textureCoordinateRectangle;
+  int32_t _textureCoordinateID;
   glm::dvec2 _translation;
   glm::dvec2 _scale;
   AttachmentState _state;
