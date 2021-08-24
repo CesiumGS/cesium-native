@@ -14,6 +14,10 @@
 - Added `Math::roundUp` and `Math::roundDown`.
 - Added `ImageManipulation` class to `CesiumGltfReader`.
 
+##### Fixes :wrench:
+
+- Fixed a bug that caused CesiumGltfWriter to write a material's normal texture info into a property named `normalTextureInfo` rather than `normalTexture`.
+
 ### v0.6.0 - 2021-08-02
 
 ##### Breaking Changes :mega:
