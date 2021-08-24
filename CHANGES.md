@@ -8,6 +8,7 @@
 
 ##### Additions :tada:
 
+- Added `Future<T>::isReady`.
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 - Added `Math::roundUp` and `Math::roundDown`.
 - Added `Rectangle::computeUnion`.
