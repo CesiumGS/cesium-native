@@ -66,10 +66,8 @@ RasterOverlayTileProvider::getTile(
   if (this->_pPlaceholder) {
     return this->_pPlaceholder.get();
   }
-  return {new RasterOverlayTile(
-      this->getOwner(),
-      targetGeometricError,
-      rectangle)};
+  return {
+      new RasterOverlayTile(this->getOwner(), targetGeometricError, rectangle)};
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
