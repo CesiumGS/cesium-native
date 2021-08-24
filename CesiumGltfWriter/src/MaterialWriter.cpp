@@ -67,7 +67,7 @@ void writeNormalTexture(
     const CesiumGltf::MaterialNormalTextureInfo& normalTexture,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
-  j.Key("normalTextureInfo");
+  j.Key("normalTexture");
   j.StartObject();
 
   j.Key("index");
