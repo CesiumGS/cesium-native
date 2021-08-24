@@ -221,14 +221,6 @@ public:
       double targetGeometricError);
 
   /**
-   * @brief Whether the given raster tile has more detail.
-   *
-   * If so its children may be subdivided to use the more detailed raster
-   * tiles.
-   */
-  virtual bool hasMoreDetailsAvailable(const TileID& tileID) const = 0;
-
-  /**
    * @brief Gets the number of bytes of tile data that are currently loaded.
    */
   int64_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }

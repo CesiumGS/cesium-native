@@ -354,14 +354,6 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   return result;
 }
 
-bool QuadtreeRasterOverlayTileProvider::hasMoreDetailsAvailable(
-    const TileID& tileID) const {
-  const CesiumGeometry::QuadtreeTileID* quadtreeTileID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tileID);
-  return quadtreeTileID != nullptr &&
-         quadtreeTileID->level < this->_maximumLevel;
-}
-
 uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
     double geometricError,
     const glm::dvec2& position) const noexcept {

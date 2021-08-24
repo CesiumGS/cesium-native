@@ -194,6 +194,7 @@ struct LoadResult {
   CesiumGeometry::Rectangle rectangle = {};
   std::vector<Credit> credits = {};
   void* pRendererResources = nullptr;
+  bool moreDetailAvailable = true;
 };
 
 /**
@@ -262,11 +263,13 @@ static LoadResult createLoadResultFromLoadedImage(
     result.rectangle = loadedImage.rectangle;
     result.credits = std::move(loadedImage.credits);
     result.pRendererResources = pRendererResources;
+    result.moreDetailAvailable = loadedImage.moreDetailAvailable;
     return result;
   }
   LoadResult result;
   result.pRendererResources = nullptr;
   result.state = RasterOverlayTile::LoadState::Failed;
+  result.moreDetailAvailable = false;
   return result;
 }
 
@@ -300,21 +303,26 @@ void RasterOverlayTileProvider::doLoad(
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);
         tile._tileCredits = std::move(result.credits);
+        tile._moreDetailAvailable =
+            result.moreDetailAvailable
+                ? RasterOverlayTile::MoreDetailAvailable::Yes
+                : RasterOverlayTile::MoreDetailAvailable::No;
         tile.setState(result.state);
 
         this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
 
         this->finalizeTileLoad(tile, isThrottledLoad);
       })
-      .catchInMainThread(
-          [this, &tile, isThrottledLoad](const std::exception& /*e*/) {
-            tile._pRendererResources = nullptr;
-            tile._image = {};
-            tile._tileCredits = {};
-            tile.setState(RasterOverlayTile::LoadState::Failed);
+      .catchInMainThread([this, &tile, isThrottledLoad](
+                             const std::exception& /*e*/) {
+        tile._pRendererResources = nullptr;
+        tile._image = {};
+        tile._tileCredits = {};
+        tile._moreDetailAvailable = RasterOverlayTile::MoreDetailAvailable::No;
+        tile.setState(RasterOverlayTile::LoadState::Failed);
 
-            this->finalizeTileLoad(tile, isThrottledLoad);
-          });
+        this->finalizeTileLoad(tile, isThrottledLoad);
+      });
 }
 
 void RasterOverlayTileProvider::beginTileLoad(

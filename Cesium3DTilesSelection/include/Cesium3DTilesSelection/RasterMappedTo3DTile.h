@@ -84,9 +84,8 @@ public:
   /**
    * @brief Returns an identifier for the texture coordinates of this tile.
    *
-   * This is an unspecified identifier that is used internally by the
-   * tile rendering infrastructure, to identify the texture coordinates
-   * in the rendering environment.
+   * The texture coordinates for this raster are found in the glTF as an
+   * attribute named `_CESIUMOVERLAY_n` where `n` is this value.
    *
    * @return The texture coordinate ID.
    */
@@ -106,13 +105,11 @@ public:
   }
 
   /**
-   * @brief Returns the translation that converts between texture coordinates
-   * and world coordinates.
+   * @brief Returns the translation that converts between the geometry texture
+   * coordinates and the texture coordinates that should be used to sample this
+   * raster texture.
    *
-   * The translation and {@link getScale} are computed from the region
-   * that is covered by the tile geometry (in the coordinates that are
-   * specific for the projection that is used by the tile provider)
-   * and the {@link getTextureCoordinateRectangle}.
+   * `rasterCoordinates = geometryCoordinates * scale + translation`
    *
    * @returns The translation.
    */
@@ -121,8 +118,9 @@ public:
   }
 
   /**
-   * @brief Returns the scaling that converts between texture coordinates and
-   * world coordinates.
+   * @brief Returns the scaling that converts between the geometry texture
+   * coordinates and the texture coordinates that should be used to sample this
+   * raster texture.
    *
    * @see getTranslation
    *
@@ -131,9 +129,13 @@ public:
   const glm::dvec2& getScale() const noexcept { return this->_scale; }
 
   /**
-   * @brief Returns the {@link AttachmentState}.
+   * @brief Indicates whether this overlay tile is currently attached to its
+   * owning geometry tile.
    *
-   * This function is not supposed to be called by clients.
+   * When a raster overlay tile is attached to a geometry tile,
+   * {@link IPrepareRendererResources::attachRasterInMainThread} is invoked.
+   * When it is detached,
+   * {@link IPrepareRendererResources::detachRasterInMainThread} is invoked.
    */
   AttachmentState getState() const noexcept { return this->_state; }
 
@@ -153,8 +155,6 @@ public:
    * @brief Detach the raster from the given tile.
    */
   void detachFromTile(Tile& tile) noexcept;
-
-  // void attachToTile(Tile& tile);
 
 private:
   void computeTranslationAndScale(Tile& tile);

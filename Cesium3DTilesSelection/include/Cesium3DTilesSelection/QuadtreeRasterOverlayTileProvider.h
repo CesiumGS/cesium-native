@@ -65,14 +65,6 @@ public:
       uint32_t imageWidth,
       uint32_t imageHeight) noexcept;
 
-  /**
-   * @brief Whether the given raster tile has more detail.
-   *
-   * If so its children may be subdivided to use the more detailed raster
-   * tiles.
-   */
-  virtual bool hasMoreDetailsAvailable(const TileID& tileID) const override;
-
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override;
 

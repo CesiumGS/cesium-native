@@ -711,9 +711,8 @@ void Tile::update(
                   i));
           --i;
 
-          Rectangle projectedRectangle = projectRectangleSimple(
-              pProvider->getProjection(),
-              *pRectangle);
+          Rectangle projectedRectangle =
+              projectRectangleSimple(pProvider->getProjection(), *pRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());
           this->_rasterTiles.emplace_back(pTile);

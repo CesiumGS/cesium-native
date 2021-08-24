@@ -20,11 +20,6 @@ public:
     return this->getAsyncSystem()
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
-
-  virtual bool
-  hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {
-    return false;
-  }
 };
 } // namespace
 
