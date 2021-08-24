@@ -5,6 +5,10 @@
 ##### Breaking Changes :mega:
 
 - Renamed `Rectangle::intersect` and `GlobeRectangle::intersect` to `computeIntersection`.
+- `RasterOverlay` and derived classes now require a `name` parameter to their constructors.
+- Changed the type of texture coordinate IDs used in the raster overlay system from `uint32_t` to `int32_t`.
+- `RasterOverlayTileProvider` is no longer quadtree-oriented. Instead, it requires derived classes to provide an image for a particular requested rectangle and geometric error. Classes that previously derived from `RasterOverlayTileProvider` should now derived from `QuadtreeRasterOverlayTileProvider` and implement `loadQuadtreeTileImage` instead of `loadTileImage`.
+- Removed `TilesetOptions::enableWaterMask`, which didn't have any effect anyway. `TilesetContentOptions::enableWaterMask` still exists and works.
 
 ##### Additions :tada:
 

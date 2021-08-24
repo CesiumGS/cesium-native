@@ -23,24 +23,6 @@ namespace Cesium3DTilesSelection {
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     RasterOverlay& owner,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-    : RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor),
-      _coverageRectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
-      _minimumLevel(0),
-      _maximumLevel(0),
-      _imageWidth(1),
-      _imageHeight(1),
-      _tilingScheme(CesiumGeometry::QuadtreeTilingScheme(
-          CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0),
-          1,
-          1)),
-      _tilesOldToRecent(),
-      _tileLookup(),
-      _cachedBytes(0) {}
-
-QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
-    RasterOverlay& owner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
@@ -70,7 +52,8 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _tileLookup(),
       _cachedBytes(0) {}
 
-std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+std::vector<CesiumAsync::SharedFuture<
+    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeospatial::GlobeRectangle& geometryRectangle,
     double targetGeometricError) {
@@ -79,7 +62,8 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       targetGeometricError);
 }
 
-std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+std::vector<CesiumAsync::SharedFuture<
+    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     double targetGeometricError) {
@@ -377,7 +361,8 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   return static_cast<uint32_t>(rounded);
 }
 
-CesiumAsync::SharedFuture<LoadedQuadtreeImage>
+CesiumAsync::SharedFuture<
+    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID) {
   auto lookupIt = this->_tileLookup.find(tileID);
@@ -516,15 +501,98 @@ void blitImage(
   ImageManipulation::blitImage(target, targetPixels, source, sourcePixels);
 }
 
-struct CombinedImageMeasurements {
-  Rectangle rectangle;
-  int32_t widthPixels;
-  int32_t heightPixels;
-  int32_t channels;
-  int32_t bytesPerChannel;
-};
+} // namespace
 
-CombinedImageMeasurements measureCombinedImage(
+CesiumAsync::Future<LoadedRasterOverlayImage>
+QuadtreeRasterOverlayTileProvider::loadTileImage(
+    RasterOverlayTile& overlayTile) {
+  // Figure out which quadtree level we need, and which tiles from that level.
+  // Load each needed tile (or pull it from cache).
+  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles =
+      this->mapRasterTilesToGeometryTile(
+          overlayTile.getRectangle(),
+          overlayTile.getTargetGeometricError());
+
+  return this->getAsyncSystem()
+      .all(std::move(tiles))
+      .thenInWorkerThread([projection = this->getProjection(),
+                           rectangle = overlayTile.getRectangle()](
+                              std::vector<LoadedQuadtreeImage>&& images) {
+        // This set of images is only "useful" if at least one actually has
+        // image data, and that image data is _not_ from an ancestor. We can
+        // identify ancestor images because they have a `subset`.
+        bool haveAnyUsefulImageData = std::any_of(
+            images.begin(),
+            images.end(),
+            [](const LoadedQuadtreeImage& image) {
+              return image.pLoaded->image.has_value() &&
+                     !image.subset.has_value();
+            });
+
+        if (!haveAnyUsefulImageData) {
+          // For non-useful sets of images, just return an empty image,
+          // signalling that the parent tile should be used instead.
+          // See https://github.com/CesiumGS/cesium-native/issues/316 for an
+          // edge case that is not yet handled.
+          return LoadedRasterOverlayImage{
+              ImageCesium(),
+              Rectangle(),
+              {},
+              {},
+              {},
+              false};
+        }
+
+        return QuadtreeRasterOverlayTileProvider::combineImages(
+            rectangle,
+            projection,
+            std::move(images));
+      });
+}
+
+void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
+  CESIUM_TRACE("QuadtreeRasterOverlayTileProvider::unloadCachedTiles");
+
+  // The cache is big enough for 100 256x256, 4-channel tiles.
+  // TODO: make this configurable
+  const int64_t maxCacheBytes = 256 * 256 * 4 * 100;
+
+  if (this->_cachedBytes <= maxCacheBytes) {
+    return;
+  }
+
+  auto it = this->_tilesOldToRecent.begin();
+
+  while (it != this->_tilesOldToRecent.end() &&
+         this->_cachedBytes > maxCacheBytes) {
+    SharedFuture<LoadedQuadtreeImage>& future = it->future;
+    if (!future.isReady()) {
+      // Don't unload tiles that are still loading.
+      ++it;
+      continue;
+    }
+
+    // Guaranteed not to block because isReady returned true.
+    const LoadedQuadtreeImage& image = future.wait();
+
+    std::shared_ptr<LoadedRasterOverlayImage> pImage = image.pLoaded;
+
+    this->_tileLookup.erase(it->tileID);
+    it = this->_tilesOldToRecent.erase(it);
+
+    // If this is the last use of this data, it will be freed when the shared
+    // pointer goes out of scope, so reduce the cachedBytes accordingly.
+    if (pImage.use_count() == 1) {
+      if (pImage->image) {
+        this->_cachedBytes -= int64_t(pImage->image->pixelData.size());
+        assert(this->_cachedBytes >= 0);
+      }
+    }
+  }
+}
+
+/*static*/ QuadtreeRasterOverlayTileProvider::CombinedImageMeasurements
+QuadtreeRasterOverlayTileProvider::measureCombinedImage(
     const Rectangle& targetRectangle,
     const std::vector<LoadedQuadtreeImage>& images) {
   // Find the image with the densest pixels, and use that to select the
@@ -628,13 +696,16 @@ CombinedImageMeasurements measureCombinedImage(
       bytesPerChannel};
 }
 
-LoadedRasterOverlayImage combineImages(
+/*static*/ LoadedRasterOverlayImage
+QuadtreeRasterOverlayTileProvider::combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
     std::vector<LoadedQuadtreeImage>&& images) {
 
   CombinedImageMeasurements measurements =
-      measureCombinedImage(targetRectangle, images);
+      QuadtreeRasterOverlayTileProvider::measureCombinedImage(
+          targetRectangle,
+          images);
 
   int32_t targetImageBytes = measurements.widthPixels *
                              measurements.heightPixels * measurements.channels *
@@ -678,93 +749,6 @@ LoadedRasterOverlayImage combineImages(
   }
 
   return result;
-}
-
-} // namespace
-
-CesiumAsync::Future<LoadedRasterOverlayImage>
-QuadtreeRasterOverlayTileProvider::loadTileImage(
-    RasterOverlayTile& overlayTile) {
-  // Figure out which quadtree level we need, and which tiles from that level.
-  // Load each needed tile (or pull it from cache).
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles =
-      this->mapRasterTilesToGeometryTile(
-          overlayTile.getRectangle(),
-          overlayTile.getTargetGeometricError());
-
-  return this->getAsyncSystem()
-      .all(std::move(tiles))
-      .thenInWorkerThread([projection = this->getProjection(),
-                           rectangle = overlayTile.getRectangle()](
-                              std::vector<LoadedQuadtreeImage>&& images) {
-        // This set of images is only "useful" if at least one actually has
-        // image data, and that image data is _not_ from an ancestor. We can
-        // identify ancestor images because they have a `subset`.
-        bool haveAnyUsefulImageData = std::any_of(
-            images.begin(),
-            images.end(),
-            [](const LoadedQuadtreeImage& image) {
-              return image.pLoaded->image.has_value() &&
-                     !image.subset.has_value();
-            });
-
-        if (!haveAnyUsefulImageData) {
-          // For non-useful sets of images, just return an empty image,
-          // signalling that the parent tile should be used instead.
-          // See https://github.com/CesiumGS/cesium-native/issues/316 for an
-          // edge case that is not yet handled.
-          return LoadedRasterOverlayImage{
-              ImageCesium(),
-              Rectangle(),
-              {},
-              {},
-              {},
-              false};
-        }
-
-        return combineImages(rectangle, projection, std::move(images));
-      });
-}
-
-void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
-  CESIUM_TRACE("QuadtreeRasterOverlayTileProvider::unloadCachedTiles");
-
-  // The cache is big enough for 100 256x256, 4-channel tiles.
-  // TODO: make this configurable
-  const int64_t maxCacheBytes = 256 * 256 * 4 * 100;
-
-  if (this->_cachedBytes <= maxCacheBytes) {
-    return;
-  }
-
-  auto it = this->_tilesOldToRecent.begin();
-
-  while (it != this->_tilesOldToRecent.end() &&
-         this->_cachedBytes > maxCacheBytes) {
-    SharedFuture<LoadedQuadtreeImage>& future = it->future;
-    if (!future.isReady()) {
-      // Don't unload tiles that are still loading.
-      ++it;
-      continue;
-    }
-
-    // Guaranteed not to block because isReady returned true.
-    const LoadedQuadtreeImage& image = future.wait();
-
-    std::shared_ptr<LoadedRasterOverlayImage> pImage = image.pLoaded;
-
-    this->_tileLookup.erase(it->tileID);
-    it = this->_tilesOldToRecent.erase(it);
-
-    // If this is the last use of this data, it will be freed when the shared
-    // pointer goes out of scope, so reduce the cachedBytes accordingly.
-    if (pImage.use_count() == 1) {
-      if (pImage->image) {
-        this->_cachedBytes -= int64_t(pImage->image->pixelData.size());
-        assert(this->_cachedBytes >= 0);
-      }
-    }
-  }
 }
 
 } // namespace Cesium3DTilesSelection

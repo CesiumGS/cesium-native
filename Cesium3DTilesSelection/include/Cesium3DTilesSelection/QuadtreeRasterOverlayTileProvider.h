@@ -15,21 +15,10 @@
 
 namespace Cesium3DTilesSelection {
 
-struct LoadedQuadtreeImage {
-  std::shared_ptr<LoadedRasterOverlayImage> pLoaded;
-  std::optional<CesiumGeometry::Rectangle> subset;
-};
-
 class CESIUM3DTILESSELECTION_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 
 public:
-  QuadtreeRasterOverlayTileProvider(
-      RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>&
-          pAssetAccessor) noexcept;
-
   /**
    * @brief Creates a new instance.
    *
@@ -64,9 +53,6 @@ public:
       uint32_t maximumLevel,
       uint32_t imageWidth,
       uint32_t imageHeight) noexcept;
-
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override;
 
   /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
@@ -120,9 +106,17 @@ public:
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(RasterOverlayTile& overlayTile) override final;
+
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
+  struct LoadedQuadtreeImage {
+    std::shared_ptr<LoadedRasterOverlayImage> pLoaded;
+    std::optional<CesiumGeometry::Rectangle> subset;
+  };
+
   CesiumAsync::SharedFuture<LoadedQuadtreeImage>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
@@ -148,6 +142,23 @@ private:
       double targetGeometricError);
 
   void unloadCachedTiles();
+
+  struct CombinedImageMeasurements {
+    CesiumGeometry::Rectangle rectangle;
+    int32_t widthPixels;
+    int32_t heightPixels;
+    int32_t channels;
+    int32_t bytesPerChannel;
+  };
+
+  static CombinedImageMeasurements measureCombinedImage(
+      const CesiumGeometry::Rectangle& targetRectangle,
+      const std::vector<LoadedQuadtreeImage>& images);
+
+  static LoadedRasterOverlayImage combineImages(
+      const CesiumGeometry::Rectangle& targetRectangle,
+      const CesiumGeospatial::Projection& projection,
+      std::vector<LoadedQuadtreeImage>&& images);
 
   CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;

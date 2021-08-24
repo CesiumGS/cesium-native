@@ -4,7 +4,7 @@ Loads or creates a `RasterOverlayTile` to cover a given geometry tile.
 
 The rest of the 3D Tiles engine calls `getTile`, giving it the exact rectangle that the returned tile must cover. The tile provider has a `Projection`, and the provided rectangle is expressed in that projection.
 
-`getTile` returns a `RasterOverlayTile`, but does not immediately start loading it. The 3D Tiles engine calls `RasterOverlayTile::loadTile` to kick off the loading process. `getTile` may return nullptr if the provider has no data within the given rectangle.
+`getTile` returns a `RasterOverlayTile`, but does not immediately start loading it. The 3D Tiles engine calls `RasterOverlayTileProvider::loadTile` to kick off the loading process. `getTile` may return nullptr if the provider has no data within the given rectangle.
 
 While the returned `RasterOverlayTile` is loading, the 3D Tiles engine will use the geometry from the parent geometry tile. The `RasterOverlayTileProvider` doesn't need to concern itself with this at all. It is handled by `RasterMappedTo3DTile`.
 
