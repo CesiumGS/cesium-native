@@ -61,7 +61,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(
-    const CesiumGeometry::Rectangle& imageryRectangle,
+    const CesiumGeometry::Rectangle& rectangle,
     double targetGeometricError) {
   if (this->_pPlaceholder) {
     return this->_pPlaceholder.get();
@@ -69,7 +69,7 @@ RasterOverlayTileProvider::getTile(
   return {new RasterOverlayTile(
       this->getOwner(),
       targetGeometricError,
-      imageryRectangle)};
+      rectangle)};
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {

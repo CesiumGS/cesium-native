@@ -158,7 +158,23 @@ public:
   virtual ~RasterOverlayTileProvider() {}
 
   /**
-   * @brief Returns whether this is a placeholder. Like this comment.
+   * @brief Returns whether this is a placeholder.
+   *
+   * For many types of {@link RasterOverlay}, we can't create a functioning
+   * `RasterOverlayTileProvider` right away. For example, we may not know the
+   * bounds of the overlay, or what projection it uses, until after we've
+   * (asynchronously) loaded a metadata service that gives us this information.
+   *
+   * So until that real `RasterOverlayTileProvider` becomes available, we use
+   * a placeholder. When {@link RasterOverlayTileProvider::getTile} is invoked
+   * on a placeholder, it returns a {@link RasterOverlayTile} that is also
+   * a placeholder. And whenever we see a placeholder `RasterOverTile` in
+   * {@link Tile::update}, we check if the corresponding `RasterOverlay` is
+   * ready yet. Once it's ready, we remove the placeholder tile and replace
+   * it with the real tiles.
+   *
+   * So the placeholder system gives us a way to defer the mapping of raster
+   * overlay tiles to geometry tiles until that mapping can be determined.
    */
   bool isPlaceholder() const noexcept { return this->_pPlaceholder != nullptr; }
 
@@ -210,14 +226,26 @@ public:
   }
 
   /**
-   * @brief Returns the {@link RasterOverlayTile} with the given ID, creating it
-   * if necessary.
+   * @brief Returns a new {@link RasterOverlayTile} with the given
+   * specifications.
    *
-   * @param id The {@link TileID} of the tile to obtain.
+   * The returned tile will not start loading immediately. To start loading,
+   * call {@link RasterOverlayTileProvider::loadTile} or
+   * {@link RasterOverlayTileProvider::loadTileThrottled}.
+   *
+   * @param rectangle The rectangle that the returned image must cover. It is
+   * allowed to cover a slightly larger rectangle in order to maintain pixel
+   * alignment. It may also cover a smaller rectangle when the overlay itself
+   * does not cover the entire rectangle.
+   * @param targetGeometricError The geometric error (in meters) of the
+   * geometry tile to which the returned raster overlay tile will be attached.
+   * With the typical settings, this raster overlay will be shown when the
+   * geometric error, when projected to the screen, is up to 16 pixels. When the
+   * error is more than 16 pixels, more detailed data will be shown instead.
    * @return The tile.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
-      const CesiumGeometry::Rectangle& imageryRectangle,
+      const CesiumGeometry::Rectangle& rectangle,
       double targetGeometricError);
 
   /**
