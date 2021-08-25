@@ -10,9 +10,9 @@
 
 - Added `Future<T>::isReady`.
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
-- Added `Rectangle::computeUnion`.
-- Added `Math::roundUp` and `Math::roundDown`.
 - Added `ImageManipulation` class to `CesiumGltfReader`.
+- Added `Math::roundUp` and `Math::roundDown`.
+- Added `Rectangle::computeUnion`.
 
 ##### Fixes :wrench:
 
