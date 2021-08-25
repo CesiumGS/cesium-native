@@ -92,16 +92,22 @@ struct FeatureTableWriter {
   };
 
   struct PropertyWriter {
-    using ValueType = FeatureTable::Property;
+    using ValueType = std::
+        variant<FeatureTable::BinaryBodyReference, std::vector<double>, double>;
 
     static void write(
-        const FeatureTable::Property& obj,
+        const std::variant<
+            FeatureTable::BinaryBodyReference,
+            std::vector<double>,
+            double>& obj,
         CesiumJsonWriter::JsonWriter& jsonWriter,
         const CesiumJsonWriter::ExtensionWriterContext& context);
   };
-
   struct GlobalPropertyScalarWriter {
-    using ValueType = FeatureTable::GlobalPropertyScalar;
+    using ValueType = std::variant<
+        FeatureTable::GlobalPropertyScalar::Variant0,
+        std::vector<double>,
+        double>;
 
     struct Variant0Writer {
       using ValueType = FeatureTable::GlobalPropertyScalar::Variant0;
@@ -113,13 +119,17 @@ struct FeatureTableWriter {
     };
 
     static void write(
-        const FeatureTable::GlobalPropertyScalar& obj,
+        const std::variant<
+            FeatureTable::GlobalPropertyScalar::Variant0,
+            std::vector<double>,
+            double>& obj,
         CesiumJsonWriter::JsonWriter& jsonWriter,
         const CesiumJsonWriter::ExtensionWriterContext& context);
   };
-
   struct GlobalPropertyCartesian3Writer {
-    using ValueType = FeatureTable::GlobalPropertyCartesian3;
+    using ValueType = std::variant<
+        FeatureTable::GlobalPropertyCartesian3::Variant0,
+        std::vector<double>>;
 
     struct Variant0Writer {
       using ValueType = FeatureTable::GlobalPropertyCartesian3::Variant0;
@@ -131,13 +141,16 @@ struct FeatureTableWriter {
     };
 
     static void write(
-        const FeatureTable::GlobalPropertyCartesian3& obj,
+        const std::variant<
+            FeatureTable::GlobalPropertyCartesian3::Variant0,
+            std::vector<double>>& obj,
         CesiumJsonWriter::JsonWriter& jsonWriter,
         const CesiumJsonWriter::ExtensionWriterContext& context);
   };
-
   struct GlobalPropertyCartesian4Writer {
-    using ValueType = FeatureTable::GlobalPropertyCartesian4;
+    using ValueType = std::variant<
+        FeatureTable::GlobalPropertyCartesian4::Variant0,
+        std::vector<double>>;
 
     struct Variant0Writer {
       using ValueType = FeatureTable::GlobalPropertyCartesian4::Variant0;
@@ -149,7 +162,9 @@ struct FeatureTableWriter {
     };
 
     static void write(
-        const FeatureTable::GlobalPropertyCartesian4& obj,
+        const std::variant<
+            FeatureTable::GlobalPropertyCartesian4::Variant0,
+            std::vector<double>>& obj,
         CesiumJsonWriter::JsonWriter& jsonWriter,
         const CesiumJsonWriter::ExtensionWriterContext& context);
   };

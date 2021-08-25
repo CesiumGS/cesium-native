@@ -17,25 +17,31 @@ namespace Cesium3DTiles {
 struct CODEGEN_API Asset : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Asset";
 
+  Asset() = default;
+
   std::string version;
 
-  std::optional<std::string> tilesetVersion;
+  std::optional<std::string> tilesetVersion = std::nullopt;
 };
 
 struct CODEGEN_API BoundingVolume : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "BoundingVolume";
 
-  std::optional<std::vector<double>> box;
+  BoundingVolume() = default;
 
-  std::optional<std::vector<double>> region;
+  std::optional<std::vector<double>> box = std::nullopt;
 
-  std::optional<std::vector<double>> sphere;
+  std::optional<std::vector<double>> region = std::nullopt;
+
+  std::optional<std::vector<double>> sphere = std::nullopt;
 };
 
 struct CODEGEN_API TileContent : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "TileContent";
 
-  std::optional<BoundingVolume> boundingVolume;
+  TileContent() = default;
+
+  std::optional<BoundingVolume> boundingVolume = std::nullopt;
 
   std::string uri;
 };
@@ -45,24 +51,28 @@ struct CODEGEN_API Tile : public CesiumUtility::ExtensibleObject {
 
   enum class Refine { ADD, REPLACE };
 
+  Tile() = default;
+
   BoundingVolume boundingVolume;
 
-  std::optional<BoundingVolume> viewerRequestVolume;
+  std::optional<BoundingVolume> viewerRequestVolume = std::nullopt;
 
   double geometricError;
 
-  std::optional<Refine> refine;
+  std::optional<Refine> refine = std::nullopt;
 
   std::vector<double> transform =
       {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-  std::optional<TileContent> content;
+  std::optional<TileContent> content = std::nullopt;
 
-  std::optional<std::vector<Tile>> children;
+  std::optional<std::vector<Tile>> children = std::nullopt;
 };
 
 struct CODEGEN_API TilesetProperties : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "TilesetProperties";
+
+  TilesetProperties() = default;
 
   double maximum;
 
@@ -75,20 +85,24 @@ struct CODEGEN_API Tileset : public CesiumUtility::ExtensibleObject {
   struct CODEGEN_API Properties : public CesiumUtility::ExtensibleObject {
     static inline constexpr const char* TypeName = "Properties";
 
+    Properties() = default;
+
     std::unordered_map<std::string, TilesetProperties> additionalProperties;
   };
 
+  Tileset() = default;
+
   Asset asset;
 
-  std::optional<Properties> properties;
+  std::optional<Properties> properties = std::nullopt;
 
   double geometricError;
 
   Tile root;
 
-  std::optional<std::vector<std::string>> extensionsUsed;
+  std::optional<std::vector<std::string>> extensionsUsed = std::nullopt;
 
-  std::optional<std::vector<std::string>> extensionsRequired;
+  std::optional<std::vector<std::string>> extensionsRequired = std::nullopt;
 };
 
 struct CODEGEN_API FeatureTable : public CesiumUtility::ExtensibleObject {
@@ -109,89 +123,109 @@ struct CODEGEN_API FeatureTable : public CesiumUtility::ExtensibleObject {
       DOUBLE
     };
 
-    double byteOffset;
+    BinaryBodyReference() = default;
 
-    std::optional<ComponentType> componentType;
+    int64_t byteOffset;
+
+    std::optional<ComponentType> componentType = std::nullopt;
   };
 
-  struct CODEGEN_API Property {
-    static inline constexpr const char* TypeName = "Property";
+  struct CODEGEN_API Property {};
 
-    std::optional<BinaryBodyReference> v0;
-    std::optional<std::vector<double>> v1;
-    std::optional<double> v2;
-  };
   struct CODEGEN_API GlobalPropertyScalar {
-    static inline constexpr const char* TypeName = "GlobalPropertyScalar";
-
     struct CODEGEN_API Variant0 : public CesiumUtility::ExtensibleObject {
       static inline constexpr const char* TypeName = "Variant0";
 
-      double byteOffset;
-    };
+      Variant0() = default;
 
-    std::optional<Variant0> v0;
-    std::optional<std::vector<double>> v1;
-    std::optional<double> v2;
+      int64_t byteOffset;
+    };
   };
+
   struct CODEGEN_API GlobalPropertyCartesian3 {
-    static inline constexpr const char* TypeName = "GlobalPropertyCartesian3";
-
     struct CODEGEN_API Variant0 : public CesiumUtility::ExtensibleObject {
       static inline constexpr const char* TypeName = "Variant0";
 
-      double byteOffset;
-    };
+      Variant0() = default;
 
-    std::optional<Variant0> v0;
-    std::optional<std::vector<double>> v1;
+      int64_t byteOffset;
+    };
   };
+
   struct CODEGEN_API GlobalPropertyCartesian4 {
-    static inline constexpr const char* TypeName = "GlobalPropertyCartesian4";
-
     struct CODEGEN_API Variant0 : public CesiumUtility::ExtensibleObject {
       static inline constexpr const char* TypeName = "Variant0";
 
-      double byteOffset;
-    };
+      Variant0() = default;
 
-    std::optional<Variant0> v0;
-    std::optional<std::vector<double>> v1;
+      int64_t byteOffset;
+    };
   };
 
-  std::unordered_map<std::string, Property> additionalProperties;
+  FeatureTable() = default;
+
+  std::unordered_map<
+      std::string,
+      std::variant<
+          FeatureTable::BinaryBodyReference,
+          std::vector<double>,
+          double>>
+      additionalProperties;
 };
 
 struct CODEGEN_API PntsFeatureTable : public FeatureTable {
   static inline constexpr const char* TypeName = "PntsFeatureTable";
 
-  std::optional<BinaryBodyReference> POSITION;
+  PntsFeatureTable() = default;
 
-  std::optional<BinaryBodyReference> POSITION_QUANTIZED;
+  std::optional<FeatureTable::BinaryBodyReference> POSITION = std::nullopt;
 
-  std::optional<BinaryBodyReference> RGBA;
+  std::optional<FeatureTable::BinaryBodyReference> POSITION_QUANTIZED =
+      std::nullopt;
 
-  std::optional<BinaryBodyReference> RGB;
+  std::optional<FeatureTable::BinaryBodyReference> RGBA = std::nullopt;
 
-  std::optional<BinaryBodyReference> RGB565;
+  std::optional<FeatureTable::BinaryBodyReference> RGB = std::nullopt;
 
-  std::optional<BinaryBodyReference> NORMAL;
+  std::optional<FeatureTable::BinaryBodyReference> RGB565 = std::nullopt;
 
-  std::optional<BinaryBodyReference> NORMAL_OCT16P;
+  std::optional<FeatureTable::BinaryBodyReference> NORMAL = std::nullopt;
 
-  std::optional<BinaryBodyReference> BATCH_ID;
+  std::optional<FeatureTable::BinaryBodyReference> NORMAL_OCT16P = std::nullopt;
 
-  std::optional<GlobalPropertyScalar> POINTS_LENGTH;
+  std::optional<FeatureTable::BinaryBodyReference> BATCH_ID = std::nullopt;
 
-  std::optional<GlobalPropertyCartesian3> RTC_CENTER;
+  std::optional<std::variant<
+      FeatureTable::GlobalPropertyScalar::Variant0,
+      std::vector<double>,
+      double>>
+      POINTS_LENGTH = std::nullopt;
 
-  std::optional<GlobalPropertyCartesian3> QUANTIZED_VOLUME_OFFSET;
+  std::optional<std::variant<
+      FeatureTable::GlobalPropertyCartesian3::Variant0,
+      std::vector<double>>>
+      RTC_CENTER = std::nullopt;
 
-  std::optional<GlobalPropertyCartesian3> QUANTIZED_VOLUME_SCALE;
+  std::optional<std::variant<
+      FeatureTable::GlobalPropertyCartesian3::Variant0,
+      std::vector<double>>>
+      QUANTIZED_VOLUME_OFFSET = std::nullopt;
 
-  std::optional<GlobalPropertyCartesian4> CONSTANT_RGBA;
+  std::optional<std::variant<
+      FeatureTable::GlobalPropertyCartesian3::Variant0,
+      std::vector<double>>>
+      QUANTIZED_VOLUME_SCALE = std::nullopt;
 
-  std::optional<GlobalPropertyScalar> BATCH_LENGTH;
+  std::optional<std::variant<
+      FeatureTable::GlobalPropertyCartesian4::Variant0,
+      std::vector<double>>>
+      CONSTANT_RGBA = std::nullopt;
+
+  std::optional<std::variant<
+      FeatureTable::GlobalPropertyScalar::Variant0,
+      std::vector<double>,
+      double>>
+      BATCH_LENGTH = std::nullopt;
 };
 
 } // namespace Cesium3DTiles

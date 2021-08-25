@@ -134,12 +134,10 @@ TEST_CASE("Write 3D Tiles PntsFeatureTable", "[3DTilesWriter]") {
   FeatureTable::BinaryBodyReference color;
   pos.byteOffset = 5678;
 
-  FeatureTable::GlobalPropertyCartesian3 rtcCenter;
-  rtcCenter.v0 = FeatureTable::GlobalPropertyCartesian3::Variant0();
-  rtcCenter.v0->byteOffset = 9012;
+  FeatureTable::GlobalPropertyCartesian3::Variant0 rtcCenter;
+  rtcCenter.byteOffset = 9012;
 
-  FeatureTable::GlobalPropertyCartesian3 qvo;
-  qvo.v1 = {1.0, 2.0, 3.0};
+  std::vector<double> qvo = {1.0, 2.0, 3.0};
 
   PntsFeatureTable pnts;
   pnts.POSITION = pos;
@@ -180,12 +178,12 @@ TEST_CASE("Write 3D Tiles PntsFeatureTable", "[3DTilesWriter]") {
 
   const rapidjson::Value& rtcJson = document["RTC_CENTER"];
   CHECK(rtcJson.IsObject());
-  CHECK(rtcJson["byteOffset"] == rtcCenter.v0->byteOffset);
+  CHECK(rtcJson["byteOffset"] == rtcCenter.byteOffset);
 
   const rapidjson::Value& qvoJson = document["QUANTIZED_VOLUME_OFFSET"];
   CHECK(qvoJson.IsArray());
-  CHECK(qvoJson.Size() == qvo.v1->size());
+  CHECK(qvoJson.Size() == qvo.size());
   for (unsigned int i = 0; i < qvoJson.Size(); i++) {
-    CHECK(qvoJson[i] == qvo.v1->at(i));
+    CHECK(qvoJson[i] == qvo.at(i));
   }
 }

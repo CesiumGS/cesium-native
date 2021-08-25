@@ -13,6 +13,96 @@ using namespace CesiumUtility;
 namespace Cesium3DTiles {
 
 namespace {
+
+void writeJson(
+    const Asset& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const BoundingVolume& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const TileContent& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const Tile::Refine& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const Tile& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const TilesetProperties& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const Tileset::Properties& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const Tileset& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable::GlobalPropertyScalar::Variant0& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable::GlobalPropertyCartesian3::Variant0& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable::GlobalPropertyCartesian4::Variant0& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable::BinaryBodyReference::ComponentType& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable::BinaryBodyReference& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const PntsFeatureTable& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+[[maybe_unused]] void writeJson(
+    const std::string& str,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& /* context */) {
+  jsonWriter.String(str);
+}
+
+[[maybe_unused]] void writeJson(
+    double val,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& /* context */) {
+  jsonWriter.Double(val);
+}
+
 [[maybe_unused]] void writeJson(
     bool val,
     JsonWriter& jsonWriter,
@@ -27,43 +117,52 @@ namespace {
   jsonWriter.Int64(val);
 }
 
-[[maybe_unused]] void writeJson(
-    double val,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& /* context */) {
-  jsonWriter.Double(val);
-}
-
-[[maybe_unused]] void writeJson(
-    const std::string& val,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& /* context */) {
-  jsonWriter.String(val);
-}
-
 template <typename T>
-void writeJson(
+[[maybe_unused]] void writeJson(
     const std::vector<T>& list,
     JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context);
-
-template <typename T>
-void writeJson(
-    const std::optional<T>& list,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context);
-
-template <typename T>
-void writeJson(
-    const std::unordered_map<std::string, T>& list,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context);
+    const ExtensionWriterContext& context) {
+  jsonWriter.StartArray();
+  for (const T& item : list) {
+    writeJson(item, jsonWriter, context);
+  }
+  jsonWriter.EndArray();
+}
 
 template <typename... Ts>
-void writeJson(
+[[maybe_unused]] void writeJson(
     const std::variant<Ts...>& val,
     JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context);
+    const ExtensionWriterContext& context) {
+  std::visit(
+      [&jsonWriter, &context](const auto& arg) {
+        writeJson(arg, jsonWriter, context);
+      },
+      val);
+}
+
+template <typename T>
+[[maybe_unused]] void writeJson(
+    const std::optional<T>& val,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  if (val.has_value()) {
+    writeJson(*val, jsonWriter, context);
+  } else {
+    jsonWriter.Null();
+  }
+}
+
+template <typename T>
+[[maybe_unused]] void writeJson(
+    const std::unordered_map<std::string, T>& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  for (const auto& item : obj) {
+    jsonWriter.Key(item.first);
+    writeJson(item.second, jsonWriter, context);
+  }
+}
 } // namespace
 
 /////////////////////////////////////////
@@ -463,39 +562,6 @@ void FeatureTableWriter::BinaryBodyReferenceWriter::write(
 }
 
 /////////////////////////////////////////
-// Writer for FeatureTable::Property
-/////////////////////////////////////////
-
-namespace {
-void writeJson(
-    const FeatureTable::Property& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  if (obj.v0.has_value()) {
-    writeJson(obj.v0, jsonWriter, context);
-    return;
-  }
-  if (obj.v1.has_value()) {
-    writeJson(obj.v1, jsonWriter, context);
-    return;
-  }
-  if (obj.v2.has_value()) {
-    writeJson(obj.v2, jsonWriter, context);
-    return;
-  }
-
-  jsonWriter.Null();
-}
-} // namespace
-
-void FeatureTableWriter::PropertyWriter::write(
-    const FeatureTable::Property& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-/////////////////////////////////////////
 // Writer for FeatureTable::GlobalPropertyScalar::Variant0
 /////////////////////////////////////////
 
@@ -520,39 +586,6 @@ void writeJson(
 
 void FeatureTableWriter::GlobalPropertyScalarWriter::Variant0Writer::write(
     const FeatureTable::GlobalPropertyScalar::Variant0& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-/////////////////////////////////////////
-// Writer for FeatureTable::GlobalPropertyScalar
-/////////////////////////////////////////
-
-namespace {
-void writeJson(
-    const FeatureTable::GlobalPropertyScalar& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  if (obj.v0.has_value()) {
-    writeJson(obj.v0, jsonWriter, context);
-    return;
-  }
-  if (obj.v1.has_value()) {
-    writeJson(obj.v1, jsonWriter, context);
-    return;
-  }
-  if (obj.v2.has_value()) {
-    writeJson(obj.v2, jsonWriter, context);
-    return;
-  }
-
-  jsonWriter.Null();
-}
-} // namespace
-
-void FeatureTableWriter::GlobalPropertyScalarWriter::write(
-    const FeatureTable::GlobalPropertyScalar& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
@@ -589,35 +622,6 @@ void FeatureTableWriter::GlobalPropertyCartesian3Writer::Variant0Writer::write(
 }
 
 /////////////////////////////////////////
-// Writer for FeatureTable::GlobalPropertyCartesian3
-/////////////////////////////////////////
-
-namespace {
-void writeJson(
-    const FeatureTable::GlobalPropertyCartesian3& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  if (obj.v0.has_value()) {
-    writeJson(obj.v0, jsonWriter, context);
-    return;
-  }
-  if (obj.v1.has_value()) {
-    writeJson(obj.v1, jsonWriter, context);
-    return;
-  }
-
-  jsonWriter.Null();
-}
-} // namespace
-
-void FeatureTableWriter::GlobalPropertyCartesian3Writer::write(
-    const FeatureTable::GlobalPropertyCartesian3& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-/////////////////////////////////////////
 // Writer for FeatureTable::GlobalPropertyCartesian4::Variant0
 /////////////////////////////////////////
 
@@ -642,35 +646,6 @@ void writeJson(
 
 void FeatureTableWriter::GlobalPropertyCartesian4Writer::Variant0Writer::write(
     const FeatureTable::GlobalPropertyCartesian4::Variant0& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-/////////////////////////////////////////
-// Writer for FeatureTable::GlobalPropertyCartesian4
-/////////////////////////////////////////
-
-namespace {
-void writeJson(
-    const FeatureTable::GlobalPropertyCartesian4& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  if (obj.v0.has_value()) {
-    writeJson(obj.v0, jsonWriter, context);
-    return;
-  }
-  if (obj.v1.has_value()) {
-    writeJson(obj.v1, jsonWriter, context);
-    return;
-  }
-
-  jsonWriter.Null();
-}
-} // namespace
-
-void FeatureTableWriter::GlobalPropertyCartesian4Writer::write(
-    const FeatureTable::GlobalPropertyCartesian4& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
@@ -800,55 +775,6 @@ void PntsFeatureTableWriter::write(
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-namespace {
-template <typename T>
-[[maybe_unused]] void writeJson(
-    const std::vector<T>& list,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  jsonWriter.StartArray();
-  for (const T& item : list) {
-    writeJson(item, jsonWriter, context);
-  }
-  jsonWriter.EndArray();
-}
-
-template <typename T>
-[[maybe_unused]] void writeJson(
-    const std::optional<T>& val,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  if (val.has_value()) {
-    writeJson(*val, jsonWriter, context);
-  } else {
-    jsonWriter.Null();
-  }
-}
-
-template <typename T>
-[[maybe_unused]] void writeJson(
-    const std::unordered_map<std::string, T>& obj,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  for (const auto& item : obj) {
-    jsonWriter.Key(item.first);
-    writeJson(item.second, jsonWriter, context);
-  }
-}
-} // namespace
-
-template <typename... Ts>
-void writeJson(
-    const std::variant<Ts...>& val,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  std::visit(
-      [&jsonWriter, &context](const auto& arg) {
-        writeJson(arg, jsonWriter, context);
-      },
-      val);
 }
 
 } // namespace Cesium3DTiles
