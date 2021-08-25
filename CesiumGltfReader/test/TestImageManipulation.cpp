@@ -166,21 +166,32 @@ TEST_CASE("ImageManipulation::blitImage") {
         [](std::byte b) { return b == std::byte(1); }));
   };
 
-  auto verifySuccessfulCopy = [&target, &targetRect]() {
+  auto contains = [](const PixelRectangle& rectangle, size_t x, size_t y) {
+    if (x < size_t(rectangle.x)) {
+      return false;
+    }
+    if (y < size_t(rectangle.y)) {
+      return false;
+    }
+    if (x >= size_t(rectangle.x + rectangle.width)) {
+      return false;
+    }
+    if (y >= size_t(rectangle.y + rectangle.height)) {
+      return false;
+    }
+    return true;
+  };
+
+  auto verifySuccessfulCopy = [&target, &targetRect, &contains]() {
+    size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
+
     for (size_t j = 0; j < size_t(target.height); ++j) {
-      bool copiedRow = j >= size_t(targetRect.y) &&
-                       j < size_t(targetRect.y + targetRect.height);
-      size_t rowOffset =
-          j * size_t(target.width * target.bytesPerChannel * target.channels);
       for (size_t i = 0; i < size_t(target.width); ++i) {
-        bool copiedColumn = i >= size_t(targetRect.x) &&
-                            i < size_t(targetRect.x + targetRect.width);
+        size_t index = j * size_t(target.width) + i;
+        size_t offset = index * bytesPerPixel;
         std::byte expected =
-            copiedRow && copiedColumn ? std::byte(2) : std::byte(1);
-        size_t offset =
-            rowOffset + i * size_t(target.bytesPerChannel * target.channels);
-        for (size_t k = 0; k < size_t(target.channels * target.bytesPerChannel);
-             ++k) {
+            contains(targetRect, i, j) ? std::byte(2) : std::byte(1);
+        for (size_t k = 0; k < bytesPerPixel; ++k) {
           CHECK(target.pixelData[offset + k] == expected);
         }
       }
