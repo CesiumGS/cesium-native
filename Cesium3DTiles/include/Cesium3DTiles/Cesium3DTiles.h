@@ -180,8 +180,7 @@ struct CODEGEN_API PntsFeatureTable : public FeatureTable {
 
   std::optional<FeatureTable::BinaryBodyReference> POSITION;
 
-  std::optional<FeatureTable::BinaryBodyReference> POSITION_QUANTIZED =
-      std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> POSITION_QUANTIZED;
 
   std::optional<FeatureTable::BinaryBodyReference> RGBA;
 
