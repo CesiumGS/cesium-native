@@ -114,7 +114,7 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    */
-  void createTileProvider(
+  void loadTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,

@@ -23,7 +23,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   RasterOverlay* pOverlayRaw = pOverlay.get();
   this->_overlays.push_back(std::move(pOverlay));
-  pOverlayRaw->createTileProvider(
+  pOverlayRaw->loadTileProvider(
       this->_pTileset->getAsyncSystem(),
       this->_pTileset->getExternals().pAssetAccessor,
       this->_pTileset->getExternals().pCreditSystem,

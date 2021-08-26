@@ -251,8 +251,11 @@ static LoadResult createLoadResultFromLoadedImage(
         "Prepare Raster " + std::to_string(image.width) + "x" +
         std::to_string(image.height) + "x" + std::to_string(image.channels) +
         "x" + std::to_string(image.bytesPerChannel));
-    void* pRendererResources =
-        pPrepareRendererResources->prepareRasterInLoadThread(image);
+
+    void* pRendererResources = nullptr;
+    if (pPrepareRendererResources) {
+      pPrepareRendererResources->prepareRasterInLoadThread(image);
+    }
 
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Loaded;

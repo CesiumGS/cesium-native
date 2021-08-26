@@ -656,6 +656,16 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
                                 pixelTolerance) *
                             projectedHeightPerPixel;
 
+    // We always need at least a 1x1 image, even if the target uses a tiny
+    // fraction of that pixel. e.g. if a level zero quadtree tile is mapped
+    // to a very tiny geometry tile.
+    if (intersection.minimumX == intersection.maximumX) {
+      intersection.maximumX += projectedWidthPerPixel;
+    }
+    if (intersection.minimumY == intersection.maximumY) {
+      intersection.maximumY += projectedHeightPerPixel;
+    }
+
     if (combinedRectangle) {
       combinedRectangle = combinedRectangle->computeUnion(intersection);
     } else {

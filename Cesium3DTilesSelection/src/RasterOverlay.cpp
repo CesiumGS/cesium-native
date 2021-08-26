@@ -55,7 +55,7 @@ RasterOverlay::getTileProvider() const noexcept {
                               : this->_pPlaceholder.get();
 }
 
-void RasterOverlay::createTileProvider(
+void RasterOverlay::loadTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
