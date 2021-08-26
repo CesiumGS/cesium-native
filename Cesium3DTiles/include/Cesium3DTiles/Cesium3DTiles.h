@@ -21,7 +21,7 @@ struct CODEGEN_API Asset : public CesiumUtility::ExtensibleObject {
 
   std::string version;
 
-  std::optional<std::string> tilesetVersion = std::nullopt;
+  std::optional<std::string> tilesetVersion;
 };
 
 struct CODEGEN_API BoundingVolume : public CesiumUtility::ExtensibleObject {
@@ -29,11 +29,11 @@ struct CODEGEN_API BoundingVolume : public CesiumUtility::ExtensibleObject {
 
   BoundingVolume() = default;
 
-  std::optional<std::vector<double>> box = std::nullopt;
+  std::optional<std::vector<double>> box;
 
-  std::optional<std::vector<double>> region = std::nullopt;
+  std::optional<std::vector<double>> region;
 
-  std::optional<std::vector<double>> sphere = std::nullopt;
+  std::optional<std::vector<double>> sphere;
 };
 
 struct CODEGEN_API TileContent : public CesiumUtility::ExtensibleObject {
@@ -41,7 +41,7 @@ struct CODEGEN_API TileContent : public CesiumUtility::ExtensibleObject {
 
   TileContent() = default;
 
-  std::optional<BoundingVolume> boundingVolume = std::nullopt;
+  std::optional<BoundingVolume> boundingVolume;
 
   std::string uri;
 };
@@ -55,18 +55,18 @@ struct CODEGEN_API Tile : public CesiumUtility::ExtensibleObject {
 
   BoundingVolume boundingVolume;
 
-  std::optional<BoundingVolume> viewerRequestVolume = std::nullopt;
+  std::optional<BoundingVolume> viewerRequestVolume;
 
   double geometricError;
 
-  std::optional<Refine> refine = std::nullopt;
+  std::optional<Refine> refine;
 
   std::vector<double> transform =
       {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-  std::optional<TileContent> content = std::nullopt;
+  std::optional<TileContent> content;
 
-  std::optional<std::vector<Tile>> children = std::nullopt;
+  std::optional<std::vector<Tile>> children;
 };
 
 struct CODEGEN_API TilesetProperties : public CesiumUtility::ExtensibleObject {
@@ -94,15 +94,15 @@ struct CODEGEN_API Tileset : public CesiumUtility::ExtensibleObject {
 
   Asset asset;
 
-  std::optional<Properties> properties = std::nullopt;
+  std::optional<Properties> properties;
 
   double geometricError;
 
   Tile root;
 
-  std::optional<std::vector<std::string>> extensionsUsed = std::nullopt;
+  std::optional<std::vector<std::string>> extensionsUsed;
 
-  std::optional<std::vector<std::string>> extensionsRequired = std::nullopt;
+  std::optional<std::vector<std::string>> extensionsRequired;
 };
 
 struct CODEGEN_API FeatureTable : public CesiumUtility::ExtensibleObject {
@@ -127,7 +127,7 @@ struct CODEGEN_API FeatureTable : public CesiumUtility::ExtensibleObject {
 
     int64_t byteOffset;
 
-    std::optional<ComponentType> componentType = std::nullopt;
+    std::optional<ComponentType> componentType;
   };
 
   struct CODEGEN_API Property {};
@@ -178,54 +178,54 @@ struct CODEGEN_API PntsFeatureTable : public FeatureTable {
 
   PntsFeatureTable() = default;
 
-  std::optional<FeatureTable::BinaryBodyReference> POSITION = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> POSITION;
 
   std::optional<FeatureTable::BinaryBodyReference> POSITION_QUANTIZED =
       std::nullopt;
 
-  std::optional<FeatureTable::BinaryBodyReference> RGBA = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> RGBA;
 
-  std::optional<FeatureTable::BinaryBodyReference> RGB = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> RGB;
 
-  std::optional<FeatureTable::BinaryBodyReference> RGB565 = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> RGB565;
 
-  std::optional<FeatureTable::BinaryBodyReference> NORMAL = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> NORMAL;
 
-  std::optional<FeatureTable::BinaryBodyReference> NORMAL_OCT16P = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> NORMAL_OCT16P;
 
-  std::optional<FeatureTable::BinaryBodyReference> BATCH_ID = std::nullopt;
+  std::optional<FeatureTable::BinaryBodyReference> BATCH_ID;
 
   std::optional<std::variant<
       FeatureTable::GlobalPropertyScalar::Variant0,
       std::vector<double>,
       double>>
-      POINTS_LENGTH = std::nullopt;
+      POINTS_LENGTH;
 
   std::optional<std::variant<
       FeatureTable::GlobalPropertyCartesian3::Variant0,
       std::vector<double>>>
-      RTC_CENTER = std::nullopt;
+      RTC_CENTER;
 
   std::optional<std::variant<
       FeatureTable::GlobalPropertyCartesian3::Variant0,
       std::vector<double>>>
-      QUANTIZED_VOLUME_OFFSET = std::nullopt;
+      QUANTIZED_VOLUME_OFFSET;
 
   std::optional<std::variant<
       FeatureTable::GlobalPropertyCartesian3::Variant0,
       std::vector<double>>>
-      QUANTIZED_VOLUME_SCALE = std::nullopt;
+      QUANTIZED_VOLUME_SCALE;
 
   std::optional<std::variant<
       FeatureTable::GlobalPropertyCartesian4::Variant0,
       std::vector<double>>>
-      CONSTANT_RGBA = std::nullopt;
+      CONSTANT_RGBA;
 
   std::optional<std::variant<
       FeatureTable::GlobalPropertyScalar::Variant0,
       std::vector<double>,
       double>>
-      BATCH_LENGTH = std::nullopt;
+      BATCH_LENGTH;
 };
 
 } // namespace Cesium3DTiles
