@@ -77,7 +77,6 @@ public:
       int32_t /*overlayTextureCoordinateID*/,
       const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
       void* /*pMainThreadRendererResources*/,
-      const CesiumGeometry::Rectangle& /*textureCoordinateRectangle*/,
       const glm::dvec2& /*translation*/,
       const glm::dvec2& /*scale*/) override {}
 
@@ -85,7 +84,5 @@ public:
       const Cesium3DTilesSelection::Tile& /*tile*/,
       int32_t /*overlayTextureCoordinateID*/,
       const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
-      void* /*pMainThreadRendererResources*/,
-      const CesiumGeometry::Rectangle& /*textureCoordinateRectangle*/) noexcept
-      override {}
+      void* /*pMainThreadRendererResources*/) noexcept override {}
 };
