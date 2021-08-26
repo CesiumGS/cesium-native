@@ -1,5 +1,6 @@
 
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
+#include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGltf/ImageManipulation.h"
 #include "CesiumUtility/Math.h"
@@ -540,10 +541,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
 void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
   CESIUM_TRACE("QuadtreeRasterOverlayTileProvider::unloadCachedTiles");
 
-  // The cache is big enough for 100 256x256, 4-channel tiles.
-  // TODO: make this configurable
-  const int64_t maxCacheBytes = 256 * 256 * 4 * 100;
-
+  int64_t maxCacheBytes = this->getOwner().getOptions().subTileCacheBytes;
   if (this->_cachedBytes <= maxCacheBytes) {
     return;
   }
