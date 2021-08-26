@@ -21,6 +21,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug that caused CesiumGltfWriter to write a material's normal texture info into a property named `normalTextureInfo` rather than `normalTexture`.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to show only the lowest resolution tiles if missing a `tilemapresource.xml` file.
 
 ### v0.6.0 - 2021-08-02
 
