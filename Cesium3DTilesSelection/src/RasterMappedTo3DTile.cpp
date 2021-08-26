@@ -91,8 +91,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
           tile,
           this->getTextureCoordinateID(),
           *this->_pReadyTile,
-          this->_pReadyTile->getRendererResources(),
-          CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)); // TODO
+          this->_pReadyTile->getRendererResources());
       this->_state = AttachmentState::Unattached;
     }
 
@@ -127,8 +126,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
             tile,
             this->getTextureCoordinateID(),
             *this->_pReadyTile,
-            this->_pReadyTile->getRendererResources(),
-            CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)); // TODO
+            this->_pReadyTile->getRendererResources());
         this->_state = AttachmentState::Unattached;
       }
 
@@ -150,7 +148,6 @@ RasterMappedTo3DTile::update(Tile& tile) {
         this->getTextureCoordinateID(),
         *this->_pReadyTile,
         this->_pReadyTile->getRendererResources(),
-        CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0), // TODO
         this->getTranslation(),
         this->getScale());
 
@@ -185,8 +182,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
       tile,
       this->getTextureCoordinateID(),
       *this->_pReadyTile,
-      this->_pReadyTile->getRendererResources(),
-      CesiumGeometry::Rectangle(0.0, 0.0, 1.0, 1.0)); // TODO
+      this->_pReadyTile->getRendererResources());
 
   this->_state = AttachmentState::Unattached;
 }
