@@ -20,11 +20,6 @@ public:
     return this->getAsyncSystem()
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
-
-  virtual bool
-  hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {
-    return false;
-  }
 };
 } // namespace
 
@@ -60,7 +55,7 @@ RasterOverlay::getTileProvider() const noexcept {
                               : this->_pPlaceholder.get();
 }
 
-void RasterOverlay::createTileProvider(
+void RasterOverlay::loadTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,

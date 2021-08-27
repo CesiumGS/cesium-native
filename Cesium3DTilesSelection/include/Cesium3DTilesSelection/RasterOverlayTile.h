@@ -107,9 +107,9 @@ public:
    * Otherwise, the state will become {@link LoadState `Failed`}.
    *
    * @param overlay The {@link RasterOverlay}.
-   * @param tileID The {@link TileID} for this tile.
+   * @param targetGeometricError The geometric error to target for this tile.
    * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
-   * the imagery rectange for this tile.
+   * the rectangle covered by this tile in the overlay's projection.
    */
   RasterOverlayTile(
       RasterOverlay& overlay,
@@ -195,6 +195,10 @@ public:
     this->_pRendererResources = pValue;
   }
 
+  /**
+   * @brief Determines if more detailed data is available for the spatial area
+   * covered by this tile.
+   */
   MoreDetailAvailable isMoreDetailAvailable() const {
     return this->_moreDetailAvailable;
   }

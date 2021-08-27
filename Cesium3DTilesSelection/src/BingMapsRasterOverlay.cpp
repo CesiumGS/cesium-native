@@ -188,7 +188,7 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, options);
+    return this->loadTileImageFromUrl(url, {}, std::move(options));
   }
 
 private:

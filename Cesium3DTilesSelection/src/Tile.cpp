@@ -141,9 +141,9 @@ void mapRasterOverlaysToTile(
 
   assert(tile.getMappedRasterTiles().empty());
 
-  std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(tile.getBoundingVolume());
-  if (!maybeRectangle) {
+  const CesiumGeospatial::GlobeRectangle* pRectangle =
+      Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
+  if (!pRectangle) {
     return;
   }
 
@@ -157,7 +157,7 @@ void mapRasterOverlaysToTile(
     //       projecting each vertex, but that would require us to have
     //       geometry first.
     Rectangle overlayRectangle =
-        projectRectangleSimple(pProvider->getProjection(), *maybeRectangle);
+        projectRectangleSimple(pProvider->getProjection(), *pRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
         pOverlay->getTileProvider()->getTile(
@@ -260,90 +260,93 @@ void Tile::loadContent() {
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
-      .thenInWorkerThread([loadInput = std::move(loadInput),
-                           projections = std::move(projections),
-                           gltfUpAxis,
-                           pPrepareRendererResources =
-                               tileset.getExternals().pPrepareRendererResources,
-                           pLogger = tileset.getExternals().pLogger](
-                              std::shared_ptr<IAssetRequest>&&
-                                  pRequest) mutable {
-        CESIUM_TRACE("loadContent worker thread");
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Did not receive a valid response for tile content {}",
-              pRequest->url());
-          auto pLoadResult = std::make_unique<TileContentLoadResult>();
-          pLoadResult->httpStatusCode = 0;
-          return LoadResult{
-              LoadState::FailedTemporarily,
-              std::move(pLoadResult),
-              nullptr};
-        }
-
-        if (pResponse->statusCode() != 0 &&
-            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Received status code {} for tile content {}",
-              pResponse->statusCode(),
-              pRequest->url());
-          auto pLoadResult = std::make_unique<TileContentLoadResult>();
-          pLoadResult->httpStatusCode = pResponse->statusCode();
-          return LoadResult{
-              LoadState::FailedTemporarily,
-              std::move(pLoadResult),
-              nullptr};
-        }
-
-        loadInput.data = pResponse->data();
-        loadInput.contentType = pResponse->contentType();
-        loadInput.url = pRequest->url();
-        std::unique_ptr<TileContentLoadResult> pContent =
-            TileContentFactory::createContent(loadInput);
-
-        void* pRendererResources = nullptr;
-        if (pContent) {
-          pContent->httpStatusCode = pResponse->statusCode();
-
-          if (pContent->model) {
-
-            CesiumGltf::Model& model = pContent->model.value();
-
-            // TODO The `extras` are currently the only way to pass
-            // arbitrary information to the consumer, so the up-axis
-            // is stored here:
-            model.extras["gltfUpAxis"] = gltfUpAxis;
-
-            const BoundingVolume& boundingVolume = loadInput.tileBoundingVolume;
-            // TODO: apply gltf up axis and RTC_CENTER
-            const glm::dmat4& transform = loadInput.tileTransform;
-
-            Tile::generateTextureCoordinates(
-                model,
-                transform /** CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP*/,
-                boundingVolume,
-                projections);
-
-            if (pPrepareRendererResources) {
-              CESIUM_TRACE("prepareInLoadThread");
-              pRendererResources =
-                  pPrepareRendererResources->prepareInLoadThread(
-                      pContent->model.value(),
-                      transform);
+      .thenInWorkerThread(
+          [loadInput = std::move(loadInput),
+           projections = std::move(projections),
+           gltfUpAxis,
+           pPrepareRendererResources =
+               tileset.getExternals().pPrepareRendererResources,
+           pLogger = tileset.getExternals().pLogger](
+              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+            CESIUM_TRACE("loadContent worker thread");
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url());
+              auto pLoadResult = std::make_unique<TileContentLoadResult>();
+              pLoadResult->httpStatusCode = 0;
+              return LoadResult{
+                  LoadState::FailedTemporarily,
+                  std::move(pLoadResult),
+                  nullptr};
             }
-          }
-        }
 
-        LoadResult result;
-        result.state = LoadState::ContentLoaded;
-        result.pContent = std::move(pContent);
-        result.pRendererResources = pRendererResources;
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Received status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url());
+              auto pLoadResult = std::make_unique<TileContentLoadResult>();
+              pLoadResult->httpStatusCode = pResponse->statusCode();
+              return LoadResult{
+                  LoadState::FailedTemporarily,
+                  std::move(pLoadResult),
+                  nullptr};
+            }
 
-        return result;
-      })
+            loadInput.data = pResponse->data();
+            loadInput.contentType = pResponse->contentType();
+            loadInput.url = pRequest->url();
+            std::unique_ptr<TileContentLoadResult> pContent =
+                TileContentFactory::createContent(loadInput);
+
+            void* pRendererResources = nullptr;
+            if (pContent) {
+              pContent->httpStatusCode = pResponse->statusCode();
+
+              if (pContent->model) {
+
+                CesiumGltf::Model& model = pContent->model.value();
+
+                // TODO The `extras` are currently the only way to pass
+                // arbitrary information to the consumer, so the up-axis
+                // is stored here:
+                model.extras["gltfUpAxis"] = gltfUpAxis;
+
+                const BoundingVolume& boundingVolume =
+                    loadInput.tileBoundingVolume;
+                // TODO: apply gltf up axis (if it's not the glTF standard Y-up,
+                // which is already accounted for) and RTC_CENTER.
+                const glm::dmat4& transform = loadInput.tileTransform;
+
+                Tile::generateTextureCoordinates(
+                    model,
+                    transform,
+                    boundingVolume,
+                    projections);
+
+                if (pPrepareRendererResources) {
+                  CESIUM_TRACE("prepareInLoadThread");
+                  pRendererResources =
+                      pPrepareRendererResources->prepareInLoadThread(
+                          pContent->model.value(),
+                          transform);
+                }
+              }
+            }
+
+            LoadResult result;
+            result.state = LoadState::ContentLoaded;
+            result.pContent = std::move(pContent);
+            result.pRendererResources = pRendererResources;
+
+            return result;
+          })
       .thenInMainThread([this](LoadResult&& loadResult) {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
@@ -683,14 +686,14 @@ void Tile::update(
     }
   }
 
-  std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(this->getBoundingVolume());
-  if (!maybeRectangle) {
+  const CesiumGeospatial::GlobeRectangle* pRectangle =
+      Impl::obtainGlobeRectangle(&this->getBoundingVolume());
+  if (!pRectangle) {
     return;
   }
 
   if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays() && maybeRectangle) {
+      this->getTileset()->supportsRasterOverlays() && pRectangle) {
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
@@ -711,9 +714,8 @@ void Tile::update(
                   i));
           --i;
 
-          Rectangle projectedRectangle = projectRectangleSimple(
-              pProvider->getProjection(),
-              *maybeRectangle);
+          Rectangle projectedRectangle =
+              projectRectangleSimple(pProvider->getProjection(), *pRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());
           this->_rasterTiles.emplace_back(pTile);
@@ -787,9 +789,9 @@ Tile::generateTextureCoordinates(
 
   // Generate texture coordinates for each projection.
   if (!projections.empty()) {
-    std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
-        getGlobeRectangle(boundingVolume);
-    if (maybeRectangle) {
+    const CesiumGeospatial::GlobeRectangle* pRectangle =
+        Impl::obtainGlobeRectangle(&boundingVolume);
+    if (pRectangle) {
       for (size_t i = 0; i < projections.size(); ++i) {
         const Projection& projection = projections[i];
 

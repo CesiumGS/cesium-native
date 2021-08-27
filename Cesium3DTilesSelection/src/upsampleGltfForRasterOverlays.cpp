@@ -131,31 +131,6 @@ Model upsampleGltfForRasterOverlays(
     nameIt->second = name;
   }
 
-  double maskTranslationX = 0.0;
-  double maskTranslationY = 0.0;
-  double maskScale = 0.0;
-
-  auto maskTranslationXIt = parentModel.extras.find("customMaskTranslationX");
-  auto maskTranslationYIt = parentModel.extras.find("customMaskTranslationY");
-  auto maskScaleIt = parentModel.extras.find("customMaskScale");
-
-  if (maskTranslationXIt != parentModel.extras.end() &&
-      maskTranslationXIt->second.isDouble() &&
-      maskTranslationYIt != parentModel.extras.end() &&
-      maskTranslationYIt->second.isDouble() &&
-      maskScaleIt != parentModel.extras.end() &&
-      maskScaleIt->second.isDouble()) {
-    maskScale = 0.5 * maskScaleIt->second.getDoubleOrDefault(0.0);
-    maskTranslationX = maskTranslationXIt->second.getDoubleOrDefault(0.0) +
-                       maskScale * (childID.tileID.x % 2);
-    maskTranslationY = maskTranslationYIt->second.getDoubleOrDefault(0.0) +
-                       maskScale * (childID.tileID.y % 2);
-  }
-
-  result.extras["customMaskTranslationX"] = maskTranslationX;
-  result.extras["customMaskTranslationY"] = maskTranslationY;
-  result.extras["customMaskScale"] = maskScale;
-
   for (Mesh& mesh : result.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       upsamplePrimitiveForRasterOverlays(

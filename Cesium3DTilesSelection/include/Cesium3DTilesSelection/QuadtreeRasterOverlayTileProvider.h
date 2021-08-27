@@ -15,25 +15,14 @@
 
 namespace Cesium3DTilesSelection {
 
-struct LoadedQuadtreeImage {
-  std::shared_ptr<LoadedRasterOverlayImage> pLoaded;
-  std::optional<CesiumGeometry::Rectangle> subset;
-};
-
 class CESIUM3DTILESSELECTION_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 
 public:
-  QuadtreeRasterOverlayTileProvider(
-      RasterOverlay& owner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>&
-          pAssetAccessor) noexcept;
-
   /**
    * @brief Creates a new instance.
    *
-   * @param owner The {@link RasterOverlay}. May not be `nullptr`.
+   * @param owner The raster overlay that owns this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
@@ -66,17 +55,6 @@ public:
       uint32_t imageHeight) noexcept;
 
   /**
-   * @brief Whether the given raster tile has more detail.
-   *
-   * If so its children may be subdivided to use the more detailed raster
-   * tiles.
-   */
-  virtual bool hasMoreDetailsAvailable(const TileID& tileID) const override;
-
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override;
-
-  /**
    * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
    * instance.
    */
@@ -95,12 +73,12 @@ public:
   uint32_t getMaximumLevel() const noexcept { return this->_maximumLevel; }
 
   /**
-   * @brief Returns the image width of this instance.
+   * @brief Returns the image width of this instance, in pixels.
    */
   uint32_t getWidth() const noexcept { return this->_imageWidth; }
 
   /**
-   * @brief Returns the image height of this instance.
+   * @brief Returns the image height of this instance, in pixels.
    */
   uint32_t getHeight() const noexcept { return this->_imageHeight; }
 
@@ -127,35 +105,61 @@ public:
       const glm::dvec2& position) const noexcept;
 
 protected:
+  /**
+   * @brief Asynchronously loads a tile in the quadtree.
+   *
+   * @param tileID The ID of the quadtree tile to load.
+   * @return A Future that resolves to the loaded image data or error
+   * information.
+   */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(RasterOverlayTile& overlayTile) override final;
+
+  struct LoadedQuadtreeImage {
+    std::shared_ptr<LoadedRasterOverlayImage> pLoaded;
+    std::optional<CesiumGeometry::Rectangle> subset;
+  };
+
   CesiumAsync::SharedFuture<LoadedQuadtreeImage>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**
    * @brief Map raster tiles to geometry tile.
    *
-   * This function is not supposed to be called by clients.
-   *
-   * @param geometryRectangle The rectangle.
-   * @param targetGeometricError The geometric error.
-   * @return A single raster tile combining the given rasters into the
-   * geometry tile's rectangle.
+   * @param geometryRectangle The rectangle for which to load tiles.
+   * @param targetGeometricError The geometric error controlling which quadtree
+   * level to use to cover the rectangle.
+   * @return A vector of shared futures, each of which will resolve to image
+   * data that is required to cover the rectangle with the given geometric
+   * error.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
-  mapRasterTilesToGeometryTile(
-      const CesiumGeospatial::GlobeRectangle& geometryRectangle,
-      double targetGeometricError);
-
-  /** @copydoc mapRasterTilesToGeometryTile */
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       double targetGeometricError);
 
   void unloadCachedTiles();
+
+  struct CombinedImageMeasurements {
+    CesiumGeometry::Rectangle rectangle;
+    int32_t widthPixels;
+    int32_t heightPixels;
+    int32_t channels;
+    int32_t bytesPerChannel;
+  };
+
+  static CombinedImageMeasurements measureCombinedImage(
+      const CesiumGeometry::Rectangle& targetRectangle,
+      const std::vector<LoadedQuadtreeImage>& images);
+
+  static LoadedRasterOverlayImage combineImages(
+      const CesiumGeometry::Rectangle& targetRectangle,
+      const CesiumGeospatial::Projection& projection,
+      std::vector<LoadedQuadtreeImage>&& images);
 
   CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;
