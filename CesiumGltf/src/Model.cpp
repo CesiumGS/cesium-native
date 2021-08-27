@@ -3,6 +3,7 @@
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include <algorithm>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/norm.hpp>
 #include <glm/vec3.hpp>
 #include <gsl/span>
 
@@ -525,7 +526,12 @@ void generateSmoothNormals(
 
   // normalizes the accumulated vertex normals
   for (size_t i = 0; i < count; ++i) {
-    normals[i] = glm::normalize(normals[i]);
+    float lengthSquared = glm::length2(normals[i]);
+    if (lengthSquared < 1e-8f) {
+      normals[i] = glm::vec3(0.0f);
+    } else {
+      normals[i] /= glm::sqrt(lengthSquared);
+    }
   }
 
   size_t normalBufferId = gltf.buffers.size();
