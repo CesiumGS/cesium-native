@@ -201,7 +201,7 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
   RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
   CesiumGeometry::Rectangle geometryRectangle =
-      projectRectangleSimple(tileProvider.getProjection(), *maybeRectangle);
+      projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
   CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 

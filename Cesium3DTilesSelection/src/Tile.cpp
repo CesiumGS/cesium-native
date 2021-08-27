@@ -798,7 +798,7 @@ Tile::generateTextureCoordinates(
         int textureCoordinateID = static_cast<int32_t>(i);
 
         CesiumGeometry::Rectangle rectangle =
-            projectRectangleSimple(projection, *maybeRectangle);
+            projectRectangleSimple(projection, *pRectangle);
 
         CesiumGeospatial::BoundingRegion boundingRegion =
             GltfContent::createRasterOverlayTextureCoordinates(

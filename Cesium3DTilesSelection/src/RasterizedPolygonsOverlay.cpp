@@ -160,11 +160,6 @@ public:
             projection),
         _polygons(polygons) {}
 
-  virtual bool
-  hasMoreDetailsAvailable(const TileID& /*tileID*/) const override {
-    return false; // always true or always false??
-  }
-
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
     return this->getAsyncSystem().runInWorkerThread(
