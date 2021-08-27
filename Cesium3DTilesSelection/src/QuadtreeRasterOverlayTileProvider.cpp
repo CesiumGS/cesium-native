@@ -203,120 +203,14 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // tile. We need to do all texture coordinate computations in the imagery
   // provider's projection.
 
-  imageryRectangle =
-      imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
-  CesiumGeometry::Rectangle imageryBounds = intersection;
-  std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
-      std::nullopt;
-
-  // size_t realOutputIndex =
-  //    outputIndex ? outputIndex.value() : outputRasterTiles.size();
-
-  double minU;
-  double maxU = 0.0;
-
-  double minV;
-  double maxV = 0.0;
-
-  // If this is the northern-most or western-most tile in the imagery tiling
-  // scheme, it may not start at the northern or western edge of the terrain
-  // tile. Calculate where it does start.
-  // TODO
-  // if (
-  //     /*!this.isBaseLayer()*/ false &&
-  //     glm::abs(clippedImageryRectangle.value().getWest() -
-  //     terrainRectangle.getWest()) >= veryCloseX
-  // ) {
-  //     maxU = glm::min(
-  //         1.0,
-  //         (clippedImageryRectangle.value().getWest() -
-  //         terrainRectangle.getWest()) / terrainRectangle.computeWidth()
-  //     );
-  // }
-
-  // if (
-  //     /*!this.isBaseLayer()*/ false &&
-  //     glm::abs(clippedImageryRectangle.value().getNorth() -
-  //     terrainRectangle.getNorth()) >= veryCloseY
-  // ) {
-  //     minV = glm::max(
-  //         0.0,
-  //         (clippedImageryRectangle.value().getNorth() -
-  //         terrainRectangle.getSouth()) / terrainRectangle.computeHeight()
-  //     );
-  // }
-
-  double initialMaxV = maxV;
-
   for (uint32_t i = southwestTileCoordinates.x; i <= northeastTileCoordinates.x;
        ++i) {
-    minU = maxU;
-
-    imageryRectangle = imageryTilingScheme.tileToRectangle(
-        QuadtreeTileID(imageryLevel, i, southwestTileCoordinates.y));
-    clippedImageryRectangle =
-        imageryRectangle.computeIntersection(imageryBounds);
-
-    if (!clippedImageryRectangle) {
-      continue;
-    }
-
-    maxU = glm::min(
-        1.0,
-        (clippedImageryRectangle.value().maximumX -
-         geometryRectangle.minimumX) /
-            geometryRectangle.computeWidth());
-
-    // If this is the eastern-most imagery tile mapped to this terrain tile,
-    // and there are more imagery tiles to the east of this one, the maxU
-    // should be 1.0 to make sure rounding errors don't make the last
-    // image fall shy of the edge of the terrain tile.
-    if (i == northeastTileCoordinates.x &&
-        (/*this.isBaseLayer()*/ true ||
-         glm::abs(
-             clippedImageryRectangle.value().maximumX -
-             geometryRectangle.maximumX) < veryCloseX)) {
-      maxU = 1.0;
-    }
-
-    maxV = initialMaxV;
-
     for (uint32_t j = southwestTileCoordinates.y;
          j <= northeastTileCoordinates.y;
          ++j) {
-      minV = maxV;
-
-      imageryRectangle = imageryTilingScheme.tileToRectangle(
-          QuadtreeTileID(imageryLevel, i, j));
-      clippedImageryRectangle =
-          imageryRectangle.computeIntersection(imageryBounds);
-
-      if (!clippedImageryRectangle) {
-        continue;
-      }
-
-      maxV = glm::min(
-          1.0,
-          (clippedImageryRectangle.value().maximumY -
-           geometryRectangle.minimumY) /
-              geometryRectangle.computeHeight());
-
-      // If this is the northern-most imagery tile mapped to this terrain tile,
-      // and there are more imagery tiles to the north of this one, the maxV
-      // should be 1.0 to make sure rounding errors don't make the last
-      // image fall shy of the edge of the terrain tile.
-      if (j == northeastTileCoordinates.y &&
-          (/*this.isBaseLayer()*/ true ||
-           glm::abs(
-               clippedImageryRectangle.value().maximumY -
-               geometryRectangle.maximumY) < veryCloseY)) {
-        maxV = 1.0;
-      }
-
       CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
-
-      result.emplace_back(pTile);
+      result.emplace_back(std::move(pTile));
     }
   }
 
