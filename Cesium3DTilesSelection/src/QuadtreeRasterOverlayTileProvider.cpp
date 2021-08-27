@@ -202,12 +202,35 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // Create TileImagery instances for each imagery tile overlapping this terrain
   // tile. We need to do all texture coordinate computations in the imagery
   // provider's projection.
+  CesiumGeometry::Rectangle imageryBounds = intersection;
+  std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
+      std::nullopt;
 
   for (uint32_t i = southwestTileCoordinates.x; i <= northeastTileCoordinates.x;
        ++i) {
+
+    imageryRectangle = imageryTilingScheme.tileToRectangle(
+        QuadtreeTileID(imageryLevel, i, southwestTileCoordinates.y));
+    clippedImageryRectangle =
+        imageryRectangle.computeIntersection(imageryBounds);
+
+    if (!clippedImageryRectangle) {
+      continue;
+    }
+
     for (uint32_t j = southwestTileCoordinates.y;
          j <= northeastTileCoordinates.y;
          ++j) {
+
+      imageryRectangle = imageryTilingScheme.tileToRectangle(
+          QuadtreeTileID(imageryLevel, i, j));
+      clippedImageryRectangle =
+          imageryRectangle.computeIntersection(imageryBounds);
+
+      if (!clippedImageryRectangle) {
+        continue;
+      }
+
       CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
       result.emplace_back(std::move(pTile));
