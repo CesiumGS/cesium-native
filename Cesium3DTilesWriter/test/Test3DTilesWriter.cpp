@@ -49,11 +49,10 @@ TEST_CASE("Write 3D Tiles Tileset", "[3DTilesWriter]") {
   ts.properties = ps;
 
   WriterContext context;
-  std::stringstream sstream;
-  context.writeTileset(sstream, ts);
+  std::string json = context.writeTileset(ts);
 
   rapidjson::Document document;
-  document.Parse(sstream.str().c_str());
+  document.Parse(json.c_str());
 
   CHECK(document.IsObject());
   CHECK(document.HasMember("asset"));
@@ -146,11 +145,10 @@ TEST_CASE("Write 3D Tiles PntsFeatureTable", "[3DTilesWriter]") {
   pnts.QUANTIZED_VOLUME_OFFSET = qvo;
 
   WriterContext context;
-  std::stringstream sstream;
-  context.writePnts(sstream, pnts);
+  std::string json = context.writePnts(pnts);
 
   rapidjson::Document document;
-  document.Parse(sstream.str().c_str());
+  document.Parse(json.c_str());
 
   REQUIRE(document.IsObject());
   CHECK(document.HasMember("RTC_CENTER"));

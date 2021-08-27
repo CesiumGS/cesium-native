@@ -16,8 +16,8 @@ public:
     this->_context.registerExtension<TObj, TExtensionWriter>();
   }
 
-  void writeTileset(std::ostream& os, const Tileset& tileset);
-  void writePnts(std::ostream& os, const PntsFeatureTable& pnts);
+  std::string writeTileset(const Tileset& tileset) noexcept;
+  std::string writePnts(const PntsFeatureTable& pnts) noexcept;
 
 private:
   CesiumJsonWriter::ExtensionWriterContext _context;

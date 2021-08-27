@@ -6,14 +6,14 @@
 using namespace Cesium3DTiles;
 using namespace CesiumJsonWriter;
 
-void WriterContext::writeTileset(std::ostream& os, const Tileset& tileset) {
+std::string WriterContext::writeTileset(const Tileset& tileset) noexcept {
   JsonWriter writer;
   TilesetWriter::write(tileset, writer, this->_context);
-  os << writer.toString();
+  return writer.toString();
 }
 
-void WriterContext::writePnts(std::ostream& os, const PntsFeatureTable& pnts) {
+std::string WriterContext::writePnts(const PntsFeatureTable& pnts) noexcept {
   JsonWriter writer;
   PntsFeatureTableWriter::write(pnts, writer, this->_context);
-  os << writer.toString();
+  return writer.toString();
 }
