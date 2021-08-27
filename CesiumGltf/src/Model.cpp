@@ -424,41 +424,15 @@ void addTriangleNormalToVertexNormals(
   normals[index2] += triangleNormal;
 }
 
-template <typename TIndex>
-void generateSmoothNormals(
-    Model& gltf,
-    MeshPrimitive& primitive,
+template <typename TIndex, typename GetIndex>
+bool accumulateNormals(
+    MeshPrimitive::Mode mode,
+    gsl::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
-    const std::optional<Accessor>& indexAccessor) {
+    int64_t numIndices,
+    GetIndex getIndex) {
 
-  size_t count = static_cast<size_t>(positionView.size());
-  size_t normalBufferStride = sizeof(glm::vec3);
-  size_t normalBufferSize = count * normalBufferStride;
-
-  std::vector<std::byte> normalByteBuffer(normalBufferSize);
-  gsl::span<glm::vec3> normals(
-      reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
-      count);
-
-  int64_t numIndices;
-  std::function<TIndex(int64_t)> getIndex;
-
-  // In the indexed case, the positions are accessed with the
-  // indices from the indexView. Otherwise, the elements are
-  // accessed directly.
-  if (indexAccessor) {
-    CesiumGltf::AccessorView<TIndex> indexView(gltf, *indexAccessor);
-    if (indexView.status() != AccessorViewStatus::Valid) {
-      return;
-    }
-    numIndices = indexView.size();
-    getIndex = [&indexView](int64_t index) { return indexView[index]; };
-  } else {
-    numIndices = int64_t(count);
-    getIndex = [](int64_t index) { return static_cast<TIndex>(index); };
-  }
-
-  switch (primitive.mode) {
+  switch (mode) {
   case MeshPrimitive::Mode::TRIANGLES:
     for (int64_t i = 2; i < numIndices; i += 3) {
       TIndex index0 = getIndex(i - 2);
@@ -501,7 +475,7 @@ void generateSmoothNormals(
 
   case MeshPrimitive::Mode::TRIANGLE_FAN:
     if (numIndices < 3) {
-      return;
+      return false;
     }
 
     {
@@ -521,6 +495,55 @@ void generateSmoothNormals(
     break;
 
   default:
+    return false;
+  }
+
+  return true;
+}
+
+template <typename TIndex>
+void generateSmoothNormals(
+    Model& gltf,
+    MeshPrimitive& primitive,
+    const AccessorView<glm::vec3>& positionView,
+    const std::optional<Accessor>& indexAccessor) {
+
+  size_t count = static_cast<size_t>(positionView.size());
+  size_t normalBufferStride = sizeof(glm::vec3);
+  size_t normalBufferSize = count * normalBufferStride;
+
+  std::vector<std::byte> normalByteBuffer(normalBufferSize);
+  gsl::span<glm::vec3> normals(
+      reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
+      count);
+
+  // In the indexed case, the positions are accessed with the
+  // indices from the indexView. Otherwise, the elements are
+  // accessed directly.
+  bool accumulationResult = false;
+  if (indexAccessor) {
+    CesiumGltf::AccessorView<TIndex> indexView(gltf, *indexAccessor);
+    if (indexView.status() != AccessorViewStatus::Valid) {
+      return;
+    }
+
+    accumulationResult = accumulateNormals<TIndex>(
+        primitive.mode,
+        normals,
+        positionView,
+        indexView.size(),
+        [&indexView](int64_t index) { return indexView[index]; });
+
+  } else {
+    accumulationResult = accumulateNormals<TIndex>(
+        primitive.mode,
+        normals,
+        positionView,
+        int64_t(count),
+        [](int64_t index) { return static_cast<TIndex>(index); });
+  }
+
+  if (!accumulationResult) {
     return;
   }
 
