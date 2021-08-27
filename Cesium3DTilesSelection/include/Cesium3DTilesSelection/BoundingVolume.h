@@ -5,6 +5,8 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
 #include "CesiumGeospatial/BoundingRegion.h"
 #include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include <optional>
 #include <variant>
 
 namespace Cesium3DTilesSelection {
@@ -49,4 +51,14 @@ CESIUM3DTILESSELECTION_API BoundingVolume transformBoundingVolume(
  */
 CESIUM3DTILESSELECTION_API glm::dvec3
 getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
+
+/**
+ * @brief Returns the bounding {@link CesiumGeospatial::GlobeRectangle} of the
+ * given {@link BoundingVolume}.
+ *
+ * @param boundingVolume The bounding volume.
+ * @return The bounding {@link CesiumGeospatial::GlobeRectangle}.
+ */
+CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
+getGlobeRectangle(const BoundingVolume& boundingVolume);
 } // namespace Cesium3DTilesSelection
