@@ -342,7 +342,7 @@ protected:
   CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
-      const LoadTileImageFromUrlOptions& options = {}) const;
+      LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
   void doLoad(RasterOverlayTile& tile, bool isThrottledLoad);

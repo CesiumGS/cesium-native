@@ -111,18 +111,19 @@ CesiumAsync::Future<LoadedRasterOverlayImage>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
-    const LoadTileImageFromUrlOptions& options) const {
+    LoadTileImageFromUrlOptions&& options) const {
 
   return this->getAssetAccessor()
       ->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [options](std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+          [options = std::move(options)](
+              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  std::move(options.rectangle),
+                  options.rectangle,
                   std::move(options.credits),
                   {"Image request for " + pRequest->url() + " failed."},
                   {},
@@ -136,7 +137,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                                     " for " + pRequest->url();
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  std::move(options.rectangle),
+                  options.rectangle,
                   std::move(options.credits),
                   {message},
                   {},
@@ -147,7 +148,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
                     CesiumGltf::ImageCesium(),
-                    std::move(options.rectangle),
+                    options.rectangle,
                     std::move(options.credits),
                     {},
                     {},
@@ -155,7 +156,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
               }
               return LoadedRasterOverlayImage{
                   std::nullopt,
-                  std::move(options.rectangle),
+                  options.rectangle,
                   std::move(options.credits),
                   {"Image response for " + pRequest->url() + " is empty."},
                   {},
@@ -176,7 +177,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             return LoadedRasterOverlayImage{
                 loadedImage.image,
-                std::move(options.rectangle),
+                options.rectangle,
                 std::move(options.credits),
                 std::move(loadedImage.errors),
                 std::move(loadedImage.warnings),

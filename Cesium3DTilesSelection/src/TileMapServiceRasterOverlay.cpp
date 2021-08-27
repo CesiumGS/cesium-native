@@ -69,7 +69,7 @@ protected:
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-    return this->loadTileImageFromUrl(url, this->_headers, options);
+    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
   }
 
 private:

@@ -313,14 +313,8 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
         maxV = 1.0;
       }
 
-      CesiumGeometry::Rectangle texCoordsRectangle(minU, minV, maxU, maxV);
-
       CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
-
-      // if (pTile->getState() != RasterOverlayTile::LoadState::Placeholder) {
-      //   this->loadTileThrottled(*pTile);
-      // }
 
       result.emplace_back(pTile);
     }
