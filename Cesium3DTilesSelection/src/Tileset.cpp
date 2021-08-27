@@ -647,7 +647,6 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
         TileRefine::Replace,
         *pContext,
         pLogger);
-    supportsRasterOverlays = true;
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
