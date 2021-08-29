@@ -141,44 +141,46 @@ static int generateOverlayTextureCoordinates(
     glm::dvec3 positionEcef = transform * glm::dvec4(position, 1.0);
 
     // Convert it to cartographic
-    std::optional<CesiumGeospatial::Cartographic> cartographic =
+    std::optional<CesiumGeospatial::Cartographic> optionalCartographic =
         CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
             positionEcef);
-    if (!cartographic) {
+    if (!optionalCartographic) {
       uvWriter[i] = glm::dvec2(0.0, 0.0);
       continue;
     }
 
+    CesiumGeospatial::Cartographic& cartographic = optionalCartographic.value();
+
     // Project it with the raster overlay's projection
     glm::dvec3 projectedPosition =
-        projectPosition(projection, cartographic.value());
+        projectPosition(projection, cartographic);
 
-    double longitude = cartographic.value().longitude;
-    double latitude = cartographic.value().latitude;
-    double ellipsoidHeight = cartographic.value().height;
+    double longitude = cartographic.longitude;
+    double latitude = cartographic.latitude;
+    double ellipsoidHeight = cartographic.height;
 
     // If the position is near the anti-meridian and the projected position is
     // outside the expected range, try using the equivalent longitude on the
     // other side of the anti-meridian to see if that gets us closer.
     if (glm::abs(
-            glm::abs(cartographic.value().longitude) -
+            glm::abs(cartographic.longitude) -
             CesiumUtility::Math::ONE_PI) < CesiumUtility::Math::EPSILON5 &&
         (projectedPosition.x < rectangle.minimumX ||
          projectedPosition.x > rectangle.maximumX ||
          projectedPosition.y < rectangle.minimumY ||
          projectedPosition.y > rectangle.maximumY)) {
-      cartographic.value().longitude += cartographic.value().longitude < 0.0
+      cartographic.longitude += cartographic.longitude < 0.0
                                             ? CesiumUtility::Math::TWO_PI
                                             : -CesiumUtility::Math::TWO_PI;
       glm::dvec3 projectedPosition2 =
-          projectPosition(projection, cartographic.value());
+          projectPosition(projection, cartographic);
 
       double distance1 = rectangle.computeSignedDistance(projectedPosition);
       double distance2 = rectangle.computeSignedDistance(projectedPosition2);
 
       if (distance2 < distance1) {
         projectedPosition = projectedPosition2;
-        longitude = cartographic.value().longitude;
+        longitude = cartographic.longitude;
       }
     }
 
