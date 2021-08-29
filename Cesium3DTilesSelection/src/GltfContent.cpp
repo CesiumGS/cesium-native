@@ -49,6 +49,63 @@ GltfContent::load(const TileContentLoadInput& input) {
   return pResult;
 }
 
+
+namespace {
+
+  /**
+   * @brief Creates a writer for UV texture coordinates in the given gltf.
+   *
+   * This will populate the given glTF with a new buffer, bufferView and
+   * accessor that is capable of storing the specified `count` of 2D
+   * floating point texture coordinates, and return a writer to that
+   * accessor data.
+   *
+   * @param gltf The glTF model.
+   * @param count The number of elements for the acccessor.
+   * @param resultAccessorId Will store the ID of the accessor that
+   * the writer will write to.
+   * @return The accessor writer.
+   */
+  CesiumGltf::AccessorWriter<glm::vec2> createUvWriter(CesiumGltf::Model& gltf, size_t count, int& resultUvAccessorId) {
+    std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
+    std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
+    std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
+
+    int uvBufferId = static_cast<int>(buffers.size());
+    CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
+
+    int uvBufferViewId = static_cast<int>(bufferViews.size());
+    bufferViews.emplace_back();
+
+    int uvAccessorId = static_cast<int>(accessors.size());
+    accessors.emplace_back();
+
+    uvBuffer.cesium.data.resize(count * 2 * sizeof(float));
+
+    CesiumGltf::BufferView& uvBufferView =
+        gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
+    uvBufferView.buffer = uvBufferId;
+    uvBufferView.byteOffset = 0;
+    uvBufferView.byteStride = 2 * sizeof(float);
+    uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
+    uvBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+
+    CesiumGltf::Accessor& uvAccessor =
+        gltf.accessors[static_cast<size_t>(uvAccessorId)];
+    uvAccessor.bufferView = uvBufferViewId;
+    uvAccessor.byteOffset = 0;
+    uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+    uvAccessor.count = int64_t(count);
+    uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
+
+    CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
+    assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
+    resultUvAccessorId = uvAccessorId;
+    return uvWriter;
+  }
+
+}
+
 static int generateOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
     int positionAccessorIndex,
@@ -63,44 +120,17 @@ static int generateOverlayTextureCoordinates(
     double& maximumHeight) {
   CESIUM_TRACE(
       "Cesium3DTilesSelection::GltfContent::generateOverlayTextureCoordinates");
-  std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
-  std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
-  std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
-
-  int uvBufferId = static_cast<int>(buffers.size());
-  CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
-
-  int uvBufferViewId = static_cast<int>(bufferViews.size());
-  bufferViews.emplace_back();
-
-  int uvAccessorId = static_cast<int>(accessors.size());
-  accessors.emplace_back();
 
   CesiumGltf::AccessorView<glm::vec3> positionView(gltf, positionAccessorIndex);
   if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
+    SPDLOG_LOGGER_ERROR(
+        spdlog::default_logger(),
+        "Invalid position accessor for generateOverlayTextureCoordinates");
     return -1;
   }
 
-  uvBuffer.cesium.data.resize(size_t(positionView.size()) * 2 * sizeof(float));
-
-  CesiumGltf::BufferView& uvBufferView =
-      gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
-  uvBufferView.buffer = uvBufferId;
-  uvBufferView.byteOffset = 0;
-  uvBufferView.byteStride = 2 * sizeof(float);
-  uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
-  uvBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
-
-  CesiumGltf::Accessor& uvAccessor =
-      gltf.accessors[static_cast<size_t>(uvAccessorId)];
-  uvAccessor.bufferView = uvBufferViewId;
-  uvAccessor.byteOffset = 0;
-  uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-  uvAccessor.count = int64_t(positionView.size());
-  uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
-
-  CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
-  assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
+  int uvAccessorId = -1;
+  CesiumGltf::AccessorWriter<glm::vec2> uvWriter = createUvWriter(gltf, size_t(positionView.size()), uvAccessorId);
 
   double width = rectangle.computeWidth();
   double height = rectangle.computeHeight();
