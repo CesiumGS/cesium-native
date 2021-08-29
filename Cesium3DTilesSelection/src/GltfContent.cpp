@@ -49,62 +49,74 @@ GltfContent::load(const TileContentLoadInput& input) {
   return pResult;
 }
 
-
 namespace {
 
-  /**
-   * @brief Creates a writer for UV texture coordinates in the given gltf.
-   *
-   * This will populate the given glTF with a new buffer, bufferView and
-   * accessor that is capable of storing the specified `count` of 2D
-   * floating point texture coordinates, and return a writer to that
-   * accessor data.
-   *
-   * @param gltf The glTF model.
-   * @param count The number of elements for the acccessor.
-   * @param resultAccessorId Will store the ID of the accessor that
-   * the writer will write to.
-   * @return The accessor writer.
-   */
-  CesiumGltf::AccessorWriter<glm::vec2> createUvWriter(CesiumGltf::Model& gltf, size_t count, int& resultUvAccessorId) {
-    std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
-    std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
-    std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
+/**
+ * @brief Creates a writer for UV texture coordinates in the given gltf.
+ *
+ * This will populate the given glTF with a new buffer, bufferView and
+ * accessor that is capable of storing the specified `count` of 2D
+ * floating point texture coordinates, and return a writer to that
+ * accessor data.
+ *
+ * @param gltf The glTF model.
+ * @param count The number of elements for the acccessor.
+ * @param resultAccessorId Will store the ID of the accessor that
+ * the writer will write to.
+ * @return The accessor writer.
+ */
+CesiumGltf::AccessorWriter<glm::vec2>
+createUvWriter(CesiumGltf::Model& gltf, size_t count, int& resultUvAccessorId) {
+  std::vector<CesiumGltf::Buffer>& buffers = gltf.buffers;
+  std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
+  std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
 
-    int uvBufferId = static_cast<int>(buffers.size());
-    CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
+  int uvBufferId = static_cast<int>(buffers.size());
+  CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
 
-    int uvBufferViewId = static_cast<int>(bufferViews.size());
-    bufferViews.emplace_back();
+  int uvBufferViewId = static_cast<int>(bufferViews.size());
+  bufferViews.emplace_back();
 
-    int uvAccessorId = static_cast<int>(accessors.size());
-    accessors.emplace_back();
+  int uvAccessorId = static_cast<int>(accessors.size());
+  accessors.emplace_back();
 
-    uvBuffer.cesium.data.resize(count * 2 * sizeof(float));
+  uvBuffer.cesium.data.resize(count * 2 * sizeof(float));
 
-    CesiumGltf::BufferView& uvBufferView =
-        gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
-    uvBufferView.buffer = uvBufferId;
-    uvBufferView.byteOffset = 0;
-    uvBufferView.byteStride = 2 * sizeof(float);
-    uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
-    uvBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+  CesiumGltf::BufferView& uvBufferView =
+      gltf.bufferViews[static_cast<size_t>(uvBufferViewId)];
+  uvBufferView.buffer = uvBufferId;
+  uvBufferView.byteOffset = 0;
+  uvBufferView.byteStride = 2 * sizeof(float);
+  uvBufferView.byteLength = int64_t(uvBuffer.cesium.data.size());
+  uvBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-    CesiumGltf::Accessor& uvAccessor =
-        gltf.accessors[static_cast<size_t>(uvAccessorId)];
-    uvAccessor.bufferView = uvBufferViewId;
-    uvAccessor.byteOffset = 0;
-    uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-    uvAccessor.count = int64_t(count);
-    uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
+  CesiumGltf::Accessor& uvAccessor =
+      gltf.accessors[static_cast<size_t>(uvAccessorId)];
+  uvAccessor.bufferView = uvBufferViewId;
+  uvAccessor.byteOffset = 0;
+  uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+  uvAccessor.count = int64_t(count);
+  uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
 
-    CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
-    assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
-    resultUvAccessorId = uvAccessorId;
-    return uvWriter;
-  }
-
+  CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
+  assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
+  resultUvAccessorId = uvAccessorId;
+  return uvWriter;
 }
+
+bool isNearAntiMeridian(double longitude) {
+  return glm::epsilonEqual(
+      glm::abs(longitude),
+      CesiumUtility::Math::ONE_PI,
+      CesiumUtility::Math::EPSILON5);
+}
+bool isNearPole(double latitude) {
+  return glm::epsilonEqual(
+      glm::abs(latitude),
+      CesiumUtility::Math::PI_OVER_TWO,
+      CesiumUtility::Math::EPSILON6);
+}
+} // namespace
 
 static int generateOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
@@ -130,7 +142,8 @@ static int generateOverlayTextureCoordinates(
   }
 
   int uvAccessorId = -1;
-  CesiumGltf::AccessorWriter<glm::vec2> uvWriter = createUvWriter(gltf, size_t(positionView.size()), uvAccessorId);
+  CesiumGltf::AccessorWriter<glm::vec2> uvWriter =
+      createUvWriter(gltf, size_t(positionView.size()), uvAccessorId);
 
   double width = rectangle.computeWidth();
   double height = rectangle.computeHeight();
@@ -152,8 +165,7 @@ static int generateOverlayTextureCoordinates(
     CesiumGeospatial::Cartographic& cartographic = optionalCartographic.value();
 
     // Project it with the raster overlay's projection
-    glm::dvec3 projectedPosition =
-        projectPosition(projection, cartographic);
+    glm::dvec3 projectedPosition = projectPosition(projection, cartographic);
 
     double longitude = cartographic.longitude;
     double latitude = cartographic.latitude;
@@ -162,32 +174,31 @@ static int generateOverlayTextureCoordinates(
     // If the position is near the anti-meridian and the projected position is
     // outside the expected range, try using the equivalent longitude on the
     // other side of the anti-meridian to see if that gets us closer.
-    if (glm::abs(
-            glm::abs(cartographic.longitude) -
-            CesiumUtility::Math::ONE_PI) < CesiumUtility::Math::EPSILON5 &&
-        (projectedPosition.x < rectangle.minimumX ||
-         projectedPosition.x > rectangle.maximumX ||
-         projectedPosition.y < rectangle.minimumY ||
-         projectedPosition.y > rectangle.maximumY)) {
-      cartographic.longitude += cartographic.longitude < 0.0
-                                            ? CesiumUtility::Math::TWO_PI
-                                            : -CesiumUtility::Math::TWO_PI;
-      glm::dvec3 projectedPosition2 =
-          projectPosition(projection, cartographic);
+
+    if (isNearAntiMeridian(cartographic.longitude) &&
+        !rectangle.contains(
+            glm::dvec2(projectedPosition.x, projectedPosition.y))) {
+      double longitude2 = cartographic.longitude < 0.0
+                              ? CesiumUtility::Math::TWO_PI
+                              : -CesiumUtility::Math::TWO_PI;
+      CesiumGeospatial::Cartographic cartographic2(
+          longitude2,
+          cartographic.latitude,
+          cartographic.height);
+      glm::dvec3 projectedPosition2 = projectPosition(projection, cartographic);
 
       double distance1 = rectangle.computeSignedDistance(projectedPosition);
       double distance2 = rectangle.computeSignedDistance(projectedPosition2);
 
       if (distance2 < distance1) {
         projectedPosition = projectedPosition2;
-        longitude = cartographic.longitude;
+        longitude = cartographic2.longitude;
       }
     }
 
     // The computation of longitude is very unstable at the poles,
     // so don't let extreme latitudes affect the longitude bounding box.
-    if (glm::abs(glm::abs(latitude) - CesiumUtility::Math::PI_OVER_TWO) >
-        CesiumUtility::Math::EPSILON6) {
+    if (!isNearPole(latitude)) {
       west = glm::min(west, longitude);
       east = glm::max(east, longitude);
     }
