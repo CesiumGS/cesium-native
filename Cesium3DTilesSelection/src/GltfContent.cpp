@@ -208,12 +208,6 @@ GltfContent::createRasterOverlayTextureCoordinates(
   double minimumHeight = std::numeric_limits<double>::max();
   double maximumHeight = std::numeric_limits<double>::lowest();
 
-  static glm::dmat4 gltfToCesiumAxes(
-      glm::dvec4(1.0, 0.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 1.0, 0.0),
-      glm::dvec4(0.0, -1.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 0.0, 1.0));
-
   gltf.forEachPrimitiveInScene(
       -1,
       [&transform,
@@ -256,8 +250,6 @@ GltfContent::createRasterOverlayTextureCoordinates(
             primitive.attributes.end()) {
           return;
         }
-
-        glm::dmat4 transform = gltfToCesiumAxes * nodeTransform;
 
         // Generate new texture coordinates
         int nextTextureCoordinateAccessorIndex =
