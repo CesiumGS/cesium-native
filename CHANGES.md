@@ -5,11 +5,20 @@
 ##### Breaking Changes :mega:
 
 - Deleted `Cesium3DTilesSelection::Gltf` and moved functionality into `CesiumGltf::Model`. 
+- Renamed `Rectangle::intersect` and `GlobeRectangle::intersect` to `computeIntersection`.
 
 ##### Additions :tada:
 
+- Added `Future<T>::isReady`.
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
 - Added an option in `TilesetOptions::ContentOptions` to generate smooth normals when the original glTFs were missing normals.
+- Added `ImageManipulation` class to `CesiumGltfReader`.
+- Added `Math::roundUp` and `Math::roundDown`.
+- Added `Rectangle::computeUnion`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused CesiumGltfWriter to write a material's normal texture info into a property named `normalTextureInfo` rather than `normalTexture`.
 
 ### v0.6.0 - 2021-08-02
 

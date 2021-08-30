@@ -395,6 +395,46 @@ public:
 
     return simplified;
   };
+
+  /**
+   * @brief Rounds a value up to the nearest integer, like `ceil`, except
+   * that if the value is very close to the lower integer it is rounded down
+   * (like `floor`) instead.
+   *
+   * @param value The value to round.
+   * @param tolerance The tolerance. If the value is closer than this to the
+   * lower integer, it is rounded down instead.
+   * @return The rounded value.
+   */
+  static double roundUp(double value, double tolerance) {
+    double up = glm::ceil(value);
+    double down = glm::floor(value);
+    if (value - down < tolerance) {
+      return down;
+    } else {
+      return up;
+    }
+  }
+
+  /**
+   * @brief Rounds a value down to the nearest integer, like `floor`, except
+   * that if the value is very close to the higher integer it is rounded up
+   * (like `ceil`) instead.
+   *
+   * @param value The value to round.
+   * @param tolerance The tolerance. If the value is closer than this to the
+   * higher integer, it is rounded up instead.
+   * @return The rounded value.
+   */
+  static double roundDown(double value, double tolerance) {
+    double up = glm::ceil(value);
+    double down = glm::floor(value);
+    if (up - value < tolerance) {
+      return up;
+    } else {
+      return down;
+    }
+  }
 };
 
 } // namespace CesiumUtility

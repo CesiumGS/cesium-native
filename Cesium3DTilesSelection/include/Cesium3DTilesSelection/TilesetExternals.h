@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/AsyncSystem.h"
 #include <memory>
 
 namespace CesiumAsync {

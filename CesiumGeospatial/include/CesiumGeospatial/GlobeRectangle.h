@@ -167,14 +167,15 @@ public:
    * account the fact that the same angle can be represented with multiple
    * values as well as the wrapping of longitude at the anti-meridian.  For a
    * simple intersection that ignores these factors and can be used with
-   * projected coordinates, see {@link CesiumGeometry::Rectangle::intersect}.
+   * projected coordinates, see
+   * {@link CesiumGeometry::Rectangle::computeIntersection}.
    *
    * @param other The other rectangle to intersect with this one.
    * @returns The intersection rectangle, or `std::nullopt` if there is no
    * intersection.
    */
   std::optional<GlobeRectangle>
-  intersect(const GlobeRectangle& other) const noexcept;
+  computeIntersection(const GlobeRectangle& other) const noexcept;
 
   /**
    * @brief Computes the union of this globe rectangle with another.

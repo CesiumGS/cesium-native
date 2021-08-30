@@ -11,6 +11,17 @@ namespace CesiumGeometry {
  */
 struct CESIUMGEOMETRY_API Rectangle final {
   /**
+   * @brief Creates a new instance with all coordinate values set to 0.0.
+   *
+   * @param minimumX_ The minimum x-coordinate.
+   * @param minimumY_ The minimum y-coordinate.
+   * @param maximumX_ The maximum x-coordinate.
+   * @param maximumY_ The maximum y-coordinate.
+   */
+  constexpr Rectangle() noexcept
+      : minimumX(0.0), minimumY(0.0), maximumX(0.0), maximumY(0.0) {}
+
+  /**
    * @brief Creates a new instance.
    *
    * Creates a new rectangle from the given coordinates. This implicitly
@@ -179,7 +190,16 @@ struct CESIUMGEOMETRY_API Rectangle final {
    * @returns The intersection rectangle, or `std::nullopt` if there is no
    * intersection.
    */
-  std::optional<Rectangle> intersect(const Rectangle& other) const noexcept;
+  std::optional<Rectangle>
+  computeIntersection(const Rectangle& other) const noexcept;
+
+  /**
+   * @brief Computes the union of this rectangle with another.
+   *
+   * @param other The other rectangle to union with this one.
+   * @return The union rectangle, which fully contains both rectangles.
+   */
+  Rectangle computeUnion(const Rectangle& other) const noexcept;
 };
 
 } // namespace CesiumGeometry

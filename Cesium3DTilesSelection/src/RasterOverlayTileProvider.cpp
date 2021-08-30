@@ -173,12 +173,12 @@ void RasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // overlaps the geometry tile.  The RasterOverlayTileProvider and its tiling
   // scheme both have the opportunity to constrain the rectangle.
   CesiumGeometry::Rectangle imageryRectangle =
-      tilingSchemeRectangle.intersect(providerRectangle)
+      tilingSchemeRectangle.computeIntersection(providerRectangle)
           .value_or(tilingSchemeRectangle);
 
   CesiumGeometry::Rectangle intersection(0.0, 0.0, 0.0, 0.0);
   std::optional<CesiumGeometry::Rectangle> maybeIntersection =
-      geometryRectangle.intersect(imageryRectangle);
+      geometryRectangle.computeIntersection(imageryRectangle);
   if (maybeIntersection) {
     intersection = maybeIntersection.value();
   } else {
@@ -349,7 +349,8 @@ void RasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
     imageryRectangle = imageryTilingScheme.tileToRectangle(
         QuadtreeTileID(imageryLevel, i, southwestTileCoordinates.y));
-    clippedImageryRectangle = imageryRectangle.intersect(imageryBounds);
+    clippedImageryRectangle =
+        imageryRectangle.computeIntersection(imageryBounds);
 
     if (!clippedImageryRectangle) {
       continue;
@@ -382,7 +383,8 @@ void RasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 
       imageryRectangle = imageryTilingScheme.tileToRectangle(
           QuadtreeTileID(imageryLevel, i, j));
-      clippedImageryRectangle = imageryRectangle.intersect(imageryBounds);
+      clippedImageryRectangle =
+          imageryRectangle.computeIntersection(imageryBounds);
 
       if (!clippedImageryRectangle) {
         continue;
