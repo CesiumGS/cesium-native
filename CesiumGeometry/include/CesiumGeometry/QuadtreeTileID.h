@@ -102,19 +102,4 @@ template <> struct hash<CesiumGeometry::QuadtreeTileID> {
     return h(key.level) ^ (h(key.x) << 1) ^ (h(key.y) << 2);
   }
 };
-
-/**
- * @brief A hash function for {@link CesiumGeometry::UpsampledQuadtreeNode} objects.
- */
-template <> struct hash<CesiumGeometry::UpsampledQuadtreeNode> {
-
-  /**
-   * @brief A specialization of the `std::hash` template for
-   * {@link CesiumGeometry::UpsampledQuadtreeNode} objects.
-   */
-  size_t
-  operator()(const CesiumGeometry::UpsampledQuadtreeNode& key) const noexcept {
-    return hash<CesiumGeometry::QuadtreeTileID>()(key.tileID);
-  }
-};
 } // namespace std
