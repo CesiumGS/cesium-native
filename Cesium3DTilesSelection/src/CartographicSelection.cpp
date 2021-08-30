@@ -33,7 +33,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
 
     // check if the difference crosses the antipole
     if (glm::abs(point[0]) > CesiumUtility::Math::ONE_PI) {
-      if (point[0] > 0) {
+      if (point[0] > 0.0) {
         point[0] -= CesiumUtility::Math::TWO_PI;
       } else {
         point[0] += CesiumUtility::Math::TWO_PI;
@@ -41,7 +41,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
     }
   }
 
-  localPolygons.push_back(localPolygon);
+  localPolygons.emplace_back(std::move(localPolygon));
 
   indices = mapbox::earcut<uint32_t>(localPolygons);
   return indices;
@@ -76,11 +76,11 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
     // check if the difference crosses the antipole
     if (glm::abs(dif_west) > CesiumUtility::Math::ONE_PI) {
       // east wrapping past the antipole to the west
-      if (dif_west > 0) {
+      if (dif_west > 0.0) {
         west = point1.x;
       }
     } else {
-      if (dif_west < 0) {
+      if (dif_west < 0.0) {
         west = point1.x;
       }
     }
@@ -89,11 +89,11 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
     // check if the difference crosses the antipole
     if (glm::abs(dif_east) > CesiumUtility::Math::ONE_PI) {
       // west wrapping past the antipole to the east
-      if (dif_east < 0) {
+      if (dif_east < 0.0) {
         east = point1.x;
       }
     } else {
-      if (dif_east > 0) {
+      if (dif_east > 0.0) {
         east = point1.x;
       }
     }
