@@ -82,20 +82,6 @@ struct CESIUMGEOMETRY_API UpsampledQuadtreeNode final {
    * @brief The {@link QuadtreeTileID} for this tree node.
    */
   QuadtreeTileID tileID;
-
-  /**
-   * @brief Returns `true` if two identifiers are equal.
-   */
-  constexpr bool operator==(const UpsampledQuadtreeNode& other) const noexcept {
-    return this->tileID == other.tileID;
-  }
-
-  /**
-   * @brief Returns `true` if two identifiers are *not* equal.
-   */
-  constexpr bool operator!=(const UpsampledQuadtreeNode& other) const noexcept {
-    return !(*this == other);
-  }
 };
 } // namespace CesiumGeometry
 

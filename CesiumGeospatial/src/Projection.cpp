@@ -3,20 +3,6 @@
 
 namespace CesiumGeospatial {
 
-std::string getProjectionName(const Projection& projection) {
-  struct Operation {
-    std::string operator()(const GeographicProjection& /*geographic*/) {
-      return "GEOGRAPHIC";
-    }
-
-    std::string operator()(const WebMercatorProjection& /*webMercator*/) {
-      return "WEB_MERCATOR";
-    }
-  };
-
-  return std::visit(Operation{}, projection);
-}
-
 glm::dvec3
 projectPosition(const Projection& projection, const Cartographic& position) {
   struct Operation {

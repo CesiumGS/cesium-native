@@ -11,7 +11,6 @@
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
 #include <spdlog/fwd.h>
-#include <string>
 
 namespace Cesium3DTilesSelection {
 
