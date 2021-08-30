@@ -7,6 +7,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
@@ -254,7 +255,10 @@ void Tile::loadContent() {
            gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
-           pLogger = tileset.getExternals().pLogger](
+           pLogger = tileset.getExternals().pLogger,
+           generateMissingNormalsSmooth =
+               tileset.getOptions()
+                   .contentOptions.generateMissingNormalsSmooth](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("loadContent worker thread");
             const IAssetResponse* pResponse = pRequest->response();
@@ -310,6 +314,10 @@ void Tile::loadContent() {
                     pContent->model.value(),
                     boundingVolume,
                     projections);
+
+                if (generateMissingNormalsSmooth) {
+                  pContent->model->generateMissingNormalsSmooth();
+                }
 
                 if (pPrepareRendererResources) {
                   CESIUM_TRACE("prepareInLoadThread");
@@ -828,6 +836,7 @@ void Tile::upsampleParent(
             std::make_unique<TileContentLoadResult>();
         pContent->model =
             upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
+
         if (pContent->model) {
           pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(
               pContent->model.value(),

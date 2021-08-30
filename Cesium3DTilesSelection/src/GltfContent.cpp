@@ -2,9 +2,11 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
+#include <optional>
 #include <stdexcept>
 
 namespace Cesium3DTilesSelection {
@@ -205,8 +207,13 @@ GltfContent::createRasterOverlayTextureCoordinates(
   double minimumHeight = std::numeric_limits<double>::max();
   double maximumHeight = std::numeric_limits<double>::lowest();
 
-  Gltf::forEachPrimitiveInScene(
-      gltf,
+  static glm::dmat4 gltfToCesiumAxes(
+      glm::dvec4(1.0, 0.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 1.0, 0.0),
+      glm::dvec4(0.0, -1.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 0.0, 1.0));
+
+  gltf.forEachPrimitiveInScene(
       -1,
       [&positionAccessorsToTextureCoordinateAccessor,
        &attributeName,
@@ -222,7 +229,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           CesiumGltf::Node& /*node*/,
           CesiumGltf::Mesh& /*mesh*/,
           CesiumGltf::MeshPrimitive& primitive,
-          const glm::dmat4& transform) {
+          const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {
           return;
@@ -247,6 +254,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
             primitive.attributes.end()) {
           return;
         }
+
+        glm::dmat4 transform = gltfToCesiumAxes * nodeTransform;
 
         // Generate new texture coordinates
         int nextTextureCoordinateAccessorIndex =
@@ -277,5 +286,4 @@ GltfContent::createRasterOverlayTextureCoordinates(
       minimumHeight,
       maximumHeight);
 }
-
 } // namespace Cesium3DTilesSelection

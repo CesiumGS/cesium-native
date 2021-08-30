@@ -1,4 +1,3 @@
-#include "Cesium3DTilesSelection/Gltf.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGltf/AccessorView.h"
