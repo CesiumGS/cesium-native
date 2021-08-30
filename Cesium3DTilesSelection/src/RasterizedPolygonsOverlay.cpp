@@ -7,10 +7,11 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/IntrusivePointer.h"
+#include "TileUtilities.h"
 #include <memory>
 #include <string>
 
-#include "TileUtilities.h"
+using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -18,12 +19,12 @@ void rasterizePolygons(
     CesiumGltf::ImageCesium& image,
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const std::string& textureTargetName,
-    const std::vector<CartographicSelection>& cartographicSelections) {
+    const std::vector<CartographicPolygon>& cartographicPolygons) {
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
   if (Cesium3DTilesSelection::Impl::withinPolygons(
           rectangle,
-          cartographicSelections)) {
+          cartographicPolygons)) {
     image.width = 1;
     image.height = 1;
     image.channels = 1;
@@ -36,7 +37,7 @@ void rasterizePolygons(
   }
 
   bool completelyOutsidePolygons = true;
-  for (const CartographicSelection& selection : cartographicSelections) {
+  for (const CartographicPolygon& selection : cartographicPolygons) {
     const std::optional<CesiumGeospatial::GlobeRectangle>& boundingRectangle =
         selection.getBoundingRectangle();
 
@@ -72,14 +73,14 @@ void rasterizePolygons(
   // intersections to rasterize one row at a time
   // NOTE: also completely ignores antimeridian (really these
   // calculations should be normalized to the first vertex)
-  for (const CartographicSelection& selection : cartographicSelections) {
+  for (const CartographicPolygon& polygon : cartographicPolygons) {
 
-    if (selection.getTargetTextureName() != textureTargetName) {
+    if (polygon.getTargetTextureName() != textureTargetName) {
       continue;
     }
 
-    const std::vector<glm::dvec2>& vertices = selection.getVertices();
-    const std::vector<uint32_t>& indices = selection.getIndices();
+    const std::vector<glm::dvec2>& vertices = polygon.getVertices();
+    const std::vector<uint32_t>& indices = polygon.getIndices();
     for (size_t triangle = 0; triangle < indices.size() / 3; ++triangle) {
       const glm::dvec2& a = vertices[indices[3 * triangle]];
       const glm::dvec2& b = vertices[indices[3 * triangle + 1]];
@@ -138,7 +139,7 @@ class CESIUM3DTILESSELECTION_API RasterizedPolygonsTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
-  std::vector<CartographicSelection> _polygons;
+  std::vector<CartographicPolygon> _polygons;
 
 public:
   RasterizedPolygonsTileProvider(
@@ -149,7 +150,7 @@ public:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const CesiumGeospatial::Projection& projection,
-      const std::vector<CartographicSelection>& polygons)
+      const std::vector<CartographicPolygon>& polygons)
       : RasterOverlayTileProvider(
             owner,
             asyncSystem,
@@ -182,7 +183,7 @@ public:
 
 RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     const std::string& name,
-    const std::vector<CartographicSelection>& polygons,
+    const std::vector<CartographicPolygon>& polygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const CesiumGeospatial::Projection& projection)
     : RasterOverlay(name),
@@ -193,7 +194,7 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
       polygons.begin(),
       polygons.end(),
       std::back_inserter(this->_clippingPolygons),
-      [polygons](const CartographicSelection& polygon) {
+      [polygons](const CartographicPolygon& polygon) {
         return polygon.isForCulling();
       });
 }

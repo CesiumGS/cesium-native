@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Library.h"
 #include <glm/vec2.hpp>
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumGeospatial {
 
 /**
  * @brief A 2D polygon that can be rasterized onto {@link Tileset} objects.
  */
-class CESIUM3DTILESSELECTION_API CartographicSelection final {
+class CESIUMGEOSPATIAL_API CartographicPolygon final {
 public:
   /**
    * @brief Constructs a 2D polygon that can be rasterized onto {@link Tileset}
@@ -28,7 +28,7 @@ public:
    * streaming can be optimized by avoiding loading tiles that are entirely
    * within the culled area.
    */
-  CartographicSelection(
+  CartographicPolygon(
       const std::string& targetTextureName,
       const std::vector<glm::dvec2>& polygon,
       bool isForCulling);
@@ -94,4 +94,4 @@ private:
   bool _isForCulling;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeospatial

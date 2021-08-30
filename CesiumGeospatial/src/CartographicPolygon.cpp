@@ -1,11 +1,9 @@
 
-#include "Cesium3DTilesSelection/CartographicSelection.h"
+#include "CesiumGeospatial/CartographicPolygon.h"
 #include <array>
 #include <mapbox/earcut.hpp>
 
-using namespace CesiumGeospatial;
-
-namespace Cesium3DTilesSelection {
+namespace CesiumGeospatial {
 
 static std::vector<uint32_t>
 triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
@@ -102,7 +100,7 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
   return CesiumGeospatial::GlobeRectangle(west, south, east, north);
 }
 
-CartographicSelection::CartographicSelection(
+CartographicPolygon::CartographicPolygon(
     const std::string& targetTextureName,
     const std::vector<glm::dvec2>& polygon,
     bool isForCulling)
@@ -112,4 +110,4 @@ CartographicSelection::CartographicSelection(
       _boundingRectangle(computeBoundingRectangle(polygon)),
       _isForCulling(isForCulling) {}
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeospatial
