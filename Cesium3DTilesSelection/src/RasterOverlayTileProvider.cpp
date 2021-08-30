@@ -255,7 +255,8 @@ static LoadResult createLoadResultFromLoadedImage(
 
     void* pRendererResources = nullptr;
     if (pPrepareRendererResources) {
-      pPrepareRendererResources->prepareRasterInLoadThread(image);
+      pRendererResources =
+          pPrepareRendererResources->prepareRasterInLoadThread(image);
     }
 
     LoadResult result;
