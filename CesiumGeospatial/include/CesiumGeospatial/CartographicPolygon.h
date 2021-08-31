@@ -10,7 +10,14 @@
 namespace CesiumGeospatial {
 
 /**
- * @brief A 2D polygon that can be rasterized onto {@link Tileset} objects.
+ * @brief A 2D polygon expressed as a list of longitude/latitude coordinates in
+ * radians.
+ *
+ * The {@link Ellipsoid} associated with the coordinates is not specified
+ * directly by this instance, but it is assumed that the longitude values range
+ * from -PI to PI radians and the latitude values range from -PI/2 to PI/2
+ * radians. Longitude values outside this range are wrapped to be inside the
+ * range. Latitude values are clamped to the range.
  */
 class CESIUMGEOSPATIAL_API CartographicPolygon final {
 public:
