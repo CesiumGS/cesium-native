@@ -1,7 +1,6 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
@@ -11,7 +10,9 @@
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
@@ -392,8 +393,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     for (auto& tile : result.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           tile->getMappedRasterTiles();
-      for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
-        RasterOverlayTile* pRasterOverlayTile = mappedRasterTile.getReadyTile();
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile.getReadyTile();
         if (pRasterOverlayTile != nullptr) {
           for (Credit credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
@@ -1203,10 +1205,15 @@ static bool isVisibleFromCamera(
   if (!forceRenderTilesUnderCamera) {
     return false;
   }
+
   const std::optional<CesiumGeospatial::Cartographic>& position =
       viewState.getPositionCartographic();
+
+  // TODO: it would be better to test a line pointing down (and up?) from the
+  // camera against the bounding volume itself, rather than transforming the
+  // bounding volume to a region.
   const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTilesSelection::Impl::obtainGlobeRectangle(&boundingVolume);
+      Impl::obtainGlobeRectangle(&boundingVolume);
   if (position && pRectangle) {
     return pRectangle->contains(position.value());
   }

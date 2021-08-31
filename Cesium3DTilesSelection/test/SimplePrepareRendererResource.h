@@ -74,18 +74,15 @@ public:
 
   virtual void attachRasterInMainThread(
       const Cesium3DTilesSelection::Tile& /*tile*/,
-      uint32_t /*overlayTextureCoordinateID*/,
+      int32_t /*overlayTextureCoordinateID*/,
       const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
       void* /*pMainThreadRendererResources*/,
-      const CesiumGeometry::Rectangle& /*textureCoordinateRectangle*/,
       const glm::dvec2& /*translation*/,
       const glm::dvec2& /*scale*/) override {}
 
   virtual void detachRasterInMainThread(
       const Cesium3DTilesSelection::Tile& /*tile*/,
-      uint32_t /*overlayTextureCoordinateID*/,
+      int32_t /*overlayTextureCoordinateID*/,
       const Cesium3DTilesSelection::RasterOverlayTile& /*rasterTile*/,
-      void* /*pMainThreadRendererResources*/,
-      const CesiumGeometry::Rectangle& /*textureCoordinateRectangle*/) noexcept
-      override {}
+      void* /*pMainThreadRendererResources*/) noexcept override {}
 };

@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
+#include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
@@ -78,7 +79,7 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "r4EZKsn7qVA+0Fc+D/ytOIedA+EDnXjD8MDfDIWYercK8oE+WuPtA8fGAWA5kA/0fwpdN1P/"
     "sv/SAAAAAElFTkSuQmCC\" title=\"Bing Imagery\"/></a>";
 
-class BingMapsTileProvider final : public RasterOverlayTileProvider {
+class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
       RasterOverlay& owner,
@@ -97,7 +98,7 @@ public:
       uint32_t minimumLevel,
       uint32_t maximumLevel,
       const std::string& culture)
-      : RasterOverlayTileProvider(
+      : QuadtreeRasterOverlayTileProvider(
             owner,
             asyncSystem,
             pAssetAccessor,
@@ -142,8 +143,8 @@ public:
   virtual ~BingMapsTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override {
     std::string url = CesiumUtility::Uri::substituteTemplateParameters(
         this->_urlTemplate,
         [this, &tileID](const std::string& key) {
@@ -161,16 +162,19 @@ protected:
           return key;
         });
 
-    // Cesium levels start at 0, Bing levels start at 1
-    unsigned int bingTileLevel = tileID.level + 1;
+    LoadTileImageFromUrlOptions options;
+    options.allowEmptyImages = true;
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    std::vector<Credit>& tileCredits = options.credits;
+
     CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
-            this->getTilingScheme().tileToRectangle(tileID));
+            options.rectangle);
 
-    LoadTileImageFromUrlOptions options;
-    options.allowEmptyImages = true;
-    std::vector<Credit>& tileCredits = options.credits;
+    // Cesium levels start at 0, Bing levels start at 1
+    unsigned int bingTileLevel = tileID.level + 1;
 
     for (const CreditAndCoverageAreas& creditAndCoverageAreas : _credits) {
       for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
@@ -184,7 +188,7 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, options);
+    return this->loadTileImageFromUrl(url, {}, std::move(options));
   }
 
 private:
@@ -214,12 +218,14 @@ private:
 };
 
 BingMapsRasterOverlay::BingMapsRasterOverlay(
+    const std::string& name,
     const std::string& url,
     const std::string& key,
     const std::string& mapStyle,
     const std::string& culture,
     const Ellipsoid& ellipsoid)
-    : _url(url),
+    : RasterOverlay(name),
+      _url(url),
       _key(key),
       _mapStyle(mapStyle),
       _culture(culture),

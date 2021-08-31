@@ -699,8 +699,6 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshContent::load");
 
-  // TODO: use context plus tileID to compute the tile's rectangle, rather than
-  // inferring it from the parent tile.
   const QuadtreeTileID& id = std::get<QuadtreeTileID>(tileID);
 
   std::unique_ptr<TileContentLoadResult> pResult =
@@ -1094,6 +1092,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   primitive.extras.emplace("OnlyWater", meshView->onlyWater);
   primitive.extras.emplace("OnlyLand", meshView->onlyLand);
 
+  // TODO: use KHR_texture_transform
   primitive.extras.emplace("WaterMaskTranslationX", 0.0);
   primitive.extras.emplace("WaterMaskTranslationY", 0.0);
   primitive.extras.emplace("WaterMaskScale", 1.0);

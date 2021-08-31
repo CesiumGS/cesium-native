@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <spdlog/fwd.h>
+#include <string>
 
 namespace Cesium3DTilesSelection {
 
@@ -22,6 +23,19 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * the process of loading.
    */
   int32_t maximumSimultaneousTileLoads = 20;
+
+  /**
+   * @brief The maximum number of bytes to use to cache sub-tiles in memory.
+   *
+   * This is used by provider types, such as
+   * {@link QuadtreeRasterOverlayTileProvider}, that have an underlying tiling
+   * scheme that may not align with the tiling scheme of the geometry tiles on
+   * which the raster overlay tiles are draped. Because a single sub-tile may
+   * overlap multiple geometry tiles, it is useful to cache loaded sub-tiles
+   * in memory in case they're needed again soon. This property controls the
+   * maximum size of that cache.
+   */
+  int64_t subTileCacheBytes = 16 * 1024 * 1024;
 };
 
 /**
@@ -42,8 +56,15 @@ public:
    *
    * @param options The {@link RasterOverlayOptions} for this instance.
    */
-  RasterOverlay(const RasterOverlayOptions& options = RasterOverlayOptions());
+  RasterOverlay(
+      const std::string& name,
+      const RasterOverlayOptions& options = RasterOverlayOptions());
   virtual ~RasterOverlay();
+
+  /**
+   * @brief Gets the name of this overlay.
+   */
+  const std::string& getName() const { return this->_name; }
 
   /**
    * @brief Gets options for this overlay.
@@ -106,7 +127,7 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    */
-  void createTileProvider(
+  void loadTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
@@ -159,6 +180,7 @@ public:
   void destroySafely(std::unique_ptr<RasterOverlay>&& pOverlay) noexcept;
 
 private:
+  std::string _name;
   std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
   std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;
   std::unique_ptr<RasterOverlay> _pSelf;

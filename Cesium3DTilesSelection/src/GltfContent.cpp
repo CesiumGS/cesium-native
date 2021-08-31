@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
 #include "CesiumGltf/Model.h"
@@ -189,7 +190,8 @@ static int generateOverlayTextureCoordinates(
 /*static*/ CesiumGeospatial::BoundingRegion
 GltfContent::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
-    uint32_t textureCoordinateID,
+    const glm::dmat4& transform,
+    int32_t textureCoordinateID,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& rectangle) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::"
@@ -207,15 +209,10 @@ GltfContent::createRasterOverlayTextureCoordinates(
   double minimumHeight = std::numeric_limits<double>::max();
   double maximumHeight = std::numeric_limits<double>::lowest();
 
-  static glm::dmat4 gltfToCesiumAxes(
-      glm::dvec4(1.0, 0.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 1.0, 0.0),
-      glm::dvec4(0.0, -1.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 0.0, 1.0));
-
   gltf.forEachPrimitiveInScene(
       -1,
-      [&positionAccessorsToTextureCoordinateAccessor,
+      [&transform,
+       &positionAccessorsToTextureCoordinateAccessor,
        &attributeName,
        &projection,
        &rectangle,
@@ -255,14 +252,16 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        glm::dmat4 transform = gltfToCesiumAxes * nodeTransform;
+        glm::dmat4 fullTransform =
+            transform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP *
+            nodeTransform;
 
         // Generate new texture coordinates
         int nextTextureCoordinateAccessorIndex =
             generateOverlayTextureCoordinates(
                 gltf_,
                 positionAccessorIndex,
-                transform,
+                fullTransform,
                 projection,
                 rectangle,
                 west,

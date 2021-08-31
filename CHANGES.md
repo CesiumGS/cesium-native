@@ -6,6 +6,10 @@
 
 - Deleted `Cesium3DTilesSelection::Gltf` and moved functionality into `CesiumGltf::Model`. 
 - Renamed `Rectangle::intersect` and `GlobeRectangle::intersect` to `computeIntersection`.
+- `RasterOverlay` and derived classes now require a `name` parameter to their constructors.
+- Changed the type of texture coordinate IDs used in the raster overlay system from `uint32_t` to `int32_t`.
+- `RasterOverlayTileProvider` is no longer quadtree-oriented. Instead, it requires derived classes to provide an image for a particular requested rectangle and geometric error. Classes that previously derived from `RasterOverlayTileProvider` should now derive from `QuadtreeRasterOverlayTileProvider` and implement `loadQuadtreeTileImage` instead of `loadTileImage`.
+- Removed `TilesetOptions::enableWaterMask`, which didn't have any effect anyway. `TilesetContentOptions::enableWaterMask` still exists and works.
 
 ##### Additions :tada:
 
@@ -19,6 +23,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug that caused CesiumGltfWriter to write a material's normal texture info into a property named `normalTextureInfo` rather than `normalTexture`.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to show only the lowest resolution tiles if missing a `tilemapresource.xml` file.
 
 ### v0.6.0 - 2021-08-02
 
