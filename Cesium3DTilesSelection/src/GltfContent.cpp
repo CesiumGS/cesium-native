@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
 #include "CesiumGltf/Model.h"
@@ -208,12 +209,6 @@ GltfContent::createRasterOverlayTextureCoordinates(
   double minimumHeight = std::numeric_limits<double>::max();
   double maximumHeight = std::numeric_limits<double>::lowest();
 
-  static const glm::dmat4 gltfToCesiumAxes(
-      glm::dvec4(1.0, 0.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 1.0, 0.0),
-      glm::dvec4(0.0, -1.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 0.0, 1.0));
-
   gltf.forEachPrimitiveInScene(
       -1,
       [&transform,
@@ -257,7 +252,9 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        glm::dmat4 fullTransform = transform * gltfToCesiumAxes * nodeTransform;
+        glm::dmat4 fullTransform =
+            transform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP *
+            nodeTransform;
 
         // Generate new texture coordinates
         int nextTextureCoordinateAccessorIndex =
