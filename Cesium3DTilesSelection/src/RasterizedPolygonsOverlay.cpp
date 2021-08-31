@@ -18,7 +18,6 @@ namespace {
 void rasterizePolygons(
     CesiumGltf::ImageCesium& image,
     const CesiumGeospatial::GlobeRectangle& rectangle,
-    const std::string& textureTargetName,
     const std::vector<CartographicPolygon>& cartographicPolygons) {
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
@@ -74,11 +73,6 @@ void rasterizePolygons(
   // NOTE: also completely ignores antimeridian (really these
   // calculations should be normalized to the first vertex)
   for (const CartographicPolygon& polygon : cartographicPolygons) {
-
-    if (polygon.getTargetTextureName() != textureTargetName) {
-      continue;
-    }
-
     const std::vector<glm::dvec2>& vertices = polygon.getVertices();
     const std::vector<uint32_t>& indices = polygon.getIndices();
     for (size_t triangle = 0; triangle < indices.size() / 3; ++triangle) {
@@ -164,8 +158,7 @@ public:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
     return this->getAsyncSystem().runInWorkerThread(
-        [name = this->getOwner().getName(),
-         &polygons = this->_polygons,
+        [&polygons = this->_polygons,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle()]() -> LoadedRasterOverlayImage {
           CesiumGeospatial::GlobeRectangle tileRectangle =
@@ -174,7 +167,7 @@ public:
           LoadedRasterOverlayImage resultImage;
           resultImage.rectangle = rectangle;
           CesiumGltf::ImageCesium image;
-          rasterizePolygons(image, tileRectangle, name, polygons);
+          rasterizePolygons(image, tileRectangle, polygons);
           resultImage.image = std::move(image);
           return resultImage;
         });
@@ -189,15 +182,7 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     : RasterOverlay(name),
       _polygons(polygons),
       _ellipsoid(ellipsoid),
-      _projection(projection) {
-  std::copy_if(
-      polygons.begin(),
-      polygons.end(),
-      std::back_inserter(this->_clippingPolygons),
-      [polygons](const CartographicPolygon& polygon) {
-        return polygon.isForCulling();
-      });
-}
+      _projection(projection) {}
 
 RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() {}
 

@@ -100,14 +100,9 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
   return CesiumGeospatial::GlobeRectangle(west, south, east, north);
 }
 
-CartographicPolygon::CartographicPolygon(
-    const std::string& targetTextureName,
-    const std::vector<glm::dvec2>& polygon,
-    bool isForCulling)
-    : _targetTextureName(targetTextureName),
-      _vertices(polygon),
+CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
+    : _vertices(polygon),
       _indices(triangulatePolygon(polygon)),
-      _boundingRectangle(computeBoundingRectangle(polygon)),
-      _isForCulling(isForCulling) {}
+      _boundingRectangle(computeBoundingRectangle(polygon)) {}
 
 } // namespace CesiumGeospatial

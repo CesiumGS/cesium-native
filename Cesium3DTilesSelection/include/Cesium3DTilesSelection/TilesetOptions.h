@@ -1,11 +1,14 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/Library.h"
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
+
+class ITileExcluder;
 
 /**
  * @brief Options for configuring the parsing of a {@link Tileset}'s content
@@ -187,6 +190,13 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * types.
    */
   bool renderTilesUnderCamera = true;
+
+  /**
+   * @brief A list of interfaces that are given an opportunity to exclude tiles
+   * from loading and rendering. If any of the excluders indicate that a tile
+   * should not be loaded, it will not be loaded.
+   */
+  std::vector<std::shared_ptr<ITileExcluder>> excluders;
 
   /**
    * @brief Options for configuring the parsing of a {@link Tileset}'s content

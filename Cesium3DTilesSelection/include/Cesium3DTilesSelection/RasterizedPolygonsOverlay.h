@@ -40,14 +40,8 @@ public:
     return this->_polygons;
   }
 
-  const std::vector<CesiumGeospatial::CartographicPolygon>&
-  getClippingPolygons() const {
-    return this->_clippingPolygons;
-  }
-
 private:
   std::vector<CesiumGeospatial::CartographicPolygon> _polygons;
-  std::vector<CesiumGeospatial::CartographicPolygon> _clippingPolygons;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };
