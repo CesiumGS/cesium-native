@@ -40,7 +40,7 @@ endif()
 add_subdirectory(modp_b64)
 
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
-set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib") 
+set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
 set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "Don't use OpenSSL")
 add_subdirectory(cpp-httplib)
 
@@ -60,6 +60,12 @@ set(CSPRNG_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/CSPRNG/source/duthomhas/csprng.h 
 add_library(PicoSHA2 INTERFACE)
 target_include_directories(PicoSHA2 SYSTEM INTERFACE PicoSHA2)
 set_target_properties(PicoSHA2 PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/PicoSHA2/picosha2.h")
+
+# Earcut has an old school CMake setup as well with lots of global settings, and it's header only anyway.
+# So define a simple library for it here.
+add_library(earcut INTERFACE)
+target_include_directories(earcut SYSTEM INTERFACE earcut/include)
+set_target_properties(earcut PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/earcut/include/mapbox/earcut.hpp")
 
 set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" CACHE INTERNAL
     "Include directory for spdlog"

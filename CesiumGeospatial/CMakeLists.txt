@@ -37,6 +37,7 @@ target_include_directories(
 target_link_libraries(CesiumGeospatial PUBLIC
     CesiumGeometry
     CesiumUtility
+    earcut
 )
 
 install(TARGETS CesiumGeospatial
