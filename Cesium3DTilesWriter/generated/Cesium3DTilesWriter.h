@@ -103,26 +103,42 @@ struct FeatureTableWriter {
         CesiumJsonWriter::JsonWriter& jsonWriter,
         const CesiumJsonWriter::ExtensionWriterContext& context);
   };
-  struct GlobalPropertyScalarWriter {
-    using ValueType = std::variant<
-        FeatureTable::GlobalPropertyScalar::Variant0,
-        std::vector<double>,
-        double>;
+  struct GlobalPropertyIntegerWriter {
+    using ValueType =
+        std::variant<FeatureTable::GlobalPropertyInteger::Variant0, int64_t>;
 
     struct Variant0Writer {
-      using ValueType = FeatureTable::GlobalPropertyScalar::Variant0;
+      using ValueType = FeatureTable::GlobalPropertyInteger::Variant0;
 
       static void write(
-          const FeatureTable::GlobalPropertyScalar::Variant0& obj,
+          const FeatureTable::GlobalPropertyInteger::Variant0& obj,
           CesiumJsonWriter::JsonWriter& jsonWriter,
           const CesiumJsonWriter::ExtensionWriterContext& context);
     };
 
     static void write(
         const std::variant<
-            FeatureTable::GlobalPropertyScalar::Variant0,
-            std::vector<double>,
-            double>& obj,
+            FeatureTable::GlobalPropertyInteger::Variant0,
+            int64_t>& obj,
+        CesiumJsonWriter::JsonWriter& jsonWriter,
+        const CesiumJsonWriter::ExtensionWriterContext& context);
+  };
+  struct GlobalPropertyNumberWriter {
+    using ValueType =
+        std::variant<FeatureTable::GlobalPropertyNumber::Variant0, double>;
+
+    struct Variant0Writer {
+      using ValueType = FeatureTable::GlobalPropertyNumber::Variant0;
+
+      static void write(
+          const FeatureTable::GlobalPropertyNumber::Variant0& obj,
+          CesiumJsonWriter::JsonWriter& jsonWriter,
+          const CesiumJsonWriter::ExtensionWriterContext& context);
+    };
+
+    static void write(
+        const std::
+            variant<FeatureTable::GlobalPropertyNumber::Variant0, double>& obj,
         CesiumJsonWriter::JsonWriter& jsonWriter,
         const CesiumJsonWriter::ExtensionWriterContext& context);
   };

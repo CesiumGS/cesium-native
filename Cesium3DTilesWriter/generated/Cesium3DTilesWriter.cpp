@@ -55,7 +55,12 @@ void writeJson(
     const ExtensionWriterContext& context);
 
 void writeJson(
-    const FeatureTable::GlobalPropertyScalar::Variant0& obj,
+    const FeatureTable::GlobalPropertyInteger::Variant0& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
+
+void writeJson(
+    const FeatureTable::GlobalPropertyNumber::Variant0& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context);
 
@@ -562,12 +567,12 @@ void FeatureTableWriter::BinaryBodyReferenceWriter::write(
 }
 
 /////////////////////////////////////////
-// Writer for FeatureTable::GlobalPropertyScalar::Variant0
+// Writer for FeatureTable::GlobalPropertyInteger::Variant0
 /////////////////////////////////////////
 
 namespace {
 void writeJson(
-    const FeatureTable::GlobalPropertyScalar::Variant0& obj,
+    const FeatureTable::GlobalPropertyInteger::Variant0& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -584,8 +589,38 @@ void writeJson(
 }
 } // namespace
 
-void FeatureTableWriter::GlobalPropertyScalarWriter::Variant0Writer::write(
-    const FeatureTable::GlobalPropertyScalar::Variant0& obj,
+void FeatureTableWriter::GlobalPropertyIntegerWriter::Variant0Writer::write(
+    const FeatureTable::GlobalPropertyInteger::Variant0& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+/////////////////////////////////////////
+// Writer for FeatureTable::GlobalPropertyNumber::Variant0
+/////////////////////////////////////////
+
+namespace {
+void writeJson(
+    const FeatureTable::GlobalPropertyNumber::Variant0& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("byteOffset");
+  writeJson(obj.byteOffset, jsonWriter, context);
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+} // namespace
+
+void FeatureTableWriter::GlobalPropertyNumberWriter::Variant0Writer::write(
+    const FeatureTable::GlobalPropertyNumber::Variant0& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
