@@ -334,6 +334,8 @@ void Tile::loadContent() {
                     boundingVolume,
                     projections);
 
+                pContent->rasterOverlayProjections = std::move(projections);
+
                 if (generateMissingNormalsSmooth) {
                   pContent->model->generateMissingNormalsSmooth();
                 }
@@ -714,7 +716,24 @@ void Tile::update(
             pLoadingTile->getOverlay().getTileProvider();
 
         // Try to replace this placeholder with real tiles.
-        if (pProvider && !pProvider->isPlaceholder()) {
+        if (pProvider && !pProvider->isPlaceholder() && this->getContent()) {
+          // Find a suitable projection in the content.
+          // If there isn't one, the mesh doesn't have the right texture
+          // coordinates for this overlay and we need to kick it back to the
+          // unloaded state to fix that.
+          // In the future, we could add the ability to add the required
+          // texture coordinates without starting over from scratch.
+          const auto& projections =
+              this->getContent()->rasterOverlayProjections;
+          auto it = std::find(
+              projections.begin(),
+              projections.end(),
+              pProvider->getProjection());
+          if (it == projections.end()) {
+            this->unloadContent();
+            return;
+          }
+
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
               static_cast<
@@ -726,7 +745,9 @@ void Tile::update(
               projectRectangleSimple(pProvider->getProjection(), *pRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());
-          this->_rasterTiles.emplace_back(pTile);
+
+          RasterMappedTo3DTile& mapped = this->_rasterTiles.emplace_back(pTile);
+          mapped.setTextureCoordinateID(int32_t(it - projections.begin()));
         }
 
         continue;
@@ -857,12 +878,12 @@ void Tile::upsampleParent(
   pTileset->getAsyncSystem()
       .runInWorkerThread([&parentModel,
                           transform = this->getTransform(),
-                          projections,
+                          projections = std::move(projections),
                           pSubdividedParentID,
                           boundingVolume = this->getBoundingVolume(),
                           pPrepareRendererResources =
                               pTileset->getExternals()
-                                  .pPrepareRendererResources]() {
+                                  .pPrepareRendererResources]() mutable {
         std::unique_ptr<TileContentLoadResult> pContent =
             std::make_unique<TileContentLoadResult>();
         pContent->model =
@@ -874,6 +895,7 @@ void Tile::upsampleParent(
               transform,
               boundingVolume,
               projections);
+          pContent->rasterOverlayProjections = std::move(projections);
         }
 
         void* pRendererResources = nullptr;
