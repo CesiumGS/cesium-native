@@ -1,10 +1,11 @@
 # Change Log
 
-### Next Release - ?
+### v0.7.0 - 2021-09-01
 
 ##### Breaking Changes :mega:
 
-- Deleted `Cesium3DTilesSelection::Gltf` and moved functionality into `CesiumGltf::Model`. 
+- Renamed the `Cesium3DTiles` namespace and library to `Cesium3DTilesSelection`.
+- Deleted `Cesium3DTilesSelection::Gltf` and moved functionality into `CesiumGltf::Model`.
 - Renamed `Rectangle::intersect` and `GlobeRectangle::intersect` to `computeIntersection`.
 - `RasterOverlay` and derived classes now require a `name` parameter to their constructors.
 - Changed the type of texture coordinate IDs used in the raster overlay system from `uint32_t` to `int32_t`.
