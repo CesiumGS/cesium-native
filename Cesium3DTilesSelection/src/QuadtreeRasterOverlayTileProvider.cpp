@@ -656,6 +656,28 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         it->subset);
   }
 
+  size_t combinedCreditsCount = 0;
+  for (auto it = images.begin(); it != images.end(); ++it) {
+    const LoadedRasterOverlayImage& loaded = *it->pLoaded;
+    if (!loaded.image) {
+      continue;
+    }
+
+    combinedCreditsCount += loaded.credits.size();
+  }
+
+  result.credits.reserve(combinedCreditsCount);
+  for (auto it = images.begin(); it != images.end(); ++it) {
+    const LoadedRasterOverlayImage& loaded = *it->pLoaded;
+    if (!loaded.image) {
+      continue;
+    }
+
+    for (const Credit& credit : loaded.credits) {
+      result.credits.push_back(credit);
+    }
+  }
+
   return result;
 }
 
