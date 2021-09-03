@@ -112,9 +112,9 @@ bool Tile::isRenderable() const noexcept {
           this->_rasterTiles.end(),
           [](const RasterMappedTo3DTile& rasterTile) -> bool {
             return rasterTile.getReadyTile() ||
-                   rasterTile.getLoadingTile() &&
-                       rasterTile.getLoadingTile()->getState() >=
-                           RasterOverlayTile::LoadState::Loaded;
+                   (rasterTile.getLoadingTile() &&
+                    rasterTile.getLoadingTile()->getState() >=
+                        RasterOverlayTile::LoadState::Loaded);
           });
     }
   }
