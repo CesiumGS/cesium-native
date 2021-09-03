@@ -632,10 +632,10 @@ void Tile::update(
             std::move(this->_pContent->pNewTileContext));
       }
 
-      // If this tile has no model, set its geometric error very high so we
-      // refine past it. Note that "no" model is different from having a model,
-      // but it is blank. In the latter case, we'll happily render nothing in
-      // the space of this tile, which is sometimes useful.
+      // If this tile has no model, we want to unconditionally refine past it.
+      // Note that "no" model is different from having a model, but it is blank.
+      // In the latter case, we'll happily render nothing in the space of this
+      // tile, which is sometimes useful.
       if (!this->_pContent->model) {
         this->setUnconditionallyRefine(true);
       }
