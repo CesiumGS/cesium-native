@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.7.1 - ????
+
+##### Fixes :wrench:
+
+- Fixed a bug introduced in v0.7.0 where Bing credits were not being collected.
+
 ### v0.7.0 - 2021-09-01
 
 ##### Breaking Changes :mega:
