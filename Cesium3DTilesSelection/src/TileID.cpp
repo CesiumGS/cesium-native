@@ -9,6 +9,7 @@ namespace Cesium3DTilesSelection {
 TileIdUtilities::createTileIdString(const TileID& tileId) {
 
   struct Operation {
+
     std::string operator()(const std::string& url) { return url; }
 
     std::string

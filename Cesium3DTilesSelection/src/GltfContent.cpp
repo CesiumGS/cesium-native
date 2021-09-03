@@ -1,10 +1,13 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
+#include <optional>
 #include <stdexcept>
 
 namespace Cesium3DTilesSelection {
@@ -206,8 +209,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
   double minimumHeight = std::numeric_limits<double>::max();
   double maximumHeight = std::numeric_limits<double>::lowest();
 
-  Gltf::forEachPrimitiveInScene(
-      gltf,
+  gltf.forEachPrimitiveInScene(
       -1,
       [&transform,
        &positionAccessorsToTextureCoordinateAccessor,
@@ -250,12 +252,16 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
+        glm::dmat4 fullTransform =
+            transform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP *
+            nodeTransform;
+
         // Generate new texture coordinates
         int nextTextureCoordinateAccessorIndex =
             generateOverlayTextureCoordinates(
                 gltf_,
                 positionAccessorIndex,
-                transform * nodeTransform,
+                fullTransform,
                 projection,
                 rectangle,
                 west,
@@ -279,5 +285,4 @@ GltfContent::createRasterOverlayTextureCoordinates(
       minimumHeight,
       maximumHeight);
 }
-
 } // namespace Cesium3DTilesSelection

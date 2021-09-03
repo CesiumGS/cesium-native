@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/CartographicSelection.h"
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "CesiumAsync/AsyncSystem.h"
+#include "CesiumGeospatial/CartographicPolygon.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/Projection.h"
 #include <memory>
@@ -20,7 +20,7 @@ class CESIUM3DTILESSELECTION_API RasterizedPolygonsOverlay final
 public:
   RasterizedPolygonsOverlay(
       const std::string& name,
-      const std::vector<CartographicSelection>& polygons,
+      const std::vector<CesiumGeospatial::CartographicPolygon>& polygons,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
       const CesiumGeospatial::Projection& projection);
   virtual ~RasterizedPolygonsOverlay() override;
@@ -35,17 +35,13 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       RasterOverlay* pOwner) override;
 
-  const std::vector<CartographicSelection>& getPolygons() const {
+  const std::vector<CesiumGeospatial::CartographicPolygon>&
+  getPolygons() const {
     return this->_polygons;
   }
 
-  const std::vector<CartographicSelection>& getClippingPolygons() const {
-    return this->_clippingPolygons;
-  }
-
 private:
-  std::vector<CartographicSelection> _polygons;
-  std::vector<CartographicSelection> _clippingPolygons;
+  std::vector<CesiumGeospatial::CartographicPolygon> _polygons;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };

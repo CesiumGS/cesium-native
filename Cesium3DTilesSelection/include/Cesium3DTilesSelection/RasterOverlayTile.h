@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/TileID.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumGeometry/Rectangle.h"

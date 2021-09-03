@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
+#include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
@@ -1263,24 +1264,19 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   // whether this tile was culled (Note: we might still want to visit it)
   bool culled = false;
 
-  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-  for (const std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
-    const RasterizedPolygonsOverlay* rasterizedPolygonsOverlay =
-        dynamic_cast<const RasterizedPolygonsOverlay*>(pOverlay.get());
-    if (rasterizedPolygonsOverlay) {
-      if (Cesium3DTilesSelection::Impl::withinPolygons(
-              boundingVolume,
-              rasterizedPolygonsOverlay->getClippingPolygons())) {
-        culled = true;
-        shouldVisit = false;
-        break;
-      }
+  for (const std::shared_ptr<ITileExcluder>& pExcluder :
+       this->_options.excluders) {
+    if (pExcluder->shouldExclude(tile)) {
+      culled = true;
+      shouldVisit = false;
+      break;
     }
   }
 
   const std::vector<ViewState>& frustums = frameState.frustums;
   const std::vector<double>& fogDensities = frameState.fogDensities;
 
+  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
   if (std::none_of(
           frustums.begin(),
           frustums.end(),

@@ -2,7 +2,6 @@
 
 #include "CesiumGeometry/Library.h"
 #include <cstdint>
-#include <functional>
 
 namespace CesiumGeometry {
 
@@ -33,21 +32,6 @@ struct CESIUMGEOMETRY_API OctreeTileID {
       : level(level), x(x), y(y), z(z) {}
 
   /**
-   * @brief Returns `true` if two identifiers are equal.
-   */
-  constexpr bool operator==(const OctreeTileID& other) const noexcept {
-    return this->level == other.level && this->x == other.x &&
-           this->y == other.y && this->z == other.z;
-  }
-
-  /**
-   * @brief Returns `true` if two identifiers are *not* equal.
-   */
-  constexpr bool operator!=(const OctreeTileID& other) const noexcept {
-    return !(*this == other);
-  }
-
-  /**
    * @brief The level of this tile ID, with 0 being the root tile.
    */
   uint32_t level;
@@ -69,21 +53,3 @@ struct CESIUMGEOMETRY_API OctreeTileID {
 };
 
 } // namespace CesiumGeometry
-
-namespace std {
-/**
- * @brief A hash function for {@link CesiumGeometry::OctreeTileID} objects.
- */
-template <> struct hash<CesiumGeometry::OctreeTileID> {
-
-  /**
-   * @brief A specialization of the `std::hash` template for
-   * {@link CesiumGeometry::OctreeTileID} objects.
-   */
-  size_t operator()(const CesiumGeometry::OctreeTileID& key) const noexcept {
-    // TODO: is this hash function any good? Probably not.
-    std::hash<uint32_t> h;
-    return h(key.level) ^ (h(key.x) << 1) ^ (h(key.y) << 2) ^ (h(key.z) << 3);
-  }
-};
-} // namespace std

@@ -82,20 +82,6 @@ struct CESIUMGEOMETRY_API UpsampledQuadtreeNode final {
    * @brief The {@link QuadtreeTileID} for this tree node.
    */
   QuadtreeTileID tileID;
-
-  /**
-   * @brief Returns `true` if two identifiers are equal.
-   */
-  constexpr bool operator==(const UpsampledQuadtreeNode& other) const noexcept {
-    return this->tileID == other.tileID;
-  }
-
-  /**
-   * @brief Returns `true` if two identifiers are *not* equal.
-   */
-  constexpr bool operator!=(const UpsampledQuadtreeNode& other) const noexcept {
-    return !(*this == other);
-  }
 };
 } // namespace CesiumGeometry
 
@@ -114,21 +100,6 @@ template <> struct hash<CesiumGeometry::QuadtreeTileID> {
     // TODO: is this hash function any good? Probably not.
     std::hash<uint32_t> h;
     return h(key.level) ^ (h(key.x) << 1) ^ (h(key.y) << 2);
-  }
-};
-
-/**
- * @brief A hash function for {@link CesiumGeometry::UpsampledQuadtreeNode} objects.
- */
-template <> struct hash<CesiumGeometry::UpsampledQuadtreeNode> {
-
-  /**
-   * @brief A specialization of the `std::hash` template for
-   * {@link CesiumGeometry::UpsampledQuadtreeNode} objects.
-   */
-  size_t
-  operator()(const CesiumGeometry::UpsampledQuadtreeNode& key) const noexcept {
-    return hash<CesiumGeometry::QuadtreeTileID>()(key.tileID);
   }
 };
 } // namespace std

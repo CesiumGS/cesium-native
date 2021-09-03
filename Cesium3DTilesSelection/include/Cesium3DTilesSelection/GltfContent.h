@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/Gltf.h"
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
@@ -12,7 +11,6 @@
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
 #include <spdlog/fwd.h>
-#include <string>
 
 namespace Cesium3DTilesSelection {
 

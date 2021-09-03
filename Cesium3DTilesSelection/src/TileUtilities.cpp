@@ -6,6 +6,8 @@
 #include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 
+using namespace CesiumGeospatial;
+
 namespace Cesium3DTilesSelection {
 namespace Impl {
 
@@ -27,7 +29,7 @@ const CesiumGeospatial::GlobeRectangle* obtainGlobeRectangle(
 
 bool withinPolygons(
     const BoundingVolume& boundingVolume,
-    const std::vector<CartographicSelection>& cartographicSelections) noexcept {
+    const std::vector<CartographicPolygon>& cartographicPolygons) noexcept {
 
   const CesiumGeospatial::GlobeRectangle* pRectangle =
       Cesium3DTilesSelection::Impl::obtainGlobeRectangle(&boundingVolume);
@@ -35,12 +37,12 @@ bool withinPolygons(
     return false;
   }
 
-  return withinPolygons(*pRectangle, cartographicSelections);
+  return withinPolygons(*pRectangle, cartographicPolygons);
 }
 
 bool withinPolygons(
     const CesiumGeospatial::GlobeRectangle& rectangle,
-    const std::vector<CartographicSelection>& cartographicSelections) noexcept {
+    const std::vector<CartographicPolygon>& cartographicPolygons) noexcept {
 
   glm::dvec2 rectangleCorners[] = {
       glm::dvec2(rectangle.getWest(), rectangle.getSouth()),
@@ -55,8 +57,8 @@ bool withinPolygons(
       rectangleCorners[0] - rectangleCorners[3]};
 
   // Iterate through all polygons.
-  for (size_t i = 0; i < cartographicSelections.size(); ++i) {
-    const CartographicSelection& selection = cartographicSelections[i];
+  for (size_t i = 0; i < cartographicPolygons.size(); ++i) {
+    const CartographicPolygon& selection = cartographicPolygons[i];
 
     const std::optional<CesiumGeospatial::GlobeRectangle>&
         polygonBoundingRectangle = selection.getBoundingRectangle();

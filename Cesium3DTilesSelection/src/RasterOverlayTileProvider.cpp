@@ -76,6 +76,7 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 
   RasterOverlay& overlay = pTile->getOverlay();
+  delete pTile;
 
   if (overlay.isBeingDestroyed()) {
     overlay.destroySafely(nullptr);
@@ -255,7 +256,8 @@ static LoadResult createLoadResultFromLoadedImage(
 
     void* pRendererResources = nullptr;
     if (pPrepareRendererResources) {
-      pPrepareRendererResources->prepareRasterInLoadThread(image);
+      pRendererResources =
+          pPrepareRendererResources->prepareRasterInLoadThread(image);
     }
 
     LoadResult result;
