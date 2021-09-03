@@ -1435,7 +1435,9 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it, as if we were
       // visiting it.
-      child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
+      if (child.getState() >= Tile::LoadState::ContentLoaded) {
+        child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
+      }
     }
   }
   return waitingForChildren;
