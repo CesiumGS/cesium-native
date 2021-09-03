@@ -110,7 +110,7 @@ bool Tile::isRenderable() const noexcept {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
-          [](const RasterMappedTo3DTile& rasterTile) -> bool {
+          [](const RasterMappedTo3DTile& rasterTile) {
             return rasterTile.getReadyTile() != nullptr;
           });
     }
