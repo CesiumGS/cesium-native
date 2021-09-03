@@ -295,6 +295,31 @@ public:
   }
 
   /**
+   * @brief Returns whether to unconditionally refine this tile.
+   *
+   * This is useful in cases such as with external tilesets, where instead of a
+   * tile having any content, it points to an external tileset's root. So the
+   * tile always needs to be refined otherwise the external tileset will not be
+   * displayed.
+   *
+   * @return Whether to uncoditionally refine this tile.
+   */
+  bool getUnconditionallyRefine() const noexcept {
+    return this->_unconditionallyRefine;
+  }
+
+  /**
+   * @brief Sets whether this tile should be unconditionally refined.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @param value Whether this tile should be unconditionaly refined.
+   */
+  void setUnconditionallyRefine(bool value) noexcept {
+    this->_unconditionallyRefine = value;
+  }
+
+  /**
    * @brief The refinement strategy of this tile.
    *
    * Returns the {@link TileRefine} value that indicates the refinement strategy
@@ -578,6 +603,7 @@ private:
   BoundingVolume _boundingVolume;
   std::optional<BoundingVolume> _viewerRequestVolume;
   double _geometricError;
+  bool _unconditionallyRefine;
   TileRefine _refine;
   glm::dmat4x4 _transform;
 

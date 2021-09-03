@@ -1682,11 +1682,13 @@ Tileset::TraversalDetails Tileset::_visitTile(
     return _renderLeaf(frameState, tile, distances, result);
   }
 
+  bool unconditionallyRefine = tile.getUnconditionallyRefine();
   bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
   bool waitingForChildren =
       _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
 
-  if (meetsSse || ancestorMeetsSse || waitingForChildren) {
+  if (!unconditionallyRefine &&
+      (meetsSse || ancestorMeetsSse || waitingForChildren)) {
     // This tile (or an ancestor) is the one we want to render this frame, but
     // we'll do different things depending on the state of this tile and on what
     // we did _last_ frame.
