@@ -142,9 +142,9 @@ void mapRasterOverlaysToTile(
 
   assert(tile.getMappedRasterTiles().empty());
 
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
-  if (!pRectangle) {
+  std::optional<GlobeRectangle> maybeRectangle =
+      getGlobeRectangle(tile.getBoundingVolume());
+  if (!maybeRectangle) {
     return;
   }
 
@@ -158,7 +158,7 @@ void mapRasterOverlaysToTile(
     //       projecting each vertex, but that would require us to have
     //       geometry first.
     Rectangle overlayRectangle =
-        projectRectangleSimple(pProvider->getProjection(), *pRectangle);
+        projectRectangleSimple(pProvider->getProjection(), *maybeRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
         pOverlay->getTileProvider()->getTile(
@@ -696,14 +696,14 @@ void Tile::update(
     }
   }
 
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&this->getBoundingVolume());
-  if (!pRectangle) {
+  std::optional<GlobeRectangle> maybeRectangle =
+      getGlobeRectangle(this->getBoundingVolume());
+  if (!maybeRectangle) {
     return;
   }
 
   if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays() && pRectangle) {
+      this->getTileset()->supportsRasterOverlays() && maybeRectangle) {
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
@@ -741,8 +741,9 @@ void Tile::update(
                   i));
           --i;
 
-          Rectangle projectedRectangle =
-              projectRectangleSimple(pProvider->getProjection(), *pRectangle);
+          Rectangle projectedRectangle = projectRectangleSimple(
+              pProvider->getProjection(),
+              *maybeRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());
 
@@ -818,16 +819,16 @@ Tile::generateTextureCoordinates(
 
   // Generate texture coordinates for each projection.
   if (!projections.empty()) {
-    const CesiumGeospatial::GlobeRectangle* pRectangle =
-        Impl::obtainGlobeRectangle(&boundingVolume);
-    if (pRectangle) {
+    std::optional<GlobeRectangle> maybeRectangle =
+        getGlobeRectangle(boundingVolume);
+    if (maybeRectangle) {
       for (size_t i = 0; i < projections.size(); ++i) {
         const Projection& projection = projections[i];
 
         int textureCoordinateID = static_cast<int32_t>(i);
 
         CesiumGeometry::Rectangle rectangle =
-            projectRectangleSimple(projection, *pRectangle);
+            projectRectangleSimple(projection, *maybeRectangle);
 
         CesiumGeospatial::BoundingRegion boundingRegion =
             GltfContent::createRasterOverlayTextureCoordinates(

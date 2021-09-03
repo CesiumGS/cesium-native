@@ -1215,10 +1215,10 @@ static bool isVisibleFromCamera(
   // TODO: it would be better to test a line pointing down (and up?) from the
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&boundingVolume);
-  if (position && pRectangle) {
-    return pRectangle->contains(position.value());
+  std::optional<GlobeRectangle> maybeRectangle =
+      getGlobeRectangle(boundingVolume);
+  if (position && maybeRectangle) {
+    return maybeRectangle->contains(position.value());
   }
   return false;
 }
