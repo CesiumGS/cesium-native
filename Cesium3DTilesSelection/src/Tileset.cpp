@@ -1850,7 +1850,7 @@ void Tileset::_processLoadQueue() {
 }
 
 void Tileset::_unloadCachedTiles() {
-  const int64_t maxBytes = this->getOptions().maximumCachedBytes;
+  const int64_t maxBytes = this->getOptions().MaximumCachedBytes;
 
   Tile* pTile = this->_loadedTiles.head();
 
