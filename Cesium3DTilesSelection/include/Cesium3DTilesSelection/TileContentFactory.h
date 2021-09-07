@@ -99,7 +99,9 @@ public:
    * input, and no loader for the content type of the input.
    */
   static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-  createContent(const CesiumAsync::AsyncSystem& asyncSystem, const TileContentLoadInput& input);
+  createContent(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const TileContentLoadInput& input);
 
 private:
   static std::optional<std::string>

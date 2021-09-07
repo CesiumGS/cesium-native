@@ -2012,7 +2012,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    record.pTile->loadContent(this->_asyncSystem);
+    record.pTile->loadContent();
 
     if (loadsInProgress >= maximumLoadsInProgress) {
       break;
