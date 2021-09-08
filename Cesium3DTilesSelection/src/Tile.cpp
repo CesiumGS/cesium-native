@@ -289,8 +289,8 @@ void Tile::loadContent() {
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
-          [&handleLoadResult,
-           &handleLoadError,
+          [handleLoadResult,
+           handleLoadError,
            loadInput = std::move(loadInput),
            projections = std::move(projections),
            gltfUpAxis,
@@ -338,15 +338,15 @@ void Tile::loadContent() {
             loadInput.url = pRequest->url();
 
             TileContentFactory::createContent(asyncSystem, loadInput)
-                .thenInMainThread([httpStatusCode = pResponse->statusCode(),
-                                   gltfUpAxis,
-                                   loadInput = std::move(loadInput),
-                                   projections = std::move(projections),
-                                   generateMissingNormalsSmooth,
-                                   pPrepareRendererResources =
-                                       std::move(pPrepareRendererResources)](
-                                      std::unique_ptr<TileContentLoadResult>&&
-                                          pContent) mutable {
+                .thenInWorkerThread([httpStatusCode = pResponse->statusCode(),
+                                     gltfUpAxis,
+                                     loadInput = std::move(loadInput),
+                                     projections = std::move(projections),
+                                     generateMissingNormalsSmooth,
+                                     pPrepareRendererResources =
+                                         std::move(pPrepareRendererResources)](
+                                        std::unique_ptr<TileContentLoadResult>&&
+                                            pContent) mutable {
                   void* pRendererResources = nullptr;
                   if (pContent) {
                     pContent->httpStatusCode = httpStatusCode;
@@ -396,7 +396,7 @@ void Tile::loadContent() {
 
                   return result;
                 })
-                .thenImmediately(handleLoadResult)
+                .thenInMainThread(handleLoadResult)
                 .catchInMainThread(handleLoadError);
 
             return LoadResult{
