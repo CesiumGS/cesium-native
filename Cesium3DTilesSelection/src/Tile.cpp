@@ -214,7 +214,6 @@ void Tile::loadContent() {
   this->setState(LoadState::ContentLoading);
 
   Tileset& tileset = *this->getTileset();
-  AsyncSystem& asyncSystem = tileset.getAsyncSystem();
 
   // TODO: support overlay mapping for tiles that aren't region-based.
   // Probably by creating a placeholder for each raster overlay and resolving it
@@ -296,7 +295,9 @@ void Tile::loadContent() {
            gltfUpAxis,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources,
-           &asyncSystem,
+           &asyncSystem = tileset.getAsyncSystem(),
+           pAssetAccessor = tileset.getExternals().pAssetAccessor,
+           &requestHeaders = this->_pContext->requestHeaders,
            pLogger = tileset.getExternals().pLogger,
            generateMissingNormalsSmooth =
                tileset.getOptions()
@@ -337,7 +338,11 @@ void Tile::loadContent() {
             loadInput.contentType = pResponse->contentType();
             loadInput.url = pRequest->url();
 
-            TileContentFactory::createContent(asyncSystem, loadInput)
+            TileContentFactory::createContent(
+                asyncSystem,
+                pAssetAccessor,
+                requestHeaders,
+                loadInput)
                 .thenInWorkerThread([httpStatusCode = pResponse->statusCode(),
                                      gltfUpAxis,
                                      loadInput = std::move(loadInput),

@@ -4,7 +4,6 @@
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
-#include "CesiumAsync/AsyncSystem.h"
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {
@@ -27,6 +26,8 @@ public:
    */
   CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
       const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::vector<std::pair<std::string, std::string>>& requestHeaders,
       const TileContentLoadInput& input) override;
 
   /**
