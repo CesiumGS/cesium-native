@@ -27,7 +27,7 @@ ResponseCacheControl::ResponseCacheControl(
 
 /*static*/ std::optional<ResponseCacheControl>
 ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
-  std::map<std::string, std::string>::const_iterator cacheControlIter =
+  std::map<std::string, std::string, CaseInsensitiveCompare>::const_iterator cacheControlIter =
       headers.find("Cache-Control");
   if (cacheControlIter == headers.end()) {
     return std::nullopt;
