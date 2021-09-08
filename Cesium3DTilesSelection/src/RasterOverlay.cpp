@@ -4,34 +4,30 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 using namespace CesiumAsync;
+using namespace Cesium3DTilesSelection;
 
 namespace {
-class PlaceholderTileProvider
-    : public Cesium3DTilesSelection::RasterOverlayTileProvider {
+class PlaceholderTileProvider : public RasterOverlayTileProvider {
 public:
   PlaceholderTileProvider(
-      Cesium3DTilesSelection::RasterOverlay& owner,
+      RasterOverlay& owner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-      : Cesium3DTilesSelection::RasterOverlayTileProvider(
-            owner,
-            asyncSystem,
-            pAssetAccessor) {}
+      : RasterOverlayTileProvider(owner, asyncSystem, pAssetAccessor) {}
 
-  virtual CesiumAsync::Future<Cesium3DTilesSelection::LoadedRasterOverlayImage>
-  loadTileImage(
-      const CesiumGeometry::QuadtreeTileID& /* tileID */) const override {
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(RasterOverlayTile& /* overlayTile */) override {
     return this->getAsyncSystem()
-        .createResolvedFuture<Cesium3DTilesSelection::LoadedRasterOverlayImage>(
-            {});
+        .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
 };
 } // namespace
 
-namespace Cesium3DTilesSelection {
-
-RasterOverlay::RasterOverlay(const RasterOverlayOptions& options)
-    : _pPlaceholder(),
+RasterOverlay::RasterOverlay(
+    const std::string& name,
+    const RasterOverlayOptions& options)
+    : _name(name),
+      _pPlaceholder(),
       _pTileProvider(),
       _pSelf(),
       _isLoadingTileProvider(false),
@@ -59,7 +55,7 @@ RasterOverlay::getTileProvider() const noexcept {
                               : this->_pPlaceholder.get();
 }
 
-void RasterOverlay::createTileProvider(
+void RasterOverlay::loadTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
@@ -125,5 +121,3 @@ void RasterOverlay::destroySafely(
     this->_pSelf.reset();
   }
 }
-
-} // namespace Cesium3DTilesSelection

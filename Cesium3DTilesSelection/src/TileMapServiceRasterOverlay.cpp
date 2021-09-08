@@ -1,7 +1,7 @@
 #include "Cesium3DTilesSelection/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
+#include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "CesiumAsync/IAssetAccessor.h"
@@ -16,7 +16,8 @@ using namespace CesiumAsync;
 
 namespace Cesium3DTilesSelection {
 
-class TileMapServiceTileProvider final : public RasterOverlayTileProvider {
+class TileMapServiceTileProvider final
+    : public QuadtreeRasterOverlayTileProvider {
 public:
   TileMapServiceTileProvider(
       RasterOverlay& owner,
@@ -36,7 +37,7 @@ public:
       uint32_t height,
       uint32_t minimumLevel,
       uint32_t maximumLevel)
-      : RasterOverlayTileProvider(
+      : QuadtreeRasterOverlayTileProvider(
             owner,
             asyncSystem,
             pAssetAccessor,
@@ -57,15 +58,18 @@ public:
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override {
     std::string url = CesiumUtility::Uri::resolve(
         this->_url,
         std::to_string(tileID.level) + "/" + std::to_string(tileID.x) + "/" +
             std::to_string(tileID.y) + this->_fileExtension,
         true);
 
-    return this->loadTileImageFromUrl(url, this->_headers, {});
+    LoadTileImageFromUrlOptions options;
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
   }
 
 private:
@@ -75,10 +79,11 @@ private:
 };
 
 TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
+    const std::string& name,
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
     const TileMapServiceRasterOverlayOptions& options)
-    : _url(url), _headers(headers), _options(options) {}
+    : RasterOverlay(name), _url(url), _headers(headers), _options(options) {}
 
 TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
 
@@ -206,6 +211,12 @@ TileMapServiceRasterOverlay::createTileProvider(
 
                 pTileset = pTileset->NextSiblingElement("TileSet");
               }
+            }
+
+            if (maximumLevel < minimumLevel && maximumLevel == 0) {
+              // Min and max levels unknown, so use defaults.
+              minimumLevel = 0;
+              maximumLevel = 25;
             }
 
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =

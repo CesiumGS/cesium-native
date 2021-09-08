@@ -150,10 +150,6 @@ public:
    * followed by {@link prepareRasterInMainThread}.
    * @param pMainThreadRendererResources The renderer resources for this raster
    * tile, as created and returned by {@link prepareRasterInMainThread}.
-   * @param textureCoordinateRectangle Defines the range of texture coordinates
-   * in which this raster tile should be applied, in the order west, south, east
-   * north. Each coordinate is in the range 0.0 (southwest corner) to 1.0
-   * (northeast corner).
    * @param translation The translation to apply to the texture coordinates
    * identified by `overlayTextureCoordinateID`. The texture coordinates to use
    * to sample the raster image are computed as `overlayTextureCoordinates *
@@ -165,10 +161,9 @@ public:
    */
   virtual void attachRasterInMainThread(
       const Tile& tile,
-      uint32_t overlayTextureCoordinateID,
+      int32_t overlayTextureCoordinateID,
       const RasterOverlayTile& rasterTile,
       void* pMainThreadRendererResources,
-      const CesiumGeometry::Rectangle& textureCoordinateRectangle,
       const glm::dvec2& translation,
       const glm::dvec2& scale) = 0;
 
@@ -181,17 +176,12 @@ public:
    * @param rasterTile The raster overlay tile to remove.
    * @param pMainThreadRendererResources The renderer resources for this raster
    * tile, as created and returned by {@link prepareRasterInMainThread}.
-   * @param textureCoordinateRectangle Defines the range of texture coordinates
-   * in which this raster tile should be applied, in the order west, south, east
-   * north. Each coordinate is in the range 0.0 (southwest corner) to 1.0
-   * (northeast corner).
    */
   virtual void detachRasterInMainThread(
       const Tile& tile,
-      uint32_t overlayTextureCoordinateID,
+      int32_t overlayTextureCoordinateID,
       const RasterOverlayTile& rasterTile,
-      void* pMainThreadRendererResources,
-      const CesiumGeometry::Rectangle& textureCoordinateRectangle) noexcept = 0;
+      void* pMainThreadRendererResources) noexcept = 0;
 };
 
 } // namespace Cesium3DTilesSelection

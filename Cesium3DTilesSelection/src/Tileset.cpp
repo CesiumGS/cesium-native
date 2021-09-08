@@ -1,8 +1,9 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
+#include "Cesium3DTilesSelection/ITileExcluder.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
+#include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "CesiumAsync/AsyncSystem.h"
@@ -11,7 +12,9 @@
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
@@ -392,8 +395,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     for (auto& tile : result.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           tile->getMappedRasterTiles();
-      for (RasterMappedTo3DTile mappedRasterTile : mappedRasterTiles) {
-        RasterOverlayTile* pRasterOverlayTile = mappedRasterTile.getReadyTile();
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile.getReadyTile();
         if (pRasterOverlayTile != nullptr) {
           for (Credit credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
@@ -1203,10 +1207,15 @@ static bool isVisibleFromCamera(
   if (!forceRenderTilesUnderCamera) {
     return false;
   }
+
   const std::optional<CesiumGeospatial::Cartographic>& position =
       viewState.getPositionCartographic();
+
+  // TODO: it would be better to test a line pointing down (and up?) from the
+  // camera against the bounding volume itself, rather than transforming the
+  // bounding volume to a region.
   const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Cesium3DTilesSelection::Impl::obtainGlobeRectangle(&boundingVolume);
+      Impl::obtainGlobeRectangle(&boundingVolume);
   if (position && pRectangle) {
     return pRectangle->contains(position.value());
   }
@@ -1254,10 +1263,19 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   // whether this tile was culled (Note: we might still want to visit it)
   bool culled = false;
 
-  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
+  for (const std::shared_ptr<ITileExcluder>& pExcluder :
+       this->_options.excluders) {
+    if (pExcluder->shouldExclude(tile)) {
+      culled = true;
+      shouldVisit = false;
+      break;
+    }
+  }
+
   const std::vector<ViewState>& frustums = frameState.frustums;
   const std::vector<double>& fogDensities = frameState.fogDensities;
 
+  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
   if (std::none_of(
           frustums.begin(),
           frustums.end(),

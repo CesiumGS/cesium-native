@@ -112,10 +112,24 @@ Model upsampleGltfForRasterOverlays(
   result.extensionsUsed = parentModel.extensionsUsed;
   result.extensionsRequired = parentModel.extensionsRequired;
   result.asset = parentModel.asset;
-  // result.extras = parentModel.extras;
+  result.extras = parentModel.extras;
   // result.extensions = parentModel.extensions;
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
+
+  // If the glTF has a name, update it with upsample info.
+  auto nameIt = result.extras.find("Cesium3DTiles_TileUrl");
+  if (nameIt != result.extras.end()) {
+    std::string name = nameIt->second.getStringOrDefault("");
+    std::string::size_type upsampledIndex = name.find(" upsampled");
+    if (upsampledIndex != std::string::npos) {
+      name = name.substr(0, upsampledIndex);
+    }
+    name += " upsampled L" + std::to_string(childID.tileID.level);
+    name += "-X" + std::to_string(childID.tileID.x);
+    name += "-Y" + std::to_string(childID.tileID.y);
+    nameIt->second = name;
+  }
 
   for (Mesh& mesh : result.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
@@ -381,15 +395,11 @@ static void upsamplePrimitiveForRasterOverlays(
   std::vector<std::string> toRemove;
 
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
-    if (attribute.first == "_CESIUMOVERLAY_0") {
-      uvAccessorIndex = attribute.second;
-
-      // Do not include _CESIUMOVERLAY_0, it will be generated later.
-      toRemove.push_back(attribute.first);
-      continue;
-    }
-
     if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
+      if (uvAccessorIndex == -1) {
+        uvAccessorIndex = attribute.second;
+      }
+
       // Do not include _CESIUMOVERLAY_*, it will be generated later.
       toRemove.push_back(attribute.first);
       continue;
