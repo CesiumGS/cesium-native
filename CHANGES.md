@@ -2,6 +2,9 @@
 
 ### v0.7.1 - ????
 
+##### Additions :tada:
+- Made tile content loading asynchronous and allowed it to make further network requests, to Ion or otherwise.
+
 ##### Fixes :wrench:
 
 - Fixed a bug introduced in v0.7.0 where Bing credits were not being collected.
