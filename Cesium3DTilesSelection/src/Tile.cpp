@@ -30,7 +30,6 @@ Tile::Tile() noexcept
       _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat4())),
       _viewerRequestVolume(),
       _geometricError(0.0),
-      _unconditionallyRefine(false),
       _refine(TileRefine::Replace),
       _transform(1.0),
       _id(""s),
@@ -50,7 +49,6 @@ Tile::Tile(Tile&& rhs) noexcept
       _boundingVolume(rhs._boundingVolume),
       _viewerRequestVolume(rhs._viewerRequestVolume),
       _geometricError(rhs._geometricError),
-      _unconditionallyRefine(rhs._unconditionallyRefine),
       _refine(rhs._refine),
       _transform(rhs._transform),
       _id(std::move(rhs._id)),
@@ -70,7 +68,6 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_boundingVolume = rhs._boundingVolume;
     this->_viewerRequestVolume = rhs._viewerRequestVolume;
     this->_geometricError = rhs._geometricError;
-    this->_unconditionallyRefine = rhs._unconditionallyRefine;
     this->_refine = rhs._refine;
     this->_transform = rhs._transform;
     this->_id = std::move(rhs._id);
@@ -637,7 +634,7 @@ void Tile::update(
       // In the latter case, we'll happily render nothing in the space of this
       // tile, which is sometimes useful.
       if (!this->_pContent->model) {
-        this->setUnconditionallyRefine(true);
+        this->setUnconditionallyRefine();
       }
 
       // A new and improved bounding volume.

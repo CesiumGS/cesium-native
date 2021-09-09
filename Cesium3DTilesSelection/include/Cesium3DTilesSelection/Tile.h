@@ -12,8 +12,10 @@
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>
+#include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -305,18 +307,16 @@ public:
    * @return Whether to uncoditionally refine this tile.
    */
   bool getUnconditionallyRefine() const noexcept {
-    return this->_unconditionallyRefine;
+    return glm::isinf(this->_geometricError);
   }
 
   /**
-   * @brief Sets whether this tile should be unconditionally refined.
+   * @brief Marks that this tile should be unconditionally refined.
    *
    * This function is not supposed to be called by clients.
-   *
-   * @param value Whether this tile should be unconditionaly refined.
    */
-  void setUnconditionallyRefine(bool value) noexcept {
-    this->_unconditionallyRefine = value;
+  void setUnconditionallyRefine() noexcept {
+    this->_geometricError = std::numeric_limits<double>::infinity();
   }
 
   /**
@@ -603,7 +603,6 @@ private:
   BoundingVolume _boundingVolume;
   std::optional<BoundingVolume> _viewerRequestVolume;
   double _geometricError;
-  bool _unconditionallyRefine;
   TileRefine _refine;
   glm::dmat4x4 _transform;
 
