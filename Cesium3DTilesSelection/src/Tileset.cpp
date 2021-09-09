@@ -1421,6 +1421,9 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     if (!child.isRenderable()) {
       waitingForChildren = true;
 
+      // While we are waiting for the child to load, we need to push along the
+      // tile and raster loading by continuing to update it.
+      child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
       this->_markTileVisited(child);
 
       // We're using the distance to the parent tile to compute the load
@@ -1431,13 +1434,6 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
           frameState.frustums,
           child,
           distances);
-
-      // While we are waiting for the child to load, we need to push along the
-      // tile and raster loading by continuing to update it, as if we were
-      // visiting it.
-      if (child.getState() >= Tile::LoadState::ContentLoaded) {
-        child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
-      }
     }
   }
   return waitingForChildren;
