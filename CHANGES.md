@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug introduced in v0.7.0 where Bing credits were not being collected.
+- Fixed the "forbidHoles" option not working when frustum culling was enabled and when external tilesets were used.
 
 ### v0.7.0 - 2021-09-01
 
