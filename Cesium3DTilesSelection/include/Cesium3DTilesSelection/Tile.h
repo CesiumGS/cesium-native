@@ -12,8 +12,10 @@
 #include "CesiumGeospatial/Projection.h"
 #include "CesiumUtility/DoublyLinkedList.h"
 #include <atomic>
+#include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -292,6 +294,29 @@ public:
    */
   void setGeometricError(double value) noexcept {
     this->_geometricError = value;
+  }
+
+  /**
+   * @brief Returns whether to unconditionally refine this tile.
+   *
+   * This is useful in cases such as with external tilesets, where instead of a
+   * tile having any content, it points to an external tileset's root. So the
+   * tile always needs to be refined otherwise the external tileset will not be
+   * displayed.
+   *
+   * @return Whether to uncoditionally refine this tile.
+   */
+  bool getUnconditionallyRefine() const noexcept {
+    return glm::isinf(this->_geometricError);
+  }
+
+  /**
+   * @brief Marks that this tile should be unconditionally refined.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void setUnconditionallyRefine() noexcept {
+    this->_geometricError = std::numeric_limits<double>::infinity();
   }
 
   /**
