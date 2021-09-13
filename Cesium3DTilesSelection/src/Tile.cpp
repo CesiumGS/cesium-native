@@ -261,156 +261,139 @@ void Tile::loadContent() {
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
-  auto handleLoadResult = [this](LoadResult&& loadResult) {
-    // if not already loaded, update the tile with the loading result
-    if (this->getState() != LoadState::ContentLoaded) {
-      this->_pContent = std::move(loadResult.pContent);
-      this->_pRendererResources = loadResult.pRendererResources;
-      if (loadResult.state != LoadState::ContentLoading) {
-        this->getTileset()->notifyTileDoneLoading(this);
-      }
-      this->setState(loadResult.state);
-    }
-  };
-
-  auto handleLoadError = [this](const std::exception& e) {
-    this->_pContent.reset();
-    this->_pRendererResources = nullptr;
-    this->getTileset()->notifyTileDoneLoading(this);
-    this->setState(LoadState::Failed);
-
-    SPDLOG_LOGGER_ERROR(
-        this->getTileset()->getExternals().pLogger,
-        "An exception occurred while loading tile: {}",
-        e.what());
-  };
-
+  AsyncSystem asyncSystem = tileset.getAsyncSystem();
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
-      .thenInWorkerThread(
-          [handleLoadResult,
-           handleLoadError,
+      .thenInWorkerThread([loadInput_ = std::move(loadInput),
+                           asyncSystem = tileset.getAsyncSystem(),
+                           pAssetAccessor =
+                               tileset.getExternals().pAssetAccessor,
+                           &requestHeaders = this->_pContext->requestHeaders,
+                           pLogger = tileset.getExternals().pLogger](
+                              std::shared_ptr<IAssetRequest>&& pRequest) {
+        CESIUM_TRACE("loadContent worker thread");
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Did not receive a valid response for tile content {}",
+              pRequest->url());
+          auto pLoadResult = std::make_unique<TileContentLoadResult>();
+          pLoadResult->httpStatusCode = 0;
+          return asyncSystem.createResolvedFuture(std::move(pLoadResult));
+        }
+
+        if (pResponse->statusCode() != 0 &&
+            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Received status code {} for tile content {}",
+              pResponse->statusCode(),
+              pRequest->url());
+          auto pLoadResult = std::make_unique<TileContentLoadResult>();
+          pLoadResult->httpStatusCode = pResponse->statusCode();
+          return asyncSystem.createResolvedFuture(std::move(pLoadResult));
+        }
+
+        TileContentLoadInput loadInput = std::move(loadInput_);
+
+        loadInput.data = pResponse->data();
+        loadInput.contentType = pResponse->contentType();
+        loadInput.url = pRequest->url();
+
+        return TileContentFactory::createContent(
+                   asyncSystem,
+                   pAssetAccessor,
+                   requestHeaders,
+                   loadInput)
+            // TODO: move status code into TileContentLoadInput!!
+            .thenImmediately(
+                [statusCode = pResponse->statusCode()](
+                    std::unique_ptr<TileContentLoadResult>&& pContent) {
+                  pContent->httpStatusCode = statusCode;
+                  return std::move(pContent);
+                });
+      })
+      .thenImmediately(
+          [gltfUpAxis,
            loadInput = std::move(loadInput),
            projections = std::move(projections),
-           gltfUpAxis,
-           pPrepareRendererResources =
-               tileset.getExternals().pPrepareRendererResources,
-           &asyncSystem = tileset.getAsyncSystem(),
-           pAssetAccessor = tileset.getExternals().pAssetAccessor,
-           &requestHeaders = this->_pContext->requestHeaders,
-           pLogger = tileset.getExternals().pLogger,
            generateMissingNormalsSmooth =
-               tileset.getOptions()
-                   .contentOptions.generateMissingNormalsSmooth](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            CESIUM_TRACE("loadContent worker thread");
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = 0;
+               tileset.getOptions().contentOptions.generateMissingNormalsSmooth,
+           pPrepareRendererResources =
+               tileset.getExternals().pPrepareRendererResources](
+              std::unique_ptr<TileContentLoadResult>&& pContent) mutable {
+            if (pContent->httpStatusCode != 0 &&
+                (pContent->httpStatusCode < 200 ||
+                 pContent->httpStatusCode >= 300)) {
               return LoadResult{
                   LoadState::FailedTemporarily,
-                  std::move(pLoadResult),
+                  std::move(pContent),
                   nullptr};
             }
 
-            if (pResponse->statusCode() != 0 &&
-                (pResponse->statusCode() < 200 ||
-                 pResponse->statusCode() >= 300)) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Received status code {} for tile content {}",
-                  pResponse->statusCode(),
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = pResponse->statusCode();
-              return LoadResult{
-                  LoadState::FailedTemporarily,
-                  std::move(pLoadResult),
-                  nullptr};
+            void* pRendererResources = nullptr;
+
+            if (pContent) {
+              if (pContent->model) {
+
+                CesiumGltf::Model& model = pContent->model.value();
+
+                // TODO The `extras` are currently the only way to pass
+                // arbitrary information to the consumer, so the up-axis
+                // is stored here:
+                model.extras["gltfUpAxis"] = gltfUpAxis;
+
+                const BoundingVolume& boundingVolume =
+                    loadInput.tileBoundingVolume;
+                // TODO: apply gltf up axis (if it's not the glTF standard
+                // Y-up, which is already accounted for) and RTC_CENTER.
+                const glm::dmat4& transform = loadInput.tileTransform;
+
+                Tile::generateTextureCoordinates(
+                    model,
+                    transform,
+                    boundingVolume,
+                    projections);
+
+                pContent->rasterOverlayProjections = std::move(projections);
+
+                if (generateMissingNormalsSmooth) {
+                  pContent->model->generateMissingNormalsSmooth();
+                }
+
+                if (pPrepareRendererResources) {
+                  CESIUM_TRACE("prepareInLoadThread");
+                  pRendererResources =
+                      pPrepareRendererResources->prepareInLoadThread(
+                          pContent->model.value(),
+                          transform);
+                }
+              }
             }
-
-            loadInput.data = pResponse->data();
-            loadInput.contentType = pResponse->contentType();
-            loadInput.url = pRequest->url();
-
-            TileContentFactory::createContent(
-                asyncSystem,
-                pAssetAccessor,
-                requestHeaders,
-                loadInput)
-                .thenInWorkerThread([httpStatusCode = pResponse->statusCode(),
-                                     gltfUpAxis,
-                                     loadInput = std::move(loadInput),
-                                     projections = std::move(projections),
-                                     generateMissingNormalsSmooth,
-                                     pPrepareRendererResources =
-                                         std::move(pPrepareRendererResources)](
-                                        std::unique_ptr<TileContentLoadResult>&&
-                                            pContent) mutable {
-                  void* pRendererResources = nullptr;
-                  if (pContent) {
-                    pContent->httpStatusCode = httpStatusCode;
-
-                    if (pContent->model) {
-
-                      CesiumGltf::Model& model = pContent->model.value();
-
-                      // TODO The `extras` are currently the only way to pass
-                      // arbitrary information to the consumer, so the up-axis
-                      // is stored here:
-                      model.extras["gltfUpAxis"] = gltfUpAxis;
-
-                      const BoundingVolume& boundingVolume =
-                          loadInput.tileBoundingVolume;
-                      // TODO: apply gltf up axis (if it's not the glTF standard
-                      // Y-up, which is already accounted for) and RTC_CENTER.
-                      const glm::dmat4& transform = loadInput.tileTransform;
-
-                      Tile::generateTextureCoordinates(
-                          model,
-                          transform,
-                          boundingVolume,
-                          projections);
-
-                      pContent->rasterOverlayProjections =
-                          std::move(projections);
-
-                      if (generateMissingNormalsSmooth) {
-                        pContent->model->generateMissingNormalsSmooth();
-                      }
-
-                      if (pPrepareRendererResources) {
-                        CESIUM_TRACE("prepareInLoadThread");
-                        pRendererResources =
-                            pPrepareRendererResources->prepareInLoadThread(
-                                pContent->model.value(),
-                                transform);
-                      }
-                    }
-                  }
-
-                  LoadResult result;
-                  result.state = LoadState::ContentLoaded;
-                  result.pContent = std::move(pContent);
-                  result.pRendererResources = pRendererResources;
-
-                  return result;
-                })
-                .thenInMainThread(handleLoadResult)
-                .catchInMainThread(handleLoadError);
 
             return LoadResult{
-                LoadState::ContentLoading,
-                std::make_unique<TileContentLoadResult>(),
-                nullptr};
+                LoadState::ContentLoaded,
+                std::move(pContent),
+                pRendererResources};
           })
-      .thenInMainThread(handleLoadResult)
-      .catchInMainThread(handleLoadError);
+      .thenInMainThread([this](LoadResult&& loadResult) {
+        this->_pContent = std::move(loadResult.pContent);
+        this->_pRendererResources = loadResult.pRendererResources;
+        this->getTileset()->notifyTileDoneLoading(this);
+        this->setState(loadResult.state);
+      })
+      .catchInMainThread([this](const std::exception& e) {
+        this->_pContent.reset();
+        this->_pRendererResources = nullptr;
+        this->getTileset()->notifyTileDoneLoading(this);
+        this->setState(LoadState::Failed);
+
+        SPDLOG_LOGGER_ERROR(
+            this->getTileset()->getExternals().pLogger,
+            "An exception occurred while loading tile: {}",
+            e.what());
+      });
 }
 
 bool Tile::unloadContent() noexcept {
