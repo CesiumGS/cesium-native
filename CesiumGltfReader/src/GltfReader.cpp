@@ -322,7 +322,7 @@ public:
 
 } // namespace
 
-GltfReader::GltfReader() {
+GltfReader::GltfReader() noexcept {
   this->registerExtension<
       MeshPrimitive,
       KHR_draco_mesh_compressionJsonHandler>();

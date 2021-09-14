@@ -116,7 +116,7 @@ template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<double, DoubleJsonHandler>
     : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
     JsonHandler::reset(pParent);
@@ -233,7 +233,7 @@ template <typename T>
 class CESIUMJSONREADER_API ArrayJsonHandler<T, IntegerJsonHandler<T>>
     : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
@@ -344,7 +344,7 @@ template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<std::string, StringJsonHandler>
     : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
     JsonHandler::reset(pParent);

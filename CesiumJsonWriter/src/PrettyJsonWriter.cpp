@@ -5,7 +5,7 @@
 #include <string_view>
 
 namespace CesiumJsonWriter {
-PrettyJsonWriter::PrettyJsonWriter() {
+PrettyJsonWriter::PrettyJsonWriter() noexcept {
   auto writer = rapidjson::PrettyWriter<rapidjson::StringBuffer>(_prettyBuffer);
   writer.SetFormatOptions(
       rapidjson::PrettyFormatOptions::kFormatSingleLineArray);

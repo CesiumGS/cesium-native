@@ -77,7 +77,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  JsonValue() : value() {}
+  JsonValue() noexcept : value() {}
 
   /**
    * @brief Creates a `null` JSON value.

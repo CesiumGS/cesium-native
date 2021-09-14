@@ -27,7 +27,8 @@ public:
 
   class SchedulerScope {
   public:
-    SchedulerScope(TScheduler* pScheduler = nullptr) : _pScheduler(pScheduler) {
+    SchedulerScope(TScheduler* pScheduler = nullptr) noexcept
+        : _pScheduler(pScheduler) {
       if (this->_pScheduler) {
         std::vector<TScheduler*>& inSuitable =
             ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();

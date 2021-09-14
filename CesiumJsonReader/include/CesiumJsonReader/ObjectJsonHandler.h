@@ -7,7 +7,7 @@
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API ObjectJsonHandler : public JsonHandler {
 public:
-  ObjectJsonHandler() : JsonHandler() {}
+  ObjectJsonHandler() noexcept : JsonHandler() {}
 
   virtual IJsonHandler* readObjectStart() override /* final */;
   virtual IJsonHandler* readObjectEnd() override /* final */;

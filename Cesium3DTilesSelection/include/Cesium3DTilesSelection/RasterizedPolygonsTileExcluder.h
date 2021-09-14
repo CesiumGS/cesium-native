@@ -23,7 +23,8 @@ public:
    * ensure that the lifetime of this overlay is longer than the lifetime of the
    * newly-constructed `RasterizedPolygonsOverlay`.
    */
-  RasterizedPolygonsTileExcluder(const RasterizedPolygonsOverlay& overlay);
+  RasterizedPolygonsTileExcluder(
+      const RasterizedPolygonsOverlay& overlay) noexcept;
 
   /**
    * @brief Determines whether a given tile is entirely inside a polygon and

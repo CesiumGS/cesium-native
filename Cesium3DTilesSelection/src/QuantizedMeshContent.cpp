@@ -66,7 +66,7 @@ struct ExtensionHeader {
 enum class QuantizedMeshIndexType { UnsignedShort, UnsignedInt };
 
 struct QuantizedMeshView {
-  QuantizedMeshView()
+  QuantizedMeshView() noexcept
       : header{nullptr},
         indexType{QuantizedMeshIndexType::UnsignedShort},
         triangleCount{0},
