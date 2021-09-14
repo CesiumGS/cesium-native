@@ -281,7 +281,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(root->getState() == Tile::LoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::FailedTemporarily);
+        REQUIRE(child.getState() == Tile::LoadState::Failed);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 

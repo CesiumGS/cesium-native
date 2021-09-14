@@ -119,6 +119,11 @@ bool Tile::isRenderable() const noexcept {
   return false;
 }
 
+bool Tile::isExternalTileset() const noexcept {
+  return this->getState() >= LoadState::ContentLoaded && this->_pContent &&
+         !this->_pContent->model;
+}
+
 namespace {
 int32_t getTextureCoordinatesForProjection(
     std::vector<CesiumGeospatial::Projection>& projections,

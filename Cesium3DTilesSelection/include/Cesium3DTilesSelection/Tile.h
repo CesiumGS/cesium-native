@@ -490,6 +490,11 @@ public:
   bool isRenderable() const noexcept;
 
   /**
+   * @brief Determines if this tile is has external tileset content.
+   */
+  bool isExternalTileset() const noexcept;
+
+  /**
    * @brief Trigger the process of loading the {@link Tile::getContent}.
    *
    * This function is not supposed to be called by clients.

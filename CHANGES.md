@@ -6,6 +6,7 @@
 
 - Fixed a bug introduced in v0.7.0 where credits from a `QuadtreeRasterOverlayTileProvider` were not collected and reported.
 - Fixed a bug where disabling frustum culling caused external tilesets to not load.
+- Fixed a bug where the "forbidHoles" option was not working with raster overlays and external tilesets.
 
 ### v0.7.0 - 2021-09-01
 

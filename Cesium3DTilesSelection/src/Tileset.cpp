@@ -1418,9 +1418,12 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
   gsl::span<Tile> children = tile.getChildren();
   bool waitingForChildren = false;
   for (Tile& child : children) {
-    if (!child.isRenderable()) {
+    if (!child.isRenderable() && !child.isExternalTileset()) {
       waitingForChildren = true;
 
+      // While we are waiting for the child to load, we need to push along the
+      // tile and raster loading by continuing to update it.
+      child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
       this->_markTileVisited(child);
 
       // We're using the distance to the parent tile to compute the load
