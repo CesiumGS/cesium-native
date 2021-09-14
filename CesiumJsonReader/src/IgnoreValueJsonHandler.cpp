@@ -3,7 +3,7 @@
 
 using namespace CesiumJsonReader;
 
-void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) {
+void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) noexcept {
   this->_pParent = pParent;
   this->_depth = 0;
 }
@@ -41,13 +41,13 @@ IgnoreValueJsonHandler::readString(const std::string_view& /*str*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readObjectStart() {
+IJsonHandler* IgnoreValueJsonHandler::readObjectStart() noexcept {
   ++this->_depth;
   return this;
 }
 
-IJsonHandler*
-IgnoreValueJsonHandler::readObjectKey(const std::string_view& /*str*/) {
+IJsonHandler* IgnoreValueJsonHandler::readObjectKey(
+    const std::string_view& /*str*/) noexcept {
   return this;
 }
 
@@ -56,7 +56,7 @@ IJsonHandler* IgnoreValueJsonHandler::readObjectEnd() {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readArrayStart() {
+IJsonHandler* IgnoreValueJsonHandler::readArrayStart() noexcept {
   ++this->_depth;
   return this;
 }
@@ -73,4 +73,6 @@ void IgnoreValueJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-IJsonHandler* IgnoreValueJsonHandler::parent() { return this->_pParent; }
+IJsonHandler* IgnoreValueJsonHandler::parent() noexcept {
+  return this->_pParent;
+}

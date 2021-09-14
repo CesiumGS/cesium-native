@@ -33,7 +33,7 @@ private:
         [pScheduler]() { ThreadPool::_scope = pScheduler->immediate.scope(); };
   }
 
-  static auto createPostRun() {
+  static auto createPostRun() noexcept {
     return []() { ThreadPool::_scope.reset(); };
   }
 

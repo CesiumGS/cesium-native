@@ -66,11 +66,11 @@ public:
   }
 
   virtual IJsonHandler*
-  readObjectKey(const std::string_view& /*str*/) override {
+  readObjectKey(const std::string_view& /*str*/) noexcept override {
     return nullptr;
   }
 
-  virtual IJsonHandler* readObjectEnd() override { return nullptr; }
+  virtual IJsonHandler* readObjectEnd() noexcept override { return nullptr; }
 
   virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {

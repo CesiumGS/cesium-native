@@ -110,7 +110,7 @@ bool Tile::isRenderable() const noexcept {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
-          [](const RasterMappedTo3DTile& rasterTile) {
+          [](const RasterMappedTo3DTile& rasterTile) noexcept {
             return rasterTile.getReadyTile() != nullptr;
           });
     }
@@ -355,7 +355,7 @@ void Tile::loadContent() {
 
             return result;
           })
-      .thenInMainThread([this](LoadResult&& loadResult) {
+      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(this);
@@ -888,13 +888,13 @@ void Tile::upsampleParent(
             std::move(pContent),
             pRendererResources};
       })
-      .thenInMainThread([this](LoadResult&& loadResult) {
+      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
-      .catchInMainThread([this](const std::exception& /*e*/) {
+      .catchInMainThread([this](const std::exception& /*e*/) noexcept {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
         this->getTileset()->notifyTileDoneLoading(this);

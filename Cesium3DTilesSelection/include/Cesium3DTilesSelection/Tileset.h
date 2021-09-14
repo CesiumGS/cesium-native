@@ -540,7 +540,7 @@ private:
      */
     double priority;
 
-    bool operator<(const LoadRecord& rhs) const {
+    bool operator<(const LoadRecord& rhs) const noexcept {
       return this->priority < rhs.priority;
     }
   };

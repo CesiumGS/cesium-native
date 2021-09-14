@@ -17,12 +17,14 @@ public:
   /**
    * @brief Returns `true` if two credit objects have the same ID.
    */
-  bool operator==(const Credit& rhs) const { return this->id == rhs.id; }
+  bool operator==(const Credit& rhs) const noexcept {
+    return this->id == rhs.id;
+  }
 
 private:
   size_t id;
 
-  Credit(size_t id_) { id = id_; }
+  Credit(size_t id_) noexcept { id = id_; }
 
   friend class CreditSystem;
 };
@@ -61,7 +63,7 @@ public:
   /**
    * @brief Get the credits to show this frame.
    */
-  const std::vector<Credit>& getCreditsToShowThisFrame() const {
+  const std::vector<Credit>& getCreditsToShowThisFrame() const noexcept {
     return _creditsToShowThisFrame;
   }
 
@@ -69,7 +71,8 @@ public:
    * @brief Get the credits that were shown last frame but should no longer be
    * shown.
    */
-  const std::vector<Credit>& getCreditsToNoLongerShowThisFrame() const {
+  const std::vector<Credit>&
+  getCreditsToNoLongerShowThisFrame() const noexcept {
     return _creditsToNoLongerShowThisFrame;
   }
 

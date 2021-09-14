@@ -40,7 +40,7 @@ struct ChunkHeader {
 };
 #pragma pack(pop)
 
-bool isBinaryGltf(const gsl::span<const std::byte>& data) {
+bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
   if (data.size() < sizeof(GlbHeader)) {
     return false;
   }
@@ -257,7 +257,7 @@ void postprocess(
 class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
-  AnyExtensionJsonHandler(const ReaderContext& /* context */)
+  AnyExtensionJsonHandler(const ReaderContext& /* context */) noexcept
       : JsonObjectJsonHandler() {}
 
   virtual void reset(

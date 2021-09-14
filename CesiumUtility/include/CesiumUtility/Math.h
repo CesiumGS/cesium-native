@@ -406,7 +406,7 @@ public:
    * lower integer, it is rounded down instead.
    * @return The rounded value.
    */
-  static double roundUp(double value, double tolerance) {
+  static double roundUp(double value, double tolerance) noexcept {
     double up = glm::ceil(value);
     double down = glm::floor(value);
     if (value - down < tolerance) {
@@ -426,7 +426,7 @@ public:
    * higher integer, it is rounded up instead.
    * @return The rounded value.
    */
-  static double roundDown(double value, double tolerance) {
+  static double roundDown(double value, double tolerance) noexcept {
     double up = glm::ceil(value);
     double down = glm::floor(value);
     if (up - value < tolerance) {

@@ -17,7 +17,7 @@ BoundingVolume transformBoundingVolume(
       return OrientedBoundingBox(center, halfAxes);
     }
 
-    BoundingVolume operator()(const BoundingRegion& boundingRegion) {
+    BoundingVolume operator()(const BoundingRegion& boundingRegion) noexcept {
       // Regions are not transformed.
       return boundingRegion;
     }
@@ -35,8 +35,8 @@ BoundingVolume transformBoundingVolume(
       return BoundingSphere(center, boundingSphere.getRadius() * uniformScale);
     }
 
-    BoundingVolume
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+    BoundingVolume operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       // Regions are not transformed.
       return boundingRegion;
     }
@@ -47,20 +47,20 @@ BoundingVolume transformBoundingVolume(
 
 glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
   struct Operation {
-    glm::dvec3 operator()(const OrientedBoundingBox& boundingBox) {
+    glm::dvec3 operator()(const OrientedBoundingBox& boundingBox) noexcept {
       return boundingBox.getCenter();
     }
 
-    glm::dvec3 operator()(const BoundingRegion& boundingRegion) {
+    glm::dvec3 operator()(const BoundingRegion& boundingRegion) noexcept {
       return boundingRegion.getBoundingBox().getCenter();
     }
 
-    glm::dvec3 operator()(const BoundingSphere& boundingSphere) {
+    glm::dvec3 operator()(const BoundingSphere& boundingSphere) noexcept {
       return boundingSphere.getCenter();
     }
 
-    glm::dvec3
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+    glm::dvec3 operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       return boundingRegion.getBoundingRegion().getBoundingBox().getCenter();
     }
   };

@@ -25,7 +25,7 @@ void TileContentFactory::registerContentType(
       contentType.begin(),
       contentType.end(),
       std::back_inserter(lowercaseContentType),
-      [](char c) { return static_cast<char>(::tolower(c)); });
+      [](char c) noexcept { return static_cast<char>(::tolower(c)); });
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
