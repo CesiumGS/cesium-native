@@ -1,10 +1,10 @@
 # Change Log
 
-### v0.7.1 - ????
+### v0.7.1 - 2021-09-14
 
 ##### Fixes :wrench:
 
-- Fixed a bug introduced in v0.7.0 where Bing credits were not being collected.
+- Fixed a bug introduced in v0.7.0 where credits from a `QuadtreeRasterOverlayTileProvider` were not collected and reported.
 - Fixed a bug where disabling frustum culling caused external tilesets to not load.
 
 ### v0.7.0 - 2021-09-01
