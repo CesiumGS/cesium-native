@@ -41,13 +41,13 @@ IgnoreValueJsonHandler::readString(const std::string_view& /*str*/) {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readObjectStart() noexcept {
+IJsonHandler* IgnoreValueJsonHandler::readObjectStart() {
   ++this->_depth;
   return this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readObjectKey(
-    const std::string_view& /*str*/) noexcept {
+IJsonHandler*
+IgnoreValueJsonHandler::readObjectKey(const std::string_view& /*str*/) {
   return this;
 }
 
@@ -56,7 +56,7 @@ IJsonHandler* IgnoreValueJsonHandler::readObjectEnd() {
   return this->_depth == 0 ? this->parent() : this;
 }
 
-IJsonHandler* IgnoreValueJsonHandler::readArrayStart() noexcept {
+IJsonHandler* IgnoreValueJsonHandler::readArrayStart() {
   ++this->_depth;
   return this;
 }

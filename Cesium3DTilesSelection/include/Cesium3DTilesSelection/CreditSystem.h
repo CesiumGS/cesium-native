@@ -47,7 +47,7 @@ public:
   /**
    * @brief Get the HTML string for this credit
    */
-  const std::string& getHtml(Credit credit) const;
+  const std::string& getHtml(Credit credit) const noexcept;
 
   /**
    * @brief Adds the Credit to the set of credits to show this frame
@@ -58,7 +58,7 @@ public:
    * @brief Notifies this CreditSystem to start tracking the credits to show for
    * the next frame.
    */
-  void startNextFrame();
+  void startNextFrame() noexcept;
 
   /**
    * @brief Get the credits to show this frame.

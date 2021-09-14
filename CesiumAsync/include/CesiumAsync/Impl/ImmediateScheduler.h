@@ -8,8 +8,8 @@ namespace Impl {
 
 template <typename TScheduler> class ImmediateScheduler {
 public:
-  explicit ImmediateScheduler(TScheduler* pScheduler)
-      : _pScheduler(pScheduler) noexcept {}
+  explicit ImmediateScheduler(TScheduler* pScheduler) noexcept
+      : _pScheduler(pScheduler) {}
 
   void schedule(async::task_run_handle t) {
     // Are we already in a suitable thread?
