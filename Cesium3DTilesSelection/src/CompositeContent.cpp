@@ -67,11 +67,7 @@ TileContentLoadInput derive(
 } // namespace
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-CompositeContent::load(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::vector<std::pair<std::string, std::string>>& requestHeaders,
-    const TileContentLoadInput& input) {
+CompositeContent::load(const TileContentLoadInput& input) {
   CESIUM_TRACE("Cesium3DTilesSelection::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const gsl::span<const std::byte>& data = input.data;
@@ -82,7 +78,7 @@ CompositeContent::load(
         pLogger,
         "Composite tile {} must be at least 16 bytes.",
         url);
-    return asyncSystem.createResolvedFuture(
+    return input.asyncSystem.createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -91,7 +87,7 @@ CompositeContent::load(
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Composite tile does not have the expected magic vaue 'cmpt'.");
-    return asyncSystem.createResolvedFuture(
+    return input.asyncSystem.createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -100,7 +96,7 @@ CompositeContent::load(
         pLogger,
         "Unsupported composite tile version {}.",
         pHeader->version);
-    return asyncSystem.createResolvedFuture(
+    return input.asyncSystem.createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -110,7 +106,7 @@ CompositeContent::load(
         "Composite tile byteLength is {} but only {} bytes are available.",
         pHeader->byteLength,
         data.size());
-    return asyncSystem.createResolvedFuture(
+    return input.asyncSystem.createResolvedFuture(
         std::unique_ptr<TileContentLoadResult>(nullptr));
   }
 
@@ -140,16 +136,13 @@ CompositeContent::load(
 
     pos += pInner->byteLength;
 
-    innerTiles.push_back(TileContentFactory::createContent(
-        asyncSystem,
-        pAssetAccessor,
-        requestHeaders,
-        derive(input, innerData)));
+    innerTiles.push_back(
+        TileContentFactory::createContent(derive(input, innerData)));
   }
 
-  return asyncSystem.all(std::move(innerTiles))
+  return input.asyncSystem.all(std::move(innerTiles))
       .thenInMainThread(
-          [&pLogger, tilesLength = pHeader->tilesLength](
+          [pLogger, tilesLength = pHeader->tilesLength](
               std::vector<std::unique_ptr<TileContentLoadResult>>&&
                   innerTilesResult) -> std::unique_ptr<TileContentLoadResult> {
             if (innerTilesResult.empty()) {

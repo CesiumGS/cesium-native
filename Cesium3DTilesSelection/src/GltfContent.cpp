@@ -14,12 +14,9 @@ namespace Cesium3DTilesSelection {
 
 /*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
 
-CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
-    const std::vector<std::pair<std::string, std::string>>& /*requestHeaders*/,
-    const TileContentLoadInput& input) {
-  return asyncSystem.createResolvedFuture(
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+GltfContent::load(const TileContentLoadInput& input) {
+  return input.asyncSystem.createResolvedFuture(
       load(input.pLogger, input.pRequest->url(), input.data));
 }
 

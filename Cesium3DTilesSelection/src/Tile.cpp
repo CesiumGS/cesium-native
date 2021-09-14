@@ -264,68 +264,62 @@ void Tile::loadContent() {
   std::move(maybeRequestFuture.value())
       // TODO: for some reason, this first lambda completely breaks if we make
       // it mutable
-      .thenInWorkerThread(
-          [this,
-           &asyncSystem = tileset.getAsyncSystem(),
-           &pAssetAccessor_ = tileset.getExternals().pAssetAccessor,
-               // TODO: get rid of this
-               & requestHeaders = this->_pContext->requestHeaders,
-           &pLogger_ = tileset.getExternals().pLogger](
-              std::shared_ptr<IAssetRequest>&& pRequest) {
-            CESIUM_TRACE("loadContent worker thread");
+      .thenInWorkerThread([this,
+                           &asyncSystem = tileset.getAsyncSystem(),
+                           &pLogger_ = tileset.getExternals().pLogger,
+                           &pAssetAccessor_ =
+                               tileset.getExternals().pAssetAccessor](
+                              std::shared_ptr<IAssetRequest>&& pRequest) {
+        CESIUM_TRACE("loadContent worker thread");
 
-            // Manually make shared_ptr copies. If we do it in the lambda
-            // capture list it turns out we can't later move those copies into
-            // TileContentLoadInput without making the lambda mutable. For some
-            // seemingly random reason making this lambda mutable breaks it.
-            auto pLogger = pLogger_;
-            auto pAssetAccessor = pAssetAccessor_;
+        // WORKAROUND:
+        // Manually make shared_ptr copies. If we do it in the lambda
+        // capture list it turns out we can't later move those copies into
+        // TileContentLoadInput without making the lambda mutable. For some
+        // seemingly random reason making this lambda mutable breaks it.
+        auto pLogger = pLogger_;
+        auto pAssetAccessor = pAssetAccessor_;
 
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = 0;
-              return asyncSystem.createResolvedFuture(std::move(pLoadResult));
-            }
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Did not receive a valid response for tile content {}",
+              pRequest->url());
+          auto pLoadResult = std::make_unique<TileContentLoadResult>();
+          pLoadResult->httpStatusCode = 0;
+          return asyncSystem.createResolvedFuture(std::move(pLoadResult));
+        }
 
-            if (pResponse->statusCode() != 0 &&
-                (pResponse->statusCode() < 200 ||
-                 pResponse->statusCode() >= 300)) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Received status code {} for tile content {}",
-                  pResponse->statusCode(),
-                  pRequest->url());
-              auto pLoadResult = std::make_unique<TileContentLoadResult>();
-              pLoadResult->httpStatusCode = pResponse->statusCode();
-              return asyncSystem.createResolvedFuture(std::move(pLoadResult));
-            }
+        if (pResponse->statusCode() != 0 &&
+            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Received status code {} for tile content {}",
+              pResponse->statusCode(),
+              pRequest->url());
+          auto pLoadResult = std::make_unique<TileContentLoadResult>();
+          pLoadResult->httpStatusCode = pResponse->statusCode();
+          return asyncSystem.createResolvedFuture(std::move(pLoadResult));
+        }
 
-            TileContentLoadInput loadInput(
-                asyncSystem,
-                std::move(pLogger),
-                std::move(pAssetAccessor),
-                std::move(pRequest),
-                std::nullopt,
-                *this);
+        TileContentLoadInput loadInput(
+            asyncSystem,
+            std::move(pLogger),
+            std::move(pAssetAccessor),
+            std::move(pRequest),
+            std::nullopt,
+            *this);
 
-            return TileContentFactory::createContent(
-                       asyncSystem,
-                       pAssetAccessor,
-                       requestHeaders,
-                       loadInput)
-                // TODO: move status code into TileContentLoadInput!!
-                .thenImmediately(
-                    [statusCode = pResponse->statusCode()](
-                        std::unique_ptr<TileContentLoadResult>&& pContent) {
-                      pContent->httpStatusCode = statusCode;
-                      return std::move(pContent);
-                    });
-          })
+        return TileContentFactory::createContent(loadInput)
+            // Forward status code to the load result.
+            .thenImmediately(
+                [statusCode = pResponse->statusCode()](
+                    std::unique_ptr<TileContentLoadResult>&& pContent) {
+                  pContent->httpStatusCode = statusCode;
+                  return std::move(pContent);
+                });
+      })
       .thenImmediately(
           [gltfUpAxis,
            &boundingVolume = this->_boundingVolume,
@@ -336,9 +330,8 @@ void Tile::loadContent() {
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources](
               std::unique_ptr<TileContentLoadResult>&& pContent) mutable {
-            if (pContent->httpStatusCode != 0 &&
-                (pContent->httpStatusCode < 200 ||
-                 pContent->httpStatusCode >= 300)) {
+            if (pContent->httpStatusCode < 200 ||
+                pContent->httpStatusCode >= 300) {
               return LoadResult{
                   LoadState::FailedTemporarily,
                   std::move(pContent),

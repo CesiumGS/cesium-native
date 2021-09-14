@@ -31,19 +31,14 @@ void TileContentFactory::registerContentType(
 }
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-TileContentFactory::createContent(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::vector<std::pair<std::string, std::string>>& requestHeaders,
-    const TileContentLoadInput& input) {
+TileContentFactory::createContent(const TileContentLoadInput& input) {
 
   const gsl::span<const std::byte>& data = input.data;
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
   auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
   if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-    return itMagic->second
-        ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
+    return itMagic->second->load(input);
   }
 
   const std::string& contentType = input.pRequest->response()->contentType();
@@ -52,8 +47,7 @@ TileContentFactory::createContent(
   auto itContentType =
       TileContentFactory::_loadersByContentType.find(baseContentType);
   if (itContentType != TileContentFactory::_loadersByContentType.end()) {
-    return itContentType->second
-        ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
+    return itContentType->second->load(input);
   }
 
   // Determine if this is plausibly a JSON external tileset.
@@ -68,8 +62,7 @@ TileContentFactory::createContent(
     // Might be an external tileset, try loading it that way.
     itMagic = TileContentFactory::_loadersByMagic.find("json");
     if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-      return itMagic->second
-          ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
+      return itMagic->second->load(input);
     }
   }
 
@@ -80,7 +73,7 @@ TileContentFactory::createContent(
       "'{}'.",
       baseContentType,
       magic);
-  return asyncSystem
+  return input.asyncSystem
       .createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 

@@ -76,12 +76,8 @@ rapidjson::Document parseFeatureTableJsonData(
 } // namespace
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
-Batched3DModelContent::load(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
-    const std::vector<std::pair<std::string, std::string>>& /*requestHeaders*/,
-    const TileContentLoadInput& input) {
-  return asyncSystem.createResolvedFuture(
+Batched3DModelContent::load(const TileContentLoadInput& input) {
+  return input.asyncSystem.createResolvedFuture(
       load(input.pLogger, input.pRequest->url(), input.data));
 }
 
