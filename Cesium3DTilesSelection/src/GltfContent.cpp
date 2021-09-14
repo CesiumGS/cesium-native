@@ -20,7 +20,7 @@ CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const std::vector<std::pair<std::string, std::string>>& /*requestHeaders*/,
     const TileContentLoadInput& input) {
   return asyncSystem.createResolvedFuture(
-      load(input.pLogger, input.url, input.data));
+      load(input.pLogger, input.pRequest->url(), input.data));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(

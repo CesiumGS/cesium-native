@@ -47,11 +47,15 @@ namespace {
 TileContentLoadInput derive(
     const TileContentLoadInput& input,
     const gsl::span<const std::byte>& derivedData) {
+  auto pLogger = input.pLogger;
+  auto pAssetAccessor = input.pAssetAccessor;
+  auto pRequest = input.pRequest;
   return TileContentLoadInput(
-      input.pLogger,
+      input.asyncSystem,
+      std::move(pLogger),
+      std::move(pAssetAccessor),
+      std::move(pRequest),
       derivedData,
-      "",
-      input.url,
       input.tileID,
       input.tileBoundingVolume,
       input.tileContentBoundingVolume,
@@ -71,7 +75,7 @@ CompositeContent::load(
   CESIUM_TRACE("Cesium3DTilesSelection::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const gsl::span<const std::byte>& data = input.data;
-  const std::string& url = input.url;
+  const std::string& url = input.pRequest->url();
 
   if (data.size() < sizeof(CmptHeader)) {
     SPDLOG_LOGGER_WARN(

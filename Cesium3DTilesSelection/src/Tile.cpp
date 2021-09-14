@@ -259,64 +259,77 @@ void Tile::loadContent() {
     std::unique_ptr<TileContentLoadResult> pContent;
     void* pRendererResources;
   };
-  TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
-  AsyncSystem asyncSystem = tileset.getAsyncSystem();
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
-      .thenInWorkerThread([loadInput_ = std::move(loadInput),
-                           asyncSystem = tileset.getAsyncSystem(),
-                           pAssetAccessor =
-                               tileset.getExternals().pAssetAccessor,
-                           &requestHeaders = this->_pContext->requestHeaders,
-                           pLogger = tileset.getExternals().pLogger](
-                              std::shared_ptr<IAssetRequest>&& pRequest) {
-        CESIUM_TRACE("loadContent worker thread");
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Did not receive a valid response for tile content {}",
-              pRequest->url());
-          auto pLoadResult = std::make_unique<TileContentLoadResult>();
-          pLoadResult->httpStatusCode = 0;
-          return asyncSystem.createResolvedFuture(std::move(pLoadResult));
-        }
+      // TODO: for some reason, this first lambda completely breaks if we make
+      // it mutable
+      .thenInWorkerThread(
+          [this,
+           &asyncSystem = tileset.getAsyncSystem(),
+           &pAssetAccessor_ = tileset.getExternals().pAssetAccessor,
+               // TODO: get rid of this
+               & requestHeaders = this->_pContext->requestHeaders,
+           &pLogger_ = tileset.getExternals().pLogger](
+              std::shared_ptr<IAssetRequest>&& pRequest) {
+            CESIUM_TRACE("loadContent worker thread");
 
-        if (pResponse->statusCode() != 0 &&
-            (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Received status code {} for tile content {}",
-              pResponse->statusCode(),
-              pRequest->url());
-          auto pLoadResult = std::make_unique<TileContentLoadResult>();
-          pLoadResult->httpStatusCode = pResponse->statusCode();
-          return asyncSystem.createResolvedFuture(std::move(pLoadResult));
-        }
+            // Manually make shared_ptr copies. If we do it in the lambda
+            // capture list it turns out we can't later move those copies into
+            // TileContentLoadInput without making the lambda mutable. For some
+            // seemingly random reason making this lambda mutable breaks it.
+            auto pLogger = pLogger_;
+            auto pAssetAccessor = pAssetAccessor_;
 
-        TileContentLoadInput loadInput = std::move(loadInput_);
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url());
+              auto pLoadResult = std::make_unique<TileContentLoadResult>();
+              pLoadResult->httpStatusCode = 0;
+              return asyncSystem.createResolvedFuture(std::move(pLoadResult));
+            }
 
-        loadInput.data = pResponse->data();
-        loadInput.contentType = pResponse->contentType();
-        loadInput.url = pRequest->url();
+            if (pResponse->statusCode() != 0 &&
+                (pResponse->statusCode() < 200 ||
+                 pResponse->statusCode() >= 300)) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Received status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url());
+              auto pLoadResult = std::make_unique<TileContentLoadResult>();
+              pLoadResult->httpStatusCode = pResponse->statusCode();
+              return asyncSystem.createResolvedFuture(std::move(pLoadResult));
+            }
 
-        return TileContentFactory::createContent(
-                   asyncSystem,
-                   pAssetAccessor,
-                   requestHeaders,
-                   loadInput)
-            // TODO: move status code into TileContentLoadInput!!
-            .thenImmediately(
-                [statusCode = pResponse->statusCode()](
-                    std::unique_ptr<TileContentLoadResult>&& pContent) {
-                  pContent->httpStatusCode = statusCode;
-                  return std::move(pContent);
-                });
-      })
+            TileContentLoadInput loadInput(
+                asyncSystem,
+                std::move(pLogger),
+                std::move(pAssetAccessor),
+                std::move(pRequest),
+                std::nullopt,
+                *this);
+
+            return TileContentFactory::createContent(
+                       asyncSystem,
+                       pAssetAccessor,
+                       requestHeaders,
+                       loadInput)
+                // TODO: move status code into TileContentLoadInput!!
+                .thenImmediately(
+                    [statusCode = pResponse->statusCode()](
+                        std::unique_ptr<TileContentLoadResult>&& pContent) {
+                      pContent->httpStatusCode = statusCode;
+                      return std::move(pContent);
+                    });
+          })
       .thenImmediately(
           [gltfUpAxis,
-           loadInput = std::move(loadInput),
+           &boundingVolume = this->_boundingVolume,
+           &transform = this->_transform,
            projections = std::move(projections),
            generateMissingNormalsSmooth =
                tileset.getOptions().contentOptions.generateMissingNormalsSmooth,
@@ -343,12 +356,6 @@ void Tile::loadContent() {
                 // arbitrary information to the consumer, so the up-axis
                 // is stored here:
                 model.extras["gltfUpAxis"] = gltfUpAxis;
-
-                const BoundingVolume& boundingVolume =
-                    loadInput.tileBoundingVolume;
-                // TODO: apply gltf up axis (if it's not the glTF standard
-                // Y-up, which is already accounted for) and RTC_CENTER.
-                const glm::dmat4& transform = loadInput.tileTransform;
 
                 Tile::generateTextureCoordinates(
                     model,

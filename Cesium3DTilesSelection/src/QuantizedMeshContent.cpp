@@ -688,7 +688,7 @@ QuantizedMeshContent::load(
       input.pLogger,
       input.tileID,
       input.tileBoundingVolume,
-      input.url,
+      input.pRequest->url(),
       input.data,
       input.contentOptions.enableWaterMask));
 }

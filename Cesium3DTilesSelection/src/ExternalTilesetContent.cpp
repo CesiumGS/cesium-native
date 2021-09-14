@@ -18,7 +18,7 @@ ExternalTilesetContent::load(
       input.pLogger,
       input.tileTransform,
       input.tileRefine,
-      input.url,
+      input.pRequest->url(),
       input.data));
 }
 

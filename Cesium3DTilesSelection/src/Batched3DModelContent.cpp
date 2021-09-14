@@ -1,6 +1,7 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumUtility/Tracing.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
@@ -81,7 +82,7 @@ Batched3DModelContent::load(
     const std::vector<std::pair<std::string, std::string>>& /*requestHeaders*/,
     const TileContentLoadInput& input) {
   return asyncSystem.createResolvedFuture(
-      load(input.pLogger, input.url, input.data));
+      load(input.pLogger, input.pRequest->url(), input.data));
 }
 
 std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(

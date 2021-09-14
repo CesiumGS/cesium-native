@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include <algorithm>
 #include <cctype>
 
@@ -45,7 +46,7 @@ TileContentFactory::createContent(
         ->load(asyncSystem, pAssetAccessor, requestHeaders, input);
   }
 
-  const std::string& contentType = input.contentType;
+  const std::string& contentType = input.pRequest->response()->contentType();
   std::string baseContentType = contentType.substr(0, contentType.find(';'));
 
   auto itContentType =
