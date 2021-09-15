@@ -164,7 +164,7 @@ public:
       gsl::span<const std::byte> stringOffsetBuffer,
       PropertyType offsetType,
       int64_t componentCount,
-      int64_t instanceCount)
+      int64_t instanceCount) noexcept 
       : _status{status},
         _valueBuffer{valueBuffer},
         _arrayOffsetBuffer{arrayOffsetBuffer},
@@ -187,7 +187,7 @@ public:
    * @param instance The instance index
    * @return The value of the instance
    */
-  ElementType get(int64_t instance) const {
+  ElementType get(int64_t instance) const noexcept {
     assert(
         _status == MetadataPropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
@@ -226,14 +226,14 @@ public:
    * @brief Get the number of instances in the FeatureTable
    * @return The number of instances in the FeatureTable
    */
-  int64_t size() const { return _instanceCount; }
+  int64_t size() const noexcept { return _instanceCount; }
 
 private:
-  ElementType getNumeric(int64_t instance) const {
+  ElementType getNumeric(int64_t instance) const noexcept {
     return reinterpret_cast<const ElementType*>(_valueBuffer.data())[instance];
   }
 
-  bool getBoolean(int64_t instance) const {
+  bool getBoolean(int64_t instance) const noexcept {
     const int64_t byteIndex = instance / 8;
     const int64_t bitIndex = instance % 8;
     const int bitValue =
@@ -241,7 +241,7 @@ private:
     return bitValue == 1;
   }
 
-  std::string_view getString(int64_t instance) const {
+  std::string_view getString(int64_t instance) const noexcept {
     const size_t currentOffset =
         getOffsetFromOffsetBuffer(instance, _stringOffsetBuffer, _offsetType);
     const size_t nextOffset = getOffsetFromOffsetBuffer(
@@ -254,7 +254,7 @@ private:
   }
 
   template <typename T>
-  MetadataArrayView<T> getNumericArray(int64_t instance) const {
+  MetadataArrayView<T> getNumericArray(int64_t instance) const noexcept {
     if (_componentCount > 0) {
       const gsl::span<const std::byte> vals(
           _valueBuffer.data() + instance * _componentCount * sizeof(T),
@@ -274,7 +274,7 @@ private:
     return MetadataArrayView<T>{vals};
   }
 
-  MetadataArrayView<std::string_view> getStringArray(int64_t instance) const {
+  MetadataArrayView<std::string_view> getStringArray(int64_t instance) const noexcept {
     if (_componentCount > 0) {
       const gsl::span<const std::byte> offsetVals(
           _stringOffsetBuffer.data() + instance * _componentCount * _offsetSize,
@@ -302,7 +302,7 @@ private:
         (nextOffset - currentOffset) / _offsetSize);
   }
 
-  MetadataArrayView<bool> getBooleanArray(int64_t instance) const {
+  MetadataArrayView<bool> getBooleanArray(int64_t instance) const noexcept {
     if (_componentCount > 0) {
       const size_t offsetBits = _componentCount * instance;
       const size_t nextOffsetBits = _componentCount * (instance + 1);
@@ -326,7 +326,7 @@ private:
     return MetadataArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
-  static int64_t getOffsetSize(PropertyType offsetType) {
+  static int64_t getOffsetSize(PropertyType offsetType) noexcept {
     switch (offsetType) {
     case CesiumGltf::PropertyType::Uint8:
       return sizeof(uint8_t);
@@ -344,7 +344,7 @@ private:
   static size_t getOffsetFromOffsetBuffer(
       size_t instance,
       const gsl::span<const std::byte>& offsetBuffer,
-      PropertyType offsetType) {
+      PropertyType offsetType) noexcept {
     switch (offsetType) {
     case PropertyType::Uint8: {
       assert(instance < offsetBuffer.size() / sizeof(uint8_t));

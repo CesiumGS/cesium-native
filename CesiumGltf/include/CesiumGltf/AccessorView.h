@@ -199,7 +199,7 @@ public:
   AccessorViewStatus status() const noexcept { return this->_status; }
 
 private:
-  void create(const Model& model, const Accessor& accessor) {
+  void create(const Model& model, const Accessor& accessor) noexcept {
     const CesiumGltf::BufferView* pBufferView =
         Model::getSafe(&model.bufferViews, accessor.bufferView);
     if (!pBufferView) {

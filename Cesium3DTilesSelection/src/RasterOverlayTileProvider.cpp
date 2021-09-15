@@ -301,7 +301,7 @@ void RasterOverlayTileProvider::doLoad(
                 pLogger,
                 std::move(loadedImage));
           })
-      .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
+      .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) noexcept {
         tile._rectangle = result.rectangle;
         tile._pRendererResources = result.pRendererResources;
         tile._image = std::move(result.image);

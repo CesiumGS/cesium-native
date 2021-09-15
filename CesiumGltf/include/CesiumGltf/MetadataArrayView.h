@@ -11,15 +11,15 @@ template <typename ElementType> class MetadataArrayView {
 public:
   MetadataArrayView() : _valueBuffer{} {}
 
-  MetadataArrayView(const gsl::span<const std::byte>& buffer)
+  MetadataArrayView(const gsl::span<const std::byte>& buffer) noexcept
       : _valueBuffer{
             CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
-  const ElementType& operator[](int64_t index) const {
+  const ElementType& operator[](int64_t index) const noexcept {
     return _valueBuffer[index];
   }
 
-  int64_t size() const { return static_cast<int64_t>(_valueBuffer.size()); }
+  int64_t size() const noexcept { return static_cast<int64_t>(_valueBuffer.size()); }
 
 private:
   gsl::span<const ElementType> _valueBuffer;
@@ -32,12 +32,12 @@ public:
   MetadataArrayView(
       const gsl::span<const std::byte>& buffer,
       int64_t bitOffset,
-      int64_t instanceCount)
+      int64_t instanceCount) noexcept
       : _valueBuffer{buffer},
         _bitOffset{bitOffset},
         _instanceCount{instanceCount} {}
 
-  bool operator[](int64_t index) const {
+  bool operator[](int64_t index) const noexcept {
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
@@ -46,7 +46,7 @@ public:
     return bitValue == 1;
   }
 
-  int64_t size() const { return _instanceCount; }
+  int64_t size() const noexcept { return _instanceCount; }
 
 private:
   gsl::span<const std::byte> _valueBuffer;
@@ -63,13 +63,13 @@ public:
       const gsl::span<const std::byte>& buffer,
       const gsl::span<const std::byte>& offsetBuffer,
       PropertyType offsetType,
-      int64_t size)
+      int64_t size) noexcept
       : _valueBuffer{buffer},
         _offsetBuffer{offsetBuffer},
         _offsetType{offsetType},
         _size{size} {}
 
-  std::string_view operator[](int64_t index) const {
+  std::string_view operator[](int64_t index) const noexcept {
     const size_t currentOffset =
         getOffsetFromOffsetBuffer(index, _offsetBuffer, _offsetType);
     const size_t nextOffset =
@@ -79,13 +79,13 @@ public:
         (nextOffset - currentOffset));
   }
 
-  int64_t size() const { return _size; }
+  int64_t size() const noexcept { return _size; }
 
 private:
   static size_t getOffsetFromOffsetBuffer(
       size_t instance,
       const gsl::span<const std::byte>& offsetBuffer,
-      PropertyType offsetType) {
+      PropertyType offsetType) noexcept {
     switch (offsetType) {
     case PropertyType::Uint8: {
       assert(instance < offsetBuffer.size() / sizeof(uint8_t));

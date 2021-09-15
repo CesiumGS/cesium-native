@@ -19,5 +19,5 @@ namespace Cesium3DTilesSelection {
  * @return The max geometric error.
  */
 double
-calcQuadtreeMaxGeometricError(const CesiumGeospatial::Ellipsoid& ellipsoid);
+calcQuadtreeMaxGeometricError(const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept;
 } // namespace Cesium3DTilesSelection

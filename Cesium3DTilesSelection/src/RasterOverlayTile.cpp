@@ -22,10 +22,10 @@ RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
       _references(0),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
-RasterOverlayTile::RasterOverlayTile(
+RasterOverlayTile::RasterOverlayTile (
     RasterOverlay& overlay,
     double targetGeometricError,
-    const CesiumGeometry::Rectangle& rectangle)
+    const CesiumGeometry::Rectangle& rectangle) noexcept
     : _pOverlay(&overlay),
       _targetGeometricError(targetGeometricError),
       _rectangle(rectangle),
@@ -88,7 +88,7 @@ void RasterOverlayTile::releaseReference() noexcept {
   }
 }
 
-void RasterOverlayTile::setState(LoadState newState) {
+void RasterOverlayTile::setState(LoadState newState) noexcept {
   this->_state = newState;
 }
 } // namespace Cesium3DTilesSelection

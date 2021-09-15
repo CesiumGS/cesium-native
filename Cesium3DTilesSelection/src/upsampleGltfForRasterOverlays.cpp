@@ -82,11 +82,11 @@ static void addSkirts(
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex);
 
-static bool isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
+static bool isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.x % 2) == 0;
 }
 
-static bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
+static bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.y % 2) == 0;
 }
 

@@ -34,7 +34,7 @@ ViewState::ViewState(
     const glm::dvec2& viewportSize,
     double horizontalFieldOfView,
     double verticalFieldOfView,
-    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic)
+    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic) 
     : _position(position),
       _direction(direction),
       _up(up),
@@ -87,26 +87,26 @@ bool ViewState::isBoundingVolumeVisible(
   struct Operation {
     const ViewState& viewState;
 
-    bool operator()(const OrientedBoundingBox& boundingBox) {
+    bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingBox,
           viewState._cullingVolume);
     }
 
-    bool operator()(const BoundingRegion& boundingRegion) {
+    bool operator()(const BoundingRegion& boundingRegion) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingRegion,
           viewState._cullingVolume);
     }
 
-    bool operator()(const BoundingSphere& boundingSphere) {
+    bool operator()(const BoundingSphere& boundingSphere) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingSphere,
           viewState._cullingVolume);
     }
 
     bool
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingRegion.getBoundingRegion(),
           viewState._cullingVolume);
@@ -121,11 +121,11 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
   struct Operation {
     const ViewState& viewState;
 
-    double operator()(const OrientedBoundingBox& boundingBox) {
+    double operator()(const OrientedBoundingBox& boundingBox) noexcept {
       return boundingBox.computeDistanceSquaredToPosition(viewState._position);
     }
 
-    double operator()(const BoundingRegion& boundingRegion) {
+    double operator()(const BoundingRegion& boundingRegion) noexcept {
       if (viewState._positionCartographic) {
         return boundingRegion.computeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),
@@ -135,13 +135,13 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
           viewState._position);
     }
 
-    double operator()(const BoundingSphere& boundingSphere) {
+    double operator()(const BoundingSphere& boundingSphere) noexcept {
       return boundingSphere.computeDistanceSquaredToPosition(
           viewState._position);
     }
 
     double
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       if (viewState._positionCartographic) {
         return boundingRegion.computeConservativeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),

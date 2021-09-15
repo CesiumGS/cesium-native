@@ -113,7 +113,7 @@ public:
   RasterOverlayTile(
       RasterOverlay& overlay,
       double targetGeometricError,
-      const CesiumGeometry::Rectangle& imageryRectangle);
+      const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
   /** @brief Default destructor. */
   ~RasterOverlayTile();
@@ -224,7 +224,7 @@ public:
 private:
   friend class RasterOverlayTileProvider;
 
-  void setState(LoadState newState);
+  void setState(LoadState newState) noexcept;
 
   RasterOverlay* _pOverlay;
   double _targetGeometricError;

@@ -512,7 +512,7 @@ private:
 
   template <typename T>
   static MetadataPropertyView<T>
-  createInvalidPropertyView(MetadataPropertyViewStatus invalidStatus) {
+  createInvalidPropertyView(MetadataPropertyViewStatus invalidStatus) noexcept {
     return MetadataPropertyView<T>(
         invalidStatus,
         gsl::span<const std::byte>(),

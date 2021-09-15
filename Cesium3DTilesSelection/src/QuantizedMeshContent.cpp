@@ -379,7 +379,7 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
 
 static double calculateSkirtHeight(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const CesiumGeospatial::GlobeRectangle& rectangle) {
+    const CesiumGeospatial::GlobeRectangle& rectangle) noexcept {
   const double levelMaximumGeometricError =
       calcQuadtreeMaxGeometricError(ellipsoid) * rectangle.computeWidth();
   return levelMaximumGeometricError * 5.0;
