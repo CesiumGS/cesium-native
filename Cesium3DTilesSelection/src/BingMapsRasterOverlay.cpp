@@ -177,7 +177,7 @@ protected:
     const unsigned int bingTileLevel = tileID.level + 1;
 
     for (const CreditAndCoverageAreas& creditAndCoverageAreas : _credits) {
-      for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
+      for (const CoverageArea& coverageArea : creditAndCoverageAreas.coverageAreas) {
         if (coverageArea.zoomMin <= bingTileLevel &&
             bingTileLevel <= coverageArea.zoomMax &&
             coverageArea.rectangle.computeIntersection(tileRectangle)
