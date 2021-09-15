@@ -52,7 +52,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
   // Determine if this is plausibly a JSON external tileset.
   size_t i;
   for (i = 0; i < data.size(); ++i) {
-    if (!std::isspace(static_cast<char>(data[i]))) {
+    if (!std::isspace(static_cast<unsigned char>(data[i]))) {
       break;
     }
   }
