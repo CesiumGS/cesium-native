@@ -68,7 +68,7 @@ struct Profile final {
    * @brief Information about the amount of storage available in the user's
    * account.
    */
-  ProfileStorage storage{ 0, 0, 0 };
+  ProfileStorage storage{0, 0, 0};
 };
 
 } // namespace CesiumIonClient
