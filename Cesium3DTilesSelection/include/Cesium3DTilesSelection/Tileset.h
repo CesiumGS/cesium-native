@@ -323,8 +323,8 @@ private:
    *
    * @param pRequest The request for which the response was received.
    */
-  CesiumAsync::Future<void>
-  _handleAssetResponse(const std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+  CesiumAsync::Future<void> _handleAssetResponse(
+      const std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
   struct LoadResult {
     std::unique_ptr<TileContext> pContext;

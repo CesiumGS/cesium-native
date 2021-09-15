@@ -121,7 +121,9 @@ int32_t zigZagDecode(int32_t value) noexcept {
 }
 
 template <class E, class D>
-void decodeIndices(const gsl::span<const E>& encoded, const gsl::span<D>& decoded) {
+void decodeIndices(
+    const gsl::span<const E>& encoded,
+    const gsl::span<D>& decoded) {
   if (decoded.size() < encoded.size()) {
     throw std::runtime_error("decoded buffer is too small.");
   }
