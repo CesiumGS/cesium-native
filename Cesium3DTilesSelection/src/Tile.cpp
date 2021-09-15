@@ -269,7 +269,7 @@ void Tile::loadContent() {
                            &pLogger_ = tileset.getExternals().pLogger,
                            &pAssetAccessor_ =
                                tileset.getExternals().pAssetAccessor](
-                              std::shared_ptr<IAssetRequest>&& pRequest) {
+                              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
         CESIUM_TRACE("loadContent worker thread");
 
         // WORKAROUND:
