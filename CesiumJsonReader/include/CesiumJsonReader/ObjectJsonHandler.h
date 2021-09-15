@@ -50,6 +50,6 @@ private:
   };
 
   int32_t _depth = 0;
-  const char* _currentKey;
+  const char* _currentKey = nullptr;
 };
 } // namespace CesiumJsonReader

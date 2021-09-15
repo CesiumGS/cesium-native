@@ -253,9 +253,9 @@ void Tile::loadContent() {
   this->loadOverlays(projections);
 
   struct LoadResult {
-    LoadState state;
-    std::unique_ptr<TileContentLoadResult> pContent;
-    void* pRendererResources;
+    LoadState state = LoadState::Unloaded;
+    std::unique_ptr<TileContentLoadResult> pContent = nullptr;
+    void* pRendererResources = nullptr;
   };
   TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
 
