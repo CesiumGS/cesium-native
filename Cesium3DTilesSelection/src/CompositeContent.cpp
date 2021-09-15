@@ -141,7 +141,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
   }
 
   return input.asyncSystem.all(std::move(innerTiles))
-      .thenInMainThread(
+      .thenInWorkerThread(
           [pLogger, tilesLength = pHeader->tilesLength](
               std::vector<std::unique_ptr<TileContentLoadResult>>&&
                   innerTilesResult) -> std::unique_ptr<TileContentLoadResult> {
