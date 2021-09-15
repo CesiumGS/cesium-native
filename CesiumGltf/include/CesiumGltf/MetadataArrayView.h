@@ -19,7 +19,9 @@ public:
     return _valueBuffer[index];
   }
 
-  int64_t size() const noexcept { return static_cast<int64_t>(_valueBuffer.size()); }
+  int64_t size() const noexcept {
+    return static_cast<int64_t>(_valueBuffer.size());
+  }
 
 private:
   gsl::span<const ElementType> _valueBuffer;

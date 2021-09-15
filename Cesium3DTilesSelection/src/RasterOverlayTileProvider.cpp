@@ -301,21 +301,22 @@ void RasterOverlayTileProvider::doLoad(
                 pLogger,
                 std::move(loadedImage));
           })
-      .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) noexcept {
-        tile._rectangle = result.rectangle;
-        tile._pRendererResources = result.pRendererResources;
-        tile._image = std::move(result.image);
-        tile._tileCredits = std::move(result.credits);
-        tile._moreDetailAvailable =
-            result.moreDetailAvailable
-                ? RasterOverlayTile::MoreDetailAvailable::Yes
-                : RasterOverlayTile::MoreDetailAvailable::No;
-        tile.setState(result.state);
+      .thenInMainThread(
+          [this, &tile, isThrottledLoad](LoadResult&& result) noexcept {
+            tile._rectangle = result.rectangle;
+            tile._pRendererResources = result.pRendererResources;
+            tile._image = std::move(result.image);
+            tile._tileCredits = std::move(result.credits);
+            tile._moreDetailAvailable =
+                result.moreDetailAvailable
+                    ? RasterOverlayTile::MoreDetailAvailable::Yes
+                    : RasterOverlayTile::MoreDetailAvailable::No;
+            tile.setState(result.state);
 
-        this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
+            this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
 
-        this->finalizeTileLoad(tile, isThrottledLoad);
-      })
+            this->finalizeTileLoad(tile, isThrottledLoad);
+          })
       .catchInMainThread([this, &tile, isThrottledLoad](
                              const std::exception& /*e*/) {
         tile._pRendererResources = nullptr;

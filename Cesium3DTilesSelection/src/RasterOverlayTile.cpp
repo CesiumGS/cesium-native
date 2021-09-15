@@ -22,7 +22,7 @@ RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
       _references(0),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
-RasterOverlayTile::RasterOverlayTile (
+RasterOverlayTile::RasterOverlayTile(
     RasterOverlay& overlay,
     double targetGeometricError,
     const CesiumGeometry::Rectangle& rectangle) noexcept

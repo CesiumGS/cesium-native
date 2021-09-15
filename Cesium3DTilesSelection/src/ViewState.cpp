@@ -34,7 +34,7 @@ ViewState::ViewState(
     const glm::dvec2& viewportSize,
     double horizontalFieldOfView,
     double verticalFieldOfView,
-    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic) 
+    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic)
     : _position(position),
       _direction(direction),
       _up(up),
@@ -105,8 +105,8 @@ bool ViewState::isBoundingVolumeVisible(
           viewState._cullingVolume);
     }
 
-    bool
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
+    bool operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingRegion.getBoundingRegion(),
           viewState._cullingVolume);
@@ -140,8 +140,8 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
           viewState._position);
     }
 
-    double
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
+    double operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       if (viewState._positionCartographic) {
         return boundingRegion.computeConservativeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),

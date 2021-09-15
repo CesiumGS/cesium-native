@@ -164,7 +164,7 @@ public:
       gsl::span<const std::byte> stringOffsetBuffer,
       PropertyType offsetType,
       int64_t componentCount,
-      int64_t instanceCount) noexcept 
+      int64_t instanceCount) noexcept
       : _status{status},
         _valueBuffer{valueBuffer},
         _arrayOffsetBuffer{arrayOffsetBuffer},
@@ -274,7 +274,8 @@ private:
     return MetadataArrayView<T>{vals};
   }
 
-  MetadataArrayView<std::string_view> getStringArray(int64_t instance) const noexcept {
+  MetadataArrayView<std::string_view>
+  getStringArray(int64_t instance) const noexcept {
     if (_componentCount > 0) {
       const gsl::span<const std::byte> offsetVals(
           _stringOffsetBuffer.data() + instance * _componentCount * _offsetSize,
