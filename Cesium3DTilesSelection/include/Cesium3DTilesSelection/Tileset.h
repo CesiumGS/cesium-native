@@ -500,11 +500,11 @@ private:
       const std::vector<ViewState>& frustums,
       const Tile& tile,
       const std::vector<double>& distances,
-      bool culled) const;
+      bool culled) const noexcept;
 
   void _processLoadQueue();
-  void _unloadCachedTiles();
-  void _markTileVisited(Tile& tile);
+  void _unloadCachedTiles() noexcept;
+  void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
 

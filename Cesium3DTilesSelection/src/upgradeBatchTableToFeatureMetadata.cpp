@@ -60,11 +60,11 @@ const std::map<std::string, GltfFeatureTableType> b3dmComponentTypeToGltfType =
         {"DOUBLE", GltfFeatureTableType{"FLOAT64", sizeof(double)}},
 };
 
-int64_t roundUp(int64_t num, int64_t multiple) {
+int64_t roundUp(int64_t num, int64_t multiple) noexcept {
   return ((num + multiple - 1) / multiple) * multiple;
 }
 
-template <typename T> bool isInRangeForSignedInteger(int64_t value) {
+template <typename T> bool isInRangeForSignedInteger(int64_t value) noexcept {
   // this only work if sizeof(T) is smaller than int64_t
   static_assert(
       !std::is_same_v<T, uint64_t> && !std::is_same_v<T, float> &&
@@ -74,7 +74,8 @@ template <typename T> bool isInRangeForSignedInteger(int64_t value) {
          value <= static_cast<int64_t>(std::numeric_limits<T>::max());
 }
 
-template <typename T> bool isInRangeForUnsignedInteger(uint64_t value) {
+template <typename T>
+bool isInRangeForUnsignedInteger(uint64_t value) noexcept {
   static_assert(!std::is_signed_v<T>);
 
   return value >= static_cast<uint64_t>(std::numeric_limits<T>::lowest()) &&

@@ -354,7 +354,7 @@ private:
    * @param tile The tile that is starting to load.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
 
   /**
    * @brief Finalizes loading of a tile.
@@ -365,7 +365,7 @@ private:
    * @param tile The tile that finished loading.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
 
 private:
   RasterOverlay* _pOwner;

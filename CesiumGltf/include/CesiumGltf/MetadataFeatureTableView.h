@@ -499,7 +499,7 @@ private:
 
   MetadataPropertyViewStatus getBufferSafe(
       int32_t bufferViewIdx,
-      gsl::span<const std::byte>& buffer) const;
+      gsl::span<const std::byte>& buffer) const noexcept;
 
   MetadataPropertyViewStatus getOffsetBufferSafe(
       int32_t bufferViewIdx,
@@ -507,7 +507,7 @@ private:
       size_t valueBufferSize,
       size_t instanceCount,
       bool checkBitsSize,
-      gsl::span<const std::byte>& offsetBuffer) const;
+      gsl::span<const std::byte>& offsetBuffer) const noexcept;
 
   template <typename T>
   static MetadataPropertyView<T>

@@ -21,7 +21,7 @@ size_t copyElements(std::vector<T>& to, std::vector<T>& from) {
   return out;
 }
 
-void updateIndex(int32_t& index, size_t offset) {
+void updateIndex(int32_t& index, size_t offset) noexcept {
   if (index == -1) {
     return;
   }

@@ -13,9 +13,10 @@
 namespace CesiumAsync {
 class CacheAssetResponse : public IAssetResponse {
 public:
-  CacheAssetResponse(const CacheItem* pCacheItem) : _pCacheItem{pCacheItem} {}
+  CacheAssetResponse(const CacheItem* pCacheItem) noexcept
+      : _pCacheItem{pCacheItem} {}
 
-  virtual uint16_t statusCode() const override {
+  virtual uint16_t statusCode() const noexcept override {
     return this->_pCacheItem->cacheResponse.statusCode;
   }
 
@@ -27,11 +28,11 @@ public:
     return it->second;
   }
 
-  virtual const HttpHeaders& headers() const override {
+  virtual const HttpHeaders& headers() const noexcept override {
     return this->_pCacheItem->cacheResponse.headers;
   }
 
-  virtual gsl::span<const std::byte> data() const override {
+  virtual gsl::span<const std::byte> data() const noexcept override {
     return gsl::span<const std::byte>(
         this->_pCacheItem->cacheResponse.data.data(),
         this->_pCacheItem->cacheResponse.data.size());
@@ -46,19 +47,19 @@ public:
   CacheAssetRequest(CacheItem&& cacheItem)
       : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
 
-  virtual const std::string& method() const override {
+  virtual const std::string& method() const noexcept override {
     return this->_cacheItem.cacheRequest.method;
   }
 
-  virtual const std::string& url() const override {
+  virtual const std::string& url() const noexcept override {
     return this->_cacheItem.cacheRequest.url;
   }
 
-  virtual const HttpHeaders& headers() const override {
+  virtual const HttpHeaders& headers() const noexcept override {
     return this->_cacheItem.cacheRequest.headers;
   }
 
-  virtual const IAssetResponse* response() const override {
+  virtual const IAssetResponse* response() const noexcept override {
     return &this->_response;
   }
 
@@ -71,7 +72,7 @@ static std::time_t convertHttpDateToTime(const std::string& httpDate);
 
 static bool shouldRevalidateCache(const CacheItem& cacheItem);
 
-static bool isCacheStale(const CacheItem& cacheItem);
+static bool isCacheStale(const CacheItem& cacheItem) noexcept;
 
 static bool shouldCacheRequest(
     const IAssetRequest& request,
@@ -242,7 +243,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
                 std::make_shared<CacheAssetRequest>(std::move(cacheItem));
             return asyncSystem.createResolvedFuture(std::move(pRequest));
           })
-      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) {
+      .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) noexcept {
         CESIUM_TRACE_END_IN_TRACK("requestAsset (cached)");
         return std::move(pRequest);
       });
@@ -271,7 +272,7 @@ bool shouldRevalidateCache(const CacheItem& cacheItem) {
   return isCacheStale(cacheItem);
 }
 
-bool isCacheStale(const CacheItem& cacheItem) {
+bool isCacheStale(const CacheItem& cacheItem) noexcept {
   std::time_t currentTime = std::time(nullptr);
   return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
 }

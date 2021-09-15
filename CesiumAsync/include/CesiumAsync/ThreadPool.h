@@ -34,7 +34,7 @@ private:
   }
 
   static auto createPostRun() noexcept {
-    return []() { ThreadPool::_scope.reset(); };
+    return []() noexcept { ThreadPool::_scope.reset(); };
   }
 
   static thread_local Impl::ImmediateScheduler<Scheduler>::SchedulerScope

@@ -34,7 +34,7 @@ public:
    * @return true if the tile should be excluded because it is entirely inside a
    * polygon.
    */
-  virtual bool shouldExclude(const Tile& tile) const override;
+  virtual bool shouldExclude(const Tile& tile) const noexcept override;
 
   /**
    * @brief Gets the overlay defining the polygons.

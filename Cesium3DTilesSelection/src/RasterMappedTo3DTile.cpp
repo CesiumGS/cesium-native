@@ -18,7 +18,7 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
   auto parentTileIt = std::find_if(
       tiles.begin(),
       tiles.end(),
-      [&overlay](RasterMappedTo3DTile& raster) {
+      [&overlay](RasterMappedTo3DTile& raster) noexcept {
         return raster.getReadyTile() &&
                &raster.getReadyTile()->getOverlay() == &overlay;
       });

@@ -330,7 +330,7 @@ void RasterOverlayTileProvider::doLoad(
 
 void RasterOverlayTileProvider::beginTileLoad(
     RasterOverlayTile& tile,
-    bool isThrottledLoad) {
+    bool isThrottledLoad) noexcept {
   // Keep this tile from being destroyed while it's loading.
   tile.addReference();
 
@@ -342,7 +342,7 @@ void RasterOverlayTileProvider::beginTileLoad(
 
 void RasterOverlayTileProvider::finalizeTileLoad(
     RasterOverlayTile& tile,
-    bool isThrottledLoad) {
+    bool isThrottledLoad) noexcept {
   --this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
     --this->_throttledTilesCurrentlyLoading;

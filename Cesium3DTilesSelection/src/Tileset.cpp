@@ -231,7 +231,8 @@ Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
       std::move(pContext));
 }
 
-static bool operator<(const FogDensityAtHeight& fogDensity, double height) {
+static bool
+operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
   return fogDensity.cameraHeight < height;
 }
 
@@ -853,7 +854,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
  */
 static std::string createExtensionsQueryParameter(
     const std::vector<std::string>& knownExtensions,
-    const std::vector<std::string>& extensions) noexcept {
+    const std::vector<std::string>& extensions) {
 
   std::string extensionsToRequest;
   for (const std::string& extension : knownExtensions) {
@@ -1229,7 +1230,7 @@ static bool isVisibleFromCamera(
  * @param fogDensity The fog density
  * @return Whether the tile is visible in the fog
  */
-static bool isVisibleInFog(double distance, double fogDensity) {
+static bool isVisibleInFog(double distance, double fogDensity) noexcept {
   if (fogDensity <= 0.0) {
     return true;
   }
@@ -1377,7 +1378,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       result);
 }
 
-static bool isLeaf(const Tile& tile) { return tile.getChildren().empty(); }
+static bool isLeaf(const Tile& tile) noexcept {
+  return tile.getChildren().empty();
+}
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
     const FrameState& frameState,
@@ -1440,7 +1443,7 @@ bool Tileset::_meetsSse(
     const std::vector<ViewState>& frustums,
     const Tile& tile,
     const std::vector<double>& distances,
-    bool culled) const {
+    bool culled) const noexcept {
 
   double largestSse = 0.0;
 
@@ -1473,7 +1476,7 @@ bool Tileset::_meetsSse(
 static bool shouldRenderThisTile(
     const Tile& tile,
     const TileSelectionState& lastFrameSelectionState,
-    int32_t lastFrameNumber) {
+    int32_t lastFrameNumber) noexcept {
   TileSelectionState::Result originalResult =
       lastFrameSelectionState.getOriginalResult(lastFrameNumber);
   if (originalResult == TileSelectionState::Result::Rendered) {
@@ -1849,7 +1852,7 @@ void Tileset::_processLoadQueue() {
       this->_options.maximumSimultaneousTileLoads);
 }
 
-void Tileset::_unloadCachedTiles() {
+void Tileset::_unloadCachedTiles() noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   Tile* pTile = this->_loadedTiles.head();
@@ -1873,7 +1876,7 @@ void Tileset::_unloadCachedTiles() {
   }
 }
 
-void Tileset::_markTileVisited(Tile& tile) {
+void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
 }
 
@@ -1936,7 +1939,8 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
           });
     }
 
-    std::string operator()(UpsampledQuadtreeNode /*subdividedParent*/) {
+    std::string
+    operator()(UpsampledQuadtreeNode /*subdividedParent*/) noexcept {
       return std::string();
     }
   };
@@ -1949,7 +1953,7 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
   return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
 }
 
-static bool anyRasterOverlaysNeedLoading(const Tile& tile) {
+static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
     if (pLoading &&

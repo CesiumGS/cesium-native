@@ -116,7 +116,9 @@ struct QuantizedMeshView {
 const size_t headerLength = 92;
 const size_t extensionHeaderLength = 5;
 
-int32_t zigZagDecode(int32_t value) { return (value >> 1) ^ (-(value & 1)); }
+int32_t zigZagDecode(int32_t value) noexcept {
+  return (value >> 1) ^ (-(value & 1));
+}
 
 template <class E, class D>
 void decodeIndices(const gsl::span<const E>& encoded, gsl::span<D>& decoded) {
@@ -139,7 +141,7 @@ template <class T>
 static T readValue(
     const gsl::span<const std::byte>& data,
     size_t offset,
-    T defaultValue) {
+    T defaultValue) noexcept {
   if (offset + sizeof(T) <= data.size()) {
     return *reinterpret_cast<const T*>(data.data() + offset);
   }
@@ -494,7 +496,7 @@ static void addSkirts(
       westEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + westVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;
       });
   westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
@@ -525,7 +527,7 @@ static void addSkirts(
       southEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + southVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;
       });
   southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
@@ -556,7 +558,7 @@ static void addSkirts(
       eastEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + eastVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;
       });
   eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
@@ -587,7 +589,7 @@ static void addSkirts(
       northEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + northVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x;
       });
   northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);

@@ -6,7 +6,7 @@ static MetadataPropertyViewStatus checkOffsetBuffer(
     const gsl::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
-    bool checkBitSize) {
+    bool checkBitSize) noexcept {
   if (offsetBuffer.size() % sizeof(T) != 0) {
     return MetadataPropertyViewStatus::
         InvalidBufferViewSizeNotDivisibleByTypeSize;
@@ -49,7 +49,7 @@ static MetadataPropertyViewStatus checkStringArrayOffsetBuffer(
     const gsl::span<const std::byte>& arrayOffsetBuffer,
     const gsl::span<const std::byte>& stringOffsetBuffer,
     size_t valueBufferSize,
-    size_t instanceCount) {
+    size_t instanceCount) noexcept {
   auto status = checkOffsetBuffer<T>(
       arrayOffsetBuffer,
       stringOffsetBuffer.size(),
@@ -108,7 +108,7 @@ const ClassProperty* MetadataFeatureTableView::getClassProperty(
 
 MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
     int32_t bufferViewIdx,
-    gsl::span<const std::byte>& buffer) const {
+    gsl::span<const std::byte>& buffer) const noexcept {
   buffer = {};
 
   const BufferView* pBufferView =
@@ -144,7 +144,7 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getOffsetBufferSafe(
     size_t valueBufferSize,
     size_t instanceCount,
     bool checkBitsSize,
-    gsl::span<const std::byte>& offsetBuffer) const {
+    gsl::span<const std::byte>& offsetBuffer) const noexcept {
   auto status = getBufferSafe(bufferViewIdx, offsetBuffer);
   if (status != MetadataPropertyViewStatus::Valid) {
     return status;

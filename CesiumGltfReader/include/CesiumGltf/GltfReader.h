@@ -134,7 +134,7 @@ public:
   /**
    * @brief Constructs a new instance.
    */
-  GltfReader() noexcept;
+  GltfReader();
 
   /**
    * @brief Registers an extension for a glTF object.
