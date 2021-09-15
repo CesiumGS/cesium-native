@@ -184,7 +184,7 @@ public:
       double right,
       double relativeEpsilon,
       double absoluteEpsilon) noexcept {
-    double diff = glm::abs(left - right);
+    const double diff = glm::abs(left - right);
     return diff <= absoluteEpsilon ||
            diff <= relativeEpsilonToAbsolute(left, right, relativeEpsilon);
   }
@@ -218,7 +218,7 @@ public:
       const glm::vec<L, T, Q>& right,
       double relativeEpsilon,
       double absoluteEpsilon) noexcept {
-    glm::vec<L, T, Q> diff = glm::abs(left - right);
+    const glm::vec<L, T, Q> diff = glm::abs(left - right);
     return glm::lessThanEqual(diff, glm::vec<L, T, Q>(absoluteEpsilon)) ==
                glm::vec<L, bool, Q>(true) ||
            glm::lessThanEqual(
@@ -277,7 +277,7 @@ public:
    * @returns The angle in the range [0, `Math::TWO_PI`].
    */
   static double zeroToTwoPi(double angle) noexcept {
-    double mod = Math::mod(angle, Math::TWO_PI);
+    const double mod = Math::mod(angle, Math::TWO_PI);
     if (glm::abs(mod) < Math::EPSILON14 && glm::abs(angle) > Math::EPSILON14) {
       return Math::TWO_PI;
     }
@@ -382,9 +382,9 @@ public:
    * @snippet TestMath.cpp convertLongitudeRange
    */
   static double convertLongitudeRange(double angle) noexcept {
-    double twoPi = Math::TWO_PI;
+    const double twoPi = Math::TWO_PI;
 
-    double simplified = angle - glm::floor(angle / twoPi) * twoPi;
+    const double simplified = angle - glm::floor(angle / twoPi) * twoPi;
 
     if (simplified < -Math::ONE_PI) {
       return simplified + twoPi;
@@ -407,8 +407,8 @@ public:
    * @return The rounded value.
    */
   static double roundUp(double value, double tolerance) noexcept {
-    double up = glm::ceil(value);
-    double down = glm::floor(value);
+    const double up = glm::ceil(value);
+    const double down = glm::floor(value);
     if (value - down < tolerance) {
       return down;
     } else {
@@ -427,8 +427,8 @@ public:
    * @return The rounded value.
    */
   static double roundDown(double value, double tolerance) noexcept {
-    double up = glm::ceil(value);
-    double down = glm::floor(value);
+    const double up = glm::ceil(value);
+    const double down = glm::floor(value);
     if (up - value < tolerance) {
       return up;
     } else {

@@ -80,7 +80,7 @@ void RasterOverlayTile::addReference() noexcept { ++this->_references; }
 
 void RasterOverlayTile::releaseReference() noexcept {
   assert(this->_references > 0);
-  uint32_t references = --this->_references;
+  const uint32_t references = --this->_references;
   if (references == 0) {
     assert(this->_pOverlay != nullptr);
     assert(this->_pOverlay->getTileProvider() != nullptr);

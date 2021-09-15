@@ -117,7 +117,7 @@ public:
    * @return `true` if the tile was kicked, and `false` otherwise
    */
   constexpr bool wasKicked(int32_t frameNumber) const noexcept {
-    Result result = this->getResult(frameNumber);
+    const Result result = this->getResult(frameNumber);
     return result == Result::RenderedAndKicked ||
            result == Result::RefinedAndKicked;
   }
@@ -131,7 +131,7 @@ public:
    * @return The {@link TileSelectionState::Result} prior to being kicked.
    */
   constexpr Result getOriginalResult(int32_t frameNumber) const noexcept {
-    Result result = this->getResult(frameNumber);
+    const Result result = this->getResult(frameNumber);
 
     switch (result) {
     case Result::RefinedAndKicked:

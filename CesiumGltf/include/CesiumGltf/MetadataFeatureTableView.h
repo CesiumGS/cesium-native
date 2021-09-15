@@ -343,14 +343,14 @@ private:
   MetadataPropertyView<T> getPrimitivePropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    PropertyType type = convertStringToPropertyType(classProperty.type);
+    const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (TypeToPropertyType<T>::value != type) {
       return createInvalidPropertyView<T>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
     gsl::span<const std::byte> valueBuffer;
-    auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
+    const auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
     if (status != MetadataPropertyViewStatus::Valid) {
       return createInvalidPropertyView<T>(status);
     }
@@ -402,7 +402,7 @@ private:
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
-    PropertyType componentType =
+    const PropertyType componentType =
         convertStringToPropertyType(classProperty.componentType.getString());
     if (TypeToPropertyType<T>::value != componentType) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
@@ -421,7 +421,7 @@ private:
               InvalidBufferViewSizeNotDivisibleByTypeSize);
     }
 
-    int64_t componentCount = classProperty.componentCount.value_or(0);
+    const int64_t componentCount = classProperty.componentCount.value_or(0);
     if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::
@@ -462,7 +462,7 @@ private:
     }
 
     // dynamic array
-    PropertyType offsetType =
+    const PropertyType offsetType =
         convertOffsetStringToPropertyType(featureTableProperty.offsetType);
     if (offsetType == PropertyType::None) {
       return createInvalidPropertyView<MetadataArrayView<T>>(

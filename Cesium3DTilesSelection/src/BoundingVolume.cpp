@@ -12,8 +12,8 @@ BoundingVolume transformBoundingVolume(
     const glm::dmat4x4& transform;
 
     BoundingVolume operator()(const OrientedBoundingBox& boundingBox) {
-      glm::dvec3 center = transform * glm::dvec4(boundingBox.getCenter(), 1.0);
-      glm::dmat3 halfAxes = glm::dmat3(transform) * boundingBox.getHalfAxes();
+      const glm::dvec3 center = transform * glm::dvec4(boundingBox.getCenter(), 1.0);
+      const glm::dmat3 halfAxes = glm::dmat3(transform) * boundingBox.getHalfAxes();
       return OrientedBoundingBox(center, halfAxes);
     }
 
@@ -23,10 +23,10 @@ BoundingVolume transformBoundingVolume(
     }
 
     BoundingVolume operator()(const BoundingSphere& boundingSphere) {
-      glm::dvec3 center =
+      const glm::dvec3 center =
           transform * glm::dvec4(boundingSphere.getCenter(), 1.0);
 
-      double uniformScale = glm::max(
+      const double uniformScale = glm::max(
           glm::max(
               glm::length(glm::dvec3(transform[0])),
               glm::length(glm::dvec3(transform[1]))),

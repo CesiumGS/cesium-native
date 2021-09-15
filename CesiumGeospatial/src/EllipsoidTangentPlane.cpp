@@ -28,7 +28,7 @@ EllipsoidTangentPlane::EllipsoidTangentPlane(
 
 glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
     const glm::dvec3& cartesian) const noexcept {
-  Ray ray(cartesian, this->_plane.getNormal());
+  const Ray ray(cartesian, this->_plane.getNormal());
 
   std::optional<glm::dvec3> intersectionPoint =
       IntersectionTests::rayPlane(ray, this->_plane);
@@ -39,7 +39,7 @@ glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
     }
   }
 
-  glm::dvec3 v = intersectionPoint.value() - this->_origin;
+  const glm::dvec3 v = intersectionPoint.value() - this->_origin;
   return glm::dvec2(glm::dot(this->_xAxis, v), glm::dot(this->_yAxis, v));
 }
 

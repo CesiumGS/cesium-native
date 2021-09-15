@@ -39,9 +39,9 @@ public:
 
   bool operator[](int64_t index) const {
     index += _bitOffset;
-    int64_t byteIndex = index / 8;
-    int64_t bitIndex = index % 8;
-    int bitValue = static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
+    const int64_t byteIndex = index / 8;
+    const int64_t bitIndex = index % 8;
+    const int bitValue = static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 
@@ -69,9 +69,9 @@ public:
         _size{size} {}
 
   std::string_view operator[](int64_t index) const {
-    size_t currentOffset =
+    const size_t currentOffset =
         getOffsetFromOffsetBuffer(index, _offsetBuffer, _offsetType);
-    size_t nextOffset =
+    const size_t nextOffset =
         getOffsetFromOffsetBuffer(index + 1, _offsetBuffer, _offsetType);
     return std::string_view(
         reinterpret_cast<const char*>(_valueBuffer.data() + currentOffset),
@@ -88,25 +88,25 @@ private:
     switch (offsetType) {
     case PropertyType::Uint8: {
       assert(instance < offsetBuffer.size() / sizeof(uint8_t));
-      uint8_t offset = *reinterpret_cast<const uint8_t*>(
+      const uint8_t offset = *reinterpret_cast<const uint8_t*>(
           offsetBuffer.data() + instance * sizeof(uint8_t));
       return static_cast<size_t>(offset);
     }
     case PropertyType::Uint16: {
       assert(instance < offsetBuffer.size() / sizeof(uint16_t));
-      uint16_t offset = *reinterpret_cast<const uint16_t*>(
+      const uint16_t offset = *reinterpret_cast<const uint16_t*>(
           offsetBuffer.data() + instance * sizeof(uint16_t));
       return static_cast<size_t>(offset);
     }
     case PropertyType::Uint32: {
       assert(instance < offsetBuffer.size() / sizeof(uint32_t));
-      uint32_t offset = *reinterpret_cast<const uint32_t*>(
+      const uint32_t offset = *reinterpret_cast<const uint32_t*>(
           offsetBuffer.data() + instance * sizeof(uint32_t));
       return static_cast<size_t>(offset);
     }
     case PropertyType::Uint64: {
       assert(instance < offsetBuffer.size() / sizeof(uint64_t));
-      uint64_t offset = *reinterpret_cast<const uint64_t*>(
+      const uint64_t offset = *reinterpret_cast<const uint64_t*>(
           offsetBuffer.data() + instance * sizeof(uint64_t));
       return static_cast<size_t>(offset);
     }

@@ -160,7 +160,7 @@ Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
     return this->getAsyncSystem().createResolvedFuture();
   }
 
-  gsl::span<const std::byte> data = pResponse->data();
+  const gsl::span<const std::byte> data = pResponse->data();
 
   rapidjson::Document ionResponse;
   ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -177,14 +177,14 @@ Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
 
   if (this->_externals.pCreditSystem) {
 
-    auto attributionsIt = ionResponse.FindMember("attributions");
+    const auto attributionsIt = ionResponse.FindMember("attributions");
     if (attributionsIt != ionResponse.MemberEnd() &&
         attributionsIt->value.IsArray()) {
 
       for (const rapidjson::Value& attribution :
            attributionsIt->value.GetArray()) {
 
-        auto html = attribution.FindMember("html");
+        const auto html = attribution.FindMember("html");
         if (html != attribution.MemberEnd() && html->value.IsString()) {
           this->_tilesetCredits.push_back(
               this->_externals.pCreditSystem->createCredit(
@@ -239,7 +239,7 @@ operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
 static double computeFogDensity(
     const std::vector<FogDensityAtHeight>& fogDensityTable,
     const ViewState& viewState) {
-  double height = viewState.getPositionCartographic()
+  const double height = viewState.getPositionCartographic()
                       .value_or(Cartographic(0.0, 0.0, 0.0))
                       .height;
 
@@ -256,15 +256,15 @@ static double computeFogDensity(
 
   auto prevIt = nextIt - 1;
 
-  double heightA = prevIt->cameraHeight;
-  double densityA = prevIt->fogDensity;
+  const double heightA = prevIt->cameraHeight;
+  const double densityA = prevIt->fogDensity;
 
-  double heightB = nextIt->cameraHeight;
-  double densityB = nextIt->fogDensity;
+  const double heightB = nextIt->cameraHeight;
+  const double densityB = nextIt->fogDensity;
 
-  double t = glm::clamp((height - heightA) / (heightB - heightA), 0.0, 1.0);
+  const double t = glm::clamp((height - heightA) / (heightB - heightA), 0.0, 1.0);
 
-  double density = glm::mix(densityA, densityB, t);
+  const double density = glm::mix(densityA, densityB, t);
 
   // CesiumJS will also fade out the fog based on the camera angle,
   // so when we're looking straight down there's no fog. This is unfortunate
@@ -310,8 +310,8 @@ const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums) {
   this->_asyncSystem.dispatchMainThreadTasks();
 
-  int32_t previousFrameNumber = this->_previousFrameNumber;
-  int32_t currentFrameNumber = previousFrameNumber + 1;
+  const int32_t previousFrameNumber = this->_previousFrameNumber;
+  const int32_t currentFrameNumber = previousFrameNumber + 1;
 
   ViewUpdateResult& result = this->_updateResult;
   // result.tilesLoading = 0;
@@ -379,7 +379,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
     }
 
     // per-tileset ion-specified credit
-    for (Credit& credit : this->_tilesetCredits) {
+    for (const Credit& credit : this->_tilesetCredits) {
       pCreditSystem->addCreditToFrame(credit);
     }
 
@@ -400,7 +400,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
         const RasterOverlayTile* pRasterOverlayTile =
             mappedRasterTile.getReadyTile();
         if (pRasterOverlayTile != nullptr) {
-          for (Credit credit : pRasterOverlayTile->getCredits()) {
+          for (const Credit credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
           }
         }
@@ -560,12 +560,12 @@ namespace {
  * @return The up-axis to use for glTF content
  */
 CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
-  auto assetIt = tileset.FindMember("asset");
+  const auto assetIt = tileset.FindMember("asset");
   if (assetIt == tileset.MemberEnd()) {
     return CesiumGeometry::Axis::Y;
   }
   const rapidjson::Value& assetJson = assetIt->value;
-  auto gltfUpAxisIt = assetJson.FindMember("gltfUpAxis");
+  const auto gltfUpAxisIt = assetJson.FindMember("gltfUpAxis");
   if (gltfUpAxisIt == assetJson.MemberEnd()) {
     return CesiumGeometry::Axis::Y;
   }
@@ -616,7 +616,7 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 
   pContext->baseUrl = pRequest->url();
 
-  gsl::span<const std::byte> data = pResponse->data();
+  const gsl::span<const std::byte> data = pResponse->data();
 
   rapidjson::Document tileset;
   tileset.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -635,13 +635,13 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
   std::unique_ptr<Tile> pRootTile = std::make_unique<Tile>();
   pRootTile->setContext(pContext.get());
 
-  auto rootIt = tileset.FindMember("root");
-  auto formatIt = tileset.FindMember("format");
+  const auto rootIt = tileset.FindMember("root");
+  const auto formatIt = tileset.FindMember("format");
 
   bool supportsRasterOverlays = false;
 
   if (rootIt != tileset.MemberEnd()) {
-    rapidjson::Value& rootJson = rootIt->value;
+    const rapidjson::Value& rootJson = rootIt->value;
     Tileset::_createTile(
         *pRootTile,
         rootJson,
@@ -670,12 +670,12 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 static std::optional<BoundingVolume> getBoundingVolumeProperty(
     const rapidjson::Value& tileJson,
     const std::string& key) {
-  auto bvIt = tileJson.FindMember(key.c_str());
+  const auto bvIt = tileJson.FindMember(key.c_str());
   if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
     return std::nullopt;
   }
 
-  auto boxIt = bvIt->value.FindMember("box");
+  const auto boxIt = bvIt->value.FindMember("box");
   if (boxIt != bvIt->value.MemberEnd() && boxIt->value.IsArray() &&
       boxIt->value.Size() >= 12) {
     const auto& a = boxIt->value.GetArray();
@@ -698,7 +698,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             a[11].GetDouble()));
   }
 
-  auto regionIt = bvIt->value.FindMember("region");
+  const auto regionIt = bvIt->value.FindMember("region");
   if (regionIt != bvIt->value.MemberEnd() && regionIt->value.IsArray() &&
       regionIt->value.Size() >= 6) {
     const auto& a = regionIt->value;
@@ -717,7 +717,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
         a[5].GetDouble());
   }
 
-  auto sphereIt = bvIt->value.FindMember("sphere");
+  const auto sphereIt = bvIt->value.FindMember("sphere");
   if (sphereIt != bvIt->value.MemberEnd() && sphereIt->value.IsArray() &&
       sphereIt->value.Size() >= 4) {
     const auto& a = sphereIt->value;
@@ -747,14 +747,14 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
 
   tile.setContext(const_cast<TileContext*>(&context));
 
-  std::optional<glm::dmat4x4> tileTransform =
+  const std::optional<glm::dmat4x4> tileTransform =
       JsonHelpers::getTransformProperty(tileJson, "transform");
   glm::dmat4x4 transform =
       parentTransform * tileTransform.value_or(glm::dmat4x4(1.0));
   tile.setTransform(transform);
 
-  auto contentIt = tileJson.FindMember("content");
-  auto childrenIt = tileJson.FindMember("children");
+  const auto contentIt = tileJson.FindMember("content");
+  const auto childrenIt = tileJson.FindMember("children");
 
   if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject()) {
     auto uriIt = contentIt->value.FindMember("uri");
@@ -790,11 +790,11 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
 
   tile.setBoundingVolume(
       transformBoundingVolume(transform, boundingVolume.value()));
-  glm::dvec3 scale = glm::dvec3(
+  const glm::dvec3 scale = glm::dvec3(
       glm::length(transform[0]),
       glm::length(transform[1]),
       glm::length(transform[2]));
-  double maxScaleComponent = glm::max(scale.x, glm::max(scale.y, scale.z));
+  const double maxScaleComponent = glm::max(scale.x, glm::max(scale.y, scale.z));
   tile.setGeometricError(geometricError.value() * maxScaleComponent);
 
   std::optional<BoundingVolume> viewerRequestVolume =
@@ -804,7 +804,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
         transformBoundingVolume(transform, viewerRequestVolume.value()));
   }
 
-  auto refineIt = tileJson.FindMember("refine");
+  const auto refineIt = tileJson.FindMember("refine");
   if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
     std::string refine = refineIt->value.GetString();
     if (refine == "REPLACE") {
@@ -824,7 +824,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {
     const auto& childrenJson = childrenIt->value;
     tile.createChildTiles(childrenJson.Size());
-    gsl::span<Tile> childTiles = tile.getChildren();
+    const gsl::span<Tile> childTiles = tile.getChildren();
 
     for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
       const auto& childJson = childrenJson[i];
@@ -896,7 +896,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
       "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
       "*;q=0.01"));
 
-  auto tilesetVersionIt = layerJson.FindMember("version");
+  const auto tilesetVersionIt = layerJson.FindMember("version");
   if (tilesetVersionIt != layerJson.MemberEnd() &&
       tilesetVersionIt->value.IsString()) {
     context.version = tilesetVersionIt->value.GetString();
@@ -949,7 +949,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     return;
   }
 
-  CesiumGeometry::QuadtreeTilingScheme tilingScheme(
+  const CesiumGeometry::QuadtreeTilingScheme tilingScheme(
       quadtreeRectangleProjected,
       quadtreeXTiles,
       1);
@@ -996,7 +996,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     childTile.setContext(&context);
     childTile.setParent(&tile);
     childTile.setTileID(id);
-    CesiumGeospatial::GlobeRectangle childGlobeRectangle =
+    const CesiumGeospatial::GlobeRectangle childGlobeRectangle =
         unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id));
     childTile.setBoundingVolume(
         createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
@@ -1022,7 +1022,7 @@ static bool updateContextWithNewToken(
     TileContext* pContext,
     const IAssetResponse* pIonResponse,
     const std::shared_ptr<spdlog::logger>& pLogger) {
-  gsl::span<const std::byte> data = pIonResponse->data();
+  const gsl::span<const std::byte> data = pIonResponse->data();
 
   rapidjson::Document ionResponse;
   ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -1148,7 +1148,7 @@ static void markTileNonRendered(
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
-  TileSelectionState::Result lastResult =
+  const TileSelectionState::Result lastResult =
       tile.getLastSelectionState().getResult(lastFrameNumber);
   markTileNonRendered(lastResult, tile, result);
 }
@@ -1160,7 +1160,7 @@ static void markChildrenNonRendered(
     ViewUpdateResult& result) {
   if (lastResult == TileSelectionState::Result::Refined) {
     for (Tile& child : tile.getChildren()) {
-      TileSelectionState::Result childLastResult =
+      const TileSelectionState::Result childLastResult =
           child.getLastSelectionState().getResult(lastFrameNumber);
       markTileNonRendered(childLastResult, child, result);
       markChildrenNonRendered(lastFrameNumber, childLastResult, child, result);
@@ -1172,7 +1172,7 @@ static void markChildrenNonRendered(
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
-  TileSelectionState::Result lastResult =
+  const TileSelectionState::Result lastResult =
       tile.getLastSelectionState().getResult(lastFrameNumber);
   markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
 }
@@ -1181,7 +1181,7 @@ static void markTileAndChildrenNonRendered(
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
-  TileSelectionState::Result lastResult =
+  const TileSelectionState::Result lastResult =
       tile.getLastSelectionState().getResult(lastFrameNumber);
   markTileNonRendered(lastResult, tile, result);
   markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
@@ -1235,7 +1235,7 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
     return true;
   }
 
-  double fogScalar = distance * fogDensity;
+  const double fogScalar = distance * fogDensity;
   return glm::exp(-(fogScalar * fogScalar)) > 0.0;
 }
 
@@ -1312,7 +1312,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   // Use a unique_ptr to ensure the _nextDistancesVector gets decrements when we
   // leave this scope.
-  auto decrementNextDistancesVector = [this](std::vector<double>*) {
+  const auto decrementNextDistancesVector = [this](std::vector<double>*) {
     --this->_nextDistancesVector;
   };
   std::unique_ptr<std::vector<double>, decltype(decrementNextDistancesVector)>
@@ -1333,8 +1333,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool isFogCulled = true;
 
     for (size_t i = 0; i < frustums.size(); ++i) {
-      double distance = distances[i];
-      double fogDensity = fogDensities[i];
+      const double distance = distances[i];
+      const double fogDensity = fogDensities[i];
 
       if (isVisibleInFog(distance, fogDensity)) {
         isFogCulled = false;
@@ -1388,7 +1388,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     const std::vector<double>& distances,
     ViewUpdateResult& result) {
 
-  TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
   tile.setLastSelectionState(TileSelectionState(
       frameState.currentFrameNumber,
@@ -1449,10 +1449,10 @@ bool Tileset::_meetsSse(
 
   for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
     const ViewState& frustum = frustums[i];
-    double distance = distances[i];
+    const double distance = distances[i];
 
     // Does this tile meet the screen-space error?
-    double sse =
+    const double sse =
         frustum.computeScreenSpaceError(tile.getGeometricError(), distance);
     if (sse > largestSse) {
       largestSse = sse;
@@ -1477,7 +1477,7 @@ static bool shouldRenderThisTile(
     const Tile& tile,
     const TileSelectionState& lastFrameSelectionState,
     int32_t lastFrameNumber) noexcept {
-  TileSelectionState::Result originalResult =
+  const TileSelectionState::Result originalResult =
       lastFrameSelectionState.getOriginalResult(lastFrameNumber);
   if (originalResult == TileSelectionState::Result::Rendered) {
     return true;
@@ -1500,7 +1500,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
     Tile& tile,
     ViewUpdateResult& result) {
 
-  TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
   markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
   tile.setLastSelectionState(TileSelectionState(
@@ -1525,7 +1525,7 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
     ViewUpdateResult& result,
     bool areChildrenRenderable) {
 
-  TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
   // Nothing else to do except mark this tile refined and return.
   TraversalDetails noChildrenTraversalDetails;
@@ -1579,7 +1579,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     size_t loadIndexHigh,
     bool queuedForLoad,
     const std::vector<double>& distances) {
-  TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
 
   std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
 
@@ -1615,10 +1615,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
   // in that case, load this tile INSTEAD of loading any of the descendants, and
   // tell the up-level we're only waiting on this tile. Keep doing this until we
   // actually manage to render this tile.
-  bool wasRenderedLastFrame =
+  const bool wasRenderedLastFrame =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
       TileSelectionState::Result::Rendered;
-  bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
+  const bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1685,8 +1685,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
     return _renderLeaf(frameState, tile, distances, result);
   }
 
-  bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
-  bool waitingForChildren =
+  const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
+  const bool waitingForChildren =
       _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
 
   if (meetsSse || ancestorMeetsSse || waitingForChildren) {
@@ -1702,8 +1702,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
     //
     // Note that even if we decide to render a tile here, it may later get
     // "kicked" in favor of an ancestor.
-    TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
-    bool renderThisTile = shouldRenderThisTile(
+    const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+    const bool renderThisTile = shouldRenderThisTile(
         tile,
         lastFrameSelectionState,
         frameState.lastFrameNumber);
@@ -1746,10 +1746,10 @@ Tileset::TraversalDetails Tileset::_visitTile(
   bool queuedForLoad =
       _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distances);
 
-  size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
-  size_t loadIndexLow = this->_loadQueueLow.size();
-  size_t loadIndexMedium = this->_loadQueueMedium.size();
-  size_t loadIndexHigh = this->_loadQueueHigh.size();
+  const size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
+  const size_t loadIndexLow = this->_loadQueueLow.size();
+  const size_t loadIndexMedium = this->_loadQueueMedium.size();
+  const size_t loadIndexHigh = this->_loadQueueHigh.size();
 
   TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(
       frameState,
@@ -1758,7 +1758,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
       tile,
       result);
 
-  bool descendantTilesAdded =
+  const bool descendantTilesAdded =
       firstRenderedDescendantIndex != result.tilesToRenderThisFrame.size();
   if (!descendantTilesAdded) {
     // No descendant tiles were added to the render list by the function above,
@@ -1820,7 +1820,7 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   // TODO: actually visit near-to-far, rather than in order of occurrence.
   gsl::span<Tile> children = tile.getChildren();
   for (Tile& child : children) {
-    TraversalDetails childTraversal = this->_visitTileIfNeeded(
+    const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,
         depth + 1,
         ancestorMeetsSse,
@@ -1867,7 +1867,7 @@ void Tileset::_unloadCachedTiles() noexcept {
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
-    bool removed = pTile->unloadContent();
+    const bool removed = pTile->unloadContent();
     if (removed) {
       this->_loadedTiles.remove(*pTile);
     }
@@ -1979,20 +1979,20 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   if (tile.getState() == Tile::LoadState::Unloaded ||
       anyRasterOverlaysNeedLoading(tile)) {
 
-    glm::dvec3 boundingVolumeCenter =
+    const glm::dvec3 boundingVolumeCenter =
         getBoundingVolumeCenter(tile.getBoundingVolume());
 
     double highestLoadPriority = std::numeric_limits<double>::max();
     for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
       const ViewState& frustum = frustums[i];
-      double distance = distances[i];
+      const double distance = distances[i];
 
       glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
-      double magnitude = glm::length(tileDirection);
+      const double magnitude = glm::length(tileDirection);
 
       if (magnitude >= CesiumUtility::Math::EPSILON5) {
         tileDirection /= magnitude;
-        double loadPriority =
+        const double loadPriority =
             (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
         if (loadPriority < highestLoadPriority) {
           highestLoadPriority = loadPriority;

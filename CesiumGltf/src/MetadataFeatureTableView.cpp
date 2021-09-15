@@ -12,12 +12,12 @@ static MetadataPropertyViewStatus checkOffsetBuffer(
         InvalidBufferViewSizeNotDivisibleByTypeSize;
   }
 
-  size_t size = offsetBuffer.size() / sizeof(T);
+  const size_t size = offsetBuffer.size() / sizeof(T);
   if (size != instanceCount + 1) {
     return MetadataPropertyViewStatus::InvalidBufferViewSizeNotFitInstanceCount;
   }
 
-  gsl::span<const T> offsetValues(
+  const gsl::span<const T> offsetValues(
       reinterpret_cast<const T*>(offsetBuffer.data()),
       size);
 
@@ -50,7 +50,7 @@ static MetadataPropertyViewStatus checkStringArrayOffsetBuffer(
     const gsl::span<const std::byte>& stringOffsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount) noexcept {
-  auto status = checkOffsetBuffer<T>(
+  const auto status = checkOffsetBuffer<T>(
       arrayOffsetBuffer,
       stringOffsetBuffer.size(),
       instanceCount,
@@ -202,7 +202,7 @@ MetadataFeatureTableView::getStringPropertyValues(
     return createInvalidPropertyView<std::string_view>(status);
   }
 
-  PropertyType offsetType =
+  const PropertyType offsetType =
       convertOffsetStringToPropertyType(featureTableProperty.offsetType);
   if (offsetType == PropertyType::None) {
     return createInvalidPropertyView<std::string_view>(
@@ -255,7 +255,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   // check fixed or dynamic array
-  int64_t componentCount = classProperty.componentCount.value_or(0);
+  const int64_t componentCount = classProperty.componentCount.value_or(0);
   if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::
@@ -269,7 +269,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   // get offset type
-  PropertyType offsetType =
+  const PropertyType offsetType =
       convertOffsetStringToPropertyType(featureTableProperty.offsetType);
   if (offsetType == PropertyType::None) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(

@@ -86,7 +86,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
 std::optional<std::string>
 TileContentFactory::getMagic(const gsl::span<const std::byte>& data) {
   if (data.size() >= 4) {
-    gsl::span<const std::byte> magicData = data.subspan(0, 4);
+    const gsl::span<const std::byte> magicData = data.subspan(0, 4);
     return std::string(reinterpret_cast<const char*>(magicData.data()), 4);
   }
 

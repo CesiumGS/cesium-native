@@ -12,7 +12,7 @@ using namespace CesiumGltf;
 namespace {
 template <typename T>
 size_t copyElements(std::vector<T>& to, std::vector<T>& from) {
-  size_t out = to.size();
+  const size_t out = to.size();
   to.resize(out + from.size());
   for (size_t i = 0; i < from.size(); ++i) {
     to[out + i] = std::move(from[i]);
@@ -48,19 +48,19 @@ void Model::merge(Model&& rhs) {
           this->extensionsRequired.end()),
       this->extensionsRequired.end());
 
-  size_t firstAccessor = copyElements(this->accessors, rhs.accessors);
-  size_t firstAnimation = copyElements(this->animations, rhs.animations);
-  size_t firstBuffer = copyElements(this->buffers, rhs.buffers);
-  size_t firstBufferView = copyElements(this->bufferViews, rhs.bufferViews);
-  size_t firstCamera = copyElements(this->cameras, rhs.cameras);
-  size_t firstImage = copyElements(this->images, rhs.images);
-  size_t firstMaterial = copyElements(this->materials, rhs.materials);
-  size_t firstMesh = copyElements(this->meshes, rhs.meshes);
-  size_t firstNode = copyElements(this->nodes, rhs.nodes);
-  size_t firstSampler = copyElements(this->samplers, rhs.samplers);
-  size_t firstScene = copyElements(this->scenes, rhs.scenes);
-  size_t firstSkin = copyElements(this->skins, rhs.skins);
-  size_t firstTexture = copyElements(this->textures, rhs.textures);
+  const size_t firstAccessor = copyElements(this->accessors, rhs.accessors);
+  const size_t firstAnimation = copyElements(this->animations, rhs.animations);
+  const size_t firstBuffer = copyElements(this->buffers, rhs.buffers);
+  const size_t firstBufferView = copyElements(this->bufferViews, rhs.bufferViews);
+  const size_t firstCamera = copyElements(this->cameras, rhs.cameras);
+  const size_t firstImage = copyElements(this->images, rhs.images);
+  const size_t firstMaterial = copyElements(this->materials, rhs.materials);
+  const size_t firstMesh = copyElements(this->meshes, rhs.meshes);
+  const size_t firstNode = copyElements(this->nodes, rhs.nodes);
+  const size_t firstSampler = copyElements(this->samplers, rhs.samplers);
+  const size_t firstScene = copyElements(this->scenes, rhs.scenes);
+  const size_t firstSkin = copyElements(this->skins, rhs.skins);
+  const size_t firstTexture = copyElements(this->textures, rhs.textures);
 
   // Update the copied indices
   for (size_t i = firstAccessor; i < this->accessors.size(); ++i) {
@@ -200,7 +200,7 @@ void Model::merge(Model&& rhs) {
         Model::getSafe(&this->scenes, rhs.scene + int32_t(firstScene));
 
     newScene.nodes = pThisDefaultScene->nodes;
-    size_t originalNodeCount = newScene.nodes.size();
+    const size_t originalNodeCount = newScene.nodes.size();
     newScene.nodes.resize(originalNodeCount + pRhsDefaultScene->nodes.size());
     std::copy(
         pRhsDefaultScene->nodes.begin(),
@@ -293,13 +293,13 @@ void forEachPrimitiveInNodeObject(
         nodeTransform * translation * glm::dmat4(rotationQuat) * scale;
   }
 
-  int meshId = node.mesh;
+  const int meshId = node.mesh;
   if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
     const Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
     forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
   }
 
-  for (int childNodeId : node.children) {
+  for (const int childNodeId : node.children) {
     if (childNodeId >= 0 &&
         childNodeId < static_cast<int>(model.nodes.size())) {
       forEachPrimitiveInNodeObject(
@@ -317,7 +317,7 @@ void forEachPrimitiveInSceneObject(
     const Model& model,
     const Scene& scene,
     TCallback& callback) {
-  for (int nodeID : scene.nodes) {
+  for (const int nodeID : scene.nodes) {
     if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
       forEachPrimitiveInNodeObject(
           transform,
@@ -352,7 +352,7 @@ void Model::forEachPrimitiveInScene(
 void Model::forEachPrimitiveInScene(
     int sceneID,
     std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const {
-  glm::dmat4x4 rootTransform(1.0);
+  const glm::dmat4x4 rootTransform(1.0);
 
   if (sceneID >= 0) {
     // Use the user-specified scene if it exists.
@@ -407,15 +407,15 @@ void addTriangleNormalToVertexNormals(
 
   // Add the triangle's normal to each vertex's accumulated normal.
 
-  uint32_t index0 = static_cast<uint32_t>(tIndex0);
-  uint32_t index1 = static_cast<uint32_t>(tIndex1);
-  uint32_t index2 = static_cast<uint32_t>(tIndex2);
+  const uint32_t index0 = static_cast<uint32_t>(tIndex0);
+  const uint32_t index1 = static_cast<uint32_t>(tIndex1);
+  const uint32_t index2 = static_cast<uint32_t>(tIndex2);
 
   const glm::vec3& vertex0 = positionView[index0];
   const glm::vec3& vertex1 = positionView[index1];
   const glm::vec3& vertex2 = positionView[index2];
 
-  glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
+  const glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
 
   // Add the triangle normal to each vertex's accumulated normal. At the end
   // we will normalize the accumulated vertex normals to average.
@@ -508,9 +508,9 @@ void generateSmoothNormals(
     const AccessorView<glm::vec3>& positionView,
     const std::optional<Accessor>& indexAccessor) {
 
-  size_t count = static_cast<size_t>(positionView.size());
-  size_t normalBufferStride = sizeof(glm::vec3);
-  size_t normalBufferSize = count * normalBufferStride;
+  const size_t count = static_cast<size_t>(positionView.size());
+  const size_t normalBufferStride = sizeof(glm::vec3);
+  const size_t normalBufferSize = count * normalBufferStride;
 
   std::vector<std::byte> normalByteBuffer(normalBufferSize);
   gsl::span<glm::vec3> normals(
@@ -549,7 +549,7 @@ void generateSmoothNormals(
 
   // normalizes the accumulated vertex normals
   for (size_t i = 0; i < count; ++i) {
-    float lengthSquared = glm::length2(normals[i]);
+    const float lengthSquared = glm::length2(normals[i]);
     if (lengthSquared < 1e-8f) {
       normals[i] = glm::vec3(0.0f);
     } else {
@@ -557,12 +557,12 @@ void generateSmoothNormals(
     }
   }
 
-  size_t normalBufferId = gltf.buffers.size();
+  const size_t normalBufferId = gltf.buffers.size();
   Buffer& normalBuffer = gltf.buffers.emplace_back();
   normalBuffer.byteLength = static_cast<int64_t>(normalBufferSize);
   normalBuffer.cesium.data = std::move(normalByteBuffer);
 
-  size_t normalBufferViewId = gltf.bufferViews.size();
+  const size_t normalBufferViewId = gltf.bufferViews.size();
   BufferView& normalBufferView = gltf.bufferViews.emplace_back();
   normalBufferView.buffer = static_cast<int32_t>(normalBufferId);
   normalBufferView.byteLength = static_cast<int64_t>(normalBufferSize);
@@ -570,7 +570,7 @@ void generateSmoothNormals(
   normalBufferView.byteStride = static_cast<int64_t>(normalBufferStride);
   normalBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
-  size_t normalAccessorId = gltf.accessors.size();
+  const size_t normalAccessorId = gltf.accessors.size();
   Accessor& normalAccessor = gltf.accessors.emplace_back();
   normalAccessor.byteOffset = 0;
   normalAccessor.bufferView = static_cast<int32_t>(normalBufferViewId);
@@ -644,8 +644,8 @@ void Model::generateMissingNormalsSmooth() {
           return;
         }
 
-        int positionAccessorId = positionIt->second;
-        AccessorView<glm::vec3> positionView(gltf_, positionAccessorId);
+        const int positionAccessorId = positionIt->second;
+        const AccessorView<glm::vec3> positionView(gltf_, positionAccessorId);
         if (positionView.status() != AccessorViewStatus::Valid) {
           return;
         }

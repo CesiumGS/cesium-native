@@ -105,7 +105,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
     const AsyncSystem& asyncSystem,
     const std::string& url,
     const std::vector<THeader>& headers) {
-  int32_t requestSinceLastPrune = ++this->_requestSinceLastPrune;
+  const int32_t requestSinceLastPrune = ++this->_requestSinceLastPrune;
   if (requestSinceLastPrune == this->_requestsPerCachePrune) {
     // More requests may have started and incremented _requestSinceLastPrune
     // beyond _requestsPerCachePrune before this next line. That's ok.
@@ -119,7 +119,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
 
   CESIUM_TRACE_BEGIN_IN_TRACK("requestAsset (cached)");
 
-  ThreadPool& threadPool = this->_cacheThreadPool;
+  const ThreadPool& threadPool = this->_cacheThreadPool;
 
   return asyncSystem
       .runInThreadPool(
@@ -146,7 +146,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
                           return std::move(pCompletedRequest);
                         }
 
-                        std::optional<ResponseCacheControl> cacheControl =
+                        const std::optional<ResponseCacheControl> cacheControl =
                             ResponseCacheControl::parseFromResponseHeaders(
                                 pResponse->headers());
 
@@ -212,7 +212,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::requestAsset(
 
                         const IAssetResponse* pResponseToStore =
                             pRequestToStore->response();
-                        std::optional<ResponseCacheControl> cacheControl =
+                        const std::optional<ResponseCacheControl> cacheControl =
                             ResponseCacheControl::parseFromResponseHeaders(
                                 pResponseToStore->headers());
 
@@ -273,7 +273,7 @@ bool shouldRevalidateCache(const CacheItem& cacheItem) {
 }
 
 bool isCacheStale(const CacheItem& cacheItem) noexcept {
-  std::time_t currentTime = std::time(nullptr);
+  const std::time_t currentTime = std::time(nullptr);
   return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
 }
 
@@ -292,7 +292,7 @@ bool shouldCacheRequest(
   }
 
   // check if response status code is cacheable
-  uint16_t statusCode = pResponse->statusCode();
+  const uint16_t statusCode = pResponse->statusCode();
   if (statusCode != 200 && // status OK
       statusCode != 201 && // status Created
       statusCode != 202 && // status Accepted

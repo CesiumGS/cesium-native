@@ -54,22 +54,22 @@ template <class T>
 static bool isBoundingVolumeVisible(
     const T& boundingVolume,
     const CullingVolume& cullingVolume) noexcept {
-  CullingResult left = boundingVolume.intersectPlane(cullingVolume.leftPlane);
+  const CullingResult left = boundingVolume.intersectPlane(cullingVolume.leftPlane);
   if (left == CullingResult::Outside) {
     return false;
   }
 
-  CullingResult right = boundingVolume.intersectPlane(cullingVolume.rightPlane);
+  const CullingResult right = boundingVolume.intersectPlane(cullingVolume.rightPlane);
   if (right == CullingResult::Outside) {
     return false;
   }
 
-  CullingResult top = boundingVolume.intersectPlane(cullingVolume.topPlane);
+  const CullingResult top = boundingVolume.intersectPlane(cullingVolume.topPlane);
   if (top == CullingResult::Outside) {
     return false;
   }
 
-  CullingResult bottom =
+  const CullingResult bottom =
       boundingVolume.intersectPlane(cullingVolume.bottomPlane);
   if (bottom == CullingResult::Outside) {
     return false;
@@ -157,7 +157,7 @@ double ViewState::computeScreenSpaceError(
     double distance) const noexcept {
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
-  double sseDenominator = this->_sseDenominator;
+  const double sseDenominator = this->_sseDenominator;
   return (geometricError * this->_viewportSize.y) / (distance * sseDenominator);
 }
 } // namespace Cesium3DTilesSelection

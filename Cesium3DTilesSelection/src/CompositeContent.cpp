@@ -121,7 +121,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
       break;
     }
 
-    gsl::span<const std::byte> innerData(data.data() + pos, pInner->byteLength);
+    const gsl::span<const std::byte> innerData(data.data() + pos, pInner->byteLength);
 
     std::unique_ptr<TileContentLoadResult> pInnerLoadResult =
         TileContentFactory::createContent(derive(input, innerData));
