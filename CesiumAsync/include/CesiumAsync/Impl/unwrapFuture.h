@@ -16,7 +16,9 @@ struct IdentityUnwrapper {
 
 template <typename T> struct ParameterizedTaskUnwrapper {
   template <typename Func> static auto unwrap(Func&& f) {
-    return [f = std::forward<Func>(f)](T&& t) mutable { return f(std::move(t))._task; };
+    return [f = std::forward<Func>(f)](T&& t) mutable {
+      return f(std::move(t))._task;
+    };
   }
 };
 
