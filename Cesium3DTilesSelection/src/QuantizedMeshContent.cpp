@@ -121,7 +121,7 @@ int32_t zigZagDecode(int32_t value) noexcept {
 }
 
 template <class E, class D>
-void decodeIndices(const gsl::span<const E>& encoded, gsl::span<D>& decoded) {
+void decodeIndices(const gsl::span<const E>& encoded, const gsl::span<D>& decoded) {
   if (decoded.size() < encoded.size()) {
     throw std::runtime_error("decoded buffer is too small.");
   }
@@ -399,9 +399,9 @@ static void addSkirt(
     double latitudeOffset,
     const std::vector<glm::dvec3>& uvsAndHeights,
     const gsl::span<const E>& edgeIndices,
-    gsl::span<float>& positions,
-    gsl::span<float>& normals,
-    gsl::span<I>& indices) {
+    const gsl::span<float>& positions,
+    const gsl::span<float>& normals,
+    const gsl::span<I>& indices) {
   const double west = rectangle.getWest();
   const double south = rectangle.getSouth();
   const double east = rectangle.getEast();
@@ -468,9 +468,9 @@ static void addSkirts(
     const gsl::span<const std::byte>& southEdgeIndicesBuffer,
     const gsl::span<const std::byte>& eastEdgeIndicesBuffer,
     const gsl::span<const std::byte>& northEdgeIndicesBuffer,
-    gsl::span<float>& outputPositions,
-    gsl::span<float>& outputNormals,
-    gsl::span<I>& outputIndices) {
+    const gsl::span<float>& outputPositions,
+    const gsl::span<float>& outputNormals,
+    const gsl::span<I>& outputIndices) {
   const uint32_t westVertexCount =
       static_cast<uint32_t>(westEdgeIndicesBuffer.size() / sizeof(E));
   const uint32_t southVertexCount =
@@ -613,7 +613,7 @@ static void addSkirts(
 
 static void decodeNormals(
     const gsl::span<const std::byte>& encoded,
-    gsl::span<float>& decoded) {
+    const gsl::span<float>& decoded) {
   if (decoded.size() < encoded.size()) {
     throw std::runtime_error("decoded buffer is too small.");
   }

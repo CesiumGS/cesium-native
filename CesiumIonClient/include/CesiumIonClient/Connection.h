@@ -53,7 +53,7 @@ public:
       int64_t clientID,
       const std::string& redirectPath,
       const std::vector<std::string>& scopes,
-      std::function<void(const std::string&)>&& openUrlCallback,
+      const std::function<void(const std::string&)>&& openUrlCallback,
       const std::string& ionApiUrl = "https://api.cesium.com/",
       const std::string& ionAuthorizeUrl = "https://cesium.com/ion/oauth");
 

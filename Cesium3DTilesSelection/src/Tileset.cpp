@@ -140,7 +140,7 @@ Tileset::~Tileset() {
 }
 
 Future<void>
-Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
+Tileset::_handleAssetResponse(const std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
     SPDLOG_LOGGER_ERROR(
@@ -593,7 +593,7 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 } // namespace
 
 /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(
-    std::shared_ptr<IAssetRequest>&& pRequest,
+    const std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
@@ -1055,7 +1055,7 @@ static bool updateContextWithNewToken(
 }
 
 void Tileset::_handleTokenRefreshResponse(
-    std::shared_ptr<IAssetRequest>&& pIonRequest,
+    const std::shared_ptr<IAssetRequest>&& pIonRequest,
     TileContext* pContext,
     const std::shared_ptr<spdlog::logger>& pLogger) {
   const IAssetResponse* pIonResponse = pIonRequest->response();
@@ -2016,7 +2016,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 
 void Tileset::processQueue(
     std::vector<Tileset::LoadRecord>& queue,
-    std::atomic<uint32_t>& loadsInProgress,
+    const std::atomic<uint32_t>& loadsInProgress,
     uint32_t maximumLoadsInProgress) {
   if (loadsInProgress >= maximumLoadsInProgress) {
     return;

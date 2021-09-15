@@ -210,7 +210,7 @@ ModelReaderResult readBinaryModel(
 }
 
 void postprocess(
-    ReaderContext& context,
+    const ReaderContext& context,
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
   Model& model = readModel.model.value();

@@ -324,7 +324,7 @@ private:
    * @param pRequest The request for which the response was received.
    */
   CesiumAsync::Future<void>
-  _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+  _handleAssetResponse(const std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
   struct LoadResult {
     std::unique_ptr<TileContext> pContext;
@@ -346,7 +346,7 @@ private:
    * @return The LoadResult structure
    */
   static LoadResult _handleTilesetResponse(
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
+      const std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
       std::unique_ptr<TileContext>&& pContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
@@ -386,7 +386,7 @@ private:
    * @param pContext The context.
    */
   void _handleTokenRefreshResponse(
-      std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
+      const std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
       TileContext* pContext,
       const std::shared_ptr<spdlog::logger>& pLogger);
 
@@ -584,7 +584,7 @@ private:
       const std::vector<double>& distances);
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
-      std::atomic<uint32_t>& loadsInProgress,
+      const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
   Tileset(const Tileset& rhs) = delete;

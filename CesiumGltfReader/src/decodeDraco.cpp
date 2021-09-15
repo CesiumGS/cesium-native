@@ -24,7 +24,7 @@ using namespace CesiumGltf;
 std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     ModelReaderResult& readModel,
     MeshPrimitive& /* primitive */,
-    KHR_draco_mesh_compression& draco) {
+    const KHR_draco_mesh_compression& draco) {
   CESIUM_TRACE("CesiumGltf::decodeBufferViewToDracoMesh");
   Model& model = readModel.model.value();
 
@@ -92,7 +92,7 @@ void copyData(const T* pSource, T* pDestination, int64_t length) {
 
 void copyDecodedIndices(
     ModelReaderResult& readModel,
-    MeshPrimitive& primitive,
+    const MeshPrimitive& primitive,
     draco::Mesh* pMesh) {
   CESIUM_TRACE("CesiumGltf::copyDecodedIndices");
   Model& model = readModel.model.value();

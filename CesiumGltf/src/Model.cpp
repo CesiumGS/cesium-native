@@ -400,7 +400,7 @@ void Model::forEachPrimitiveInScene(
 namespace {
 template <typename TIndex>
 void addTriangleNormalToVertexNormals(
-    gsl::span<glm::vec3>& normals,
+    const gsl::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     TIndex tIndex0,
     TIndex tIndex1,
@@ -429,7 +429,7 @@ void addTriangleNormalToVertexNormals(
 template <typename TIndex, typename GetIndex>
 bool accumulateNormals(
     MeshPrimitive::Mode mode,
-    gsl::span<glm::vec3>& normals,
+    const gsl::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     int64_t numIndices,
     GetIndex getIndex) {

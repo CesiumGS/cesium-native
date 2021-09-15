@@ -187,7 +187,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   this->_state = AttachmentState::Unattached;
 }
 
-void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
+void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   if (!this->_pReadyTile) {
     return;
   }

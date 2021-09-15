@@ -210,7 +210,7 @@ CompatibleTypes findCompatibleTypes(const rapidjson::Value& propertyValue) {
 void updateExtensionWithJsonStringProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -307,7 +307,7 @@ template <typename T, typename TRapidJson = T>
 void updateExtensionWithJsonNumericProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue,
     const std::string& typeName) {
@@ -342,7 +342,7 @@ void updateExtensionWithJsonNumericProperty(
 void updateExtensionWithJsonBoolProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
   assert(propertyValue.Size() >= featureTable.count);
@@ -911,7 +911,7 @@ void updateBooleanArrayProperty(
 void updateExtensionWithArrayProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const CompatibleTypes& compatibleTypes,
     const rapidjson::Value& propertyValue) {
@@ -1019,7 +1019,7 @@ void updateExtensionWithArrayProperty(
 void updateExtensionWithJsonProperty(
     Model& gltf,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const rapidjson::Value& propertyValue) {
 
@@ -1148,7 +1148,7 @@ void updateExtensionWithBinaryProperty(
     int64_t gltfBufferOffset,
     BinaryProperty& binaryProperty,
     ClassProperty& classProperty,
-    FeatureTable& featureTable,
+    const FeatureTable& featureTable,
     FeatureTableProperty& featureTableProperty,
     const std::string& propertyName,
     const rapidjson::Value& propertyValue,

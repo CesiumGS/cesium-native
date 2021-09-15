@@ -95,7 +95,7 @@ static std::string createAuthorizationErrorHtml(
     int64_t clientID,
     const std::string& redirectPath,
     const std::vector<std::string>& scopes,
-    std::function<void(const std::string&)>&& openUrlCallback,
+    const std::function<void(const std::string&)>&& openUrlCallback,
     const std::string& ionApiUrl,
     const std::string& ionAuthorizeUrl) {
 
@@ -259,7 +259,7 @@ static Response<T> createErrorResponse(const IAssetResponse* pResponse) {
 template <typename T>
 static Response<T> createJsonErrorResponse(
     const IAssetResponse* pResponse,
-    rapidjson::Document& d) {
+    const rapidjson::Document& d) {
   return Response<T>{
       std::nullopt,
       pResponse->statusCode(),
