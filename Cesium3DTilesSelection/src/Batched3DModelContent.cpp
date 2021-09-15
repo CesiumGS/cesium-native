@@ -159,9 +159,9 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
   }
 
   const uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
-                      header.featureTableBinaryByteLength +
-                      header.batchTableJsonByteLength +
-                      header.batchTableBinaryByteLength;
+                            header.featureTableBinaryByteLength +
+                            header.batchTableJsonByteLength +
+                            header.batchTableBinaryByteLength;
   const uint32_t glbEnd = header.byteLength;
 
   if (glbEnd <= glbStart) {
@@ -182,8 +182,9 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
     rapidjson::Document featureTable =
         parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 
-    const int64_t batchTableStart = headerLength + header.featureTableJsonByteLength +
-                              header.featureTableBinaryByteLength;
+    const int64_t batchTableStart = headerLength +
+                                    header.featureTableJsonByteLength +
+                                    header.featureTableBinaryByteLength;
     const int64_t batchTableLength =
         header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
 

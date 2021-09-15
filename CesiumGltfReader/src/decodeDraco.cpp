@@ -219,7 +219,8 @@ void copyDecodedAttribute(
   Buffer& buffer = model.buffers.emplace_back();
 
   const int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
-  const int64_t stride = numberOfComponents * pAccessor->computeByteSizeOfComponent();
+  const int64_t stride =
+      numberOfComponents * pAccessor->computeByteSizeOfComponent();
   const int64_t sizeBytes = pAccessor->count * stride;
 
   buffer.cesium.data.resize(static_cast<size_t>(sizeBytes));

@@ -25,7 +25,8 @@ bool Rectangle::fullyContains(const Rectangle& other) const noexcept {
 
 double
 Rectangle::computeSignedDistance(const glm::dvec2& position) const noexcept {
-  const glm::dvec2 bottomLeftDistance = glm::dvec2(minimumX, minimumY) - position;
+  const glm::dvec2 bottomLeftDistance =
+      glm::dvec2(minimumX, minimumY) - position;
   const glm::dvec2 topRightDistance = position - glm::dvec2(maximumX, maximumY);
   const glm::dvec2 maxDistance = glm::max(bottomLeftDistance, topRightDistance);
 

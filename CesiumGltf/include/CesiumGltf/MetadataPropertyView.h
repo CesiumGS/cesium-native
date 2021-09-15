@@ -236,7 +236,8 @@ private:
   bool getBoolean(int64_t instance) const {
     const int64_t byteIndex = instance / 8;
     const int64_t bitIndex = instance % 8;
-    const int bitValue = static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
+    const int bitValue =
+        static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 

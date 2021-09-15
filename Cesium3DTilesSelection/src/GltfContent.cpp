@@ -79,7 +79,9 @@ static int generateOverlayTextureCoordinates(
   const int uvAccessorId = static_cast<int>(accessors.size());
   accessors.emplace_back();
 
-  const CesiumGltf::AccessorView<glm::vec3> positionView(gltf, positionAccessorIndex);
+  const CesiumGltf::AccessorView<glm::vec3> positionView(
+      gltf,
+      positionAccessorIndex);
   if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
     return -1;
   }
@@ -146,8 +148,10 @@ static int generateOverlayTextureCoordinates(
       const glm::dvec3 projectedPosition2 =
           projectPosition(projection, cartographic.value());
 
-      const double distance1 = rectangle.computeSignedDistance(projectedPosition);
-      const double distance2 = rectangle.computeSignedDistance(projectedPosition2);
+      const double distance1 =
+          rectangle.computeSignedDistance(projectedPosition);
+      const double distance2 =
+          rectangle.computeSignedDistance(projectedPosition2);
 
       if (distance2 < distance1) {
         projectedPosition = projectedPosition2;

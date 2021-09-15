@@ -248,9 +248,10 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   const CesiumGeometry::Rectangle& tilingSchemeRectangle =
       tilingScheme.getRectangle();
 
-  const double toMeters = computeApproximateConversionFactorToMetersNearPosition(
-      this->getProjection(),
-      position);
+  const double toMeters =
+      computeApproximateConversionFactorToMetersNearPosition(
+          this->getProjection(),
+          position);
 
   const double levelZeroMaximumTexelSpacingMeters =
       (tilingSchemeRectangle.computeWidth() * toMeters) /
@@ -287,7 +288,10 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
   // subtle) race condition.
   auto loadParentTile = [tileID, this]() {
     const Rectangle rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    const QuadtreeTileID parentID(tileID.level - 1, tileID.x >> 1, tileID.y >> 1);
+    const QuadtreeTileID parentID(
+        tileID.level - 1,
+        tileID.x >> 1,
+        tileID.y >> 1);
     return this->getQuadtreeTile(parentID).thenImmediately(
         [rectangle](const LoadedQuadtreeImage& loaded) {
           return LoadedQuadtreeImage{loaded.pLoaded, rectangle};
@@ -613,9 +617,9 @@ QuadtreeRasterOverlayTileProvider::combineImages(
           targetRectangle,
           images);
 
-  const int32_t targetImageBytes = measurements.widthPixels *
-                             measurements.heightPixels * measurements.channels *
-                             measurements.bytesPerChannel;
+  const int32_t targetImageBytes =
+      measurements.widthPixels * measurements.heightPixels *
+      measurements.channels * measurements.bytesPerChannel;
   if (targetImageBytes <= 0) {
     // Target image has no pixels, so our work here is done.
     return LoadedRasterOverlayImage{

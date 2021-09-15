@@ -793,7 +793,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
     const double longitude = Math::lerp(west, east, uRatio);
     const double latitude = Math::lerp(south, north, vRatio);
-    const double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio);
+    const double heightMeters =
+        Math::lerp(minimumHeight, maximumHeight, heightRatio);
 
     glm::dvec3 position = ellipsoid.cartographicToCartesian(
         Cartographic(longitude, latitude, heightMeters));

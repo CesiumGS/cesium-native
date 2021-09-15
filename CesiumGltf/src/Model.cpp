@@ -51,7 +51,8 @@ void Model::merge(Model&& rhs) {
   const size_t firstAccessor = copyElements(this->accessors, rhs.accessors);
   const size_t firstAnimation = copyElements(this->animations, rhs.animations);
   const size_t firstBuffer = copyElements(this->buffers, rhs.buffers);
-  const size_t firstBufferView = copyElements(this->bufferViews, rhs.bufferViews);
+  const size_t firstBufferView =
+      copyElements(this->bufferViews, rhs.bufferViews);
   const size_t firstCamera = copyElements(this->cameras, rhs.cameras);
   const size_t firstImage = copyElements(this->images, rhs.images);
   const size_t firstMaterial = copyElements(this->materials, rhs.materials);
@@ -415,7 +416,8 @@ void addTriangleNormalToVertexNormals(
   const glm::vec3& vertex1 = positionView[index1];
   const glm::vec3& vertex2 = positionView[index2];
 
-  const glm::vec3 triangleNormal = glm::cross(vertex1 - vertex0, vertex2 - vertex0);
+  const glm::vec3 triangleNormal =
+      glm::cross(vertex1 - vertex0, vertex2 - vertex0);
 
   // Add the triangle normal to each vertex's accumulated normal. At the end
   // we will normalize the accumulated vertex normals to average.

@@ -240,8 +240,8 @@ static double computeFogDensity(
     const std::vector<FogDensityAtHeight>& fogDensityTable,
     const ViewState& viewState) {
   const double height = viewState.getPositionCartographic()
-                      .value_or(Cartographic(0.0, 0.0, 0.0))
-                      .height;
+                            .value_or(Cartographic(0.0, 0.0, 0.0))
+                            .height;
 
   // Find the entry that is for >= this camera height.
   auto nextIt =
@@ -262,7 +262,8 @@ static double computeFogDensity(
   const double heightB = nextIt->cameraHeight;
   const double densityB = nextIt->fogDensity;
 
-  const double t = glm::clamp((height - heightA) / (heightB - heightA), 0.0, 1.0);
+  const double t =
+      glm::clamp((height - heightA) / (heightB - heightA), 0.0, 1.0);
 
   const double density = glm::mix(densityA, densityB, t);
 
@@ -794,7 +795,8 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
       glm::length(transform[0]),
       glm::length(transform[1]),
       glm::length(transform[2]));
-  const double maxScaleComponent = glm::max(scale.x, glm::max(scale.y, scale.z));
+  const double maxScaleComponent =
+      glm::max(scale.x, glm::max(scale.y, scale.z));
   tile.setGeometricError(geometricError.value() * maxScaleComponent);
 
   std::optional<BoundingVolume> viewerRequestVolume =
@@ -1388,7 +1390,8 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     const std::vector<double>& distances,
     ViewUpdateResult& result) {
 
-  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState =
+      tile.getLastSelectionState();
 
   tile.setLastSelectionState(TileSelectionState(
       frameState.currentFrameNumber,
@@ -1500,7 +1503,8 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
     Tile& tile,
     ViewUpdateResult& result) {
 
-  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState =
+      tile.getLastSelectionState();
 
   markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
   tile.setLastSelectionState(TileSelectionState(
@@ -1525,7 +1529,8 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
     ViewUpdateResult& result,
     bool areChildrenRenderable) {
 
-  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState =
+      tile.getLastSelectionState();
 
   // Nothing else to do except mark this tile refined and return.
   TraversalDetails noChildrenTraversalDetails;
@@ -1579,7 +1584,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
     size_t loadIndexHigh,
     bool queuedForLoad,
     const std::vector<double>& distances) {
-  const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+  const TileSelectionState lastFrameSelectionState =
+      tile.getLastSelectionState();
 
   std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
 
@@ -1618,7 +1624,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
   const bool wasRenderedLastFrame =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber) ==
       TileSelectionState::Result::Rendered;
-  const bool wasReallyRenderedLastFrame = wasRenderedLastFrame && tile.isRenderable();
+  const bool wasReallyRenderedLastFrame =
+      wasRenderedLastFrame && tile.isRenderable();
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1702,7 +1709,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
     //
     // Note that even if we decide to render a tile here, it may later get
     // "kicked" in favor of an ancestor.
-    const TileSelectionState lastFrameSelectionState = tile.getLastSelectionState();
+    const TileSelectionState lastFrameSelectionState =
+        tile.getLastSelectionState();
     const bool renderThisTile = shouldRenderThisTile(
         tile,
         lastFrameSelectionState,
@@ -1746,7 +1754,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
   bool queuedForLoad =
       _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distances);
 
-  const size_t firstRenderedDescendantIndex = result.tilesToRenderThisFrame.size();
+  const size_t firstRenderedDescendantIndex =
+      result.tilesToRenderThisFrame.size();
   const size_t loadIndexLow = this->_loadQueueLow.size();
   const size_t loadIndexMedium = this->_loadQueueMedium.size();
   const size_t loadIndexHigh = this->_loadQueueHigh.size();

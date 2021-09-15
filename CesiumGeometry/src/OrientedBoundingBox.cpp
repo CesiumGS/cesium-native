@@ -18,17 +18,17 @@ OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
   // plane is used as if it is its normal; the first three components are
   // assumed to be normalized
   const double radEffective = glm::abs(
-                            normal.x * xAxisDirectionAndHalfLength.x +
-                            normal.y * xAxisDirectionAndHalfLength.y +
-                            normal.z * xAxisDirectionAndHalfLength.z) +
-                        glm::abs(
-                            normal.x * yAxisDirectionAndHalfLength.x +
-                            normal.y * yAxisDirectionAndHalfLength.y +
-                            normal.z * yAxisDirectionAndHalfLength.z) +
-                        glm::abs(
-                            normal.x * zAxisDirectionAndHalfLength.x +
-                            normal.y * zAxisDirectionAndHalfLength.y +
-                            normal.z * zAxisDirectionAndHalfLength.z);
+                                  normal.x * xAxisDirectionAndHalfLength.x +
+                                  normal.y * xAxisDirectionAndHalfLength.y +
+                                  normal.z * xAxisDirectionAndHalfLength.z) +
+                              glm::abs(
+                                  normal.x * yAxisDirectionAndHalfLength.x +
+                                  normal.y * yAxisDirectionAndHalfLength.y +
+                                  normal.z * yAxisDirectionAndHalfLength.z) +
+                              glm::abs(
+                                  normal.x * zAxisDirectionAndHalfLength.x +
+                                  normal.y * zAxisDirectionAndHalfLength.y +
+                                  normal.z * zAxisDirectionAndHalfLength.z);
 
   const double distanceToPlane =
       ::glm::dot(normal, this->getCenter()) + plane.getDistance();

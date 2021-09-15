@@ -421,7 +421,7 @@ void updateNumericArrayProperty(
   // check if it's a fixed array
   if (compatibleTypes.minComponentCount == compatibleTypes.maxComponentCount) {
     const size_t numOfValues = static_cast<size_t>(featureTable.count) *
-                         *compatibleTypes.minComponentCount;
+                               *compatibleTypes.minComponentCount;
     std::vector<std::byte> valueBuffer(sizeof(ValueType) * numOfValues);
     ValueType* value = reinterpret_cast<ValueType*>(valueBuffer.data());
     for (int64_t i = 0; i < featureTable.count; ++i) {
@@ -509,7 +509,8 @@ void updateNumericArrayProperty(
   gltfValueBufferView.byteOffset = 0;
   gltfValueBufferView.byteLength =
       static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
-  const int32_t valueBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  const int32_t valueBufferIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
   gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
@@ -520,7 +521,8 @@ void updateNumericArrayProperty(
   gltfOffsetBufferView.byteOffset = 0;
   gltfOffsetBufferView.byteLength =
       static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
-  const int32_t offsetBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  const int32_t offsetBufferIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "ARRAY";
   classProperty.componentType = convertPropertyTypeToString(
@@ -883,7 +885,8 @@ void updateBooleanArrayProperty(
   gltfValueBufferView.byteOffset = 0;
   gltfValueBufferView.byteLength =
       static_cast<int64_t>(gltfValueBuffer.cesium.data.size());
-  const int32_t valueBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  const int32_t valueBufferIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   Buffer& gltfOffsetBuffer = gltf.buffers.emplace_back();
   gltfOffsetBuffer.byteLength = static_cast<int64_t>(offsetBuffer.size());
@@ -894,7 +897,8 @@ void updateBooleanArrayProperty(
   gltfOffsetBufferView.byteOffset = 0;
   gltfOffsetBufferView.byteLength =
       static_cast<int64_t>(gltfOffsetBuffer.cesium.data.size());
-  const int32_t offsetBufferIdx = static_cast<int32_t>(gltf.bufferViews.size() - 1);
+  const int32_t offsetBufferIdx =
+      static_cast<int32_t>(gltf.bufferViews.size() - 1);
 
   classProperty.type = "ARRAY";
   classProperty.componentType = "BOOLEAN";

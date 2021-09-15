@@ -55,7 +55,8 @@ BoundingRegion::BoundingRegion(
       glm::cross(glm::dvec3(0.0, 0.0, 1.0), easternMidpointCartesian));
 
   // Compute the normal of the plane bounding the southern edge of the tile.
-  const glm::dvec3 westVector = westernMidpointCartesian - easternMidpointCartesian;
+  const glm::dvec3 westVector =
+      westernMidpointCartesian - easternMidpointCartesian;
   const glm::dvec3 eastWestNormal = glm::normalize(westVector);
 
   if (!Math::equalsEpsilon(glm::length(eastWestNormal), 1.0, Math::EPSILON6)) {
@@ -285,9 +286,10 @@ static OrientedBoundingBox fromPlaneExtents(
     // If the rectangle spans the equator, CW is instead aligned with the
     // equator (because it sticks out the farthest at the equator).
     const double lonCenter = tangentPointCartographic.longitude;
-    const double latCenter = rectangle.getSouth() < 0.0 && rectangle.getNorth() > 0.0
-                           ? 0.0
-                           : tangentPointCartographic.latitude;
+    const double latCenter =
+        rectangle.getSouth() < 0.0 && rectangle.getNorth() > 0.0
+            ? 0.0
+            : tangentPointCartographic.latitude;
 
     // Compute XY extents using the rectangle at maximum height
     const Cartographic perimeterCartographicNC(
@@ -388,7 +390,7 @@ static OrientedBoundingBox fromPlaneExtents(
   planeOrigin.z = 0.0; // center the plane on the equator to simpify plane
                        // normal calculation
   const bool isPole = glm::abs(planeOrigin.x) < Math::EPSILON10 &&
-                glm::abs(planeOrigin.y) < Math::EPSILON10;
+                      glm::abs(planeOrigin.y) < Math::EPSILON10;
   const glm::dvec3 planeNormal =
       !isPole ? glm::normalize(planeOrigin) : glm::dvec3(1.0, 0.0, 0.0);
   const glm::dvec3 planeYAxis(0.0, 0.0, 1.0);
@@ -397,10 +399,11 @@ static OrientedBoundingBox fromPlaneExtents(
 
   // Get the horizon point relative to the center. This will be the farthest
   // extent in the plane's X dimension.
-  const glm::dvec3 horizonCartesian = ellipsoid.cartographicToCartesian(Cartographic(
-      centerLongitude + Math::PI_OVER_TWO,
-      latitudeNearestToEquator,
-      maximumHeight));
+  const glm::dvec3 horizonCartesian =
+      ellipsoid.cartographicToCartesian(Cartographic(
+          centerLongitude + Math::PI_OVER_TWO,
+          latitudeNearestToEquator,
+          maximumHeight));
   maxX = glm::dot(plane.projectPointOntoPlane(horizonCartesian), planeXAxis);
   minX = -maxX; // symmetrical
 

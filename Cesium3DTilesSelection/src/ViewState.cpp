@@ -54,17 +54,20 @@ template <class T>
 static bool isBoundingVolumeVisible(
     const T& boundingVolume,
     const CullingVolume& cullingVolume) noexcept {
-  const CullingResult left = boundingVolume.intersectPlane(cullingVolume.leftPlane);
+  const CullingResult left =
+      boundingVolume.intersectPlane(cullingVolume.leftPlane);
   if (left == CullingResult::Outside) {
     return false;
   }
 
-  const CullingResult right = boundingVolume.intersectPlane(cullingVolume.rightPlane);
+  const CullingResult right =
+      boundingVolume.intersectPlane(cullingVolume.rightPlane);
   if (right == CullingResult::Outside) {
     return false;
   }
 
-  const CullingResult top = boundingVolume.intersectPlane(cullingVolume.topPlane);
+  const CullingResult top =
+      boundingVolume.intersectPlane(cullingVolume.topPlane);
   if (top == CullingResult::Outside) {
     return false;
   }

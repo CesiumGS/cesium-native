@@ -63,8 +63,10 @@ bool ImageManipulation::blitImage(
   const size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
   size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
 
-  const size_t requiredTargetSize = size_t(targetPixels.height) * bytesPerTargetRow;
-  const size_t requiredSourceSize = size_t(sourcePixels.height) * bytesPerSourceRow;
+  const size_t requiredTargetSize =
+      size_t(targetPixels.height) * bytesPerTargetRow;
+  const size_t requiredSourceSize =
+      size_t(sourcePixels.height) * bytesPerSourceRow;
   if (target.pixelData.size() < requiredTargetSize ||
       source.pixelData.size() < requiredSourceSize) {
     return false;

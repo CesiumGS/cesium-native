@@ -86,7 +86,11 @@ void rasterizePolygons(
       const double maxX = glm::max(a.x, glm::max(b.x, c.x));
       const double maxY = glm::max(a.y, glm::max(b.y, c.y));
 
-      const CesiumGeospatial::GlobeRectangle triangleBounds(minX, minY, maxX, maxY);
+      const CesiumGeospatial::GlobeRectangle triangleBounds(
+          minX,
+          minY,
+          maxX,
+          maxY);
 
       // skip this triangle if it is entirely outside the tile bounds
       if (!rectangle.computeIntersection(triangleBounds)) {
@@ -101,8 +105,9 @@ void rasterizePolygons(
       const glm::dvec2 ca_perp(-ca.y, ca.x);
 
       for (size_t j = 0; j < 256; ++j) {
-        const double pixelY = rectangle.getSouth() +
-                        rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
+        const double pixelY =
+            rectangle.getSouth() +
+            rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
         for (size_t i = 0; i < 256; ++i) {
           const double pixelX =
               rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / 256.0;

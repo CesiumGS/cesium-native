@@ -65,7 +65,8 @@ bool QuadtreeTileAvailability::isTileAvailable(
   // level n exists, then all its parent tiles back to level 0 exist too.  This
   // isn't really enforced anywhere, but Cesium would never load a tile for
   // which this is not true.
-  const CesiumGeometry::Rectangle rectangle = this->_tilingScheme.tileToRectangle(id);
+  const CesiumGeometry::Rectangle rectangle =
+      this->_tilingScheme.tileToRectangle(id);
   const glm::dvec2 center = rectangle.getCenter();
   return this->computeMaximumLevelAtPosition(center) >= id.level;
 }
@@ -123,10 +124,14 @@ bool QuadtreeTileAvailability::isTileAvailable(
   // Find the deepest quadtree node containing this point.
   bool found = false;
   while (!found) {
-    const uint32_t ll = pNode->ll && pNode->ll->extent.contains(position) ? 1 : 0;
-    const uint32_t lr = pNode->lr && pNode->lr->extent.contains(position) ? 1 : 0;
-    const uint32_t ul = pNode->ul && pNode->ul->extent.contains(position) ? 1 : 0;
-    const uint32_t ur = pNode->ur && pNode->ur->extent.contains(position) ? 1 : 0;
+    const uint32_t ll =
+        pNode->ll && pNode->ll->extent.contains(position) ? 1 : 0;
+    const uint32_t lr =
+        pNode->lr && pNode->lr->extent.contains(position) ? 1 : 0;
+    const uint32_t ul =
+        pNode->ul && pNode->ul->extent.contains(position) ? 1 : 0;
+    const uint32_t ur =
+        pNode->ur && pNode->ur->extent.contains(position) ? 1 : 0;
 
     // The common scenario is that the point is in only one quadrant and we can
     // simply iterate down the tree.  But if the point is on a boundary between

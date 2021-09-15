@@ -432,7 +432,8 @@ static void upsamplePrimitiveForRasterOverlays(
         parentModel.buffers[static_cast<size_t>(bufferView.buffer)];
 
     const int64_t accessorByteStride = accessor.computeByteStride(parentModel);
-    const int64_t accessorComponentElements = accessor.computeNumberOfComponents();
+    const int64_t accessorComponentElements =
+        accessor.computeNumberOfComponents();
     if (accessor.componentType != Accessor::ComponentType::FLOAT) {
       // Can only interpolate floating point vertex attributes
       return;
@@ -495,7 +496,7 @@ static void upsamplePrimitiveForRasterOverlays(
   std::optional<SkirtMeshMetadata> parentSkirtMeshMetadata =
       SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
   const bool hasSkirt = (parentSkirtMeshMetadata != std::nullopt) &&
-                  (positionAttributeIndex != -1);
+                        (positionAttributeIndex != -1);
   if (hasSkirt) {
     indicesBegin = parentSkirtMeshMetadata->noSkirtIndicesBegin;
     indicesCount = parentSkirtMeshMetadata->noSkirtIndicesCount;
@@ -642,7 +643,8 @@ static void upsamplePrimitiveForRasterOverlays(
   }
 
   // Update the accessor vertex counts and min/max values
-  const int64_t numberOfVertices = int64_t(newVertexFloats.size()) / vertexSizeFloats;
+  const int64_t numberOfVertices =
+      int64_t(newVertexFloats.size()) / vertexSizeFloats;
   for (const FloatVertexAttribute& attribute : attributes) {
     Accessor& accessor =
         model.accessors[static_cast<size_t>(attribute.accessorIndex)];

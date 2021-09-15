@@ -33,7 +33,7 @@ time_t internalTimegm(std::tm const* t) {
 
   const time_t seconds_in_day = 3600 * 24;
   const time_t result = seconds_in_day * days_since_epoch + 3600 * t->tm_hour +
-                  60 * t->tm_min + t->tm_sec;
+                        60 * t->tm_min + t->tm_sec;
 
   return result;
 }

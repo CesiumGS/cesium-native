@@ -350,7 +350,8 @@ private:
     }
 
     gsl::span<const std::byte> valueBuffer;
-    const auto status = getBufferSafe(featureTableProperty.bufferView, valueBuffer);
+    const auto status =
+        getBufferSafe(featureTableProperty.bufferView, valueBuffer);
     if (status != MetadataPropertyViewStatus::Valid) {
       return createInvalidPropertyView<T>(status);
     }

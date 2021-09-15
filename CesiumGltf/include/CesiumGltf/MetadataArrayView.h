@@ -41,7 +41,8 @@ public:
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
+    const int bitValue =
+        static_cast<int>(_valueBuffer[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 

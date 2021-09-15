@@ -573,7 +573,8 @@ void Tile::update(
   if (this->getState() == LoadState::FailedTemporarily) {
     // Check with the TileContext to see if we should retry.
     if (this->_pContext->failedTileCallback) {
-      const FailedTileAction action = this->_pContext->failedTileCallback(*this);
+      const FailedTileAction action =
+          this->_pContext->failedTileCallback(*this);
       switch (action) {
       case FailedTileAction::GiveUp:
         this->setState(LoadState::Failed);

@@ -222,8 +222,10 @@ private:
     }
 
     const int64_t accessorByteStride = accessor.computeByteStride(model);
-    const int64_t accessorComponentElements = accessor.computeNumberOfComponents();
-    const int64_t accessorComponentBytes = accessor.computeByteSizeOfComponent();
+    const int64_t accessorComponentElements =
+        accessor.computeNumberOfComponents();
+    const int64_t accessorComponentBytes =
+        accessor.computeByteSizeOfComponent();
     const int64_t accessorBytesPerStride =
         accessorComponentElements * accessorComponentBytes;
 
