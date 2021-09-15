@@ -113,8 +113,8 @@ struct QuantizedMeshView {
 };
 
 // We can't use sizeof(QuantizedMeshHeader) because it may be padded.
-const size_t headerLength = 92;
-const size_t extensionHeaderLength = 5;
+constexpr size_t headerLength = 92;
+constexpr size_t extensionHeaderLength = 5;
 
 int32_t zigZagDecode(int32_t value) noexcept {
   return (value >> 1) ^ (-(value & 1));
@@ -149,7 +149,7 @@ static T readValue(
 }
 
 static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
-  const uint8_t rangeMax = 255;
+  constexpr uint8_t rangeMax = 255;
 
   glm::dvec3 result;
 

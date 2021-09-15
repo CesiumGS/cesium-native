@@ -382,7 +382,7 @@ public:
    * @snippet TestMath.cpp convertLongitudeRange
    */
   static double convertLongitudeRange(double angle) noexcept {
-    const double twoPi = Math::TWO_PI;
+    constexpr double twoPi = Math::TWO_PI;
 
     const double simplified = angle - glm::floor(angle / twoPi) * twoPi;
 

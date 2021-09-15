@@ -15,7 +15,7 @@ namespace {
 
 // One hundredth of a pixel. If we compute a rectangle that goes less than "this
 // much" into the next pixel, we'll ignore the extra.
-const double pixelTolerance = 0.01;
+constexpr double pixelTolerance = 0.01;
 
 } // namespace
 
