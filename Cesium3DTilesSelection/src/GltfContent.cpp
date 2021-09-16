@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
@@ -7,7 +8,6 @@
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
-#include "CesiumAsync/IAssetResponse.h"
 #include <optional>
 #include <stdexcept>
 
