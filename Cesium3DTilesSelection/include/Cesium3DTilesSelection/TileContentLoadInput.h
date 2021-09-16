@@ -36,6 +36,17 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
    * and have to be initialized before this instance is passed to
    * one of the loader functions.
    *
+   * @param tile The {@link Tile} that the content belongs to
+   */
+  TileContentLoadInput(const Tile& tile);
+
+  /**
+   * @brief Creates a new, uninitialized instance for the given tile.
+   *
+   * The `data`, `contentType` and `url` will have default values,
+   * and have to be initialized before this instance is passed to
+   * one of the loader functions.
+   *
    * @param asyncSystem The async system to use for tile content loading.
    * @param pLogger The logger that will be used
    * @param pAssetAccessor The asset accessor to make further requests with.
@@ -109,7 +120,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   /**
    * @brief The content data to use.
    */
-  gsl::span<const std::byte> data;
+  std::optional<gsl::span<const std::byte>> data;
 
   /**
    * @brief The {@link TileID}.

@@ -15,7 +15,7 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
       input.tileTransform,
       input.tileRefine,
       input.pRequest->url(),
-      input.data));
+      *input.data));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(

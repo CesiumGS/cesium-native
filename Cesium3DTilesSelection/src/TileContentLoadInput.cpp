@@ -5,26 +5,41 @@
 using namespace Cesium3DTilesSelection;
 using namespace CesiumAsync;
 
+TileContentLoadInput::TileContentLoadInput(const Tile& tile)
+    : asyncSystem(nullptr),
+      pLogger(nullptr),
+      pAssetAccessor(nullptr),
+      pRequest(nullptr),
+      data(std::nullopt),
+      tileID(tile.getTileID()),
+      tileBoundingVolume(tile.getBoundingVolume()),
+      tileContentBoundingVolume(tile.getContentBoundingVolume()),
+      tileRefine(tile.getRefine()),
+      tileGeometricError(tile.getGeometricError()),
+      tileTransform(tile.getTransform()),
+      contentOptions(tile.getContext()->pTileset->getOptions().contentOptions) {
+}
+
 TileContentLoadInput::TileContentLoadInput(
     const AsyncSystem& asyncSystem_,
     std::shared_ptr<spdlog::logger>&& pLogger_,
     std::shared_ptr<IAssetAccessor>&& pAssetAccessor_,
     std::shared_ptr<IAssetRequest>&& pRequest_,
     const std::optional<gsl::span<const std::byte>>& data_,
-    const Tile& tile_)
+    const Tile& tile)
     : asyncSystem(asyncSystem_),
       pLogger(std::move(pLogger_)),
       pAssetAccessor(std::move(pAssetAccessor_)),
       pRequest(std::move(pRequest_)),
       data(data_ ? *data_ : this->pRequest->response()->data()),
-      tileID(tile_.getTileID()),
-      tileBoundingVolume(tile_.getBoundingVolume()),
-      tileContentBoundingVolume(tile_.getContentBoundingVolume()),
-      tileRefine(tile_.getRefine()),
-      tileGeometricError(tile_.getGeometricError()),
-      tileTransform(tile_.getTransform()),
-      contentOptions(
-          tile_.getContext()->pTileset->getOptions().contentOptions) {}
+      tileID(tile.getTileID()),
+      tileBoundingVolume(tile.getBoundingVolume()),
+      tileContentBoundingVolume(tile.getContentBoundingVolume()),
+      tileRefine(tile.getRefine()),
+      tileGeometricError(tile.getGeometricError()),
+      tileTransform(tile.getTransform()),
+      contentOptions(tile.getContext()->pTileset->getOptions().contentOptions) {
+}
 
 TileContentLoadInput::TileContentLoadInput(
     const AsyncSystem& asyncSystem_,

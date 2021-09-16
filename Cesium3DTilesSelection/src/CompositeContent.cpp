@@ -70,7 +70,7 @@ CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 CompositeContent::load(const TileContentLoadInput& input) {
   CESIUM_TRACE("Cesium3DTilesSelection::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-  const gsl::span<const std::byte>& data = input.data;
+  const gsl::span<const std::byte>& data = *input.data;
   const std::string& url = input.pRequest->url();
 
   if (data.size() < sizeof(CmptHeader)) {

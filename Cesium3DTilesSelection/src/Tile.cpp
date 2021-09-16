@@ -260,12 +260,14 @@ void Tile::loadContent() {
     void* pRendererResources;
   };
 
+  TileContentLoadInput loadInput(*this);
+
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       // TODO: for some reason, this first lambda completely breaks if we make
       // it mutable
       .thenInWorkerThread(
-          [this,
+          [loadInput = std::move(loadInput),
            asyncSystem = tileset.getAsyncSystem(),
            pLogger = tileset.getExternals().pLogger,
            pAssetAccessor = tileset.getExternals().pAssetAccessor](
@@ -296,13 +298,11 @@ void Tile::loadContent() {
               return asyncSystem.createResolvedFuture(std::move(pLoadResult));
             }
 
-            TileContentLoadInput loadInput(
-                asyncSystem,
-                std::move(pLogger),
-                std::move(pAssetAccessor),
-                std::move(pRequest),
-                std::nullopt,
-                *this);
+            loadInput.asyncSystem = asyncSystem;
+            loadInput.pLogger = std::move(pLogger);
+            loadInput.pAssetAccessor = std::move(pAssetAccessor);
+            loadInput.pRequest = std::move(pRequest);
+            loadInput.data = loadInput.pRequest->response()->data();
 
             return TileContentFactory::createContent(loadInput)
                 // Forward status code to the load result.

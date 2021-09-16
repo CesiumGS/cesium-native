@@ -685,7 +685,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       input.tileID,
       input.tileBoundingVolume,
       input.pRequest->url(),
-      input.data,
+      *input.data,
       input.contentOptions.enableWaterMask));
 }
 
