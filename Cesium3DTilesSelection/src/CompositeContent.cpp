@@ -120,7 +120,6 @@ CompositeContent::load(const TileContentLoadInput& input) {
       SPDLOG_LOGGER_WARN(
           pLogger,
           "Composite tile ends before all embedded tiles could be read.");
-      pos = static_cast<uint32_t>(pHeader->byteLength);
       break;
     }
     const InnerHeader* pInner =
@@ -129,7 +128,6 @@ CompositeContent::load(const TileContentLoadInput& input) {
       SPDLOG_LOGGER_WARN(
           pLogger,
           "Composite tile ends before all embedded tiles could be read.");
-      pos = static_cast<uint32_t>(pHeader->byteLength);
       break;
     }
     gsl::span<const std::byte> innerData(data.data() + pos, pInner->byteLength);
