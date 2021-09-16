@@ -2,6 +2,7 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Uri.h"
 #include <cstddef>
 #include <rapidjson/document.h>
@@ -15,7 +16,7 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
       input.tileTransform,
       input.tileRefine,
       input.pRequest->url(),
-      *input.data));
+      input.pRequest->response()->data()));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(

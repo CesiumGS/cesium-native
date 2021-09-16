@@ -2,6 +2,7 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
@@ -685,7 +686,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       input.tileID,
       input.tileBoundingVolume,
       input.pRequest->url(),
-      *input.data,
+      input.pRequest->response()->data(),
       input.contentOptions.enableWaterMask));
 }
 

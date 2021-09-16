@@ -7,6 +7,7 @@
 #include "CesiumUtility/Math.h"
 #include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/joinToString.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include <optional>
 #include <stdexcept>
 
@@ -16,8 +17,10 @@ namespace Cesium3DTilesSelection {
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
-  return input.asyncSystem.createResolvedFuture(
-      load(input.pLogger, input.pRequest->url(), *input.data));
+  return input.asyncSystem.createResolvedFuture(load(
+      input.pLogger,
+      input.pRequest->url(),
+      input.pRequest->response()->data()));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(

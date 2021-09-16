@@ -264,8 +264,6 @@ void Tile::loadContent() {
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
-      // TODO: for some reason, this first lambda completely breaks if we make
-      // it mutable
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            asyncSystem = tileset.getAsyncSystem(),
@@ -302,7 +300,6 @@ void Tile::loadContent() {
             loadInput.pLogger = std::move(pLogger);
             loadInput.pAssetAccessor = std::move(pAssetAccessor);
             loadInput.pRequest = std::move(pRequest);
-            loadInput.data = loadInput.pRequest->response()->data();
 
             return TileContentFactory::createContent(loadInput)
                 // Forward status code to the load result.

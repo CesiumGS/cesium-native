@@ -2,6 +2,8 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Tracing.h"
 #include <cstddef>
 #include <functional>
@@ -32,6 +34,64 @@ static_assert(sizeof(InnerHeader) == 12);
 namespace Cesium3DTilesSelection {
 
 namespace {
+
+class DerivedInnerResponse : public CesiumAsync::IAssetResponse {
+private:
+  const IAssetResponse* pOriginalResponse;
+  gsl::span<const std::byte> derivedData;
+
+public:
+  DerivedInnerResponse(
+      const IAssetResponse* pOriginalResponse_,
+      const gsl::span<const std::byte> derivedData_)
+      : pOriginalResponse(pOriginalResponse_), derivedData(derivedData_) {}
+
+  uint16_t statusCode() const override {
+    return pOriginalResponse->statusCode();
+  }
+
+  std::string contentType() const override {
+    return pOriginalResponse->contentType();
+  }
+
+  const CesiumAsync::HttpHeaders& headers() const override {
+    return pOriginalResponse->headers();
+  }
+
+  gsl::span<const std::byte> data() const override { return derivedData; }
+};
+
+class DerivedInnerRequest : public CesiumAsync::IAssetRequest {
+private:
+  std::shared_ptr<CesiumAsync::IAssetRequest> pOriginalRequest;
+  std::unique_ptr<DerivedInnerResponse> pDerivedResponse;
+
+public:
+  DerivedInnerRequest(
+      const std::shared_ptr<CesiumAsync::IAssetRequest>& pOriginalRequest_,
+      const gsl::span<const std::byte> data)
+      : pOriginalRequest(pOriginalRequest_),
+        pDerivedResponse(std::make_unique<DerivedInnerResponse>(
+            pOriginalRequest->response(),
+            data)) {}
+
+  const std::string& method() const override {
+    return this->pOriginalRequest->method();
+  }
+
+  const std::string& url() const override {
+    return this->pOriginalRequest->url();
+  }
+
+  const CesiumAsync::HttpHeaders& headers() const override {
+    return this->pOriginalRequest->headers();
+  }
+
+  const CesiumAsync::IAssetResponse* response() const override {
+    return this->pDerivedResponse.get();
+  }
+};
+
 /**
  * @brief Derive a {@link TileContentLoadInput} from the given one.
  *
@@ -47,15 +107,11 @@ namespace {
 TileContentLoadInput derive(
     const TileContentLoadInput& input,
     const gsl::span<const std::byte>& derivedData) {
-  auto pLogger = input.pLogger;
-  auto pAssetAccessor = input.pAssetAccessor;
-  auto pRequest = input.pRequest;
   return TileContentLoadInput(
       input.asyncSystem,
-      std::move(pLogger),
-      std::move(pAssetAccessor),
-      std::move(pRequest),
-      derivedData,
+      input.pLogger,
+      input.pAssetAccessor,
+      std::make_shared<DerivedInnerRequest>(input.pRequest, derivedData),
       input.tileID,
       input.tileBoundingVolume,
       input.tileContentBoundingVolume,
@@ -70,7 +126,7 @@ CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 CompositeContent::load(const TileContentLoadInput& input) {
   CESIUM_TRACE("Cesium3DTilesSelection::CompositeContent::load");
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-  const gsl::span<const std::byte>& data = *input.data;
+  const gsl::span<const std::byte>& data = input.pRequest->response()->data();
   const std::string& url = input.pRequest->url();
 
   if (data.size() < sizeof(CmptHeader)) {
