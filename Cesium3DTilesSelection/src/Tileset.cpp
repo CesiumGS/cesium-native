@@ -1696,7 +1696,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     return _renderLeaf(frameState, tile, distances, result);
   }
 
-  bool unconditionallyRefine = tile.getUnconditionallyRefine();
+  const bool unconditionallyRefine = tile.getUnconditionallyRefine();
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
   const bool waitingForChildren =
       _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
