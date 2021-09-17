@@ -321,7 +321,7 @@ void Tile::loadContent() {
                 // arbitrary information to the consumer, so the up-axis
                 // is stored here:
                 model.extras["gltfUpAxis"] =
-                    static_cast<std::underlying_type<Axis>::type>(gltfUpAxis);
+                    static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
 
                 const BoundingVolume& boundingVolume =
                     loadInput.tileBoundingVolume;
