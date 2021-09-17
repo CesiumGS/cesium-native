@@ -60,12 +60,22 @@ struct TileContentLoadResult {
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
       availableTileRectangles{};
 
+  // TODO: other forms of tile availability, like a bitfield?
+
   /**
    * @brief The HTTP status code received when accessing this content.
    */
   uint16_t httpStatusCode = 0;
 
-  // TODO: other forms of tile availability, like a bitfield?
+  /**
+   * @brief The raster overlay projections for which texture coordinates have
+   * been generated.
+   *
+   * For the projection at index `n`, there is a set of texture coordinates
+   * with the attribute name `_CESIUMOVERLAY_n` that corresponds to that
+   * projection.
+   */
+  std::vector<CesiumGeospatial::Projection> rasterOverlayProjections;
 };
 
 } // namespace Cesium3DTilesSelection

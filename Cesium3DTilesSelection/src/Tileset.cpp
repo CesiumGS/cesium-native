@@ -1425,9 +1425,12 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
   gsl::span<Tile> children = tile.getChildren();
   bool waitingForChildren = false;
   for (Tile& child : children) {
-    if (!child.isRenderable()) {
+    if (!child.isRenderable() && !child.isExternalTileset()) {
       waitingForChildren = true;
 
+      // While we are waiting for the child to load, we need to push along the
+      // tile and raster loading by continuing to update it.
+      child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
       this->_markTileVisited(child);
 
       // We're using the distance to the parent tile to compute the load
@@ -1693,11 +1696,13 @@ Tileset::TraversalDetails Tileset::_visitTile(
     return _renderLeaf(frameState, tile, distances, result);
   }
 
+  bool unconditionallyRefine = tile.getUnconditionallyRefine();
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
   const bool waitingForChildren =
       _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
 
-  if (meetsSse || ancestorMeetsSse || waitingForChildren) {
+  if (!unconditionallyRefine &&
+      (meetsSse || ancestorMeetsSse || waitingForChildren)) {
     // This tile (or an ancestor) is the one we want to render this frame, but
     // we'll do different things depending on the state of this tile and on what
     // we did _last_ frame.
