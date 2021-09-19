@@ -6,7 +6,8 @@
 
 #include <cesium-sqlite3.h>
 
-#include <rapidjson/fwd.h>
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
