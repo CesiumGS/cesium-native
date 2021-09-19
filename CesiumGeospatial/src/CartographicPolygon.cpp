@@ -1,7 +1,9 @@
 
 #include "CesiumGeospatial/CartographicPolygon.h"
-#include <array>
+
 #include <mapbox/earcut.hpp>
+
+#include <array>
 
 namespace CesiumGeospatial {
 

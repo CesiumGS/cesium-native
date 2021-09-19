@@ -1,8 +1,10 @@
 #include "CesiumGeospatial/EllipsoidTangentPlane.h"
-#include "CesiumGeometry/IntersectionTests.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Ray.h"
+
 #include "CesiumGeospatial/Transforms.h"
+
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Ray.h>
 
 #include <stdexcept>
 

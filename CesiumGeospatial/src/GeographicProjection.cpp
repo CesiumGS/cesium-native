@@ -1,6 +1,7 @@
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/Cartographic.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
 
 namespace CesiumGeospatial {
 

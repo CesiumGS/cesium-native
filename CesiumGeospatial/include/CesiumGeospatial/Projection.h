@@ -2,6 +2,7 @@
 
 #include "CesiumGeospatial/GeographicProjection.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
+
 #include <variant>
 
 namespace CesiumGeospatial {

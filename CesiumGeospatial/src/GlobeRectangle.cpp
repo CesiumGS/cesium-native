@@ -1,5 +1,6 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
 
 using namespace CesiumUtility;
 

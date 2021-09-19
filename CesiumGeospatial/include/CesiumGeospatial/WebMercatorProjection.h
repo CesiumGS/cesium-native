@@ -3,6 +3,7 @@
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/Library.h"
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 

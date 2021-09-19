@@ -1,8 +1,10 @@
 #pragma once
 
-#include "CesiumGeometry/Plane.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/Library.h"
+
+#include <CesiumGeometry/Plane.h>
+
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>

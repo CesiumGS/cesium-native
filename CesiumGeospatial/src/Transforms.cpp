@@ -1,5 +1,7 @@
 #include "CesiumGeospatial/Transforms.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/gtc/epsilon.hpp>
 
 using namespace CesiumUtility;

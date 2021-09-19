@@ -1,7 +1,8 @@
 #pragma once
 
 #include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
 
 namespace CesiumGeospatial {
 

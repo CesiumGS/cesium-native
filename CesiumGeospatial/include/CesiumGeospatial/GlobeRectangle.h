@@ -3,7 +3,9 @@
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <optional>
 
 namespace CesiumGeospatial {

@@ -1,4 +1,5 @@
 #include "CesiumGeospatial/Projection.h"
+
 #include <glm/trigonometric.hpp>
 
 namespace CesiumGeospatial {

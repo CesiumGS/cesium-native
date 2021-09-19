@@ -2,7 +2,9 @@
 
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/vec3.hpp>
 #include <optional>
 
