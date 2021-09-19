@@ -1,5 +1,7 @@
 #include "CesiumAsync/AsyncSystem.h"
+
 #include "CesiumAsync/ITaskProcessor.h"
+
 #include <future>
 
 namespace CesiumAsync {

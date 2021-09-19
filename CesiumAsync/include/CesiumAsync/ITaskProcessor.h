@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumAsync/Library.h"
+
 #include <functional>
 
 namespace CesiumAsync {

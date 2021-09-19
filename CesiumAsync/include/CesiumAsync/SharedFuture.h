@@ -5,7 +5,9 @@
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
 #include "CesiumAsync/Impl/WithTracing.h"
 #include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumUtility/Tracing.h>
+
 #include <variant>
 
 namespace CesiumAsync {

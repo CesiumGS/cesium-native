@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
+
 #include <functional>
 #include <string>
 

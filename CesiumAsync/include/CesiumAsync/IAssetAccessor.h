@@ -3,8 +3,10 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/Library.h"
-#include <cstddef>
+
 #include <gsl/span>
+
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>

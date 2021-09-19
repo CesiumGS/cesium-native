@@ -2,8 +2,10 @@
 
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
-#include <cstddef>
+
 #include <gsl/span>
+
+#include <cstddef>
 #include <map>
 #include <string>
 

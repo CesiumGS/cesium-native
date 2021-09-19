@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumAsync/Impl/ImmediateScheduler.h"
+
 #include <memory>
 
 namespace CesiumAsync {

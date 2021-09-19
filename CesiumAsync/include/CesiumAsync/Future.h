@@ -6,7 +6,9 @@
 #include "CesiumAsync/Impl/WithTracing.h"
 #include "CesiumAsync/SharedFuture.h"
 #include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumUtility/Tracing.h>
+
 #include <variant>
 
 namespace CesiumAsync {

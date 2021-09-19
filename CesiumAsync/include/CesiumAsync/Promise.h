@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
 #include "CesiumAsync/Impl/cesium-async++.h"
+
 #include <exception>
 #include <memory>
 

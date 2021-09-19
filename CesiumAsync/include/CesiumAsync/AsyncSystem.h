@@ -8,7 +8,9 @@
 #include "CesiumAsync/Library.h"
 #include "CesiumAsync/Promise.h"
 #include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumUtility/Tracing.h>
+
 #include <memory>
 
 namespace CesiumAsync {
