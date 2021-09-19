@@ -1,12 +1,14 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/Library.h"
 #include "CesiumIonClient/Assets.h"
 #include "CesiumIonClient/Profile.h"
 #include "CesiumIonClient/Response.h"
 #include "CesiumIonClient/Token.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/Library.h>
+
 #include <cstdint>
 
 namespace CesiumIonClient {
