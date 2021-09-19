@@ -1,15 +1,19 @@
 #include "upgradeBatchTableToFeatureMetadata.h"
+
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "CesiumGltf/PropertyType.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumGltf/MeshPrimitiveEXT_feature_metadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/ModelEXT_feature_metadata.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumUtility/Tracing.h>
+
 #include <glm/glm.hpp>
-#include <map>
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
+
+#include <map>
 #include <type_traits>
 
 using namespace CesiumGltf;

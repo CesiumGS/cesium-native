@@ -3,12 +3,15 @@
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumGeospatial/CartographicPolygon.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/Projection.h"
-#include <memory>
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/Projection.h>
+
 #include <spdlog/fwd.h>
+
+#include <memory>
 #include <string>
 #include <vector>
 

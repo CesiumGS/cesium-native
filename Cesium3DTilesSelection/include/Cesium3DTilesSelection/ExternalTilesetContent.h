@@ -5,10 +5,12 @@
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
-#include <cstddef>
+
 #include <gsl/span>
-#include <memory>
 #include <spdlog/fwd.h>
+
+#include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace Cesium3DTilesSelection {

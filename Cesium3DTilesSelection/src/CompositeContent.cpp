@@ -2,9 +2,12 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumUtility/Tracing.h"
-#include <cstddef>
+
+#include <CesiumUtility/Tracing.h>
+
 #include <rapidjson/document.h>
+
+#include <cstddef>
 #include <stdexcept>
 
 namespace {

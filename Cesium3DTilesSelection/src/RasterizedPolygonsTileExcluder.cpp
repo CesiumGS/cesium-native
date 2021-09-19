@@ -1,4 +1,5 @@
 #include "Cesium3DTilesSelection/RasterizedPolygonsTileExcluder.h"
+
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/Tile.h"
 #include "TileUtilities.h"

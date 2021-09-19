@@ -1,11 +1,14 @@
 #include "upsampleGltfForRasterOverlays.h"
-#include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
+
 #include "SkirtMeshMetadata.h"
+
+#include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Tracing.h>
+
 #include <algorithm>
 #include <cstddef>
 

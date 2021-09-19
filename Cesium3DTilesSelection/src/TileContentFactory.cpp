@@ -1,5 +1,7 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
+
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+
 #include <algorithm>
 #include <cctype>
 

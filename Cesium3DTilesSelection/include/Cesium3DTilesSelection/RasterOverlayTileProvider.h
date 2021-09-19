@@ -3,13 +3,16 @@
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumGltf/GltfReader.h"
-#include "CesiumUtility/IntrusivePointer.h"
+
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGltf/GltfReader.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
+#include <spdlog/fwd.h>
+
 #include <cassert>
 #include <optional>
-#include <spdlog/fwd.h>
 
 namespace Cesium3DTilesSelection {
 

@@ -1,10 +1,13 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/Library.h"
-#include "CesiumAsync/IAssetAccessor.h"
+
+#include <CesiumAsync/IAssetAccessor.h>
+
+#include <spdlog/fwd.h>
+
 #include <functional>
 #include <memory>
-#include <spdlog/fwd.h>
 #include <string>
 
 namespace Cesium3DTilesSelection {

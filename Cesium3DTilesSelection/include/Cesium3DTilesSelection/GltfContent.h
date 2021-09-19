@@ -6,11 +6,14 @@
 #include "Cesium3DTilesSelection/TileContentLoader.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
-#include "CesiumGltf/GltfReader.h"
-#include <cstddef>
+
+#include <CesiumGltf/GltfReader.h>
+
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
 #include <spdlog/fwd.h>
+
+#include <cstddef>
 
 namespace Cesium3DTilesSelection {
 

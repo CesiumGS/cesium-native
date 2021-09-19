@@ -1,9 +1,11 @@
 
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
+
 #include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGltf/ImageManipulation.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGltf/ImageManipulation.h>
+#include <CesiumUtility/Math.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;

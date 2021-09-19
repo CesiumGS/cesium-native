@@ -6,8 +6,10 @@
 #include "Cesium3DTilesSelection/TileContentLoader.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
-#include <memory>
+
 #include <spdlog/fwd.h>
+
+#include <memory>
 #include <string>
 
 namespace Cesium3DTilesSelection {

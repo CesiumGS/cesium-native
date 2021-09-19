@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGltf/Model.h"
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGltf/Model.h>
+
 #include <vector>
 
 namespace Cesium3DTilesSelection {

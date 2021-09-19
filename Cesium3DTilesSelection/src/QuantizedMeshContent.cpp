@@ -1,20 +1,25 @@
 #include "QuantizedMeshContent.h"
+
+#include "SkirtMeshMetadata.h"
+#include "calcQuadtreeMaxGeometricError.h"
+
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
-#include "CesiumUtility/Uri.h"
-#include "SkirtMeshMetadata.h"
-#include "calcQuadtreeMaxGeometricError.h"
-#include <cstddef>
+
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/Uri.h>
+
 #include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
+
+#include <cstddef>
 #include <stdexcept>
 
 using namespace CesiumUtility;
