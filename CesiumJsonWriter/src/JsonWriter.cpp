@@ -1,4 +1,5 @@
-#include <CesiumJsonWriter/JsonWriter.h>
+#include "CesiumJsonWriter/JsonWriter.h"
+
 #include <algorithm>
 #include <iterator>
 #include <string>
