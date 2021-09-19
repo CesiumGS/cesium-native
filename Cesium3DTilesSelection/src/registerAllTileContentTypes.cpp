@@ -1,11 +1,11 @@
 #include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
 
 #include "Batched3DModelContent.h"
-#include "CompositeContent.h"
-#include "QuantizedMeshContent.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
+#include "CompositeContent.h"
+#include "QuantizedMeshContent.h"
 
 namespace Cesium3DTilesSelection {
 

@@ -1,10 +1,10 @@
 
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 
-#include "TileUtilities.h"
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "TileUtilities.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>

@@ -1,7 +1,5 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 
-#include "TileUtilities.h"
-#include "calcQuadtreeMaxGeometricError.h"
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
@@ -9,6 +7,8 @@
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "TileUtilities.h"
+#include "calcQuadtreeMaxGeometricError.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>

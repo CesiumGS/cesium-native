@@ -1,12 +1,12 @@
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 
-#include "TileUtilities.h"
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
+#include "TileUtilities.h"
 
 using namespace CesiumUtility;
 using namespace Cesium3DTilesSelection;

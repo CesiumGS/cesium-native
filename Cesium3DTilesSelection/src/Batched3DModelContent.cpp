@@ -1,9 +1,9 @@
 
 #include "Batched3DModelContent.h"
 
-#include "upgradeBatchTableToFeatureMetadata.h"
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "upgradeBatchTableToFeatureMetadata.h"
 
 #include <CesiumGltf/ModelEXT_feature_metadata.h>
 #include <CesiumUtility/Tracing.h>

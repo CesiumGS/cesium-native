@@ -1,11 +1,11 @@
 #include "Cesium3DTilesSelection/Tile.h"
 
-#include "TileUtilities.h"
-#include "upsampleGltfForRasterOverlays.h"
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
+#include "TileUtilities.h"
+#include "upsampleGltfForRasterOverlays.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
