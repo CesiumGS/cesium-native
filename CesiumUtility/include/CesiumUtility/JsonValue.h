@@ -1,9 +1,11 @@
 #pragma once
 
 #include "CesiumUtility/Library.h"
+
+#include <gsl/narrow>
+
 #include <cmath>
 #include <cstdint>
-#include <gsl/narrow>
 #include <initializer_list>
 #include <map>
 #include <optional>

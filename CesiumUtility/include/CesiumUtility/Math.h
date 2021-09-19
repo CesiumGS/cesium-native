@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumUtility/Library.h"
+
 #include <glm/gtc/epsilon.hpp>
 
 namespace CesiumUtility {
