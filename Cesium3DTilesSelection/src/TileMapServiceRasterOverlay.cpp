@@ -5,6 +5,7 @@
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "Cesium3DTilesSelection/tinyxml-cesium.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -13,7 +14,6 @@
 #include <CesiumUtility/Uri.h>
 
 #include <cstddef>
-#include <tinyxml2.h>
 
 using namespace CesiumAsync;
 
