@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/Library.h"
+
 #include <memory>
 #include <optional>
 #include <string>
