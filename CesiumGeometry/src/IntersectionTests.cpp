@@ -1,7 +1,10 @@
 #include "CesiumGeometry/IntersectionTests.h"
+
 #include "CesiumGeometry/Plane.h"
 #include "CesiumGeometry/Ray.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/geometric.hpp>
 
 using namespace CesiumUtility;

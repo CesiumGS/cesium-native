@@ -2,6 +2,7 @@
 
 #include "CesiumGeometry/Library.h"
 #include "CullingResult.h"
+
 #include <glm/vec3.hpp>
 
 namespace CesiumGeometry {

@@ -1,8 +1,12 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
+
 #include "CesiumGeometry/Plane.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
+
 #include <stdexcept>
 
 namespace CesiumGeometry {
