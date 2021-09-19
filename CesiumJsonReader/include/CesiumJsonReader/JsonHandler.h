@@ -3,6 +3,7 @@
 #include "CesiumJsonReader/IJsonHandler.h"
 #include "CesiumJsonReader/IgnoreValueJsonHandler.h"
 #include "CesiumJsonReader/Library.h"
+
 #include <cstdint>
 #include <string>
 

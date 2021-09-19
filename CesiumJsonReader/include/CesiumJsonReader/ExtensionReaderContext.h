@@ -2,6 +2,7 @@
 
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/Library.h"
+
 #include <functional>
 #include <map>
 #include <memory>

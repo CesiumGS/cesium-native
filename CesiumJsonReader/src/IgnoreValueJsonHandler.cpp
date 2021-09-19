@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/IgnoreValueJsonHandler.h"
+
 #include <string>
 
 using namespace CesiumJsonReader;

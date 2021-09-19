@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/StringJsonHandler.h"
+
 #include "CesiumJsonReader/JsonHandler.h"
 
 using namespace CesiumJsonReader;

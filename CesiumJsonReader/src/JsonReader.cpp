@@ -1,6 +1,8 @@
 #include "CesiumJsonReader/JsonReader.h"
-#include <cassert>
+
 #include <rapidjson/reader.h>
+
+#include <cassert>
 
 using namespace CesiumJsonReader;
 

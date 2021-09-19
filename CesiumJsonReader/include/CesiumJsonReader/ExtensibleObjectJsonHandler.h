@@ -5,6 +5,7 @@
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
+
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
 

@@ -3,7 +3,9 @@
 #include "CesiumJsonReader/ExtensionReaderContext.h"
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
+
 #include <CesiumUtility/ExtensibleObject.h>
+
 #include <memory>
 
 namespace CesiumJsonReader {

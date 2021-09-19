@@ -2,8 +2,10 @@
 
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/Library.h"
-#include <cstddef>
+
 #include <gsl/span>
+
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>

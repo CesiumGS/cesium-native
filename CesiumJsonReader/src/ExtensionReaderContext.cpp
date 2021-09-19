@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/ExtensionReaderContext.h"
+
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
