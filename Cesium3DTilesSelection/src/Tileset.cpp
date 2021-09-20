@@ -140,7 +140,7 @@ Tileset::~Tileset() {
 }
 
 Future<void>
-Tileset::_handleAssetResponse(const std::shared_ptr<IAssetRequest>&& pRequest) {
+Tileset::_handleAssetResponse(std::shared_ptr<IAssetRequest>&& pRequest) {
   const IAssetResponse* pResponse = pRequest->response();
   if (!pResponse) {
     SPDLOG_LOGGER_ERROR(
@@ -593,7 +593,7 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 } // namespace
 
 /*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(
-    const std::shared_ptr<IAssetRequest>&& pRequest,
+    std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
     bool useWaterMask) {
@@ -1055,7 +1055,7 @@ static bool updateContextWithNewToken(
 }
 
 void Tileset::_handleTokenRefreshResponse(
-    const std::shared_ptr<IAssetRequest>&& pIonRequest,
+    std::shared_ptr<IAssetRequest>&& pIonRequest,
     TileContext* pContext,
     const std::shared_ptr<spdlog::logger>& pLogger) {
   const IAssetResponse* pIonResponse = pIonRequest->response();

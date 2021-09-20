@@ -586,8 +586,7 @@ private:
    * This method should only be called when this tile's parent is already
    * loaded.
    */
-  void
-  upsampleParent(const std::vector<CesiumGeospatial::Projection>&& projections);
+  void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
 
   /**
    * @brief Initiates loading of any overlays attached to this tile.

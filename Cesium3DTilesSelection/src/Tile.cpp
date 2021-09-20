@@ -856,7 +856,7 @@ Tile::generateTextureCoordinates(
 }
 
 void Tile::upsampleParent(
-    const std::vector<CesiumGeospatial::Projection>&& projections) {
+    std::vector<CesiumGeospatial::Projection>&& projections) {
   Tile* pParent = this->getParent();
   const UpsampledQuadtreeNode* pSubdividedParentID =
       std::get_if<UpsampledQuadtreeNode>(&this->getTileID());

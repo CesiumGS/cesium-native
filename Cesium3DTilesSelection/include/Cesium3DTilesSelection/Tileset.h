@@ -323,8 +323,8 @@ private:
    *
    * @param pRequest The request for which the response was received.
    */
-  CesiumAsync::Future<void> _handleAssetResponse(
-      const std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
+  CesiumAsync::Future<void>
+  _handleAssetResponse(std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest);
 
   struct LoadResult {
     std::unique_ptr<TileContext> pContext;
@@ -346,7 +346,7 @@ private:
    * @return The LoadResult structure
    */
   static LoadResult _handleTilesetResponse(
-      const std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
+      std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
       std::unique_ptr<TileContext>&& pContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
@@ -386,7 +386,7 @@ private:
    * @param pContext The context.
    */
   void _handleTokenRefreshResponse(
-      const std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
+      std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest,
       TileContext* pContext,
       const std::shared_ptr<spdlog::logger>& pLogger);
 
