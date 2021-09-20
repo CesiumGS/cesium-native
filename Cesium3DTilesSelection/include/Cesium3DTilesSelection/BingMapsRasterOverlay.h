@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterOverlay.h"
+#include "RasterOverlay.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeospatial/Ellipsoid.h>
