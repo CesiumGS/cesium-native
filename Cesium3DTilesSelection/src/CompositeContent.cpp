@@ -50,9 +50,7 @@ public:
     return pOriginalResponse->statusCode();
   }
 
-  std::string contentType() const override {
-    return pOriginalResponse->contentType();
-  }
+  std::string contentType() const override { return ""; }
 
   const CesiumAsync::HttpHeaders& headers() const override {
     return pOriginalResponse->headers();

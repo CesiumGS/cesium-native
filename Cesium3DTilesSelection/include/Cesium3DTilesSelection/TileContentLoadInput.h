@@ -47,8 +47,6 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
    * @param pLogger The logger that will be used
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pRequest The original tile request and its response.
-   * @param data The content data to use. The response data will be used
-   * instead if this is left as `std::nullopt`.
    * @param tile The {@link Tile} that the content belongs to.
    */
   TileContentLoadInput(
