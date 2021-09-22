@@ -306,25 +306,56 @@ function resolveDictionary(
 }
 
 /**
- * @brief Creates a documentation comment block for the given property.
- *
- * The result will be a (non-indented) doxygen comment block that contains
- * the `briefDoc` (or `name`) and `fullDoc` from the given property values.
+ * @brief Creates a documentation comment block for the class that 
+ * contains the values for the given enum property.
  *
  * @param {Object} propertyValues The property
  * @return {String} The comment block
  */
-function createPropertyDoc(propertyValues) {
-  let propertyDoc = `/**\n * @brief ${
+ function createEnumPropertyDoc(propertyValues) {
+  let propertyDoc = `/**\n * @brief Known values for ${
     propertyValues.briefDoc || propertyValues.name
   }\n`;
-  if (propertyValues.fullDoc) {
-    propertyDoc += ` *\n * ${propertyValues.fullDoc
-      .split("\n")
-      .join("\n * ")}\n`;
-  }
   propertyDoc += ` */`;
   return propertyDoc;
+}
+
+/**
+ * Returns a string representing the common type of an "anyOf" property.
+ * 
+ * If there is no common type (because it is not an "anyOf" property,
+ * or the "anyOf" entries don't contain "type" properties, or there
+ * are different "type" properties), then undefined is returned.
+ * 
+ * @param {String} propertyName The property name
+ * @param {Object} propertyDetails The value of the property in the JSON 
+ * schema. Good to know that. Used a debugger to figure it out. 
+ * @returns The string indicating the common type, or undefined.
+ */
+function findCommonEnumType(propertyName, propertyDetails) {
+  if (
+    !propertyDetails.anyOf ||
+    propertyDetails.anyOf.length === 0 ||
+    !propertyDetails.anyOf[0].enum ||
+    propertyDetails.anyOf[0].enum.length === 0
+  ) {
+    return undefined;
+  }
+  var firstType = undefined;
+  for (var i = 0; i<propertyDetails.anyOf.length; i++) {
+    const element = propertyDetails.anyOf[i];
+    if (element.type) {
+      if (firstType) {
+        if (element.type !== firstType) {
+          console.warn('Expected equal types for enum values in ' + propertyName + ', but found ' + firstType + ' and ' + element.type);
+          return undefined;
+        }
+      } else {
+        firstType = element.type;
+      }
+    }
+  }
+  return firstType;
 }
 
 function resolveEnum(
@@ -344,6 +375,12 @@ function resolveEnum(
     return undefined;
   }
 
+  const enumType = findCommonEnumType(propertyName, propertyDetails);
+  if (!enumType) {
+    return undefined;
+  }
+  const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
+
   const enumName = toPascalCase(propertyName);
 
   const readerTypes = createEnumReaderType(
@@ -354,23 +391,25 @@ function resolveEnum(
   );
 
   const propertyDefaultValues = propertyDefaults(propertyName, propertyDetails);
+  const enumBriefDoc = propertyDefaultValues.briefDoc + '\n * \n * Known values are defined in {@link ' + enumName + '}.\n *';
   const result = {
     ...propertyDefaultValues,
     localTypes: [
       unindent(`
-        ${createPropertyDoc(propertyDefaultValues)}
-        enum class ${toPascalCase(propertyName)} {
+        ${createEnumPropertyDoc(propertyDefaultValues)}
+        class ${enumName} {
+          public: 
             ${indent(
               propertyDetails.anyOf
                 .map((e) => createEnum(e))
                 .filter((e) => e !== undefined)
-                .join(",\n\n"),
+                .join(";\n\n")+";",
               12
             )}
         };
       `),
     ],
-    type: makeOptional ? `std::optional<${enumName}>` : enumName,
+    type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: createEnumDefault(enumName, propertyDetails),
     readerHeaders: [`"CesiumGltf/${parentName}.h"`],
@@ -382,17 +421,39 @@ function resolveEnum(
       propertyDetails
     ),
     needsInitialization: !makeOptional,
+    briefDoc : enumBriefDoc,
   };
 
   if (readerTypes.length > 0) {
     result.readerType = `${enumName}JsonHandler`;
-  } else {
-    result.readerType = `CesiumJsonReader::IntegerJsonHandler<${parentName}::${enumName}>`;
+  } else if (enumType === "integer") {
+    result.readerType = `CesiumJsonReader::IntegerJsonHandler<${enumRuntimeType}>`;
     result.readerHeaders.push(`"CesiumJsonReader/IntegerJsonHandler.h"`);
+  } else if (enumType === "string") {
+    result.readerType = `CesiumJsonReader::StringJsonHandler`;
+    result.readerHeaders.push(`"CesiumJsonReader/StringJsonHandler.h"`);
   }
 
   return result;
 }
+
+/**
+ * If ... many conditions hold, ... then this will return the name
+ * of the "default" value of the given enum property.
+ * 
+ * @param {Object} propertyDetails The property details
+ * @returns The name of the default property
+ */
+function findNameOfDefault(propertyDetails) {
+  for (var i = 0; i<propertyDetails.anyOf.length; i++) {
+    const element = propertyDetails.anyOf[i];
+    if (element.enum && (element.enum[0] == propertyDetails.default)) {
+      return element.description;
+    }
+  }
+  return undefined;
+}
+
 
 function createEnumDefault(enumName, propertyDetails) {
   if (propertyDetails.default === undefined) {
@@ -400,7 +461,7 @@ function createEnumDefault(enumName, propertyDetails) {
   }
 
   if (propertyDetails.anyOf[0].type === "integer") {
-    return `${enumName}(${propertyDetails.default})`;
+    return `${enumName}::${findNameOfDefault(propertyDetails)}`;
   } else {
     return `${enumName}::${propertyDetails.default}`;
   }
@@ -412,11 +473,11 @@ function createEnum(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return `${makeIdentifier(enumDetails.description)} = ${
+    return `static const int32_t ${makeIdentifier(enumDetails.description)} = ${
       enumDetails.enum[0]
     }`;
   } else {
-    return makeIdentifier(enumDetails.enum[0]);
+    return `inline static const std::string ${makeIdentifier(enumDetails.enum[0])} = \"${enumDetails.enum[0]}\"`;
   }
 }
 
@@ -428,6 +489,10 @@ function createEnumReaderType(
 ) {
   if (propertyDetails.anyOf[0].type === "integer") {
     // No special reader needed for integer enums.
+    return [];
+  }
+  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
+    // No special reader needed for string enums.
     return [];
   }
 
@@ -452,6 +517,10 @@ function createEnumReaderTypeImpl(
 ) {
   if (propertyDetails.anyOf[0].type === "integer") {
     // No special reader needed for integer enums.
+    return [];
+  }
+  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
+    // No special reader needed for string enums.
     return [];
   }
 
