@@ -317,9 +317,7 @@ void Tile::loadContent() {
                 // Forward status code to the load result.
                 .thenInWorkerThread(
                     [statusCode = pResponse->statusCode(),
-                     // We can't move loadInput just yet, since createContent()
-                     // may still be using it at capture-time.
-                     &loadInput,
+                     loadInput = std::move(loadInput),
                      gltfUpAxis,
                      projections = std::move(projections),
                      generateMissingNormalsSmooth,
