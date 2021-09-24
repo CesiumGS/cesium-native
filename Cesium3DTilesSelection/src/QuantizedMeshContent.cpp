@@ -2,6 +2,7 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/JsonHelpers.h"
@@ -678,15 +679,15 @@ static std::vector<std::byte> generateNormals(
   return normalsBuffer;
 }
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 QuantizedMeshContent::load(const TileContentLoadInput& input) {
-  return load(
+  return input.asyncSystem.createResolvedFuture(load(
       input.pLogger,
       input.tileID,
       input.tileBoundingVolume,
-      input.url,
-      input.data,
-      input.contentOptions.enableWaterMask);
+      input.pRequest->url(),
+      input.pRequest->response()->data(),
+      input.contentOptions.enableWaterMask));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(

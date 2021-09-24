@@ -2,20 +2,21 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Uri.h"
 #include <cstddef>
 #include <rapidjson/document.h>
 
 namespace Cesium3DTilesSelection {
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 ExternalTilesetContent::load(const TileContentLoadInput& input) {
-  return load(
+  return input.asyncSystem.createResolvedFuture(load(
       input.pLogger,
       input.tileTransform,
       input.tileRefine,
-      input.url,
-      input.data);
+      input.pRequest->url(),
+      input.pRequest->response()->data()));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> ExternalTilesetContent::load(

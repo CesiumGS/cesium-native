@@ -28,7 +28,7 @@ public:
    * The result will only contain the `childTiles` and the `pNewTileContext`.
    * Other fields will be empty or have default values.
    */
-  std::unique_ptr<TileContentLoadResult>
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   load(const TileContentLoadInput& input) override;
 
 private:
