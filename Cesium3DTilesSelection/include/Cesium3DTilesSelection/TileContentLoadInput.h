@@ -22,9 +22,10 @@ namespace Cesium3DTilesSelection {
  * @brief The information that is passed to a {@link TileContentLoader} to
  * create a {@link TileContentLoadResult}.
  *
- * For many types of tile content, only the `data` field is required. The other
- * members are used for content that can generate child tiles, like external
- * tilesets or composite tiles. These members are usually initialized from
+ * For many types of tile content, only the `pRequest` field is required. The
+ * other members are used for content that can generate child tiles, like
+ * external tilesets or composite tiles. These members are usually initialized
+ * from
  * the corresponding members of the {@link Tile} that the content belongs to.
  */
 struct CESIUM3DTILESSELECTION_API TileContentLoadInput {

@@ -6,10 +6,7 @@
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumUtility/Tracing.h"
 #include <cstddef>
-#include <functional>
 #include <rapidjson/document.h>
-#include <stdexcept>
-#include <thread>
 
 namespace {
 #pragma pack(push, 1)
