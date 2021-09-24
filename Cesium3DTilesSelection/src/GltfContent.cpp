@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGeometry/AxisTransforms.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/AccessorWriter.h"
@@ -14,9 +15,12 @@ namespace Cesium3DTilesSelection {
 
 /*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
-  return load(input.pLogger, input.url, input.data);
+  return input.asyncSystem.createResolvedFuture(load(
+      input.pLogger,
+      input.pRequest->url(),
+      input.pRequest->response()->data()));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(

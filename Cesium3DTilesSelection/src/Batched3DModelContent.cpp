@@ -1,6 +1,7 @@
 #include "Batched3DModelContent.h"
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumUtility/Tracing.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
@@ -74,9 +75,12 @@ rapidjson::Document parseFeatureTableJsonData(
 
 } // namespace
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 Batched3DModelContent::load(const TileContentLoadInput& input) {
-  return load(input.pLogger, input.url, input.data);
+  return input.asyncSystem.createResolvedFuture(load(
+      input.pLogger,
+      input.pRequest->url(),
+      input.pRequest->response()->data()));
 }
 
 std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(

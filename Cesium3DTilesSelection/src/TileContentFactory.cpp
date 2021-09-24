@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include <algorithm>
 #include <cctype>
 
@@ -29,10 +30,9 @@ void TileContentFactory::registerContentType(
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
-
-  const gsl::span<const std::byte>& data = input.data;
+  const gsl::span<const std::byte>& data = input.pRequest->response()->data();
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
   auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
@@ -40,7 +40,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
     return itMagic->second->load(input);
   }
 
-  const std::string& contentType = input.contentType;
+  const std::string& contentType = input.pRequest->response()->contentType();
   std::string baseContentType = contentType.substr(0, contentType.find(';'));
 
   auto itContentType =
@@ -72,7 +72,8 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
       "'{}'.",
       baseContentType,
       magic);
-  return nullptr;
+  return input.asyncSystem
+      .createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 
 /**
