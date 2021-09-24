@@ -58,7 +58,7 @@ rapidjson::Document parseFeatureTableJsonData(
     return document;
   }
 
-  auto rtcIt = document.FindMember("RTC_CENTER");
+  const auto rtcIt = document.FindMember("RTC_CENTER");
   if (rtcIt != document.MemberEnd() && rtcIt->value.IsArray() &&
       rtcIt->value.Size() == 3 && rtcIt->value[0].IsDouble() &&
       rtcIt->value[1].IsDouble() && rtcIt->value[2].IsDouble()) {
@@ -162,18 +162,18 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
         "size specified in its header.");
   }
 
-  uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
-                      header.featureTableBinaryByteLength +
-                      header.batchTableJsonByteLength +
-                      header.batchTableBinaryByteLength;
-  uint32_t glbEnd = header.byteLength;
+  const uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
+                            header.featureTableBinaryByteLength +
+                            header.batchTableJsonByteLength +
+                            header.batchTableBinaryByteLength;
+  const uint32_t glbEnd = header.byteLength;
 
   if (glbEnd <= glbStart) {
     throw std::runtime_error("The B3DM is invalid because the start of the "
                              "glTF model is after the end of the entire B3DM.");
   }
 
-  gsl::span<const std::byte> glbData =
+  const gsl::span<const std::byte> glbData =
       data.subspan(glbStart, glbEnd - glbStart);
   std::unique_ptr<TileContentLoadResult> pResult =
       GltfContent::load(pLogger, url, glbData);
@@ -181,21 +181,22 @@ std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
   if (pResult->model && header.featureTableJsonByteLength > 0) {
     CesiumGltf::Model& gltf = pResult->model.value();
 
-    gsl::span<const std::byte> featureTableJsonData =
+    const gsl::span<const std::byte> featureTableJsonData =
         data.subspan(headerLength, header.featureTableJsonByteLength);
     rapidjson::Document featureTable =
         parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 
-    int64_t batchTableStart = headerLength + header.featureTableJsonByteLength +
-                              header.featureTableBinaryByteLength;
-    int64_t batchTableLength =
+    const int64_t batchTableStart = headerLength +
+                                    header.featureTableJsonByteLength +
+                                    header.featureTableBinaryByteLength;
+    const int64_t batchTableLength =
         header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
 
     if (batchTableLength > 0) {
-      gsl::span<const std::byte> batchTableJsonData = data.subspan(
+      const gsl::span<const std::byte> batchTableJsonData = data.subspan(
           static_cast<size_t>(batchTableStart),
           header.batchTableJsonByteLength);
-      gsl::span<const std::byte> batchTableBinaryData = data.subspan(
+      const gsl::span<const std::byte> batchTableBinaryData = data.subspan(
           static_cast<size_t>(
               batchTableStart + header.batchTableJsonByteLength),
           header.batchTableBinaryByteLength);

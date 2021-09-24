@@ -155,7 +155,7 @@ protected:
                 tileID.computeInvertedY(this->getTilingScheme()));
           }
           if (key == "subdomain") {
-            size_t subdomainIndex =
+            const size_t subdomainIndex =
                 (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
             return this->_subdomains[subdomainIndex];
           }
@@ -168,16 +168,17 @@ protected:
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     std::vector<Credit>& tileCredits = options.credits;
 
-    CesiumGeospatial::GlobeRectangle tileRectangle =
+    const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
             this->getProjection(),
             options.rectangle);
 
     // Cesium levels start at 0, Bing levels start at 1
-    unsigned int bingTileLevel = tileID.level + 1;
+    const unsigned int bingTileLevel = tileID.level + 1;
 
     for (const CreditAndCoverageAreas& creditAndCoverageAreas : _credits) {
-      for (CoverageArea coverageArea : creditAndCoverageAreas.coverageAreas) {
+      for (const CoverageArea& coverageArea :
+           creditAndCoverageAreas.coverageAreas) {
         if (coverageArea.zoomMin <= bingTileLevel &&
             bingTileLevel <= coverageArea.zoomMax &&
             coverageArea.rectangle.computeIntersection(tileRectangle)
@@ -195,7 +196,7 @@ private:
   static std::string tileXYToQuadKey(uint32_t level, uint32_t x, uint32_t y) {
     std::string quadkey;
     for (int32_t i = static_cast<int32_t>(level); i >= 0; --i) {
-      uint32_t bitmask = static_cast<uint32_t>(1 << i);
+      const uint32_t bitmask = static_cast<uint32_t>(1 << i);
       uint32_t digit = 0;
 
       if ((x & bitmask) != 0) {
@@ -265,7 +266,7 @@ std::vector<CreditAndCoverageAreas> collectCredits(
     const rapidjson::Value* pResource,
     const std::shared_ptr<CreditSystem>& pCreditSystem) {
   std::vector<CreditAndCoverageAreas> credits;
-  auto attributionsIt = pResource->FindMember("imageryProviders");
+  const auto attributionsIt = pResource->FindMember("imageryProviders");
   if (attributionsIt != pResource->MemberEnd() &&
       attributionsIt->value.IsArray()) {
 
@@ -273,19 +274,19 @@ std::vector<CreditAndCoverageAreas> collectCredits(
          attributionsIt->value.GetArray()) {
 
       std::vector<CoverageArea> coverageAreas;
-      auto coverageAreasIt = attribution.FindMember("coverageAreas");
+      const auto coverageAreasIt = attribution.FindMember("coverageAreas");
       if (coverageAreasIt != attribution.MemberEnd() &&
           coverageAreasIt->value.IsArray()) {
 
         for (const rapidjson::Value& area : coverageAreasIt->value.GetArray()) {
 
-          auto bboxIt = area.FindMember("bbox");
+          const auto bboxIt = area.FindMember("bbox");
           if (bboxIt != area.MemberEnd() && bboxIt->value.IsArray() &&
               bboxIt->value.Size() == 4) {
 
-            auto zoomMinIt = area.FindMember("zoomMin");
-            auto zoomMaxIt = area.FindMember("zoomMax");
-            auto bboxArrayIt = bboxIt->value.GetArray();
+            const auto zoomMinIt = area.FindMember("zoomMin");
+            const auto zoomMaxIt = area.FindMember("zoomMax");
+            const auto bboxArrayIt = bboxIt->value.GetArray();
             if (zoomMinIt != area.MemberEnd() &&
                 zoomMaxIt != area.MemberEnd() && zoomMinIt->value.IsUint() &&
                 zoomMaxIt->value.IsUint() && bboxArrayIt[0].IsNumber() &&
@@ -307,7 +308,7 @@ std::vector<CreditAndCoverageAreas> collectCredits(
         }
       }
 
-      auto creditString = attribution.FindMember("attribution");
+      const auto creditString = attribution.FindMember("attribution");
       if (creditString != attribution.MemberEnd() &&
           creditString->value.IsString()) {
         credits.push_back(
@@ -437,7 +438,7 @@ BingMapsRasterOverlay::createTileProvider(
             }
 
             const std::byte* responseBuffer = pResponse->data().data();
-            size_t responseSize = pResponse->data().size();
+            const size_t responseSize = pResponse->data().size();
 
             sessionCache[metadataUrl] = std::vector<std::byte>(
                 pResponse->data().begin(),

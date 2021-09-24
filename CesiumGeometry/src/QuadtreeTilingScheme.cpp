@@ -26,16 +26,16 @@ QuadtreeTilingScheme::positionToTile(const glm::dvec2& position, uint32_t level)
     return std::nullopt;
   }
 
-  uint32_t xTiles = this->getNumberOfXTilesAtLevel(level);
-  uint32_t yTiles = this->getNumberOfYTilesAtLevel(level);
+  const uint32_t xTiles = this->getNumberOfXTilesAtLevel(level);
+  const uint32_t yTiles = this->getNumberOfYTilesAtLevel(level);
 
-  double overallWidth = this->getRectangle().computeWidth();
-  double xTileWidth = overallWidth / xTiles;
-  double overallHeight = this->getRectangle().computeHeight();
-  double yTileHeight = overallHeight / yTiles;
+  const double overallWidth = this->getRectangle().computeWidth();
+  const double xTileWidth = overallWidth / xTiles;
+  const double overallHeight = this->getRectangle().computeHeight();
+  const double yTileHeight = overallHeight / yTiles;
 
-  double distanceFromWest = position.x - this->getRectangle().minimumX;
-  double distanceFromSouth = position.y - this->getRectangle().minimumY;
+  const double distanceFromWest = position.x - this->getRectangle().minimumX;
+  const double distanceFromSouth = position.y - this->getRectangle().minimumY;
 
   uint32_t xTileCoordinate =
       static_cast<uint32_t>(distanceFromWest / xTileWidth);
@@ -56,16 +56,16 @@ QuadtreeTilingScheme::positionToTile(const glm::dvec2& position, uint32_t level)
 
 CesiumGeometry::Rectangle QuadtreeTilingScheme::tileToRectangle(
     const CesiumGeometry::QuadtreeTileID& tileID) const noexcept {
-  uint32_t xTiles = this->getNumberOfXTilesAtLevel(tileID.level);
-  uint32_t yTiles = this->getNumberOfYTilesAtLevel(tileID.level);
+  const uint32_t xTiles = this->getNumberOfXTilesAtLevel(tileID.level);
+  const uint32_t yTiles = this->getNumberOfYTilesAtLevel(tileID.level);
 
-  double xTileWidth = this->_rectangle.computeWidth() / xTiles;
-  double left = this->_rectangle.minimumX + tileID.x * xTileWidth;
-  double right = this->_rectangle.minimumX + (tileID.x + 1) * xTileWidth;
+  const double xTileWidth = this->_rectangle.computeWidth() / xTiles;
+  const double left = this->_rectangle.minimumX + tileID.x * xTileWidth;
+  const double right = this->_rectangle.minimumX + (tileID.x + 1) * xTileWidth;
 
-  double yTileHeight = this->_rectangle.computeHeight() / yTiles;
-  double bottom = this->_rectangle.minimumY + tileID.y * yTileHeight;
-  double top = this->_rectangle.minimumY + (tileID.y + 1) * yTileHeight;
+  const double yTileHeight = this->_rectangle.computeHeight() / yTiles;
+  const double bottom = this->_rectangle.minimumY + tileID.y * yTileHeight;
+  const double top = this->_rectangle.minimumY + (tileID.y + 1) * yTileHeight;
 
   return Rectangle(left, bottom, right, top);
 }

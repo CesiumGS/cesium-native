@@ -164,7 +164,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   options.moreDetailAvailable};
             }
 
-            gsl::span<const std::byte> data = pResponse->data();
+            const gsl::span<const std::byte> data = pResponse->data();
 
             CesiumGltf::ImageReaderResult loadedImage =
                 RasterOverlayTileProvider::_gltfReader.readImage(data);
@@ -244,8 +244,8 @@ static LoadResult createLoadResultFromLoadedImage(
 
   CesiumGltf::ImageCesium& image = loadedImage.image.value();
 
-  int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
-  int64_t requiredBytes =
+  const int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
+  const int64_t requiredBytes =
       static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
   if (image.width > 0 && image.height > 0 &&
       image.pixelData.size() >= static_cast<size_t>(requiredBytes)) {
@@ -301,21 +301,22 @@ void RasterOverlayTileProvider::doLoad(
                 pLogger,
                 std::move(loadedImage));
           })
-      .thenInMainThread([this, &tile, isThrottledLoad](LoadResult&& result) {
-        tile._rectangle = result.rectangle;
-        tile._pRendererResources = result.pRendererResources;
-        tile._image = std::move(result.image);
-        tile._tileCredits = std::move(result.credits);
-        tile._moreDetailAvailable =
-            result.moreDetailAvailable
-                ? RasterOverlayTile::MoreDetailAvailable::Yes
-                : RasterOverlayTile::MoreDetailAvailable::No;
-        tile.setState(result.state);
+      .thenInMainThread(
+          [this, &tile, isThrottledLoad](LoadResult&& result) noexcept {
+            tile._rectangle = result.rectangle;
+            tile._pRendererResources = result.pRendererResources;
+            tile._image = std::move(result.image);
+            tile._tileCredits = std::move(result.credits);
+            tile._moreDetailAvailable =
+                result.moreDetailAvailable
+                    ? RasterOverlayTile::MoreDetailAvailable::Yes
+                    : RasterOverlayTile::MoreDetailAvailable::No;
+            tile.setState(result.state);
 
-        this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
+            this->_tileDataBytes += int64_t(tile.getImage().pixelData.size());
 
-        this->finalizeTileLoad(tile, isThrottledLoad);
-      })
+            this->finalizeTileLoad(tile, isThrottledLoad);
+          })
       .catchInMainThread([this, &tile, isThrottledLoad](
                              const std::exception& /*e*/) {
         tile._pRendererResources = nullptr;
@@ -330,7 +331,7 @@ void RasterOverlayTileProvider::doLoad(
 
 void RasterOverlayTileProvider::beginTileLoad(
     RasterOverlayTile& tile,
-    bool isThrottledLoad) {
+    bool isThrottledLoad) noexcept {
   // Keep this tile from being destroyed while it's loading.
   tile.addReference();
 
@@ -342,7 +343,7 @@ void RasterOverlayTileProvider::beginTileLoad(
 
 void RasterOverlayTileProvider::finalizeTileLoad(
     RasterOverlayTile& tile,
-    bool isThrottledLoad) {
+    bool isThrottledLoad) noexcept {
   --this->_totalTilesCurrentlyLoading;
   if (isThrottledLoad) {
     --this->_throttledTilesCurrentlyLoading;

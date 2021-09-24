@@ -138,7 +138,7 @@ std::string_view JsonWriter::toStringView() {
 }
 
 std::vector<std::byte> JsonWriter::toBytes() {
-  auto view = this->toStringView();
+  const auto view = this->toStringView();
   std::vector<std::byte> result(view.size(), std::byte(0));
   std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(result.data());
   std::copy(view.begin(), view.end(), u8Pointer);

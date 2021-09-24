@@ -181,7 +181,10 @@ CompositeContent::load(const TileContentLoadInput& input) {
           "Composite tile ends before all embedded tiles could be read.");
       break;
     }
-    gsl::span<const std::byte> innerData(data.data() + pos, pInner->byteLength);
+
+    const gsl::span<const std::byte> innerData(
+        data.data() + pos,
+        pInner->byteLength);
 
     pos += pInner->byteLength;
 

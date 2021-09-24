@@ -8,7 +8,7 @@
 namespace CesiumGeometry {
 CullingResult
 OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
-  glm::dvec3 normal = plane.getNormal();
+  const glm::dvec3 normal = plane.getNormal();
 
   const glm::dmat3& halfAxes = this->getHalfAxes();
   const glm::dvec3& xAxisDirectionAndHalfLength = halfAxes[0];
@@ -17,20 +17,20 @@ OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
 
   // plane is used as if it is its normal; the first three components are
   // assumed to be normalized
-  double radEffective = glm::abs(
-                            normal.x * xAxisDirectionAndHalfLength.x +
-                            normal.y * xAxisDirectionAndHalfLength.y +
-                            normal.z * xAxisDirectionAndHalfLength.z) +
-                        glm::abs(
-                            normal.x * yAxisDirectionAndHalfLength.x +
-                            normal.y * yAxisDirectionAndHalfLength.y +
-                            normal.z * yAxisDirectionAndHalfLength.z) +
-                        glm::abs(
-                            normal.x * zAxisDirectionAndHalfLength.x +
-                            normal.y * zAxisDirectionAndHalfLength.y +
-                            normal.z * zAxisDirectionAndHalfLength.z);
+  const double radEffective = glm::abs(
+                                  normal.x * xAxisDirectionAndHalfLength.x +
+                                  normal.y * xAxisDirectionAndHalfLength.y +
+                                  normal.z * xAxisDirectionAndHalfLength.z) +
+                              glm::abs(
+                                  normal.x * yAxisDirectionAndHalfLength.x +
+                                  normal.y * yAxisDirectionAndHalfLength.y +
+                                  normal.z * yAxisDirectionAndHalfLength.z) +
+                              glm::abs(
+                                  normal.x * zAxisDirectionAndHalfLength.x +
+                                  normal.y * zAxisDirectionAndHalfLength.y +
+                                  normal.z * zAxisDirectionAndHalfLength.z);
 
-  double distanceToPlane =
+  const double distanceToPlane =
       ::glm::dot(normal, this->getCenter()) + plane.getDistance();
 
   if (distanceToPlane <= -radEffective) {
@@ -46,22 +46,22 @@ OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
 
 double OrientedBoundingBox::computeDistanceSquaredToPosition(
     const glm::dvec3& position) const noexcept {
-  glm::dvec3 offset = position - this->getCenter();
+  const glm::dvec3 offset = position - this->getCenter();
 
   const glm::dmat3& halfAxes = this->getHalfAxes();
   glm::dvec3 u = halfAxes[0];
   glm::dvec3 v = halfAxes[1];
   glm::dvec3 w = halfAxes[2];
 
-  double uHalf = glm::length(u);
-  double vHalf = glm::length(v);
-  double wHalf = glm::length(w);
+  const double uHalf = glm::length(u);
+  const double vHalf = glm::length(v);
+  const double wHalf = glm::length(w);
 
   u /= uHalf;
   v /= vHalf;
   w /= wHalf;
 
-  glm::dvec3 pPrime(
+  const glm::dvec3 pPrime(
       glm::dot(offset, u),
       glm::dot(offset, v),
       glm::dot(offset, w));

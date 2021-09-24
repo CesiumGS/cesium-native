@@ -6,18 +6,18 @@ static MetadataPropertyViewStatus checkOffsetBuffer(
     const gsl::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
-    bool checkBitSize) {
+    bool checkBitSize) noexcept {
   if (offsetBuffer.size() % sizeof(T) != 0) {
     return MetadataPropertyViewStatus::
         InvalidBufferViewSizeNotDivisibleByTypeSize;
   }
 
-  size_t size = offsetBuffer.size() / sizeof(T);
+  const size_t size = offsetBuffer.size() / sizeof(T);
   if (size != instanceCount + 1) {
     return MetadataPropertyViewStatus::InvalidBufferViewSizeNotFitInstanceCount;
   }
 
-  gsl::span<const T> offsetValues(
+  const gsl::span<const T> offsetValues(
       reinterpret_cast<const T*>(offsetBuffer.data()),
       size);
 
@@ -49,8 +49,8 @@ static MetadataPropertyViewStatus checkStringArrayOffsetBuffer(
     const gsl::span<const std::byte>& arrayOffsetBuffer,
     const gsl::span<const std::byte>& stringOffsetBuffer,
     size_t valueBufferSize,
-    size_t instanceCount) {
-  auto status = checkOffsetBuffer<T>(
+    size_t instanceCount) noexcept {
+  const auto status = checkOffsetBuffer<T>(
       arrayOffsetBuffer,
       stringOffsetBuffer.size(),
       instanceCount,
@@ -108,7 +108,7 @@ const ClassProperty* MetadataFeatureTableView::getClassProperty(
 
 MetadataPropertyViewStatus MetadataFeatureTableView::getBufferSafe(
     int32_t bufferViewIdx,
-    gsl::span<const std::byte>& buffer) const {
+    gsl::span<const std::byte>& buffer) const noexcept {
   buffer = {};
 
   const BufferView* pBufferView =
@@ -144,7 +144,7 @@ MetadataPropertyViewStatus MetadataFeatureTableView::getOffsetBufferSafe(
     size_t valueBufferSize,
     size_t instanceCount,
     bool checkBitsSize,
-    gsl::span<const std::byte>& offsetBuffer) const {
+    gsl::span<const std::byte>& offsetBuffer) const noexcept {
   auto status = getBufferSafe(bufferViewIdx, offsetBuffer);
   if (status != MetadataPropertyViewStatus::Valid) {
     return status;
@@ -202,7 +202,7 @@ MetadataFeatureTableView::getStringPropertyValues(
     return createInvalidPropertyView<std::string_view>(status);
   }
 
-  PropertyType offsetType =
+  const PropertyType offsetType =
       convertOffsetStringToPropertyType(featureTableProperty.offsetType);
   if (offsetType == PropertyType::None) {
     return createInvalidPropertyView<std::string_view>(
@@ -255,7 +255,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   // check fixed or dynamic array
-  int64_t componentCount = classProperty.componentCount.value_or(0);
+  const int64_t componentCount = classProperty.componentCount.value_or(0);
   if (componentCount > 0 && featureTableProperty.arrayOffsetBufferView >= 0) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::
@@ -269,7 +269,7 @@ MetadataFeatureTableView::getStringArrayPropertyValues(
   }
 
   // get offset type
-  PropertyType offsetType =
+  const PropertyType offsetType =
       convertOffsetStringToPropertyType(featureTableProperty.offsetType);
   if (offsetType == PropertyType::None) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(

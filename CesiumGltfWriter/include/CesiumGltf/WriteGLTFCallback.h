@@ -10,5 +10,6 @@ using WriteGLTFCallback =
     const std::function<void(std::string_view, const std::vector<std::byte>&)>;
 
 /** Default no-op callback for glTF / GLB writing */
-inline void noopGltfWriter(std::string_view, const std::vector<std::byte>&) {}
+inline void
+noopGltfWriter(std::string_view, const std::vector<std::byte>&) noexcept {}
 } // namespace CesiumGltf

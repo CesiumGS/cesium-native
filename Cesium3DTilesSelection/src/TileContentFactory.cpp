@@ -26,7 +26,7 @@ void TileContentFactory::registerContentType(
       contentType.begin(),
       contentType.end(),
       std::back_inserter(lowercaseContentType),
-      [](char c) { return static_cast<char>(::tolower(c)); });
+      [](char c) noexcept { return static_cast<char>(::tolower(c)); });
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
@@ -52,7 +52,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
   // Determine if this is plausibly a JSON external tileset.
   size_t i;
   for (i = 0; i < data.size(); ++i) {
-    if (!std::isspace(static_cast<char>(data[i]))) {
+    if (!std::isspace(static_cast<unsigned char>(data[i]))) {
       break;
     }
   }
@@ -87,7 +87,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
 std::optional<std::string>
 TileContentFactory::getMagic(const gsl::span<const std::byte>& data) {
   if (data.size() >= 4) {
-    gsl::span<const std::byte> magicData = data.subspan(0, 4);
+    const gsl::span<const std::byte> magicData = data.subspan(0, 4);
     return std::string(reinterpret_cast<const char*>(magicData.data()), 4);
   }
 

@@ -54,22 +54,25 @@ template <class T>
 static bool isBoundingVolumeVisible(
     const T& boundingVolume,
     const CullingVolume& cullingVolume) noexcept {
-  CullingResult left = boundingVolume.intersectPlane(cullingVolume.leftPlane);
+  const CullingResult left =
+      boundingVolume.intersectPlane(cullingVolume.leftPlane);
   if (left == CullingResult::Outside) {
     return false;
   }
 
-  CullingResult right = boundingVolume.intersectPlane(cullingVolume.rightPlane);
+  const CullingResult right =
+      boundingVolume.intersectPlane(cullingVolume.rightPlane);
   if (right == CullingResult::Outside) {
     return false;
   }
 
-  CullingResult top = boundingVolume.intersectPlane(cullingVolume.topPlane);
+  const CullingResult top =
+      boundingVolume.intersectPlane(cullingVolume.topPlane);
   if (top == CullingResult::Outside) {
     return false;
   }
 
-  CullingResult bottom =
+  const CullingResult bottom =
       boundingVolume.intersectPlane(cullingVolume.bottomPlane);
   if (bottom == CullingResult::Outside) {
     return false;
@@ -84,26 +87,26 @@ bool ViewState::isBoundingVolumeVisible(
   struct Operation {
     const ViewState& viewState;
 
-    bool operator()(const OrientedBoundingBox& boundingBox) {
+    bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingBox,
           viewState._cullingVolume);
     }
 
-    bool operator()(const BoundingRegion& boundingRegion) {
+    bool operator()(const BoundingRegion& boundingRegion) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingRegion,
           viewState._cullingVolume);
     }
 
-    bool operator()(const BoundingSphere& boundingSphere) {
+    bool operator()(const BoundingSphere& boundingSphere) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingSphere,
           viewState._cullingVolume);
     }
 
-    bool
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+    bool operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
           boundingRegion.getBoundingRegion(),
           viewState._cullingVolume);
@@ -118,11 +121,11 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
   struct Operation {
     const ViewState& viewState;
 
-    double operator()(const OrientedBoundingBox& boundingBox) {
+    double operator()(const OrientedBoundingBox& boundingBox) noexcept {
       return boundingBox.computeDistanceSquaredToPosition(viewState._position);
     }
 
-    double operator()(const BoundingRegion& boundingRegion) {
+    double operator()(const BoundingRegion& boundingRegion) noexcept {
       if (viewState._positionCartographic) {
         return boundingRegion.computeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),
@@ -132,13 +135,13 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
           viewState._position);
     }
 
-    double operator()(const BoundingSphere& boundingSphere) {
+    double operator()(const BoundingSphere& boundingSphere) noexcept {
       return boundingSphere.computeDistanceSquaredToPosition(
           viewState._position);
     }
 
-    double
-    operator()(const BoundingRegionWithLooseFittingHeights& boundingRegion) {
+    double operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       if (viewState._positionCartographic) {
         return boundingRegion.computeConservativeDistanceSquaredToPosition(
             viewState._positionCartographic.value(),
@@ -157,7 +160,7 @@ double ViewState::computeScreenSpaceError(
     double distance) const noexcept {
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
-  double sseDenominator = this->_sseDenominator;
+  const double sseDenominator = this->_sseDenominator;
   return (geometricError * this->_viewportSize.y) / (distance * sseDenominator);
 }
 } // namespace Cesium3DTilesSelection
