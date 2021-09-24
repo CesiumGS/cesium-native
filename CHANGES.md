@@ -1,9 +1,12 @@
 # Change Log
 
-### v0.7.2 - 2021-09-14
+### Next Version - ?
 
 ##### Additions :tada:
-- Made tile content loading asynchronous and allowed it to make further network requests, to Ion or otherwise.
+
+- Made tile content loading asynchronous and allowed it to make further network requests, to Cesium ion or otherwise.
+
+### v0.7.2 - 2021-09-14
 
 ##### Fixes :wrench:
 
