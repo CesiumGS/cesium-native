@@ -281,7 +281,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(root->getState() == Tile::LoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == Tile::LoadState::FailedTemporarily);
+        REQUIRE(child.getState() == Tile::LoadState::Failed);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -628,9 +628,8 @@ TEST_CASE("Test additive refinement") {
             "tileset3/tileset3.json") {
           REQUIRE(doesTileMeetSSE(viewState, child, tileset));
         } else {
-          // external tileset has always geometric error over 999999, so it
-          // won't meet sse
-          REQUIRE(!doesTileMeetSSE(viewState, child, tileset));
+          // external tilesets get unconditionally refined
+          REQUIRE(root->getUnconditionallyRefine());
 
           // expect the children to meet sse and begin loading the content
           REQUIRE(child.getChildren().size() == 1);
