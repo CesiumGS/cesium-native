@@ -438,32 +438,38 @@ function resolveEnum(
 
 /**
  * If ... many conditions hold, ... then this will return the name
- * of the "default" value of the given enum property.
+ * of the "initial" value of the given enum property.
  * 
  * @param {Object} propertyDetails The property details
  * @returns The name of the default property
  */
-function findNameOfDefault(propertyDetails) {
+function findNameOfInitial(propertyDetails) {
+  if (propertyDetails.default) {
+    for (var i = 0; i<propertyDetails.anyOf.length; i++) {
+      const element = propertyDetails.anyOf[i];
+      if (element.enum && (element.enum[0] == propertyDetails.default)) {
+        if (element.type === "integer") {
+          return element.description;
+        }
+        return `${makeIdentifier(element.enum[0])}`;
+      }
+    }
+  }
+  // No explicit default value was found. Return the first value
   for (var i = 0; i<propertyDetails.anyOf.length; i++) {
     const element = propertyDetails.anyOf[i];
-    if (element.enum && (element.enum[0] == propertyDetails.default)) {
-      return element.description;
+    if (element.enum) {
+      if (element.type === "integer") {
+        return element.description;
+      }
+      return `${makeIdentifier(element.enum[0])}`;
     }
   }
   return undefined;
 }
 
-
 function createEnumDefault(enumName, propertyDetails) {
-  if (propertyDetails.default === undefined) {
-    return undefined;
-  }
-
-  if (propertyDetails.anyOf[0].type === "integer") {
-    return `${enumName}::${findNameOfDefault(propertyDetails)}`;
-  } else {
-    return `${enumName}::${propertyDetails.default}`;
-  }
+  return `${enumName}::${findNameOfInitial(propertyDetails)}`;
 }
 
 function createEnum(enumDetails) {
