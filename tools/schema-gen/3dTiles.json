@@ -4,12 +4,22 @@
       "name": "TilesetProperties"
     }
   },
-
   "extensions": [
     {
-      "schema": "3DTILES_tile_metadata/schema/tileset.3DTILES_tile_metadata.schema.json",
-      "name": "3DTILES_tile_metadata"
+      "name": "3DTILES_bounding_volume_S2",
+      "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    },
+    {
+      "name": "3DTILES_content_gltf",
+      "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json"
+    },
+    {
+      "name": "3DTILES_implicit_tiling",
+      "schema": "3DTILES_implicit_tiling/schema/tile.3DTILES_implicit_tiling.schema.json"
+    },
+    {
+      "name": "3DTILES_multiple_contents",
+      "schema": "3DTILES_multiple_contents/schema/tile.3DTILES_multiple_contents.schema.json"
     }
   ]
 }
-

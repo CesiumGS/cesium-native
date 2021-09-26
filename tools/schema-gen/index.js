@@ -52,7 +52,7 @@ for (const extension of config.extensions) {
   const extRoot = path.basename(extension.schema);
   const overrides = {};
   overrides[extRoot] = {
-    name: "EXT_" + extension.name
+    name: extension.name
   };
   const extOptions = {
     ...options,
