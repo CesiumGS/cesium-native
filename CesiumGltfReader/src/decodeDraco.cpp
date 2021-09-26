@@ -116,8 +116,7 @@ void copyDecodedIndices(
   }
 
   draco::PointIndex::ValueType numPoint = pMesh->num_points();
-  Accessor::ComponentType supposedComponentType =
-      Accessor::ComponentType::UNSIGNED_BYTE;
+  int32_t supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
   if (numPoint < static_cast<draco::PointIndex::ValueType>(
                      std::numeric_limits<uint8_t>::max())) {
     supposedComponentType = Accessor::ComponentType::UNSIGNED_BYTE;
@@ -129,8 +128,7 @@ void copyDecodedIndices(
     supposedComponentType = Accessor::ComponentType::UNSIGNED_INT;
   }
 
-  if (static_cast<uint32_t>(supposedComponentType) >
-      static_cast<uint32_t>(pIndicesAccessor->componentType)) {
+  if (supposedComponentType > pIndicesAccessor->componentType) {
     pIndicesAccessor->componentType = supposedComponentType;
   }
 

@@ -10,34 +10,33 @@
 
 namespace CesiumGltf {
 /**
- * @brief A camera's projection.  A node can reference a camera to apply a
+ * @brief A camera's projection.  A node **MAY** reference a camera to apply a
  * transform to place the camera in the scene.
  */
 struct CESIUMGLTF_API Camera final : public NamedObject {
   static inline constexpr const char* TypeName = "Camera";
 
   /**
-   * @brief Specifies if the camera uses a perspective or orthographic
-   * projection.
-   *
-   * Based on this, either the camera's `perspective` or `orthographic` property
-   * will be defined.
+   * @brief Known values for Specifies if the camera uses a perspective or
+   * orthographic projection.
    */
-  enum class Type {
-    perspective,
+  struct Type {
+    inline static const std::string perspective = "perspective";
 
-    orthographic
+    inline static const std::string orthographic = "orthographic";
   };
 
   /**
    * @brief An orthographic camera containing properties to create an
-   * orthographic projection matrix.
+   * orthographic projection matrix. This property **MUST NOT** be defined when
+   * `perspective` is defined.
    */
   std::optional<CameraOrthographic> orthographic;
 
   /**
    * @brief A perspective camera containing properties to create a perspective
-   * projection matrix.
+   * projection matrix. This property **MUST NOT** be defined when
+   * `orthographic` is defined.
    */
   std::optional<CameraPerspective> perspective;
 
@@ -45,9 +44,12 @@ struct CESIUMGLTF_API Camera final : public NamedObject {
    * @brief Specifies if the camera uses a perspective or orthographic
    * projection.
    *
+   * Known values are defined in {@link Type}.
+   *
+   *
    * Based on this, either the camera's `perspective` or `orthographic` property
-   * will be defined.
+   * **MUST** be defined.
    */
-  Type type = Type();
+  std::string type = Type::perspective;
 };
 } // namespace CesiumGltf

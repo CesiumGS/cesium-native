@@ -428,13 +428,13 @@ void addTriangleNormalToVertexNormals(
 
 template <typename TIndex, typename GetIndex>
 bool accumulateNormals(
-    MeshPrimitive::Mode mode,
+    int32_t meshPrimitiveMode,
     const gsl::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     int64_t numIndices,
     GetIndex getIndex) {
 
-  switch (mode) {
+  switch (meshPrimitiveMode) {
   case MeshPrimitive::Mode::TRIANGLES:
     for (int64_t i = 2; i < numIndices; i += 3) {
       TIndex index0 = getIndex(i - 2);

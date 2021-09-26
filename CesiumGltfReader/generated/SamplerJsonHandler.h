@@ -27,9 +27,9 @@ protected:
 
 private:
   Sampler* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<Sampler::MagFilter> _magFilter;
-  CesiumJsonReader::IntegerJsonHandler<Sampler::MinFilter> _minFilter;
-  CesiumJsonReader::IntegerJsonHandler<Sampler::WrapS> _wrapS;
-  CesiumJsonReader::IntegerJsonHandler<Sampler::WrapT> _wrapT;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
 };
 } // namespace CesiumGltf

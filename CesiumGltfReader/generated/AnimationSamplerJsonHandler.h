@@ -5,6 +5,7 @@
 #include "CesiumGltf/AnimationSampler.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
@@ -26,22 +27,9 @@ protected:
       AnimationSampler& o);
 
 private:
-  class InterpolationJsonHandler : public CesiumJsonReader::JsonHandler {
-  public:
-    InterpolationJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(
-        CesiumJsonReader::IJsonHandler* pParent,
-        AnimationSampler::Interpolation* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
-
-  private:
-    AnimationSampler::Interpolation* _pEnum = nullptr;
-  };
-
   AnimationSampler* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
-  InterpolationJsonHandler _interpolation;
+  CesiumJsonReader::StringJsonHandler _interpolation;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
 };
 } // namespace CesiumGltf

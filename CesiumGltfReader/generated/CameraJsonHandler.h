@@ -6,6 +6,7 @@
 #include "CameraPerspectiveJsonHandler.h"
 #include "CesiumGltf/Camera.h"
 #include "CesiumGltf/ReaderContext.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
@@ -27,20 +28,9 @@ protected:
       Camera& o);
 
 private:
-  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
-  public:
-    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(CesiumJsonReader::IJsonHandler* pParent, Camera::Type* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
-
-  private:
-    Camera::Type* _pEnum = nullptr;
-  };
-
   Camera* _pObject = nullptr;
   CameraOrthographicJsonHandler _orthographic;
   CameraPerspectiveJsonHandler _perspective;
-  TypeJsonHandler _type;
+  CesiumJsonReader::StringJsonHandler _type;
 };
 } // namespace CesiumGltf

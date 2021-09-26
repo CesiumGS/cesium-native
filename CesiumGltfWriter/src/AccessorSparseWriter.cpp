@@ -5,7 +5,6 @@
 #include <CesiumGltf/AccessorSparseValues.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <magic_enum.hpp>
 #include <stdexcept>
 
 void writeAccessorSparseIndices(
@@ -21,10 +20,7 @@ void writeAccessorSparseIndices(
     j.Int64(indices.byteOffset);
   }
 
-  j.KeyPrimitive(
-      "componentType",
-      static_cast<std::uint16_t>(
-          magic_enum::enum_integer(indices.componentType)));
+  j.KeyPrimitive("componentType", indices.componentType);
 
   if (!indices.extensions.empty()) {
     CesiumGltf::writeExtensions(indices.extensions, j);

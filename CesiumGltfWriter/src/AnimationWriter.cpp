@@ -3,7 +3,6 @@
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumGltf/AnimationChannelTarget.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
-#include <magic_enum.hpp>
 #include <stdexcept>
 #include <type_traits>
 
@@ -20,9 +19,7 @@ void writeAnimationChannel(
     j.Key("node");
     j.Int(animationChannel.target.node);
     j.Key("path");
-    const auto pathAsString =
-        std::string(magic_enum::enum_name(animationChannel.target.path));
-    j.String(pathAsString.c_str());
+    j.String(animationChannel.target.path.c_str());
 
     if (!animationChannel.target.extensions.empty()) {
       CesiumGltf::writeExtensions(animationChannel.target.extensions, j);
@@ -43,9 +40,7 @@ void writeAnimationSampler(
 
   j.StartObject();
   j.KeyPrimitive("input", animationSampler.input);
-  j.KeyPrimitive(
-      "interpolation",
-      magic_enum::enum_name(animationSampler.interpolation));
+  j.KeyPrimitive("interpolation", animationSampler.interpolation);
   j.KeyPrimitive("output", animationSampler.output);
 
   if (!animationSampler.extensions.empty()) {

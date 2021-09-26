@@ -14,89 +14,85 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
   static inline constexpr const char* TypeName = "Sampler";
 
   /**
-   * @brief Magnification filter.
-   *
-   * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729`
-   * (LINEAR).
+   * @brief Known values for Magnification filter.
    */
-  enum class MagFilter {
-    NEAREST = 9728,
+  struct MagFilter {
+    static constexpr int32_t NEAREST = 9728;
 
-    LINEAR = 9729
+    static constexpr int32_t LINEAR = 9729;
   };
 
   /**
-   * @brief Minification filter.
-   *
-   * All valid values correspond to WebGL enums.
+   * @brief Known values for Minification filter.
    */
-  enum class MinFilter {
-    NEAREST = 9728,
+  struct MinFilter {
+    static constexpr int32_t NEAREST = 9728;
 
-    LINEAR = 9729,
+    static constexpr int32_t LINEAR = 9729;
 
-    NEAREST_MIPMAP_NEAREST = 9984,
+    static constexpr int32_t NEAREST_MIPMAP_NEAREST = 9984;
 
-    LINEAR_MIPMAP_NEAREST = 9985,
+    static constexpr int32_t LINEAR_MIPMAP_NEAREST = 9985;
 
-    NEAREST_MIPMAP_LINEAR = 9986,
+    static constexpr int32_t NEAREST_MIPMAP_LINEAR = 9986;
 
-    LINEAR_MIPMAP_LINEAR = 9987
+    static constexpr int32_t LINEAR_MIPMAP_LINEAR = 9987;
   };
 
   /**
-   * @brief s wrapping mode.
-   *
-   * S (U) wrapping mode.  All valid values correspond to WebGL enums.
+   * @brief Known values for S (U) wrapping mode.
    */
-  enum class WrapS {
-    CLAMP_TO_EDGE = 33071,
+  struct WrapS {
+    static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
-    MIRRORED_REPEAT = 33648,
+    static constexpr int32_t MIRRORED_REPEAT = 33648;
 
-    REPEAT = 10497
+    static constexpr int32_t REPEAT = 10497;
   };
 
   /**
-   * @brief t wrapping mode.
-   *
-   * T (V) wrapping mode.  All valid values correspond to WebGL enums.
+   * @brief Known values for T (V) wrapping mode.
    */
-  enum class WrapT {
-    CLAMP_TO_EDGE = 33071,
+  struct WrapT {
+    static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
-    MIRRORED_REPEAT = 33648,
+    static constexpr int32_t MIRRORED_REPEAT = 33648;
 
-    REPEAT = 10497
+    static constexpr int32_t REPEAT = 10497;
   };
 
   /**
    * @brief Magnification filter.
    *
-   * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729`
-   * (LINEAR).
+   * Known values are defined in {@link MagFilter}.
+   *
    */
-  std::optional<MagFilter> magFilter;
+  std::optional<int32_t> magFilter = MagFilter::NEAREST;
 
   /**
    * @brief Minification filter.
    *
+   * Known values are defined in {@link MinFilter}.
+   *
+   */
+  std::optional<int32_t> minFilter = MinFilter::NEAREST;
+
+  /**
+   * @brief S (U) wrapping mode.
+   *
+   * Known values are defined in {@link WrapS}.
+   *
+   *
    * All valid values correspond to WebGL enums.
    */
-  std::optional<MinFilter> minFilter;
+  int32_t wrapS = WrapS::REPEAT;
 
   /**
-   * @brief s wrapping mode.
+   * @brief T (V) wrapping mode.
    *
-   * S (U) wrapping mode.  All valid values correspond to WebGL enums.
-   */
-  WrapS wrapS = WrapS(10497);
-
-  /**
-   * @brief t wrapping mode.
+   * Known values are defined in {@link WrapT}.
    *
-   * T (V) wrapping mode.  All valid values correspond to WebGL enums.
    */
-  WrapT wrapT = WrapT(10497);
+  int32_t wrapT = WrapT::REPEAT;
 };
 } // namespace CesiumGltf

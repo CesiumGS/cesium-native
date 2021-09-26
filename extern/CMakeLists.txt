@@ -44,8 +44,6 @@ set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
 set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "Don't use OpenSSL")
 add_subdirectory(cpp-httplib)
 
-add_subdirectory(magic_enum)
-
 # CSPRNG's CMake setup is old school, and it really only has one source
 # file, so set up a library manually here.
 add_library(csprng CSPRNG/source/csprng.cpp)
