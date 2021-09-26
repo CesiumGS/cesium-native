@@ -31,7 +31,7 @@ void CesiumGltf::writeAccessor(
     }
 
     j.Key("componentType");
-    j.Int(magic_enum::enum_integer(accessor.componentType));
+    j.Int(accessor.componentType);
 
     if (accessor.normalized) {
       j.Key("normalized");
@@ -42,7 +42,7 @@ void CesiumGltf::writeAccessor(
     j.Int64(accessor.count);
 
     j.Key("type");
-    j.String(magic_enum::enum_name(accessor.type));
+    j.String(accessor.type);
 
     if (!accessor.max.empty()) {
       j.Key("max");

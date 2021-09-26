@@ -33,7 +33,7 @@ void writePrimitive(
 
   if (primitive.mode != CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
     j.Key("mode");
-    j.Int(magic_enum::enum_integer(primitive.mode));
+    j.Int(primitive.mode);
   }
 
   if (!primitive.targets.empty()) {

@@ -21,10 +21,7 @@ void writeAccessorSparseIndices(
     j.Int64(indices.byteOffset);
   }
 
-  j.KeyPrimitive(
-      "componentType",
-      static_cast<std::uint16_t>(
-          magic_enum::enum_integer(indices.componentType)));
+  j.KeyPrimitive("componentType", indices.componentType);
 
   if (!indices.extensions.empty()) {
     CesiumGltf::writeExtensions(indices.extensions, j);

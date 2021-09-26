@@ -193,7 +193,7 @@ void CesiumGltf::writeMaterial(
     }
 
     if (material.alphaMode != Material::AlphaMode::OPAQUE) {
-      j.KeyPrimitive("alphaMode", magic_enum::enum_name(material.alphaMode));
+      j.KeyPrimitive("alphaMode", material.alphaMode);
     }
 
     if (material.alphaCutoff != 0.5) {

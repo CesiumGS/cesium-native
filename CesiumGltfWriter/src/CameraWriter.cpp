@@ -90,8 +90,7 @@ void CesiumGltf::writeCamera(
     }
 
     j.Key("type");
-    auto cameraTypeAsString = std::string(magic_enum::enum_name(camera.type));
-    j.String(cameraTypeAsString.c_str());
+    j.String(camera.type.c_str());
 
     if (!camera.name.empty()) {
       j.Key("name");

@@ -37,7 +37,7 @@ void CesiumGltf::writeBufferView(
 
     if (bufferView.target) {
       j.Key("target");
-      j.Int(magic_enum::enum_integer(*bufferView.target));
+      j.Int(*bufferView.target);
     }
 
     if (!bufferView.name.empty()) {
