@@ -6,7 +6,6 @@
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <cstdint>
-#include <magic_enum.hpp>
 #include <utility>
 #include <vector>
 

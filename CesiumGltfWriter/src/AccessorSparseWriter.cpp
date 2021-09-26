@@ -5,7 +5,6 @@
 #include <CesiumGltf/AccessorSparseValues.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <magic_enum.hpp>
 #include <stdexcept>
 
 void writeAccessorSparseIndices(

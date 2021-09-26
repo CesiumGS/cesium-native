@@ -7,7 +7,6 @@
 #include <CesiumGltf/Texture.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <cassert>
-#include <magic_enum.hpp>
 #include <vector>
 
 void writePbrMetallicRoughness(

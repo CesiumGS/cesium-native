@@ -4,7 +4,6 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <magic_enum.hpp>
 #include <vector>
 
 void writePrimitive(
