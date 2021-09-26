@@ -3,7 +3,8 @@
 
 using namespace CesiumGltf;
 
-/*static*/ int8_t Accessor::computeNumberOfComponents(const std::string& type) {
+/*static*/ int8_t
+Accessor::computeNumberOfComponents(const std::string& type) noexcept {
   if (type == CesiumGltf::Accessor::Type::SCALAR) {
     return 1;
   }
@@ -29,7 +30,8 @@ using namespace CesiumGltf;
   return 0;
 }
 
-/*static*/ int8_t Accessor::computeByteSizeOfComponent(int32_t componentType) {
+/*static*/ int8_t
+Accessor::computeByteSizeOfComponent(int32_t componentType) noexcept {
   switch (componentType) {
   case CesiumGltf::Accessor::ComponentType::BYTE:
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
@@ -46,20 +48,21 @@ using namespace CesiumGltf;
   }
 }
 
-int8_t Accessor::computeNumberOfComponents() const {
+int8_t Accessor::computeNumberOfComponents() const noexcept {
   return Accessor::computeNumberOfComponents(this->type);
 }
 
-int8_t Accessor::computeByteSizeOfComponent() const {
+int8_t Accessor::computeByteSizeOfComponent() const noexcept {
   return Accessor::computeByteSizeOfComponent(this->componentType);
 }
 
-int64_t Accessor::computeBytesPerVertex() const {
+int64_t Accessor::computeBytesPerVertex() const noexcept {
   return int64_t{this->computeByteSizeOfComponent()} *
          int64_t{this->computeNumberOfComponents()};
 }
 
-int64_t Accessor::computeByteStride(const CesiumGltf::Model& model) const {
+int64_t
+Accessor::computeByteStride(const CesiumGltf::Model& model) const noexcept {
   const BufferView* pBufferView =
       Model::getSafe(&model.bufferViews, this->bufferView);
   if (!pBufferView) {

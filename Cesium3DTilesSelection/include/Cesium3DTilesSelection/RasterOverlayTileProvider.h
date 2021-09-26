@@ -27,7 +27,7 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
    * This will be an empty optional if the loading failed. In this case,
    * the `errors` vector will contain the corresponding error messages.
    */
-  std::optional<CesiumGltf::ImageCesium> image;
+  std::optional<CesiumGltf::ImageCesium> image{};
 
   /**
    * @brief The projected rectangle defining the bounds of this image.
@@ -35,20 +35,20 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
    * The rectangle extends from the left side of the leftmost pixel to the
    * right side of the rightmost pixel, and similar for the vertical direction.
    */
-  CesiumGeometry::Rectangle rectangle;
+  CesiumGeometry::Rectangle rectangle{};
 
   /**
    * @brief The {@link Credit} objects that decribe the attributions that
    * are required when using the image.
    */
-  std::vector<Credit> credits;
+  std::vector<Credit> credits{};
 
   /**
    * @brief Error messages from loading the image.
    *
    * If the image was loaded successfully, this should be empty.
    */
-  std::vector<std::string> errors;
+  std::vector<std::string> errors{};
 
   /**
    * @brief Warnings from loading the image.
@@ -56,13 +56,13 @@ struct CESIUM3DTILESSELECTION_API LoadedRasterOverlayImage {
   // Implementation note: In the current implementation, this will
   // always be empty, but it might contain warnings in the future,
   // when other image types or loaders are used.
-  std::vector<std::string> warnings;
+  std::vector<std::string> warnings{};
 
   /**
    * @brief Whether more detailed data, beyond this image, is available within
    * the bounds of this image.
    */
-  bool moreDetailAvailable;
+  bool moreDetailAvailable = false;
 };
 
 /**
@@ -73,7 +73,7 @@ struct LoadTileImageFromUrlOptions {
    * @brief The rectangle definining the bounds of the image being loaded,
    * expressed in the {@link RasterOverlayTileProvider}'s projection.
    */
-  CesiumGeometry::Rectangle rectangle = {};
+  CesiumGeometry::Rectangle rectangle{};
 
   /**
    * @brief The credits to display with this tile.
@@ -81,7 +81,7 @@ struct LoadTileImageFromUrlOptions {
    * This property is copied verbatim to the
    * {@link LoadedRasterOverlayImage::credits} property.
    */
-  std::vector<Credit> credits = {};
+  std::vector<Credit> credits{};
 
   /**
    * @brief Whether more detailed data, beyond this image, is available within
@@ -354,7 +354,7 @@ private:
    * @param tile The tile that is starting to load.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  void beginTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
 
   /**
    * @brief Finalizes loading of a tile.
@@ -365,7 +365,7 @@ private:
    * @param tile The tile that finished loading.
    * @param isThrottledLoad True if the load was originally throttled.
    */
-  void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad);
+  void finalizeTileLoad(RasterOverlayTile& tile, bool isThrottledLoad) noexcept;
 
 private:
   RasterOverlay* _pOwner;

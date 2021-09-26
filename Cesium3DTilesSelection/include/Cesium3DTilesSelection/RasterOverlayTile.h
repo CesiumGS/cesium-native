@@ -113,7 +113,7 @@ public:
   RasterOverlayTile(
       RasterOverlay& overlay,
       double targetGeometricError,
-      const CesiumGeometry::Rectangle& imageryRectangle);
+      const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
   /** @brief Default destructor. */
   ~RasterOverlayTile();
@@ -132,7 +132,7 @@ public:
    * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
    * of this tile in the raster overlay's projected coordinates.
    */
-  const CesiumGeometry::Rectangle& getRectangle() const {
+  const CesiumGeometry::Rectangle& getRectangle() const noexcept {
     return this->_rectangle;
   }
 
@@ -143,7 +143,9 @@ public:
    * This is used to control which content (how highly detailed) the
    * {@link RasterOverlayTileProvider} uses within the bounds of this tile.
    */
-  double getTargetGeometricError() const { return this->_targetGeometricError; }
+  double getTargetGeometricError() const noexcept {
+    return this->_targetGeometricError;
+  }
 
   /**
    * @brief Returns the current {@link LoadState}.
@@ -183,14 +185,16 @@ public:
   /**
    * @brief Returns the renderer resources that have been created for this tile.
    */
-  void* getRendererResources() const { return this->_pRendererResources; }
+  void* getRendererResources() const noexcept {
+    return this->_pRendererResources;
+  }
 
   /**
    * @brief Set the renderer resources for this tile.
    *
    * This function is not supposed to be called by clients.
    */
-  void setRendererResources(void* pValue) {
+  void setRendererResources(void* pValue) noexcept {
     this->_pRendererResources = pValue;
   }
 
@@ -198,7 +202,7 @@ public:
    * @brief Determines if more detailed data is available for the spatial area
    * covered by this tile.
    */
-  MoreDetailAvailable isMoreDetailAvailable() const {
+  MoreDetailAvailable isMoreDetailAvailable() const noexcept {
     return this->_moreDetailAvailable;
   }
 
@@ -220,7 +224,7 @@ public:
 private:
   friend class RasterOverlayTileProvider;
 
-  void setState(LoadState newState);
+  void setState(LoadState newState) noexcept;
 
   RasterOverlay* _pOverlay;
   double _targetGeometricError;

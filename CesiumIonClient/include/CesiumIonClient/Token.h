@@ -12,38 +12,38 @@ struct Token {
   /**
    * @brief The identifier of the token.
    */
-  std::string jti;
+  std::string jti{};
 
   /**
    * @brief The name of the token.
    */
-  std::string name;
+  std::string name{};
 
   /**
    * @brief The token value.
    */
-  std::string token;
+  std::string token{};
 
   /**
    * @brief True if this is the default token.
    */
-  bool isDefault;
+  bool isDefault{};
 
   /**
    * @brief The date when this token was last used.
    */
-  std::string lastUsed;
+  std::string lastUsed{};
 
   /**
    * @brief The scopes granted by this token.
    */
-  std::vector<std::string> scopes;
+  std::vector<std::string> scopes{};
 
   /**
    * @brief The assets that this token my access.
    *
    * If `std::nullopt`, the token allows access to all assets.
    */
-  std::optional<std::vector<int64_t>> assets;
+  std::optional<std::vector<int64_t>> assets{};
 };
 } // namespace CesiumIonClient

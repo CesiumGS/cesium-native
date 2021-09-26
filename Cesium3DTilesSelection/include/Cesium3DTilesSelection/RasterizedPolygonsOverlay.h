@@ -36,7 +36,7 @@ public:
       RasterOverlay* pOwner) override;
 
   const std::vector<CesiumGeospatial::CartographicPolygon>&
-  getPolygons() const {
+  getPolygons() const noexcept {
     return this->_polygons;
   }
 

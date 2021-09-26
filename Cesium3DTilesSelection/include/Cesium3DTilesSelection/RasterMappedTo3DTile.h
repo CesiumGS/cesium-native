@@ -157,7 +157,7 @@ public:
   void detachFromTile(Tile& tile) noexcept;
 
 private:
-  void computeTranslationAndScale(Tile& tile);
+  void computeTranslationAndScale(const Tile& tile);
 
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;
