@@ -5,6 +5,7 @@
 #include "CesiumGltf/EnumValue.h"
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+
 #include <optional>
 #include <string>
 #include <vector>

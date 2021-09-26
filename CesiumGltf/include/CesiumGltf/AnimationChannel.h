@@ -5,6 +5,7 @@
 #include "CesiumGltf/AnimationChannelTarget.h"
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+
 #include <cstdint>
 
 namespace CesiumGltf {

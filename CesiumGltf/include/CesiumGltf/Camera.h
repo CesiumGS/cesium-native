@@ -6,6 +6,7 @@
 #include "CesiumGltf/CameraPerspective.h"
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
+
 #include <optional>
 
 namespace CesiumGltf {

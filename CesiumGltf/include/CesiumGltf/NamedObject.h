@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+
 #include <string>
 
 namespace CesiumGltf {

@@ -5,6 +5,7 @@
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/PropertyStatistics.h"
+
 #include <cstdint>
 #include <optional>
 #include <unordered_map>

@@ -5,6 +5,7 @@
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/TextureAccessor.h"
+
 #include <optional>
 #include <string>
 #include <unordered_map>

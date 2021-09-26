@@ -18,6 +18,7 @@
 #include "CesiumGltf/Scene.h"
 #include "CesiumGltf/Skin.h"
 #include "CesiumGltf/Texture.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>

@@ -2,9 +2,11 @@
 
 #include "CesiumGltf/PropertyType.h"
 #include "CesiumUtility/SpanHelper.h"
+
+#include <gsl/span>
+
 #include <cassert>
 #include <cstddef>
-#include <gsl/span>
 
 namespace CesiumGltf {
 template <typename ElementType> class MetadataArrayView {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>

@@ -1,4 +1,5 @@
 #include "WriteBinaryGLB.h"
+
 #include <algorithm>
 
 const std::size_t BYTE_HEADER_SIZE = 12;

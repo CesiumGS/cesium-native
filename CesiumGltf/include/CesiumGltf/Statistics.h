@@ -5,6 +5,7 @@
 #include "CesiumGltf/ClassStatistics.h"
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+
 #include <unordered_map>
 
 namespace CesiumGltf {

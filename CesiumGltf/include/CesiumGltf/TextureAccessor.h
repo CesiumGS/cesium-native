@@ -5,6 +5,7 @@
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/TextureInfo.h"
+
 #include <string>
 
 namespace CesiumGltf {

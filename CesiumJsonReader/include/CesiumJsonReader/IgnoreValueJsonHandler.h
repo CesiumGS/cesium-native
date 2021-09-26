@@ -2,6 +2,7 @@
 
 #include "CesiumJsonReader/IJsonHandler.h"
 #include "CesiumJsonReader/Library.h"
+
 #include <cstdint>
 
 namespace CesiumJsonReader {

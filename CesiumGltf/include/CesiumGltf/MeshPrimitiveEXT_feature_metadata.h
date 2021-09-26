@@ -6,6 +6,7 @@
 #include "CesiumGltf/FeatureIDAttribute.h"
 #include "CesiumGltf/FeatureIDTexture.h"
 #include "CesiumGltf/Library.h"
+
 #include <string>
 #include <vector>
 

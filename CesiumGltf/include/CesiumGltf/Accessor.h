@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/AccessorSpec.h"
 #include "CesiumGltf/Library.h"
+
 #include <cstdint>
 
 namespace CesiumGltf {

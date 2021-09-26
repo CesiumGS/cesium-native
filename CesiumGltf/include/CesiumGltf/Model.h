@@ -2,8 +2,10 @@
 
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/ModelSpec.h"
-#include <functional>
+
 #include <glm/mat4x4.hpp>
+
+#include <functional>
 
 namespace CesiumGltf {
 

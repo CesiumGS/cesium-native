@@ -4,6 +4,7 @@
 
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+
 #include <cstdint>
 #include <unordered_map>
 #include <vector>

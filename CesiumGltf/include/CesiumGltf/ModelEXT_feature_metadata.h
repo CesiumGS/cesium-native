@@ -8,6 +8,7 @@
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/Schema.h"
 #include "CesiumGltf/Statistics.h"
+
 #include <optional>
 #include <string>
 #include <unordered_map>

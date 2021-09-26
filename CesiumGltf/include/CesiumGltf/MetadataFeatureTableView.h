@@ -4,7 +4,9 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumGltf/PropertyType.h"
+
 #include <glm/common.hpp>
+
 #include <optional>
 
 namespace CesiumGltf {

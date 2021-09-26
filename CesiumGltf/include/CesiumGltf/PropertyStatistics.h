@@ -5,6 +5,7 @@
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
 #include "CesiumUtility/JsonValue.h"
+
 #include <unordered_map>
 
 namespace CesiumGltf {

@@ -1,10 +1,14 @@
 #include "AccessorWriter.h"
+
 #include "AccessorSparseWriter.h"
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
-#include <magic_enum.hpp>
+
 #include <stdexcept>
 #include <type_traits>
+
+#include <magic_enum.hpp>
 
 void CesiumGltf::writeAccessor(
     const std::vector<Accessor>& accessors,

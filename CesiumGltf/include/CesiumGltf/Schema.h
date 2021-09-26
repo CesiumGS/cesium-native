@@ -6,6 +6,7 @@
 #include "CesiumGltf/Enum.h"
 #include "CesiumGltf/ExtensibleObject.h"
 #include "CesiumGltf/Library.h"
+
 #include <optional>
 #include <string>
 #include <unordered_map>

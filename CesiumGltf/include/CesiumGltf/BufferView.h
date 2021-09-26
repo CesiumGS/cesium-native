@@ -4,6 +4,7 @@
 
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
+
 #include <cstdint>
 #include <optional>
 

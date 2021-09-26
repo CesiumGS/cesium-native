@@ -1,4 +1,5 @@
 #include "CesiumGltf/Writer.h"
+
 #include "AccessorWriter.h"
 #include "AnimationWriter.h"
 #include "AssetWriter.h"
@@ -12,9 +13,7 @@
 #include "SkinWriter.h"
 #include "TextureWriter.h"
 #include "WriteBinaryGLB.h"
-#include <BufferViewWriter.h>
-#include <BufferWriter.h>
-#include <CameraWriter.h>
+
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/Writer.h>
@@ -22,11 +21,16 @@
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
+
 #include <array>
 #include <cstdio>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
+
+#include <BufferViewWriter.h>
+#include <BufferWriter.h>
+#include <CameraWriter.h>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;

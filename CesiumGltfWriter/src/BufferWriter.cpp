@@ -1,9 +1,12 @@
 #include "BufferWriter.h"
+
 #include "Base64URIDetector.h"
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <string_view>
 
 void CesiumGltf::writeBuffer(

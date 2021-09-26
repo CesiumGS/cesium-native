@@ -6,6 +6,7 @@
 #include "CesiumGltf/AnimationSampler.h"
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
+
 #include <vector>
 
 namespace CesiumGltf {

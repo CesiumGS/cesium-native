@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/MetadataArrayView.h"
 #include "CesiumGltf/PropertyType.h"
+
 #include <cstdint>
 #include <type_traits>
 
