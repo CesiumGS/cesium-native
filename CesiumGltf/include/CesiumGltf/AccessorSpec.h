@@ -20,45 +20,40 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
   static inline constexpr const char* TypeName = "Accessor";
 
   /**
-   * @brief The datatype of components in the attribute.
-   *
-   * All valid values correspond to WebGL enums.  The corresponding typed arrays
-   * are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`,
-   * and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when
-   * the accessor contains indices, i.e., the accessor is only referenced by
-   * `primitive.indices`.
+   * @brief Known values for The datatype of components in the attribute.
    */
-  enum class ComponentType {
-    BYTE = 5120,
+  struct ComponentType {
+    static constexpr int32_t BYTE = 5120;
 
-    UNSIGNED_BYTE = 5121,
+    static constexpr int32_t UNSIGNED_BYTE = 5121;
 
-    SHORT = 5122,
+    static constexpr int32_t SHORT = 5122;
 
-    UNSIGNED_SHORT = 5123,
+    static constexpr int32_t UNSIGNED_SHORT = 5123;
 
-    UNSIGNED_INT = 5125,
+    static constexpr int32_t UNSIGNED_INT = 5125;
 
-    FLOAT = 5126
+    static constexpr int32_t FLOAT = 5126;
   };
 
   /**
-   * @brief Specifies if the attribute is a scalar, vector, or matrix.
+   * @brief Known values for Specifies if the attribute is a scalar, vector, or
+   * matrix.
    */
-  enum class Type {
-    SCALAR,
+  struct Type {
+    inline static const std::string SCALAR = "SCALAR";
 
-    VEC2,
+    inline static const std::string VEC2 = "VEC2";
 
-    VEC3,
+    inline static const std::string VEC3 = "VEC3";
 
-    VEC4,
+    inline static const std::string VEC4 = "VEC4";
 
-    MAT2,
+    inline static const std::string MAT2 = "MAT2";
 
-    MAT3,
+    inline static const std::string MAT3 = "MAT3";
 
-    MAT4
+    inline static const std::string MAT4 = "MAT4";
   };
 
   /**
@@ -79,13 +74,16 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
   /**
    * @brief The datatype of components in the attribute.
    *
+   * Known values are defined in {@link ComponentType}.
+   *
+   *
    * All valid values correspond to WebGL enums.  The corresponding typed arrays
    * are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`,
    * and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when
    * the accessor contains indices, i.e., the accessor is only referenced by
    * `primitive.indices`.
    */
-  ComponentType componentType = ComponentType();
+  int32_t componentType = int32_t();
 
   /**
    * @brief Specifies whether integer data values should be normalized.
@@ -107,8 +105,11 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
 
   /**
    * @brief Specifies if the attribute is a scalar, vector, or matrix.
+   *
+   * Known values are defined in {@link Type}.
+   *
    */
-  Type type = Type();
+  std::string type = std::string();
 
   /**
    * @brief Maximum value of each component in this attribute.

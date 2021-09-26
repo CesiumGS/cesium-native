@@ -19,17 +19,14 @@ struct CESIUMGLTF_API Material final : public NamedObject {
   static inline constexpr const char* TypeName = "Material";
 
   /**
-   * @brief The alpha rendering mode of the material.
-   *
-   * The material's alpha rendering mode enumeration specifying the
-   * interpretation of the alpha value of the main factor and texture.
+   * @brief Known values for The alpha rendering mode of the material.
    */
-  enum class AlphaMode {
-    OPAQUE,
+  struct AlphaMode {
+    inline static const std::string OPAQUE = "OPAQUE";
 
-    MASK,
+    inline static const std::string MASK = "MASK";
 
-    BLEND
+    inline static const std::string BLEND = "BLEND";
   };
 
   /**
@@ -87,10 +84,13 @@ struct CESIUMGLTF_API Material final : public NamedObject {
   /**
    * @brief The alpha rendering mode of the material.
    *
+   * Known values are defined in {@link AlphaMode}.
+   *
+   *
    * The material's alpha rendering mode enumeration specifying the
    * interpretation of the alpha value of the main factor and texture.
    */
-  AlphaMode alphaMode = AlphaMode::OPAQUE;
+  std::string alphaMode = AlphaMode::OPAQUE;
 
   /**
    * @brief The alpha cutoff value of the material.

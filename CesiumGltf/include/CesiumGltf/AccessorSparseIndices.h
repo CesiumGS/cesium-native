@@ -15,17 +15,14 @@ struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AccessorSparseIndices";
 
   /**
-   * @brief The indices data type.
-   *
-   * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123`
-   * (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
+   * @brief Known values for The indices data type.
    */
-  enum class ComponentType {
-    UNSIGNED_BYTE = 5121,
+  struct ComponentType {
+    static constexpr int32_t UNSIGNED_BYTE = 5121;
 
-    UNSIGNED_SHORT = 5123,
+    static constexpr int32_t UNSIGNED_SHORT = 5123;
 
-    UNSIGNED_INT = 5125
+    static constexpr int32_t UNSIGNED_INT = 5125;
   };
 
   /**
@@ -43,9 +40,12 @@ struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
   /**
    * @brief The indices data type.
    *
+   * Known values are defined in {@link ComponentType}.
+   *
+   *
    * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123`
    * (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
    */
-  ComponentType componentType = ComponentType();
+  int32_t componentType = int32_t();
 };
 } // namespace CesiumGltf

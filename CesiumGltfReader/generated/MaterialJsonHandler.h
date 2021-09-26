@@ -7,6 +7,7 @@
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/BoolJsonHandler.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "MaterialNormalTextureInfoJsonHandler.h"
 #include "MaterialOcclusionTextureInfoJsonHandler.h"
 #include "MaterialPBRMetallicRoughnessJsonHandler.h"
@@ -32,18 +33,6 @@ protected:
       Material& o);
 
 private:
-  class AlphaModeJsonHandler : public CesiumJsonReader::JsonHandler {
-  public:
-    AlphaModeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void
-    reset(CesiumJsonReader::IJsonHandler* pParent, Material::AlphaMode* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
-
-  private:
-    Material::AlphaMode* _pEnum = nullptr;
-  };
-
   Material* _pObject = nullptr;
   MaterialPBRMetallicRoughnessJsonHandler _pbrMetallicRoughness;
   MaterialNormalTextureInfoJsonHandler _normalTexture;
@@ -52,7 +41,7 @@ private:
   CesiumJsonReader::
       ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
           _emissiveFactor;
-  AlphaModeJsonHandler _alphaMode;
+  CesiumJsonReader::StringJsonHandler _alphaMode;
   CesiumJsonReader::DoubleJsonHandler _alphaCutoff;
   CesiumJsonReader::BoolJsonHandler _doubleSided;
 };

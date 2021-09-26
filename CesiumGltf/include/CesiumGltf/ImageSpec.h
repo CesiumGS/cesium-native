@@ -17,12 +17,13 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
   static inline constexpr const char* TypeName = "Image";
 
   /**
-   * @brief The image's MIME type. Required if `bufferView` is defined.
+   * @brief Known values for The image's MIME type. Required if `bufferView` is
+   * defined.
    */
-  enum class MimeType {
-    image_jpeg,
+  struct MimeType {
+    inline static const std::string image_jpeg = "image/jpeg";
 
-    image_png
+    inline static const std::string image_png = "image/png";
   };
 
   /**
@@ -36,8 +37,11 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
 
   /**
    * @brief The image's MIME type. Required if `bufferView` is defined.
+   *
+   * Known values are defined in {@link MimeType}.
+   *
    */
-  std::optional<MimeType> mimeType;
+  std::optional<std::string> mimeType;
 
   /**
    * @brief The index of the bufferView that contains the image. Use this

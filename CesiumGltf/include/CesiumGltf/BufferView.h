@@ -15,12 +15,12 @@ struct CESIUMGLTF_API BufferView final : public NamedObject {
   static inline constexpr const char* TypeName = "BufferView";
 
   /**
-   * @brief The target that the GPU buffer should be bound to.
+   * @brief Known values for The target that the GPU buffer should be bound to.
    */
-  enum class Target {
-    ARRAY_BUFFER = 34962,
+  struct Target {
+    static constexpr int32_t ARRAY_BUFFER = 34962;
 
-    ELEMENT_ARRAY_BUFFER = 34963
+    static constexpr int32_t ELEMENT_ARRAY_BUFFER = 34963;
   };
 
   /**
@@ -49,7 +49,10 @@ struct CESIUMGLTF_API BufferView final : public NamedObject {
 
   /**
    * @brief The target that the GPU buffer should be bound to.
+   *
+   * Known values are defined in {@link Target}.
+   *
    */
-  std::optional<Target> target;
+  std::optional<int32_t> target;
 };
 } // namespace CesiumGltf

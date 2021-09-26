@@ -17,16 +17,13 @@ struct CESIUMGLTF_API Camera final : public NamedObject {
   static inline constexpr const char* TypeName = "Camera";
 
   /**
-   * @brief Specifies if the camera uses a perspective or orthographic
-   * projection.
-   *
-   * Based on this, either the camera's `perspective` or `orthographic` property
-   * will be defined.
+   * @brief Known values for Specifies if the camera uses a perspective or
+   * orthographic projection.
    */
-  enum class Type {
-    perspective,
+  struct Type {
+    inline static const std::string perspective = "perspective";
 
-    orthographic
+    inline static const std::string orthographic = "orthographic";
   };
 
   /**
@@ -45,9 +42,12 @@ struct CESIUMGLTF_API Camera final : public NamedObject {
    * @brief Specifies if the camera uses a perspective or orthographic
    * projection.
    *
+   * Known values are defined in {@link Type}.
+   *
+   *
    * Based on this, either the camera's `perspective` or `orthographic` property
    * will be defined.
    */
-  Type type = Type();
+  std::string type = std::string();
 };
 } // namespace CesiumGltf

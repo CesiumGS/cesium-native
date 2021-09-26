@@ -15,14 +15,14 @@ struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationSampler";
 
   /**
-   * @brief Interpolation algorithm.
+   * @brief Known values for Interpolation algorithm.
    */
-  enum class Interpolation {
-    LINEAR,
+  struct Interpolation {
+    inline static const std::string LINEAR = "LINEAR";
 
-    STEP,
+    inline static const std::string STEP = "STEP";
 
-    CUBICSPLINE
+    inline static const std::string CUBICSPLINE = "CUBICSPLINE";
   };
 
   /**
@@ -37,8 +37,11 @@ struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
 
   /**
    * @brief Interpolation algorithm.
+   *
+   * Known values are defined in {@link Interpolation}.
+   *
    */
-  Interpolation interpolation = Interpolation::LINEAR;
+  std::string interpolation = Interpolation::LINEAR;
 
   /**
    * @brief The index of an accessor, containing keyframe output values.
