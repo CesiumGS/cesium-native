@@ -4,16 +4,16 @@
 
 #include <CesiumUtility/Tracing.h>
 
-#include <cesium-sqlite3.h>
-
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <spdlog/spdlog.h>
-#include <sqlite3.h>
 
 #include <cstddef>
 #include <stdexcept>
 #include <utility>
+
+#include <cesium-sqlite3.h>
+#include <sqlite3.h>
 
 using namespace CesiumAsync;
 

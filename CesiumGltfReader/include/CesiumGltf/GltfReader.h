@@ -3,8 +3,10 @@
 #include "CesiumGltf/IExtensionJsonHandler.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/ReaderLibrary.h"
-#include <functional>
+
 #include <gsl/span>
+
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>

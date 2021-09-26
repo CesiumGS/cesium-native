@@ -1,5 +1,7 @@
 #include "CesiumAsync/AsyncSystem.h"
+
 #include <catch2/catch.hpp>
+
 #include <chrono>
 #include <memory>
 #include <thread>

@@ -1,5 +1,6 @@
 #include "CesiumGeometry/BoundingSphere.h"
 #include "CesiumGeometry/Plane.h"
+
 #include <catch2/catch.hpp>
 #include <glm/mat3x3.hpp>
 

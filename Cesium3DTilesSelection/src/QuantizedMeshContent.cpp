@@ -1,11 +1,10 @@
 #include "QuantizedMeshContent.h"
 
-#include "SkirtMeshMetadata.h"
-#include "calcQuadtreeMaxGeometricError.h"
-
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "SkirtMeshMetadata.h"
+#include "calcQuadtreeMaxGeometricError.h"
 
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/GlobeRectangle.h>

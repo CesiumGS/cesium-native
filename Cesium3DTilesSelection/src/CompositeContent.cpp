@@ -1,4 +1,5 @@
 #include "CompositeContent.h"
+
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"

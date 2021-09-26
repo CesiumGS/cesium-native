@@ -1,11 +1,14 @@
 #include "CesiumGltf/Model.h"
+
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
-#include <algorithm>
+
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/vec3.hpp>
 #include <gsl/span>
+
+#include <algorithm>
 
 using namespace CesiumGltf;
 

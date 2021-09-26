@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/IAssetRequest.h"
+
 #include <string>
 
 class MockAssetRequest : public CesiumAsync::IAssetRequest {

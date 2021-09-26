@@ -6,15 +6,15 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <duthomhas/csprng.hpp>
-#include <httplib.h>
-#include <modp_b64.h>
-
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
 #include <thread>
+
+#include <httplib.h>
+#include <modp_b64.h>
 
 #ifdef _MSC_VER
 #pragma warning(push)

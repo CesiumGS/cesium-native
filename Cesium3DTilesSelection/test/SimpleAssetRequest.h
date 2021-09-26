@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/IAssetRequest.h"
 #include "SimpleAssetResponse.h"
+
 #include <memory>
 
 class SimpleAssetRequest : public CesiumAsync::IAssetRequest {
