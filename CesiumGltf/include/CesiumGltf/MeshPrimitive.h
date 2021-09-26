@@ -16,7 +16,7 @@ struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "MeshPrimitive";
 
   /**
-   * @brief Known values for The type of primitives to render.
+   * @brief Known values for The topology type of primitives to render.
    */
   struct Mode {
     static constexpr int32_t POINTS = 0;
@@ -35,30 +35,18 @@ struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
   };
 
   /**
-   * @brief A dictionary object, where each key corresponds to mesh attribute
+   * @brief A plain JSON object, where each key corresponds to a mesh attribute
    * semantic and each value is the index of the accessor containing attribute's
    * data.
    */
   std::unordered_map<std::string, int32_t> attributes;
 
   /**
-   * @brief The index of the accessor that contains the indices.
+   * @brief The index of the accessor that contains the vertex indices.
    *
-   * The index of the accessor that contains mesh indices.  When this is not
-   * defined, the primitives should be rendered without indices using
-   * `drawArrays()`.  When defined, the accessor must contain indices: the
-   * `bufferView` referenced by the accessor should have a `target` equal to
-   * 34963 (ELEMENT_ARRAY_BUFFER); `componentType` must be 5121 (UNSIGNED_BYTE),
-   * 5123 (UNSIGNED_SHORT) or 5125 (UNSIGNED_INT), the latter may require
-   * enabling additional hardware support; `type` must be `"SCALAR"`. For
-   * triangle primitives, the front face has a counter-clockwise (CCW) winding
-   * order. Values of the index accessor must not include the maximum value for
-   * the given component type, which triggers primitive restart in several
-   * graphics APIs and would require client implementations to rebuild the index
-   * buffer. Primitive restart values are disallowed and all index values must
-   * refer to actual vertices. As a result, the index accessor's values must not
-   * exceed the following maxima: BYTE `< 255`, UNSIGNED_SHORT `< 65535`,
-   * UNSIGNED_INT `< 4294967295`.
+   * When this is undefined, the primitive defines non-indexed geometry.  When
+   * defined, the accessor **MUST** have `SCALAR` type and an unsigned integer
+   * component type.
    */
   int32_t indices = -1;
 
@@ -68,19 +56,15 @@ struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
   int32_t material = -1;
 
   /**
-   * @brief The type of primitives to render.
+   * @brief The topology type of primitives to render.
    *
    * Known values are defined in {@link Mode}.
    *
-   *
-   * All valid values correspond to WebGL enums.
    */
   int32_t mode = Mode::TRIANGLES;
 
   /**
-   * @brief An array of Morph Targets, each  Morph Target is a dictionary
-   * mapping attributes (only `POSITION`, `NORMAL`, and `TANGENT` supported) to
-   * their deviations in the Morph Target.
+   * @brief An array of morph targets.
    */
   std::vector<std::unordered_map<std::string, int32_t>> targets;
 };

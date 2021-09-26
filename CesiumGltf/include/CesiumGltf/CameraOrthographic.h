@@ -14,20 +14,20 @@ struct CESIUMGLTF_API CameraOrthographic final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "CameraOrthographic";
 
   /**
-   * @brief The floating-point horizontal magnification of the view. Must not be
-   * zero.
+   * @brief The floating-point horizontal magnification of the view. This value
+   * **MUST NOT** be equal to zero. This value **SHOULD NOT** be negative.
    */
   double xmag = double();
 
   /**
-   * @brief The floating-point vertical magnification of the view. Must not be
-   * zero.
+   * @brief The floating-point vertical magnification of the view. This value
+   * **MUST NOT** be equal to zero. This value **SHOULD NOT** be negative.
    */
   double ymag = double();
 
   /**
-   * @brief The floating-point distance to the far clipping plane. `zfar` must
-   * be greater than `znear`.
+   * @brief The floating-point distance to the far clipping plane. This value
+   * **MUST NOT** be equal to zero. `zfar` **MUST** be greater than `znear`.
    */
   double zfar = double();
 

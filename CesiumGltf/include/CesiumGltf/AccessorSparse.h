@@ -10,31 +10,27 @@
 
 namespace CesiumGltf {
 /**
- * @brief Sparse storage of attributes that deviate from their initialization
- * value.
+ * @brief Sparse storage of accessor values that deviate from their
+ * initialization value.
  */
 struct CESIUMGLTF_API AccessorSparse final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AccessorSparse";
 
   /**
-   * @brief Number of entries stored in the sparse array.
-   *
-   * The number of attributes encoded in this sparse accessor.
+   * @brief Number of deviating accessor values stored in the sparse array.
    */
   int64_t count = int64_t();
 
   /**
-   * @brief Index array of size `count` that points to those accessor attributes
-   * that deviate from their initialization value. Indices must strictly
-   * increase.
+   * @brief An object pointing to a buffer view containing the indices of
+   * deviating accessor values. The number of indices is equal to `count`.
+   * Indices **MUST** strictly increase.
    */
   AccessorSparseIndices indices;
 
   /**
-   * @brief Array of size `count` times number of components, storing the
-   * displaced accessor attributes pointed by `indices`. Substituted values must
-   * have the same `componentType` and number of components as the base
-   * accessor.
+   * @brief An object pointing to a buffer view containing the deviating
+   * accessor values.
    */
   AccessorSparseValues values;
 };

@@ -16,10 +16,10 @@ struct CESIUMGLTF_API BufferSpec : public NamedObject {
   static inline constexpr const char* TypeName = "Buffer";
 
   /**
-   * @brief The uri of the buffer.
+   * @brief The URI (or IRI) of the buffer.
    *
-   * Relative paths are relative to the .gltf file.  Instead of referencing an
-   * external file, the uri can also be a data-uri.
+   * Relative paths are relative to the current glTF asset.  Instead of
+   * referencing an external file, this field **MAY** contain a `data:`-URI.
    */
   std::optional<std::string> uri;
 

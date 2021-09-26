@@ -40,7 +40,7 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
   };
 
   /**
-   * @brief Known values for s wrapping mode.
+   * @brief Known values for S (U) wrapping mode.
    */
   struct WrapS {
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
@@ -51,7 +51,7 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
   };
 
   /**
-   * @brief Known values for t wrapping mode.
+   * @brief Known values for T (V) wrapping mode.
    */
   struct WrapT {
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
@@ -66,9 +66,6 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
    *
    * Known values are defined in {@link MagFilter}.
    *
-   *
-   * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729`
-   * (LINEAR).
    */
   std::optional<int32_t> magFilter = MagFilter::NEAREST;
 
@@ -77,28 +74,24 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
    *
    * Known values are defined in {@link MinFilter}.
    *
-   *
-   * All valid values correspond to WebGL enums.
    */
   std::optional<int32_t> minFilter = MinFilter::NEAREST;
 
   /**
-   * @brief s wrapping mode.
+   * @brief S (U) wrapping mode.
    *
    * Known values are defined in {@link WrapS}.
    *
    *
-   * S (U) wrapping mode.  All valid values correspond to WebGL enums.
+   * All valid values correspond to WebGL enums.
    */
   int32_t wrapS = WrapS::REPEAT;
 
   /**
-   * @brief t wrapping mode.
+   * @brief T (V) wrapping mode.
    *
    * Known values are defined in {@link WrapT}.
    *
-   *
-   * T (V) wrapping mode.  All valid values correspond to WebGL enums.
    */
   int32_t wrapT = WrapT::REPEAT;
 };

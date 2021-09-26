@@ -10,7 +10,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief A camera's projection.  A node can reference a camera to apply a
+ * @brief A camera's projection.  A node **MAY** reference a camera to apply a
  * transform to place the camera in the scene.
  */
 struct CESIUMGLTF_API Camera final : public NamedObject {
@@ -28,13 +28,15 @@ struct CESIUMGLTF_API Camera final : public NamedObject {
 
   /**
    * @brief An orthographic camera containing properties to create an
-   * orthographic projection matrix.
+   * orthographic projection matrix. This property **MUST NOT** be defined when
+   * `perspective` is defined.
    */
   std::optional<CameraOrthographic> orthographic;
 
   /**
    * @brief A perspective camera containing properties to create a perspective
-   * projection matrix.
+   * projection matrix. This property **MUST NOT** be defined when
+   * `orthographic` is defined.
    */
   std::optional<CameraPerspective> perspective;
 
@@ -46,7 +48,7 @@ struct CESIUMGLTF_API Camera final : public NamedObject {
    *
    *
    * Based on this, either the camera's `perspective` or `orthographic` property
-   * will be defined.
+   * **MUST** be defined.
    */
   std::string type = Type::perspective;
 };
