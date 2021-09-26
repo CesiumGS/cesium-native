@@ -397,8 +397,7 @@ function resolveEnum(
     localTypes: [
       unindent(`
         ${createEnumPropertyDoc(propertyDefaultValues)}
-        class ${enumName} {
-          public: 
+        struct ${enumName} {
             ${indent(
               propertyDetails.anyOf
                 .map((e) => createEnum(e))
@@ -473,7 +472,7 @@ function createEnum(enumDetails) {
   }
 
   if (enumDetails.type === "integer") {
-    return `static const int32_t ${makeIdentifier(enumDetails.description)} = ${
+    return `static constexpr int32_t ${makeIdentifier(enumDetails.description)} = ${
       enumDetails.enum[0]
     }`;
   } else {
