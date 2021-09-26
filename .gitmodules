@@ -7,6 +7,9 @@
 [submodule "extern/draco"]
 	path = extern/draco
 	url = https://github.com/google/draco.git
+[submodule "extern/earcut"]
+	path = extern/earcut
+	url = https://github.com/mapbox/earcut.hpp.git
 [submodule "extern/Catch2"]
 	path = extern/Catch2
 	url = https://github.com/catchorg/Catch2.git

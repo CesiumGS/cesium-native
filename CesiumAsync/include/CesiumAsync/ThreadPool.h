@@ -33,8 +33,8 @@ private:
         [pScheduler]() { ThreadPool::_scope = pScheduler->immediate.scope(); };
   }
 
-  static auto createPostRun() {
-    return []() { ThreadPool::_scope.reset(); };
+  static auto createPostRun() noexcept {
+    return []() noexcept { ThreadPool::_scope.reset(); };
   }
 
   static thread_local Impl::ImmediateScheduler<Scheduler>::SchedulerScope
@@ -43,6 +43,7 @@ private:
   std::shared_ptr<Scheduler> _pScheduler;
 
   template <typename T> friend class Future;
+  template <typename T> friend class SharedFuture;
   friend class AsyncSystem;
 };
 

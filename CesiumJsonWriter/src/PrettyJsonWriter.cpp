@@ -5,7 +5,7 @@
 #include <string_view>
 
 namespace CesiumJsonWriter {
-PrettyJsonWriter::PrettyJsonWriter() {
+PrettyJsonWriter::PrettyJsonWriter() noexcept {
   auto writer = rapidjson::PrettyWriter<rapidjson::StringBuffer>(_prettyBuffer);
   writer.SetFormatOptions(
       rapidjson::PrettyFormatOptions::kFormatSingleLineArray);
@@ -155,7 +155,7 @@ std::string_view PrettyJsonWriter::toStringView() {
 }
 
 std::vector<std::byte> PrettyJsonWriter::toBytes() {
-  auto view = this->toStringView();
+  const auto view = this->toStringView();
   std::vector<std::byte> result(view.size(), std::byte(0));
   std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(result.data());
   std::copy(view.begin(), view.end(), u8Pointer);

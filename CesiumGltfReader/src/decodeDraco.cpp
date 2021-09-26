@@ -24,7 +24,7 @@ using namespace CesiumGltf;
 std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     ModelReaderResult& readModel,
     MeshPrimitive& /* primitive */,
-    KHR_draco_mesh_compression& draco) {
+    const KHR_draco_mesh_compression& draco) {
   CESIUM_TRACE("CesiumGltf::decodeBufferViewToDracoMesh");
   Model& model = readModel.model.value();
 
@@ -35,7 +35,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     return nullptr;
   }
 
-  BufferView& bufferView = *pBufferView;
+  const BufferView& bufferView = *pBufferView;
 
   Buffer* pBuffer = Model::getSafe(&model.buffers, bufferView.buffer);
   if (!pBuffer) {
@@ -54,7 +54,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     return nullptr;
   }
 
-  gsl::span<const std::byte> data(
+  const gsl::span<const std::byte> data(
       buffer.cesium.data.data() + bufferView.byteOffset,
       static_cast<uint64_t>(bufferView.byteLength));
 
@@ -92,7 +92,7 @@ void copyData(const T* pSource, T* pDestination, int64_t length) {
 
 void copyDecodedIndices(
     ModelReaderResult& readModel,
-    MeshPrimitive& primitive,
+    const MeshPrimitive& primitive,
     draco::Mesh* pMesh) {
   CESIUM_TRACE("CesiumGltf::copyDecodedIndices");
   Model& model = readModel.model.value();
@@ -141,7 +141,7 @@ void copyDecodedIndices(
   Buffer& indicesBuffer = model.buffers.emplace_back();
 
   int64_t indexBytes = pIndicesAccessor->computeByteSizeOfComponent();
-  int64_t indicesBytes = pIndicesAccessor->count * indexBytes;
+  const int64_t indicesBytes = pIndicesAccessor->count * indexBytes;
 
   indicesBuffer.cesium.data.resize(static_cast<size_t>(indicesBytes));
   indicesBuffer.byteLength = indicesBytes;
@@ -218,9 +218,10 @@ void copyDecodedAttribute(
   bufferView.buffer = static_cast<int32_t>(model.buffers.size());
   Buffer& buffer = model.buffers.emplace_back();
 
-  int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
-  int64_t stride = numberOfComponents * pAccessor->computeByteSizeOfComponent();
-  int64_t sizeBytes = pAccessor->count * stride;
+  const int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
+  const int64_t stride =
+      numberOfComponents * pAccessor->computeByteSizeOfComponent();
+  const int64_t sizeBytes = pAccessor->count * stride;
 
   buffer.cesium.data.resize(static_cast<size_t>(sizeBytes));
   buffer.byteLength = sizeBytes;
@@ -229,9 +230,9 @@ void copyDecodedAttribute(
   bufferView.byteOffset = 0;
   pAccessor->byteOffset = 0;
 
-  auto doCopy = [pMesh, pAttribute, numberOfComponents](auto pOut) {
+  const auto doCopy = [pMesh, pAttribute, numberOfComponents](auto pOut) {
     for (draco::PointIndex i(0); i < pMesh->num_points(); ++i) {
-      draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
+      const draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
       pAttribute->ConvertValue(valueIndex, numberOfComponents, pOut);
       pOut += pAttribute->num_components();
     }
@@ -291,7 +292,7 @@ void decodePrimitive(
       continue;
     }
 
-    int32_t primitiveAttrIndex = primitiveAttrIt->second;
+    const int32_t primitiveAttrIndex = primitiveAttrIt->second;
     Accessor* pAccessor = Model::getSafe(&model.accessors, primitiveAttrIndex);
     if (!pAccessor) {
       readModel.warnings.emplace_back(
@@ -299,7 +300,7 @@ void decodePrimitive(
       continue;
     }
 
-    int32_t dracoAttrIndex = attribute.second;
+    const int32_t dracoAttrIndex = attribute.second;
     const draco::PointAttribute* pAttribute =
         pMesh->GetAttributeByUniqueId(static_cast<uint32_t>(dracoAttrIndex));
     if (pAttribute == nullptr) {

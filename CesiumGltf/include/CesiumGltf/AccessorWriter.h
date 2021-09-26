@@ -24,7 +24,7 @@ public:
       : _accessor(model, accessor) {}
 
   /** @copydoc AccessorView::AccessorView(const Model&,int32_t) */
-  AccessorWriter(Model& model, int32_t accessorIndex)
+  AccessorWriter(Model& model, int32_t accessorIndex) noexcept
       : _accessor(model, accessorIndex) {}
 
   /** @copydoc AccessorView::operator[]() */

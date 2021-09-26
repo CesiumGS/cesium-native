@@ -4,6 +4,7 @@
 #include "CesiumAsync/Impl/CatchFunction.h"
 #include "CesiumAsync/Impl/ContinuationFutureType.h"
 #include "CesiumAsync/Impl/WithTracing.h"
+#include "CesiumAsync/SharedFuture.h"
 #include "CesiumAsync/ThreadPool.h"
 #include "CesiumUtility/Tracing.h"
 #include <variant>
@@ -204,6 +205,31 @@ public:
    */
   T wait() { return this->_task.get(); }
 
+  /**
+   * @brief Determines if this future is already resolved or rejected.
+   *
+   * If this method returns true, it is guaranteed that {@link wait} will
+   * not block but will instead immediately return a value or throw an
+   * exception.
+   *
+   * @return True if the future is already resolved or rejected and {@link wait}
+   * will not block; otherwise, false.
+   */
+  bool isReady() const { return this->_task.ready(); }
+
+  /**
+   * @brief Creates a version of this future that can be shared, meaning that
+   * its value may be accessed multiple times and multiple continuations may be
+   * attached to it.
+   *
+   * Calling this method invalidates the original Future.
+   *
+   * @return The `SharedFuture`.
+   */
+  SharedFuture<T> share() && {
+    return SharedFuture<T>(this->_pSchedulers, this->_task.share());
+  }
+
 private:
   Future(
       const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
@@ -258,6 +284,7 @@ private:
   friend struct Impl::TaskUnwrapper;
 
   template <typename R> friend class Future;
+  template <typename R> friend class SharedFuture;
   template <typename R> friend class Promise;
 };
 
