@@ -16,7 +16,7 @@ void ImageManipulation::unsafeBlitImage(
     size_t sourceWidth,
     size_t sourceHeight,
     size_t bytesPerPixel) {
-  size_t bytesToCopyPerRow = bytesPerPixel * sourceWidth;
+  const size_t bytesToCopyPerRow = bytesPerPixel * sourceWidth;
 
   if (bytesToCopyPerRow == targetRowStride &&
       targetRowStride == sourceRowStride) {
@@ -60,11 +60,13 @@ bool ImageManipulation::blitImage(
   }
 
   size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
-  size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
+  const size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
   size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
 
-  size_t requiredTargetSize = size_t(targetPixels.height) * bytesPerTargetRow;
-  size_t requiredSourceSize = size_t(sourcePixels.height) * bytesPerSourceRow;
+  const size_t requiredTargetSize =
+      size_t(targetPixels.height) * bytesPerTargetRow;
+  const size_t requiredSourceSize =
+      size_t(sourcePixels.height) * bytesPerSourceRow;
   if (target.pixelData.size() < requiredTargetSize ||
       source.pixelData.size() < requiredSourceSize) {
     return false;

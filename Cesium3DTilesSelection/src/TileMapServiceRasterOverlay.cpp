@@ -135,7 +135,7 @@ TileMapServiceRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  std::optional<Credit> credit =
+  const std::optional<Credit> credit =
       this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
                                   this->_options.credit.value()))
                             : std::nullopt;
@@ -161,10 +161,10 @@ TileMapServiceRasterOverlay::createTileProvider(
               return nullptr;
             }
 
-            gsl::span<const std::byte> data = pResponse->data();
+            const gsl::span<const std::byte> data = pResponse->data();
 
             tinyxml2::XMLDocument doc;
-            tinyxml2::XMLError error = doc.Parse(
+            const tinyxml2::XMLError error = doc.Parse(
                 reinterpret_cast<const char*>(data.data()),
                 data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
@@ -204,7 +204,7 @@ TileMapServiceRasterOverlay::createTileProvider(
               tinyxml2::XMLElement* pTileset =
                   pTilesets->FirstChildElement("TileSet");
               while (pTileset) {
-                uint32_t level =
+                const uint32_t level =
                     getAttributeUint32(pTileset, "order").value_or(0);
                 minimumLevel = glm::min(minimumLevel, level);
                 maximumLevel = glm::max(maximumLevel, level);

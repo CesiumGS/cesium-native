@@ -58,8 +58,8 @@ void rasterizePolygons(
     return;
   }
 
-  double rectangleWidth = rectangle.computeWidth();
-  double rectangleHeight = rectangle.computeHeight();
+  const double rectangleWidth = rectangle.computeWidth();
+  const double rectangleHeight = rectangle.computeHeight();
 
   // create source image
   image.width = 256;
@@ -81,39 +81,44 @@ void rasterizePolygons(
       const glm::dvec2& c = vertices[indices[3 * triangle + 2]];
 
       // TODO: deal with the corner cases here
-      double minX = glm::min(a.x, glm::min(b.x, c.x));
-      double minY = glm::min(a.y, glm::min(b.y, c.y));
-      double maxX = glm::max(a.x, glm::max(b.x, c.x));
-      double maxY = glm::max(a.y, glm::max(b.y, c.y));
+      const double minX = glm::min(a.x, glm::min(b.x, c.x));
+      const double minY = glm::min(a.y, glm::min(b.y, c.y));
+      const double maxX = glm::max(a.x, glm::max(b.x, c.x));
+      const double maxY = glm::max(a.y, glm::max(b.y, c.y));
 
-      CesiumGeospatial::GlobeRectangle triangleBounds(minX, minY, maxX, maxY);
+      const CesiumGeospatial::GlobeRectangle triangleBounds(
+          minX,
+          minY,
+          maxX,
+          maxY);
 
       // skip this triangle if it is entirely outside the tile bounds
       if (!rectangle.computeIntersection(triangleBounds)) {
         continue;
       }
 
-      glm::dvec2 ab = b - a;
-      glm::dvec2 ab_perp(-ab.y, ab.x);
-      glm::dvec2 bc = c - b;
-      glm::dvec2 bc_perp(-bc.y, bc.x);
-      glm::dvec2 ca = a - c;
-      glm::dvec2 ca_perp(-ca.y, ca.x);
+      const glm::dvec2 ab = b - a;
+      const glm::dvec2 ab_perp(-ab.y, ab.x);
+      const glm::dvec2 bc = c - b;
+      const glm::dvec2 bc_perp(-bc.y, bc.x);
+      const glm::dvec2 ca = a - c;
+      const glm::dvec2 ca_perp(-ca.y, ca.x);
 
       for (size_t j = 0; j < 256; ++j) {
-        double pixelY = rectangle.getSouth() +
-                        rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
+        const double pixelY =
+            rectangle.getSouth() +
+            rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
         for (size_t i = 0; i < 256; ++i) {
-          double pixelX =
+          const double pixelX =
               rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / 256.0;
-          glm::dvec2 v(pixelX, pixelY);
+          const glm::dvec2 v(pixelX, pixelY);
 
-          glm::dvec2 av = v - a;
-          glm::dvec2 cv = v - c;
+          const glm::dvec2 av = v - a;
+          const glm::dvec2 cv = v - c;
 
-          double v_proj_ab_perp = glm::dot(av, ab_perp);
-          double v_proj_bc_perp = glm::dot(cv, bc_perp);
-          double v_proj_ca_perp = glm::dot(cv, ca_perp);
+          const double v_proj_ab_perp = glm::dot(av, ab_perp);
+          const double v_proj_bc_perp = glm::dot(cv, bc_perp);
+          const double v_proj_ca_perp = glm::dot(cv, ca_perp);
 
           // will determine in or out, irrespective of winding
           if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
@@ -161,7 +166,7 @@ public:
         [&polygons = this->_polygons,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle()]() -> LoadedRasterOverlayImage {
-          CesiumGeospatial::GlobeRectangle tileRectangle =
+          const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
           LoadedRasterOverlayImage resultImage;

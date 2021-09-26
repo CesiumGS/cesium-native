@@ -23,7 +23,8 @@ public:
    * ensure that the lifetime of this overlay is longer than the lifetime of the
    * newly-constructed `RasterizedPolygonsOverlay`.
    */
-  RasterizedPolygonsTileExcluder(const RasterizedPolygonsOverlay& overlay);
+  RasterizedPolygonsTileExcluder(
+      const RasterizedPolygonsOverlay& overlay) noexcept;
 
   /**
    * @brief Determines whether a given tile is entirely inside a polygon and
@@ -33,7 +34,7 @@ public:
    * @return true if the tile should be excluded because it is entirely inside a
    * polygon.
    */
-  virtual bool shouldExclude(const Tile& tile) const override;
+  virtual bool shouldExclude(const Tile& tile) const noexcept override;
 
   /**
    * @brief Gets the overlay defining the polygons.
