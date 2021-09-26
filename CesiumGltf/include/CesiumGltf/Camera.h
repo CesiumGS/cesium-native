@@ -48,6 +48,6 @@ struct CESIUMGLTF_API Camera final : public NamedObject {
    * Based on this, either the camera's `perspective` or `orthographic` property
    * will be defined.
    */
-  std::string type = std::string();
+  std::string type = Type::perspective;
 };
 } // namespace CesiumGltf

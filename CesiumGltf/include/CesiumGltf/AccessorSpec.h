@@ -83,7 +83,7 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
    * the accessor contains indices, i.e., the accessor is only referenced by
    * `primitive.indices`.
    */
-  int32_t componentType = int32_t();
+  int32_t componentType = ComponentType::BYTE;
 
   /**
    * @brief Specifies whether integer data values should be normalized.
@@ -109,7 +109,7 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
    * Known values are defined in {@link Type}.
    *
    */
-  std::string type = std::string();
+  std::string type = Type::SCALAR;
 
   /**
    * @brief Maximum value of each component in this attribute.

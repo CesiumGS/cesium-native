@@ -53,6 +53,6 @@ struct CESIUMGLTF_API BufferView final : public NamedObject {
    * Known values are defined in {@link Target}.
    *
    */
-  std::optional<int32_t> target;
+  std::optional<int32_t> target = Target::ARRAY_BUFFER;
 };
 } // namespace CesiumGltf

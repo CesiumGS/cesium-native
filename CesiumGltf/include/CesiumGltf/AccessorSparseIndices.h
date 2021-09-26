@@ -46,6 +46,6 @@ struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
    * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123`
    * (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
    */
-  int32_t componentType = int32_t();
+  int32_t componentType = ComponentType::UNSIGNED_BYTE;
 };
 } // namespace CesiumGltf

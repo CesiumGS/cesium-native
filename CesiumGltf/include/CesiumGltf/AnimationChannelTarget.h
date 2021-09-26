@@ -49,6 +49,6 @@ struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
    * Known values are defined in {@link Path}.
    *
    */
-  std::string path = std::string();
+  std::string path = Path::translation;
 };
 } // namespace CesiumGltf
