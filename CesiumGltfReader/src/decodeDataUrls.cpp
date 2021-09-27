@@ -5,9 +5,9 @@
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumUtility/Tracing.h"
 
-#include <cstddef>
-
 #include <modp_b64.h>
+
+#include <cstddef>
 
 namespace {
 

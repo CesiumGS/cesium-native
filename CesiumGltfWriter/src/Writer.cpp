@@ -22,15 +22,15 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <BufferViewWriter.h>
+#include <BufferWriter.h>
+#include <CameraWriter.h>
+
 #include <array>
 #include <cstdio>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
-
-#include <BufferViewWriter.h>
-#include <BufferWriter.h>
-#include <CameraWriter.h>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
