@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Library.h"
+#include "Cartographic.h"
+#include "Library.h"
 
 #include <CesiumUtility/Math.h>
 

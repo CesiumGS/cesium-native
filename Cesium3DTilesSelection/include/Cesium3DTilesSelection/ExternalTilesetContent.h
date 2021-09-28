@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
-#include "Cesium3DTilesSelection/TileContentLoader.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
+#include "Library.h"
+#include "Tile.h"
+#include "TileContentLoadResult.h"
+#include "TileContentLoader.h"
+#include "TileRefine.h"
 
 #include <gsl/span>
 #include <spdlog/fwd.h>

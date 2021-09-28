@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/CreditSystem.h"
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-#include "Cesium3DTilesSelection/TileID.h"
+#include "CreditSystem.h"
+#include "IPrepareRendererResources.h"
+#include "Library.h"
+#include "RasterOverlayTileProvider.h"
+#include "TileID.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>

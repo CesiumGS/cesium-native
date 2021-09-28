@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeospatial/Library.h"
+#include "Library.h"
 
 #include <CesiumUtility/Math.h>
 

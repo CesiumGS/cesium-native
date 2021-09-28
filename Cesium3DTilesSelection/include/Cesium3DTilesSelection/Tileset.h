@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContext.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/TilesetOptions.h"
-#include "Cesium3DTilesSelection/ViewState.h"
-#include "Cesium3DTilesSelection/ViewUpdateResult.h"
+#include "Library.h"
+#include "RasterOverlayCollection.h"
+#include "Tile.h"
+#include "TileContext.h"
+#include "TilesetExternals.h"
+#include "TilesetOptions.h"
+#include "ViewState.h"
+#include "ViewUpdateResult.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>

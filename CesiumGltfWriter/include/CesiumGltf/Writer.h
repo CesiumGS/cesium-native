@@ -1,9 +1,10 @@
 #pragma once
-#include "CesiumGltf/Model.h"
 #include "WriteGLTFCallback.h"
 #include "WriteModelOptions.h"
 #include "WriteModelResult.h"
 #include "WriterLibrary.h"
+
+#include <CesiumGltf/Model.h>
 
 #include <cstdint>
 #include <string_view>

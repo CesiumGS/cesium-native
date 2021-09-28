@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/ICacheDatabase.h"
+#include "ICacheDatabase.h"
 
 #include <spdlog/fwd.h>
 

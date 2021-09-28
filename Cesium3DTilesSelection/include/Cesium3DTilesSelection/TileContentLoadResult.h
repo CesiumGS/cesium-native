@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContext.h"
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include "Tile.h"
+#include "TileContext.h"
+
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 
 namespace Cesium3DTilesSelection {
 

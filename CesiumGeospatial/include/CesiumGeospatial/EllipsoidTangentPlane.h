@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/Library.h"
+#include "Ellipsoid.h"
+#include "Library.h"
 
 #include <CesiumGeometry/Plane.h>
 

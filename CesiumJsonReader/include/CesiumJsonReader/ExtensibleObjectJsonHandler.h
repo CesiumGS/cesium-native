@@ -1,10 +1,10 @@
 #pragma once
 
-#include "CesiumJsonReader/DictionaryJsonHandler.h"
-#include "CesiumJsonReader/ExtensionReaderContext.h"
-#include "CesiumJsonReader/ExtensionsJsonHandler.h"
-#include "CesiumJsonReader/JsonObjectJsonHandler.h"
-#include "CesiumJsonReader/ObjectJsonHandler.h"
+#include "DictionaryJsonHandler.h"
+#include "ExtensionReaderContext.h"
+#include "ExtensionsJsonHandler.h"
+#include "JsonObjectJsonHandler.h"
+#include "ObjectJsonHandler.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>

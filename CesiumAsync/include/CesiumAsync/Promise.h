@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
-#include "CesiumAsync/Impl/cesium-async++.h"
+#include "Impl/AsyncSystemSchedulers.h"
+#include "Impl/cesium-async++.h"
 
 #include <exception>
 #include <memory>

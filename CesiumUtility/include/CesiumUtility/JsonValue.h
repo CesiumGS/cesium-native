@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumUtility/Library.h"
+#include "Library.h"
 
 #include <gsl/narrow>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
+#include "Library.h"
 
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>

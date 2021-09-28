@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/Library.h"
+#include "AsyncSystem.h"
+#include "IAssetRequest.h"
+#include "Library.h"
 
 #include <gsl/span>
 

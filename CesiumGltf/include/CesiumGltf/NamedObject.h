@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/ExtensibleObject.h"
-#include "CesiumGltf/Library.h"
+#include "ExtensibleObject.h"
+#include "Library.h"
 
 #include <string>
 

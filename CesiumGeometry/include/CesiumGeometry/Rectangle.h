@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
+#include "Library.h"
 
 #include <glm/vec2.hpp>
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumJsonReader/ExtensionReaderContext.h"
-#include "CesiumJsonReader/IExtensionJsonHandler.h"
-#include "CesiumJsonReader/ObjectJsonHandler.h"
+#include "ExtensionReaderContext.h"
+#include "IExtensionJsonHandler.h"
+#include "ObjectJsonHandler.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 

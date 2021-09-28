@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/Library.h"
+#include "Library.h"
 
 #include <functional>
 

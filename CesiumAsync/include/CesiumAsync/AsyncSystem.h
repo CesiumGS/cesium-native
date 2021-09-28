@@ -1,13 +1,13 @@
 #pragma once
 
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/Impl/ContinuationFutureType.h"
-#include "CesiumAsync/Impl/RemoveFuture.h"
-#include "CesiumAsync/Impl/WithTracing.h"
-#include "CesiumAsync/Impl/cesium-async++.h"
-#include "CesiumAsync/Library.h"
-#include "CesiumAsync/Promise.h"
-#include "CesiumAsync/ThreadPool.h"
+#include "Future.h"
+#include "Impl/ContinuationFutureType.h"
+#include "Impl/RemoveFuture.h"
+#include "Impl/WithTracing.h"
+#include "Impl/cesium-async++.h"
+#include "Library.h"
+#include "Promise.h"
+#include "ThreadPool.h"
 
 #include <CesiumUtility/Tracing.h>
 

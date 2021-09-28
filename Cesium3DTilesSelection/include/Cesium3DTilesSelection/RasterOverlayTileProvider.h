@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/CreditSystem.h"
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
+#include "CreditSystem.h"
+#include "Library.h"
+#include "RasterMappedTo3DTile.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>

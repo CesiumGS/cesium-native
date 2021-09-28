@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/IExtensionJsonHandler.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/ReaderLibrary.h"
+#include "IExtensionJsonHandler.h"
+#include "ReaderLibrary.h"
+
+#include <CesiumGltf/Model.h>
 
 #include <gsl/span>
 

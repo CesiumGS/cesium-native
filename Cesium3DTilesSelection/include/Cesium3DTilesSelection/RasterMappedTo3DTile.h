@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
+#include "RasterOverlayTile.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumUtility/IntrusivePointer.h>

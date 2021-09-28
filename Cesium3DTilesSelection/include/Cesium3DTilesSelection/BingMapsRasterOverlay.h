@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
+#include "Library.h"
 #include "RasterOverlay.h"
 
 #include <CesiumAsync/IAssetRequest.h>

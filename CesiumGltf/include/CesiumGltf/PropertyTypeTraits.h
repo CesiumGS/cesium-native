@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/MetadataArrayView.h"
-#include "CesiumGltf/PropertyType.h"
+#include "MetadataArrayView.h"
+#include "PropertyType.h"
 
 #include <cstdint>
 #include <type_traits>

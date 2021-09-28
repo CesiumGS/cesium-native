@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumUtility/JsonValue.h"
-#include "CesiumUtility/Library.h"
+#include "JsonValue.h"
+#include "Library.h"
 
 #include <any>
 #include <unordered_map>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/ITileExcluder.h"
-#include "Cesium3DTilesSelection/Library.h"
+#include "ITileExcluder.h"
+#include "Library.h"
 
 namespace Cesium3DTilesSelection {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumJsonReader/IJsonHandler.h"
+#include "IJsonHandler.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
