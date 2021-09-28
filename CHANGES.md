@@ -6,6 +6,10 @@
 
 - Made tile content loading asynchronous and allowed it to make further network requests, to Cesium ion or otherwise.
 
+##### Fixes :wrench:
+
+- Fixed a bug that caused the `RTC_CENTER` semantic in a B3DM feature table to be ignored if any of the values happened to be integers rather than floating-point numbers. This caused these tiles to render in the wrong location.
+
 ### v0.7.2 - 2021-09-14
 
 ##### Fixes :wrench:
