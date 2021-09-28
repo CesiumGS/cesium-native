@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
+
 #include <string>
 #include <utility>
 #include <vector>

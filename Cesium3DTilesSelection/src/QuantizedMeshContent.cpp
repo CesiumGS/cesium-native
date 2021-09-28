@@ -3,7 +3,6 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-
 #include "SkirtMeshMetadata.h"
 #include "calcQuadtreeMaxGeometricError.h"
 

@@ -3,9 +3,11 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Tracing.h>
+
 #include <cstddef>
 
 namespace {
@@ -190,7 +192,7 @@ CompositeContent::load(const TileContentLoadInput& input) {
 
     innerTiles.push_back(
         TileContentFactory::createContent(derive(input, innerData)));
-    }
+  }
 
   return input.asyncSystem.all(std::move(innerTiles))
       .thenInWorkerThread(
@@ -199,34 +201,34 @@ CompositeContent::load(const TileContentLoadInput& input) {
                   innerTilesResult) -> std::unique_ptr<TileContentLoadResult> {
             if (innerTilesResult.empty()) {
               if (tilesLength > 0) {
-      SPDLOG_LOGGER_WARN(
-          pLogger,
+                SPDLOG_LOGGER_WARN(
+                    pLogger,
                     "Composite tile does not contain any loadable inner "
                     "tiles.");
-    }
+              }
               return std::unique_ptr<TileContentLoadResult>(nullptr);
-  }
+            }
             if (innerTilesResult.size() == 1) {
               return std::move(innerTilesResult[0]);
-  }
+            }
 
             std::unique_ptr<TileContentLoadResult> pResult =
                 std::move(innerTilesResult[0]);
 
             for (size_t i = 1; i < innerTilesResult.size(); ++i) {
               if (!innerTilesResult[i] || !innerTilesResult[i]->model) {
-      continue;
-    }
+                continue;
+              }
 
-    if (pResult->model) {
+              if (pResult->model) {
                 pResult->model.value().merge(
                     std::move(innerTilesResult[i]->model.value()));
-    } else {
+              } else {
                 pResult->model = std::move(innerTilesResult[i]->model);
-    }
-  }
+              }
+            }
 
-  return pResult;
+            return pResult;
           });
 }
 

@@ -3,9 +3,10 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include <cstddef>
-#include <CesiumUtility/Uri.h>
+
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Uri.h>
+
 #include <rapidjson/document.h>
 
 #include <cstddef>

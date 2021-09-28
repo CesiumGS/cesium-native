@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../ITaskProcessor.h"
 #include "ImmediateScheduler.h"
 
 #include <memory>
+
+#include "../ITaskProcessor.h"
 
 namespace CesiumAsync {
 namespace Impl {

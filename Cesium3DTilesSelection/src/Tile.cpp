@@ -4,17 +4,16 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
-
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
 #include <CesiumAsync/AsyncSystem.h>
-#include <CesiumGeometry/Rectangle.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Transforms.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Tracing.h>
@@ -333,9 +332,9 @@ void Tile::loadContent() {
                                          std::move(pPrepareRendererResources)](
                                         std::unique_ptr<TileContentLoadResult>&&
                                             pContent) mutable {
-            void* pRendererResources = nullptr;
+                  void* pRendererResources = nullptr;
 
-            if (pContent) {
+                  if (pContent) {
                     pContent->httpStatusCode = statusCode;
                     if (statusCode < 200 || statusCode >= 300) {
                       return LoadResult{
@@ -344,9 +343,9 @@ void Tile::loadContent() {
                           nullptr};
                     }
 
-              if (pContent->model) {
+                    if (pContent->model) {
 
-                CesiumGltf::Model& model = pContent->model.value();
+                      CesiumGltf::Model& model = pContent->model.value();
 
                       // TODO The `extras` are currently the only way to
                       // pass arbitrary information to the consumer, so the
@@ -354,32 +353,32 @@ void Tile::loadContent() {
                       model.extras["gltfUpAxis"] =
                           static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
 
-                Tile::generateTextureCoordinates(
-                    model,
+                      Tile::generateTextureCoordinates(
+                          model,
                           loadInput.tileTransform,
                           // Would it be better to use the content bounding
                           // volume, if it exists?
                           // What about
                           // TileContentLoadResult::updatedBoundingVolume?
                           loadInput.tileBoundingVolume,
-                    projections);
+                          projections);
 
                       pContent->rasterOverlayProjections =
                           std::move(projections);
 
-                if (generateMissingNormalsSmooth) {
-                  pContent->model->generateMissingNormalsSmooth();
-                }
+                      if (generateMissingNormalsSmooth) {
+                        pContent->model->generateMissingNormalsSmooth();
+                      }
 
-                if (pPrepareRendererResources) {
-                  CESIUM_TRACE("prepareInLoadThread");
-                  pRendererResources =
-                      pPrepareRendererResources->prepareInLoadThread(
-                          pContent->model.value(),
+                      if (pPrepareRendererResources) {
+                        CESIUM_TRACE("prepareInLoadThread");
+                        pRendererResources =
+                            pPrepareRendererResources->prepareInLoadThread(
+                                pContent->model.value(),
                                 loadInput.tileTransform);
-                }
-              }
-            }
+                      }
+                    }
+                  }
 
                   return LoadResult{
                       LoadState::ContentLoaded,
