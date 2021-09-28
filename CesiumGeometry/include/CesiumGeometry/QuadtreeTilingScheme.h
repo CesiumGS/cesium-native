@@ -20,7 +20,7 @@ public:
    * projected coordinates.
    * @param rootTilesX The number of tiles at the root of the quadtree in the X
    * direction.
-   * @param rootTilesY The nubmer of tiles at the root of the quadtree in the Y
+   * @param rootTilesY The number of tiles at the root of the quadtree in the Y
    * direction.
    */
   QuadtreeTilingScheme(

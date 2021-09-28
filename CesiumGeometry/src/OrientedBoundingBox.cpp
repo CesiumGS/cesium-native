@@ -96,4 +96,13 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
   return distanceSquared;
 }
 
+// TODO: add test for this
+bool OrientedBoundingBox::contains(const glm::dvec3& position) const noexcept {
+  glm::vec3 localPosition = this->_inverseHalfAxes * position;
+  return 
+      glm::abs(localPosition.x) <= 1.0 &&
+      glm::abs(localPosition.y) <= 1.0 &&
+      glm::abs(localPosition.z) <= 1.0; 
+}
+
 } // namespace CesiumGeometry
