@@ -22,7 +22,8 @@ public:
    *
    * @param boundingRegion The bounding region that has imprecise heights.
    */
-  BoundingRegionWithLooseFittingHeights(const BoundingRegion& boundingRegion);
+  BoundingRegionWithLooseFittingHeights(
+      const BoundingRegion& boundingRegion) noexcept;
 
   /**
    * @brief Gets the bounding region that has imprecise heights.

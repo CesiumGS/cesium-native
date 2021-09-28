@@ -110,7 +110,8 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * invalid.
    */
   template <typename T>
-  static const T* getSafe(const std::vector<T>* pItems, int32_t index) {
+  static const T*
+  getSafe(const std::vector<T>* pItems, int32_t index) noexcept {
     if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
       return nullptr;
     } else {
@@ -129,7 +130,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * invalid.
    */
   template <typename T>
-  static T* getSafe(std::vector<T>* pItems, int32_t index) {
+  static T* getSafe(std::vector<T>* pItems, int32_t index) noexcept {
     if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
       return nullptr;
     } else {

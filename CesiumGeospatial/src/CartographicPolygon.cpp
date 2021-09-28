@@ -10,7 +10,7 @@ namespace CesiumGeospatial {
 static std::vector<uint32_t>
 triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
   std::vector<uint32_t> indices;
-  size_t vertexCount = polygon.size();
+  const size_t vertexCount = polygon.size();
 
   if (vertexCount < 3) {
     return indices;
@@ -49,7 +49,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
 
 static std::optional<GlobeRectangle>
 computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
-  size_t vertexCount = polygon.size();
+  const size_t vertexCount = polygon.size();
 
   if (vertexCount < 3) {
     return std::nullopt;
@@ -72,7 +72,7 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
       south = point1.y;
     }
 
-    double dif_west = point1.x - west;
+    const double dif_west = point1.x - west;
     // check if the difference crosses the antipole
     if (glm::abs(dif_west) > CesiumUtility::Math::ONE_PI) {
       // east wrapping past the antipole to the west
@@ -85,7 +85,7 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
       }
     }
 
-    double dif_east = point1.x - east;
+    const double dif_east = point1.x - east;
     // check if the difference crosses the antipole
     if (glm::abs(dif_east) > CesiumUtility::Math::ONE_PI) {
       // west wrapping past the antipole to the east

@@ -7,10 +7,11 @@
 using namespace Cesium3DTilesSelection;
 
 RasterizedPolygonsTileExcluder::RasterizedPolygonsTileExcluder(
-    const RasterizedPolygonsOverlay& overlay)
+    const RasterizedPolygonsOverlay& overlay) noexcept
     : _pOverlay(&overlay) {}
 
-bool RasterizedPolygonsTileExcluder::shouldExclude(const Tile& tile) const {
+bool RasterizedPolygonsTileExcluder::shouldExclude(
+    const Tile& tile) const noexcept {
   return Cesium3DTilesSelection::Impl::withinPolygons(
       tile.getBoundingVolume(),
       this->_pOverlay->getPolygons());

@@ -10,7 +10,7 @@ class CESIUMJSONREADER_API StringJsonHandler : public JsonHandler {
 public:
   StringJsonHandler() noexcept;
   void reset(IJsonHandler* pParent, std::string* pString);
-  std::string* getObject();
+  std::string* getObject() noexcept;
   virtual IJsonHandler* readString(const std::string_view& str) override;
 
 private:

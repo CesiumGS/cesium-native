@@ -6,7 +6,7 @@
 
 namespace Cesium3DTilesSelection {
 struct SkirtMeshMetadata {
-  SkirtMeshMetadata()
+  SkirtMeshMetadata() noexcept
       : noSkirtIndicesBegin{0},
         noSkirtIndicesCount{0},
         meshCenter{0.0, 0.0, 0.0},

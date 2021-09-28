@@ -79,7 +79,7 @@ private:
     virtual void reportWarning(
         const std::string& warning,
         std::vector<std::string>&& context) override;
-    void setInputStream(rapidjson::MemoryStream* pInputStream);
+    void setInputStream(rapidjson::MemoryStream* pInputStream) noexcept;
 
   private:
     std::vector<std::string>& _warnings;

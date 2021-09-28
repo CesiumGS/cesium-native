@@ -47,9 +47,9 @@ public:
    */
   static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(
       const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept {
-    double longitudeValue =
+    const double longitudeValue =
         ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
-    double latitudeValue =
+    const double latitudeValue =
         ellipsoid.getMaximumRadius() * CesiumUtility::Math::PI_OVER_TWO;
     return CesiumGeometry::Rectangle(
         -longitudeValue,

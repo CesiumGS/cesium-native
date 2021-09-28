@@ -25,7 +25,7 @@ public:
    * and `updatedBoundingVolume`. Other fields will be empty or have
    * default values.
    */
-  std::unique_ptr<TileContentLoadResult>
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   load(const TileContentLoadInput& input) override;
 
   /**

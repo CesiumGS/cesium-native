@@ -28,7 +28,7 @@ WebMercatorProjection::WebMercatorProjection(
 
 glm::dvec3 WebMercatorProjection::project(
     const Cartographic& cartographic) const noexcept {
-  double semimajorAxis = this->_semimajorAxis;
+  const double semimajorAxis = this->_semimajorAxis;
   return glm::dvec3(
       cartographic.longitude * semimajorAxis,
       WebMercatorProjection::geodeticLatitudeToMercatorAngle(
@@ -39,14 +39,14 @@ glm::dvec3 WebMercatorProjection::project(
 
 CesiumGeometry::Rectangle WebMercatorProjection::project(
     const CesiumGeospatial::GlobeRectangle& rectangle) const noexcept {
-  glm::dvec3 sw = this->project(rectangle.getSouthwest());
-  glm::dvec3 ne = this->project(rectangle.getNortheast());
+  const glm::dvec3 sw = this->project(rectangle.getSouthwest());
+  const glm::dvec3 ne = this->project(rectangle.getNortheast());
   return CesiumGeometry::Rectangle(sw.x, sw.y, ne.x, ne.y);
 }
 
 Cartographic WebMercatorProjection::unproject(
     const glm::dvec2& projectedCoordinates) const noexcept {
-  double oneOverEarthSemimajorAxis = this->_oneOverSemimajorAxis;
+  const double oneOverEarthSemimajorAxis = this->_oneOverSemimajorAxis;
 
   return Cartographic(
       projectedCoordinates.x * oneOverEarthSemimajorAxis,
@@ -64,8 +64,8 @@ Cartographic WebMercatorProjection::unproject(
 
 CesiumGeospatial::GlobeRectangle WebMercatorProjection::unproject(
     const CesiumGeometry::Rectangle& rectangle) const noexcept {
-  Cartographic sw = this->unproject(rectangle.getLowerLeft());
-  Cartographic ne = this->unproject(rectangle.getUpperRight());
+  const Cartographic sw = this->unproject(rectangle.getLowerLeft());
+  const Cartographic ne = this->unproject(rectangle.getUpperRight());
   return GlobeRectangle(sw.longitude, sw.latitude, ne.longitude, ne.latitude);
 }
 
@@ -83,7 +83,7 @@ CesiumGeospatial::GlobeRectangle WebMercatorProjection::unproject(
       -WebMercatorProjection::MAXIMUM_LATITUDE,
       WebMercatorProjection::MAXIMUM_LATITUDE);
 
-  double sinLatitude = glm::sin(latitude);
+  const double sinLatitude = glm::sin(latitude);
   return 0.5 * glm::log((1.0 + sinLatitude) / (1.0 - sinLatitude));
 }
 

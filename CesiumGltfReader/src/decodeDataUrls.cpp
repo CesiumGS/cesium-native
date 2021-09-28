@@ -15,7 +15,7 @@ std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
   CESIUM_TRACE("CesiumGltf::decodeBase64");
   std::vector<std::byte> result(modp_b64_decode_len(data.size()));
 
-  size_t resultLength = modp_b64_decode(
+  const size_t resultLength = modp_b64_decode(
       reinterpret_cast<char*>(result.data()),
       reinterpret_cast<const char*>(data.data()),
       data.size());
@@ -45,7 +45,7 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
     return std::nullopt;
   }
 
-  size_t dataDelimeter = uri.find(',', dataPrefixLength);
+  const size_t dataDelimeter = uri.find(',', dataPrefixLength);
   if (dataDelimeter == std::string::npos) {
     return std::nullopt;
   }
@@ -66,7 +66,7 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
         result.mimeType.size() - base64IndicatorLength);
   }
 
-  gsl::span<const std::byte> data(
+  const gsl::span<const std::byte> data(
       reinterpret_cast<const std::byte*>(uri.data()) + dataDelimeter + 1,
       uri.size() - dataDelimeter - 1);
 

@@ -7,7 +7,7 @@ namespace CesiumUtility {
 std::optional<double> JsonHelpers::getScalarProperty(
     const rapidjson::Value& tileJson,
     const std::string& key) {
-  auto it = tileJson.FindMember(key.c_str());
+  const auto it = tileJson.FindMember(key.c_str());
   if (it == tileJson.MemberEnd() || !it->value.IsNumber()) {
     return std::nullopt;
   }
@@ -18,7 +18,7 @@ std::optional<double> JsonHelpers::getScalarProperty(
 std::optional<glm::dmat4x4> JsonHelpers::getTransformProperty(
     const rapidjson::Value& tileJson,
     const std::string& key) {
-  auto it = tileJson.FindMember(key.c_str());
+  const auto it = tileJson.FindMember(key.c_str());
   if (it == tileJson.MemberEnd() || !it->value.IsArray() ||
       it->value.Size() < 16) {
     return std::nullopt;
@@ -59,7 +59,7 @@ std::optional<std::vector<double>> JsonHelpers::getDoubles(
     const rapidjson::Value& json,
     int32_t expectedSize,
     const std::string& key) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   if (it == json.MemberEnd()) {
     return std::nullopt;
   }
@@ -87,7 +87,7 @@ std::string JsonHelpers::getStringOrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     const std::string& defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getStringOrDefault(it->value, defaultValue);
@@ -106,7 +106,7 @@ double JsonHelpers::getDoubleOrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     double defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getDoubleOrDefault(it->value, defaultValue);
@@ -125,7 +125,7 @@ uint32_t JsonHelpers::getUint32OrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     uint32_t defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getUint32OrDefault(it->value, defaultValue);
@@ -144,7 +144,7 @@ int32_t JsonHelpers::getInt32OrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     int32_t defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getInt32OrDefault(it->value, defaultValue);
@@ -163,7 +163,7 @@ uint64_t JsonHelpers::getUint64OrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     uint64_t defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getUint64OrDefault(it->value, defaultValue);
@@ -182,7 +182,7 @@ int64_t JsonHelpers::getInt64OrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     int64_t defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getInt64OrDefault(it->value, defaultValue);
@@ -201,7 +201,7 @@ bool JsonHelpers::getBoolOrDefault(
     const rapidjson::Value& json,
     const std::string& key,
     bool defaultValue) {
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   return it == json.MemberEnd()
              ? defaultValue
              : JsonHelpers::getBoolOrDefault(it->value, defaultValue);
@@ -220,7 +220,7 @@ std::vector<std::string>
 JsonHelpers::getStrings(const rapidjson::Value& json, const std::string& key) {
   std::vector<std::string> result;
 
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   if (it != json.MemberEnd() && it->value.IsArray()) {
     const auto& valueJson = it->value;
 
@@ -241,7 +241,7 @@ std::vector<int64_t>
 JsonHelpers::getInt64s(const rapidjson::Value& json, const std::string& key) {
   std::vector<int64_t> result;
 
-  auto it = json.FindMember(key.c_str());
+  const auto it = json.FindMember(key.c_str());
   if (it != json.MemberEnd() && it->value.IsArray()) {
     const auto& valueJson = it->value;
 

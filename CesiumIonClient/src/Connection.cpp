@@ -32,9 +32,9 @@ using namespace CesiumUtility;
 
 namespace {
 std::string encodeBase64(const std::vector<uint8_t>& bytes) {
-  size_t count = modp_b64_encode_len(bytes.size());
+  const size_t count = modp_b64_encode_len(bytes.size());
   std::string result(count, 0);
-  size_t actualLength = modp_b64_encode(
+  const size_t actualLength = modp_b64_encode(
       result.data(),
       reinterpret_cast<const char*>(bytes.data()),
       bytes.size());
@@ -42,7 +42,7 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
 
   // Convert to a URL-friendly form of Base64 according to the algorithm
   // in [RFC7636 Appendix A](https://tools.ietf.org/html/rfc7636#appendix-A)
-  size_t firstPaddingIndex = result.find('=');
+  const size_t firstPaddingIndex = result.find('=');
   if (firstPaddingIndex != std::string::npos) {
     result.erase(result.begin() + int64_t(firstPaddingIndex), result.end());
   }
@@ -106,7 +106,7 @@ static std::string createAuthorizationErrorHtml(
 
   std::shared_ptr<httplib::Server> pServer =
       std::make_shared<httplib::Server>();
-  int port = pServer->bind_to_any_port("127.0.0.1");
+  const int port = pServer->bind_to_any_port("127.0.0.1");
 
   std::string redirectUrl =
       Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
@@ -206,7 +206,7 @@ static std::string createAuthorizationErrorHtml(
               createSuccessHtml(friendlyApplicationName),
               "text/html");
           promise.resolve(std::move(connection));
-        } catch (std::exception& exception) {
+        } catch (const std::exception& exception) {
           response.set_content(
               createAuthorizationErrorHtml(friendlyApplicationName, exception),
               "text/html");
@@ -262,7 +262,7 @@ static Response<T> createErrorResponse(const IAssetResponse* pResponse) {
 template <typename T>
 static Response<T> createJsonErrorResponse(
     const IAssetResponse* pResponse,
-    rapidjson::Document& d) {
+    const rapidjson::Document& d) {
   return Response<T>{
       std::nullopt,
       pResponse->statusCode(),
@@ -328,7 +328,7 @@ CesiumAsync::Future<Response<Profile>> Connection::me() const {
                 JsonHelpers::getBoolOrDefault(d, "emailVerified", false);
             result.avatar = JsonHelpers::getStringOrDefault(d, "avatar", "");
 
-            auto storageIt = d.FindMember("storage");
+            const auto storageIt = d.FindMember("storage");
             if (storageIt == d.MemberEnd()) {
               result.storage.available = 0;
               result.storage.total = 0;
@@ -397,7 +397,7 @@ CesiumAsync::Future<Response<Assets>> Connection::assets() const {
 
             result.link = JsonHelpers::getStringOrDefault(d, "link", "");
 
-            auto itemsIt = d.FindMember("items");
+            const auto itemsIt = d.FindMember("items");
             if (itemsIt != d.MemberEnd() && itemsIt->value.IsArray()) {
               const rapidjson::Value& items = itemsIt->value;
               result.items.resize(items.Size());
@@ -426,7 +426,7 @@ static Token tokenFromJson(const rapidjson::Value& json) {
   token.lastUsed = JsonHelpers::getStringOrDefault(json, "lastUsed", "");
   token.scopes = JsonHelpers::getStrings(json, "scopes");
 
-  auto assetsIt = json.FindMember("assets");
+  const auto assetsIt = json.FindMember("assets");
   if (assetsIt != json.MemberEnd()) {
     token.assets = JsonHelpers::getInt64s(json, "assets");
   } else {
@@ -549,7 +549,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
   }
   writer.EndObject();
 
-  gsl::span<const std::byte> tokenBytes(
+  const gsl::span<const std::byte> tokenBytes(
       reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
       tokenBuffer.GetSize());
   return this->_pAssetAccessor
@@ -613,7 +613,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
   writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
   writer.EndObject();
 
-  gsl::span<const std::byte> payload(
+  const gsl::span<const std::byte> payload(
       reinterpret_cast<const std::byte*>(postBuffer.GetString()),
       postBuffer.GetSize());
 

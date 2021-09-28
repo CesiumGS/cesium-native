@@ -8,14 +8,14 @@
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API ObjectJsonHandler : public JsonHandler {
 public:
-  ObjectJsonHandler() : JsonHandler() {}
+  ObjectJsonHandler() noexcept : JsonHandler() {}
 
   virtual IJsonHandler* readObjectStart() override /* final */;
   virtual IJsonHandler* readObjectEnd() override /* final */;
 
 protected:
-  virtual IJsonHandler* StartSubObject();
-  virtual IJsonHandler* EndSubObject();
+  virtual IJsonHandler* StartSubObject() noexcept;
+  virtual IJsonHandler* EndSubObject() noexcept;
 
   template <typename TAccessor, typename TProperty>
   IJsonHandler*
@@ -32,14 +32,14 @@ protected:
     return &accessor;
   }
 
-  const char* getCurrentKey() const;
+  const char* getCurrentKey() const noexcept;
 
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
 protected:
-  void setCurrentKey(const char* key);
+  void setCurrentKey(const char* key) noexcept;
 
 private:
   template <typename T> struct isOptional {
@@ -51,6 +51,6 @@ private:
   };
 
   int32_t _depth = 0;
-  const char* _currentKey;
+  const char* _currentKey = nullptr;
 };
 } // namespace CesiumJsonReader

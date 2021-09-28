@@ -17,7 +17,7 @@ class PrettyJsonWriter : public JsonWriter {
   std::unique_ptr<rapidjson::PrettyWriter<rapidjson::StringBuffer>> pretty;
 
 public:
-  PrettyJsonWriter();
+  PrettyJsonWriter() noexcept;
   ~PrettyJsonWriter() {}
 
   // rapidjson methods

@@ -144,7 +144,7 @@ SqliteStatementPtr prepareStatement(
     const SqliteConnectionPtr& pConnection,
     const std::string& sql) {
   CESIUM_SQLITE(sqlite3_stmt*) pStmt;
-  int status = CESIUM_SQLITE(sqlite3_prepare_v2)(
+  const int status = CESIUM_SQLITE(sqlite3_prepare_v2)(
       pConnection.get(),
       sql.c_str(),
       int(sql.size()),
@@ -343,11 +343,11 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   }
 
   // Cache hit - unpack and return it.
-  int64_t itemIndex = CESIUM_SQLITE(
+  const int64_t itemIndex = CESIUM_SQLITE(
       sqlite3_column_int64)(this->_pImpl->_getEntryStmtWrapper.get(), 0);
 
   // parse cache item metadata
-  std::time_t expiryTime = CESIUM_SQLITE(
+  const std::time_t expiryTime = CESIUM_SQLITE(
       sqlite3_column_int64)(this->_pImpl->_getEntryStmtWrapper.get(), 1);
 
   // parse response cache
@@ -357,13 +357,13 @@ std::optional<CacheItem> SqliteCache::getEntry(const std::string& key) const {
   HttpHeaders responseHeaders =
       convertStringToHeaders(serializedResponseHeaders);
 
-  uint16_t statusCode = static_cast<uint16_t>(CESIUM_SQLITE(
+  const uint16_t statusCode = static_cast<uint16_t>(CESIUM_SQLITE(
       sqlite3_column_int)(this->_pImpl->_getEntryStmtWrapper.get(), 3));
 
   const std::byte* rawResponseData =
       reinterpret_cast<const std::byte*>(CESIUM_SQLITE(
           sqlite3_column_blob)(this->_pImpl->_getEntryStmtWrapper.get(), 4));
-  int responseDataSize = CESIUM_SQLITE(
+  const int responseDataSize = CESIUM_SQLITE(
       sqlite3_column_bytes)(this->_pImpl->_getEntryStmtWrapper.get(), 4);
   std::vector<std::byte> responseData(
       rawResponseData,
@@ -669,7 +669,7 @@ bool SqliteCache::prune() {
   }
 
   // check if we should delete more
-  int deletedRows =
+  const int deletedRows =
       CESIUM_SQLITE(sqlite3_changes)(this->_pImpl->_pConnection.get());
   if (totalItems - deletedRows < static_cast<int>(this->_pImpl->_maxItems)) {
     return true;

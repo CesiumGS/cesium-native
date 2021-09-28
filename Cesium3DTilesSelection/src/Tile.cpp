@@ -4,9 +4,12 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
+
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/ITaskProcessor.h>
@@ -113,7 +116,7 @@ bool Tile::isRenderable() const noexcept {
       return std::all_of(
           this->_rasterTiles.begin(),
           this->_rasterTiles.end(),
-          [](const RasterMappedTo3DTile& rasterTile) {
+          [](const RasterMappedTo3DTile& rasterTile) noexcept {
             return rasterTile.getReadyTile() != nullptr;
           });
     }
@@ -165,7 +168,7 @@ void mapRasterOverlaysToTile(
     // TODO: we can compute a much more precise projected rectangle by
     //       projecting each vertex, but that would require us to have
     //       geometry first.
-    Rectangle overlayRectangle =
+    const Rectangle overlayRectangle =
         projectRectangleSimple(pProvider->getProjection(), *pRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
@@ -179,7 +182,7 @@ void mapRasterOverlaysToTile(
       const CesiumGeospatial::Projection& projection =
           pRaster->getOverlay().getTileProvider()->getProjection();
 
-      int32_t projectionID =
+      const int32_t projectionID =
           getTextureCoordinatesForProjection(projections, projection);
 
       mappedTile.setTextureCoordinateID(projectionID);
@@ -261,26 +264,29 @@ void Tile::loadContent() {
   this->loadOverlays(projections);
 
   struct LoadResult {
-    LoadState state;
-    std::unique_ptr<TileContentLoadResult> pContent;
-    void* pRendererResources;
+    LoadState state = LoadState::Unloaded;
+    std::unique_ptr<TileContentLoadResult> pContent = nullptr;
+    void* pRendererResources = nullptr;
   };
-  TileContentLoadInput loadInput(tileset.getExternals().pLogger, *this);
+
+  TileContentLoadInput loadInput(*this);
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
-           projections = std::move(projections),
-           gltfUpAxis,
-           pPrepareRendererResources =
-               tileset.getExternals().pPrepareRendererResources,
+           asyncSystem = tileset.getAsyncSystem(),
            pLogger = tileset.getExternals().pLogger,
+           pAssetAccessor = tileset.getExternals().pAssetAccessor,
+           gltfUpAxis,
+           projections = std::move(projections),
            generateMissingNormalsSmooth =
-               tileset.getOptions()
-                   .contentOptions.generateMissingNormalsSmooth](
+               tileset.getOptions().contentOptions.generateMissingNormalsSmooth,
+           pPrepareRendererResources =
+               tileset.getExternals().pPrepareRendererResources](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             CESIUM_TRACE("loadContent worker thread");
+
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               SPDLOG_LOGGER_ERROR(
@@ -289,10 +295,10 @@ void Tile::loadContent() {
                   pRequest->url());
               auto pLoadResult = std::make_unique<TileContentLoadResult>();
               pLoadResult->httpStatusCode = 0;
-              return LoadResult{
+              return asyncSystem.createResolvedFuture(LoadResult{
                   LoadState::FailedTemporarily,
                   std::move(pLoadResult),
-                  nullptr};
+                  nullptr});
             }
 
             if (pResponse->statusCode() != 0 &&
@@ -305,44 +311,61 @@ void Tile::loadContent() {
                   pRequest->url());
               auto pLoadResult = std::make_unique<TileContentLoadResult>();
               pLoadResult->httpStatusCode = pResponse->statusCode();
-              return LoadResult{
+              return asyncSystem.createResolvedFuture(LoadResult{
                   LoadState::FailedTemporarily,
                   std::move(pLoadResult),
-                  nullptr};
+                  nullptr});
             }
 
-            loadInput.data = pResponse->data();
-            loadInput.contentType = pResponse->contentType();
-            loadInput.url = pRequest->url();
-            std::unique_ptr<TileContentLoadResult> pContent =
-                TileContentFactory::createContent(loadInput);
+            loadInput.asyncSystem = std::move(asyncSystem);
+            loadInput.pLogger = std::move(pLogger);
+            loadInput.pAssetAccessor = std::move(pAssetAccessor);
+            loadInput.pRequest = std::move(pRequest);
 
+            return TileContentFactory::createContent(loadInput)
+                // Forward status code to the load result.
+                .thenInWorkerThread([statusCode = pResponse->statusCode(),
+                                     loadInput = std::move(loadInput),
+                                     gltfUpAxis,
+                                     projections = std::move(projections),
+                                     generateMissingNormalsSmooth,
+                                     pPrepareRendererResources =
+                                         std::move(pPrepareRendererResources)](
+                                        std::unique_ptr<TileContentLoadResult>&&
+                                            pContent) mutable {
             void* pRendererResources = nullptr;
+
             if (pContent) {
-              pContent->httpStatusCode = pResponse->statusCode();
+                    pContent->httpStatusCode = statusCode;
+                    if (statusCode < 200 || statusCode >= 300) {
+                      return LoadResult{
+                          LoadState::FailedTemporarily,
+                          std::move(pContent),
+                          nullptr};
+                    }
 
               if (pContent->model) {
 
                 CesiumGltf::Model& model = pContent->model.value();
 
-                // TODO The `extras` are currently the only way to pass
-                // arbitrary information to the consumer, so the up-axis
-                // is stored here:
-                model.extras["gltfUpAxis"] = gltfUpAxis;
-
-                const BoundingVolume& boundingVolume =
-                    loadInput.tileBoundingVolume;
-                // TODO: apply gltf up axis (if it's not the glTF standard Y-up,
-                // which is already accounted for) and RTC_CENTER.
-                const glm::dmat4& transform = loadInput.tileTransform;
+                      // TODO The `extras` are currently the only way to
+                      // pass arbitrary information to the consumer, so the
+                      // up-axis is stored here:
+                      model.extras["gltfUpAxis"] =
+                          static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
 
                 Tile::generateTextureCoordinates(
                     model,
-                    transform,
-                    boundingVolume,
+                          loadInput.tileTransform,
+                          // Would it be better to use the content bounding
+                          // volume, if it exists?
+                          // What about
+                          // TileContentLoadResult::updatedBoundingVolume?
+                          loadInput.tileBoundingVolume,
                     projections);
 
-                pContent->rasterOverlayProjections = std::move(projections);
+                      pContent->rasterOverlayProjections =
+                          std::move(projections);
 
                 if (generateMissingNormalsSmooth) {
                   pContent->model->generateMissingNormalsSmooth();
@@ -353,19 +376,18 @@ void Tile::loadContent() {
                   pRendererResources =
                       pPrepareRendererResources->prepareInLoadThread(
                           pContent->model.value(),
-                          transform);
+                                loadInput.tileTransform);
                 }
               }
             }
 
-            LoadResult result;
-            result.state = LoadState::ContentLoaded;
-            result.pContent = std::move(pContent);
-            result.pRendererResources = pRendererResources;
-
-            return result;
+                  return LoadResult{
+                      LoadState::ContentLoaded,
+                      std::move(pContent),
+                      pRendererResources};
+                });
           })
-      .thenInMainThread([this](LoadResult&& loadResult) {
+      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(this);
@@ -512,22 +534,22 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
     return;
   }
 
-  QuadtreeTileID swID(
+  const QuadtreeTileID swID(
       pParentTileID->level + 1,
       pParentTileID->x * 2,
       pParentTileID->y * 2);
-  QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-  QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-  QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+  const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+  const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+  const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
-  QuadtreeTilingScheme& tilingScheme =
+  const QuadtreeTilingScheme& tilingScheme =
       parent.getContext()->implicitContext.value().tilingScheme;
-  Projection& projection =
+  const Projection& projection =
       parent.getContext()->implicitContext.value().projection;
 
   parent.createChildTiles(4);
 
-  gsl::span<Tile> children = parent.getChildren();
+  const gsl::span<Tile> children = parent.getChildren();
   Tile& sw = children[0];
   Tile& se = children[1];
   Tile& nw = children[2];
@@ -538,7 +560,7 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
   nw.setContext(parent.getContext());
   ne.setContext(parent.getContext());
 
-  double geometricError = parent.getGeometricError() * 0.5;
+  const double geometricError = parent.getGeometricError() * 0.5;
   sw.setGeometricError(geometricError);
   se.setGeometricError(geometricError);
   nw.setGeometricError(geometricError);
@@ -554,8 +576,8 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
   nw.setTileID(UpsampledQuadtreeNode{nwID});
   ne.setTileID(UpsampledQuadtreeNode{neID});
 
-  double minimumHeight = pRegion->getMinimumHeight();
-  double maximumHeight = pRegion->getMaximumHeight();
+  const double minimumHeight = pRegion->getMinimumHeight();
+  const double maximumHeight = pRegion->getMaximumHeight();
 
   sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
       unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(swID)),
@@ -583,7 +605,8 @@ void Tile::update(
   if (this->getState() == LoadState::FailedTemporarily) {
     // Check with the TileContext to see if we should retry.
     if (this->_pContext->failedTileCallback) {
-      FailedTileAction action = this->_pContext->failedTileCallback(*this);
+      const FailedTileAction action =
+          this->_pContext->failedTileCallback(*this);
       switch (action) {
       case FailedTileAction::GiveUp:
         this->setState(LoadState::Failed);
@@ -673,21 +696,21 @@ void Tile::update(
     const CesiumGeometry::QuadtreeTileAvailability& availability =
         implicitContext.availability;
 
-    QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
+    const QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
 
-    QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
-    uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
+    const QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
+    const uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
 
-    QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
+    const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+    const uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
 
-    QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
+    const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+    const uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
 
-    QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-    uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
+    const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+    const uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
 
-    size_t childCount = sw + se + nw + ne;
+    const size_t childCount = sw + se + nw + ne;
     if (childCount > 0) {
       // If any children are available, we need to create all four in order to
       // avoid holes. But non-available tiles will be upsampled instead of
@@ -749,7 +772,7 @@ void Tile::update(
                   i));
           --i;
 
-          Rectangle projectedRectangle =
+          const Rectangle projectedRectangle =
               projectRectangleSimple(pProvider->getProjection(), *pRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());
@@ -761,7 +784,7 @@ void Tile::update(
         continue;
       }
 
-      RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
+      const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
           mappedRasterTile.update(*this);
       moreRasterDetailAvailable |=
           moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
@@ -798,7 +821,7 @@ int64_t Tile::computeByteSize() const noexcept {
     // the decoded image size instead.
     const std::vector<CesiumGltf::BufferView>& bufferViews = model.bufferViews;
     for (const CesiumGltf::Image& image : model.images) {
-      int32_t bufferView = image.bufferView;
+      const int32_t bufferView = image.bufferView;
       if (bufferView < 0 ||
           bufferView >= static_cast<int32_t>(bufferViews.size())) {
         continue;
@@ -832,9 +855,9 @@ Tile::generateTextureCoordinates(
       for (size_t i = 0; i < projections.size(); ++i) {
         const Projection& projection = projections[i];
 
-        int textureCoordinateID = static_cast<int32_t>(i);
+        const int textureCoordinateID = static_cast<int32_t>(i);
 
-        CesiumGeometry::Rectangle rectangle =
+        const CesiumGeometry::Rectangle rectangle =
             projectRectangleSimple(projection, *pRectangle);
 
         CesiumGeospatial::BoundingRegion boundingRegion =
@@ -918,13 +941,13 @@ void Tile::upsampleParent(
             std::move(pContent),
             pRendererResources};
       })
-      .thenInMainThread([this](LoadResult&& loadResult) {
+      .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
-      .catchInMainThread([this](const std::exception& /*e*/) {
+      .catchInMainThread([this](const std::exception& /*e*/) noexcept {
         this->_pContent.reset();
         this->_pRendererResources = nullptr;
         this->getTileset()->notifyTileDoneLoading(this);
@@ -940,7 +963,7 @@ void Tile::loadOverlays(
   Tileset* pTileset = this->getTileset();
 
   if (pTileset->supportsRasterOverlays()) {
-    RasterOverlayCollection& overlays = pTileset->getOverlays();
+    const RasterOverlayCollection& overlays = pTileset->getOverlays();
     mapRasterOverlaysToTile(*this, overlays, projections);
   }
 }

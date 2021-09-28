@@ -84,7 +84,7 @@ IonRasterOverlay::createTileProvider(
                 "externalType",
                 "unknown");
             if (externalType == "BING") {
-              auto optionsIt = response.FindMember("options");
+              const auto optionsIt = response.FindMember("options");
               if (optionsIt == response.MemberEnd() ||
                   !optionsIt->value.IsObject()) {
                 SPDLOG_LOGGER_ERROR(

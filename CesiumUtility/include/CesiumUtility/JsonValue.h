@@ -79,19 +79,19 @@ public:
   /**
    * @brief Default constructor.
    */
-  JsonValue() : value() {}
+  JsonValue() noexcept : value() {}
 
   /**
    * @brief Creates a `null` JSON value.
    */
-  JsonValue(std::nullptr_t) : value(nullptr) {}
+  JsonValue(std::nullptr_t) noexcept : value(nullptr) {}
 
   /**
    * @brief Creates a `Number` JSON value.
    *
    * NaN and ±Infinity are represented as {@link JsonValue::Null}.
    */
-  JsonValue(double v) {
+  JsonValue(double v) noexcept {
     if (std::isnan(v) || std::isinf(v)) {
       value = nullptr;
     } else {
@@ -103,52 +103,52 @@ public:
    * @brief Creates a `std::int64_t` JSON value (Widening conversion from
    * std::int8_t).
    */
-  JsonValue(std::int8_t v) : value(static_cast<std::int64_t>(v)) {}
+  JsonValue(std::int8_t v) noexcept : value(static_cast<std::int64_t>(v)) {}
 
   /**
    * @brief Creates a `std::uint64_t` JSON value (Widening conversion from
    * std::uint8_t).
    */
-  JsonValue(std::uint8_t v) : value(static_cast<std::uint64_t>(v)) {}
+  JsonValue(std::uint8_t v) noexcept : value(static_cast<std::uint64_t>(v)) {}
 
   /**
    * @brief Creates a `std::int64_t` JSON value (Widening conversion from
    * std::int16_t).
    */
-  JsonValue(std::int16_t v) : value(static_cast<std::int64_t>(v)) {}
+  JsonValue(std::int16_t v) noexcept : value(static_cast<std::int64_t>(v)) {}
 
   /**
    * @brief Creates a `std::uint64_t` JSON value (Widening conversion from
    * std::uint16_t).
    */
-  JsonValue(std::uint16_t v) : value(static_cast<std::uint64_t>(v)) {}
+  JsonValue(std::uint16_t v) noexcept : value(static_cast<std::uint64_t>(v)) {}
 
   /**
    * @brief Creates a `std::int64_t` JSON value (Widening conversion from
    * std::int32_t).
    */
-  JsonValue(std::int32_t v) : value(static_cast<std::int64_t>(v)) {}
+  JsonValue(std::int32_t v) noexcept : value(static_cast<std::int64_t>(v)) {}
 
   /**
    * @brief Creates a `std::uint64_t` JSON value (Widening conversion from
    * std::uint32_t).
    */
-  JsonValue(std::uint32_t v) : value(static_cast<std::uint64_t>(v)) {}
+  JsonValue(std::uint32_t v) noexcept : value(static_cast<std::uint64_t>(v)) {}
 
   /**
    * @brief Creates a `std::int64_t` JSON value.
    */
-  JsonValue(std::int64_t v) : value(v) {}
+  JsonValue(std::int64_t v) noexcept : value(v) {}
 
   /**
    * @brief Creates a `std::uint64_t` JSON value.
    */
-  JsonValue(std::uint64_t v) : value(v) {}
+  JsonValue(std::uint64_t v) noexcept : value(v) {}
 
   /**
    * @brief Creates a `Bool` JSON value.
    */
-  JsonValue(bool v) : value(v) {}
+  JsonValue(bool v) noexcept : value(v) {}
 
   /**
    * @brief Creates a `String` JSON value.
@@ -158,7 +158,7 @@ public:
   /**
    * @brief Creates a `String` JSON value.
    */
-  JsonValue(std::string&& v) : value(std::move(v)) {}
+  JsonValue(std::string&& v) noexcept : value(std::move(v)) {}
 
   /**
    * @brief Creates a `String` JSON value.
@@ -183,7 +183,7 @@ public:
   /**
    * @brief Creates an `Array` JSON value with the given elements.
    */
-  JsonValue(std::vector<JsonValue>&& v) : value(std::move(v)) {}
+  JsonValue(std::vector<JsonValue>&& v) noexcept : value(std::move(v)) {}
 
   /**
    * @brief Creates an JSON value from the given initializer list.
@@ -464,7 +464,7 @@ public:
    * @brief Gets the bool from the value or returns defaultValue
    * @return The bool or defaultValue if this->value is not a bool.
    */
-  [[nodiscard]] inline bool getBoolOrDefault(bool defaultValue) const {
+  [[nodiscard]] inline bool getBoolOrDefault(bool defaultValue) const noexcept {
     const auto* v = std::get_if<bool>(&this->value);
     if (v) {
       return *v;
@@ -491,7 +491,8 @@ public:
    * @brief Gets the double from the value or returns defaultValue
    * @return The double or defaultValue if this->value is not a double.
    */
-  [[nodiscard]] inline double getDoubleOrDefault(double defaultValue) const {
+  [[nodiscard]] inline double
+  getDoubleOrDefault(double defaultValue) const noexcept {
     const auto* v = std::get_if<double>(&this->value);
     if (v) {
       return *v;
@@ -505,7 +506,7 @@ public:
    * @return The uint64_t or defaultValue if this->value is not a uint64_t.
    */
   [[nodiscard]] inline std::uint64_t
-  getUint64OrDefault(std::uint64_t defaultValue) const {
+  getUint64OrDefault(std::uint64_t defaultValue) const noexcept {
     const auto* v = std::get_if<std::uint64_t>(&this->value);
     if (v) {
       return *v;
@@ -519,7 +520,7 @@ public:
    * @return The int64_t or defaultValue if this->value is not a int64_t.
    */
   [[nodiscard]] inline std::int64_t
-  getInt64OrDefault(std::int64_t defaultValue) const {
+  getInt64OrDefault(std::int64_t defaultValue) const noexcept {
     const auto* v = std::get_if<std::int64_t>(&this->value);
     if (v) {
       return *v;

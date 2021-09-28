@@ -84,7 +84,8 @@ void RasterOverlay::loadTileProvider(
           pLogger,
           this)
       .thenInMainThread(
-          [this](std::unique_ptr<RasterOverlayTileProvider> pProvider) {
+          [this](
+              std::unique_ptr<RasterOverlayTileProvider>&& pProvider) noexcept {
             this->_pTileProvider = std::move(pProvider);
             this->_isLoadingTileProvider = false;
             CESIUM_TRACE_END_IN_TRACK("createTileProvider");

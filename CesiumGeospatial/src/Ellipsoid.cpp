@@ -18,9 +18,9 @@ Ellipsoid::geodeticSurfaceNormal(const glm::dvec3& position) const noexcept {
 
 glm::dvec3 Ellipsoid::geodeticSurfaceNormal(
     const Cartographic& cartographic) const noexcept {
-  double longitude = cartographic.longitude;
-  double latitude = cartographic.latitude;
-  double cosLatitude = glm::cos(latitude);
+  const double longitude = cartographic.longitude;
+  const double latitude = cartographic.latitude;
+  const double cosLatitude = glm::cos(latitude);
 
   return glm::normalize(glm::dvec3(
       cosLatitude * glm::cos(longitude),
@@ -32,7 +32,7 @@ glm::dvec3 Ellipsoid::cartographicToCartesian(
     const Cartographic& cartographic) const noexcept {
   glm::dvec3 n = this->geodeticSurfaceNormal(cartographic);
   glm::dvec3 k = this->_radiiSquared * n;
-  double gamma = sqrt(glm::dot(n, k));
+  const double gamma = sqrt(glm::dot(n, k));
   k /= gamma;
   n *= cartographic.height;
   return k + n;
@@ -46,33 +46,33 @@ Ellipsoid::cartesianToCartographic(const glm::dvec3& cartesian) const noexcept {
     return std::optional<Cartographic>();
   }
 
-  glm::dvec3 n = this->geodeticSurfaceNormal(p.value());
-  glm::dvec3 h = cartesian - p.value();
+  const glm::dvec3 n = this->geodeticSurfaceNormal(p.value());
+  const glm::dvec3 h = cartesian - p.value();
 
-  double longitude = glm::atan(n.y, n.x);
-  double latitude = glm::asin(n.z);
-  double height = Math::sign(glm::dot(h, cartesian)) * glm::length(h);
+  const double longitude = glm::atan(n.y, n.x);
+  const double latitude = glm::asin(n.z);
+  const double height = Math::sign(glm::dot(h, cartesian)) * glm::length(h);
 
   return Cartographic(longitude, latitude, height);
 }
 
 std::optional<glm::dvec3>
 Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept {
-  double positionX = cartesian.x;
-  double positionY = cartesian.y;
-  double positionZ = cartesian.z;
+  const double positionX = cartesian.x;
+  const double positionY = cartesian.y;
+  const double positionZ = cartesian.z;
 
-  double oneOverRadiiX = this->_oneOverRadii.x;
-  double oneOverRadiiY = this->_oneOverRadii.y;
-  double oneOverRadiiZ = this->_oneOverRadii.z;
+  const double oneOverRadiiX = this->_oneOverRadii.x;
+  const double oneOverRadiiY = this->_oneOverRadii.y;
+  const double oneOverRadiiZ = this->_oneOverRadii.z;
 
-  double x2 = positionX * positionX * oneOverRadiiX * oneOverRadiiX;
-  double y2 = positionY * positionY * oneOverRadiiY * oneOverRadiiY;
-  double z2 = positionZ * positionZ * oneOverRadiiZ * oneOverRadiiZ;
+  const double x2 = positionX * positionX * oneOverRadiiX * oneOverRadiiX;
+  const double y2 = positionY * positionY * oneOverRadiiY * oneOverRadiiY;
+  const double z2 = positionZ * positionZ * oneOverRadiiZ * oneOverRadiiZ;
 
   // Compute the squared ellipsoid norm.
-  double squaredNorm = x2 + y2 + z2;
-  double ratio = sqrt(1.0 / squaredNorm);
+  const double squaredNorm = x2 + y2 + z2;
+  const double ratio = sqrt(1.0 / squaredNorm);
 
   // As an initial approximation, assume that the radial intersection is the
   // projection point.
@@ -83,13 +83,13 @@ Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept {
     return !std::isfinite(ratio) ? std::optional<glm::dvec3>() : intersection;
   }
 
-  double oneOverRadiiSquaredX = this->_oneOverRadiiSquared.x;
-  double oneOverRadiiSquaredY = this->_oneOverRadiiSquared.y;
-  double oneOverRadiiSquaredZ = this->_oneOverRadiiSquared.z;
+  const double oneOverRadiiSquaredX = this->_oneOverRadiiSquared.x;
+  const double oneOverRadiiSquaredY = this->_oneOverRadiiSquared.y;
+  const double oneOverRadiiSquaredZ = this->_oneOverRadiiSquared.z;
 
   // Use the gradient at the intersection point in place of the true unit
   // normal. The difference in magnitude will be absorbed in the multiplier.
-  glm::dvec3 gradient(
+  const glm::dvec3 gradient(
       intersection.x * oneOverRadiiSquaredX * 2.0,
       intersection.y * oneOverRadiiSquaredY * 2.0,
       intersection.z * oneOverRadiiSquaredZ * 2.0);
@@ -134,7 +134,7 @@ Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept {
                   y2 * yMultiplier3 * oneOverRadiiSquaredY +
                   z2 * zMultiplier3 * oneOverRadiiSquaredZ;
 
-    double derivative = -2.0 * denominator;
+    const double derivative = -2.0 * denominator;
 
     correction = func / derivative;
   } while (glm::abs(func) > Math::EPSILON12);

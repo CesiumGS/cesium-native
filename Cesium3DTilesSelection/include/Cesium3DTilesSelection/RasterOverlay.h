@@ -67,15 +67,17 @@ public:
   /**
    * @brief Gets the name of this overlay.
    */
-  const std::string& getName() const { return this->_name; }
+  const std::string& getName() const noexcept { return this->_name; }
 
   /**
    * @brief Gets options for this overlay.
    */
-  RasterOverlayOptions& getOptions() { return this->_options; }
+  RasterOverlayOptions& getOptions() noexcept { return this->_options; }
 
   /** @copydoc getOptions */
-  const RasterOverlayOptions& getOptions() const { return this->_options; }
+  const RasterOverlayOptions& getOptions() const noexcept {
+    return this->_options;
+  }
 
   /**
    * @brief Gets the tile provider for this overlay.

@@ -36,7 +36,7 @@ BoundingRegion::BoundingRegion(
       _northNormal(),
       _planesAreInvalid(false) {
   // The middle latitude on the western edge.
-  glm::dvec3 westernMidpointCartesian =
+  const glm::dvec3 westernMidpointCartesian =
       ellipsoid.cartographicToCartesian(Cartographic(
           rectangle.getWest(),
           (rectangle.getSouth() + rectangle.getNorth()) * 0.5,
@@ -47,7 +47,7 @@ BoundingRegion::BoundingRegion(
       glm::cross(westernMidpointCartesian, glm::dvec3(0.0, 0.0, 1.0)));
 
   // The middle latitude on the eastern edge.
-  glm::dvec3 easternMidpointCartesian =
+  const glm::dvec3 easternMidpointCartesian =
       ellipsoid.cartographicToCartesian(Cartographic(
           rectangle.getEast(),
           (rectangle.getSouth() + rectangle.getNorth()) * 0.5,
@@ -58,25 +58,26 @@ BoundingRegion::BoundingRegion(
       glm::cross(glm::dvec3(0.0, 0.0, 1.0), easternMidpointCartesian));
 
   // Compute the normal of the plane bounding the southern edge of the tile.
-  glm::dvec3 westVector = westernMidpointCartesian - easternMidpointCartesian;
-  glm::dvec3 eastWestNormal = glm::normalize(westVector);
+  const glm::dvec3 westVector =
+      westernMidpointCartesian - easternMidpointCartesian;
+  const glm::dvec3 eastWestNormal = glm::normalize(westVector);
 
   if (!Math::equalsEpsilon(glm::length(eastWestNormal), 1.0, Math::EPSILON6)) {
     this->_planesAreInvalid = true;
     return;
   }
 
-  double south = rectangle.getSouth();
+  const double south = rectangle.getSouth();
   glm::dvec3 southSurfaceNormal;
 
   if (south > 0.0) {
     // Compute a plane that doesn't cut through the tile.
-    glm::dvec3 southCenterCartesian =
+    const glm::dvec3 southCenterCartesian =
         ellipsoid.cartographicToCartesian(Cartographic(
             (rectangle.getWest() + rectangle.getEast()) * 0.5,
             south,
             0.0));
-    Plane westPlane(this->_southwestCornerCartesian, this->_westNormal);
+    const Plane westPlane(this->_southwestCornerCartesian, this->_westNormal);
 
     // Find a point that is on the west and the south planes
     std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
@@ -98,17 +99,17 @@ BoundingRegion::BoundingRegion(
       glm::normalize(glm::cross(southSurfaceNormal, westVector));
 
   // Compute the normal of the plane bounding the northern edge of the tile.
-  double north = rectangle.getNorth();
+  const double north = rectangle.getNorth();
   glm::dvec3 northSurfaceNormal;
   if (north < 0.0) {
     // Compute a plane that doesn't cut through the tile.
-    glm::dvec3 northCenterCartesian =
+    const glm::dvec3 northCenterCartesian =
         ellipsoid.cartographicToCartesian(Cartographic(
             (rectangle.getWest() + rectangle.getEast()) * 0.5,
             north,
             0.0));
 
-    Plane eastPlane(this->_northeastCornerCartesian, this->_eastNormal);
+    const Plane eastPlane(this->_northeastCornerCartesian, this->_eastNormal);
 
     // Find a point that is on the east and the north planes
     std::optional<glm::dvec3> intersection = IntersectionTests::rayPlane(
@@ -171,18 +172,18 @@ double BoundingRegion::computeDistanceSquaredToPosition(
       const glm::dvec3& eastNormal = this->_eastNormal;
       const glm::dvec3& northNormal = this->_northNormal;
 
-      glm::dvec3 vectorFromSouthwestCorner =
+      const glm::dvec3 vectorFromSouthwestCorner =
           cartesianPosition - southwestCornerCartesian;
-      double distanceToWestPlane =
+      const double distanceToWestPlane =
           glm::dot(vectorFromSouthwestCorner, westNormal);
-      double distanceToSouthPlane =
+      const double distanceToSouthPlane =
           glm::dot(vectorFromSouthwestCorner, southNormal);
 
-      glm::dvec3 vectorFromNortheastCorner =
+      const glm::dvec3 vectorFromNortheastCorner =
           cartesianPosition - northeastCornerCartesian;
-      double distanceToEastPlane =
+      const double distanceToEastPlane =
           glm::dot(vectorFromNortheastCorner, eastNormal);
-      double distanceToNorthPlane =
+      const double distanceToNorthPlane =
           glm::dot(vectorFromNortheastCorner, northNormal);
 
       if (distanceToWestPlane > 0.0) {
@@ -198,20 +199,20 @@ double BoundingRegion::computeDistanceSquaredToPosition(
       }
     }
 
-    double cameraHeight = cartographicPosition.height;
-    double minimumHeight = this->_minimumHeight;
-    double maximumHeight = this->_maximumHeight;
+    const double cameraHeight = cartographicPosition.height;
+    const double minimumHeight = this->_minimumHeight;
+    const double maximumHeight = this->_maximumHeight;
 
     if (cameraHeight > maximumHeight) {
-      double distanceAboveTop = cameraHeight - maximumHeight;
+      const double distanceAboveTop = cameraHeight - maximumHeight;
       result += distanceAboveTop * distanceAboveTop;
     } else if (cameraHeight < minimumHeight) {
-      double distanceBelowBottom = minimumHeight - cameraHeight;
+      const double distanceBelowBottom = minimumHeight - cameraHeight;
       result += distanceBelowBottom * distanceBelowBottom;
     }
   }
 
-  double bboxDistanceSquared =
+  const double bboxDistanceSquared =
       this->getBoundingBox().computeDistanceSquaredToPosition(
           cartesianPosition);
   return glm::max(bboxDistanceSquared, result);
@@ -238,17 +239,17 @@ static OrientedBoundingBox fromPlaneExtents(
     double maximumZ) noexcept {
   glm::dmat3 halfAxes(planeXAxis, planeYAxis, planeZAxis);
 
-  glm::dvec3 centerOffset(
+  const glm::dvec3 centerOffset(
       (minimumX + maximumX) / 2.0,
       (minimumY + maximumY) / 2.0,
       (minimumZ + maximumZ) / 2.0);
 
-  glm::dvec3 scale(
+  const glm::dvec3 scale(
       (maximumX - minimumX) / 2.0,
       (maximumY - minimumY) / 2.0,
       (maximumZ - minimumZ) / 2.0);
 
-  glm::dmat3 scaledHalfAxes(
+  const glm::dmat3 scaledHalfAxes(
       halfAxes[0] * scale.x,
       halfAxes[1] * scale.y,
       halfAxes[2] * scale.z);
@@ -279,21 +280,22 @@ static OrientedBoundingBox fromPlaneExtents(
   if (rectangle.computeWidth() <= Math::ONE_PI) {
     // The bounding box will be aligned with the tangent plane at the center of
     // the rectangle.
-    Cartographic tangentPointCartographic = rectangle.computeCenter();
-    glm::dvec3 tangentPoint =
+    const Cartographic tangentPointCartographic = rectangle.computeCenter();
+    const glm::dvec3 tangentPoint =
         ellipsoid.cartographicToCartesian(tangentPointCartographic);
-    EllipsoidTangentPlane tangentPlane(tangentPoint, ellipsoid);
+    const EllipsoidTangentPlane tangentPlane(tangentPoint, ellipsoid);
     plane = tangentPlane.getPlane();
 
     // If the rectangle spans the equator, CW is instead aligned with the
     // equator (because it sticks out the farthest at the equator).
-    double lonCenter = tangentPointCartographic.longitude;
-    double latCenter = rectangle.getSouth() < 0.0 && rectangle.getNorth() > 0.0
-                           ? 0.0
-                           : tangentPointCartographic.latitude;
+    const double lonCenter = tangentPointCartographic.longitude;
+    const double latCenter =
+        rectangle.getSouth() < 0.0 && rectangle.getNorth() > 0.0
+            ? 0.0
+            : tangentPointCartographic.latitude;
 
     // Compute XY extents using the rectangle at maximum height
-    Cartographic perimeterCartographicNC(
+    const Cartographic perimeterCartographicNC(
         lonCenter,
         rectangle.getNorth(),
         maximumHeight);
@@ -301,7 +303,7 @@ static OrientedBoundingBox fromPlaneExtents(
         rectangle.getWest(),
         rectangle.getNorth(),
         maximumHeight);
-    Cartographic perimeterCartographicCW(
+    const Cartographic perimeterCartographicCW(
         rectangle.getWest(),
         latCenter,
         maximumHeight);
@@ -309,31 +311,31 @@ static OrientedBoundingBox fromPlaneExtents(
         rectangle.getWest(),
         rectangle.getSouth(),
         maximumHeight);
-    Cartographic perimeterCartographicSC(
+    const Cartographic perimeterCartographicSC(
         lonCenter,
         rectangle.getSouth(),
         maximumHeight);
 
-    glm::dvec3 perimeterCartesianNC =
+    const glm::dvec3 perimeterCartesianNC =
         ellipsoid.cartographicToCartesian(perimeterCartographicNC);
     glm::dvec3 perimeterCartesianNW =
         ellipsoid.cartographicToCartesian(perimeterCartographicNW);
-    glm::dvec3 perimeterCartesianCW =
+    const glm::dvec3 perimeterCartesianCW =
         ellipsoid.cartographicToCartesian(perimeterCartographicCW);
     glm::dvec3 perimeterCartesianSW =
         ellipsoid.cartographicToCartesian(perimeterCartographicSW);
-    glm::dvec3 perimeterCartesianSC =
+    const glm::dvec3 perimeterCartesianSC =
         ellipsoid.cartographicToCartesian(perimeterCartographicSC);
 
-    glm::dvec2 perimeterProjectedNC =
+    const glm::dvec2 perimeterProjectedNC =
         tangentPlane.projectPointToNearestOnPlane(perimeterCartesianNC);
-    glm::dvec2 perimeterProjectedNW =
+    const glm::dvec2 perimeterProjectedNW =
         tangentPlane.projectPointToNearestOnPlane(perimeterCartesianNW);
-    glm::dvec2 perimeterProjectedCW =
+    const glm::dvec2 perimeterProjectedCW =
         tangentPlane.projectPointToNearestOnPlane(perimeterCartesianCW);
-    glm::dvec2 perimeterProjectedSW =
+    const glm::dvec2 perimeterProjectedSW =
         tangentPlane.projectPointToNearestOnPlane(perimeterCartesianSW);
-    glm::dvec2 perimeterProjectedSC =
+    const glm::dvec2 perimeterProjectedSC =
         tangentPlane.projectPointToNearestOnPlane(perimeterCartesianSC);
 
     minX = glm::min(
@@ -375,12 +377,12 @@ static OrientedBoundingBox fromPlaneExtents(
 
   // Handle the case where rectangle width is greater than PI (wraps around more
   // than half the ellipsoid).
-  bool fullyAboveEquator = rectangle.getSouth() > 0.0;
-  bool fullyBelowEquator = rectangle.getNorth() < 0.0;
-  double latitudeNearestToEquator =
+  const bool fullyAboveEquator = rectangle.getSouth() > 0.0;
+  const bool fullyBelowEquator = rectangle.getNorth() < 0.0;
+  const double latitudeNearestToEquator =
       fullyAboveEquator ? rectangle.getSouth()
                         : fullyBelowEquator ? rectangle.getNorth() : 0.0;
-  double centerLongitude = rectangle.computeCenter().longitude;
+  const double centerLongitude = rectangle.computeCenter().longitude;
 
   // Plane is located at the rectangle's center longitude and the rectangle's
   // latitude that is closest to the equator. It rotates around the Z axis. This
@@ -390,20 +392,21 @@ static OrientedBoundingBox fromPlaneExtents(
       Cartographic(centerLongitude, latitudeNearestToEquator, maximumHeight));
   planeOrigin.z = 0.0; // center the plane on the equator to simpify plane
                        // normal calculation
-  bool isPole = glm::abs(planeOrigin.x) < Math::EPSILON10 &&
-                glm::abs(planeOrigin.y) < Math::EPSILON10;
-  glm::dvec3 planeNormal =
+  const bool isPole = glm::abs(planeOrigin.x) < Math::EPSILON10 &&
+                      glm::abs(planeOrigin.y) < Math::EPSILON10;
+  const glm::dvec3 planeNormal =
       !isPole ? glm::normalize(planeOrigin) : glm::dvec3(1.0, 0.0, 0.0);
-  glm::dvec3 planeYAxis(0.0, 0.0, 1.0);
-  glm::dvec3 planeXAxis = glm::cross(planeNormal, planeYAxis);
+  const glm::dvec3 planeYAxis(0.0, 0.0, 1.0);
+  const glm::dvec3 planeXAxis = glm::cross(planeNormal, planeYAxis);
   plane = Plane(planeOrigin, planeNormal);
 
   // Get the horizon point relative to the center. This will be the farthest
   // extent in the plane's X dimension.
-  glm::dvec3 horizonCartesian = ellipsoid.cartographicToCartesian(Cartographic(
-      centerLongitude + Math::PI_OVER_TWO,
-      latitudeNearestToEquator,
-      maximumHeight));
+  const glm::dvec3 horizonCartesian =
+      ellipsoid.cartographicToCartesian(Cartographic(
+          centerLongitude + Math::PI_OVER_TWO,
+          latitudeNearestToEquator,
+          maximumHeight));
   maxX = glm::dot(plane.projectPointOntoPlane(horizonCartesian), planeXAxis);
   minX = -maxX; // symmetrical
 
@@ -420,7 +423,7 @@ static OrientedBoundingBox fromPlaneExtents(
                  rectangle.getSouth(),
                  fullyAboveEquator ? minimumHeight : maximumHeight))
              .z;
-  glm::dvec3 farZ = ellipsoid.cartographicToCartesian(Cartographic(
+  const glm::dvec3 farZ = ellipsoid.cartographicToCartesian(Cartographic(
       rectangle.getEast(),
       latitudeNearestToEquator,
       maximumHeight));

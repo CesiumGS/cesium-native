@@ -43,7 +43,7 @@ struct ChunkHeader {
 };
 #pragma pack(pop)
 
-bool isBinaryGltf(const gsl::span<const std::byte>& data) {
+bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
   if (data.size() < sizeof(GlbHeader)) {
     return false;
   }
@@ -78,10 +78,10 @@ namespace {
  * @return The string
  */
 std::string toMagicString(uint32_t i) {
-  unsigned char c0 = static_cast<unsigned char>(i & 0xFF);
-  unsigned char c1 = static_cast<unsigned char>((i >> 8) & 0xFF);
-  unsigned char c2 = static_cast<unsigned char>((i >> 16) & 0xFF);
-  unsigned char c3 = static_cast<unsigned char>((i >> 24) & 0xFF);
+  const unsigned char c0 = static_cast<unsigned char>(i & 0xFF);
+  const unsigned char c1 = static_cast<unsigned char>((i >> 8) & 0xFF);
+  const unsigned char c2 = static_cast<unsigned char>((i >> 16) & 0xFF);
+  const unsigned char c3 = static_cast<unsigned char>((i >> 24) & 0xFF);
   std::stringstream stream;
   stream << c0 << c1 << c2 << c3 << " (0x" << std::hex << i << ")";
   return stream.str();
@@ -123,7 +123,7 @@ ModelReaderResult readBinaryModel(
         {}};
   }
 
-  gsl::span<const std::byte> glbData = data.subspan(0, pHeader->length);
+  const gsl::span<const std::byte> glbData = data.subspan(0, pHeader->length);
 
   const ChunkHeader* pJsonChunkHeader =
       reinterpret_cast<const ChunkHeader*>(glbData.data() + sizeof(GlbHeader));
@@ -135,8 +135,8 @@ ModelReaderResult readBinaryModel(
         {}};
   }
 
-  size_t jsonStart = sizeof(GlbHeader) + sizeof(ChunkHeader);
-  size_t jsonEnd = jsonStart + pJsonChunkHeader->chunkLength;
+  const size_t jsonStart = sizeof(GlbHeader) + sizeof(ChunkHeader);
+  const size_t jsonEnd = jsonStart + pJsonChunkHeader->chunkLength;
 
   if (jsonEnd > glbData.size()) {
     return {
@@ -147,7 +147,7 @@ ModelReaderResult readBinaryModel(
         {}};
   }
 
-  gsl::span<const std::byte> jsonChunk =
+  const gsl::span<const std::byte> jsonChunk =
       glbData.subspan(jsonStart, pJsonChunkHeader->chunkLength);
   gsl::span<const std::byte> binaryChunk;
 
@@ -162,8 +162,8 @@ ModelReaderResult readBinaryModel(
           {}};
     }
 
-    size_t binaryStart = jsonEnd + sizeof(ChunkHeader);
-    size_t binaryEnd = binaryStart + pBinaryChunkHeader->chunkLength;
+    const size_t binaryStart = jsonEnd + sizeof(ChunkHeader);
+    const size_t binaryEnd = binaryStart + pBinaryChunkHeader->chunkLength;
 
     if (binaryEnd > glbData.size()) {
       return {
@@ -196,7 +196,7 @@ ModelReaderResult readBinaryModel(
       return result;
     }
 
-    int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
+    const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
     if (buffer.byteLength > binaryChunkSize ||
         buffer.byteLength + 3 < binaryChunkSize) {
       result.errors.emplace_back("GLB binary chunk size does not match the "
@@ -213,7 +213,7 @@ ModelReaderResult readBinaryModel(
 }
 
 void postprocess(
-    ReaderContext& context,
+    const ReaderContext& context,
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
   Model& model = readModel.model.value();
@@ -241,8 +241,8 @@ void postprocess(
         continue;
       }
 
-      gsl::span<const std::byte> bufferSpan(buffer.cesium.data);
-      gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
+      const gsl::span<const std::byte> bufferSpan(buffer.cesium.data);
+      const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
       ImageReaderResult imageResult = context.reader.readImage(bufferViewSpan);
@@ -260,7 +260,7 @@ void postprocess(
 class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
-  AnyExtensionJsonHandler(const ReaderContext& /* context */)
+  AnyExtensionJsonHandler(const ReaderContext& /* context */) noexcept
       : JsonObjectJsonHandler() {}
 
   virtual void reset(

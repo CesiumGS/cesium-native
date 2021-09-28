@@ -58,7 +58,7 @@ public:
 private:
   Promise(
       const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
-      const std::shared_ptr<async::event_task<T>>& pEvent)
+      const std::shared_ptr<async::event_task<T>>& pEvent) noexcept
       : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
 
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;
@@ -84,7 +84,7 @@ public:
 private:
   Promise(
       const std::shared_ptr<Impl::AsyncSystemSchedulers>& pSchedulers,
-      const std::shared_ptr<async::event_task<void>>& pEvent)
+      const std::shared_ptr<async::event_task<void>>& pEvent) noexcept
       : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
 
   std::shared_ptr<Impl::AsyncSystemSchedulers> _pSchedulers;

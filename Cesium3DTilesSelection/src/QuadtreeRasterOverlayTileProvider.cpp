@@ -17,7 +17,7 @@ namespace {
 
 // One hundredth of a pixel. If we compute a rectangle that goes less than "this
 // much" into the next pixel, we'll ignore the extra.
-const double pixelTolerance = 0.01;
+constexpr double pixelTolerance = 0.01;
 
 } // namespace
 
@@ -133,12 +133,12 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       intersection.getCenter());
   imageryLevel = glm::max(0U, imageryLevel);
 
-  uint32_t maximumLevel = this->getMaximumLevel();
+  const uint32_t maximumLevel = this->getMaximumLevel();
   if (imageryLevel > maximumLevel) {
     imageryLevel = maximumLevel;
   }
 
-  uint32_t minimumLevel = this->getMinimumLevel();
+  const uint32_t minimumLevel = this->getMinimumLevel();
   if (imageryLevel < minimumLevel) {
     imageryLevel = minimumLevel;
   }
@@ -168,10 +168,10 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // actually need the southernmost or westernmost tiles.
 
   // We define "very close" as being within 1/512 of the width of the tile.
-  double veryCloseX = geometryRectangle.computeWidth() / 512.0;
-  double veryCloseY = geometryRectangle.computeHeight() / 512.0;
+  const double veryCloseX = geometryRectangle.computeWidth() / 512.0;
+  const double veryCloseY = geometryRectangle.computeHeight() / 512.0;
 
-  CesiumGeometry::Rectangle southwestTileRectangle =
+  const CesiumGeometry::Rectangle southwestTileRectangle =
       imageryTilingScheme.tileToRectangle(southwestTileCoordinates);
 
   if (glm::abs(southwestTileRectangle.maximumY - geometryRectangle.minimumY) <
@@ -186,7 +186,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     ++southwestTileCoordinates.x;
   }
 
-  CesiumGeometry::Rectangle northeastTileRectangle =
+  const CesiumGeometry::Rectangle northeastTileRectangle =
       imageryTilingScheme.tileToRectangle(northeastTileCoordinates);
 
   if (glm::abs(northeastTileRectangle.maximumY - geometryRectangle.minimumY) <
@@ -204,7 +204,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // Create TileImagery instances for each imagery tile overlapping this terrain
   // tile. We need to do all texture coordinate computations in the imagery
   // provider's projection.
-  CesiumGeometry::Rectangle imageryBounds = intersection;
+  const CesiumGeometry::Rectangle imageryBounds = intersection;
   std::optional<CesiumGeometry::Rectangle> clippedImageryRectangle =
       std::nullopt;
 
@@ -250,18 +250,19 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
   const CesiumGeometry::Rectangle& tilingSchemeRectangle =
       tilingScheme.getRectangle();
 
-  double toMeters = computeApproximateConversionFactorToMetersNearPosition(
-      this->getProjection(),
-      position);
+  const double toMeters =
+      computeApproximateConversionFactorToMetersNearPosition(
+          this->getProjection(),
+          position);
 
-  double levelZeroMaximumTexelSpacingMeters =
+  const double levelZeroMaximumTexelSpacingMeters =
       (tilingSchemeRectangle.computeWidth() * toMeters) /
       (this->_imageWidth * tilingScheme.getNumberOfXTilesAtLevel(0));
 
-  double twoToTheLevelPower =
+  const double twoToTheLevelPower =
       levelZeroMaximumTexelSpacingMeters / geometricError;
-  double level = glm::log2(twoToTheLevelPower);
-  double rounded = glm::max(glm::round(level), 0.0);
+  const double level = glm::log2(twoToTheLevelPower);
+  const double rounded = glm::max(glm::round(level), 0.0);
   return static_cast<uint32_t>(rounded);
 }
 
@@ -288,8 +289,11 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
   // non-thread-safe object from another thread and creating a (potentially very
   // subtle) race condition.
   auto loadParentTile = [tileID, this]() {
-    Rectangle rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    QuadtreeTileID parentID(tileID.level - 1, tileID.x >> 1, tileID.y >> 1);
+    const Rectangle rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    const QuadtreeTileID parentID(
+        tileID.level - 1,
+        tileID.x >> 1,
+        tileID.y >> 1);
     return this->getQuadtreeTile(parentID).thenImmediately(
         [rectangle](const LoadedQuadtreeImage& loaded) {
           return LoadedQuadtreeImage{loaded.pLoaded, rectangle};
@@ -386,7 +390,7 @@ void blitImage(
     const ImageCesium& source,
     const Rectangle& sourceRectangle,
     const std::optional<Rectangle>& sourceSubset) {
-  Rectangle sourceToCopy = sourceSubset.value_or(sourceRectangle);
+  const Rectangle sourceToCopy = sourceSubset.value_or(sourceRectangle);
   std::optional<Rectangle> overlap =
       targetRectangle.computeIntersection(sourceToCopy);
   if (!overlap) {
@@ -394,9 +398,9 @@ void blitImage(
     return;
   }
 
-  PixelRectangle targetPixels =
+  const PixelRectangle targetPixels =
       computePixelRectangle(target, targetRectangle, *overlap);
-  PixelRectangle sourcePixels =
+  const PixelRectangle sourcePixels =
       computePixelRectangle(source, sourceRectangle, *overlap);
 
   ImageManipulation::blitImage(target, targetPixels, source, sourcePixels);
@@ -422,7 +426,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
         // This set of images is only "useful" if at least one actually has
         // image data, and that image data is _not_ from an ancestor. We can
         // identify ancestor images because they have a `subset`.
-        bool haveAnyUsefulImageData = std::any_of(
+        const bool haveAnyUsefulImageData = std::any_of(
             images.begin(),
             images.end(),
             [](const LoadedQuadtreeImage& image) {
@@ -454,7 +458,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
 void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
   CESIUM_TRACE("QuadtreeRasterOverlayTileProvider::unloadCachedTiles");
 
-  int64_t maxCacheBytes = this->getOwner().getOptions().subTileCacheBytes;
+  const int64_t maxCacheBytes = this->getOwner().getOptions().subTileCacheBytes;
   if (this->_cachedBytes <= maxCacheBytes) {
     return;
   }
@@ -463,7 +467,7 @@ void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
 
   while (it != this->_tilesOldToRecent.end() &&
          this->_cachedBytes > maxCacheBytes) {
-    SharedFuture<LoadedQuadtreeImage>& future = it->future;
+    const SharedFuture<LoadedQuadtreeImage>& future = it->future;
     if (!future.isReady()) {
       // Don't unload tiles that are still loading.
       ++it;
@@ -534,7 +538,7 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
     }
 
     // The portion of the source that we actually need to copy.
-    Rectangle sourceSubset = image.subset.value_or(loaded.rectangle);
+    const Rectangle sourceSubset = image.subset.value_or(loaded.rectangle);
 
     // Find the bounds of the combined image.
     // Intersect the loaded image's rectangle with the target rectangle.
@@ -589,10 +593,10 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
   }
 
   // Compute the pixel dimensions needed for the combined image.
-  int32_t combinedWidthPixels = static_cast<int32_t>(Math::roundUp(
+  const int32_t combinedWidthPixels = static_cast<int32_t>(Math::roundUp(
       combinedRectangle->computeWidth() / projectedWidthPerPixel,
       pixelTolerance));
-  int32_t combinedHeightPixels = static_cast<int32_t>(Math::roundUp(
+  const int32_t combinedHeightPixels = static_cast<int32_t>(Math::roundUp(
       combinedRectangle->computeHeight() / projectedHeightPerPixel,
       pixelTolerance));
 
@@ -610,14 +614,14 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     const Projection& /* projection */,
     std::vector<LoadedQuadtreeImage>&& images) {
 
-  CombinedImageMeasurements measurements =
+  const CombinedImageMeasurements measurements =
       QuadtreeRasterOverlayTileProvider::measureCombinedImage(
           targetRectangle,
           images);
 
-  int32_t targetImageBytes = measurements.widthPixels *
-                             measurements.heightPixels * measurements.channels *
-                             measurements.bytesPerChannel;
+  const int32_t targetImageBytes =
+      measurements.widthPixels * measurements.heightPixels *
+      measurements.channels * measurements.bytesPerChannel;
   if (targetImageBytes <= 0) {
     // Target image has no pixels, so our work here is done.
     return LoadedRasterOverlayImage{

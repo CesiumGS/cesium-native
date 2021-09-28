@@ -8,7 +8,7 @@
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API IgnoreValueJsonHandler : public IJsonHandler {
 public:
-  void reset(IJsonHandler* pParent);
+  void reset(IJsonHandler* pParent) noexcept;
 
   virtual IJsonHandler* readNull() override;
   virtual IJsonHandler* readBool(bool b) override;
@@ -28,7 +28,7 @@ public:
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
-  IJsonHandler* parent();
+  IJsonHandler* parent() noexcept;
 
 private:
   IJsonHandler* _pParent = nullptr;

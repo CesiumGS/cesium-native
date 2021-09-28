@@ -131,7 +131,7 @@ public:
    */
   constexpr double computeWidth() const noexcept {
     double east = this->_east;
-    double west = this->_west;
+    const double west = this->_west;
     if (east < west) {
       east += CesiumUtility::Math::TWO_PI;
     }

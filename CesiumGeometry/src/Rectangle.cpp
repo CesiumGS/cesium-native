@@ -11,10 +11,10 @@ bool Rectangle::contains(const glm::dvec2& position) const noexcept {
 }
 
 bool Rectangle::overlaps(const Rectangle& other) const noexcept {
-  double left = glm::max(this->minimumX, other.minimumX);
-  double bottom = glm::max(this->minimumY, other.minimumY);
-  double right = glm::min(this->maximumX, other.maximumX);
-  double top = glm::min(this->maximumY, other.maximumY);
+  const double left = glm::max(this->minimumX, other.minimumX);
+  const double bottom = glm::max(this->minimumY, other.minimumY);
+  const double right = glm::min(this->maximumX, other.maximumX);
+  const double top = glm::min(this->maximumY, other.maximumY);
   return bottom < top && left < right;
 }
 
@@ -26,9 +26,10 @@ bool Rectangle::fullyContains(const Rectangle& other) const noexcept {
 
 double
 Rectangle::computeSignedDistance(const glm::dvec2& position) const noexcept {
-  glm::dvec2 bottomLeftDistance = glm::dvec2(minimumX, minimumY) - position;
-  glm::dvec2 topRightDistance = position - glm::dvec2(maximumX, maximumY);
-  glm::dvec2 maxDistance = glm::max(bottomLeftDistance, topRightDistance);
+  const glm::dvec2 bottomLeftDistance =
+      glm::dvec2(minimumX, minimumY) - position;
+  const glm::dvec2 topRightDistance = position - glm::dvec2(maximumX, maximumY);
+  const glm::dvec2 maxDistance = glm::max(bottomLeftDistance, topRightDistance);
 
   if (maxDistance.x <= 0.0 && maxDistance.y <= 0.0) {
     // Inside, report closest edge.
@@ -44,10 +45,10 @@ Rectangle::computeSignedDistance(const glm::dvec2& position) const noexcept {
 
 std::optional<Rectangle>
 Rectangle::computeIntersection(const Rectangle& other) const noexcept {
-  double left = glm::max(this->minimumX, other.minimumX);
-  double bottom = glm::max(this->minimumY, other.minimumY);
-  double right = glm::min(this->maximumX, other.maximumX);
-  double top = glm::min(this->maximumY, other.maximumY);
+  const double left = glm::max(this->minimumX, other.minimumX);
+  const double bottom = glm::max(this->minimumY, other.minimumY);
+  const double right = glm::min(this->maximumX, other.maximumX);
+  const double top = glm::min(this->maximumY, other.maximumY);
 
   if (bottom >= top || left >= right) {
     return std::nullopt;

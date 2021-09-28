@@ -19,7 +19,7 @@ Credit CreditSystem::createCredit(const std::string& html) {
   return Credit(_credits.size() - 1);
 }
 
-const std::string& CreditSystem::getHtml(Credit credit) const {
+const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
   if (credit.id < _credits.size()) {
     return _credits[credit.id].html;
   }
@@ -51,7 +51,7 @@ void CreditSystem::addCreditToFrame(Credit credit) {
   _credits[credit.id].lastFrameNumber = _currentFrameNumber;
 }
 
-void CreditSystem::startNextFrame() {
+void CreditSystem::startNextFrame() noexcept {
   _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
   _creditsToShowThisFrame.clear();
   _currentFrameNumber++;

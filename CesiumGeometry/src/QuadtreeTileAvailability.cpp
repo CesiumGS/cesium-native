@@ -15,7 +15,7 @@ QuadtreeTileAvailability::QuadtreeTileAvailability(
           this->_tilingScheme.getRootTilesX() *
           this->_tilingScheme.getRootTilesY()) {
   for (uint32_t j = 0; j < this->_tilingScheme.getRootTilesY(); ++j) {
-    uint32_t rowStart = j * this->_tilingScheme.getRootTilesX();
+    const uint32_t rowStart = j * this->_tilingScheme.getRootTilesX();
     for (uint32_t i = 0; i < this->_tilingScheme.getRootTilesX(); ++i) {
       QuadtreeTileID id(0, i, j);
       Rectangle extent = tilingScheme.tileToRectangle(id);
@@ -27,16 +27,16 @@ QuadtreeTileAvailability::QuadtreeTileAvailability(
 
 void QuadtreeTileAvailability::addAvailableTileRange(
     const QuadtreeTileRectangularRange& range) noexcept {
-  Rectangle ll = this->_tilingScheme.tileToRectangle(
+  const Rectangle ll = this->_tilingScheme.tileToRectangle(
       QuadtreeTileID(range.level, range.minimumX, range.minimumY));
-  Rectangle ur = this->_tilingScheme.tileToRectangle(
+  const Rectangle ur = this->_tilingScheme.tileToRectangle(
       QuadtreeTileID(range.level, range.maximumX, range.maximumY));
 
   RectangleWithLevel rectangleWithLevel{
       range.level,
       Rectangle(ll.minimumX, ll.minimumY, ur.maximumX, ur.maximumY)};
 
-  for (std::unique_ptr<QuadtreeNode>& pNode : this->_rootNodes) {
+  for (const std::unique_ptr<QuadtreeNode>& pNode : this->_rootNodes) {
     if (pNode->extent.overlaps(rectangleWithLevel.rectangle)) {
       putRectangleInQuadtree(
           this->_tilingScheme,
@@ -67,8 +67,9 @@ bool QuadtreeTileAvailability::isTileAvailable(
   // level n exists, then all its parent tiles back to level 0 exist too.  This
   // isn't really enforced anywhere, but Cesium would never load a tile for
   // which this is not true.
-  CesiumGeometry::Rectangle rectangle = this->_tilingScheme.tileToRectangle(id);
-  glm::dvec2 center = rectangle.getCenter();
+  const CesiumGeometry::Rectangle rectangle =
+      this->_tilingScheme.tileToRectangle(id);
+  const glm::dvec2 center = rectangle.getCenter();
   return this->computeMaximumLevelAtPosition(center) >= id.level;
 }
 
@@ -125,10 +126,14 @@ bool QuadtreeTileAvailability::isTileAvailable(
   // Find the deepest quadtree node containing this point.
   bool found = false;
   while (!found) {
-    uint32_t ll = pNode->ll && pNode->ll->extent.contains(position) ? 1 : 0;
-    uint32_t lr = pNode->lr && pNode->lr->extent.contains(position) ? 1 : 0;
-    uint32_t ul = pNode->ul && pNode->ul->extent.contains(position) ? 1 : 0;
-    uint32_t ur = pNode->ur && pNode->ur->extent.contains(position) ? 1 : 0;
+    const uint32_t ll =
+        pNode->ll && pNode->ll->extent.contains(position) ? 1 : 0;
+    const uint32_t lr =
+        pNode->lr && pNode->lr->extent.contains(position) ? 1 : 0;
+    const uint32_t ul =
+        pNode->ul && pNode->ul->extent.contains(position) ? 1 : 0;
+    const uint32_t ur =
+        pNode->ur && pNode->ur->extent.contains(position) ? 1 : 0;
 
     // The common scenario is that the point is in only one quadrant and we can
     // simply iterate down the tree.  But if the point is on a boundary between

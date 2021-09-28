@@ -1,7 +1,7 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-
+#include <CesiumAsync/IAssetResponse.h>
 #include <algorithm>
 #include <cctype>
 
@@ -27,14 +27,13 @@ void TileContentFactory::registerContentType(
       contentType.begin(),
       contentType.end(),
       std::back_inserter(lowercaseContentType),
-      [](char c) { return static_cast<char>(::tolower(c)); });
+      [](char c) noexcept { return static_cast<char>(::tolower(c)); });
   TileContentFactory::_loadersByContentType[lowercaseContentType] = pLoader;
 }
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
-
-  const gsl::span<const std::byte>& data = input.data;
+  const gsl::span<const std::byte>& data = input.pRequest->response()->data();
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
   auto itMagic = TileContentFactory::_loadersByMagic.find(magic);
@@ -42,7 +41,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
     return itMagic->second->load(input);
   }
 
-  const std::string& contentType = input.contentType;
+  const std::string& contentType = input.pRequest->response()->contentType();
   std::string baseContentType = contentType.substr(0, contentType.find(';'));
 
   auto itContentType =
@@ -54,7 +53,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
   // Determine if this is plausibly a JSON external tileset.
   size_t i;
   for (i = 0; i < data.size(); ++i) {
-    if (!std::isspace(static_cast<char>(data[i]))) {
+    if (!std::isspace(static_cast<unsigned char>(data[i]))) {
       break;
     }
   }
@@ -74,7 +73,8 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
       "'{}'.",
       baseContentType,
       magic);
-  return nullptr;
+  return input.asyncSystem
+      .createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
 }
 
 /**
@@ -88,7 +88,7 @@ TileContentFactory::createContent(const TileContentLoadInput& input) {
 std::optional<std::string>
 TileContentFactory::getMagic(const gsl::span<const std::byte>& data) {
   if (data.size() >= 4) {
-    gsl::span<const std::byte> magicData = data.subspan(0, 4);
+    const gsl::span<const std::byte> magicData = data.subspan(0, 4);
     return std::string(reinterpret_cast<const char*>(magicData.data()), 4);
   }
 

@@ -101,7 +101,7 @@ public:
   /**
    * @brief Returns the internal pointer.
    */
-  T* get() const { return this->_p; }
+  T* get() const noexcept { return this->_p; }
 
   /**
    * @brief Returns `true` if two pointers are equal.

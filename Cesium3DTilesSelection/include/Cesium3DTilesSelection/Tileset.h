@@ -503,11 +503,11 @@ private:
       const std::vector<ViewState>& frustums,
       const Tile& tile,
       const std::vector<double>& distances,
-      bool culled) const;
+      bool culled) const noexcept;
 
   void _processLoadQueue();
-  void _unloadCachedTiles();
-  void _markTileVisited(Tile& tile);
+  void _unloadCachedTiles() noexcept;
+  void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
 
@@ -543,7 +543,7 @@ private:
      */
     double priority;
 
-    bool operator<(const LoadRecord& rhs) const {
+    bool operator<(const LoadRecord& rhs) const noexcept {
       return this->priority < rhs.priority;
     }
   };
@@ -587,7 +587,7 @@ private:
       const std::vector<double>& distances);
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
-      std::atomic<uint32_t>& loadsInProgress,
+      const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
   Tileset(const Tileset& rhs) = delete;

@@ -116,7 +116,7 @@ std::string Uri::substituteTemplateParameters(
 
     // Find the end of this parameter
     ++nextPos;
-    size_t endPos = templateUri.find('}', nextPos);
+    const size_t endPos = templateUri.find('}', nextPos);
     if (endPos == std::string::npos) {
       throw std::runtime_error("Unclosed template parameter");
     }
