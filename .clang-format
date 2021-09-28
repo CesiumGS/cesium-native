@@ -41,7 +41,7 @@ CommentPragmas: '{.*}'
 IncludeBlocks: Regroup
 IncludeCategories:
   # Local includes, enclosed in quotation marks, ending in `.h`
-  - Regex: '"[A-Za-z0-9+_\/\-]+\.h"'
+  - Regex: '"[A-Za-z0-9.+_\/\-]+\.h"'
     Priority: 1
   # Cesium project includes, starting with `<Cesium`, and ending with `.h>`
   - Regex: '<Cesium[A-Za-z0-9+_\/\-\]+\.h>'
