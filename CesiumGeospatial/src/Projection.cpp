@@ -75,6 +75,34 @@ GlobeRectangle unprojectRectangleSimple(
   return std::visit(Operation{rectangle}, projection);
 }
 
+CesiumGeometry::AxisAlignedBox projectRegionSimple(
+    const Projection& projection,
+    const BoundingRegion& region) {
+  CesiumGeometry::Rectangle rectangle = 
+      projectRectangleSimple(projection, region.getRectangle());
+  return CesiumGeometry::AxisAlignedBox(
+      rectangle.minimumX,
+      rectangle.minimumY,
+      region.getMinimumHeight(),
+      rectangle.maximumX,
+      rectangle.maximumY,
+      region.getMaximumHeight());
+}
+
+BoundingRegion unprojectRegionSimple(
+    const Projection& projection,
+    const CesiumGeometry::AxisAlignedBox& box) {
+  GlobeRectangle rectangle = 
+      unprojectRectangleSimple(
+        projection, 
+        CesiumGeometry::Rectangle(
+            box.minimumX,
+            box.minimumY,
+            box.maximumX,
+            box.maximumY));
+  return BoundingRegion(rectangle, box.minimumZ, box.maximumZ);
+}
+
 double computeApproximateConversionFactorToMetersNearPosition(
     const Projection& projection,
     const glm::dvec2& position) {

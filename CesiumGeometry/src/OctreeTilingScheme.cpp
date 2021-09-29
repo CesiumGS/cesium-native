@@ -3,7 +3,7 @@
 namespace CesiumGeometry {
 
 OctreeTilingScheme::OctreeTilingScheme(
-    const CesiumGeometry::OrientedBoundingBox& box,
+    const AxisAlignedBox& box,
     uint32_t rootTilesX,
     uint32_t rootTilesY,
     uint32_t rootTilesZ) noexcept
@@ -27,80 +27,65 @@ OctreeTilingScheme::getNumberOfZTilesAtLevel(uint32_t level) const noexcept {
   return this->_rootTilesZ << level;
 }
 
-std::optional<CesiumGeometry::OctreeTileID>
+std::optional<OctreeTileID>
 OctreeTilingScheme::positionToTile(const glm::dvec3& position, uint32_t level)
     const noexcept {
 
-  glm::dvec3 localPosition = this->getBox().getInverseHalfAxes() * position;
-
-  if (glm::abs(localPosition.x) > 1.0 ||
-      glm::abs(localPosition.y) > 1.0 ||
-      glm::abs(localPosition.z) > 1.0) {
-    // outside the bounds of the tiling scheme
+  if (!this->_box.contains(position)) {
     return std::nullopt;
-  }    
+  }
 
   uint32_t xTiles = this->getNumberOfXTilesAtLevel(level);
   uint32_t yTiles = this->getNumberOfYTilesAtLevel(level);
   uint32_t zTiles = this->getNumberOfZTilesAtLevel(level);
 
-  const glm::dvec3& boxDimensions = this->getBox().getLengths();
-  double xTileSize = boxDimensions.x / xTiles;
-  double yTileSize = boxDimensions.y / yTiles;
-  double zTileSize = boxDimensions.z / zTiles;
+  double xTileSize = this->_box.lengthX / xTiles;
+  double yTileSize = this->_box.lengthY / yTiles;
+  double zTileSize = this->_box.lengthZ / zTiles;
 
   uint32_t xTileCoordinate =
-      static_cast<uint32_t>((localPosition.x - 1.0) / xTileSize);
+      static_cast<uint32_t>((position.x - this->_box.minimumX) / xTileSize);
   if (xTileCoordinate >= xTiles) {
     xTileCoordinate = xTiles - 1;
   }
   uint32_t yTileCoordinate =
-      static_cast<uint32_t>((localPosition.y - 1.0) / yTileSize);
+      static_cast<uint32_t>((position.y - this->_box.minimumY) / yTileSize);
   if (yTileCoordinate >= yTiles) {
     yTileCoordinate = yTiles - 1;
   }
   uint32_t zTileCoordinate =
-      static_cast<uint32_t>((localPosition.z - 1.0) / zTileSize);
+      static_cast<uint32_t>((position.z - this->_box.minimumZ) / zTileSize);
   if (zTileCoordinate >= zTiles) {
     zTileCoordinate = zTiles - 1;
   }
 
-  return CesiumGeometry::OctreeTileID(
+  return OctreeTileID(
       level,
       xTileCoordinate,
       yTileCoordinate,
       zTileCoordinate);
 }
 
-CesiumGeometry::OrientedBoundingBox OctreeTilingScheme::tileToBoundingBox(
-    const CesiumGeometry::OctreeTileID& tileID) const noexcept {
-  double xTiles = this->getNumberOfXTilesAtLevel(tileID.level);
-  double yTiles = this->getNumberOfYTilesAtLevel(tileID.level);
-  double zTiles = this->getNumberOfZTilesAtLevel(tileID.level);
+AxisAlignedBox OctreeTilingScheme::tileToBox(
+    const OctreeTileID& tileID) const noexcept {
+  uint32_t xTiles = this->getNumberOfXTilesAtLevel(tileID.level);
+  uint32_t yTiles = this->getNumberOfYTilesAtLevel(tileID.level);
+  uint32_t zTiles = this->getNumberOfZTilesAtLevel(tileID.level);
 
-  const glm::dmat3& boxHalfAxes = this->getBox().getHalfAxes();
-  glm::dmat3 tileHalfAxes(
-      boxHalfAxes[0] / xTiles,
-      boxHalfAxes[1] / yTiles,
-      boxHalfAxes[2] / zTiles);
-    
-  const glm::dvec3& boxDimensions = this->getBox().getLengths();
-  glm::dvec3 tileDimensions(
-      boxDimensions.x / xTiles,
-      boxDimensions.y / yTiles,
-      boxDimensions.z / zTiles);
+  double xTileSize = this->_box.lengthX / xTiles;
+  double yTileSize = this->_box.lengthY / yTiles;
+  double zTileSize = this->_box.lengthZ / zTiles;
 
-  glm::dvec3 tileCenter = 
-      this->getBox().getCenter() 
-      - boxHalfAxes[0] 
-      - boxHalfAxes[1]
-      - boxHalfAxes[2] 
-      + tileDimensions * glm::dvec3(tileID.x, tileID.y, tileID.z)
-      + tileHalfAxes[0]
-      + tileHalfAxes[1]
-      + tileHalfAxes[2];
+  double minimumX = xTileSize * tileID.x;
+  double minimumY = yTileSize * tileID.y;
+  double minimumZ = zTileSize * tileID.z;
 
-  return OrientedBoundingBox(tileCenter, tileHalfAxes);
+  return AxisAlignedBox(
+      minimumX,
+      minimumY,
+      minimumZ,
+      minimumX + xTileSize,
+      minimumY + yTileSize,
+      minimumZ + zTileSize);
 }
-
 } // namespace CesiumGeometry

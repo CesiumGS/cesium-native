@@ -162,7 +162,7 @@ void mapRasterOverlaysToTile(
     // TODO: we can compute a much more precise projected rectangle by
     //       projecting each vertex, but that would require us to have
     //       geometry first.
-    Rectangle overlayRectangle =
+    CesiumGeometry::Rectangle overlayRectangle =
         projectRectangleSimple(pProvider->getProjection(), *pRectangle);
 
     IntrusivePointer<RasterOverlayTile> pRaster =
@@ -428,12 +428,17 @@ bool Tile::unloadContent() noexcept {
   return true;
 }
 
-static void createImplicitTile(
+static void createImplicitQuadtreeTile(
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
     bool available) {
+
+  if (!implicitContext.quadtreeTilingScheme) {
+    return;
+  }
+
   child.setContext(parent.getContext());
   child.setParent(&parent);
 
@@ -443,33 +448,103 @@ static void createImplicitTile(
     child.setTileID(UpsampledQuadtreeNode{childID});
   }
 
+  // TODO: check override geometric error from metadata
   child.setGeometricError(parent.getGeometricError() * 0.5);
 
-  double minimumHeight = -1000.0;
-  double maximumHeight = 9000.0;
+  const BoundingRegion* pRegion = 
+      std::get_if<BoundingRegion>(&implicitContext.implicitRootBoundingVolume);
+  const OrientedBoundingBox* pBox = 
+      std::get_if<OrientedBoundingBox>(&implicitContext.implicitRootBoundingVolume);
 
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&parent.getBoundingVolume());
-  if (!pRegion) {
-    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(
-            &parent.getBoundingVolume());
-    if (pLooseRegion) {
-      pRegion = &pLooseRegion->getBoundingRegion();
+  if (pRegion && implicitContext.projection) {
+    double minimumHeight = -1000.0;
+    double maximumHeight = 9000.0;
+
+    const BoundingRegion* pParentRegion =
+        std::get_if<BoundingRegion>(&parent.getBoundingVolume());
+    if (!pParentRegion) {
+      const BoundingRegionWithLooseFittingHeights* pLooseRegion =
+          std::get_if<BoundingRegionWithLooseFittingHeights>(
+              &parent.getBoundingVolume());
+      if (pLooseRegion) {
+        pParentRegion = &pLooseRegion->getBoundingRegion();
+      }
     }
+
+    if (pParentRegion) {
+      minimumHeight = pParentRegion->getMinimumHeight();
+      maximumHeight = pParentRegion->getMaximumHeight();
+    }
+
+    child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        unprojectRectangleSimple(
+            *implicitContext.projection,
+            implicitContext.quadtreeTilingScheme->tileToRectangle(childID)),
+        minimumHeight,
+        maximumHeight)));
+
+  } else if (pBox) {
+    CesiumGeometry::Rectangle rectangleLocal = 
+        implicitContext.quadtreeTilingScheme->tileToRectangle(childID);
+    glm::dvec2 centerLocal = rectangleLocal.getCenter();
+    const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
+    child.setBoundingVolume(
+        OrientedBoundingBox(
+          rootHalfAxes * glm::dvec3(centerLocal.x, centerLocal.y, 0.0),
+          glm::dmat3(
+            0.5 * rectangleLocal.computeWidth() * rootHalfAxes[0],
+            0.5 * rectangleLocal.computeHeight() * rootHalfAxes[1],
+            rootHalfAxes[2])));
+  }
+}
+
+static void createImplicitOctreeTile(
+    const ImplicitTilingContext& implicitContext,
+    Tile& parent,
+    Tile& child,
+    const OctreeTileID& childID,
+    bool available) {
+
+  if (!implicitContext.octreeTilingScheme) {
+    return;
   }
 
-  if (pRegion) {
-    minimumHeight = pRegion->getMinimumHeight();
-    maximumHeight = pRegion->getMaximumHeight();
-  }
+  child.setContext(parent.getContext());
+  child.setParent(&parent);
 
-  child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-      unprojectRectangleSimple(
-          implicitContext.projection,
-          implicitContext.tilingScheme.tileToRectangle(childID)),
-      minimumHeight,
-      maximumHeight)));
+/* TODO: upsample missing octree tiles
+  if (available) {
+    child.setTileID(childID);
+  } else {
+    child.setTileID(UpsampledOctreeNode{childID});
+  }*/
+
+  // TODO: check for overrided geometric error metadata
+  child.setGeometricError(parent.getGeometricError() * 0.5);
+
+  const BoundingRegion* pRegion = 
+      std::get_if<BoundingRegion>(&implicitContext.implicitRootBoundingVolume);
+  const OrientedBoundingBox* pBox = 
+      std::get_if<OrientedBoundingBox>(&implicitContext.implicitRootBoundingVolume);
+
+  if (pRegion && implicitContext.projection) {
+    child.setBoundingVolume(
+        unprojectRegionSimple(
+            *implicitContext.projection,
+            implicitContext.octreeTilingScheme->tileToBox(childID)));
+  } else if (pBox) {
+    AxisAlignedBox childLocal = 
+        implicitContext.octreeTilingScheme->tileToBox(childID);
+    const glm::dvec3& centerLocal = childLocal.center;
+    const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
+    child.setBoundingVolume(
+        OrientedBoundingBox(
+          rootHalfAxes * centerLocal,
+          glm::dmat3(
+            0.5 * childLocal.lengthX * rootHalfAxes[0],
+            0.5 * childLocal.lengthY * rootHalfAxes[1],
+            0.5 * childLocal.lengthZ * rootHalfAxes[2])));
+  }
 }
 
 static void createQuadtreeSubdividedChildren(Tile& parent) {
@@ -509,6 +584,14 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
     return;
   }
 
+  ImplicitTilingContext& implicitContext = 
+      *parent.getContext()->implicitContext;
+
+  if (!implicitContext.quadtreeTilingScheme ||
+      !implicitContext.projection) {
+    return;
+  }
+
   QuadtreeTileID swID(
       pParentTileID->level + 1,
       pParentTileID->x * 2,
@@ -518,9 +601,9 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
   QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
   QuadtreeTilingScheme& tilingScheme =
-      parent.getContext()->implicitContext.value().tilingScheme;
+      *implicitContext.quadtreeTilingScheme;
   Projection& projection =
-      parent.getContext()->implicitContext.value().projection;
+      *implicitContext.projection;
 
   parent.createChildTiles(4);
 
@@ -661,43 +744,51 @@ void Tile::update(
     this->setState(LoadState::Done);
   }
 
-  if (this->getContext()->implicitContext && this->getChildren().empty() &&
-      std::get_if<QuadtreeTileID>(&this->_id)) {
-    // Check if any child tiles are known to be available, and create them if
-    // they are.
-    const ImplicitTilingContext& implicitContext =
-        this->getContext()->implicitContext.value();
-    const CesiumGeometry::QuadtreeTileAvailability& availability =
-        implicitContext.availability;
+  if (this->getContext()->implicitContext && this->getChildren().empty()) {
+    QuadtreeTileID* pQuadtreeTileID = std::get_if<QuadtreeTileID>(&this->_id);
+    OctreeTileID* pOctreeTileID = std::get_if<OctreeTileID>(&this->_id);
 
-    QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
+    if (pQuadtreeTileID) {
+      // Check if any child tiles are known to be available, and create them if
+      // they are.
+      const ImplicitTilingContext& implicitContext =
+          this->getContext()->implicitContext.value();
+      const CesiumGeometry::QuadtreeTileAvailability& availability =
+          implicitContext.availability;
 
-    QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
-    uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
+      QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
 
-    QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
+      // TODO: generalize availability
+      QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
+      uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
 
-    QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
+      QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
+      uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
 
-    QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-    uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
+      QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
+      uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
 
-    size_t childCount = sw + se + nw + ne;
-    if (childCount > 0) {
-      // If any children are available, we need to create all four in order to
-      // avoid holes. But non-available tiles will be upsampled instead of
-      // loaded.
-      // TODO: this is the right thing to do for terrain, which is the only use
-      // of implicit tiling currently. But we may need to re-evaluate it if
-      // we're using implicit tiling for buildings (for example) in the future.
-      this->_children.resize(4);
+      QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
+      uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
 
-      createImplicitTile(implicitContext, *this, this->_children[0], swID, sw);
-      createImplicitTile(implicitContext, *this, this->_children[1], seID, se);
-      createImplicitTile(implicitContext, *this, this->_children[2], nwID, nw);
-      createImplicitTile(implicitContext, *this, this->_children[3], neID, ne);
+      size_t childCount = sw + se + nw + ne;
+      if (childCount > 0) {
+        // If any children are available, we need to create all four in order to
+        // avoid holes. But non-available tiles will be upsampled instead of
+        // loaded.
+        // TODO: this is the right thing to do for terrain, which is the only use
+        // of implicit tiling currently. But we may need to re-evaluate it if
+        // we're using implicit tiling for buildings (for example) in the future.
+        this->_children.resize(4);
+
+        createImplicitQuadtreeTile(implicitContext, *this, this->_children[0], swID, sw);
+        createImplicitQuadtreeTile(implicitContext, *this, this->_children[1], seID, se);
+        createImplicitQuadtreeTile(implicitContext, *this, this->_children[2], nwID, nw);
+        createImplicitQuadtreeTile(implicitContext, *this, this->_children[3], neID, ne);
+      }
+
+    } else if (pOctreeTileID) {
+
     }
   }
 
@@ -746,7 +837,7 @@ void Tile::update(
                   i));
           --i;
 
-          Rectangle projectedRectangle =
+          CesiumGeometry::Rectangle projectedRectangle =
               projectRectangleSimple(pProvider->getProjection(), *pRectangle);
           CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
               pProvider->getTile(projectedRectangle, this->getGeometricError());

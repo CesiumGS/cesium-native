@@ -1,10 +1,13 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumGeometry/OctreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
 #include <string>
 #include <vector>
+#include <optional>
 
 namespace Cesium3DTilesSelection {
 
@@ -12,13 +15,11 @@ class Tileset;
 class TileContext;
 
 /**
- * @brief A tiling context that was created for terrain tiles.
+ * @brief A tiling context that was created for implicit quadtree or octree 
+ * tiles.
  *
- * A terrain tileset is a multi-resolution quadtree pyramid of heightmaps, as
- * described in the <a
- * href="https://github.com/CesiumGS/quantized-mesh">quantized-mesh-1.0</a>
- * specification. The URLs for the individual tiles are computed from the base
- * URL of the tileset.
+ * The URLs for the individual tiles are computed from the base URL of the 
+ * tileset.
  */
 class ImplicitTilingContext final {
 public:
@@ -36,12 +37,30 @@ public:
   /**
    * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} for this context.
    */
-  CesiumGeometry::QuadtreeTilingScheme tilingScheme;
+  std::optional<CesiumGeometry::QuadtreeTilingScheme> quadtreeTilingScheme;
+
+  /**
+   * @brief The {@link CesiumGeometry::OctreeTilingScheme} for this context.
+   */
+  std::optional<CesiumGeometry::OctreeTilingScheme> octreeTilingScheme;
+
+  /**
+   * @brief The bounding volume of the implicit root tile. This can only be
+   * {@link CesiumGeospatial::BoundingRegion} or 
+   * {@link CesiumGeometry::OrientedBoundingBox}.
+   * 
+   * This will later be use to determine what type of bounding volume to use
+   * and how to unproject the implicitly subdivided children.
+   */
+  BoundingVolume implicitRootBoundingVolume;
 
   /**
    * @brief The {@link CesiumGeospatial::Projection} for this context.
+   * 
+   * Only relevant if implicitRootBoundingVolume is 
+   * {@link CesiumGeospatial::BoundingRegion}.
    */
-  CesiumGeospatial::Projection projection;
+  std::optional<CesiumGeospatial::Projection> projection;
 
   /**
    * @brief The {@link CesiumGeometry::QuadtreeTileAvailability} for this
