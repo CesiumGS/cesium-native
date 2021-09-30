@@ -21,9 +21,9 @@ IJsonHandler* ObjectJsonHandler::readObjectEnd() {
   return this->parent();
 }
 
-IJsonHandler* ObjectJsonHandler::StartSubObject() { return nullptr; }
+IJsonHandler* ObjectJsonHandler::StartSubObject() noexcept { return nullptr; }
 
-IJsonHandler* ObjectJsonHandler::EndSubObject() { return nullptr; }
+IJsonHandler* ObjectJsonHandler::EndSubObject() noexcept { return nullptr; }
 
 void ObjectJsonHandler::reportWarning(
     const std::string& warning,
@@ -34,10 +34,10 @@ void ObjectJsonHandler::reportWarning(
   this->parent()->reportWarning(warning, std::move(context));
 }
 
-const char* ObjectJsonHandler::getCurrentKey() const {
+const char* ObjectJsonHandler::getCurrentKey() const noexcept {
   return this->_currentKey;
 }
 
-void ObjectJsonHandler::setCurrentKey(const char* key) {
+void ObjectJsonHandler::setCurrentKey(const char* key) noexcept {
   this->_currentKey = key;
 }

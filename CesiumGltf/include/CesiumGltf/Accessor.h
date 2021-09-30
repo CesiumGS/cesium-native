@@ -19,7 +19,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * @return The number of components. Returns 0 if {@link Accessor::type} is
    * not a valid enumeration value.
    */
-  static int8_t computeNumberOfComponents(const std::string& type);
+  static int8_t computeNumberOfComponents(const std::string& type) noexcept;
 
   /**
    * @brief Computes the number of bytes for a given accessor component type.
@@ -31,7 +31,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * @return The number of bytes for the component type. Returns 0 if
    * {@link Accessor::componentType} is not a valid enumeration value.
    */
-  static int8_t computeByteSizeOfComponent(int32_t componentType);
+  static int8_t computeByteSizeOfComponent(int32_t componentType) noexcept;
 
   /**
    * @brief Computes the number of components for this accessor.
@@ -43,7 +43,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * @return The number of components in this accessor. Returns 0 if this
    * accessor's {@link Accessor::type} does not have a valid enumeration value.
    */
-  int8_t computeNumberOfComponents() const;
+  int8_t computeNumberOfComponents() const noexcept;
 
   /**
    * @brief Computes the number of bytes for this accessor's component type.
@@ -57,7 +57,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * if this accessor's {@link Accessor::componentType} does not have a valid
    * enumeration value.
    */
-  int8_t computeByteSizeOfComponent() const;
+  int8_t computeByteSizeOfComponent() const noexcept;
 
   /**
    * @brief Computes the total number of bytes for this accessor in each vertex.
@@ -71,7 +71,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * {@link Accessor::componentType} does not have a valid enumeration
    * value.
    */
-  int64_t computeBytesPerVertex() const;
+  int64_t computeBytesPerVertex() const noexcept;
 
   /**
    * @brief Computes this accessor's stride.
@@ -89,6 +89,6 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * a valid enumeration value, or if {@link Accessor::bufferView} does not
    * refer to a valid {@link BufferView}.
    */
-  int64_t computeByteStride(const CesiumGltf::Model& model) const;
+  int64_t computeByteStride(const CesiumGltf::Model& model) const noexcept;
 };
 } // namespace CesiumGltf

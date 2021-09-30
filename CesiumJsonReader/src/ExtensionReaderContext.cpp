@@ -9,7 +9,7 @@ using namespace CesiumUtility;
 class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
-  AnyExtensionJsonHandler() : JsonObjectJsonHandler() {}
+  AnyExtensionJsonHandler() noexcept : JsonObjectJsonHandler() {}
 
   virtual void reset(
       IJsonHandler* pParentHandler,
