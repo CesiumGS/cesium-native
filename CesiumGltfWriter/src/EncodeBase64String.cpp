@@ -1,4 +1,5 @@
 #include "EncodeBase64String.h"
+
 #include <modp_b64.h>
 
 std::string

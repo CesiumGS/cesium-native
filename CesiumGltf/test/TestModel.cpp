@@ -1,17 +1,20 @@
 
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
-#include "catch2/catch.hpp"
-#include <algorithm>
-#include <cstdint>
-#include <cstring>
+
 #include <glm/common.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <utility>
 #include <vector>
+
+#include "catch2/catch.hpp"
 
 using namespace CesiumGltf;
 

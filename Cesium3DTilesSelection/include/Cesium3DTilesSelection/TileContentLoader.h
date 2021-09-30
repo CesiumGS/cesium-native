@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/TileContentLoadInput.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
+#include "TileContentLoadInput.h"
+#include "TileContentLoadResult.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+
 #include <string>
 #include <utility>
 #include <vector>

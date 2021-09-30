@@ -1,12 +1,17 @@
+
 #include "Batched3DModelContent.h"
+
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "CesiumUtility/Tracing.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
-#include <cstddef>
+
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltf/ModelEXT_feature_metadata.h>
+#include <CesiumUtility/Tracing.h>
+
 #include <rapidjson/document.h>
+
+#include <cstddef>
 #include <stdexcept>
 
 namespace Cesium3DTilesSelection {

@@ -1,5 +1,7 @@
 #include "CesiumGeometry/BoundingSphere.h"
+
 #include "CesiumGeometry/Plane.h"
+
 #include <glm/geometric.hpp>
 
 namespace CesiumGeometry {

@@ -1,8 +1,9 @@
 #pragma once
 
 #include <glm/mat4x4.hpp>
-#include <optional>
 #include <rapidjson/fwd.h>
+
+#include <optional>
 #include <string>
 #include <vector>
 

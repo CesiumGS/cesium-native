@@ -1,13 +1,16 @@
 #include "CesiumAsync/CachingAssetAccessor.h"
+
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/CacheItem.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "InternalTimegm.h"
 #include "ResponseCacheControl.h"
+
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
-#include <spdlog/spdlog.h>
 #include <sstream>
 
 namespace CesiumAsync {

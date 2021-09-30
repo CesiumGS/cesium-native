@@ -1,4 +1,5 @@
 #include "CesiumGltf/Accessor.h"
+
 #include "CesiumGltf/Model.h"
 
 using namespace CesiumGltf;

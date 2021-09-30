@@ -1,6 +1,8 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include <algorithm>
+
 #include <glm/common.hpp>
+
+#include <algorithm>
 
 namespace CesiumGeometry {
 

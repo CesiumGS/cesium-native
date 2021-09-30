@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/ReaderLibrary.h"
+#include "ReaderLibrary.h"
+
 #include <cstddef>
 #include <cstdint>
 

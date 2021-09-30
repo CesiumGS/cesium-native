@@ -1,4 +1,6 @@
+
 #include "Cesium3DTilesSelection/Tileset.h"
+
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
@@ -6,27 +8,30 @@
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/GeographicProjection.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
-#include "CesiumUtility/Uri.h"
 #include "TileUtilities.h"
 #include "calcQuadtreeMaxGeometricError.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/ITaskProcessor.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/Uri.h>
+
+#include <glm/common.hpp>
+#include <rapidjson/document.h>
+
 #include <algorithm>
 #include <cstddef>
-#include <glm/common.hpp>
 #include <limits>
 #include <optional>
-#include <rapidjson/document.h>
 #include <unordered_set>
 
 using namespace CesiumAsync;

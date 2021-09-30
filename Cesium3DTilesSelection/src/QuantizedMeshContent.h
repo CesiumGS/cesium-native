@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
+
 #include <cstddef>
 
 namespace Cesium3DTilesSelection {

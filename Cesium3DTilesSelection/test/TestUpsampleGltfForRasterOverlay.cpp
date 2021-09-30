@@ -4,9 +4,11 @@
 #include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
+
 #include <catch2/catch.hpp>
-#include <cstring>
 #include <glm/trigonometric.hpp>
+
+#include <cstring>
 #include <vector>
 
 using namespace Cesium3DTilesSelection;

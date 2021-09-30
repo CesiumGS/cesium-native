@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+#include "Cartographic.h"
+#include "Library.h"
+
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumUtility/Math.h>
+
 #include <optional>
 
 namespace CesiumGeospatial {

@@ -1,14 +1,18 @@
 #include "CameraWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
 #include <CesiumGltf/CameraPerspective.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
+
 #include <cstdint>
-#include <magic_enum.hpp>
 #include <utility>
 #include <vector>
+
+#include <magic_enum.hpp>
 
 void writeOrthographicCamera(
     const CesiumGltf::CameraOrthographic& cameraOrthographic,

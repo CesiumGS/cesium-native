@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumAsync/Impl/ImmediateScheduler.h"
+#include "../ITaskProcessor.h"
+#include "ImmediateScheduler.h"
+
 #include <memory>
 
 namespace CesiumAsync {

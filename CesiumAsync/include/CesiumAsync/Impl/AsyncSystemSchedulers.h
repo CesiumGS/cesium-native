@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/Impl/QueuedScheduler.h"
-#include "CesiumAsync/Impl/TaskScheduler.h"
-#include "CesiumAsync/Impl/cesium-async++.h"
+#include "QueuedScheduler.h"
+#include "TaskScheduler.h"
+#include "cesium-async++.h"
 
 namespace CesiumAsync {
 

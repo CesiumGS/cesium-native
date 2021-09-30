@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "CesiumGeospatial/CartographicPolygon.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
+
+#include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+
 #include <vector>
 
 namespace Cesium3DTilesSelection {

@@ -1,4 +1,5 @@
 #include "CesiumGltf/GltfReader.h"
+
 #include "CesiumGltf/IExtensionJsonHandler.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/JsonHandler.h"
@@ -10,10 +11,12 @@
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
+
+#include <rapidjson/reader.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
-#include <rapidjson/reader.h>
 #include <sstream>
 #include <string>
 

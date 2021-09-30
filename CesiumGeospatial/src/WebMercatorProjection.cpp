@@ -1,6 +1,9 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
+
 #include "CesiumGeospatial/Cartographic.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/exponential.hpp>
 #include <glm/trigonometric.hpp>
 
