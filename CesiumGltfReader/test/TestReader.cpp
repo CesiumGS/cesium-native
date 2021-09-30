@@ -307,3 +307,27 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   auto& zeroExtensions = withoutCustomExt.model->extensions;
   REQUIRE(zeroExtensions.empty());
 }
+
+TEST_CASE("Unknown MIME types are handled") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "images": [
+            {
+              "mimeType" : "image/webp"
+            }
+        ]
+    }
+  )";
+
+  ReadModelOptions options;
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult modelResult = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult.errors.empty());
+  REQUIRE(modelResult.model.has_value());
+}
