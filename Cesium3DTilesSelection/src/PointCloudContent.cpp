@@ -58,8 +58,8 @@ rapidjson::Document parseFeatureTable(
 
   auto rtcIt = document.FindMember("RTC_CENTER");
   if (rtcIt != document.MemberEnd() && rtcIt->value.IsArray() &&
-      rtcIt->value.Size() == 3 && rtcIt->value[0].IsDouble() &&
-      rtcIt->value[1].IsDouble() && rtcIt->value[2].IsDouble()) {
+      rtcIt->value.Size() == 3 && rtcIt->value[0].IsNumber() &&
+      rtcIt->value[1].IsNumber() && rtcIt->value[2].IsNumber()) {
     // Add the RTC_CENTER value to the glTF itself.
     rapidjson::Value& rtcValue = rtcIt->value;
     gltf.extras["RTC_CENTER"] = {
@@ -135,6 +135,13 @@ rapidjson::Document parseFeatureTable(
   if (pointsLengthIt != document.MemberEnd() &&
       pointsLengthIt->value.IsUint()) {
     pointsLength = pointsLengthIt->value.GetUint();
+    if (pointsLength <= 3) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Error parsing PNTS content, not enough points.");
+
+      return document;
+    }
   } else {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -158,7 +165,6 @@ rapidjson::Document parseFeatureTable(
   auto colorsIt = document.FindMember("RGB");
   if (colorsIt != document.MemberEnd() && colorsIt->value.IsObject()) {
     auto byteOffsetIt = colorsIt->value.FindMember("byteOffset");
-    ;
     if (byteOffsetIt != colorsIt->value.MemberEnd() &&
         byteOffsetIt->value.IsUint()) {
       usingColors = true;
