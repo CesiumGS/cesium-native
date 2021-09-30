@@ -1,6 +1,9 @@
 #include "SamplerWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <magic_enum.hpp>
 
 void CesiumGltf::writeSampler(

@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Projection.h"
+#include "Library.h"
+#include "RasterOverlay.h"
+
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
+
 #include <functional>
 #include <memory>
 
@@ -100,12 +102,14 @@ public:
   /**
    * @brief Creates a new instance.
    *
+   * @param name The user-given name of this overlay layer.
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
    * @param options The {@link TileMapServiceRasterOverlayOptions}.
    */
   TileMapServiceRasterOverlay(
+      const std::string& name,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers =
           std::vector<CesiumAsync::IAssetAccessor::THeader>(),

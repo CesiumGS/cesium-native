@@ -1,11 +1,13 @@
 #pragma once
 
-#include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
-#include "CesiumAsync/Impl/CatchFunction.h"
-#include "CesiumAsync/Impl/ContinuationFutureType.h"
-#include "CesiumAsync/Impl/WithTracing.h"
-#include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Tracing.h"
+#include "Impl/AsyncSystemSchedulers.h"
+#include "Impl/CatchFunction.h"
+#include "Impl/ContinuationFutureType.h"
+#include "Impl/WithTracing.h"
+#include "ThreadPool.h"
+
+#include <CesiumUtility/Tracing.h>
+
 #include <variant>
 
 namespace CesiumAsync {
@@ -193,7 +195,19 @@ public:
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
-  T wait() { return this->_task.get(); }
+  const T& wait() const { return this->_task.get(); }
+
+  /**
+   * @brief Determines if this future is already resolved or rejected.
+   *
+   * If this method returns true, it is guaranteed that {@link wait} will
+   * not block but will instead immediately return a value or throw an
+   * exception.
+   *
+   * @return True if the future is already resolved or rejected and {@link wait}
+   * will not block; otherwise, false.
+   */
+  bool isReady() const { return this->_task.ready(); }
 
 private:
   SharedFuture(

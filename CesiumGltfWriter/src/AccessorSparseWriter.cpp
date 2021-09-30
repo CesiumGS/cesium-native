@@ -1,12 +1,16 @@
 #include "AccessorSparseWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/AccessorSparse.h>
 #include <CesiumGltf/AccessorSparseIndices.h>
 #include <CesiumGltf/AccessorSparseValues.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <magic_enum.hpp>
+
 #include <stdexcept>
+
+#include <magic_enum.hpp>
 
 void writeAccessorSparseIndices(
     const CesiumGltf::AccessorSparseIndices& indices,

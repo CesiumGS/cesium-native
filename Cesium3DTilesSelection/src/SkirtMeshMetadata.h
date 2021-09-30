@@ -1,10 +1,12 @@
-#include "CesiumUtility/JsonValue.h"
+#include <CesiumUtility/JsonValue.h>
+
 #include <glm/vec3.hpp>
+
 #include <optional>
 
 namespace Cesium3DTilesSelection {
 struct SkirtMeshMetadata {
-  SkirtMeshMetadata()
+  SkirtMeshMetadata() noexcept
       : noSkirtIndicesBegin{0},
         noSkirtIndicesCount{0},
         meshCenter{0.0, 0.0, 0.0},

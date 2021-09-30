@@ -37,8 +37,8 @@ function generate(options, schema) {
   schemaCache.popContext();
 
   const headers = lodash.uniq([
-      `"CesiumGltf/Library.h"`,
-      `"CesiumGltf/${base}.h"`,
+      `"Library.h"`,
+      `"${base}.h"`,
       ...lodash.flatten(properties.map((property) => property.headers))
   ]);
 

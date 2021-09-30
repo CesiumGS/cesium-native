@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeospatial/Projection.h"
+#include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/Projection.h>
+
 #include <string>
 #include <vector>
 

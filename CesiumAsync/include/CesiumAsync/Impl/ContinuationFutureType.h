@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumAsync/Impl/ContinuationReturnType.h"
-#include "CesiumAsync/Impl/RemoveFuture.h"
+#include "ContinuationReturnType.h"
+#include "RemoveFuture.h"
 
 namespace CesiumAsync {
 

@@ -1,5 +1,7 @@
 #include "SkirtMeshMetadata.h"
+
 #include <CesiumUtility/JsonValue.h>
+
 #include <optional>
 #include <stdexcept>
 
@@ -26,9 +28,9 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
     return std::nullopt;
   }
 
-  double noSkirtIndicesBegin =
+  const double noSkirtIndicesBegin =
       (*pNoSkirtRange)[0].getSafeNumberOrDefault<double>(-1.0);
-  double noSkirtIndicesCount =
+  const double noSkirtIndicesCount =
       (*pNoSkirtRange)[1].getSafeNumberOrDefault<double>(-1.0);
 
   if (noSkirtIndicesBegin < 0.0 || noSkirtIndicesCount < 0.0) {

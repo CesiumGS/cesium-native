@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
 #include "CesiumUtility/JsonValue.h"
+#include "Library.h"
+
 #include <any>
 #include <unordered_map>
 #include <utility>

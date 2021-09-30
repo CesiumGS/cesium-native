@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Gltf.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGltf/Model.h>
 
 namespace Cesium3DTilesSelection {
 

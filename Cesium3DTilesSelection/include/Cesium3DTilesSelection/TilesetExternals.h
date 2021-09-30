@@ -1,7 +1,10 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "Library.h"
+#include "spdlog-cesium.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+
 #include <memory>
 
 namespace CesiumAsync {

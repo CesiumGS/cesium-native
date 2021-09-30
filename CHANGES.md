@@ -1,10 +1,53 @@
 # Change Log
 
-### Next Release - ?
+### Next Version - ?
 
 ##### Additions :tada:
 
+- Made tile content loading asynchronous and allowed it to make further network requests, to Cesium ion or otherwise.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused the `RTC_CENTER` semantic in a B3DM feature table to be ignored if any of the values happened to be integers rather than floating-point numbers. This caused these tiles to render in the wrong location.
+
+### v0.7.2 - 2021-09-14
+
+##### Fixes :wrench:
+
+- Fixed a bug where the "forbidHoles" option was not working with raster overlays and external tilesets.
+
+### v0.7.1 - 2021-09-14
+
+##### Fixes :wrench:
+
+- Fixed a bug introduced in v0.7.0 where credits from a `QuadtreeRasterOverlayTileProvider` were not collected and reported.
+- Fixed a bug where disabling frustum culling caused external tilesets to not load.
+
+### v0.7.0 - 2021-09-01
+
+##### Breaking Changes :mega:
+
+- Renamed the `Cesium3DTiles` namespace and library to `Cesium3DTilesSelection`.
+- Deleted `Cesium3DTilesSelection::Gltf` and moved functionality into `CesiumGltf::Model`.
+- Renamed `Rectangle::intersect` and `GlobeRectangle::intersect` to `computeIntersection`.
+- `RasterOverlay` and derived classes now require a `name` parameter to their constructors.
+- Changed the type of texture coordinate IDs used in the raster overlay system from `uint32_t` to `int32_t`.
+- `RasterOverlayTileProvider` is no longer quadtree-oriented. Instead, it requires derived classes to provide an image for a particular requested rectangle and geometric error. Classes that previously derived from `RasterOverlayTileProvider` should now derive from `QuadtreeRasterOverlayTileProvider` and implement `loadQuadtreeTileImage` instead of `loadTileImage`.
+- Removed `TilesetOptions::enableWaterMask`, which didn't have any effect anyway. `TilesetContentOptions::enableWaterMask` still exists and works.
+
+##### Additions :tada:
+
+- Added `Future<T>::isReady`.
 - Added `Future<T>::share`, which returns a `SharedFuture<T>` and allows multiple continuations to be attached.
+- Added an option in `TilesetOptions::ContentOptions` to generate smooth normals when the original glTFs were missing normals.
+- Added `ImageManipulation` class to `CesiumGltfReader`.
+- Added `Math::roundUp` and `Math::roundDown`.
+- Added `Rectangle::computeUnion`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused CesiumGltfWriter to write a material's normal texture info into a property named `normalTextureInfo` rather than `normalTexture`.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to show only the lowest resolution tiles if missing a `tilemapresource.xml` file.
 
 ### v0.6.0 - 2021-08-02
 

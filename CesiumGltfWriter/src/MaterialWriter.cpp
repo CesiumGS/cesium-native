@@ -1,14 +1,18 @@
 #include "MaterialWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <cassert>
-#include <magic_enum.hpp>
 #include <vector>
+
+#include <magic_enum.hpp>
 
 void writePbrMetallicRoughness(
     const CesiumGltf::MaterialPBRMetallicRoughness& pbr,
@@ -67,7 +71,7 @@ void writeNormalTexture(
     const CesiumGltf::MaterialNormalTextureInfo& normalTexture,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   auto& j = jsonWriter;
-  j.Key("normalTextureInfo");
+  j.Key("normalTexture");
   j.StartObject();
 
   j.Key("index");

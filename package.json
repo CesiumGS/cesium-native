@@ -1,6 +1,6 @@
 {
   "name": "cesium-native",
-  "version": "0.6.0",
+  "version": "0.7.2",
   "description": "Cesium 3D Geospatial for C++",
   "main": "index.js",
   "directories": {

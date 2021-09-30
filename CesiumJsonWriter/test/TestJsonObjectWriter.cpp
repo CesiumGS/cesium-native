@@ -1,7 +1,9 @@
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
+
 #include <catch2/catch.hpp>
+
 #include <cstdint>
 #include <string>
 

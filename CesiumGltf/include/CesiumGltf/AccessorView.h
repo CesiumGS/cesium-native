@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/Model.h"
+#include "Model.h"
+
 #include <cstddef>
 #include <stdexcept>
 
@@ -199,7 +200,7 @@ public:
   AccessorViewStatus status() const noexcept { return this->_status; }
 
 private:
-  void create(const Model& model, const Accessor& accessor) {
+  void create(const Model& model, const Accessor& accessor) noexcept {
     const CesiumGltf::BufferView* pBufferView =
         Model::getSafe(&model.bufferViews, accessor.bufferView);
     if (!pBufferView) {
@@ -215,16 +216,18 @@ private:
     }
 
     const std::vector<std::byte>& data = pBuffer->cesium.data;
-    int64_t bufferBytes = int64_t(data.size());
+    const int64_t bufferBytes = int64_t(data.size());
     if (pBufferView->byteOffset + pBufferView->byteLength > bufferBytes) {
       this->_status = AccessorViewStatus::BufferTooSmall;
       return;
     }
 
-    int64_t accessorByteStride = accessor.computeByteStride(model);
-    int64_t accessorComponentElements = accessor.computeNumberOfComponents();
-    int64_t accessorComponentBytes = accessor.computeByteSizeOfComponent();
-    int64_t accessorBytesPerStride =
+    const int64_t accessorByteStride = accessor.computeByteStride(model);
+    const int64_t accessorComponentElements =
+        accessor.computeNumberOfComponents();
+    const int64_t accessorComponentBytes =
+        accessor.computeByteSizeOfComponent();
+    const int64_t accessorBytesPerStride =
         accessorComponentElements * accessorComponentBytes;
 
     if (sizeof(T) != accessorBytesPerStride) {
@@ -232,8 +235,8 @@ private:
       return;
     }
 
-    int64_t accessorBytes = accessorByteStride * accessor.count;
-    int64_t bytesRemainingInBufferView =
+    const int64_t accessorBytes = accessorByteStride * accessor.count;
+    const int64_t bytesRemainingInBufferView =
         pBufferView->byteLength -
         (accessor.byteOffset + accessorByteStride * (accessor.count - 1) +
          accessorBytesPerStride);

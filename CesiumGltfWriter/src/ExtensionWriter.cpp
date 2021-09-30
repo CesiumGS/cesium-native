@@ -1,4 +1,5 @@
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumUtility/JsonValue.h>
 

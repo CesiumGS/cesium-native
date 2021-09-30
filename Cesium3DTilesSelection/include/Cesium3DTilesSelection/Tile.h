@@ -1,20 +1,24 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/Gltf.h"
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/TileContext.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "Cesium3DTilesSelection/TileSelectionState.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumUtility/DoublyLinkedList.h"
-#include <atomic>
+#include "BoundingVolume.h"
+#include "Library.h"
+#include "RasterMappedTo3DTile.h"
+#include "RasterOverlayTile.h"
+#include "TileContext.h"
+#include "TileID.h"
+#include "TileRefine.h"
+#include "TileSelectionState.h"
+
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumUtility/DoublyLinkedList.h>
+
+#include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
+
+#include <atomic>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -296,6 +300,29 @@ public:
   }
 
   /**
+   * @brief Returns whether to unconditionally refine this tile.
+   *
+   * This is useful in cases such as with external tilesets, where instead of a
+   * tile having any content, it points to an external tileset's root. So the
+   * tile always needs to be refined otherwise the external tileset will not be
+   * displayed.
+   *
+   * @return Whether to uncoditionally refine this tile.
+   */
+  bool getUnconditionallyRefine() const noexcept {
+    return glm::isinf(this->_geometricError);
+  }
+
+  /**
+   * @brief Marks that this tile should be unconditionally refined.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void setUnconditionallyRefine() noexcept {
+    this->_geometricError = std::numeric_limits<double>::infinity();
+  }
+
+  /**
    * @brief The refinement strategy of this tile.
    *
    * Returns the {@link TileRefine} value that indicates the refinement strategy
@@ -466,6 +493,11 @@ public:
   bool isRenderable() const noexcept;
 
   /**
+   * @brief Determines if this tile is has external tileset content.
+   */
+  bool isExternalTileset() const noexcept;
+
+  /**
    * @brief Trigger the process of loading the {@link Tile::getContent}.
    *
    * This function is not supposed to be called by clients.
@@ -547,6 +579,7 @@ private:
   static std::optional<CesiumGeospatial::BoundingRegion>
   generateTextureCoordinates(
       CesiumGltf::Model& model,
+      const glm::dmat4& transform,
       const BoundingVolume& boundingVolume,
       const std::vector<CesiumGeospatial::Projection>& projections);
 
@@ -557,6 +590,16 @@ private:
    * loaded.
    */
   void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
+
+  /**
+   * @brief Initiates loading of any overlays attached to this tile.
+   *
+   * This method should only be called when the tile is in the ContentLoading
+   * state and _rasterTiles is empty.
+   *
+   * @param projections On return the set of projections used by the overlays.
+   */
+  void loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;

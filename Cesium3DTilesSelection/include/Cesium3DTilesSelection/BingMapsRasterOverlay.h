@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeospatial/Ellipsoid.h"
+#include "Library.h"
+#include "RasterOverlay.h"
+
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+
 #include <functional>
 #include <memory>
 
@@ -85,6 +87,7 @@ public:
   /**
    * @brief Creates a new instance.
    *
+   * @param name The user-given name of this overlay layer.
    * @param url The url of the Bing Maps server hosting the imagery.
    * @param key The Bing Maps key for your application, which can be created at
    * https://www.bingmapsportal.com/.
@@ -99,6 +102,7 @@ public:
    * {@link CesiumGeospatial::Ellipsoid::WGS84}.
    */
   BingMapsRasterOverlay(
+      const std::string& name,
       const std::string& url,
       const std::string& key,
       const std::string& mapStyle = BingMapsStyle::AERIAL,

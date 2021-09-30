@@ -12,7 +12,7 @@ struct Asset {
   /**
    * @brief The unique identifier for this asset.
    */
-  int64_t id;
+  int64_t id = -1;
 
   /**
    * @brief The name of this asset.
@@ -40,7 +40,7 @@ struct Asset {
   /**
    * @brief The number of bytes this asset occupies in the user's account.
    */
-  int64_t bytes;
+  int64_t bytes = 0;
 
   /**
    * @brief The date and time that this asset was created in [RFC
@@ -67,7 +67,7 @@ struct Asset {
   /**
    * @brief The percentage progress of the tiling pipeline preparing this asset.
    */
-  int8_t percentComplete;
+  int8_t percentComplete = 0;
 };
 
 struct Assets {

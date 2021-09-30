@@ -1,4 +1,5 @@
 #include "CesiumUtility/Math.h"
+
 #include <catch2/catch.hpp>
 
 using namespace CesiumUtility;
@@ -49,4 +50,24 @@ TEST_CASE("Math::convertLongitudeRange example") {
       CesiumUtility::Math::degreesToRadians(270.0));
   //! [convertLongitudeRange]
   CHECK(longitude == CesiumUtility::Math::degreesToRadians(-90.0));
+}
+
+TEST_CASE("Math::roundUp and roundDown") {
+  CHECK(Math::roundUp(1.0, 0.01) == 1.0);
+  CHECK(Math::roundDown(1.0, 0.01) == 1.0);
+
+  CHECK(Math::roundUp(1.01, 0.01) == 2.0);
+  CHECK(Math::roundDown(1.99, 0.01) == 1.0);
+
+  CHECK(Math::roundUp(1.005, 0.01) == 1.0);
+  CHECK(Math::roundDown(1.995, 0.01) == 2.0);
+
+  CHECK(Math::roundUp(-1.0, 0.01) == -1.0);
+  CHECK(Math::roundDown(-1.0, 0.01) == -1.0);
+
+  CHECK(Math::roundUp(-1.99, 0.01) == -1.0);
+  CHECK(Math::roundDown(-1.01, 0.01) == -2.0);
+
+  CHECK(Math::roundUp(-1.995, 0.01) == -2.0);
+  CHECK(Math::roundDown(-1.005, 0.01) == -1.0);
 }

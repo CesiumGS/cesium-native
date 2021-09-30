@@ -1,14 +1,17 @@
 #include "Cesium3DTilesSelection/IonRasterOverlay.h"
+
 #include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TileMapServiceRasterOverlay.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Uri.h"
+
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Uri.h>
+
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
@@ -17,9 +20,12 @@ using namespace CesiumUtility;
 namespace Cesium3DTilesSelection {
 
 IonRasterOverlay::IonRasterOverlay(
+    const std::string& name,
     uint32_t ionAssetID,
     const std::string& ionAccessToken)
-    : _ionAssetID(ionAssetID), _ionAccessToken(ionAccessToken) {}
+    : RasterOverlay(name),
+      _ionAssetID(ionAssetID),
+      _ionAccessToken(ionAccessToken) {}
 
 IonRasterOverlay::~IonRasterOverlay() {}
 
@@ -42,7 +48,8 @@ IonRasterOverlay::createTileProvider(
 
   return pAssetAccessor->requestAsset(asyncSystem, ionUrl)
       .thenInWorkerThread(
-          [pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
+          [name = this->getName(),
+           pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
               -> std::unique_ptr<RasterOverlay> {
             const IAssetResponse* pResponse = pRequest->response();
 
@@ -77,7 +84,7 @@ IonRasterOverlay::createTileProvider(
                 "externalType",
                 "unknown");
             if (externalType == "BING") {
-              auto optionsIt = response.FindMember("options");
+              const auto optionsIt = response.FindMember("options");
               if (optionsIt == response.MemberEnd() ||
                   !optionsIt->value.IsObject()) {
                 SPDLOG_LOGGER_ERROR(
@@ -100,6 +107,7 @@ IonRasterOverlay::createTileProvider(
                   JsonHelpers::getStringOrDefault(options, "culture", "");
 
               return std::make_unique<BingMapsRasterOverlay>(
+                  name,
                   url,
                   key,
                   mapStyle,
@@ -108,6 +116,7 @@ IonRasterOverlay::createTileProvider(
             std::string url =
                 JsonHelpers::getStringOrDefault(response, "url", "");
             return std::make_unique<TileMapServiceRasterOverlay>(
+                name,
                 url,
                 std::vector<CesiumAsync::IAssetAccessor::THeader>{
                     std::make_pair(

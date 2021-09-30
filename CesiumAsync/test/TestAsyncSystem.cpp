@@ -1,5 +1,7 @@
 #include "CesiumAsync/AsyncSystem.h"
+
 #include <catch2/catch.hpp>
+
 #include <chrono>
 #include <memory>
 #include <thread>
@@ -504,5 +506,23 @@ TEST_CASE("AsyncSystem") {
 
     CHECK(executed1);
     CHECK(value1 == 2);
+  }
+
+  SECTION("Future reports when it is ready") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto future = promise.getFuture();
+
+    CHECK(!future.isReady());
+    promise.resolve(4);
+    CHECK(future.isReady());
+  }
+
+  SECTION("SharedFuture reports when it is ready") {
+    auto promise = asyncSystem.createPromise<int>();
+    auto future = promise.getFuture().share();
+
+    CHECK(!future.isReady());
+    promise.resolve(4);
+    CHECK(future.isReady());
   }
 }

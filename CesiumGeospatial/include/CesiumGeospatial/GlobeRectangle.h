@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+#include "Cartographic.h"
+#include "Library.h"
+
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumUtility/Math.h>
+
 #include <optional>
 
 namespace CesiumGeospatial {
@@ -129,7 +131,7 @@ public:
    */
   constexpr double computeWidth() const noexcept {
     double east = this->_east;
-    double west = this->_west;
+    const double west = this->_west;
     if (east < west) {
       east += CesiumUtility::Math::TWO_PI;
     }
@@ -167,14 +169,15 @@ public:
    * account the fact that the same angle can be represented with multiple
    * values as well as the wrapping of longitude at the anti-meridian.  For a
    * simple intersection that ignores these factors and can be used with
-   * projected coordinates, see {@link CesiumGeometry::Rectangle::intersect}.
+   * projected coordinates, see
+   * {@link CesiumGeometry::Rectangle::computeIntersection}.
    *
    * @param other The other rectangle to intersect with this one.
    * @returns The intersection rectangle, or `std::nullopt` if there is no
    * intersection.
    */
   std::optional<GlobeRectangle>
-  intersect(const GlobeRectangle& other) const noexcept;
+  computeIntersection(const GlobeRectangle& other) const noexcept;
 
   /**
    * @brief Computes the union of this globe rectangle with another.

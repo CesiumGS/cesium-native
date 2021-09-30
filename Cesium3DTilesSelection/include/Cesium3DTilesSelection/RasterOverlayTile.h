@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGltf/Model.h"
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGltf/Model.h>
+
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -61,6 +62,28 @@ public:
   };
 
   /**
+   * @brief Tile availability states.
+   *
+   * Values of this enumeration are returned by
+   * {@link RasterOverlayTile::update}, which in turn is called by
+   * {@link Tile::update}. These values are used to determine whether a leaf
+   * tile has been reached, but the associated raster tiles are not yet the
+   * most detailed ones that are available.
+   */
+  enum class MoreDetailAvailable {
+
+    /** @brief There are no more detailed raster tiles. */
+    No = 0,
+
+    /** @brief There are more detailed raster tiles. */
+    Yes = 1,
+
+    /** @brief It is not known whether more detailed raster tiles are available.
+     */
+    Unknown = 2
+  };
+
+  /**
    * @brief Constructs a placeholder tile for the tile provider.
    *
    * The {@link getState} of this instance will always be
@@ -84,11 +107,14 @@ public:
    * Otherwise, the state will become {@link LoadState `Failed`}.
    *
    * @param overlay The {@link RasterOverlay}.
-   * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for this tile.
+   * @param targetGeometricError The geometric error to target for this tile.
+   * @param imageryRectangle The {@link CesiumGeometry::Rectangle} that defines
+   * the rectangle covered by this tile in the overlay's projection.
    */
   RasterOverlayTile(
       RasterOverlay& overlay,
-      const CesiumGeometry::QuadtreeTileID& tileID);
+      double targetGeometricError,
+      const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
   /** @brief Default destructor. */
   ~RasterOverlayTile();
@@ -104,11 +130,22 @@ public:
   const RasterOverlay& getOverlay() const noexcept { return *this->_pOverlay; }
 
   /**
-   * @brief Returns the {@link CesiumGeometry::QuadtreeTileID} that was given
-   * during construction.
+   * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
+   * of this tile in the raster overlay's projected coordinates.
    */
-  const CesiumGeometry::QuadtreeTileID& getID() const noexcept {
-    return this->_tileID;
+  const CesiumGeometry::Rectangle& getRectangle() const noexcept {
+    return this->_rectangle;
+  }
+
+  /**
+   * @brief Gets the geometric error value that this overlay tile is suitable
+   * for.
+   *
+   * This is used to control which content (how highly detailed) the
+   * {@link RasterOverlayTileProvider} uses within the bounds of this tile.
+   */
+  double getTargetGeometricError() const noexcept {
+    return this->_targetGeometricError;
   }
 
   /**
@@ -149,15 +186,25 @@ public:
   /**
    * @brief Returns the renderer resources that have been created for this tile.
    */
-  void* getRendererResources() const { return this->_pRendererResources; }
+  void* getRendererResources() const noexcept {
+    return this->_pRendererResources;
+  }
 
   /**
    * @brief Set the renderer resources for this tile.
    *
    * This function is not supposed to be called by clients.
    */
-  void setRendererResources(void* pValue) {
+  void setRendererResources(void* pValue) noexcept {
     this->_pRendererResources = pValue;
+  }
+
+  /**
+   * @brief Determines if more detailed data is available for the spatial area
+   * covered by this tile.
+   */
+  MoreDetailAvailable isMoreDetailAvailable() const noexcept {
+    return this->_moreDetailAvailable;
   }
 
   /**
@@ -178,14 +225,16 @@ public:
 private:
   friend class RasterOverlayTileProvider;
 
-  void setState(LoadState newState);
+  void setState(LoadState newState) noexcept;
 
   RasterOverlay* _pOverlay;
-  CesiumGeometry::QuadtreeTileID _tileID;
+  double _targetGeometricError;
+  CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;
   LoadState _state;
   CesiumGltf::ImageCesium _image;
   void* _pRendererResources;
   uint32_t _references;
+  MoreDetailAvailable _moreDetailAvailable;
 };
 } // namespace Cesium3DTilesSelection

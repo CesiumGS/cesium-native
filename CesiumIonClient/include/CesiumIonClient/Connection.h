@@ -1,12 +1,14 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/Library.h"
-#include "CesiumIonClient/Assets.h"
-#include "CesiumIonClient/Profile.h"
-#include "CesiumIonClient/Response.h"
-#include "CesiumIonClient/Token.h"
+#include "Assets.h"
+#include "Profile.h"
+#include "Response.h"
+#include "Token.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/Library.h>
+
 #include <cstdint>
 
 namespace CesiumIonClient {
@@ -75,7 +77,7 @@ public:
   /**
    * @brief Gets the async system used by this connection to do work in threads.
    */
-  const CesiumAsync::AsyncSystem& getAsyncSystem() const {
+  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {
     return this->_asyncSystem;
   }
 
@@ -83,19 +85,22 @@ public:
    * @brief Gets the interface used by this connection to interact with the
    * Cesium ion REST API.
    */
-  const std::shared_ptr<CesiumAsync::IAssetAccessor>& getAssetAccessor() const {
+  const std::shared_ptr<CesiumAsync::IAssetAccessor>&
+  getAssetAccessor() const noexcept {
     return this->_pAssetAccessor;
   }
 
   /**
    * @brief Gets the access token used by this connection.
    */
-  const std::string& getAccessToken() const { return this->_accessToken; }
+  const std::string& getAccessToken() const noexcept {
+    return this->_accessToken;
+  }
 
   /**
    * @brief Gets the Cesium ion API base URL.
    */
-  const std::string& getApiUrl() const { return this->_apiUrl; }
+  const std::string& getApiUrl() const noexcept { return this->_apiUrl; }
 
   /**
    * @brief Retrieves profile information for the access token currently being

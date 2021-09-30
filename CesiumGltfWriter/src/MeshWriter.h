@@ -1,6 +1,7 @@
 #pragma once
 #include <CesiumGltf/Mesh.h>
 #include <CesiumJsonWriter/JsonWriter.h>
+
 #include <vector>
 
 namespace CesiumGltf {

@@ -1,10 +1,13 @@
 #pragma once
 
-#include "CesiumGltf/IExtensionJsonHandler.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/ReaderLibrary.h"
-#include <functional>
+#include "IExtensionJsonHandler.h"
+#include "ReaderLibrary.h"
+
+#include <CesiumGltf/Model.h>
+
 #include <gsl/span>
+
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
