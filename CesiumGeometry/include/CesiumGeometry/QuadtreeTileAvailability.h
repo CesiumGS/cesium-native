@@ -1,10 +1,12 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeometry/Rectangle.h"
+#include "Library.h"
+#include "QuadtreeTileRectangularRange.h"
+#include "QuadtreeTilingScheme.h"
+#include "Rectangle.h"
+
 #include <glm/vec2.hpp>
+
 #include <memory>
 #include <vector>
 

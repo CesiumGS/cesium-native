@@ -1,11 +1,13 @@
 #pragma once
 
-#include "CesiumAsync/Impl/AsyncSystemSchedulers.h"
-#include "CesiumAsync/Impl/CatchFunction.h"
-#include "CesiumAsync/Impl/ContinuationFutureType.h"
-#include "CesiumAsync/Impl/WithTracing.h"
-#include "CesiumAsync/ThreadPool.h"
-#include "CesiumUtility/Tracing.h"
+#include "Impl/AsyncSystemSchedulers.h"
+#include "Impl/CatchFunction.h"
+#include "Impl/ContinuationFutureType.h"
+#include "Impl/WithTracing.h"
+#include "ThreadPool.h"
+
+#include <CesiumUtility/Tracing.h>
+
 #include <variant>
 
 namespace CesiumAsync {

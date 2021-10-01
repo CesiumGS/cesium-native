@@ -1,12 +1,14 @@
 #include "CompositeContent.h"
+
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Tracing.h>
+
 #include <cstddef>
-#include <rapidjson/document.h>
 
 namespace {
 #pragma pack(push, 1)

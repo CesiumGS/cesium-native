@@ -5,10 +5,12 @@
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
 #include "ResponseCacheControl.h"
+
 #include <catch2/catch.hpp>
+#include <spdlog/spdlog.h>
+
 #include <cstddef>
 #include <optional>
-#include <spdlog/spdlog.h>
 
 using namespace CesiumAsync;
 

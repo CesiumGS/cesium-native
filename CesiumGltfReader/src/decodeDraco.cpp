@@ -1,8 +1,10 @@
 #include "decodeDraco.h"
+
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumUtility/Tracing.h"
+
 #include <cstddef>
 #include <string>
 

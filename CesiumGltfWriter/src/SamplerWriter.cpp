@@ -1,5 +1,7 @@
 #include "SamplerWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 
 void CesiumGltf::writeSampler(

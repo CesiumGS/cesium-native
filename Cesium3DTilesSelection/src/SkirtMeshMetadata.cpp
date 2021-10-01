@@ -1,5 +1,7 @@
 #include "SkirtMeshMetadata.h"
+
 #include <CesiumUtility/JsonValue.h>
+
 #include <optional>
 #include <stdexcept>
 

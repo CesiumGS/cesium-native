@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/AccessorView.h"
+#include "AccessorView.h"
 
 namespace CesiumGltf {
 

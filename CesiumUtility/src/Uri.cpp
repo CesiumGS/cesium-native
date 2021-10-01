@@ -1,5 +1,7 @@
 #include "CesiumUtility/Uri.h"
-#include "uriparser/Uri.h"
+
+#include <uriparser/Uri.h>
+
 #include <stdexcept>
 
 using namespace CesiumUtility;

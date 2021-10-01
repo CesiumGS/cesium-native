@@ -1,4 +1,5 @@
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
+
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"

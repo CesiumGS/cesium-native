@@ -2,6 +2,7 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "CesiumGeospatial/WebMercatorProjection.h"
 #include "SimpleAssetAccessor.h"
+
 #include <catch2/catch.hpp>
 
 using namespace Cesium3DTilesSelection;

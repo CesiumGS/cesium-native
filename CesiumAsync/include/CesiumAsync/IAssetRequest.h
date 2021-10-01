@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/Library.h"
+#include "HttpHeaders.h"
+#include "Library.h"
+
 #include <functional>
 #include <string>
 

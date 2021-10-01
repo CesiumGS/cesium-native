@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/Library.h"
-#include <cstddef>
+#include "JsonHandler.h"
+#include "Library.h"
+
 #include <gsl/span>
+
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>

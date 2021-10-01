@@ -1,6 +1,8 @@
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
+
 #include "Cesium3DTilesSelection/Tileset.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
 

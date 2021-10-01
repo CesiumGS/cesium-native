@@ -1,10 +1,12 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/Library.h"
-#include <cstddef>
+#include "AsyncSystem.h"
+#include "IAssetRequest.h"
+#include "Library.h"
+
 #include <gsl/span>
+
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>

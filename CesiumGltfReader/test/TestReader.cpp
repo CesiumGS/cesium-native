@@ -1,14 +1,16 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
+
 #include <catch2/catch.hpp>
+#include <glm/vec3.hpp>
+#include <gsl/span>
+#include <rapidjson/reader.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
-#include <glm/vec3.hpp>
-#include <gsl/span>
-#include <rapidjson/reader.h>
 #include <string>
 
 using namespace CesiumGltf;

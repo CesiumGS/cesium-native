@@ -118,7 +118,7 @@ function resolveProperty(
         ...propertyDefaults(propertyName, propertyDetails),
         type: makeOptional ? `std::optional<${typeName}>` : typeName,
         headers: [
-          `"CesiumGltf/${type}.h"`,
+          `"${type}.h"`,
           ...(makeOptional ? ["<optional>"] : []),
         ],
         readerType: `${type}JsonHandler`,

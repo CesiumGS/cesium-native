@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
+#include "Library.h"
+
 #include <cstdint>
 
 namespace CesiumGeometry {

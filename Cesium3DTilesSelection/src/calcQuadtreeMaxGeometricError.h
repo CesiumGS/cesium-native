@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeospatial/Ellipsoid.h"
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 namespace Cesium3DTilesSelection {
 /**

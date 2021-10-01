@@ -1,10 +1,10 @@
 #include "TileUtilities.h"
 
-#include <variant>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
+#include <variant>
 
 using namespace CesiumGeospatial;
 

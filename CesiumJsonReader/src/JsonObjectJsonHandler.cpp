@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
+
 #include <cstdint>
 
 using namespace CesiumJsonReader;

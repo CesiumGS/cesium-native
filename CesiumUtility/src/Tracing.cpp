@@ -1,4 +1,5 @@
 #include "CesiumUtility/Tracing.h"
+
 #include <algorithm>
 #include <cassert>
 

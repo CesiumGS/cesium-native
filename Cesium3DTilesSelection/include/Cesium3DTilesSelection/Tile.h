@@ -1,20 +1,23 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/TileContext.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "Cesium3DTilesSelection/TileSelectionState.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumUtility/DoublyLinkedList.h"
-#include <atomic>
+#include "BoundingVolume.h"
+#include "Library.h"
+#include "RasterMappedTo3DTile.h"
+#include "RasterOverlayTile.h"
+#include "TileContext.h"
+#include "TileID.h"
+#include "TileRefine.h"
+#include "TileSelectionState.h"
+
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumUtility/DoublyLinkedList.h>
+
 #include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
+
+#include <atomic>
 #include <limits>
 #include <memory>
 #include <optional>

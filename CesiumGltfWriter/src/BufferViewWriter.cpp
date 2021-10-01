@@ -1,6 +1,9 @@
 #include "BufferViewWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <stdexcept>
 #include <type_traits>
 
