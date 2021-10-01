@@ -1,10 +1,11 @@
 # Change Log
 
-### Next Version - ?
+### v0.8.0 - 2021-10-01
 
-##### Additions :tada:
+##### Breaking Changes :mega:
 
-- Made tile content loading asynchronous and allowed it to make further network requests, to Cesium ion or otherwise.
+- glTF enums are now represented in CesiumGltf as their underlying type (int32 or string) rather than as an enum class.
+- Tile content loaders now return a `Future`, which allows them to be asynchronous and make further network requests.
 
 ##### Fixes :wrench:
 
