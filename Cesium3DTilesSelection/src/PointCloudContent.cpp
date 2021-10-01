@@ -5,6 +5,8 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "CesiumUtility/Tracing.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/IAssetResponse.h"
 #include <cstddef>
 #include <rapidjson/document.h>
 #include <stdexcept>
@@ -383,15 +385,30 @@ rapidjson::Document parseFeatureTable(
 
 } // namespace
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 PointCloudContent::load(const TileContentLoadInput& input) {
-  return load(input.pLogger, input.url, input.data);
+  return 
+      input.asyncSystem.createResolvedFuture(
+        load(
+          input.pLogger, 
+          input.pRequest->url(), 
+          input.pRequest->response()->data()));
 }
 
 std::unique_ptr<TileContentLoadResult> PointCloudContent::load(
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& /*url*/,
+    const std::string& url,
     const gsl::span<const std::byte>& data) {
+
+  // manual conditional breakpoint for a tile that doesn't seem to work
+  // (visual studio seems to have trouble with string comparison conditional breakpoints)
+  if (url == "https://assets.cesium.com/43978/6/13915.pnts?v=1") {
+    // breakpoint here
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Here's an obligatory side-effect to avoid compiler optimizing away a breakpoint(:");
+  }
+
   // TODO: actually use the pnts payload
   if (data.size() < sizeof(PntsHeader)) {
     throw std::runtime_error(
@@ -467,6 +484,10 @@ std::unique_ptr<TileContentLoadResult> PointCloudContent::load(
               batchTableJson,
               batchTableBinaryData);
         }*/
+  }
+  
+  if (pResult->model) {
+    pResult->model->extras["Cesium3DTiles_TileUrl"] = url;
   }
 
   return pResult;

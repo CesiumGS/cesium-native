@@ -6,6 +6,7 @@
 #include "Cesium3DTilesSelection/TileContentLoader.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
+#include "CesiumAsync/Future.h"
 #include <cstddef>
 #include <memory>
 #include <spdlog/fwd.h>
@@ -27,7 +28,7 @@ public:
    * The result will only contain the `model`. Other fields will be
    * empty or have default values.
    */
-  std::unique_ptr<TileContentLoadResult>
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   load(const TileContentLoadInput& input) override;
 
   /**
