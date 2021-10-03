@@ -8,14 +8,13 @@
 
 namespace CesiumGltf {
 /**
- * @brief The index of the node and TRS property that an animation channel
- * targets.
+ * @brief The descriptor of the animated property.
  */
 struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationChannelTarget";
 
   /**
-   * @brief Known values for The name of the node's TRS property to modify, or
+   * @brief Known values for The name of the node's TRS property to animate, or
    * the `"weights"` of the Morph Targets it instantiates. For the
    * `"translation"` property, the values that are provided by the sampler are
    * the translation along the X, Y, and Z axes. For the `"rotation"` property,
@@ -34,13 +33,14 @@ struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
   };
 
   /**
-   * @brief The index of the node to target.
+   * @brief The index of the node to animate. When undefined, the animated
+   * object **MAY** be defined by an extension.
    */
   int32_t node = -1;
 
   /**
-   * @brief The name of the node's TRS property to modify, or the `"weights"` of
-   * the Morph Targets it instantiates. For the `"translation"` property, the
+   * @brief The name of the node's TRS property to animate, or the `"weights"`
+   * of the Morph Targets it instantiates. For the `"translation"` property, the
    * values that are provided by the sampler are the translation along the X, Y,
    * and Z axes. For the `"rotation"` property, the values are a quaternion in
    * the order (x, y, z, w), where w is the scalar. For the `"scale"` property,
