@@ -8,8 +8,8 @@
 
 namespace CesiumGltf {
 /**
- * @brief Combines input and output accessors with an interpolation algorithm to
- * define a keyframe graph (but not its target).
+ * @brief An animation sampler combines timestamps with a sequence of output
+ * values and defines an interpolation algorithm.
  */
 struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationSampler";
@@ -26,12 +26,11 @@ struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
   };
 
   /**
-   * @brief The index of an accessor containing keyframe input values, e.g.,
-   * time.
+   * @brief The index of an accessor containing keyframe timestamps.
    *
-   * That accessor **MUST** have floating-point components. The values represent
-   * time in seconds with `time[0] >= 0.0`, and strictly increasing values,
-   * i.e., `time[n + 1] > time[n]`.
+   * The accessor **MUST** be of scalar type with floating-point components. The
+   * values represent time in seconds with `time[0] >= 0.0`, and strictly
+   * increasing values, i.e., `time[n + 1] > time[n]`.
    */
   int32_t input = -1;
 

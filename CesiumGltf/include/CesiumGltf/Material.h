@@ -18,7 +18,7 @@ namespace CesiumGltf {
 struct CESIUMGLTF_API Material final : public NamedObject {
   static inline constexpr const char* TypeName = "Material";
 
-  /**generate
+  /**
    * @brief Known values for The alpha rendering mode of the material.
    */
   struct AlphaMode {
