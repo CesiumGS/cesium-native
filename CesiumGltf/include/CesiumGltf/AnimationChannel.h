@@ -9,7 +9,8 @@
 
 namespace CesiumGltf {
 /**
- * @brief Targets an animation's sampler at a node's property.
+ * @brief An animation channel combines an animation sampler with a target
+ * property being animated.
  */
 struct CESIUMGLTF_API AnimationChannel final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationChannel";
@@ -24,7 +25,7 @@ struct CESIUMGLTF_API AnimationChannel final : public ExtensibleObject {
   int32_t sampler = -1;
 
   /**
-   * @brief The index of the node and TRS property to target.
+   * @brief The descriptor of the animated property.
    */
   AnimationChannelTarget target;
 };
