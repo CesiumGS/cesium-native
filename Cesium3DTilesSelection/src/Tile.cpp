@@ -730,13 +730,19 @@ void Tile::update(
         this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
       }
 
-      if (!this->_pContent->availableTileRectangles.empty() &&
-          this->getContext()->implicitContext) {
+      if (this->getContext()->implicitContext) {
         ImplicitTilingContext& context =
-            this->getContext()->implicitContext.value();
-        for (const QuadtreeTileRectangularRange& range :
-             this->_pContent->availableTileRectangles) {
-          context.availability.addAvailableTileRange(range);
+            *this->getContext()->implicitContext;
+            
+        if (context.quadtreeTilingScheme) {
+          if (!this->_pContent->availableTileRectangles.empty()) {
+            for (const QuadtreeTileRectangularRange& range :
+                this->_pContent->availableTileRectangles) {
+              context.availability.addAvailableTileRange(range);
+            }
+          } else if (this->_pContent->quadtreeSubtreeAvailability) {
+            
+          }
         }
       }
     }
@@ -788,7 +794,7 @@ void Tile::update(
       }
 
     } else if (pOctreeTileID) {
-
+      // TODO: handle Octree case
     }
   }
 

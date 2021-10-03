@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/OctreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
@@ -65,8 +66,16 @@ public:
   /**
    * @brief The {@link CesiumGeometry::QuadtreeTileAvailability} for this
    * context.
+   * 
+   * Only applicable for quantized-mesh tilesets.
    */
-  CesiumGeometry::QuadtreeTileAvailability availability;
+  std::optional<CesiumGeometry::QuadtreeTileAvailability> rectangleAvailability;
+
+  /**
+   * @brief The {@link CesiumGeometry::}
+   */
+  std::optional<CesiumGeometry::QuadtreeSubtreeAvailability> 
+      quadtreeSubtreeAvailability;
 };
 
 /**

@@ -3,6 +3,7 @@
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/TileContext.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
 
 namespace Cesium3DTilesSelection {
 
@@ -60,7 +61,16 @@ struct TileContentLoadResult {
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
       availableTileRectangles;
 
-  // TODO: other forms of tile availability, like a bitfield?
+  /**
+   * @brief The quadtree availability subtree for this tile if it is exists.
+   */
+  std::optional<CesiumGeometry::QuadtreeSubtreeAvailability::Subtree>
+      quadtreeSubtreeAvailability;
+
+  /**
+   * @brief The octree availability subtree for this tile if it exists.
+   */
+  // TODO:
 
   /**
    * @brief The HTTP status code received when accessing this content.
