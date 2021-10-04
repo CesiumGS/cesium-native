@@ -74,14 +74,19 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
   REQUIRE(pMetadata->schema.has_value());
   REQUIRE(pMetadata->schema->classes.size() == 1);
 
-  auto treesIt = pMetadata->schema->classes.find("tree");
-  REQUIRE(treesIt != pMetadata->schema->classes.end());
+  auto treeIt = pMetadata->schema->classes.find("tree");
+  REQUIRE(treeIt != pMetadata->schema->classes.end());
 
-  REQUIRE(treesIt->second.properties.size() == 3);
+  REQUIRE(treeIt->second.properties.size() == 3);
 
-  auto birdCountIt = treesIt->second.properties.find("birdCount");
-  REQUIRE(birdCountIt != treesIt->second.properties.end());
+  auto birdCountIt = treeIt->second.properties.find("birdCount");
+  REQUIRE(birdCountIt != treeIt->second.properties.end());
   REQUIRE(birdCountIt->second.max.isNull());
   REQUIRE(!birdCountIt->second.min.isNull());
   REQUIRE(birdCountIt->second.min.getSafeNumberOrDefault(-1) == 1);
+
+  auto treesIt = pMetadata->featureTables.find("trees");
+  REQUIRE(treesIt != pMetadata->featureTables.end());
+  REQUIRE(treesIt->second.classProperty.has_value());
+  REQUIRE(treesIt->second.classProperty.value() == "tree");
 }
