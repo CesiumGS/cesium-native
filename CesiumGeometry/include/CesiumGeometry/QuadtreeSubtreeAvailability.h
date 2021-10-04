@@ -1,12 +1,12 @@
 #pragma once
 
 #include "CesiumGeometry/Library.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include <cstddef>
 #include <gsl/span>
-#include <vector>
 #include <memory>
-#include <byte>
+#include <vector>
 
 namespace CesiumGeometry {
 
@@ -28,9 +28,7 @@ public:
 
   bool isTileAvailable(const QuadtreeTileID& tileID) const noexcept;
 
-  bool addSubtree(
-      const QuadtreeTileID& tileID, 
-      Subtree&& subtree) noexcept;
+  bool addSubtree(const QuadtreeTileID& tileID, Subtree&& subtree) noexcept;
 
 private:
   struct Node {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
 #include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/Library.h"
 #include "CesiumGeometry/OctreeTileID.h"
 #include <glm/vec3.hpp>
 #include <optional>
@@ -26,18 +26,16 @@ public:
    * @param rootTilesZ The number of tiles at the root of the quadtree in the Z
    * direction.
    */
-  OctreeTilingScheme(
+  constexpr OctreeTilingScheme(
       const AxisAlignedBox& box,
       uint32_t rootTilesX,
       uint32_t rootTilesY,
-      uint32_t rootTilesZ);
+      uint32_t rootTilesZ) noexcept;
 
   /**
    * @brief Return the overall box that is tiled.
    */
-  const AxisAlignedBox& getBox() const noexcept {
-    return this->_box;
-  }
+  const AxisAlignedBox& getBox() const noexcept { return this->_box; }
 
   /**
    * @brief Returns the number of root tiles, in x-direction.
@@ -73,9 +71,9 @@ public:
    * @brief Computes the {@link CesiumGeometry::OctreeTileID} for a given
    * position and level.
    *
-   * If the projected position is within the {@link getBox} of this tiling 
-   * scheme, then this will compute the octree tile ID for the tile that 
-   * contains the given position at the given level. Otherwise, `nullopt` is 
+   * If the projected position is within the {@link getBox} of this tiling
+   * scheme, then this will compute the octree tile ID for the tile that
+   * contains the given position at the given level. Otherwise, `nullopt` is
    * returned.
    *
    * @param position The position in projected coordinates.
@@ -86,7 +84,7 @@ public:
   positionToTile(const glm::dvec3& position, uint32_t level) const noexcept;
 
   /**
-   * @brief Returns the {@link AxisAlignedBox} that is 
+   * @brief Returns the {@link AxisAlignedBox} that is
    * covered by the specified tile.
    *
    * The volume that is covered by the tile that is identified with

@@ -78,7 +78,7 @@ GlobeRectangle unprojectRectangleSimple(
 CesiumGeometry::AxisAlignedBox projectRegionSimple(
     const Projection& projection,
     const BoundingRegion& region) {
-  CesiumGeometry::Rectangle rectangle = 
+  CesiumGeometry::Rectangle rectangle =
       projectRectangleSimple(projection, region.getRectangle());
   return CesiumGeometry::AxisAlignedBox(
       rectangle.minimumX,
@@ -92,14 +92,13 @@ CesiumGeometry::AxisAlignedBox projectRegionSimple(
 BoundingRegion unprojectRegionSimple(
     const Projection& projection,
     const CesiumGeometry::AxisAlignedBox& box) {
-  GlobeRectangle rectangle = 
-      unprojectRectangleSimple(
-        projection, 
-        CesiumGeometry::Rectangle(
-            box.minimumX,
-            box.minimumY,
-            box.maximumX,
-            box.maximumY));
+  GlobeRectangle rectangle = unprojectRectangleSimple(
+      projection,
+      CesiumGeometry::Rectangle(
+          box.minimumX,
+          box.minimumY,
+          box.maximumX,
+          box.maximumY));
   return BoundingRegion(rectangle, box.minimumZ, box.maximumZ);
 }
 

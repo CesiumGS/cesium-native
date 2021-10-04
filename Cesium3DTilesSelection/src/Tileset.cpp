@@ -948,10 +948,14 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     return;
   }
 
-  CesiumGeometry::QuadtreeTilingScheme tilingScheme(
-      quadtreeRectangleProjected,
-      quadtreeXTiles,
-      1);
+  BoundingVolume boundingVolume =
+      createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe);
+
+  std::optional<CesiumGeometry::QuadtreeTilingScheme> tilingScheme =
+      std::make_optional<CesiumGeometry::QuadtreeTilingScheme>(
+          quadtreeRectangleProjected,
+          quadtreeXTiles,
+          1);
 
   std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
   uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
@@ -959,8 +963,13 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
   context.implicitContext = {
       urls,
       tilingScheme,
+      std::nullopt,
+      boundingVolume,
       projection,
-      CesiumGeometry::QuadtreeTileAvailability(tilingScheme, maxZoom)};
+      std::make_optional<CesiumGeometry::QuadtreeTileAvailability>(
+          *tilingScheme,
+          maxZoom),
+      std::nullopt};
 
   std::vector<std::string> extensions =
       JsonHelpers::getStrings(layerJson, "extensions");
@@ -983,8 +992,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
   }
 
   tile.setContext(&context);
-  tile.setBoundingVolume(
-      createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe));
+  tile.setBoundingVolume(boundingVolume);
   tile.setGeometricError(999999999.0);
   tile.createChildTiles(quadtreeXTiles);
 
@@ -996,7 +1004,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
     childTile.setParent(&tile);
     childTile.setTileID(id);
     CesiumGeospatial::GlobeRectangle childGlobeRectangle =
-        unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(id));
+        unprojectRectangleSimple(projection, tilingScheme->tileToRectangle(id));
     childTile.setBoundingVolume(
         createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
     childTile.setGeometricError(

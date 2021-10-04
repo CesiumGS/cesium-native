@@ -28,10 +28,10 @@ public:
    *
    * @snippet TestOrientedBoundingBox.cpp Constructor
    */
-  constexpr OrientedBoundingBox(
+  OrientedBoundingBox(
       const glm::dvec3& center,
       const glm::dmat3& halfAxes) noexcept
-      : _center(center), 
+      : _center(center),
         _halfAxes(halfAxes),
         // TODO: what should we do if halfAxes is singular?
         _inverseHalfAxes(glm::inverse(halfAxes)),
@@ -96,8 +96,9 @@ public:
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
 
   /**
-   * @brief Computes whether the given position is contained within bounding box.
-   * 
+   * @brief Computes whether the given position is contained within bounding
+   * box.
+   *
    * @param position The position.
    * @return Whether the position is contained within the bounding box.
    */

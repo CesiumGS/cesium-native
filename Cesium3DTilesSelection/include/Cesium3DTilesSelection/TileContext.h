@@ -1,14 +1,14 @@
 #pragma once
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "CesiumGeometry/QuadtreeTileAvailability.h"
-#include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/OctreeTilingScheme.h"
+#include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
+#include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeospatial/Projection.h"
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 namespace Cesium3DTilesSelection {
 
@@ -16,10 +16,10 @@ class Tileset;
 class TileContext;
 
 /**
- * @brief A tiling context that was created for implicit quadtree or octree 
+ * @brief A tiling context that was created for implicit quadtree or octree
  * tiles.
  *
- * The URLs for the individual tiles are computed from the base URL of the 
+ * The URLs for the individual tiles are computed from the base URL of the
  * tileset.
  */
 class ImplicitTilingContext final {
@@ -47,9 +47,9 @@ public:
 
   /**
    * @brief The bounding volume of the implicit root tile. This can only be
-   * {@link CesiumGeospatial::BoundingRegion} or 
+   * {@link CesiumGeospatial::BoundingRegion} or
    * {@link CesiumGeometry::OrientedBoundingBox}.
-   * 
+   *
    * This will later be use to determine what type of bounding volume to use
    * and how to unproject the implicitly subdivided children.
    */
@@ -57,8 +57,8 @@ public:
 
   /**
    * @brief The {@link CesiumGeospatial::Projection} for this context.
-   * 
-   * Only relevant if implicitRootBoundingVolume is 
+   *
+   * Only relevant if implicitRootBoundingVolume is
    * {@link CesiumGeospatial::BoundingRegion}.
    */
   std::optional<CesiumGeospatial::Projection> projection;
@@ -66,7 +66,7 @@ public:
   /**
    * @brief The {@link CesiumGeometry::QuadtreeTileAvailability} for this
    * context.
-   * 
+   *
    * Only applicable for quantized-mesh tilesets.
    */
   std::optional<CesiumGeometry::QuadtreeTileAvailability> rectangleAvailability;
@@ -74,7 +74,7 @@ public:
   /**
    * @brief The {@link CesiumGeometry::}
    */
-  std::optional<CesiumGeometry::QuadtreeSubtreeAvailability> 
+  std::optional<CesiumGeometry::QuadtreeSubtreeAvailability>
       quadtreeSubtreeAvailability;
 };
 

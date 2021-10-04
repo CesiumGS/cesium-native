@@ -2,8 +2,8 @@
 
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/TileContext.h"
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 #include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
+#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 
 namespace Cesium3DTilesSelection {
 
@@ -65,7 +65,7 @@ struct TileContentLoadResult {
    * @brief The quadtree availability subtree for this tile if it is exists.
    */
   std::optional<CesiumGeometry::QuadtreeSubtreeAvailability::Subtree>
-      quadtreeSubtreeAvailability;
+      quadtreeSubtree;
 
   /**
    * @brief The octree availability subtree for this tile if it exists.
