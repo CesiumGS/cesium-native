@@ -9,37 +9,39 @@ const argv = yargs.options({
     alias: "s",
     description: "The path to the glTF 2.0 JSONSchema files.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   output: {
     alias: "o",
     description: "The output directory for the generated glTF class files.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   readerOutput: {
     alias: "r",
     description: "The output directory for the generated reader files.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   extensions: {
     alias: "e",
     description: "The extensions directory.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   config: {
     alias: "c",
-    description: "The path to the configuration options controlling code generation, expressed in a JSON file.",
+    description:
+      "The path to the configuration options controlling code generation, expressed in a JSON file.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   oneHandlerFile: {
-    description: "Generate all the JSON handler implementations into a single file, GeneratedJsonHandlers.cpp.",
+    description:
+      "Generate all the JSON handler implementations into a single file, GeneratedJsonHandlers.cpp.",
     type: "bool",
-    default: true
-  }
+    default: true,
+  },
 }).argv;
 
 const schemaCache = new SchemaCache(argv.schema, argv.extensions);
@@ -51,7 +53,10 @@ if (argv.oneHandlerFile) {
   // Clear the handler implementation file, and then we'll append to it in `generate`.
   const readerHeaderOutputDir = path.join(argv.readerOutput, "generated");
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
-  const readerSourceOutputPath = path.join(readerHeaderOutputDir, "GeneratedJsonHandlers.cpp");
+  const readerSourceOutputPath = path.join(
+    readerHeaderOutputDir,
+    "GeneratedJsonHandlers.cpp"
+  );
   fs.writeFileSync(readerSourceOutputPath, "", "utf-8");
 }
 
@@ -63,7 +68,7 @@ const options = {
   config: config,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
-  extensions: {}
+  extensions: {},
 };
 
 let schemas = [modelSchema];
@@ -71,7 +76,9 @@ let schemas = [modelSchema];
 for (const extension of config.extensions) {
   const extensionSchema = schemaCache.loadExtension(extension.schema);
   if (!extensionSchema) {
-    console.warn(`Could not load schema ${extension.schema} for extension class ${extension.className}.`);
+    console.warn(
+      `Could not load schema ${extension.schema} for extension class ${extension.className}.`
+    );
     continue;
   }
 
@@ -84,7 +91,9 @@ for (const extension of config.extensions) {
   schemas.push(...generate(options, extensionSchema));
 
   for (const objectToExtend of extension.attachTo) {
-    const objectToExtendSchema = schemaCache.load(`${objectToExtend}.schema.json`);
+    const objectToExtendSchema = schemaCache.load(
+      `${objectToExtend}.schema.json`
+    );
     if (!objectToExtendSchema) {
       console.warn("Could not load schema for ${objectToExtend}.");
       continue;
@@ -96,7 +105,7 @@ for (const extension of config.extensions) {
 
     options.extensions[objectToExtendSchema.title].push({
       name: extension.extensionName,
-      className: extension.className
+      className: extension.className,
     });
   }
 }
