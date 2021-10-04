@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "npm run generate-gltf-old",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "generate-gltf-old"]
+        },
+        {
             "name": "npm run test-gltf",
             "type": "node",
             "request": "launch",
