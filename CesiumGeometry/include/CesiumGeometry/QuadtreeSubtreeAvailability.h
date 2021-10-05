@@ -15,17 +15,6 @@ namespace CesiumGeometry {
 
 class CESIUMGEOMETRY_API QuadtreeSubtreeAvailability final {
 public:
-  struct Subtree {
-    uint32_t levels;
-    uint32_t maximumLevel;
-    std::vector<std::byte> bitstream;
-    gsl::span<const std::byte> tileAvailability;
-    gsl::span<const std::byte> contentAvailability;
-    gsl::span<const std::byte> subtreeAvailability;
-
-    Subtree(void* data, uint32_t levels, uint32_t maximumLevel);
-  };
-
   /**
    * @brief Constructs a new instance.
    *
@@ -33,7 +22,9 @@ public:
    * availability.
    */
   QuadtreeSubtreeAvailability(
-      const QuadtreeTilingScheme& tilingScheme) noexcept;
+      const QuadtreeTilingScheme& tilingScheme,
+      uint32_t subtreeLevels,
+      uint32_t maximumLevel) noexcept;
 
   /**
    * @brief Determines the currently known availability status of the given
@@ -54,9 +45,18 @@ public:
    *
    * @return Whether the insertion was successful.
    */
-  bool addSubtree(const QuadtreeTileID& tileID, Subtree&& subtree) noexcept;
+  bool addSubtree(
+      const QuadtreeTileID& tileID,
+      std::vector<std::byte>&& data) noexcept;
 
 private:
+  struct Subtree {
+    std::vector<std::byte> bitstream;
+    gsl::span<const std::byte> tileAvailability;
+    gsl::span<const std::byte> contentAvailability;
+    gsl::span<const std::byte> subtreeAvailability;
+  };
+
   struct Node {
     Subtree subtree;
     std::vector<std::unique_ptr<Node>> childNodes;
@@ -64,9 +64,20 @@ private:
     Node(Subtree&& subtree_);
   };
 
+  std::optional<Subtree>
+  _createSubtree(std::vector<std::byte>&& data) const noexcept;
+
   QuadtreeTilingScheme _tilingScheme;
+  uint32_t _subtreeLevels;
   uint32_t _maximumLevel;
   std::unique_ptr<Node> _pRoot;
+
+  // precomputed values
+  uint32_t _2PowSubtreeLevels;
+  size_t _subtreeAvailabilitySize;
+  size_t _tileAvailabilitySize;
+  size_t _tilePlusContentAvailabilitySize;
+  size_t _subtreeBufferSize;
 };
 
 } // namespace CesiumGeometry

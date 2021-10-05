@@ -6,6 +6,8 @@
 #include "Tile.h"
 #include "TileContext.h"
 
+#include <memory>
+
 namespace Cesium3DTilesSelection {
 
 class Tile;
@@ -63,15 +65,12 @@ struct TileContentLoadResult {
       availableTileRectangles{};
 
   /**
-   * @brief The quadtree availability subtree for this tile if it is exists.
+   * @brief The bitstream containing the availability data for this tile's
+   * subtree.
+   *
+   * Only applicable if the implicit tiling extension is being used.
    */
-  std::optional<CesiumGeometry::QuadtreeSubtreeAvailability::Subtree>
-      quadtreeSubtree;
-
-  /**
-   * @brief The octree availability subtree for this tile if it exists.
-   */
-  // TODO:
+  std::optional<std::vector<std::byte>> subtreeBitstream;
 
   /**
    * @brief The HTTP status code received when accessing this content.

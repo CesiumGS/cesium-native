@@ -89,6 +89,12 @@ public:
    */
   std::optional<CesiumGeometry::QuadtreeSubtreeAvailability>
       quadtreeSubtreeAvailability;
+
+  /**
+   * @brief The {@link CesiumGeometry::OctreeSubtreeAvailability} for this
+   * context.
+   */
+  // TODO:
 };
 
 /**

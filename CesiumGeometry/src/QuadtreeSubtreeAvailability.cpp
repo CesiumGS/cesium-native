@@ -68,37 +68,6 @@ static uint64_t getMortonIndexForInts(uint32_t x, uint32_t y) {
   return result;
 }
 
-QuadtreeSubtreeAvailability::Subtree::Subtree(
-    void* data,
-    uint32_t levels_,
-    uint32_t maximumLevel_)
-    : levels(levels_), maximumLevel(maximumLevel_) {
-
-  // For reference:
-  // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
-  // 4^levels
-  size_t subtreeAvailabilitySize = 1ULL << (this->levels << 1);
-  // (4^levels - 1) / 3
-  size_t tileAvailabilitySize = (subtreeAvailabilitySize - 1) / 3;
-  size_t tilePlusContentAvailabilitySize = tileAvailabilitySize << 1;
-  size_t bufferSize = subtreeAvailabilitySize + tilePlusContentAvailabilitySize;
-
-  this->bitstream.resize(bufferSize);
-  std::memcpy(bitstream.data(), data, bufferSize);
-
-  this->tileAvailability = gsl::span<const std::byte>(
-      reinterpret_cast<const std::byte*>(bitstream.data()),
-      tileAvailabilitySize);
-  this->contentAvailability = gsl::span<const std::byte>(
-      reinterpret_cast<const std::byte*>(
-          bitstream.data() + tileAvailabilitySize),
-      tileAvailabilitySize);
-  this->subtreeAvailability = gsl::span<const std::byte>(
-      reinterpret_cast<const std::byte*>(
-          bitstream.data() + tilePlusContentAvailabilitySize),
-      subtreeAvailabilitySize);
-}
-
 QuadtreeSubtreeAvailability::Node::Node(Subtree&& subtree_)
     : subtree(std::move(subtree_)) {
   size_t childNodesCount = countOnesInBuffer(this->subtree.subtreeAvailability);
@@ -106,8 +75,65 @@ QuadtreeSubtreeAvailability::Node::Node(Subtree&& subtree_)
 }
 
 QuadtreeSubtreeAvailability::QuadtreeSubtreeAvailability(
-    const QuadtreeTilingScheme& tilingScheme) noexcept
-    : _tilingScheme(tilingScheme), _maximumLevel(0), _pRoot(nullptr) {}
+    const QuadtreeTilingScheme& tilingScheme,
+    uint32_t subtreeLevels,
+    uint32_t maximumLevel) noexcept
+    : _tilingScheme(tilingScheme),
+      _subtreeLevels(subtreeLevels),
+      _maximumLevel(maximumLevel),
+      _pRoot(nullptr) {
+
+  // PRECOMPUTE USEFUL VALUES FOR SUBTREE COMPUTATIONS:
+  this->_2PowSubtreeLevels = 1 << subtreeLevels;
+  size_t _4PowSubtreeLevels = 1ULL << (subtreeLevels << 1);
+
+  // For reference:
+  // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
+
+  // ceil((4^levels - 1) / 3 / 8)
+  // The size of tile availability in bytes.
+  this->_tileAvailabilitySize = ((_4PowSubtreeLevels - 1) / 3 + 7) >> 3;
+
+  // The size of tile + content availability in bytes. Both tile and content
+  // availability have the same size.
+  this->_tilePlusContentAvailabilitySize = this->_tileAvailabilitySize << 1;
+
+  // ceil (4^levels / 8)
+  // The size of the subtree availability in bytes.
+  this->_subtreeAvailabilitySize = (_4PowSubtreeLevels + 7) >> 3;
+
+  // The overall size in bytes that each subtree's buffer should be.
+  this->_subtreeBufferSize =
+      this->_tilePlusContentAvailabilitySize + this->_subtreeAvailabilitySize;
+}
+
+std::optional<QuadtreeSubtreeAvailability::Subtree>
+QuadtreeSubtreeAvailability::_createSubtree(
+    std::vector<std::byte>&& data) const noexcept {
+
+  // The buffer size must exactly match the expected buffer size.
+  if (data.size() != this->_subtreeBufferSize) {
+    return std::nullopt;
+  }
+
+  Subtree subtree;
+
+  subtree.bitstream = std::move(data);
+
+  subtree.tileAvailability = gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(subtree.bitstream.data()),
+      this->_tileAvailabilitySize);
+  subtree.contentAvailability = gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(
+          subtree.bitstream.data() + this->_tileAvailabilitySize),
+      this->_tileAvailabilitySize);
+  subtree.subtreeAvailability = gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(
+          subtree.bitstream.data() + this->_tilePlusContentAvailabilitySize),
+      this->_subtreeAvailabilitySize);
+
+  return std::make_optional<Subtree>(std::move(subtree));
+}
 
 uint8_t QuadtreeSubtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID) const noexcept {
@@ -121,13 +147,14 @@ uint8_t QuadtreeSubtreeAvailability::computeAvailability(
   while (pNode && tileID.level >= level) {
     const Subtree& subtree = pNode->subtree;
 
-    uint32_t levelDifference = std::min(tileID.level - level, subtree.levels);
+    uint32_t levelDifference =
+        std::min(tileID.level - level, this->_subtreeLevels);
     uint32_t tilesPerAxisAtLevel = 1 << levelDifference;
     uint64_t mortonIndex = getMortonIndexForInts(
         tileID.x % tilesPerAxisAtLevel,
         tileID.y % tilesPerAxisAtLevel);
 
-    if (levelDifference < subtree.levels) {
+    if (levelDifference < this->_subtreeLevels) {
       // The availability info is within this subtree.
       uint8_t availability = TileAvailabilityFlags::REACHABLE;
 
@@ -178,7 +205,7 @@ uint8_t QuadtreeSubtreeAvailability::computeAvailability(
           countOnesInByte(availabilityByte >> (8 - bitIndex));
 
       pNode = pNode->childNodes[childSubtreeIndex].get();
-      level += subtree.levels;
+      level += this->_subtreeLevels;
     } else {
       // The child subtree containing the tile id is not available.
       return TileAvailabilityFlags::REACHABLE;
@@ -201,7 +228,12 @@ uint8_t QuadtreeSubtreeAvailability::computeAvailability(
 
 bool QuadtreeSubtreeAvailability::addSubtree(
     const QuadtreeTileID& tileID,
-    Subtree&& newSubtree) noexcept {
+    std::vector<std::byte>&& data) noexcept {
+
+  std::optional<Subtree> newSubtree = this->_createSubtree(std::move(data));
+  if (!newSubtree) {
+    return false;
+  }
 
   if (tileID.level == 0) {
     if (this->_pRoot) {
@@ -209,10 +241,7 @@ bool QuadtreeSubtreeAvailability::addSubtree(
       return false;
     } else {
       // Set the root subtree.
-      this->_pRoot = std::make_unique<Node>(std::move(newSubtree));
-      // TODO: assumes the maximum level of the root subtree is the overall
-      // max level, is that true?
-      this->_maximumLevel = this->_pRoot->subtree.maximumLevel;
+      this->_pRoot = std::make_unique<Node>(std::move(*newSubtree));
       return true;
     }
   }
@@ -231,14 +260,13 @@ bool QuadtreeSubtreeAvailability::addSubtree(
 
     // The given subtree to add must fall exactly at the end of an existing
     // subtree.
-    if (levelDifference < subtree.levels) {
+    if (levelDifference < this->_subtreeLevels) {
       return false;
     }
 
-    uint32_t tilesPerAxisAtLevel = 1 << subtree.levels;
     uint64_t mortonIndex = getMortonIndexForInts(
-        tileID.x % tilesPerAxisAtLevel,
-        tileID.y % tilesPerAxisAtLevel);
+        tileID.x % this->_2PowSubtreeLevels,
+        tileID.y % this->_2PowSubtreeLevels);
 
     // TODO: consolidate duplicated code here...
 
@@ -258,7 +286,7 @@ bool QuadtreeSubtreeAvailability::addSubtree(
           countOnesInBuffer(clippedSubtreeAvailability) +
           countOnesInByte(availabilityByte >> (8 - indexWithinByte));
 
-      if (levelDifference == subtree.levels) {
+      if (levelDifference == this->_subtreeLevels) {
         if (pNode->childNodes[childSubtreeIndex]) {
           // This subtree was already added.
           // TODO: warn of error
@@ -266,11 +294,11 @@ bool QuadtreeSubtreeAvailability::addSubtree(
         }
 
         pNode->childNodes[childSubtreeIndex] =
-            std::make_unique<Node>(std::move(newSubtree));
+            std::make_unique<Node>(std::move(*newSubtree));
         return true;
       } else {
         pNode = pNode->childNodes[childSubtreeIndex].get();
-        level += subtree.levels;
+        level += this->_subtreeLevels;
       }
     } else {
       // This child subtree is marked as non-available.

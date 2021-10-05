@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
+#include "Cesium3DTilesSelection/ImplicitTileset.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
@@ -471,9 +472,10 @@ Tileset::requestTileContent(Tile& tile) {
     return std::nullopt;
   }
 
-  // For implicit tiles, check if they have any content.
+  // TODO: should we be checking for content availability or tile availability
+  // here? For implicit tiles, check if they are available.
   if (tile.getContext()->implicitContext &&
-      !(tile.getAvailability() & TileAvailabilityFlags::CONTENT_AVAILABLE)) {
+      !(tile.getAvailability() & TileAvailabilityFlags::TILE_AVAILABLE)) {
     return std::nullopt;
   }
 
@@ -492,7 +494,7 @@ Tileset::requestAvailabilitySubtree(Tile& tile) {
 
   if (!tile.getContext()->implicitContext ||
       !(availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) ||
-      availability & TileAvailabilityFlags::SUBTREE_LOADED) {
+      (availability & TileAvailabilityFlags::SUBTREE_LOADED)) {
     return std::nullopt;
   }
 
@@ -790,6 +792,8 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   const auto contentIt = tileJson.FindMember("content");
   const auto childrenIt = tileJson.FindMember("children");
 
+  const char* contentUri = nullptr;
+
   if (contentIt != tileJson.MemberEnd() && contentIt->value.IsObject()) {
     auto uriIt = contentIt->value.FindMember("uri");
     if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
@@ -797,7 +801,8 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     }
 
     if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      tile.setTileID(uriIt->value.GetString());
+      contentUri = uriIt->value.GetString();
+      tile.setTileID(contentUri);
     }
 
     std::optional<BoundingVolume> contentBoundingVolume =
@@ -813,6 +818,16 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return;
+  }
+
+  const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&*boundingVolume);
+  const BoundingRegionWithLooseFittingHeights* pLooseRegion =
+      std::get_if<BoundingRegionWithLooseFittingHeights>(&*boundingVolume);
+  const OrientedBoundingBox* pBox =
+      std::get_if<OrientedBoundingBox>(&*boundingVolume);
+
+  if (!pRegion && pLooseRegion) {
+    pRegion = &pLooseRegion->getBoundingRegion();
   }
 
   std::optional<double> geometricError =
@@ -854,6 +869,151 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     }
   } else {
     tile.setRefine(parentRefine);
+  }
+
+  // TODO: move into helper function
+  // Check for the 3DTILES_implicit_tiling extension
+  if (childrenIt == tileJson.MemberEnd() && contentUri) {
+    auto extensionsIt = tileJson.FindMember("extensions");
+    if (extensionsIt != tileJson.MemberEnd() &&
+        extensionsIt->value.IsObject()) {
+      auto extension = extensionsIt->value.GetObject();
+      auto implicitTilingIt = extension.FindMember("3DTiles_implicit_tiling");
+      if (implicitTilingIt != extension.MemberEnd() &&
+          implicitTilingIt->value.IsObject()) {
+        auto implicitTiling = implicitTilingIt->value.GetObject();
+
+        auto tilingSchemeIt = implicitTiling.FindMember("subdivisionScheme");
+        auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
+        auto maximumLevelIt = implicitTiling.FindMember("maximumLevel");
+        auto subtreesIt = implicitTiling.FindMember("subtrees");
+
+        if (tilingSchemeIt == implicitTiling.MemberEnd() ||
+            !tilingSchemeIt->value.IsString() ||
+            subtreeLevelsIt == implicitTiling.MemberEnd() ||
+            !subtreeLevelsIt->value.IsUint() ||
+            maximumLevelIt == implicitTiling.MemberEnd() ||
+            !maximumLevelIt->value.IsUint() ||
+            subtreesIt == implicitTiling.MemberEnd() ||
+            !subtreesIt->value.IsObject()) {
+          return;
+        }
+
+        uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
+        uint32_t maximumLevel = maximumLevelIt->value.GetUint();
+
+        auto subtrees = subtreesIt->value.GetObject();
+        auto subtreesUriIt = subtrees.FindMember("uri");
+
+        if (subtreesUriIt == subtrees.MemberEnd() ||
+            !subtreesUriIt->value.IsString()) {
+          return;
+        }
+
+        ImplicitTilingContext implicitContext{
+            {contentUri},
+            subtreesUriIt->value.GetString(),
+            std::nullopt,
+            std::nullopt,
+            *boundingVolume,
+            GeographicProjection(),
+            std::nullopt,
+            // std::nullopt
+        };
+
+        const char* tilingScheme = tilingSchemeIt->value.GetString();
+        if (std::strcmp(tilingScheme, "QUADTREE")) {
+          if (pRegion) {
+            implicitContext.quadtreeTilingScheme = QuadtreeTilingScheme(
+                projectRectangleSimple(
+                    *implicitContext.projection,
+                    pRegion->getRectangle()),
+                1,
+                1);
+          } else if (pBox) {
+            const glm::dvec3& boxLengths = pBox->getLengths();
+            implicitContext.quadtreeTilingScheme = QuadtreeTilingScheme(
+                CesiumGeometry::Rectangle(
+                    -0.5 * boxLengths.x,
+                    -0.5 * boxLengths.y,
+                    0.5 * boxLengths.x,
+                    0.5 * boxLengths.y),
+                1,
+                1);
+          }
+
+          if (implicitContext.quadtreeTilingScheme) {
+            implicitContext.quadtreeSubtreeAvailability =
+                QuadtreeSubtreeAvailability(
+                    *implicitContext.quadtreeTilingScheme,
+                    subtreeLevels,
+                    maximumLevel);
+
+            std::unique_ptr<TileContext> pNewContext =
+                std::make_unique<TileContext>();
+            pNewContext->pTileset = context.pTileset;
+            pNewContext->baseUrl = context.baseUrl;
+            pNewContext->requestHeaders = context.requestHeaders;
+            pNewContext->version = context.version;
+            pNewContext->failedTileCallback = context.failedTileCallback;
+
+            pNewContext->implicitContext =
+                std::make_optional<ImplicitTilingContext>(
+                    std::move(implicitContext));
+
+            tile.setContext(pNewContext.get());
+            tile.getTileset()->addContext(std::move(pNewContext));
+          }
+        } else if (std::strcmp(tilingScheme, "OCTREE")) {
+          if (pRegion) {
+            implicitContext.octreeTilingScheme = OctreeTilingScheme(
+                projectRegionSimple(*implicitContext.projection, *pRegion),
+                1,
+                1,
+                1);
+          } else if (pBox) {
+            const glm::dvec3& boxLengths = pBox->getLengths();
+            implicitContext.octreeTilingScheme = OctreeTilingScheme(
+                CesiumGeometry::AxisAlignedBox(
+                    -0.5 * boxLengths.x,
+                    -0.5 * boxLengths.y,
+                    -0.5 * boxLengths.z,
+                    0.5 * boxLengths.x,
+                    0.5 * boxLengths.y,
+                    0.5 * boxLengths.z),
+                1,
+                1,
+                1);
+          }
+
+          if (implicitContext.octreeTilingScheme) {
+            // TODO:
+            /*
+              implicitContext.octreeSubtreeAvailability =
+                  OctreeSubtreeAvailability(
+                    *implicitContext.octreeTilingScheme,
+                    subtreeLevels, maximumLevel);*/
+
+            std::unique_ptr<TileContext> pNewContext =
+                std::make_unique<TileContext>();
+            pNewContext->pTileset = context.pTileset;
+            pNewContext->baseUrl = context.baseUrl;
+            pNewContext->requestHeaders = context.requestHeaders;
+            pNewContext->version = context.version;
+            pNewContext->failedTileCallback = context.failedTileCallback;
+
+            pNewContext->implicitContext =
+                std::make_optional<ImplicitTilingContext>(
+                    std::move(implicitContext));
+
+            tile.setContext(pNewContext.get());
+            tile.getTileset()->addContext(std::move(pNewContext));
+          }
+        }
+      }
+    }
+
+    return;
   }
 
   if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {

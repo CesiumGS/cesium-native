@@ -238,7 +238,12 @@ void Tile::loadContent() {
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
+  std::optional<Future<std::shared_ptr<IAssetRequest>>>
+      maybeSubtreeRequestFuture = tileset.requestAvailabilitySubtree(*this);
 
+  // TODO: rethink some of this logic, in implicit tiling, a tile may be
+  // available but have no content. It may still have children. Should we
+  // upsample according to "tile unavailablility" or "content unavailability".
   if (!maybeRequestFuture) {
     // There is no content to load. But we may need to upsample.
 
@@ -266,6 +271,11 @@ void Tile::loadContent() {
 
   this->loadOverlays(projections);
 
+  struct RequestResults {
+    std::shared_ptr<IAssetRequest> pContentRequest;
+    std::shared_ptr<IAssetRequest> pSubtreeRequest;
+  };
+
   struct LoadResult {
     LoadState state = LoadState::Unloaded;
     std::unique_ptr<TileContentLoadResult> pContent = nullptr;
@@ -277,6 +287,24 @@ void Tile::loadContent() {
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
   std::move(maybeRequestFuture.value())
       .thenInWorkerThread(
+          [asyncSystem = tileset.getAsyncSystem(),
+           maybeSubtreeRequestFuture = std::move(maybeSubtreeRequestFuture)](
+              std::shared_ptr<IAssetRequest>&& pContentRequest) mutable {
+            if (maybeSubtreeRequestFuture) {
+              return std::move(maybeSubtreeRequestFuture.value())
+                  .thenInWorkerThread(
+                      [pContentRequest = std::move(pContentRequest)](
+                          std::shared_ptr<IAssetRequest>&& pSubtreeRequest) {
+                        return RequestResults{
+                            std::move(pContentRequest),
+                            std::move(pSubtreeRequest)};
+                      });
+            } else {
+              return asyncSystem.createResolvedFuture(
+                  RequestResults{std::move(pContentRequest), nullptr});
+            }
+          })
+      .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            asyncSystem = tileset.getAsyncSystem(),
            pLogger = tileset.getExternals().pLogger,
@@ -287,8 +315,13 @@ void Tile::loadContent() {
                tileset.getOptions().contentOptions.generateMissingNormalsSmooth,
            pPrepareRendererResources =
                tileset.getExternals().pPrepareRendererResources](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
+              RequestResults&& requestResults) mutable {
             CESIUM_TRACE("loadContent worker thread");
+
+            std::shared_ptr<IAssetRequest>& pRequest =
+                requestResults.pContentRequest;
+            // std::shared_ptr<IAssetRequest>& pSubtreeRequest =
+            //    requestResults.pSubtreeRequest;
 
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -780,9 +813,11 @@ void Tile::update(
               }
             }
           } else if (context.quadtreeSubtreeAvailability) {
-            context.quadtreeSubtreeAvailability->addSubtree(
-                *pQuadtreeTileID,
-                std::move(*this->_pContent->quadtreeSubtree));
+            if (this->_pContent->subtreeBitstream) {
+              context.quadtreeSubtreeAvailability->addSubtree(
+                  *pQuadtreeTileID,
+                  std::move(*this->_pContent->subtreeBitstream));
+            }
           }
         } else if (
             pOctreeTileID && context.octreeTilingScheme
