@@ -5,12 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "npm run generate-gltf-old",
+            "name": "npm run generate-gltf",
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run-script", "generate-gltf-old"]
+            "runtimeArgs": ["run-script", "generate-gltf"]
+        },
+        {
+            "name": "npm run generate-3d-tiles",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "generate-3d-tiles"]
         },
         {
             "name": "npm run test-gltf",
@@ -27,6 +35,54 @@
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run-script", "test-3d-tiles"]
+        },
+        {
+            "name": "npm run generate-gltf-old",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "generate-gltf-old"]
+        },
+        {
+            "name": "npm run test-gltf-old",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "test-gltf-old"]
+        },
+        {
+            "name": "npm run generate-gltf-new",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "generate-gltf-new"]
+        },
+        {
+            "name": "npm run generate-3d-tiles-new",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "generate-3d-tiles-new"]
+        },
+        {
+            "name": "npm run test-gltf-new",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "test-gltf-new"]
+        },
+        {
+            "name": "npm run test-3d-tiles-new",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "test-3d-tiles-new"]
         }
     ]
 }

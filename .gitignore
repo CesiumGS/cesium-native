@@ -6,3 +6,4 @@ node_modules
 CMakeSettings.json
 *.user
 .cache
+*.DS_Store

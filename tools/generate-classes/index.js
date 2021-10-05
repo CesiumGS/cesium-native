@@ -6,43 +6,41 @@ const generate = require("./generate");
 
 const argv = yargs.options({
   schema: {
-    alias: "s",
-    description: "The path to the root JSON Schema.",
+    description: "The path to the JSON schema files.",
+    demandOption: true,
+    type: "string"
+  },
+  root: {
+    description: "The root schema file.",
     demandOption: true,
     type: "string"
   },
   output: {
-    alias: "o",
     description: "The output directory for the generated class files.",
     demandOption: true,
     type: "string"
   },
   readerOutput: {
-    alias: "r",
     description: "The output directory for the generated reader files.",
     demandOption: true,
     type: "string",
   },
   writerOutput: {
-    alias: "w",
     description: "The output directory for the generated writer files.",
     demandOption: true,
     type: "string",
   },
   extensions: {
-    alias: "e",
     description: "The extensions directory.",
     demandOption: true,
     type: "string"
   },
   config: {
-    alias: "c",
     description: "The path to the configuration options controlling code generation, expressed in a JSON file.",
     demandOption: true,
     type: "string"
   },
   namespace: {
-    alias: "n",
     description: "Namespace to put the generated classes/methods in.",
     demandOption: true,
     type: "string"
@@ -56,7 +54,7 @@ const argv = yargs.options({
 }).argv;
 
 const schemaCache = new SchemaCache(argv.schema, argv.extensions);
-const modelSchema = schemaCache.load("glTF.schema.json");
+const rootSchema = schemaCache.load(argv.root);
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
@@ -76,13 +74,15 @@ const options = {
   oneHandlerFile: argv.oneHandlerFile,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
+  writerOutputDir: argv.writerOutput,
   config: config,
+  namespace: argv.namespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {},
 };
 
-let schemas = [modelSchema];
+let schemas = [rootSchema];
 
 for (const extension of config.extensions) {
   const extensionSchema = schemaCache.loadExtension(extension.schema);
