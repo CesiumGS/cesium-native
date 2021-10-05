@@ -320,7 +320,7 @@ function privateSpecConstructor(name) {
   return `
     private:
       /**
-       * @brief This class is not mean to be instantiated directly. Use {@link ${name}} instead.
+       * @brief This class is not meant to be instantiated directly. Use {@link ${name}} instead.
        */
       ${name}Spec() = default;
       friend struct ${name};
