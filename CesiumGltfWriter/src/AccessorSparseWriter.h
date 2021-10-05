@@ -1,5 +1,6 @@
 #pragma once
 #include "CesiumGltf/AccessorSparse.h"
+
 #include <CesiumJsonWriter/JsonWriter.h>
 
 namespace CesiumGltf {

@@ -1,5 +1,6 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
+
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
 

@@ -29,7 +29,6 @@ private:
   AccessorSparseIndices* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
-  CesiumJsonReader::IntegerJsonHandler<AccessorSparseIndices::ComponentType>
-      _componentType;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _componentType;
 };
 } // namespace CesiumGltf

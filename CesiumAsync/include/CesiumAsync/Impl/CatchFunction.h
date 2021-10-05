@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/Impl/unwrapFuture.h"
+#include "unwrapFuture.h"
 
 namespace CesiumAsync {
 namespace Impl {

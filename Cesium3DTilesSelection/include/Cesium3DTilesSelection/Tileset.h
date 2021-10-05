@@ -1,21 +1,24 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContext.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/TilesetOptions.h"
-#include "Cesium3DTilesSelection/ViewState.h"
-#include "Cesium3DTilesSelection/ViewUpdateResult.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "Library.h"
+#include "RasterOverlayCollection.h"
+#include "Tile.h"
+#include "TileContext.h"
+#include "TilesetExternals.h"
+#include "TilesetOptions.h"
+#include "ViewState.h"
+#include "ViewUpdateResult.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/QuadtreeTileAvailability.h>
+
+#include <rapidjson/fwd.h>
+
 #include <atomic>
 #include <memory>
 #include <optional>
-#include <rapidjson/fwd.h>
 #include <string>
 #include <vector>
 
@@ -500,11 +503,11 @@ private:
       const std::vector<ViewState>& frustums,
       const Tile& tile,
       const std::vector<double>& distances,
-      bool culled) const;
+      bool culled) const noexcept;
 
   void _processLoadQueue();
-  void _unloadCachedTiles();
-  void _markTileVisited(Tile& tile);
+  void _unloadCachedTiles() noexcept;
+  void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
   std::string getResolvedSubtreeUrl(const Tile& tile) const;
@@ -541,7 +544,7 @@ private:
      */
     double priority;
 
-    bool operator<(const LoadRecord& rhs) const {
+    bool operator<(const LoadRecord& rhs) const noexcept {
       return this->priority < rhs.priority;
     }
   };
@@ -585,7 +588,7 @@ private:
       const std::vector<double>& distances);
   void processQueue(
       std::vector<Tileset::LoadRecord>& queue,
-      std::atomic<uint32_t>& loadsInProgress,
+      const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
   Tileset(const Tileset& rhs) = delete;

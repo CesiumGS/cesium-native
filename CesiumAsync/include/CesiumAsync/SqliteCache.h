@@ -1,10 +1,12 @@
 #pragma once
 
-#include "CesiumAsync/ICacheDatabase.h"
+#include "ICacheDatabase.h"
+
+#include <spdlog/fwd.h>
+
 #include <cstddef>
 #include <memory>
 #include <optional>
-#include <spdlog/fwd.h>
 #include <string>
 
 namespace CesiumAsync {

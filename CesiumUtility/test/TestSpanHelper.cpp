@@ -1,6 +1,8 @@
 #include "CesiumUtility/SpanHelper.h"
-#include "catch2/catch.hpp"
+
 #include <vector>
+
+#include "catch2/catch.hpp"
 
 TEST_CASE("reintepretCastSpan") {
   std::vector<std::byte> data(7 * sizeof(float));

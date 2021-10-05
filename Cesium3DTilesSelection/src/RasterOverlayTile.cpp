@@ -1,11 +1,13 @@
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
+
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumUtility/joinToString.h"
+
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/ITaskProcessor.h>
+#include <CesiumUtility/joinToString.h>
 
 using namespace CesiumAsync;
 
@@ -25,7 +27,7 @@ RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
 RasterOverlayTile::RasterOverlayTile(
     RasterOverlay& overlay,
     double targetGeometricError,
-    const CesiumGeometry::Rectangle& rectangle)
+    const CesiumGeometry::Rectangle& rectangle) noexcept
     : _pOverlay(&overlay),
       _targetGeometricError(targetGeometricError),
       _rectangle(rectangle),
@@ -80,7 +82,7 @@ void RasterOverlayTile::addReference() noexcept { ++this->_references; }
 
 void RasterOverlayTile::releaseReference() noexcept {
   assert(this->_references > 0);
-  uint32_t references = --this->_references;
+  const uint32_t references = --this->_references;
   if (references == 0) {
     assert(this->_pOverlay != nullptr);
     assert(this->_pOverlay->getTileProvider() != nullptr);
@@ -88,7 +90,7 @@ void RasterOverlayTile::releaseReference() noexcept {
   }
 }
 
-void RasterOverlayTile::setState(LoadState newState) {
+void RasterOverlayTile::setState(LoadState newState) noexcept {
   this->_state = newState;
 }
 } // namespace Cesium3DTilesSelection

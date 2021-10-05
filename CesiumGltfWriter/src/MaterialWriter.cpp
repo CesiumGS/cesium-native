@@ -1,13 +1,15 @@
 #include "MaterialWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <cassert>
-#include <magic_enum.hpp>
 #include <vector>
 
 void writePbrMetallicRoughness(
@@ -193,7 +195,7 @@ void CesiumGltf::writeMaterial(
     }
 
     if (material.alphaMode != Material::AlphaMode::OPAQUE) {
-      j.KeyPrimitive("alphaMode", magic_enum::enum_name(material.alphaMode));
+      j.KeyPrimitive("alphaMode", material.alphaMode);
     }
 
     if (material.alphaCutoff != 0.5) {

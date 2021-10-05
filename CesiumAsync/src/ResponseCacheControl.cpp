@@ -1,4 +1,5 @@
 #include "ResponseCacheControl.h"
+
 #include <map>
 #include <set>
 
@@ -41,7 +42,7 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
   size_t next = 0;
   while ((next = headerValue.find(',', last)) != std::string::npos) {
     std::string directive = trimSpace(headerValue.substr(last, next - last));
-    size_t equalSize = directive.find('=');
+    const size_t equalSize = directive.find('=');
     if (equalSize != std::string::npos) {
       parameterizedDirectives.insert(
           {trimSpace(directive.substr(0, equalSize)),
@@ -54,7 +55,7 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
   }
 
   std::string directive = trimSpace(headerValue.substr(last));
-  size_t equalSize = directive.find('=');
+  const size_t equalSize = directive.find('=');
   if (equalSize != std::string::npos) {
     parameterizedDirectives.insert(
         {trimSpace(directive.substr(0, equalSize)),

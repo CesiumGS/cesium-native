@@ -1,5 +1,6 @@
 #pragma once
 #include <CesiumJsonWriter/JsonWriter.h>
+
 #include <any>
 #include <unordered_map>
 

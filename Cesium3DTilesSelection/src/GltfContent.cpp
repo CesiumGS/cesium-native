@@ -1,12 +1,16 @@
 #include "Cesium3DTilesSelection/GltfContent.h"
+
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumGeometry/AxisTransforms.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/AccessorWriter.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
-#include "CesiumUtility/joinToString.h"
+
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/AccessorWriter.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/joinToString.h>
+
 #include <optional>
 #include <stdexcept>
 
@@ -14,9 +18,12 @@ namespace Cesium3DTilesSelection {
 
 /*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
-  return load(input.pLogger, input.url, input.data);
+  return input.asyncSystem.createResolvedFuture(load(
+      input.pLogger,
+      input.pRequest->url(),
+      input.pRequest->response()->data()));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
@@ -70,16 +77,18 @@ static int generateOverlayTextureCoordinates(
   std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
   std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
 
-  int uvBufferId = static_cast<int>(buffers.size());
+  const int uvBufferId = static_cast<int>(buffers.size());
   CesiumGltf::Buffer& uvBuffer = buffers.emplace_back();
 
-  int uvBufferViewId = static_cast<int>(bufferViews.size());
+  const int uvBufferViewId = static_cast<int>(bufferViews.size());
   bufferViews.emplace_back();
 
-  int uvAccessorId = static_cast<int>(accessors.size());
+  const int uvAccessorId = static_cast<int>(accessors.size());
   accessors.emplace_back();
 
-  CesiumGltf::AccessorView<glm::vec3> positionView(gltf, positionAccessorIndex);
+  const CesiumGltf::AccessorView<glm::vec3> positionView(
+      gltf,
+      positionAccessorIndex);
   if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
     return -1;
   }
@@ -105,13 +114,13 @@ static int generateOverlayTextureCoordinates(
   CesiumGltf::AccessorWriter<glm::vec2> uvWriter(gltf, uvAccessorId);
   assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
-  double width = rectangle.computeWidth();
-  double height = rectangle.computeHeight();
+  const double width = rectangle.computeWidth();
+  const double height = rectangle.computeHeight();
 
   for (int64_t i = 0; i < positionView.size(); ++i) {
     // Get the ECEF position
-    glm::vec3 position = positionView[i];
-    glm::dvec3 positionEcef = transform * glm::dvec4(position, 1.0);
+    const glm::vec3 position = positionView[i];
+    const glm::dvec3 positionEcef = transform * glm::dvec4(position, 1.0);
 
     // Convert it to cartographic
     std::optional<CesiumGeospatial::Cartographic> cartographic =
@@ -127,8 +136,8 @@ static int generateOverlayTextureCoordinates(
         projectPosition(projection, cartographic.value());
 
     double longitude = cartographic.value().longitude;
-    double latitude = cartographic.value().latitude;
-    double ellipsoidHeight = cartographic.value().height;
+    const double latitude = cartographic.value().latitude;
+    const double ellipsoidHeight = cartographic.value().height;
 
     // If the position is near the anti-meridian and the projected position is
     // outside the expected range, try using the equivalent longitude on the
@@ -143,11 +152,13 @@ static int generateOverlayTextureCoordinates(
       cartographic.value().longitude += cartographic.value().longitude < 0.0
                                             ? CesiumUtility::Math::TWO_PI
                                             : -CesiumUtility::Math::TWO_PI;
-      glm::dvec3 projectedPosition2 =
+      const glm::dvec3 projectedPosition2 =
           projectPosition(projection, cartographic.value());
 
-      double distance1 = rectangle.computeSignedDistance(projectedPosition);
-      double distance2 = rectangle.computeSignedDistance(projectedPosition2);
+      const double distance1 =
+          rectangle.computeSignedDistance(projectedPosition);
+      const double distance2 =
+          rectangle.computeSignedDistance(projectedPosition2);
 
       if (distance2 < distance1) {
         projectedPosition = projectedPosition2;
@@ -232,13 +243,13 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        int positionAccessorIndex = positionIt->second;
+        const int positionAccessorIndex = positionIt->second;
         if (positionAccessorIndex < 0 ||
             positionAccessorIndex >= static_cast<int>(gltf_.accessors.size())) {
           return;
         }
 
-        int textureCoordinateAccessorIndex =
+        const int textureCoordinateAccessorIndex =
             positionAccessorsToTextureCoordinateAccessor[static_cast<size_t>(
                 positionAccessorIndex)];
         if (textureCoordinateAccessorIndex > 0) {
@@ -252,12 +263,12 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        glm::dmat4 fullTransform =
+        const glm::dmat4 fullTransform =
             transform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP *
             nodeTransform;
 
         // Generate new texture coordinates
-        int nextTextureCoordinateAccessorIndex =
+        const int nextTextureCoordinateAccessorIndex =
             generateOverlayTextureCoordinates(
                 gltf_,
                 positionAccessorIndex,

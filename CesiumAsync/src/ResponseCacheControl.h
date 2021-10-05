@@ -2,6 +2,7 @@
 
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
+
 #include <map>
 #include <optional>
 #include <string>
@@ -44,47 +45,51 @@ public:
   /**
    * @brief Must-Revalidate directive that appears in the Cache-Control header.
    */
-  inline bool mustRevalidate() const { return _mustRevalidate; }
+  inline bool mustRevalidate() const noexcept { return _mustRevalidate; }
 
   /**
    * @brief No-Cache directive that appears in the Cache-Control header.
    */
-  inline bool noCache() const { return _noCache; }
+  inline bool noCache() const noexcept { return _noCache; }
 
   /**
    * @brief No-Store directive that appears in the Cache-Control header.
    */
-  inline bool noStore() const { return _noStore; }
+  inline bool noStore() const noexcept { return _noStore; }
 
   /**
    * @brief No-Transform directive that appears in the Cache-Control header.
    */
-  inline bool noTransform() const { return _noTransform; }
+  inline bool noTransform() const noexcept { return _noTransform; }
 
   /**
    * @brief Public directive that appears in the Cache-Control header.
    */
-  inline bool accessControlPublic() const { return _accessControlPublic; }
+  inline bool accessControlPublic() const noexcept {
+    return _accessControlPublic;
+  }
 
   /**
    * @brief Private directive that appears in the Cache-Control header.
    */
-  inline bool accessControlPrivate() const { return _accessControlPrivate; }
+  inline bool accessControlPrivate() const noexcept {
+    return _accessControlPrivate;
+  }
 
   /**
    * @brief Proxy-Revalidate directive that appears in the Cache-Control header.
    */
-  inline bool proxyRevalidate() const { return _proxyRevalidate; }
+  inline bool proxyRevalidate() const noexcept { return _proxyRevalidate; }
 
   /**
    * @brief Max-Age directive that appears in the Cache-Control header.
    */
-  int maxAge() const { return _maxAge; }
+  int maxAge() const noexcept { return _maxAge; }
 
   /**
    * @brief S-Maxage directive that appears in the Cache-Control header.
    */
-  int sharedMaxAge() const { return _sharedMaxAge; }
+  int sharedMaxAge() const noexcept { return _sharedMaxAge; }
 
   /**
    * @brief Parse response cache control from the response's headers.

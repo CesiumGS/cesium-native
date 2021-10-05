@@ -3,7 +3,7 @@
 namespace CesiumGeospatial {
 
 BoundingRegionWithLooseFittingHeights::BoundingRegionWithLooseFittingHeights(
-    const BoundingRegion& boundingRegion)
+    const BoundingRegion& boundingRegion) noexcept
     : _region(boundingRegion) {}
 
 double BoundingRegionWithLooseFittingHeights::

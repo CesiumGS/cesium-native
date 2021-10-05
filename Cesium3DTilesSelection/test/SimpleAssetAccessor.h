@@ -4,6 +4,7 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
+
 #include <cstddef>
 #include <map>
 #include <memory>

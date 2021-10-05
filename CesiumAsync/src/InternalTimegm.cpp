@@ -4,6 +4,7 @@
 // https://github.com/boostorg/chrono/blob/aa51cbd5121ed29093484f53e5f96e13a9a915b4/include/boost/chrono/io/time_point_io.hpp#L784
 
 #include "InternalTimegm.h"
+
 #include <cstdint>
 
 namespace CesiumAsync {
@@ -22,18 +23,18 @@ time_t internalTimegm(std::tm const* t) {
     year += month / 12;
     month %= 12;
   } else if (month < 0) {
-    int years_diff = (-month + 11) / 12;
+    const int years_diff = (-month + 11) / 12;
     year -= years_diff;
     month += 12 * years_diff;
   }
   month++;
-  int day = t->tm_mday;
-  int day_of_year = daysFrom1jan(year, month, day);
-  int days_since_epoch = daysFrom1970(year) + day_of_year;
+  const int day = t->tm_mday;
+  const int day_of_year = daysFrom1jan(year, month, day);
+  const int days_since_epoch = daysFrom1970(year) + day_of_year;
 
-  time_t seconds_in_day = 3600 * 24;
-  time_t result = seconds_in_day * days_since_epoch + 3600 * t->tm_hour +
-                  60 * t->tm_min + t->tm_sec;
+  const time_t seconds_in_day = 3600 * 24;
+  const time_t result = seconds_in_day * days_since_epoch + 3600 * t->tm_hour +
+                        60 * t->tm_min + t->tm_sec;
 
   return result;
 }

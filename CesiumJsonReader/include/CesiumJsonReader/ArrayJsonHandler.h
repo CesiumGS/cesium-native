@@ -1,10 +1,11 @@
 #pragma once
 
-#include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/Library.h"
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include "JsonHandler.h"
+#include "Library.h"
 #include "StringJsonHandler.h"
+
 #include <cassert>
 #include <vector>
 
@@ -66,11 +67,11 @@ public:
   }
 
   virtual IJsonHandler*
-  readObjectKey(const std::string_view& /*str*/) override {
+  readObjectKey(const std::string_view& /*str*/) noexcept override {
     return nullptr;
   }
 
-  virtual IJsonHandler* readObjectEnd() override { return nullptr; }
+  virtual IJsonHandler* readObjectEnd() noexcept override { return nullptr; }
 
   virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
@@ -116,7 +117,7 @@ template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<double, DoubleJsonHandler>
     : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
     JsonHandler::reset(pParent);
@@ -233,7 +234,7 @@ template <typename T>
 class CESIUMJSONREADER_API ArrayJsonHandler<T, IntegerJsonHandler<T>>
     : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
@@ -344,7 +345,7 @@ template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<std::string, StringJsonHandler>
     : public JsonHandler {
 public:
-  ArrayJsonHandler() : JsonHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
     JsonHandler::reset(pParent);

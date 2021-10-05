@@ -1,29 +1,30 @@
 #include "ImageWriter.h"
+
 #include "Base64URIDetector.h"
 #include "EncodeBase64String.h"
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <algorithm>
 #include <cstdint>
 
 [[nodiscard]] std::string
-mimeTypeToMimeString(CesiumGltf::Image::MimeType mimeType) noexcept {
-  if (mimeType == CesiumGltf::Image::MimeType::image_jpeg) {
-    return "image/jpeg";
-  } else {
-    return "image/png";
-  }
-}
-
-[[nodiscard]] std::string
-mimeTypeToExtensionString(CesiumGltf::Image::MimeType mimeType) noexcept {
+mimeTypeToExtensionString(const std::string& mimeType) noexcept {
   if (mimeType == CesiumGltf::Image::MimeType::image_jpeg) {
     return ".jpeg";
-  } else {
+  }
+  if (mimeType == CesiumGltf::Image::MimeType::image_png) {
     return ".png";
   }
+  std::size_t slashIndex = mimeType.find('/');
+  if (slashIndex != std::string::npos) {
+    return "." + mimeType.substr(slashIndex + 1);
+  }
+  // TODO Print a warning here!
+  return "";
 }
 
 void CesiumGltf::writeImage(
@@ -96,7 +97,7 @@ void CesiumGltf::writeImage(
 
     if (image.mimeType) {
       j.Key("mimeType");
-      j.String(mimeTypeToMimeString(*image.mimeType));
+      j.String(*image.mimeType);
     }
 
     if (image.bufferView >= 0) {

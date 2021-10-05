@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumUtility/IntrusivePointer.h"
+#include "RasterOverlayTile.h"
+
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
 #include <memory>
 
 namespace Cesium3DTilesSelection {
@@ -157,7 +159,7 @@ public:
   void detachFromTile(Tile& tile) noexcept;
 
 private:
-  void computeTranslationAndScale(Tile& tile);
+  void computeTranslationAndScale(const Tile& tile);
 
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pLoadingTile;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pReadyTile;

@@ -1,4 +1,5 @@
 #include "CesiumUtility/JsonValue.h"
+
 #include <cassert>
 
 using namespace CesiumUtility;

@@ -47,6 +47,4 @@ target_link_libraries(CesiumGltfWriter
         CesiumGltf
         CesiumJsonWriter
         modp_b64
-    PRIVATE
-        magic_enum
 )

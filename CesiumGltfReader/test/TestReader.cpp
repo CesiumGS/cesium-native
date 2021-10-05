@@ -1,14 +1,16 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
+
 #include <catch2/catch.hpp>
+#include <glm/vec3.hpp>
+#include <gsl/span>
+#include <rapidjson/reader.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
-#include <glm/vec3.hpp>
-#include <gsl/span>
-#include <rapidjson/reader.h>
 #include <string>
 
 using namespace CesiumGltf;
@@ -306,4 +308,28 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
 
   auto& zeroExtensions = withoutCustomExt.model->extensions;
   REQUIRE(zeroExtensions.empty());
+}
+
+TEST_CASE("Unknown MIME types are handled") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "images": [
+            {
+              "mimeType" : "image/webp"
+            }
+        ]
+    }
+  )";
+
+  ReadModelOptions options;
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult modelResult = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult.errors.empty());
+  REQUIRE(modelResult.model.has_value());
 }

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/Impl/unwrapFuture.h"
-#include "CesiumUtility/Tracing.h"
+#include "unwrapFuture.h"
+
+#include <CesiumUtility/Tracing.h>
 
 namespace CesiumAsync {
 namespace Impl {

@@ -9,6 +9,7 @@
 #include "CesiumJsonReader/BoolJsonHandler.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
@@ -30,24 +31,13 @@ protected:
       Accessor& o);
 
 private:
-  class TypeJsonHandler : public CesiumJsonReader::JsonHandler {
-  public:
-    TypeJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(CesiumJsonReader::IJsonHandler* pParent, Accessor::Type* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
-
-  private:
-    Accessor::Type* _pEnum = nullptr;
-  };
-
   Accessor* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
-  CesiumJsonReader::IntegerJsonHandler<Accessor::ComponentType> _componentType;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _componentType;
   CesiumJsonReader::BoolJsonHandler _normalized;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-  TypeJsonHandler _type;
+  CesiumJsonReader::StringJsonHandler _type;
   CesiumJsonReader::
       ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
           _max;

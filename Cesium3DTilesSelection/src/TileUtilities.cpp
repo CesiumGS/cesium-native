@@ -1,10 +1,10 @@
 #include "TileUtilities.h"
 
-#include <variant>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
+#include <variant>
 
 using namespace CesiumGeospatial;
 
@@ -78,19 +78,19 @@ bool withinPolygons(
       const glm::dvec2& b = vertices[indices[j - 1]];
       const glm::dvec2& c = vertices[indices[j]];
 
-      glm::dvec2 ab = b - a;
-      glm::dvec2 ab_perp(-ab.y, ab.x);
-      glm::dvec2 bc = c - b;
-      glm::dvec2 bc_perp(-bc.y, bc.x);
-      glm::dvec2 ca = a - c;
-      glm::dvec2 ca_perp(-ca.y, ca.x);
+      const glm::dvec2 ab = b - a;
+      const glm::dvec2 ab_perp(-ab.y, ab.x);
+      const glm::dvec2 bc = c - b;
+      const glm::dvec2 bc_perp(-bc.y, bc.x);
+      const glm::dvec2 ca = a - c;
+      const glm::dvec2 ca_perp(-ca.y, ca.x);
 
-      glm::dvec2 av = rectangleCorners[0] - a;
-      glm::dvec2 cv = rectangleCorners[0] - c;
+      const glm::dvec2 av = rectangleCorners[0] - a;
+      const glm::dvec2 cv = rectangleCorners[0] - c;
 
-      double v_proj_ab_perp = glm::dot(av, ab_perp);
-      double v_proj_bc_perp = glm::dot(cv, bc_perp);
-      double v_proj_ca_perp = glm::dot(cv, ca_perp);
+      const double v_proj_ab_perp = glm::dot(av, ab_perp);
+      const double v_proj_bc_perp = glm::dot(cv, bc_perp);
+      const double v_proj_ca_perp = glm::dot(cv, ca_perp);
 
       // This will determine in or out, irrespective of winding.
       if ((v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
@@ -115,17 +115,17 @@ bool withinPolygons(
       const glm::dvec2& a = vertices[j];
       const glm::dvec2& b = vertices[(j + 1) % vertices.size()];
 
-      glm::dvec2 ba = a - b;
+      const glm::dvec2 ba = a - b;
 
       // Check each rectangle edge.
       for (size_t k = 0; k < 4; ++k) {
         const glm::dvec2& cd = rectangleEdges[k];
-        glm::dmat2 lineSegmentMatrix(cd, ba);
-        glm::dvec2 ca = a - rectangleCorners[k];
+        const glm::dmat2 lineSegmentMatrix(cd, ba);
+        const glm::dvec2 ca = a - rectangleCorners[k];
 
         // s and t are calculated such that:
         // line_intersection = a + t * ab = c + s * cd
-        glm::dvec2 st = glm::inverse(lineSegmentMatrix) * ca;
+        const glm::dvec2 st = glm::inverse(lineSegmentMatrix) * ca;
 
         // check that the intersection is within the line segments
         if (st.x <= 1.0 && st.x >= 0.0 && st.y <= 1.0 && st.y >= 0.0) {

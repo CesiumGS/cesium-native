@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeospatial/Ellipsoid.h"
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 namespace Cesium3DTilesSelection {
 /**
@@ -18,6 +18,6 @@ namespace Cesium3DTilesSelection {
  * @param ellipsoid The ellipsoid.
  * @return The max geometric error.
  */
-double
-calcQuadtreeMaxGeometricError(const CesiumGeospatial::Ellipsoid& ellipsoid);
+double calcQuadtreeMaxGeometricError(
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept;
 } // namespace Cesium3DTilesSelection

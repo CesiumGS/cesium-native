@@ -1,5 +1,6 @@
 #pragma once
 #include <CesiumGltf/Model.h>
+
 #include <cstdint>
 #include <string_view>
 #include <vector>

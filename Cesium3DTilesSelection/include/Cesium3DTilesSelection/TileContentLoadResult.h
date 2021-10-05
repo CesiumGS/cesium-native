@@ -1,9 +1,12 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContext.h"
+#include "Tile.h"
+#include "TileContext.h"
+
 #include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+
+#include "CesiumGeospatial/Projection.h"
 
 namespace Cesium3DTilesSelection {
 
@@ -30,12 +33,12 @@ struct TileContentLoadResult {
    * If it has a value but the model is blank, the tile can
    * be "rendered", but it is rendered as nothing.
    */
-  std::optional<CesiumGltf::Model> model;
+  std::optional<CesiumGltf::Model> model{};
 
   /**
    * @brief A new context, if any, used by the `childTiles`.
    */
-  std::unique_ptr<TileContext> pNewTileContext;
+  std::unique_ptr<TileContext> pNewTileContext{};
 
   /**
    * @brief New child tiles discovered by loading this tile.
@@ -44,7 +47,7 @@ struct TileContentLoadResult {
    * contains the root tiles of the subtree. This is ignored if the
    * tile already has any child tiles.
    */
-  std::optional<std::vector<Tile>> childTiles;
+  std::optional<std::vector<Tile>> childTiles{};
 
   /**
    * @brief An improved bounding volume for this tile.
@@ -52,14 +55,14 @@ struct TileContentLoadResult {
    * If this is available, then it is more accurate than the one the tile used
    * originally.
    */
-  std::optional<BoundingVolume> updatedBoundingVolume;
+  std::optional<BoundingVolume> updatedBoundingVolume{};
 
   /**
    * @brief Available quadtree tiles discovered as a result of loading this
    * tile.
    */
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
-      availableTileRectangles;
+      availableTileRectangles{};
 
   /**
    * @brief The quadtree availability subtree for this tile if it is exists.
@@ -75,7 +78,7 @@ struct TileContentLoadResult {
   /**
    * @brief The HTTP status code received when accessing this content.
    */
-  uint16_t httpStatusCode;
+  uint16_t httpStatusCode = 0;
 
   /**
    * @brief The raster overlay projections for which texture coordinates have

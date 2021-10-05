@@ -11,7 +11,7 @@ class Tile;
 class ITileExcluder {
 public:
   virtual ~ITileExcluder() = default;
-  virtual bool shouldExclude(const Tile& tile) const = 0;
+  virtual bool shouldExclude(const Tile& tile) const noexcept = 0;
 };
 
 } // namespace Cesium3DTilesSelection

@@ -1,6 +1,8 @@
 #include "CesiumJsonReader/JsonReader.h"
-#include <cassert>
+
 #include <rapidjson/reader.h>
+
+#include <cassert>
 
 using namespace CesiumJsonReader;
 
@@ -9,7 +11,7 @@ namespace {
 struct Dispatcher {
   IJsonHandler* pCurrent;
 
-  bool update(IJsonHandler* pNext) {
+  bool update(IJsonHandler* pNext) noexcept {
     if (pNext == nullptr) {
       return false;
     }
@@ -25,7 +27,10 @@ struct Dispatcher {
   bool Int64(int64_t i) { return update(pCurrent->readInt64(i)); }
   bool Uint64(uint64_t i) { return update(pCurrent->readUint64(i)); }
   bool Double(double d) { return update(pCurrent->readDouble(d)); }
-  bool RawNumber(const char* /* str */, size_t /* length */, bool /* copy */) {
+  bool RawNumber(
+      const char* /* str */,
+      size_t /* length */,
+      bool /* copy */) noexcept {
     // This should not be called.
     assert(false);
     return false;
@@ -112,7 +117,7 @@ void JsonReader::FinalJsonHandler::reportWarning(
 }
 
 void JsonReader::FinalJsonHandler::setInputStream(
-    rapidjson::MemoryStream* pInputStream) {
+    rapidjson::MemoryStream* pInputStream) noexcept {
   this->_pInputStream = pInputStream;
 }
 

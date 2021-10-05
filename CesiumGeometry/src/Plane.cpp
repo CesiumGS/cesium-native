@@ -1,6 +1,9 @@
 #include "CesiumGeometry/Plane.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/geometric.hpp>
+
 #include <stdexcept>
 
 using namespace CesiumUtility;
@@ -26,8 +29,8 @@ double Plane::getPointDistance(const glm::dvec3& point) const noexcept {
 glm::dvec3
 Plane::projectPointOntoPlane(const glm::dvec3& point) const noexcept {
   // projectedPoint = point - (normal.point + scale) * normal
-  double pointDistance = this->getPointDistance(point);
-  glm::dvec3 scaledNormal = this->_normal * pointDistance;
+  const double pointDistance = this->getPointDistance(point);
+  const glm::dvec3 scaledNormal = this->_normal * pointDistance;
   return point - scaledNormal;
 }
 
