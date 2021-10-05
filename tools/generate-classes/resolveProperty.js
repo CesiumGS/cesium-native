@@ -1,860 +1,599 @@
-const nameUtils = require("./nameUtils");
-const lodash = require('lodash');
+const getNameFromSchema = require("./getNameFromSchema");
+const unindent = require("./unindent");
+const indent = require("./indent");
+const makeIdentifier = require("./makeIdentifier");
+const lodash = require("lodash");
+const cppReservedWords = require("./cppReservedWords");
 
-function getBaseProperty(name, details) {
-  const fullDoc =
-    details.gltf_detailedDescription &&
-    details.gltf_detailedDescription.indexOf(
-      details.description
-    ) === 0
-      ? details.gltf_detailedDescription
-          .substr(details.description.length)
-          .trim()
-      : details.gltf_detailedDescription;
-
-  const briefDocLines = details.description ? [`@brief ${details.description}`] : [];
-  const fullDocLines = fullDoc ? fullDoc.split("\n") : [];
-
-  return {
-    docs: briefDocLines.concat(fullDocLines),
-    typeName: nameUtils.makeTypeName(name),
-    model: {
-      type: nameUtils.makeTypeName(name),
-      headers: []
-    },
-    reader: {
-      type: nameUtils.makeTypeName(name, "JsonHandler"),
-      headers: []
-    },
-  };
-}
-
-function topoSort(graph) {
-  const tmpOrder = Object.keys(graph).filter((key) => graph[key].length === 0);
-  const order = [];
-
-  while (tmpOrder.length > 0) {
-    const n = tmpOrder.pop();
-    order.push(n);
-
-    Object.keys(graph).forEach((m) => {
-      const edges = graph[m];
-      const removed = edges.filter((k) => k !== n);
-      const found = removed.length !== edges.length;
-      graph[m] = removed;
-
-      if (found && removed.length === 0) {
-        tmpOrder.push(m);
-      }
-    });
-  }
-
-  return order;
-}
-
-class Context {
-  #scope;
-  #schemaStack;
-  #schemaCache;
-  #resolveCache;
-  #overrides;
-
-  constructor(schemaCache, overrides) {
-    this.#schemaStack = [];
-    this.#scope = [];
-    this.#schemaCache = schemaCache;
-    this.#resolveCache = {};
-    this.#overrides = overrides || {};
-  }
-
-  resolve(ref) {
-    const existing = this.#resolveCache[ref];
-    if (existing) {
-      return existing;
-    } else {
-      const parts = ref.split("#");
-      if (parts[0]) {
-        this.#schemaStack.push(parts[0]);
-      }
-
-      const schemaName = this.#schemaStack[this.#schemaStack.length - 1];
-      if (!schemaName) {
-        console.warn("no schema currently being resolved");
-        return undefined;
-      }
-
-      const schema = this.#schemaCache.load(schemaName, parts[1]);
-      if (!schema) {
-        console.warn("failed to load schema", schemaName);
-        this.#schemaStack.pop();
-        return undefined;
-      }
-
-      const override = this.#overrides[schemaName] || {};
-      const result = this.create(schema, schemaName, this);
-      if (!result) {
-        console.warn("failed to resolve schema", schemaName);
-        this.#schemaStack.pop();
-        return undefined;
-      }
-
-      this.#resolveCache[ref] = result;
-      this.#schemaStack.pop();
-      return result;
-    }
-  }
-
-  #resolveEnum(schema, name) {
-    if (schema.type !== "string") {
-      console.warn("non-string non-glTF-style enums not supported");
-      return undefined;
-    }
-
-    return SchemaEnum.fromEnum(schema, name, this);
-  }
-
-  // detect if the anyOf is a glTF-style enum or an actual variant type (not supported)
-  #resolveAnyOf(details, name) {
-    const typeItem = details.anyOf
-      .filter((item) => item.type !== undefined && item.enum === undefined)
-      .pop();
-    if (typeItem !== undefined) {
-      const itemInfo = details.anyOf.filter((item) => item.enum !== undefined);
-      return SchemaEnum.fromAnyOf(typeItem, itemInfo, name, this);
-    } else {
-      console.warn(`heterogeneous variants not supported`);
-      return undefined;
-    }
-  }
-
-  #createInScope(schema, name) {
-    if (schema.allOf && schema.allOf.length == 1 && (schema.properties === undefined))
-      return this.#createInScope(schema.allOf[0], name);
-    if (schema.$ref)
-      return new SchemaRef(schema.$ref, this);
-    if (schema.anyOf)
-      return this.#resolveAnyOf(schema, name);
-    if (schema.enum)
-      return this.#resolveEnum(schema, name);
-    if (schema.type === "string")
-      return new SchemaString(schema);
-    if (schema.type === "integer")
-      return new SchemaInteger(schema);
-    if (schema.type === "number")
-      return new SchemaDouble(schema);
-    if (schema.type === "boolean")
-      return new SchemaBool(schema, name);
-    if (isJsonObject(schema))
-      return new SchemaObject(schema, name, this);
-    if (schema.type === "array")
-      return new SchemaArray(schema, name, this);
-
-    console.warn(`can't identify type of '${name}', skipping`);
+function resolveProperty(
+  schemaCache,
+  config,
+  parentName,
+  propertyName,
+  propertyDetails,
+  required
+) {
+  if (Object.keys(propertyDetails).length === 0) {
+    // Ignore totally empty properties. The glTF JSON schema files often use empty properties in derived classes
+    // when the actual property definition is in the base class.
     return undefined;
   }
 
-  create(schema, name, parent) {
-    if (parent instanceof SchemaObject) {
-      this.#scope.push(parent);
-    }
-
-    const override = this.#overrides[name] || {};
-    const result = this.#createInScope(schema, override.name || nameUtils.makeTypeName(name));
-
-    if (parent instanceof SchemaObject) {
-      this.#scope.pop();
-    }
-
-    return result;
-  }
-
-  get scope() {
-    return [...this.#scope];
-  }
-
-}
-
-class EnumValue {
-  #baseName;
-  #value;
-  #intValue;
-
-  constructor(jsonType, value, description) {
-    this.#baseName = (jsonType === "string") ? value : description;
-    this.#value = (jsonType === "string") ? `"${value}"s` : value;
-    this.#intValue = (jsonType === "integer") ? value : undefined;
-  }
-
-  get name() {
-    return nameUtils.makeIdentifier(this.#baseName);
-  }
-
-  get value() {
-    return this.#value;
-  }
-
-  get modelMember() {
-    return (this.#intValue !== undefined) ? `${this.name} = ${this.#intValue}` : this.name;
-  }
-}
-
-class SchemaEnum {
-  #valueType;
-  #typeName;
-  #valueList;
-  #scope;
-
-  #baseObject;
-
-  static fromEnum(schema, name, context) {
-    const enm = new SchemaEnum();
-
-    enm.#baseObject = new SchemaObject(schema, name, context);
-    enm.#valueType = new SchemaString(schema, name + "Item");
-    enm.#typeName = name;
-    enm.#valueList = schema.enum.map((item) =>
-        new EnumValue(schema.type, item, schema.description))
-    enm.#scope = context.scope;
-
-    return enm;
-  }
-
-  static fromAnyOf(valueSchema, valueList, name, context) {
-    const enm = new SchemaEnum();
-
-    enm.#baseObject = context.create(valueSchema, name, enm);
-    enm.#valueType = enm.#baseObject;
-    enm.#typeName = name;
-    enm.#valueList = valueList
-      .filter((item) => item.enum !== undefined)
-      .map((item) => new EnumValue(valueSchema.type, item.enum[0], item.description));
-    enm.#scope = context.scope;
-
-    return enm;
-  }
-
-  get baseName() {
-    return this.#typeName;
-  }
-
-  get modelHeaders() {
-    return this.#valueType.modelHeaders;
-  }
-
-  get readerHeaders() {
-    return this.#valueType.readerHeaders;
-  }
-
-  get model() {
-    return nameUtils.makeTypeName(this.#typeName);
-  }
-
-  get reader() {
-    return this.model + "JsonHandler";
-  }
-
-  get scopedModel() {
-    return this.#scope
-      .concat(this)
-      .map((t) => t.model)
-      .join("::");
-  }
-
-  get scopedReader() {
-    return this.#scope
-      .concat(this)
-      .map((t) => t.reader)
-      .join("::");
-  }
-
-  get valueType() {
-    return this.#valueType;
-  }
-
-  get values() {
-    return this.#valueList;
-  }
-}
-
-class Property {
-  #name;
-  #type;
-  #required;
-
-  constructor(name, type, required) {
-    this.#name = name;
-    this.#type = type;
-    this.#required = required;
-  }
-
-  get #useOptional() {
-    return (this.#type.default === undefined) && !this.#required;
-  }
-
-  get name() {
-    return this.#name;
-  }
-
-  get required() {
-    return !this.#useOptional;
-  }
-
-  get isAdditional() {
-    return this.#type instanceof SchemaAdditionalProperties;
-  }
-
-  get modelHeaders() {
-    return this.#useOptional ? [...this.#type.modelHeaders, "<optional>"] : this.#type.modelHeaders;
-  }
-
-  get readerHeaders() {
-    return this.#type.readerHeaders;
-  }
-
-  get modelMember() {
-    const declType = this.#useOptional
-      ? `std::optional<${this.#type.model}>`
-      : this.#type.model;
-    return (this.#type.default === undefined)
-      ? `${declType} ${this.name};`
-      : `${declType} ${this.name} = ${this.#type.default};`;
-  }
-
-  get readerMember() {
-    return `${this.#type.reader} _${this.name};`;
-  }
-
-  get modelArgs() {
-    return this.#type.modelBase ? this.#type.modelBase.args : "";
-  }
-
-  get readerArgs() {
-    return this.#type.readerBase ? this.#type.readerBase.args : "";
-  }
-}
-
-class SchemaAdditionalProperties {
-  #propType;
-
-  constructor(schema, context, parent) {
-    this.#propType = context.create(schema, "additionalProperty", parent);
-  }
-
-  get baseName() {
-    return "PropertyMap";
-  }
-
-  get propType() {
-    return this.#propType;
-  }
-
-  get model() {
-    return `std::unordered_map<std::string, ${this.#propType.model}>`;
-  }
-
-  get reader() {
-    return `CesiumJsonReader::DictionaryJsonHandler<${this.#propType.model}, ${this.#propType.reader}>`;
-  }
-
-  get modelHeaders() {
-    return ["<unordered_map>"];
-  }
-
-  get readerHeaders() {
-    return ["<CesiumJsonReader/DictionaryJsonHandler.h>"];
-  }
-
-  get modelBase() {
-    return this.propType.modelBase;
-  }
-
-  get readerBase() {
-    return this.propType.readerBase;
-  }
-
-}
-
-class SchemaRef {
-  #ref;
-  #context;
-  #cachedType;
-
-  constructor(ref, context) {
-    this.#ref = ref;
-    this.#context = context;
-  }
-
-  get #type() {
-    if (!this.#cachedType) {
-      this.#cachedType = this.#context.resolve(this.#ref);
-    }
-    return this.#cachedType;
-  }
-
-  get default() {
-    return this.#type.default;
-  }
-
-  get baseName() {
-    return this.#type.baseName;
-  }
-
-  get model() {
-    return this.#type.model;
-  }
-
-  get reader() {
-    return this.#type.reader;
-  }
-
-  get scopedModel() {
-    return this.#type.scopedModel;
-  }
-
-  get scopedReader() {
-    return this.#type.scopedReader;
-  }
-
-  get modelHeaders() {
-    return [];
-  }
-
-  get readerHeaders() {
-    return [];
-  }
-
-  get modelBase() {
-    return this.#type.modelBase;
-  }
-
-  get readerBase() {
-    return this.#type.readerBase;
-  }
-
-  get properties() {
-    return this.#type.properties;
-  }
-
-  resolve() {
-    return this.#type;
-  }
-}
-
-class TypeInfo {
-  #baseName;
-  #type;
-  #headers;
-  #ctor;
-
-  constructor(baseName, type, headers, ctor) {
-    this.#baseName = baseName;
-    this.#type = type;
-    this.#headers = headers || [];
-    this.#ctor = ctor || {};
-  }
-
-  get baseName() {
-    return this.#baseName;
-  }
-
-  get type() {
-    return this.#type;
-  }
-
-  get headers() {
-    return this.#headers;
-  }
-
-  get params() {
-    return Object.keys(this.#ctor)
-      .map((arg) => `${this.#ctor[arg]} ${arg}`)
-      .join(", ");
-  }
-
-  get args() {
-    return Object.keys(this.#ctor).join(", ");
-  }
-
-  inherit(baseName, type, headers) {
-    return new TypeInfo(baseName, type, headers, this.#ctor);
-  }
-}
-
-class SchemaObject {
-  #typeName;
-  #schema;
-  #context;
-  #scope;
-  #properties;
-  #additionalType;
-  #base;
-
-  #modelBase;
-  #readerBase;
-  #inheritedProps;
-
-  constructor(schema, name, context) {
-    console.log("create object", name);
-    this.#typeName = name;
-    this.#schema = schema;
-    this.#context = context;
-    this.#scope = context.scope;
-
-    this.#modelBase = new TypeInfo(
-      "ExtensibleObject",
-      "CesiumUtility::ExtensibleObject",
-      ["<CesiumUtility/ExtensibleObject.h>"]
+  propertyName = makeNameIntoValidIdentifier(propertyName);
+
+  // If we don't know what's required, act as if everything is.
+  // Specifically this means we _don't_ make it optional.
+  const isRequired = required === undefined || required.includes(propertyName);
+  const makeOptional = !isRequired && propertyDetails.default === undefined;
+
+  if (propertyDetails.type == "array") {
+    return resolveArray(
+      schemaCache,
+      config,
+      parentName,
+      propertyName,
+      propertyDetails,
+      required
     );
-    this.#readerBase = new TypeInfo(
-      "ExtensibleObjectJsonHandler",
-      "CesiumJsonReader::ExtensibleObjectJsonHandler",
-      ["<CesiumJsonReader/ExtensibleObjectJsonHandler.h>"],
-      { context: "const ExtensionContext&" }
+  } else if (propertyDetails.type == "integer") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      headers: ["<cstdint>", ...(makeOptional ? ["<optional>"] : [])],
+      type: makeOptional ? "std::optional<int64_t>" : "int64_t",
+      readerHeaders: [`"CesiumJsonReader/IntegerJsonHandler.h"`],
+      readerType: "CesiumJsonReader::IntegerJsonHandler<int64_t>",
+      needsInitialization: !makeOptional,
+    };
+  } else if (propertyDetails.type == "number") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      headers: makeOptional ? ["<optional>"] : [],
+      type: makeOptional ? "std::optional<double>" : "double",
+      readerHeaders: [`"CesiumJsonReader/DoubleJsonHandler.h"`],
+      readerType: "CesiumJsonReader::DoubleJsonHandler",
+      needsInitialization: !makeOptional,
+    };
+  } else if (propertyDetails.type == "boolean") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      headers: makeOptional ? ["<optional>"] : [],
+      type: makeOptional ? "std::optional<bool>" : "bool",
+      readerHeaders: `"CesiumJsonReader/BoolJsonHandler.h"`,
+      readerType: "CesiumJsonReader::BoolJsonHandler",
+      needsInitialization: ~makeOptional,
+    };
+  } else if (propertyDetails.type == "string") {
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: makeOptional ? "std::optional<std::string>" : "std::string",
+      headers: ["<string>", ...(makeOptional ? ["<optional>"] : [])],
+      readerHeaders: [`"CesiumJsonReader/StringJsonHandler.h"`],
+      readerType: "CesiumJsonReader::StringJsonHandler",
+      defaultValue:
+        propertyDetails.default !== undefined
+          ? `"${propertyDetails.default.toString()}"`
+          : undefined,
+    };
+  } else if (
+    propertyDetails.type == "object" &&
+    propertyDetails.additionalProperties
+  ) {
+    return resolveDictionary(
+      schemaCache,
+      config,
+      parentName,
+      propertyName,
+      propertyDetails,
+      required
     );
-    const inheritedProps = ["extensions", "extras"];
+  } else if (isEnum(propertyDetails)) {
+    return resolveEnum(
+      schemaCache,
+      config,
+      parentName,
+      propertyName,
+      propertyDetails,
+      makeOptional
+    );
+  } else if (propertyDetails.$ref) {
+    const itemSchema = schemaCache.load(propertyDetails.$ref);
+    if (itemSchema.title === "glTF Id") {
+      return {
+        ...propertyDefaults(propertyName, propertyDetails),
+        type: "int32_t",
+        defaultValue: -1,
+        headers: ["<cstdint>"],
+        readerHeaders: [`"CesiumJsonReader/IntegerJsonHandler.h"`],
+        readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
+      };
+    } else {
+      const type = getNameFromSchema(config, itemSchema);
+      const typeName = getNameFromSchema(config, itemSchema);
 
-    const inherits = schema.allOf || [];
-    if (inherits.length > 1) {
-      console.warn("multiple inheritance not supported");
+      return {
+        ...propertyDefaults(propertyName, propertyDetails),
+        type: makeOptional ? `std::optional<${typeName}>` : typeName,
+        headers: [
+          `"CesiumGltf/${type}.h"`,
+          ...(makeOptional ? ["<optional>"] : []),
+        ],
+        readerType: `${type}JsonHandler`,
+        readerHeaders: [`"${type}JsonHandler.h"`],
+        schemas: [itemSchema],
+      };
     }
-    if (inherits.length > 0) {
-      const base = context.create(inherits[0], name + "Parent");
-      this.#modelBase = base.modelBase.inherit(
-        base.model,
-        base.scopedModel,
-        base.modelHeaders
-      );
-      this.#readerBase = base.readerBase.inherit(
-        base.reader,
-        base.scopedReader,
-        base.readerHeaders
-      );
-      const baseProps = (base.properties || []).map((p) => p.name);
-      inheritedProps.push(...baseProps);
+  } else if (propertyDetails.allOf && propertyDetails.allOf.length == 1) {
+    const nested = resolveProperty(
+      schemaCache,
+      config,
+      parentName,
+      propertyName,
+      propertyDetails.allOf[0],
+      required
+    );
 
-      if (base instanceof SchemaObject) {
-        inheritedProps.push(...base.#inheritedProps);
+    return {
+      ...nested,
+      briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
+      fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
+    };
+    // TODO: This is a partially-working support for properties that can have multiple types, via std::variant.
+    // But it still needs an implementation of VariantJsonHandler, and may require per-property codegen as well.
+    // } else if (Array.isArray(propertyDetails.type)) {
+    //   const nested = propertyDetails.type.map((type) => {
+    //     const propertyNameWithType = propertyName + " (" + type + ")";
+    //     return resolveProperty(
+    //       schemaCache,
+    //       config,
+    //       parentName,
+    //       propertyNameWithType,
+    //       {
+    //         ...propertyDetails,
+    //         type: type,
+    //       },
+    //       [propertyNameWithType]
+    //     );
+    //   });
+
+    //   return {
+    //     ...propertyDefaults(propertyName, propertyDetails),
+    //     type: `std::variant<${nested.map((item) => item.type).join(", ")}>`,
+    //     headers: lodash.uniq([
+    //       "<variant>",
+    //       ...lodash.flatten(nested.map((type) => type.headers)),
+    //     ]),
+    //     readerType: `VariantJsonHandler<${nested
+    //       .map((item) => item.readerType)
+    //       .join(", ")}>`,
+    //     readerHeaders: lodash.uniq([
+    //       `"VariantJsonHandler.h"`,
+    //       ...lodash.flatten(nested.map((item) => item.readerHeaders)),
+    //     ]),
+    //     schemas: lodash.uniq(lodash.flatten(nested.map((item) => item.schemas))),
+    //   };
+  } else {
+    console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
+    return {
+      ...propertyDefaults(propertyName, propertyDetails),
+      type: `CesiumUtility::JsonValue`,
+      headers: [`"CesiumUtility/JsonValue.h"`],
+      readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
+      readerHeaders: [`"CesiumJsonReader/JsonObjectJsonHandler.h"`],
+    };
+  }
+}
+
+function toPascalCase(name) {
+  if (name.length === 0) {
+    return name;
+  }
+
+  return name[0].toUpperCase() + name.substr(1);
+}
+
+function propertyDefaults(propertyName, propertyDetails) {
+  const fullDoc =
+    propertyDetails.gltf_detailedDescription &&
+    propertyDetails.gltf_detailedDescription.indexOf(
+      propertyDetails.description
+    ) === 0
+      ? propertyDetails.gltf_detailedDescription
+          .substr(propertyDetails.description.length)
+          .trim()
+      : propertyDetails.gltf_detailedDescription;
+  return {
+    name: propertyName,
+    headers: [],
+    readerHeaders: [],
+    readerHeadersImpl: [],
+    type: "",
+    defaultValue:
+      propertyDetails.default !== undefined
+        ? propertyDetails.default.toString()
+        : undefined,
+    readerType: "",
+    schemas: [],
+    localTypes: [],
+    readerLocalTypes: [],
+    readerLocalTypesImpl: [],
+    briefDoc: propertyDetails.description,
+    fullDoc: fullDoc,
+  };
+}
+
+function resolveArray(
+  schemaCache,
+  config,
+  parentName,
+  propertyName,
+  propertyDetails,
+  required
+) {
+  // If there is no items definition, pass an effectively empty object.
+  // But if the definition is _actually_ empty, the property will be ignored
+  // completely. So just add a dummy property.
+
+  const itemProperty = resolveProperty(
+    schemaCache,
+    config,
+    parentName,
+    propertyName + ".items",
+    propertyDetails.items || { notEmpty: true },
+    undefined
+  );
+
+  if (!itemProperty) {
+    return undefined;
+  }
+
+  return {
+    ...propertyDefaults(propertyName, propertyDetails),
+    name: propertyName,
+    headers: ["<vector>", ...itemProperty.headers],
+    schemas: itemProperty.schemas,
+    localTypes: itemProperty.localTypes,
+    type: `std::vector<${itemProperty.type}>`,
+    defaultValue: propertyDetails.default
+      ? `{ ${propertyDetails.default} }`
+      : undefined,
+    readerHeaders: [
+      `"CesiumJsonReader/ArrayJsonHandler.h"`,
+      ...itemProperty.readerHeaders,
+    ],
+    readerType: `CesiumJsonReader::ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
+  };
+}
+
+function resolveDictionary(
+  schemaCache,
+  config,
+  parentName,
+  propertyName,
+  propertyDetails,
+  required
+) {
+  const additional = resolveProperty(
+    schemaCache,
+    config,
+    parentName,
+    propertyName + ".additionalProperties",
+    propertyDetails.additionalProperties,
+    // Treat the nested property type as required so it's not wrapped in std::optional.
+    [propertyName + ".additionalProperties"]
+  );
+
+  if (!additional) {
+    return undefined;
+  }
+
+  return {
+    ...propertyDefaults(propertyName, propertyDetails),
+    name: propertyName,
+    headers: ["<unordered_map>", ...additional.headers],
+    schemas: additional.schemas,
+    localTypes: additional.localTypes,
+    type: `std::unordered_map<std::string, ${additional.type}>`,
+    readerHeaders: [
+      `"CesiumJsonReader/DictionaryJsonHandler.h"`,
+      ...additional.readerHeaders,
+    ],
+    readerType: `CesiumJsonReader::DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
+  };
+}
+
+/**
+ * @brief Creates a documentation comment block for the class that
+ * contains the values for the given enum property.
+ *
+ * @param {Object} propertyValues The property
+ * @return {String} The comment block
+ */
+function createEnumPropertyDoc(propertyValues) {
+  let propertyDoc = `/**\n * @brief Known values for ${
+    propertyValues.briefDoc || propertyValues.name
+  }\n`;
+  propertyDoc += ` */`;
+  return propertyDoc;
+}
+
+/**
+ * Returns a string representing the common type of an "anyOf" property.
+ *
+ * If there is no common type (because it is not an "anyOf" property,
+ * or the "anyOf" entries don't contain "type" properties, or there
+ * are different "type" properties), then undefined is returned.
+ *
+ * @param {String} propertyName The property name
+ * @param {Object} propertyDetails The value of the property in the JSON
+ * schema. Good to know that. Used a debugger to figure it out.
+ * @returns The string indicating the common type, or undefined.
+ */
+function findCommonEnumType(propertyName, propertyDetails) {
+  if (!isEnum(propertyDetails)) {
+    return undefined;
+  }
+  let firstType = undefined;
+  for (let i = 0; i < propertyDetails.anyOf.length; i++) {
+    const element = propertyDetails.anyOf[i];
+    if (element.type) {
+      if (firstType) {
+        if (element.type !== firstType) {
+          console.warn(
+            "Expected equal types for enum values in " +
+              propertyName +
+              ", but found " +
+              firstType +
+              " and " +
+              element.type
+          );
+          return undefined;
+        }
+      } else {
+        firstType = element.type;
       }
-
-      this.#base = base;
-    }
-    this.#inheritedProps = lodash.uniq(inheritedProps);
-
-    const propEntries =
-      Object.keys(schema.properties || {})
-        .filter((name) => !inheritedProps.includes(name))
-        .map((name) => [name, context.create(schema.properties[name], name, this)]);
-    this.#properties = Object.fromEntries(propEntries);
-
-    if (this.#schema.additionalProperties) {
-      this.#additionalType = new SchemaAdditionalProperties(
-        this.#schema.additionalProperties, this.#context, this);
     }
   }
+  return firstType;
+}
 
-  get baseName() {
-    return this.#typeName;
+function resolveEnum(
+  schemaCache,
+  config,
+  parentName,
+  propertyName,
+  propertyDetails,
+  makeOptional
+) {
+  if (!isEnum(propertyDetails)) {
+    return undefined;
   }
 
-  get modelBase() {
-    return this.#modelBase;
+  const enumType = findCommonEnumType(propertyName, propertyDetails);
+  if (!enumType) {
+    return undefined;
+  }
+  const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
+
+  const enumName = toPascalCase(propertyName);
+
+  const readerTypes = createEnumReaderType(
+    parentName,
+    enumName,
+    propertyName,
+    propertyDetails
+  );
+
+  const propertyDefaultValues = propertyDefaults(propertyName, propertyDetails);
+  const enumBriefDoc =
+    propertyDefaultValues.briefDoc +
+    "\n * \n * Known values are defined in {@link " +
+    enumName +
+    "}.\n *";
+  const result = {
+    ...propertyDefaultValues,
+    localTypes: [
+      unindent(`
+        ${createEnumPropertyDoc(propertyDefaultValues)}
+        struct ${enumName} {
+            ${indent(
+              propertyDetails.anyOf
+                .map((e) => createEnum(e))
+                .filter((e) => e !== undefined)
+                .join(";\n\n") + ";",
+              12
+            )}
+        };
+      `),
+    ],
+    type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
+    headers: makeOptional ? ["<optional>"] : [],
+    defaultValue: createEnumDefault(enumName, propertyDetails),
+    readerHeaders: [`"CesiumGltf/${parentName}.h"`],
+    readerLocalTypes: readerTypes,
+    readerLocalTypesImpl: createEnumReaderTypeImpl(
+      parentName,
+      enumName,
+      propertyName,
+      propertyDetails
+    ),
+    needsInitialization: !makeOptional,
+    briefDoc: enumBriefDoc,
+  };
+
+  if (readerTypes.length > 0) {
+    result.readerType = `${enumName}JsonHandler`;
+  } else if (enumType === "integer") {
+    result.readerType = `CesiumJsonReader::IntegerJsonHandler<${enumRuntimeType}>`;
+    result.readerHeaders.push(`"CesiumJsonReader/IntegerJsonHandler.h"`);
+  } else if (enumType === "string") {
+    result.readerType = `CesiumJsonReader::StringJsonHandler`;
+    result.readerHeaders.push(`"CesiumJsonReader/StringJsonHandler.h"`);
   }
 
-  get readerBase() {
-    return this.#readerBase;
+  return result;
+}
+
+function getEnumValue(enumDetails) {
+  if (enumDetails.const !== undefined) {
+    return enumDetails.const;
   }
 
-  get model() {
-    return this.#typeName;
+  if (enumDetails.enum !== undefined && enumDetails.enum.length > 0) {
+    return enumDetails.enum[0];
   }
 
-  get reader() {
-    return this.#typeName + "JsonHandler";
+  return undefined;
+}
+
+function isEnum(propertyDetails) {
+  if (
+    propertyDetails.anyOf === undefined ||
+    propertyDetails.anyOf.length === 0
+  ) {
+    return false;
   }
 
-  get scopedModel() {
-    return this.#scope
-      .concat(this)
-      .map((t) => t.model)
-      .join("::");
-  }
+  const firstEnum = propertyDetails.anyOf[0];
+  const firstEnumValue = getEnumValue(firstEnum);
 
-  get scopedReader() {
-    return this.#scope
-      .concat(this)
-      .map((t) => t.reader)
-      .join("::");
-  }
+  return firstEnumValue !== undefined;
+}
 
-  get modelHeaders() {
-    return lodash.uniq(lodash.flatten(
-      this.properties.map((t) => t.modelHeaders).concat(this.modelBase.headers)
-    ));
-  }
-
-  get readerHeaders() {
-    return lodash.uniq(lodash.flatten(
-      this.properties.map((t) => t.readerHeaders).concat(this.readerBase.headers)
-    ));
-  }
-
-  #findSubtypes(target) {
-    const types = [];
-    let queue = Object.values(this.#properties).concat(this.#additionalType);
-    while (queue.length > 0) {
-      const objs = queue.filter((t) => t instanceof target);
-      types.push(...objs);
-      queue = queue.map((t) => {
-        if (t instanceof SchemaArray)
-          return t.elemType;
-        if (t instanceof SchemaAdditionalProperties)
-          return t.propType;
-        if (t instanceof SchemaEnum)
-          return t.valueType;
-        return undefined;
-      }).filter((t) => t);
+/**
+ * If ... many conditions hold, ... then this will return the name
+ * of the "initial" value of the given enum property.
+ *
+ * @param {Object} propertyDetails The property details
+ * @returns The name of the default property
+ */
+function findNameOfInitial(propertyDetails) {
+  if (propertyDetails.default !== undefined) {
+    for (let i = 0; i < propertyDetails.anyOf.length; i++) {
+      const element = propertyDetails.anyOf[i];
+      const enumValue = getEnumValue(element);
+      if (enumValue === propertyDetails.default) {
+        if (element.type === "integer") {
+          return element.description;
+        }
+        return `${makeIdentifier(enumValue)}`;
+      }
     }
-    if (this.#base instanceof target)
-      types.push(this.#base);
-    return types;
   }
-
-  get subtypes() {
-    return this.#findSubtypes(SchemaObject);
-  }
-
-  get enums() {
-    return this.#findSubtypes(SchemaEnum);
-  }
-
-  get refs() {
-    const resolved = {};
-    const depGraph = {};
-
-    const queue = [this];
-    while (queue.length > 0) {
-      const head = queue.pop();
-      if (resolved[head.baseName])
-        continue;
-
-      const refs = [head, ...head.subtypes].map((t) => t.#findSubtypes(SchemaRef));
-      const resolvedRefs = lodash.uniq(lodash.flatten(refs))
-        .map((ref) => ref.resolve())
-        .filter((ref) => ref.subtypes !== undefined);
-
-      queue.push(...resolvedRefs);
-      depGraph[head.baseName] = resolvedRefs.map((t) => t.baseName).filter((name) => name !== head.baseName);
-      resolved[head.baseName] = head;
+  // No explicit default value was found. Return the first value
+  for (let i = 0; i < propertyDetails.anyOf.length; i++) {
+    const element = propertyDetails.anyOf[i];
+    const enumValue = getEnumValue(element);
+    if (enumValue !== undefined) {
+      if (element.type === "integer") {
+        return element.description;
+      }
+      return `${makeIdentifier(enumValue)}`;
     }
+  }
+  return undefined;
+}
 
-    return topoSort(depGraph).map((name) => resolved[name]);
+function createEnumDefault(enumName, propertyDetails) {
+  return `${enumName}::${findNameOfInitial(propertyDetails)}`;
+}
+
+function createEnum(enumDetails) {
+  const enumValue = getEnumValue(enumDetails);
+  if (enumValue === undefined) {
+    return undefined;
   }
 
-  get properties() {
-    const requiredProps = this.#schema.required || [];
-    const props = Object.keys(this.#properties || {})
-      .map((name) => {
-        const propType = this.#properties[name];
-        const required = requiredProps.includes(name);
-        return new Property(name, propType, required);
-      });
-
-    if (this.#additionalType) {
-      const additional = new Property("additionalProperties", this.#additionalType, true);
-      props.push(additional);
-    }
-
-    return props;
-  }
-
-  get hasAdditional() {
-    return this.#additionalType !== undefined;
+  if (enumDetails.type === "integer") {
+    return `static constexpr int32_t ${makeIdentifier(
+      enumDetails.description
+    )} = ${enumValue}`;
+  } else {
+    return `inline static const std::string ${makeIdentifier(
+      enumValue
+    )} = \"${enumValue}\"`;
   }
 }
 
-class SchemaArray {
-  #schema;
-  #context;
-  #elemType;
-
-  constructor(schema, name, context) {
-    this.#schema = schema;
-    this.#context = context;
-    this.#elemType = context.create(this.#schema.items, name + "Item", this);
+function createEnumReaderType(
+  parentName,
+  enumName,
+  propertyName,
+  propertyDetails
+) {
+  if (propertyDetails.anyOf[0].type === "integer") {
+    // No special reader needed for integer enums.
+    return [];
   }
-
-  get baseName() {
-    return this.#elemType.baseName + "Array";
-  }
-
-  get elemType() {
-    return this.#elemType;
-  }
-
-  get default() {
-    return this.#schema.default ? `{ ${this.#schema.default} }` : undefined;
-  }
-
-  get model() {
-    return `std::vector<${this.elemType.model}>`;
-  }
-
-  get reader() {
-    return `CesiumJsonReader::ArrayJsonHandler<${this.#elemType.model}, ${this.#elemType.reader}>`;
-  }
-
-  get modelHeaders() {
-    return lodash.uniq([...this.#elemType.modelHeaders, "<vector>"]);
-  }
-
-  get readerHeaders() {
-    return lodash.uniq([...this.#elemType.readerHeaders, "<CesiumJsonReader/ArrayJsonHandler.h>"]);
-  }
-
-  get modelBase() {
-    return this.elemType.modelBase;
-  }
-
-  get readerBase() {
-    return this.elemType.readerBase;
-  }
-}
-
-class SchemaInteger {
-  #schema;
-
-  constructor(schema) {
-    this.#schema = schema;
-  }
-
-  get default() {
-    return this.#schema.default;
-  }
-
-  get baseName() {
-    return "Integer";
-  }
-
-  get model() {
-    return "int64_t";
-  }
-
-  get reader() {
-    return "CesiumJsonReader::IntegerJsonHandler<int64_t>";
-  }
-
-  get modelHeaders() {
-    return ["<cstdint>"];
-  }
-
-  get readerHeaders() {
-    return ["<CesiumJsonReader/IntegerJsonHandler.h>"];
-  }
-}
-
-class SchemaDouble {
-  #schema;
-
-  constructor(schema) {
-    this.#schema = schema;
-  }
-
-  get default() {
-    return this.#schema.default;
-  }
-
-  get baseName() {
-    return "Double";
-  }
-
-  get model() {
-    return "double";
-  }
-
-  get reader() {
-    return "CesiumJsonReader::DoubleJsonHandler";
-  }
-
-  get modelHeaders() {
+  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
+    // No special reader needed for string enums.
     return [];
   }
 
-  get readerHeaders() {
-    return ["<CesiumJsonReader/DoubleJsonHandler.h>"];
-  }
+  return unindent(`
+    class ${enumName}JsonHandler : public CesiumJsonReader::JsonHandler {
+    public:
+      ${enumName}JsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
+      void reset(CesiumJsonReader::IJsonHandler* pParent, ${parentName}::${enumName}* pEnum);
+      virtual CesiumJsonReader::IJsonHandler* readString(const std::string_view& str) override;
+
+    private:
+      ${parentName}::${enumName}* _pEnum = nullptr;
+    };
+  `);
 }
 
-class SchemaString {
-  #schema;
-
-  constructor(schema) {
-    this.#schema = schema;
+function createEnumReaderTypeImpl(
+  parentName,
+  enumName,
+  propertyName,
+  propertyDetails
+) {
+  if (propertyDetails.anyOf[0].type === "integer") {
+    // No special reader needed for integer enums.
+    return [];
   }
-
-  get default() {
-    return this.#schema.default ? `"${this.#schema.default}"` : undefined;
-  }
-
-  get baseName() {
-    return "String";
-  }
-
-  get model() {
-    return "std::string";
-  }
-
-  get reader() {
-    return "CesiumJsonReader::StringJsonHandler";
-  }
-
-  get modelHeaders() {
-    return ["<string>"];
-  }
-
-  get readerHeaders() {
-    return ["<CesiumJsonReader/StringJsonHandler.h>"];
-  }
-}
-
-class SchemaBool {
-  #schema;
-
-  constructor(schema) {
-    this.#schema = schema;
-  }
-
-  get default() {
-    return this.#schema.default;
-  }
-
-  get baseName() {
-    return "Bool";
-  }
-
-  get model() {
-    return "bool";
-  }
-
-  get reader() {
-    return "CesiumJsonReader::BoolJsonHandler";
-  }
-
-  get modelHeaders() {
+  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
+    // No special reader needed for string enums.
     return [];
   }
 
-  get readerHeaders() {
-    return ["<CesiumJsonReader/BoolJsonHandler.h>"];
+  return unindent(`
+    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(CesiumJsonReader::IJsonHandler* pParent, ${parentName}::${enumName}* pEnum) {
+      JsonHandler::reset(pParent);
+      this->_pEnum = pEnum;
+    }
+
+    CesiumJsonReader::IJsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::readString(const std::string_view& str) {
+      using namespace std::string_literals;
+
+      assert(this->_pEnum);
+
+      ${indent(
+        propertyDetails.anyOf
+          .map((e) => {
+            const enumValue = getEnumValue(e);
+            return enumValue !== undefined
+              ? `if ("${enumValue}"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(
+                  enumValue
+                )};`
+              : undefined;
+          })
+          .filter((s) => s !== undefined)
+          .join("\nelse "),
+        6
+      )}
+      else return nullptr;
+
+      return this->parent();
+    }
+  `);
+}
+
+function makeNameIntoValidIdentifier(name) {
+  if (cppReservedWords.indexOf(name) >= 0) {
+    name += "Property";
   }
+  return name;
 }
 
-
-function isJsonObject(details) {
-  return details.type === "object"
-      || details.$schema !== undefined
-      || details.properties !== undefined;
-}
-
-module.exports = {
-  Context: Context,
-};
+module.exports = resolveProperty;
