@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
+#include "Library.h"
 
 #include <cstdint>
 
@@ -20,7 +20,7 @@ public:
 
   /**
    * @brief This tile has a subtree that is known to be available.
-   * 
+   *
    * This implies that the tile itself must be available as well.
    */
   static const uint8_t SUBTREE_AVAILABLE = 4 | TILE_AVAILABLE;
@@ -31,8 +31,8 @@ public:
   static const uint8_t SUBTREE_LOADED = 8 | SUBTREE_AVAILABLE;
 
   /**
-   * @brief The tile is reachable through the tileset availability tree. 
-   * 
+   * @brief The tile is reachable through the tileset availability tree.
+   *
    * If a tile is not reachable, the above flags being false may simply
    * indicate that a subtree needed to reach this tile has not yet been loaded.
    */

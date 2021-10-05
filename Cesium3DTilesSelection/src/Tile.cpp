@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
+#include "CesiumGeometry/TileAvailabilityFlags.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -13,7 +14,6 @@
 #include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/AxisTransforms.h>
-#include "CesiumGeometry/TileAvailabilityFlags.h"
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Transforms.h>
 #include <CesiumGltf/Model.h>
@@ -826,10 +826,14 @@ void Tile::update(
         ne = implicitContext.rectangleAvailability->isTileAvailable(neID) ? 1
                                                                           : 0;
       } else if (implicitContext.quadtreeSubtreeAvailability) {
-        sw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(swID);
-        se = implicitContext.quadtreeSubtreeAvailability->computeAvailability(seID);
-        nw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(nwID);
-        ne = implicitContext.quadtreeSubtreeAvailability->computeAvailability(neID);
+        sw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
+            swID);
+        se = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
+            seID);
+        nw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
+            nwID);
+        ne = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
+            neID);
       }
 
       size_t childCount = sw + se + nw + ne;

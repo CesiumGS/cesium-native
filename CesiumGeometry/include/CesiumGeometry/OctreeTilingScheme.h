@@ -3,7 +3,9 @@
 #include "CesiumGeometry/AxisAlignedBox.h"
 #include "CesiumGeometry/Library.h"
 #include "CesiumGeometry/OctreeTileID.h"
+
 #include <glm/vec3.hpp>
+
 #include <optional>
 
 namespace CesiumGeometry {

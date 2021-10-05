@@ -1,12 +1,13 @@
 #pragma once
 
-#include "TileAvailabilityFlags.h"
+#include "Library.h"
 #include "QuadtreeTileID.h"
 #include "QuadtreeTilingScheme.h"
-#include "Library.h"
+#include "TileAvailabilityFlags.h"
+
+#include <gsl/span>
 
 #include <cstddef>
-#include <gsl/span>
 #include <memory>
 #include <vector>
 
@@ -27,7 +28,7 @@ public:
 
   /**
    * @brief Constructs a new instance.
-   * 
+   *
    * @param tilingScheme The {@link QuadtreeTilingScheme} to use with this
    * availability.
    */
@@ -35,22 +36,22 @@ public:
       const QuadtreeTilingScheme& tilingScheme) noexcept;
 
   /**
-   * @brief Determines the currently known availability status of the given 
+   * @brief Determines the currently known availability status of the given
    * tile.
-   * 
+   *
    * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for the tile.
-   * 
-   * @return The {@link TileAvailabilityFlags} for this tile encoded into a 
+   *
+   * @return The {@link TileAvailabilityFlags} for this tile encoded into a
    * uint8_t.
    */
   uint8_t computeAvailability(const QuadtreeTileID& tileID) const noexcept;
-  
+
   /**
    * @brief Attempts to add an availability subtree into the existing overall
    * availability tree.
-   * 
+   *
    * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for the tile.
-   * 
+   *
    * @return Whether the insertion was successful.
    */
   bool addSubtree(const QuadtreeTileID& tileID, Subtree&& subtree) noexcept;

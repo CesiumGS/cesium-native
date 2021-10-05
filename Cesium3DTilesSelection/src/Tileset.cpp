@@ -2016,7 +2016,7 @@ std::string Tileset::getResolvedSubtreeUrl(const Tile& tile) const {
     std::string operator()(const std::string& url) { return url; }
 
     std::string operator()(const QuadtreeTileID& quadtreeID) {
-      if (!this->context.implicitContext || 
+      if (!this->context.implicitContext ||
           !this->context.implicitContext->subtreeTemplateUrl) {
         return std::string();
       }
@@ -2042,8 +2042,8 @@ std::string Tileset::getResolvedSubtreeUrl(const Tile& tile) const {
     }
 
     std::string operator()(const OctreeTileID& octreeID) {
-       if (!this->context.implicitContext || 
-           !this->context.implicitContext->subtreeTemplateUrl) {
+      if (!this->context.implicitContext ||
+          !this->context.implicitContext->subtreeTemplateUrl) {
         return std::string();
       }
 

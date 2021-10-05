@@ -228,21 +228,19 @@ public:
   /**
    * @brief Returns the {@link CesiumGeometry::TileAvailabilityFlags} for this
    * tile encoded into a uint8_t.
-   * 
+   *
    * This function is not supposed to be called by clients.
-   * 
+   *
    * @return The availability.
    */
-  uint8_t getAvailability() const noexcept {
-    return this->_availability;
-  }
+  uint8_t getAvailability() const noexcept { return this->_availability; }
 
   /**
    * @brief Sets the availability as a uint8_t encoding the
    * {@link CesiumGeometry::TileAvailabilityFlags} for this tile.
-   * 
+   *
    * This function is not supposed to be called by clients.
-   * 
+   *
    * @param availability The availability information to set for this tile.
    */
   void setAvailability(const uint8_t availability) noexcept {

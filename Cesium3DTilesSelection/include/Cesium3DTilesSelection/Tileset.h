@@ -220,9 +220,9 @@ public:
 
   /**
    * @brief Request to load the availability subtree for the given tile.
-   * 
+   *
    * This function is not supposed to be called by client.
-   * 
+   *
    * @param tile The tile for which the subtree is requested.
    * @return A future that resolves when the subtree response is received, or
    * std::nullopt if this Tile cannot or does not need to load the subtree.

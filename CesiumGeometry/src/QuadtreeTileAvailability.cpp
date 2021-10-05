@@ -1,4 +1,5 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
+
 #include "CesiumGeometry/TileAvailabilityFlags.h"
 
 #include <glm/common.hpp>
@@ -68,12 +69,12 @@ uint8_t QuadtreeTileAvailability::isTileAvailable(
   // level n exists, then all its parent tiles back to level 0 exist too.  This
   // isn't really enforced anywhere, but Cesium would never load a tile for
   // which this is not true.
-  const CesiumGeometry::Rectangle rectangle = this->_tilingScheme.tileToRectangle(id);
+  const CesiumGeometry::Rectangle rectangle =
+      this->_tilingScheme.tileToRectangle(id);
   const glm::dvec2 center = rectangle.getCenter();
   if (this->computeMaximumLevelAtPosition(center) >= id.level) {
-    return 
-        TileAvailabilityFlags::TILE_AVAILABLE | 
-        TileAvailabilityFlags::REACHABLE;
+    return TileAvailabilityFlags::TILE_AVAILABLE |
+           TileAvailabilityFlags::REACHABLE;
   }
 
   return 0;

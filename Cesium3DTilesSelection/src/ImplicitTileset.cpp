@@ -1,4 +1,5 @@
 #include "Cesium3DTilesSelection/ImplicitTileset.h"
+
 #include "CesiumGeometry/OrientedBoundingBox.h"
 
 using namespace CesiumGeometry;

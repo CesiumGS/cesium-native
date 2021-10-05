@@ -1,12 +1,10 @@
 #pragma once
 
-#include "Tile.h"
-#include "TileContext.h"
-
 #include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
-
 #include "CesiumGeospatial/Projection.h"
+#include "Tile.h"
+#include "TileContext.h"
 
 namespace Cesium3DTilesSelection {
 

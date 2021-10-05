@@ -1,11 +1,11 @@
 #pragma once
 
 #include "BoundingRegion.h"
+#include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/Rectangle.h"
 #include "GeographicProjection.h"
 #include "WebMercatorProjection.h"
 
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/Rectangle.h"
 #include <variant>
 
 namespace CesiumGeospatial {
