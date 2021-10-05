@@ -36,6 +36,17 @@ public:
   std::vector<std::string> tileTemplateUrls;
 
   /**
+   * @brief The templates for the relative URLs of the subtree files.
+   *
+   * The template elements of these URLs may be `x`, `y`, or `z` (or `level`),
+   * and will be substituted with the corresponding information from
+   * a {@link CesiumGeometry::QuadtreeTileID}. The `version` template
+   * element will be substituted with the version number of the owning
+   * context.
+   */
+  std::optional<std::string> subtreeTemplateUrl;
+
+  /**
    * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} for this context.
    */
   std::optional<CesiumGeometry::QuadtreeTilingScheme> quadtreeTilingScheme;
@@ -72,7 +83,8 @@ public:
   std::optional<CesiumGeometry::QuadtreeTileAvailability> rectangleAvailability;
 
   /**
-   * @brief The {@link CesiumGeometry::}
+   * @brief The {@link CesiumGeometry::QuadtreeSubtreeAvailability} for this
+   * context.
    */
   std::optional<CesiumGeometry::QuadtreeSubtreeAvailability>
       quadtreeSubtreeAvailability;

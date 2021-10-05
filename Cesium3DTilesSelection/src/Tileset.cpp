@@ -470,6 +470,15 @@ Tileset::requestTileContent(Tile& tile) {
       tile.getContext()->requestHeaders);
 }
 
+std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+requestAvailabilitySubtree(Tile& tile) {
+  if (tile.getContext()->implicitContext) {
+
+  }
+
+  return std::nullopt;
+}
+
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {
   this->_contexts.push_back(std::move(pNewContext));
 }
@@ -962,6 +971,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
 
   context.implicitContext = {
       urls,
+      std::nullopt,
       tilingScheme,
       std::nullopt,
       boundingVolume,
@@ -1928,6 +1938,80 @@ std::string Tileset::getResolvedContentUrl(const Tile& tile) const {
 
       return CesiumUtility::Uri::substituteTemplateParameters(
           context.implicitContext.value().tileTemplateUrls[0],
+          [this, &octreeID](const std::string& placeholder) -> std::string {
+            if (placeholder == "level") {
+              return std::to_string(octreeID.level);
+            }
+            if (placeholder == "x") {
+              return std::to_string(octreeID.x);
+            }
+            if (placeholder == "y") {
+              return std::to_string(octreeID.y);
+            }
+            if (placeholder == "z") {
+              return std::to_string(octreeID.z);
+            }
+            if (placeholder == "version") {
+              return this->context.version.value_or(std::string());
+            }
+
+            return placeholder;
+          });
+    }
+
+    std::string operator()(UpsampledQuadtreeNode /*subdividedParent*/) {
+      return std::string();
+    }
+  };
+
+  std::string url = std::visit(Operation{*tile.getContext()}, tile.getTileID());
+  if (url.empty()) {
+    return url;
+  }
+
+  return CesiumUtility::Uri::resolve(tile.getContext()->baseUrl, url, true);
+}
+
+std::string Tileset::getResolvedSubtreeUrl(const Tile& tile) const {
+  struct Operation {
+    const TileContext& context;
+
+    std::string operator()(const std::string& url) { return url; }
+
+    std::string operator()(const QuadtreeTileID& quadtreeID) {
+      if (!this->context.implicitContext || 
+          !this->context.implicitContext->subtreeTemplateUrl) {
+        return std::string();
+      }
+
+      return CesiumUtility::Uri::substituteTemplateParameters(
+          *this->context.implicitContext.value().subtreeTemplateUrl,
+          [this, &quadtreeID](const std::string& placeholder) -> std::string {
+            if (placeholder == "level" || placeholder == "z") {
+              return std::to_string(quadtreeID.level);
+            }
+            if (placeholder == "x") {
+              return std::to_string(quadtreeID.x);
+            }
+            if (placeholder == "y") {
+              return std::to_string(quadtreeID.y);
+            }
+            if (placeholder == "version") {
+              return this->context.version.value_or(std::string());
+            }
+
+            return placeholder;
+          });
+    }
+
+    std::string operator()(const OctreeTileID& octreeID) {
+       if (!this->context.implicitContext || 
+           !this->context.implicitContext->subtreeTemplateUrl) {
+        return std::string();
+      }
+
+      return CesiumUtility::Uri::substituteTemplateParameters(
+          *this->context.implicitContext.value().subtreeTemplateUrl,
           [this, &octreeID](const std::string& placeholder) -> std::string {
             if (placeholder == "level") {
               return std::to_string(octreeID.level);

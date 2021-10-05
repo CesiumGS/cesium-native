@@ -8,6 +8,7 @@
 #include "CesiumAsync/ITaskProcessor.h"
 #include "CesiumGeometry/Axis.h"
 #include "CesiumGeometry/AxisTransforms.h"
+#include "CesiumGeometry/TileAvailabilityFlags.h"
 #include "CesiumGeospatial/Transforms.h"
 #include "CesiumGltf/Model.h"
 #include "CesiumUtility/Tracing.h"
@@ -433,7 +434,7 @@ static void createImplicitQuadtreeTile(
     Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
-    bool available) {
+    uint8_t available) {
 
   if (!implicitContext.quadtreeTilingScheme) {
     return;
@@ -444,7 +445,7 @@ static void createImplicitQuadtreeTile(
 
   if (available) {
     child.setTileID(childID);
-  } else {
+  } else /*if (upsample) */ {
     child.setTileID(UpsampledQuadtreeNode{childID});
   }
 
@@ -796,18 +797,10 @@ void Tile::update(
         ne = implicitContext.rectangleAvailability->isTileAvailable(neID) ? 1
                                                                           : 0;
       } else if (implicitContext.quadtreeSubtreeAvailability) {
-        sw = implicitContext.quadtreeSubtreeAvailability->isTileAvailable(swID)
-                 ? 1
-                 : 0;
-        se = implicitContext.quadtreeSubtreeAvailability->isTileAvailable(seID)
-                 ? 1
-                 : 0;
-        nw = implicitContext.quadtreeSubtreeAvailability->isTileAvailable(nwID)
-                 ? 1
-                 : 0;
-        ne = implicitContext.quadtreeSubtreeAvailability->isTileAvailable(neID)
-                 ? 1
-                 : 0;
+        sw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(swID);
+        se = implicitContext.quadtreeSubtreeAvailability->computeAvailability(seID);
+        nw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(nwID);
+        ne = implicitContext.quadtreeSubtreeAvailability->computeAvailability(neID);
       }
 
       size_t childCount = sw + se + nw + ne;

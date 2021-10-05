@@ -507,6 +507,7 @@ private:
   void _markTileVisited(Tile& tile);
 
   std::string getResolvedContentUrl(const Tile& tile) const;
+  std::string getResolvedSubtreeUrl(const Tile& tile) const;
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;

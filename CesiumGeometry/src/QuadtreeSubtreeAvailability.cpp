@@ -109,10 +109,10 @@ QuadtreeSubtreeAvailability::QuadtreeSubtreeAvailability(
     const QuadtreeTilingScheme& tilingScheme) noexcept
     : _tilingScheme(tilingScheme), _maximumLevel(0), _pRoot(nullptr) {}
 
-bool QuadtreeSubtreeAvailability::isTileAvailable(
+uint8_t QuadtreeSubtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID) const noexcept {
   if (!this->_pRoot || tileID.level > this->_maximumLevel) {
-    return false;
+    return 0;
   }
 
   uint32_t level = 0;
@@ -129,6 +129,7 @@ bool QuadtreeSubtreeAvailability::isTileAvailable(
 
     if (levelDifference < subtree.levels) {
       // The availability info is within this subtree.
+      uint8_t availability = TileAvailabilityFlags::REACHABLE;
 
       // For reference:
       // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
@@ -137,35 +138,50 @@ bool QuadtreeSubtreeAvailability::isTileAvailable(
       uint64_t offset = ((1 << (levelDifference << 1)) - 1) / 3;
 
       uint64_t availabilityIndex = mortonIndex + offset;
+      uint64_t byteIndex = availabilityIndex >> 3;
+      uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
+      uint8_t bitMask = 1 << bitIndex;
 
-      return
-          // Take the closest byte of availability data...
-          (uint8_t)subtree.tileAvailability[availabilityIndex >> 3] &
-          // ... and only take the needed bit from that byte.
-          (1 << (availabilityIndex & 7));
+      // Check tile availability.
+      if ((uint8_t)subtree.tileAvailability[byteIndex] & bitIndex) {
+        availability |= TileAvailabilityFlags::TILE_AVAILABLE;
+      }
+
+      // Check content availability.
+      if ((uint8_t)subtree.tileAvailability[byteIndex] & bitIndex) {
+        availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
+      }
+
+      // If this is the 0th level within the subtree, we know this tile's
+      // subtree is available and loaded.
+      if (levelDifference == 0) {
+        availabilityIndex |= TileAvailabilityFlags::SUBTREE_LOADED;
+      }
+
+      return availability;
     }
 
     // Check if the needed child subtree exists.
     uint64_t byteIndex = mortonIndex >> 3;
-    uint8_t indexWithinByte = static_cast<uint8_t>(mortonIndex & 7);
+    uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
 
     gsl::span<const std::byte> clippedSubtreeAvailability =
         subtree.subtreeAvailability.subspan(0, byteIndex);
     uint8_t availabilityByte = (uint8_t)subtree.subtreeAvailability[byteIndex];
 
-    if (availabilityByte & (1 << indexWithinByte)) {
+    if (availabilityByte & (1 << bitIndex)) {
       // The child subtree is available, so calculate the index it's stored in.
       uint64_t childSubtreeIndex =
           // TODO: maybe partial sums should be precomputed in the subtree
           // availability, instead of iterating through the buffer each time.
           countOnesInBuffer(clippedSubtreeAvailability) +
-          countOnesInByte(availabilityByte >> (8 - indexWithinByte));
+          countOnesInByte(availabilityByte >> (8 - bitIndex));
 
       pNode = pNode->childNodes[childSubtreeIndex].get();
       level += subtree.levels;
     } else {
       // The child subtree containing the tile id is not available.
-      return false;
+      return TileAvailabilityFlags::REACHABLE;
     }
   }
 
@@ -174,7 +190,13 @@ bool QuadtreeSubtreeAvailability::isTileAvailable(
   // loaded.
   assert(pNode == nullptr);
 
-  return false;
+  // This means the tile was the root of a subtree that was available, but not
+  // loaded. It is not reachable though, pending the load of the subtree.
+  if (tileID.level == level) {
+    return TileAvailabilityFlags::SUBTREE_AVAILABLE;
+  }
+
+  return 0;
 }
 
 bool QuadtreeSubtreeAvailability::addSubtree(

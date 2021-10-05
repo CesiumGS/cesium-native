@@ -57,9 +57,10 @@ public:
    * the x- and y- coordinates of the queried tile.
    *
    * @param id The quadtree tile ID.
-   * @returns Whether the tile is available.
+   * @returns The {@link CesiumGeometry::TileAvailabilityFlags} for this tile,
+   * encoded into an uint8_t.
    */
-  bool isTileAvailable(const QuadtreeTileID& id) const noexcept;
+  uint8_t isTileAvailable(const QuadtreeTileID& id) const noexcept;
 
 private:
   struct RectangleWithLevel {

@@ -1,4 +1,5 @@
 #include "CesiumGeometry/QuadtreeTileAvailability.h"
+#include "CesiumGeometry/TileAvailabilityFlags.h"
 #include <algorithm>
 #include <glm/common.hpp>
 
@@ -57,7 +58,7 @@ uint32_t QuadtreeTileAvailability::computeMaximumLevelAtPosition(
   return 0;
 }
 
-bool QuadtreeTileAvailability::isTileAvailable(
+uint8_t QuadtreeTileAvailability::isTileAvailable(
     const QuadtreeTileID& id) const noexcept {
   // Get the center of the tile and find the maximum level at that position.
   // Because availability is by tile, if the level is available at that point,
@@ -67,7 +68,11 @@ bool QuadtreeTileAvailability::isTileAvailable(
   // which this is not true.
   CesiumGeometry::Rectangle rectangle = this->_tilingScheme.tileToRectangle(id);
   glm::dvec2 center = rectangle.getCenter();
-  return this->computeMaximumLevelAtPosition(center) >= id.level;
+  if (this->computeMaximumLevelAtPosition(center) >= id.level) {
+    return 
+        TileAvailabilityFlags::TILE_AVAILABLE | 
+        TileAvailabilityFlags::REACHABLE;
+  }
 }
 
 /*static*/ void QuadtreeTileAvailability::putRectangleInQuadtree(
