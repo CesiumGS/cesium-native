@@ -33,6 +33,7 @@ Tile::Tile() noexcept
     : _pContext(nullptr),
       _pParent(nullptr),
       _children(),
+      _availability(0),
       _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat4())),
       _viewerRequestVolume(),
       _geometricError(0.0),
@@ -52,6 +53,7 @@ Tile::Tile(Tile&& rhs) noexcept
     : _pContext(rhs._pContext),
       _pParent(rhs._pParent),
       _children(std::move(rhs._children)),
+      _availability(rhs._availability),
       _boundingVolume(rhs._boundingVolume),
       _viewerRequestVolume(rhs._viewerRequestVolume),
       _geometricError(rhs._geometricError),
@@ -71,6 +73,7 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_pContext = rhs._pContext;
     this->_pParent = rhs._pParent;
     this->_children = std::move(rhs._children);
+    this->_availability = rhs._availability;
     this->_boundingVolume = rhs._boundingVolume;
     this->_viewerRequestVolume = rhs._viewerRequestVolume;
     this->_geometricError = rhs._geometricError;
@@ -458,7 +461,7 @@ static void createImplicitQuadtreeTile(
     Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
-    uint8_t available) {
+    uint8_t availability) {
 
   if (!implicitContext.quadtreeTilingScheme) {
     return;
@@ -466,8 +469,9 @@ static void createImplicitQuadtreeTile(
 
   child.setContext(parent.getContext());
   child.setParent(&parent);
+  child.setAvailability(availability);
 
-  if (available) {
+  if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);
   } else /*if (upsample) */ {
     child.setTileID(UpsampledQuadtreeNode{childID});
@@ -807,10 +811,10 @@ void Tile::update(
       const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
       const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
 
-      uint32_t sw = 0;
-      uint32_t se = 0;
-      uint32_t nw = 0;
-      uint32_t ne = 0;
+      uint8_t sw = 0;
+      uint8_t se = 0;
+      uint8_t nw = 0;
+      uint8_t ne = 0;
 
       if (implicitContext.rectangleAvailability) {
         sw = implicitContext.rectangleAvailability->isTileAvailable(swID) ? 1

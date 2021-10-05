@@ -17,6 +17,7 @@
 #include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -470,6 +471,12 @@ Tileset::requestTileContent(Tile& tile) {
     return std::nullopt;
   }
 
+  // For implicit tiles, check if they have any content.
+  if (tile.getContext()->implicitContext &&
+      !(tile.getAvailability() & TileAvailabilityFlags::CONTENT_AVAILABLE)) {
+    return std::nullopt;
+  }
+
   this->notifyTileStartLoading(&tile);
 
   return this->getExternals().pAssetAccessor->requestAsset(
@@ -479,12 +486,23 @@ Tileset::requestTileContent(Tile& tile) {
 }
 
 std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
-requestAvailabilitySubtree(Tile& tile) {
-  if (tile.getContext()->implicitContext) {
+Tileset::requestAvailabilitySubtree(Tile& tile) {
+  std::string url = this->getResolvedSubtreeUrl(tile);
+  uint8_t availability = tile.getAvailability();
 
+  if (!tile.getContext()->implicitContext ||
+      !(availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) ||
+      availability & TileAvailabilityFlags::SUBTREE_LOADED) {
+    return std::nullopt;
   }
 
-  return std::nullopt;
+  // TODO: How should we incorporate this into the tile load throttling system?
+  // i.e. "this->notifyTileStartLoading(&this)"
+
+  return this->getExternals().pAssetAccessor->requestAsset(
+      this->getAsyncSystem(),
+      url,
+      tile.getContext()->requestHeaders);
 }
 
 void Tileset::addContext(std::unique_ptr<TileContext>&& pNewContext) {

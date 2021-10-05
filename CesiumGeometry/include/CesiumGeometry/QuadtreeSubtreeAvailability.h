@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "TileAvailabilityFlags.h"
+#include "QuadtreeTileID.h"
+#include "QuadtreeTilingScheme.h"
+#include "Library.h"
+
 #include <cstddef>
 #include <gsl/span>
 #include <memory>

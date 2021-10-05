@@ -143,12 +143,12 @@ uint8_t QuadtreeSubtreeAvailability::computeAvailability(
       uint8_t bitMask = 1 << bitIndex;
 
       // Check tile availability.
-      if ((uint8_t)subtree.tileAvailability[byteIndex] & bitIndex) {
+      if ((uint8_t)subtree.tileAvailability[byteIndex] & bitMask) {
         availability |= TileAvailabilityFlags::TILE_AVAILABLE;
       }
 
       // Check content availability.
-      if ((uint8_t)subtree.tileAvailability[byteIndex] & bitIndex) {
+      if ((uint8_t)subtree.tileAvailability[byteIndex] & bitMask) {
         availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
       }
 

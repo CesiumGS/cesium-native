@@ -75,6 +75,8 @@ uint8_t QuadtreeTileAvailability::isTileAvailable(
         TileAvailabilityFlags::TILE_AVAILABLE | 
         TileAvailabilityFlags::REACHABLE;
   }
+
+  return 0;
 }
 
 /*static*/ void QuadtreeTileAvailability::putRectangleInQuadtree(
