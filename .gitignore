@@ -5,3 +5,4 @@ node_modules
 .vs
 CMakeSettings.json
 *.user
+.cache
