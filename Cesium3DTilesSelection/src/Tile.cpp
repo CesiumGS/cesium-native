@@ -815,10 +815,9 @@ void Tile::update(
             }
           } else if (context.quadtreeSubtreeAvailability) {
             if (this->_pContent->subtreeLoadResult) {
-              // TODO: next
-              // context.quadtreeSubtreeAvailability->addSubtree(
-              //    *pQuadtreeTileID,
-              //    std::move(*this->_pContent->subtreeLoadResult));
+              context.quadtreeSubtreeAvailability->addSubtree(
+                  *pQuadtreeTileID,
+                  std::move(*this->_pContent->subtreeLoadResult));
             }
           }
         } else if (

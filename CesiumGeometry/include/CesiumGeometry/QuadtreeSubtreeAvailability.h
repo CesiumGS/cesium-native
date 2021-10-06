@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AvailabilityTree.h"
 #include "Library.h"
 #include "QuadtreeTileID.h"
 #include "QuadtreeTilingScheme.h"
@@ -42,42 +43,20 @@ public:
    * availability tree.
    *
    * @param tileID The {@link CesiumGeometry::QuadtreeTileID} for the tile.
+   * @param newSubtree The {@link CesiumGeometry::AvailabilitySubtree} to add.
    *
    * @return Whether the insertion was successful.
    */
   bool addSubtree(
       const QuadtreeTileID& tileID,
-      std::vector<std::byte>&& data) noexcept;
+      AvailabilitySubtree&& newSubtree) noexcept;
 
 private:
-  struct Subtree {
-    std::vector<std::byte> bitstream;
-    gsl::span<const std::byte> tileAvailability;
-    gsl::span<const std::byte> contentAvailability;
-    gsl::span<const std::byte> subtreeAvailability;
-  };
-
-  struct Node {
-    Subtree subtree;
-    std::vector<std::unique_ptr<Node>> childNodes;
-
-    Node(Subtree&& subtree_);
-  };
-
-  std::optional<Subtree>
-  _createSubtree(std::vector<std::byte>&& data) const noexcept;
-
   QuadtreeTilingScheme _tilingScheme;
   uint32_t _subtreeLevels;
   uint32_t _maximumLevel;
-  std::unique_ptr<Node> _pRoot;
-
-  // precomputed values
-  uint32_t _2PowSubtreeLevels;
-  size_t _subtreeAvailabilitySize;
-  size_t _tileAvailabilitySize;
-  size_t _tilePlusContentAvailabilitySize;
-  size_t _subtreeBufferSize;
+  uint32_t _maximumChildrenSubtrees;
+  std::unique_ptr<AvailabilityNode> _pRoot;
 };
 
 } // namespace CesiumGeometry

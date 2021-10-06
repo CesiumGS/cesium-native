@@ -30,6 +30,7 @@ public:
    */
   static const uint8_t SUBTREE_LOADED = 8 | SUBTREE_AVAILABLE;
 
+  // TODO: is REACHABLE needed? Reevaluate after implementation
   /**
    * @brief The tile is reachable through the tileset availability tree.
    *
