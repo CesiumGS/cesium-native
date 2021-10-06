@@ -11,15 +11,15 @@
 
 namespace CesiumGltf {
 /**
- * @brief Image data used to create a texture. Image can be referenced by URI or
- * `bufferView` index. `mimeType` is required in the latter case.
+ * @brief Image data used to create a texture. Image **MAY** be referenced by an
+ * URI (or IRI) or a buffer view index.
  */
 struct CESIUMGLTF_API ImageSpec : public NamedObject {
   static inline constexpr const char* TypeName = "Image";
 
   /**
-   * @brief Known values for The image's MIME type. Required if `bufferView` is
-   * defined.
+   * @brief Known values for The image's media type. This field **MUST** be
+   * defined when `bufferView` is defined.
    */
   struct MimeType {
     inline static const std::string image_jpeg = "image/jpeg";
@@ -28,16 +28,17 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
   };
 
   /**
-   * @brief The uri of the image.
+   * @brief The URI (or IRI) of the image.
    *
-   * Relative paths are relative to the .gltf file.  Instead of referencing an
-   * external file, the uri can also be a data-uri.  The image format must be
-   * jpg or png.
+   * Relative paths are relative to the current glTF asset.  Instead of
+   * referencing an external file, this field **MAY** contain a `data:`-URI.
+   * This field **MUST NOT** be defined when `bufferView` is defined.
    */
   std::optional<std::string> uri;
 
   /**
-   * @brief The image's MIME type. Required if `bufferView` is defined.
+   * @brief The image's media type. This field **MUST** be defined when
+   * `bufferView` is defined.
    *
    * Known values are defined in {@link MimeType}.
    *
@@ -45,8 +46,8 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
   std::optional<std::string> mimeType = MimeType::image_jpeg;
 
   /**
-   * @brief The index of the bufferView that contains the image. Use this
-   * instead of the image's uri property.
+   * @brief The index of the bufferView that contains the image. This field
+   * **MUST NOT** be defined when `uri` is defined.
    */
   int32_t bufferView = -1;
 

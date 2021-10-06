@@ -31,7 +31,7 @@ struct CESIUMGLTF_API ModelSpec : public ExtensibleObject {
   static inline constexpr const char* TypeName = "Model";
 
   /**
-   * @brief Names of glTF extensions used somewhere in this asset.
+   * @brief Names of glTF extensions used in this asset.
    */
   std::vector<std::string> extensionsUsed;
 
@@ -114,6 +114,8 @@ struct CESIUMGLTF_API ModelSpec : public ExtensibleObject {
 
   /**
    * @brief The index of the default scene.
+   *
+   * This property **MUST NOT** be defined, when `scenes` is undefined.
    */
   int32_t scene = -1;
 

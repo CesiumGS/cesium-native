@@ -12,16 +12,13 @@
 
 namespace CesiumGltf {
 /**
- * @brief A typed view into a bufferView.  A bufferView contains raw binary
- * data.  An accessor provides a typed view into a bufferView or a subset of a
- * bufferView similar to how WebGL's `vertexAttribPointer()` defines an
- * attribute in a buffer.
+ * @brief A typed view into a buffer view that contains raw binary data.
  */
 struct CESIUMGLTF_API AccessorSpec : public NamedObject {
   static inline constexpr const char* TypeName = "Accessor";
 
   /**
-   * @brief Known values for The datatype of components in the attribute.
+   * @brief Known values for The datatype of the accessor's components.
    */
   struct ComponentType {
     static constexpr int32_t BYTE = 5120;
@@ -38,8 +35,8 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
   };
 
   /**
-   * @brief Known values for Specifies if the attribute is a scalar, vector, or
-   * matrix.
+   * @brief Known values for Specifies if the accessor's elements are scalars,
+   * vectors, or matrices.
    */
   struct Type {
     inline static const std::string SCALAR = "SCALAR";
@@ -60,52 +57,52 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
   /**
    * @brief The index of the bufferView.
    *
-   * When not defined, accessor must be initialized with zeros; `sparse`
-   * property or extensions could override zeros with actual values.
+   * The index of the buffer view. When undefined, the accessor **MUST** be
+   * initialized with zeros; `sparse` property or extensions **MAY** override
+   * zeros with actual values.
    */
   int32_t bufferView = -1;
 
   /**
-   * @brief The offset relative to the start of the bufferView in bytes.
+   * @brief The offset relative to the start of the buffer view in bytes.
    *
-   * This must be a multiple of the size of the component datatype.
+   * This **MUST** be a multiple of the size of the component datatype. This
+   * property **MUST NOT** be defined when `bufferView` is undefined.
    */
   int64_t byteOffset = 0;
 
   /**
-   * @brief The datatype of components in the attribute.
+   * @brief The datatype of the accessor's components.
    *
    * Known values are defined in {@link ComponentType}.
    *
    *
-   * All valid values correspond to WebGL enums.  The corresponding typed arrays
-   * are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`,
-   * and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when
-   * the accessor contains indices, i.e., the accessor is only referenced by
-   * `primitive.indices`.
+   * UNSIGNED_INT type **MUST NOT** be used for any accessor that is not
+   * referenced by `mesh.primitive.indices`.
    */
   int32_t componentType = ComponentType::BYTE;
 
   /**
-   * @brief Specifies whether integer data values should be normalized.
+   * @brief Specifies whether integer data values are normalized before usage.
    *
-   * Specifies whether integer data values should be normalized (`true`) to [0,
-   * 1] (for unsigned types) or [-1, 1] (for signed types), or converted
-   * directly (`false`) when they are accessed. This property is defined only
-   * for accessors that contain vertex attributes or animation output data.
+   * Specifies whether integer data values are normalized (`true`) to [0, 1]
+   * (for unsigned types) or to [-1, 1] (for signed types) when they are
+   * accessed. This property **MUST NOT** be set to `true` for accessors with
+   * `FLOAT` or `UNSIGNED_INT` component type.
    */
   bool normalized = false;
 
   /**
-   * @brief The number of attributes referenced by this accessor.
+   * @brief The number of elements referenced by this accessor.
    *
-   * The number of attributes referenced by this accessor, not to be confused
-   * with the number of bytes or number of components.
+   * The number of elements referenced by this accessor, not to be confused with
+   * the number of bytes or number of components.
    */
   int64_t count = int64_t();
 
   /**
-   * @brief Specifies if the attribute is a scalar, vector, or matrix.
+   * @brief Specifies if the accessor's elements are scalars, vectors, or
+   * matrices.
    *
    * Known values are defined in {@link Type}.
    *
@@ -113,37 +110,37 @@ struct CESIUMGLTF_API AccessorSpec : public NamedObject {
   std::string type = Type::SCALAR;
 
   /**
-   * @brief Maximum value of each component in this attribute.
+   * @brief Maximum value of each component in this accessor.
    *
-   * Array elements must be treated as having the same data type as accessor's
-   * `componentType`. Both min and max arrays have the same length.  The length
-   * is determined by the value of the type property; it can be 1, 2, 3, 4, 9,
-   * or 16.
+   * Array elements **MUST** be treated as having the same data type as
+   * accessor's `componentType`. Both `min` and `max` arrays have the same
+   * length.  The length is determined by the value of the `type` property; it
+   * can be 1, 2, 3, 4, 9, or 16.
    *
    * `normalized` property has no effect on array values: they always correspond
-   * to the actual values stored in the buffer. When accessor is sparse, this
-   * property must contain max values of accessor data with sparse substitution
-   * applied.
+   * to the actual values stored in the buffer. When the accessor is sparse,
+   * this property **MUST** contain maximum values of accessor data with sparse
+   * substitution applied.
    */
   std::vector<double> max;
 
   /**
-   * @brief Minimum value of each component in this attribute.
+   * @brief Minimum value of each component in this accessor.
    *
-   * Array elements must be treated as having the same data type as accessor's
-   * `componentType`. Both min and max arrays have the same length.  The length
-   * is determined by the value of the type property; it can be 1, 2, 3, 4, 9,
-   * or 16.
+   * Array elements **MUST** be treated as having the same data type as
+   * accessor's `componentType`. Both `min` and `max` arrays have the same
+   * length.  The length is determined by the value of the `type` property; it
+   * can be 1, 2, 3, 4, 9, or 16.
    *
    * `normalized` property has no effect on array values: they always correspond
-   * to the actual values stored in the buffer. When accessor is sparse, this
-   * property must contain min values of accessor data with sparse substitution
-   * applied.
+   * to the actual values stored in the buffer. When the accessor is sparse,
+   * this property **MUST** contain minimum values of accessor data with sparse
+   * substitution applied.
    */
   std::vector<double> min;
 
   /**
-   * @brief Sparse storage of attributes that deviate from their initialization
+   * @brief Sparse storage of elements that deviate from their initialization
    * value.
    */
   std::optional<AccessorSparse> sparse;

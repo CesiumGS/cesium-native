@@ -16,7 +16,8 @@ struct CESIUMGLTF_API BufferView final : public NamedObject {
   static inline constexpr const char* TypeName = "BufferView";
 
   /**
-   * @brief Known values for The target that the GPU buffer should be bound to.
+   * @brief Known values for The hint representing the intended GPU buffer type
+   * to use with this buffer view.
    */
   struct Target {
     static constexpr int32_t ARRAY_BUFFER = 34962;
@@ -43,13 +44,14 @@ struct CESIUMGLTF_API BufferView final : public NamedObject {
    * @brief The stride, in bytes.
    *
    * The stride, in bytes, between vertex attributes.  When this is not defined,
-   * data is tightly packed. When two or more accessors use the same bufferView,
-   * this field must be defined.
+   * data is tightly packed. When two or more accessors use the same buffer
+   * view, this field **MUST** be defined.
    */
   std::optional<int64_t> byteStride;
 
   /**
-   * @brief The target that the GPU buffer should be bound to.
+   * @brief The hint representing the intended GPU buffer type to use with this
+   * buffer view.
    *
    * Known values are defined in {@link Target}.
    *

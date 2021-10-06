@@ -21,10 +21,11 @@ struct CESIUMGLTF_API FeatureTableProperty final : public ExtensibleObject {
    * `type` is `BOOLEAN` values are packed into a bitfield. When `type` is
    * `STRING` values are stored as byte sequences and decoded as UTF-8 strings.
    * When `type` is a numeric type values are stored as the provided `type`.
-   * When `type` is `ENUM` values are stored as the enum's `valueType`. When
-   * `type` is `ARRAY` elements are packed tightly together and the data type is
-   * based on the `componentType` following the same rules as above.
-   * `arrayOffsetBufferView` is required for variable-size arrays and
+   * When `type` is `ENUM` values are stored as the enum's `valueType`. Each
+   * enum value in the buffer must match one of the allowed values in the enum
+   * definition. When `type` is `ARRAY` elements are packed tightly together and
+   * the data type is based on the `componentType` following the same rules as
+   * above. `arrayOffsetBufferView` is required for variable-size arrays and
    * `stringOffsetBufferView` is required for strings (for variable-length
    * arrays of strings, both are required). The buffer view `byteOffset` must be
    * aligned to a multiple of 8 bytes. If the buffer view's `buffer` is the
