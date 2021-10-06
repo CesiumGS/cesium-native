@@ -49,6 +49,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
    * @param pLogger The logger that will be used
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pRequest The original tile request and its response.
+   * @param pSubtreeRequest The original subtree request and its response.
    * @param tile The {@link Tile} that the content belongs to.
    */
   TileContentLoadInput(
@@ -56,6 +57,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
+      const std::shared_ptr<CesiumAsync::IAssetRequest>& pSubtreeRequest,
       const Tile& tile);
 
   /**
@@ -65,6 +67,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
    * @param pLogger The logger that will be used
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pRequest The original tile request and its response.
+   * @param pSubtreeRequest The original subtree request and its response.
    * @param tileID The {@link TileID}
    * @param tileBoundingVolume The tile {@link BoundingVolume}
    * @param tileContentBoundingVolume The tile content {@link BoundingVolume}
@@ -77,6 +80,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
+      const std::shared_ptr<CesiumAsync::IAssetRequest>& pSubtreeRequest,
       const TileID& tileID,
       const BoundingVolume& tileBoundingVolume,
       const std::optional<BoundingVolume>& tileContentBoundingVolume,
@@ -101,9 +105,17 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
   /**
-   * @brief The asset request and response data for the tile.
+   * @brief The content asset request and response data for the tile.
    */
   std::shared_ptr<CesiumAsync::IAssetRequest> pRequest;
+
+  /**
+   * @brief The subtree asset request and response data for the tile.
+   *
+   * Only applicable if implicit tiling is used and this tile is the root of an
+   * availability subtree.
+   */
+  std::shared_ptr<CesiumAsync::IAssetRequest> pSubtreeRequest;
 
   /**
    * @brief The {@link TileID}.

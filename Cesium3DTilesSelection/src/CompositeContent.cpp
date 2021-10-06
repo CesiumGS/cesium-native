@@ -109,6 +109,7 @@ TileContentLoadInput derive(
       input.pLogger,
       input.pAssetAccessor,
       std::make_shared<DerivedInnerRequest>(input.pRequest, derivedData),
+      input.pSubtreeRequest,
       input.tileID,
       input.tileBoundingVolume,
       input.tileContentBoundingVolume,

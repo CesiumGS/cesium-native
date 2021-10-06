@@ -4,7 +4,6 @@
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/ITileExcluder.h"
-#include "Cesium3DTilesSelection/ImplicitTileset.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
@@ -922,7 +921,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
         };
 
         const char* tilingScheme = tilingSchemeIt->value.GetString();
-        if (std::strcmp(tilingScheme, "QUADTREE")) {
+        if (!std::strcmp(tilingScheme, "QUADTREE")) {
           if (pRegion) {
             implicitContext.quadtreeTilingScheme = QuadtreeTilingScheme(
                 projectRectangleSimple(
@@ -964,7 +963,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             tile.setContext(pNewContext.get());
             tile.getTileset()->addContext(std::move(pNewContext));
           }
-        } else if (std::strcmp(tilingScheme, "OCTREE")) {
+        } else if (!std::strcmp(tilingScheme, "OCTREE")) {
           if (pRegion) {
             implicitContext.octreeTilingScheme = OctreeTilingScheme(
                 projectRegionSimple(*implicitContext.projection, *pRegion),

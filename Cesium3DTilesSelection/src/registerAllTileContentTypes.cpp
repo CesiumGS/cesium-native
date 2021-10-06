@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
 
+#include "AvailabilitySubtreeContent.h"
 #include "Batched3DModelContent.h"
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
 #include "Cesium3DTilesSelection/GltfContent.h"
@@ -21,6 +22,9 @@ void registerAllTileContentTypes() {
   TileContentFactory::registerMagic(
       "json",
       std::make_shared<ExternalTilesetContent>());
+  TileContentFactory::registerMagic(
+      "subt",
+      std::make_shared<AvailabilitySubtreeContent>());
 
   TileContentFactory::registerContentType(
       QuantizedMeshContent::CONTENT_TYPE,

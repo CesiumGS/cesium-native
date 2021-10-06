@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGeometry/AvailabilitySubtree.h"
 #include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 #include "CesiumGeospatial/Projection.h"
@@ -65,12 +66,11 @@ struct TileContentLoadResult {
       availableTileRectangles{};
 
   /**
-   * @brief The bitstream containing the availability data for this tile's
-   * subtree.
+   * @brief The result of loading this tile's availability subtree.
    *
    * Only applicable if the implicit tiling extension is being used.
    */
-  std::optional<std::vector<std::byte>> subtreeBitstream;
+  std::optional<CesiumGeometry::AvailabilitySubtree> subtreeLoadResult;
 
   /**
    * @brief The HTTP status code received when accessing this content.

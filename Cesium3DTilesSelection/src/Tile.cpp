@@ -320,8 +320,8 @@ void Tile::loadContent() {
 
             std::shared_ptr<IAssetRequest>& pRequest =
                 requestResults.pContentRequest;
-            // std::shared_ptr<IAssetRequest>& pSubtreeRequest =
-            //    requestResults.pSubtreeRequest;
+            std::shared_ptr<IAssetRequest>& pSubtreeRequest =
+                requestResults.pSubtreeRequest;
 
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -357,6 +357,7 @@ void Tile::loadContent() {
             loadInput.pLogger = std::move(pLogger);
             loadInput.pAssetAccessor = std::move(pAssetAccessor);
             loadInput.pRequest = std::move(pRequest);
+            loadInput.pSubtreeRequest = std::move(pSubtreeRequest);
 
             return TileContentFactory::createContent(loadInput)
                 // Forward status code to the load result.
@@ -813,10 +814,11 @@ void Tile::update(
               }
             }
           } else if (context.quadtreeSubtreeAvailability) {
-            if (this->_pContent->subtreeBitstream) {
-              context.quadtreeSubtreeAvailability->addSubtree(
-                  *pQuadtreeTileID,
-                  std::move(*this->_pContent->subtreeBitstream));
+            if (this->_pContent->subtreeLoadResult) {
+              // TODO: next
+              // context.quadtreeSubtreeAvailability->addSubtree(
+              //    *pQuadtreeTileID,
+              //    std::move(*this->_pContent->subtreeLoadResult));
             }
           }
         } else if (
