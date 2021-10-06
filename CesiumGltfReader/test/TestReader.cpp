@@ -88,7 +88,8 @@ TEST_CASE("CesiumGltf::GltfReader") {
 
 TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /= "TriangleWithoutIndices.gltf";
+  gltfFile /=
+      "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile.string());
   CesiumGltf::GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
@@ -105,6 +106,19 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[0] == glm::vec3(0.0, 0.0, 0.0));
   CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
+}
+
+TEST_CASE("Read BoxTexturedWebp (with error messages)") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "BoxTexturedWebp/glTF/BoxTexturedWebp.gltf";
+  std::vector<std::byte> data = readFile(gltfFile.string());
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult result = reader.readModel(data);
+  REQUIRE(result.model);
+  REQUIRE(result.warnings.empty());
+
+  // Expect errors, because WebP cannot be read
+  REQUIRE(result.errors.size() > 0);
 }
 
 TEST_CASE("Nested extras serializes properly") {
@@ -330,6 +344,7 @@ TEST_CASE("Unknown MIME types are handled") {
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
-  REQUIRE(modelResult.errors.empty());
+  // Note: The modelResult.errors will not be empty,
+  // because no images could be read.
   REQUIRE(modelResult.model.has_value());
 }

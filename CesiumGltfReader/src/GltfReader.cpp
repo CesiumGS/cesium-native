@@ -246,8 +246,23 @@ void postprocess(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
       ImageReaderResult imageResult = context.reader.readImage(bufferViewSpan);
+      readModel.warnings.insert(
+          readModel.warnings.end(),
+          imageResult.warnings.begin(),
+          imageResult.warnings.end());
+      readModel.errors.insert(
+          readModel.errors.end(),
+          imageResult.errors.begin(),
+          imageResult.errors.end());
       if (imageResult.image) {
         image.cesium = std::move(imageResult.image.value());
+      } else {
+        if (image.mimeType) {
+          readModel.errors.emplace_back(
+              "Declared image MIME Type: " + image.mimeType.value());
+        } else {
+          readModel.errors.emplace_back("Image does not declare a MIME Type");
+        }
       }
     }
   }
