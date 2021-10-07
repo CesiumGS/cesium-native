@@ -16,7 +16,9 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/OctreeTilingScheme.h>
 #include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GeographicProjection.h>
@@ -917,8 +919,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             *boundingVolume,
             GeographicProjection(),
             std::nullopt,
-            // std::nullopt
-        };
+            std::nullopt};
 
         const char* tilingScheme = tilingSchemeIt->value.GetString();
         if (!std::strcmp(tilingScheme, "QUADTREE")) {

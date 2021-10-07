@@ -28,7 +28,7 @@ public:
    * @param rootTilesZ The number of tiles at the root of the quadtree in the Z
    * direction.
    */
-  constexpr OctreeTilingScheme(
+  OctreeTilingScheme(
       const AxisAlignedBox& box,
       uint32_t rootTilesX,
       uint32_t rootTilesY,

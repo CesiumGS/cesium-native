@@ -74,7 +74,7 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
 }
 
 Future<std::unique_ptr<TileContentLoadResult>>
-load(const TileContentLoadInput& input) {
+AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
   const AsyncSystem& asyncSystem = input.asyncSystem;
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const std::string& url = input.pRequest->url();

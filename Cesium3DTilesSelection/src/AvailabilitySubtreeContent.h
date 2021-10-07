@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/Library.h"
 #include "Cesium3DTilesSelection/TileContentLoadInput.h"
 #include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/TileContentLoader.h"
@@ -10,7 +11,8 @@
 
 namespace Cesium3DTilesSelection {
 
-class AvailabilitySubtreeContent : public TileContentLoader {
+class CESIUM3DTILESSELECTION_API AvailabilitySubtreeContent final
+    : public TileContentLoader {
 public:
   CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   load(const TileContentLoadInput& input) override;

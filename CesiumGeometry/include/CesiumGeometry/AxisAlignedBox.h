@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
+#include "Library.h"
 
 #include <glm/vec3.hpp>
 
@@ -8,7 +8,7 @@ namespace CesiumGeometry {
 
 struct CESIUMGEOMETRY_API AxisAlignedBox final {
 
-  constexpr AxisAlignedBox() noexcept
+  AxisAlignedBox() noexcept
       : minimumX(0.0),
         minimumY(0.0),
         minimumZ(0.0),
@@ -20,7 +20,7 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
         lengthZ(0.0),
         center(0.0) {}
 
-  constexpr AxisAlignedBox(
+  AxisAlignedBox(
       double minimumX_,
       double minimumY_,
       double minimumZ_,

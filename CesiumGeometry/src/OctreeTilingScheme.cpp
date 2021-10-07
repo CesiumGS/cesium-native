@@ -2,7 +2,7 @@
 
 namespace CesiumGeometry {
 
-constexpr OctreeTilingScheme::OctreeTilingScheme(
+OctreeTilingScheme::OctreeTilingScheme(
     const AxisAlignedBox& box,
     uint32_t rootTilesX,
     uint32_t rootTilesY,

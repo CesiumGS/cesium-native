@@ -9,6 +9,8 @@
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
 
+#include <vector>
+
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -377,7 +379,7 @@ void checkGridMesh(
     const AccessorView<glm::vec3>& positions,
     const QuadtreeTilingScheme& tilingScheme,
     const Ellipsoid& ellipsoid,
-    const Rectangle& tileRectangle,
+    const CesiumGeometry::Rectangle& tileRectangle,
     uint32_t verticesWidth,
     uint32_t verticesHeight) {
   double west = tileRectangle.minimumX;
@@ -680,25 +682,35 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
 
   // mock context
   Ellipsoid ellipsoid = Ellipsoid::WGS84;
-  Rectangle rectangle(
+  CesiumGeometry::Rectangle rectangle(
       glm::radians(-180.0),
       glm::radians(-90.0),
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
+  GeographicProjection projection(ellipsoid);
+  BoundingRegion boundingRegion(
+      unprojectRectangleSimple(projection, rectangle),
+      -1000.0,
+      9000.0);
   TileContext context{};
   context.implicitContext = ImplicitTilingContext{
       std::vector<std::string>{},
+      std::nullopt,
       tilingScheme,
-      GeographicProjection(ellipsoid),
-      QuadtreeTileAvailability(tilingScheme, 23)};
+      std::nullopt,
+      boundingRegion,
+      projection,
+      QuadtreeTileAvailability(tilingScheme, 23),
+      std::nullopt};
 
   SECTION("Check quantized mesh that has uint16_t indices") {
     // mock quantized mesh
     uint32_t verticesWidth = 3;
     uint32_t verticesHeight = 3;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -774,7 +786,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint32_t verticesWidth = 300;
     uint32_t verticesHeight = 300;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -850,7 +863,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint32_t verticesWidth = 255;
     uint32_t verticesHeight = 255;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -926,7 +940,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint32_t verticesWidth = 3;
     uint32_t verticesHeight = 3;
     QuadtreeTileID tileID(10, 0, 0);
-    Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+    CesiumGeometry::Rectangle tileRectangle =
+        tilingScheme.tileToRectangle(tileID);
     BoundingRegion boundingVolume = BoundingRegion(
         GlobeRectangle(
             tileRectangle.minimumX,
@@ -1005,24 +1020,34 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
 
   // mock context
   Ellipsoid ellipsoid = Ellipsoid::WGS84;
-  Rectangle rectangle(
+  CesiumGeometry::Rectangle rectangle(
       glm::radians(-180.0),
       glm::radians(-90.0),
       glm::radians(180.0),
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
+  GeographicProjection projection(ellipsoid);
+  BoundingRegion boundingRegion(
+      unprojectRectangleSimple(projection, rectangle),
+      -1000.0,
+      9000.0);
   TileContext context{};
   context.implicitContext = ImplicitTilingContext{
       std::vector<std::string>{},
+      std::nullopt,
       tilingScheme,
-      GeographicProjection(ellipsoid),
-      QuadtreeTileAvailability(tilingScheme, 23)};
+      std::nullopt,
+      boundingRegion,
+      projection,
+      QuadtreeTileAvailability(tilingScheme, 23),
+      std::nullopt};
 
   // mock quantized mesh
   uint32_t verticesWidth = 3;
   uint32_t verticesHeight = 3;
   QuadtreeTileID tileID(10, 0, 0);
-  Rectangle tileRectangle = tilingScheme.tileToRectangle(tileID);
+  CesiumGeometry::Rectangle tileRectangle =
+      tilingScheme.tileToRectangle(tileID);
   BoundingRegion boundingVolume = BoundingRegion(
       GlobeRectangle(
           tileRectangle.minimumX,
