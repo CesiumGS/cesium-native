@@ -455,14 +455,15 @@ bool Tile::unloadContent() noexcept {
 
 static void createImplicitTile(
     const ImplicitTilingContext& implicitContext,
-    Tile& parent,
+    const Tile& parent,
     Tile& child,
     const QuadtreeTileID& childID,
-    bool available) {
-  child.setContext(parent.getContext());
-  child.setParent(&parent);
+    const TileContext* pContext) {
+  child.setContext(
+      const_cast<TileContext*>(pContext ? pContext : parent.getContext()));
+  child.setParent(const_cast<Tile*>(&parent));
 
-  if (available) {
+  if (pContext) {
     child.setTileID(childID);
   } else {
     child.setTileID(UpsampledQuadtreeNode{childID});
@@ -597,6 +598,26 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
       maximumHeight)));
 }
 
+namespace {
+// Finds the first context in a "pUnderlyingContext" chain that has a given tile
+// ID available. If the ID is not available from any context, returns nullptr.
+TileContext*
+findContextWithTileID(TileContext* pStart, const QuadtreeTileID& id) {
+  TileContext* pCurrent = pStart;
+
+  while (pCurrent) {
+    if (pCurrent->implicitContext &&
+        pCurrent->implicitContext->availability.isTileAvailable(id)) {
+      return pCurrent;
+    }
+
+    pCurrent = pCurrent->pUnderlyingContext.get();
+  }
+
+  return nullptr;
+}
+} // namespace
+
 void Tile::update(
     int32_t /*previousFrameNumber*/,
     int32_t /*currentFrameNumber*/) {
@@ -691,27 +712,21 @@ void Tile::update(
       std::get_if<QuadtreeTileID>(&this->_id)) {
     // Check if any child tiles are known to be available, and create them if
     // they are.
-    const ImplicitTilingContext& implicitContext =
-        this->getContext()->implicitContext.value();
-    const CesiumGeometry::QuadtreeTileAvailability& availability =
-        implicitContext.availability;
-
     const QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
 
     const QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
-    const uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
+    const TileContext* pSW = findContextWithTileID(this->getContext(), swID);
 
     const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    const uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
+    const TileContext* pSE = findContextWithTileID(this->getContext(), seID);
 
     const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    const uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
+    const TileContext* pNW = findContextWithTileID(this->getContext(), nwID);
 
     const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-    const uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
+    const TileContext* pNE = findContextWithTileID(this->getContext(), neID);
 
-    const size_t childCount = sw + se + nw + ne;
-    if (childCount > 0) {
+    if (pSW || pSE || pNW || pNE) {
       // If any children are available, we need to create all four in order to
       // avoid holes. But non-available tiles will be upsampled instead of
       // loaded.
@@ -720,10 +735,12 @@ void Tile::update(
       // we're using implicit tiling for buildings (for example) in the future.
       this->_children.resize(4);
 
-      createImplicitTile(implicitContext, *this, this->_children[0], swID, sw);
-      createImplicitTile(implicitContext, *this, this->_children[1], seID, se);
-      createImplicitTile(implicitContext, *this, this->_children[2], nwID, nw);
-      createImplicitTile(implicitContext, *this, this->_children[3], neID, ne);
+      const ImplicitTilingContext& implicitContext =
+          this->getContext()->implicitContext.value();
+      createImplicitTile(implicitContext, *this, this->_children[0], swID, pSW);
+      createImplicitTile(implicitContext, *this, this->_children[1], seID, pSE);
+      createImplicitTile(implicitContext, *this, this->_children[2], nwID, pNW);
+      createImplicitTile(implicitContext, *this, this->_children[3], neID, pNE);
     }
   }
 

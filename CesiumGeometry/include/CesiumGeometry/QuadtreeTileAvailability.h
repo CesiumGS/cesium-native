@@ -18,6 +18,13 @@ namespace CesiumGeometry {
 class CESIUMGEOMETRY_API QuadtreeTileAvailability final {
 public:
   /**
+   * @brief Creates a new instance that tiles a rectangle with coordinates from
+   * 0.0 to 1.0, starting with a single tile at the root and proceeding through
+   * level 30.
+   */
+  QuadtreeTileAvailability() noexcept;
+
+  /**
    * @brief Creates a new instance.
    *
    * @param tilingScheme The {@link QuadtreeTilingScheme}.

@@ -166,6 +166,18 @@ public:
    * properties of its parent context.
    */
   ContextInitializerCallback contextInitializerCallback;
+
+  /**
+   * @brief Another tiling context underlying this one, if any.
+   *
+   * If a tile is not available from this tiling context, we check the
+   * underlyingContext to see if it is available from that one instead. This
+   * allows one implicitly-tiled tileset to be layered on top of another one.
+   * For example, custom terrain for a small area layered on top of Cesium World
+   * Terrain. In this scenario, Cesium World Terrain would be the
+   * underlyingContext.
+   */
+  std::unique_ptr<TileContext> pUnderlyingContext;
 };
 
 } // namespace Cesium3DTilesSelection

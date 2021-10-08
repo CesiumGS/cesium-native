@@ -6,6 +6,11 @@
 
 namespace CesiumGeometry {
 
+QuadtreeTileAvailability::QuadtreeTileAvailability() noexcept
+    : QuadtreeTileAvailability(
+          QuadtreeTilingScheme(Rectangle(0.0, 0.0, 1.0, 1.0), 1, 1),
+          30) {}
+
 QuadtreeTileAvailability::QuadtreeTileAvailability(
     const QuadtreeTilingScheme& tilingScheme,
     uint32_t maximumLevel) noexcept

@@ -21,6 +21,11 @@ namespace CesiumGeospatial {
 class CESIUMGEOSPATIAL_API GlobeRectangle final {
 public:
   /**
+   * @brief Constructs a new instance with all coordinate values set to 0.0.
+   */
+  constexpr GlobeRectangle() noexcept : GlobeRectangle(0.0, 0.0, 0.0, 0.0) {}
+
+  /**
    * @brief Constructs a new instance.
    *
    * @param west The westernmost longitude, in radians, in the range [-Pi, Pi].

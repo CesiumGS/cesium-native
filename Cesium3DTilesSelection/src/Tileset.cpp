@@ -8,6 +8,7 @@
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 #include "Cesium3DTilesSelection/TileID.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
+#include "TerrainLayerJson.h"
 #include "TileUtilities.h"
 #include "calcQuadtreeMaxGeometricError.h"
 
@@ -519,11 +520,15 @@ Future<void> Tileset::_loadTilesetJson(
   return this->getExternals()
       .pAssetAccessor->requestAsset(this->getAsyncSystem(), url, headers)
       .thenInWorkerThread(
-          [pLogger = this->_externals.pLogger,
+          [asyncSystem = this->_asyncSystem,
+           pAssetAccessor = this->_externals.pAssetAccessor,
+           pLogger = this->_externals.pLogger,
            pContext = std::move(pContext),
            useWaterMask = this->getOptions().contentOptions.enableWaterMask](
               std::shared_ptr<IAssetRequest>&& pRequest) mutable {
             return Tileset::_handleTilesetResponse(
+                asyncSystem,
+                pAssetAccessor,
                 std::move(pRequest),
                 std::move(pContext),
                 pLogger,
@@ -597,7 +602,9 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 }
 } // namespace
 
-/*static*/ Tileset::LoadResult Tileset::_handleTilesetResponse(
+/*static*/ Future<Tileset::LoadResult> Tileset::_handleTilesetResponse(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<IAssetRequest>&& pRequest,
     std::unique_ptr<TileContext>&& pContext,
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -608,7 +615,8 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
         pLogger,
         "Did not receive a valid response for tileset {}",
         pRequest->url());
-    return LoadResult{std::move(pContext), nullptr, false};
+    return asyncSystem.createResolvedFuture<LoadResult>(
+        {std::move(pContext), nullptr, false});
   }
 
   if (pResponse->statusCode() != 0 &&
@@ -618,7 +626,8 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
         "Received status code {} for tileset {}",
         pResponse->statusCode(),
         pRequest->url());
-    return LoadResult{std::move(pContext), nullptr, false};
+    return asyncSystem.createResolvedFuture<LoadResult>(
+        {std::move(pContext), nullptr, false});
   }
 
   pContext->baseUrl = pRequest->url();
@@ -631,10 +640,12 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
   if (tileset.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
+        "Error when parsing tileset JSON, error code {} at byte offset "
+        "{}",
         tileset.GetParseError(),
         tileset.GetErrorOffset());
-    return LoadResult{std::move(pContext), nullptr, false};
+    return asyncSystem.createResolvedFuture<LoadResult>(
+        {std::move(pContext), nullptr, false});
   }
 
   pContext->pTileset->_gltfUpAxis = obtainGltfUpAxis(tileset);
@@ -645,8 +656,6 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
   const auto rootIt = tileset.FindMember("root");
   const auto formatIt = tileset.FindMember("format");
 
-  bool supportsRasterOverlays = false;
-
   if (rootIt != tileset.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
     Tileset::_createTile(
@@ -656,22 +665,24 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
         TileRefine::Replace,
         *pContext,
         pLogger);
+
+    return asyncSystem.createResolvedFuture<LoadResult>(
+        {std::move(pContext), std::move(pRootTile), false});
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
-    Tileset::_createTerrainTile(
-        *pRootTile,
+    return Tileset::_createTerrainTile(
+        pAssetAccessor,
+        asyncSystem,
+        std::move(pRootTile),
         tileset,
-        *pContext,
+        std::move(pContext),
         pLogger,
         useWaterMask);
-    supportsRasterOverlays = true;
+  } else {
+    return asyncSystem.createResolvedFuture<LoadResult>(
+        {std::move(pContext), std::move(pRootTile), false});
   }
-
-  return LoadResult{
-      std::move(pContext),
-      std::move(pRootTile),
-      supportsRasterOverlays};
 }
 
 static std::optional<BoundingVolume> getBoundingVolumeProperty(
@@ -890,71 +901,44 @@ static std::string createExtensionsQueryParameter(
 static BoundingVolume createDefaultLooseEarthBoundingVolume(
     const CesiumGeospatial::GlobeRectangle& globeRectangle) {
   return BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(globeRectangle, -1000.0, -9000.0));
+      BoundingRegion(globeRectangle, -1000.0, 9000.0));
 }
 
-/*static*/ void Tileset::_createTerrainTile(
-    Tile& tile,
-    const rapidjson::Value& layerJson,
-    TileContext& context,
+namespace {
+
+std::optional<ImplicitTilingContext> createImplicitContextFromLayerJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
+    const TerrainLayerJson& layerJson,
     bool useWaterMask) {
-  context.requestHeaders.push_back(std::make_pair(
-      "Accept",
-      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
-      "*;q=0.01"));
-
-  const auto tilesetVersionIt = layerJson.FindMember("version");
-  if (tilesetVersionIt != layerJson.MemberEnd() &&
-      tilesetVersionIt->value.IsString()) {
-    context.version = tilesetVersionIt->value.GetString();
-  }
-
-  std::optional<std::vector<double>> optionalBounds =
-      JsonHelpers::getDoubles(layerJson, -1, "bounds");
-  std::vector<double> bounds;
-  if (optionalBounds) {
-    bounds = optionalBounds.value();
-  }
-
-  std::string projectionString =
-      JsonHelpers::getStringOrDefault(layerJson, "projection", "EPSG:4326");
-
   CesiumGeospatial::Projection projection;
   CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
   CesiumGeometry::Rectangle quadtreeRectangleProjected(0.0, 0.0, 0.0, 0.0);
-  uint32_t quadtreeXTiles;
+  int32_t quadtreeXTiles;
 
-  if (projectionString == "EPSG:4326") {
+  if (layerJson.projection == "EPSG:4326") {
     CesiumGeospatial::GeographicProjection geographic;
     projection = geographic;
     quadtreeRectangleGlobe =
-        bounds.size() >= 4 ? CesiumGeospatial::GlobeRectangle::fromDegrees(
-                                 bounds[0],
-                                 bounds[1],
-                                 bounds[2],
-                                 bounds[3])
-                           : GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+        layerJson.bounds.computeWidth() > 0.0
+            ? layerJson.bounds
+            : GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
     quadtreeRectangleProjected = geographic.project(quadtreeRectangleGlobe);
     quadtreeXTiles = 2;
-  } else if (projectionString == "EPSG:3857") {
+  } else if (layerJson.projection == "EPSG:3857") {
     CesiumGeospatial::WebMercatorProjection webMercator;
     projection = webMercator;
     quadtreeRectangleGlobe =
-        bounds.size() >= 4 ? CesiumGeospatial::GlobeRectangle::fromDegrees(
-                                 bounds[0],
-                                 bounds[1],
-                                 bounds[2],
-                                 bounds[3])
-                           : WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
+        layerJson.bounds.computeWidth() > 0.0
+            ? layerJson.bounds
+            : WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
     quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
     quadtreeXTiles = 1;
   } else {
     SPDLOG_LOGGER_ERROR(
         pLogger,
-        "Tileset contained an unknown projection value: {}",
-        projectionString);
-    return;
+        "Tileset contains an unknown projection value: {}",
+        layerJson.projection);
+    return std::nullopt;
   }
 
   const CesiumGeometry::QuadtreeTilingScheme tilingScheme(
@@ -962,17 +946,13 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
       quadtreeXTiles,
       1);
 
-  std::vector<std::string> urls = JsonHelpers::getStrings(layerJson, "tiles");
-  uint32_t maxZoom = JsonHelpers::getUint32OrDefault(layerJson, "maxzoom", 30);
-
-  context.implicitContext = {
-      urls,
+  ImplicitTilingContext result{
+      layerJson.tiles,
       tilingScheme,
       projection,
-      CesiumGeometry::QuadtreeTileAvailability(tilingScheme, maxZoom)};
-
-  std::vector<std::string> extensions =
-      JsonHelpers::getStrings(layerJson, "extensions");
+      CesiumGeometry::QuadtreeTileAvailability(
+          tilingScheme,
+          layerJson.maxzoom)};
 
   // Request normals, watermask, and metadata if they're available
   std::vector<std::string> knownExtensions = {"octvertexnormals", "metadata"};
@@ -982,22 +962,51 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
   }
 
   std::string extensionsToRequest =
-      createExtensionsQueryParameter(knownExtensions, extensions);
+      createExtensionsQueryParameter(knownExtensions, layerJson.extensions);
 
   if (!extensionsToRequest.empty()) {
-    for (std::string& url : context.implicitContext.value().tileTemplateUrls) {
+    for (std::string& url : result.tileTemplateUrls) {
       url =
           CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
     }
   }
 
+  return result;
+}
+
+void applyResolvedLayerJson(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    TileContext& context,
+    Tile& tile,
+    const TerrainLayerJson& layerJson,
+    bool useWaterMask) {
   tile.setContext(&context);
   tile.setBoundingVolume(
-      createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe));
+      createDefaultLooseEarthBoundingVolume(layerJson.bounds));
   tile.setGeometricError(999999999.0);
+
+  context.requestHeaders.push_back(std::make_pair(
+      "Accept",
+      "application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/"
+      "*;q=0.01"));
+  context.version = layerJson.version;
+  context.implicitContext =
+      createImplicitContextFromLayerJson(pLogger, layerJson, useWaterMask);
+
+  // If we weren't able to successfully create an implicit context, we're done.
+  if (!context.implicitContext) {
+    return;
+  }
+
+  const QuadtreeTilingScheme& tilingScheme =
+      context.implicitContext->tilingScheme;
+  const Projection& projection = context.implicitContext->projection;
+
+  int32_t quadtreeXTiles =
+      context.implicitContext->tilingScheme.getRootTilesX();
   tile.createChildTiles(quadtreeXTiles);
 
-  for (uint32_t i = 0; i < quadtreeXTiles; ++i) {
+  for (int32_t i = 0; i < quadtreeXTiles; ++i) {
     Tile& childTile = tile.getChildren()[i];
     QuadtreeTileID id(0, i, 0);
 
@@ -1012,6 +1021,61 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
         8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) *
         childGlobeRectangle.computeWidth());
   }
+
+  // Turn parent layer.jsons into underlying layers.
+  if (layerJson.pResolvedParent) {
+    auto pUnderlying = std::make_unique<TileContext>();
+
+    pUnderlying->baseUrl = Uri::resolve(context.baseUrl, layerJson.parentUrl);
+    pUnderlying->contextInitializerCallback =
+        context.contextInitializerCallback;
+    pUnderlying->failedTileCallback = context.failedTileCallback;
+    pUnderlying->pTileset = context.pTileset;
+    pUnderlying->requestHeaders = context.requestHeaders;
+    pUnderlying->version = layerJson.pResolvedParent->version;
+    pUnderlying->implicitContext = createImplicitContextFromLayerJson(
+        pLogger,
+        *layerJson.pResolvedParent,
+        useWaterMask);
+
+    context.pUnderlyingContext = std::move(pUnderlying);
+
+    // TODO: handle an underlying layer with an underlying layer.
+  }
+}
+
+} // namespace
+
+/*static*/ CesiumAsync::Future<Tileset::LoadResult> Tileset::_createTerrainTile(
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    std::unique_ptr<Tile>&& pTile,
+    const rapidjson::Value& layerJson,
+    std::unique_ptr<TileContext>&& pContext,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    bool useWaterMask) {
+  assert(pTile);
+  assert(pContext);
+
+  return TerrainLayerJson::parse(pLogger, layerJson)
+      .resolveParents(
+          asyncSystem,
+          pAssetAccessor,
+          pLogger,
+          pContext->baseUrl,
+          pContext->requestHeaders)
+      .thenInWorkerThread([pLogger,
+                           pContext = std::move(pContext),
+                           pTile = std::move(pTile),
+                           useWaterMask](TerrainLayerJson&& resolved) mutable {
+        applyResolvedLayerJson(
+            pLogger,
+            *pContext,
+            *pTile,
+            resolved,
+            useWaterMask);
+        return LoadResult{std::move(pContext), std::move(pTile), true};
+      });
 }
 
 /**

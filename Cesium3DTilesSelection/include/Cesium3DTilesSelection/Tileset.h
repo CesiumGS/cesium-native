@@ -348,7 +348,9 @@ private:
    * @param pRequest The request for which the response was received.
    * @return The LoadResult structure
    */
-  static LoadResult _handleTilesetResponse(
+  static CesiumAsync::Future<LoadResult> _handleTilesetResponse(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest,
       std::unique_ptr<TileContext>&& pContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -367,10 +369,12 @@ private:
       TileRefine parentRefine,
       const TileContext& context,
       const std::shared_ptr<spdlog::logger>& pLogger);
-  static void _createTerrainTile(
-      Tile& tile,
+  static CesiumAsync::Future<LoadResult> _createTerrainTile(
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      std::unique_ptr<Tile>&& pTile,
       const rapidjson::Value& layerJson,
-      TileContext& context,
+      std::unique_ptr<TileContext>&& pContext,
       const std::shared_ptr<spdlog::logger>& pLogger,
       bool useWaterMask);
   FailedTileAction _onIonTileFailed(Tile& failedTile);
