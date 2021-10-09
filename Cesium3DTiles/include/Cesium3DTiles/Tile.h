@@ -74,8 +74,7 @@ struct CESIUM3DTILES_API Tile final : public ExtensibleObject {
 
   /**
    * @brief Metadata about the tile's content and a link to the content. When
-   * this is omitted the tile is just used for culling. This is required for
-   * leaf tiles.
+   * this is omitted the tile is just used for culling.
    */
   std::optional<Content> content;
 
