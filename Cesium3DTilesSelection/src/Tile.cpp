@@ -504,6 +504,7 @@ static void createImplicitQuadtreeTile(
   child.setContext(parent.getContext());
   child.setParent(&parent);
   child.setAvailability(availability);
+  child.setRefine(parent.getRefine());
 
   if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);

@@ -1029,6 +1029,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
         childTile.setTileID(rootID);
         childTile.setBoundingVolume(tile.getBoundingVolume());
         childTile.setGeometricError(tile.getGeometricError());
+        childTile.setRefine(tile.getRefine());
 
         tile.setUnconditionallyRefine();
       }
