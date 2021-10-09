@@ -11,10 +11,11 @@ function resolveProperty(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   if (Object.keys(propertyDetails).length === 0) {
-    // Ignore totally empty properties. The glTF JSON schema files often use empty properties in derived classes
+    // Ignore totally empty properties. The glTF and 3D Tiles JSON schema files often use empty properties in derived classes
     // when the actual property definition is in the base class.
     return undefined;
   }
@@ -93,7 +94,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      makeOptional
+      makeOptional,
+      namespace
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -114,7 +116,7 @@ function resolveProperty(
         ...propertyDefaults(propertyName, propertyDetails),
         type: makeOptional ? `std::optional<${typeName}>` : typeName,
         headers: [
-          `"CesiumGltf/${type}.h"`,
+          `"${namespace}/${type}.h"`,
           ...(makeOptional ? ["<optional>"] : []),
         ],
         readerType: `${type}JsonHandler`,
@@ -362,7 +364,8 @@ function resolveEnum(
   parentName,
   propertyName,
   propertyDetails,
-  makeOptional
+  makeOptional,
+  namespace
 ) {
   if (!isEnum(propertyDetails)) {
     return undefined;
@@ -408,7 +411,7 @@ function resolveEnum(
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: createEnumDefault(enumName, propertyDetails),
-    readerHeaders: [`"CesiumGltf/${parentName}.h"`],
+    readerHeaders: [`"${namespace}/${parentName}.h"`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
       parentName,

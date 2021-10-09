@@ -125,6 +125,7 @@ const processed = {};
 
 while (schemas.length > 0) {
   const schema = schemas.pop();
+  console.log(schema.$id);
   if (processed[schema.sourcePath]) {
     continue;
   }

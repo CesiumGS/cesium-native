@@ -32,7 +32,8 @@ function generate(options, schema) {
         name,
         key,
         schema.properties[key],
-        required
+        required,
+        namespace
       )
     )
     .filter((property) => property !== undefined);
