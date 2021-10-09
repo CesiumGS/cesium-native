@@ -34,7 +34,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      required
+      required,
+      namespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
@@ -85,7 +86,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      required
+      required,
+      namespace
     );
   } else if (isEnum(propertyDetails)) {
     return resolveEnum(
@@ -131,7 +133,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails.allOf[0],
-      required
+      required,
+      namespace
     );
 
     return {
@@ -139,40 +142,6 @@ function resolveProperty(
       briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
       fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
     };
-    // TODO: This is a partially-working support for properties that can have multiple types, via std::variant.
-    // But it still needs an implementation of VariantJsonHandler, and may require per-property codegen as well.
-    // } else if (Array.isArray(propertyDetails.type)) {
-    //   const nested = propertyDetails.type.map((type) => {
-    //     const propertyNameWithType = propertyName + " (" + type + ")";
-    //     return resolveProperty(
-    //       schemaCache,
-    //       config,
-    //       parentName,
-    //       propertyNameWithType,
-    //       {
-    //         ...propertyDetails,
-    //         type: type,
-    //       },
-    //       [propertyNameWithType]
-    //     );
-    //   });
-
-    //   return {
-    //     ...propertyDefaults(propertyName, propertyDetails),
-    //     type: `std::variant<${nested.map((item) => item.type).join(", ")}>`,
-    //     headers: lodash.uniq([
-    //       "<variant>",
-    //       ...lodash.flatten(nested.map((type) => type.headers)),
-    //     ]),
-    //     readerType: `VariantJsonHandler<${nested
-    //       .map((item) => item.readerType)
-    //       .join(", ")}>`,
-    //     readerHeaders: lodash.uniq([
-    //       `"VariantJsonHandler.h"`,
-    //       ...lodash.flatten(nested.map((item) => item.readerHeaders)),
-    //     ]),
-    //     schemas: lodash.uniq(lodash.flatten(nested.map((item) => item.schemas))),
-    //   };
   } else {
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
     return {
@@ -229,7 +198,8 @@ function resolveArray(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   // If there is no items definition, pass an effectively empty object.
   // But if the definition is _actually_ empty, the property will be ignored
@@ -241,7 +211,8 @@ function resolveArray(
     parentName,
     propertyName + ".items",
     propertyDetails.items || { notEmpty: true },
-    undefined
+    undefined,
+    namespace
   );
 
   if (!itemProperty) {
@@ -272,7 +243,8 @@ function resolveDictionary(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   const additional = resolveProperty(
     schemaCache,
@@ -281,7 +253,8 @@ function resolveDictionary(
     propertyName + ".additionalProperties",
     propertyDetails.additionalProperties,
     // Treat the nested property type as required so it's not wrapped in std::optional.
-    [propertyName + ".additionalProperties"]
+    [propertyName + ".additionalProperties"],
+    namespace
   );
 
   if (!additional) {
