@@ -14,9 +14,8 @@
 namespace CesiumGeometry {
 
 namespace AvailabilityUtilities {
-constexpr uint8_t countOnesInByte(uint8_t _byte);
-
-constexpr uint64_t countOnesInBuffer(gsl::span<const std::byte> buffer);
+uint8_t countOnesInByte(uint8_t _byte);
+uint64_t countOnesInBuffer(gsl::span<const std::byte> buffer);
 } // namespace AvailabilityUtilities
 
 struct CESIUMGEOMETRY_API ConstantAvailability {
