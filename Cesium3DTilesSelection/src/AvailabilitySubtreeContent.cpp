@@ -27,8 +27,6 @@ struct SubtreeHeader {
   uint64_t binaryByteLength;
 };
 
-static constexpr size_t headerLength = sizeof(SubtreeHeader);
-
 struct SubtreeBuffer {
   std::string name;
   std::optional<std::string> uri;
@@ -78,11 +76,14 @@ AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
   const AsyncSystem& asyncSystem = input.asyncSystem;
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
   const std::string& url = input.pRequest->url();
-  const gsl::span<const std::byte>& data = input.pRequest->response()->data();
+  const gsl::span<const std::byte>& data =
+      input.pSubtreeRequest->response()->data();
   const std::shared_ptr<IAssetAccessor>& pAssetAccessor = input.pAssetAccessor;
   const HttpHeaders& headers = input.pRequest->headers();
   // TODO: Can we avoid this copy conversion?
   std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
+
+  size_t headerLength = sizeof(SubtreeHeader);
 
   if (data.size() < headerLength) {
     throw std::runtime_error("The Subtree file is invalid because it is too "

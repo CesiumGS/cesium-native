@@ -879,7 +879,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
     if (extensionsIt != tileJson.MemberEnd() &&
         extensionsIt->value.IsObject()) {
       auto extension = extensionsIt->value.GetObject();
-      auto implicitTilingIt = extension.FindMember("3DTiles_implicit_tiling");
+      auto implicitTilingIt = extension.FindMember("3DTILES_implicit_tiling");
       if (implicitTilingIt != extension.MemberEnd() &&
           implicitTilingIt->value.IsObject()) {
         auto implicitTiling = implicitTilingIt->value.GetObject();
@@ -921,8 +921,11 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             std::nullopt,
             std::nullopt};
 
+        TileID rootID = "";
+
         const char* tilingScheme = tilingSchemeIt->value.GetString();
         if (!std::strcmp(tilingScheme, "QUADTREE")) {
+          rootID = QuadtreeTileID(0, 0, 0);
           if (pRegion) {
             implicitContext.quadtreeTilingScheme = QuadtreeTilingScheme(
                 projectRectangleSimple(
@@ -965,6 +968,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             tile.getTileset()->addContext(std::move(pNewContext));
           }
         } else if (!std::strcmp(tilingScheme, "OCTREE")) {
+          rootID = OctreeTileID(0, 0, 0, 0);
           if (pRegion) {
             implicitContext.octreeTilingScheme = OctreeTilingScheme(
                 projectRegionSimple(*implicitContext.projection, *pRegion),
@@ -1010,6 +1014,23 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             tile.getTileset()->addContext(std::move(pNewContext));
           }
         }
+
+        // This will act as a dummy tile representing the implicit tileset. Its
+        // only child will act as the actual root content of the new tileset.
+        tile.createChildTiles(1);
+
+        Tile& childTile = tile.getChildren()[0];
+        childTile.setContext(tile.getContext());
+        childTile.setParent(&tile);
+        childTile.setAvailability(
+            TileAvailabilityFlags::TILE_AVAILABLE |
+            TileAvailabilityFlags::SUBTREE_AVAILABLE |
+            TileAvailabilityFlags::REACHABLE);
+        childTile.setTileID(rootID);
+        childTile.setBoundingVolume(tile.getBoundingVolume());
+        childTile.setGeometricError(tile.getGeometricError());
+
+        tile.setUnconditionallyRefine();
       }
     }
 
@@ -1199,6 +1220,9 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
 
     childTile.setContext(&context);
     childTile.setParent(&tile);
+    childTile.setAvailability(
+        TileAvailabilityFlags::TILE_AVAILABLE |
+        TileAvailabilityFlags::REACHABLE);
     childTile.setTileID(id);
     const CesiumGeospatial::GlobeRectangle childGlobeRectangle =
         unprojectRectangleSimple(projection, tilingScheme->tileToRectangle(id));

@@ -75,7 +75,8 @@ uint8_t QuadtreeSubtreeAvailability::computeAvailability(
         subtree.subtreeAvailability,
         subtree);
 
-    uint32_t relativeTileIdMask = ~(0xFFFFFFFF << level);
+    uint32_t levelsLeft = tileID.level - level;
+    uint32_t relativeTileIdMask = ~(0xFFFFFFFF << levelsLeft);
     uint32_t levelDifference =
         std::min(tileID.level - level, this->_subtreeLevels);
     uint32_t nextLevel = level + levelDifference;
@@ -214,7 +215,8 @@ bool QuadtreeSubtreeAvailability::addSubtree(
         subtree.subtreeAvailability,
         subtree);
 
-    uint32_t relativeTileIdMask = ~(0xFFFFFFFF << level);
+    uint32_t levelsLeft = tileID.level - level;
+    uint32_t relativeTileIdMask = ~(0xFFFFFFFF << levelsLeft);
     uint32_t nextLevel = level + this->_subtreeLevels;
 
     // The given subtree to add must fall exactly at the end of an existing

@@ -20,15 +20,13 @@ public:
 
   /**
    * @brief This tile has a subtree that is known to be available.
-   *
-   * This implies that the tile itself must be available as well.
    */
-  static const uint8_t SUBTREE_AVAILABLE = 4 | TILE_AVAILABLE;
+  static const uint8_t SUBTREE_AVAILABLE = 4;
 
   /**
-   * @brief This tile has a subtree that is available and loaded.
+   * @brief This tile has a subtree that is loaded.
    */
-  static const uint8_t SUBTREE_LOADED = 8 | SUBTREE_AVAILABLE;
+  static const uint8_t SUBTREE_LOADED = 8;
 
   // TODO: is REACHABLE needed? Reevaluate after implementation
   /**

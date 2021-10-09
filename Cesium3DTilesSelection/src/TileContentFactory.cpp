@@ -37,7 +37,7 @@ CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
   if (input.pSubtreeRequest) {
     const gsl::span<const std::byte>& subtreeData =
-        input.pRequest->response()->data();
+        input.pSubtreeRequest->response()->data();
     std::optional<std::string> magic =
         TileContentFactory::getMagic(subtreeData);
     if (magic) {
