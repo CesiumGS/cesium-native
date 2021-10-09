@@ -17,7 +17,8 @@
 #include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/OctreeTilingScheme.h>
-#include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeometry/QuadtreeAvailability.h>
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -946,11 +947,10 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
           }
 
           if (implicitContext.quadtreeTilingScheme) {
-            implicitContext.quadtreeSubtreeAvailability =
-                QuadtreeSubtreeAvailability(
-                    *implicitContext.quadtreeTilingScheme,
-                    subtreeLevels,
-                    maximumLevel);
+            implicitContext.quadtreeSubtreeAvailability = QuadtreeAvailability(
+                *implicitContext.quadtreeTilingScheme,
+                subtreeLevels,
+                maximumLevel);
 
             std::unique_ptr<TileContext> pNewContext =
                 std::make_unique<TileContext>();
@@ -1185,7 +1185,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
       std::nullopt,
       boundingVolume,
       projection,
-      std::make_optional<CesiumGeometry::QuadtreeTileAvailability>(
+      std::make_optional<CesiumGeometry::QuadtreeRectangleAvailability>(
           *tilingScheme,
           maxZoom),
       std::nullopt};

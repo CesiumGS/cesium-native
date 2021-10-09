@@ -14,7 +14,7 @@
 
 namespace CesiumGeometry {
 
-class CESIUMGEOMETRY_API QuadtreeSubtreeAvailability final {
+class CESIUMGEOMETRY_API QuadtreeAvailability final {
 public:
   /**
    * @brief Constructs a new instance.
@@ -22,7 +22,7 @@ public:
    * @param tilingScheme The {@link QuadtreeTilingScheme} to use with this
    * availability.
    */
-  QuadtreeSubtreeAvailability(
+  QuadtreeAvailability(
       const QuadtreeTilingScheme& tilingScheme,
       uint32_t subtreeLevels,
       uint32_t maximumLevel) noexcept;

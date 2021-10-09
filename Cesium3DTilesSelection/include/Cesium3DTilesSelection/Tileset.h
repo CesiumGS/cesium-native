@@ -12,7 +12,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 
 #include <rapidjson/fwd.h>
 

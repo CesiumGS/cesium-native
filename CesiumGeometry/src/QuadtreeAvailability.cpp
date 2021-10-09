@@ -1,4 +1,4 @@
-#include "CesiumGeometry/QuadtreeSubtreeAvailability.h"
+#include "CesiumGeometry/QuadtreeAvailability.h"
 
 namespace CesiumGeometry {
 
@@ -43,7 +43,7 @@ static uint64_t getMortonIndexForInts(uint32_t a, uint32_t b) {
   return result;
 }
 
-QuadtreeSubtreeAvailability::QuadtreeSubtreeAvailability(
+QuadtreeAvailability::QuadtreeAvailability(
     const QuadtreeTilingScheme& tilingScheme,
     uint32_t subtreeLevels,
     uint32_t maximumLevel) noexcept
@@ -53,7 +53,7 @@ QuadtreeSubtreeAvailability::QuadtreeSubtreeAvailability(
       _maximumChildrenSubtrees(1ULL << (subtreeLevels << 1)),
       _pRoot(nullptr) {}
 
-uint8_t QuadtreeSubtreeAvailability::computeAvailability(
+uint8_t QuadtreeAvailability::computeAvailability(
     const QuadtreeTileID& tileID) const noexcept {
   if (!this->_pRoot || tileID.level > this->_maximumLevel) {
     return 0;
@@ -184,7 +184,7 @@ uint8_t QuadtreeSubtreeAvailability::computeAvailability(
   return 0;
 }
 
-bool QuadtreeSubtreeAvailability::addSubtree(
+bool QuadtreeAvailability::addSubtree(
     const QuadtreeTileID& tileID,
     AvailabilitySubtree&& newSubtree) noexcept {
 
