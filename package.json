@@ -14,11 +14,7 @@
     "test-gltf": "cd tools/generate-classes && npm run test-gltf && cd ../.. && npm run format",
     "test-3d-tiles": "cd tools/generate-classes && npm run test-3d-tiles && cd ../.. && npm run format",
     "generate-gltf-old": "cd tools/generate-gltf-classes && npm run generate && cd ../.. && npm run format",
-    "test-gltf-old": "cd tools/generate-gltf-classes && npm run test && cd ../.. && npm run format",
-    "generate-gltf-new": "cd tools/schema-gen && npm run generate-gltf && cd ../.. && npm run format",
-    "generate-3d-tiles-new": "cd tools/schema-gen && npm run generate-3d-tiles && cd ../.. && npm run format",
-    "test-gltf-new": "cd tools/schema-gen && npm run test-gltf && cd ../.. && npm run format",
-    "test-3d-tiles-new": "cd tools/schema-gen && npm run test-3d-tiles && cd ../.. && npm run format"
+    "test-gltf-old": "cd tools/generate-gltf-classes && npm run test && cd ../.. && npm run format"
   },
   "repository": {
     "type": "git",
