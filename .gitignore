@@ -7,3 +7,4 @@ CMakeSettings.json
 *.user
 .cache
 *.DS_Store
+test.db
