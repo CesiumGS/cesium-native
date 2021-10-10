@@ -1,5 +1,6 @@
 #include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
+
 #include <catch2/catch.hpp>
 
 using namespace Cesium3DTilesSelection;

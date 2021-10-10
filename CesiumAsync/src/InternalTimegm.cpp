@@ -4,6 +4,7 @@
 // https://github.com/boostorg/chrono/blob/aa51cbd5121ed29093484f53e5f96e13a9a915b4/include/boost/chrono/io/time_point_io.hpp#L784
 
 #include "InternalTimegm.h"
+
 #include <cstdint>
 
 namespace CesiumAsync {

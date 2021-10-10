@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/TileContentLoadInput.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
-#include "Cesium3DTilesSelection/TileContentLoader.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "CesiumAsync/AsyncSystem.h"
+#include "BoundingVolume.h"
+#include "Library.h"
+#include "TileContentLoadInput.h"
+#include "TileContentLoadResult.h"
+#include "TileContentLoader.h"
+#include "TileID.h"
+#include "TileRefine.h"
+
+#include <CesiumAsync/AsyncSystem.h>
 
 #include <gsl/span>
 #include <spdlog/fwd.h>

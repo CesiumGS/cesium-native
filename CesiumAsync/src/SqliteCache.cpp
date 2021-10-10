@@ -1,13 +1,16 @@
 #include "CesiumAsync/SqliteCache.h"
+
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Tracing.h"
-#include "rapidjson/document.h"
-#include "rapidjson/rapidjson.h"
-#include "rapidjson/writer.h"
+
+#include <CesiumUtility/Tracing.h>
+
 #include <cesium-sqlite3.h>
-#include <cstddef>
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
+
+#include <cstddef>
 #include <stdexcept>
 #include <utility>
 

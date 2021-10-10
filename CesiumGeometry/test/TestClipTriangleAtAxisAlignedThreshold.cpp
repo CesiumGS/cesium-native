@@ -1,4 +1,5 @@
 #include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
+
 #include <catch2/catch.hpp>
 
 using namespace CesiumGeometry;

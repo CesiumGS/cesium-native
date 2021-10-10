@@ -1,11 +1,15 @@
 #include "Cesium3DTilesSelection/ExternalTilesetContent.h"
+
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Uri.h"
-#include <cstddef>
+
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Uri.h>
+
 #include <rapidjson/document.h>
+
+#include <cstddef>
 
 namespace Cesium3DTilesSelection {
 

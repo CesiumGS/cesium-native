@@ -1,6 +1,8 @@
 #include "readFile.h"
-#include "catch2/catch.hpp"
+
 #include <fstream>
+
+#include "catch2/catch.hpp"
 
 std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);

@@ -1,5 +1,7 @@
 #include "AssetWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Asset.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 

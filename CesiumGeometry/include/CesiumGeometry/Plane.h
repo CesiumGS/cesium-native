@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
+#include "Library.h"
+
 #include <glm/vec3.hpp>
 
 namespace CesiumGeometry {

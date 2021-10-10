@@ -1,21 +1,26 @@
+
 #include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
+
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Uri.h"
-#include <optional>
+
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Uri.h>
+
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
+
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>

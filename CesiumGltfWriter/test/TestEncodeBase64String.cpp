@@ -1,5 +1,7 @@
 #include "EncodeBase64String.h"
+
 #include <catch2/catch.hpp>
+
 #include <iostream>
 #include <string_view>
 #include <vector>

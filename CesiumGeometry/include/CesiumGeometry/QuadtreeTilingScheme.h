@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/Rectangle.h"
+#include "Library.h"
+#include "QuadtreeTileID.h"
+#include "Rectangle.h"
+
 #include <glm/vec2.hpp>
+
 #include <optional>
 
 namespace CesiumGeometry {

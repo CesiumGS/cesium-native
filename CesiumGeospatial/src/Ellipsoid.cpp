@@ -1,5 +1,7 @@
 #include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 

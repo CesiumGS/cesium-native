@@ -1,7 +1,10 @@
 #include "AccessorWriter.h"
+
 #include "AccessorSparseWriter.h"
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 #include <stdexcept>
 #include <type_traits>
 

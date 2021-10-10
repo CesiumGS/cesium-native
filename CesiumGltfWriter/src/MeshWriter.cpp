@@ -1,9 +1,12 @@
 #include "MeshWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
+
 #include <vector>
 
 void writePrimitive(

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/Impl/cesium-async++.h"
+#include "cesium-async++.h"
 
 namespace CesiumAsync {
 

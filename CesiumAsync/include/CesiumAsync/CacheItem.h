@@ -1,8 +1,10 @@
 #pragma once
 
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/Library.h"
-#include "gsl/span"
+#include "HttpHeaders.h"
+#include "Library.h"
+
+#include <gsl/span>
+
 #include <cstddef>
 #include <ctime>
 #include <map>

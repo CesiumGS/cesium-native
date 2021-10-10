@@ -1,15 +1,18 @@
 #include "Cesium3DTilesSelection/TileMapServiceRasterOverlay.h"
+
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Uri.h"
-#include "tinyxml2.h"
+#include "Cesium3DTilesSelection/tinyxml-cesium.h"
+
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumUtility/Uri.h>
+
 #include <cstddef>
 
 using namespace CesiumAsync;

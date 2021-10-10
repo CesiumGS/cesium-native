@@ -5,13 +5,16 @@
 #include "CesiumGltf/Node.h"
 #include "CesiumGltf/Scene.h"
 #include "CesiumGltf/Writer.h"
+
 #include <CesiumGltf/GltfReader.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/WriteModelOptions.h>
-#include <algorithm>
+
 #include <catch2/catch.hpp>
-#include <cstddef>
 #include <gsl/span>
+
+#include <algorithm>
+#include <cstddef>
 #include <string>
 
 using namespace CesiumGltf;

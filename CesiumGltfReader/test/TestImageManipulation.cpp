@@ -1,7 +1,9 @@
 #include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltf/ImageManipulation.h"
-#include <algorithm>
+
 #include <catch2/catch.hpp>
+
+#include <algorithm>
 
 using namespace CesiumGltf;
 

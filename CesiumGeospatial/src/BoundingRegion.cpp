@@ -1,9 +1,12 @@
 #include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeometry/IntersectionTests.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Ray.h"
+
 #include "CesiumGeospatial/EllipsoidTangentPlane.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Ray.h>
+#include <CesiumUtility/Math.h>
+
 #include <stdexcept>
 
 using namespace CesiumUtility;

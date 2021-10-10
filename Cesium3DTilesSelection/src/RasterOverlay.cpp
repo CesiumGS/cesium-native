@@ -1,4 +1,5 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
+
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"

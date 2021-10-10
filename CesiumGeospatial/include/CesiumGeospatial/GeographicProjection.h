@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+#include "Ellipsoid.h"
+#include "GlobeRectangle.h"
+#include "Library.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 

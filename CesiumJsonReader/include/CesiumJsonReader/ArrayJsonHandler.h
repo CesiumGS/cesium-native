@@ -1,10 +1,11 @@
 #pragma once
 
-#include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/Library.h"
 #include "DoubleJsonHandler.h"
 #include "IntegerJsonHandler.h"
+#include "JsonHandler.h"
+#include "Library.h"
 #include "StringJsonHandler.h"
+
 #include <cassert>
 #include <functional>
 #include <memory>

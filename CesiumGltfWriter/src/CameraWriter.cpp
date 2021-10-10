@@ -1,10 +1,13 @@
 #include "CameraWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
 #include <CesiumGltf/CameraPerspective.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
+
 #include <cstdint>
 #include <utility>
 #include <vector>

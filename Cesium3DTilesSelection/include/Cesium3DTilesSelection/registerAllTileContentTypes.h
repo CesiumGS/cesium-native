@@ -1,4 +1,4 @@
-#include "Cesium3DTilesSelection/Library.h"
+#include "Library.h"
 
 namespace Cesium3DTilesSelection {
 

@@ -1,6 +1,9 @@
 #include "Cesium3DTilesSelection/TileContentFactory.h"
+
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetResponse.h"
+
+#include <CesiumAsync/IAssetResponse.h>
+
 #include <algorithm>
 #include <cctype>
 

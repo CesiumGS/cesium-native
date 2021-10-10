@@ -5,11 +5,13 @@
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
+
 #include <catch2/catch.hpp>
-#include <filesystem>
 #include <rapidjson/document.h>
-#include <set>
 #include <spdlog/spdlog.h>
+
+#include <filesystem>
+#include <set>
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesSelection;

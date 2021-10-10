@@ -1,14 +1,16 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/GltfReader.h"
 #include "CesiumGltf/KHR_draco_mesh_compression.h"
+
 #include <catch2/catch.hpp>
+#include <glm/vec3.hpp>
+#include <gsl/span>
+#include <rapidjson/reader.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
-#include <glm/vec3.hpp>
-#include <gsl/span>
-#include <rapidjson/reader.h>
 #include <string>
 
 using namespace CesiumGltf;
@@ -118,7 +120,8 @@ TEST_CASE("CesiumGltf::GltfReader") {
 
 TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /= "TriangleWithoutIndices.gltf";
+  gltfFile /=
+      "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile.string());
   CesiumGltf::GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
@@ -135,6 +138,19 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[0] == glm::vec3(0.0, 0.0, 0.0));
   CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
+}
+
+TEST_CASE("Read BoxTexturedWebp (with error messages)") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "BoxTexturedWebp/glTF/BoxTexturedWebp.gltf";
+  std::vector<std::byte> data = readFile(gltfFile.string());
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult result = reader.readModel(data);
+  REQUIRE(result.model);
+  REQUIRE(result.warnings.empty());
+
+  // Expect errors, because WebP cannot be read
+  REQUIRE(result.errors.size() > 0);
 }
 
 TEST_CASE("Nested extras serializes properly") {
@@ -338,4 +354,29 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
 
   auto& zeroExtensions = withoutCustomExt.model->extensions;
   REQUIRE(zeroExtensions.empty());
+}
+
+TEST_CASE("Unknown MIME types are handled") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "images": [
+            {
+              "mimeType" : "image/webp"
+            }
+        ]
+    }
+  )";
+
+  ReadModelOptions options;
+  CesiumGltf::GltfReader reader;
+  ModelReaderResult modelResult = reader.readModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  // Note: The modelResult.errors will not be empty,
+  // because no images could be read.
+  REQUIRE(modelResult.model.has_value());
 }

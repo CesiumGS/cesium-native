@@ -1,20 +1,23 @@
 #include "Cesium3DTilesSelection/Tile.h"
+
 #include "Cesium3DTilesSelection/GltfContent.h"
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumAsync/ITaskProcessor.h"
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeometry/AxisTransforms.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeospatial/Transforms.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumUtility/Tracing.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/ITaskProcessor.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/AxisTransforms.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Transforms.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumUtility/Tracing.h>
+
 #include <cstddef>
 
 using namespace CesiumAsync;
@@ -333,7 +336,8 @@ void Tile::loadContent() {
 
                   if (pContent) {
                     pContent->httpStatusCode = statusCode;
-                    if (statusCode < 200 || statusCode >= 300) {
+                    if (statusCode != 0 &&
+                        (statusCode < 200 || statusCode >= 300)) {
                       return LoadResult{
                           LoadState::FailedTemporarily,
                           std::move(pContent),

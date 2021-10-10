@@ -1,10 +1,12 @@
 #pragma once
 
-#include "CesiumGltf/MetadataPropertyView.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
-#include "CesiumGltf/PropertyType.h"
+#include "MetadataPropertyView.h"
+#include "Model.h"
+#include "ModelEXT_feature_metadata.h"
+#include "PropertyType.h"
+
 #include <glm/common.hpp>
+
 #include <optional>
 
 namespace CesiumGltf {

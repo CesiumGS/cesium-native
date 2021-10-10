@@ -1,4 +1,5 @@
 #include "Cesium3DTilesSelection/CreditSystem.h"
+
 #include <catch2/catch.hpp>
 
 using namespace Cesium3DTilesSelection;
