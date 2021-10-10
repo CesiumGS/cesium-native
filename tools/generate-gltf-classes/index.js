@@ -8,17 +8,17 @@ const argv = yargs.options({
   schema: {
     description: "The path to the JSON schema files.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   root: {
     description: "The root schema file.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   output: {
     description: "The output directory for the generated class files.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   readerOutput: {
     description: "The output directory for the generated reader files.",
@@ -28,17 +28,18 @@ const argv = yargs.options({
   extensions: {
     description: "The extensions directory.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   config: {
-    description: "The path to the configuration options controlling code generation, expressed in a JSON file.",
+    description:
+      "The path to the configuration options controlling code generation, expressed in a JSON file.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   namespace: {
     description: "Namespace to put the generated classes/methods in.",
     demandOption: true,
-    type: "string"
+    type: "string",
   },
   oneHandlerFile: {
     description:
