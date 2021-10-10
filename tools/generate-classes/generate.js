@@ -11,7 +11,6 @@ function generate(options, schema) {
     schemaCache,
     outputDir,
     readerOutputDir,
-    writerOutputDir,
     config,
     namespace,
   } = options;

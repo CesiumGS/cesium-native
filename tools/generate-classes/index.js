@@ -25,11 +25,6 @@ const argv = yargs.options({
     demandOption: true,
     type: "string",
   },
-  writerOutput: {
-    description: "The output directory for the generated writer files.",
-    demandOption: true,
-    type: "string",
-  },
   extensions: {
     description: "The extensions directory.",
     demandOption: true,
@@ -74,7 +69,6 @@ const options = {
   oneHandlerFile: argv.oneHandlerFile,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
-  writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
