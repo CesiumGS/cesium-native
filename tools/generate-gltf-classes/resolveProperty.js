@@ -11,10 +11,11 @@ function resolveProperty(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   if (Object.keys(propertyDetails).length === 0) {
-    // Ignore totally empty properties. The glTF JSON schema files often use empty properties in derived classes
+    // Ignore totally empty properties. The glTF and 3D Tiles JSON schema files often use empty properties in derived classes
     // when the actual property definition is in the base class.
     return undefined;
   }
@@ -33,7 +34,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      required
+      required,
+      namespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
@@ -84,7 +86,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      required
+      required,
+      namespace
     );
   } else if (isEnum(propertyDetails)) {
     return resolveEnum(
@@ -93,7 +96,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      makeOptional
+      makeOptional,
+      namespace
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -114,7 +118,7 @@ function resolveProperty(
         ...propertyDefaults(propertyName, propertyDetails),
         type: makeOptional ? `std::optional<${typeName}>` : typeName,
         headers: [
-          `"CesiumGltf/${type}.h"`,
+          `"${namespace}/${type}.h"`,
           ...(makeOptional ? ["<optional>"] : []),
         ],
         readerType: `${type}JsonHandler`,
@@ -129,7 +133,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails.allOf[0],
-      required
+      required,
+      namespace
     );
 
     return {
@@ -137,40 +142,6 @@ function resolveProperty(
       briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
       fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
     };
-    // TODO: This is a partially-working support for properties that can have multiple types, via std::variant.
-    // But it still needs an implementation of VariantJsonHandler, and may require per-property codegen as well.
-    // } else if (Array.isArray(propertyDetails.type)) {
-    //   const nested = propertyDetails.type.map((type) => {
-    //     const propertyNameWithType = propertyName + " (" + type + ")";
-    //     return resolveProperty(
-    //       schemaCache,
-    //       config,
-    //       parentName,
-    //       propertyNameWithType,
-    //       {
-    //         ...propertyDetails,
-    //         type: type,
-    //       },
-    //       [propertyNameWithType]
-    //     );
-    //   });
-
-    //   return {
-    //     ...propertyDefaults(propertyName, propertyDetails),
-    //     type: `std::variant<${nested.map((item) => item.type).join(", ")}>`,
-    //     headers: lodash.uniq([
-    //       "<variant>",
-    //       ...lodash.flatten(nested.map((type) => type.headers)),
-    //     ]),
-    //     readerType: `VariantJsonHandler<${nested
-    //       .map((item) => item.readerType)
-    //       .join(", ")}>`,
-    //     readerHeaders: lodash.uniq([
-    //       `"VariantJsonHandler.h"`,
-    //       ...lodash.flatten(nested.map((item) => item.readerHeaders)),
-    //     ]),
-    //     schemas: lodash.uniq(lodash.flatten(nested.map((item) => item.schemas))),
-    //   };
   } else {
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
     return {
@@ -227,7 +198,8 @@ function resolveArray(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   // If there is no items definition, pass an effectively empty object.
   // But if the definition is _actually_ empty, the property will be ignored
@@ -239,7 +211,8 @@ function resolveArray(
     parentName,
     propertyName + ".items",
     propertyDetails.items || { notEmpty: true },
-    undefined
+    undefined,
+    namespace
   );
 
   if (!itemProperty) {
@@ -270,7 +243,8 @@ function resolveDictionary(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   const additional = resolveProperty(
     schemaCache,
@@ -279,7 +253,8 @@ function resolveDictionary(
     propertyName + ".additionalProperties",
     propertyDetails.additionalProperties,
     // Treat the nested property type as required so it's not wrapped in std::optional.
-    [propertyName + ".additionalProperties"]
+    [propertyName + ".additionalProperties"],
+    namespace
   );
 
   if (!additional) {
@@ -362,7 +337,8 @@ function resolveEnum(
   parentName,
   propertyName,
   propertyDetails,
-  makeOptional
+  makeOptional,
+  namespace
 ) {
   if (!isEnum(propertyDetails)) {
     return undefined;
@@ -408,7 +384,7 @@ function resolveEnum(
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: createEnumDefault(enumName, propertyDetails),
-    readerHeaders: [`"CesiumGltf/${parentName}.h"`],
+    readerHeaders: [`"${namespace}/${parentName}.h"`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
       parentName,

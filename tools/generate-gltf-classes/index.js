@@ -6,35 +6,39 @@ const generate = require("./generate");
 
 const argv = yargs.options({
   schema: {
-    alias: "s",
-    description: "The path to the glTF 2.0 JSONSchema files.",
+    description: "The path to the JSON schema files.",
     demandOption: true,
-    type: "string",
+    type: "string"
+  },
+  root: {
+    description: "The root schema file.",
+    demandOption: true,
+    type: "string"
   },
   output: {
-    alias: "o",
-    description: "The output directory for the generated glTF class files.",
+    description: "The output directory for the generated class files.",
     demandOption: true,
-    type: "string",
+    type: "string"
   },
   readerOutput: {
-    alias: "r",
     description: "The output directory for the generated reader files.",
     demandOption: true,
     type: "string",
   },
   extensions: {
-    alias: "e",
     description: "The extensions directory.",
     demandOption: true,
-    type: "string",
+    type: "string"
   },
   config: {
-    alias: "c",
-    description:
-      "The path to the configuration options controlling code generation, expressed in a JSON file.",
+    description: "The path to the configuration options controlling code generation, expressed in a JSON file.",
     demandOption: true,
-    type: "string",
+    type: "string"
+  },
+  namespace: {
+    description: "Namespace to put the generated classes/methods in.",
+    demandOption: true,
+    type: "string"
   },
   oneHandlerFile: {
     description:
@@ -45,7 +49,7 @@ const argv = yargs.options({
 }).argv;
 
 const schemaCache = new SchemaCache(argv.schema, argv.extensions);
-const modelSchema = schemaCache.load("glTF.schema.json");
+const rootSchema = schemaCache.load(argv.root);
 
 const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
@@ -66,12 +70,13 @@ const options = {
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
   config: config,
+  namespace: argv.namespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {},
 };
 
-let schemas = [modelSchema];
+let schemas = [rootSchema];
 
 for (const extension of config.extensions) {
   const extensionSchema = schemaCache.loadExtension(extension.schema);
