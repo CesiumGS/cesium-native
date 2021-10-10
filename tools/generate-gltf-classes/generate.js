@@ -51,14 +51,14 @@ function generate(options, schema) {
   schemaCache.popContext();
 
   let headers = lodash.uniq([
-    `"${namespace}/Library.h"`,
-    `"${namespace}/${base}.h"`,
+    `"Library.h"`,
+    `"${base}.h"`,
     ...lodash.flatten(properties.map((property) => property.headers)),
   ]);
 
   // Prevent header from including itself for recursive types like Tile
   headers = headers.filter((headers) => {
-    return headers !== `"${namespace}/${name}.h"`;
+    return headers !== `"${name}.h"`;
   });
 
   headers.sort();
