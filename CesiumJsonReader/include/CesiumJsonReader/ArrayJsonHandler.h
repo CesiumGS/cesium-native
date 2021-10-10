@@ -6,6 +6,8 @@
 #include "IntegerJsonHandler.h"
 #include "StringJsonHandler.h"
 #include <cassert>
+#include <functional>
+#include <memory>
 #include <vector>
 
 namespace CesiumJsonReader {
@@ -14,12 +16,16 @@ class CESIUMJSONREADER_API ArrayJsonHandler : public JsonHandler {
 public:
   template <typename... Ts>
   ArrayJsonHandler(Ts&&... args) noexcept
-      : JsonHandler(), _objectHandler(std::forward<Ts>(args)...) {}
+      : JsonHandler(),
+        _handlerFactory(
+            std::bind(handlerFactory<Ts...>, std::forward<Ts>(args)...)),
+        _objectHandler() {}
 
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
+    this->_objectHandler.reset(this->_handlerFactory());
   }
 
   virtual IJsonHandler* readNull() override {
@@ -61,8 +67,8 @@ public:
 
     assert(this->_pArray);
     T& o = this->_pArray->emplace_back();
-    this->_objectHandler.reset(this, &o);
-    return this->_objectHandler.readObjectStart();
+    this->_objectHandler->reset(this, &o);
+    return this->_objectHandler->readObjectStart();
   }
 
   virtual IJsonHandler*
@@ -107,9 +113,15 @@ private:
     }
   }
 
+  template <typename... Ts> static THandler* handlerFactory(Ts&&... args) {
+    return new THandler(std::forward<Ts>(args)...);
+  }
+
   std::vector<T>* _pArray = nullptr;
   bool _arrayIsOpen = false;
-  THandler _objectHandler;
+
+  std::function<THandler*()> _handlerFactory;
+  std::unique_ptr<THandler> _objectHandler;
 };
 
 template <>
