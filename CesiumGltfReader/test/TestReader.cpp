@@ -45,16 +45,48 @@ std::vector<std::byte> readFile(const std::string& path) {
 TEST_CASE("CesiumGltf::GltfReader") {
   using namespace std::string_literals;
 
-  std::string s =
-      "{"s + "  \"accessors\": ["s + "    {"s +
-      "      \"count\": 4,"s + //{\"test\":true},"s +
-      "      \"componentType\":5121,"s + "      \"type\":\"VEC2\","s +
-      "      \"max\":[1.0, 2.2, 3.3],"s + "      \"min\":[0.0, -1.2]"s +
-      "    }"s + "  ],"s + "  \"meshes\": [{"s + "    \"primitives\": [{"s +
-      "      \"attributes\": {"s + "        \"POSITION\": 0,"s +
-      "        \"NORMAL\": 1"s + "      },"s + "      \"targets\": ["s +
-      "        {\"POSITION\": 10, \"NORMAL\": 11}"s + "      ]"s + "    }]"s +
-      "  }],"s + "  \"surprise\":{\"foo\":true}"s + "}"s;
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4,
+          "componentType": 5121,
+          "type": "VEC2",
+          "max": [
+            1,
+            2.2,
+            3.3
+          ],
+          "min": [
+            0,
+            -1.2
+          ]
+        }
+      ],
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 1
+              },
+              "targets": [
+                {
+                  "POSITION": 10,
+                  "NORMAL": 11
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "surprise": {
+        "foo": true
+      }
+    }
+  )";
+
   CesiumGltf::GltfReader reader;
   ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
