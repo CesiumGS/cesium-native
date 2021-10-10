@@ -913,7 +913,7 @@ std::optional<ImplicitTilingContext> createImplicitContextFromLayerJson(
   CesiumGeospatial::Projection projection;
   CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
   CesiumGeometry::Rectangle quadtreeRectangleProjected(0.0, 0.0, 0.0, 0.0);
-  int32_t quadtreeXTiles;
+  uint32_t quadtreeXTiles;
 
   if (layerJson.projection == "EPSG:4326") {
     CesiumGeospatial::GeographicProjection geographic;
@@ -950,9 +950,7 @@ std::optional<ImplicitTilingContext> createImplicitContextFromLayerJson(
       layerJson.tiles,
       tilingScheme,
       projection,
-      CesiumGeometry::QuadtreeTileAvailability(
-          tilingScheme,
-          layerJson.maxzoom)};
+      QuadtreeTileAvailability(tilingScheme, uint32_t(layerJson.maxzoom))};
 
   // Request normals, watermask, and metadata if they're available
   std::vector<std::string> knownExtensions = {"octvertexnormals", "metadata"};
@@ -1002,11 +1000,11 @@ void applyResolvedLayerJson(
       context.implicitContext->tilingScheme;
   const Projection& projection = context.implicitContext->projection;
 
-  int32_t quadtreeXTiles =
+  uint32_t quadtreeXTiles =
       context.implicitContext->tilingScheme.getRootTilesX();
   tile.createChildTiles(quadtreeXTiles);
 
-  for (int32_t i = 0; i < quadtreeXTiles; ++i) {
+  for (uint32_t i = 0; i < quadtreeXTiles; ++i) {
     Tile& childTile = tile.getChildren()[i];
     QuadtreeTileID id(0, i, 0);
 
