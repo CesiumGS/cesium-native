@@ -31,7 +31,7 @@ struct CESIUMGLTF_API BufferSpec : public NamedObject {
 
 private:
   /**
-   * @brief This class is not mean to be instantiated directly. Use {@link Buffer} instead.
+   * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
    */
   BufferSpec() = default;
   friend struct Buffer;

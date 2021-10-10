@@ -138,7 +138,7 @@ struct CESIUMGLTF_API ModelSpec : public ExtensibleObject {
 
 private:
   /**
-   * @brief This class is not mean to be instantiated directly. Use {@link Model} instead.
+   * @brief This class is not meant to be instantiated directly. Use {@link Model} instead.
    */
   ModelSpec() = default;
   friend struct Model;
