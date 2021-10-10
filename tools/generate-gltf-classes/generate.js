@@ -82,12 +82,12 @@ function generate(options, schema) {
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
-    properties
-      .map((property) => formatProperty(property))
-      .filter(propertyText => propertyText !== undefined)
-      .join("\n\n"),
-    16
-  )}
+                  properties
+                    .map((property) => formatProperty(property))
+                    .filter(propertyText => propertyText !== undefined)
+                    .join("\n\n"),
+                  16
+                )}
                 ${thisConfig.toBeInherited ? privateSpecConstructor(name) : ""}
             };
         }
@@ -193,11 +193,11 @@ function generate(options, schema) {
 
             ${name}* _pObject = nullptr;
             ${indent(
-    properties
-      .map((property) => formatReaderProperty(property))
-      .join("\n"),
-    12
-  )}
+              properties
+                .map((property) => formatReaderProperty(property))
+                .join("\n"),
+              12
+            )}
           };
         }
   `;
@@ -268,11 +268,11 @@ function generate(options, schema) {
           using namespace std::string_literals;
 
           ${indent(
-    properties
-      .map((property) => formatReaderPropertyImpl(property))
-      .join("\n"),
-    10
-  )}
+            properties
+              .map((property) => formatReaderPropertyImpl(property))
+              .join("\n"),
+            10
+          )}
 
           return this->readObjectKey${base}(objectType, str, *this->_pObject);
         }
