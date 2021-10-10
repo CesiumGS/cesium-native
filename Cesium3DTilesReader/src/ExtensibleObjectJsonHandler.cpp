@@ -1,4 +1,5 @@
 #include "ExtensibleObjectJsonHandler.h"
+
 #include "Cesium3DTiles/ExtensibleObject.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"

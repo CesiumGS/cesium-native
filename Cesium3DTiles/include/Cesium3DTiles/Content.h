@@ -5,6 +5,7 @@
 #include "Cesium3DTiles/BoundingVolume.h"
 #include "Cesium3DTiles/ExtensibleObject.h"
 #include "Cesium3DTiles/Library.h"
+
 #include <optional>
 #include <string>
 

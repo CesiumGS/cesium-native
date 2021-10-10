@@ -7,6 +7,7 @@
 #include "Cesium3DTiles/Library.h"
 #include "Cesium3DTiles/Properties.h"
 #include "Cesium3DTiles/Tile.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>

@@ -3,8 +3,10 @@
 #include "Cesium3DTiles/IExtensionJsonHandler.h"
 #include "Cesium3DTiles/ReaderLibrary.h"
 #include "Cesium3DTiles/Tileset.h"
-#include <functional>
+
 #include <gsl/span>
+
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>

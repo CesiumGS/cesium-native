@@ -1,14 +1,17 @@
 #include "Cesium3DTiles/TilesetReader.h"
+
 #include "Cesium3DTiles/IExtensionJsonHandler.h"
 #include "Cesium3DTiles/ReaderContext.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
 #include "CesiumUtility/Tracing.h"
 #include "TilesetJsonHandler.h"
+
+#include <rapidjson/reader.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
-#include <rapidjson/reader.h>
 #include <sstream>
 #include <string>
 

@@ -4,6 +4,7 @@
 
 #include "Cesium3DTiles/ExtensibleObject.h"
 #include "Cesium3DTiles/Library.h"
+
 #include <vector>
 
 namespace Cesium3DTiles {

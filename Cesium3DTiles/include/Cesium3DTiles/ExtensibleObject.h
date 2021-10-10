@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/Library.h"
 #include "CesiumUtility/JsonValue.h"
+
 #include <any>
 #include <unordered_map>
 #include <utility>

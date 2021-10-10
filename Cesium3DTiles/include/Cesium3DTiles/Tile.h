@@ -6,6 +6,7 @@
 #include "Cesium3DTiles/Content.h"
 #include "Cesium3DTiles/ExtensibleObject.h"
 #include "Cesium3DTiles/Library.h"
+
 #include <optional>
 #include <vector>
 

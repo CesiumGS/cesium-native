@@ -2,6 +2,7 @@
 
 #include "Cesium3DTiles/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
+
 #include <memory>
 
 namespace Cesium3DTiles {

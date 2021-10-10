@@ -1,13 +1,16 @@
 #include "Cesium3DTiles/TilesetReader.h"
+
 #include <CesiumJsonReader/JsonReader.h>
+
 #include <catch2/catch.hpp>
+#include <glm/vec3.hpp>
+#include <gsl/span>
+#include <rapidjson/reader.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
-#include <glm/vec3.hpp>
-#include <gsl/span>
-#include <rapidjson/reader.h>
 #include <string>
 
 using namespace Cesium3DTiles;
