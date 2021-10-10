@@ -7,7 +7,14 @@ const resolveProperty = require("./resolveProperty");
 const unindent = require("./unindent");
 
 function generate(options, schema) {
-  const { schemaCache, outputDir, readerOutputDir, writerOutputDir, config, namespace } = options;
+  const {
+    schemaCache,
+    outputDir,
+    readerOutputDir,
+    writerOutputDir,
+    config,
+    namespace,
+  } = options;
 
   const name = getNameFromSchema(config, schema);
   const thisConfig = config.classes[schema.title] || {};
@@ -44,11 +51,16 @@ function generate(options, schema) {
 
   schemaCache.popContext();
 
-  const headers = lodash.uniq([
+  let headers = lodash.uniq([
     `"${namespace}/Library.h"`,
     `"${namespace}/${base}.h"`,
     ...lodash.flatten(properties.map((property) => property.headers)),
   ]);
+
+  // Prevent header from including itself for recursive types like Tile
+  headers = headers.filter((headers) => {
+    return headers !== `"${namespace}/${name}.h"`;
+  });
 
   headers.sort();
 
@@ -90,11 +102,17 @@ function generate(options, schema) {
   );
   fs.writeFileSync(headerOutputPath, unindent(header), "utf-8");
 
-  const readerHeaders = lodash.uniq([
+  let readerHeaders = lodash.uniq([
     `"${namespace}/ReaderContext.h"`,
     `"${base}JsonHandler.h"`,
     ...lodash.flatten(properties.map((property) => property.readerHeaders)),
   ]);
+
+  // Prevent header from including itself for recursive types like Tile
+  readerHeaders = readerHeaders.filter((readerHeader) => {
+    return readerHeader !== `"${name}JsonHandler.h"`;
+  });
+
   readerHeaders.sort();
 
   const readerLocalTypes = lodash.uniq(

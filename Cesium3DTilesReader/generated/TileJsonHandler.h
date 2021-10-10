@@ -10,7 +10,6 @@
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "ContentJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
-#include "TileJsonHandler.h"
 
 namespace Cesium3DTiles {
 struct ReaderContext;
