@@ -1,9 +1,10 @@
 #include "decodeDataUrls.h"
 
 #include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/Model.h"
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumUtility/Tracing.h"
+
+#include <CesiumGltf/Model.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <modp_b64.h>
 

@@ -1,4 +1,3 @@
-
 #include "Cesium3DTilesSelection/RasterizedPolygonsOverlay.h"
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"

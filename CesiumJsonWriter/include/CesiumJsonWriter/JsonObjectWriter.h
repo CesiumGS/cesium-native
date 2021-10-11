@@ -1,4 +1,5 @@
 #pragma once
+
 #include "JsonWriter.h"
 
 #include <CesiumUtility/JsonValue.h>

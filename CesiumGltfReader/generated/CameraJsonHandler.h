@@ -4,10 +4,11 @@
 
 #include "CameraOrthographicJsonHandler.h"
 #include "CameraPerspectiveJsonHandler.h"
-#include "CesiumGltf/Camera.h"
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+
+#include <CesiumGltf/Camera.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumGltf {
 struct ReaderContext;

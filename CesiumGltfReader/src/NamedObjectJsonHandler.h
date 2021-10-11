@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumGltf {
 struct NamedObject;

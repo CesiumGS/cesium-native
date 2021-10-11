@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumGltf/TextureInfo.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumGltf/TextureInfo.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumGltf {
 struct ReaderContext;

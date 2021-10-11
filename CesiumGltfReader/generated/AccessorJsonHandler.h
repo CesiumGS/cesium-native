@@ -3,14 +3,15 @@
 #pragma once
 
 #include "AccessorSparseJsonHandler.h"
-#include "CesiumGltf/Accessor.h"
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumJsonReader/ArrayJsonHandler.h"
-#include "CesiumJsonReader/BoolJsonHandler.h"
-#include "CesiumJsonReader/DoubleJsonHandler.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
-#include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+
+#include <CesiumGltf/Accessor.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
+#include <CesiumJsonReader/BoolJsonHandler.h>
+#include <CesiumJsonReader/DoubleJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumGltf {
 struct ReaderContext;

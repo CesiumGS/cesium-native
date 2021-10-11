@@ -1,10 +1,11 @@
 #include "Batched3DModelContent.h"
-#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
-#include "CesiumGltf/MetadataFeatureTableView.h"
-#include "CesiumGltf/MetadataPropertyView.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
+
+#include <CesiumGltf/MeshPrimitiveEXT_feature_metadata.h>
+#include <CesiumGltf/MetadataFeatureTableView.h>
+#include <CesiumGltf/MetadataPropertyView.h>
+#include <CesiumGltf/ModelEXT_feature_metadata.h>
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
