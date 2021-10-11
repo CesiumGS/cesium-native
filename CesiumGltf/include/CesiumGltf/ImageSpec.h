@@ -43,7 +43,7 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
    * Known values are defined in {@link MimeType}.
    *
    */
-  std::optional<std::string> mimeType = MimeType::image_jpeg;
+  std::optional<std::string> mimeType;
 
   /**
    * @brief The index of the bufferView that contains the image. This field
