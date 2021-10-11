@@ -113,10 +113,7 @@ function resolveProperty(
       return {
         ...propertyDefaults(propertyName, propertyDetails),
         type: makeOptional ? `std::optional<${typeName}>` : typeName,
-        headers: [
-          `"${type}.h"`,
-          ...(makeOptional ? ["<optional>"] : []),
-        ],
+        headers: [`"${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${type}JsonHandler.h"`],
         schemas: [itemSchema],
