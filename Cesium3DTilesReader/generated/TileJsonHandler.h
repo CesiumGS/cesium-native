@@ -4,12 +4,13 @@
 
 #include "BoundingVolumeJsonHandler.h"
 #include "Cesium3DTiles/ReaderContext.h"
-#include "Cesium3DTiles/Tile.h"
-#include "CesiumJsonReader/ArrayJsonHandler.h"
-#include "CesiumJsonReader/DoubleJsonHandler.h"
-#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ContentJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+
+#include <Cesium3DTiles/Tile.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
+#include <CesiumJsonReader/DoubleJsonHandler.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace Cesium3DTiles {
 struct ReaderContext;

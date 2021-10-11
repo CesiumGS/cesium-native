@@ -3,10 +3,11 @@
 #pragma once
 
 #include "BoundingVolumeJsonHandler.h"
-#include "Cesium3DTiles/Content.h"
 #include "Cesium3DTiles/ReaderContext.h"
-#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+
+#include <Cesium3DTiles/Content.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace Cesium3DTiles {
 struct ReaderContext;

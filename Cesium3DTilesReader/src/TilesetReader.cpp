@@ -105,8 +105,7 @@ public:
 
 } // namespace
 
-TilesetReader::TilesetReader() {
-}
+TilesetReader::TilesetReader() {}
 
 void TilesetReader::setExtensionState(
     const std::string& extensionName,
