@@ -3,11 +3,15 @@
 #include "CesiumGltf/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <memory>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
+
 struct ReaderContext;
-struct ExtensibleObject;
 
 class ExtensionsJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:

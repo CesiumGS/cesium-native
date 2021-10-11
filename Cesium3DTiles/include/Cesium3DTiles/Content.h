@@ -3,11 +3,14 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
+
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 /**

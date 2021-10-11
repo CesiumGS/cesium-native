@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CesiumUtility/JsonValue.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <unordered_map>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**

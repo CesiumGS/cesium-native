@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <optional>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A view into a buffer generally representing a subset of the buffer.

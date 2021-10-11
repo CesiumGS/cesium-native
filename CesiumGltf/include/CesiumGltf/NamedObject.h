@@ -1,9 +1,12 @@
 #pragma once
 
-#include "ExtensibleObject.h"
 #include "Library.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <string>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**

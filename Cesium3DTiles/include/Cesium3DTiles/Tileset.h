@@ -3,14 +3,17 @@
 #pragma once
 
 #include "Asset.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
 #include "Properties.h"
 #include "Tile.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 /**

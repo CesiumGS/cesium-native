@@ -7,8 +7,11 @@
 #include "CesiumUtility/JsonValue.h"
 #include "ExtensionsJsonHandler.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
-struct ExtensibleObject;
 
 class ExtensibleObjectJsonHandler : public CesiumJsonReader::ObjectJsonHandler {
 public:

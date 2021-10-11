@@ -3,12 +3,15 @@
 #pragma once
 
 #include "CesiumUtility/JsonValue.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
 #include <optional>
 #include <string>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**

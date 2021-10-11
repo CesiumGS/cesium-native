@@ -8,7 +8,6 @@
 #include "Buffer.h"
 #include "BufferView.h"
 #include "Camera.h"
-#include "ExtensibleObject.h"
 #include "Image.h"
 #include "Library.h"
 #include "Material.h"
@@ -19,9 +18,13 @@
 #include "Skin.h"
 #include "Texture.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
 #include <string>
 #include <vector>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**

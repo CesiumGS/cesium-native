@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <vector>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief Joints and matrices defining a skin.

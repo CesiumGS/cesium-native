@@ -7,6 +7,8 @@
 
 #include <optional>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief Texture sampler properties for filtering and wrapping modes.

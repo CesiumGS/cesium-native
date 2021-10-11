@@ -9,6 +9,8 @@
 
 #include <vector>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A keyframe animation.

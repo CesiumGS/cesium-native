@@ -4,10 +4,13 @@
 
 #include "AccessorSparseIndices.h"
 #include "AccessorSparseValues.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**

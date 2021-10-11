@@ -12,6 +12,8 @@
 #include <optional>
 #include <vector>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief The material appearance of a primitive.

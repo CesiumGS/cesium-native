@@ -4,12 +4,15 @@
 
 #include "Class.h"
 #include "Enum.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
 #include <unordered_map>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**
