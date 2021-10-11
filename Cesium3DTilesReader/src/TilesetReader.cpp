@@ -106,7 +106,6 @@ public:
 } // namespace
 
 TilesetReader::TilesetReader() {
-  // TODO: register extensions here
 }
 
 void TilesetReader::setExtensionState(

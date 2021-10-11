@@ -72,9 +72,7 @@ enum class ExtensionState {
 /**
  * @brief Options for how to read a tileset.
  */
-struct CESIUM3DTILESREADER_API ReadTilesetOptions {
-  // TODO
-};
+struct CESIUM3DTILESREADER_API ReadTilesetOptions {};
 
 /**
  * @brief Reads tilesets.
