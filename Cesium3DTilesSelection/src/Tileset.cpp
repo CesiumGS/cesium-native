@@ -991,12 +991,10 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
           }
 
           if (implicitContext.octreeTilingScheme) {
-            // TODO:
-            /*
-              implicitContext.octreeSubtreeAvailability =
-                  OctreeSubtreeAvailability(
-                    *implicitContext.octreeTilingScheme,
-                    subtreeLevels, maximumLevel);*/
+            implicitContext.octreeAvailability = OctreeAvailability(
+                *implicitContext.octreeTilingScheme,
+                subtreeLevels,
+                maximumLevel);
 
             std::unique_ptr<TileContext> pNewContext =
                 std::make_unique<TileContext>();

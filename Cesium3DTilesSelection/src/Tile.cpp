@@ -569,13 +569,12 @@ static void createImplicitQuadtreeTile(
   }
 }
 
-/*
 static void createImplicitOctreeTile(
     const ImplicitTilingContext& implicitContext,
     Tile& parent,
     Tile& child,
     const OctreeTileID& childID,
-    bool available) {
+    uint8_t availability) {
 
   if (!implicitContext.octreeTilingScheme) {
     return;
@@ -583,11 +582,14 @@ static void createImplicitOctreeTile(
 
   child.setContext(parent.getContext());
   child.setParent(&parent);
+  child.setAvailability(availability);
+  child.setRefine(parent.getRefine());
 
-  if (available) {
+  if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);
   } else {
-    // TODO: upsample missing octree tiles
+    return;
+    // TODO: optionally upsample missing octree tiles?
     // child.setTileID(UpsampledOctreeNode{childID});
   }
 
@@ -596,28 +598,26 @@ static void createImplicitOctreeTile(
 
   const BoundingRegion* pRegion =
       std::get_if<BoundingRegion>(&implicitContext.implicitRootBoundingVolume);
-  const OrientedBoundingBox* pBox =
-      std::get_if<OrientedBoundingBox>(&implicitContext.implicitRootBoundingVolume);
+  const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
+      &implicitContext.implicitRootBoundingVolume);
 
   if (pRegion && implicitContext.projection) {
-    child.setBoundingVolume(
-        unprojectRegionSimple(
-            *implicitContext.projection,
-            implicitContext.octreeTilingScheme->tileToBox(childID)));
+    child.setBoundingVolume(unprojectRegionSimple(
+        *implicitContext.projection,
+        implicitContext.octreeTilingScheme->tileToBox(childID)));
   } else if (pBox) {
     AxisAlignedBox childLocal =
         implicitContext.octreeTilingScheme->tileToBox(childID);
     const glm::dvec3& centerLocal = childLocal.center;
     const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
-    child.setBoundingVolume(
-        OrientedBoundingBox(
-          rootHalfAxes * centerLocal,
-          glm::dmat3(
+    child.setBoundingVolume(OrientedBoundingBox(
+        rootHalfAxes * centerLocal,
+        glm::dmat3(
             0.5 * childLocal.lengthX * rootHalfAxes[0],
             0.5 * childLocal.lengthY * rootHalfAxes[1],
             0.5 * childLocal.lengthZ * rootHalfAxes[2])));
   }
-}*/
+}
 
 static void createQuadtreeSubdividedChildren(Tile& parent) {
   // TODO: support non-BoundingRegions.
@@ -833,13 +833,13 @@ void Tile::update(
   }
 
   if (this->getContext()->implicitContext && this->getChildren().empty()) {
+    const ImplicitTilingContext& implicitContext =
+        this->getContext()->implicitContext.value();
+
     if (pQuadtreeTileID) {
       // Check if any child tiles are known to be available, and create them if
       // they are.
-      const ImplicitTilingContext& implicitContext =
-          this->getContext()->implicitContext.value();
 
-      // TODO: generalize availability
       const QuadtreeTileID swID(
           pQuadtreeTileID->level + 1,
           pQuadtreeTileID->x * 2,
@@ -854,14 +854,10 @@ void Tile::update(
       uint8_t ne = 0;
 
       if (implicitContext.rectangleAvailability) {
-        sw = implicitContext.rectangleAvailability->isTileAvailable(swID) ? 1
-                                                                          : 0;
-        se = implicitContext.rectangleAvailability->isTileAvailable(seID) ? 1
-                                                                          : 0;
-        nw = implicitContext.rectangleAvailability->isTileAvailable(nwID) ? 1
-                                                                          : 0;
-        ne = implicitContext.rectangleAvailability->isTileAvailable(neID) ? 1
-                                                                          : 0;
+        sw = implicitContext.rectangleAvailability->isTileAvailable(swID);
+        se = implicitContext.rectangleAvailability->isTileAvailable(seID);
+        nw = implicitContext.rectangleAvailability->isTileAvailable(nwID);
+        ne = implicitContext.rectangleAvailability->isTileAvailable(neID);
       } else if (implicitContext.quadtreeSubtreeAvailability) {
         sw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
             swID);
@@ -873,7 +869,11 @@ void Tile::update(
             neID);
       }
 
-      size_t childCount = sw + se + nw + ne;
+      size_t childCount = (sw & TileAvailabilityFlags::TILE_AVAILABLE) +
+                          (se & TileAvailabilityFlags::TILE_AVAILABLE) +
+                          (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
+                          (ne & TileAvailabilityFlags::TILE_AVAILABLE);
+
       if (childCount > 0) {
         // If any children are available, we need to create all four in order to
         // avoid holes. But non-available tiles will be upsampled instead of
@@ -910,8 +910,61 @@ void Tile::update(
             ne);
       }
 
-    } else if (pOctreeTileID) {
+    } else if (pOctreeTileID && implicitContext.octreeAvailability) {
       // TODO: handle Octree case
+      // Check if any child tiles are known to be available, and create them if
+      // they are.
+
+      uint8_t availabilities[8];
+      OctreeTileID childIDs[8];
+
+      childIDs[0] = OctreeTileID(
+          pOctreeTileID->level + 1,
+          pOctreeTileID->x * 2,
+          pOctreeTileID->y * 2,
+          pOctreeTileID->z * 2);
+
+      const OctreeTileID& firstChildID = childIDs[0];
+
+      availabilities[0] =
+          implicitContext.octreeAvailability->computeAvailability(firstChildID);
+
+      uint8_t availableChildren =
+          (availabilities[0] & TileAvailabilityFlags::TILE_AVAILABLE) ? 1 : 0;
+
+      for (uint8_t relativeChildID = 1; relativeChildID < 8;
+           ++relativeChildID) {
+        childIDs[relativeChildID] = OctreeTileID(
+            firstChildID.level,
+            firstChildID.x + ((relativeChildID & 4) >> 2),
+            firstChildID.y + ((relativeChildID & 2) >> 1),
+            firstChildID.z + (relativeChildID & 1));
+
+        availabilities[relativeChildID] =
+            implicitContext.octreeAvailability->computeAvailability(
+                childIDs[relativeChildID]);
+
+        if (availabilities[relativeChildID] &
+            TileAvailabilityFlags::TILE_AVAILABLE) {
+          ++availableChildren;
+        }
+      }
+
+      // TODO: optionally upsample missing tiles if at least one is available
+
+      this->_children.resize(availableChildren);
+      for (uint8_t relativeChildId = 0, availableChild = 0; relativeChildId < 8;
+           ++relativeChildId) {
+        uint8_t availability = availabilities[relativeChildId];
+        if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
+          createImplicitOctreeTile(
+              implicitContext,
+              *this,
+              this->_children[availableChild++],
+              childIDs[relativeChildId],
+              availabilities[relativeChildId]);
+        }
+      }
     }
   }
 
