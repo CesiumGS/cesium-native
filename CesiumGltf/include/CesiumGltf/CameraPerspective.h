@@ -18,20 +18,23 @@ struct CESIUMGLTF_API CameraPerspective final : public ExtensibleObject {
   /**
    * @brief The floating-point aspect ratio of the field of view.
    *
-   * When this is undefined, the aspect ratio of the canvas is used.
+   * When undefined, the aspect ratio of the rendering viewport **MUST** be
+   * used.
    */
   std::optional<double> aspectRatio;
 
   /**
-   * @brief The floating-point vertical field of view in radians.
+   * @brief The floating-point vertical field of view in radians. This value
+   * **SHOULD** be less than π.
    */
   double yfov = double();
 
   /**
    * @brief The floating-point distance to the far clipping plane.
    *
-   * When defined, `zfar` must be greater than `znear`. If `zfar` is undefined,
-   * runtime must use infinite projection matrix.
+   * When defined, `zfar` **MUST** be greater than `znear`. If `zfar` is
+   * undefined, client implementations **SHOULD** use infinite projection
+   * matrix.
    */
   std::optional<double> zfar;
 

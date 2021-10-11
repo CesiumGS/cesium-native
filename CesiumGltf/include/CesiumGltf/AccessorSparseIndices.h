@@ -9,8 +9,9 @@
 
 namespace CesiumGltf {
 /**
- * @brief Indices of those attributes that deviate from their initialization
- * value.
+ * @brief An object pointing to a buffer view containing the indices of
+ * deviating accessor values. The number of indices is equal to
+ * `accessor.sparse.count`. Indices **MUST** strictly increase.
  */
 struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
   static inline constexpr const char* TypeName = "AccessorSparseIndices";
@@ -27,14 +28,15 @@ struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
   };
 
   /**
-   * @brief The index of the bufferView with sparse indices. Referenced
-   * bufferView can't have ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER target.
+   * @brief The index of the buffer view with sparse indices. The referenced
+   * buffer view **MUST NOT** have its `target` or `byteStride` properties
+   * defined. The buffer view and the optional `byteOffset` **MUST** be aligned
+   * to the `componentType` byte length.
    */
   int32_t bufferView = -1;
 
   /**
-   * @brief The offset relative to the start of the bufferView in bytes. Must be
-   * aligned.
+   * @brief The offset relative to the start of the buffer view in bytes.
    */
   int64_t byteOffset = 0;
 
@@ -43,9 +45,6 @@ struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
    *
    * Known values are defined in {@link ComponentType}.
    *
-   *
-   * Valid values correspond to WebGL enums: `5121` (UNSIGNED_BYTE), `5123`
-   * (UNSIGNED_SHORT), `5125` (UNSIGNED_INT).
    */
   int32_t componentType = ComponentType::UNSIGNED_BYTE;
 };

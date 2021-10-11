@@ -11,10 +11,11 @@ function resolveProperty(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   if (Object.keys(propertyDetails).length === 0) {
-    // Ignore totally empty properties. The glTF JSON schema files often use empty properties in derived classes
+    // Ignore totally empty properties. The glTF and 3D Tiles JSON schema files often use empty properties in derived classes
     // when the actual property definition is in the base class.
     return undefined;
   }
@@ -33,7 +34,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      required
+      required,
+      namespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
@@ -84,20 +86,18 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails,
-      required
+      required,
+      namespace
     );
-  } else if (
-    propertyDetails.anyOf &&
-    propertyDetails.anyOf.length > 0 &&
-    propertyDetails.anyOf[0].enum
-  ) {
+  } else if (isEnum(propertyDetails)) {
     return resolveEnum(
       schemaCache,
       config,
       parentName,
       propertyName,
       propertyDetails,
-      makeOptional
+      makeOptional,
+      namespace
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -117,10 +117,7 @@ function resolveProperty(
       return {
         ...propertyDefaults(propertyName, propertyDetails),
         type: makeOptional ? `std::optional<${typeName}>` : typeName,
-        headers: [
-          `"${type}.h"`,
-          ...(makeOptional ? ["<optional>"] : []),
-        ],
+        headers: [`"${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${type}JsonHandler.h"`],
         schemas: [itemSchema],
@@ -133,7 +130,8 @@ function resolveProperty(
       parentName,
       propertyName,
       propertyDetails.allOf[0],
-      required
+      required,
+      namespace
     );
 
     return {
@@ -141,40 +139,6 @@ function resolveProperty(
       briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
       fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
     };
-  // TODO: This is a partially-working support for properties that can have multiple types, via std::variant.
-  // But it still needs an implementation of VariantJsonHandler, and may require per-property codegen as well.
-  // } else if (Array.isArray(propertyDetails.type)) {
-  //   const nested = propertyDetails.type.map((type) => {
-  //     const propertyNameWithType = propertyName + " (" + type + ")";
-  //     return resolveProperty(
-  //       schemaCache,
-  //       config,
-  //       parentName,
-  //       propertyNameWithType,
-  //       {
-  //         ...propertyDetails,
-  //         type: type,
-  //       },
-  //       [propertyNameWithType]
-  //     );
-  //   });
-
-  //   return {
-  //     ...propertyDefaults(propertyName, propertyDetails),
-  //     type: `std::variant<${nested.map((item) => item.type).join(", ")}>`,
-  //     headers: lodash.uniq([
-  //       "<variant>",
-  //       ...lodash.flatten(nested.map((type) => type.headers)),
-  //     ]),
-  //     readerType: `VariantJsonHandler<${nested
-  //       .map((item) => item.readerType)
-  //       .join(", ")}>`,
-  //     readerHeaders: lodash.uniq([
-  //       `"VariantJsonHandler.h"`,
-  //       ...lodash.flatten(nested.map((item) => item.readerHeaders)),
-  //     ]),
-  //     schemas: lodash.uniq(lodash.flatten(nested.map((item) => item.schemas))),
-  //   };
   } else {
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
     return {
@@ -231,7 +195,8 @@ function resolveArray(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   // If there is no items definition, pass an effectively empty object.
   // But if the definition is _actually_ empty, the property will be ignored
@@ -243,7 +208,8 @@ function resolveArray(
     parentName,
     propertyName + ".items",
     propertyDetails.items || { notEmpty: true },
-    undefined
+    undefined,
+    namespace
   );
 
   if (!itemProperty) {
@@ -274,7 +240,8 @@ function resolveDictionary(
   parentName,
   propertyName,
   propertyDetails,
-  required
+  required,
+  namespace
 ) {
   const additional = resolveProperty(
     schemaCache,
@@ -283,7 +250,8 @@ function resolveDictionary(
     propertyName + ".additionalProperties",
     propertyDetails.additionalProperties,
     // Treat the nested property type as required so it's not wrapped in std::optional.
-    [propertyName + ".additionalProperties"]
+    [propertyName + ".additionalProperties"],
+    namespace
   );
 
   if (!additional) {
@@ -306,13 +274,13 @@ function resolveDictionary(
 }
 
 /**
- * @brief Creates a documentation comment block for the class that 
+ * @brief Creates a documentation comment block for the class that
  * contains the values for the given enum property.
  *
  * @param {Object} propertyValues The property
  * @return {String} The comment block
  */
- function createEnumPropertyDoc(propertyValues) {
+function createEnumPropertyDoc(propertyValues) {
   let propertyDoc = `/**\n * @brief Known values for ${
     propertyValues.briefDoc || propertyValues.name
   }\n`;
@@ -322,32 +290,34 @@ function resolveDictionary(
 
 /**
  * Returns a string representing the common type of an "anyOf" property.
- * 
+ *
  * If there is no common type (because it is not an "anyOf" property,
  * or the "anyOf" entries don't contain "type" properties, or there
  * are different "type" properties), then undefined is returned.
- * 
+ *
  * @param {String} propertyName The property name
- * @param {Object} propertyDetails The value of the property in the JSON 
- * schema. Good to know that. Used a debugger to figure it out. 
+ * @param {Object} propertyDetails The value of the property in the JSON
+ * schema. Good to know that. Used a debugger to figure it out.
  * @returns The string indicating the common type, or undefined.
  */
 function findCommonEnumType(propertyName, propertyDetails) {
-  if (
-    !propertyDetails.anyOf ||
-    propertyDetails.anyOf.length === 0 ||
-    !propertyDetails.anyOf[0].enum ||
-    propertyDetails.anyOf[0].enum.length === 0
-  ) {
+  if (!isEnum(propertyDetails)) {
     return undefined;
   }
-  var firstType = undefined;
-  for (var i = 0; i<propertyDetails.anyOf.length; i++) {
+  let firstType = undefined;
+  for (let i = 0; i < propertyDetails.anyOf.length; i++) {
     const element = propertyDetails.anyOf[i];
     if (element.type) {
       if (firstType) {
         if (element.type !== firstType) {
-          console.warn('Expected equal types for enum values in ' + propertyName + ', but found ' + firstType + ' and ' + element.type);
+          console.warn(
+            "Expected equal types for enum values in " +
+              propertyName +
+              ", but found " +
+              firstType +
+              " and " +
+              element.type
+          );
           return undefined;
         }
       } else {
@@ -364,14 +334,10 @@ function resolveEnum(
   parentName,
   propertyName,
   propertyDetails,
-  makeOptional
+  makeOptional,
+  namespace
 ) {
-  if (
-    !propertyDetails.anyOf ||
-    propertyDetails.anyOf.length === 0 ||
-    !propertyDetails.anyOf[0].enum ||
-    propertyDetails.anyOf[0].enum.length === 0
-  ) {
+  if (!isEnum(propertyDetails)) {
     return undefined;
   }
 
@@ -391,7 +357,11 @@ function resolveEnum(
   );
 
   const propertyDefaultValues = propertyDefaults(propertyName, propertyDetails);
-  const enumBriefDoc = propertyDefaultValues.briefDoc + '\n * \n * Known values are defined in {@link ' + enumName + '}.\n *';
+  const enumBriefDoc =
+    propertyDefaultValues.briefDoc +
+    "\n * \n * Known values are defined in {@link " +
+    enumName +
+    "}.\n *";
   const result = {
     ...propertyDefaultValues,
     localTypes: [
@@ -402,7 +372,7 @@ function resolveEnum(
               propertyDetails.anyOf
                 .map((e) => createEnum(e))
                 .filter((e) => e !== undefined)
-                .join(";\n\n")+";",
+                .join(";\n\n") + ";",
               12
             )}
         };
@@ -411,7 +381,7 @@ function resolveEnum(
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: makeOptional ? undefined : createEnumDefault(enumName, propertyDetails),
-    readerHeaders: [`"CesiumGltf/${parentName}.h"`],
+    readerHeaders: [`"${namespace}/${parentName}.h"`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
       parentName,
@@ -420,7 +390,7 @@ function resolveEnum(
       propertyDetails
     ),
     needsInitialization: !makeOptional,
-    briefDoc : enumBriefDoc,
+    briefDoc: enumBriefDoc,
   };
 
   if (readerTypes.length > 0) {
@@ -436,33 +406,61 @@ function resolveEnum(
   return result;
 }
 
+function getEnumValue(enumDetails) {
+  if (enumDetails.const !== undefined) {
+    return enumDetails.const;
+  }
+
+  if (enumDetails.enum !== undefined && enumDetails.enum.length > 0) {
+    return enumDetails.enum[0];
+  }
+
+  return undefined;
+}
+
+function isEnum(propertyDetails) {
+  if (
+    propertyDetails.anyOf === undefined ||
+    propertyDetails.anyOf.length === 0
+  ) {
+    return false;
+  }
+
+  const firstEnum = propertyDetails.anyOf[0];
+  const firstEnumValue = getEnumValue(firstEnum);
+
+  return firstEnumValue !== undefined;
+}
+
 /**
  * If ... many conditions hold, ... then this will return the name
  * of the "initial" value of the given enum property.
- * 
+ *
  * @param {Object} propertyDetails The property details
  * @returns The name of the default property
  */
 function findNameOfInitial(propertyDetails) {
-  if (propertyDetails.default) {
-    for (var i = 0; i<propertyDetails.anyOf.length; i++) {
+  if (propertyDetails.default !== undefined) {
+    for (let i = 0; i < propertyDetails.anyOf.length; i++) {
       const element = propertyDetails.anyOf[i];
-      if (element.enum && (element.enum[0] == propertyDetails.default)) {
+      const enumValue = getEnumValue(element);
+      if (enumValue === propertyDetails.default) {
         if (element.type === "integer") {
           return element.description;
         }
-        return `${makeIdentifier(element.enum[0])}`;
+        return `${makeIdentifier(enumValue)}`;
       }
     }
   }
   // No explicit default value was found. Return the first value
-  for (var i = 0; i<propertyDetails.anyOf.length; i++) {
+  for (let i = 0; i < propertyDetails.anyOf.length; i++) {
     const element = propertyDetails.anyOf[i];
-    if (element.enum) {
+    const enumValue = getEnumValue(element);
+    if (enumValue !== undefined) {
       if (element.type === "integer") {
         return element.description;
       }
-      return `${makeIdentifier(element.enum[0])}`;
+      return `${makeIdentifier(enumValue)}`;
     }
   }
   return undefined;
@@ -473,16 +471,19 @@ function createEnumDefault(enumName, propertyDetails) {
 }
 
 function createEnum(enumDetails) {
-  if (!enumDetails.enum || enumDetails.enum.length === 0) {
+  const enumValue = getEnumValue(enumDetails);
+  if (enumValue === undefined) {
     return undefined;
   }
 
   if (enumDetails.type === "integer") {
-    return `static constexpr int32_t ${makeIdentifier(enumDetails.description)} = ${
-      enumDetails.enum[0]
-    }`;
+    return `static constexpr int32_t ${makeIdentifier(
+      enumDetails.description
+    )} = ${enumValue}`;
   } else {
-    return `inline static const std::string ${makeIdentifier(enumDetails.enum[0])} = \"${enumDetails.enum[0]}\"`;
+    return `inline static const std::string ${makeIdentifier(
+      enumValue
+    )} = \"${enumValue}\"`;
   }
 }
 
@@ -542,15 +543,14 @@ function createEnumReaderTypeImpl(
 
       ${indent(
         propertyDetails.anyOf
-          .map((e) =>
-            e.enum && e.enum[0] !== undefined
-              ? `if ("${
-                  e.enum[0]
-                }"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(
-                  e.enum[0]
+          .map((e) => {
+            const enumValue = getEnumValue(e);
+            return enumValue !== undefined
+              ? `if ("${enumValue}"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(
+                  enumValue
                 )};`
-              : undefined
-          )
+              : undefined;
+          })
           .filter((s) => s !== undefined)
           .join("\nelse "),
         6
