@@ -9,6 +9,8 @@
 
 #include <optional>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A camera's projection.  A node **MAY** reference a camera to apply a

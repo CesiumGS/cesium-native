@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <optional>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A view into a buffer generally representing a subset of the buffer.
@@ -56,6 +58,6 @@ struct CESIUMGLTF_API BufferView final : public NamedObject {
    * Known values are defined in {@link Target}.
    *
    */
-  std::optional<int32_t> target = Target::ARRAY_BUFFER;
+  std::optional<int32_t> target;
 };
 } // namespace CesiumGltf

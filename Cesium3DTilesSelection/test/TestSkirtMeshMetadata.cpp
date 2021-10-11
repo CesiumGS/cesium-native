@@ -1,5 +1,6 @@
-#include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
+
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 

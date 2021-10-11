@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <vector>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A node in the node hierarchy.  When the node contains `skin`, all

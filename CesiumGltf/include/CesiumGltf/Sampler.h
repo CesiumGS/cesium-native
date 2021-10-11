@@ -7,6 +7,8 @@
 
 #include <optional>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief Texture sampler properties for filtering and wrapping modes.
@@ -68,7 +70,7 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
    * Known values are defined in {@link MagFilter}.
    *
    */
-  std::optional<int32_t> magFilter = MagFilter::NEAREST;
+  std::optional<int32_t> magFilter;
 
   /**
    * @brief Minification filter.
@@ -76,7 +78,7 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
    * Known values are defined in {@link MinFilter}.
    *
    */
-  std::optional<int32_t> minFilter = MinFilter::NEAREST;
+  std::optional<int32_t> minFilter;
 
   /**
    * @brief S (U) wrapping mode.

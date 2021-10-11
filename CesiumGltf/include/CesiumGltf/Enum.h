@@ -3,12 +3,15 @@
 #pragma once
 
 #include "EnumValue.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
 #include <vector>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**

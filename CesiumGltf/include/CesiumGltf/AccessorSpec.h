@@ -10,6 +10,8 @@
 #include <optional>
 #include <vector>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A typed view into a buffer view that contains raw binary data.

@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
+
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 
 #include <cstddef>
 #include <map>

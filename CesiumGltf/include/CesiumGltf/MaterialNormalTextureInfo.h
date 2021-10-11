@@ -5,6 +5,8 @@
 #include "Library.h"
 #include "TextureInfo.h"
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief undefined

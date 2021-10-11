@@ -1,5 +1,6 @@
-#include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltf/ImageManipulation.h"
+
+#include <CesiumGltf/ImageCesium.h>
 
 #include <catch2/catch.hpp>
 

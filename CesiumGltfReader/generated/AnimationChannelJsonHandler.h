@@ -3,10 +3,11 @@
 #pragma once
 
 #include "AnimationChannelTargetJsonHandler.h"
-#include "CesiumGltf/AnimationChannel.h"
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumGltf/AnimationChannel.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumGltf {
 struct ReaderContext;

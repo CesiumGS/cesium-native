@@ -1,5 +1,6 @@
 #include "CesiumGeometry/Rectangle.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 

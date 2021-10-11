@@ -9,6 +9,8 @@
 #include <optional>
 #include <string>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief Image data used to create a texture. Image **MAY** be referenced by an
@@ -43,7 +45,7 @@ struct CESIUMGLTF_API ImageSpec : public NamedObject {
    * Known values are defined in {@link MimeType}.
    *
    */
-  std::optional<std::string> mimeType = MimeType::image_jpeg;
+  std::optional<std::string> mimeType;
 
   /**
    * @brief The index of the bufferView that contains the image. This field

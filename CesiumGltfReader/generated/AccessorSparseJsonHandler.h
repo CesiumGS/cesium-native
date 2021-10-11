@@ -4,10 +4,11 @@
 
 #include "AccessorSparseIndicesJsonHandler.h"
 #include "AccessorSparseValuesJsonHandler.h"
-#include "CesiumGltf/AccessorSparse.h"
 #include "CesiumGltf/ReaderContext.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumGltf/AccessorSparse.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumGltf {
 struct ReaderContext;

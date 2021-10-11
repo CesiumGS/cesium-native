@@ -8,6 +8,8 @@
 
 #include <vector>
 
+using namespace CesiumUtility;
+
 namespace CesiumGltf {
 /**
  * @brief A set of primitives to be rendered.  Its global transform is defined

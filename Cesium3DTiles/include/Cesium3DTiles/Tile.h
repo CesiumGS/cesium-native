@@ -4,11 +4,14 @@
 
 #include "BoundingVolume.h"
 #include "Content.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <vector>
+
+using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 /**
@@ -57,7 +60,7 @@ struct CESIUM3DTILES_API Tile final : public ExtensibleObject {
    * Known values are defined in {@link Refine}.
    *
    */
-  std::optional<std::string> refine = Refine::ADD;
+  std::optional<std::string> refine;
 
   /**
    * @brief A floating-point 4x4 affine transformation matrix, stored in

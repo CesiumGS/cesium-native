@@ -3,10 +3,13 @@
 #pragma once
 
 #include "AnimationChannelTarget.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
 
+#include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
 /**
