@@ -380,7 +380,7 @@ function resolveEnum(
     ],
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
-    defaultValue: createEnumDefault(enumName, propertyDetails),
+    defaultValue: makeOptional ? undefined : createEnumDefault(enumName, propertyDetails),
     readerHeaders: [`"${namespace}/${parentName}.h"`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
