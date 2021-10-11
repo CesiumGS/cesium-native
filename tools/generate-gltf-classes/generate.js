@@ -73,7 +73,7 @@ function generate(options, schema) {
 
         namespace ${namespace} {
             /**
-             * @brief ${schema.description}
+             * @brief ${schema.description ? schema.description : schema.title}
              */
             struct ${namespace.toUpperCase()}_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
                 static inline constexpr const char* TypeName = "${name}";
