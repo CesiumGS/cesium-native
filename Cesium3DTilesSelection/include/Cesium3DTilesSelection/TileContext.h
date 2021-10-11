@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoundingVolume.h"
+#include "CesiumGeometry/OctreeAvailability.h"
 #include "CesiumGeometry/OctreeTilingScheme.h"
 #include "CesiumGeometry/QuadtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeRectangleAvailability.h"
@@ -76,7 +77,7 @@ public:
   std::optional<CesiumGeospatial::Projection> projection;
 
   /**
-   * @brief The {@link CesiumGeometry::QuadtreeTileAvailability} for this
+   * @brief The {@link CesiumGeometry::QuadtreeRectangleAvailability} for this
    * context.
    *
    * Only applicable for quantized-mesh tilesets.
@@ -85,17 +86,17 @@ public:
       rectangleAvailability;
 
   /**
-   * @brief The {@link CesiumGeometry::QuadtreeSubtreeAvailability} for this
+   * @brief The {@link CesiumGeometry::QuadtreeAvailability} for this
    * context.
    */
   std::optional<CesiumGeometry::QuadtreeAvailability>
       quadtreeSubtreeAvailability;
 
   /**
-   * @brief The {@link CesiumGeometry::OctreeSubtreeAvailability} for this
+   * @brief The {@link CesiumGeometry::OctreeAvailability} for this
    * context.
    */
-  // TODO:
+  std::optional<CesiumGeometry::OctreeAvailability> octreeAvailability;
 };
 
 /**

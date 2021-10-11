@@ -1,59 +1,45 @@
-#include "CesiumGeometry/QuadtreeAvailability.h"
+#include "CesiumGeometry/OctreeAvailability.h"
 
 namespace CesiumGeometry {
 
-// For reference:
-// https://graphics.stanford.edu/~seander/bithacks.html#Interleave64bitOps
-static uint16_t getMortonIndexForBytes(uint8_t a, uint8_t b) {
-  return ((a * 0x0101010101010101ULL & 0x8040201008040201ULL) *
-              0x0102040810204081ULL >>
-          49) &
-             0x5555 |
-         ((b * 0x0101010101010101ULL & 0x8040201008040201ULL) *
-              0x0102040810204081ULL >>
-          48) &
-             0xAAAA;
-}
+/**
+ * @brief Inserts two 0 bits of spacing between a number's bits.
+ *
+ * @param i A 10-bit unsigned int.
+ * @return A 32-bit unsigned int.
+ */
+static uint32_t spread3(uint32_t i) {
+  i = (i ^ (i << 16)) & 0x030000ff;
+  i = (i ^ (i << 8)) & 0x0300f00f;
+  i = (i ^ (i << 4)) & 0x030c30c3;
+  i = (i ^ (i << 2)) & 0x09249249;
 
-static uint32_t getMortonIndexForShorts(uint16_t a, uint16_t b) {
-  uint8_t* pFirstByteA = reinterpret_cast<uint8_t*>(&a);
-  uint8_t* pFirstByteB = reinterpret_cast<uint8_t*>(&b);
-
-  uint32_t result = 0;
-  uint16_t* pFirstShortResult = reinterpret_cast<uint16_t*>(&result);
-
-  *pFirstShortResult = getMortonIndexForBytes(*pFirstByteA, *pFirstByteB);
-  *(pFirstShortResult + 1) =
-      getMortonIndexForBytes(*(pFirstByteA + 1), *(pFirstByteB + 1));
-
-  return result;
+  return i;
 }
 
 /**
- * @brief Get the 2D morton index for this tile id. The x and y components of
- * the tile id must be no more than 16 bits each.
+ * @brief Gets the morton index for this tile id. The x, y, and z components of
+ * the tile id must be no more than 10 bits each.
  *
- * @param tileID the tileID to find the morton index for.
+ * @param tileID the tile id to create a morton index for.
  * @return The 32-bit unsigned morton index.
  */
-static uint32_t getMortonIndex(const QuadtreeTileID& tileID) {
-  return getMortonIndexForShorts(
-      static_cast<uint16_t>(tileID.x),
-      static_cast<uint16_t>(tileID.y));
+static uint32_t getMortonIndex(const OctreeTileID& tileID) {
+  return spread3(tileID.x) << 2 | spread3(tileID.y) << 1 | spread3(tileID.z);
 }
 
-QuadtreeAvailability::QuadtreeAvailability(
-    const QuadtreeTilingScheme& tilingScheme,
+OctreeAvailability::OctreeAvailability(
+    const OctreeTilingScheme& tilingScheme,
     uint32_t subtreeLevels,
     uint32_t maximumLevel) noexcept
     : _tilingScheme(tilingScheme),
       _subtreeLevels(subtreeLevels),
       _maximumLevel(maximumLevel),
-      _maximumChildrenSubtrees(1ULL << (subtreeLevels << 1)),
+      _maximumChildrenSubtrees(1ULL << (3 * subtreeLevels)),
       _pRoot(nullptr) {}
 
-uint8_t QuadtreeAvailability::computeAvailability(
-    const QuadtreeTileID& tileID) const noexcept {
+uint8_t OctreeAvailability::computeAvailability(
+    const OctreeTileID& tileID) const noexcept {
   if (!this->_pRoot || tileID.level > this->_maximumLevel) {
     return 0;
   }
@@ -91,8 +77,8 @@ uint8_t QuadtreeAvailability::computeAvailability(
       // For reference:
       // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
       // The below is identical to:
-      // (4^levelRelativeToSubtree - 1) / 3
-      uint32_t offset = ((1 << (levelDifference << 1)) - 1) / 3;
+      // (8^levelRelativeToSubtree - 1) / 3
+      uint32_t offset = ((1 << (3 * levelDifference)) - 1) / 3;
 
       uint32_t availabilityIndex = relativeMortonIndex + offset;
       uint32_t byteIndex = availabilityIndex >> 3;
@@ -126,7 +112,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
     }
 
     uint32_t childSubtreeMortonIndex =
-        relativeMortonIndex >> (2 * levelsLeftAfterNextLevel);
+        relativeMortonIndex >> (3 * levelsLeftAfterNextLevel);
 
     // Check if the needed child subtree exists.
     bool childSubtreeAvailable = false;
@@ -164,7 +150,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
     if (childSubtreeAvailable) {
       pNode = pNode->childNodes[childSubtreeIndex].get();
       level += this->_subtreeLevels;
-      relativeMortonIndexMask >>= 2 * this->_subtreeLevels;
+      relativeMortonIndexMask >>= 3 * this->_subtreeLevels;
     } else {
       // The child subtree containing the tile id is not available.
       return TileAvailabilityFlags::REACHABLE;
@@ -187,8 +173,8 @@ uint8_t QuadtreeAvailability::computeAvailability(
   return 0;
 }
 
-bool QuadtreeAvailability::addSubtree(
-    const QuadtreeTileID& tileID,
+bool OctreeAvailability::addSubtree(
+    const OctreeTileID& tileID,
     AvailabilitySubtree&& newSubtree) noexcept {
 
   if (tileID.level == 0) {
@@ -229,12 +215,12 @@ bool QuadtreeAvailability::addSubtree(
       return false;
     }
 
-    // TODO: consolidate duplicated code here...
-
     uint32_t levelsLeftAfterChildren = tileID.level - nextLevel;
     uint32_t relativeMortonIndex = mortonIndex & relativeMortonIndexMask;
     uint32_t childSubtreeMortonIndex =
-        relativeMortonIndex >> (2 * levelsLeftAfterChildren);
+        relativeMortonIndex >> (3 * levelsLeftAfterChildren);
+
+    // TODO: consolidate duplicated code here...
 
     // Check if the needed child subtree exists.
     bool childSubtreeAvailable = false;
@@ -284,7 +270,7 @@ bool QuadtreeAvailability::addSubtree(
       } else {
         pNode = pNode->childNodes[childSubtreeIndex].get();
         level = nextLevel;
-        relativeMortonIndexMask >>= 2 * this->_subtreeLevels;
+        relativeMortonIndexMask >>= 3 * this->_subtreeLevels;
       }
     } else {
       // This child subtree is marked as non-available.

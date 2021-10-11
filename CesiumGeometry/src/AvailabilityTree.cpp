@@ -19,8 +19,8 @@ static const uint8_t ones_in_byte[] = {
 
 uint8_t countOnesInByte(uint8_t _byte) { return ones_in_byte[_byte]; }
 
-uint64_t countOnesInBuffer(gsl::span<const std::byte> buffer) {
-  uint64_t count = 0;
+uint32_t countOnesInBuffer(gsl::span<const std::byte> buffer) {
+  uint32_t count = 0;
   for (const std::byte& byte : buffer) {
     count += countOnesInByte((uint8_t)byte);
   }
