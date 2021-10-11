@@ -2,7 +2,7 @@
 # Based on the LLVM coding style https://llvm.org/docs/CodingStandards.html
 BasedOnStyle: LLVM
 
-# Always add a line break after an opening bracket if the parameters 
+# Always add a line break after an opening bracket if the parameters
 # do not fit on a single line
 AlignAfterOpenBracket: AlwaysBreak
 
@@ -10,7 +10,7 @@ AlignAfterOpenBracket: AlwaysBreak
 # a new line
 BinPackArguments: false
 
-# If a function call or braced initializer list does not fit on a 
+# If a function call or braced initializer list does not fit on a
 # line, allow putting all arguments onto the next line
 # (even if BinPackArguments is false).
 AllowAllArgumentsOnNextLine: false
@@ -19,7 +19,7 @@ AllowAllArgumentsOnNextLine: false
 # a new line
 BinPackParameters: false
 
-# If the function declaration does not fit on a line, allow putting 
+# If the function declaration does not fit on a line, allow putting
 # all parameters of a function declaration onto the next line
 # (even when BinPackParameters is false).
 AllowAllParametersOfDeclarationOnNextLine: false
@@ -27,7 +27,7 @@ AllowAllParametersOfDeclarationOnNextLine: false
 # Use 'int* a;' (instead of 'int *a;')
 PointerAlignment: Left
 
-# If the constructor initializers doe not fit on a line, put each 
+# If the constructor initializers doe not fit on a line, put each
 # initializer on its own line.
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 
@@ -35,3 +35,20 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 # is here to avoid breaking lines within "{@link SomeClass}"
 # which would cause doxygen to fail.
 CommentPragmas: '{.*}'
+
+# Disregard any exising include order, and re-order the headers
+# to use the following order based on the include path regexes:
+IncludeBlocks: Regroup
+IncludeCategories:
+  # Local includes, enclosed in quotation marks, ending in `.h`
+  - Regex: '"[A-Za-z0-9.+_\/\-]+\.h"'
+    Priority: 1
+  # Cesium project includes, starting with `<Cesium`, and ending with `.h>`
+  - Regex: '<Cesium[A-Za-z0-9+_\/\-\]+\.h>'
+    Priority: 2
+  # Third party includes, of the form `<something/something>` or `<something.h>`
+  - Regex: '(<[A-Za-z0-9_\/\-]+\/[A-Za-z0-9_\/\-\.]+>)|(<[A-Za-z0-9+_\/\-]+\.h>)'
+    Priority: 3
+  # Standard library includes, of the form `<something>
+  - Regex: '<[A-Za-z0-9_]+>'
+    Priority: 4

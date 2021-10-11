@@ -5,6 +5,7 @@
 #include "CesiumGltf/AnimationChannelTarget.h"
 #include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
+#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ExtensibleObjectJsonHandler.h"
 
 namespace CesiumGltf {
@@ -26,21 +27,8 @@ protected:
       AnimationChannelTarget& o);
 
 private:
-  class PathJsonHandler : public CesiumJsonReader::JsonHandler {
-  public:
-    PathJsonHandler() noexcept : CesiumJsonReader::JsonHandler() {}
-    void reset(
-        CesiumJsonReader::IJsonHandler* pParent,
-        AnimationChannelTarget::Path* pEnum);
-    virtual CesiumJsonReader::IJsonHandler*
-    readString(const std::string_view& str) override;
-
-  private:
-    AnimationChannelTarget::Path* _pEnum = nullptr;
-  };
-
   AnimationChannelTarget* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _node;
-  PathJsonHandler _path;
+  CesiumJsonReader::StringJsonHandler _path;
 };
 } // namespace CesiumGltf

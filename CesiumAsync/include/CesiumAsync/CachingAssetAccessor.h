@@ -1,13 +1,15 @@
 #pragma once
 
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/ICacheDatabase.h"
-#include "CesiumAsync/ThreadPool.h"
+#include "IAssetAccessor.h"
+#include "IAssetRequest.h"
+#include "ICacheDatabase.h"
+#include "ThreadPool.h"
+
+#include <spdlog/fwd.h>
+
 #include <atomic>
 #include <cstddef>
 #include <memory>
-#include <spdlog/fwd.h>
 #include <string>
 
 namespace CesiumAsync {

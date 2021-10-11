@@ -1,9 +1,10 @@
 #pragma once
 
 #include <gsl/span>
-#include <memory>
 #include <rapidjson/fwd.h>
 #include <spdlog/fwd.h>
+
+#include <memory>
 
 namespace CesiumGltf {
 struct Model;

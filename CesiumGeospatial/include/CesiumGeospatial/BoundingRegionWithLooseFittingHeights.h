@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Library.h"
+#include "BoundingRegion.h"
+#include "Library.h"
 
 namespace CesiumGeospatial {
 
@@ -22,7 +22,8 @@ public:
    *
    * @param boundingRegion The bounding region that has imprecise heights.
    */
-  BoundingRegionWithLooseFittingHeights(const BoundingRegion& boundingRegion);
+  BoundingRegionWithLooseFittingHeights(
+      const BoundingRegion& boundingRegion) noexcept;
 
   /**
    * @brief Gets the bounding region that has imprecise heights.

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumAsync/Impl/ImmediateScheduler.h"
-#include "CesiumAsync/Impl/cesium-async++.h"
+#include "ImmediateScheduler.h"
+#include "cesium-async++.h"
 
 namespace CesiumAsync {
 namespace Impl {

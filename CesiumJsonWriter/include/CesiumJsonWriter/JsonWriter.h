@@ -1,11 +1,13 @@
 #pragma once
 #include "JsonWriter.h"
+
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include <string_view>
 #include <vector>
 

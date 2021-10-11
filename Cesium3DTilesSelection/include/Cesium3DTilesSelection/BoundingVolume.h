@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include <optional>
+#include "Library.h"
+
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+
 #include <variant>
 
 namespace Cesium3DTilesSelection {

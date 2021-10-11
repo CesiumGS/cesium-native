@@ -1,20 +1,25 @@
 #include "QuantizedMeshContent.h"
+
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
-#include "CesiumUtility/Uri.h"
 #include "SkirtMeshMetadata.h"
 #include "calcQuadtreeMaxGeometricError.h"
-#include <cstddef>
+
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/Uri.h>
+
 #include <glm/common.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <rapidjson/document.h>
+
+#include <cstddef>
 #include <stdexcept>
 
 using namespace CesiumUtility;
@@ -66,7 +71,7 @@ struct ExtensionHeader {
 enum class QuantizedMeshIndexType { UnsignedShort, UnsignedInt };
 
 struct QuantizedMeshView {
-  QuantizedMeshView()
+  QuantizedMeshView() noexcept
       : header{nullptr},
         indexType{QuantizedMeshIndexType::UnsignedShort},
         triangleCount{0},
@@ -113,13 +118,17 @@ struct QuantizedMeshView {
 };
 
 // We can't use sizeof(QuantizedMeshHeader) because it may be padded.
-const size_t headerLength = 92;
-const size_t extensionHeaderLength = 5;
+constexpr size_t headerLength = 92;
+constexpr size_t extensionHeaderLength = 5;
 
-int32_t zigZagDecode(int32_t value) { return (value >> 1) ^ (-(value & 1)); }
+int32_t zigZagDecode(int32_t value) noexcept {
+  return (value >> 1) ^ (-(value & 1));
+}
 
 template <class E, class D>
-void decodeIndices(const gsl::span<const E>& encoded, gsl::span<D>& decoded) {
+void decodeIndices(
+    const gsl::span<const E>& encoded,
+    const gsl::span<D>& decoded) {
   if (decoded.size() < encoded.size()) {
     throw std::runtime_error("decoded buffer is too small.");
   }
@@ -139,7 +148,7 @@ template <class T>
 static T readValue(
     const gsl::span<const std::byte>& data,
     size_t offset,
-    T defaultValue) {
+    T defaultValue) noexcept {
   if (offset + sizeof(T) <= data.size()) {
     return *reinterpret_cast<const T*>(data.data() + offset);
   }
@@ -147,7 +156,7 @@ static T readValue(
 }
 
 static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
-  const uint8_t rangeMax = 255;
+  constexpr uint8_t rangeMax = 255;
 
   glm::dvec3 result;
 
@@ -156,7 +165,7 @@ static glm::dvec3 octDecode(uint8_t x, uint8_t y) {
   result.z = 1.0 - (glm::abs(result.x) + glm::abs(result.y));
 
   if (result.z < 0.0) {
-    double oldVX = result.x;
+    const double oldVX = result.x;
     result.x =
         (1.0 - glm::abs(result.y)) * CesiumUtility::Math::signNotZero(oldVX);
     result.y =
@@ -187,7 +196,7 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
   readIndex += headerLength;
 
   // parse u, v, and height buffers
-  uint32_t vertexCount = meshView.header->vertexCount;
+  const uint32_t vertexCount = meshView.header->vertexCount;
 
   meshView.uBuffer = gsl::span<const uint16_t>(
       reinterpret_cast<const uint16_t*>(data.data() + readIndex),
@@ -230,7 +239,7 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
       return std::nullopt;
     }
 
-    uint32_t indicesCount = meshView.triangleCount * 3;
+    const uint32_t indicesCount = meshView.triangleCount * 3;
     meshView.indicesBuffer = gsl::span<const std::byte>(
         data.data() + readIndex,
         indicesCount * sizeof(uint32_t));
@@ -249,7 +258,7 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
       return std::nullopt;
     }
 
-    uint32_t indicesCount = meshView.triangleCount * 3;
+    const uint32_t indicesCount = meshView.triangleCount * 3;
     meshView.indicesBuffer = gsl::span<const std::byte>(
         data.data() + readIndex,
         indicesCount * sizeof(uint16_t));
@@ -319,10 +328,10 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
       break;
     }
 
-    uint8_t extensionID =
+    const uint8_t extensionID =
         *reinterpret_cast<const uint8_t*>(data.data() + readIndex);
     readIndex += sizeof(uint8_t);
-    uint32_t extensionLength =
+    const uint32_t extensionLength =
         *reinterpret_cast<const uint32_t*>(data.data() + readIndex);
     readIndex += sizeof(uint32_t);
 
@@ -377,8 +386,8 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
 
 static double calculateSkirtHeight(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const CesiumGeospatial::GlobeRectangle& rectangle) {
-  double levelMaximumGeometricError =
+    const CesiumGeospatial::GlobeRectangle& rectangle) noexcept {
+  const double levelMaximumGeometricError =
       calcQuadtreeMaxGeometricError(ellipsoid) * rectangle.computeWidth();
   return levelMaximumGeometricError * 5.0;
 }
@@ -397,13 +406,13 @@ static void addSkirt(
     double latitudeOffset,
     const std::vector<glm::dvec3>& uvsAndHeights,
     const gsl::span<const E>& edgeIndices,
-    gsl::span<float>& positions,
-    gsl::span<float>& normals,
-    gsl::span<I>& indices) {
-  double west = rectangle.getWest();
-  double south = rectangle.getSouth();
-  double east = rectangle.getEast();
-  double north = rectangle.getNorth();
+    const gsl::span<float>& positions,
+    const gsl::span<float>& normals,
+    const gsl::span<I>& indices) {
+  const double west = rectangle.getWest();
+  const double south = rectangle.getSouth();
+  const double east = rectangle.getEast();
+  const double north = rectangle.getNorth();
 
   size_t newEdgeIndex = currentVertexCount;
   size_t positionIdx = currentVertexCount * 3;
@@ -411,12 +420,12 @@ static void addSkirt(
   for (size_t i = 0; i < edgeIndices.size(); ++i) {
     E edgeIdx = edgeIndices[i];
 
-    double uRatio = uvsAndHeights[edgeIdx].x;
-    double vRatio = uvsAndHeights[edgeIdx].y;
-    double heightRatio = uvsAndHeights[edgeIdx].z;
-    double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
-    double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
-    double heightMeters =
+    const double uRatio = uvsAndHeights[edgeIdx].x;
+    const double vRatio = uvsAndHeights[edgeIdx].y;
+    const double heightRatio = uvsAndHeights[edgeIdx].z;
+    const double longitude = Math::lerp(west, east, uRatio) + longitudeOffset;
+    const double latitude = Math::lerp(south, north, vRatio) + latitudeOffset;
+    const double heightMeters =
         Math::lerp(minimumHeight, maximumHeight, heightRatio) - skirtHeight;
     glm::dvec3 position = ellipsoid.cartographicToCartesian(
         Cartographic(longitude, latitude, heightMeters));
@@ -427,7 +436,7 @@ static void addSkirt(
     positions[positionIdx + 2] = static_cast<float>(position.z);
 
     if (!normals.empty()) {
-      size_t componentIndex = static_cast<size_t>(3 * edgeIdx);
+      const size_t componentIndex = static_cast<size_t>(3 * edgeIdx);
       normals[positionIdx] = normals[componentIndex];
       normals[positionIdx + 1] = normals[componentIndex + 1];
       normals[positionIdx + 2] = normals[componentIndex + 2];
@@ -466,16 +475,16 @@ static void addSkirts(
     const gsl::span<const std::byte>& southEdgeIndicesBuffer,
     const gsl::span<const std::byte>& eastEdgeIndicesBuffer,
     const gsl::span<const std::byte>& northEdgeIndicesBuffer,
-    gsl::span<float>& outputPositions,
-    gsl::span<float>& outputNormals,
-    gsl::span<I>& outputIndices) {
-  uint32_t westVertexCount =
+    const gsl::span<float>& outputPositions,
+    const gsl::span<float>& outputNormals,
+    const gsl::span<I>& outputIndices) {
+  const uint32_t westVertexCount =
       static_cast<uint32_t>(westEdgeIndicesBuffer.size() / sizeof(E));
-  uint32_t southVertexCount =
+  const uint32_t southVertexCount =
       static_cast<uint32_t>(southEdgeIndicesBuffer.size() / sizeof(E));
-  uint32_t eastVertexCount =
+  const uint32_t eastVertexCount =
       static_cast<uint32_t>(eastEdgeIndicesBuffer.size() / sizeof(E));
-  uint32_t northVertexCount =
+  const uint32_t northVertexCount =
       static_cast<uint32_t>(northEdgeIndicesBuffer.size() / sizeof(E));
 
   // allocate edge indices to be sort later
@@ -494,7 +503,7 @@ static void addSkirts(
       westEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + westVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;
       });
   westEdgeIndices = gsl::span(sortEdgeIndices.data(), westVertexCount);
@@ -525,7 +534,7 @@ static void addSkirts(
       southEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + southVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;
       });
   southEdgeIndices = gsl::span(sortEdgeIndices.data(), southVertexCount);
@@ -556,7 +565,7 @@ static void addSkirts(
       eastEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + eastVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;
       });
   eastEdgeIndices = gsl::span(sortEdgeIndices.data(), eastVertexCount);
@@ -587,7 +596,7 @@ static void addSkirts(
       northEdgeIndices.end(),
       sortEdgeIndices.begin(),
       sortEdgeIndices.begin() + northVertexCount,
-      [&uvsAndHeights](auto lhs, auto rhs) {
+      [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x;
       });
   northEdgeIndices = gsl::span(sortEdgeIndices.data(), northVertexCount);
@@ -611,7 +620,7 @@ static void addSkirts(
 
 static void decodeNormals(
     const gsl::span<const std::byte>& encoded,
-    gsl::span<float>& decoded) {
+    const gsl::span<float>& decoded) {
   if (decoded.size() < encoded.size()) {
     throw std::runtime_error("decoded buffer is too small.");
   }
@@ -633,22 +642,22 @@ static std::vector<std::byte> generateNormals(
     const gsl::span<T>& indices,
     size_t currentNumOfIndex) {
   std::vector<std::byte> normalsBuffer(positions.size() * sizeof(float));
-  gsl::span<float> normals(
+  const gsl::span<float> normals(
       reinterpret_cast<float*>(normalsBuffer.data()),
       positions.size());
   for (size_t i = 0; i < currentNumOfIndex; i += 3) {
     T id0 = indices[i];
     T id1 = indices[i + 1];
     T id2 = indices[i + 2];
-    size_t id0x3 = static_cast<size_t>(id0) * 3;
-    size_t id1x3 = static_cast<size_t>(id1) * 3;
-    size_t id2x3 = static_cast<size_t>(id2) * 3;
+    const size_t id0x3 = static_cast<size_t>(id0) * 3;
+    const size_t id1x3 = static_cast<size_t>(id1) * 3;
+    const size_t id2x3 = static_cast<size_t>(id2) * 3;
 
-    glm::vec3 p0 =
+    const glm::vec3 p0 =
         glm::vec3(positions[id0x3], positions[id0x3 + 1], positions[id0x3 + 2]);
-    glm::vec3 p1 =
+    const glm::vec3 p1 =
         glm::vec3(positions[id1x3], positions[id1x3 + 1], positions[id1x3 + 2]);
-    glm::vec3 p2 =
+    const glm::vec3 p2 =
         glm::vec3(positions[id2x3], positions[id2x3 + 1], positions[id2x3 + 2]);
 
     glm::vec3 normal = glm::cross(p1 - p0, p2 - p0);
@@ -678,15 +687,15 @@ static std::vector<std::byte> generateNormals(
   return normalsBuffer;
 }
 
-std::unique_ptr<TileContentLoadResult>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 QuantizedMeshContent::load(const TileContentLoadInput& input) {
-  return load(
+  return input.asyncSystem.createResolvedFuture(load(
       input.pLogger,
       input.tileID,
       input.tileBoundingVolume,
-      input.url,
-      input.data,
-      input.contentOptions.enableWaterMask);
+      input.pRequest->url(),
+      input.pRequest->response()->data(),
+      input.contentOptions.enableWaterMask));
 }
 
 /*static*/ std::unique_ptr<TileContentLoadResult> QuantizedMeshContent::load(
@@ -734,12 +743,12 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   // get vertex count for this mesh
   const QuantizedMeshHeader* pHeader = meshView->header;
-  uint32_t vertexCount = pHeader->vertexCount;
-  uint32_t indicesCount = meshView->triangleCount * 3;
-  uint32_t skirtVertexCount =
+  const uint32_t vertexCount = pHeader->vertexCount;
+  const uint32_t indicesCount = meshView->triangleCount * 3;
+  const uint32_t skirtVertexCount =
       meshView->westEdgeIndicesCount + meshView->southEdgeIndicesCount +
       meshView->eastEdgeIndicesCount + meshView->northEdgeIndicesCount;
-  uint32_t skirtIndicesCount = (skirtVertexCount - 4) * 6;
+  const uint32_t skirtIndicesCount = (skirtVertexCount - 4) * 6;
 
   // decode position without skirt, but preallocate position buffer to include
   // skirt as well
@@ -750,16 +759,16 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       (vertexCount + skirtVertexCount) * 3);
   size_t positionOutputIndex = 0;
 
-  glm::dvec3 center(
+  const glm::dvec3 center(
       pHeader->BoundingSphereCenterX,
       pHeader->BoundingSphereCenterY,
       pHeader->BoundingSphereCenterZ);
-  glm::dvec3 horizonOcclusionPoint(
+  const glm::dvec3 horizonOcclusionPoint(
       pHeader->HorizonOcclusionPointX,
       pHeader->HorizonOcclusionPointY,
       pHeader->HorizonOcclusionPointZ);
-  double minimumHeight = pHeader->MinimumHeight;
-  double maximumHeight = pHeader->MaximumHeight;
+  const double minimumHeight = pHeader->MinimumHeight;
+  const double maximumHeight = pHeader->MaximumHeight;
 
   double minX = std::numeric_limits<double>::max();
   double minY = std::numeric_limits<double>::max();
@@ -770,10 +779,10 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
   const CesiumGeospatial::GlobeRectangle& rectangle = pRegion->getRectangle();
-  double west = rectangle.getWest();
-  double south = rectangle.getSouth();
-  double east = rectangle.getEast();
-  double north = rectangle.getNorth();
+  const double west = rectangle.getWest();
+  const double south = rectangle.getSouth();
+  const double east = rectangle.getEast();
+  const double north = rectangle.getNorth();
 
   int32_t u = 0;
   int32_t v = 0;
@@ -789,9 +798,10 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     double vRatio = static_cast<double>(v) / 32767.0;
     double heightRatio = static_cast<double>(height) / 32767.0;
 
-    double longitude = Math::lerp(west, east, uRatio);
-    double latitude = Math::lerp(south, north, vRatio);
-    double heightMeters = Math::lerp(minimumHeight, maximumHeight, heightRatio);
+    const double longitude = Math::lerp(west, east, uRatio);
+    const double latitude = Math::lerp(south, north, vRatio);
+    const double heightMeters =
+        Math::lerp(minimumHeight, maximumHeight, heightRatio);
 
     glm::dvec3 position = ellipsoid.cartographicToCartesian(
         Cartographic(longitude, latitude, heightMeters));
@@ -815,7 +825,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   std::vector<std::byte> outputNormalsBuffer;
   gsl::span<float> outputNormals;
   if (!meshView->octEncodedNormalBuffer.empty()) {
-    uint32_t totalNormalFloats = (vertexCount + skirtVertexCount) * 3;
+    const uint32_t totalNormalFloats = (vertexCount + skirtVertexCount) * 3;
     outputNormalsBuffer.resize(totalNormalFloats * sizeof(float));
     outputNormals = gsl::span<float>(
         reinterpret_cast<float*>(outputNormalsBuffer.data()),
@@ -840,14 +850,14 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
       meshView->indexType == QuantizedMeshIndexType::UnsignedInt
           ? sizeof(uint32_t)
           : sizeof(uint16_t);
-  double skirtHeight = calculateSkirtHeight(ellipsoid, rectangle);
-  double longitudeOffset = (east - west) * 0.0001;
-  double latitudeOffset = (north - south) * 0.0001;
+  const double skirtHeight = calculateSkirtHeight(ellipsoid, rectangle);
+  const double longitudeOffset = (east - west) * 0.0001;
+  const double latitudeOffset = (north - south) * 0.0001;
   if (meshView->indexType == QuantizedMeshIndexType::UnsignedInt) {
     // decode the tile indices without skirt.
-    size_t outputIndicesCount = indicesCount + skirtIndicesCount;
+    const size_t outputIndicesCount = indicesCount + skirtIndicesCount;
     outputIndicesBuffer.resize(outputIndicesCount * sizeof(uint32_t));
-    gsl::span<const uint32_t> indices(
+    const gsl::span<const uint32_t> indices(
         reinterpret_cast<const uint32_t*>(meshView->indicesBuffer.data()),
         indicesCount);
     gsl::span<uint32_t> outputIndices(
@@ -887,8 +897,8 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
     indexSizeBytes = sizeof(uint32_t);
   } else {
-    size_t outputIndicesCount = indicesCount + skirtIndicesCount;
-    gsl::span<const uint16_t> indices(
+    const size_t outputIndicesCount = indicesCount + skirtIndicesCount;
+    const gsl::span<const uint16_t> indices(
         reinterpret_cast<const uint16_t*>(meshView->indicesBuffer.data()),
         indicesCount);
     if (vertexCount + skirtVertexCount < std::numeric_limits<uint16_t>::max()) {
@@ -979,7 +989,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   pbr.metallicFactor = 0.0;
   pbr.roughnessFactor = 1.0;
 
-  size_t meshId = model.meshes.size();
+  const size_t meshId = model.meshes.size();
   model.meshes.emplace_back();
   CesiumGltf::Mesh& mesh = model.meshes[meshId];
   mesh.primitives.emplace_back();
@@ -989,12 +999,12 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   primitive.material = 0;
 
   // add position buffer to gltf
-  size_t positionBufferId = model.buffers.size();
+  const size_t positionBufferId = model.buffers.size();
   model.buffers.emplace_back();
   CesiumGltf::Buffer& positionBuffer = model.buffers[positionBufferId];
   positionBuffer.cesium.data = std::move(outputPositionsBuffer);
 
-  size_t positionBufferViewId = model.bufferViews.size();
+  const size_t positionBufferViewId = model.bufferViews.size();
   model.bufferViews.emplace_back();
   CesiumGltf::BufferView& positionBufferView =
       model.bufferViews[positionBufferViewId];
@@ -1004,7 +1014,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   positionBufferView.byteLength = int64_t(positionBuffer.cesium.data.size());
   positionBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-  size_t positionAccessorId = model.accessors.size();
+  const size_t positionAccessorId = model.accessors.size();
   model.accessors.emplace_back();
   CesiumGltf::Accessor& positionAccessor = model.accessors[positionAccessorId];
   positionAccessor.bufferView = static_cast<int>(positionBufferViewId);
@@ -1019,12 +1029,12 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
 
   // add normal buffer to gltf if there are any
   if (!outputNormalsBuffer.empty()) {
-    size_t normalBufferId = model.buffers.size();
+    const size_t normalBufferId = model.buffers.size();
     model.buffers.emplace_back();
     CesiumGltf::Buffer& normalBuffer = model.buffers[normalBufferId];
     normalBuffer.cesium.data = std::move(outputNormalsBuffer);
 
-    size_t normalBufferViewId = model.bufferViews.size();
+    const size_t normalBufferViewId = model.bufferViews.size();
     model.bufferViews.emplace_back();
     CesiumGltf::BufferView& normalBufferView =
         model.bufferViews[normalBufferViewId];
@@ -1034,7 +1044,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     normalBufferView.byteLength = int64_t(normalBuffer.cesium.data.size());
     normalBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-    size_t normalAccessorId = model.accessors.size();
+    const size_t normalAccessorId = model.accessors.size();
     model.accessors.emplace_back();
     CesiumGltf::Accessor& normalAccessor = model.accessors[normalAccessorId];
     normalAccessor.bufferView = int32_t(normalBufferViewId);
@@ -1047,12 +1057,12 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   }
 
   // add indices buffer to gltf
-  size_t indicesBufferId = model.buffers.size();
+  const size_t indicesBufferId = model.buffers.size();
   model.buffers.emplace_back();
   CesiumGltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
   indicesBuffer.cesium.data = std::move(outputIndicesBuffer);
 
-  size_t indicesBufferViewId = model.bufferViews.size();
+  const size_t indicesBufferViewId = model.bufferViews.size();
   model.bufferViews.emplace_back();
   CesiumGltf::BufferView& indicesBufferView =
       model.bufferViews[indicesBufferViewId];
@@ -1062,7 +1072,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   indicesBufferView.byteStride = indexSizeBytes;
   indicesBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
 
-  size_t indicesAccessorId = model.accessors.size();
+  const size_t indicesAccessorId = model.accessors.size();
   model.accessors.emplace_back();
   CesiumGltf::Accessor& indicesAccessor = model.accessors[indicesAccessorId];
   indicesAccessor.bufferView = int32_t(indicesBufferViewId);
@@ -1101,7 +1111,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
   if (!meshView->onlyWater && !meshView->onlyLand) {
 
     // create source image
-    size_t waterMaskImageId = model.images.size();
+    const size_t waterMaskImageId = model.images.size();
     model.images.emplace_back();
     CesiumGltf::Image& waterMaskImage = model.images[waterMaskImageId];
     waterMaskImage.cesium.width = 256;
@@ -1115,7 +1125,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
         65536);
 
     // create sampler parameters
-    size_t waterMaskSamplerId = model.samplers.size();
+    const size_t waterMaskSamplerId = model.samplers.size();
     model.samplers.emplace_back();
     CesiumGltf::Sampler& waterMaskSampler = model.samplers[waterMaskSamplerId];
     waterMaskSampler.magFilter = CesiumGltf::Sampler::MagFilter::LINEAR;
@@ -1125,7 +1135,7 @@ QuantizedMeshContent::load(const TileContentLoadInput& input) {
     waterMaskSampler.wrapT = CesiumGltf::Sampler::WrapT::CLAMP_TO_EDGE;
 
     // create texture
-    size_t waterMaskTextureId = model.textures.size();
+    const size_t waterMaskTextureId = model.textures.size();
     model.textures.emplace_back();
     CesiumGltf::Texture& waterMaskTexture = model.textures[waterMaskTextureId];
     waterMaskTexture.sampler = int32_t(waterMaskSamplerId);
@@ -1195,7 +1205,7 @@ static void processMetadata(
     return;
   }
 
-  auto availableIt = metadata.FindMember("available");
+  const auto availableIt = metadata.FindMember("available");
   if (availableIt == metadata.MemberEnd() || !availableIt->value.IsArray()) {
     return;
   }

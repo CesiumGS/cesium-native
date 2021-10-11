@@ -1,4 +1,5 @@
 #include "CesiumAsync/HttpHeaders.h"
+
 #include <algorithm>
 
 namespace CesiumAsync {

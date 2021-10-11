@@ -1,14 +1,16 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
-#include "Cesium3DTilesSelection/TileContentLoader.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include <cstddef>
+#include "Library.h"
+#include "Tile.h"
+#include "TileContentLoadResult.h"
+#include "TileContentLoader.h"
+#include "TileRefine.h"
+
 #include <gsl/span>
-#include <memory>
 #include <spdlog/fwd.h>
+
+#include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -28,7 +30,7 @@ public:
    * The result will only contain the `childTiles` and the `pNewTileContext`.
    * Other fields will be empty or have default values.
    */
-  std::unique_ptr<TileContentLoadResult>
+  CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   load(const TileContentLoadInput& input) override;
 
 private:

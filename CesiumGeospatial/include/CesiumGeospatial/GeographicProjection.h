@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Library.h"
-#include "CesiumUtility/Math.h"
+#include "Ellipsoid.h"
+#include "GlobeRectangle.h"
+#include "Library.h"
+
+#include <CesiumUtility/Math.h>
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
@@ -45,9 +47,9 @@ public:
    */
   static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(
       const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept {
-    double longitudeValue =
+    const double longitudeValue =
         ellipsoid.getMaximumRadius() * CesiumUtility::Math::ONE_PI;
-    double latitudeValue =
+    const double latitudeValue =
         ellipsoid.getMaximumRadius() * CesiumUtility::Math::PI_OVER_TWO;
     return CesiumGeometry::Rectangle(
         -longitudeValue,

@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/TileContentLoadInput.h"
-#include "Cesium3DTilesSelection/TileContentLoadResult.h"
-#include "Cesium3DTilesSelection/TileContentLoader.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
+#include "BoundingVolume.h"
+#include "Library.h"
+#include "TileContentLoadInput.h"
+#include "TileContentLoadResult.h"
+#include "TileContentLoader.h"
+#include "TileID.h"
+#include "TileRefine.h"
+
+#include <CesiumAsync/AsyncSystem.h>
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -97,7 +99,7 @@ public:
    * no loader registered for the magic header of the given
    * input, and no loader for the content type of the input.
    */
-  static std::unique_ptr<TileContentLoadResult>
+  static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
   createContent(const TileContentLoadInput& input);
 
 private:

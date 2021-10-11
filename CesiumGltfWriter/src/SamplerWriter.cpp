@@ -1,7 +1,8 @@
 #include "SamplerWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumJsonWriter/JsonObjectWriter.h>
-#include <magic_enum.hpp>
 
 void CesiumGltf::writeSampler(
     const std::vector<Sampler>& samplers,
@@ -19,22 +20,22 @@ void CesiumGltf::writeSampler(
 
     if (sampler.magFilter) {
       j.Key("magFilter");
-      j.Int(magic_enum::enum_integer(*sampler.magFilter));
+      j.Int(*sampler.magFilter);
     }
 
     if (sampler.minFilter) {
       j.Key("minFilter");
-      j.Int(magic_enum::enum_integer(*sampler.minFilter));
+      j.Int(*sampler.minFilter);
     }
 
     if (sampler.wrapS != Sampler::WrapS::REPEAT) {
       j.Key("wrapS");
-      j.Int(magic_enum::enum_integer(sampler.wrapS));
+      j.Int(sampler.wrapS);
     }
 
     if (sampler.wrapT != Sampler::WrapT::REPEAT) {
       j.Key("wrapT");
-      j.Int(magic_enum::enum_integer(sampler.wrapT));
+      j.Int(sampler.wrapT);
     }
 
     if (!sampler.name.empty()) {

@@ -1,4 +1,5 @@
 #include "CesiumGeometry/AxisTransforms.h"
+
 #include <glm/mat3x3.hpp>
 
 namespace CesiumGeometry {

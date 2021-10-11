@@ -35,7 +35,7 @@ private:
       _attributes;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
   CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
-  CesiumJsonReader::IntegerJsonHandler<MeshPrimitive::Mode> _mode;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _mode;
   CesiumJsonReader::ArrayJsonHandler<
       std::unordered_map<std::string, int32_t>,
       CesiumJsonReader::DictionaryJsonHandler<

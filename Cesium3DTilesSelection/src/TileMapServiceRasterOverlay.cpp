@@ -1,15 +1,18 @@
 #include "Cesium3DTilesSelection/TileMapServiceRasterOverlay.h"
+
 #include "Cesium3DTilesSelection/CreditSystem.h"
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/RasterOverlayTile.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
-#include "CesiumUtility/Uri.h"
-#include "tinyxml2.h"
+#include "Cesium3DTilesSelection/tinyxml-cesium.h"
+
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumUtility/Uri.h>
+
 #include <cstddef>
 
 using namespace CesiumAsync;
@@ -135,7 +138,7 @@ TileMapServiceRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  std::optional<Credit> credit =
+  const std::optional<Credit> credit =
       this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
                                   this->_options.credit.value()))
                             : std::nullopt;
@@ -161,10 +164,10 @@ TileMapServiceRasterOverlay::createTileProvider(
               return nullptr;
             }
 
-            gsl::span<const std::byte> data = pResponse->data();
+            const gsl::span<const std::byte> data = pResponse->data();
 
             tinyxml2::XMLDocument doc;
-            tinyxml2::XMLError error = doc.Parse(
+            const tinyxml2::XMLError error = doc.Parse(
                 reinterpret_cast<const char*>(data.data()),
                 data.size_bytes());
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
@@ -204,7 +207,7 @@ TileMapServiceRasterOverlay::createTileProvider(
               tinyxml2::XMLElement* pTileset =
                   pTilesets->FirstChildElement("TileSet");
               while (pTileset) {
-                uint32_t level =
+                const uint32_t level =
                     getAttributeUint32(pTileset, "order").value_or(0);
                 minimumLevel = glm::min(minimumLevel, level);
                 maximumLevel = glm::max(maximumLevel, level);

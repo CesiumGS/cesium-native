@@ -4,6 +4,7 @@
 #include <CesiumGltf/WriteModelOptions.h>
 #include <CesiumGltf/WriteModelResult.h>
 #include <CesiumJsonWriter/JsonWriter.h>
+
 #include <cstdint>
 #include <utility>
 #include <vector>

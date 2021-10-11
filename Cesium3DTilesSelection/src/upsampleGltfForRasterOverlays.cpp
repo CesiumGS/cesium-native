@@ -1,11 +1,14 @@
 #include "upsampleGltfForRasterOverlays.h"
-#include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumUtility/Tracing.h"
+
 #include "SkirtMeshMetadata.h"
+
+#include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/Tracing.h>
+
 #include <algorithm>
 #include <cstddef>
 
@@ -82,11 +85,13 @@ static void addSkirts(
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex);
 
-static bool isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
+static bool
+isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.x % 2) == 0;
 }
 
-static bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) {
+static bool
+isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.y % 2) == 0;
 }
 
@@ -121,7 +126,7 @@ Model upsampleGltfForRasterOverlays(
   auto nameIt = result.extras.find("Cesium3DTiles_TileUrl");
   if (nameIt != result.extras.end()) {
     std::string name = nameIt->second.getStringOrDefault("");
-    std::string::size_type upsampledIndex = name.find(" upsampled");
+    const std::string::size_type upsampledIndex = name.find(" upsampled");
     if (upsampledIndex != std::string::npos) {
       name = name.substr(0, upsampledIndex);
     }
@@ -161,7 +166,7 @@ static void copyVertexAttributes(
             attribute.buffer.data() + attribute.offset +
             attribute.stride * vertexIndex);
         for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
-          float value = *pInput;
+          const float value = *pInput;
           output.push_back(value);
           if (!skipMinMaxUpdate) {
             attribute.minimums[static_cast<size_t>(i)] = glm::min(
@@ -185,7 +190,7 @@ static void copyVertexAttributes(
             attribute.buffer.data() + attribute.offset +
             attribute.stride * vertex.second);
         for (int32_t i = 0; i < attribute.numberOfFloatsPerVertex; ++i) {
-          float value = glm::mix(*pInput0, *pInput1, vertex.t);
+          const float value = glm::mix(*pInput0, *pInput1, vertex.t);
           output.push_back(value);
           if (!skipMinMaxUpdate) {
             attribute.minimums[static_cast<size_t>(i)] = glm::min(
@@ -368,16 +373,16 @@ static void upsamplePrimitiveForRasterOverlays(
   std::vector<FloatVertexAttribute> attributes;
   attributes.reserve(primitive.attributes.size());
 
-  size_t vertexBufferIndex = model.buffers.size();
+  const size_t vertexBufferIndex = model.buffers.size();
   model.buffers.emplace_back();
 
-  size_t indexBufferIndex = model.buffers.size();
+  const size_t indexBufferIndex = model.buffers.size();
   model.buffers.emplace_back();
 
-  size_t vertexBufferViewIndex = model.bufferViews.size();
+  const size_t vertexBufferViewIndex = model.bufferViews.size();
   model.bufferViews.emplace_back();
 
-  size_t indexBufferViewIndex = model.bufferViews.size();
+  const size_t indexBufferViewIndex = model.bufferViews.size();
   model.bufferViews.emplace_back();
 
   BufferView& vertexBufferView = model.bufferViews[vertexBufferViewIndex];
@@ -431,8 +436,9 @@ static void upsamplePrimitiveForRasterOverlays(
     const Buffer& buffer =
         parentModel.buffers[static_cast<size_t>(bufferView.buffer)];
 
-    int64_t accessorByteStride = accessor.computeByteStride(parentModel);
-    int64_t accessorComponentElements = accessor.computeNumberOfComponents();
+    const int64_t accessorByteStride = accessor.computeByteStride(parentModel);
+    const int64_t accessorComponentElements =
+        accessor.computeNumberOfComponents();
     if (accessor.componentType != Accessor::ComponentType::FLOAT) {
       // Can only interpolate floating point vertex attributes
       return;
@@ -474,15 +480,15 @@ static void upsamplePrimitiveForRasterOverlays(
     return;
   }
 
-  for (std::string& attribute : toRemove) {
+  for (const std::string& attribute : toRemove) {
     primitive.attributes.erase(attribute);
   }
 
-  bool keepAboveU = !isWestChild(childID);
-  bool keepAboveV = !isSouthChild(childID);
+  const bool keepAboveU = !isWestChild(childID);
+  const bool keepAboveV = !isSouthChild(childID);
 
-  AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
-  AccessorView<TIndex> indicesView(parentModel, primitive.indices);
+  const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
+  const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
 
   if (uvView.status() != AccessorViewStatus::Valid ||
       indicesView.status() != AccessorViewStatus::Valid) {
@@ -494,8 +500,8 @@ static void upsamplePrimitiveForRasterOverlays(
   int64_t indicesCount = indicesView.size();
   std::optional<SkirtMeshMetadata> parentSkirtMeshMetadata =
       SkirtMeshMetadata::parseFromGltfExtras(primitive.extras);
-  bool hasSkirt = (parentSkirtMeshMetadata != std::nullopt) &&
-                  (positionAttributeIndex != -1);
+  const bool hasSkirt = (parentSkirtMeshMetadata != std::nullopt) &&
+                        (positionAttributeIndex != -1);
   if (hasSkirt) {
     indicesBegin = parentSkirtMeshMetadata->noSkirtIndicesBegin;
     indicesCount = parentSkirtMeshMetadata->noSkirtIndicesCount;
@@ -523,9 +529,9 @@ static void upsamplePrimitiveForRasterOverlays(
     TIndex i1 = indicesView[i + 1];
     TIndex i2 = indicesView[i + 2];
 
-    glm::vec2 uv0 = uvView[i0];
-    glm::vec2 uv1 = uvView[i1];
-    glm::vec2 uv2 = uvView[i2];
+    const glm::vec2 uv0 = uvView[i0];
+    const glm::vec2 uv1 = uvView[i1];
+    const glm::vec2 uv2 = uvView[i2];
 
     // Clip this triangle against the East-West boundary
     clippedA.clear();
@@ -642,7 +648,8 @@ static void upsamplePrimitiveForRasterOverlays(
   }
 
   // Update the accessor vertex counts and min/max values
-  int64_t numberOfVertices = int64_t(newVertexFloats.size()) / vertexSizeFloats;
+  const int64_t numberOfVertices =
+      int64_t(newVertexFloats.size()) / vertexSizeFloats;
   for (const FloatVertexAttribute& attribute : attributes) {
     Accessor& accessor =
         model.accessors[static_cast<size_t>(attribute.accessorIndex)];
@@ -652,7 +659,7 @@ static void upsamplePrimitiveForRasterOverlays(
   }
 
   // Add an accessor for the indices
-  size_t indexAccessorIndex = model.accessors.size();
+  const size_t indexAccessorIndex = model.accessors.size();
   model.accessors.emplace_back();
   Accessor& newIndicesAccessor = model.accessors.back();
   newIndicesAccessor.bufferView = static_cast<int>(indexBufferViewIndex);
@@ -756,13 +763,13 @@ static uint32_t getOrCreateVertex(
           complements[static_cast<size_t>(~(*pIndex))]);
     }
 
-    uint32_t existingIndex = vertexMap[static_cast<size_t>(*pIndex)];
+    const uint32_t existingIndex = vertexMap[static_cast<size_t>(*pIndex)];
     if (existingIndex != std::numeric_limits<uint32_t>::max()) {
       return existingIndex;
     }
   }
 
-  uint32_t beforeOutput = static_cast<uint32_t>(output.size());
+  const uint32_t beforeOutput = static_cast<uint32_t>(output.size());
   copyVertexAttributes(attributes, complements, clipVertex, output);
   uint32_t newIndex =
       beforeOutput / (static_cast<uint32_t>(output.size()) - beforeOutput);
@@ -786,19 +793,19 @@ static void addClippedPolygon(
     return;
   }
 
-  uint32_t i0 = getOrCreateVertex(
+  const uint32_t i0 = getOrCreateVertex(
       output,
       attributes,
       vertexMap,
       complements,
       clipResult[0]);
-  uint32_t i1 = getOrCreateVertex(
+  const uint32_t i1 = getOrCreateVertex(
       output,
       attributes,
       vertexMap,
       complements,
       clipResult[1]);
-  uint32_t i2 = getOrCreateVertex(
+  const uint32_t i2 = getOrCreateVertex(
       output,
       attributes,
       vertexMap,
@@ -814,7 +821,7 @@ static void addClippedPolygon(
   clipVertexToIndices.push_back(i2);
 
   if (clipResult.size() > 3) {
-    uint32_t i3 = getOrCreateVertex(
+    const uint32_t i3 = getOrCreateVertex(
         output,
         attributes,
         vertexMap,
@@ -840,7 +847,7 @@ static void addEdge(
     const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
     const std::vector<CesiumGeometry::TriangleClipVertex>& clipResult) {
   for (uint32_t i = 0; i < clipVertexToIndices.size(); ++i) {
-    glm::vec2 uv = getVertexValue(uvs, complements, clipResult[i]);
+    const glm::vec2 uv = getVertexValue(uvs, complements, clipResult[i]);
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.x,
@@ -908,11 +915,11 @@ static void addSkirt(
 
   uint32_t newEdgeIndex = uint32_t(output.size() / size_t(vertexSizeFloats));
   for (size_t i = 0; i < edgeIndices.size(); ++i) {
-    uint32_t edgeIdx = edgeIndices[i];
+    const uint32_t edgeIdx = edgeIndices[i];
     uint32_t offset = 0;
     for (size_t j = 0; j < attributes.size(); ++j) {
       FloatVertexAttribute& attribute = attributes[j];
-      uint32_t valueIndex = offset + uint32_t(vertexSizeFloats) * edgeIdx;
+      const uint32_t valueIndex = offset + uint32_t(vertexSizeFloats) * edgeIdx;
 
       if (int32_t(j) == positionAttributeIndex) {
         glm::dvec3 position{
@@ -952,7 +959,7 @@ static void addSkirt(
     }
 
     if (i < edgeIndices.size() - 1) {
-      uint32_t nextEdgeIdx = edgeIndices[i + 1];
+      const uint32_t nextEdgeIdx = edgeIndices[i + 1];
       indices.push_back(edgeIdx);
       indices.push_back(nextEdgeIdx);
       indices.push_back(newEdgeIndex);
@@ -978,7 +985,7 @@ static void addSkirts(
     int32_t positionAttributeIndex) {
   CESIUM_TRACE("addSkirts");
 
-  glm::dvec3 center = currentSkirt.meshCenter;
+  const glm::dvec3 center = currentSkirt.meshCenter;
   double shortestSkirtHeight =
       glm::min(parentSkirt.skirtWestHeight, parentSkirt.skirtEastHeight);
   shortestSkirtHeight =

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CesiumAsync/Impl/cesium-async++.h"
+#include "cesium-async++.h"
+
 #include <spdlog/spdlog.h>
 
 namespace CesiumAsync {
@@ -8,7 +9,7 @@ namespace Impl {
 
 template <typename TScheduler> class ImmediateScheduler {
 public:
-  explicit ImmediateScheduler(TScheduler* pScheduler)
+  explicit ImmediateScheduler(TScheduler* pScheduler) noexcept
       : _pScheduler(pScheduler) {}
 
   void schedule(async::task_run_handle t) {
@@ -47,7 +48,7 @@ public:
       return *this;
     }
 
-    void reset() {
+    void reset() noexcept {
       if (this->_pScheduler) {
         std::vector<TScheduler*>& inSuitable =
             ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
@@ -74,7 +75,8 @@ private:
   // If a TScheduler instance is found in this thread-local vector, then the
   // current thread has been dispatched by this scheduler and therefore we can
   // dispatch immediately.
-  static std::vector<TScheduler*>& getSchedulersCurrentlyDispatching() {
+  static std::vector<TScheduler*>&
+  getSchedulersCurrentlyDispatching() noexcept {
     // We're using a static local here rather than a static field because, on
     // at least some Linux systems (mine), with Clang 12, in a Debug build, a
     // thread_local static field causes a SEGFAULT on access.

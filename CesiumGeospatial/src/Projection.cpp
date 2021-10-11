@@ -1,4 +1,5 @@
 #include "CesiumGeospatial/Projection.h"
+
 #include <glm/trigonometric.hpp>
 
 namespace CesiumGeospatial {
@@ -8,11 +9,11 @@ projectPosition(const Projection& projection, const Cartographic& position) {
   struct Operation {
     const Cartographic& position;
 
-    glm::dvec3 operator()(const GeographicProjection& geographic) {
+    glm::dvec3 operator()(const GeographicProjection& geographic) noexcept {
       return geographic.project(position);
     }
 
-    glm::dvec3 operator()(const WebMercatorProjection& webMercator) {
+    glm::dvec3 operator()(const WebMercatorProjection& webMercator) noexcept {
       return webMercator.project(position);
     }
   };
@@ -25,11 +26,11 @@ unprojectPosition(const Projection& projection, const glm::dvec3& position) {
   struct Operation {
     const glm::dvec3& position;
 
-    Cartographic operator()(const GeographicProjection& geographic) {
+    Cartographic operator()(const GeographicProjection& geographic) noexcept {
       return geographic.unproject(position);
     }
 
-    Cartographic operator()(const WebMercatorProjection& webMercator) {
+    Cartographic operator()(const WebMercatorProjection& webMercator) noexcept {
       return webMercator.unproject(position);
     }
   };
@@ -44,12 +45,12 @@ CesiumGeometry::Rectangle projectRectangleSimple(
     const GlobeRectangle& rectangle;
 
     CesiumGeometry::Rectangle
-    operator()(const GeographicProjection& geographic) {
+    operator()(const GeographicProjection& geographic) noexcept {
       return geographic.project(rectangle);
     }
 
     CesiumGeometry::Rectangle
-    operator()(const WebMercatorProjection& webMercator) {
+    operator()(const WebMercatorProjection& webMercator) noexcept {
       return webMercator.project(rectangle);
     }
   };
@@ -63,11 +64,12 @@ GlobeRectangle unprojectRectangleSimple(
   struct Operation {
     const CesiumGeometry::Rectangle& rectangle;
 
-    GlobeRectangle operator()(const GeographicProjection& geographic) {
+    GlobeRectangle operator()(const GeographicProjection& geographic) noexcept {
       return geographic.unproject(rectangle);
     }
 
-    GlobeRectangle operator()(const WebMercatorProjection& webMercator) {
+    GlobeRectangle
+    operator()(const WebMercatorProjection& webMercator) noexcept {
       return webMercator.unproject(rectangle);
     }
   };
@@ -81,11 +83,11 @@ double computeApproximateConversionFactorToMetersNearPosition(
   struct Operation {
     const glm::dvec2& position;
 
-    double operator()(const GeographicProjection& /*geographic*/) {
+    double operator()(const GeographicProjection& /*geographic*/) noexcept {
       return 1.0;
     }
 
-    double operator()(const WebMercatorProjection& webMercator) {
+    double operator()(const WebMercatorProjection& webMercator) noexcept {
       // TODO: is there a better estimate?
       return glm::cos(webMercator.unproject(position).latitude);
     }

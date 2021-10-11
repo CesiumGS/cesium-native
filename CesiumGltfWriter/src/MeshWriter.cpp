@@ -1,10 +1,12 @@
 #include "MeshWriter.h"
+
 #include "ExtensionWriter.h"
+
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <magic_enum.hpp>
+
 #include <vector>
 
 void writePrimitive(
@@ -33,7 +35,7 @@ void writePrimitive(
 
   if (primitive.mode != CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
     j.Key("mode");
-    j.Int(magic_enum::enum_integer(primitive.mode));
+    j.Int(primitive.mode);
   }
 
   if (!primitive.targets.empty()) {

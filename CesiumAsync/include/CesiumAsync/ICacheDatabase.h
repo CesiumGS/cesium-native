@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumAsync/CacheItem.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/Library.h"
+#include "CacheItem.h"
+#include "IAssetRequest.h"
+#include "Library.h"
+
 #include <cstddef>
 #include <optional>
 

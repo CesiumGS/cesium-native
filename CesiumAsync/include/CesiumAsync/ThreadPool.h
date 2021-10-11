@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumAsync/Impl/ImmediateScheduler.h"
-#include "CesiumAsync/Impl/cesium-async++.h"
-#include "CesiumAsync/Library.h"
+#include "Impl/ImmediateScheduler.h"
+#include "Impl/cesium-async++.h"
+#include "Library.h"
+
 #include <memory>
 
 namespace CesiumAsync {
@@ -33,8 +34,8 @@ private:
         [pScheduler]() { ThreadPool::_scope = pScheduler->immediate.scope(); };
   }
 
-  static auto createPostRun() {
-    return []() { ThreadPool::_scope.reset(); };
+  static auto createPostRun() noexcept {
+    return []() noexcept { ThreadPool::_scope.reset(); };
   }
 
   static thread_local Impl::ImmediateScheduler<Scheduler>::SchedulerScope

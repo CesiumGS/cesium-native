@@ -31,6 +31,6 @@ private:
   CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _byteStride;
-  CesiumJsonReader::IntegerJsonHandler<BufferView::Target> _target;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _target;
 };
 } // namespace CesiumGltf

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
+#include "Library.h"
 
 namespace CesiumGeometry {
 
 /**
  * @brief An enum describing the x, y, and z axes
  */
-enum CESIUMGEOMETRY_API Axis {
+enum class CESIUMGEOMETRY_API Axis {
   /**
    * @brief The x-axis
    */

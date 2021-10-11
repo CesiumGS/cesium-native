@@ -1,11 +1,13 @@
 {
   "name": "generate-gltf-classes",
   "version": "1.0.0",
-  "description": "Generate CesiumGltf C++ classes from the glTF spec.",
+  "description": "Generate C++ classes from a JSON schema",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js --schema https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/specification/2.0/schema/ --output test_output/model --readerOutput test_output/reader --extensions https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/extensions/2.0/ --config glTF.json",
-    "generate": "node index.js --schema https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/specification/2.0/schema/ --output ../../CesiumGltf --readerOutput ../../CesiumGltfReader --extensions https://raw.githubusercontent.com/kring/glTF/metadata-schema-cleanup/extensions/2.0/ --config glTF.json"
+    "generate-3d-tiles": "node index.js --schema https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-json-schema-2020-12/specification/schema/ --root tileset.schema.json --output ../../Cesium3DTiles --readerOutput ../../Cesium3DTilesReader --extensions https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-json-schema-2020-12/extensions/ --namespace Cesium3DTiles --config 3dTiles.json",
+    "generate-gltf": "node index.js --schema https://raw.githubusercontent.com/CesiumGS/glTF/3d-tiles-next/specification/2.0/schema/ --root glTF.schema.json --output ../../CesiumGltf --readerOutput ../../CesiumGltfReader --extensions https://raw.githubusercontent.com/CesiumGS/glTF/3d-tiles-next/extensions/2.0/ --namespace CesiumGltf --config glTF.json",
+    "test-3d-tiles": "node index.js --schema https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-json-schema-2020-12/specification/schema/ --root tileset.schema.json --output test_output/Cesium3DTiles --readerOutput test_output/Cesium3DTilesReader --extensions https://raw.githubusercontent.com/CesiumGS/3d-tiles/3d-tiles-next-json-schema-2020-12/extensions/ --namespace Cesium3DTiles --config 3dTiles.json",
+    "test-gltf": "node index.js --schema https://raw.githubusercontent.com/CesiumGS/glTF/3d-tiles-next/specification/2.0/schema/ --root glTF.schema.json --output test_output/CesiumGltf --readerOutput test_output/CesiumGltfReader --extensions https://raw.githubusercontent.com/CesiumGS/glTF/3d-tiles-next/extensions/2.0/ --namespace CesiumGltf --config glTF.json"
   },
   "author": "CesiumGS, Inc.",
   "license": "UNLICENSED",

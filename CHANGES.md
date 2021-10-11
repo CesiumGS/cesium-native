@@ -1,10 +1,34 @@
 # Change Log
 
-### v0.7.1 - ????
+### ? - ?
 
 ##### Fixes :wrench:
 
-- Fixed a bug introduced in v0.7.0 where Bing credits were not being collected.
+- Errors and warnings that occur while loading glTF textures are now include in the model load errors and warnings.
+
+### v0.8.0 - 2021-10-01
+
+##### Breaking Changes :mega:
+
+- glTF enums are now represented in CesiumGltf as their underlying type (int32 or string) rather than as an enum class.
+- Tile content loaders now return a `Future`, which allows them to be asynchronous and make further network requests.
+
+##### Fixes :wrench:
+
+- Fixed a bug that caused the `RTC_CENTER` semantic in a B3DM feature table to be ignored if any of the values happened to be integers rather than floating-point numbers. This caused these tiles to render in the wrong location.
+
+### v0.7.2 - 2021-09-14
+
+##### Fixes :wrench:
+
+- Fixed a bug where the "forbidHoles" option was not working with raster overlays and external tilesets.
+
+### v0.7.1 - 2021-09-14
+
+##### Fixes :wrench:
+
+- Fixed a bug introduced in v0.7.0 where credits from a `QuadtreeRasterOverlayTileProvider` were not collected and reported.
+- Fixed a bug where disabling frustum culling caused external tilesets to not load.
 
 ### v0.7.0 - 2021-09-01
 

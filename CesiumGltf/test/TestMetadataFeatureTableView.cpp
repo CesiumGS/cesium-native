@@ -1,6 +1,8 @@
 #include "CesiumGltf/MetadataFeatureTableView.h"
-#include "catch2/catch.hpp"
+
 #include <cstring>
+
+#include "catch2/catch.hpp"
 
 using namespace CesiumGltf;
 

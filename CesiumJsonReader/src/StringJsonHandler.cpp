@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/StringJsonHandler.h"
+
 #include "CesiumJsonReader/JsonHandler.h"
 
 using namespace CesiumJsonReader;
@@ -10,7 +11,7 @@ void StringJsonHandler::reset(IJsonHandler* pParent, std::string* pString) {
   this->_pString = pString;
 }
 
-std::string* StringJsonHandler::getObject() { return this->_pString; }
+std::string* StringJsonHandler::getObject() noexcept { return this->_pString; }
 
 IJsonHandler* StringJsonHandler::readString(const std::string_view& str) {
   *this->_pString = str;

@@ -1,4 +1,5 @@
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
+
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
@@ -18,7 +19,7 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
   auto parentTileIt = std::find_if(
       tiles.begin(),
       tiles.end(),
-      [&overlay](RasterMappedTo3DTile& raster) {
+      [&overlay](RasterMappedTo3DTile& raster) noexcept {
         return raster.getReadyTile() &&
                &raster.getReadyTile()->getOverlay() == &overlay;
       });
@@ -86,7 +87,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
       this->_pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded) {
     // Unattach the old tile
     if (this->_pReadyTile && this->getState() != AttachmentState::Unattached) {
-      TilesetExternals& externals = tile.getTileset()->getExternals();
+      const TilesetExternals& externals = tile.getTileset()->getExternals();
       externals.pPrepareRendererResources->detachRasterInMainThread(
           tile,
           this->getTextureCoordinateID(),
@@ -121,7 +122,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
         pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
         this->_pReadyTile != pCandidate) {
       if (this->getState() != AttachmentState::Unattached) {
-        TilesetExternals& externals = tile.getTileset()->getExternals();
+        const TilesetExternals& externals = tile.getTileset()->getExternals();
         externals.pPrepareRendererResources->detachRasterInMainThread(
             tile,
             this->getTextureCoordinateID(),
@@ -142,7 +143,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
       this->getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
     this->_pReadyTile->loadInMainThread();
 
-    TilesetExternals& externals = tile.getTileset()->getExternals();
+    const TilesetExternals& externals = tile.getTileset()->getExternals();
     externals.pPrepareRendererResources->attachRasterInMainThread(
         tile,
         this->getTextureCoordinateID(),
@@ -177,7 +178,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
     return;
   }
 
-  TilesetExternals& externals = tile.getTileset()->getExternals();
+  const TilesetExternals& externals = tile.getTileset()->getExternals();
   externals.pPrepareRendererResources->detachRasterInMainThread(
       tile,
       this->getTextureCoordinateID(),
@@ -187,7 +188,7 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   this->_state = AttachmentState::Unattached;
 }
 
-void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
+void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   if (!this->_pReadyTile) {
     return;
   }
@@ -198,18 +199,18 @@ void RasterMappedTo3DTile::computeTranslationAndScale(Tile& tile) {
     return;
   }
 
-  RasterOverlayTileProvider& tileProvider =
+  const RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
-  CesiumGeometry::Rectangle geometryRectangle =
+  const CesiumGeometry::Rectangle geometryRectangle =
       projectRectangleSimple(tileProvider.getProjection(), *maybeRectangle);
-  CesiumGeometry::Rectangle imageryRectangle =
+  const CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 
-  double terrainWidth = geometryRectangle.computeWidth();
-  double terrainHeight = geometryRectangle.computeHeight();
+  const double terrainWidth = geometryRectangle.computeWidth();
+  const double terrainHeight = geometryRectangle.computeHeight();
 
-  double scaleX = terrainWidth / imageryRectangle.computeWidth();
-  double scaleY = terrainHeight / imageryRectangle.computeHeight();
+  const double scaleX = terrainWidth / imageryRectangle.computeWidth();
+  const double scaleY = terrainHeight / imageryRectangle.computeHeight();
   this->_translation = glm::dvec2(
       (scaleX * (geometryRectangle.minimumX - imageryRectangle.minimumX)) /
           terrainWidth,

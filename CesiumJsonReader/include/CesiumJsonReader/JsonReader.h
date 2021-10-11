@@ -1,9 +1,11 @@
 #pragma once
 
-#include "CesiumJsonReader/JsonHandler.h"
-#include "CesiumJsonReader/Library.h"
-#include <cstddef>
+#include "JsonHandler.h"
+#include "Library.h"
+
 #include <gsl/span>
+
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
@@ -77,7 +79,7 @@ private:
     virtual void reportWarning(
         const std::string& warning,
         std::vector<std::string>&& context) override;
-    void setInputStream(rapidjson::MemoryStream* pInputStream);
+    void setInputStream(rapidjson::MemoryStream* pInputStream) noexcept;
 
   private:
     std::vector<std::string>& _warnings;

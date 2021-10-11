@@ -1,4 +1,5 @@
 #include "CesiumJsonReader/ExtensionReaderContext.h"
+
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
@@ -9,7 +10,7 @@ using namespace CesiumUtility;
 class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
-  AnyExtensionJsonHandler() : JsonObjectJsonHandler() {}
+  AnyExtensionJsonHandler() noexcept : JsonObjectJsonHandler() {}
 
   virtual void reset(
       IJsonHandler* pParentHandler,

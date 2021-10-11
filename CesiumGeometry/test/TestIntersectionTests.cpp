@@ -1,6 +1,7 @@
 #include "CesiumGeometry/IntersectionTests.h"
 #include "CesiumGeometry/Plane.h"
 #include "CesiumGeometry/Ray.h"
+
 #include <catch2/catch.hpp>
 #include <glm/mat3x3.hpp>
 
