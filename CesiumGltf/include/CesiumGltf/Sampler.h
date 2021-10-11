@@ -71,7 +71,7 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
    * Valid values correspond to WebGL enums: `9728` (NEAREST) and `9729`
    * (LINEAR).
    */
-  std::optional<int32_t> magFilter = MagFilter::NEAREST;
+  std::optional<int32_t> magFilter;
 
   /**
    * @brief Minification filter.
@@ -81,7 +81,7 @@ struct CESIUMGLTF_API Sampler final : public NamedObject {
    *
    * All valid values correspond to WebGL enums.
    */
-  std::optional<int32_t> minFilter = MinFilter::NEAREST;
+  std::optional<int32_t> minFilter;
 
   /**
    * @brief s wrapping mode.
