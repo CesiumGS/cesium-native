@@ -1,6 +1,8 @@
 #include "Cesium3DTilesSelection/BoundingVolume.h"
+
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Transforms.h"
+
 #include <glm/gtc/matrix_inverse.hpp>
 
 using namespace CesiumGeometry;
