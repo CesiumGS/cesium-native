@@ -8,9 +8,11 @@
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class AnimationJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Animation;

@@ -8,9 +8,11 @@
 
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class PropertyStatisticsJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:

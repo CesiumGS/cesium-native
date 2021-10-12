@@ -11,9 +11,11 @@
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Accessor;

@@ -7,9 +7,11 @@
 
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class AssetJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Asset;

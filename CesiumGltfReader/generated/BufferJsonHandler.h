@@ -7,9 +7,11 @@
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class BufferJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Buffer;

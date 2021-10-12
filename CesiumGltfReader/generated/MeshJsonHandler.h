@@ -8,9 +8,11 @@
 #include "MeshPrimitiveJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MeshJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Mesh;

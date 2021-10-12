@@ -128,9 +128,11 @@ function generate(options, schema) {
 
         ${readerHeaders.map((header) => `#include ${header}`).join("\n")}
 
-        namespace ${namespace} {
+        namespace CesiumJsonReader {
           class ExtensionReaderContext;
+        }
 
+        namespace ${namespace} {
           class ${name}JsonHandler : public ${baseReader}${thisConfig.extensionName ? `, public CesiumJsonReader::IExtensionJsonHandler` : ""} {
           public:
             using ValueType = ${name};

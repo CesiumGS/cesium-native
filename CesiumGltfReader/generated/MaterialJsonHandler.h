@@ -13,9 +13,11 @@
 #include "NamedObjectJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MaterialJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Material;

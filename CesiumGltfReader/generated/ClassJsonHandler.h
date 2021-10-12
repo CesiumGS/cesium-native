@@ -9,9 +9,11 @@
 
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class ClassJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Class;
