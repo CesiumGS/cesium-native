@@ -7,7 +7,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief undefined
+ * @brief Material Normal Texture Info
  */
 struct CESIUMGLTF_API MaterialNormalTextureInfo final : public TextureInfo {
   static inline constexpr const char* TypeName = "MaterialNormalTextureInfo";
