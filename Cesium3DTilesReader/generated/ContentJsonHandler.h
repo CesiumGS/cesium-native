@@ -3,20 +3,21 @@
 #pragma once
 
 #include "BoundingVolumeJsonHandler.h"
-#include "Cesium3DTiles/ReaderContext.h"
-#include "ExtensibleObjectJsonHandler.h"
 
 #include <Cesium3DTiles/Content.h>
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace Cesium3DTiles {
-struct ReaderContext;
+class ExtensionReaderContext;
 
-class ContentJsonHandler : public ExtensibleObjectJsonHandler {
+class ContentJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Content;
 
-  ContentJsonHandler(const ReaderContext& context) noexcept;
+  ContentJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Content* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

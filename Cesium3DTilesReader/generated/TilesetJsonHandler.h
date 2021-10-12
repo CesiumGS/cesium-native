@@ -3,8 +3,6 @@
 #pragma once
 
 #include "AssetJsonHandler.h"
-#include "Cesium3DTiles/ReaderContext.h"
-#include "ExtensibleObjectJsonHandler.h"
 #include "PropertiesJsonHandler.h"
 #include "TileJsonHandler.h"
 
@@ -12,16 +10,19 @@
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace Cesium3DTiles {
-struct ReaderContext;
+class ExtensionReaderContext;
 
-class TilesetJsonHandler : public ExtensibleObjectJsonHandler {
+class TilesetJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Tileset;
 
-  TilesetJsonHandler(const ReaderContext& context) noexcept;
+  TilesetJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Tileset* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
