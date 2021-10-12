@@ -3,10 +3,11 @@
 #pragma once
 
 #include "Asset.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
 #include "Properties.h"
 #include "Tile.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <string>
 #include <unordered_map>
@@ -16,7 +17,8 @@ namespace Cesium3DTiles {
 /**
  * @brief A 3D Tiles tileset.
  */
-struct CESIUM3DTILES_API Tileset final : public ExtensibleObject {
+struct CESIUM3DTILES_API Tileset final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tileset";
 
   /**

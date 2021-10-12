@@ -4,8 +4,9 @@
 
 #include "BoundingVolume.h"
 #include "Content.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <vector>
@@ -14,7 +15,7 @@ namespace Cesium3DTiles {
 /**
  * @brief A tile in a 3D Tiles tileset.
  */
-struct CESIUM3DTILES_API Tile final : public ExtensibleObject {
+struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tile";
 
   /**

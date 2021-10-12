@@ -3,8 +3,9 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
@@ -13,7 +14,8 @@ namespace Cesium3DTiles {
 /**
  * @brief Metadata about the tile's content and a link to the content.
  */
-struct CESIUM3DTILES_API Content final : public ExtensibleObject {
+struct CESIUM3DTILES_API Content final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Content";
 
   /**
