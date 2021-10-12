@@ -1,274 +1,374 @@
-#include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/WriteModelOptions.h"
-#include "CesiumGltf/Writer.h"
+#include "CesiumGltf/GltfWriter.h"
 
-#include <CesiumGltf/AccessorSparseIndices.h>
-#include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/Mesh.h>
-#include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Node.h>
-#include <CesiumGltf/Scene.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/KHR_draco_mesh_compression.h>
 
 #include <catch2/catch.hpp>
+#include <glm/vec3.hpp>
 #include <gsl/span>
+#include <rapidjson/reader.h>
 
-#include <algorithm>
-#include <cstddef>
+#include <filesystem>
+#include <fstream>
 #include <string>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
-// indices followed by positional data
-// 3 ushorts, 2 padding bytes, then 9 floats
-const std::vector<std::byte> TRIANGLE_INDICES_THEN_FLOATS{
-    std::byte(0x00), std::byte(0x00), std::byte(0x01), std::byte(0x00),
-    std::byte(0x02), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x80), std::byte(0x3f),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00),
-    std::byte(0x00), std::byte(0x00), std::byte(0x80), std::byte(0x3f),
-    std::byte(0x00), std::byte(0x00), std::byte(0x00), std::byte(0x00)};
+namespace {
+std::vector<std::byte> writeFile(const std::filesystem::path& fileName) {
+  std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+  REQUIRE(file);
 
-Model generateTriangleModel() {
-  Buffer buffer;
-  buffer.cesium.data = TRIANGLE_INDICES_THEN_FLOATS;
-  buffer.byteLength =
-      static_cast<std::int64_t>(TRIANGLE_INDICES_THEN_FLOATS.size());
+  std::streamsize size = file.tellg();
+  file.seekg(0, std::ios::beg);
 
-  BufferView indicesBufferView;
-  indicesBufferView.buffer = 0;
-  indicesBufferView.byteOffset = 0;
-  indicesBufferView.byteLength = 6;
-  indicesBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
+  std::vector<std::byte> buffer(static_cast<size_t>(size));
+  file.read(reinterpret_cast<char*>(buffer.data()), size);
 
-  BufferView vertexBufferView;
-  vertexBufferView.buffer = 0;
-  vertexBufferView.byteOffset = 8;
-  vertexBufferView.byteLength = 36;
-  vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
+  return buffer;
+}
+} // namespace
 
-  Accessor indicesAccessor;
-  indicesAccessor.bufferView = 0;
-  indicesAccessor.byteOffset = 0;
-  indicesAccessor.componentType = AccessorSpec::ComponentType::UNSIGNED_SHORT;
-  indicesAccessor.count = 3;
-  indicesAccessor.type = AccessorSpec::Type::SCALAR;
-  indicesAccessor.max = std::vector<double>{2.0};
-  indicesAccessor.min = std::vector<double>{0.0};
+TEST_CASE("CesiumGltf::GltfWriter") {
+  using namespace std::string_literals;
 
-  Accessor vertexAccessor;
-  vertexAccessor.bufferView = 1;
-  vertexAccessor.byteOffset = 0;
-  vertexAccessor.componentType = AccessorSpec::ComponentType::FLOAT;
-  vertexAccessor.count = 3;
-  vertexAccessor.type = AccessorSpec::Type::VEC3;
-  vertexAccessor.max = std::vector<double>{1.0, 1.0, 0.0};
-  vertexAccessor.min = std::vector<double>{0.0, 0.0, 0.0};
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4,
+          "componentType": 5121,
+          "type": "VEC2",
+          "max": [
+            1,
+            2.2,
+            3.3
+          ],
+          "min": [
+            0,
+            -1.2
+          ]
+        }
+      ],
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 1
+              },
+              "targets": [
+                {
+                  "POSITION": 10,
+                  "NORMAL": 11
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "surprise": {
+        "foo": true
+      }
+    }
+  )";
 
-  Node node;
-  node.mesh = 0;
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult result = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  CHECK(result.errors.empty());
+  REQUIRE(result.model.has_value());
 
-  Scene scene;
-  scene.nodes.emplace_back(0);
+  Model& model = result.model.value();
+  REQUIRE(model.accessors.size() == 1);
+  CHECK(model.accessors[0].count == 4);
+  CHECK(
+      model.accessors[0].componentType ==
+      Accessor::ComponentType::UNSIGNED_BYTE);
+  CHECK(model.accessors[0].type == Accessor::Type::VEC2);
+  REQUIRE(model.accessors[0].min.size() == 2);
+  CHECK(model.accessors[0].min[0] == 0.0);
+  CHECK(model.accessors[0].min[1] == -1.2);
+  REQUIRE(model.accessors[0].max.size() == 3);
+  CHECK(model.accessors[0].max[0] == 1.0);
+  CHECK(model.accessors[0].max[1] == 2.2);
+  CHECK(model.accessors[0].max[2] == 3.3);
 
-  MeshPrimitive trianglePrimitive;
-  trianglePrimitive.attributes.emplace("POSITION", 1);
-  trianglePrimitive.indices = 0;
+  REQUIRE(model.meshes.size() == 1);
+  REQUIRE(model.meshes[0].primitives.size() == 1);
+  CHECK(model.meshes[0].primitives[0].attributes["POSITION"] == 0);
+  CHECK(model.meshes[0].primitives[0].attributes["NORMAL"] == 1);
 
-  Mesh mesh;
-  mesh.primitives.emplace_back(std::move(trianglePrimitive));
-
-  Model triangleModel;
-
-  triangleModel.scenes.emplace_back(std::move(scene));
-  triangleModel.nodes.emplace_back(std::move(node));
-  triangleModel.meshes.emplace_back(std::move(mesh));
-  triangleModel.buffers.emplace_back(std::move(buffer));
-  triangleModel.bufferViews.emplace_back(std::move(indicesBufferView));
-  triangleModel.bufferViews.emplace_back(std::move(vertexBufferView));
-  triangleModel.accessors.emplace_back(std::move(indicesAccessor));
-  triangleModel.accessors.emplace_back(std::move(vertexAccessor));
-  triangleModel.asset.version = "2.0";
-  return triangleModel;
+  REQUIRE(model.meshes[0].primitives[0].targets.size() == 1);
+  CHECK(model.meshes[0].primitives[0].targets[0]["POSITION"] == 10);
+  CHECK(model.meshes[0].primitives[0].targets[0]["NORMAL"] == 11);
 }
 
-TEST_CASE(
-    "Generates glTF asset with required top level property `asset`",
-    "[GltfWriter]") {
-  CesiumGltf::Model m;
-  m.asset.version = "2.0";
+TEST_CASE("Write TriangleWithoutIndices") {
+  std::filesystem::path gltfFile = CesiumGltfWriter_TEST_DATA_DIR;
+  gltfFile /=
+      "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
+  std::vector<std::byte> data = writeFile(gltfFile);
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult result = writer.writeModel(data);
+  REQUIRE(result.model);
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  const Model& model = result.model.value();
+  REQUIRE(model.meshes.size() == 1);
+  REQUIRE(model.meshes[0].primitives.size() == 1);
+  REQUIRE(model.meshes[0].primitives[0].attributes.size() == 1);
+  REQUIRE(model.meshes[0].primitives[0].attributes.begin()->second == 0);
 
-  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
-  const auto asBytes = writeResult.gltfAssetBytes;
-  const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
-  const std::string asString(
-      reinterpret_cast<const char*>(asBytes.data()),
-      asBytes.size());
-  REQUIRE(asString == expectedString);
+  AccessorView<glm::vec3> position(model, 0);
+  REQUIRE(position.size() == 3);
+  CHECK(position[0] == glm::vec3(0.0, 0.0, 0.0));
+  CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
+  CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
 }
 
-TEST_CASE(
-    "Generates glb asset with required top level property `asset`",
-    "[GltfWriter]") {
-  CesiumGltf::Model m;
-  m.asset.version = "2.0";
+TEST_CASE("Write BoxTexturedWebp (with error messages)") {
+  std::filesystem::path gltfFile = CesiumGltfWriter_TEST_DATA_DIR;
+  gltfFile /= "BoxTexturedWebp/glTF/BoxTexturedWebp.gltf";
+  std::vector<std::byte> data = writeFile(gltfFile);
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult result = writer.writeModel(data);
+  REQUIRE(result.model);
+  REQUIRE(result.warnings.empty());
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  // Expect errors, because WebP cannot be write
+  REQUIRE(result.errors.size() > 0);
+}
 
-  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
-  REQUIRE(writeResult.errors.empty());
-  REQUIRE(writeResult.warnings.empty());
+TEST_CASE("Nested extras serializes properly") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "1.1"
+        },
+        "extras": {
+            "A": "Hello World",
+            "B": 1234567,
+            "C": {
+                "C1": {},
+                "C2": [1,2,3,4,5]
+            }
+        }
+    }
+  )";
 
-  auto& asBytes = writeResult.gltfAssetBytes;
-  std::vector<std::byte> expectedMagic = {
-      std::byte('g'),
-      std::byte('l'),
-      std::byte('T'),
-      std::byte('F'),
-  };
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult result = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.model.has_value());
+
+  Model& model = result.model.value();
+  auto cit = model.extras.find("C");
+  REQUIRE(cit != model.extras.end());
+
+  JsonValue* pC2 = cit->second.getValuePtrForKey("C2");
+  REQUIRE(pC2 != nullptr);
+
+  CHECK(pC2->isArray());
+  std::vector<JsonValue>& array = std::get<std::vector<JsonValue>>(pC2->value);
+  CHECK(array.size() == 5);
+  CHECK(array[0].getSafeNumber<double>() == 1.0);
+  CHECK(array[1].getSafeNumber<std::uint64_t>() == 2);
+  CHECK(array[2].getSafeNumber<std::uint8_t>() == 3);
+  CHECK(array[3].getSafeNumber<std::int16_t>() == 4);
+  CHECK(array[4].getSafeNumber<std::int32_t>() == 5);
+}
+
+TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
+  const std::string s = R"(
+    {
+      "asset": {
+        "version": "2.0"
+      },
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "extensions": {
+                "KHR_draco_mesh_compression": {
+                  "bufferView": 1,
+                  "attributes": {
+                    "POSITION": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  )";
+
+  WriteModelOptions options;
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult modelResult = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult.errors.empty());
+  REQUIRE(modelResult.model.has_value());
+
+  Model& model = modelResult.model.value();
+  REQUIRE(model.meshes.size() == 1);
+  REQUIRE(model.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive = model.meshes[0].primitives[0];
+  KHR_draco_mesh_compression* pDraco =
+      primitive.getExtension<KHR_draco_mesh_compression>();
+  REQUIRE(pDraco);
+
+  CHECK(pDraco->bufferView == 1);
+  CHECK(pDraco->attributes.size() == 1);
+
+  REQUIRE(pDraco->attributes.find("POSITION") != pDraco->attributes.end());
+  CHECK(pDraco->attributes.find("POSITION")->second == 0);
+
+  // Repeat test but this time the extension should be deserialized as a
+  // JsonValue.
+  writer.getExtensions().setExtensionState(
+      "KHR_draco_mesh_compression",
+      CesiumJsonWriter::ExtensionState::JsonOnly);
+
+  ModelWriterResult modelResult2 = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+
+  REQUIRE(modelResult2.errors.empty());
+  REQUIRE(modelResult2.model.has_value());
+
+  Model& model2 = modelResult2.model.value();
+  REQUIRE(model2.meshes.size() == 1);
+  REQUIRE(model2.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive2 = model2.meshes[0].primitives[0];
+  JsonValue* pDraco2 =
+      primitive2.getGenericExtension("KHR_draco_mesh_compression");
+  REQUIRE(pDraco2);
+
+  REQUIRE(pDraco2->getValuePtrForKey("bufferView"));
+  CHECK(
+      pDraco2->getValuePtrForKey("bufferView")
+          ->getSafeNumberOrDefault<int64_t>(0) == 1);
+
+  REQUIRE(pDraco2->getValuePtrForKey("attributes"));
+  REQUIRE(pDraco2->getValuePtrForKey("attributes")->isObject());
   REQUIRE(
-      std::equal(expectedMagic.begin(), expectedMagic.end(), asBytes.begin()));
+      pDraco2->getValuePtrForKey("attributes")->getValuePtrForKey("POSITION"));
+  REQUIRE(
+      pDraco2->getValuePtrForKey("attributes")
+          ->getValuePtrForKey("POSITION")
+          ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
-  const std::uint32_t expectedGLBContainerVersion = 2;
-  const std::int64_t actualGLBContainerVersion =
-      (static_cast<std::uint8_t>(asBytes[4])) |
-      (static_cast<std::uint8_t>(asBytes[5]) << 8) |
-      (static_cast<std::uint8_t>(asBytes[6]) << 16) |
-      (static_cast<std::uint8_t>(asBytes[7]) << 24);
+  // Repeat test but this time the extension should not be deserialized at all.
+  writer.getExtensions().setExtensionState(
+      "KHR_draco_mesh_compression",
+      CesiumJsonWriter::ExtensionState::Disabled);
 
-  //  12 byte header + 8 bytes for JSON chunk + 27 bytes for json string + 1
-  //  byte for padding to 48 bytes.
-  const std::int64_t expectedGLBSize = 48;
-  const std::int64_t totalGLBSize = // is 48
-      (static_cast<std::uint8_t>(asBytes[8])) |
-      (static_cast<std::uint8_t>(asBytes[9]) << 8) |
-      (static_cast<std::uint8_t>(asBytes[10]) << 16) |
-      (static_cast<std::uint8_t>(asBytes[11]) << 24);
+  ModelWriterResult modelResult3 = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
 
-  REQUIRE(expectedGLBContainerVersion == actualGLBContainerVersion);
-  REQUIRE(expectedGLBSize == totalGLBSize);
+  REQUIRE(modelResult3.errors.empty());
+  REQUIRE(modelResult3.model.has_value());
 
-  const std::string expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
-  const auto* asStringPtr = reinterpret_cast<const char*>(asBytes.data() + 20);
-  std::string extractedJson(asStringPtr, expectedString.size());
-  REQUIRE(expectedString == extractedJson);
+  Model& model3 = modelResult3.model.value();
+  REQUIRE(model3.meshes.size() == 1);
+  REQUIRE(model3.meshes[0].primitives.size() == 1);
+
+  MeshPrimitive& primitive3 = model3.meshes[0].primitives[0];
+
+  REQUIRE(!primitive3.getGenericExtension("KHR_draco_mesh_compression"));
+  REQUIRE(!primitive3.getExtension<KHR_draco_mesh_compression>());
 }
 
-TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
-  const auto validateStructure = [](const std::vector<std::byte>& gltfAsset) {
-    CesiumGltf::GltfReader reader;
-    auto loadedModelResult = reader.readModel(gsl::span(gltfAsset));
-    REQUIRE(loadedModelResult.model.has_value());
-    auto& loadedModel = loadedModelResult.model;
+TEST_CASE("Extensions deserialize to JsonVaue iff "
+          "a default extension is registered") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "extensions": {
+            "A": {
+              "test": "Hello World"
+            },
+            "B": {
+              "another": "Goodbye World"
+            }
+        }
+    }
+  )";
 
-    REQUIRE(loadedModel->accessors.size() == 2);
-    const auto& accessors = loadedModel->accessors;
+  WriteModelOptions options;
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult withCustomExtModel = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
 
-    // Triangle Indices
-    REQUIRE(accessors[0].bufferView == 0);
-    REQUIRE(accessors[0].byteOffset == 0);
-    REQUIRE(
-        accessors[0].componentType ==
-        CesiumGltf::AccessorSpec::ComponentType::UNSIGNED_SHORT);
-    REQUIRE(accessors[0].count == 3);
-    REQUIRE(accessors[0].min == std::vector<double>{0.0});
-    REQUIRE(accessors[0].max == std::vector<double>{2.0});
+  REQUIRE(withCustomExtModel.errors.empty());
+  REQUIRE(withCustomExtModel.model.has_value());
 
-    // Triangle Positions
-    REQUIRE(accessors[1].bufferView == 1);
-    REQUIRE(accessors[1].byteOffset == 0);
-    REQUIRE(
-        accessors[1].componentType ==
-        CesiumGltf::AccessorSpec::ComponentType::FLOAT);
-    REQUIRE(accessors[1].count == 3);
-    REQUIRE(accessors[1].min == std::vector<double>{0.0, 0.0, 0.0});
-    REQUIRE(accessors[1].max == std::vector<double>{1.0, 1.0, 0.0});
+  REQUIRE(withCustomExtModel.model->extensions.size() == 2);
 
-    // Asset
-    const auto& asset = loadedModel->asset;
-    REQUIRE(asset.version == "2.0");
+  JsonValue* pA = withCustomExtModel.model->getGenericExtension("A");
+  JsonValue* pB = withCustomExtModel.model->getGenericExtension("B");
+  REQUIRE(pA != nullptr);
+  REQUIRE(pB != nullptr);
 
-    // Buffer
-    const auto& buffers = loadedModel->buffers;
-    REQUIRE(buffers.size() == 1);
-    const auto& buffer = buffers.at(0);
+  REQUIRE(pA->getValuePtrForKey("test"));
+  REQUIRE(
+      pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
 
-    REQUIRE(buffer.cesium.data == TRIANGLE_INDICES_THEN_FLOATS);
-    REQUIRE(buffer.cesium.data.size() == TRIANGLE_INDICES_THEN_FLOATS.size());
+  REQUIRE(pB->getValuePtrForKey("another"));
+  REQUIRE(
+      pB->getValuePtrForKey("another")->getStringOrDefault("") ==
+      "Goodbye World");
 
-    // BufferViews
-    const auto& bufferViews = loadedModel->bufferViews;
-    REQUIRE(bufferViews.size() == 2);
+  // Repeat test but this time the extension should be skipped.
+  writer.getExtensions().setExtensionState(
+      "A",
+      CesiumJsonWriter::ExtensionState::Disabled);
+  writer.getExtensions().setExtensionState(
+      "B",
+      CesiumJsonWriter::ExtensionState::Disabled);
 
-    const auto indicesBufferView = bufferViews.at(0);
-    REQUIRE(indicesBufferView.buffer == 0);
-    REQUIRE(indicesBufferView.byteOffset == 0);
-    REQUIRE(indicesBufferView.byteLength == 6);
-    REQUIRE(
-        (indicesBufferView.target.has_value() &&
-         *indicesBufferView.target ==
-             CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER));
+  ModelWriterResult withoutCustomExt = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
 
-    const auto positionBufferView = bufferViews.at(1);
-    REQUIRE(positionBufferView.buffer == 0);
-    REQUIRE(positionBufferView.byteOffset == 8);
-    REQUIRE(positionBufferView.byteLength == 36);
-    REQUIRE(
-        (positionBufferView.target.has_value() &&
-         *positionBufferView.target ==
-             CesiumGltf::BufferView::Target::ARRAY_BUFFER));
+  auto& zeroExtensions = withoutCustomExt.model->extensions;
+  REQUIRE(zeroExtensions.empty());
+}
 
-    // Meshes
-    const auto meshes = loadedModel->meshes;
-    REQUIRE(meshes.size() == 1);
-    const auto& mesh = meshes.at(0);
-    REQUIRE(mesh.primitives.size() == 1);
+TEST_CASE("Unknown MIME types are handled") {
+  const std::string s = R"(
+    {
+        "asset" : {
+            "version" : "2.0"
+        },
+        "images": [
+            {
+              "mimeType" : "image/webp"
+            }
+        ]
+    }
+  )";
 
-    // MeshPrimitive
-    const auto& primitive = mesh.primitives.at(0);
-    REQUIRE(primitive.attributes.count("POSITION") == 1);
-    REQUIRE(primitive.attributes.at("POSITION") == 1);
-    REQUIRE(primitive.indices == 0);
+  WriteModelOptions options;
+  CesiumGltf::GltfWriter writer;
+  ModelWriterResult modelResult = writer.writeModel(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
 
-    const auto& nodes = loadedModel->nodes;
-    REQUIRE(nodes.size() == 1);
-    const auto& node = nodes.at(0);
-    REQUIRE(node.mesh == 0);
-
-    const auto& scenes = loadedModel->scenes;
-    REQUIRE(scenes.size() == 1);
-
-    const auto& scene = scenes.at(0);
-    REQUIRE(scene.nodes == std::vector<std::int32_t>{0});
-  };
-
-  const auto model = generateTriangleModel();
-
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
-  options.autoConvertDataToBase64 = true;
-
-  const auto writeResultGltf =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
-  REQUIRE(writeResultGltf.errors.empty());
-  REQUIRE(writeResultGltf.warnings.empty());
-  validateStructure(writeResultGltf.gltfAssetBytes);
-
-  options.exportType = CesiumGltf::GltfExportType::GLB;
-  options.autoConvertDataToBase64 = false;
-  const auto writeResultGlb =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
-  REQUIRE(writeResultGlb.errors.empty());
-  REQUIRE(writeResultGlb.warnings.empty());
-  validateStructure(writeResultGlb.gltfAssetBytes);
+  // Note: The modelResult.errors will not be empty,
+  // because no images could be write.
+  REQUIRE(modelResult.model.has_value());
 }

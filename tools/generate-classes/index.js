@@ -25,6 +25,11 @@ const argv = yargs.options({
     demandOption: true,
     type: "string",
   },
+  writerOutput: {
+    description: "The output directory for the generated writer files.",
+    demandOption: true,
+    type: "string",
+  },
   extensions: {
     description: "The extensions directory.",
     demandOption: true,
@@ -65,11 +70,23 @@ if (argv.oneHandlerFile) {
   fs.writeFileSync(readerSourceOutputPath, "", "utf-8");
 }
 
+if (argv.oneHandlerFile) {
+  // Clear the handler implementation file, and then we'll append to it in `generate`.
+  const writerHeaderOutputDir = path.join(argv.writerOutput, "generated");
+  fs.mkdirSync(writerHeaderOutputDir, { recursive: true });
+  const writerSourceOutputPath = path.join(
+    writerHeaderOutputDir,
+    "GeneratedJsonHandlers.cpp"
+  );
+  fs.writeFileSync(writerSourceOutputPath, "", "utf-8");
+}
+
 const options = {
   schemaCache,
   oneHandlerFile: argv.oneHandlerFile,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
+  writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")

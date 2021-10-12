@@ -5,6 +5,7 @@ if (DOXYGEN_FOUND)
         LIB_DIRS
         ../Cesium3DTiles/include
         ../Cesium3DTilesReader/include
+        ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
         ../CesiumGeometry/include
@@ -20,6 +21,7 @@ if (DOXYGEN_FOUND)
         DOXYGEN_EXAMPLE_PATH
         ../Cesium3DTiles/test
         ../Cesium3DTilesReader/test
+        ../Cesium3DTilesWriter/test
         ../Cesium3DTilesSelection/test
         ../CesiumAsync/test
         ../CesiumGeometry/test
