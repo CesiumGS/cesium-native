@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Cesium3DTiles/IExtensionJsonHandler.h"
-#include "Cesium3DTiles/ReaderLibrary.h"
-#include "Cesium3DTiles/Tileset.h"
+#include "ReaderLibrary.h"
+
+#include <Cesium3DTiles/Tileset.h>
+#include <CesiumJsonReader/ExtensionReaderContext.h>
+#include <CesiumJsonReader/IExtensionJsonHandler.h>
 
 #include <gsl/span>
 
@@ -15,8 +17,6 @@
 #include <vector>
 
 namespace Cesium3DTiles {
-
-struct ReaderContext;
 
 /**
  * @brief The result of reading a tileset with
@@ -40,36 +40,6 @@ struct CESIUM3DTILESREADER_API TilesetReaderResult {
 };
 
 /**
- * @brief The state of a tileset extension.
- */
-enum class ExtensionState {
-  /**
-   * @brief The extension is enabled.
-   *
-   * If a statically-typed class is available for the extension, it will be
-   * used. Otherwise the extension will be represented as a
-   * {@link CesiumUtility::JsonValue}.
-   */
-  Enabled,
-
-  /**
-   * @brief The extension is enabled but will always be deserialized as a
-   * {@link CesiumUtility::JsonValue}.
-   *
-   * Even if a statically-typed class is available for the extension, it will
-   * not be used.
-   */
-  JsonOnly,
-
-  /**
-   * @brief The extension is disabled.
-   *
-   * It will not be represented in the loaded tileset at all.
-   */
-  Disabled
-};
-
-/**
  * @brief Options for how to read a tileset.
  */
 struct CESIUM3DTILESREADER_API ReadTilesetOptions {};
@@ -85,66 +55,16 @@ public:
   TilesetReader();
 
   /**
-   * @brief Registers an extension for a tileset object.
-   *
-   * @tparam TExtended The tileset object to extend.
-   * @tparam TExtensionHandler The extension's
-   * {@link CesiumJsonReader::JsonHandler}.
-   * @param extensionName The name of the extension.
+   * @brief Gets the context used to control how extensions are loaded from a
+   * tileset.
    */
-  template <typename TExtended, typename TExtensionHandler>
-  void registerExtension(const std::string& extensionName) {
-    auto it =
-        this->_extensions.emplace(extensionName, ObjectTypeToHandler()).first;
-    it->second.insert_or_assign(
-        TExtended::TypeName,
-        ExtensionReaderFactory([](const ReaderContext& context) {
-          return std::make_unique<TExtensionHandler>(context);
-        }));
-  }
+  CesiumJsonReader::ExtensionReaderContext& getExtensions();
 
   /**
-   * @brief Registers an extension for a tileset object.
-   *
-   * The extension name is obtained from `TExtensionHandler::ExtensionName`.
-   *
-   * @tparam TExtended The tileset object to extend.
-   * @tparam TExtensionHandler The extension's
-   * {@link CesiumJsonReader::JsonHandler}.
+   * @brief Gets the context used to control how extensions are loaded from a
+   * tileset.
    */
-  template <typename TExtended, typename TExtensionHandler>
-  void registerExtension() {
-    auto it =
-        this->_extensions
-            .emplace(TExtensionHandler::ExtensionName, ObjectTypeToHandler())
-            .first;
-    it->second.insert_or_assign(
-        TExtended::TypeName,
-        ExtensionHandlerFactory([](const ReaderContext& context) {
-          return std::make_unique<TExtensionHandler>(context);
-        }));
-  }
-
-  /**
-   * @brief Enables or disables a tileset extension.
-   *
-   * By default, all extensions are enabled. When an enabled extension is
-   * encountered in the source tileset, it is read into a statically-typed
-   * extension class, if one is registered, or into a
-   * {@link CesiumUtility::JsonValue} if not.
-   *
-   * When a disabled extension is encountered in the source tileset, it is
-   * ignored completely.
-   *
-   * An extension may also be set to `ExtensionState::JsonOnly`, in which case
-   * it will be read into a {@link CesiumUtility::JsonValue} even if a
-   * statically-typed extension class is registered.
-   *
-   * @param extensionName The name of the extension to be enabled or disabled.
-   * @param newState The new state for the extension.
-   */
-  void
-  setExtensionState(const std::string& extensionName, ExtensionState newState);
+  const CesiumJsonReader::ExtensionReaderContext& getExtensions() const;
 
   /**
    * @brief Reads a tileset.
@@ -157,20 +77,8 @@ public:
       const gsl::span<const std::byte>& data,
       const ReadTilesetOptions& options = ReadTilesetOptions()) const;
 
-  std::unique_ptr<IExtensionJsonHandler> createExtensionHandler(
-      const ReaderContext& context,
-      const std::string_view& extensionName,
-      const std::string& extendedObjectType) const;
-
 private:
-  using ExtensionHandlerFactory =
-      std::function<std::unique_ptr<IExtensionJsonHandler>(
-          const ReaderContext&)>;
-  using ObjectTypeToHandler = std::map<std::string, ExtensionHandlerFactory>;
-  using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
-
-  ExtensionNameMap _extensions;
-  std::unordered_map<std::string, ExtensionState> _extensionStates;
+  CesiumJsonReader::ExtensionReaderContext _context;
 };
 
 } // namespace Cesium3DTiles
