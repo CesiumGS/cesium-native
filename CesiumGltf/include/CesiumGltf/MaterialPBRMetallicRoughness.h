@@ -10,8 +10,6 @@
 #include <optional>
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A set of parameter values that are used to define the
@@ -19,7 +17,7 @@ namespace CesiumGltf {
  * methodology.
  */
 struct CESIUMGLTF_API MaterialPBRMetallicRoughness final
-    : public ExtensibleObject {
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "MaterialPBRMetallicRoughness";
 
   /**

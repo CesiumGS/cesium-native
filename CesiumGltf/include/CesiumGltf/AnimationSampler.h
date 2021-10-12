@@ -8,14 +8,13 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An animation sampler combines timestamps with a sequence of output
  * values and defines an interpolation algorithm.
  */
-struct CESIUMGLTF_API AnimationSampler final : public ExtensibleObject {
+struct CESIUMGLTF_API AnimationSampler final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationSampler";
 
   /**

@@ -2,20 +2,20 @@
 
 #include "CesiumGltf/NamedObject.h"
 
-#include <ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 #include <string>
 
 using namespace CesiumGltf;
 
 NamedObjectJsonHandler::NamedObjectJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _name() {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _name() {}
 
 void NamedObjectJsonHandler::reset(
     IJsonHandler* pParent,
     NamedObject* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParent, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParent, pObject);
 }
 
 CesiumJsonReader::IJsonHandler*

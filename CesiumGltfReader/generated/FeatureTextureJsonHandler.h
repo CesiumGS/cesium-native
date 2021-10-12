@@ -3,20 +3,22 @@
 #pragma once
 
 #include "CesiumGltf/FeatureTexture.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
 #include "TextureAccessorJsonHandler.h"
 
-namespace CesiumGltf {
-struct ReaderContext;
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
-class FeatureTextureJsonHandler : public ExtensibleObjectJsonHandler {
+namespace CesiumGltf {
+class ExtensionReaderContext;
+
+class FeatureTextureJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = FeatureTexture;
 
-  FeatureTextureJsonHandler(const ReaderContext& context) noexcept;
+  FeatureTextureJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, FeatureTexture* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

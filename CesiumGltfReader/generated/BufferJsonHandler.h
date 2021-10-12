@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CesiumGltf/Buffer.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
 class BufferJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Buffer;
 
-  BufferJsonHandler(const ReaderContext& context) noexcept;
+  BufferJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Buffer* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

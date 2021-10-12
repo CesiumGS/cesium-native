@@ -3,26 +3,26 @@
 #pragma once
 
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
 #include "FeatureIDAttributeJsonHandler.h"
 #include "FeatureIDTextureJsonHandler.h"
 
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
 class MeshPrimitiveEXT_feature_metadataJsonHandler
-    : public ExtensibleObjectJsonHandler,
-      public IExtensionJsonHandler {
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
+      public CesiumJsonReader::IExtensionJsonHandler {
 public:
   using ValueType = MeshPrimitiveEXT_feature_metadata;
 
   static inline constexpr const char* ExtensionName = "EXT_feature_metadata";
 
   MeshPrimitiveEXT_feature_metadataJsonHandler(
-      const ReaderContext& context) noexcept;
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       MeshPrimitiveEXT_feature_metadata* pObject);
@@ -31,50 +31,52 @@ public:
 
   virtual void reset(
       IJsonHandler* pParentHandler,
-      ExtensibleObject& o,
+      CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
   virtual IJsonHandler* readNull() override {
-    return ExtensibleObjectJsonHandler::readNull();
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readNull();
   };
   virtual IJsonHandler* readBool(bool b) override {
-    return ExtensibleObjectJsonHandler::readBool(b);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readBool(b);
   }
   virtual IJsonHandler* readInt32(int32_t i) override {
-    return ExtensibleObjectJsonHandler::readInt32(i);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readInt32(i);
   }
   virtual IJsonHandler* readUint32(uint32_t i) override {
-    return ExtensibleObjectJsonHandler::readUint32(i);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readUint32(i);
   }
   virtual IJsonHandler* readInt64(int64_t i) override {
-    return ExtensibleObjectJsonHandler::readInt64(i);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readInt64(i);
   }
   virtual IJsonHandler* readUint64(uint64_t i) override {
-    return ExtensibleObjectJsonHandler::readUint64(i);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readUint64(i);
   }
   virtual IJsonHandler* readDouble(double d) override {
-    return ExtensibleObjectJsonHandler::readDouble(d);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readDouble(d);
   }
   virtual IJsonHandler* readString(const std::string_view& str) override {
-    return ExtensibleObjectJsonHandler::readString(str);
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readString(str);
   }
   virtual IJsonHandler* readObjectStart() override {
-    return ExtensibleObjectJsonHandler::readObjectStart();
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readObjectStart();
   }
   virtual IJsonHandler* readObjectEnd() override {
-    return ExtensibleObjectJsonHandler::readObjectEnd();
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readObjectEnd();
   }
   virtual IJsonHandler* readArrayStart() override {
-    return ExtensibleObjectJsonHandler::readArrayStart();
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readArrayStart();
   }
   virtual IJsonHandler* readArrayEnd() override {
-    return ExtensibleObjectJsonHandler::readArrayEnd();
+    return CesiumJsonReader::ExtensibleObjectJsonHandler::readArrayEnd();
   }
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context =
           std::vector<std::string>()) override {
-    ExtensibleObjectJsonHandler::reportWarning(warning, std::move(context));
+    CesiumJsonReader::ExtensibleObjectJsonHandler::reportWarning(
+        warning,
+        std::move(context));
   }
 
 protected:

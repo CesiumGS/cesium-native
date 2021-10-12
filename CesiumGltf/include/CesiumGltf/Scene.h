@@ -8,8 +8,6 @@
 #include <cstdint>
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief The root nodes of a scene.

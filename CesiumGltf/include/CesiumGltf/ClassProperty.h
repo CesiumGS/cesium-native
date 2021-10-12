@@ -11,13 +11,12 @@
 #include <optional>
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A class property.
  */
-struct CESIUMGLTF_API ClassProperty final : public ExtensibleObject {
+struct CESIUMGLTF_API ClassProperty final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ClassProperty";
 
   /**

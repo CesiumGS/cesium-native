@@ -3,19 +3,21 @@
 #pragma once
 
 #include "CesiumGltf/AnimationChannelTarget.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
-class AnimationChannelTargetJsonHandler : public ExtensibleObjectJsonHandler {
+class AnimationChannelTargetJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = AnimationChannelTarget;
 
-  AnimationChannelTargetJsonHandler(const ReaderContext& context) noexcept;
+  AnimationChannelTargetJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, AnimationChannelTarget* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

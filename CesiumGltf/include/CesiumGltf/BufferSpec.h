@@ -9,8 +9,6 @@
 #include <optional>
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A buffer points to binary geometry, animation, or skins.

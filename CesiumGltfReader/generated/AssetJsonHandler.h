@@ -3,18 +3,19 @@
 #pragma once
 
 #include "CesiumGltf/Asset.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
-class AssetJsonHandler : public ExtensibleObjectJsonHandler {
+class AssetJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Asset;
 
-  AssetJsonHandler(const ReaderContext& context) noexcept;
+  AssetJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Asset* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

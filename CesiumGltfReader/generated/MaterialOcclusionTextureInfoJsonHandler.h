@@ -3,19 +3,18 @@
 #pragma once
 
 #include "CesiumGltf/MaterialOcclusionTextureInfo.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
 
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
 class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   using ValueType = MaterialOcclusionTextureInfo;
 
   MaterialOcclusionTextureInfoJsonHandler(
-      const ReaderContext& context) noexcept;
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void
   reset(IJsonHandler* pParentHandler, MaterialOcclusionTextureInfo* pObject);
 

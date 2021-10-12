@@ -3,20 +3,22 @@
 #pragma once
 
 #include "CesiumGltf/MeshPrimitive.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/DictionaryJsonHandler.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
-class MeshPrimitiveJsonHandler : public ExtensibleObjectJsonHandler {
+class MeshPrimitiveJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = MeshPrimitive;
 
-  MeshPrimitiveJsonHandler(const ReaderContext& context) noexcept;
+  MeshPrimitiveJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, MeshPrimitive* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

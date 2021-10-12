@@ -11,13 +11,11 @@
 #include <string>
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An object defining the values of an enum.
  */
-struct CESIUMGLTF_API Enum final : public ExtensibleObject {
+struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Enum";
 
   /**

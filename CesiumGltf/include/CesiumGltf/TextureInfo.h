@@ -8,13 +8,11 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Reference to a texture.
  */
-struct CESIUMGLTF_API TextureInfo : public ExtensibleObject {
+struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "TextureInfo";
 
   /**

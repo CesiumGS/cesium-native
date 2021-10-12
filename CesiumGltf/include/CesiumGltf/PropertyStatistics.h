@@ -9,13 +9,12 @@
 
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Statistics about property values.
  */
-struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
+struct CESIUMGLTF_API PropertyStatistics final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "PropertyStatistics";
 
   /**

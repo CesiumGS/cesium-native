@@ -10,13 +10,12 @@
 #include <unordered_map>
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Geometry to be rendered with the given material.
  */
-struct CESIUMGLTF_API MeshPrimitive final : public ExtensibleObject {
+struct CESIUMGLTF_API MeshPrimitive final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "MeshPrimitive";
 
   /**
