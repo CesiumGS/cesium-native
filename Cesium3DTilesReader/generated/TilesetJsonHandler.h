@@ -13,9 +13,11 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
-namespace Cesium3DTiles {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace Cesium3DTiles {
 class TilesetJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:

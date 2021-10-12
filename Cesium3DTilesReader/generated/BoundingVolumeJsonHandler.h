@@ -7,9 +7,11 @@
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
-namespace Cesium3DTiles {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace Cesium3DTiles {
 class BoundingVolumeJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
