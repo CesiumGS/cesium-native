@@ -4,10 +4,10 @@
 
 #include "AccessorSparseIndicesJsonHandler.h"
 #include "AccessorSparseValuesJsonHandler.h"
-#include "CesiumGltf/AccessorSparse.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
 
+#include <CesiumGltf/AccessorSparse.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;

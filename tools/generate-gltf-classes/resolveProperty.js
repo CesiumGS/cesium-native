@@ -42,7 +42,7 @@ function resolveProperty(
       ...propertyDefaults(propertyName, propertyDetails),
       headers: ["<cstdint>", ...(makeOptional ? ["<optional>"] : [])],
       type: makeOptional ? "std::optional<int64_t>" : "int64_t",
-      readerHeaders: [`"CesiumJsonReader/IntegerJsonHandler.h"`],
+      readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
       readerType: "CesiumJsonReader::IntegerJsonHandler<int64_t>",
       needsInitialization: !makeOptional,
     };
@@ -51,7 +51,7 @@ function resolveProperty(
       ...propertyDefaults(propertyName, propertyDetails),
       headers: makeOptional ? ["<optional>"] : [],
       type: makeOptional ? "std::optional<double>" : "double",
-      readerHeaders: [`"CesiumJsonReader/DoubleJsonHandler.h"`],
+      readerHeaders: [`<CesiumJsonReader/DoubleJsonHandler.h>`],
       readerType: "CesiumJsonReader::DoubleJsonHandler",
       needsInitialization: !makeOptional,
     };
@@ -60,7 +60,7 @@ function resolveProperty(
       ...propertyDefaults(propertyName, propertyDetails),
       headers: makeOptional ? ["<optional>"] : [],
       type: makeOptional ? "std::optional<bool>" : "bool",
-      readerHeaders: `"CesiumJsonReader/BoolJsonHandler.h"`,
+      readerHeaders: `<CesiumJsonReader/BoolJsonHandler.h>`,
       readerType: "CesiumJsonReader::BoolJsonHandler",
       needsInitialization: ~makeOptional,
     };
@@ -69,7 +69,7 @@ function resolveProperty(
       ...propertyDefaults(propertyName, propertyDetails),
       type: makeOptional ? "std::optional<std::string>" : "std::string",
       headers: ["<string>", ...(makeOptional ? ["<optional>"] : [])],
-      readerHeaders: [`"CesiumJsonReader/StringJsonHandler.h"`],
+      readerHeaders: [`<CesiumJsonReader/StringJsonHandler.h>`],
       readerType: "CesiumJsonReader::StringJsonHandler",
       defaultValue:
         propertyDetails.default !== undefined
@@ -107,7 +107,7 @@ function resolveProperty(
         type: "int32_t",
         defaultValue: -1,
         headers: ["<cstdint>"],
-        readerHeaders: [`"CesiumJsonReader/IntegerJsonHandler.h"`],
+        readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
       };
     } else {
@@ -144,9 +144,9 @@ function resolveProperty(
     return {
       ...propertyDefaults(propertyName, propertyDetails),
       type: `CesiumUtility::JsonValue`,
-      headers: [`"CesiumUtility/JsonValue.h"`],
+      headers: [`<CesiumUtility/JsonValue.h>`],
       readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
-      readerHeaders: [`"CesiumJsonReader/JsonObjectJsonHandler.h"`],
+      readerHeaders: [`<CesiumJsonReader/JsonObjectJsonHandler.h>`],
     };
   }
 }
@@ -227,7 +227,7 @@ function resolveArray(
       ? `{ ${propertyDetails.default} }`
       : undefined,
     readerHeaders: [
-      `"CesiumJsonReader/ArrayJsonHandler.h"`,
+      `<CesiumJsonReader/ArrayJsonHandler.h>`,
       ...itemProperty.readerHeaders,
     ],
     readerType: `CesiumJsonReader::ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
@@ -266,7 +266,7 @@ function resolveDictionary(
     localTypes: additional.localTypes,
     type: `std::unordered_map<std::string, ${additional.type}>`,
     readerHeaders: [
-      `"CesiumJsonReader/DictionaryJsonHandler.h"`,
+      `<CesiumJsonReader/DictionaryJsonHandler.h>`,
       ...additional.readerHeaders,
     ],
     readerType: `CesiumJsonReader::DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
@@ -380,8 +380,10 @@ function resolveEnum(
     ],
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
-    defaultValue: makeOptional ? undefined : createEnumDefault(enumName, propertyDetails),
-    readerHeaders: [`"${namespace}/${parentName}.h"`],
+    defaultValue: makeOptional
+      ? undefined
+      : createEnumDefault(enumName, propertyDetails),
+    readerHeaders: [`<${namespace}/${parentName}.h>`],
     readerLocalTypes: readerTypes,
     readerLocalTypesImpl: createEnumReaderTypeImpl(
       parentName,
@@ -397,10 +399,10 @@ function resolveEnum(
     result.readerType = `${enumName}JsonHandler`;
   } else if (enumType === "integer") {
     result.readerType = `CesiumJsonReader::IntegerJsonHandler<${enumRuntimeType}>`;
-    result.readerHeaders.push(`"CesiumJsonReader/IntegerJsonHandler.h"`);
+    result.readerHeaders.push(`<CesiumJsonReader/IntegerJsonHandler.h>`);
   } else if (enumType === "string") {
     result.readerType = `CesiumJsonReader::StringJsonHandler`;
-    result.readerHeaders.push(`"CesiumJsonReader/StringJsonHandler.h"`);
+    result.readerHeaders.push(`<CesiumJsonReader/StringJsonHandler.h>`);
   }
 
   return result;

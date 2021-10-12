@@ -1,5 +1,6 @@
 #include "CesiumGltf/MetadataPropertyView.h"
 
+#include <catch2/catch.hpp>
 #include <gsl/span>
 
 #include <bitset>
@@ -7,8 +8,6 @@
 #include <cstddef>
 #include <cstring>
 #include <vector>
-
-#include "catch2/catch.hpp"
 
 template <typename T> static void checkNumeric(const std::vector<T>& expected) {
   std::vector<std::byte> data;

@@ -1,4 +1,3 @@
-
 #include "Cesium3DTilesSelection/BingMapsRasterOverlay.h"
 
 #include "Cesium3DTilesSelection/CreditSystem.h"

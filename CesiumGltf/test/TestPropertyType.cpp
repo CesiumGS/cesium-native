@@ -1,6 +1,6 @@
 #include "CesiumGltf/PropertyType.h"
 
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 
 TEST_CASE("Test PropertyType utilities function") {
   SECTION("Convert string to PropertyType") {

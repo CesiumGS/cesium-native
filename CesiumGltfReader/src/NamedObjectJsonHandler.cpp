@@ -1,7 +1,6 @@
 #include "NamedObjectJsonHandler.h"
 
-#include "CesiumGltf/NamedObject.h"
-
+#include <CesiumGltf/NamedObject.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 #include <string>

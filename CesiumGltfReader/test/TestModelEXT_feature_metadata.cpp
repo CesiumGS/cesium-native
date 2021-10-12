@@ -1,7 +1,8 @@
 #include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
 
-#include "catch2/catch.hpp"
+#include <CesiumGltf/ModelEXT_feature_metadata.h>
+
+#include <catch2/catch.hpp>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;

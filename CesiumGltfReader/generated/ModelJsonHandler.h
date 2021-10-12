@@ -8,10 +8,6 @@
 #include "BufferJsonHandler.h"
 #include "BufferViewJsonHandler.h"
 #include "CameraJsonHandler.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumJsonReader/ArrayJsonHandler.h"
-#include "CesiumJsonReader/IntegerJsonHandler.h"
-#include "CesiumJsonReader/StringJsonHandler.h"
 #include "ImageJsonHandler.h"
 #include "MaterialJsonHandler.h"
 #include "MeshJsonHandler.h"
@@ -21,7 +17,11 @@
 #include "SkinJsonHandler.h"
 #include "TextureJsonHandler.h"
 
+#include <CesiumGltf/Model.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;

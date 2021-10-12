@@ -4,9 +4,10 @@
 
 #include "AnimationChannelJsonHandler.h"
 #include "AnimationSamplerJsonHandler.h"
-#include "CesiumGltf/Animation.h"
-#include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+
+#include <CesiumGltf/Animation.h>
+#include <CesiumJsonReader/ArrayJsonHandler.h>
 
 namespace CesiumJsonReader {
 class ExtensionReaderContext;

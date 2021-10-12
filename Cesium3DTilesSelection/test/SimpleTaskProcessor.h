@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/ITaskProcessor.h"
+#include <CesiumAsync/ITaskProcessor.h>
 
 class SimpleTaskProcessor : public CesiumAsync::ITaskProcessor {
 public:
