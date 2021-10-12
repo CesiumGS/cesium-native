@@ -7,9 +7,11 @@
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   using ValueType = MaterialOcclusionTextureInfo;

@@ -7,9 +7,11 @@
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   using ValueType = MaterialNormalTextureInfo;

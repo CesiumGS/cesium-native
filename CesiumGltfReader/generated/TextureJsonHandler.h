@@ -7,9 +7,11 @@
 #include <CesiumGltf/Texture.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class TextureJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Texture;

@@ -9,9 +9,11 @@
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MaterialPBRMetallicRoughnessJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:

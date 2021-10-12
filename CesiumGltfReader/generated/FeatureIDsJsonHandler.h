@@ -7,9 +7,11 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class FeatureIDsJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:

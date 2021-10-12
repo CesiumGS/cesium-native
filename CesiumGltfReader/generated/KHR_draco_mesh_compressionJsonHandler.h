@@ -7,9 +7,11 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class KHR_draco_mesh_compressionJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler,
       public CesiumJsonReader::IExtensionJsonHandler {
