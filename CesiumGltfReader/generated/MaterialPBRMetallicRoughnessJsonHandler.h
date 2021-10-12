@@ -3,22 +3,24 @@
 #pragma once
 
 #include "CesiumGltf/MaterialPBRMetallicRoughness.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
 
-namespace CesiumGltf {
-struct ReaderContext;
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
+namespace CesiumJsonReader {
+class ExtensionReaderContext;
+}
+
+namespace CesiumGltf {
 class MaterialPBRMetallicRoughnessJsonHandler
-    : public ExtensibleObjectJsonHandler {
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = MaterialPBRMetallicRoughness;
 
   MaterialPBRMetallicRoughnessJsonHandler(
-      const ReaderContext& context) noexcept;
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void
   reset(IJsonHandler* pParentHandler, MaterialPBRMetallicRoughness* pObject);
 

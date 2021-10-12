@@ -4,18 +4,22 @@
 
 #include "AnimationChannelTargetJsonHandler.h"
 #include "CesiumGltf/AnimationChannel.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+
+namespace CesiumJsonReader {
+class ExtensionReaderContext;
+}
 
 namespace CesiumGltf {
-struct ReaderContext;
-
-class AnimationChannelJsonHandler : public ExtensibleObjectJsonHandler {
+class AnimationChannelJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = AnimationChannel;
 
-  AnimationChannelJsonHandler(const ReaderContext& context) noexcept;
+  AnimationChannelJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, AnimationChannel* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

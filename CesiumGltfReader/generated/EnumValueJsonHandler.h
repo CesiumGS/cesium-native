@@ -3,19 +3,23 @@
 #pragma once
 
 #include "CesiumGltf/EnumValue.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/IntegerJsonHandler.h"
 #include "CesiumJsonReader/StringJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+
+namespace CesiumJsonReader {
+class ExtensionReaderContext;
+}
 
 namespace CesiumGltf {
-struct ReaderContext;
-
-class EnumValueJsonHandler : public ExtensibleObjectJsonHandler {
+class EnumValueJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = EnumValue;
 
-  EnumValueJsonHandler(const ReaderContext& context) noexcept;
+  EnumValueJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, EnumValue* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

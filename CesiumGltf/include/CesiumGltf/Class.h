@@ -3,8 +3,9 @@
 #pragma once
 
 #include "ClassProperty.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
@@ -14,7 +15,7 @@ namespace CesiumGltf {
 /**
  * @brief A class containing a set of properties.
  */
-struct CESIUMGLTF_API Class final : public ExtensibleObject {
+struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Class";
 
   /**

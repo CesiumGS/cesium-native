@@ -3,8 +3,9 @@
 #pragma once
 
 #include "ClassStatistics.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <unordered_map>
 
@@ -12,7 +13,8 @@ namespace CesiumGltf {
 /**
  * @brief Statistics about features.
  */
-struct CESIUMGLTF_API Statistics final : public ExtensibleObject {
+struct CESIUMGLTF_API Statistics final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Statistics";
 
   /**

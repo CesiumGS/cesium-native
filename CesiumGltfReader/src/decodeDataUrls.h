@@ -3,10 +3,10 @@
 namespace CesiumGltf {
 
 struct ModelReaderResult;
-struct ReaderContext;
+class GltfReader;
 
 void decodeDataUrls(
-    const ReaderContext& context,
+    const GltfReader& reader,
     ModelReaderResult& readModel,
     bool clearDecodedDataUrls);
 } // namespace CesiumGltf

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CesiumGltf/Material.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/ArrayJsonHandler.h"
 #include "CesiumJsonReader/BoolJsonHandler.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
@@ -14,14 +13,17 @@
 #include "NamedObjectJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
 
-namespace CesiumGltf {
-struct ReaderContext;
+namespace CesiumJsonReader {
+class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MaterialJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Material;
 
-  MaterialJsonHandler(const ReaderContext& context) noexcept;
+  MaterialJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Material* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

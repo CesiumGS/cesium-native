@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CesiumUtility/JsonValue.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
 #include <optional>
@@ -14,7 +15,8 @@ namespace CesiumGltf {
 /**
  * @brief A class property.
  */
-struct CESIUMGLTF_API ClassProperty final : public ExtensibleObject {
+struct CESIUMGLTF_API ClassProperty final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ClassProperty";
 
   /**

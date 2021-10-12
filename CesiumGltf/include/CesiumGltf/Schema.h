@@ -4,8 +4,9 @@
 
 #include "Class.h"
 #include "Enum.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
@@ -15,7 +16,7 @@ namespace CesiumGltf {
 /**
  * @brief An object defining classes and enums.
  */
-struct CESIUMGLTF_API Schema final : public ExtensibleObject {
+struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Schema";
 
   /**

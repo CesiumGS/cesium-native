@@ -3,8 +3,9 @@
 #pragma once
 
 #include "EnumValue.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <string>
@@ -14,7 +15,7 @@ namespace CesiumGltf {
 /**
  * @brief An object defining the values of an enum.
  */
-struct CESIUMGLTF_API Enum final : public ExtensibleObject {
+struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Enum";
 
   /**

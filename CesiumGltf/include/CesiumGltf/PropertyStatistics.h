@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CesiumUtility/JsonValue.h"
-#include "ExtensibleObject.h"
 #include "Library.h"
+
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <unordered_map>
 
@@ -12,7 +13,8 @@ namespace CesiumGltf {
 /**
  * @brief Statistics about property values.
  */
-struct CESIUMGLTF_API PropertyStatistics final : public ExtensibleObject {
+struct CESIUMGLTF_API PropertyStatistics final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "PropertyStatistics";
 
   /**

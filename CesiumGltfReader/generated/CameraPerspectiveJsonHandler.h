@@ -3,18 +3,22 @@
 #pragma once
 
 #include "CesiumGltf/CameraPerspective.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "CesiumJsonReader/DoubleJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+
+namespace CesiumJsonReader {
+class ExtensionReaderContext;
+}
 
 namespace CesiumGltf {
-struct ReaderContext;
-
-class CameraPerspectiveJsonHandler : public ExtensibleObjectJsonHandler {
+class CameraPerspectiveJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = CameraPerspective;
 
-  CameraPerspectiveJsonHandler(const ReaderContext& context) noexcept;
+  CameraPerspectiveJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CameraPerspective* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
