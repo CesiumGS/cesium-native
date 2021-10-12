@@ -8,9 +8,11 @@
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class SceneJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Scene;

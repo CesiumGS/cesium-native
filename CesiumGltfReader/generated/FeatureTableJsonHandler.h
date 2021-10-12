@@ -10,9 +10,11 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class FeatureTableJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:

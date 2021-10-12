@@ -9,9 +9,11 @@
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
-namespace CesiumGltf {
+namespace CesiumJsonReader {
 class ExtensionReaderContext;
+}
 
+namespace CesiumGltf {
 class MeshJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Mesh;
