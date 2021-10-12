@@ -18,14 +18,16 @@ static uint32_t spread3(uint32_t i) {
 }
 
 /**
- * @brief Gets the morton index for this tile id. The x, y, and z components of
- * the tile id must be no more than 10 bits each.
+ * @brief Gets the morton index for x, y, and z. The x, y, and z must be no
+ * more than 10 bits each.
  *
- * @param tileID the tile id to create a morton index for.
+ * @param x An unsigned 10-bit number to put in places 2, 5, 8, etc.
+ * @param y An unsigned 10-bit number to put in places 1, 4, 7, etc.
+ * @param z An unsigned 10-bit number to put in places 0, 3, 6, etc.
  * @return The 32-bit unsigned morton index.
  */
-static uint32_t getMortonIndex(const OctreeTileID& tileID) {
-  return spread3(tileID.x) << 2 | spread3(tileID.y) << 1 | spread3(tileID.z);
+static uint32_t getMortonIndex(uint32_t x, uint32_t y, uint32_t z) {
+  return spread3(x) << 2 | spread3(y) << 1 | spread3(z);
 }
 
 OctreeAvailability::OctreeAvailability(
@@ -44,8 +46,7 @@ uint8_t OctreeAvailability::computeAvailability(
     return 0;
   }
 
-  uint32_t relativeMortonIndexMask = 0xFFFFFFFF;
-  uint32_t mortonIndex = getMortonIndex(tileID);
+  uint32_t relativeTileIdMask = 0xFFFFFFFF;
 
   uint32_t level = 0;
   AvailabilityNode* pNode = this->_pRoot.get();
@@ -68,11 +69,14 @@ uint8_t OctreeAvailability::computeAvailability(
     uint32_t nextLevel = level + levelDifference;
     uint32_t levelsLeftAfterNextLevel = tileID.level - nextLevel;
 
-    uint32_t relativeMortonIndex = mortonIndex & relativeMortonIndexMask;
-
     if (levelDifference < this->_subtreeLevels) {
       // The availability info is within this subtree.
       uint8_t availability = TileAvailabilityFlags::REACHABLE;
+
+      uint32_t relativeMortonIndex = getMortonIndex(
+          tileID.x & relativeTileIdMask,
+          tileID.y & relativeTileIdMask,
+          tileID.z & relativeTileIdMask);
 
       // For reference:
       // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
@@ -111,8 +115,10 @@ uint8_t OctreeAvailability::computeAvailability(
       return availability;
     }
 
-    uint32_t childSubtreeMortonIndex =
-        relativeMortonIndex >> (3 * levelsLeftAfterNextLevel);
+    uint32_t childSubtreeMortonIndex = getMortonIndex(
+        (tileID.x & relativeTileIdMask) >> levelsLeftAfterNextLevel,
+        (tileID.y & relativeTileIdMask) >> levelsLeftAfterNextLevel,
+        (tileID.z & relativeTileIdMask) >> levelsLeftAfterNextLevel);
 
     // Check if the needed child subtree exists.
     bool childSubtreeAvailable = false;
@@ -150,7 +156,7 @@ uint8_t OctreeAvailability::computeAvailability(
     if (childSubtreeAvailable) {
       pNode = pNode->childNodes[childSubtreeIndex].get();
       level += this->_subtreeLevels;
-      relativeMortonIndexMask >>= 3 * this->_subtreeLevels;
+      relativeTileIdMask >>= this->_subtreeLevels;
     } else {
       // The child subtree containing the tile id is not available.
       return TileAvailabilityFlags::REACHABLE;
@@ -194,8 +200,7 @@ bool OctreeAvailability::addSubtree(
     return false;
   }
 
-  uint32_t relativeMortonIndexMask = 0xFFFFFFFF;
-  uint32_t mortonIndex = getMortonIndex(tileID);
+  uint32_t relativeTileIdMask = 0xFFFFFFFF;
 
   AvailabilityNode* pNode = this->_pRoot.get();
   uint32_t level = 0;
@@ -216,9 +221,10 @@ bool OctreeAvailability::addSubtree(
     }
 
     uint32_t levelsLeftAfterChildren = tileID.level - nextLevel;
-    uint32_t relativeMortonIndex = mortonIndex & relativeMortonIndexMask;
-    uint32_t childSubtreeMortonIndex =
-        relativeMortonIndex >> (3 * levelsLeftAfterChildren);
+    uint32_t childSubtreeMortonIndex = getMortonIndex(
+        (tileID.x & relativeTileIdMask) >> levelsLeftAfterChildren,
+        (tileID.y & relativeTileIdMask) >> levelsLeftAfterChildren,
+        (tileID.z & relativeTileIdMask) >> levelsLeftAfterChildren);
 
     // TODO: consolidate duplicated code here...
 
@@ -270,7 +276,7 @@ bool OctreeAvailability::addSubtree(
       } else {
         pNode = pNode->childNodes[childSubtreeIndex].get();
         level = nextLevel;
-        relativeMortonIndexMask >>= 3 * this->_subtreeLevels;
+        relativeTileIdMask >>= this->_subtreeLevels;
       }
     } else {
       // This child subtree is marked as non-available.
