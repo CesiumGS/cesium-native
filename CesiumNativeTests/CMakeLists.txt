@@ -6,6 +6,8 @@ configure_cesium_library(cesium-native-tests)
 set(cesium_native_targets
     Cesium3DTilesReader
     Cesium3DTilesSelection
+    CesiumAsync
+    CesiumGeometry
     CesiumGeospatial
     CesiumGltf
     CesiumGltfReader
