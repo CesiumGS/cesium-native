@@ -14,14 +14,12 @@
 #include <string>
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief glTF extension that assigns metadata to features in a model.
  */
 struct CESIUMGLTF_API ModelEXT_feature_metadata final
-    : public ExtensibleObject {
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ModelEXT_feature_metadata";
   static inline constexpr const char* ExtensionName = "EXT_feature_metadata";
 

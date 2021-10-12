@@ -1,7 +1,7 @@
 {
     "classes": {
         "Tileset Property": {
-            "overrideName": "ExtensibleObject"
+            "overrideName": "CesiumUtility::ExtensibleObject"
         }
     },
     "extensions": []

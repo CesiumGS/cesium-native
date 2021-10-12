@@ -9,13 +9,12 @@
 
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An object mapping feature IDs to a feature table.
  */
-struct CESIUMGLTF_API FeatureIDAttribute final : public ExtensibleObject {
+struct CESIUMGLTF_API FeatureIDAttribute final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureIDAttribute";
 
   /**

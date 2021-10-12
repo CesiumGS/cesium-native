@@ -9,14 +9,13 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An animation channel combines an animation sampler with a target
  * property being animated.
  */
-struct CESIUMGLTF_API AnimationChannel final : public ExtensibleObject {
+struct CESIUMGLTF_API AnimationChannel final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationChannel";
 
   /**

@@ -11,13 +11,12 @@
 #include <optional>
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Statistics about features that conform to the class.
  */
-struct CESIUMGLTF_API ClassStatistics final : public ExtensibleObject {
+struct CESIUMGLTF_API ClassStatistics final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ClassStatistics";
 
   /**

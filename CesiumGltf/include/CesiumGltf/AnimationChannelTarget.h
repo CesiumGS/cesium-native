@@ -8,13 +8,12 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief The descriptor of the animated property.
  */
-struct CESIUMGLTF_API AnimationChannelTarget final : public ExtensibleObject {
+struct CESIUMGLTF_API AnimationChannelTarget final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "AnimationChannelTarget";
 
   /**

@@ -11,13 +11,11 @@
 #include <optional>
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace Cesium3DTiles {
 /**
  * @brief A tile in a 3D Tiles tileset.
  */
-struct CESIUM3DTILES_API Tile final : public ExtensibleObject {
+struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tile";
 
   /**

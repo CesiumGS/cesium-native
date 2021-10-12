@@ -6,13 +6,12 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-using namespace CesiumUtility;
-
 namespace Cesium3DTiles {
 /**
  * @brief A dictionary object of metadata about per-feature properties.
  */
-struct CESIUM3DTILES_API Properties final : public ExtensibleObject {
+struct CESIUM3DTILES_API Properties final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Properties";
 
   /**

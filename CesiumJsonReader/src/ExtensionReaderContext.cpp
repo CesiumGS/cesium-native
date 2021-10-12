@@ -72,6 +72,12 @@ public:
   }
 };
 
+void ExtensionReaderContext::setExtensionState(
+    const std::string& extensionName,
+    ExtensionState newState) {
+  this->_extensionStates[extensionName] = newState;
+}
+
 std::unique_ptr<IExtensionJsonHandler>
 ExtensionReaderContext::createExtensionHandler(
     const std::string_view& extensionName,

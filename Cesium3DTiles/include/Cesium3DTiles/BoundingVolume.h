@@ -8,14 +8,13 @@
 
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace Cesium3DTiles {
 /**
  * @brief A bounding volume that encloses a tile or its content. Exactly one
  * `box`, `region`, or `sphere` property is required.
  */
-struct CESIUM3DTILES_API BoundingVolume final : public ExtensibleObject {
+struct CESIUM3DTILES_API BoundingVolume final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "BoundingVolume";
 
   /**

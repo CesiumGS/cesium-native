@@ -11,13 +11,11 @@
 #include <string>
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A class containing a set of properties.
  */
-struct CESIUMGLTF_API Class final : public ExtensibleObject {
+struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Class";
 
   /**

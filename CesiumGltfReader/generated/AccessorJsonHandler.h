@@ -3,7 +3,6 @@
 #pragma once
 
 #include "AccessorSparseJsonHandler.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "NamedObjectJsonHandler.h"
 
 #include <CesiumGltf/Accessor.h>
@@ -14,13 +13,14 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumGltf {
-struct ReaderContext;
+class ExtensionReaderContext;
 
 class AccessorJsonHandler : public NamedObjectJsonHandler {
 public:
   using ValueType = Accessor;
 
-  AccessorJsonHandler(const ReaderContext& context) noexcept;
+  AccessorJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Accessor* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;

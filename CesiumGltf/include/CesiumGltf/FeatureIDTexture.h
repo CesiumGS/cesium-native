@@ -9,13 +9,12 @@
 
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An object describing a texture used for storing per-texel feature IDs.
  */
-struct CESIUMGLTF_API FeatureIDTexture final : public ExtensibleObject {
+struct CESIUMGLTF_API FeatureIDTexture final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureIDTexture";
 
   /**

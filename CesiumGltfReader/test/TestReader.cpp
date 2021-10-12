@@ -233,9 +233,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   // Repeat test but this time the extension should be deserialized as a
   // JsonValue.
-  reader.setExtensionState(
+  reader.getExtensions().setExtensionState(
       "KHR_draco_mesh_compression",
-      ExtensionState::JsonOnly);
+      CesiumJsonReader::ExtensionState::JsonOnly);
 
   ModelReaderResult modelResult2 = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
@@ -268,9 +268,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
           ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
   // Repeat test but this time the extension should not be deserialized at all.
-  reader.setExtensionState(
+  reader.getExtensions().setExtensionState(
       "KHR_draco_mesh_compression",
-      ExtensionState::Disabled);
+      CesiumJsonReader::ExtensionState::Disabled);
 
   ModelReaderResult modelResult3 = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
@@ -333,8 +333,12 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
-  reader.setExtensionState("A", ExtensionState::Disabled);
-  reader.setExtensionState("B", ExtensionState::Disabled);
+  reader.getExtensions().setExtensionState(
+      "A",
+      CesiumJsonReader::ExtensionState::Disabled);
+  reader.getExtensions().setExtensionState(
+      "B",
+      CesiumJsonReader::ExtensionState::Disabled);
 
   ModelReaderResult withoutCustomExt = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),

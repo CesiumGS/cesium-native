@@ -6,14 +6,13 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An orthographic camera containing properties to create an orthographic
  * projection matrix.
  */
-struct CESIUMGLTF_API CameraOrthographic final : public ExtensibleObject {
+struct CESIUMGLTF_API CameraOrthographic final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "CameraOrthographic";
 
   /**

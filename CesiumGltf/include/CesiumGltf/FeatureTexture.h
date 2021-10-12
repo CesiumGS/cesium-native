@@ -11,15 +11,14 @@
 #include <string>
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Features whose property values are stored directly in texture
  * channels. This is not to be confused with feature ID textures which store
  * feature IDs for use with a feature table.
  */
-struct CESIUMGLTF_API FeatureTexture final : public ExtensibleObject {
+struct CESIUMGLTF_API FeatureTexture final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureTexture";
 
   /**

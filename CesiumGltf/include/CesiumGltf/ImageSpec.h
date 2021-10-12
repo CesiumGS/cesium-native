@@ -9,8 +9,6 @@
 #include <optional>
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Image data used to create a texture. Image **MAY** be referenced by an
