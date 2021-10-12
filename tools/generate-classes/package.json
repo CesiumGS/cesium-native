@@ -1,5 +1,5 @@
 {
-  "name": "generate-gltf-classes",
+  "name": "generate-classes",
   "version": "1.0.0",
   "description": "Generate C++ classes from a JSON schema",
   "main": "index.js",
