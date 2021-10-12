@@ -4,14 +4,11 @@
 
 #include "BoundingVolume.h"
 #include "Content.h"
+#include "ExtensibleObject.h"
 #include "Library.h"
-
-#include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
 #include <vector>
-
-using namespace CesiumUtility;
 
 namespace Cesium3DTiles {
 /**
