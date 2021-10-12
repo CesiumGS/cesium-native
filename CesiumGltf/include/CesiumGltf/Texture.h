@@ -7,8 +7,6 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A texture and its sampler.

@@ -8,15 +8,14 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An object pointing to a buffer view containing the indices of
  * deviating accessor values. The number of indices is equal to
  * `accessor.sparse.count`. Indices **MUST** strictly increase.
  */
-struct CESIUMGLTF_API AccessorSparseIndices final : public ExtensibleObject {
+struct CESIUMGLTF_API AccessorSparseIndices final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "AccessorSparseIndices";
 
   /**

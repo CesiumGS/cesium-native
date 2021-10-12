@@ -10,14 +10,13 @@
 #include <optional>
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Feature IDs to be used as indices to property arrays in the feature
  * table.
  */
-struct CESIUMGLTF_API FeatureIDs final : public ExtensibleObject {
+struct CESIUMGLTF_API FeatureIDs final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureIDs";
 
   /**

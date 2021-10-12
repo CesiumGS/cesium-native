@@ -1,7 +1,5 @@
 #include "CesiumGltf/GltfReader.h"
 
-#include "CesiumGltf/IExtensionJsonHandler.h"
-#include "CesiumGltf/ReaderContext.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "MeshPrimitiveEXT_feature_metadataJsonHandler.h"
 #include "ModelEXT_feature_metadataJsonHandler.h"
@@ -53,7 +51,7 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
 }
 
 ModelReaderResult readJsonModel(
-    const ReaderContext& context,
+    const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
 
   CESIUM_TRACE("CesiumGltf::ModelReader::readJsonModel");
@@ -90,7 +88,7 @@ std::string toMagicString(uint32_t i) {
 } // namespace
 
 ModelReaderResult readBinaryModel(
-    const ReaderContext& context,
+    const CesiumJsonReader::ExtensionReaderContext& context,
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("CesiumGltf::ModelReader::readBinaryModel");
 
@@ -214,13 +212,13 @@ ModelReaderResult readBinaryModel(
 }
 
 void postprocess(
-    const ReaderContext& context,
+    const GltfReader& reader,
     ModelReaderResult& readModel,
     const ReadModelOptions& options) {
   Model& model = readModel.model.value();
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(context, readModel, options.clearDecodedDataUrls);
+    decodeDataUrls(reader, readModel, options.clearDecodedDataUrls);
   }
 
   if (options.decodeEmbeddedImages) {
@@ -246,7 +244,7 @@ void postprocess(
       const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
-      ImageReaderResult imageResult = context.reader.readImage(bufferViewSpan);
+      ImageReaderResult imageResult = reader.readImage(bufferViewSpan);
       readModel.warnings.insert(
           readModel.warnings.end(),
           imageResult.warnings.begin(),
@@ -273,101 +271,40 @@ void postprocess(
   }
 }
 
-class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
-                                public IExtensionJsonHandler {
-public:
-  AnyExtensionJsonHandler(const ReaderContext& /* context */) noexcept
-      : JsonObjectJsonHandler() {}
-
-  virtual void reset(
-      IJsonHandler* pParentHandler,
-      ExtensibleObject& o,
-      const std::string_view& extensionName) override {
-    std::any& value =
-        o.extensions.emplace(extensionName, JsonValue(JsonValue::Object()))
-            .first->second;
-    JsonObjectJsonHandler::reset(
-        pParentHandler,
-        &std::any_cast<JsonValue&>(value));
-  }
-
-  virtual IJsonHandler* readNull() override {
-    return JsonObjectJsonHandler::readNull();
-  };
-  virtual IJsonHandler* readBool(bool b) override {
-    return JsonObjectJsonHandler::readBool(b);
-  }
-  virtual IJsonHandler* readInt32(int32_t i) override {
-    return JsonObjectJsonHandler::readInt32(i);
-  }
-  virtual IJsonHandler* readUint32(uint32_t i) override {
-    return JsonObjectJsonHandler::readUint32(i);
-  }
-  virtual IJsonHandler* readInt64(int64_t i) override {
-    return JsonObjectJsonHandler::readInt64(i);
-  }
-  virtual IJsonHandler* readUint64(uint64_t i) override {
-    return JsonObjectJsonHandler::readUint64(i);
-  }
-  virtual IJsonHandler* readDouble(double d) override {
-    return JsonObjectJsonHandler::readDouble(d);
-  }
-  virtual IJsonHandler* readString(const std::string_view& str) override {
-    return JsonObjectJsonHandler::readString(str);
-  }
-  virtual IJsonHandler* readObjectStart() override {
-    return JsonObjectJsonHandler::readObjectStart();
-  }
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
-    return JsonObjectJsonHandler::readObjectKey(str);
-  }
-  virtual IJsonHandler* readObjectEnd() override {
-    return JsonObjectJsonHandler::readObjectEnd();
-  }
-  virtual IJsonHandler* readArrayStart() override {
-    return JsonObjectJsonHandler::readArrayStart();
-  }
-  virtual IJsonHandler* readArrayEnd() override {
-    return JsonObjectJsonHandler::readArrayEnd();
-  }
-
-  virtual void reportWarning(
-      const std::string& warning,
-      std::vector<std::string>&& context =
-          std::vector<std::string>()) override {
-    JsonObjectJsonHandler::reportWarning(warning, std::move(context));
-  }
-};
-
 } // namespace
 
-GltfReader::GltfReader() {
-  this->registerExtension<
+GltfReader::GltfReader() : _context() {
+  this->_context.registerExtension<
       MeshPrimitive,
       KHR_draco_mesh_compressionJsonHandler>();
 
-  this->registerExtension<Model, ModelEXT_feature_metadataJsonHandler>();
-  this->registerExtension<
+  this->_context
+      .registerExtension<Model, ModelEXT_feature_metadataJsonHandler>();
+  this->_context.registerExtension<
       MeshPrimitive,
       MeshPrimitiveEXT_feature_metadataJsonHandler>();
 }
 
-void GltfReader::setExtensionState(
-    const std::string& extensionName,
-    ExtensionState newState) {
-  this->_extensionStates[extensionName] = newState;
+CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
+  return this->_context;
+}
+
+const CesiumJsonReader::ExtensionReaderContext&
+GltfReader::getExtensions() const {
+  return this->_context;
 }
 
 ModelReaderResult GltfReader::readModel(
     const gsl::span<const std::byte>& data,
     const ReadModelOptions& options) const {
 
-  ReaderContext context{*this};
+  const CesiumJsonReader::ExtensionReaderContext& context =
+      this->getExtensions();
   ModelReaderResult result = isBinaryGltf(data) ? readBinaryModel(context, data)
                                                 : readJsonModel(context, data);
 
   if (result.model) {
-    postprocess(context, result, options);
+    postprocess(*this, result, options);
   }
 
   return result;
@@ -413,33 +350,4 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) const {
   }
 
   return result;
-}
-
-std::unique_ptr<IExtensionJsonHandler> GltfReader::createExtensionHandler(
-    const ReaderContext& context,
-    const std::string_view& extensionName,
-    const std::string& extendedObjectType) const {
-
-  std::string extensionNameString{extensionName};
-
-  auto stateIt = this->_extensionStates.find(extensionNameString);
-  if (stateIt != this->_extensionStates.end()) {
-    if (stateIt->second == ExtensionState::Disabled) {
-      return nullptr;
-    } else if (stateIt->second == ExtensionState::JsonOnly) {
-      return std::make_unique<AnyExtensionJsonHandler>(context);
-    }
-  }
-
-  auto extensionNameIt = this->_extensions.find(extensionNameString);
-  if (extensionNameIt == this->_extensions.end()) {
-    return std::make_unique<AnyExtensionJsonHandler>(context);
-  }
-
-  auto objectTypeIt = extensionNameIt->second.find(extendedObjectType);
-  if (objectTypeIt == extensionNameIt->second.end()) {
-    return std::make_unique<AnyExtensionJsonHandler>(context);
-  }
-
-  return objectTypeIt->second(context);
 }

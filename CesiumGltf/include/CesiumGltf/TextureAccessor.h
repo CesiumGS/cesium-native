@@ -9,14 +9,13 @@
 
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A description of how to access property values from the color channels
  * of a texture.
  */
-struct CESIUMGLTF_API TextureAccessor final : public ExtensibleObject {
+struct CESIUMGLTF_API TextureAccessor final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "TextureAccessor";
 
   /**

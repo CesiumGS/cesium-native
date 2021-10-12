@@ -10,13 +10,15 @@
 using namespace CesiumGltf;
 
 KHR_draco_mesh_compressionJsonHandler::KHR_draco_mesh_compressionJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _bufferView(), _attributes() {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _attributes() {}
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     KHR_draco_mesh_compression* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -32,7 +34,7 @@ KHR_draco_mesh_compressionJsonHandler::readObjectKey(
 
 void KHR_draco_mesh_compressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
-    ExtensibleObject& o,
+    CesiumUtility::ExtensibleObject& o,
     const std::string_view& extensionName) {
   std::any& value =
       o.extensions.emplace(extensionName, KHR_draco_mesh_compression())
@@ -68,8 +70,8 @@ KHR_draco_mesh_compressionJsonHandler::readObjectKeyKHR_draco_mesh_compression(
 using namespace CesiumGltf;
 
 ModelEXT_feature_metadataJsonHandler::ModelEXT_feature_metadataJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _schema(context),
       _schemaUri(),
       _statistics(context),
@@ -79,7 +81,7 @@ ModelEXT_feature_metadataJsonHandler::ModelEXT_feature_metadataJsonHandler(
 void ModelEXT_feature_metadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     ModelEXT_feature_metadata* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -95,7 +97,7 @@ ModelEXT_feature_metadataJsonHandler::readObjectKey(
 
 void ModelEXT_feature_metadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
-    ExtensibleObject& o,
+    CesiumUtility::ExtensibleObject& o,
     const std::string_view& extensionName) {
   std::any& value =
       o.extensions.emplace(extensionName, ModelEXT_feature_metadata())
@@ -141,8 +143,8 @@ using namespace CesiumGltf;
 
 MeshPrimitiveEXT_feature_metadataJsonHandler::
     MeshPrimitiveEXT_feature_metadataJsonHandler(
-        const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _featureIdAttributes(context),
       _featureIdTextures(context),
       _featureTextures() {}
@@ -150,7 +152,7 @@ MeshPrimitiveEXT_feature_metadataJsonHandler::
 void MeshPrimitiveEXT_feature_metadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     MeshPrimitiveEXT_feature_metadata* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -166,7 +168,7 @@ MeshPrimitiveEXT_feature_metadataJsonHandler::readObjectKey(
 
 void MeshPrimitiveEXT_feature_metadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
-    ExtensibleObject& o,
+    CesiumUtility::ExtensibleObject& o,
     const std::string_view& extensionName) {
   std::any& value =
       o.extensions.emplace(extensionName, MeshPrimitiveEXT_feature_metadata())
@@ -213,15 +215,15 @@ CesiumJsonReader::IJsonHandler* MeshPrimitiveEXT_feature_metadataJsonHandler::
 using namespace CesiumGltf;
 
 FeatureIDTextureJsonHandler::FeatureIDTextureJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _featureTable(),
       _featureIds(context) {}
 
 void FeatureIDTextureJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     FeatureIDTexture* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -260,13 +262,15 @@ FeatureIDTextureJsonHandler::readObjectKeyFeatureIDTexture(
 using namespace CesiumGltf;
 
 TextureAccessorJsonHandler::TextureAccessorJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _channels(), _texture(context) {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _channels(),
+      _texture(context) {}
 
 void TextureAccessorJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     TextureAccessor* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -305,13 +309,15 @@ TextureAccessorJsonHandler::readObjectKeyTextureAccessor(
 using namespace CesiumGltf;
 
 TextureInfoJsonHandler::TextureInfoJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _index(), _texCoord() {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _index(),
+      _texCoord() {}
 
 void TextureInfoJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     TextureInfo* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -350,15 +356,15 @@ TextureInfoJsonHandler::readObjectKeyTextureInfo(
 using namespace CesiumGltf;
 
 FeatureIDAttributeJsonHandler::FeatureIDAttributeJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _featureTable(),
       _featureIds(context) {}
 
 void FeatureIDAttributeJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     FeatureIDAttribute* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -397,8 +403,8 @@ FeatureIDAttributeJsonHandler::readObjectKeyFeatureIDAttribute(
 using namespace CesiumGltf;
 
 FeatureIDsJsonHandler::FeatureIDsJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _attribute(),
       _constant(),
       _divisor() {}
@@ -406,7 +412,7 @@ FeatureIDsJsonHandler::FeatureIDsJsonHandler(
 void FeatureIDsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     FeatureIDs* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -446,15 +452,15 @@ CesiumJsonReader::IJsonHandler* FeatureIDsJsonHandler::readObjectKeyFeatureIDs(
 using namespace CesiumGltf;
 
 FeatureTextureJsonHandler::FeatureTextureJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _classProperty(),
       _properties(context) {}
 
 void FeatureTextureJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     FeatureTexture* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -493,8 +499,8 @@ FeatureTextureJsonHandler::readObjectKeyFeatureTexture(
 using namespace CesiumGltf;
 
 FeatureTableJsonHandler::FeatureTableJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _classProperty(),
       _count(),
       _properties(context) {}
@@ -502,7 +508,7 @@ FeatureTableJsonHandler::FeatureTableJsonHandler(
 void FeatureTableJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     FeatureTable* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -543,8 +549,8 @@ FeatureTableJsonHandler::readObjectKeyFeatureTable(
 using namespace CesiumGltf;
 
 FeatureTablePropertyJsonHandler::FeatureTablePropertyJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _bufferView(),
       _offsetType(),
       _arrayOffsetBufferView(),
@@ -553,7 +559,7 @@ FeatureTablePropertyJsonHandler::FeatureTablePropertyJsonHandler(
 void FeatureTablePropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     FeatureTableProperty* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -602,13 +608,14 @@ FeatureTablePropertyJsonHandler::readObjectKeyFeatureTableProperty(
 using namespace CesiumGltf;
 
 StatisticsJsonHandler::StatisticsJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _classes(context) {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _classes(context) {}
 
 void StatisticsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     Statistics* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -644,13 +651,15 @@ CesiumJsonReader::IJsonHandler* StatisticsJsonHandler::readObjectKeyStatistics(
 using namespace CesiumGltf;
 
 ClassStatisticsJsonHandler::ClassStatisticsJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _count(), _properties(context) {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _count(),
+      _properties(context) {}
 
 void ClassStatisticsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     ClassStatistics* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -689,8 +698,8 @@ ClassStatisticsJsonHandler::readObjectKeyClassStatistics(
 using namespace CesiumGltf;
 
 PropertyStatisticsJsonHandler::PropertyStatisticsJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _min(),
       _max(),
       _mean(),
@@ -703,7 +712,7 @@ PropertyStatisticsJsonHandler::PropertyStatisticsJsonHandler(
 void PropertyStatisticsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     PropertyStatistics* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -756,8 +765,9 @@ PropertyStatisticsJsonHandler::readObjectKeyPropertyStatistics(
 
 using namespace CesiumGltf;
 
-SchemaJsonHandler::SchemaJsonHandler(const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+SchemaJsonHandler::SchemaJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _name(),
       _description(),
       _version(),
@@ -767,7 +777,7 @@ SchemaJsonHandler::SchemaJsonHandler(const ReaderContext& context) noexcept
 void SchemaJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     Schema* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -807,8 +817,9 @@ CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKeySchema(
 
 using namespace CesiumGltf;
 
-EnumJsonHandler::EnumJsonHandler(const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+EnumJsonHandler::EnumJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _name(),
       _description(),
       _valueType(),
@@ -817,7 +828,7 @@ EnumJsonHandler::EnumJsonHandler(const ReaderContext& context) noexcept
 void EnumJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     Enum* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -856,13 +867,16 @@ CesiumJsonReader::IJsonHandler* EnumJsonHandler::readObjectKeyEnum(
 using namespace CesiumGltf;
 
 EnumValueJsonHandler::EnumValueJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _name(), _description(), _value() {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _name(),
+      _description(),
+      _value() {}
 
 void EnumValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     EnumValue* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -901,8 +915,9 @@ CesiumJsonReader::IJsonHandler* EnumValueJsonHandler::readObjectKeyEnumValue(
 
 using namespace CesiumGltf;
 
-ClassJsonHandler::ClassJsonHandler(const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+ClassJsonHandler::ClassJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _name(),
       _description(),
       _properties(context) {}
@@ -910,7 +925,7 @@ ClassJsonHandler::ClassJsonHandler(const ReaderContext& context) noexcept
 void ClassJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     Class* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -947,8 +962,8 @@ CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(
 using namespace CesiumGltf;
 
 ClassPropertyJsonHandler::ClassPropertyJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _name(),
       _description(),
       _type(),
@@ -965,7 +980,7 @@ ClassPropertyJsonHandler::ClassPropertyJsonHandler(
 void ClassPropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     ClassProperty* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -1026,8 +1041,9 @@ ClassPropertyJsonHandler::readObjectKeyClassProperty(
 
 using namespace CesiumGltf;
 
-ModelJsonHandler::ModelJsonHandler(const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+ModelJsonHandler::ModelJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _extensionsUsed(),
       _extensionsRequired(),
       _accessors(context),
@@ -1049,7 +1065,7 @@ ModelJsonHandler::ModelJsonHandler(const ReaderContext& context) noexcept
 void ModelJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     Model* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -1116,7 +1132,8 @@ CesiumJsonReader::IJsonHandler* ModelJsonHandler::readObjectKeyModel(
 
 using namespace CesiumGltf;
 
-TextureJsonHandler::TextureJsonHandler(const ReaderContext& context) noexcept
+TextureJsonHandler::TextureJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _sampler(), _source() {}
 
 void TextureJsonHandler::reset(
@@ -1156,7 +1173,8 @@ CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(
 
 using namespace CesiumGltf;
 
-SkinJsonHandler::SkinJsonHandler(const ReaderContext& context) noexcept
+SkinJsonHandler::SkinJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _inverseBindMatrices(),
       _skeleton(),
@@ -1204,7 +1222,8 @@ CesiumJsonReader::IJsonHandler* SkinJsonHandler::readObjectKeySkin(
 
 using namespace CesiumGltf;
 
-SceneJsonHandler::SceneJsonHandler(const ReaderContext& context) noexcept
+SceneJsonHandler::SceneJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _nodes() {}
 
 void SceneJsonHandler::reset(
@@ -1242,7 +1261,8 @@ CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKeyScene(
 
 using namespace CesiumGltf;
 
-SamplerJsonHandler::SamplerJsonHandler(const ReaderContext& context) noexcept
+SamplerJsonHandler::SamplerJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _magFilter(),
       _minFilter(),
@@ -1290,7 +1310,8 @@ CesiumJsonReader::IJsonHandler* SamplerJsonHandler::readObjectKeySampler(
 
 using namespace CesiumGltf;
 
-NodeJsonHandler::NodeJsonHandler(const ReaderContext& context) noexcept
+NodeJsonHandler::NodeJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _camera(),
       _children(),
@@ -1353,7 +1374,8 @@ CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(
 
 using namespace CesiumGltf;
 
-MeshJsonHandler::MeshJsonHandler(const ReaderContext& context) noexcept
+MeshJsonHandler::MeshJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _primitives(context), _weights() {}
 
 void MeshJsonHandler::reset(
@@ -1394,8 +1416,8 @@ CesiumJsonReader::IJsonHandler* MeshJsonHandler::readObjectKeyMesh(
 using namespace CesiumGltf;
 
 MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _attributes(),
       _indices(),
       _material(),
@@ -1405,7 +1427,7 @@ MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
 void MeshPrimitiveJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     MeshPrimitive* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -1449,7 +1471,8 @@ MeshPrimitiveJsonHandler::readObjectKeyMeshPrimitive(
 
 using namespace CesiumGltf;
 
-MaterialJsonHandler::MaterialJsonHandler(const ReaderContext& context) noexcept
+MaterialJsonHandler::MaterialJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _pbrMetallicRoughness(context),
       _normalTexture(context),
@@ -1520,7 +1543,7 @@ using namespace CesiumGltf;
 
 MaterialOcclusionTextureInfoJsonHandler::
     MaterialOcclusionTextureInfoJsonHandler(
-        const ReaderContext& context) noexcept
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : TextureInfoJsonHandler(context), _strength() {}
 
 void MaterialOcclusionTextureInfoJsonHandler::reset(
@@ -1564,7 +1587,7 @@ CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::
 using namespace CesiumGltf;
 
 MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoJsonHandler(
-    const ReaderContext& context) noexcept
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : TextureInfoJsonHandler(context), _scale() {}
 
 void MaterialNormalTextureInfoJsonHandler::reset(
@@ -1609,8 +1632,8 @@ using namespace CesiumGltf;
 
 MaterialPBRMetallicRoughnessJsonHandler::
     MaterialPBRMetallicRoughnessJsonHandler(
-        const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _baseColorFactor(),
       _baseColorTexture(context),
       _metallicFactor(),
@@ -1620,7 +1643,7 @@ MaterialPBRMetallicRoughnessJsonHandler::
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     MaterialPBRMetallicRoughness* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -1677,7 +1700,8 @@ CesiumJsonReader::IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::
 
 using namespace CesiumGltf;
 
-ImageJsonHandler::ImageJsonHandler(const ReaderContext& context) noexcept
+ImageJsonHandler::ImageJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _uri(), _mimeType(), _bufferView() {}
 
 void ImageJsonHandler::reset(
@@ -1719,7 +1743,8 @@ CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKeyImage(
 
 using namespace CesiumGltf;
 
-CameraJsonHandler::CameraJsonHandler(const ReaderContext& context) noexcept
+CameraJsonHandler::CameraJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _orthographic(context),
       _perspective(context),
@@ -1765,8 +1790,8 @@ CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
 using namespace CesiumGltf;
 
 CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _aspectRatio(),
       _yfov(),
       _zfar(),
@@ -1775,7 +1800,7 @@ CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
 void CameraPerspectiveJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CameraPerspective* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -1818,8 +1843,8 @@ CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
 using namespace CesiumGltf;
 
 CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _xmag(),
       _ymag(),
       _zfar(),
@@ -1828,7 +1853,7 @@ CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
 void CameraOrthographicJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CameraOrthographic* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -1871,7 +1896,7 @@ CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
 using namespace CesiumGltf;
 
 BufferViewJsonHandler::BufferViewJsonHandler(
-    const ReaderContext& context) noexcept
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _buffer(),
       _byteOffset(),
@@ -1925,7 +1950,8 @@ CesiumJsonReader::IJsonHandler* BufferViewJsonHandler::readObjectKeyBufferView(
 
 using namespace CesiumGltf;
 
-BufferJsonHandler::BufferJsonHandler(const ReaderContext& context) noexcept
+BufferJsonHandler::BufferJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _uri(), _byteLength() {}
 
 void BufferJsonHandler::reset(
@@ -1965,8 +1991,9 @@ CesiumJsonReader::IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
 
 using namespace CesiumGltf;
 
-AssetJsonHandler::AssetJsonHandler(const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+AssetJsonHandler::AssetJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _copyright(),
       _generator(),
       _version(),
@@ -1975,7 +2002,7 @@ AssetJsonHandler::AssetJsonHandler(const ReaderContext& context) noexcept
 void AssetJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     Asset* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -2014,7 +2041,7 @@ CesiumJsonReader::IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
 using namespace CesiumGltf;
 
 AnimationJsonHandler::AnimationJsonHandler(
-    const ReaderContext& context) noexcept
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context), _channels(context), _samplers(context) {}
 
 void AnimationJsonHandler::reset(
@@ -2058,8 +2085,8 @@ CesiumJsonReader::IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
 using namespace CesiumGltf;
 
 AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _input(),
       _interpolation(),
       _output() {}
@@ -2067,7 +2094,7 @@ AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
 void AnimationSamplerJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     AnimationSampler* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -2108,13 +2135,15 @@ AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
 using namespace CesiumGltf;
 
 AnimationChannelJsonHandler::AnimationChannelJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _sampler(), _target(context) {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _sampler(),
+      _target(context) {}
 
 void AnimationChannelJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     AnimationChannel* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -2153,13 +2182,15 @@ AnimationChannelJsonHandler::readObjectKeyAnimationChannel(
 using namespace CesiumGltf;
 
 AnimationChannelTargetJsonHandler::AnimationChannelTargetJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _node(), _path() {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _node(),
+      _path() {}
 
 void AnimationChannelTargetJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     AnimationChannelTarget* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -2197,7 +2228,8 @@ AnimationChannelTargetJsonHandler::readObjectKeyAnimationChannelTarget(
 
 using namespace CesiumGltf;
 
-AccessorJsonHandler::AccessorJsonHandler(const ReaderContext& context) noexcept
+AccessorJsonHandler::AccessorJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
     : NamedObjectJsonHandler(context),
       _bufferView(),
       _byteOffset(),
@@ -2261,8 +2293,8 @@ CesiumJsonReader::IJsonHandler* AccessorJsonHandler::readObjectKeyAccessor(
 using namespace CesiumGltf;
 
 AccessorSparseJsonHandler::AccessorSparseJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _count(),
       _indices(context),
       _values(context) {}
@@ -2270,7 +2302,7 @@ AccessorSparseJsonHandler::AccessorSparseJsonHandler(
 void AccessorSparseJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparse* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -2311,13 +2343,15 @@ AccessorSparseJsonHandler::readObjectKeyAccessorSparse(
 using namespace CesiumGltf;
 
 AccessorSparseValuesJsonHandler::AccessorSparseValuesJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context), _bufferView(), _byteOffset() {}
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _byteOffset() {}
 
 void AccessorSparseValuesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparseValues* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -2356,8 +2390,8 @@ AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
 using namespace CesiumGltf;
 
 AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(
-    const ReaderContext& context) noexcept
-    : ExtensibleObjectJsonHandler(context),
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
       _bufferView(),
       _byteOffset(),
       _componentType() {}
@@ -2365,7 +2399,7 @@ AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(
 void AccessorSparseIndicesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     AccessorSparseIndices* pObject) {
-  ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 

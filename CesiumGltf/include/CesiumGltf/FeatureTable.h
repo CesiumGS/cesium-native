@@ -12,14 +12,13 @@
 #include <string>
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A feature table defined by a class and property values stored in
  * arrays.
  */
-struct CESIUMGLTF_API FeatureTable final : public ExtensibleObject {
+struct CESIUMGLTF_API FeatureTable final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureTable";
 
   /**

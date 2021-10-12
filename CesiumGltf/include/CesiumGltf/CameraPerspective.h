@@ -8,14 +8,13 @@
 
 #include <optional>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief A perspective camera containing properties to create a perspective
  * projection matrix.
  */
-struct CESIUMGLTF_API CameraPerspective final : public ExtensibleObject {
+struct CESIUMGLTF_API CameraPerspective final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "CameraPerspective";
 
   /**

@@ -10,14 +10,13 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Sparse storage of accessor values that deviate from their
  * initialization value.
  */
-struct CESIUMGLTF_API AccessorSparse final : public ExtensibleObject {
+struct CESIUMGLTF_API AccessorSparse final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "AccessorSparse";
 
   /**

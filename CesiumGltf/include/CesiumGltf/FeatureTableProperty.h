@@ -9,13 +9,12 @@
 #include <cstdint>
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An array of binary property values.
  */
-struct CESIUMGLTF_API FeatureTableProperty final : public ExtensibleObject {
+struct CESIUMGLTF_API FeatureTableProperty final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureTableProperty";
 
   /**

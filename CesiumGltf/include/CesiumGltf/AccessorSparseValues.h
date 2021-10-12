@@ -8,8 +8,6 @@
 
 #include <cstdint>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief An object pointing to a buffer view containing the deviating accessor
@@ -18,7 +16,8 @@ namespace CesiumGltf {
  * accessor. The elements are tightly packed. Data **MUST** be aligned following
  * the same rules as the base accessor.
  */
-struct CESIUMGLTF_API AccessorSparseValues final : public ExtensibleObject {
+struct CESIUMGLTF_API AccessorSparseValues final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "AccessorSparseValues";
 
   /**

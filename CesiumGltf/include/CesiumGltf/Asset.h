@@ -9,13 +9,11 @@
 #include <optional>
 #include <string>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief Metadata about the glTF asset.
  */
-struct CESIUMGLTF_API Asset final : public ExtensibleObject {
+struct CESIUMGLTF_API Asset final : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Asset";
 
   /**

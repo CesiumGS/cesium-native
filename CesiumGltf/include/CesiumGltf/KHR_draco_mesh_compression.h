@@ -9,14 +9,12 @@
 #include <cstdint>
 #include <unordered_map>
 
-using namespace CesiumUtility;
-
 namespace CesiumGltf {
 /**
  * @brief undefined
  */
 struct CESIUMGLTF_API KHR_draco_mesh_compression final
-    : public ExtensibleObject {
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "KHR_draco_mesh_compression";
   static inline constexpr const char* ExtensionName =
       "KHR_draco_mesh_compression";

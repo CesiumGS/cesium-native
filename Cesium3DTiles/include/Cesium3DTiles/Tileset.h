@@ -13,13 +13,12 @@
 #include <unordered_map>
 #include <vector>
 
-using namespace CesiumUtility;
-
 namespace Cesium3DTiles {
 /**
  * @brief A 3D Tiles tileset.
  */
-struct CESIUM3DTILES_API Tileset final : public ExtensibleObject {
+struct CESIUM3DTILES_API Tileset final
+    : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Tileset";
 
   /**
