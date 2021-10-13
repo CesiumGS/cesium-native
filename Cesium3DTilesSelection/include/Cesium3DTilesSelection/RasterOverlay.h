@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace Cesium3DTilesSelection {
@@ -132,7 +133,8 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    */
-  void loadTileProvider(
+  CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>
+  loadTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
@@ -187,10 +189,11 @@ public:
 private:
   std::string _name;
   std::unique_ptr<RasterOverlayTileProvider> _pPlaceholder;
-  std::unique_ptr<RasterOverlayTileProvider> _pTileProvider;
   std::unique_ptr<RasterOverlay> _pSelf;
-  bool _isLoadingTileProvider;
   RasterOverlayOptions _options;
+  std::optional<
+      CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>>
+      _loadingTileProvider;
 };
 
 } // namespace Cesium3DTilesSelection
