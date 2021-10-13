@@ -157,7 +157,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                availabilityByte >> (8 - bitIndex));
+                availabilityByte >> (static_cast<uint8_t>(8) - bitIndex));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR

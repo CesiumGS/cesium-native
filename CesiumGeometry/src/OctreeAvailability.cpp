@@ -37,7 +37,7 @@ OctreeAvailability::OctreeAvailability(
     : _tilingScheme(tilingScheme),
       _subtreeLevels(subtreeLevels),
       _maximumLevel(maximumLevel),
-      _maximumChildrenSubtrees(1ULL << (3 * subtreeLevels)),
+      _maximumChildrenSubtrees(1 << (3 * subtreeLevels)),
       _pRoot(nullptr) {}
 
 uint8_t OctreeAvailability::computeAvailability(
@@ -87,21 +87,21 @@ uint8_t OctreeAvailability::computeAvailability(
       uint32_t availabilityIndex = relativeMortonIndex + offset;
       uint32_t byteIndex = availabilityIndex >> 3;
       uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
-      uint8_t bitMask = 1 << bitIndex;
+      uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
       // Check tile availability.
-      if (tileAvailabilityAccessor.isConstant() &&
-              tileAvailabilityAccessor.getConstant() ||
-          tileAvailabilityAccessor.isBufferView() &&
-              (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask) {
+      if ((tileAvailabilityAccessor.isConstant() &&
+           tileAvailabilityAccessor.getConstant()) ||
+          (tileAvailabilityAccessor.isBufferView() &&
+           (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
         availability |= TileAvailabilityFlags::TILE_AVAILABLE;
       }
 
       // Check content availability.
-      if (contentAvailabilityAccessor.isConstant() &&
-              contentAvailabilityAccessor.getConstant() ||
-          contentAvailabilityAccessor.isBufferView() &&
-              (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask) {
+      if ((contentAvailabilityAccessor.isConstant() &&
+           contentAvailabilityAccessor.getConstant()) ||
+          (contentAvailabilityAccessor.isBufferView() &&
+           (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
         availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
       }
 
@@ -146,7 +146,7 @@ uint8_t OctreeAvailability::computeAvailability(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                availabilityByte >> (8 - bitIndex));
+                availabilityByte >> static_cast<uint8_t>(8 - bitIndex));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
