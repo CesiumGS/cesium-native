@@ -3,8 +3,8 @@
 #include "CesiumAsync/IAssetResponse.h"
 
 #include <CesiumUtility/Tracing.h>
-
 #include <cesium-sqlite3.h>
+
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <spdlog/spdlog.h>

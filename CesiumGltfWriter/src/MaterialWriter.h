@@ -1,4 +1,5 @@
 #pragma once
+
 #include <CesiumGltf/Material.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 

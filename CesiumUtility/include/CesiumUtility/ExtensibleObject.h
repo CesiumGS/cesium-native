@@ -52,6 +52,21 @@ struct CESIUMUTILITY_API ExtensibleObject {
   JsonValue* getGenericExtension(const std::string& extensionName) noexcept;
 
   /**
+   * @brief Adds a statically-typed extension to this object.
+   *
+   * If the extension already exists, the existing one is returned.
+   *
+   * @tparam T The type of the extension to add.
+   * @return The added extension.
+   */
+  template <typename T> T& addExtension() {
+    std::any& extension =
+        extensions.try_emplace(T::ExtensionName, std::make_any<T>())
+            .first->second;
+    return std::any_cast<T&>(extension);
+  }
+
+  /**
    * @brief The extensions attached to this object.
    *
    * Use {@link getExtension} to get the extension with a particular static

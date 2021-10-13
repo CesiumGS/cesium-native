@@ -1,4 +1,5 @@
 #pragma once
+
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/WriteGLTFCallback.h>
 #include <CesiumGltf/WriteModelOptions.h>

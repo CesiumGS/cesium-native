@@ -1,13 +1,14 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/ViewState.h"
 #include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumUtility/Math.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 #include "SimplePrepareRendererResource.h"
 #include "SimpleTaskProcessor.h"
+
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/mat4x4.hpp>

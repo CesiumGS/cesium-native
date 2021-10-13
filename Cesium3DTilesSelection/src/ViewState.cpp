@@ -1,4 +1,3 @@
-
 #include "Cesium3DTilesSelection/ViewState.h"
 
 #include <CesiumGeometry/CullingVolume.h>

@@ -1,60 +1,80 @@
-#include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/KHR_draco_mesh_compression.h"
+
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/KHR_draco_mesh_compression.h>
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
 #include <gsl/span>
 #include <rapidjson/reader.h>
 
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
 namespace {
-std::vector<std::byte> readFile(const std::string& path) {
-  FILE* fp = std::fopen(path.c_str(), "rb");
-  REQUIRE(fp);
+std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
+  std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+  REQUIRE(file);
 
-  try {
-    std::fseek(fp, 0, SEEK_END);
-    long pos = std::ftell(fp);
-    std::fseek(fp, 0, SEEK_SET);
+  std::streamsize size = file.tellg();
+  file.seekg(0, std::ios::beg);
 
-    std::vector<std::byte> result(static_cast<size_t>(pos));
-    size_t itemsRead = std::fread(result.data(), 1, result.size(), fp);
-    REQUIRE(itemsRead == result.size());
+  std::vector<std::byte> buffer(static_cast<size_t>(size));
+  file.read(reinterpret_cast<char*>(buffer.data()), size);
 
-    std::fclose(fp);
-
-    return result;
-  } catch (...) {
-    if (fp) {
-      std::fclose(fp);
-    }
-    throw;
-  }
+  return buffer;
 }
 } // namespace
 
 TEST_CASE("CesiumGltf::GltfReader") {
   using namespace std::string_literals;
 
-  std::string s =
-      "{"s + "  \"accessors\": ["s + "    {"s +
-      "      \"count\": 4,"s + //{\"test\":true},"s +
-      "      \"componentType\":5121,"s + "      \"type\":\"VEC2\","s +
-      "      \"max\":[1.0, 2.2, 3.3],"s + "      \"min\":[0.0, -1.2]"s +
-      "    }"s + "  ],"s + "  \"meshes\": [{"s + "    \"primitives\": [{"s +
-      "      \"attributes\": {"s + "        \"POSITION\": 0,"s +
-      "        \"NORMAL\": 1"s + "      },"s + "      \"targets\": ["s +
-      "        {\"POSITION\": 10, \"NORMAL\": 11}"s + "      ]"s + "    }]"s +
-      "  }],"s + "  \"surprise\":{\"foo\":true}"s + "}"s;
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4,
+          "componentType": 5121,
+          "type": "VEC2",
+          "max": [
+            1,
+            2.2,
+            3.3
+          ],
+          "min": [
+            0,
+            -1.2
+          ]
+        }
+      ],
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 1
+              },
+              "targets": [
+                {
+                  "POSITION": 10,
+                  "NORMAL": 11
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "surprise": {
+        "foo": true
+      }
+    }
+  )";
+
   CesiumGltf::GltfReader reader;
   ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
@@ -90,7 +110,7 @@ TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /=
       "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
-  std::vector<std::byte> data = readFile(gltfFile.string());
+  std::vector<std::byte> data = readFile(gltfFile);
   CesiumGltf::GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
@@ -111,7 +131,7 @@ TEST_CASE("Read TriangleWithoutIndices") {
 TEST_CASE("Read BoxTexturedWebp (with error messages)") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /= "BoxTexturedWebp/glTF/BoxTexturedWebp.gltf";
-  std::vector<std::byte> data = readFile(gltfFile.string());
+  std::vector<std::byte> data = readFile(gltfFile);
   CesiumGltf::GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
@@ -213,9 +233,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   // Repeat test but this time the extension should be deserialized as a
   // JsonValue.
-  reader.setExtensionState(
+  reader.getExtensions().setExtensionState(
       "KHR_draco_mesh_compression",
-      ExtensionState::JsonOnly);
+      CesiumJsonReader::ExtensionState::JsonOnly);
 
   ModelReaderResult modelResult2 = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
@@ -248,9 +268,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
           ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
   // Repeat test but this time the extension should not be deserialized at all.
-  reader.setExtensionState(
+  reader.getExtensions().setExtensionState(
       "KHR_draco_mesh_compression",
-      ExtensionState::Disabled);
+      CesiumJsonReader::ExtensionState::Disabled);
 
   ModelReaderResult modelResult3 = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
@@ -313,8 +333,12 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       "Goodbye World");
 
   // Repeat test but this time the extension should be skipped.
-  reader.setExtensionState("A", ExtensionState::Disabled);
-  reader.setExtensionState("B", ExtensionState::Disabled);
+  reader.getExtensions().setExtensionState(
+      "A",
+      CesiumJsonReader::ExtensionState::Disabled);
+  reader.getExtensions().setExtensionState(
+      "B",
+      CesiumJsonReader::ExtensionState::Disabled);
 
   ModelReaderResult withoutCustomExt = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <CesiumGltf/Model.h>
 
 #include <cstdint>
