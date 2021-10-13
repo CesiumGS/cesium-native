@@ -920,6 +920,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             *boundingVolume,
             GeographicProjection(),
             std::nullopt,
+            std::nullopt,
             std::nullopt};
 
         TileID rootID = "";
@@ -1186,6 +1187,7 @@ static BoundingVolume createDefaultLooseEarthBoundingVolume(
       std::make_optional<CesiumGeometry::QuadtreeRectangleAvailability>(
           *tilingScheme,
           maxZoom),
+      std::nullopt,
       std::nullopt};
 
   std::vector<std::string> extensions =
