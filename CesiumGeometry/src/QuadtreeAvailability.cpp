@@ -5,14 +5,15 @@ namespace CesiumGeometry {
 // For reference:
 // https://graphics.stanford.edu/~seander/bithacks.html#Interleave64bitOps
 static uint16_t getMortonIndexForBytes(uint8_t a, uint8_t b) {
-  return ((a * 0x0101010101010101ULL & 0x8040201008040201ULL) *
-              0x0102040810204081ULL >>
-          49) &
-             0x5555 |
-         ((b * 0x0101010101010101ULL & 0x8040201008040201ULL) *
-              0x0102040810204081ULL >>
-          48) &
-             0xAAAA;
+  return static_cast<uint16_t>(
+      (((a * 0x0101010101010101ULL & 0x8040201008040201ULL) *
+            0x0102040810204081ULL >>
+        49) &
+       0x5555) |
+      (((b * 0x0101010101010101ULL & 0x8040201008040201ULL) *
+            0x0102040810204081ULL >>
+        48) &
+       0xAAAA));
 }
 
 static uint32_t getMortonIndexForShorts(uint16_t a, uint16_t b) {
@@ -50,7 +51,7 @@ QuadtreeAvailability::QuadtreeAvailability(
     : _tilingScheme(tilingScheme),
       _subtreeLevels(subtreeLevels),
       _maximumLevel(maximumLevel),
-      _maximumChildrenSubtrees(1ULL << (subtreeLevels << 1)),
+      _maximumChildrenSubtrees(1U << (subtreeLevels << 1U)),
       _pRoot(nullptr) {}
 
 uint8_t QuadtreeAvailability::computeAvailability(
@@ -94,26 +95,26 @@ uint8_t QuadtreeAvailability::computeAvailability(
       // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
       // The below is identical to:
       // (4^levelRelativeToSubtree - 1) / 3
-      uint32_t offset = ((1 << (levelDifference << 1)) - 1) / 3;
+      uint32_t offset = ((1U << (levelDifference << 1U)) - 1U) / 3U;
 
       uint32_t availabilityIndex = relativeMortonIndex + offset;
       uint32_t byteIndex = availabilityIndex >> 3;
       uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
-      uint8_t bitMask = 1 << bitIndex;
+      uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
       // Check tile availability.
-      if (tileAvailabilityAccessor.isConstant() &&
-              tileAvailabilityAccessor.getConstant() ||
-          tileAvailabilityAccessor.isBufferView() &&
-              (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask) {
+      if ((tileAvailabilityAccessor.isConstant() &&
+           tileAvailabilityAccessor.getConstant()) ||
+          (tileAvailabilityAccessor.isBufferView() &&
+           (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
         availability |= TileAvailabilityFlags::TILE_AVAILABLE;
       }
 
       // Check content availability.
-      if (contentAvailabilityAccessor.isConstant() &&
-              contentAvailabilityAccessor.getConstant() ||
-          contentAvailabilityAccessor.isBufferView() &&
-              (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask) {
+      if ((contentAvailabilityAccessor.isConstant() &&
+           contentAvailabilityAccessor.getConstant()) ||
+          (contentAvailabilityAccessor.isBufferView() &&
+           (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
         availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
       }
 
@@ -157,7 +158,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                availabilityByte >> (static_cast<uint8_t>(8) - bitIndex));
+                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
@@ -263,7 +264,7 @@ bool QuadtreeAvailability::addSubtree(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                availabilityByte >> (8 - bitIndex));
+                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
