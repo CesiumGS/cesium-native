@@ -869,10 +869,11 @@ void Tile::update(
             neID);
       }
 
-      size_t childCount = (sw & TileAvailabilityFlags::TILE_AVAILABLE) +
-                          (se & TileAvailabilityFlags::TILE_AVAILABLE) +
-                          (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
-                          (ne & TileAvailabilityFlags::TILE_AVAILABLE);
+      size_t childCount = static_cast<size_t>(
+          (sw & TileAvailabilityFlags::TILE_AVAILABLE) +
+          (se & TileAvailabilityFlags::TILE_AVAILABLE) +
+          (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
+          (ne & TileAvailabilityFlags::TILE_AVAILABLE));
 
       if (childCount > 0) {
         // If any children are available, we need to create all four in order to

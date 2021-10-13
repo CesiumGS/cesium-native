@@ -184,12 +184,12 @@ AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
       subtreeAvailability != document.MemberEnd() &&
       subtreeAvailability->value.IsObject()) {
 
-    subtreeResult.tileAvailability = std::move(
-        resolveAvailabilityView(tileAvailabilityIt->value.GetObject()));
-    subtreeResult.contentAvailability = std::move(
-        resolveAvailabilityView(contentAvailability->value.GetObject()));
-    subtreeResult.subtreeAvailability = std::move(
-        resolveAvailabilityView(subtreeAvailability->value.GetObject()));
+    subtreeResult.tileAvailability =
+        resolveAvailabilityView(tileAvailabilityIt->value.GetObject());
+    subtreeResult.contentAvailability =
+        resolveAvailabilityView(contentAvailability->value.GetObject());
+    subtreeResult.subtreeAvailability =
+        resolveAvailabilityView(subtreeAvailability->value.GetObject());
   }
 
   // Parse buffers, request external buffers as needed.
