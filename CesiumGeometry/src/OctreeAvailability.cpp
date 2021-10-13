@@ -37,7 +37,7 @@ OctreeAvailability::OctreeAvailability(
     : _tilingScheme(tilingScheme),
       _subtreeLevels(subtreeLevels),
       _maximumLevel(maximumLevel),
-      _maximumChildrenSubtrees(1 << (3 * subtreeLevels)),
+      _maximumChildrenSubtrees(1U << (3U * subtreeLevels)),
       _pRoot(nullptr) {}
 
 uint8_t OctreeAvailability::computeAvailability(
@@ -82,7 +82,7 @@ uint8_t OctreeAvailability::computeAvailability(
       // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
       // The below is identical to:
       // (8^levelRelativeToSubtree - 1) / 3
-      uint32_t offset = ((1 << (3 * levelDifference)) - 1) / 3;
+      uint32_t offset = ((1U << (3U * levelDifference)) - 1U) / 3U;
 
       uint32_t availabilityIndex = relativeMortonIndex + offset;
       uint32_t byteIndex = availabilityIndex >> 3;
@@ -146,7 +146,7 @@ uint8_t OctreeAvailability::computeAvailability(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                availabilityByte >> static_cast<uint8_t>(8 - bitIndex));
+                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
@@ -253,7 +253,7 @@ bool OctreeAvailability::addSubtree(
             AvailabilityUtilities::countOnesInBuffer(
                 clippedSubtreeAvailability) +
             AvailabilityUtilities::countOnesInByte(
-                availabilityByte >> (8 - bitIndex));
+                static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
       }
     } else {
       // INVALID AVAILABILITY ACCESSOR
