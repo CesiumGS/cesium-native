@@ -45,16 +45,26 @@ RasterOverlay::~RasterOverlay() {
 }
 
 RasterOverlayTileProvider* RasterOverlay::getTileProvider() noexcept {
-  return this->_loadingTileProvider && this->_loadingTileProvider->isReady()
-             ? this->_loadingTileProvider->wait().get()
-             : this->_pPlaceholder.get();
+  RasterOverlayTileProvider* pResult =
+      this->_loadingTileProvider && this->_loadingTileProvider->isReady()
+          ? this->_loadingTileProvider->wait().get()
+          : nullptr;
+  if (!pResult) {
+    pResult = this->_pPlaceholder.get();
+  }
+  return pResult;
 }
 
 const RasterOverlayTileProvider*
 RasterOverlay::getTileProvider() const noexcept {
-  return this->_loadingTileProvider && this->_loadingTileProvider->isReady()
-             ? this->_loadingTileProvider->wait().get()
-             : this->_pPlaceholder.get();
+  const RasterOverlayTileProvider* pResult =
+      this->_loadingTileProvider && this->_loadingTileProvider->isReady()
+          ? this->_loadingTileProvider->wait().get()
+          : nullptr;
+  if (!pResult) {
+    pResult = this->_pPlaceholder.get();
+  }
+  return pResult;
 }
 
 CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>

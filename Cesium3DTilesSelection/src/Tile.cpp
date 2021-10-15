@@ -230,7 +230,14 @@ void Tile::loadContent() {
   // aligned like geographic or web mercator, because we won't know our raster
   // rectangle until we can project each vertex.
 
-  std::vector<CesiumGeospatial::Projection> projections;
+  const RasterOverlayCollection& overlays = this->getTileset()->getOverlays();
+  std::vector<CesiumGeospatial::Projection> projections =
+      overlays.getUniqueProjections();
+
+  // TODO: If we can be certain a particular raster overlay doesn't apply to
+  // this tile, because we can determine the raster overlay's rectangle can't
+  // overlap this tile's bounding volume, then exclude the overlay's projection
+  // from the list.
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
@@ -260,7 +267,14 @@ void Tile::loadContent() {
     return;
   }
 
-  this->loadOverlays(projections);
+  // TODO: we can load overlay tiles here (and not later) if we're already sure
+  // of our bounding rectangle in the overlay's projection. That will happen
+  // when our bounding volume is a BoundingRegion and we can compute an accurate
+  // projected rectangle just from the longitude/latitude rectangle (i.e. the
+  // projection X coordinate only affects longitude and the Y coordinate only
+  // affects latitude). That will shave off some load latency because we don't
+  // need to serialize load of geometry and overlays.
+  // this->loadOverlays(projections);
 
   struct LoadResult {
     LoadState state = LoadState::Unloaded;
@@ -354,18 +368,27 @@ void Tile::loadContent() {
                       model.extras["gltfUpAxis"] =
                           static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
 
-                      Tile::generateTextureCoordinates(
-                          model,
-                          loadInput.tileTransform,
-                          // Would it be better to use the content bounding
-                          // volume, if it exists?
-                          // What about
-                          // TileContentLoadResult::updatedBoundingVolume?
-                          loadInput.tileBoundingVolume,
-                          projections);
+                      // #327: compute rectangle and texture coordinates for
+                      // each projection.
+                      // As an optimization, only generate texture coordinates
+                      // if a raster overlay that uses this projection has data
+                      // within this tile.
+
+                      GenerateTextureCoordinatesResult generateResult =
+                          Tile::generateTextureCoordinates(
+                              model,
+                              loadInput.tileTransform,
+                              // Would it be better to use the content bounding
+                              // volume, if it exists?
+                              // What about
+                              // TileContentLoadResult::updatedBoundingVolume?
+                              loadInput.tileBoundingVolume,
+                              projections);
 
                       pContent->rasterOverlayProjections =
                           std::move(projections);
+                      pContent->rasterOverlayRectangles =
+                          std::move(generateResult.projectionRectangles);
 
                       if (generateMissingNormalsSmooth) {
                         pContent->model->generateMissingNormalsSmooth();
@@ -390,6 +413,48 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
+
+        const std::vector<Projection>& projections =
+            this->_pContent->rasterOverlayProjections;
+        const std::vector<Rectangle>& rectangles =
+            this->_pContent->rasterOverlayRectangles;
+
+        for (const auto& pOverlay : this->getTileset()->getOverlays()) {
+          const RasterOverlayTileProvider* pProvider =
+              pOverlay->getTileProvider();
+
+          if (pProvider->isPlaceholder()) {
+            continue;
+          }
+
+          const Projection& projection = pProvider->getProjection();
+          auto projectionIt =
+              std::find(projections.begin(), projections.end(), projection);
+          if (projectionIt == projections.end()) {
+            // TODO: reload tile with missing projection?
+            continue;
+          }
+
+          const int32_t projectionID =
+              int32_t(projectionIt - projections.begin());
+          const Rectangle& overlayRectangle = rectangles[projectionID];
+
+          IntrusivePointer<RasterOverlayTile> pRaster =
+              pOverlay->getTileProvider()->getTile(
+                  overlayRectangle,
+                  this->getGeometricError());
+          if (pRaster) {
+            RasterMappedTo3DTile& mappedTile =
+                this->getMappedRasterTiles().emplace_back(pRaster);
+            mappedTile.setTextureCoordinateID(projectionID);
+
+            if (pRaster->getState() !=
+                RasterOverlayTile::LoadState::Placeholder) {
+              pOverlay->getTileProvider()->loadTileThrottled(*pRaster);
+            }
+          }
+        }
+
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
@@ -840,41 +905,45 @@ void Tile::setState(LoadState value) noexcept {
   this->_state.store(value, std::memory_order::memory_order_release);
 }
 
-/*static*/ std::optional<CesiumGeospatial::BoundingRegion>
+/*static*/ Tile::GenerateTextureCoordinatesResult
 Tile::generateTextureCoordinates(
     CesiumGltf::Model& model,
     const glm::dmat4& transform,
     const BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::Projection>& projections) {
-  std::optional<CesiumGeospatial::BoundingRegion> result;
+  // If this Tile uses a BoundingRegion as its bounding volume, we can assume
+  // it's tight-fitting. Otherwise, we need to compute a tight-fitting
+  // BoundingRegion from the geometry.
+  const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&boundingVolume);
+  GenerateTextureCoordinatesResult result{
+      pRegion ? *pRegion : GltfContent::computeBoundingRegion(model, transform),
+      std::vector<Rectangle>()};
 
   // Generate texture coordinates for each projection.
-  if (!projections.empty()) {
-    std::optional<GlobeRectangle> maybeRectangle =
-        getGlobeRectangle(boundingVolume);
-    if (maybeRectangle) {
-      for (size_t i = 0; i < projections.size(); ++i) {
-        const Projection& projection = projections[i];
+  for (size_t i = 0; i < projections.size(); ++i) {
+    const Projection& projection = projections[i];
 
-        const int textureCoordinateID = static_cast<int32_t>(i);
+    const int textureCoordinateID = static_cast<int32_t>(i);
 
-        const CesiumGeometry::Rectangle rectangle =
-            projectRectangleSimple(projection, *maybeRectangle);
+    // Currently, a Longitude/Latitude Rectangle maps perfectly to all possible
+    // projection types, because the only possible projection types are
+    // Geographic and Web Mercator. In the future if/when we add projections
+    // that don't have this convenient property, we'll need to compute the
+    // Rectangle for each projection directly from the vertex positions.
+    const CesiumGeometry::Rectangle rectangle = projectRectangleSimple(
+        projection,
+        result.boundingRegion.getRectangle());
 
-        CesiumGeospatial::BoundingRegion boundingRegion =
-            GltfContent::createRasterOverlayTextureCoordinates(
-                model,
-                transform,
-                textureCoordinateID,
-                projection,
-                rectangle);
-        if (result) {
-          result = boundingRegion.computeUnion(result.value());
-        } else {
-          result = boundingRegion;
-        }
-      }
-    }
+    // TODO: if we generate all texture coordinates in one go rather than
+    // separately for each projection, we'll avoid a bunch of redundant
+    // work.
+    GltfContent::createRasterOverlayTextureCoordinates(
+        model,
+        transform,
+        textureCoordinateID,
+        projection,
+        rectangle);
+    result.projectionRectangles.emplace_back(rectangle);
   }
 
   return result;
@@ -908,40 +977,44 @@ void Tile::upsampleParent(
   };
 
   pTileset->getAsyncSystem()
-      .runInWorkerThread([&parentModel,
-                          transform = this->getTransform(),
-                          projections = std::move(projections),
-                          pSubdividedParentID,
-                          boundingVolume = this->getBoundingVolume(),
-                          pPrepareRendererResources =
-                              pTileset->getExternals()
-                                  .pPrepareRendererResources]() mutable {
-        std::unique_ptr<TileContentLoadResult> pContent =
-            std::make_unique<TileContentLoadResult>();
-        pContent->model =
-            upsampleGltfForRasterOverlays(parentModel, *pSubdividedParentID);
+      .runInWorkerThread(
+          [&parentModel,
+           transform = this->getTransform(),
+           projections = std::move(projections),
+           pSubdividedParentID,
+           boundingVolume = this->getBoundingVolume(),
+           pPrepareRendererResources =
+               pTileset->getExternals().pPrepareRendererResources]() mutable {
+            std::unique_ptr<TileContentLoadResult> pContent =
+                std::make_unique<TileContentLoadResult>();
+            pContent->model = upsampleGltfForRasterOverlays(
+                parentModel,
+                *pSubdividedParentID);
 
-        if (pContent->model) {
-          pContent->updatedBoundingVolume = Tile::generateTextureCoordinates(
-              pContent->model.value(),
-              transform,
-              boundingVolume,
-              projections);
-          pContent->rasterOverlayProjections = std::move(projections);
-        }
+            if (pContent->model) {
+              GenerateTextureCoordinatesResult generateResult =
+                  Tile::generateTextureCoordinates(
+                      pContent->model.value(),
+                      transform,
+                      boundingVolume,
+                      projections);
+              pContent->updatedBoundingVolume = generateResult.boundingRegion;
+              pContent->rasterOverlayProjections = std::move(projections);
+            }
 
-        void* pRendererResources = nullptr;
-        if (pContent->model && pPrepareRendererResources) {
-          pRendererResources = pPrepareRendererResources->prepareInLoadThread(
-              pContent->model.value(),
-              transform);
-        }
+            void* pRendererResources = nullptr;
+            if (pContent->model && pPrepareRendererResources) {
+              pRendererResources =
+                  pPrepareRendererResources->prepareInLoadThread(
+                      pContent->model.value(),
+                      transform);
+            }
 
-        return LoadResult{
-            LoadState::ContentLoaded,
-            std::move(pContent),
-            pRendererResources};
-      })
+            return LoadResult{
+                LoadState::ContentLoaded,
+                std::move(pContent),
+                pRendererResources};
+          })
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;

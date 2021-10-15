@@ -5,6 +5,7 @@
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
@@ -25,6 +26,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   RasterOverlay* pOverlayRaw = pOverlay.get();
   this->_overlays.push_back(std::move(pOverlay));
+
   pOverlayRaw->loadTileProvider(
       this->_pTileset->getAsyncSystem(),
       this->_pTileset->getExternals().pAssetAccessor,
@@ -82,6 +84,27 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   // in-progress loads are complete, which may be immediately.
   (*it)->destroySafely(std::move(*it));
   this->_overlays.erase(it);
+}
+
+std::vector<Projection> RasterOverlayCollection::getUniqueProjections() const {
+  std::vector<Projection> projections;
+
+  for (const std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
+    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
+
+    // Ignore tile providers that are still placeholders.
+    if (pProvider->isPlaceholder()) {
+      continue;
+    }
+
+    const Projection& projection = pProvider->getProjection();
+    auto it = std::find(projections.begin(), projections.end(), projection);
+    if (it == projections.end()) {
+      projections.emplace_back(projection);
+    }
+  }
+
+  return projections;
 }
 
 } // namespace Cesium3DTilesSelection

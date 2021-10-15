@@ -14,6 +14,7 @@
 #include <spdlog/fwd.h>
 
 #include <cstddef>
+#include <optional>
 
 namespace Cesium3DTilesSelection {
 
@@ -86,6 +87,22 @@ public:
       int32_t textureCoordinateID,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& rectangle);
+
+  /**
+   * @brief Computes a bounding region from the vertex positions in a glTF
+   * model.
+   *
+   * If the glTF model spans the anti-meridian, the west and east longitude
+   * values will be in the usual -PI to PI range, but east will have a smaller
+   * value than west.
+   *
+   * @param gltf The model.
+   * @param transform The transform from model coordinates to ECEF coordinates.
+   * @return The computed bounding region.
+   */
+  static CesiumGeospatial::BoundingRegion computeBoundingRegion(
+      const CesiumGltf::Model& gltf,
+      const glm::dmat4& transform);
 
 private:
   static CesiumGltf::GltfReader _gltfReader;

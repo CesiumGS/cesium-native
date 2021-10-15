@@ -4,12 +4,15 @@
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/Tile.h"
+#include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "TileUtilities.h"
 
-using namespace CesiumUtility;
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumUtility;
 
 namespace {
 
@@ -193,16 +196,33 @@ void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
     return;
   }
 
-  std::optional<CesiumGeospatial::GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(tile.getBoundingVolume());
-  if (!maybeRectangle) {
+  // TODO: allow no content, as long as we have a bounding region.
+  if (!tile.getContent()) {
     return;
   }
 
   const RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
-  const CesiumGeometry::Rectangle geometryRectangle =
-      projectRectangleSimple(tileProvider.getProjection(), *maybeRectangle);
+
+  const Projection& projection = tileProvider.getProjection();
+  const std::vector<Projection>& projections =
+      tile.getContent()->rasterOverlayProjections;
+  const std::vector<Rectangle>& rectangles =
+      tile.getContent()->rasterOverlayRectangles;
+
+  auto projectionIt =
+      std::find(projections.begin(), projections.end(), projection);
+  if (projectionIt == projections.end()) {
+    return;
+  }
+
+  int32_t projectionIndex = int32_t(projectionIt - projections.begin());
+  if (projectionIndex >= rectangles.size()) {
+    return;
+  }
+
+  const Rectangle& geometryRectangle = rectangles[projectionIndex];
+
   const CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 

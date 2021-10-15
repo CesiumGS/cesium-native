@@ -77,6 +77,12 @@ struct TileContentLoadResult {
    * projection.
    */
   std::vector<CesiumGeospatial::Projection> rasterOverlayProjections;
+
+  /**
+   * @brief The rectangle covered by this tile in each of the
+   * {@link rasterOverlayProjections}.
+   */
+  std::vector<CesiumGeometry::Rectangle> rasterOverlayRectangles;
 };
 
 } // namespace Cesium3DTilesSelection

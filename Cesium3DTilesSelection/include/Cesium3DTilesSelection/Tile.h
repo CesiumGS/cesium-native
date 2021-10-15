@@ -566,6 +566,11 @@ private:
    */
   void setState(LoadState value) noexcept;
 
+  struct GenerateTextureCoordinatesResult {
+    CesiumGeospatial::BoundingRegion boundingRegion;
+    std::vector<CesiumGeometry::Rectangle> projectionRectangles;
+  };
+
   /**
    * @brief Generates texture coordiantes for the raster overlays of the content
    * of this tile.
@@ -576,8 +581,7 @@ private:
    *
    * @return The bounding region
    */
-  static std::optional<CesiumGeospatial::BoundingRegion>
-  generateTextureCoordinates(
+  static GenerateTextureCoordinatesResult generateTextureCoordinates(
       CesiumGltf::Model& model,
       const glm::dmat4& transform,
       const BoundingVolume& boundingVolume,

@@ -3,6 +3,7 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/AxisTransforms.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
@@ -198,6 +199,90 @@ static int generateOverlayTextureCoordinates(
   return uvAccessorId;
 }
 
+namespace {
+/**
+ * @brief Apply the transform for the `RTC_CENTER`
+ *
+ * If the B3DM that contained the given model had an `RTC_CENTER` in its
+ * Feature Table, then it was stored in the `extras` property of the glTF
+ * model, as a 3-element array under the name `RTC_CENTER`.
+ *
+ * This function will multiply the given matrix with the (translation) matrix
+ * that was created from this `RTC_CENTER` property in the `extras` of the
+ * given model. If the given model does not have this property, then nothing
+ * will be done.
+ *
+ * @param model The glTF model
+ * @param rootTransform The matrix that will be multiplied with the transform
+ */
+void applyRtcCenter(
+    const CesiumGltf::Model& model,
+    glm::dmat4x4& rootTransform) {
+  auto rtcCenterIt = model.extras.find("RTC_CENTER");
+  if (rtcCenterIt == model.extras.end()) {
+    return;
+  }
+  const CesiumUtility::JsonValue& rtcCenter = rtcCenterIt->second;
+  const std::vector<CesiumUtility::JsonValue>* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&rtcCenter.value);
+  if (!pArray) {
+    return;
+  }
+  if (pArray->size() != 3) {
+    return;
+  }
+  const double x = (*pArray)[0].getSafeNumberOrDefault(0.0);
+  const double y = (*pArray)[1].getSafeNumberOrDefault(0.0);
+  const double z = (*pArray)[2].getSafeNumberOrDefault(0.0);
+  const glm::dmat4x4 rtcTransform(
+      glm::dvec4(1.0, 0.0, 0.0, 0.0),
+      glm::dvec4(0.0, 1.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 1.0, 0.0),
+      glm::dvec4(x, y, z, 1.0));
+  rootTransform *= rtcTransform;
+}
+
+/**
+ * @brief Apply the transform so that the up-axis of the given model is the
+ * Z-axis.
+ *
+ * By default, the up-axis of a glTF model will the the Y-axis.
+ *
+ * If the tileset that contained the model had the `asset.gltfUpAxis` string
+ * property, then the information about the up-axis has been stored in as a
+ * number property called `gltfUpAxis` in the `extras` of the given model.
+ *
+ * Depending on whether this value is CesiumGeometry::Axis::X, Y, or Z,
+ * the given matrix will be multiplied with a matrix that converts the
+ * respective axis to be the Z-axis, as required by the 3D Tiles standard.
+ *
+ * @param model The glTF model
+ * @param rootTransform The matrix that will be multiplied with the transform
+ */
+void applyGltfUpAxisTransform(
+    const CesiumGltf::Model& model,
+    glm::dmat4x4& rootTransform) {
+
+  auto gltfUpAxisIt = model.extras.find("gltfUpAxis");
+  if (gltfUpAxisIt == model.extras.end()) {
+    // The default up-axis of glTF is the Y-axis, and no other
+    // up-axis was specified. Transform the Y-axis to the Z-axis,
+    // to match the 3D Tiles specification
+    rootTransform *= CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+    return;
+  }
+  const CesiumUtility::JsonValue& gltfUpAxis = gltfUpAxisIt->second;
+  int gltfUpAxisValue = static_cast<int>(gltfUpAxis.getSafeNumberOrDefault(1));
+  if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::X)) {
+    rootTransform *= CesiumGeometry::AxisTransforms::X_UP_TO_Z_UP;
+  } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Y)) {
+    rootTransform *= CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+  } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Z)) {
+    // No transform required
+  }
+}
+} // namespace
+
 /*static*/ CesiumGeospatial::BoundingRegion
 GltfContent::createRasterOverlayTextureCoordinates(
     CesiumGltf::Model& gltf,
@@ -207,6 +292,11 @@ GltfContent::createRasterOverlayTextureCoordinates(
     const CesiumGeometry::Rectangle& rectangle) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::"
                "createRasterOverlayTextureCoordinates");
+
+  glm::dmat4 rootTransform = transform;
+  applyRtcCenter(gltf, rootTransform);
+  applyGltfUpAxisTransform(gltf, rootTransform);
+
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
 
@@ -222,7 +312,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [&transform,
+      [&rootTransform,
        &positionAccessorsToTextureCoordinateAccessor,
        &attributeName,
        &projection,
@@ -263,9 +353,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           return;
         }
 
-        const glm::dmat4 fullTransform =
-            transform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP *
-            nodeTransform;
+        const glm::dmat4 fullTransform = rootTransform * nodeTransform;
 
         // Generate new texture coordinates
         const int nextTextureCoordinateAccessorIndex =
@@ -296,4 +384,117 @@ GltfContent::createRasterOverlayTextureCoordinates(
       minimumHeight,
       maximumHeight);
 }
+
+/*static*/ CesiumGeospatial::BoundingRegion GltfContent::computeBoundingRegion(
+    const CesiumGltf::Model& gltf,
+    const glm::dmat4& transform) {
+  CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::"
+               "computeBoundingRegion");
+
+  glm::dmat4 rootTransform = transform;
+  applyRtcCenter(gltf, rootTransform);
+  applyGltfUpAxisTransform(gltf, rootTransform);
+
+  double west = CesiumUtility::Math::ONE_PI;
+  double south = CesiumUtility::Math::PI_OVER_TWO;
+  double east = -CesiumUtility::Math::ONE_PI;
+  double north = -CesiumUtility::Math::PI_OVER_TWO;
+  double minimumHeight = std::numeric_limits<double>::max();
+  double maximumHeight = std::numeric_limits<double>::lowest();
+  bool haveFirst = false;
+
+  gltf.forEachPrimitiveInScene(
+      -1,
+      [&rootTransform,
+       &west,
+       &south,
+       &east,
+       &north,
+       &minimumHeight,
+       &maximumHeight,
+       &haveFirst](
+          const CesiumGltf::Model& gltf_,
+          const CesiumGltf::Node& /*node*/,
+          const CesiumGltf::Mesh& /*mesh*/,
+          const CesiumGltf::MeshPrimitive& primitive,
+          const glm::dmat4& nodeTransform) {
+        auto positionIt = primitive.attributes.find("POSITION");
+        if (positionIt == primitive.attributes.end()) {
+          return;
+        }
+
+        const int positionAccessorIndex = positionIt->second;
+        if (positionAccessorIndex < 0 ||
+            positionAccessorIndex >= static_cast<int>(gltf_.accessors.size())) {
+          return;
+        }
+
+        const glm::dmat4 fullTransform = rootTransform * nodeTransform;
+
+        const CesiumGltf::AccessorView<glm::vec3> positionView(
+            gltf_,
+            positionAccessorIndex);
+        if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
+          return;
+        }
+
+        for (int64_t i = 0; i < positionView.size(); ++i) {
+          // Get the ECEF position
+          const glm::vec3 position = positionView[i];
+          const glm::dvec3 positionEcef =
+              fullTransform * glm::dvec4(position, 1.0);
+
+          // Convert it to cartographic
+          std::optional<CesiumGeospatial::Cartographic> cartographic =
+              CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
+                  positionEcef);
+          if (!cartographic) {
+            continue;
+          }
+
+          double longitude = cartographic->longitude;
+          double latitude = cartographic->latitude;
+          double height = cartographic->height;
+
+          if (haveFirst) {
+            // Check if we've crossed the anti-meridian relative to the first
+            // point and if so adjust so our min/maxes below have the expected
+            // result.
+            double difference = longitude - west;
+            if (difference > Math::ONE_PI) {
+              longitude -= Math::TWO_PI;
+            } else if (difference < -Math::ONE_PI) {
+              longitude += Math::TWO_PI;
+            }
+          } else {
+            haveFirst = true;
+          }
+
+          // The computation of longitude is very unstable at the poles,
+          // so don't let extreme latitudes affect the longitude bounding box.
+          if (glm::abs(
+                  glm::abs(cartographic->latitude) -
+                  CesiumUtility::Math::PI_OVER_TWO) >
+              CesiumUtility::Math::EPSILON6) {
+            west = glm::min(west, longitude);
+            east = glm::max(east, longitude);
+          }
+          south = glm::min(south, latitude);
+          north = glm::max(north, latitude);
+          minimumHeight = glm::min(minimumHeight, height);
+          maximumHeight = glm::max(maximumHeight, height);
+        }
+      });
+
+  // Put longitudes back in the -PI to PI range, which may make east < west but
+  // that's ok.
+  west = Math::negativePiToPi(west);
+  east = Math::negativePiToPi(east);
+
+  return CesiumGeospatial::BoundingRegion(
+      CesiumGeospatial::GlobeRectangle(west, south, east, north),
+      minimumHeight,
+      maximumHeight);
+}
+
 } // namespace Cesium3DTilesSelection
