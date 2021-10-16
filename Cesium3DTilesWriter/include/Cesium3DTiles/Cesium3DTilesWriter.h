@@ -9,9 +9,9 @@ namespace Cesium3DTiles {
 
 /**
  * @brief The result of writing a tileset with
- * {@link TilesetWriter::writeTileset}.
+ * {@link Cesium3DTilesWriter::writeTileset}.
  */
-struct CESIUM3DTILESWRITER_API TilesetWriterResult {
+struct CESIUM3DTILESWRITER_API Cesium3DTilesWriterResult {
   /**
    * @brief The final generated std::vector<std::byte> of the tileset.
    */
@@ -41,12 +41,12 @@ struct CESIUM3DTILESWRITER_API WriteTilesetOptions {
 /**
  * @brief Writes tilesets.
  */
-class CESIUM3DTILESWRITER_API TilesetWriter {
+class CESIUM3DTILESWRITER_API Cesium3DTilesWriter {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  TilesetWriter();
+  Cesium3DTilesWriter();
 
   /**
    * @brief Gets the context used to control how tileset extensions are written.
@@ -66,7 +66,7 @@ public:
    * @param options Options for how to write the tileset.
    * @return The result of writing the tileset.
    */
-  TilesetWriterResult writeTileset(
+  Cesium3DTilesWriterResult writeTileset(
       const Tileset& model,
       const WriteTilesetOptions& options = WriteTilesetOptions()) const;
 

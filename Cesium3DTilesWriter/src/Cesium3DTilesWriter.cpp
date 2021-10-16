@@ -1,6 +1,6 @@
-#include "Cesium3DTiles/TilesetWriter.h"
-
 #include "Cesium3DTiles/Cesium3DTilesWriter.h"
+
+#include "TilesetWriter.h"
 #include "CesiumUtility/Tracing.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
@@ -10,26 +10,26 @@ using namespace Cesium3DTiles;
 using namespace CesiumJsonWriter;
 using namespace CesiumUtility;
 
-TilesetWriter::TilesetWriter() {}
+Cesium3DTilesWriter::Cesium3DTilesWriter() {}
 
-CesiumJsonWriter::ExtensionWriterContext& TilesetWriter::getExtensions() {
+CesiumJsonWriter::ExtensionWriterContext& Cesium3DTilesWriter::getExtensions() {
   return this->_context;
 }
 
 const CesiumJsonWriter::ExtensionWriterContext&
-TilesetWriter::getExtensions() const {
+Cesium3DTilesWriter::getExtensions() const {
   return this->_context;
 }
 
-TilesetWriterResult TilesetWriter::writeTileset(
+Cesium3DTilesWriterResult Cesium3DTilesWriter::writeTileset(
     const Tileset& tileset,
     const WriteTilesetOptions& options) const {
-  CESIUM_TRACE("CesiumGltf::TilesetWriter::writeTileset");
+  CESIUM_TRACE("CesiumGltf::Cesium3DTilesWriter::writeTileset");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
-  TilesetWriterResult result;
+  Cesium3DTilesWriterResult result;
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -38,7 +38,7 @@ TilesetWriterResult TilesetWriter::writeTileset(
     writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  TilesetWriter::write(tileset, writer, context);
+  TilesetWriter::write(tileset, *writer, context);
   result.tilesetBytes = writer->toBytes();
 
   return result;
