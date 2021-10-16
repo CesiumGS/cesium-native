@@ -1,4 +1,5 @@
 add_library(CesiumJsonWriter "")
+
 configure_cesium_library(CesiumJsonWriter)
 
 cesium_glob_files(CESIUM_JSON_WRITER_SOURCES src/*.cpp)
@@ -11,12 +12,6 @@ set_target_properties(CesiumJsonWriter
     PROPERTIES
         TEST_SOURCES "${CESIUM_JSON_WRITER_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_JSON_WRITER_TEST_HEADERS}"
-        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
-)
-
-set_target_properties(CesiumJsonWriter
-    PROPERTIES
-    PUBLIC_HEADER "${CESIUM_JSON_WRITER_PUBLIC_HEADERS}"
 )
 
 target_sources(
@@ -28,18 +23,25 @@ target_sources(
         ${CESIUM_JSON_WRITER_PUBLIC_HEADERS}
 )
 
+target_compile_definitions(
+    CesiumJsonWriter
+    PRIVATE
+        ${CESIUM_NATIVE_RAPIDJSON_DEFINES}
+)
+
 target_include_directories(
     CesiumJsonWriter
     SYSTEM PUBLIC
+        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
+        ${CMAKE_CURRENT_LIST_DIR}/generated
 )
 
 target_link_libraries(CesiumJsonWriter
     PUBLIC
-        GSL
         CesiumUtility
 )
 

@@ -1,97 +1,75 @@
 #pragma once
 
-#include "JsonHandler.h"
-#include "Library.h"
-
-#include <gsl/span>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 #include <cstddef>
-#include <optional>
-#include <string>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <string_view>
 #include <vector>
 
-namespace rapidjson {
-struct MemoryStream;
-}
-
 namespace CesiumJsonWriter {
+class JsonWriter {
+  rapidjson::StringBuffer _compactBuffer;
+  std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> compact;
 
-/**
- * @brief The result of {@link Writer::writeJson}.
- */
-template <typename T> struct WriteJsonResult {
-  /**
-   * @brief The value write from the JSON, or `std::nullopt` on error.
-   */
-  std::optional<T> value;
-
-  /**
-   * @brief Errors that occurred while writing.
-   */
-  std::vector<std::string> errors;
-
-  /**
-   * @brief Warnings that occurred while writing.
-   */
-  std::vector<std::string> warnings;
-};
-
-/**
- * @brief Writes JSON.
- */
-class CESIUMJSONWRITER_API JsonWriter {
 public:
-  /**
-   * @brief Writes JSON from a byte buffer.
-   *
-   * @param data The buffer from which to write JSON.
-   * @param handler The handler to receive the top-level JSON object.
-   * @return The result of writing the JSON.
-   */
-  template <typename T>
-  static WriteJsonResult<typename T::ValueType>
-  writeJson(const gsl::span<const std::byte>& data, T& handler) {
-    WriteJsonResult<typename T::ValueType> result;
+  JsonWriter();
+  virtual ~JsonWriter() {}
 
-    result.value.emplace();
+  // rapidjson methods
+  virtual bool Null();
+  virtual bool Bool(bool b);
+  virtual bool Int(int i);
+  virtual bool Uint(unsigned int i);
+  virtual bool Uint64(std::uint64_t i);
+  virtual bool Int64(std::int64_t i);
+  virtual bool Double(double d);
+  virtual bool RawNumber(const char* str, unsigned int length, bool copy);
+  virtual bool Key(std::string_view string);
+  virtual bool String(std::string_view string);
+  virtual bool StartObject();
+  virtual bool EndObject();
+  virtual bool StartArray();
+  virtual bool EndArray();
 
-    FinalJsonHandler finalHandler(result.warnings);
-    handler.reset(&finalHandler, &result.value.value());
+  // Primitive overloads
+  virtual void Primitive(std::int32_t value);
+  virtual void Primitive(std::uint32_t value);
+  virtual void Primitive(std::int64_t value);
+  virtual void Primitive(std::uint64_t value);
+  virtual void Primitive(float value);
+  virtual void Primitive(double value);
+  virtual void Primitive(std::nullptr_t value);
+  virtual void Primitive(std::string_view string);
 
-    JsonWriter::internalWrite(
-        data,
-        handler,
-        finalHandler,
-        result.errors,
-        result.warnings);
+  // Integral
+  virtual void KeyPrimitive(std::string_view keyName, std::int32_t value);
+  virtual void KeyPrimitive(std::string_view keyName, std::uint32_t value);
+  virtual void KeyPrimitive(std::string_view keyName, std::int64_t value);
+  virtual void KeyPrimitive(std::string_view keyName, std::uint64_t value);
 
-    if (!result.errors.empty()) {
-      result.value.reset();
-    }
+  // String
+  virtual void KeyPrimitive(std::string_view keyName, std::string_view value);
 
-    return result;
-  }
+  // Floating Point
+  virtual void KeyPrimitive(std::string_view keyName, float value);
+  virtual void KeyPrimitive(std::string_view keyName, double value);
 
-private:
-  class FinalJsonHandler : public JsonHandler {
-  public:
-    FinalJsonHandler(std::vector<std::string>& warnings);
-    virtual void reportWarning(
-        const std::string& warning,
-        std::vector<std::string>&& context) override;
-    void setInputStream(rapidjson::MemoryStream* pInputStream) noexcept;
+  // Null
+  virtual void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
 
-  private:
-    std::vector<std::string>& _warnings;
-    rapidjson::MemoryStream* _pInputStream;
-  };
+  // Array / Objects
+  virtual void
+  KeyArray(std::string_view keyName, std::function<void(void)> insideArray);
 
-  static void internalWrite(
-      const gsl::span<const std::byte>& data,
-      IJsonHandler& handler,
-      FinalJsonHandler& finalHandler,
-      std::vector<std::string>& errors,
-      std::vector<std::string>& warnings);
+  virtual void
+  KeyObject(std::string_view keyName, std::function<void(void)> insideObject);
+
+  virtual std::string toString();
+  virtual std::string_view toStringView();
+  virtual std::vector<std::byte> toBytes();
 };
-
 } // namespace CesiumJsonWriter

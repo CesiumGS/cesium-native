@@ -1,156 +1,149 @@
 #include "CesiumJsonWriter/JsonWriter.h"
 
-#include <rapidjson/reader.h>
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <string_view>
 
-#include <cassert>
+namespace CesiumJsonWriter {
+JsonWriter::JsonWriter()
+    : compact(std::make_unique<rapidjson::Writer<rapidjson::StringBuffer>>(
+          _compactBuffer)) {}
 
-using namespace CesiumJsonWriter;
+bool JsonWriter::Null() { return compact->Null(); }
 
-namespace {
+bool JsonWriter::Bool(bool b) { return compact->Bool(b); }
 
-struct Dispatcher {
-  IJsonHandler* pCurrent;
+bool JsonWriter::Int(int i) { return compact->Int(i); }
 
-  bool update(IJsonHandler* pNext) noexcept {
-    if (pNext == nullptr) {
-      return false;
-    }
+bool JsonWriter::Uint(unsigned int i) { return compact->Uint(i); }
 
-    this->pCurrent = pNext;
-    return true;
-  }
+bool JsonWriter::Uint64(std::uint64_t i) { return compact->Uint64(i); }
 
-  bool Null() { return update(pCurrent->writeNull()); }
-  bool Bool(bool b) { return update(pCurrent->writeBool(b)); }
-  bool Int(int i) { return update(pCurrent->writeInt32(i)); }
-  bool Uint(unsigned i) { return update(pCurrent->writeUint32(i)); }
-  bool Int64(int64_t i) { return update(pCurrent->writeInt64(i)); }
-  bool Uint64(uint64_t i) { return update(pCurrent->writeUint64(i)); }
-  bool Double(double d) { return update(pCurrent->writeDouble(d)); }
-  bool RawNumber(
-      const char* /* str */,
-      size_t /* length */,
-      bool /* copy */) noexcept {
-    // This should not be called.
-    assert(false);
-    return false;
-  }
-  bool String(const char* str, size_t length, bool /* copy */) {
-    return update(pCurrent->writeString(std::string_view(str, length)));
-  }
-  bool StartObject() { return update(pCurrent->writeObjectStart()); }
-  bool Key(const char* str, size_t length, bool /* copy */) {
-    return update(pCurrent->writeObjectKey(std::string_view(str, length)));
-  }
-  bool EndObject(size_t /* memberCount */) {
-    return update(pCurrent->writeObjectEnd());
-  }
-  bool StartArray() { return update(pCurrent->writeArrayStart()); }
-  bool EndArray(size_t /* elementCount */) {
-    return update(pCurrent->writeArrayEnd());
-  }
-};
+bool JsonWriter::Int64(std::int64_t i) { return compact->Int64(i); }
 
-std::string getMessageFromRapidJsonError(rapidjson::ParseErrorCode code) {
-  switch (code) {
-  case rapidjson::ParseErrorCode::kParseErrorDocumentEmpty:
-    return "The document is empty.";
-  case rapidjson::ParseErrorCode::kParseErrorDocumentRootNotSingular:
-    return "The document root must not be followed by other values.";
-  case rapidjson::ParseErrorCode::kParseErrorValueInvalid:
-    return "Invalid value.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissName:
-    return "Missing a name for object member.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissColon:
-    return "Missing a colon after a name of object member.";
-  case rapidjson::ParseErrorCode::kParseErrorObjectMissCommaOrCurlyBracket:
-    return "Missing a comma or '}' after an object member.";
-  case rapidjson::ParseErrorCode::kParseErrorArrayMissCommaOrSquareBracket:
-    return "Missing a comma or ']' after an array element.";
-  case rapidjson::ParseErrorCode::kParseErrorStringUnicodeEscapeInvalidHex:
-    return "Incorrect hex digit after \\u escape in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringUnicodeSurrogateInvalid:
-    return "The surrogate pair in string is invalid.";
-  case rapidjson::ParseErrorCode::kParseErrorStringEscapeInvalid:
-    return "Invalid escape character in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringMissQuotationMark:
-    return "Missing a closing quotation mark in string.";
-  case rapidjson::ParseErrorCode::kParseErrorStringInvalidEncoding:
-    return "Invalid encoding in string.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberTooBig:
-    return "Number too big to be stored in double.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberMissFraction:
-    return "Missing fraction part in number.";
-  case rapidjson::ParseErrorCode::kParseErrorNumberMissExponent:
-    return "Missing exponent in number.";
-  case rapidjson::ParseErrorCode::kParseErrorTermination:
-    return "Parsing was terminated.";
-  case rapidjson::ParseErrorCode::kParseErrorUnspecificSyntaxError:
-  default:
-    return "Unspecific syntax error.";
-  }
+bool JsonWriter::Double(double d) { return compact->Double(d); }
+
+bool JsonWriter::RawNumber(const char* str, unsigned int length, bool copy) {
+  return compact->RawNumber(str, length, copy);
 }
 
-} // namespace
-
-JsonWriter::FinalJsonHandler::FinalJsonHandler(
-    std::vector<std::string>& warnings)
-    : JsonHandler(), _warnings(warnings), _pInputStream(nullptr) {
-  reset(this);
+bool JsonWriter::String(std::string_view string) {
+  return compact->String(
+      string.data(),
+      static_cast<unsigned int>(string.size()));
 }
 
-void JsonWriter::FinalJsonHandler::reportWarning(
-    const std::string& warning,
-    std::vector<std::string>&& context) {
-  std::string fullWarning = warning;
-  fullWarning += "\n  While parsing: ";
-  for (auto it = context.rbegin(); it != context.rend(); ++it) {
-    fullWarning += *it;
-  }
-
-  fullWarning += "\n  From byte offset: ";
-  fullWarning += this->_pInputStream
-                     ? std::to_string(this->_pInputStream->Tell())
-                     : "unknown";
-
-  this->_warnings.emplace_back(std::move(fullWarning));
+bool JsonWriter::Key(std::string_view key) {
+  return compact->Key(key.data(), static_cast<unsigned int>(key.size()));
 }
 
-void JsonWriter::FinalJsonHandler::setInputStream(
-    rapidjson::MemoryStream* pInputStream) noexcept {
-  this->_pInputStream = pInputStream;
+bool JsonWriter::StartObject() { return compact->StartObject(); }
+
+bool JsonWriter::EndObject() { return compact->EndObject(); }
+
+bool JsonWriter::StartArray() { return compact->StartArray(); }
+
+bool JsonWriter::EndArray() { return compact->EndArray(); }
+
+void JsonWriter::Primitive(std::int32_t value) { compact->Int(value); }
+
+void JsonWriter::Primitive(std::uint32_t value) { compact->Uint(value); }
+
+void JsonWriter::Primitive(std::int64_t value) { compact->Int64(value); }
+
+void JsonWriter::Primitive(std::uint64_t value) { compact->Uint64(value); }
+
+void JsonWriter::Primitive(float value) {
+  compact->Double(static_cast<double>(value));
 }
 
-/*static*/ void JsonWriter::internalWrite(
-    const gsl::span<const std::byte>& data,
-    IJsonHandler& handler,
-    FinalJsonHandler& finalHandler,
-    std::vector<std::string>& errors,
-    std::vector<std::string>& /* warnings */) {
+void JsonWriter::Primitive(double value) { compact->Double(value); }
 
-  rapidjson::Reader writer;
-  rapidjson::MemoryStream inputStream(
-      reinterpret_cast<const char*>(data.data()),
-      data.size());
+void JsonWriter::Primitive(std::nullptr_t) { compact->Null(); }
 
-  finalHandler.setInputStream(&inputStream);
-
-  Dispatcher dispatcher{&handler};
-
-  writer.IterativeParseInit();
-
-  bool success = true;
-  while (success && !writer.IterativeParseComplete()) {
-    success = writer.IterativeParseNext<rapidjson::kParseDefaultFlags>(
-        inputStream,
-        dispatcher);
-  }
-
-  if (writer.HasParseError()) {
-    std::string s("JSON parsing error at byte offset ");
-    s += std::to_string(writer.GetErrorOffset());
-    s += ": ";
-    s += getMessageFromRapidJsonError(writer.GetParseErrorCode());
-    errors.emplace_back(std::move(s));
-  }
+void JsonWriter::Primitive(std::string_view string) {
+  compact->String(string.data(), static_cast<unsigned int>(string.size()));
 }
+
+// Integral
+void JsonWriter::KeyPrimitive(std::string_view keyName, std::int32_t value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+void JsonWriter::KeyPrimitive(std::string_view keyName, std::uint32_t value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+void JsonWriter::KeyPrimitive(std::string_view keyName, std::int64_t value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+void JsonWriter::KeyPrimitive(std::string_view keyName, std::uint64_t value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+void JsonWriter::KeyPrimitive(
+    std::string_view keyName,
+    std::string_view value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+// Floating Point
+void JsonWriter::KeyPrimitive(std::string_view keyName, float value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+void JsonWriter::KeyPrimitive(std::string_view keyName, double value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+// Null
+void JsonWriter::KeyPrimitive(std::string_view keyName, std::nullptr_t value) {
+  Key(keyName);
+  Primitive(value);
+}
+
+// Array / Objects
+void JsonWriter::KeyArray(
+    std::string_view keyName,
+    std::function<void(void)> insideArray) {
+  Key(keyName);
+  compact->StartArray();
+  insideArray();
+  compact->EndArray();
+}
+
+void JsonWriter::KeyObject(
+    std::string_view keyName,
+    std::function<void(void)> insideObject) {
+  Key(keyName);
+  compact->StartObject();
+  insideObject();
+  compact->EndObject();
+}
+
+std::string JsonWriter::toString() {
+  return std::string(_compactBuffer.GetString());
+}
+
+std::string_view JsonWriter::toStringView() {
+  return std::string_view(_compactBuffer.GetString(), _compactBuffer.GetSize());
+}
+
+std::vector<std::byte> JsonWriter::toBytes() {
+  const auto view = this->toStringView();
+  std::vector<std::byte> result(view.size(), std::byte(0));
+  std::uint8_t* u8Pointer = reinterpret_cast<std::uint8_t*>(result.data());
+  std::copy(view.begin(), view.end(), u8Pointer);
+  return result;
+}
+
+} // namespace CesiumJsonWriter
