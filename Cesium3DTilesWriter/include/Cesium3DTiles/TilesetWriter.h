@@ -24,7 +24,8 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILESWRITER_API TilesetWriterResult {
   /**
-   * @brief The write tileset, or std::nullopt if the tileset could not be write.
+   * @brief The write tileset, or std::nullopt if the tileset could not be
+   * write.
    */
   std::optional<Tileset> tileset;
 
