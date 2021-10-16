@@ -4,17 +4,6 @@
 
 #include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
-#include <CesiumJsonWriter/IExtensionJsonHandler.h>
-
-#include <gsl/span>
-
-#include <functional>
-#include <map>
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace Cesium3DTiles {
 
@@ -24,10 +13,9 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILESWRITER_API TilesetWriterResult {
   /**
-   * @brief The write tileset, or std::nullopt if the tileset could not be
-   * write.
+   * @brief The final generated std::vector<std::byte> of the tileset.
    */
-  std::optional<Tileset> tileset;
+  std::vector<std::byte> tilesetBytes;
 
   /**
    * @brief Errors, if any, that occurred during the write process.
@@ -43,7 +31,12 @@ struct CESIUM3DTILESWRITER_API TilesetWriterResult {
 /**
  * @brief Options for how to write a tileset.
  */
-struct CESIUM3DTILESWRITER_API WriteTilesetOptions {};
+struct CESIUM3DTILESWRITER_API WriteTilesetOptions {
+  /**
+   * @brief If the tileset JSON should be pretty printed.
+   */
+  bool prettyPrint = true;
+};
 
 /**
  * @brief Writes tilesets.
@@ -56,26 +49,25 @@ public:
   TilesetWriter();
 
   /**
-   * @brief Gets the context used to control how extensions are written from a
-   * tileset.
+   * @brief Gets the context used to control how tileset extensions are written.
    */
   CesiumJsonWriter::ExtensionWriterContext& getExtensions();
 
   /**
-   * @brief Gets the context used to control how extensions are written from a
-   * tileset.
+   * @brief Gets the context used to control how tileset extensions are written.
    */
   const CesiumJsonWriter::ExtensionWriterContext& getExtensions() const;
 
   /**
-   * @brief Writes a tileset.
+   * @brief Serializes the provided tileset object into a byte vector using the
+   * provided flags to convert.
    *
    * @param data The buffer from which to write the tileset.
    * @param options Options for how to write the tileset.
    * @return The result of writing the tileset.
    */
   TilesetWriterResult writeTileset(
-      const gsl::span<const std::byte>& data,
+      const Tileset& model,
       const WriteTilesetOptions& options = WriteTilesetOptions()) const;
 
 private:
