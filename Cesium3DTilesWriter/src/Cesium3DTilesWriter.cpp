@@ -1,7 +1,7 @@
 #include "Cesium3DTiles/Cesium3DTilesWriter.h"
 
-#include "TilesetWriter.h"
 #include "CesiumUtility/Tracing.h"
+#include "TilesetWriter.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -21,7 +21,7 @@ Cesium3DTilesWriter::getExtensions() const {
   return this->_context;
 }
 
-Cesium3DTilesWriterResult Cesium3DTilesWriter::writeTileset(
+TilesetWriterResult Cesium3DTilesWriter::writeTileset(
     const Tileset& tileset,
     const WriteTilesetOptions& options) const {
   CESIUM_TRACE("CesiumGltf::Cesium3DTilesWriter::writeTileset");
@@ -29,7 +29,7 @@ Cesium3DTilesWriterResult Cesium3DTilesWriter::writeTileset(
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
-  Cesium3DTilesWriterResult result;
+  TilesetWriterResult result;
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {

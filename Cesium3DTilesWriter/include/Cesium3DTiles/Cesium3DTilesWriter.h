@@ -11,7 +11,7 @@ namespace Cesium3DTiles {
  * @brief The result of writing a tileset with
  * {@link Cesium3DTilesWriter::writeTileset}.
  */
-struct CESIUM3DTILESWRITER_API Cesium3DTilesWriterResult {
+struct CESIUM3DTILESWRITER_API TilesetWriterResult {
   /**
    * @brief The final generated std::vector<std::byte> of the tileset.
    */
@@ -35,7 +35,7 @@ struct CESIUM3DTILESWRITER_API WriteTilesetOptions {
   /**
    * @brief If the tileset JSON should be pretty printed.
    */
-  bool prettyPrint = true;
+  bool prettyPrint = false;
 };
 
 /**
@@ -66,8 +66,8 @@ public:
    * @param options Options for how to write the tileset.
    * @return The result of writing the tileset.
    */
-  Cesium3DTilesWriterResult writeTileset(
-      const Tileset& model,
+  TilesetWriterResult writeTileset(
+      const Tileset& tileset,
       const WriteTilesetOptions& options = WriteTilesetOptions()) const;
 
 private:

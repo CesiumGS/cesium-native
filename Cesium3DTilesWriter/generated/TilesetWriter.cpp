@@ -113,10 +113,12 @@ template <typename T>
     const std::unordered_map<std::string, T>& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
   for (const auto& item : obj) {
     jsonWriter.Key(item.first);
     writeJson(item.second, jsonWriter, context);
   }
+  jsonWriter.EndObject();
 }
 } // namespace
 
