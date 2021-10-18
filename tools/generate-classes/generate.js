@@ -297,73 +297,6 @@ function generate(options, schema) {
     fs.writeFileSync(readerSourceOutputPath, unindent(readerImpl), "utf-8");
   }
 
-  const genericWriters = `
-    [[maybe_unused]] void writeJson(
-        const std::string& str,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& /* context */) {
-      jsonWriter.String(str);
-    }
-
-    [[maybe_unused]] void writeJson(
-        double val,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& /* context */) {
-      jsonWriter.Double(val);
-    }
-
-    [[maybe_unused]] void writeJson(
-        bool val,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& /* context */) {
-      jsonWriter.Bool(val);
-    }
-
-    [[maybe_unused]] void writeJson(
-        int64_t val,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& /* context */) {
-      jsonWriter.Int64(val);
-    }
-
-    template <typename T>
-    [[maybe_unused]] void writeJson(
-        const std::vector<T>& list,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& context) {
-      jsonWriter.StartArray();
-      for (const T& item : list) {
-        writeJson(item, jsonWriter, context);
-      }
-      jsonWriter.EndArray();
-    }
-
-    template <typename T>
-    [[maybe_unused]] void writeJson(
-        const std::optional<T>& val,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& context) {
-      if (val.has_value()) {
-        writeJson(*val, jsonWriter, context);
-      } else {
-        jsonWriter.Null();
-      }
-    }
-
-    template <typename T>
-    [[maybe_unused]] void writeJson(
-        const std::unordered_map<std::string, T>& obj,
-        JsonWriter& jsonWriter,
-        const ExtensionWriterContext& context) {
-      jsonWriter.StartObject();
-      for (const auto& item : obj) {
-        jsonWriter.Key(item.first);
-        writeJson(item.second, jsonWriter, context);
-      }
-      jsonWriter.EndObject();
-    }
-  `;
-
   return lodash.uniq(
     lodash.flatten(properties.map((property) => property.schemas))
   );
@@ -401,14 +334,6 @@ function formatReaderProperty(property) {
 }
 
 function formatReaderPropertyImpl(property) {
-  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
-}
-
-function formatWriterProperty(property) {
-  return `${property.writerType} _${property.name};`;
-}
-
-function formatWriterPropertyImpl(property) {
   return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
 }
 
@@ -457,36 +382,6 @@ function getReaderName(name) {
     // CesiumUtility types have their corresponding reader classes in CesiumJsonReader
     if (namespace === "CesiumUtility") {
       namespace = "CesiumJsonReader";
-    }
-    return `${namespace}::${pieces.groups.name}JsonHandler`;
-  } else {
-    return `${name}JsonHandler`;
-  }
-}
-
-function getWriterIncludeFromName(name) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces && pieces.groups && pieces.groups.namespace) {
-    let namespace = pieces.groups.namespace;
-
-    // CesiumUtility types have their corresponding writer classes in CesiumJsonWriter
-    if (namespace === "CesiumUtility") {
-      namespace = "CesiumJsonWriter";
-    }
-    return `<${namespace}/${pieces.groups.name}JsonHandler.h>`;
-  } else {
-    return `"${name}JsonHandler.h"`;
-  }
-}
-
-function getWriterName(name) {
-  const pieces = name.match(qualifiedTypeNameRegex);
-  if (pieces && pieces.groups && pieces.groups.namespace) {
-    let namespace = pieces.groups.namespace;
-
-    // CesiumUtility types have their corresponding writer classes in CesiumJsonWriter
-    if (namespace === "CesiumUtility") {
-      namespace = "CesiumJsonWriter";
     }
     return `${namespace}::${pieces.groups.name}JsonHandler`;
   } else {

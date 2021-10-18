@@ -44,8 +44,6 @@ function resolveProperty(
       type: makeOptional ? "std::optional<int64_t>" : "int64_t",
       readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
       readerType: "CesiumJsonReader::IntegerJsonHandler<int64_t>",
-      writerHeaders: [`<CesiumJsonWriter/IntegerJsonHandler.h>`],
-      writerType: "CesiumJsonWriter::IntegerJsonHandler<int64_t>",
       needsInitialization: !makeOptional,
     };
   } else if (propertyDetails.type == "number") {
@@ -55,8 +53,6 @@ function resolveProperty(
       type: makeOptional ? "std::optional<double>" : "double",
       readerHeaders: [`<CesiumJsonReader/DoubleJsonHandler.h>`],
       readerType: "CesiumJsonReader::DoubleJsonHandler",
-      writerHeaders: [`<CesiumJsonWriter/DoubleJsonHandler.h>`],
-      writerType: "CesiumJsonWriter::DoubleJsonHandler",
       needsInitialization: !makeOptional,
     };
   } else if (propertyDetails.type == "boolean") {
@@ -66,8 +62,6 @@ function resolveProperty(
       type: makeOptional ? "std::optional<bool>" : "bool",
       readerHeaders: `<CesiumJsonReader/BoolJsonHandler.h>`,
       readerType: "CesiumJsonReader::BoolJsonHandler",
-      writerHeaders: `<CesiumJsonWriter/BoolJsonHandler.h>`,
-      writerType: "CesiumJsonWriter::BoolJsonHandler",
       needsInitialization: ~makeOptional,
     };
   } else if (propertyDetails.type == "string") {
@@ -77,8 +71,6 @@ function resolveProperty(
       headers: ["<string>", ...(makeOptional ? ["<optional>"] : [])],
       readerHeaders: [`<CesiumJsonReader/StringJsonHandler.h>`],
       readerType: "CesiumJsonReader::StringJsonHandler",
-      writerHeaders: [`<CesiumJsonWriter/StringJsonHandler.h>`],
-      writerType: "CesiumJsonWriter::StringJsonHandler",
       defaultValue:
         propertyDetails.default !== undefined
           ? `"${propertyDetails.default.toString()}"`
@@ -117,8 +109,6 @@ function resolveProperty(
         headers: ["<cstdint>"],
         readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
-        writerHeaders: [`<CesiumJsonWriter/IntegerJsonHandler.h>`],
-        writerType: "CesiumJsonWriter::IntegerJsonHandler<int32_t>",
       };
     } else {
       const type = getNameFromSchema(config, itemSchema);
@@ -130,8 +120,6 @@ function resolveProperty(
         headers: [`"${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${type}JsonHandler.h"`],
-        writerType: `${type}JsonHandler`,
-        writerHeaders: [`"${type}JsonHandler.h"`],
         schemas: [itemSchema],
       };
     }
@@ -159,8 +147,6 @@ function resolveProperty(
       headers: [`<CesiumUtility/JsonValue.h>`],
       readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
       readerHeaders: [`<CesiumJsonReader/JsonObjectJsonHandler.h>`],
-      writerType: `CesiumJsonWriter::JsonObjectJsonHandler`,
-      writerHeaders: [`<CesiumJsonWriter/JsonObjectJsonHandler.h>`],
     };
   }
 }
@@ -188,21 +174,16 @@ function propertyDefaults(propertyName, propertyDetails) {
     headers: [],
     readerHeaders: [],
     readerHeadersImpl: [],
-    writerHeaders: [],
-    writerHeadersImpl: [],
     type: "",
     defaultValue:
       propertyDetails.default !== undefined
         ? propertyDetails.default.toString()
         : undefined,
     readerType: "",
-    writerType: "",
     schemas: [],
     localTypes: [],
     readerLocalTypes: [],
     readerLocalTypesImpl: [],
-    writerLocalTypes: [],
-    writerLocalTypesImpl: [],
     briefDoc: propertyDetails.description,
     fullDoc: fullDoc,
   };
@@ -250,11 +231,6 @@ function resolveArray(
       ...itemProperty.readerHeaders,
     ],
     readerType: `CesiumJsonReader::ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
-    writerHeaders: [
-      `<CesiumJsonWriter/ArrayJsonHandler.h>`,
-      ...itemProperty.writerHeaders,
-    ],
-    writerType: `CesiumJsonWriter::ArrayJsonHandler<${itemProperty.type}, ${itemProperty.writerType}>`,
   };
 }
 
@@ -294,11 +270,6 @@ function resolveDictionary(
       ...additional.readerHeaders,
     ],
     readerType: `CesiumJsonReader::DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
-    writerHeaders: [
-      `<CesiumJsonWriter/DictionaryJsonHandler.h>`,
-      ...additional.writerHeaders,
-    ],
-    writerType: `CesiumJsonWriter::DictionaryJsonHandler<${additional.type}, ${additional.writerType}>`,
   };
 }
 
@@ -385,13 +356,6 @@ function resolveEnum(
     propertyDetails
   );
 
-  const writerTypes = createEnumWriterType(
-    parentName,
-    enumName,
-    propertyName,
-    propertyDetails
-  );
-
   const propertyDefaultValues = propertyDefaults(propertyName, propertyDetails);
   const enumBriefDoc =
     propertyDefaultValues.briefDoc +
@@ -427,14 +391,6 @@ function resolveEnum(
       propertyName,
       propertyDetails
     ),
-    writerHeaders: [`<${namespace}/${parentName}.h>`],
-    writerLocalTypes: writerTypes,
-    writerLocalTypesImpl: createEnumWriterTypeImpl(
-      parentName,
-      enumName,
-      propertyName,
-      propertyDetails
-    ),
     needsInitialization: !makeOptional,
     briefDoc: enumBriefDoc,
   };
@@ -447,16 +403,6 @@ function resolveEnum(
   } else if (enumType === "string") {
     result.readerType = `CesiumJsonReader::StringJsonHandler`;
     result.readerHeaders.push(`<CesiumJsonReader/StringJsonHandler.h>`);
-  }
-
-  if (writerTypes.length > 0) {
-    result.writerType = `${enumName}JsonHandler`;
-  } else if (enumType === "integer") {
-    result.writerType = `CesiumJsonWriter::IntegerJsonHandler<${enumRuntimeType}>`;
-    result.writerHeaders.push(`<CesiumJsonWriter/IntegerJsonHandler.h>`);
-  } else if (enumType === "string") {
-    result.writerType = `CesiumJsonWriter::StringJsonHandler`;
-    result.writerHeaders.push(`<CesiumJsonWriter/StringJsonHandler.h>`);
   }
 
   return result;
@@ -593,81 +539,6 @@ function createEnumReaderTypeImpl(
     }
 
     CesiumJsonReader::IJsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::readString(const std::string_view& str) {
-      using namespace std::string_literals;
-
-      assert(this->_pEnum);
-
-      ${indent(
-        propertyDetails.anyOf
-          .map((e) => {
-            const enumValue = getEnumValue(e);
-            return enumValue !== undefined
-              ? `if ("${enumValue}"s == str) *this->_pEnum = ${parentName}::${enumName}::${makeIdentifier(
-                  enumValue
-                )};`
-              : undefined;
-          })
-          .filter((s) => s !== undefined)
-          .join("\nelse "),
-        6
-      )}
-      else return nullptr;
-
-      return this->parent();
-    }
-  `);
-}
-
-function createEnumWriterType(
-  parentName,
-  enumName,
-  propertyName,
-  propertyDetails
-) {
-  if (propertyDetails.anyOf[0].type === "integer") {
-    // No special writer needed for integer enums.
-    return [];
-  }
-  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
-    // No special writer needed for string enums.
-    return [];
-  }
-
-  return unindent(`
-    class ${enumName}JsonHandler : public CesiumJsonWriter::JsonHandler {
-    public:
-      ${enumName}JsonHandler() noexcept : CesiumJsonWriter::JsonHandler() {}
-      void reset(CesiumJsonWriter::IJsonHandler* pParent, ${parentName}::${enumName}* pEnum);
-      virtual CesiumJsonWriter::IJsonHandler* writeString(const std::string_view& str) override;
-
-    private:
-      ${parentName}::${enumName}* _pEnum = nullptr;
-    };
-  `);
-}
-
-function createEnumWriterTypeImpl(
-  parentName,
-  enumName,
-  propertyName,
-  propertyDetails
-) {
-  if (propertyDetails.anyOf[0].type === "integer") {
-    // No special writer needed for integer enums.
-    return [];
-  }
-  if (findCommonEnumType(propertyName, propertyDetails) === "string") {
-    // No special writer needed for string enums.
-    return [];
-  }
-
-  return unindent(`
-    void ${parentName}JsonHandler::${enumName}JsonHandler::reset(CesiumJsonWriter::IJsonHandler* pParent, ${parentName}::${enumName}* pEnum) {
-      JsonHandler::reset(pParent);
-      this->_pEnum = pEnum;
-    }
-
-    CesiumJsonWriter::IJsonHandler* ${parentName}JsonHandler::${enumName}JsonHandler::writeString(const std::string_view& str) {
       using namespace std::string_literals;
 
       assert(this->_pEnum);

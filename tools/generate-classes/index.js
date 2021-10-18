@@ -70,17 +70,6 @@ if (argv.oneHandlerFile) {
   fs.writeFileSync(readerSourceOutputPath, "", "utf-8");
 }
 
-if (argv.oneHandlerFile) {
-  // Clear the handler implementation file, and then we'll append to it in `generate`.
-  const writerHeaderOutputDir = path.join(argv.writerOutput, "generated");
-  fs.mkdirSync(writerHeaderOutputDir, { recursive: true });
-  const writerSourceOutputPath = path.join(
-    writerHeaderOutputDir,
-    "GeneratedJsonHandlers.cpp"
-  );
-  fs.writeFileSync(writerSourceOutputPath, "", "utf-8");
-}
-
 const options = {
   schemaCache,
   oneHandlerFile: argv.oneHandlerFile,
