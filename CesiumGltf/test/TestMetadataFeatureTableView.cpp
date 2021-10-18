@@ -60,7 +60,7 @@ TEST_CASE("Test numeric properties") {
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "UINT32");
   REQUIRE(classProperty->componentCount == std::nullopt);
-  REQUIRE(classProperty->componentType.isNull());
+  REQUIRE(classProperty->componentType == std::nullopt);
 
   SECTION("Access correct type") {
     MetadataPropertyView<uint32_t> uint32Property =
@@ -248,7 +248,7 @@ TEST_CASE("Test boolean properties") {
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "BOOLEAN");
   REQUIRE(classProperty->componentCount == std::nullopt);
-  REQUIRE(classProperty->componentType.isNull());
+  REQUIRE(classProperty->componentType == std::nullopt);
 
   SECTION("Access correct type") {
     MetadataPropertyView<bool> boolProperty =
@@ -358,7 +358,7 @@ TEST_CASE("Test string property") {
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "STRING");
   REQUIRE(classProperty->componentCount == std::nullopt);
-  REQUIRE(classProperty->componentType.isNull());
+  REQUIRE(classProperty->componentType == std::nullopt);
 
   SECTION("Access correct type") {
     MetadataPropertyView<std::string_view> stringProperty =
@@ -473,7 +473,7 @@ TEST_CASE("Test fixed numeric array") {
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
   REQUIRE(classProperty->componentCount == 3);
-  REQUIRE(classProperty->componentType.getString() == "UINT32");
+  REQUIRE(classProperty->componentType == "UINT32");
 
   SECTION("Access the right type") {
     MetadataPropertyView<MetadataArrayView<uint32_t>> arrayProperty =
@@ -613,7 +613,7 @@ TEST_CASE("Test dynamic numeric array") {
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
-  REQUIRE(classProperty->componentType.getString() == "UINT16");
+  REQUIRE(classProperty->componentType == "UINT16");
 
   SECTION("Access the correct type") {
     MetadataPropertyView<MetadataArrayView<uint16_t>> property =
@@ -716,7 +716,7 @@ TEST_CASE("Test fixed boolean array") {
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
   REQUIRE(classProperty->componentCount == 3);
-  REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
+  REQUIRE(classProperty->componentType == "BOOLEAN");
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<bool>> boolProperty =
@@ -845,7 +845,7 @@ TEST_CASE("Test dynamic bool array") {
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
-  REQUIRE(classProperty->componentType.getString() == "BOOLEAN");
+  REQUIRE(classProperty->componentType == "BOOLEAN");
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<bool>> boolProperty =
@@ -962,7 +962,7 @@ TEST_CASE("Test fixed array of string") {
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
   REQUIRE(classProperty->componentCount == 2);
-  REQUIRE(classProperty->componentType.getString() == "STRING");
+  REQUIRE(classProperty->componentType == "STRING");
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =
@@ -1139,7 +1139,7 @@ TEST_CASE("Test dynamic array of string") {
   const ClassProperty* classProperty =
       view.getClassProperty("TestClassProperty");
   REQUIRE(classProperty->type == "ARRAY");
-  REQUIRE(classProperty->componentType.getString() == "STRING");
+  REQUIRE(classProperty->componentType == "STRING");
 
   SECTION("Access correct type") {
     MetadataPropertyView<MetadataArrayView<std::string_view>> stringProperty =

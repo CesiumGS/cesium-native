@@ -35,7 +35,7 @@
         {
             "className": "ModelEXT_feature_metadata",
             "extensionName": "EXT_feature_metadata",
-            "schema": "Vendor/EXT_feature_metadata/schema/gltf.EXT_feature_metadata.schema.json",
+            "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json",
             "attachTo": [
                 "glTF"
             ]
