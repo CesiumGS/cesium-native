@@ -1,7 +1,6 @@
 #include "CesiumGltf/PropertyType.h"
 
 #include "CesiumGltf/ClassProperty.h"
-
 #include "CesiumGltf/FeatureTable.h"
 
 namespace CesiumGltf {
