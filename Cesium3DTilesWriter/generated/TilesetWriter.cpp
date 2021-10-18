@@ -84,18 +84,6 @@ template <typename T>
   jsonWriter.EndArray();
 }
 
-template <typename... Ts>
-[[maybe_unused]] void writeJson(
-    const std::variant<Ts...>& val,
-    JsonWriter& jsonWriter,
-    const ExtensionWriterContext& context) {
-  std::visit(
-      [&jsonWriter, &context](const auto& arg) {
-        writeJson(arg, jsonWriter, context);
-      },
-      val);
-}
-
 template <typename T>
 [[maybe_unused]] void writeJson(
     const std::optional<T>& val,
