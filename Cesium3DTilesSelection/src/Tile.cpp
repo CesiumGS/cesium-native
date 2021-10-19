@@ -145,59 +145,23 @@ int32_t getTextureCoordinatesForProjection(
   }
 }
 
-void mapRasterOverlaysToTile(
-    Tile& tile,
-    const RasterOverlayCollection& overlays,
-    std::vector<CesiumGeospatial::Projection>& projections) {
+std::vector<Projection> mapOverlaysToTile(Tile& tile) {
+  Tileset& tileset = *tile.getTileset();
+  RasterOverlayCollection& overlays = tileset.getOverlays();
 
-  assert(tile.getMappedRasterTiles().empty());
+  std::vector<Projection> projections;
 
-  std::optional<GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(tile.getBoundingVolume());
-  if (!maybeRectangle) {
-    return;
-  }
-
-  // Find the unique projections; we'll create texture coordinates for each
-  // later.
-  for (const auto& pOverlay : overlays) {
-    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
-
-    // Project the globe rectangle to the raster's coordinate system.
-    // TODO: we can compute a much more precise projected rectangle by
-    //       projecting each vertex, but that would require us to have
-    //       geometry first.
-    const Rectangle overlayRectangle =
-        projectRectangleSimple(pProvider->getProjection(), *maybeRectangle);
-
-    IntrusivePointer<RasterOverlayTile> pRaster =
-        pOverlay->getTileProvider()->getTile(
-            overlayRectangle,
-            tile.getGeometricError());
-    if (pRaster) {
-      RasterMappedTo3DTile& mappedTile =
-          tile.getMappedRasterTiles().emplace_back(pRaster);
-
-      const CesiumGeospatial::Projection& projection =
-          pRaster->getOverlay().getTileProvider()->getProjection();
-
-      const int32_t projectionID =
-          getTextureCoordinatesForProjection(projections, projection);
-
-      mappedTile.setTextureCoordinateID(projectionID);
-
-      if (pRaster->getState() != RasterOverlayTile::LoadState::Placeholder) {
-        pOverlay->getTileProvider()->loadTileThrottled(*pRaster);
-      }
+  for (auto& pOverlay : overlays) {
+    RasterMappedTo3DTile* pMapped =
+        RasterMappedTo3DTile::mapOverlayToTile(*pOverlay, tile, projections);
+    if (pMapped) {
+      // Try to load now, but if the mapped raster tile is a placeholder this
+      // won't do anything.
+      pMapped->loadThrottled();
     }
   }
 
-  // Add geographic texture coordinates for water mask.
-  if (tile.getTileset()->getOptions().contentOptions.enableWaterMask) {
-    getTextureCoordinatesForProjection(
-        projections,
-        CesiumGeospatial::GeographicProjection());
-  }
+  return projections;
 }
 } // namespace
 
@@ -206,15 +170,7 @@ void Tile::loadContent() {
     // No need to load geometry, but give previously-throttled
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
-      RasterOverlayTile* pLoading = mapped.getLoadingTile();
-      if (pLoading &&
-          pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
-        RasterOverlayTileProvider* pProvider =
-            pLoading->getOverlay().getTileProvider();
-        if (pProvider) {
-          pProvider->loadTileThrottled(*pLoading);
-        }
-      }
+      mapped.loadThrottled();
     }
     return;
   }
@@ -222,22 +178,6 @@ void Tile::loadContent() {
   this->setState(LoadState::ContentLoading);
 
   Tileset& tileset = *this->getTileset();
-
-  // TODO: support overlay mapping for tiles that aren't region-based.
-  // Probably by creating a placeholder for each raster overlay and resolving it
-  // to actual raster tiles once we have real geometry. This will also be
-  // necessary for raster overlays with a projection that isn't nicely lon/lat
-  // aligned like geographic or web mercator, because we won't know our raster
-  // rectangle until we can project each vertex.
-
-  const RasterOverlayCollection& overlays = this->getTileset()->getOverlays();
-  std::vector<CesiumGeospatial::Projection> projections =
-      overlays.getUniqueProjections();
-
-  // TODO: If we can be certain a particular raster overlay doesn't apply to
-  // this tile, because we can determine the raster overlay's rectangle can't
-  // overlap this tile's bounding volume, then exclude the overlay's projection
-  // from the list.
 
   std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
       tileset.requestTileContent(*this);
@@ -251,7 +191,7 @@ void Tile::loadContent() {
       // We can't upsample this tile until its parent tile is done loading.
       if (this->getParent() &&
           this->getParent()->getState() == LoadState::Done) {
-        this->loadOverlays(projections);
+        std::vector<Projection> projections = mapOverlaysToTile(*this);
         this->upsampleParent(std::move(projections));
       } else {
         // Try again later. Push the parent tile loading along if we can.
@@ -267,14 +207,7 @@ void Tile::loadContent() {
     return;
   }
 
-  // TODO: we can load overlay tiles here (and not later) if we're already sure
-  // of our bounding rectangle in the overlay's projection. That will happen
-  // when our bounding volume is a BoundingRegion and we can compute an accurate
-  // projected rectangle just from the longitude/latitude rectangle (i.e. the
-  // projection X coordinate only affects longitude and the Y coordinate only
-  // affects latitude). That will shave off some load latency because we don't
-  // need to serialize load of geometry and overlays.
-  // this->loadOverlays(projections);
+  std::vector<Projection> projections = mapOverlaysToTile(*this);
 
   struct LoadResult {
     LoadState state = LoadState::Unloaded;
@@ -368,12 +301,6 @@ void Tile::loadContent() {
                       model.extras["gltfUpAxis"] =
                           static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
 
-                      // #327: compute rectangle and texture coordinates for
-                      // each projection.
-                      // As an optimization, only generate texture coordinates
-                      // if a raster overlay that uses this projection has data
-                      // within this tile.
-
                       GenerateTextureCoordinatesResult generateResult =
                           Tile::generateTextureCoordinates(
                               model,
@@ -413,48 +340,6 @@ void Tile::loadContent() {
       .thenInMainThread([this](LoadResult&& loadResult) noexcept {
         this->_pContent = std::move(loadResult.pContent);
         this->_pRendererResources = loadResult.pRendererResources;
-
-        const std::vector<Projection>& projections =
-            this->_pContent->rasterOverlayProjections;
-        const std::vector<Rectangle>& rectangles =
-            this->_pContent->rasterOverlayRectangles;
-
-        for (const auto& pOverlay : this->getTileset()->getOverlays()) {
-          const RasterOverlayTileProvider* pProvider =
-              pOverlay->getTileProvider();
-
-          if (pProvider->isPlaceholder()) {
-            continue;
-          }
-
-          const Projection& projection = pProvider->getProjection();
-          auto projectionIt =
-              std::find(projections.begin(), projections.end(), projection);
-          if (projectionIt == projections.end()) {
-            // TODO: reload tile with missing projection?
-            continue;
-          }
-
-          const int32_t projectionID =
-              int32_t(projectionIt - projections.begin());
-          const Rectangle& overlayRectangle = rectangles[projectionID];
-
-          IntrusivePointer<RasterOverlayTile> pRaster =
-              pOverlay->getTileProvider()->getTile(
-                  overlayRectangle,
-                  this->getGeometricError());
-          if (pRaster) {
-            RasterMappedTo3DTile& mappedTile =
-                this->getMappedRasterTiles().emplace_back(pRaster);
-            mappedTile.setTextureCoordinateID(projectionID);
-
-            if (pRaster->getState() !=
-                RasterOverlayTile::LoadState::Placeholder) {
-              pOverlay->getTileProvider()->loadTileThrottled(*pRaster);
-            }
-          }
-        }
-
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
       })
@@ -792,14 +677,8 @@ void Tile::update(
     }
   }
 
-  std::optional<GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(this->getBoundingVolume());
-  if (!maybeRectangle) {
-    return;
-  }
-
   if (this->getState() == LoadState::Done &&
-      this->getTileset()->supportsRasterOverlays() && maybeRectangle) {
+      this->getTileset()->supportsRasterOverlays()) {
     bool moreRasterDetailAvailable = false;
 
     for (size_t i = 0; i < this->_rasterTiles.size(); ++i) {
@@ -812,24 +691,8 @@ void Tile::update(
             pLoadingTile->getOverlay().getTileProvider();
 
         // Try to replace this placeholder with real tiles.
-        if (pProvider && !pProvider->isPlaceholder() && this->getContent()) {
-          // Find a suitable projection in the content.
-          // If there isn't one, the mesh doesn't have the right texture
-          // coordinates for this overlay and we need to kick it back to the
-          // unloaded state to fix that.
-          // In the future, we could add the ability to add the required
-          // texture coordinates without starting over from scratch.
-          const auto& projections =
-              this->getContent()->rasterOverlayProjections;
-          auto it = std::find(
-              projections.begin(),
-              projections.end(),
-              pProvider->getProjection());
-          if (it == projections.end()) {
-            this->unloadContent();
-            return;
-          }
-
+        if (pProvider && !pProvider->isPlaceholder()) {
+          // Remove the existing placeholder mapping
           this->_rasterTiles.erase(
               this->_rasterTiles.begin() +
               static_cast<
@@ -837,14 +700,27 @@ void Tile::update(
                   i));
           --i;
 
-          const Rectangle projectedRectangle = projectRectangleSimple(
-              pProvider->getProjection(),
-              *maybeRectangle);
-          CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile =
-              pProvider->getTile(projectedRectangle, this->getGeometricError());
+          // Add a new mapping.
+          std::vector<Projection> missingProjections;
+          RasterMappedTo3DTile* pMapping =
+              RasterMappedTo3DTile::mapOverlayToTile(
+                  pProvider->getOwner(),
+                  *this,
+                  missingProjections);
 
-          RasterMappedTo3DTile& mapped = this->_rasterTiles.emplace_back(pTile);
-          mapped.setTextureCoordinateID(int32_t(it - projections.begin()));
+          if (!missingProjections.empty()) {
+            // The mesh doesn't have the right texture coordinates for this
+            // overlay's projection, so we need to kick it back to the unloaded
+            // state to fix that.
+            // In the future, we could add the ability to add the required
+            // texture coordinates without starting over from scratch.
+            this->unloadContent();
+            return;
+          }
+
+          if (pMapping) {
+            pMapping->loadThrottled();
+          }
         }
 
         continue;
@@ -1000,6 +876,8 @@ void Tile::upsampleParent(
                       projections);
               pContent->updatedBoundingVolume = generateResult.boundingRegion;
               pContent->rasterOverlayProjections = std::move(projections);
+              pContent->rasterOverlayRectangles =
+                  std::move(generateResult.projectionRectangles);
             }
 
             void* pRendererResources = nullptr;
@@ -1027,19 +905,6 @@ void Tile::upsampleParent(
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(LoadState::Failed);
       });
-}
-
-void Tile::loadOverlays(
-    std::vector<CesiumGeospatial::Projection>& projections) {
-  assert(this->_rasterTiles.empty());
-  assert(this->_state == LoadState::ContentLoading);
-
-  Tileset* pTileset = this->getTileset();
-
-  if (pTileset->supportsRasterOverlays()) {
-    const RasterOverlayCollection& overlays = pTileset->getOverlays();
-    mapRasterOverlaysToTile(*this, overlays, projections);
-  }
 }
 
 } // namespace Cesium3DTilesSelection

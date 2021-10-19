@@ -68,6 +68,7 @@ RasterOverlayTileProvider::getTile(
   if (this->_pPlaceholder) {
     return this->_pPlaceholder.get();
   }
+  // TODO: return nullptr if rectangle doesn't overlap the provider's rectangle.
   return {
       new RasterOverlayTile(this->getOwner(), targetGeometricError, rectangle)};
 }
@@ -95,8 +96,6 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
 }
 
 bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     return true;
   }
@@ -287,6 +286,8 @@ void RasterOverlayTileProvider::doLoad(
     // Already loading or loaded, do nothing.
     return;
   }
+
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);

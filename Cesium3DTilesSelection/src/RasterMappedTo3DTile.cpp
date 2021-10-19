@@ -1,5 +1,3 @@
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
@@ -8,6 +6,8 @@
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "TileUtilities.h"
+
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -45,10 +45,11 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
 namespace Cesium3DTilesSelection {
 
 RasterMappedTo3DTile::RasterMappedTo3DTile(
-    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile)
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
+    int32_t textureCoordinateIndex)
     : _pLoadingTile(pRasterTile),
       _pReadyTile(nullptr),
-      _textureCoordinateID(0),
+      _textureCoordinateID(textureCoordinateIndex),
       _translation(0.0, 0.0),
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
@@ -189,6 +190,135 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
       this->_pReadyTile->getRendererResources());
 
   this->_state = AttachmentState::Unattached;
+}
+
+bool RasterMappedTo3DTile::loadThrottled() noexcept {
+  RasterOverlayTile* pLoading = this->getLoadingTile();
+  if (!pLoading) {
+    return true;
+  }
+
+  RasterOverlayTileProvider* pProvider =
+      pLoading->getOverlay().getTileProvider();
+  if (!pProvider) {
+    // This should not be possible.
+    assert(pProvider);
+    return false;
+  }
+
+  return pProvider->loadTileThrottled(*pLoading);
+}
+
+namespace {
+
+IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay& overlay) {
+  // Rectangle and geometric error don't matter for a placeholder.
+  return overlay.getPlaceholder()->getTile(Rectangle(), 0.0);
+}
+
+const BoundingRegion*
+getRegionFromBoundingVolume(const BoundingVolume& boundingVolume) {
+  const BoundingRegion* pResult = std::get_if<BoundingRegion>(&boundingVolume);
+  if (!pResult) {
+    const BoundingRegionWithLooseFittingHeights* pLoose =
+        std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume);
+    if (pLoose) {
+      pResult = &pLoose->getBoundingRegion();
+    }
+  }
+  return pResult;
+}
+
+std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
+    const Projection& projection,
+    const BoundingVolume& boundingVolume) {
+  const BoundingRegion* pRegion = getRegionFromBoundingVolume(boundingVolume);
+  if (!pRegion) {
+    return std::nullopt;
+  }
+
+  // Currently _all_ supported projections can have a rectangle precisely
+  // determined from a bounding region. This may not be true, however, for
+  // projections we add in the future where X is not purely a function of
+  // longitude or Y is not purely a function of latitude.
+  return projectRectangleSimple(projection, pRegion->getRectangle());
+}
+
+int32_t addProjectionToList(
+    std::vector<Projection>& projections,
+    const Projection& projection) {
+  auto it = std::find(projections.begin(), projections.end(), projection);
+  if (it == projections.end()) {
+    projections.emplace_back(projection);
+    return int32_t(projections.size()) - 1;
+  } else {
+    return int32_t(it - projections.begin());
+  }
+}
+
+} // namespace
+
+/*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
+    RasterOverlay& overlay,
+    Tile& tile,
+    std::vector<Projection>& missingProjections) {
+  RasterOverlayTileProvider* pProvider = overlay.getTileProvider();
+  if (pProvider->isPlaceholder()) {
+    // Provider not created yet, so add a placeholder tile.
+    return &tile.getMappedRasterTiles().emplace_back(
+        RasterMappedTo3DTile(getPlaceholderTile(overlay), -1));
+  }
+
+  const Projection& projection = pProvider->getProjection();
+
+  // If the tile is loaded, use the precise rectangle computed from the content.
+  const TileContentLoadResult* pContent = tile.getContent();
+  if (pContent) {
+    const std::vector<Projection>& projections =
+        pContent->rasterOverlayProjections;
+    const std::vector<Rectangle>& rectangles =
+        pContent->rasterOverlayRectangles;
+    auto it = std::find(projections.begin(), projections.end(), projection);
+    if (it == projections.end()) {
+      // We don't have a precise rectangle for this projection, which means the
+      // tile was loaded before we knew we needed this projection. We'll need to
+      // reload the tile (later).
+      int32_t textureCoordinateIndex =
+          int32_t(projections.size()) +
+          addProjectionToList(missingProjections, projection);
+      // TODO: don't create a tile if there's no overlap
+      return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+          getPlaceholderTile(overlay),
+          textureCoordinateIndex));
+    }
+
+    // We have a rectangle and texture coordinates for this projection.
+    int32_t index = int32_t(it - projections.begin());
+    assert(index < rectangles.size());
+
+    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+        pProvider->getTile(rectangles[index], tile.getGeometricError()),
+        index));
+  }
+
+  // Maybe we can derive a precise rectangle from the bounding volume.
+  int32_t textureCoordinateIndex =
+      addProjectionToList(missingProjections, projection);
+  std::optional<Rectangle> maybeRectangle =
+      getPreciseRectangleFromBoundingVolume(
+          pProvider->getProjection(),
+          tile.getBoundingVolume());
+  if (maybeRectangle) {
+    // TODO: don't create a tile if there's no overlap
+    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+        pProvider->getTile(*maybeRectangle, tile.getGeometricError()),
+        textureCoordinateIndex));
+  } else {
+    // No precise rectangle yet, so return a placeholder for now.
+    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+        getPlaceholderTile(overlay),
+        textureCoordinateIndex));
+  }
 }
 
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
