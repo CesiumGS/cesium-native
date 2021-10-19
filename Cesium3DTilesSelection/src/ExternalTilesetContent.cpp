@@ -31,43 +31,76 @@ ExternalTilesetContent::load(const TileContentLoadInput& input) {
     const gsl::span<const std::byte>& data) {
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
+  /*
+    rapidjson::Document tilesetJson;
+    tilesetJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
-
-  if (tilesetJson.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset());
-    return pResult;
-  }
-
+    if (tilesetJson.HasParseError()) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Error when parsing tileset JSON, error code {} at byte offset {}",
+          tilesetJson.GetParseError(),
+          tilesetJson.GetErrorOffset());
+      return pResult;
+    }
+  */
   pResult->childTiles.emplace(1);
 
   pResult->pNewTileContext = std::make_unique<TileContext>();
   pResult->pNewTileContext->baseUrl = url;
 
   TileContext* pContext = pResult->pNewTileContext.get();
-  pContext->contextInitializerCallback = [](const TileContext& parentContext,
-                                            TileContext& currentContext) {
+  pContext->contextInitializerCallback = [pTile =
+                                              &pResult->childTiles.value()[0],
+                                          data = std::vector<std::byte>(
+                                              data.begin(),
+                                              data.end()),
+                                          tileTransform,
+                                          tileRefine,
+                                          pLogger
+                                          //&loadTilesFromJson =
+                                          //Tileset::loadTilesFromJson
+  ](const TileContext& parentContext, TileContext& currentContext) mutable {
     currentContext.pTileset = parentContext.pTileset;
     currentContext.requestHeaders = parentContext.requestHeaders;
     currentContext.version = parentContext.version;
     currentContext.failedTileCallback = parentContext.failedTileCallback;
+
+    rapidjson::Document tilesetJson;
+    tilesetJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+
+    if (tilesetJson.HasParseError()) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Error when parsing tileset JSON, error code {} at byte offset {}",
+          tilesetJson.GetParseError(),
+          tilesetJson.GetErrorOffset());
+      return;
+    }
+
+    if (pTile) {
+      Tileset::loadTilesFromJson(
+          *pTile,
+          tilesetJson,
+          tileTransform,
+          tileRefine,
+          currentContext,
+          pLogger);
+    }
   };
 
   pResult->childTiles.value()[0].setContext(pContext);
 
-  Tileset::loadTilesFromJson(
-      pResult->childTiles.value()[0],
-      tilesetJson,
-      tileTransform,
-      tileRefine,
-      *pContext,
-      pLogger);
-
+  // TODO: is it okay to call this in the context initializer callback instead?
+  /*
+    Tileset::loadTilesFromJson(
+        pResult->childTiles.value()[0],
+        tilesetJson,
+        tileTransform,
+        tileRefine,
+        *pContext,
+        pLogger);
+  */
   return pResult;
 }
 

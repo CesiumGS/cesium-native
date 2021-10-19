@@ -814,17 +814,19 @@ void Tile::update(
                 context.rectangleAvailability->addAvailableTileRange(range);
               }
             }
-          } else if (context.quadtreeSubtreeAvailability) {
+          } else if (context.quadtreeAvailability) {
             if (this->_pContent->subtreeLoadResult) {
-              context.quadtreeSubtreeAvailability->addSubtree(
+              context.quadtreeAvailability->addSubtree(
                   *pQuadtreeTileID,
                   std::move(*this->_pContent->subtreeLoadResult));
             }
           }
         } else if (
-            pOctreeTileID && context.octreeTilingScheme
-            /*&& context.octreeSubtreeAvailability*/) {
-          // TODO: handle octree case
+            this->_pContent->subtreeLoadResult && pOctreeTileID &&
+            context.octreeTilingScheme && context.octreeAvailability) {
+          context.octreeAvailability->addSubtree(
+              *pOctreeTileID,
+              std::move(*this->_pContent->subtreeLoadResult));
         }
       }
     }
@@ -858,15 +860,11 @@ void Tile::update(
         se = implicitContext.rectangleAvailability->isTileAvailable(seID);
         nw = implicitContext.rectangleAvailability->isTileAvailable(nwID);
         ne = implicitContext.rectangleAvailability->isTileAvailable(neID);
-      } else if (implicitContext.quadtreeSubtreeAvailability) {
-        sw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
-            swID);
-        se = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
-            seID);
-        nw = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
-            nwID);
-        ne = implicitContext.quadtreeSubtreeAvailability->computeAvailability(
-            neID);
+      } else if (implicitContext.quadtreeAvailability) {
+        sw = implicitContext.quadtreeAvailability->computeAvailability(swID);
+        se = implicitContext.quadtreeAvailability->computeAvailability(seID);
+        nw = implicitContext.quadtreeAvailability->computeAvailability(nwID);
+        ne = implicitContext.quadtreeAvailability->computeAvailability(neID);
       }
 
       size_t childCount = static_cast<size_t>(
@@ -912,7 +910,6 @@ void Tile::update(
       }
 
     } else if (pOctreeTileID && implicitContext.octreeAvailability) {
-      // TODO: handle Octree case
       // Check if any child tiles are known to be available, and create them if
       // they are.
 

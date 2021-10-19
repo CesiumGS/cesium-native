@@ -948,7 +948,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
           }
 
           if (implicitContext.quadtreeTilingScheme) {
-            implicitContext.quadtreeSubtreeAvailability = QuadtreeAvailability(
+            implicitContext.quadtreeAvailability = QuadtreeAvailability(
                 *implicitContext.quadtreeTilingScheme,
                 subtreeLevels,
                 maximumLevel);
