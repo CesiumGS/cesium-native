@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <string>
 
 namespace CesiumGltf {
 /**
@@ -16,6 +15,20 @@ namespace CesiumGltf {
 struct CESIUMGLTF_API FeatureTableProperty final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "FeatureTableProperty";
+
+  /**
+   * @brief Known values for The type of values in `arrayOffsetBufferView` and
+   * `stringOffsetBufferView`.
+   */
+  struct OffsetType {
+    inline static const std::string UINT8 = "UINT8";
+
+    inline static const std::string UINT16 = "UINT16";
+
+    inline static const std::string UINT32 = "UINT32";
+
+    inline static const std::string UINT64 = "UINT64";
+  };
 
   /**
    * @brief The index of the buffer view containing property values. The data
@@ -40,8 +53,11 @@ struct CESIUMGLTF_API FeatureTableProperty final
   /**
    * @brief The type of values in `arrayOffsetBufferView` and
    * `stringOffsetBufferView`.
+   *
+   * Known values are defined in {@link OffsetType}.
+   *
    */
-  std::string offsetType = "UINT32";
+  std::string offsetType = OffsetType::UINT32;
 
   /**
    * @brief The index of the buffer view containing offsets for variable-length

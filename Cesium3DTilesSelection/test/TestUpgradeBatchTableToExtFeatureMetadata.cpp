@@ -28,7 +28,7 @@ static void checkScalarProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedPropertyType);
-  REQUIRE(property.componentType.isNull());
+  REQUIRE(property.componentType == std::nullopt);
   REQUIRE(property.componentCount == std::nullopt);
 
   MetadataFeatureTableView view(&model, &featureTable);
@@ -62,7 +62,7 @@ static void checkArrayProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
-  REQUIRE(property.componentType.getString() == expectedComponentType);
+  REQUIRE(property.componentType == expectedComponentType);
   if (expectedComponentCount > 0) {
     REQUIRE(
         property.componentCount.value() ==
