@@ -125,8 +125,6 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   // Compute the required level in the imagery tiling scheme.
   // TODO: dividing by 8 to change the default 3D Tiles SSE (16) back to the
   // terrain SSE (2)
-  // TODO: Correct latitude factor, which is really a property of the
-  // projection.
   uint32_t imageryLevel = this->computeLevelFromGeometricError(
       targetGeometricError / 8.0,
       intersection.getCenter());
@@ -198,6 +196,22 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
           veryCloseX &&
       northeastTileCoordinates.x > southwestTileCoordinates.x) {
     --northeastTileCoordinates.x;
+  }
+
+  // If we're mapping too many tiles, reduce the level until it's sane.
+  uint32_t maxTextureSize =
+      uint32_t(this->getOwner().getOptions().maximumTextureSize);
+
+  uint32_t tilesX = northeastTileCoordinates.x - southwestTileCoordinates.x;
+  uint32_t tilesY = northeastTileCoordinates.y - southwestTileCoordinates.y;
+
+  while (imageryLevel > 0U && (tilesX * this->getWidth() > maxTextureSize ||
+                               tilesY * this->getHeight() > maxTextureSize)) {
+    --imageryLevel;
+    northeastTileCoordinates = northeastTileCoordinates.getParent();
+    southwestTileCoordinates = southwestTileCoordinates.getParent();
+    tilesX = northeastTileCoordinates.x - southwestTileCoordinates.x;
+    tilesY = northeastTileCoordinates.y - southwestTileCoordinates.y;
   }
 
   // Create TileImagery instances for each imagery tile overlapping this terrain

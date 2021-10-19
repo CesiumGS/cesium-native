@@ -256,6 +256,35 @@ int32_t addProjectionToList(
   }
 }
 
+double getTileGeometricError(const Tile& tile) {
+  // Use the tile's geometric error, unless it's 0.0 or really tiny, in which
+  // case use half the parent's error.
+  double geometricError = tile.getGeometricError();
+  if (geometricError > Math::EPSILON5) {
+    return geometricError;
+  }
+
+  const Tile* pParent = tile.getParent();
+  double divisor = 1.0;
+
+  while (pParent) {
+    if (!pParent->getUnconditionallyRefine()) {
+      divisor *= 2.0;
+      double ancestorError = pParent->getGeometricError();
+      if (ancestorError > Math::EPSILON5) {
+        return ancestorError / divisor;
+      }
+    }
+
+    pParent = pParent->getParent();
+  }
+
+  // No sensible geometric error all the way to the root of the tile tree.
+  // So just use a tiny geometric error and raster selection will be limited by
+  // quadtree tile count or texture resolution size.
+  return Math::EPSILON5;
+}
+
 } // namespace
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
@@ -297,7 +326,7 @@ int32_t addProjectionToList(
     assert(index < rectangles.size());
 
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pProvider->getTile(rectangles[index], tile.getGeometricError()),
+        pProvider->getTile(rectangles[index], getTileGeometricError(tile)),
         index));
   }
 
@@ -311,7 +340,7 @@ int32_t addProjectionToList(
   if (maybeRectangle) {
     // TODO: don't create a tile if there's no overlap
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pProvider->getTile(*maybeRectangle, tile.getGeometricError()),
+        pProvider->getTile(*maybeRectangle, getTileGeometricError(tile)),
         textureCoordinateIndex));
   } else {
     // No precise rectangle yet, so return a placeholder for now.

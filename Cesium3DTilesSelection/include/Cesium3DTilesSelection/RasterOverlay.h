@@ -40,6 +40,20 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * maximum size of that cache.
    */
   int64_t subTileCacheBytes = 16 * 1024 * 1024;
+
+  /**
+   * @brief The maximum pixel size of raster overlay textures, in either
+   * direction.
+   *
+   * Requests that the overlay limit the size of provided textures to no more
+   * than this number of pixels in either direction. This may result in reduced
+   * raster overlay detail in some cases. For example, in a
+   * {@link QuadtreeRasterOverlayTileProvider}, this property will limit the
+   * number of quadtree tiles that may be mapped to a given geometry tile. The
+   * selected quadtree level for a geometry tile is reduced in order to stay
+   * under this limit.
+   */
+  int32_t maximumTextureSize = 256 * 4;
 };
 
 /**

@@ -64,6 +64,7 @@ void rasterizePolygons(
   const double rectangleHeight = rectangle.computeHeight();
 
   // create source image
+  // TODO: adjust size based on geometric error, up to a max texture size.
   image.width = 256;
   image.height = 256;
   image.channels = 1;
