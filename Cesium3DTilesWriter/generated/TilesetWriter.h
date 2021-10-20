@@ -8,39 +8,44 @@
 
 namespace Cesium3DTiles {
 
-struct AssetWriter {
+struct TilesetWriter {
   static void write(
-      const Asset& obj,
+      const Tileset& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
-struct BoundingVolumeWriter {
-  static void write(
-      const BoundingVolume& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-struct ContentWriter {
-  static void write(
-      const Content& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
+
 struct TileWriter {
   static void write(
       const Tile& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
+
+struct ContentWriter {
+  static void write(
+      const Content& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BoundingVolumeWriter {
+  static void write(
+      const BoundingVolume& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct PropertiesWriter {
   static void write(
       const Properties& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
-struct TilesetWriter {
+
+struct AssetWriter {
   static void write(
-      const Tileset& obj,
+      const Asset& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
