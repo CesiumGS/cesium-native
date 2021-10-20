@@ -778,16 +778,18 @@ void Tile::update(
 
         this->createChildTiles(std::move(this->_pContent->childTiles.value()));
 
-        // Initialize the new context, if there is one.
-        if (this->_pContent->pNewTileContext &&
-            this->_pContent->pNewTileContext->contextInitializerCallback) {
-          this->_pContent->pNewTileContext->contextInitializerCallback(
-              *this->getContext(),
-              *this->_pContent->pNewTileContext);
-        }
+        // Initialize the new contexts, if there are any.
+        for (auto&& pNewContext : this->_pContent->newTileContexts) {
+          if (pNewContext) {
+            if (pNewContext->contextInitializerCallback) {
+              pNewContext->contextInitializerCallback(
+                  *this->_pContext,
+                  *pNewContext);
+            }
 
-        this->getTileset()->addContext(
-            std::move(this->_pContent->pNewTileContext));
+            this->_pContext->pTileset->addContext(std::move(pNewContext));
+          }
+        }
       }
 
       // If this tile has no model, we want to unconditionally refine past it.
@@ -834,6 +836,8 @@ void Tile::update(
     this->setState(LoadState::Done);
   }
 
+  // TODO: if the children availability is known and they are all unavailable
+  // we should stop checking for availbility
   if (this->getContext()->implicitContext && this->getChildren().empty()) {
     const ImplicitTilingContext& implicitContext =
         this->getContext()->implicitContext.value();
@@ -873,14 +877,11 @@ void Tile::update(
           (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
           (ne & TileAvailabilityFlags::TILE_AVAILABLE));
 
-      if (childCount > 0) {
-        // If any children are available, we need to create all four in order to
-        // avoid holes. But non-available tiles will be upsampled instead of
-        // loaded.
-        // TODO: this is the right thing to do for terrain, which is the only
-        // use of implicit tiling currently. But we may need to re-evaluate it
-        // if we're using implicit tiling for buildings (for example) in the
-        // future.
+      if (implicitContext.rectangleAvailability && childCount > 0) {
+        // For quantized mesh, if any children are available, we need to create
+        // all four in order to avoid holes. But non-available tiles will be
+        // upsampled instead of loaded.
+
         this->_children.resize(4);
 
         createImplicitQuadtreeTile(
@@ -907,6 +908,29 @@ void Tile::update(
             this->_children[3],
             neID,
             ne);
+      } else if (implicitContext.quadtreeAvailability) {
+
+        this->_children.reserve(childCount);
+
+        if (sw & TileAvailabilityFlags::TILE_AVAILABLE) {
+          Tile& child = this->_children.emplace_back();
+          createImplicitQuadtreeTile(implicitContext, *this, child, swID, sw);
+        }
+
+        if (se & TileAvailabilityFlags::TILE_AVAILABLE) {
+          Tile& child = this->_children.emplace_back();
+          createImplicitQuadtreeTile(implicitContext, *this, child, seID, se);
+        }
+
+        if (nw & TileAvailabilityFlags::TILE_AVAILABLE) {
+          Tile& child = this->_children.emplace_back();
+          createImplicitQuadtreeTile(implicitContext, *this, child, nwID, nw);
+        }
+
+        if (ne & TileAvailabilityFlags::TILE_AVAILABLE) {
+          Tile& child = this->_children.emplace_back();
+          createImplicitQuadtreeTile(implicitContext, *this, child, neID, ne);
+        }
       }
 
     } else if (pOctreeTileID && implicitContext.octreeAvailability) {

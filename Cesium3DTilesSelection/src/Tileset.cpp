@@ -453,6 +453,7 @@ void Tileset::notifyTileUnloading(Tile* pTile) noexcept {
 
 void Tileset::loadTilesFromJson(
     Tile& rootTile,
+    std::vector<std::unique_ptr<TileContext>>& newContexts,
     const rapidjson::Value& tilesetJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
@@ -460,6 +461,7 @@ void Tileset::loadTilesFromJson(
     const std::shared_ptr<spdlog::logger>& pLogger) {
   Tileset::_createTile(
       rootTile,
+      newContexts,
       tilesetJson["root"],
       parentTransform,
       parentRefine,
@@ -680,13 +682,20 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
 
   if (rootIt != tileset.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
+    std::vector<std::unique_ptr<TileContext>> newContexts;
+
     Tileset::_createTile(
         *pRootTile,
+        newContexts,
         rootJson,
         glm::dmat4(1.0),
         TileRefine::Replace,
         *pContext,
         pLogger);
+
+    for (auto&& pNewContext : newContexts) {
+      pContext->pTileset->addContext(std::move(pNewContext));
+    }
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
@@ -774,6 +783,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
 
 /*static*/ void Tileset::_createTile(
     Tile& tile,
+    std::vector<std::unique_ptr<TileContext>>& newContexts,
     const rapidjson::Value& tileJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
@@ -960,13 +970,15 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             pNewContext->requestHeaders = context.requestHeaders;
             pNewContext->version = context.version;
             pNewContext->failedTileCallback = context.failedTileCallback;
+            pNewContext->contextInitializerCallback =
+                context.contextInitializerCallback;
 
             pNewContext->implicitContext =
                 std::make_optional<ImplicitTilingContext>(
                     std::move(implicitContext));
 
             tile.setContext(pNewContext.get());
-            tile.getTileset()->addContext(std::move(pNewContext));
+            newContexts.push_back(std::move(pNewContext));
           }
         } else if (!std::strcmp(tilingScheme, "OCTREE")) {
           rootID = OctreeTileID(0, 0, 0, 0);
@@ -1004,13 +1016,15 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
             pNewContext->requestHeaders = context.requestHeaders;
             pNewContext->version = context.version;
             pNewContext->failedTileCallback = context.failedTileCallback;
+            pNewContext->contextInitializerCallback =
+                context.contextInitializerCallback;
 
             pNewContext->implicitContext =
                 std::make_optional<ImplicitTilingContext>(
                     std::move(implicitContext));
 
             tile.setContext(pNewContext.get());
-            tile.getTileset()->addContext(std::move(pNewContext));
+            newContexts.push_back(std::move(pNewContext));
           }
         }
 
@@ -1048,6 +1062,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
       child.setParent(&tile);
       Tileset::_createTile(
           child,
+          newContexts,
           childJson,
           transform,
           tile.getRefine(),

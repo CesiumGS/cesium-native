@@ -37,9 +37,9 @@ struct TileContentLoadResult {
   std::optional<CesiumGltf::Model> model{};
 
   /**
-   * @brief A new context, if any, used by the `childTiles`.
+   * @brief The new contexts used by the `childTiles`, if any.
    */
-  std::unique_ptr<TileContext> pNewTileContext{};
+  std::vector<std::unique_ptr<TileContext>> newTileContexts;
 
   /**
    * @brief New child tiles discovered by loading this tile.

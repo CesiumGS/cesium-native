@@ -190,6 +190,8 @@ public:
    * This method is safe to call from any thread.
    *
    * @param rootTile A blank tile into which to load the root.
+   * @param newContexts The new contexts that are generated from recursively
+   * parsing the tiles.
    * @param tilesetJson The parsed tileset.json.
    * @param parentTransform The new tile's parent transform.
    * @param parentRefine The default refinment to use if not specified
@@ -199,6 +201,7 @@ public:
    */
   static void loadTilesFromJson(
       Tile& rootTile,
+      std::vector<std::unique_ptr<TileContext>>& newContexts,
       const rapidjson::Value& tilesetJson,
       const glm::dmat4& parentTransform,
       TileRefine parentRefine,
@@ -375,6 +378,7 @@ private:
 
   static void _createTile(
       Tile& tile,
+      std::vector<std::unique_ptr<TileContext>>& newContexts,
       const rapidjson::Value& tileJson,
       const glm::dmat4& parentTransform,
       TileRefine parentRefine,
