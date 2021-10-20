@@ -213,7 +213,7 @@ namespace {
 
 IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay& overlay) {
   // Rectangle and geometric error don't matter for a placeholder.
-  return overlay.getPlaceholder()->getTile(Rectangle(), 0.0);
+  return overlay.getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0));
 }
 
 const BoundingRegion*
@@ -285,6 +285,73 @@ double getTileGeometricError(const Tile& tile) {
   return Math::EPSILON5;
 }
 
+glm::dvec2 computeGeometryDiameters(
+    const Projection& projection,
+    const Rectangle& rectangle,
+    double maxHeight,
+    const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
+  glm::dvec3 ll = ellipsoid.cartographicToCartesian(unprojectPosition(
+      projection,
+      glm::dvec3(rectangle.getLowerLeft(), maxHeight)));
+  glm::dvec3 lr = ellipsoid.cartographicToCartesian(unprojectPosition(
+      projection,
+      glm::dvec3(rectangle.getLowerRight(), maxHeight)));
+  glm::dvec3 ul = ellipsoid.cartographicToCartesian(unprojectPosition(
+      projection,
+      glm::dvec3(rectangle.getUpperLeft(), maxHeight)));
+  glm::dvec3 ur = ellipsoid.cartographicToCartesian(unprojectPosition(
+      projection,
+      glm::dvec3(rectangle.getUpperRight(), maxHeight)));
+
+  double lowerDistance = glm::distance(ll, lr);
+  double upperDistance = glm::distance(ul, ur);
+  double leftDistance = glm::distance(ll, ul);
+  double rightDistance = glm::distance(lr, ur);
+
+  double x = glm::max(lowerDistance, upperDistance);
+  double y = glm::max(leftDistance, rightDistance);
+
+  // If either projected coordinate crosses zero, also check the distance at
+  // zero. This is not completely robust, but works well enough for currently
+  // supported projections at least.
+  if (glm::sign(rectangle.minimumX) != glm::sign(rectangle.maximumX)) {
+    glm::dvec3 top = ellipsoid.cartographicToCartesian(unprojectPosition(
+        projection,
+        glm::dvec3(0.0, rectangle.maximumY, maxHeight)));
+    glm::dvec3 bottom = ellipsoid.cartographicToCartesian(unprojectPosition(
+        projection,
+        glm::dvec3(0.0, rectangle.minimumY, maxHeight)));
+    double distance = glm::distance(top, bottom);
+    y = glm::max(y, distance);
+  }
+
+  if (glm::sign(rectangle.minimumY) != glm::sign(rectangle.maximumY)) {
+    glm::dvec3 left = ellipsoid.cartographicToCartesian(unprojectPosition(
+        projection,
+        glm::dvec3(rectangle.minimumX, 0.0, maxHeight)));
+    glm::dvec3 right = ellipsoid.cartographicToCartesian(unprojectPosition(
+        projection,
+        glm::dvec3(rectangle.maximumX, 0.0, maxHeight)));
+    double distance = glm::distance(left, right);
+    x = glm::max(x, distance);
+  }
+
+  return glm::dvec2(x, y);
+}
+
+glm::dvec2 computeDesiredScreenPixels(
+    const Tile& tile,
+    const Projection& projection,
+    const Rectangle& rectangle,
+    double maxHeight,
+    const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
+  double geometryError = getTileGeometricError(tile);
+  double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
+  glm::dvec2 diameters =
+      computeGeometryDiameters(projection, rectangle, maxHeight, ellipsoid);
+  return diameters * geometrySSE / geometryError;
+}
+
 } // namespace
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
@@ -325,8 +392,15 @@ double getTileGeometricError(const Tile& tile) {
     int32_t index = int32_t(it - projections.begin());
     assert(index < rectangles.size());
 
+    const Rectangle& rectangle = rectangles[index];
+    const glm::dvec2 screenPixels = computeDesiredScreenPixels(
+        tile,
+        projection,
+        rectangle,
+        0.0, // TODO: use actual height
+        Ellipsoid::WGS84);
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pProvider->getTile(rectangles[index], getTileGeometricError(tile)),
+        pProvider->getTile(rectangle, screenPixels),
         index));
   }
 
@@ -339,8 +413,14 @@ double getTileGeometricError(const Tile& tile) {
           tile.getBoundingVolume());
   if (maybeRectangle) {
     // TODO: don't create a tile if there's no overlap
+    const glm::dvec2 screenPixels = computeDesiredScreenPixels(
+        tile,
+        projection,
+        *maybeRectangle,
+        0.0, // TODO: use actual height
+        Ellipsoid::WGS84);
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pProvider->getTile(*maybeRectangle, getTileGeometricError(tile)),
+        pProvider->getTile(*maybeRectangle, screenPixels),
         textureCoordinateIndex));
   } else {
     // No precise rectangle yet, so return a placeholder for now.

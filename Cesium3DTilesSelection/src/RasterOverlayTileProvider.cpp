@@ -64,13 +64,13 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(
     const CesiumGeometry::Rectangle& rectangle,
-    double targetGeometricError) {
+    const glm::dvec2& targetScreenPixels) {
   if (this->_pPlaceholder) {
     return this->_pPlaceholder.get();
   }
   // TODO: return nullptr if rectangle doesn't overlap the provider's rectangle.
   return {
-      new RasterOverlayTile(this->getOwner(), targetGeometricError, rectangle)};
+      new RasterOverlayTile(this->getOwner(), targetScreenPixels, rectangle)};
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {

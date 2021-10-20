@@ -250,7 +250,7 @@ public:
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
       const CesiumGeometry::Rectangle& rectangle,
-      double targetGeometricError);
+      const glm::dvec2& targetScreenPixels);
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.

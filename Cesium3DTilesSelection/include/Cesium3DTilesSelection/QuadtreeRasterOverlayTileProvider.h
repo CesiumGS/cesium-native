@@ -142,7 +142,7 @@ private:
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError);
+      const glm::dvec2 targetScreenPixels);
 
   void unloadCachedTiles();
 
