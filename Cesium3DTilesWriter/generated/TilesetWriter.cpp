@@ -157,6 +157,11 @@ void writeJson(
     writeJsonExtensions(obj, jsonWriter, context);
   }
 
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
   jsonWriter.EndObject();
 }
 
@@ -202,6 +207,11 @@ void writeJson(
     writeJsonExtensions(obj, jsonWriter, context);
   }
 
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
   jsonWriter.EndObject();
 }
 
@@ -222,6 +232,11 @@ void writeJson(
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
   }
 
   jsonWriter.EndObject();
@@ -253,6 +268,11 @@ void writeJson(
     writeJsonExtensions(obj, jsonWriter, context);
   }
 
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
   jsonWriter.EndObject();
 }
 
@@ -271,6 +291,11 @@ void writeJson(
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
   }
 
   jsonWriter.EndObject();
@@ -293,6 +318,11 @@ void writeJson(
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
   }
 
   jsonWriter.EndObject();
