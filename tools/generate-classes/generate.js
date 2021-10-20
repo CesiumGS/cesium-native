@@ -6,12 +6,11 @@ const path = require("path");
 const resolveProperty = require("./resolveProperty");
 const unindent = require("./unindent");
 
-function generate(options, schema) {
+function generate(options, schema, writers) {
   const {
     schemaCache,
     outputDir,
     readerOutputDir,
-    writerOutputDir,
     config,
     namespace,
   } = options;
@@ -283,6 +282,78 @@ function generate(options, schema) {
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
   `;
 
+  const writeDeclaration = `
+        struct ${name}Writer {
+          static void write(
+              const ${name}& obj,
+              CesiumJsonWriter::JsonWriter& jsonWriter,
+              const CesiumJsonWriter::ExtensionWriterContext& context);
+        };
+  `;
+
+  const writeJsonDeclaration = `
+        void writeJson(
+            const ${name}& obj,
+            JsonWriter& jsonWriter,
+            const ExtensionWriterContext& context);
+  `;
+
+  const writeDefinition = `
+        void ${name}Writer::write(
+            const ${name}& obj,
+            JsonWriter& jsonWriter,
+            const ExtensionWriterContext& context) {
+          writeJson(obj, jsonWriter, context);
+        }
+  `;
+
+  const writeJsonDefinition = `
+        void writeJson(
+            const ${name}& obj,
+            JsonWriter& jsonWriter,
+            const ExtensionWriterContext& context) {
+          jsonWriter.StartObject();
+
+          ${indent(
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
+
+          ${
+            schema.properties.extensions
+              ? `
+            if (!obj.extensions.empty()) {
+              jsonWriter.Key("extensions");
+              writeJsonExtensions(obj, jsonWriter, context);
+            }
+          `
+              : ""
+          }
+
+          ${
+            schema.properties.extras
+              ? `
+            if (!obj.extras.empty()) {
+              jsonWriter.Key("extras");
+              writeJson(obj.extras, jsonWriter, context);
+            }
+          `
+              : ""
+          }
+
+          jsonWriter.EndObject();
+        }
+  `;
+
+  writers.push({
+    writeDeclaration,
+    writeJsonDeclaration,
+    writeDefinition,
+    writeJsonDefinition,
+  });
+
   if (options.oneHandlerFile) {
     const readerSourceOutputPath = path.join(
       readerHeaderOutputDir,
@@ -335,6 +406,32 @@ function formatReaderProperty(property) {
 
 function formatReaderPropertyImpl(property) {
   return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
+}
+
+function formatWriterPropertyImpl(property) {
+  let result = "";
+
+  const type = property.type;
+
+  const hasEmptyGuard =
+    type.startsWith("std::vector") || type.startsWith("std::unordered_map");
+  const hasOptionalGuard = type.startsWith("std::optional");
+  const hasGuard = hasEmptyGuard || hasOptionalGuard;
+
+  if (hasEmptyGuard) {
+    result += `if (!obj.${property.name}.empty()) {\n`;
+  } else if (hasOptionalGuard) {
+    result += `if (obj.${property.name}.has_value()) {\n`;
+  }
+
+  result += `jsonWriter.Key("${property.name}");\n`;
+  result += `writeJson(obj.${property.name}, jsonWriter, context);\n`;
+
+  if (hasGuard) {
+    result += "}\n";
+  }
+
+  return result;
 }
 
 function privateSpecConstructor(name) {

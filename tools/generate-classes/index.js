@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const SchemaCache = require("./SchemaCache");
 const generate = require("./generate");
+const generateCombinedWriter = require("./generateCombinedWriter");
 
 const argv = yargs.options({
   schema: {
@@ -75,13 +76,14 @@ const options = {
   oneHandlerFile: argv.oneHandlerFile,
   outputDir: argv.output,
   readerOutputDir: argv.readerOutput,
-  writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {},
 };
+
+const writers = [];
 
 let schemas = [rootSchema];
 
@@ -100,7 +102,7 @@ for (const extension of config.extensions) {
   config.classes[extensionSchema.title].overrideName = extension.className;
   config.classes[extensionSchema.title].extensionName = extension.extensionName;
 
-  schemas.push(...generate(options, extensionSchema));
+  schemas.push(...generate(options, extensionSchema, writers));
 
   for (const objectToExtend of extension.attachTo) {
     const objectToExtendSchema = schemaCache.load(
@@ -130,5 +132,15 @@ while (schemas.length > 0) {
     continue;
   }
   processed[schema.sourcePath] = true;
-  schemas.push(...generate(options, schema));
+  schemas.push(...generate(options, schema, writers));
 }
+
+const writerOptions = {
+  writerOutputDir: argv.writerOutput,
+  config: config,
+  namespace: argv.namespace,
+  rootSchema: rootSchema,
+  writers: writers,
+};
+
+generateCombinedWriter(writerOptions);
