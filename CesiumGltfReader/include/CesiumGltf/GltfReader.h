@@ -3,10 +3,6 @@
 #include "IExtensionJsonHandler.h"
 #include "ReaderLibrary.h"
 
-#include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/Future.h>
-#include <CesiumAsync/HttpHeaders.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/Model.h>
 
 #include <gsl/span>
@@ -217,24 +213,6 @@ public:
       const ReadModelOptions& options = ReadModelOptions()) const;
 
   /**
-   * @brief Accepts the result of {@link readModel} and resolves any remaining
-   * external buffers and images.
-   *
-   * @param asyncSystem The async system to use for resolving external data.
-   * @param baseUrl The base url that all the external uris are relative to.
-   * @param headers The http headers needed to make any external data requests.
-   * @param pAssetAccessor The asset accessor to use to request the external
-   * buffers and images.
-   * @param result The result of the synchronous readModel invocation.
-   */
-  static CesiumAsync::Future<ModelReaderResult> resolveExternalData(
-      CesiumAsync::AsyncSystem asyncSystem,
-      const std::string& baseUrl,
-      const CesiumAsync::HttpHeaders& headers,
-      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
-      ModelReaderResult&& result);
-
-  /**
    * @brief Reads an image from a buffer.
    *
    * The [stb_image](https://github.com/nothings/stb) library is used to decode
@@ -243,7 +221,7 @@ public:
    * @param data The buffer from which to read the image.
    * @return The result of reading the image.
    */
-  static ImageReaderResult readImage(const gsl::span<const std::byte>& data);
+  ImageReaderResult readImage(const gsl::span<const std::byte>& data) const;
 
   std::unique_ptr<IExtensionJsonHandler> createExtensionHandler(
       const ReaderContext& context,

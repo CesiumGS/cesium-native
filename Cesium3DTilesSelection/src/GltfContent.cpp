@@ -16,28 +16,19 @@
 
 namespace Cesium3DTilesSelection {
 
-using namespace CesiumAsync;
-
 /*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
 
-Future<std::unique_ptr<TileContentLoadResult>>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
-  return load(
-      input.asyncSystem,
+  return input.asyncSystem.createResolvedFuture(load(
       input.pLogger,
       input.pRequest->url(),
-      input.pRequest->headers(),
-      input.pAssetAccessor,
-      input.pRequest->response()->data());
+      input.pRequest->response()->data()));
 }
 
-/*static*/
-Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
-    const AsyncSystem& asyncSystem,
+/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
-    const HttpHeaders& headers,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
   std::unique_ptr<TileContentLoadResult> pResult =
@@ -64,18 +55,8 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
-  return CesiumGltf::GltfReader::resolveExternalData(
-             asyncSystem,
-             url,
-             headers,
-             pAssetAccessor,
-             std::move(loadedModel))
-      .thenInWorkerThread([](CesiumGltf::ModelReaderResult&& resolvedModel) {
-        std::unique_ptr<TileContentLoadResult> pResult =
-            std::make_unique<TileContentLoadResult>();
-        pResult->model = std::move(resolvedModel.model);
-        return pResult;
-      });
+  pResult->model = std::move(loadedModel.model);
+  return pResult;
 }
 
 static int generateOverlayTextureCoordinates(

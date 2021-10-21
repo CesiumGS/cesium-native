@@ -5,9 +5,6 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
 
-#include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/HttpHeaders.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltf/ModelEXT_feature_metadata.h>
 #include <CesiumUtility/Tracing.h>
@@ -18,8 +15,6 @@
 #include <stdexcept>
 
 namespace Cesium3DTilesSelection {
-
-using namespace CesiumAsync;
 
 struct B3dmHeader {
   unsigned char magic[4];
@@ -85,15 +80,18 @@ rapidjson::Document parseFeatureTableJsonData(
 
 } // namespace
 
-Future<std::unique_ptr<TileContentLoadResult>>
+CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 Batched3DModelContent::load(const TileContentLoadInput& input) {
-  const AsyncSystem& asyncSystem = input.asyncSystem;
-  const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-  const std::string& url = input.pRequest->url();
-  const HttpHeaders& headers = input.pRequest->headers();
-  const std::shared_ptr<IAssetAccessor>& pAssetAccessor = input.pAssetAccessor;
-  const gsl::span<const std::byte>& data = input.pRequest->response()->data();
+  return input.asyncSystem.createResolvedFuture(load(
+      input.pLogger,
+      input.pRequest->url(),
+      input.pRequest->response()->data()));
+}
 
+std::unique_ptr<TileContentLoadResult> Batched3DModelContent::load(
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const gsl::span<const std::byte>& data) {
   // TODO: actually use the b3dm payload
   if (data.size() < sizeof(B3dmHeader)) {
     throw std::runtime_error("The B3DM is invalid because it is too small to "
@@ -182,72 +180,57 @@ Batched3DModelContent::load(const TileContentLoadInput& input) {
 
   const gsl::span<const std::byte> glbData =
       data.subspan(glbStart, glbEnd - glbStart);
+  std::unique_ptr<TileContentLoadResult> pResult =
+      GltfContent::load(pLogger, url, glbData);
 
-  return GltfContent::load(
-             asyncSystem,
-             pLogger,
-             url,
-             headers,
-             pAssetAccessor,
-             glbData)
-      .thenInWorkerThread([header = std::move(header),
-                           headerLength,
-                           pLogger,
-                           // Is passing this span safe? It points to the
-                           // response which is in the TileContentLoadInput
-                           // which outives the content loading, right?
-                           data](std::unique_ptr<TileContentLoadResult>&&
-                                     pResult) {
-        if (pResult->model && header.featureTableJsonByteLength > 0) {
-          CesiumGltf::Model& gltf = pResult->model.value();
+  if (pResult->model && header.featureTableJsonByteLength > 0) {
+    CesiumGltf::Model& gltf = pResult->model.value();
 
-          const gsl::span<const std::byte> featureTableJsonData =
-              data.subspan(headerLength, header.featureTableJsonByteLength);
-          rapidjson::Document featureTable =
-              parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
+    const gsl::span<const std::byte> featureTableJsonData =
+        data.subspan(headerLength, header.featureTableJsonByteLength);
+    rapidjson::Document featureTable =
+        parseFeatureTableJsonData(pLogger, gltf, featureTableJsonData);
 
-          const int64_t batchTableStart = headerLength +
-                                          header.featureTableJsonByteLength +
-                                          header.featureTableBinaryByteLength;
-          const int64_t batchTableLength = header.batchTableBinaryByteLength +
-                                           header.batchTableJsonByteLength;
+    const int64_t batchTableStart = headerLength +
+                                    header.featureTableJsonByteLength +
+                                    header.featureTableBinaryByteLength;
+    const int64_t batchTableLength =
+        header.batchTableBinaryByteLength + header.batchTableJsonByteLength;
 
-          if (batchTableLength > 0) {
-            const gsl::span<const std::byte> batchTableJsonData = data.subspan(
-                static_cast<size_t>(batchTableStart),
-                header.batchTableJsonByteLength);
-            const gsl::span<const std::byte> batchTableBinaryData =
-                data.subspan(
-                    static_cast<size_t>(
-                        batchTableStart + header.batchTableJsonByteLength),
-                    header.batchTableBinaryByteLength);
+    if (batchTableLength > 0) {
+      const gsl::span<const std::byte> batchTableJsonData = data.subspan(
+          static_cast<size_t>(batchTableStart),
+          header.batchTableJsonByteLength);
+      const gsl::span<const std::byte> batchTableBinaryData = data.subspan(
+          static_cast<size_t>(
+              batchTableStart + header.batchTableJsonByteLength),
+          header.batchTableBinaryByteLength);
 
-            rapidjson::Document batchTableJson;
-            batchTableJson.Parse(
-                reinterpret_cast<const char*>(batchTableJsonData.data()),
-                batchTableJsonData.size());
-            if (batchTableJson.HasParseError()) {
-              SPDLOG_LOGGER_WARN(
-                  pLogger,
-                  "Error when parsing batch table JSON, error code {} at byte "
-                  "offset "
-                  "{}. Skip parsing metadata",
-                  batchTableJson.GetParseError(),
-                  batchTableJson.GetErrorOffset());
-              return std::move(pResult);
-            }
+      rapidjson::Document batchTableJson;
+      batchTableJson.Parse(
+          reinterpret_cast<const char*>(batchTableJsonData.data()),
+          batchTableJsonData.size());
+      if (batchTableJson.HasParseError()) {
+        SPDLOG_LOGGER_WARN(
+            pLogger,
+            "Error when parsing batch table JSON, error code {} at byte "
+            "offset "
+            "{}. Skip parsing metadata",
+            batchTableJson.GetParseError(),
+            batchTableJson.GetErrorOffset());
+        return pResult;
+      }
 
-            upgradeBatchTableToFeatureMetadata(
-                pLogger,
-                gltf,
-                featureTable,
-                batchTableJson,
-                batchTableBinaryData);
-          }
-        }
+      upgradeBatchTableToFeatureMetadata(
+          pLogger,
+          gltf,
+          featureTable,
+          batchTableJson,
+          batchTableBinaryData);
+    }
+  }
 
-        return std::move(pResult);
-      });
+  return pResult;
 }
 
 } // namespace Cesium3DTilesSelection

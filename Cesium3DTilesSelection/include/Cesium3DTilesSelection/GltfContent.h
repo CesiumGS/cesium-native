@@ -7,10 +7,6 @@
 #include "TileID.h"
 #include "TileRefine.h"
 
-#include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/Future.h>
-#include <CesiumAsync/HttpHeaders.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/GltfReader.h>
 
 #include <glm/mat4x4.hpp>
@@ -42,22 +38,14 @@ public:
    *
    * (Only public to be called from `Batched3DModelContent`)
    *
-   * @param asyncSystem The async system to use for requesting any external
-   * content.
    * @param pLogger Only used for logging
    * @param url The URL, only used for logging
-   * @param headers The http headers to use for resolving any external content.
-   * @param pAssetAccessor The asset accessor to use to resolve external
-   * content.
    * @param data The actual glTF data
    * @return The {@link TileContentLoadResult}
    */
-  static CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>> load(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+  static std::unique_ptr<TileContentLoadResult> load(
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& url,
-      const CesiumAsync::HttpHeaders& headers,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const gsl::span<const std::byte>& data);
 
   /**
