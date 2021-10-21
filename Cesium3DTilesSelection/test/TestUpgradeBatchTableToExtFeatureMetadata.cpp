@@ -1,16 +1,17 @@
 #include "Batched3DModelContent.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/HttpHeaders.h"
 #include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
 #include "CesiumGltf/MetadataFeatureTableView.h"
 #include "CesiumGltf/MetadataPropertyView.h"
 #include "CesiumGltf/ModelEXT_feature_metadata.h"
+#include "readFile.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 #include "SimpleTaskProcessor.h"
-#include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
+
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/HttpHeaders.h"
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
@@ -245,32 +246,33 @@ static void createTestForArrayJson(
       totalInstances);
 }
 
-static std::unique_ptr<TileContentLoadResult>
-loadB3dm(const std::filesystem::path& filePath) {
+static std::unique_ptr<TileContentLoadResult> loadB3dm(
+    const std::filesystem::path& filePath) {
 
-  std::unique_ptr<SimpleAssetResponse> pResponse =
+  std::unique_ptr<SimpleAssetResponse> pResponse = 
       std::make_unique<SimpleAssetResponse>(
-          static_cast<uint16_t>(200),
-          "",
-          CesiumAsync::HttpHeaders(),
-          readFile(filePath));
-
-  std::shared_ptr<SimpleAssetRequest> pRequest =
+        static_cast<uint16_t>(200),
+        "",
+        CesiumAsync::HttpHeaders(),
+        readFile(filePath));
+  
+  std::shared_ptr<SimpleAssetRequest> pRequest = 
       std::make_shared<SimpleAssetRequest>(
-          "GET",
-          "test.url",
-          CesiumAsync::HttpHeaders(),
-          std::move(pResponse));
+        "GET",
+        "test.url",
+        CesiumAsync::HttpHeaders(),
+        std::move(pResponse));
 
-  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockedRequests = {
-      {"test.url", std::move(pRequest)}};
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockedRequests = 
+      {{ "test.url", std::move(pRequest) }};
 
   TileContentLoadInput input(
-      CesiumAsync::AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
-      spdlog::default_logger(),
+      CesiumAsync::AsyncSystem(
+          std::make_shared<SimpleTaskProcessor>()),
+      spdlog::default_logger(), 
       std::make_shared<SimpleAssetAccessor>(std::move(mockedRequests)),
       std::move(pRequest),
-      std::make_shared <,
+      std::make_shared<,
       Tile());
 
   return Batched3DModelContent().load(input).wait();
@@ -464,7 +466,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
-
+  
   std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
 
   REQUIRE(pResult != nullptr);
