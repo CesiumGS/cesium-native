@@ -32,13 +32,6 @@ namespace Cesium3DTilesSelection {
 struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
 
   /**
-   * @brief Creates an empty, uninitialized instance.
-   *
-   * Should only be used for testing.
-   */
-  TileContentLoadInput();
-
-  /**
    * @brief Creates a new, uninitialized instance for the given tile.
    *
    * The `asyncSystem`, `pLogger`, `pAssetAccessor` and `pRequest` will have

@@ -263,16 +263,15 @@ loadB3dm(const std::filesystem::path& filePath) {
           std::move(pResponse));
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockedRequests = {
-      {"test.url", pRequest}};
+      {"test.url", std::move(pRequest)}};
 
-  TileContentLoadInput input;
-
-  input.asyncSystem =
-      CesiumAsync::AsyncSystem(std::make_shared<SimpleTaskProcessor>());
-  input.pLogger = spdlog::default_logger();
-  input.pAssetAccessor =
+  TileContentLoadInput input(
+      CesiumAsync::AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      spdlog::default_logger(),
       std::make_shared<SimpleAssetAccessor>(std::move(mockedRequests)),
-  input.pRequest = std::move(pRequest);
+      std::move(pRequest),
+      std::make_shared <,
+      Tile());
 
   return Batched3DModelContent().load(input).wait();
 }
