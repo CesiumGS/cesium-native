@@ -62,4 +62,16 @@ getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
  */
 CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
 getGlobeRectangle(const BoundingVolume& boundingVolume);
+
+/**
+ * @brief Returns the bounding region if the bounding volume is a
+ * {@link BoundingRegion} or a {@link BoundingRegionWithLooseFittingHeights}.
+ *
+ * @param boundingVolume The bounding volume.
+ * @return A pointer to the bounding region, or nullptr is the bounding volume
+ * is not a bounding region.
+ */
+CESIUM3DTILESSELECTION_API const CesiumGeospatial::BoundingRegion*
+getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
+
 } // namespace Cesium3DTilesSelection

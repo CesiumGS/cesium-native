@@ -792,7 +792,8 @@ Tile::generateTextureCoordinates(
   // If this Tile uses a BoundingRegion as its bounding volume, we can assume
   // it's tight-fitting. Otherwise, we need to compute a tight-fitting
   // BoundingRegion from the geometry.
-  const BoundingRegion* pRegion = std::get_if<BoundingRegion>(&boundingVolume);
+  const BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(boundingVolume);
   GenerateTextureCoordinatesResult result{
       pRegion ? *pRegion : GltfContent::computeBoundingRegion(model, transform),
       std::vector<Rectangle>()};

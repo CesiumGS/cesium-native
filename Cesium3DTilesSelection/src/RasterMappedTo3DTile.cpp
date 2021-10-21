@@ -216,23 +216,11 @@ IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay& overlay) {
   return overlay.getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0));
 }
 
-const BoundingRegion*
-getRegionFromBoundingVolume(const BoundingVolume& boundingVolume) {
-  const BoundingRegion* pResult = std::get_if<BoundingRegion>(&boundingVolume);
-  if (!pResult) {
-    const BoundingRegionWithLooseFittingHeights* pLoose =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume);
-    if (pLoose) {
-      pResult = &pLoose->getBoundingRegion();
-    }
-  }
-  return pResult;
-}
-
 std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
     const Projection& projection,
     const BoundingVolume& boundingVolume) {
-  const BoundingRegion* pRegion = getRegionFromBoundingVolume(boundingVolume);
+  const BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(boundingVolume);
   if (!pRegion) {
     return std::nullopt;
   }
