@@ -45,15 +45,24 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * @brief The maximum pixel size of raster overlay textures, in either
    * direction.
    *
-   * Requests that the overlay limit the size of provided textures to no more
-   * than this number of pixels in either direction. This may result in reduced
-   * raster overlay detail in some cases. For example, in a
-   * {@link QuadtreeRasterOverlayTileProvider}, this property will limit the
-   * number of quadtree tiles that may be mapped to a given geometry tile. The
-   * selected quadtree level for a geometry tile is reduced in order to stay
-   * under this limit.
+   * Images created by this overlay will be no more than this number of pixels
+   * in either direction. This may result in reduced raster overlay detail in
+   * some cases. For example, in a {@link QuadtreeRasterOverlayTileProvider},
+   * this property will limit the number of quadtree tiles that may be mapped to
+   * a given geometry tile. The selected quadtree level for a geometry tile is
+   * reduced in order to stay under this limit.
    */
-  int32_t maximumTextureSize = 256 * 4;
+  int32_t maximumTextureSize = 2048;
+
+  /**
+   * @brief The maximum number of pixels of error when rendering this overlay.
+   * This is used to select an appropriate level-of-detail.
+   *
+   * When this property has its default value, 2.0, it means that raster overlay
+   * images will be sized so that, when zoomed in closeset, a single pixel in
+   * the image maps to approximately 2x2 pixels on the screen.
+   */
+  double maximumScreenSpaceError = 2.0;
 };
 
 /**

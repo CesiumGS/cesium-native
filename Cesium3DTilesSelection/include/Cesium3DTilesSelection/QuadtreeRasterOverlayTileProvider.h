@@ -93,18 +93,17 @@ public:
   }
 
   /**
-   * Computes the appropriate tile level of detail (zoom level) for a given
-   * geometric error near a given projected position. The position is required
-   * because coordinates in many projections will map to real-world meters
-   * differently in different parts of the globe.
+   * @brief Computes the best quadtree level to use for an image intended to
+   * cover a given projected rectangle when it is a given size on the screen.
    *
-   * @param geometricError The geometric error for which to compute a level.
-   * @param position The projected position defining the area of interest.
-   * @return The level that is closest to the desired geometric error.
+   * @param rectangle The range of projected coordinates to cover.
+   * @param screenPixels The number of screen pixels to be covered by the
+   * rectangle.
+   * @return The level.
    */
-  uint32_t computeLevelFromGeometricError(
-      double geometricError,
-      const glm::dvec2& position) const noexcept;
+  uint32_t computeLevelFromTargetScreenPixels(
+      const CesiumGeometry::Rectangle& rectangle,
+      const glm::dvec2& screenPixels);
 
 protected:
   /**

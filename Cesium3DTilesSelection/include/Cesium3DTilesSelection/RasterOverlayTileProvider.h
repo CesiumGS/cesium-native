@@ -241,11 +241,11 @@ public:
    * allowed to cover a slightly larger rectangle in order to maintain pixel
    * alignment. It may also cover a smaller rectangle when the overlay itself
    * does not cover the entire rectangle.
-   * @param targetGeometricError The geometric error (in meters) of the
-   * geometry tile to which the returned raster overlay tile will be attached.
-   * With the typical settings, this raster overlay will be shown when the
-   * geometric error, when projected to the screen, is up to 16 pixels. When the
-   * error is more than 16 pixels, more detailed data will be shown instead.
+   * @param targetScreenPixels The maximum number of pixels on the screen that
+   * this tile is meant to cover. The overlay image should be approximately this
+   * many pixels divided by the
+   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
+   * the desired level-of-detail, but it does not need to be exactly this size.
    * @return The tile.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(

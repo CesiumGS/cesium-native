@@ -55,6 +55,45 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _tileLookup(),
       _cachedBytes(0) {}
 
+uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
+    const CesiumGeometry::Rectangle& rectangle,
+    const glm::dvec2& screenPixels) {
+  const double rasterScreenSpaceError =
+      this->getOwner().getOptions().maximumScreenSpaceError;
+
+  const glm::dvec2 rasterPixels = screenPixels / rasterScreenSpaceError;
+  const glm::dvec2 rasterTiles =
+      rasterPixels / glm::dvec2(this->getWidth(), this->getHeight());
+  const glm::dvec2 targetTileDimensions =
+      glm::dvec2(rectangle.computeWidth(), rectangle.computeHeight()) /
+      rasterTiles;
+  const glm::dvec2 totalDimensions = glm::dvec2(
+      this->getCoverageRectangle().computeWidth(),
+      this->getCoverageRectangle().computeHeight());
+  const glm::dvec2 totalTileDimensions =
+      totalDimensions / glm::dvec2(
+                            this->getTilingScheme().getRootTilesX(),
+                            this->getTilingScheme().getRootTilesY());
+  const glm::dvec2 twoToTheLevelPower =
+      totalTileDimensions / targetTileDimensions;
+  const glm::dvec2 level = glm::log2(twoToTheLevelPower);
+  const glm::dvec2 rounded = glm::max(glm::round(level), 0.0);
+
+  uint32_t imageryLevel = uint32_t(glm::max(rounded.x, rounded.y));
+
+  const uint32_t maximumLevel = this->getMaximumLevel();
+  if (imageryLevel > maximumLevel) {
+    imageryLevel = maximumLevel;
+  }
+
+  const uint32_t minimumLevel = this->getMinimumLevel();
+  if (imageryLevel < minimumLevel) {
+    imageryLevel = minimumLevel;
+  }
+
+  return imageryLevel;
+}
+
 std::vector<CesiumAsync::SharedFuture<
     QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
@@ -124,47 +163,14 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   }
 
   // Compute the required level in the imagery tiling scheme.
-  const double rasterScreenSpaceError = 2.0; // TODO: make this configurable
-  const glm::dvec2 rasterPixels = targetScreenPixels / rasterScreenSpaceError;
-  const glm::dvec2 rasterTiles =
-      rasterPixels / glm::dvec2(this->getWidth(), this->getHeight());
-  const glm::dvec2 targetTileDimensions =
-      glm::dvec2(
-          geometryRectangle.computeWidth(),
-          geometryRectangle.computeHeight()) /
-      rasterTiles;
-  const glm::dvec2 totalDimensions = glm::dvec2(
-      this->getCoverageRectangle().computeWidth(),
-      this->getCoverageRectangle().computeHeight());
-  const glm::dvec2 totalTileDimensions =
-      totalDimensions / glm::dvec2(
-                            imageryTilingScheme.getRootTilesX(),
-                            imageryTilingScheme.getRootTilesY());
-  const glm::dvec2 twoToTheLevelPower =
-      totalTileDimensions / targetTileDimensions;
-  const glm::dvec2 level = glm::log2(twoToTheLevelPower);
-  const glm::dvec2 rounded = glm::max(glm::round(level), 0.0);
-
-  uint32_t imageryLevel = uint32_t(glm::max(rounded.x, rounded.y));
-
-  const uint32_t maximumLevel = this->getMaximumLevel();
-  if (imageryLevel > maximumLevel) {
-    imageryLevel = maximumLevel;
-  }
-
-  const uint32_t minimumLevel = this->getMinimumLevel();
-  if (imageryLevel < minimumLevel) {
-    imageryLevel = minimumLevel;
-  }
+  uint32_t level = this->computeLevelFromTargetScreenPixels(
+      geometryRectangle,
+      targetScreenPixels);
 
   std::optional<QuadtreeTileID> southwestTileCoordinatesOpt =
-      imageryTilingScheme.positionToTile(
-          intersection.getLowerLeft(),
-          imageryLevel);
+      imageryTilingScheme.positionToTile(intersection.getLowerLeft(), level);
   std::optional<QuadtreeTileID> northeastTileCoordinatesOpt =
-      imageryTilingScheme.positionToTile(
-          intersection.getUpperRight(),
-          imageryLevel);
+      imageryTilingScheme.positionToTile(intersection.getUpperRight(), level);
 
   // Because of the intersection, we should always have valid tile coordinates.
   // But give up if we don't.
@@ -222,9 +228,9 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
   uint32_t tilesX = northeastTileCoordinates.x - southwestTileCoordinates.x + 1;
   uint32_t tilesY = northeastTileCoordinates.y - southwestTileCoordinates.y + 1;
 
-  while (imageryLevel > 0U && (tilesX * this->getWidth() > maxTextureSize ||
-                               tilesY * this->getHeight() > maxTextureSize)) {
-    --imageryLevel;
+  while (level > 0U && (tilesX * this->getWidth() > maxTextureSize ||
+                        tilesY * this->getHeight() > maxTextureSize)) {
+    --level;
     northeastTileCoordinates = northeastTileCoordinates.getParent();
     southwestTileCoordinates = southwestTileCoordinates.getParent();
     tilesX = northeastTileCoordinates.x - southwestTileCoordinates.x + 1;
@@ -242,7 +248,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
        ++i) {
 
     imageryRectangle = imageryTilingScheme.tileToRectangle(
-        QuadtreeTileID(imageryLevel, i, southwestTileCoordinates.y));
+        QuadtreeTileID(level, i, southwestTileCoordinates.y));
     clippedImageryRectangle =
         imageryRectangle.computeIntersection(imageryBounds);
 
@@ -254,8 +260,8 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
          j <= northeastTileCoordinates.y;
          ++j) {
 
-      imageryRectangle = imageryTilingScheme.tileToRectangle(
-          QuadtreeTileID(imageryLevel, i, j));
+      imageryRectangle =
+          imageryTilingScheme.tileToRectangle(QuadtreeTileID(level, i, j));
       clippedImageryRectangle =
           imageryRectangle.computeIntersection(imageryBounds);
 
@@ -264,36 +270,12 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
       }
 
       CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
-          this->getQuadtreeTile(QuadtreeTileID(imageryLevel, i, j));
+          this->getQuadtreeTile(QuadtreeTileID(level, i, j));
       result.emplace_back(std::move(pTile));
     }
   }
 
   return result;
-}
-
-uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError(
-    double geometricError,
-    const glm::dvec2& position) const noexcept {
-  // PERFORMANCE_IDEA: factor out the stuff that doesn't change.
-  const QuadtreeTilingScheme& tilingScheme = this->getTilingScheme();
-  const CesiumGeometry::Rectangle& tilingSchemeRectangle =
-      tilingScheme.getRectangle();
-
-  const double toMeters =
-      computeApproximateConversionFactorToMetersNearPosition(
-          this->getProjection(),
-          position);
-
-  const double levelZeroMaximumTexelSpacingMeters =
-      (tilingSchemeRectangle.computeWidth() * toMeters) /
-      (this->_imageWidth * tilingScheme.getNumberOfXTilesAtLevel(0));
-
-  const double twoToTheLevelPower =
-      levelZeroMaximumTexelSpacingMeters / geometricError;
-  const double level = glm::log2(twoToTheLevelPower);
-  const double rounded = glm::max(glm::round(level), 0.0);
-  return static_cast<uint32_t>(rounded);
 }
 
 CesiumAsync::SharedFuture<
@@ -349,18 +331,20 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
               // Successfully loaded, continue.
               cachedBytes += int64_t(loaded.image->pixelData.size());
 
+#if SHOW_TILE_BOUNDARIES
               // Highlight the edges in red to show tile boundaries.
-              // gsl::span<uint32_t> pixels =
-              //     reintepretCastSpan<uint32_t, std::byte>(
-              //         loaded.image->pixelData);
-              // for (int32_t j = 0; j < loaded.image->height; ++j) {
-              //   for (int32_t i = 0; i < loaded.image->width; ++i) {
-              //     if (i == 0 || j == 0 || i == loaded.image->width - 1 ||
-              //         j == loaded.image->height - 1) {
-              //       pixels[j * loaded.image->width + i] = 0xFF0000FF;
-              //     }
-              //   }
-              // }
+              gsl::span<uint32_t> pixels =
+                  reintepretCastSpan<uint32_t, std::byte>(
+                      loaded.image->pixelData);
+              for (int32_t j = 0; j < loaded.image->height; ++j) {
+                for (int32_t i = 0; i < loaded.image->width; ++i) {
+                  if (i == 0 || j == 0 || i == loaded.image->width - 1 ||
+                      j == loaded.image->height - 1) {
+                    pixels[j * loaded.image->width + i] = 0xFF0000FF;
+                  }
+                }
+              }
+#endif
 
               return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
                   std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
@@ -727,6 +711,20 @@ QuadtreeRasterOverlayTileProvider::combineImages(
       result.credits.push_back(credit);
     }
   }
+
+  // Highlight the edges in yellow to show tile boundaries.
+#if SHOW_TILE_BOUNDARIES
+  gsl::span<uint32_t> pixels =
+      reintepretCastSpan<uint32_t, std::byte>(result.image->pixelData);
+  for (int32_t j = 0; j < result.image->height; ++j) {
+    for (int32_t i = 0; i < result.image->width; ++i) {
+      if (i == 0 || j == 0 || i == result.image->width - 1 ||
+          j == result.image->height - 1) {
+        pixels[j * result.image->width + i] = 0xFF00FFFF;
+      }
+    }
+  }
+#endif
 
   return result;
 }
