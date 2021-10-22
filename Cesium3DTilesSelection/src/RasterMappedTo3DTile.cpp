@@ -48,7 +48,8 @@ bool rasterCoversTile(
   if (pContent) {
     const std::vector<Rectangle>& rectangles =
         pContent->rasterOverlayRectangles;
-    if (textureCoordinateID >= 0 && size_t(textureCoordinateID) < rectangles.size()) {
+    if (textureCoordinateID >= 0 &&
+        size_t(textureCoordinateID) < rectangles.size()) {
       return raster.getRectangle().fullyContains(
           rectangles[size_t(textureCoordinateID)]);
     }
