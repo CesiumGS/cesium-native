@@ -94,12 +94,12 @@ RasterOverlay::loadTileProvider(
               pPrepareRendererResources,
               pLogger,
               this)
-          .thenInMainThread([this](std::unique_ptr<RasterOverlayTileProvider>&&
+          .thenInMainThread([](std::unique_ptr<RasterOverlayTileProvider>&&
                                        pProvider) noexcept {
             CESIUM_TRACE_END_IN_TRACK("createTileProvider");
             return std::move(pProvider);
           })
-          .catchInMainThread([this, pLogger](const std::exception& e) {
+          .catchInMainThread([pLogger](const std::exception& e) {
             SPDLOG_LOGGER_ERROR(
                 pLogger,
                 "Exception while creating tile provider: {0}",

@@ -145,11 +145,10 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   REQUIRE(pProvider);
   REQUIRE(!pProvider->isPlaceholder());
 
-  SECTION("uses root tile for a huge geometric error") {
+  SECTION("uses root tile for a small number of screen pixels") {
     Rectangle rectangle(0.000001, 0.000001, 0.000002, 0.000002);
-    double geometricError = 99999999999.0;
     IntrusivePointer<RasterOverlayTile> pTile =
-        pProvider->getTile(rectangle, geometricError);
+        pProvider->getTile(rectangle, glm::dvec2(2, 2));
     pProvider->loadTile(*pTile);
 
     for (int i = 0; pTile->getState() != RasterOverlayTile::LoadState::Loaded;

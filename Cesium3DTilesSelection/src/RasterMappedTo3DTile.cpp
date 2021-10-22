@@ -48,9 +48,9 @@ bool rasterCoversTile(
   if (pContent) {
     const std::vector<Rectangle>& rectangles =
         pContent->rasterOverlayRectangles;
-    if (textureCoordinateID >= 0 && textureCoordinateID < rectangles.size()) {
+    if (textureCoordinateID >= 0 && size_t(textureCoordinateID) < rectangles.size()) {
       return raster.getRectangle().fullyContains(
-          rectangles[textureCoordinateID]);
+          rectangles[size_t(textureCoordinateID)]);
     }
   }
 
@@ -413,9 +413,9 @@ glm::dvec2 computeDesiredScreenPixels(
 
     // We have a rectangle and texture coordinates for this projection.
     int32_t index = int32_t(it - projections.begin());
-    assert(index < rectangles.size());
+    assert(index >= 0 && size_t(index) < rectangles.size());
 
-    const Rectangle& rectangle = rectangles[index];
+    const Rectangle& rectangle = rectangles[size_t(index)];
     const glm::dvec2 screenPixels = computeDesiredScreenPixels(
         tile,
         projection,
@@ -479,11 +479,11 @@ void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   }
 
   int32_t projectionIndex = int32_t(projectionIt - projections.begin());
-  if (projectionIndex >= rectangles.size()) {
+  if (projectionIndex < 0 || size_t(projectionIndex) >= rectangles.size()) {
     return;
   }
 
-  const Rectangle& geometryRectangle = rectangles[projectionIndex];
+  const Rectangle& geometryRectangle = rectangles[size_t(projectionIndex)];
 
   const CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();

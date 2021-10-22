@@ -130,21 +130,6 @@ bool Tile::isExternalTileset() const noexcept {
 }
 
 namespace {
-int32_t getTextureCoordinatesForProjection(
-    std::vector<CesiumGeospatial::Projection>& projections,
-    const Projection& projection) {
-  auto existingCoordinatesIt =
-      std::find(projections.begin(), projections.end(), projection);
-  if (existingCoordinatesIt == projections.end()) {
-    // New set of texture coordinates.
-    projections.push_back(projection);
-    return int32_t(projections.size()) - 1;
-  } else {
-    // Use previously-added texture coordinates.
-    return static_cast<int32_t>(existingCoordinatesIt - projections.begin());
-  }
-}
-
 std::vector<Projection> mapOverlaysToTile(Tile& tile) {
   Tileset& tileset = *tile.getTileset();
   RasterOverlayCollection& overlays = tileset.getOverlays();
