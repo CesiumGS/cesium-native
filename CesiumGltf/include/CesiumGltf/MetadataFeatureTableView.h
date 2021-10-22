@@ -93,9 +93,9 @@ public:
 
     PropertyType type = convertStringToPropertyType(pClassProperty->type);
     PropertyType componentType = PropertyType::None;
-    if (pClassProperty->componentType.isString()) {
-      componentType = convertStringToPropertyType(
-          pClassProperty->componentType.getString());
+    if (pClassProperty->componentType.has_value()) {
+      componentType =
+          convertStringToPropertyType(pClassProperty->componentType.value());
     }
 
     if (type != PropertyType::Array) {
@@ -108,7 +108,7 @@ public:
       getArrayPropertyViewImpl(
           propertyName,
           *pClassProperty,
-          type,
+          componentType,
           std::forward<Callback>(callback));
     }
   }
@@ -395,18 +395,18 @@ private:
   MetadataPropertyView<MetadataArrayView<T>> getPrimitiveArrayPropertyValues(
       const ClassProperty& classProperty,
       const FeatureTableProperty& featureTableProperty) const {
-    if (classProperty.type != "ARRAY") {
+    if (classProperty.type != ClassProperty::Type::ARRAY) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
-    if (!classProperty.componentType.isString()) {
+    if (!classProperty.componentType.has_value()) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);
     }
 
     const PropertyType componentType =
-        convertStringToPropertyType(classProperty.componentType.getString());
+        convertStringToPropertyType(classProperty.componentType.value());
     if (TypeToPropertyType<T>::value != componentType) {
       return createInvalidPropertyView<MetadataArrayView<T>>(
           MetadataPropertyViewStatus::InvalidTypeMismatch);

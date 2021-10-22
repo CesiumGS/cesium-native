@@ -29,7 +29,7 @@ struct CESIUMGLTF_API ModelEXT_feature_metadata final
   std::optional<Schema> schema;
 
   /**
-   * @brief A uri to an external schema file.
+   * @brief The URI (or IRI) of the external schema file.
    */
   std::optional<std::string> schemaUri;
 
