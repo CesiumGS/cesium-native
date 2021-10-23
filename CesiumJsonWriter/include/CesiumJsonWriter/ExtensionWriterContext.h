@@ -5,8 +5,8 @@
 
 #include <any>
 #include <functional>
+#include <map>
 #include <string>
-#include <unordered_map>
 
 namespace CesiumJsonWriter {
 
@@ -114,12 +114,11 @@ public:
       const std::string& extendedObjectType) const;
 
 private:
-  using ObjectTypeToHandler =
-      std::unordered_map<std::string, ExtensionHandler<std::any>>;
-  using ExtensionNameMap = std::unordered_map<std::string, ObjectTypeToHandler>;
+  using ObjectTypeToHandler = std::map<std::string, ExtensionHandler<std::any>>;
+  using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;
-  std::unordered_map<std::string, ExtensionState> _extensionStates;
+  std::map<std::string, ExtensionState> _extensionStates;
 };
 
 } // namespace CesiumJsonWriter

@@ -414,7 +414,7 @@ function formatWriterPropertyImpl(property) {
   const type = property.type;
 
   const hasEmptyGuard =
-    type.startsWith("std::vector") || type.startsWith("std::unordered_map");
+    type.startsWith("std::vector") || type.startsWith("std::map");
   const hasOptionalGuard = type.startsWith("std::optional");
   const hasGuard = hasEmptyGuard || hasOptionalGuard;
 

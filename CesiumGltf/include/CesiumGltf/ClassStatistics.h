@@ -8,8 +8,8 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
+#include <map>
 #include <optional>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -29,6 +29,6 @@ struct CESIUMGLTF_API ClassStatistics final
    * class' `properties` dictionary and each value is an object containing
    * statistics about property values.
    */
-  std::unordered_map<std::string, PropertyStatistics> properties;
+  std::map<std::string, PropertyStatistics> properties;
 };
 } // namespace CesiumGltf

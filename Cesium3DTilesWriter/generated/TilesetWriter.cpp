@@ -111,7 +111,7 @@ template <typename T>
 
 template <typename T>
 [[maybe_unused]] void writeJson(
-    const std::unordered_map<std::string, T>& obj,
+    const std::map<std::string, T>& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
   jsonWriter.StartObject();

@@ -135,6 +135,10 @@ while (schemas.length > 0) {
   schemas.push(...generate(options, schema, writers));
 }
 
+if (argv.namespace === "CesiumGltf") {
+  return;
+}
+
 const writerOptions = {
   writerOutputDir: argv.writerOutput,
   config: config,

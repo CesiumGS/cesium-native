@@ -8,7 +8,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace CesiumJsonReader {
@@ -119,7 +118,7 @@ private:
   using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;
-  std::unordered_map<std::string, ExtensionState> _extensionStates;
+  std::map<std::string, ExtensionState> _extensionStates;
 };
 
 } // namespace CesiumJsonReader

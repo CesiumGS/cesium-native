@@ -56,7 +56,7 @@ TEST_CASE("Writes tileset JSON") {
   property2.maximum = 5.0;
   property2.minimum = 1.0;
 
-  std::unordered_map<std::string, Properties> properties = {
+  std::map<std::string, Properties> properties = {
       {"property1", property1},
       {"property2", property2}};
 
@@ -80,13 +80,13 @@ TEST_CASE("Writes tileset JSON") {
         "tilesetVersion": "1.2.3"
       },
       "properties": {
-        "property2": {
-          "maximum": 5.0,
-          "minimum": 1.0
-        },
         "property1": {
           "maximum": 10.0,
           "minimum": 0.0
+        },
+        "property2": {
+          "maximum": 5.0,
+          "minimum": 1.0
         }
       },
       "geometricError": 45.0,
