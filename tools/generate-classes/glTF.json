@@ -25,7 +25,7 @@
     },
     "extensions": [
         {
-            "className": "KHR_draco_mesh_compression",
+            "className": "ExtensionKhrDracoMeshCompression",
             "extensionName": "KHR_draco_mesh_compression",
             "schema": "Khronos/KHR_draco_mesh_compression/schema/mesh.primitive.KHR_draco_mesh_compression.schema.json",
             "attachTo": [
@@ -33,7 +33,7 @@
             ]
         },
         {
-            "className": "ModelEXT_feature_metadata",
+            "className": "ExtensionModelExtFeatureMetadata",
             "extensionName": "EXT_feature_metadata",
             "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json",
             "attachTo": [
@@ -41,7 +41,7 @@
             ]
         },
         {
-            "className": "MeshPrimitiveEXT_feature_metadata",
+            "className": "ExtensionPrimitiveExtFeatureMetadata",
             "extensionName": "EXT_feature_metadata",
             "schema": "Vendor/EXT_feature_metadata/schema/primitive.EXT_feature_metadata.schema.json",
             "attachTo": [
