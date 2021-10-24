@@ -19,6 +19,24 @@
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run-script", "generate-gltf"]
+        },
+        {
+            "name": "Test",
+            "program": "${workspaceFolder}/build-debug/CesiumNativeTests/cesium-native-tests",
+            "cwd": "${workspaceFolder}",
+            "type": "cppdbg",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "text": "set print elements 0"
+                }
+            ]
         }
     ]
 }
