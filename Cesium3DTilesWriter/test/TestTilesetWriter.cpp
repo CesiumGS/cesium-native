@@ -1,5 +1,7 @@
 #include "Cesium3DTiles/Cesium3DTilesWriter.h"
 
+#include <Cesium3DTiles/Extension3dTilesContentGltf.h>
+
 #include <catch2/catch.hpp>
 
 using namespace Cesium3DTiles;
@@ -160,6 +162,78 @@ TEST_CASE("Writes tileset JSON with extras") {
       {"year", 2000}};
 
   tileset.extras = {{"final", true}, {"info", nestedExtras}};
+
+  Cesium3DTilesWriter writer;
+  TilesetWriterResult result = writer.writeTileset(tileset);
+  const auto asBytes = result.tilesetBytes;
+
+  CHECK(result.errors.empty());
+  CHECK(result.warnings.empty());
+
+  std::string expectedString = removeWhitespace(R"(
+    {
+      "asset": {
+        "version": "1.0"
+      },
+      "geometricError": 45.0,
+      "root": {
+        "boundingVolume": {
+          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+        },
+        "geometricError": 15.0,
+        "refine": "ADD",
+        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+        "extras": {
+          "resolution": 0.5,
+          "year": 2001
+        }
+      },
+      "extras": {
+        "final": true,
+        "info": {
+          "authors": ["A","B","C"],
+          "type": "tileset",
+          "year": 2000
+        }
+      }
+    }
+  )");
+
+  const std::string extractedString(
+      reinterpret_cast<const char*>(asBytes.data()),
+      asBytes.size());
+
+  REQUIRE(expectedString == extractedString);
+}
+
+TEST_CASE("Writes tileset JSON with 3DTILES_content_gltf extension") {
+  using namespace std::string_literals;
+
+  Content content;
+  content.uri = "root.glb";
+
+  Tile root;
+  root.boundingVolume.box = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  root.geometricError = 15.0;
+  root.refine = Tile::Refine::ADD;
+  root.content = content;
+
+  Asset asset;
+  asset.version = "1.0";
+
+  Tileset tileset;
+  tileset.asset = asset;
+  tileset.root = root;
+  tileset.geometricError = 45.0;
+  tileset.extensionsUsed = {"3DTILES_content_gltf"};
+  tileset.extensionsRequired = {"3DTILES_content_gltf"};
+
+  Extension3dTilesContentGltf& contentGltfExtension =
+      tileset.addExtension<Extension3dTilesContentGltf>();
+  contentGltfExtension.extensionsUsed = {
+      "KHR_draco_mesh_compression",
+      "KHR_materials_unlit"};
+  contentGltfExtension.extensionsRequired = {"KHR_draco_mesh_compression"};
 
   Cesium3DTilesWriter writer;
   TilesetWriterResult result = writer.writeTileset(tileset);

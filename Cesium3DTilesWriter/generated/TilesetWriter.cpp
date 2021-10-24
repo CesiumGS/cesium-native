@@ -3,6 +3,8 @@
 
 #include "TilesetWriter.h"
 
+#include <Cesium3DTiles/Extension3dTilesContentGltf.h>
+#include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
@@ -14,6 +16,11 @@ using namespace CesiumUtility;
 namespace Cesium3DTiles {
 
 namespace {
+
+void writeJson(
+    const Extension3dTilesContentGltf& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context);
 
 void writeJson(
     const Tileset& obj,
@@ -119,6 +126,35 @@ template <typename T>
     jsonWriter.Key(item.first);
     writeJson(item.second, jsonWriter, context);
   }
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Extension3dTilesContentGltf& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.extensionsUsed.empty()) {
+    jsonWriter.Key("extensionsUsed");
+    writeJson(obj.extensionsUsed, jsonWriter, context);
+  }
+
+  if (!obj.extensionsRequired.empty()) {
+    jsonWriter.Key("extensionsRequired");
+    writeJson(obj.extensionsRequired, jsonWriter, context);
+  }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
   jsonWriter.EndObject();
 }
 
@@ -329,6 +365,13 @@ void writeJson(
 }
 
 } // namespace
+
+void Extension3dTilesContentGltfWriter::write(
+    const Extension3dTilesContentGltf& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
 
 void TilesetWriter::write(
     const Tileset& obj,
