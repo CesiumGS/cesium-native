@@ -118,7 +118,7 @@ private:
   using ExtensionNameMap = std::map<std::string, ObjectTypeToHandler>;
 
   ExtensionNameMap _extensions;
-  std::map<std::string, ExtensionState> _extensionStates;
+  std::unordered_map<std::string, ExtensionState> _extensionStates;
 };
 
 } // namespace CesiumJsonReader
