@@ -1,8 +1,8 @@
 #pragma once
 
+#include "ExtensionModelExtFeatureMetadata.h"
 #include "MetadataPropertyView.h"
 #include "Model.h"
-#include "ModelEXT_feature_metadata.h"
 #include "PropertyType.h"
 
 #include <glm/common.hpp>

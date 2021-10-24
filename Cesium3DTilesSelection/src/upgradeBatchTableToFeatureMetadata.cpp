@@ -2,9 +2,9 @@
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
-#include <CesiumGltf/MeshPrimitiveEXT_feature_metadata.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/ModelEXT_feature_metadata.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumUtility/Tracing.h>
@@ -1288,8 +1288,8 @@ void upgradeBatchTableToFeatureMetadata(
     gltf.buffers.emplace_back();
   }
 
-  ModelEXT_feature_metadata& modelExtension =
-      gltf.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& modelExtension =
+      gltf.addExtension<ExtensionModelExtFeatureMetadata>();
   Schema& schema = modelExtension.schema.emplace();
   Class& classDefinition =
       schema.classes.emplace("default", Class()).first->second;
@@ -1371,8 +1371,8 @@ void upgradeBatchTableToFeatureMetadata(
       primitive.attributes.erase("_BATCHID");
 
       // Create a feature extension
-      MeshPrimitiveEXT_feature_metadata& extension =
-          primitive.addExtension<MeshPrimitiveEXT_feature_metadata>();
+      ExtensionPrimitiveExtFeatureMetadata& extension =
+          primitive.addExtension<ExtensionPrimitiveExtFeatureMetadata>();
       FeatureIDAttribute& attribute =
           extension.featureIdAttributes.emplace_back();
       attribute.featureTable = "default";
