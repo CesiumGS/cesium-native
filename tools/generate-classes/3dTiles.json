@@ -4,5 +4,14 @@
             "overrideName": "CesiumUtility::ExtensibleObject"
         }
     },
-    "extensions": []
+    "extensions": [
+        {
+            "className": "Extension3dTilesContentGltf",
+            "extensionName": "3DTILES_content_gltf",
+            "schema": "3DTILES_content_gltf/schema/tileset.3DTILES_content_gltf.schema.json",
+            "attachTo": [
+                "tileset"
+            ]
+        }
+    ]
 }
