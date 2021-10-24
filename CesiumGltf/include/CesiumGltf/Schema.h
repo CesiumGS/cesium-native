@@ -8,9 +8,9 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <map>
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -38,12 +38,12 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
    * @brief A dictionary, where each key is a class ID and each value is an
    * object defining the class.
    */
-  std::unordered_map<std::string, Class> classes;
+  std::map<std::string, Class> classes;
 
   /**
    * @brief A dictionary, where each key is an enum ID and each value is an
    * object defining the values for the enum.
    */
-  std::unordered_map<std::string, Enum> enums;
+  std::map<std::string, Enum> enums;
 };
 } // namespace CesiumGltf

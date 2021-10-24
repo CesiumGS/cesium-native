@@ -6,7 +6,7 @@
 using namespace CesiumUtility;
 
 void CesiumGltf::writeExtensions(
-    const std::unordered_map<std::string, std::any>& extensions,
+    const std::map<std::string, std::any>& extensions,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
   if (extensions.empty()) {
     return;

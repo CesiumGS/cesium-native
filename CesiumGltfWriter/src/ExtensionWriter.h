@@ -3,10 +3,10 @@
 #include <CesiumJsonWriter/JsonWriter.h>
 
 #include <any>
-#include <unordered_map>
+#include <map>
 
 namespace CesiumGltf {
 void writeExtensions(
-    const std::unordered_map<std::string, std::any>& extensions,
+    const std::map<std::string, std::any>& extensions,
     CesiumJsonWriter::JsonWriter& jsonWriter);
 }

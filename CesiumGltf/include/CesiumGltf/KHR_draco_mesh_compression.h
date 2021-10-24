@@ -7,7 +7,7 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <unordered_map>
+#include <map>
 
 namespace CesiumGltf {
 /**
@@ -28,6 +28,6 @@ struct CESIUMGLTF_API KHR_draco_mesh_compression final
    * @brief A dictionary object, where each key corresponds to an attribute and
    * its unique attribute id stored in the compressed geometry.
    */
-  std::unordered_map<std::string, int32_t> attributes;
+  std::map<std::string, int32_t> attributes;
 };
 } // namespace CesiumGltf

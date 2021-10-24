@@ -8,9 +8,9 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 namespace CesiumGltf {
 /**
@@ -39,6 +39,6 @@ struct CESIUMGLTF_API FeatureTable final
    * property values are stored. Optional properties may be excluded from this
    * dictionary.
    */
-  std::unordered_map<std::string, FeatureTableProperty> properties;
+  std::map<std::string, FeatureTableProperty> properties;
 };
 } // namespace CesiumGltf

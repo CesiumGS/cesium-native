@@ -7,7 +7,7 @@
 
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <unordered_map>
+#include <map>
 
 namespace CesiumGltf {
 /**
@@ -22,6 +22,6 @@ struct CESIUMGLTF_API Statistics final
    * dictionary and each value is an object containing statistics about features
    * that conform to the class.
    */
-  std::unordered_map<std::string, ClassStatistics> classes;
+  std::map<std::string, ClassStatistics> classes;
 };
 } // namespace CesiumGltf
