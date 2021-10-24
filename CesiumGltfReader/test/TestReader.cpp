@@ -1,7 +1,7 @@
 #include "CesiumGltf/GltfReader.h"
 
 #include <CesiumGltf/AccessorView.h>
-#include <CesiumGltf/KHR_draco_mesh_compression.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
@@ -221,8 +221,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   REQUIRE(model.meshes[0].primitives.size() == 1);
 
   MeshPrimitive& primitive = model.meshes[0].primitives[0];
-  KHR_draco_mesh_compression* pDraco =
-      primitive.getExtension<KHR_draco_mesh_compression>();
+  ExtensionKhrDracoMeshCompression* pDraco =
+      primitive.getExtension<ExtensionKhrDracoMeshCompression>();
   REQUIRE(pDraco);
 
   CHECK(pDraco->bufferView == 1);
@@ -286,7 +286,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   MeshPrimitive& primitive3 = model3.meshes[0].primitives[0];
 
   REQUIRE(!primitive3.getGenericExtension("KHR_draco_mesh_compression"));
-  REQUIRE(!primitive3.getExtension<KHR_draco_mesh_compression>());
+  REQUIRE(!primitive3.getExtension<ExtensionKhrDracoMeshCompression>());
 }
 
 TEST_CASE("Extensions deserialize to JsonVaue iff "

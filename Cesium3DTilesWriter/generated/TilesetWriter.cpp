@@ -4,9 +4,9 @@
 #include "TilesetWriter.h"
 
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
-#include <CesiumJsonWriter/ExtensionsWriter.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/writeJsonExtensions.h>
 
 using namespace CesiumJsonWriter;
 using namespace CesiumUtility;

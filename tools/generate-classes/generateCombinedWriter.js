@@ -36,7 +36,7 @@ function generateCombinedWriter(options) {
         #include "${name}Writer.h"
         
         #include <CesiumJsonWriter/ExtensionWriterContext.h>
-        #include <CesiumJsonWriter/ExtensionsWriter.h>
+        #include <CesiumJsonWriter/writeJsonExtensions.h>
         #include <CesiumJsonWriter/JsonObjectWriter.h>
         #include <CesiumJsonWriter/JsonWriter.h>
         

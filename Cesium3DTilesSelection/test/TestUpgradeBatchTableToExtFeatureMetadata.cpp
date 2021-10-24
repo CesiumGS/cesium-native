@@ -2,10 +2,10 @@
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
 
-#include <CesiumGltf/MeshPrimitiveEXT_feature_metadata.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/MetadataFeatureTableView.h>
 #include <CesiumGltf/MetadataPropertyView.h>
-#include <CesiumGltf/ModelEXT_feature_metadata.h>
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
@@ -138,8 +138,8 @@ static void createTestForScalarJson(
       batchTableJson,
       gsl::span<const std::byte>());
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -213,8 +213,8 @@ static void createTestForArrayJson(
       batchTableJson,
       gsl::span<const std::byte>());
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -252,8 +252,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
 
   Model& gltf = *pResult->model;
 
-  ModelEXT_feature_metadata* pExtension =
-      gltf.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(pExtension);
 
   // Check the schema
@@ -334,8 +334,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
           primitive.attributes.find("_FEATURE_ID_1") ==
           primitive.attributes.end());
 
-      MeshPrimitiveEXT_feature_metadata* pPrimitiveExtension =
-          primitive.getExtension<MeshPrimitiveEXT_feature_metadata>();
+      ExtensionPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+          primitive.getExtension<ExtensionPrimitiveExtFeatureMetadata>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
@@ -437,8 +437,8 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   REQUIRE(pResult != nullptr);
   REQUIRE(pResult->model != std::nullopt);
 
-  ModelEXT_feature_metadata* metadata =
-      pResult->model->getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      pResult->model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -582,8 +582,8 @@ TEST_CASE("Upgrade json nested json metadata to string") {
   REQUIRE(pResult != nullptr);
   REQUIRE(pResult->model != std::nullopt);
 
-  ModelEXT_feature_metadata* metadata =
-      pResult->model->getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      pResult->model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
@@ -672,8 +672,8 @@ TEST_CASE("Upgrade bool json to boolean binary") {
       batchTableJson,
       gsl::span<const std::byte>());
 
-  ModelEXT_feature_metadata* metadata =
-      model.getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* metadata =
+      model.getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(metadata != nullptr);
 
   std::optional<Schema> schema = metadata->schema;
