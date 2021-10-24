@@ -189,7 +189,6 @@ void writeJson(
   }
 
   if (!obj.extensions.empty()) {
-    jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
   }
 

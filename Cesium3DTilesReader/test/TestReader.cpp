@@ -30,7 +30,7 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 }
 } // namespace
 
-TEST_CASE("Cesium3DTiles::TilesetReader") {
+TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;
 
   std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;
@@ -118,7 +118,87 @@ TEST_CASE("Cesium3DTiles::TilesetReader") {
   CHECK_FALSE(child.viewerRequestVolume);
 }
 
-TEST_CASE("Can deserialize 3DTILES_content_gltf") {
+TEST_CASE("Reads tileset JSON with extras") {
+  std::string s = R"(
+    {
+      "asset": {
+        "version": "1.0"
+      },
+      "geometricError": 45.0,
+      "root": {
+        "boundingVolume": {
+          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+        },
+        "geometricError": 15.0,
+        "refine": "ADD",
+        "transform": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+        "extras": {
+          "D": "Goodbye"
+        }
+      },
+      "extras": {
+        "A": "Hello",
+        "B": 1234567,
+        "C": {
+          "C1": {},
+          "C2": [1,2,3,4,5],
+          "C3": true
+        }
+      }
+    }
+  )";
+
+  Cesium3DTiles::TilesetReader reader;
+  TilesetReaderResult result = reader.readTileset(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.tileset.has_value());
+
+  Tileset& tileset = result.tileset.value();
+
+  auto ait = tileset.extras.find("A");
+  REQUIRE(ait != tileset.extras.end());
+  CHECK(ait->second.isString());
+  CHECK(ait->second.getStringOrDefault("") == "Hello");
+
+  auto bit = tileset.extras.find("B");
+  REQUIRE(bit != tileset.extras.end());
+  CHECK(bit->second.isNumber());
+  CHECK(bit->second.getUint64() == 1234567);
+
+  auto cit = tileset.extras.find("C");
+  REQUIRE(cit != tileset.extras.end());
+
+  JsonValue* pC1 = cit->second.getValuePtrForKey("C1");
+  REQUIRE(pC1 != nullptr);
+  CHECK(pC1->isObject());
+  CHECK(pC1->getObject().empty());
+
+  JsonValue* pC2 = cit->second.getValuePtrForKey("C2");
+  REQUIRE(pC2 != nullptr);
+
+  CHECK(pC2->isArray());
+  JsonValue::Array array = pC2->getArray();
+  CHECK(array.size() == 5);
+  CHECK(array[0].getSafeNumber<double>() == 1.0);
+  CHECK(array[1].getSafeNumber<std::uint64_t>() == 2);
+  CHECK(array[2].getSafeNumber<std::uint8_t>() == 3);
+  CHECK(array[3].getSafeNumber<std::int16_t>() == 4);
+  CHECK(array[4].getSafeNumber<std::int32_t>() == 5);
+
+  JsonValue* pC3 = cit->second.getValuePtrForKey("C3");
+  REQUIRE(pC3 != nullptr);
+  CHECK(pC3->isBool());
+  CHECK(pC3->getBool());
+
+  auto dit = tileset.root.extras.find("D");
+  REQUIRE(dit != tileset.root.extras.end());
+  CHECK(dit->second.isString());
+  CHECK(dit->second.getStringOrDefault("") == "Goodbye");
+}
+
+TEST_CASE("Reads tileset JSON with 3DTILES_content_gltf extension") {
   std::string s = R"(
     {
       "asset": {
@@ -176,7 +256,7 @@ TEST_CASE("Can deserialize 3DTILES_content_gltf") {
   CHECK(contentGltf->extensionsRequired == gltfExtensionsRequired);
 }
 
-TEST_CASE("Can deserialize custom extension") {
+TEST_CASE("Reads tileset JSON with custom extension") {
   std::string s = R"(
     {
       "asset": {
@@ -184,10 +264,10 @@ TEST_CASE("Can deserialize custom extension") {
       },
       "extensions": {
         "A": {
-          "test": "Hello World"
+          "test": "Hello"
         },
         "B": {
-          "another": "Goodbye World"
+          "another": "Goodbye"
         }
       }
     }
@@ -207,13 +287,11 @@ TEST_CASE("Can deserialize custom extension") {
   REQUIRE(pB != nullptr);
 
   REQUIRE(pA->getValuePtrForKey("test"));
-  REQUIRE(
-      pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
+  REQUIRE(pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello");
 
   REQUIRE(pB->getValuePtrForKey("another"));
   REQUIRE(
-      pB->getValuePtrForKey("another")->getStringOrDefault("") ==
-      "Goodbye World");
+      pB->getValuePtrForKey("another")->getStringOrDefault("") == "Goodbye");
 
   // Repeat test but this time the extension should be skipped.
   reader.getExtensions().setExtensionState(

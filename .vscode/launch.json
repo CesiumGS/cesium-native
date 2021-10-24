@@ -23,6 +23,7 @@
         {
             "name": "Test",
             "program": "${workspaceFolder}/build-debug/CesiumNativeTests/cesium-native-tests",
+            "args": ["*custom*"],
             "cwd": "${workspaceFolder}",
             "type": "cppdbg",
             "request": "launch",

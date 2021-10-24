@@ -10,10 +10,14 @@
 namespace Cesium3DTiles {
 
 struct Extension3dTilesContentGltfWriter {
+  using ValueType = Extension3dTilesContentGltf;
+
   static void write(
       const Extension3dTilesContentGltf& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static inline constexpr const char* ExtensionName = "3DTILES_content_gltf";
 };
 
 struct TilesetWriter {

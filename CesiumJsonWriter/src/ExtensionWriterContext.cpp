@@ -1,11 +1,20 @@
 #include "CesiumJsonWriter/ExtensionWriterContext.h"
 
+#include "CesiumJsonWriter/JsonObjectWriter.h"
 #include "CesiumJsonWriter/JsonWriter.h"
 
+#include <CesiumUtility/JsonValue.h>
+
 using namespace CesiumJsonWriter;
+using namespace CesiumUtility;
 
 namespace {
-void noOpWriter(const std::any&, JsonWriter&, const ExtensionWriterContext&) {}
+void objWriter(
+    const std::any& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& /* context */) {
+  writeJsonValue(std::any_cast<const JsonValue&>(obj), jsonWriter);
+}
 } // namespace
 
 ExtensionWriterContext::ExtensionHandler<std::any>
@@ -18,18 +27,20 @@ ExtensionWriterContext::createExtensionHandler(
   auto stateIt = this->_extensionStates.find(extensionNameString);
   if (stateIt != this->_extensionStates.end()) {
     if (stateIt->second == ExtensionState::Disabled) {
-      return noOpWriter;
+      return nullptr;
+    } else if (stateIt->second == ExtensionState::JsonOnly) {
+      return objWriter;
     }
   }
 
   auto extensionNameIt = this->_extensions.find(extensionNameString);
   if (extensionNameIt == this->_extensions.end()) {
-    return noOpWriter;
+    return objWriter;
   }
 
   auto objectTypeIt = extensionNameIt->second.find(extendedObjectType);
   if (objectTypeIt == extensionNameIt->second.end()) {
-    return noOpWriter;
+    return objWriter;
   }
 
   return objectTypeIt->second;

@@ -9,15 +9,24 @@ void writeJsonExtensions(
     const TExtended& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
+  bool startedObject = false;
+
   for (const auto& item : obj.extensions) {
     auto handler =
         context.createExtensionHandler(item.first, TExtended::TypeName);
-    if (!handler)
+    if (!handler) {
       continue;
+    }
+    if (!startedObject) {
+      jsonWriter.Key("extensions");
+      jsonWriter.StartObject();
+      startedObject = true;
+    }
     jsonWriter.Key(item.first);
     handler(item.second, jsonWriter, context);
   }
-  jsonWriter.EndObject();
+  if (startedObject) {
+    jsonWriter.EndObject();
+  }
 }
 } // namespace CesiumJsonWriter

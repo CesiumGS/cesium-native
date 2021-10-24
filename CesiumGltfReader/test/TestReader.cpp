@@ -141,7 +141,7 @@ TEST_CASE("Read BoxTexturedWebp (with error messages)") {
   REQUIRE(result.errors.size() > 0);
 }
 
-TEST_CASE("Nested extras serializes properly") {
+TEST_CASE("Nested extras deserializes properly") {
   const std::string s = R"(
     {
         "asset" : {

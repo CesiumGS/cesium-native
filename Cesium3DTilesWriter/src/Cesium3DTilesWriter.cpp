@@ -11,8 +11,8 @@ using namespace CesiumJsonWriter;
 using namespace CesiumUtility;
 
 Cesium3DTilesWriter::Cesium3DTilesWriter() {
-    this->_context
-      .registerExtension<Tileset, Extension3dTilesContentGltf>();
+  this->_context
+      .registerExtension<Tileset, Extension3dTilesContentGltfWriter>();
 }
 
 CesiumJsonWriter::ExtensionWriterContext& Cesium3DTilesWriter::getExtensions() {
