@@ -149,8 +149,8 @@ TEST_CASE("Can deserialize 3DTILES_content_gltf") {
   Cesium3DTiles::TilesetReader reader;
   TilesetReaderResult result = reader.readTileset(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
-  CHECK(result.errors.empty());
-  CHECK(result.warnings.empty());
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.empty());
   REQUIRE(result.tileset.has_value());
 
   Tileset& tileset = result.tileset.value();
@@ -174,4 +174,58 @@ TEST_CASE("Can deserialize 3DTILES_content_gltf") {
   REQUIRE(contentGltf);
   CHECK(contentGltf->extensionsUsed == gltfExtensionsUsed);
   CHECK(contentGltf->extensionsRequired == gltfExtensionsRequired);
+}
+
+TEST_CASE("Can deserialize custom extension") {
+  std::string s = R"(
+    {
+      "asset": {
+        "version": "1.0"
+      },
+      "extensions": {
+        "A": {
+          "test": "Hello World"
+        },
+        "B": {
+          "another": "Goodbye World"
+        }
+      }
+    }
+  )";
+
+  Cesium3DTiles::TilesetReader reader;
+  TilesetReaderResult withCustomExt = reader.readTileset(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  REQUIRE(withCustomExt.errors.empty());
+  REQUIRE(withCustomExt.tileset.has_value());
+
+  REQUIRE(withCustomExt.tileset->extensions.size() == 2);
+
+  JsonValue* pA = withCustomExt.tileset->getGenericExtension("A");
+  JsonValue* pB = withCustomExt.tileset->getGenericExtension("B");
+  REQUIRE(pA != nullptr);
+  REQUIRE(pB != nullptr);
+
+  REQUIRE(pA->getValuePtrForKey("test"));
+  REQUIRE(
+      pA->getValuePtrForKey("test")->getStringOrDefault("") == "Hello World");
+
+  REQUIRE(pB->getValuePtrForKey("another"));
+  REQUIRE(
+      pB->getValuePtrForKey("another")->getStringOrDefault("") ==
+      "Goodbye World");
+
+  // Repeat test but this time the extension should be skipped.
+  reader.getExtensions().setExtensionState(
+      "A",
+      CesiumJsonReader::ExtensionState::Disabled);
+  reader.getExtensions().setExtensionState(
+      "B",
+      CesiumJsonReader::ExtensionState::Disabled);
+
+  TilesetReaderResult withoutCustomExt = reader.readTileset(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+
+  auto& zeroExtensions = withoutCustomExt.tileset->extensions;
+  REQUIRE(zeroExtensions.empty());
 }
