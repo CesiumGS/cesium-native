@@ -1,5 +1,6 @@
 #include "Cesium3DTiles/TilesetReader.h"
 
+#include <Cesium3DTiles/Extension3dTilesContentGltf.h>
 #include <CesiumJsonReader/JsonReader.h>
 
 #include <catch2/catch.hpp>
@@ -115,4 +116,62 @@ TEST_CASE("Cesium3DTiles::TilesetReader") {
   CHECK(child.geometricError == 159.43385994848);
   CHECK(child.children.size() == 4);
   CHECK_FALSE(child.viewerRequestVolume);
+}
+
+TEST_CASE("Can deserialize 3DTILES_content_gltf") {
+  std::string s = R"(
+    {
+      "asset": {
+        "version": "1.0"
+      },
+      "geometricError": 45.0,
+      "root": {
+        "boundingVolume": {
+          "box": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+        },
+        "geometricError": 15.0,
+        "refine": "ADD",
+        "content": {
+          "uri": "root.glb"
+        }
+      },
+      "extensionsUsed": ["3DTILES_content_gltf"],
+      "extensionsRequired": ["3DTILES_content_gltf"],
+      "extensions": {
+        "3DTILES_content_gltf": {
+          "extensionsUsed": ["KHR_draco_mesh_compression", "KHR_materials_unlit"],
+          "extensionsRequired": ["KHR_draco_mesh_compression"]
+        }
+      }
+    }
+  )";
+
+  Cesium3DTiles::TilesetReader reader;
+  TilesetReaderResult result = reader.readTileset(
+      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+  CHECK(result.errors.empty());
+  CHECK(result.warnings.empty());
+  REQUIRE(result.tileset.has_value());
+
+  Tileset& tileset = result.tileset.value();
+  CHECK(tileset.asset.version == "1.0");
+
+  const std::vector<std::string> tilesetExtensionUsed{"3DTILES_content_gltf"};
+  const std::vector<std::string> tilesetExtensionRequired{
+      "3DTILES_content_gltf"};
+
+  const std::vector<std::string> gltfExtensionsUsed{
+      "KHR_draco_mesh_compression",
+      "KHR_materials_unlit"};
+  const std::vector<std::string> gltfExtensionsRequired{
+      "KHR_draco_mesh_compression"};
+
+  CHECK(tileset.extensionsUsed == tilesetExtensionUsed);
+  CHECK(tileset.extensionsUsed == tilesetExtensionUsed);
+
+  Extension3dTilesContentGltf* contentGltf =
+      tileset.getExtension<Extension3dTilesContentGltf>();
+  REQUIRE(contentGltf);
+  CHECK(contentGltf->extensionsUsed == gltfExtensionsUsed);
+  CHECK(contentGltf->extensionsRequired == gltfExtensionsRequired);
 }
