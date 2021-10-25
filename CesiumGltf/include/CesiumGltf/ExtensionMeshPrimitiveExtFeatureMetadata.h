@@ -16,10 +16,10 @@ namespace CesiumGltf {
  * @brief `EXT_feature_metadata extension` for a primitive in a glTF model, to
  * associate it with the root `EXT_feature_metadata` object.
  */
-struct CESIUMGLTF_API ExtensionPrimitiveExtFeatureMetadata final
+struct CESIUMGLTF_API ExtensionMeshPrimitiveExtFeatureMetadata final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName =
-      "ExtensionPrimitiveExtFeatureMetadata";
+      "ExtensionMeshPrimitiveExtFeatureMetadata";
   static inline constexpr const char* ExtensionName = "EXT_feature_metadata";
 
   /**

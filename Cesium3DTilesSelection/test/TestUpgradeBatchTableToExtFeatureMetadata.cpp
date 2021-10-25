@@ -2,8 +2,8 @@
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
 
+#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
-#include <CesiumGltf/ExtensionPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/MetadataFeatureTableView.h>
 #include <CesiumGltf/MetadataPropertyView.h>
 
@@ -334,8 +334,8 @@ TEST_CASE("Converts simple batch table to EXT_feature_metadata") {
           primitive.attributes.find("_FEATURE_ID_1") ==
           primitive.attributes.end());
 
-      ExtensionPrimitiveExtFeatureMetadata* pPrimitiveExtension =
-          primitive.getExtension<ExtensionPrimitiveExtFeatureMetadata>();
+      ExtensionMeshPrimitiveExtFeatureMetadata* pPrimitiveExtension =
+          primitive.getExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
       REQUIRE(pPrimitiveExtension);
       REQUIRE(pPrimitiveExtension->featureIdAttributes.size() == 1);
 
