@@ -40,35 +40,6 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
   return nullptr;
 }
 
-bool rasterCoversTile(
-    const Tile& tile,
-    const RasterOverlayTile& raster,
-    int32_t textureCoordinateID) {
-  const TileContentLoadResult* pContent = tile.getContent();
-  if (pContent) {
-    const std::vector<Rectangle>& rectangles =
-        pContent->rasterOverlayRectangles;
-    if (textureCoordinateID >= 0 &&
-        size_t(textureCoordinateID) < rectangles.size()) {
-      return raster.getRectangle().fullyContains(
-          rectangles[size_t(textureCoordinateID)]);
-    }
-  }
-
-  const BoundingRegion* pRegion =
-      getBoundingRegionFromBoundingVolume(tile.getBoundingVolume());
-  if (pRegion) {
-    const Projection& projection =
-        raster.getOverlay().getTileProvider()->getProjection();
-    return raster.getRectangle().fullyContains(
-        projectRectangleSimple(projection, pRegion->getRectangle()));
-  }
-
-  // We can't tell if this raster covers the tile. This shouldn't really happen,
-  // but if it does we'll just hope for the best.
-  return true;
-}
-
 } // namespace
 
 namespace Cesium3DTilesSelection {
@@ -109,10 +80,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
     if (pTile) {
       RasterOverlayTile* pOverlayTile =
           findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
-      if (pOverlayTile && rasterCoversTile(
-                              *pTile,
-                              *pOverlayTile,
-                              this->getTextureCoordinateID())) {
+      if (pOverlayTile) {
         this->_pLoadingTile = pOverlayTile;
       }
     }
@@ -148,11 +116,7 @@ RasterMappedTo3DTile::update(Tile& tile) {
     while (pTile) {
       pCandidate = findTileOverlay(*pTile, this->_pLoadingTile->getOverlay());
       if (pCandidate &&
-          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
-          rasterCoversTile(
-              *pTile,
-              *pCandidate,
-              this->getTextureCoordinateID())) {
+          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
         break;
       }
       pTile = pTile->getParent();
