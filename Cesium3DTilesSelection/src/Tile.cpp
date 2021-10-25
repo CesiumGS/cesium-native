@@ -286,15 +286,18 @@ void Tile::loadContent() {
                       model.extras["gltfUpAxis"] =
                           static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
 
+                      const BoundingVolume& contentBoundingVolume =
+                          pContent->updatedBoundingVolume
+                              ? *pContent->updatedBoundingVolume
+                              : (loadInput.tileContentBoundingVolume
+                                     ? *loadInput.tileContentBoundingVolume
+                                     : loadInput.tileBoundingVolume);
+
                       GenerateTextureCoordinatesResult generateResult =
                           Tile::generateTextureCoordinates(
                               model,
                               loadInput.tileTransform,
-                              // Would it be better to use the content bounding
-                              // volume, if it exists?
-                              // What about
-                              // TileContentLoadResult::updatedBoundingVolume?
-                              loadInput.tileBoundingVolume,
+                              contentBoundingVolume,
                               projections);
 
                       pContent->rasterOverlayProjections =
