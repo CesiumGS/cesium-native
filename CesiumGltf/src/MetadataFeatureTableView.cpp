@@ -191,7 +191,7 @@ MetadataPropertyView<std::string_view>
 MetadataFeatureTableView::getStringPropertyValues(
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty.type != "STRING") {
+  if (classProperty.type != ClassProperty::Type::STRING) {
     return createInvalidPropertyView<std::string_view>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
@@ -235,13 +235,12 @@ MetadataPropertyView<MetadataArrayView<std::string_view>>
 MetadataFeatureTableView::getStringArrayPropertyValues(
     const ClassProperty& classProperty,
     const FeatureTableProperty& featureTableProperty) const {
-  if (classProperty.type != "ARRAY") {
+  if (classProperty.type != ClassProperty::Type::ARRAY) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }
 
-  if (!classProperty.componentType.isString() ||
-      classProperty.componentType.getString() != "STRING") {
+  if (classProperty.componentType != ClassProperty::ComponentType::STRING) {
     return createInvalidPropertyView<MetadataArrayView<std::string_view>>(
         MetadataPropertyViewStatus::InvalidTypeMismatch);
   }

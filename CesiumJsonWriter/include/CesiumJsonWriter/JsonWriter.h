@@ -1,5 +1,4 @@
 #pragma once
-#include "JsonWriter.h"
 
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <CesiumGltf/Camera.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 

@@ -1,6 +1,6 @@
 #include "CesiumGltf/ImageManipulation.h"
 
-#include "CesiumGltf/ImageCesium.h"
+#include <CesiumGltf/ImageCesium.h>
 
 #include <cassert>
 #include <cstring>

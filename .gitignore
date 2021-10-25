@@ -5,3 +5,6 @@ node_modules
 .vs
 CMakeSettings.json
 *.user
+.cache
+*.DS_Store
+test.db

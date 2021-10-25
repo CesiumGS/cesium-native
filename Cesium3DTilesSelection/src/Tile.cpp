@@ -374,7 +374,8 @@ void Tile::loadContent() {
 
                   if (pContent) {
                     pContent->httpStatusCode = statusCode;
-                    if (statusCode < 200 || statusCode >= 300) {
+                    if (statusCode != 0 &&
+                        (statusCode < 200 || statusCode >= 300)) {
                       return LoadResult{
                           LoadState::FailedTemporarily,
                           std::move(pContent),

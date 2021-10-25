@@ -1,14 +1,16 @@
 #pragma once
 
-#include "CesiumJsonReader/StringJsonHandler.h"
-#include "ExtensibleObjectJsonHandler.h"
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumGltf {
 struct NamedObject;
 
-class NamedObjectJsonHandler : public ExtensibleObjectJsonHandler {
+class NamedObjectJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 protected:
-  NamedObjectJsonHandler(const ReaderContext& context) noexcept;
+  NamedObjectJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentReader, NamedObject* pObject);
   IJsonHandler* readObjectKeyNamedObject(
       const std::string& objectType,

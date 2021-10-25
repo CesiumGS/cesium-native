@@ -1,8 +1,8 @@
 #include "BufferWriter.h"
+#include "CesiumGltf/WriteModelOptions.h"
+#include "CesiumGltf/WriteModelResult.h"
 
 #include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/WriteModelOptions.h>
-#include <CesiumGltf/WriteModelResult.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/JsonValue.h>

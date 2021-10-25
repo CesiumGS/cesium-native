@@ -3,6 +3,7 @@
 #include "ExtensionWriter.h"
 
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 void CesiumGltf::writeScene(
     const std::vector<Scene>& scenes,
     CesiumJsonWriter::JsonWriter& jsonWriter) {
