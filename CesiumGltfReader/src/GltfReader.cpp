@@ -1,8 +1,8 @@
 #include "CesiumGltf/GltfReader.h"
 
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
+#include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
-#include "ExtensionPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
@@ -282,7 +282,7 @@ GltfReader::GltfReader() : _context() {
       .registerExtension<Model, ExtensionModelExtFeatureMetadataJsonHandler>();
   this->_context.registerExtension<
       MeshPrimitive,
-      ExtensionPrimitiveExtFeatureMetadataJsonHandler>();
+      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
 }
 
 CesiumJsonReader::ExtensionReaderContext& GltfReader::getExtensions() {
