@@ -74,7 +74,7 @@ void rasterizePolygons(
   image.height = int32_t(glm::round(textureSize.y));
   image.channels = 1;
   image.bytesPerChannel = 1;
-  image.pixelData.resize(image.width * image.height);
+  image.pixelData.resize(size_t(image.width * image.height));
 
   // TODO: this is naive approach, use line-triangle
   // intersections to rasterize one row at a time
@@ -118,10 +118,11 @@ void rasterizePolygons(
       for (size_t j = 0; j < height; ++j) {
         const double pixelY =
             rectangle.getSouth() +
-            rectangleHeight * (1.0 - (double(j) + 0.5) / height);
+            rectangleHeight * (1.0 - (double(j) + 0.5) / double(height));
         for (size_t i = 0; i < width; ++i) {
-          const double pixelX =
-              rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / width;
+          const double pixelX = rectangle.getWest() + rectangleWidth *
+                                                          (double(i) + 0.5) /
+                                                          double(width);
           const glm::dvec2 v(pixelX, pixelY);
 
           const glm::dvec2 av = v - a;
