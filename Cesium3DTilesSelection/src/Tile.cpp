@@ -467,6 +467,14 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
     return;
   }
 
+  // QuadtreeTileID can't handle higher than level 30 because the x and y
+  // coordinates (uint32_t) will overflow. If we ever have an actual need for
+  // higher levels, we can switch to 64-bit integers or use a different tile ID
+  // type.
+  if (pParentTileID->level >= 30U) {
+    return;
+  }
+
   // TODO: support upsampling non-implicit tiles.
   if (!parent.getContext()->implicitContext) {
     return;

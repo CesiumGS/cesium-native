@@ -59,8 +59,8 @@ struct CESIUM3DTILESSELECTION_API RasterOverlayOptions {
    * This is used to select an appropriate level-of-detail.
    *
    * When this property has its default value, 2.0, it means that raster overlay
-   * images will be sized so that, when zoomed in closeset, a single pixel in
-   * the image maps to approximately 2x2 pixels on the screen.
+   * images will be sized so that, when zoomed in closest, a single pixel in
+   * the raster overlay maps to approximately 2x2 pixels on the screen.
    */
   double maximumScreenSpaceError = 2.0;
 };
