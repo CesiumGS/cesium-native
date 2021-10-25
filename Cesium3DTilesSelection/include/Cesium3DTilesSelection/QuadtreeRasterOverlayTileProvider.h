@@ -121,8 +121,8 @@ private:
   loadTileImage(RasterOverlayTile& overlayTile) override final;
 
   struct LoadedQuadtreeImage {
-    std::shared_ptr<LoadedRasterOverlayImage> pLoaded;
-    std::optional<CesiumGeometry::Rectangle> subset;
+    std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
+    std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
   };
 
   CesiumAsync::SharedFuture<LoadedQuadtreeImage>

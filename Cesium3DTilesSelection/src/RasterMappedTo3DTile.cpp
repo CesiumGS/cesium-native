@@ -353,6 +353,16 @@ glm::dvec2 computeDesiredScreenPixels(
         RasterMappedTo3DTile(getPlaceholderTile(overlay), -1));
   }
 
+  // We can get a more accurate estimate of the real-world size of the projected
+  // rectangle if we consider the rectangle at the true height of the geometry
+  // rather than assuming it's on the ellipsoid. This will make basically no
+  // difference for small tiles (because surface normals on opposite ends of
+  // tiles are effectively identical), and only a small difference for large
+  // ones (because heights will be small compared to the total size of a large
+  // tile). So we're skipping this complexity for now and estimating geometry
+  // width/height as if it's on the ellipsoid surface.
+  const double heightForSizeEstimation = 0.0;
+
   const Projection& projection = pProvider->getProjection();
 
   // If the tile is loaded, use the precise rectangle computed from the content.
@@ -385,7 +395,7 @@ glm::dvec2 computeDesiredScreenPixels(
         tile,
         projection,
         rectangle,
-        0.0, // TODO: use actual height
+        heightForSizeEstimation,
         Ellipsoid::WGS84);
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
         pProvider->getTile(rectangle, screenPixels),
@@ -405,7 +415,7 @@ glm::dvec2 computeDesiredScreenPixels(
         tile,
         projection,
         *maybeRectangle,
-        0.0, // TODO: use actual height
+        heightForSizeEstimation,
         Ellipsoid::WGS84);
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
         pProvider->getTile(*maybeRectangle, screenPixels),
