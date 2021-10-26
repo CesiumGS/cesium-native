@@ -373,7 +373,8 @@ glm::dvec2 computeDesiredScreenPixels(
     if (pRectangle) {
       // We have a rectangle and texture coordinates for this projection.
       // TODO: don't create a tile if there's no overlap
-      int32_t index = int32_t(pRectangle - &pContent->rasterOverlayRectangles[0]);
+      int32_t index =
+          int32_t(pRectangle - &pContent->rasterOverlayRectangles[0]);
       const glm::dvec2 screenPixels = computeDesiredScreenPixels(
           tile,
           projection,
