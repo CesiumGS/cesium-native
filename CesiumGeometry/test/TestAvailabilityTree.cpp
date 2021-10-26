@@ -20,13 +20,15 @@ TEST_CASE("Test AvailabilityUtilities") {
   SECTION("Test countOnesInByte") {
     uint8_t byte = static_cast<uint8_t>(0xFF);
     for (uint8_t i = 0; i <= 8; ++i) {
-      REQUIRE(AvailabilityUtilities::countOnesInByte(byte >> i) == (8 - i));
+      REQUIRE(
+          AvailabilityUtilities::countOnesInByte(
+              static_cast<uint8_t>(byte >> i)) == (8 - i));
     }
   }
 
   SECTION("Test countOnesInBuffer") {
     std::vector<std::byte> buffer(64);
-    for (int i = 0; i < 64; ++i) {
+    for (size_t i = 0; i < 64U; ++i) {
       buffer[i] = static_cast<std::byte>(0xFC);
     }
 
@@ -40,7 +42,7 @@ TEST_CASE("Test AvailabilityUtilities") {
 
 TEST_CASE("Test AvailabilityAccessor") {
   std::vector<std::byte> availabilityBuffer(64);
-  for (int i = 0; i < 64; ++i) {
+  for (size_t i = 0; i < 64U; ++i) {
     availabilityBuffer[i] = static_cast<std::byte>(0xFC);
   }
 
@@ -73,7 +75,7 @@ TEST_CASE("Test AvailabilityAccessor") {
     REQUIRE(!contentAvailabilityAccessor.isConstant());
     REQUIRE(contentAvailabilityAccessor.isBufferView());
     REQUIRE(contentAvailabilityAccessor.size() == 64);
-    for (int i = 0; i < 64; ++i) {
+    for (size_t i = 0; i < 64U; ++i) {
       REQUIRE(contentAvailabilityAccessor[i] == static_cast<std::byte>(0xFC));
     }
   }
@@ -97,7 +99,7 @@ TEST_CASE("Test AvailabilityAccessor") {
     REQUIRE(contentAvailabilityAccessor.isBufferView());
     REQUIRE(contentAvailabilityAccessor.size() == 32);
 
-    for (int i = 0; i < 32; ++i) {
+    for (size_t i = 0; i < 32U; ++i) {
       REQUIRE(tileAvailabilityAccessor[i] == static_cast<std::byte>(0xFC));
       REQUIRE(contentAvailabilityAccessor[i] == static_cast<std::byte>(0xFC));
     }
