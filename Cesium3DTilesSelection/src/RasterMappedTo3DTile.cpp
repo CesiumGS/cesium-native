@@ -368,38 +368,32 @@ glm::dvec2 computeDesiredScreenPixels(
   // If the tile is loaded, use the precise rectangle computed from the content.
   const TileContentLoadResult* pContent = tile.getContent();
   if (pContent) {
-    const std::vector<Projection>& projections =
-        pContent->rasterOverlayProjections;
-    const std::vector<Rectangle>& rectangles =
-        pContent->rasterOverlayRectangles;
-    auto it = std::find(projections.begin(), projections.end(), projection);
-    if (it == projections.end()) {
+    const Rectangle* pRectangle =
+        pContent->findRectangleForOverlayProjection(projection);
+    if (pRectangle) {
+      // We have a rectangle and texture coordinates for this projection.
+      // TODO: don't create a tile if there's no overlap
+      int32_t index = int32_t(pRectangle - &pContent->rasterOverlayRectangles[0]);
+      const glm::dvec2 screenPixels = computeDesiredScreenPixels(
+          tile,
+          projection,
+          *pRectangle,
+          heightForSizeEstimation,
+          Ellipsoid::WGS84);
+      return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+          pProvider->getTile(*pRectangle, screenPixels),
+          index));
+    } else {
       // We don't have a precise rectangle for this projection, which means the
       // tile was loaded before we knew we needed this projection. We'll need to
       // reload the tile (later).
       int32_t textureCoordinateIndex =
-          int32_t(projections.size()) +
+          int32_t(pContent->rasterOverlayProjections.size()) +
           addProjectionToList(missingProjections, projection);
-      // TODO: don't create a tile if there's no overlap
       return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
           getPlaceholderTile(overlay),
           textureCoordinateIndex));
     }
-
-    // We have a rectangle and texture coordinates for this projection.
-    int32_t index = int32_t(it - projections.begin());
-    assert(index >= 0 && size_t(index) < rectangles.size());
-
-    const Rectangle& rectangle = rectangles[size_t(index)];
-    const glm::dvec2 screenPixels = computeDesiredScreenPixels(
-        tile,
-        projection,
-        rectangle,
-        heightForSizeEstimation,
-        Ellipsoid::WGS84);
-    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pProvider->getTile(rectangle, screenPixels),
-        index));
   }
 
   // Maybe we can derive a precise rectangle from the bounding volume.

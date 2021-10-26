@@ -304,6 +304,10 @@ void Tile::loadContent() {
                           std::move(projections);
                       pContent->rasterOverlayRectangles =
                           std::move(generateResult.projectionRectangles);
+                      pContent->minimumHeight =
+                          generateResult.boundingRegion.getMinimumHeight();
+                      pContent->maximumHeight =
+                          generateResult.boundingRegion.getMaximumHeight();
 
                       if (generateMissingNormalsSmooth) {
                         pContent->model->generateMissingNormalsSmooth();
@@ -435,63 +439,94 @@ static void createImplicitTile(
       maximumHeight)));
 }
 
-static void createQuadtreeSubdividedChildren(Tile& parent) {
-  // TODO: support non-BoundingRegions.
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&parent.getBoundingVolume());
-  if (!pRegion) {
-    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(
-            &parent.getBoundingVolume());
-    if (pLooseRegion) {
-      pRegion = &pLooseRegion->getBoundingRegion();
+namespace {
+
+std::optional<BoundingRegion>
+getTileBoundingRegionForUpsampling(const Tile& parent) {
+  // To create subdivided children, we need to know a bounding region for each.
+  // If the parent is already loaded and we have Web Mercator or Geographic
+  // textures coordinates, we're set. If it's not, but it has a bounding region,
+  // we're still set. Otherwise, we can't upsample (yet?).
+
+  // Get an accurate bounding region from the content first.
+  const TileContentLoadResult* pParentContent = parent.getContent();
+  if (pParentContent) {
+    // We can work with either a geographic to web mercator projected rectangle.
+    GeographicProjection geographic;
+    const Rectangle* pGeographicRectangle =
+        pParentContent->findRectangleForOverlayProjection(geographic);
+    if (pGeographicRectangle) {
+      return BoundingRegion(
+          unprojectRectangleSimple(geographic, *pGeographicRectangle),
+          pParentContent->minimumHeight,
+          pParentContent->maximumHeight);
+    }
+
+    WebMercatorProjection webMercator;
+    const Rectangle* pWebMercatorRectangle =
+        pParentContent->findRectangleForOverlayProjection(webMercator);
+    if (pWebMercatorRectangle) {
+      return BoundingRegion(
+          unprojectRectangleSimple(webMercator, *pWebMercatorRectangle),
+          pParentContent->minimumHeight,
+          pParentContent->maximumHeight);
     }
   }
 
-  if (!pRegion) {
+  // If the tile's bounding volume is a region, use it.
+  const BoundingRegion* pRegion =
+      std::get_if<BoundingRegion>(&parent.getBoundingVolume());
+  if (pRegion) {
+    return *pRegion;
+  }
+
+  const BoundingRegionWithLooseFittingHeights* pLoose =
+      std::get_if<BoundingRegionWithLooseFittingHeights>(
+          &parent.getBoundingVolume());
+  if (pLoose) {
+    return pLoose->getBoundingRegion();
+  }
+
+  return std::nullopt;
+}
+
+} // namespace
+
+static void createQuadtreeSubdividedChildren(Tile& parent) {
+  std::optional<BoundingRegion> maybeRegion =
+      getTileBoundingRegionForUpsampling(parent);
+  if (!maybeRegion) {
     return;
   }
 
-  // TODO: support upsampling non-quadtrees.
-  const QuadtreeTileID* pParentTileID =
+  const QuadtreeTileID* pRealParentTileID =
       std::get_if<QuadtreeTileID>(&parent.getTileID());
-  if (!pParentTileID) {
+  if (!pRealParentTileID) {
     const UpsampledQuadtreeNode* pUpsampledID =
         std::get_if<UpsampledQuadtreeNode>(&parent.getTileID());
     if (pUpsampledID) {
-      pParentTileID = &pUpsampledID->tileID;
+      pRealParentTileID = &pUpsampledID->tileID;
     }
   }
 
-  if (!pParentTileID) {
-    return;
-  }
+  QuadtreeTileID parentTileID =
+      pRealParentTileID ? *pRealParentTileID : QuadtreeTileID(0, 0, 0);
 
   // QuadtreeTileID can't handle higher than level 30 because the x and y
   // coordinates (uint32_t) will overflow. If we ever have an actual need for
   // higher levels, we can switch to 64-bit integers or use a different tile ID
   // type.
-  if (pParentTileID->level >= 30U) {
-    return;
-  }
-
-  // TODO: support upsampling non-implicit tiles.
-  if (!parent.getContext()->implicitContext) {
+  if (parentTileID.level >= 30U) {
     return;
   }
 
   const QuadtreeTileID swID(
-      pParentTileID->level + 1,
-      pParentTileID->x * 2,
-      pParentTileID->y * 2);
+      parentTileID.level + 1,
+      parentTileID.x * 2,
+      parentTileID.y * 2);
   const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
   const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
   const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-
-  const QuadtreeTilingScheme& tilingScheme =
-      parent.getContext()->implicitContext.value().tilingScheme;
-  const Projection& projection =
-      parent.getContext()->implicitContext.value().projection;
 
   parent.createChildTiles(4);
 
@@ -522,25 +557,67 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
   nw.setTileID(UpsampledQuadtreeNode{nwID});
   ne.setTileID(UpsampledQuadtreeNode{neID});
 
-  const double minimumHeight = pRegion->getMinimumHeight();
-  const double maximumHeight = pRegion->getMaximumHeight();
+  const double minimumHeight = maybeRegion->getMinimumHeight();
+  const double maximumHeight = maybeRegion->getMaximumHeight();
 
-  sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-      unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(swID)),
-      minimumHeight,
-      maximumHeight)));
-  se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-      unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(seID)),
-      minimumHeight,
-      maximumHeight)));
-  nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-      unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(nwID)),
-      minimumHeight,
-      maximumHeight)));
-  ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-      unprojectRectangleSimple(projection, tilingScheme.tileToRectangle(neID)),
-      minimumHeight,
-      maximumHeight)));
+  GlobeRectangle swRectangle(0.0, 0.0, 0.0, 0.0);
+  GlobeRectangle seRectangle(0.0, 0.0, 0.0, 0.0);
+  GlobeRectangle nwRectangle(0.0, 0.0, 0.0, 0.0);
+  GlobeRectangle neRectangle(0.0, 0.0, 0.0, 0.0);
+
+  // If we have an implicit tiling context, make these new tiles conform to it.
+  // Otherwise just subdivide the bounding region.
+  const TileContext* pContext = parent.getContext();
+  if (pRealParentTileID && pContext && pContext->implicitContext) {
+    const QuadtreeTilingScheme& tilingScheme =
+        pContext->implicitContext.value().tilingScheme;
+    const Projection& projection = pContext->implicitContext.value().projection;
+
+    swRectangle = unprojectRectangleSimple(
+        projection,
+        tilingScheme.tileToRectangle(swID));
+    seRectangle = unprojectRectangleSimple(
+        projection,
+        tilingScheme.tileToRectangle(seID));
+    nwRectangle = unprojectRectangleSimple(
+        projection,
+        tilingScheme.tileToRectangle(nwID));
+    neRectangle = unprojectRectangleSimple(
+        projection,
+        tilingScheme.tileToRectangle(neID));
+  } else {
+    const GlobeRectangle& parentRectangle = maybeRegion->getRectangle();
+    Cartographic center = parentRectangle.computeCenter();
+    swRectangle = GlobeRectangle(
+        parentRectangle.getWest(),
+        parentRectangle.getSouth(),
+        center.longitude,
+        center.latitude);
+    seRectangle = GlobeRectangle(
+        center.longitude,
+        parentRectangle.getSouth(),
+        parentRectangle.getEast(),
+        center.latitude);
+    nwRectangle = GlobeRectangle(
+        parentRectangle.getWest(),
+        center.latitude,
+        center.longitude,
+        parentRectangle.getNorth());
+    neRectangle = GlobeRectangle(
+        center.longitude,
+        center.latitude,
+        parentRectangle.getEast(),
+        parentRectangle.getNorth());
+  }
+
+  sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
+      BoundingRegion(swRectangle, minimumHeight, maximumHeight)));
+  se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
+      BoundingRegion(seRectangle, minimumHeight, maximumHeight)));
+  nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
+      BoundingRegion(nwRectangle, minimumHeight, maximumHeight)));
+  ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
+      BoundingRegion(neRectangle, minimumHeight, maximumHeight)));
 }
 
 void Tile::update(
@@ -877,6 +954,10 @@ void Tile::upsampleParent(
               pContent->rasterOverlayProjections = std::move(projections);
               pContent->rasterOverlayRectangles =
                   std::move(generateResult.projectionRectangles);
+              pContent->minimumHeight =
+                  generateResult.boundingRegion.getMinimumHeight();
+              pContent->maximumHeight =
+                  generateResult.boundingRegion.getMaximumHeight();
             }
 
             void* pRendererResources = nullptr;

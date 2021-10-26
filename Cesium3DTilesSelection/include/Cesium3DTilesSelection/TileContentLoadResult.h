@@ -83,6 +83,27 @@ struct TileContentLoadResult {
    * {@link rasterOverlayProjections}.
    */
   std::vector<CesiumGeometry::Rectangle> rasterOverlayRectangles;
+
+  /**
+   * @brief The minimum height in this tile, in meters above the ellipsoid.
+   */
+  double minimumHeight = 0.0;
+
+  /**
+   * @brief The maximum height in this tile, in meters above the ellipsoid.
+   */
+  double maximumHeight = 0.0;
+
+  /**
+   * @brief Finds the rectangle corresponding to a given projection in
+   * {@link rasterOverlayProjections}.
+   *
+   * @param projection The projection.
+   * @return The tile's rectangle in the given projection, or nullptr if the
+   * projection is not in {@link rasterOverlayProjections}.
+   */
+  const CesiumGeometry::Rectangle* findRectangleForOverlayProjection(
+      const CesiumGeospatial::Projection& projection) const;
 };
 
 } // namespace Cesium3DTilesSelection
