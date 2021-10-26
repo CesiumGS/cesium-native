@@ -18,9 +18,10 @@ namespace CesiumGltf {
 /**
  * @brief glTF extension that assigns metadata to features in a model.
  */
-struct CESIUMGLTF_API ModelEXT_feature_metadata final
+struct CESIUMGLTF_API ExtensionModelExtFeatureMetadata final
     : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ModelEXT_feature_metadata";
+  static inline constexpr const char* TypeName =
+      "ExtensionModelExtFeatureMetadata";
   static inline constexpr const char* ExtensionName = "EXT_feature_metadata";
 
   /**
