@@ -1,4 +1,5 @@
 #pragma once
+
 #include "WriteGLTFCallback.h"
 #include "WriteModelOptions.h"
 #include "WriteModelResult.h"

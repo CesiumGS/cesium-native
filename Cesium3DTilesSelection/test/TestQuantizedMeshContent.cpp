@@ -1,10 +1,11 @@
 #include "Cesium3DTilesSelection/registerAllTileContentTypes.h"
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumUtility/Math.h"
 #include "QuantizedMeshContent.h"
+
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>

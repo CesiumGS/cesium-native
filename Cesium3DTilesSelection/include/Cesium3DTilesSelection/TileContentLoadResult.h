@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeometry/AvailabilityTree.h"
+#include "CesiumGeometry/Availability.h"
 #include "CesiumGeometry/QuadtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileRectangularRange.h"
 #include "CesiumGeospatial/Projection.h"

@@ -481,7 +481,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
             "app/json",
             HttpHeaders{
                 {"Content-Type", "app/json"},
-                {"Expires", "Wed, 21 Oct 2021 07:28:00 GMT"}},
+                {"Expires", "Wed, 21 Oct 2037 07:28:00 GMT"}},
             std::vector<std::byte>());
 
     std::shared_ptr<IAssetRequest> mockRequest =
@@ -510,7 +510,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
             std::vector<IAssetAccessor::THeader>{})
         .wait();
     REQUIRE(mockCacheDatabase->storeResponseCall == true);
-    REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime == 1634801280);
+    REQUIRE(mockCacheDatabase->storeRequestParam->expiryTime == 2139722880);
   }
 }
 

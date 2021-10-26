@@ -1,16 +1,18 @@
 #include "Batched3DModelContent.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumGltf/MeshPrimitiveEXT_feature_metadata.h"
-#include "CesiumGltf/MetadataFeatureTableView.h"
-#include "CesiumGltf/MetadataPropertyView.h"
-#include "CesiumGltf/ModelEXT_feature_metadata.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 #include "SimpleTaskProcessor.h"
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
+
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/HttpHeaders.h"
+
+#include <CesiumGltf/MeshPrimitiveEXT_feature_metadata.h>
+#include <CesiumGltf/MetadataFeatureTableView.h>
+#include <CesiumGltf/MetadataPropertyView.h>
+#include <CesiumGltf/ModelEXT_feature_metadata.h>
 
 #include <catch2/catch.hpp>
 #include <rapidjson/document.h>
@@ -33,7 +35,7 @@ static void checkScalarProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == expectedPropertyType);
-  REQUIRE(property.componentType.isNull());
+  REQUIRE(property.componentType == std::nullopt);
   REQUIRE(property.componentCount == std::nullopt);
 
   MetadataFeatureTableView view(&model, &featureTable);
@@ -67,7 +69,7 @@ static void checkArrayProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
-  REQUIRE(property.componentType.getString() == expectedComponentType);
+  REQUIRE(property.componentType == expectedComponentType);
   if (expectedComponentCount > 0) {
     REQUIRE(
         property.componentCount.value() ==

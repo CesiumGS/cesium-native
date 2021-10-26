@@ -1,9 +1,10 @@
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumUtility/Math.h"
 #include "SkirtMeshMetadata.h"
 #include "upsampleGltfForRasterOverlays.h"
+
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <glm/trigonometric.hpp>

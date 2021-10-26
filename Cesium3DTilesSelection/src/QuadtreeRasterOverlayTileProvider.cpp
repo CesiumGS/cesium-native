@@ -1,4 +1,3 @@
-
 #include "Cesium3DTilesSelection/QuadtreeRasterOverlayTileProvider.h"
 
 #include "Cesium3DTilesSelection/RasterOverlay.h"

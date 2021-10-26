@@ -1,5 +1,7 @@
 #pragma once
+
 #include "WriterLibrary.h"
+
 namespace CesiumGltf {
 
 enum class GltfExportType { GLB, GLTF };

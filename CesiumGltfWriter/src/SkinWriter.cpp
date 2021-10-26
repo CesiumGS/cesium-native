@@ -3,6 +3,7 @@
 #include "ExtensionWriter.h"
 
 #include <CesiumJsonWriter/JsonObjectWriter.h>
+
 void CesiumGltf::writeSkin(
     const std::vector<Skin>& skins,
     CesiumJsonWriter::JsonWriter& jsonWriter) {

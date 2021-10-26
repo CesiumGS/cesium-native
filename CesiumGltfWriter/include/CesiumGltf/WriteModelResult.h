@@ -1,4 +1,5 @@
 #pragma once
+
 #include "WriterLibrary.h"
 
 #include <cstddef>

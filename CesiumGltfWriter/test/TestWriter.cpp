@@ -1,14 +1,14 @@
-#include "CesiumGltf/AccessorSparseIndices.h"
-#include "CesiumGltf/Buffer.h"
-#include "CesiumGltf/BufferView.h"
-#include "CesiumGltf/Mesh.h"
-#include "CesiumGltf/Node.h"
-#include "CesiumGltf/Scene.h"
+#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltf/WriteModelOptions.h"
 #include "CesiumGltf/Writer.h"
 
-#include <CesiumGltf/GltfReader.h>
+#include <CesiumGltf/AccessorSparseIndices.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/WriteModelOptions.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/Scene.h>
 
 #include <catch2/catch.hpp>
 #include <gsl/span>

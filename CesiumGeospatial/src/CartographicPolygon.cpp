@@ -1,4 +1,3 @@
-
 #include "CesiumGeospatial/CartographicPolygon.h"
 
 #include <mapbox/earcut.hpp>

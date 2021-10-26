@@ -1,4 +1,3 @@
-
 #include "Batched3DModelContent.h"
 
 #include "Cesium3DTilesSelection/GltfContent.h"

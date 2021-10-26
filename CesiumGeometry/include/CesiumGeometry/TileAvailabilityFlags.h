@@ -6,27 +6,26 @@
 
 namespace CesiumGeometry {
 
-class CESIUMGEOMETRY_API TileAvailabilityFlags final {
-public:
+enum CESIUMGEOMETRY_API TileAvailabilityFlags {
   /**
    * @brief The tile is known to be available.
    */
-  static const uint8_t TILE_AVAILABLE = 1;
+  TILE_AVAILABLE = 1U,
 
   /**
    * @brief The tile's content is known to be available.
    */
-  static const uint8_t CONTENT_AVAILABLE = 2;
+  CONTENT_AVAILABLE = 2U,
 
   /**
    * @brief This tile has a subtree that is known to be available.
    */
-  static const uint8_t SUBTREE_AVAILABLE = 4;
+  SUBTREE_AVAILABLE = 4U,
 
   /**
    * @brief This tile has a subtree that is loaded.
    */
-  static const uint8_t SUBTREE_LOADED = 8;
+  SUBTREE_LOADED = 8U,
 
   // TODO: is REACHABLE needed? Reevaluate after implementation
   /**
@@ -35,7 +34,7 @@ public:
    * If a tile is not reachable, the above flags being false may simply
    * indicate that a subtree needed to reach this tile has not yet been loaded.
    */
-  static const uint8_t REACHABLE = 16;
+  REACHABLE = 16U
 };
 
 } // namespace CesiumGeometry

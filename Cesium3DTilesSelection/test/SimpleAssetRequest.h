@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/IAssetRequest.h"
 #include "SimpleAssetResponse.h"
+
+#include <CesiumAsync/IAssetRequest.h>
 
 #include <memory>
 

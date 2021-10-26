@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AvailabilityTree.h"
+#include "Availability.h"
 #include "Library.h"
 #include "OctreeTileID.h"
 #include "OctreeTilingScheme.h"
