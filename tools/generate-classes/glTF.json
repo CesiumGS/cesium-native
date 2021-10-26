@@ -41,7 +41,7 @@
             ]
         },
         {
-            "className": "ExtensionPrimitiveExtFeatureMetadata",
+            "className": "ExtensionMeshPrimitiveExtFeatureMetadata",
             "extensionName": "EXT_feature_metadata",
             "schema": "Vendor/EXT_feature_metadata/schema/primitive.EXT_feature_metadata.schema.json",
             "attachTo": [

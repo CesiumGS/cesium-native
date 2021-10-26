@@ -2,8 +2,8 @@
 
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
+#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
-#include <CesiumGltf/ExtensionPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
@@ -1371,8 +1371,8 @@ void upgradeBatchTableToFeatureMetadata(
       primitive.attributes.erase("_BATCHID");
 
       // Create a feature extension
-      ExtensionPrimitiveExtFeatureMetadata& extension =
-          primitive.addExtension<ExtensionPrimitiveExtFeatureMetadata>();
+      ExtensionMeshPrimitiveExtFeatureMetadata& extension =
+          primitive.addExtension<ExtensionMeshPrimitiveExtFeatureMetadata>();
       FeatureIDAttribute& attribute =
           extension.featureIdAttributes.emplace_back();
       attribute.featureTable = "default";

@@ -118,7 +118,7 @@ TEST_CASE("Reads tileset JSON") {
   CHECK_FALSE(child.viewerRequestVolume);
 }
 
-TEST_CASE("Reads tileset JSON with extras") {
+TEST_CASE("Reads extras") {
   std::string s = R"(
     {
       "asset": {
@@ -198,7 +198,7 @@ TEST_CASE("Reads tileset JSON with extras") {
   CHECK(dit->second.getStringOrDefault("") == "Goodbye");
 }
 
-TEST_CASE("Reads tileset JSON with 3DTILES_content_gltf extension") {
+TEST_CASE("Reads 3DTILES_content_gltf") {
   std::string s = R"(
     {
       "asset": {
@@ -256,7 +256,7 @@ TEST_CASE("Reads tileset JSON with 3DTILES_content_gltf extension") {
   CHECK(contentGltf->extensionsRequired == gltfExtensionsRequired);
 }
 
-TEST_CASE("Reads tileset JSON with custom extension") {
+TEST_CASE("Reads custom extension") {
   std::string s = R"(
     {
       "asset": {
