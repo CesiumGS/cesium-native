@@ -100,6 +100,34 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
   this->_children = std::move(children);
 }
 
+double Tile::getNonZeroGeometricError() const noexcept {
+  double geometricError = this->getGeometricError();
+  if (geometricError > Math::EPSILON5) {
+    // Tile's geometric error is good.
+    return geometricError;
+  }
+
+  const Tile* pParent = this->getParent();
+  double divisor = 1.0;
+
+  while (pParent) {
+    if (!pParent->getUnconditionallyRefine()) {
+      divisor *= 2.0;
+      double ancestorError = pParent->getGeometricError();
+      if (ancestorError > Math::EPSILON5) {
+        return ancestorError / divisor;
+      }
+    }
+
+    pParent = pParent->getParent();
+  }
+
+  // No sensible geometric error all the way to the root of the tile tree.
+  // So just use a tiny geometric error and raster selection will be limited by
+  // quadtree tile count or texture resolution size.
+  return Math::EPSILON5;
+}
+
 void Tile::setTileID(const TileID& id) noexcept { this->_id = id; }
 
 bool Tile::isRenderable() const noexcept {
@@ -490,9 +518,7 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   return std::nullopt;
 }
 
-} // namespace
-
-static void createQuadtreeSubdividedChildren(Tile& parent) {
+void createQuadtreeSubdividedChildren(Tile& parent) {
   std::optional<BoundingRegion> maybeRegion =
       getTileBoundingRegionForUpsampling(parent);
   if (!maybeRegion) {
@@ -540,6 +566,10 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
   se.setContext(parent.getContext());
   nw.setContext(parent.getContext());
   ne.setContext(parent.getContext());
+
+  // The parent tile must not have a zero geometric error, even if it's a leaf
+  // tile. Otherwise we'd never refine it.
+  parent.setGeometricError(parent.getNonZeroGeometricError());
 
   const double geometricError = parent.getGeometricError() * 0.5;
   sw.setGeometricError(geometricError);
@@ -618,7 +648,14 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
       BoundingRegion(nwRectangle, minimumHeight, maximumHeight)));
   ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
       BoundingRegion(neRectangle, minimumHeight, maximumHeight)));
+
+  sw.setTransform(parent.getTransform());
+  se.setTransform(parent.getTransform());
+  nw.setTransform(parent.getTransform());
+  ne.setTransform(parent.getTransform());
 }
+
+} // namespace
 
 void Tile::update(
     int32_t /*previousFrameNumber*/,
@@ -934,7 +971,9 @@ void Tile::upsampleParent(
            transform = this->getTransform(),
            projections = std::move(projections),
            pSubdividedParentID,
-           boundingVolume = this->getBoundingVolume(),
+           tileBoundingVolume = this->getBoundingVolume(),
+           tileContentBoundingVolume = this->getContentBoundingVolume(),
+           gltfUpAxis = pTileset->getGltfUpAxis(),
            pPrepareRendererResources =
                pTileset->getExternals().pPrepareRendererResources]() mutable {
             std::unique_ptr<TileContentLoadResult> pContent =
@@ -944,11 +983,23 @@ void Tile::upsampleParent(
                 *pSubdividedParentID);
 
             if (pContent->model) {
+              // TODO The `extras` are currently the only way to
+              // pass arbitrary information to the consumer, so the
+              // up-axis is stored here:
+              pContent->model->extras["gltfUpAxis"] =
+                  static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
+
+              const BoundingVolume& contentBoundingVolume =
+                  pContent->updatedBoundingVolume
+                      ? *pContent->updatedBoundingVolume
+                      : (tileContentBoundingVolume ? *tileContentBoundingVolume
+                                                   : tileBoundingVolume);
+
               GenerateTextureCoordinatesResult generateResult =
                   Tile::generateTextureCoordinates(
                       pContent->model.value(),
                       transform,
-                      boundingVolume,
+                      contentBoundingVolume,
                       projections);
               pContent->updatedBoundingVolume = generateResult.boundingRegion;
               pContent->rasterOverlayProjections = std::move(projections);

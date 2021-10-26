@@ -244,35 +244,6 @@ int32_t addProjectionToList(
   }
 }
 
-double getTileGeometricError(const Tile& tile) {
-  // Use the tile's geometric error, unless it's 0.0 or really tiny, in which
-  // case use half the parent's error.
-  double geometricError = tile.getGeometricError();
-  if (geometricError > Math::EPSILON5) {
-    return geometricError;
-  }
-
-  const Tile* pParent = tile.getParent();
-  double divisor = 1.0;
-
-  while (pParent) {
-    if (!pParent->getUnconditionallyRefine()) {
-      divisor *= 2.0;
-      double ancestorError = pParent->getGeometricError();
-      if (ancestorError > Math::EPSILON5) {
-        return ancestorError / divisor;
-      }
-    }
-
-    pParent = pParent->getParent();
-  }
-
-  // No sensible geometric error all the way to the root of the tile tree.
-  // So just use a tiny geometric error and raster selection will be limited by
-  // quadtree tile count or texture resolution size.
-  return Math::EPSILON5;
-}
-
 glm::dvec2 computeGeometryDiameters(
     const Projection& projection,
     const Rectangle& rectangle,
@@ -333,7 +304,7 @@ glm::dvec2 computeDesiredScreenPixels(
     const Rectangle& rectangle,
     double maxHeight,
     const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
-  double geometryError = getTileGeometricError(tile);
+  double geometryError = tile.getNonZeroGeometricError();
   double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
   glm::dvec2 diameters =
       computeGeometryDiameters(projection, rectangle, maxHeight, ellipsoid);
