@@ -53,7 +53,7 @@ AvailabilityNode::AvailabilityNode(
 }
 
 AvailabilityAccessor::AvailabilityAccessor(
-    const AvailabilityView view,
+    const AvailabilityView& view,
     const AvailabilitySubtree& subtree) noexcept {
   this->pBufferView = std::get_if<SubtreeBufferView>(&view);
   this->pConstant = std::get_if<ConstantAvailability>(&view);

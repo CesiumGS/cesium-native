@@ -47,9 +47,9 @@ TEST_CASE("Test AvailabilityAccessor") {
   }
 
   AvailabilitySubtree subtree{
-      ConstantAvailability{1},
+      ConstantAvailability{true},
       SubtreeBufferView{0, 64, 0},
-      ConstantAvailability{0},
+      ConstantAvailability{false},
       {std::move(availabilityBuffer)}};
 
   AvailabilityAccessor tileAvailabilityAccessor(
@@ -80,24 +80,24 @@ TEST_CASE("Test AvailabilityAccessor") {
     }
   }
 
-  // Now try sharing a single buffer between multiple views.
-  subtree.tileAvailability = SubtreeBufferView{0, 32, 0};
-  subtree.contentAvailability = SubtreeBufferView{32, 32, 0};
-
-  // Recreate accessors.
-  tileAvailabilityAccessor =
-      AvailabilityAccessor(subtree.tileAvailability, subtree);
-  contentAvailabilityAccessor =
-      AvailabilityAccessor(subtree.contentAvailability, subtree);
-
   SECTION("Test combined buffer availability") {
+    // Now try sharing a single buffer between multiple views.
+    subtree.tileAvailability = SubtreeBufferView{0, 32, 0};
+    subtree.contentAvailability = SubtreeBufferView{32, 32, 0};
+
+    // Recreate accessors.
+    tileAvailabilityAccessor =
+        AvailabilityAccessor(subtree.tileAvailability, subtree);
+    contentAvailabilityAccessor =
+        AvailabilityAccessor(subtree.contentAvailability, subtree);
+
     REQUIRE(!tileAvailabilityAccessor.isConstant());
     REQUIRE(tileAvailabilityAccessor.isBufferView());
-    REQUIRE(tileAvailabilityAccessor.size() == 32);
+    REQUIRE(tileAvailabilityAccessor.size() == 32U);
 
     REQUIRE(!contentAvailabilityAccessor.isConstant());
     REQUIRE(contentAvailabilityAccessor.isBufferView());
-    REQUIRE(contentAvailabilityAccessor.size() == 32);
+    REQUIRE(contentAvailabilityAccessor.size() == 32U);
 
     for (size_t i = 0; i < 32U; ++i) {
       REQUIRE(tileAvailabilityAccessor[i] == static_cast<std::byte>(0xFC));
@@ -227,27 +227,27 @@ TEST_CASE("Test QuadtreeAvailability") {
     }
   }
 
-  // Mock loaded child subtrees for tile IDs (3, 0, 0), (3, 0, 1), (3, 0, 2),
-  // and (3, 1, 2).
-  QuadtreeTileID mockChildrenSubtreeIds[]{
-      QuadtreeTileID(3, 0, 0),
-      QuadtreeTileID(3, 0, 1),
-      QuadtreeTileID(3, 0, 2),
-      QuadtreeTileID(3, 1, 2)};
-
-  for (const QuadtreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
-    AvailabilitySubtree childSubtree{
-        ConstantAvailability{1},
-        ConstantAvailability{1},
-        ConstantAvailability{0},
-        {}};
-
-    quadtreeAvailability.addSubtree(
-        mockChildrenSubtreeId,
-        std::move(childSubtree));
-  }
-
   SECTION("Test children subtree loaded flag") {
+    // Mock loaded child subtrees for tile IDs (3, 0, 0), (3, 0, 1), (3, 0, 2),
+    // and (3, 1, 2).
+    QuadtreeTileID mockChildrenSubtreeIds[]{
+        QuadtreeTileID(3, 0, 0),
+        QuadtreeTileID(3, 0, 1),
+        QuadtreeTileID(3, 0, 2),
+        QuadtreeTileID(3, 1, 2)};
+
+    for (const QuadtreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
+      AvailabilitySubtree childSubtree{
+          ConstantAvailability{true},
+          ConstantAvailability{true},
+          ConstantAvailability{false},
+          {}};
+
+      quadtreeAvailability.addSubtree(
+          mockChildrenSubtreeId,
+          std::move(childSubtree));
+    }
+
     // Check that the correct child subtrees are noted to be loaded.
     uint32_t componentLengthAtLevel = 1U << 3;
     for (uint32_t y = 0; y < componentLengthAtLevel; ++y) {

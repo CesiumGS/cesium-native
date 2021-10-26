@@ -156,8 +156,7 @@ AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
     if (constantIt != availabilityObject.MemberEnd() &&
         constantIt->value.IsUint()) {
 
-      return ConstantAvailability{
-          static_cast<uint8_t>(constantIt->value.GetUint())};
+      return ConstantAvailability{constantIt->value.GetUint() != 0U};
 
     } else if (
         bufferViewIt != availabilityObject.MemberEnd() &&
@@ -170,7 +169,7 @@ AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
       }
     }
 
-    return ConstantAvailability{0};
+    return ConstantAvailability{false};
   };
 
   auto tileAvailabilityIt = document.FindMember("tileAvailability");

@@ -19,7 +19,7 @@ uint32_t countOnesInBuffer(gsl::span<const std::byte> buffer);
 } // namespace AvailabilityUtilities
 
 struct CESIUMGEOMETRY_API ConstantAvailability {
-  uint8_t constant;
+  bool constant;
 };
 
 struct CESIUMGEOMETRY_API SubtreeBufferView {
@@ -53,7 +53,7 @@ struct CESIUMGEOMETRY_API AvailabilityTree {
 class CESIUMGEOMETRY_API AvailabilityAccessor {
 public:
   AvailabilityAccessor(
-      const AvailabilityView view,
+      const AvailabilityView& view,
       const AvailabilitySubtree& subtree) noexcept;
 
   bool isBufferView() const noexcept {
@@ -65,7 +65,7 @@ public:
   /**
    * @brief Unsafe if isConstant is false.
    */
-  uint8_t getConstant() const { return pConstant->constant; }
+  bool getConstant() const { return pConstant->constant; }
 
   /**
    * @brief Unsafe is isBufferView is false.
