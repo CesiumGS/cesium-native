@@ -1,5 +1,8 @@
 #include "CesiumGltf/GltfReader.h"
 
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumUtility/Uri.h"
 #include "KHR_draco_mesh_compressionJsonHandler.h"
 #include "MeshPrimitiveEXT_feature_metadataJsonHandler.h"
 #include "ModelEXT_feature_metadataJsonHandler.h"
@@ -7,13 +10,10 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
 #include <CesiumJsonReader/ExtensionReaderContext.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Tracing.h>
-#include "CesiumUtility/Uri.h"
 
 #include <rapidjson/reader.h>
 
@@ -322,6 +322,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     const HttpHeaders& headers,
     std::shared_ptr<IAssetAccessor> pAssetAccessor,
     ModelReaderResult&& result) {
+
   // TODO: Can we avoid this copy conversion?
   std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
 
@@ -346,10 +347,12 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
+  auto pResult = std::make_unique<ModelReaderResult>(std::move(result));
+
   std::vector<Future<bool>> resolvedBuffers;
   resolvedBuffers.reserve(externalBufferCount);
 
-  for (Buffer& buffer : result.model->buffers) {
+  for (Buffer& buffer : pResult->model->buffers) {
     if (buffer.uri) {
       resolvedBuffers.push_back(
           pAssetAccessor
@@ -376,7 +379,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     }
   }
 
-  for (Image& image : result.model->images) {
+  for (Image& image : pResult->model->images) {
     if (image.uri) {
       resolvedBuffers.push_back(
           pAssetAccessor
@@ -406,9 +409,9 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
   }
 
   return asyncSystem.all(std::move(resolvedBuffers))
-      .thenInWorkerThread([result = std::move(result)](
+      .thenInWorkerThread([pResult = std::move(pResult)](
                               std::vector<bool>&& /*bufferResolutions*/) {
-        return std::move(result);
+        return std::move(*pResult.get());
       });
 }
 

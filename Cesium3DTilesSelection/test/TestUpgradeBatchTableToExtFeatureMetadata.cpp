@@ -1,13 +1,12 @@
 #include "Batched3DModelContent.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/HttpHeaders.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 #include "SimpleTaskProcessor.h"
 #include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
-
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/HttpHeaders.h"
 
 #include <CesiumGltf/MeshPrimitiveEXT_feature_metadata.h>
 #include <CesiumGltf/MetadataFeatureTableView.h>
