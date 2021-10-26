@@ -38,6 +38,21 @@ struct CESIUMGEOMETRY_API OctreeTileID {
       : level(level), x(x), y(y), z(z) {}
 
   /**
+   * @brief Returns `true` if two identifiers are equal.
+   */
+  constexpr bool operator==(const OctreeTileID& other) const noexcept {
+    return this->level == other.level && this->x == other.x &&
+           this->y == other.y && this->z == other.z;
+  }
+
+  /**
+   * @brief Returns `true` if two identifiers are *not* equal.
+   */
+  constexpr bool operator!=(const OctreeTileID& other) const noexcept {
+    return !(*this == other);
+  }
+
+  /**
    * @brief The level of this tile ID, with 0 being the root tile.
    */
   uint32_t level;

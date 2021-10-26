@@ -21,13 +21,13 @@ static uint32_t spread3(uint32_t i) {
  * @brief Gets the morton index for x, y, and z. The x, y, and z must be no
  * more than 10 bits each.
  *
- * @param x An unsigned 10-bit number to put in places 2, 5, 8, etc.
+ * @param x An unsigned 10-bit number to put in places 0, 3, 6, etc.
  * @param y An unsigned 10-bit number to put in places 1, 4, 7, etc.
- * @param z An unsigned 10-bit number to put in places 0, 3, 6, etc.
+ * @param z An unsigned 10-bit number to put in places 2, 5, 8, etc.
  * @return The 32-bit unsigned morton index.
  */
 static uint32_t getMortonIndex(uint32_t x, uint32_t y, uint32_t z) {
-  return spread3(x) << 2 | spread3(y) << 1 | spread3(z);
+  return spread3(z) << 2 | spread3(y) << 1 | spread3(x);
 }
 
 OctreeAvailability::OctreeAvailability(
@@ -77,8 +77,8 @@ uint8_t OctreeAvailability::computeAvailability(
       // For reference:
       // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
       // The below is identical to:
-      // (8^levelRelativeToSubtree - 1) / 3
-      uint32_t offset = ((1U << (3U * levelsLeft)) - 1U) / 3U;
+      // (8^levelRelativeToSubtree - 1) / 7
+      uint32_t offset = ((1U << (3U * levelsLeft)) - 1U) / 7U;
 
       uint32_t availabilityIndex = relativeMortonIndex + offset;
       uint32_t byteIndex = availabilityIndex >> 3;

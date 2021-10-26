@@ -1,6 +1,9 @@
 
 #include "CesiumGeometry/Availability.h"
+#include "CesiumGeometry/AxisAlignedBox.h"
 #include "CesiumGeometry/OctreeAvailability.h"
+#include "CesiumGeometry/OctreeTileID.h"
+#include "CesiumGeometry/OctreeTilingScheme.h"
 #include "CesiumGeometry/QuadtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
@@ -106,32 +109,187 @@ TEST_CASE("Test AvailabilityAccessor") {
   }
 }
 
+TEST_CASE("Test OctreeAvailability") {
+  // We will test with an octree availability subtree with 3 levels.
+
+  // All tiles in the root subtree will have tile availability.
+
+  // The content availability will require a bitstream with 73 bits, but we
+  // will need to align to an 8-byte boundary. So it will take 16 bytes.
+
+  // The subtree availability bitstream will require 512 bits (64 bytes).
+
+  // Tiles with morton index 12, 13, 14, and 15 will not have content.
+  // These are tiles 3, 4, 5, 6 in level 2.
+  // These are tile IDs (2, 1, 1, 0), (2, 0, 0, 1), (2, 1, 0, 1), and
+  // (2, 0, 1, 1).
+  std::vector<std::byte> contentAvailabilityBuffer(16);
+
+  // Fill the first 72 bits with ones.
+  for (size_t i = 0; i < 9U; ++i) {
+    contentAvailabilityBuffer[i] = static_cast<std::byte>(0xFF);
+  }
+
+  // Fill just the 72nd bit with one.
+  contentAvailabilityBuffer[9] = static_cast<std::byte>(0x80);
+
+  // Set zeroes for bits 12, 13, 14, and 15.
+  contentAvailabilityBuffer[1] = static_cast<std::byte>(0xF0);
+
+  OctreeTileID unavailableContentIds[] = {
+      OctreeTileID(2, 1, 1, 0),
+      OctreeTileID(2, 0, 0, 1),
+      OctreeTileID(2, 1, 0, 1),
+      OctreeTileID(2, 0, 1, 1)};
+
+  // Child subtrees 44, 45, 46, and 47 will be unavailable.
+  // These correspond to tile IDs (3, 2, 0, 3), (3, 3, 0, 3), (3, 2, 1, 3), and
+  // (3, 3, 1, 3).
+  std::vector<std::byte> subtreeAvailabilityBuffer(64);
+
+  // Fill all bits with ones.
+  for (size_t i = 0; i < 64U; ++i) {
+    subtreeAvailabilityBuffer[i] = static_cast<std::byte>(0xFF);
+  }
+
+  // Fill bits 44, 45, 46, and 47 with zeroes.
+  subtreeAvailabilityBuffer[5] = static_cast<std::byte>(0xF0);
+
+  OctreeTileID unavailableSubtreeIds[]{
+      OctreeTileID(3, 2, 0, 3),
+      OctreeTileID(3, 3, 0, 3),
+      OctreeTileID(3, 2, 1, 3),
+      OctreeTileID(3, 3, 1, 3)};
+
+  AvailabilitySubtree subtree{
+      ConstantAvailability{true},
+      SubtreeBufferView{0, 16, 0},
+      SubtreeBufferView{0, 64, 1},
+      {contentAvailabilityBuffer, subtreeAvailabilityBuffer}};
+
+  OctreeAvailability octreeAvailability(
+      OctreeTilingScheme(AxisAlignedBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0), 1, 1, 1),
+      3,
+      5);
+  octreeAvailability.addSubtree(OctreeTileID(0, 0, 0, 0), std::move(subtree));
+
+  SECTION("Test tile and content availability") {
+    for (uint32_t level = 0; level < 3U; ++level) {
+      for (uint32_t z = 0; z < (1U << level); ++z) {
+        for (uint32_t y = 0; y < (1U << level); ++y) {
+          for (uint32_t x = 0; x < (1U << level); ++x) {
+            OctreeTileID id(level, x, y, z);
+            uint8_t availability = octreeAvailability.computeAvailability(id);
+
+            // All tiles should be available.
+            REQUIRE(availability & TileAvailabilityFlags::TILE_AVAILABLE);
+
+            // Whether the content should be available
+            bool contentShouldBeAvailable = true;
+            for (const OctreeTileID& tileID : unavailableContentIds) {
+              if (tileID == id) {
+                contentShouldBeAvailable = false;
+                break;
+              }
+            }
+
+            REQUIRE(
+                (bool)(availability & TileAvailabilityFlags::CONTENT_AVAILABLE) ==
+                contentShouldBeAvailable);
+          }
+        }
+      }
+    }
+  }
+
+  SECTION("Test children subtree availability") {
+    // Check child subtree availability, none are loaded yet.
+    uint32_t componentLengthAtLevel = 1U << 3;
+    for (uint32_t z = 0; z < componentLengthAtLevel; ++z) {
+      for (uint32_t y = 0; y < componentLengthAtLevel; ++y) {
+        for (uint32_t x = 0; x < componentLengthAtLevel; ++x) {
+          OctreeTileID id(3, x, y, z);
+          uint8_t availability = octreeAvailability.computeAvailability(id);
+
+          bool subtreeShouldBeAvailable = true;
+          for (const OctreeTileID& tileID : unavailableSubtreeIds) {
+            if (tileID == id) {
+              subtreeShouldBeAvailable = false;
+              break;
+            }
+          }
+
+          REQUIRE(
+              (bool)(availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) ==
+              subtreeShouldBeAvailable);
+        }
+      }
+    }
+  }
+
+  SECTION("Test children subtree loaded flag") {
+    // Mock loaded child subtrees for tile IDs (3, 0, 0, 0), (3, 0, 1, 0), (3,
+    // 0, 2, 0), and (3, 1, 2, 1).
+    OctreeTileID mockChildrenSubtreeIds[]{
+        OctreeTileID(3, 0, 0, 0),
+        OctreeTileID(3, 0, 1, 0),
+        OctreeTileID(3, 0, 2, 0),
+        OctreeTileID(3, 1, 2, 1)};
+
+    for (const OctreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
+      AvailabilitySubtree childSubtree{
+          ConstantAvailability{true},
+          ConstantAvailability{true},
+          ConstantAvailability{false},
+          {}};
+
+      octreeAvailability.addSubtree(
+          mockChildrenSubtreeId,
+          std::move(childSubtree));
+    }
+
+    // Check that the correct child subtrees are noted to be loaded.
+    uint32_t componentLengthAtLevel = 1U << 3;
+    for (uint32_t z = 0; z < componentLengthAtLevel; ++z) {
+      for (uint32_t y = 0; y < componentLengthAtLevel; ++y) {
+        for (uint32_t x = 0; x < componentLengthAtLevel; ++x) {
+          OctreeTileID id(3, x, y, z);
+          uint8_t availability = octreeAvailability.computeAvailability(id);
+
+          bool subtreeShouldBeLoaded = false;
+          for (const OctreeTileID& tileID : mockChildrenSubtreeIds) {
+            if (tileID == id) {
+              subtreeShouldBeLoaded = true;
+              break;
+            }
+          }
+
+          REQUIRE(
+              (bool)(availability & TileAvailabilityFlags::SUBTREE_LOADED) ==
+              subtreeShouldBeLoaded);
+        }
+      }
+    }
+  }
+}
+
 TEST_CASE("Test QuadtreeAvailability") {
   // We will test with a quadtree availability subtree with 3 levels.
 
-  // The tile and content availability will require bitstreams with 21 bits,
-  // but we will need to byte-align to 8 bytes minimum for each.
+  // All tiles in the root subtree will be available.
+
+  // The content availability will require a bitstream with 21 bits, but we
+  // will need to byte-align to 8 bytes.
 
   // The subtree availability bitstream will require 64 bits (exactly 8 bytes).
-
-  // All tiles in the subtree will have tile availability.
-  std::vector<std::byte> tileAvailabilityBuffer = {
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xfc),
-      static_cast<std::byte>(0x00),
-      static_cast<std::byte>(0x00),
-      static_cast<std::byte>(0x00),
-      static_cast<std::byte>(0x00),
-      static_cast<std::byte>(0x00)};
 
   // Tiles with morton index 12, 13, 14, and 15 will not have content.
   // These are tiles 7, 8, 9, 10 in level 2.
   // These are tile IDs (2, 3, 1), (2, 0, 2), (2, 1, 2), and (2, 0, 3).
   std::vector<std::byte> contentAvailabilityBuffer = {
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xf0),
-      static_cast<std::byte>(0xfc),
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xF0),
+      static_cast<std::byte>(0xFC),
       static_cast<std::byte>(0x00),
       static_cast<std::byte>(0x00),
       static_cast<std::byte>(0x00),
@@ -148,14 +306,14 @@ TEST_CASE("Test QuadtreeAvailability") {
   // These correspond to tile IDs (3, 2, 6), (3, 3, 6), (3, 2, 7), and
   // (3, 3, 7).
   std::vector<std::byte> subtreeAvailabilityBuffer = {
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xf0),
-      static_cast<std::byte>(0xff),
-      static_cast<std::byte>(0xff)};
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xF0),
+      static_cast<std::byte>(0xFF),
+      static_cast<std::byte>(0xFF)};
 
   QuadtreeTileID unavailableSubtreeIds[]{
       QuadtreeTileID(3, 2, 6),
@@ -164,12 +322,10 @@ TEST_CASE("Test QuadtreeAvailability") {
       QuadtreeTileID(3, 3, 7)};
 
   AvailabilitySubtree subtree{
+      ConstantAvailability{true},
       SubtreeBufferView{0, 8, 0},
       SubtreeBufferView{0, 8, 1},
-      SubtreeBufferView{0, 8, 2},
-      {tileAvailabilityBuffer,
-       contentAvailabilityBuffer,
-       subtreeAvailabilityBuffer}};
+      {contentAvailabilityBuffer, subtreeAvailabilityBuffer}};
 
   QuadtreeAvailability quadtreeAvailability(
       QuadtreeTilingScheme(Rectangle(0.0, 0.0, 1.0, 1.0), 1, 1),
