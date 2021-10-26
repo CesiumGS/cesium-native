@@ -1,5 +1,5 @@
 
-#include "CesiumGeometry/AvailabilityTree.h"
+#include "CesiumGeometry/Availability.h"
 #include "CesiumGeometry/OctreeAvailability.h"
 #include "CesiumGeometry/QuadtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileID.h"

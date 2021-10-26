@@ -5,7 +5,7 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeometry/AvailabilityTree.h"
+#include "CesiumGeometry/Availability.h"
 #include "CesiumUtility/Uri.h"
 
 #include <gsl/span>

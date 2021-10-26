@@ -1,5 +1,5 @@
 
-#include "CesiumGeometry/AvailabilityTree.h"
+#include "CesiumGeometry/Availability.h"
 
 namespace CesiumGeometry {
 
