@@ -409,10 +409,11 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
   }
 
   return asyncSystem.all(std::move(resolvedBuffers))
-      .thenInWorkerThread([pResult = std::move(pResult)](
-                              std::vector<bool>&& /*bufferResolutions*/) {
-        return std::move(*pResult.get());
-      });
+      .thenInWorkerThread(
+          [pResult = std::move(pResult)](
+              std::vector<bool>&& /*bufferResolutions*/) mutable {
+            return std::move(*pResult.release());
+          });
 }
 
 /*static*/
