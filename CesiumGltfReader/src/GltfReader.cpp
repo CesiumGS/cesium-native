@@ -333,30 +333,36 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  size_t externalBufferCount = 0;
+  // Get a rough count of how many external buffers we may have.
+  // Some of these may be data uris though.
+  size_t uriBuffersCount = 0;
   for (const Buffer& buffer : result.model->buffers) {
     if (buffer.uri) {
-      ++externalBufferCount;
+      ++uriBuffersCount;
     }
   }
 
   for (const Image& image : result.model->images) {
     if (image.uri) {
-      ++externalBufferCount;
+      ++uriBuffersCount;
     }
   }
 
-  if (externalBufferCount == 0) {
+  if (uriBuffersCount == 0) {
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
   auto pResult = std::make_unique<ModelReaderResult>(std::move(result));
 
   std::vector<Future<bool>> resolvedBuffers;
-  resolvedBuffers.reserve(externalBufferCount);
+  resolvedBuffers.reserve(uriBuffersCount);
+
+  // We need to skip data uris.
+  constexpr std::string_view dataPrefix = "data:";
+  constexpr size_t dataPrefixLength = dataPrefix.size();
 
   for (Buffer& buffer : pResult->model->buffers) {
-    if (buffer.uri) {
+    if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
               ->requestAsset(
@@ -383,7 +389,7 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
   }
 
   for (Image& image : pResult->model->images) {
-    if (image.uri) {
+    if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
               ->requestAsset(
