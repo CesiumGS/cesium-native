@@ -17,7 +17,7 @@ TileContentLoadResult::findRectangleForOverlayProjection(
   auto it = std::find(projections.begin(), projections.end(), projection);
   if (it != projections.end()) {
     int32_t index = int32_t(it - projections.begin());
-    if (index >= 0 && index < rectangles.size()) {
+    if (index >= 0 && size_t(index) < rectangles.size()) {
       return &rectangles[size_t(index)];
     }
   }
