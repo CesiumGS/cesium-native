@@ -104,9 +104,35 @@ glm::dvec2 computeProjectedRectangleSize(
   double x = glm::max(lowerDistance, upperDistance);
   double y = glm::max(leftDistance, rightDistance);
 
+  // A rectangle that wraps around the whole globe might have an upper and lower
+  // distance that are very small even though the rectangle is huge, because the
+  // left and right edges of the rectangle are nearly on top of each other.
+  // Detect that just by measuring the distance to a midpoint.
+  // The bigger problem here is that we're measuring the Cartesian distance,
+  // rather than the distance over the globe surface. But it's close enough
+  // for our purposes except in this extreme case.
+  glm::dvec3 lc = ellipsoid.cartographicToCartesian(unprojectPosition(
+      projection,
+      glm::dvec3(rectangle.getCenter().x, rectangle.minimumY, maxHeight)));
+  glm::dvec3 uc = ellipsoid.cartographicToCartesian(unprojectPosition(
+      projection,
+      glm::dvec3(rectangle.getCenter().x, rectangle.maximumY, maxHeight)));
+
+  double halfDistanceLA = glm::distance(ll, lc);
+  double halfDistanceLB = glm::distance(lc, lr);
+  double halfDistanceUA = glm::distance(ul, uc);
+  double halfDistanceUB = glm::distance(uc, ur);
+
+  if (halfDistanceLA > x || halfDistanceLB > x || halfDistanceUA > x ||
+      halfDistanceUB > x) {
+    x = glm::max(
+        halfDistanceLA + halfDistanceLB,
+        halfDistanceUA + halfDistanceUB);
+  }
+
   // If either projected coordinate crosses zero, also check the distance at
-  // zero. This is not completely robust, but works well enough for currently
-  // supported projections at least.
+  // zero. This is not completely robust, but works well enough for
+  // currently supported projections at least.
   if (glm::sign(rectangle.minimumX) != glm::sign(rectangle.maximumX)) {
     glm::dvec3 top = ellipsoid.cartographicToCartesian(unprojectPosition(
         projection,
@@ -127,6 +153,17 @@ glm::dvec2 computeProjectedRectangleSize(
         glm::dvec3(rectangle.maximumX, 0.0, maxHeight)));
     double distance = glm::distance(left, right);
     x = glm::max(x, distance);
+
+    // Also check for X (nearly) wrapping the whole globe.
+    glm::dvec3 center = ellipsoid.cartographicToCartesian(unprojectPosition(
+        projection,
+        glm::dvec3(rectangle.getCenter().x, 0.0, maxHeight)));
+
+    double halfDistanceL = glm::distance(left, center);
+    double halfDistanceR = glm::distance(center, right);
+    if (halfDistanceL > x || halfDistanceR > x) {
+      x = halfDistanceL + halfDistanceR;
+    }
   }
 
   return glm::dvec2(x, y);
