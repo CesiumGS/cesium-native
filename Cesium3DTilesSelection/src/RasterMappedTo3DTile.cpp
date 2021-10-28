@@ -311,6 +311,22 @@ glm::dvec2 computeDesiredScreenPixels(
   return diameters * geometrySSE / geometryError;
 }
 
+RasterMappedTo3DTile* addRealTile(
+    Tile& tile,
+    RasterOverlayTileProvider& provider,
+    const Rectangle& rectangle,
+    const glm::dvec2& screenPixels,
+    int32_t textureCoordinateIndex) {
+  IntrusivePointer<RasterOverlayTile> pTile =
+      provider.getTile(rectangle, screenPixels);
+  if (!pTile) {
+    return nullptr;
+  } else {
+    return &tile.getMappedRasterTiles().emplace_back(
+        RasterMappedTo3DTile(pTile, textureCoordinateIndex));
+  }
+}
+
 } // namespace
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
@@ -352,9 +368,7 @@ glm::dvec2 computeDesiredScreenPixels(
           *pRectangle,
           heightForSizeEstimation,
           Ellipsoid::WGS84);
-      return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-          pProvider->getTile(*pRectangle, screenPixels),
-          index));
+      return addRealTile(tile, *pProvider, *pRectangle, screenPixels, index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
       // tile was loaded before we knew we needed this projection. We'll need to
@@ -383,9 +397,12 @@ glm::dvec2 computeDesiredScreenPixels(
         *maybeRectangle,
         heightForSizeEstimation,
         Ellipsoid::WGS84);
-    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
-        pProvider->getTile(*maybeRectangle, screenPixels),
-        textureCoordinateIndex));
+    return addRealTile(
+        tile,
+        *pProvider,
+        *maybeRectangle,
+        screenPixels,
+        textureCoordinateIndex);
   } else {
     // No precise rectangle yet, so return a placeholder for now.
     return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(

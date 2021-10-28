@@ -147,6 +147,8 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param coverageRectangle The rectangle that bounds all the area covered by
+   * this overlay, expressed in projected coordinates.
    */
   RasterOverlayTileProvider(
       RasterOverlay& owner,
@@ -156,7 +158,8 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection) noexcept;
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
   /** @brief Default destructor. */
   virtual ~RasterOverlayTileProvider() {}
@@ -227,6 +230,14 @@ public:
    */
   const CesiumGeospatial::Projection& getProjection() const noexcept {
     return this->_projection;
+  }
+
+  /**
+   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
+   * instance.
+   */
+  const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept {
+    return this->_coverageRectangle;
   }
 
   /**
@@ -378,6 +389,7 @@ private:
   std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
+  CesiumGeometry::Rectangle _coverageRectangle;
   std::unique_ptr<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;

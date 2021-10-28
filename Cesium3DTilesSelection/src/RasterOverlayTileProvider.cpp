@@ -33,6 +33,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPrepareRendererResources(nullptr),
       _pLogger(nullptr),
       _projection(CesiumGeospatial::GeographicProjection()),
+      _coverageRectangle(CesiumGeospatial::GeographicProjection::
+                             computeMaximumProjectedRectangle()),
       _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
@@ -48,7 +50,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const CesiumGeospatial::Projection& projection) noexcept
+    const CesiumGeospatial::Projection& projection,
+    const Rectangle& coverageRectangle) noexcept
     : _pOwner(&owner),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
@@ -56,6 +59,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPrepareRendererResources(pPrepareRendererResources),
       _pLogger(pLogger),
       _projection(projection),
+      _coverageRectangle(coverageRectangle),
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
@@ -68,7 +72,11 @@ RasterOverlayTileProvider::getTile(
   if (this->_pPlaceholder) {
     return this->_pPlaceholder.get();
   }
-  // TODO: return nullptr if rectangle doesn't overlap the provider's rectangle.
+
+  if (!rectangle.overlaps(this->_coverageRectangle)) {
+    return nullptr;
+  }
+
   return {
       new RasterOverlayTile(this->getOwner(), targetScreenPixels, rectangle)};
 }

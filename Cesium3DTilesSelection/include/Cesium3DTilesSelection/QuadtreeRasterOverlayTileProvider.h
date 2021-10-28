@@ -57,14 +57,6 @@ public:
       uint32_t imageHeight) noexcept;
 
   /**
-   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
-   * instance.
-   */
-  const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept {
-    return this->_coverageRectangle;
-  }
-
-  /**
    * @brief Returns the minimum tile level of this instance.
    */
   uint32_t getMinimumLevel() const noexcept { return this->_minimumLevel; }
@@ -162,7 +154,6 @@ private:
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);
 
-  CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;
   uint32_t _imageWidth;
