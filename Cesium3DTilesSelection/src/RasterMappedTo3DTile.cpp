@@ -244,70 +244,37 @@ int32_t addProjectionToList(
   }
 }
 
-glm::dvec2 computeGeometryDiameters(
-    const Projection& projection,
-    const Rectangle& rectangle,
-    double maxHeight,
-    const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
-  glm::dvec3 ll = ellipsoid.cartographicToCartesian(unprojectPosition(
-      projection,
-      glm::dvec3(rectangle.getLowerLeft(), maxHeight)));
-  glm::dvec3 lr = ellipsoid.cartographicToCartesian(unprojectPosition(
-      projection,
-      glm::dvec3(rectangle.getLowerRight(), maxHeight)));
-  glm::dvec3 ul = ellipsoid.cartographicToCartesian(unprojectPosition(
-      projection,
-      glm::dvec3(rectangle.getUpperLeft(), maxHeight)));
-  glm::dvec3 ur = ellipsoid.cartographicToCartesian(unprojectPosition(
-      projection,
-      glm::dvec3(rectangle.getUpperRight(), maxHeight)));
-
-  double lowerDistance = glm::distance(ll, lr);
-  double upperDistance = glm::distance(ul, ur);
-  double leftDistance = glm::distance(ll, ul);
-  double rightDistance = glm::distance(lr, ur);
-
-  double x = glm::max(lowerDistance, upperDistance);
-  double y = glm::max(leftDistance, rightDistance);
-
-  // If either projected coordinate crosses zero, also check the distance at
-  // zero. This is not completely robust, but works well enough for currently
-  // supported projections at least.
-  if (glm::sign(rectangle.minimumX) != glm::sign(rectangle.maximumX)) {
-    glm::dvec3 top = ellipsoid.cartographicToCartesian(unprojectPosition(
-        projection,
-        glm::dvec3(0.0, rectangle.maximumY, maxHeight)));
-    glm::dvec3 bottom = ellipsoid.cartographicToCartesian(unprojectPosition(
-        projection,
-        glm::dvec3(0.0, rectangle.minimumY, maxHeight)));
-    double distance = glm::distance(top, bottom);
-    y = glm::max(y, distance);
-  }
-
-  if (glm::sign(rectangle.minimumY) != glm::sign(rectangle.maximumY)) {
-    glm::dvec3 left = ellipsoid.cartographicToCartesian(unprojectPosition(
-        projection,
-        glm::dvec3(rectangle.minimumX, 0.0, maxHeight)));
-    glm::dvec3 right = ellipsoid.cartographicToCartesian(unprojectPosition(
-        projection,
-        glm::dvec3(rectangle.maximumX, 0.0, maxHeight)));
-    double distance = glm::distance(left, right);
-    x = glm::max(x, distance);
-  }
-
-  return glm::dvec2(x, y);
-}
-
 glm::dvec2 computeDesiredScreenPixels(
     const Tile& tile,
     const Projection& projection,
     const Rectangle& rectangle,
     double maxHeight,
     const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
+  // We're aiming to estimate the maximum number of pixels (in each projected
+  // direction) the tile will occupy on the screen. The will be determined by
+  // the tile's geometric error, because when less error is needed (i.e. the
+  // viewer moved closer), the LOD will switch to show the tile's children
+  // instead of this tile.
+  //
+  // It works like this:
+  // * Estimate the size of the projected rectangle in world coordinates.
+  // * Compute the distance at which tile will switch to its children, based on
+  // its geometric error and the tileset SSE.
+  // * Compute the on-screen size of the projected rectangle at that distance.
+  //
+  // For the two compute steps, we use the usual perspective projection SSE
+  // equation:
+  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
+  //
+  // Conveniently a bunch of terms cancel out, so the screen pixel size is not
+  // actually dependent on the screen dimensions or field-of-view angle.
   double geometryError = tile.getNonZeroGeometricError();
   double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
-  glm::dvec2 diameters =
-      computeGeometryDiameters(projection, rectangle, maxHeight, ellipsoid);
+  glm::dvec2 diameters = computeProjectedRectangleSize(
+      projection,
+      rectangle,
+      maxHeight,
+      ellipsoid);
   return diameters * geometrySSE / geometryError;
 }
 

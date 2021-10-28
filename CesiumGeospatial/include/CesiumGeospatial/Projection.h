@@ -3,6 +3,8 @@
 #include "GeographicProjection.h"
 #include "WebMercatorProjection.h"
 
+#include <glm/vec2.hpp>
+
 #include <variant>
 
 namespace CesiumGeospatial {
@@ -73,18 +75,24 @@ GlobeRectangle unprojectRectangleSimple(
     const CesiumGeometry::Rectangle& rectangle);
 
 /**
- * @brief Computes a factor for distance approximations.
+ * @brief Computes the approximate real-world size, in meters, of a given
+ * projected rectangle.
  *
- * Computes a conversion factor that, when multiplied by a difference between
- * two projected coordinate values, yields an approximate distance between them
- * in meters.
+ * The returned X component corresponds to the size in the projected X
+ * direction, while the returned Y component corresponds to the size in the
+ * projected Y direction.
  *
  * @param projection The projection.
- * @param position The position near which to compute the conversion factor.
- * @return The conversion factor.
+ * @param rectangle The projected rectangle to measure.
+ * @param maxHeight The maximum height of the geometry inside the rectangle.
+ * @param ellipsoid The ellipsoid used to convert longitude and latitude to
+ * ellipsoid-centered coordinates.
+ * @return The approximate size.
  */
-double computeApproximateConversionFactorToMetersNearPosition(
+glm::dvec2 computeProjectedRectangleSize(
     const Projection& projection,
-    const glm::dvec2& position);
+    const CesiumGeometry::Rectangle& rectangle,
+    double maxHeight,
+    const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
 } // namespace CesiumGeospatial
