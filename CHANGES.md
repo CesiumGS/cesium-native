@@ -5,6 +5,8 @@
 ##### Fixes :wrench:
 
 - Errors and warnings that occur while loading glTF textures are now include in the model load errors and warnings.
+- Fixes how `generate-classes` deals with reserved C++ keywords. Property names that are C++ keywords should be appended with "Property" as was already done,
+but when parsing JSONs the original property name string should be used. 
 
 ### v0.8.0 - 2021-10-01
 
