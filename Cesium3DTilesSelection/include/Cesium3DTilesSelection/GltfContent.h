@@ -16,6 +16,10 @@
 #include <cstddef>
 #include <optional>
 
+namespace CesiumGeospatial {
+class GlobeRectangle;
+}
+
 namespace Cesium3DTilesSelection {
 
 class Tileset;
@@ -81,12 +85,13 @@ public:
    * expected to lie within.
    * @return The bounding region.
    */
-  static CesiumGeospatial::BoundingRegion createRasterOverlayTextureCoordinates(
+  static std::optional<TileContentDetailsForOverlays>
+  createRasterOverlayTextureCoordinates(
       CesiumGltf::Model& gltf,
-      const glm::dmat4& transform,
-      int32_t textureCoordinateID,
-      const CesiumGeospatial::Projection& projection,
-      const CesiumGeometry::Rectangle& rectangle);
+      const glm::dmat4& modelToEcefTransform,
+      int32_t firstTextureCoordinateID,
+      const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
+      std::vector<CesiumGeospatial::Projection>&& projections);
 
   /**
    * @brief Computes a bounding region from the vertex positions in a glTF

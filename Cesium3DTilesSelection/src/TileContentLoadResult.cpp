@@ -7,7 +7,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 
 const CesiumGeometry::Rectangle*
-TileContentLoadResult::findRectangleForOverlayProjection(
+TileContentDetailsForOverlays::findRectangleForOverlayProjection(
     const CesiumGeospatial::Projection& projection) const {
   const std::vector<Projection>& projections = this->rasterOverlayProjections;
   const std::vector<Rectangle>& rectangles = this->rasterOverlayRectangles;

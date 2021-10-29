@@ -176,6 +176,134 @@ std::vector<Projection> mapOverlaysToTile(Tile& tile) {
 
   return projections;
 }
+
+const BoundingVolume& getEffectiveBoundingVolume(
+    const BoundingVolume& tileBoundingVolume,
+    const std::optional<BoundingVolume>& updatedTileBoundingVolume,
+    [[maybe_unused]] const std::optional<BoundingVolume>&
+        updatedTileContentBoundingVolume) {
+  // If we have an updated tile bounding volume, use it.
+  if (updatedTileBoundingVolume) {
+    return *updatedTileBoundingVolume;
+  }
+
+  // If we _only_ have an updated _content_ bounding volume, that's a developer
+  // error.
+  assert(!updatedTileContentBoundingVolume);
+
+  return tileBoundingVolume;
+}
+
+const BoundingVolume& getEffectiveContentBoundingVolume(
+    const BoundingVolume& tileBoundingVolume,
+    const std::optional<BoundingVolume>& tileContentBoundingVolume,
+    const std::optional<BoundingVolume>& updatedTileBoundingVolume,
+    const std::optional<BoundingVolume>& updatedTileContentBoundingVolume) {
+  // If we have an updated tile content bounding volume, use it.
+  if (updatedTileContentBoundingVolume) {
+    return *updatedTileContentBoundingVolume;
+  }
+
+  // Next best thing is an updated tile non-content bounding volume.
+  if (updatedTileBoundingVolume) {
+    return *updatedTileBoundingVolume;
+  }
+
+  // Then a content bounding volume attached to the tile.
+  if (tileContentBoundingVolume) {
+    return *tileContentBoundingVolume;
+  }
+
+  // And finally the regular tile bounding volume.
+  return tileBoundingVolume;
+}
+
+/**
+ * @brief Called in a worker thread to prepare newly loaded or upsampled content
+ * for use.
+ *
+ * @param pPrepareRendererResources
+ * @param content
+ * @param generateMissingNormalsSmooth
+ * @param gltfUpAxis
+ * @param tileTransform
+ * @param contentBoundingVolume
+ * @param boundingVolume
+ * @param projections
+ * @return The opaque pointer to the renderer resources as returned by
+ * {@link IPrepareRendererResources::prepareInLoadThread}.
+ */
+void* processNewTileContent(
+    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    TileContentLoadResult& content,
+    bool generateMissingNormalsSmooth,
+    CesiumGeometry::Axis gltfUpAxis,
+    const glm::dmat4& tileTransform,
+    const std::optional<BoundingVolume>& tileContentBoundingVolume,
+    const BoundingVolume& tileBoundingVolume,
+    std::vector<Projection>&& projections) {
+  if (!content.model) {
+    return nullptr;
+  }
+
+  CesiumGltf::Model& model = *content.model;
+
+  // TODO The `extras` are currently the only way to
+  // pass arbitrary information to the consumer, so the
+  // up-axis is stored here:
+  model.extras["gltfUpAxis"] =
+      static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
+
+  const BoundingVolume& contentBoundingVolume =
+      getEffectiveContentBoundingVolume(
+          tileBoundingVolume,
+          tileContentBoundingVolume,
+          content.updatedBoundingVolume,
+          content.updatedContentBoundingVolume);
+
+  // If we have projections, generate texture coordinates for all of them. Also
+  // remember the min and max height so that we can use them for upsampling.
+  const BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(contentBoundingVolume);
+  content.overlayDetails = GltfContent::createRasterOverlayTextureCoordinates(
+      model,
+      tileTransform,
+      0,
+      pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
+      std::move(projections));
+
+  // If our tile bounding region has loose fitting heights, find the real ones.
+  const BoundingVolume& boundingVolume = getEffectiveBoundingVolume(
+      tileBoundingVolume,
+      content.updatedBoundingVolume,
+      content.updatedContentBoundingVolume);
+  if (std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume) !=
+      nullptr) {
+    if (content.overlayDetails) {
+      // We already computed the bounding region for overlays, so use it.
+      content.updatedBoundingVolume = content.overlayDetails->boundingRegion;
+    } else {
+      // We need to compute an accurate bounding region
+      content.updatedBoundingVolume =
+          GltfContent::computeBoundingRegion(model, tileTransform);
+    }
+  }
+
+  if (generateMissingNormalsSmooth) {
+    content.model->generateMissingNormalsSmooth();
+  }
+
+  void* pRendererResources = nullptr;
+
+  if (pPrepareRendererResources) {
+    CESIUM_TRACE("prepareInLoadThread");
+    pRendererResources =
+        pPrepareRendererResources->prepareInLoadThread(model, tileTransform);
+  }
+
+  return pRendererResources;
+}
+
 } // namespace
 
 void Tile::loadContent() {
@@ -304,51 +432,15 @@ void Tile::loadContent() {
                           nullptr};
                     }
 
-                    if (pContent->model) {
-
-                      CesiumGltf::Model& model = pContent->model.value();
-
-                      // TODO The `extras` are currently the only way to
-                      // pass arbitrary information to the consumer, so the
-                      // up-axis is stored here:
-                      model.extras["gltfUpAxis"] =
-                          static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
-
-                      const BoundingVolume& contentBoundingVolume =
-                          pContent->updatedBoundingVolume
-                              ? *pContent->updatedBoundingVolume
-                              : (loadInput.tileContentBoundingVolume
-                                     ? *loadInput.tileContentBoundingVolume
-                                     : loadInput.tileBoundingVolume);
-
-                      GenerateTextureCoordinatesResult generateResult =
-                          Tile::generateTextureCoordinates(
-                              model,
-                              loadInput.tileTransform,
-                              contentBoundingVolume,
-                              projections);
-
-                      pContent->rasterOverlayProjections =
-                          std::move(projections);
-                      pContent->rasterOverlayRectangles =
-                          std::move(generateResult.projectionRectangles);
-                      pContent->minimumHeight =
-                          generateResult.boundingRegion.getMinimumHeight();
-                      pContent->maximumHeight =
-                          generateResult.boundingRegion.getMaximumHeight();
-
-                      if (generateMissingNormalsSmooth) {
-                        pContent->model->generateMissingNormalsSmooth();
-                      }
-
-                      if (pPrepareRendererResources) {
-                        CESIUM_TRACE("prepareInLoadThread");
-                        pRendererResources =
-                            pPrepareRendererResources->prepareInLoadThread(
-                                pContent->model.value(),
-                                loadInput.tileTransform);
-                      }
-                    }
+                    pRendererResources = processNewTileContent(
+                        pPrepareRendererResources,
+                        *pContent,
+                        generateMissingNormalsSmooth,
+                        gltfUpAxis,
+                        loadInput.tileTransform,
+                        loadInput.tileContentBoundingVolume,
+                        loadInput.tileBoundingVolume,
+                        std::move(projections));
                   }
 
                   return LoadResult{
@@ -478,27 +570,8 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
 
   // Get an accurate bounding region from the content first.
   const TileContentLoadResult* pParentContent = parent.getContent();
-  if (pParentContent) {
-    // We can work with either a geographic to web mercator projected rectangle.
-    GeographicProjection geographic;
-    const Rectangle* pGeographicRectangle =
-        pParentContent->findRectangleForOverlayProjection(geographic);
-    if (pGeographicRectangle) {
-      return BoundingRegion(
-          unprojectRectangleSimple(geographic, *pGeographicRectangle),
-          pParentContent->minimumHeight,
-          pParentContent->maximumHeight);
-    }
-
-    WebMercatorProjection webMercator;
-    const Rectangle* pWebMercatorRectangle =
-        pParentContent->findRectangleForOverlayProjection(webMercator);
-    if (pWebMercatorRectangle) {
-      return BoundingRegion(
-          unprojectRectangleSimple(webMercator, *pWebMercatorRectangle),
-          pParentContent->minimumHeight,
-          pParentContent->maximumHeight);
-    }
+  if (pParentContent && pParentContent->overlayDetails) {
+    return pParentContent->overlayDetails->boundingRegion;
   }
 
   // If the tile's bounding volume is a region, use it.
@@ -730,7 +803,11 @@ void Tile::update(
 
       // A new and improved bounding volume.
       if (this->_pContent->updatedBoundingVolume) {
-        this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
+        this->setBoundingVolume(*this->_pContent->updatedBoundingVolume);
+      }
+      if (this->_pContent->updatedContentBoundingVolume) {
+        this->setContentBoundingVolume(
+            *this->_pContent->updatedContentBoundingVolume);
       }
 
       if (!this->_pContent->availableTileRectangles.empty() &&
@@ -893,51 +970,6 @@ void Tile::setState(LoadState value) noexcept {
   this->_state.store(value, std::memory_order::memory_order_release);
 }
 
-/*static*/ Tile::GenerateTextureCoordinatesResult
-Tile::generateTextureCoordinates(
-    CesiumGltf::Model& model,
-    const glm::dmat4& transform,
-    const BoundingVolume& boundingVolume,
-    const std::vector<CesiumGeospatial::Projection>& projections) {
-  // If this Tile uses a BoundingRegion as its bounding volume, we can assume
-  // it's tight-fitting. Otherwise, we need to compute a tight-fitting
-  // BoundingRegion from the geometry.
-  const BoundingRegion* pRegion =
-      getBoundingRegionFromBoundingVolume(boundingVolume);
-  GenerateTextureCoordinatesResult result{
-      pRegion ? *pRegion : GltfContent::computeBoundingRegion(model, transform),
-      std::vector<Rectangle>()};
-
-  // Generate texture coordinates for each projection.
-  for (size_t i = 0; i < projections.size(); ++i) {
-    const Projection& projection = projections[i];
-
-    const int textureCoordinateID = static_cast<int32_t>(i);
-
-    // Currently, a Longitude/Latitude Rectangle maps perfectly to all possible
-    // projection types, because the only possible projection types are
-    // Geographic and Web Mercator. In the future if/when we add projections
-    // that don't have this convenient property, we'll need to compute the
-    // Rectangle for each projection directly from the vertex positions.
-    const CesiumGeometry::Rectangle rectangle = projectRectangleSimple(
-        projection,
-        result.boundingRegion.getRectangle());
-
-    // TODO: if we generate all texture coordinates in one go rather than
-    // separately for each projection, we'll avoid a bunch of redundant
-    // work.
-    GltfContent::createRasterOverlayTextureCoordinates(
-        model,
-        transform,
-        textureCoordinateID,
-        projection,
-        rectangle);
-    result.projectionRectangles.emplace_back(rectangle);
-  }
-
-  return result;
-}
-
 void Tile::upsampleParent(
     std::vector<CesiumGeospatial::Projection>&& projections) {
   Tile* pParent = this->getParent();
@@ -974,6 +1006,9 @@ void Tile::upsampleParent(
            tileBoundingVolume = this->getBoundingVolume(),
            tileContentBoundingVolume = this->getContentBoundingVolume(),
            gltfUpAxis = pTileset->getGltfUpAxis(),
+           generateMissingNormalsSmooth =
+               pTileset->getOptions()
+                   .contentOptions.generateMissingNormalsSmooth,
            pPrepareRendererResources =
                pTileset->getExternals().pPrepareRendererResources]() mutable {
             std::unique_ptr<TileContentLoadResult> pContent =
@@ -982,42 +1017,15 @@ void Tile::upsampleParent(
                 parentModel,
                 *pSubdividedParentID);
 
-            if (pContent->model) {
-              // TODO The `extras` are currently the only way to
-              // pass arbitrary information to the consumer, so the
-              // up-axis is stored here:
-              pContent->model->extras["gltfUpAxis"] =
-                  static_cast<std::underlying_type_t<Axis>>(gltfUpAxis);
-
-              const BoundingVolume& contentBoundingVolume =
-                  pContent->updatedBoundingVolume
-                      ? *pContent->updatedBoundingVolume
-                      : (tileContentBoundingVolume ? *tileContentBoundingVolume
-                                                   : tileBoundingVolume);
-
-              GenerateTextureCoordinatesResult generateResult =
-                  Tile::generateTextureCoordinates(
-                      pContent->model.value(),
-                      transform,
-                      contentBoundingVolume,
-                      projections);
-              pContent->updatedBoundingVolume = generateResult.boundingRegion;
-              pContent->rasterOverlayProjections = std::move(projections);
-              pContent->rasterOverlayRectangles =
-                  std::move(generateResult.projectionRectangles);
-              pContent->minimumHeight =
-                  generateResult.boundingRegion.getMinimumHeight();
-              pContent->maximumHeight =
-                  generateResult.boundingRegion.getMaximumHeight();
-            }
-
-            void* pRendererResources = nullptr;
-            if (pContent->model && pPrepareRendererResources) {
-              pRendererResources =
-                  pPrepareRendererResources->prepareInLoadThread(
-                      pContent->model.value(),
-                      transform);
-            }
+            void* pRendererResources = processNewTileContent(
+                pPrepareRendererResources,
+                *pContent,
+                generateMissingNormalsSmooth,
+                gltfUpAxis,
+                transform,
+                tileContentBoundingVolume,
+                tileBoundingVolume,
+                std::move(projections));
 
             return LoadResult{
                 LoadState::ContentLoaded,
