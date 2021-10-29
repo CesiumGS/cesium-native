@@ -226,7 +226,7 @@ function generate(options, schema) {
     const initializerList = properties
       .filter((p) => p.readerType.toLowerCase().indexOf("jsonhandler") != -1)
       .map(
-        (p) => `_${p.name}(${p.schemas && p.schemas.length > 0 ? varName : ""})`
+        (p) => `_${p.cppSafeName}(${p.schemas && p.schemas.length > 0 ? varName : ""})`
       )
       .join(", ");
     return initializerList == "" ? "" : ", " + initializerList;
@@ -308,14 +308,14 @@ function formatProperty(property) {
 
   let result = "";
 
-  result += `/**\n * @brief ${property.briefDoc || property.name}\n`;
+  result += `/**\n * @brief ${property.briefDoc || property.cppSafeName}\n`;
   if (property.fullDoc) {
     result += ` *\n * ${property.fullDoc.split("\n").join("\n * ")}\n`;
   }
 
   result += ` */\n`;
 
-  result += `${property.type} ${property.name}`;
+  result += `${property.type} ${property.cppSafeName}`;
 
   if (property.defaultValue !== undefined) {
     result += " = " + property.defaultValue;
@@ -329,11 +329,11 @@ function formatProperty(property) {
 }
 
 function formatReaderProperty(property) {
-  return `${property.readerType} _${property.name};`;
+  return `${property.readerType} _${property.cppSafeName};`;
 }
 
 function formatReaderPropertyImpl(property) {
-  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.name}, o.${property.name});`;
+  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.cppSafeName}, o.${property.cppSafeName});`;
 }
 
 function privateSpecConstructor(name) {
