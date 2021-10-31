@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - Errors and warnings that occur while loading glTF textures are now include in the model load errors and warnings.
+- Fixed a bug that could cause crashes or incorrect behavior when using raster overlays.
 
 ### v0.8.0 - 2021-10-01
 
