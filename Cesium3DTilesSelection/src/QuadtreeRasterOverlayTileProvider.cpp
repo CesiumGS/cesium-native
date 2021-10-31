@@ -344,7 +344,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
   this->unloadCachedTiles();
 
-  return newIt->future;
+  return result;
 }
 
 namespace {
