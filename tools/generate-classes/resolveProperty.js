@@ -20,7 +20,7 @@ function resolveProperty(
     return undefined;
   }
 
-  propertyName = makeNameIntoValidIdentifier(propertyName);
+  cppSafeName = makeNameIntoValidIdentifier(propertyName);
 
   // If we don't know what's required, act as if everything is.
   // Specifically this means we _don't_ make it optional.
@@ -33,13 +33,14 @@ function resolveProperty(
       config,
       parentName,
       propertyName,
+      cppSafeName,
       propertyDetails,
       required,
       namespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
-      ...propertyDefaults(propertyName, propertyDetails),
+      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
       headers: ["<cstdint>", ...(makeOptional ? ["<optional>"] : [])],
       type: makeOptional ? "std::optional<int64_t>" : "int64_t",
       readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
@@ -48,7 +49,7 @@ function resolveProperty(
     };
   } else if (propertyDetails.type == "number") {
     return {
-      ...propertyDefaults(propertyName, propertyDetails),
+      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
       headers: makeOptional ? ["<optional>"] : [],
       type: makeOptional ? "std::optional<double>" : "double",
       readerHeaders: [`<CesiumJsonReader/DoubleJsonHandler.h>`],
@@ -57,7 +58,7 @@ function resolveProperty(
     };
   } else if (propertyDetails.type == "boolean") {
     return {
-      ...propertyDefaults(propertyName, propertyDetails),
+      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
       headers: makeOptional ? ["<optional>"] : [],
       type: makeOptional ? "std::optional<bool>" : "bool",
       readerHeaders: `<CesiumJsonReader/BoolJsonHandler.h>`,
@@ -66,7 +67,7 @@ function resolveProperty(
     };
   } else if (propertyDetails.type == "string") {
     return {
-      ...propertyDefaults(propertyName, propertyDetails),
+      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
       type: makeOptional ? "std::optional<std::string>" : "std::string",
       headers: ["<string>", ...(makeOptional ? ["<optional>"] : [])],
       readerHeaders: [`<CesiumJsonReader/StringJsonHandler.h>`],
@@ -85,6 +86,7 @@ function resolveProperty(
       config,
       parentName,
       propertyName,
+      cppSafeName,
       propertyDetails,
       required,
       namespace
@@ -95,6 +97,7 @@ function resolveProperty(
       config,
       parentName,
       propertyName,
+      cppSafeName,
       propertyDetails,
       makeOptional,
       namespace
@@ -103,7 +106,7 @@ function resolveProperty(
     const itemSchema = schemaCache.load(propertyDetails.$ref);
     if (itemSchema.title === "glTF Id") {
       return {
-        ...propertyDefaults(propertyName, propertyDetails),
+        ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
         type: "int32_t",
         defaultValue: -1,
         headers: ["<cstdint>"],
@@ -115,7 +118,7 @@ function resolveProperty(
       const typeName = getNameFromSchema(config, itemSchema);
 
       return {
-        ...propertyDefaults(propertyName, propertyDetails),
+        ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
         type: makeOptional ? `std::optional<${typeName}>` : typeName,
         headers: [`"${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
         readerType: `${type}JsonHandler`,
@@ -136,13 +139,13 @@ function resolveProperty(
 
     return {
       ...nested,
-      briefDoc: propertyDefaults(propertyName, propertyDetails).briefDoc,
-      fullDoc: propertyDefaults(propertyName, propertyDetails).fullDoc,
+      briefDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails).briefDoc,
+      fullDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails).fullDoc,
     };
   } else {
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
     return {
-      ...propertyDefaults(propertyName, propertyDetails),
+      ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
       type: `CesiumUtility::JsonValue`,
       headers: [`<CesiumUtility/JsonValue.h>`],
       readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
@@ -159,7 +162,7 @@ function toPascalCase(name) {
   return name[0].toUpperCase() + name.substr(1);
 }
 
-function propertyDefaults(propertyName, propertyDetails) {
+function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
   const fullDoc =
     propertyDetails.gltf_detailedDescription &&
     propertyDetails.gltf_detailedDescription.indexOf(
@@ -171,6 +174,7 @@ function propertyDefaults(propertyName, propertyDetails) {
       : propertyDetails.gltf_detailedDescription;
   return {
     name: propertyName,
+    cppSafeName: cppSafeName,
     headers: [],
     readerHeaders: [],
     readerHeadersImpl: [],
@@ -194,6 +198,7 @@ function resolveArray(
   config,
   parentName,
   propertyName,
+  cppSafeName,
   propertyDetails,
   required,
   namespace
@@ -217,7 +222,7 @@ function resolveArray(
   }
 
   return {
-    ...propertyDefaults(propertyName, propertyDetails),
+    ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
     name: propertyName,
     headers: ["<vector>", ...itemProperty.headers],
     schemas: itemProperty.schemas,
@@ -239,6 +244,7 @@ function resolveDictionary(
   config,
   parentName,
   propertyName,
+  cppSafeName,
   propertyDetails,
   required,
   namespace
@@ -259,7 +265,7 @@ function resolveDictionary(
   }
 
   return {
-    ...propertyDefaults(propertyName, propertyDetails),
+    ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
     name: propertyName,
     headers: ["<unordered_map>", ...additional.headers],
     schemas: additional.schemas,
@@ -333,6 +339,7 @@ function resolveEnum(
   config,
   parentName,
   propertyName,
+  cppSafeName,
   propertyDetails,
   makeOptional,
   namespace
@@ -356,7 +363,7 @@ function resolveEnum(
     propertyDetails
   );
 
-  const propertyDefaultValues = propertyDefaults(propertyName, propertyDetails);
+  const propertyDefaultValues = propertyDefaults(propertyName, cppSafeName, propertyDetails);
   const enumBriefDoc =
     propertyDefaultValues.briefDoc +
     "\n * \n * Known values are defined in {@link " +
