@@ -273,8 +273,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
         std::vector<CesiumGltf::BufferView>& bufferViews = gltf.bufferViews;
         std::vector<CesiumGltf::Accessor>& accessors = gltf.accessors;
 
-        positionAccessorsToTextureCoordinateAccessor[positionAccessorIndex] =
-            int32_t(gltf.accessors.size());
+        positionAccessorsToTextureCoordinateAccessor[size_t(
+            positionAccessorIndex)] = int32_t(gltf.accessors.size());
 
         // Create a buffer, bufferView, accessor, and writer for each set of
         // coordinates. Reserve space for them to avoid unnecessary
