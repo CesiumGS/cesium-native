@@ -74,16 +74,17 @@ MetadataFeatureTableView::MetadataFeatureTableView(
   assert(pModel != nullptr && "model must not be nullptr");
   assert(pFeatureTable != nullptr && "featureTable must not be nullptr");
 
-  const ModelEXT_feature_metadata* pMetadata =
-      pModel->getExtension<ModelEXT_feature_metadata>();
+  const ExtensionModelExtFeatureMetadata* pMetadata =
+      pModel->getExtension<ExtensionModelExtFeatureMetadata>();
   assert(
       pMetadata != nullptr &&
-      "Model must contain ModelEXT_feature_metadata to use FeatureTableView");
+      "Model must contain ExtensionModelExtFeatureMetadata to use "
+      "FeatureTableView");
 
   const std::optional<Schema>& schema = pMetadata->schema;
   assert(
-      schema != std::nullopt &&
-      "ModelEXT_feature_metadata must contain Schema to use FeatureTableView");
+      schema != std::nullopt && "ExtensionModelExtFeatureMetadata must contain "
+                                "Schema to use FeatureTableView");
 
   auto classIter =
       schema->classes.find(_pFeatureTable->classProperty.value_or(""));
