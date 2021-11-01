@@ -1,7 +1,7 @@
 #include "CesiumGltf/Model.h"
 
 #include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/KHR_draco_mesh_compression.h"
+#include "CesiumGltf/ExtensionKhrDracoMeshCompression.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
@@ -118,8 +118,8 @@ void Model::merge(Model&& rhs) {
         }
       }
 
-      KHR_draco_mesh_compression* pDraco =
-          primitive.getExtension<KHR_draco_mesh_compression>();
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
       if (pDraco) {
         updateIndex(pDraco->bufferView, firstBufferView);
       }

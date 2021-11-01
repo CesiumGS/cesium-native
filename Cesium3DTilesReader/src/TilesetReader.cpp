@@ -1,6 +1,7 @@
 #include "Cesium3DTiles/TilesetReader.h"
 
 #include "CesiumUtility/Tracing.h"
+#include "Extension3dTilesContentGltfJsonHandler.h"
 #include "TilesetJsonHandler.h"
 
 #include <CesiumJsonReader/JsonHandler.h>
@@ -38,7 +39,10 @@ TilesetReaderResult readTilesetJson(
 
 } // namespace
 
-TilesetReader::TilesetReader() {}
+TilesetReader::TilesetReader() {
+  this->_context
+      .registerExtension<Tileset, Extension3dTilesContentGltfJsonHandler>();
+}
 
 CesiumJsonReader::ExtensionReaderContext& TilesetReader::getExtensions() {
   return this->_context;
