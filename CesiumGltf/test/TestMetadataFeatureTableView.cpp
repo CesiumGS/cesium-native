@@ -35,8 +35,8 @@ TEST_CASE("Test numeric properties") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -222,8 +222,8 @@ TEST_CASE("Test boolean properties") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -330,8 +330,8 @@ TEST_CASE("Test string property") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -443,8 +443,8 @@ TEST_CASE("Test fixed numeric array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -585,8 +585,8 @@ TEST_CASE("Test dynamic numeric array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -686,8 +686,8 @@ TEST_CASE("Test fixed boolean array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -818,8 +818,8 @@ TEST_CASE("Test dynamic bool array") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -932,8 +932,8 @@ TEST_CASE("Test fixed array of string") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();
@@ -1111,8 +1111,8 @@ TEST_CASE("Test dynamic array of string") {
   }
 
   // setup metadata
-  ModelEXT_feature_metadata& metadata =
-      model.addExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata& metadata =
+      model.addExtension<ExtensionModelExtFeatureMetadata>();
 
   // setup schema
   Schema& schema = metadata.schema.emplace();

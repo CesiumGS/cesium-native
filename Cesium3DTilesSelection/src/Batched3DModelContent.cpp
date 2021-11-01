@@ -5,7 +5,7 @@
 #include "upgradeBatchTableToFeatureMetadata.h"
 
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGltf/ModelEXT_feature_metadata.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <rapidjson/document.h>
