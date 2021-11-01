@@ -1,6 +1,6 @@
 #include "CesiumGltf/GltfReader.h"
 
-#include <CesiumGltf/ModelEXT_feature_metadata.h>
+#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 
 #include <catch2/catch.hpp>
 
@@ -68,8 +68,8 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
   REQUIRE(modelResult.errors.empty());
   REQUIRE(modelResult.model.has_value());
 
-  ModelEXT_feature_metadata* pMetadata =
-      modelResult.model->getExtension<ModelEXT_feature_metadata>();
+  ExtensionModelExtFeatureMetadata* pMetadata =
+      modelResult.model->getExtension<ExtensionModelExtFeatureMetadata>();
   REQUIRE(pMetadata);
 
   REQUIRE(pMetadata->schema.has_value());

@@ -340,9 +340,11 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
       CacheEntry{tileID, std::move(future).share()});
   this->_tileLookup[tileID] = newIt;
 
+  SharedFuture<LoadedQuadtreeImage> result = newIt->future;
+
   this->unloadCachedTiles();
 
-  return newIt->future;
+  return result;
 }
 
 namespace {

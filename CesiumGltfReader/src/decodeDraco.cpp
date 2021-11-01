@@ -2,7 +2,7 @@
 
 #include "CesiumGltf/GltfReader.h"
 
-#include <CesiumGltf/KHR_draco_mesh_compression.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -27,7 +27,7 @@ using namespace CesiumGltf;
 std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     ModelReaderResult& readModel,
     MeshPrimitive& /* primitive */,
-    const KHR_draco_mesh_compression& draco) {
+    const ExtensionKhrDracoMeshCompression& draco) {
   CESIUM_TRACE("CesiumGltf::decodeBufferViewToDracoMesh");
   Model& model = readModel.model.value();
 
@@ -269,7 +269,7 @@ void copyDecodedAttribute(
 void decodePrimitive(
     ModelReaderResult& readModel,
     MeshPrimitive& primitive,
-    KHR_draco_mesh_compression& draco) {
+    ExtensionKhrDracoMeshCompression& draco) {
   CESIUM_TRACE("CesiumGltf::decodePrimitive");
   Model& model = readModel.model.value();
 
@@ -333,8 +333,8 @@ void decodeDraco(CesiumGltf::ModelReaderResult& readModel) {
 
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
-      KHR_draco_mesh_compression* pDraco =
-          primitive.getExtension<KHR_draco_mesh_compression>();
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
       if (!pDraco) {
         continue;
       }
