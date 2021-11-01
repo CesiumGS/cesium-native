@@ -21,7 +21,6 @@
 ##### Additions :tada:
 
 - Added new `Cesium3DTiles` and `Cesium3DTilesReader` libraries. They are useful for reading and working with 3D Tiles tilesets.
--
 
 ##### Fixes :wrench:
 
