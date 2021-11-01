@@ -229,6 +229,11 @@ void postprocess(
   if (options.decodeEmbeddedImages) {
     CESIUM_TRACE("CesiumGltf::decodeEmbeddedImages");
     for (Image& image : model.images) {
+      // Ignore external images for now.
+      if (image.uri) {
+        continue;
+      }
+
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
       const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
