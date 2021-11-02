@@ -51,6 +51,46 @@ public:
       const OctreeTileID& tileID,
       AvailabilitySubtree&& newSubtree) noexcept;
 
+  /**
+   * @brief Find the child node corresponding to this tile ID and parent node.
+   *
+   * Attempts to find the child node for the tile with the given ID and parent
+   * node. The parent node is used to speed up the search significantly. Note
+   * that if the given tile ID does not correspond exactly to an immediate
+   * child node of the parent node, nullptr will be returned. If a tileID
+   * outside the given parent node's subtree is given, an incorrect child node
+   * may be returned.
+   *
+   * @param tileID The tile ID of the child node we are looking for.
+   * @param pParentNode The immediate parent to the child node we are looking
+   * for.
+   * @return The child node if found, nullptr otherwise.
+   */
+  const AvailabilityNode* findChildNode(
+      const OctreeTileID& tileID,
+      const AvailabilityNode* pParentNode) const;
+
+  /**
+   * @brief Gets the number of levels in each subtree.
+   */
+  constexpr inline uint32_t getSubtreeLevels() const noexcept {
+    return this->_subtreeLevels;
+  }
+
+  /**
+   * @brief Gets the index of the maximum level in this implicit tileset.
+   */
+  constexpr inline uint32_t getMaximumLevel() const noexcept {
+    return this->_maximumLevel;
+  }
+
+  /**
+   * @brief Gets a pointer to the root subtree node of this implicit tileset.
+   */
+  const AvailabilityNode* getRootNode() const noexcept {
+    return this->_pRoot.get();
+  }
+
 private:
   OctreeTilingScheme _tilingScheme;
   uint32_t _subtreeLevels;

@@ -331,6 +331,52 @@ private:
   };
 
   /**
+   * @brief Useful implicit tiling information for traversal of the current
+   * tile.
+   */
+  struct ImplicitTraversalInfo {
+    const CesiumGeometry::AvailabilityNode* pCurrentNode;
+
+    /**
+     * @brief Creates empty instance.
+     */
+    ImplicitTraversalInfo() noexcept : pCurrentNode(nullptr){};
+
+    /**
+     * @brief Attempt to initialize an instance with the given {@link Tile}.
+     *
+     * @param pTile The tile that may be the implicit root.
+     */
+    ImplicitTraversalInfo(const Tile* pTile) noexcept : pCurrentNode(nullptr) {
+      if (!pTile) {
+        return;
+      }
+
+      const TileContext* pContext = pTile->getContext();
+      if (!pContext || !pContext->implicitContext) {
+        return;
+      }
+
+      const TileID& id = pTile->getTileID();
+      const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
+          std::get_if<CesiumGeometry::QuadtreeTileID>(&id);
+      const CesiumGeometry::OctreeTileID* pOctreeID =
+          std::get_if<CesiumGeometry::OctreeTileID>(&id);
+
+      const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+      if (pQuadtreeID && pQuadtreeID->level == 0 &&
+          implicitContext.quadtreeAvailability) {
+        this->pCurrentNode =
+            implicitContext.quadtreeAvailability->getRootNode();
+      } else if (
+          pOctreeID && pOctreeID->level == 0 &&
+          implicitContext.octreeAvailability) {
+        this->pCurrentNode = implicitContext.octreeAvailability->getRootNode();
+      }
+    }
+  };
+
+  /**
    * @brief Handles the response that was received for an asset request.
    *
    * This function is supposed to be called on the main thread.
@@ -426,6 +472,7 @@ private:
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       Tile& tile,
       const std::vector<double>& distances,
       ViewUpdateResult& result);
@@ -452,6 +499,7 @@ private:
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -460,12 +508,14 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -571,6 +621,10 @@ private:
   std::vector<LoadRecord> _loadQueueLow;
   std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
 
+  std::vector<LoadRecord> _subtreeLoadQueue;
+  std::atomic<uint32_t>
+      _subtreeLoadsInProgress; // TODO: does this need to be atomic?
+
   Tile::LoadedLinkedList _loadedTiles;
 
   RasterOverlayCollection _overlays;
@@ -598,7 +652,7 @@ private:
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
-  static void addTileToLoadQueue(
+  static double addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
       const std::vector<ViewState>& frustums,
       Tile& tile,
@@ -607,6 +661,10 @@ private:
       std::vector<Tileset::LoadRecord>& queue,
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
+
+  // TODO: temp remove??
+  void loadSubtree(Tile* pTile);
+  void processSubtreeQueue();
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
