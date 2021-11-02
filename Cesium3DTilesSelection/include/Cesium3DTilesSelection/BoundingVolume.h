@@ -54,14 +54,14 @@ CESIUM3DTILESSELECTION_API glm::dvec3
 getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
 
 /**
- * @brief Returns the bounding {@link CesiumGeospatial::GlobeRectangle} of the
+ * @brief Estimates the bounding {@link CesiumGeospatial::GlobeRectangle} of the
  * given {@link BoundingVolume}.
  *
  * @param boundingVolume The bounding volume.
  * @return The bounding {@link CesiumGeospatial::GlobeRectangle}.
  */
 CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
-getGlobeRectangle(const BoundingVolume& boundingVolume);
+estimateGlobeRectangle(const BoundingVolume& boundingVolume);
 
 /**
  * @brief Returns the bounding region if the bounding volume is a

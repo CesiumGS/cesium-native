@@ -77,7 +77,7 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
 
 // TODO: Test this more thoroughly
 std::optional<GlobeRectangle>
-getGlobeRectangle(const BoundingVolume& boundingVolume) {
+estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
   struct Operation {
     std::optional<GlobeRectangle>
     operator()(const BoundingSphere& boundingSphere) {

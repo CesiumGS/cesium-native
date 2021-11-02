@@ -58,7 +58,7 @@ public:
    * to {@link Tileset} tiles.
    *
    * Generates new texture coordinates for the `gltf` using the given
-   * `projection`. The first new texture coordinate (`u` or `s`) will be 0.0 at
+   * `projections`. The first new texture coordinate (`u` or `s`) will be 0.0 at
    * the `minimumX` of the given `rectangle` and 1.0 at the `maximumX`. The
    * second texture coordinate (`v` or `t`) will be 0.0 at the `minimumY` of
    * the given `rectangle` and 1.0 at the `maximumY`.
@@ -68,22 +68,27 @@ public:
    * fractional distance of that projected position between the minimum and
    * maximum.
    *
-   * Projected positions that fall outside the `rectangle` will be clamped to
-   * the edges, so the coordinate values will never be less then 0.0 or greater
-   * than 1.0.
+   * Projected positions that fall outside the `globeRectangle` will be clamped
+   * to the edges, so the coordinate values will never be less then 0.0 or
+   * greater than 1.0.
    *
    * These texture coordinates are stored in the provided glTF, and a new
-   * primitive attribute named `_CESIUMOVERLAY_n`, where `n` is the
-   * `textureCoordinateID` passed to this function, is added to each primitive.
+   * primitive attribute named `_CESIUMOVERLAY_n` is added to each primitive,
+   * where `n` starts with the `firstTextureCoordinateID` passed to this
+   * function and increases with each projection.
    *
    * @param gltf The glTF model.
-   * @param transform The transformation of this glTF to ECEF coordinates.
-   * @param textureCoordinateID The texture coordinate ID.
-   * @param projection The projection. There is a linear relationship between
-   * the coordinates of this projection and the generated texture coordinates.
-   * @param rectangle The rectangle that all projected vertex positions are
-   * expected to lie within.
-   * @return The bounding region.
+   * @param modelToEcefTransform The transformation of this glTF to ECEF
+   * coordinates.
+   * @param firstTextureCoordinateID The texture coordinate ID of the first
+   * projection.
+   * @param globeRectangle The rectangle that all projected vertex positions are
+   * expected to lie within. If this parameter is std::nullopt, it is computed
+   * from the vertices.
+   * @param projections The projections for which to generate texture
+   * coordinates. There is a linear relationship between the coordinates of this
+   * projection and the generated texture coordinates.
+   * @return The detailed of the generated texture coordinates.
    */
   static std::optional<TileContentDetailsForOverlays>
   createRasterOverlayTextureCoordinates(

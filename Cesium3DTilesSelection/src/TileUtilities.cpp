@@ -16,7 +16,7 @@ bool withinPolygons(
     const std::vector<CartographicPolygon>& cartographicPolygons) noexcept {
 
   std::optional<GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(boundingVolume);
+      estimateGlobeRectangle(boundingVolume);
   if (!maybeRectangle) {
     return false;
   }

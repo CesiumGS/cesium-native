@@ -1202,7 +1202,8 @@ static void markTileAndChildrenNonRendered(
  * @param viewState The {@link ViewState}
  * @param boundingVolume The bounding volume of the tile
  * @param forceRenderTilesUnderCamera Whether tiles under the camera should
- * always be rendered (see {@link Cesium3DTilesSelection::TilesetOptions})
+ * always be considered visible and rendered (see
+ * {@link Cesium3DTilesSelection::TilesetOptions}).
  * @return Whether the tile is visible according to the current camera
  * configuration
  */
@@ -1224,7 +1225,7 @@ static bool isVisibleFromCamera(
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
   std::optional<GlobeRectangle> maybeRectangle =
-      getGlobeRectangle(boundingVolume);
+      estimateGlobeRectangle(boundingVolume);
   if (position && maybeRectangle) {
     return maybeRectangle->contains(position.value());
   }
