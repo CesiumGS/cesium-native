@@ -1,11 +1,6 @@
 
 #include "AvailabilitySubtreeContent.h"
 
-#include "Cesium3DTilesSelection/TileContentFactory.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumGeometry/Availability.h"
 #include "CesiumUtility/Uri.h"
 
 #include <gsl/span>
@@ -53,12 +48,22 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
     return pAssetAccessor->requestAsset(asyncSystem, fullBufferUri, headers)
         .thenInWorkerThread([buffer = std::move(buffer)](
                                 std::shared_ptr<IAssetRequest>&& pRequest) {
-          if (pRequest->response()) {
-            const gsl::span<const std::byte>& data =
-                pRequest->response()->data();
+          const IAssetResponse* pResponse = pRequest->response();
+          if (pResponse) {
+            const gsl::span<const std::byte>& data = pResponse->data();
 
-            if (data.size() == buffer.byteLength) {
-              return std::vector<std::byte>(data.begin(), data.end());
+            uint16_t statusCode = pResponse->statusCode();
+
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              return std::vector<std::byte>();
+            }
+
+            if (data.size() >= buffer.byteLength) {
+              gsl::span<const std::byte> bufferData =
+                  data.subspan(0, buffer.byteLength);
+              return std::vector<std::byte>(
+                  bufferData.begin(),
+                  bufferData.end());
             }
           }
 
@@ -71,15 +76,16 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
   }
 }
 
-Future<std::unique_ptr<TileContentLoadResult>>
-AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
-  const AsyncSystem& asyncSystem = input.asyncSystem;
-  const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-  const std::string& url = input.pRequest->url();
-  const gsl::span<const std::byte>& data =
-      input.pSubtreeRequest->response()->data();
-  const std::shared_ptr<IAssetAccessor>& pAssetAccessor = input.pAssetAccessor;
-  const HttpHeaders& headers = input.pRequest->headers();
+/*static*/
+CesiumAsync::Future<std::unique_ptr<AvailabilitySubtree>>
+AvailabilitySubtreeContent::load(
+    AsyncSystem asyncSystem,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const gsl::span<const std::byte>& data,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const HttpHeaders& headers) {
+
   // TODO: Can we avoid this copy conversion?
   std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
 
@@ -105,7 +111,7 @@ AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
         document.GetParseError(),
         document.GetErrorOffset());
     return asyncSystem
-        .createResolvedFuture<std::unique_ptr<TileContentLoadResult>>(nullptr);
+        .createResolvedFuture<std::unique_ptr<AvailabilitySubtree>>(nullptr);
   }
 
   AvailabilitySubtree subtreeResult;
@@ -239,39 +245,14 @@ AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
     }
   }
 
-  // TODO: is this a bit hacky, can we change some terminology to make this
-  // feel more legitimate? Currently this works similar to CompositeContent.
-
-  // The input needed to actually now load the tile content.
-  TileContentLoadInput contentInput(
-      input.asyncSystem,
-      input.pLogger,
-      input.pAssetAccessor,
-      input.pRequest,
-      nullptr,
-      input.tileID,
-      input.tileBoundingVolume,
-      input.tileContentBoundingVolume,
-      input.tileRefine,
-      input.tileGeometricError,
-      input.tileTransform,
-      input.contentOptions);
-
   return asyncSystem.all(std::move(futureBuffers))
       .thenInWorkerThread(
           [asyncSystem,
-           contentInput = std::move(contentInput),
-           subtreeResult = std::move(subtreeResult)](
+           pSubtreeResult =
+               std::make_unique<AvailabilitySubtree>(std::move(subtreeResult))](
               std::vector<std::vector<std::byte>>&& buffers) mutable {
-            subtreeResult.buffers = std::move(buffers);
-
-            return TileContentFactory::createContent(contentInput)
-                .thenInWorkerThread(
-                    [subtreeResult = std::move(subtreeResult)](
-                        std::unique_ptr<TileContentLoadResult>&& pResult) {
-                      pResult->subtreeLoadResult = std::move(subtreeResult);
-                      return std::move(pResult);
-                    });
+            pSubtreeResult->buffers = std::move(buffers);
+            return std::move(pSubtreeResult);
           });
 }
 

@@ -35,19 +35,6 @@ void TileContentFactory::registerContentType(
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 TileContentFactory::createContent(const TileContentLoadInput& input) {
-  if (input.pSubtreeRequest) {
-    const gsl::span<const std::byte>& subtreeData =
-        input.pSubtreeRequest->response()->data();
-    std::optional<std::string> magic =
-        TileContentFactory::getMagic(subtreeData);
-    if (magic) {
-      auto itMagic = TileContentFactory::_loadersByMagic.find(*magic);
-      if (itMagic != TileContentFactory::_loadersByMagic.end()) {
-        return itMagic->second->load(input);
-      }
-    }
-  }
-
   const gsl::span<const std::byte>& data = input.pRequest->response()->data();
   std::string magic = TileContentFactory::getMagic(data).value_or("json");
 
