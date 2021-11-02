@@ -114,6 +114,54 @@ public:
       const CesiumGltf::Model& gltf,
       const glm::dmat4& transform);
 
+  /**
+   * @brief Applies the glTF's RTC_CENTER, if any, to the given rootTransform.
+   *
+   * @param gltf
+   * @param rootTransform
+   * @return glm::dmat4x4
+   */
+
+  /**
+   * @brief Applies the glTF's RTC_CENTER, if any, to the given transform.
+   *
+   * If the glTF has a 3-element numeric array under the name `RTC_CENTER`, this
+   * function will multiply the given matrix with the (translation) matrix that
+   * is created from this `RTC_CENTER` property in the `extras` of the given
+   * model. If the given model does not have this property, then this function
+   * will return the `rootTransform` unchanged.
+   *
+   * @param model The glTF model
+   * @param rootTransform The matrix that will be multiplied with the transform
+   * @return The result of multiplying the `RTC_CENTER` with the
+   * `rootTransform`.
+   */
+  static glm::dmat4x4 applyRtcCenter(
+      const CesiumGltf::Model& gltf,
+      const glm::dmat4x4& rootTransform);
+
+  /**
+   * @brief Applies the glTF's `gltfUpAxis`, if any, to the given transform.
+   *
+   * By default, the up-axis of a glTF model will the the Y-axis.
+   *
+   * If the tileset that contained the model had the `asset.gltfUpAxis` string
+   * property, then the information about the up-axis has been stored in as a
+   * number property called `gltfUpAxis` in the `extras` of the given model.
+   *
+   * Depending on whether this value is `CesiumGeometry::Axis::X`, `Y`, or `Z`,
+   * the given matrix will be multiplied with a matrix that converts the
+   * respective axis to be the Z-axis, as required by the 3D Tiles standard.
+   *
+   * @param model The glTF model
+   * @param rootTransform The matrix that will be multiplied with the transform
+   * @return The result of multiplying the `rootTransform` with the
+   * `gltfUpAxis`.
+   */
+  static glm::dmat4x4 applyGltfUpAxisTransform(
+      const CesiumGltf::Model& model,
+      const glm::dmat4x4& rootTransform);
+
 private:
   static CesiumGltf::GltfReader _gltfReader;
 };

@@ -105,87 +105,6 @@ void updateBoundsWithNewPosition(
   maximumHeight = glm::max(maximumHeight, ellipsoidHeight);
 }
 
-/**
- * @brief Apply the transform for the `RTC_CENTER`
- *
- * If the B3DM that contained the given model had an `RTC_CENTER` in its
- * Feature Table, then it was stored in the `extras` property of the glTF
- * model, as a 3-element array under the name `RTC_CENTER`.
- *
- * This function will multiply the given matrix with the (translation) matrix
- * that was created from this `RTC_CENTER` property in the `extras` of the
- * given model. If the given model does not have this property, then nothing
- * will be done.
- *
- * @param model The glTF model
- * @param rootTransform The matrix that will be multiplied with the transform
- */
-void applyRtcCenter(
-    const CesiumGltf::Model& model,
-    glm::dmat4x4& rootTransform) {
-  auto rtcCenterIt = model.extras.find("RTC_CENTER");
-  if (rtcCenterIt == model.extras.end()) {
-    return;
-  }
-  const CesiumUtility::JsonValue& rtcCenter = rtcCenterIt->second;
-  const std::vector<CesiumUtility::JsonValue>* pArray =
-      std::get_if<CesiumUtility::JsonValue::Array>(&rtcCenter.value);
-  if (!pArray) {
-    return;
-  }
-  if (pArray->size() != 3) {
-    return;
-  }
-  const double x = (*pArray)[0].getSafeNumberOrDefault(0.0);
-  const double y = (*pArray)[1].getSafeNumberOrDefault(0.0);
-  const double z = (*pArray)[2].getSafeNumberOrDefault(0.0);
-  const glm::dmat4x4 rtcTransform(
-      glm::dvec4(1.0, 0.0, 0.0, 0.0),
-      glm::dvec4(0.0, 1.0, 0.0, 0.0),
-      glm::dvec4(0.0, 0.0, 1.0, 0.0),
-      glm::dvec4(x, y, z, 1.0));
-  rootTransform *= rtcTransform;
-}
-
-/**
- * @brief Apply the transform so that the up-axis of the given model is the
- * Z-axis.
- *
- * By default, the up-axis of a glTF model will the the Y-axis.
- *
- * If the tileset that contained the model had the `asset.gltfUpAxis` string
- * property, then the information about the up-axis has been stored in as a
- * number property called `gltfUpAxis` in the `extras` of the given model.
- *
- * Depending on whether this value is CesiumGeometry::Axis::X, Y, or Z,
- * the given matrix will be multiplied with a matrix that converts the
- * respective axis to be the Z-axis, as required by the 3D Tiles standard.
- *
- * @param model The glTF model
- * @param rootTransform The matrix that will be multiplied with the transform
- */
-void applyGltfUpAxisTransform(
-    const CesiumGltf::Model& model,
-    glm::dmat4x4& rootTransform) {
-
-  auto gltfUpAxisIt = model.extras.find("gltfUpAxis");
-  if (gltfUpAxisIt == model.extras.end()) {
-    // The default up-axis of glTF is the Y-axis, and no other
-    // up-axis was specified. Transform the Y-axis to the Z-axis,
-    // to match the 3D Tiles specification
-    rootTransform *= CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
-    return;
-  }
-  const CesiumUtility::JsonValue& gltfUpAxis = gltfUpAxisIt->second;
-  int gltfUpAxisValue = static_cast<int>(gltfUpAxis.getSafeNumberOrDefault(1));
-  if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::X)) {
-    rootTransform *= CesiumGeometry::AxisTransforms::X_UP_TO_Z_UP;
-  } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Y)) {
-    rootTransform *= CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
-  } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Z)) {
-    // No transform required
-  }
-}
 } // namespace
 
 /*static*/ std::optional<TileContentDetailsForOverlays>
@@ -220,8 +139,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
   }
 
   glm::dmat4 rootTransform = modelToEcefTransform;
-  applyRtcCenter(gltf, rootTransform);
-  applyGltfUpAxisTransform(gltf, rootTransform);
+  rootTransform = applyRtcCenter(gltf, rootTransform);
+  rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
   std::vector<int> positionAccessorsToTextureCoordinateAccessor;
   positionAccessorsToTextureCoordinateAccessor.resize(gltf.accessors.size(), 0);
@@ -445,8 +364,8 @@ GltfContent::createRasterOverlayTextureCoordinates(
                "computeBoundingRegion");
 
   glm::dmat4 rootTransform = transform;
-  applyRtcCenter(gltf, rootTransform);
-  applyGltfUpAxisTransform(gltf, rootTransform);
+  rootTransform = applyRtcCenter(gltf, rootTransform);
+  rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
   double west = CesiumUtility::Math::ONE_PI;
   double south = CesiumUtility::Math::PI_OVER_TWO;
@@ -548,6 +467,55 @@ GltfContent::createRasterOverlayTextureCoordinates(
       CesiumGeospatial::GlobeRectangle(west, south, east, north),
       minimumHeight,
       maximumHeight);
+}
+
+/*static*/ glm::dmat4x4 GltfContent::applyRtcCenter(
+    const CesiumGltf::Model& gltf,
+    const glm::dmat4x4& rootTransform) {
+  auto rtcCenterIt = gltf.extras.find("RTC_CENTER");
+  if (rtcCenterIt == gltf.extras.end()) {
+    return rootTransform;
+  }
+  const CesiumUtility::JsonValue& rtcCenter = rtcCenterIt->second;
+  const std::vector<CesiumUtility::JsonValue>* pArray =
+      std::get_if<CesiumUtility::JsonValue::Array>(&rtcCenter.value);
+  if (!pArray) {
+    return rootTransform;
+  }
+  if (pArray->size() != 3) {
+    return rootTransform;
+  }
+  const double x = (*pArray)[0].getSafeNumberOrDefault(0.0);
+  const double y = (*pArray)[1].getSafeNumberOrDefault(0.0);
+  const double z = (*pArray)[2].getSafeNumberOrDefault(0.0);
+  const glm::dmat4x4 rtcTransform(
+      glm::dvec4(1.0, 0.0, 0.0, 0.0),
+      glm::dvec4(0.0, 1.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 1.0, 0.0),
+      glm::dvec4(x, y, z, 1.0));
+  return rootTransform * rtcTransform;
+}
+
+/*static*/ glm::dmat4x4 GltfContent::applyGltfUpAxisTransform(
+    const CesiumGltf::Model& model,
+    const glm::dmat4x4& rootTransform) {
+  auto gltfUpAxisIt = model.extras.find("gltfUpAxis");
+  if (gltfUpAxisIt == model.extras.end()) {
+    // The default up-axis of glTF is the Y-axis, and no other
+    // up-axis was specified. Transform the Y-axis to the Z-axis,
+    // to match the 3D Tiles specification
+    return rootTransform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+  }
+  const CesiumUtility::JsonValue& gltfUpAxis = gltfUpAxisIt->second;
+  int gltfUpAxisValue = static_cast<int>(gltfUpAxis.getSafeNumberOrDefault(1));
+  if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::X)) {
+    return rootTransform * CesiumGeometry::AxisTransforms::X_UP_TO_Z_UP;
+  } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Y)) {
+    return rootTransform * CesiumGeometry::AxisTransforms::Y_UP_TO_Z_UP;
+  } else if (gltfUpAxisValue == static_cast<int>(CesiumGeometry::Axis::Z)) {
+    // No transform required
+  }
+  return rootTransform;
 }
 
 } // namespace Cesium3DTilesSelection
