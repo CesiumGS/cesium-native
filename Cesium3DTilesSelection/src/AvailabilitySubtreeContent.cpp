@@ -53,12 +53,22 @@ static Future<std::vector<std::byte>> resolveSubtreeBuffer(
     return pAssetAccessor->requestAsset(asyncSystem, fullBufferUri, headers)
         .thenInWorkerThread([buffer = std::move(buffer)](
                                 std::shared_ptr<IAssetRequest>&& pRequest) {
-          if (pRequest->response()) {
-            const gsl::span<const std::byte>& data =
-                pRequest->response()->data();
+          const IAssetResponse* pResponse = pRequest->response();
+          if (pResponse) {
+            const gsl::span<const std::byte>& data = pResponse->data();
 
-            if (data.size() == buffer.byteLength) {
-              return std::vector<std::byte>(data.begin(), data.end());
+            uint16_t statusCode = pResponse->statusCode();
+
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              return std::vector<std::byte>();
+            }
+
+            if (data.size() >= buffer.byteLength) {
+              gsl::span<const std::byte> bufferData =
+                  data.subspan(0, buffer.byteLength);
+              return std::vector<std::byte>(
+                  bufferData.begin(),
+                  bufferData.end());
             }
           }
 
@@ -75,7 +85,7 @@ Future<std::unique_ptr<TileContentLoadResult>>
 AvailabilitySubtreeContent::load(const TileContentLoadInput& input) {
   const AsyncSystem& asyncSystem = input.asyncSystem;
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-  const std::string& url = input.pRequest->url();
+  const std::string& url = input.pSubtreeRequest->url();
   const gsl::span<const std::byte>& data =
       input.pSubtreeRequest->response()->data();
   const std::shared_ptr<IAssetAccessor>& pAssetAccessor = input.pAssetAccessor;
