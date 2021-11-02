@@ -40,8 +40,6 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
-  std::unique_ptr<TileContentLoadResult> pResult =
-      std::make_unique<TileContentLoadResult>();
 
   CesiumGltf::ModelReaderResult loadedModel =
       GltfContent::_gltfReader.readModel(data);
