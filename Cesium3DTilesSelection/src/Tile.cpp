@@ -619,6 +619,13 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
     return;
   }
 
+  // The parent tile must not have a zero geometric error, even if it's a leaf
+  // tile. Otherwise we'd never refine it.
+  parent.setGeometricError(parent.getNonZeroGeometricError());
+
+  // The parent must use REPLACE refinement.
+  parent.setRefine(TileRefine::Replace);
+
   const QuadtreeTileID swID(
       parentTileID.level + 1,
       parentTileID.x * 2,
@@ -639,10 +646,6 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   se.setContext(parent.getContext());
   nw.setContext(parent.getContext());
   ne.setContext(parent.getContext());
-
-  // The parent tile must not have a zero geometric error, even if it's a leaf
-  // tile. Otherwise we'd never refine it.
-  parent.setGeometricError(parent.getNonZeroGeometricError());
 
   const double geometricError = parent.getGeometricError() * 0.5;
   sw.setGeometricError(geometricError);
@@ -1019,6 +1022,12 @@ void Tile::upsampleParent(
             pContent->model = upsampleGltfForRasterOverlays(
                 parentModel,
                 *pSubdividedParentID);
+
+            // We can't necessarily trust our original bounding volume, so
+            // recompute it here. See:
+            // https://github.com/CesiumGS/cesium-native/issues/385
+            pContent->updatedBoundingVolume =
+                GltfContent::computeBoundingRegion(*pContent->model, transform);
 
             void* pRendererResources = processNewTileContent(
                 pPrepareRendererResources,
