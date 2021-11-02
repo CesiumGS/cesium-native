@@ -375,8 +375,6 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                   Uri::resolve(baseUrl, *buffer.uri),
                   tHeaders)
               .thenInWorkerThread(
-                  // TODO: is this safe? result should be alive until
-                  // the final continuation is invoked.
                   [pBuffer =
                        &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
@@ -402,8 +400,6 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                   Uri::resolve(baseUrl, *image.uri),
                   tHeaders)
               .thenInWorkerThread(
-                  // TODO: is this safe? result should be alive until
-                  // the final continuation is invoked.
                   [pImage = &image](std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
                     if (pResponse) {
