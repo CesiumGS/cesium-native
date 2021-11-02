@@ -83,11 +83,6 @@ public:
    */
   size_t size() const noexcept { return this->_overlays.size(); }
 
-  /**
-   * @brief Gets the unique projections used by the overlays in this collection.
-   */
-  std::vector<CesiumGeospatial::Projection> getUniqueProjections() const;
-
 private:
   Tileset* _pTileset;
   std::vector<std::unique_ptr<RasterOverlay>> _overlays;

@@ -87,25 +87,4 @@ void RasterOverlayCollection::remove(RasterOverlay* pOverlay) noexcept {
   this->_overlays.erase(it);
 }
 
-std::vector<Projection> RasterOverlayCollection::getUniqueProjections() const {
-  std::vector<Projection> projections;
-
-  for (const std::unique_ptr<RasterOverlay>& pOverlay : this->_overlays) {
-    const RasterOverlayTileProvider* pProvider = pOverlay->getTileProvider();
-
-    // Ignore tile providers that are still placeholders.
-    if (pProvider->isPlaceholder()) {
-      continue;
-    }
-
-    const Projection& projection = pProvider->getProjection();
-    auto it = std::find(projections.begin(), projections.end(), projection);
-    if (it == projections.end()) {
-      projections.emplace_back(projection);
-    }
-  }
-
-  return projections;
-}
-
 } // namespace Cesium3DTilesSelection
