@@ -266,8 +266,9 @@ glm::dvec2 computeDesiredScreenPixels(
   // equation:
   // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
   //
-  // Conveniently a bunch of terms cancel out, so the screen pixel size is not
-  // actually dependent on the screen dimensions or field-of-view angle.
+  // Conveniently a bunch of terms cancel out, so the screen pixel size at the
+  // switch distance is not actually dependent on the screen dimensions or
+  // field-of-view angle.
   double geometryError = tile.getNonZeroGeometricError();
   double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
   glm::dvec2 diameters = computeProjectedRectangleSize(
@@ -329,7 +330,6 @@ RasterMappedTo3DTile* addRealTile(
             : nullptr;
     if (pRectangle) {
       // We have a rectangle and texture coordinates for this projection.
-      // TODO: don't create a tile if there's no overlap
       int32_t index = int32_t(
           pRectangle - &pContent->overlayDetails->rasterOverlayRectangles[0]);
       const glm::dvec2 screenPixels = computeDesiredScreenPixels(
@@ -364,7 +364,6 @@ RasterMappedTo3DTile* addRealTile(
           pProvider->getProjection(),
           tile.getBoundingVolume());
   if (maybeRectangle) {
-    // TODO: don't create a tile if there's no overlap
     const glm::dvec2 screenPixels = computeDesiredScreenPixels(
         tile,
         projection,
@@ -386,12 +385,10 @@ RasterMappedTo3DTile* addRealTile(
 }
 
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
-  if (!this->_pReadyTile) {
-    return;
-  }
-
-  // TODO: allow no content, as long as we have a bounding region.
-  if (!tile.getContent() || !tile.getContent()->overlayDetails) {
+  if (!this->_pReadyTile || !tile.getContent() ||
+      !tile.getContent()->overlayDetails) {
+    // This shouldn't happen
+    assert(false);
     return;
   }
 
