@@ -1,5 +1,26 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `QuadtreeRasterOverlayTileProvider::computeLevelFromGeometricError` has been removed. `computeLevelFromTargetScreenPixels` may be useful as a replacement.
+- The constructor of `RasterOverlayTileProvider` now requires a coverage rectangle.
+- `RasterOverlayTileProvider::getTile` now takes a `targetScreenPixels` instead of a `targetGeometricError`.
+- The constructor of `RasterMappedTo3DTile` now requires a texture coordinate index.
+- The constructor of `RasterOverlayTile` now takes a `targetScreenPixels` instead of a `targetGeometricError`. And the corresponding `getTargetGeometricError` has been removed.
+- Removed `TileContentLoadResult::rasterOverlayProjections`. This field is now found in the `overlayDetails`.
+- Removed `obtainGlobeRectangle` from `TileUtilities.h`. Use `obtainGlobeRectangle` in `BoundingVolume.h` instead.
+
+##### Additions :tada:
+
+- Added support for raster overlays, including clipping polygons, on any 3D Tiles tileset.
+- Raster overlay level-of detail is now selected using "target screen pixels" rather than the hard-to-interpret geometric error value.
+- A `RasterOverlay` can now be configured with a `maximumScreenSpaceError` independent of the screen-space error used for the geometry.
+- `RasterOverlay::loadTileProvider` now returns a `SharedFuture`, making it easy to attach a continuation to run when the load completes.
+- Added `GltfContent::applyRtcCenter` and `applyGltfUpAxisTransform`.
+- Clipping polygon edges now remain sharp even when zooming in past the available geometry detail.
+
 ### v0.9.0 - 2021-11-01
 
 ##### Breaking Changes :mega:

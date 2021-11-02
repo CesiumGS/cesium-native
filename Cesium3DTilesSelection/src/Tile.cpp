@@ -806,6 +806,9 @@ void Tile::update(
         this->setBoundingVolume(*this->_pContent->updatedBoundingVolume);
       }
       if (this->_pContent->updatedContentBoundingVolume) {
+        // There should not be an updated content bounding volume unless there
+        // is also an updated regular bounding volume.
+        assert(this->_pContent->updatedBoundingVolume);
         this->setContentBoundingVolume(
             *this->_pContent->updatedContentBoundingVolume);
       }
