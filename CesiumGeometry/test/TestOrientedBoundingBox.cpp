@@ -26,30 +26,31 @@ TEST_CASE("OrientedBoundingBox::intersectPlane") {
       // rotated
       TestCase{
           glm::dvec3(0.0),
-          glm::rotate(glm::dmat4(), 1.2, glm::dvec3(0.5, 1.5, -1.2))},
+          glm::dmat3(
+              glm::rotate(glm::dmat4(), 1.2, glm::dvec3(0.5, 1.5, -1.2)))},
       // scaled
       TestCase{
           glm::dvec3(0.0),
-          glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 20.6))},
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 20.6)))},
       TestCase{
           glm::dvec3(0.0),
-          glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.4, 20.6))},
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.4, 20.6)))},
       TestCase{
           glm::dvec3(0.0),
-          glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.0, 20.6))},
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.0, 20.6)))},
       TestCase{
           glm::dvec3(0.0),
-          glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 0.0))},
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 0.0)))},
       TestCase{
           glm::dvec3(0.0),
-          glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.0, 0.0))},
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.0, 0.0)))},
       // arbitrary box
       TestCase{
           glm::dvec3(-5.1, 0.0, 0.1),
-          glm::rotate(
+          glm::dmat3(glm::rotate(
               glm::scale(glm::dmat4(), glm::dvec3(1.5, 80.4, 2.6)),
               1.2,
-              glm::dvec3(0.5, 1.5, -1.2))});
+              glm::dvec3(0.5, 1.5, -1.2)))});
 
   SECTION("test corners, edges, faces") {
     const double SQRT1_2 = pow(1.0 / 2.0, 1 / 2.0);
