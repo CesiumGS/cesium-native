@@ -335,24 +335,43 @@ private:
    * tile.
    */
   struct ImplicitTraversalInfo {
-    const CesiumGeometry::AvailabilityNode* pCurrentNode;
+
+    /**
+     * @brief The parent subtree node to the current one.
+     *
+     * This is only useful when we have not yet loaded the current subtree.
+     * Knowing the parent will let us easily add the new subtree once its
+     * loaded.
+     */
+    CesiumGeometry::AvailabilityNode* pParentNode;
+
+    /**
+     * @brief The subtree that contains the current tile's availability.
+     *
+     * If the current tile is the root of a subtree that has not been loaded
+     * yet, this will be nullptr.
+     */
+    CesiumGeometry::AvailabilityNode* pCurrentNode;
 
     /**
      * @brief Creates empty instance.
      */
-    ImplicitTraversalInfo() noexcept : pCurrentNode(nullptr){};
+    ImplicitTraversalInfo() noexcept
+        : pParentNode(nullptr), pCurrentNode(nullptr){};
 
     /**
      * @brief Attempt to initialize an instance with the given {@link Tile}.
      *
      * @param pTile The tile that may be the implicit root.
      */
-    ImplicitTraversalInfo(const Tile* pTile) noexcept : pCurrentNode(nullptr) {
+    ImplicitTraversalInfo(Tile* pTile) noexcept
+        : pParentNode(nullptr), pCurrentNode(nullptr) {
+
       if (!pTile) {
         return;
       }
 
-      const TileContext* pContext = pTile->getContext();
+      TileContext* pContext = pTile->getContext();
       if (!pContext || !pContext->implicitContext) {
         return;
       }
@@ -363,7 +382,7 @@ private:
       const CesiumGeometry::OctreeTileID* pOctreeID =
           std::get_if<CesiumGeometry::OctreeTileID>(&id);
 
-      const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+      ImplicitTilingContext& implicitContext = *pContext->implicitContext;
       if (pQuadtreeID && pQuadtreeID->level == 0 &&
           implicitContext.quadtreeAvailability) {
         this->pCurrentNode =
@@ -616,12 +635,35 @@ private:
     }
   };
 
+  struct SubtreeLoadRecord {
+    /**
+     * @brief The root tile of the subtree to load.
+     */
+    Tile* pTile;
+
+    /**
+     * @brief The parent subtree node to the subtree we want to load.
+     */
+    CesiumGeometry::AvailabilityNode* pParentNode;
+
+    /**
+     * @brief The relative priority of loading this tile.
+     *
+     * Lower priority values load sooner.
+     */
+    double priority;
+
+    bool operator<(const SubtreeLoadRecord& rhs) const noexcept {
+      return this->priority < rhs.priority;
+    }
+  };
+
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
   std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
 
-  std::vector<LoadRecord> _subtreeLoadQueue;
+  std::vector<SubtreeLoadRecord> _subtreeLoadQueue;
   std::atomic<uint32_t>
       _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
@@ -662,8 +704,7 @@ private:
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
-  // TODO: temp remove??
-  void loadSubtree(Tile* pTile);
+  void loadSubtree(Tile* pTile, CesiumGeometry::AvailabilityNode* pParentNode);
   void processSubtreeQueue();
 
   Tileset(const Tileset& rhs) = delete;

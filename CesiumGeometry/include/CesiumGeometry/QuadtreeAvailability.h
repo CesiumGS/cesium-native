@@ -52,6 +52,26 @@ public:
       AvailabilitySubtree&& newSubtree) noexcept;
 
   /**
+   * @brief Attempts to add a child subtree onto the given parent subtree.
+   *
+   * Priming with a known parent subtree node avoids the need to traverse the
+   * entire availability tree so far. If the parent node is nullptr and the
+   * tile ID indicates this is the root tile, the subtree will be attached to
+   * the root.
+   *
+   * @param tileID The root tile's ID of the subtree we are trying to add.
+   * @param pParentNode The parent subtree node. The tileID should fall exactly
+   * at the end of this parent subtree.
+   * @param newSubtree The new subtree to add to the overall availability tree.
+   *
+   * @return Whether the insertion was successful.
+   */
+  bool addSubtree(
+      const QuadtreeTileID& tileID,
+      AvailabilityNode* pParentNode,
+      AvailabilitySubtree&& newSubtree) noexcept;
+
+  /**
    * @brief Find the child node corresponding to this tile ID and parent node.
    *
    * Attempts to find the child node for the tile with the given ID and parent
@@ -66,9 +86,8 @@ public:
    * for.
    * @return The child node if found, nullptr otherwise.
    */
-  const AvailabilityNode* findChildNode(
-      const QuadtreeTileID& tileID,
-      const AvailabilityNode* pParentNode) const;
+  AvailabilityNode*
+  findChildNode(const QuadtreeTileID& tileID, AvailabilityNode* pParentNode);
 
   /**
    * @brief Gets the number of levels in each subtree.
@@ -87,9 +106,7 @@ public:
   /**
    * @brief Gets a pointer to the root subtree node of this implicit tileset.
    */
-  const AvailabilityNode* getRootNode() const noexcept {
-    return this->_pRoot.get();
-  }
+  AvailabilityNode* getRootNode() noexcept { return this->_pRoot.get(); }
 
 private:
   QuadtreeTilingScheme _tilingScheme;
