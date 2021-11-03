@@ -1658,40 +1658,38 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       tile,
       distances);
 
-  if (!implicitInfo.pCurrentNode) {
-    TileContext* pContext = tile.getContext();
+  TileContext* pContext = tile.getContext();
 
-    bool usingImplicitTiling =
-        pContext && pContext->implicitContext &&
-        (pContext->implicitContext->quadtreeAvailability ||
-         pContext->implicitContext->octreeAvailability);
+  bool usingImplicitTiling = pContext && pContext->implicitContext &&
+                             (pContext->implicitContext->quadtreeAvailability ||
+                              pContext->implicitContext->octreeAvailability);
 
-    if (usingImplicitTiling) {
-      // This tile is currently a leaf and it is available because it exists.
-      // So if its level index is a multiple of the number of subtree levels, it
-      // is a root to a subtree. Since implicitInfo.pCurrentNode == nullptr,
-      // this tile's subtree hasn't been loaded yet.
+  if (usingImplicitTiling && !implicitInfo.pCurrentNode) {
+    // This tile is currently a leaf and it is available because it exists.
+    // So if its level index is a multiple of the number of subtree levels, it
+    // is a root to a subtree. Since implicitInfo.pCurrentNode == nullptr,
+    // this tile's subtree hasn't been loaded yet.
 
-      // Remember that if the subtree for a tile is known to be available, its
-      // tile is implied to be available, even though its explicit tile
-      // availability (contained in its own subtree) may not be loaded just yet.
-      // This is how this tile has come to be created before its subtree has
-      // been loaded.
+    // Remember that if the subtree for a tile is known to be available, its
+    // tile is implied to be available, even though its explicit tile
+    // availability (contained in its own subtree) may not be loaded just yet.
+    // This is how this tile has come to be created before its subtree has
+    // been loaded.
 
-      const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+    const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
 
-      const TileID& tileID = tile.getTileID();
-      const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-      const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
+    const TileID& tileID = tile.getTileID();
+    const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
+    const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
 
-      if ((pQuadtreeID && implicitContext.quadtreeAvailability &&
-           (pQuadtreeID->level %
-            implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) ||
-          (pOctreeID && implicitContext.octreeAvailability &&
-           (pOctreeID->level %
-            implicitContext.octreeAvailability->getSubtreeLevels()) == 0)) {
-        this->_subtreeLoadQueue.push_back({&tile, loadPriority});
-      }
+    if ((pQuadtreeID && implicitContext.quadtreeAvailability &&
+         (pQuadtreeID->level %
+          implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) ||
+        (pOctreeID && implicitContext.octreeAvailability &&
+         (pOctreeID->level %
+          implicitContext.octreeAvailability->getSubtreeLevels()) == 0)) {
+      this->_subtreeLoadQueue.push_back(
+          {&tile, implicitInfo.pParentNode, loadPriority});
     }
   }
 
@@ -2136,18 +2134,18 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
       const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
       const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
 
-      const TileContext* pContext = child.getContext();
+      TileContext* pContext = child.getContext();
       if (pContext && pContext->implicitContext) {
-        const ImplicitTilingContext& implicitContext =
-            *pContext->implicitContext;
+        ImplicitTilingContext& implicitContext = *pContext->implicitContext;
         if (pQuadtreeID && implicitContext.quadtreeAvailability) {
           // The child's availability is in the same subtree node unless it is
           // the root of a child subtree.
           if (pQuadtreeID->level %
                   implicitContext.quadtreeAvailability->getSubtreeLevels() !=
               0) {
-            childImplicitInfo.pCurrentNode = implicitInfo.pCurrentNode;
+            childImplicitInfo = implicitInfo;
           } else {
+            childImplicitInfo.pParentNode = implicitInfo.pCurrentNode;
             childImplicitInfo.pCurrentNode =
                 implicitContext.quadtreeAvailability->findChildNode(
                     *pQuadtreeID,
@@ -2159,8 +2157,9 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
           if (pOctreeID->level %
                   implicitContext.octreeAvailability->getSubtreeLevels() !=
               0) {
-            childImplicitInfo.pCurrentNode = implicitInfo.pCurrentNode;
+            childImplicitInfo = implicitInfo;
           } else {
+            childImplicitInfo.pParentNode = implicitInfo.pCurrentNode;
             childImplicitInfo.pCurrentNode =
                 implicitContext.octreeAvailability->findChildNode(
                     *pOctreeID,
@@ -2453,7 +2452,7 @@ void Tileset::processQueue(
 }
 
 // TODO: remove temp scratch function
-void Tileset::loadSubtree(Tile* pTile) {
+void Tileset::loadSubtree(Tile* pTile, AvailabilityNode* pParentNode) {
   if (!pTile) {
     return;
   }
@@ -2486,8 +2485,8 @@ void Tileset::loadSubtree(Tile* pTile) {
                   std::unique_ptr<AvailabilitySubtree>(nullptr));
             })
         .thenInMainThread(
-            [this,
-             pTile](std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
+            [this, pTile, pParentNode](
+                std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
               --this->_subtreeLoadsInProgress;
               const TileID& tileID = pTile->getTileID();
               const QuadtreeTileID* pQuadtreeID =
@@ -2502,10 +2501,12 @@ void Tileset::loadSubtree(Tile* pTile) {
                 if (pQuadtreeID && implicitContext.quadtreeAvailability) {
                   implicitContext.quadtreeAvailability->addSubtree(
                       *pQuadtreeID,
+                      pParentNode,
                       std::move(*pSubtree.release()));
                 } else if (pOctreeID && implicitContext.octreeAvailability) {
                   implicitContext.octreeAvailability->addSubtree(
                       *pOctreeID,
+                      pParentNode,
                       std::move(*pSubtree.release()));
                 }
               }
@@ -2522,9 +2523,9 @@ void Tileset::processSubtreeQueue() {
 
   std::sort(this->_subtreeLoadQueue.begin(), this->_subtreeLoadQueue.end());
 
-  for (LoadRecord& record : this->_subtreeLoadQueue) {
+  for (SubtreeLoadRecord& record : this->_subtreeLoadQueue) {
     // TODO: tracing code here
-    loadSubtree(record.pTile);
+    loadSubtree(record.pTile, record.pParentNode);
     if (this->_subtreeLoadsInProgress >= 20) {
       break;
     }
