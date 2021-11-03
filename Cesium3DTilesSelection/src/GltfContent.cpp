@@ -242,7 +242,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           uvAccessor.count = int64_t(positionView.size());
           uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
 
-          AccessorWriter<glm::vec2>& uvWriter =
+          [[maybe_unused]] AccessorWriter<glm::vec2>& uvWriter =
               uvWriters.emplace_back(gltf, uvAccessorId);
           assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
