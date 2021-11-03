@@ -106,15 +106,15 @@ public:
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
-   * @param options The {@link TileMapServiceRasterOverlayOptions}.
+   * @param tmsOptions The {@link TileMapServiceRasterOverlayOptions}.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   TileMapServiceRasterOverlay(
       const std::string& name,
       const std::string& url,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers =
-          std::vector<CesiumAsync::IAssetAccessor::THeader>(),
-      const TileMapServiceRasterOverlayOptions& options =
-          TileMapServiceRasterOverlayOptions());
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
+      const TileMapServiceRasterOverlayOptions& tmsOptions = {},
+      const RasterOverlayOptions& overlayOptions = {});
   virtual ~TileMapServiceRasterOverlay() override;
 
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>

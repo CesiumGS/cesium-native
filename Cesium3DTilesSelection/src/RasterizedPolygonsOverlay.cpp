@@ -232,8 +232,9 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     const std::string& name,
     const std::vector<CartographicPolygon>& polygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const CesiumGeospatial::Projection& projection)
-    : RasterOverlay(name),
+    const CesiumGeospatial::Projection& projection,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
       _polygons(polygons),
       _ellipsoid(ellipsoid),
       _projection(projection) {}

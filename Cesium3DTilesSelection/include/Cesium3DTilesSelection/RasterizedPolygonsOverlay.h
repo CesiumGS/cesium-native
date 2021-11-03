@@ -25,7 +25,8 @@ public:
       const std::string& name,
       const std::vector<CesiumGeospatial::CartographicPolygon>& polygons,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
-      const CesiumGeospatial::Projection& projection);
+      const CesiumGeospatial::Projection& projection,
+      const RasterOverlayOptions& overlayOptions = {});
   virtual ~RasterizedPolygonsOverlay() override;
 
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>

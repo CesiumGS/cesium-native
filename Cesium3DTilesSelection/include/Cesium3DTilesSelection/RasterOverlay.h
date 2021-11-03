@@ -81,11 +81,12 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param options The {@link RasterOverlayOptions} for this instance.
+   * @param name The user-given name of this overlay layer.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   RasterOverlay(
       const std::string& name,
-      const RasterOverlayOptions& options = RasterOverlayOptions());
+      const RasterOverlayOptions& overlayOptions = RasterOverlayOptions());
   virtual ~RasterOverlay();
 
   /**
