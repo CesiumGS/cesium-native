@@ -39,6 +39,27 @@ endif()
 
 add_subdirectory(modp_b64)
 
+add_library(
+  s2geometry
+  s2geometry/src/s2/s2cell_id.cc
+  s2geometry/src/s2/r2rect.cc
+  s2geometry/src/s2/s2coords.cc
+  s2geometry/src/s2/util/bits/bits.cc
+  s2geometry/src/s2/util/coding/coder.cc
+  s2geometry/src/s2/s2latlng.cc
+  s2geometry/src/s2/third_party/absl/strings/numbers.cc
+  s2geometry/src/s2/third_party/absl/strings/str_cat.cc
+  s2geometry/src/s2/s1angle.cc
+  s2geometry/src/s2/base/stringprintf.cc
+  s2geometry/src/s2/third_party/absl/base/internal/raw_logging.cc
+  s2geometry/src/s2/third_party/absl/strings/internal/memutil.cc
+  s2geometry/src/s2/third_party/absl/strings/ascii.cc
+  s2geometry/src/s2/third_party/absl/base/internal/throw_delegate.cc
+)
+target_include_directories(s2geometry PUBLIC s2geometry/src)
+target_compile_options(s2geometry PRIVATE "/J" "/wd4127" "/wd4996")
+target_compile_definitions(s2geometry PRIVATE NOMINMAX _USE_MATH_DEFINES)
+
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
 set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
 set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "Don't use OpenSSL")

@@ -10,6 +10,8 @@ using namespace CesiumUtility;
 
 namespace CesiumGeometry {
 
+Plane::Plane() noexcept : Plane(glm::dvec3(0.0, 0.0, 1.0), 0.0) {}
+
 Plane::Plane(const glm::dvec3& normal, double distance)
     : _normal(normal), _distance(distance) {
   //>>includeStart('debug', pragmas.debug);

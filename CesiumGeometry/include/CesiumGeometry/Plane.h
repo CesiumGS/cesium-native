@@ -12,6 +12,11 @@ namespace CesiumGeometry {
 class CESIUMGEOMETRY_API Plane final {
 public:
   /**
+   * @brief Constructs a new plane with a +Z normal and a distance of 0.0.
+   */
+  Plane() noexcept;
+
+  /**
    * @brief Constructs a new plane from a normal and a distance from the origin.
    *
    * The plane is defined by:
