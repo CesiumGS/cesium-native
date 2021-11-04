@@ -37,11 +37,37 @@ struct CESIUMGEOMETRY_API AvailabilitySubtree {
   std::vector<std::vector<std::byte>> buffers;
 };
 
+/**
+ * @brief Availability nodes wrap subtree objects and link them together to
+ * form a downwardly traversable availability tree.
+ */
 struct CESIUMGEOMETRY_API AvailabilityNode {
-  AvailabilitySubtree subtree;
+  /**
+   * @brief The subtree data for this node.
+   *
+   * If a node exists but its subtree does not exist, it indicates that the
+   * subtree is known to be available and is actively in the process of loading.
+   */
+  std::optional<AvailabilitySubtree> subtree;
+
+  /**
+   * @brief The child nodes for this subtree node.
+   */
   std::vector<std::unique_ptr<AvailabilityNode>> childNodes;
 
-  AvailabilityNode(
+  /**
+   * @brief Creates an empty instance;
+   */
+  AvailabilityNode() noexcept;
+
+  /**
+   * @brief Sets the loaded subtree for this availability node.
+   *
+   * @param subtree_ The loaded subtree to set for this node.
+   * @param maxChildrenSubtrees The maximum number of children this subtree
+   * could possible have if all of them happen to be available.
+   */
+  void setLoadedSubtree(
       AvailabilitySubtree&& subtree_,
       uint32_t maxChildrenSubtrees) noexcept;
 };

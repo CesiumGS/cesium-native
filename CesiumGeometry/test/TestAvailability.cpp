@@ -262,7 +262,7 @@ TEST_CASE("Test OctreeAvailability") {
 
         octreeAvailability.addSubtree(
             mockChildrenSubtreeId,
-            pParentNode,
+            // pParentNode,
             std::move(childSubtree));
       }
     }
@@ -447,7 +447,7 @@ TEST_CASE("Test QuadtreeAvailability") {
 
         quadtreeAvailability.addSubtree(
             mockChildrenSubtreeId,
-            pParentNode,
+            // pParentNode,
             std::move(childSubtree));
       }
     }

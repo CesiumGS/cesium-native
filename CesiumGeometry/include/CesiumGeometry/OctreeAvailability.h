@@ -52,7 +52,25 @@ public:
       AvailabilitySubtree&& newSubtree) noexcept;
 
   /**
-   * @brief Attempts to add a child subtree onto the given parent subtree.
+   * @brief Determines the currently known availability status of the given
+   * tile.
+   *
+   * Priming with a known parent subtree node avoids the need to traverse the
+   * entire availability tree so far. The node must have a loaded subtree
+   *
+   * @param tileID The tile ID to get the availability for.
+   * @param pNode The subtree node to look for the tileID in. The tileID should
+   * be within this subtree node.
+   *
+   * @return The {@link TileAvailabilityFlags} for this tile encoded into a
+   * uint8_t.
+   */
+  uint8_t computeAvailability(
+      const OctreeTileID& tileID,
+      const AvailabilityNode* pNode) const noexcept;
+
+  /**
+   * @brief Attempts to add a child subtree node onto the given parent node.
    *
    * Priming with a known parent subtree node avoids the need to traverse the
    * entire availability tree so far. If the parent node is nullptr and the
@@ -62,14 +80,45 @@ public:
    * @param tileID The root tile's ID of the subtree we are trying to add.
    * @param pParentNode The parent subtree node. The tileID should fall exactly
    * at the end of this parent subtree.
-   * @param newSubtree The new subtree to add to the overall availability tree.
+   *
+   * @return The newly created node if the insertion was successful, nullptr
+   * otherwise.
+   */
+  AvailabilityNode*
+  addNode(const OctreeTileID& tileID, AvailabilityNode* pParentNode) noexcept;
+
+  /**
+   * @brief Attempts to add a loaded subtree onto the given node.
+   *
+   * The node must have been created earlier from a call to addNode.
+   *
+   * @param pNode The node on which to add the subtree.
+   * @param newSubtree The new subtree to add.
    *
    * @return Whether the insertion was successful.
    */
-  bool addSubtree(
-      const OctreeTileID& tileID,
-      AvailabilityNode* pParentNode,
+  bool addLoadedSubtree(
+      AvailabilityNode* pNode,
       AvailabilitySubtree&& newSubtree) noexcept;
+  /**
+   * @brief Find the child node index corresponding to this tile ID and parent
+   * node.
+   *
+   * Attempts to find the child node for the tile with the given ID and parent
+   * node. The parent node is used to speed up the search significantly. Note
+   * that if the given tile ID does not correspond exactly to an immediate
+   * child node of the parent node, nullptr will be returned. If a tileID
+   * outside the given parent node's subtree is given, an incorrect child index
+   * may be returned.
+   *
+   * @param tileID The tile ID of the child node we are looking for.
+   * @param pParentNode The immediate parent to the child node we are looking
+   * for.
+   * @return The child node index if found, std::nullopt otherwise.
+   */
+  std::optional<uint32_t> findChildNodeIndex(
+      const OctreeTileID& tileID,
+      const AvailabilityNode* pParentNode) const;
 
   /**
    * @brief Find the child node corresponding to this tile ID and parent node.
@@ -78,7 +127,7 @@ public:
    * node. The parent node is used to speed up the search significantly. Note
    * that if the given tile ID does not correspond exactly to an immediate
    * child node of the parent node, nullptr will be returned. If a tileID
-   * outside the given parent node's subtree is given, an incorrect child node
+   * outside the given parent node's subtree is given, an incorrect child index
    * may be returned.
    *
    * @param tileID The tile ID of the child node we are looking for.
@@ -86,8 +135,9 @@ public:
    * for.
    * @return The child node if found, nullptr otherwise.
    */
-  AvailabilityNode*
-  findChildNode(const OctreeTileID& tileID, AvailabilityNode* pParentNode);
+  AvailabilityNode* findChildNode(
+      const OctreeTileID& tileID,
+      AvailabilityNode* pParentNode) const;
 
   /**
    * @brief Gets the number of levels in each subtree.

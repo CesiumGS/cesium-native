@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ImplicitTraversalInfo.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
@@ -13,6 +14,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/QuadtreeRectangleAvailability.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 
 #include <rapidjson/fwd.h>
 
@@ -331,71 +333,6 @@ private:
   };
 
   /**
-   * @brief Useful implicit tiling information for traversal of the current
-   * tile.
-   */
-  struct ImplicitTraversalInfo {
-
-    /**
-     * @brief The parent subtree node to the current one.
-     *
-     * This is only useful when we have not yet loaded the current subtree.
-     * Knowing the parent will let us easily add the new subtree once its
-     * loaded.
-     */
-    CesiumGeometry::AvailabilityNode* pParentNode;
-
-    /**
-     * @brief The subtree that contains the current tile's availability.
-     *
-     * If the current tile is the root of a subtree that has not been loaded
-     * yet, this will be nullptr.
-     */
-    CesiumGeometry::AvailabilityNode* pCurrentNode;
-
-    /**
-     * @brief Creates empty instance.
-     */
-    ImplicitTraversalInfo() noexcept
-        : pParentNode(nullptr), pCurrentNode(nullptr){};
-
-    /**
-     * @brief Attempt to initialize an instance with the given {@link Tile}.
-     *
-     * @param pTile The tile that may be the implicit root.
-     */
-    ImplicitTraversalInfo(Tile* pTile) noexcept
-        : pParentNode(nullptr), pCurrentNode(nullptr) {
-
-      if (!pTile) {
-        return;
-      }
-
-      TileContext* pContext = pTile->getContext();
-      if (!pContext || !pContext->implicitContext) {
-        return;
-      }
-
-      const TileID& id = pTile->getTileID();
-      const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-          std::get_if<CesiumGeometry::QuadtreeTileID>(&id);
-      const CesiumGeometry::OctreeTileID* pOctreeID =
-          std::get_if<CesiumGeometry::OctreeTileID>(&id);
-
-      ImplicitTilingContext& implicitContext = *pContext->implicitContext;
-      if (pQuadtreeID && pQuadtreeID->level == 0 &&
-          implicitContext.quadtreeAvailability) {
-        this->pCurrentNode =
-            implicitContext.quadtreeAvailability->getRootNode();
-      } else if (
-          pOctreeID && pOctreeID->level == 0 &&
-          implicitContext.octreeAvailability) {
-        this->pCurrentNode = implicitContext.octreeAvailability->getRootNode();
-      }
-    }
-  };
-
-  /**
    * @brief Handles the response that was received for an asset request.
    *
    * This function is supposed to be called on the main thread.
@@ -491,7 +428,7 @@ private:
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
+      ImplicitTraversalInfo&& implicitInfo,
       Tile& tile,
       const std::vector<double>& distances,
       ViewUpdateResult& result);
@@ -518,7 +455,7 @@ private:
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
+      ImplicitTraversalInfo&& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -527,7 +464,7 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
+      ImplicitTraversalInfo&& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -642,9 +579,10 @@ private:
     Tile* pTile;
 
     /**
-     * @brief The parent subtree node to the subtree we want to load.
+     * @brief The implicit traversal information which will tell us what subtree
+     * to load and which parent to attach it to.
      */
-    CesiumGeometry::AvailabilityNode* pParentNode;
+    ImplicitTraversalInfo implicitInfo;
 
     /**
      * @brief The relative priority of loading this tile.
@@ -704,7 +642,11 @@ private:
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
-  void loadSubtree(Tile* pTile, CesiumGeometry::AvailabilityNode* pParentNode);
+  void loadSubtree(SubtreeLoadRecord&& loadRecord);
+  void addSubtreeToLoadQueue(
+      Tile& tile,
+      ImplicitTraversalInfo&& implicitInfo,
+      double loadPriority);
   void processSubtreeQueue();
 
   Tileset(const Tileset& rhs) = delete;

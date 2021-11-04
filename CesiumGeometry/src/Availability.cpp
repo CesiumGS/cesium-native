@@ -28,14 +28,17 @@ uint32_t countOnesInBuffer(gsl::span<const std::byte> buffer) {
 }
 } // namespace AvailabilityUtilities
 
-AvailabilityNode::AvailabilityNode(
+AvailabilityNode::AvailabilityNode() noexcept
+    : subtree(std::nullopt), childNodes(){};
+
+void AvailabilityNode::setLoadedSubtree(
     AvailabilitySubtree&& subtree_,
-    uint32_t maxChildrenSubtrees) noexcept
-    : subtree(std::move(subtree_)) {
+    uint32_t maxChildrenSubtrees) noexcept {
+  this->subtree = std::make_optional<AvailabilitySubtree>(std::move(subtree_));
 
   AvailabilityAccessor subtreeAvailabilityAccessor(
-      subtree.subtreeAvailability,
-      subtree);
+      this->subtree->subtreeAvailability,
+      *this->subtree);
 
   size_t childNodesCount = 0;
   if (subtreeAvailabilityAccessor.isConstant()) {
