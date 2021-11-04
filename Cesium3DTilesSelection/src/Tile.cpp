@@ -394,6 +394,20 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
+
+        if (this->getContext()->implicitContext) {
+          ImplicitTilingContext& context = *this->getContext()->implicitContext;
+          const QuadtreeTileID* pQuadtreeTileID =
+              std::get_if<QuadtreeTileID>(&this->getTileID());
+          if (pQuadtreeTileID && context.quadtreeTilingScheme &&
+              context.rectangleAvailability &&
+              !this->_pContent->availableTileRectangles.empty()) {
+            for (const QuadtreeTileRectangularRange& range :
+                 this->_pContent->availableTileRectangles) {
+              context.rectangleAvailability->addAvailableTileRange(range);
+            }
+          }
+        }
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();
@@ -593,7 +607,7 @@ void Tile::update(
     }
   }
 
-  QuadtreeTileID* pQuadtreeTileID = std::get_if<QuadtreeTileID>(&this->_id);
+  // QuadtreeTileID* pQuadtreeTileID = std::get_if<QuadtreeTileID>(&this->_id);
 
   if (this->getState() == LoadState::ContentLoaded) {
     if (externals.pPrepareRendererResources) {
@@ -639,19 +653,20 @@ void Tile::update(
       if (this->_pContent->updatedBoundingVolume) {
         this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
       }
+      /*
+            if (this->getContext()->implicitContext) {
+              ImplicitTilingContext& context =
+         *this->getContext()->implicitContext;
 
-      if (this->getContext()->implicitContext) {
-        ImplicitTilingContext& context = *this->getContext()->implicitContext;
-
-        if (pQuadtreeTileID && context.quadtreeTilingScheme &&
-            context.rectangleAvailability &&
-            !this->_pContent->availableTileRectangles.empty()) {
-          for (const QuadtreeTileRectangularRange& range :
-               this->_pContent->availableTileRectangles) {
-            context.rectangleAvailability->addAvailableTileRange(range);
-          }
-        }
-      }
+              if (pQuadtreeTileID && context.quadtreeTilingScheme &&
+                  context.rectangleAvailability &&
+                  !this->_pContent->availableTileRectangles.empty()) {
+                for (const QuadtreeTileRectangularRange& range :
+                     this->_pContent->availableTileRectangles) {
+                  context.rectangleAvailability->addAvailableTileRange(range);
+                }
+              }
+            }*/
     }
 
     this->setState(LoadState::Done);

@@ -1892,8 +1892,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     Tile& tile,
     ViewUpdateResult& result) {
 
-  tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
-
   // TODO: move to helper function
   TileContext* pContext = tile.getContext();
   if (pContext && pContext->implicitContext) {
@@ -1952,9 +1950,11 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         }
       }
     }
+
+    createImplicitChildrenIfNeeded(tile, implicitInfo);
   }
 
-  createImplicitChildrenIfNeeded(tile, implicitInfo);
+  tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
 
   this->_markTileVisited(tile);
 
@@ -2892,7 +2892,14 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    record.pTile->loadContent();
+    // TODO: for implicit tilesets only create content request if content is
+    // available.
+    if (record.pTile->getState() == Tile::LoadState::Unloaded) {
+      record.pTile->loadContent(this->requestTileContent(*record.pTile));
+    } else {
+      record.pTile->loadContent();
+    }
+
     if (loadsInProgress >= maximumLoadsInProgress) {
       break;
     }

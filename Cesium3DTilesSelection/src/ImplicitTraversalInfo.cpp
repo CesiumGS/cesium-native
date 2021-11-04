@@ -1,5 +1,5 @@
 
-#include "ImplicitTraversalInfo.h"
+#include "Cesium3DTilesSelection/ImplicitTraversalInfo.h"
 
 #include "Cesium3DTilesSelection/TileContext.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
