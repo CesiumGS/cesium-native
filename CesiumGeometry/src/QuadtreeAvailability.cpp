@@ -407,7 +407,7 @@ AvailabilityNode* QuadtreeAvailability::addNode(
 
   // The tile must fall exactly after the parent subtree.
   if ((tileID.level % this->_subtreeLevels) != 0) {
-    return false;
+    return nullptr;
   }
 
   uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << this->_subtreeLevels);
