@@ -29,7 +29,7 @@ uint32_t countOnesInBuffer(gsl::span<const std::byte> buffer) {
 } // namespace AvailabilityUtilities
 
 AvailabilityNode::AvailabilityNode() noexcept
-    : subtree(std::nullopt), childNodes(){};
+    : subtree(std::nullopt), childNodes() {}
 
 void AvailabilityNode::setLoadedSubtree(
     AvailabilitySubtree&& subtree_,

@@ -397,7 +397,7 @@ AvailabilityNode* OctreeAvailability::addNode(
 
   // The tile must fall exactly after the parent subtree.
   if ((tileID.level % this->_subtreeLevels) != 0) {
-    return false;
+    return nullptr;
   }
 
   uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << this->_subtreeLevels);
@@ -436,7 +436,7 @@ AvailabilityNode* OctreeAvailability::addNode(
               static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
     } else {
       // This subtree is not supposed to be available.
-      return false;
+      return nullptr;
     }
   }
 
@@ -446,7 +446,7 @@ AvailabilityNode* OctreeAvailability::addNode(
     return pParentNode->childNodes[subtreeIndex].get();
   }
 
-  return false;
+  return nullptr;
 }
 
 bool OctreeAvailability::addLoadedSubtree(
