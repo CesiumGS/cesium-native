@@ -1929,6 +1929,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         if (implicitInfo.pCurrentNode) {
           implicitInfo.availability =
               getImplicitAvailability(tile, implicitInfo.pCurrentNode);
+        } else {
+          implicitInfo.availability = TileAvailabilityFlags::TILE_AVAILABLE |
+                                      TileAvailabilityFlags::SUBTREE_AVAILABLE;
         }
       } else {
         // If we don't have either subtree nodes, we check to see if this is
@@ -1947,6 +1950,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
         if (implicitInfo.pCurrentNode) {
           implicitInfo.availability =
               getImplicitAvailability(tile, implicitInfo.pCurrentNode);
+        } else {
+          implicitInfo.availability = TileAvailabilityFlags::TILE_AVAILABLE |
+                                      TileAvailabilityFlags::SUBTREE_AVAILABLE;
         }
       }
     }
@@ -2975,7 +2981,7 @@ void Tileset::addSubtreeToLoadQueue(
     ImplicitTraversalInfo&& implicitInfo,
     double loadPriority) {
 
-  if (implicitInfo.pParentNode && !implicitInfo.pCurrentNode &&
+  if (!implicitInfo.pCurrentNode &&
       implicitInfo.availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) {
     TileContext* pContext = tile.getContext();
     if (pContext && pContext->implicitContext) {
