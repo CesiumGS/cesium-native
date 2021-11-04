@@ -12,7 +12,7 @@ namespace Cesium3DTilesSelection {
  * @brief Creates empty instance.
  */
 ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
-    : pParentNode(nullptr), pCurrentNode(nullptr), availability(0){};
+    : pParentNode(nullptr), pCurrentNode(nullptr), availability(0) {}
 
 /**
  * @brief Attempt to initialize an instance with the given {@link Tile}.
