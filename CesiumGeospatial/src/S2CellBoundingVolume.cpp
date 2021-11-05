@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/geometric.hpp>
+#include <glm/gtx/norm.hpp>
 #include <glm/matrix.hpp>
 
 #include <array>
@@ -159,9 +160,9 @@ CesiumGeometry::CullingResult S2CellBoundingVolume::intersectPlane(
     double distanceToPlane =
         glm::dot(plane.getNormal(), this->_vertices[i]) + plane.getDistance();
     if (distanceToPlane < 0.0) {
-      negCount++;
+      ++negCount;
     } else {
-      plusCount++;
+      ++plusCount;
     }
   }
 
@@ -173,7 +174,245 @@ CesiumGeometry::CullingResult S2CellBoundingVolume::intersectPlane(
   return CullingResult::Intersecting;
 }
 
+namespace {
+
+std::array<glm::dvec3, 4>
+getPlaneVertices(const std::array<glm::dvec3, 8>& vertices, int index) {
+  if (index <= 1) {
+    int start = index * 4;
+    return {
+        vertices[start],
+        vertices[start + 1],
+        vertices[start + 2],
+        vertices[start + 3]};
+  }
+
+  return {
+      vertices[index % 4],
+      vertices[(index + 1) % 4],
+      vertices[4 + ((index + 1) % 4)],
+      vertices[4 + index]};
+}
+
+std::array<glm::dvec3, 4> computeEdgeNormals(
+    const Plane& plane,
+    const std::array<glm::dvec3, 4>& vertices,
+    bool invert) {
+  std::array<glm::dvec3, 4> result = {
+      glm::normalize(glm::cross(plane.getNormal(), vertices[1] - vertices[0])),
+      glm::normalize(glm::cross(plane.getNormal(), vertices[2] - vertices[1])),
+      glm::normalize(glm::cross(plane.getNormal(), vertices[3] - vertices[2])),
+      glm::normalize(glm::cross(plane.getNormal(), vertices[0] - vertices[3]))};
+
+  if (invert) {
+    result[0] = -result[0];
+    result[1] = -result[1];
+    result[2] = -result[2];
+    result[3] = -result[3];
+  }
+
+  return result;
+}
+
+/**
+ * Finds point on a line segment closest to a given point.
+ * @private
+ */
+glm::dvec3 closestPointLineSegment(
+    const glm::dvec3& p,
+    const glm::dvec3& l0,
+    const glm::dvec3& l1) {
+  glm::dvec3 d = l1 - l0;
+  double t = glm::dot(d, p - l0);
+
+  if (t <= 0.0) {
+    return l0;
+  }
+
+  double dMag = glm::dot(d, d);
+  if (t >= dMag) {
+    return l1;
+  }
+
+  t /= dMag;
+  return glm::dvec3(
+      (1 - t) * l0.x + t * l1.x,
+      (1 - t) * l0.y + t * l1.y,
+      (1 - t) * l0.z + t * l1.z);
+}
+
+/**
+ * Finds closes point on the polygon, created by the given vertices, from
+ * a point. The test point and the polygon are all on the same plane.
+ * @private
+ */
+glm::dvec3 closestPointPolygon(
+    const glm::dvec3& p,
+    const std::array<glm::dvec3, 4>& vertices,
+    const std::array<glm::dvec3, 4>& edgeNormals) {
+  double minDistance = std::numeric_limits<double>::max();
+  glm::dvec3 closestPoint = p;
+
+  for (int i = 0; i < vertices.size(); ++i) {
+    Plane edgePlane(vertices[i], edgeNormals[i]);
+    double edgePlaneDistance = edgePlane.getPointDistance(p);
+
+    // Skip checking against the edge if the point is not in the half-space that
+    // the edgePlane's normal points towards i.e. if the edgePlane is facing
+    // away from the point.
+    if (edgePlaneDistance < 0.0) {
+      continue;
+    }
+
+    glm::dvec3 closestPointOnEdge =
+        closestPointLineSegment(p, vertices[i], vertices[(i + 1) % 4]);
+
+    double distance = glm::distance(p, closestPointOnEdge);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = closestPointOnEdge;
+    }
+  }
+
+  return closestPoint;
+}
+
+} // namespace
+
+/**
+ * The distance to point check for this kDOP involves checking the signed
+ * distance of the point to each bounding plane. A plane qualifies for a
+ * distance check if the point being tested against is in the half-space in the
+ * direction of the normal i.e. if the signed distance of the point from the
+ * plane is greater than 0.
+ *
+ * There are 4 possible cases for a point if it is outside the polyhedron:
+ *
+ *   \     X     /     X \           /       \           /       \           /
+ * ---\---------/---   ---\---------/---   ---X---------/---   ---\---------/---
+ *     \       /           \       /           \       /           \       /
+ *   ---\-----/---       ---\-----/---       ---\-----/---       ---\-----/---
+ *       \   /               \   /               \   /               \   /
+ *                                                                    \ /
+ *                                                                     \
+ *                                                                    / \
+ *                                                                   / X \
+ *
+ *         I                  II                  III                 IV
+ *
+ * * Case I: There is only one plane selected.
+ * In this case, we project the point onto the plane and do a point polygon
+ * distance check to find the closest point on the polygon. The point may lie
+ * inside the "face" of the polygon or outside. If it is outside, we need to
+ * determine which edges to test against.
+ *
+ * * Case II: There are two planes selected.
+ * In this case, the point will lie somewhere on the line created at the
+ * intersection of the selected planes or one of the planes.
+ *
+ * * Case III: There are three planes selected.
+ * In this case, the point will lie on the vertex, at the intersection of the
+ * selected planes.
+ *
+ * * Case IV: There are more than three planes selected.
+ * Since we are on an ellipsoid, this will only happen in the bottom plane,
+ * which is what we will use for the distance test.
+ */
 double S2CellBoundingVolume::computeDistanceSquaredToPosition(
-    const glm::dvec3& /* position */) const noexcept {
-  return 0.0;
+    const glm::dvec3& position) const noexcept {
+  size_t numSelectedPlanes = 0;
+  std::array<int32_t, 6> selectedPlaneIndices;
+
+  if (this->_boundingPlanes[0].getPointDistance(position) > 0.0) {
+    selectedPlaneIndices[numSelectedPlanes++] = 0;
+  } else if (this->_boundingPlanes[1].getPointDistance(position) > 0.0) {
+    selectedPlaneIndices[numSelectedPlanes++] = 1;
+  }
+
+  for (int i = 0; i < 4; i++) {
+    int32_t sidePlaneIndex = 2 + i;
+    if (this->_boundingPlanes[sidePlaneIndex].getPointDistance(position) >
+        0.0) {
+      selectedPlaneIndices[numSelectedPlanes++] = sidePlaneIndex;
+    }
+  }
+
+  // Check if inside all planes.
+  if (numSelectedPlanes == 0) {
+    return 0.0;
+  }
+
+  // We use the skip variable when the side plane indices are non-consecutive.
+  if (numSelectedPlanes == 1) {
+    // Handles Case I
+    int32_t planeIndex = selectedPlaneIndices[0];
+    const Plane& selectedPlane = this->_boundingPlanes[planeIndex];
+    std::array<glm::dvec3, 4> vertices =
+        getPlaneVertices(this->_vertices, planeIndex);
+    std::array<glm::dvec3, 4> edgeNormals =
+        computeEdgeNormals(selectedPlane, vertices, planeIndex == 0);
+    glm::dvec3 facePoint = closestPointPolygon(
+        selectedPlane.projectPointOntoPlane(position),
+        vertices,
+        edgeNormals);
+
+    return glm::distance(facePoint, position);
+  } else if (numSelectedPlanes == 2) {
+    // Handles Case II
+    // Since we are on the ellipsoid, the dihedral angle between a top plane and
+    // a side plane will always be acute, so we can do a faster check there.
+    if (selectedPlaneIndices[0] == 0) {
+      glm::dvec3 facePoint = closestPointLineSegment(
+          position,
+          this->_vertices
+              [4 * selectedPlaneIndices[0] + (selectedPlaneIndices[1] - 2)],
+          this->_vertices
+              [4 * selectedPlaneIndices[0] +
+               ((selectedPlaneIndices[1] - 2 + 1) % 4)]);
+      return glm::distance(facePoint, position);
+    }
+    double minimumDistanceSquared = std::numeric_limits<double>::max();
+    for (int i = 0; i < 2; i++) {
+      int32_t planeIndex = selectedPlaneIndices[i];
+      const Plane& selectedPlane = this->_boundingPlanes[planeIndex];
+      std::array<glm::dvec3, 4> vertices =
+          getPlaneVertices(this->_vertices, planeIndex);
+      std::array<glm::dvec3, 4> edgeNormals =
+          computeEdgeNormals(selectedPlane, vertices, planeIndex == 0);
+      glm::dvec3 facePoint = closestPointPolygon(
+          selectedPlane.projectPointOntoPlane(position),
+          vertices,
+          edgeNormals);
+
+      double distanceSquared = glm::distance2(facePoint, position);
+      if (distanceSquared < minimumDistanceSquared) {
+        minimumDistanceSquared = distanceSquared;
+      }
+    }
+    return glm::sqrt(minimumDistanceSquared);
+  } else if (numSelectedPlanes > 3) {
+    // Handles Case IV
+    std::array<glm::dvec3, 4> vertices = getPlaneVertices(this->_vertices, 1);
+    glm::dvec3 facePoint = closestPointPolygon(
+        this->_boundingPlanes[1].projectPointOntoPlane(position),
+        vertices,
+        computeEdgeNormals(this->_boundingPlanes[1], vertices, false));
+    return glm::distance(facePoint, position);
+  }
+
+  // Handles Case III
+  int32_t skip =
+      selectedPlaneIndices[1] == 2 && selectedPlaneIndices[2] == 5 ? 0 : 1;
+
+  // Vertex is on top plane.
+  if (selectedPlaneIndices[0] == 0) {
+    return glm::distance(
+        position,
+        this->_vertices[(selectedPlaneIndices[1] - 2 + skip) % 4]);
+  }
+
+  // Vertex is on bottom plane.
+  return glm::distance(
+      position,
+      this->_vertices[4 + ((selectedPlaneIndices[1] - 2 + skip) % 4)]);
 }
