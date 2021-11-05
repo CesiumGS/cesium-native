@@ -44,12 +44,13 @@ public:
 
   S2CellID(uint64_t id);
 
+  bool isValid() const;
   uint64_t getID() const { return this->_id; }
   std::string toToken() const;
 
   int32_t getLevel() const;
   Cartographic getCenter() const;
-  GlobeRectangle getRectangle() const;
+  GlobeRectangle getVertices() const;
 
 private:
   uint64_t _id;
