@@ -12,6 +12,21 @@ namespace CesiumGeometry {
 class CESIUMGEOMETRY_API Plane final {
 public:
   /**
+   * @brief The XY plane passing through the origin, with normal in positive Z.
+   */
+  static const Plane ORIGIN_XY_PLANE;
+
+  /**
+   * @brief The YZ plane passing through the origin, with normal in positive X.
+   */
+  static const Plane ORIGIN_YZ_PLANE;
+
+  /**
+   * @brief The ZX plane passing through the origin, with normal in positive Y.
+   */
+  static const Plane ORIGIN_ZX_PLANE;
+
+  /**
    * @brief Constructs a new plane with a +Z normal and a distance of 0.0.
    */
   Plane() noexcept;
