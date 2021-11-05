@@ -7,6 +7,7 @@
 #include <CesiumGeometry/Plane.h>
 
 #include <glm/vec3.hpp>
+#include <gsl/span>
 
 #include <array>
 #include <string_view>
@@ -39,6 +40,8 @@ public:
    */
   glm::dvec3 getCenter() const noexcept;
 
+  gsl::span<const glm::dvec3> getVertices() const noexcept;
+
   /**
    * @brief Determines on which side of a plane the bounding volume is located.
    *
@@ -64,6 +67,8 @@ public:
    */
   double
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
+
+  gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
 private:
   S2CellID _cellID;
