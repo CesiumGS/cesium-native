@@ -26,9 +26,7 @@ using GoogleS2CellID = S2CellId;
 
 S2CellID::S2CellID(uint64_t id) : _id(id) {}
 
-bool S2CellID::isValid() const {
-  return GoogleS2CellID(this->_id).is_valid();
-}
+bool S2CellID::isValid() const { return GoogleS2CellID(this->_id).is_valid(); }
 
 std::string S2CellID::toToken() const {
   return GoogleS2CellID(this->_id).ToToken();
