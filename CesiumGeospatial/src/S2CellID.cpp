@@ -1,15 +1,20 @@
 #include "CesiumGeospatial/S2CellID.h"
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4127 4996)
 
 #define _CHAR_UNSIGNED
 #define NOMINMAX
 #define _USE_MATH_DEFINES
+#endif
+
 #include <s2/s2cell_id.h>
 #include <s2/s2latlng.h>
 
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 using namespace CesiumGeospatial;
 

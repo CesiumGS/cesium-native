@@ -70,7 +70,7 @@ std::array<Plane, 6> computeBoundingPlanes(
   //   - Compute geodetic surface normal at one vertex.
   //   - Compute vector between vertices.
   //   - Compute normal of side plane. (cross product of top dir and side dir)
-  for (int i = 0; i < 4; ++i) {
+  for (size_t i = 0; i < 4; ++i) {
     const glm::dvec3& vertex = verticesCartesian[i];
     const glm::dvec3& adjacentVertex = verticesCartesian[(i + 1) % 4];
     const glm::dvec3 geodeticNormal = ellipsoid.geodeticSurfaceNormal(vertex);
@@ -115,7 +115,7 @@ std::array<glm::dvec3, 8>
 computeVertices(const std::array<Plane, 6>& boundingPlanes) {
   std::array<glm::dvec3, 8> vertices;
 
-  for (int i = 0; i < 4; ++i) {
+  for (size_t i = 0; i < 4; ++i) {
     // Vertices on the top plane.
     vertices[i] = computeIntersection(
         boundingPlanes[0],
@@ -158,8 +158,8 @@ gsl::span<const glm::dvec3> S2CellBoundingVolume::getVertices() const noexcept {
 
 CesiumGeometry::CullingResult S2CellBoundingVolume::intersectPlane(
     const CesiumGeometry::Plane& plane) const noexcept {
-  int32_t plusCount = 0;
-  int32_t negCount = 0;
+  size_t plusCount = 0;
+  size_t negCount = 0;
   for (size_t i = 0; i < this->_vertices.size(); ++i) {
     double distanceToPlane =
         glm::dot(plane.getNormal(), this->_vertices[i]) + plane.getDistance();
@@ -181,9 +181,9 @@ CesiumGeometry::CullingResult S2CellBoundingVolume::intersectPlane(
 namespace {
 
 std::array<glm::dvec3, 4>
-getPlaneVertices(const std::array<glm::dvec3, 8>& vertices, int index) {
+getPlaneVertices(const std::array<glm::dvec3, 8>& vertices, size_t index) {
   if (index <= 1) {
-    int start = index * 4;
+    size_t start = index * 4;
     return {
         vertices[start],
         vertices[start + 1],
@@ -191,7 +191,7 @@ getPlaneVertices(const std::array<glm::dvec3, 8>& vertices, int index) {
         vertices[start + 3]};
   }
 
-  int32_t i = index - 2;
+  size_t i = index - 2;
   return {
       vertices[i % 4],
       vertices[(i + 1) % 4],
@@ -258,7 +258,7 @@ glm::dvec3 closestPointPolygon(
   double minDistance = std::numeric_limits<double>::max();
   glm::dvec3 closestPoint = p;
 
-  for (int i = 0; i < vertices.size(); ++i) {
+  for (size_t i = 0; i < vertices.size(); ++i) {
     Plane edgePlane(vertices[i], edgeNormals[i]);
     double edgePlaneDistance = edgePlane.getPointDistance(p);
 
@@ -326,7 +326,7 @@ glm::dvec3 closestPointPolygon(
 double S2CellBoundingVolume::computeDistanceSquaredToPosition(
     const glm::dvec3& position) const noexcept {
   size_t numSelectedPlanes = 0;
-  std::array<int32_t, 6> selectedPlaneIndices;
+  std::array<size_t, 6> selectedPlaneIndices;
 
   if (this->_boundingPlanes[0].getPointDistance(position) > 0.0) {
     selectedPlaneIndices[numSelectedPlanes++] = 0;
@@ -334,8 +334,8 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
     selectedPlaneIndices[numSelectedPlanes++] = 1;
   }
 
-  for (int i = 0; i < 4; i++) {
-    int32_t sidePlaneIndex = 2 + i;
+  for (size_t i = 0; i < 4; i++) {
+    size_t sidePlaneIndex = 2 + i;
     if (this->_boundingPlanes[sidePlaneIndex].getPointDistance(position) >
         0.0) {
       selectedPlaneIndices[numSelectedPlanes++] = sidePlaneIndex;
@@ -350,7 +350,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
   // We use the skip variable when the side plane indices are non-consecutive.
   if (numSelectedPlanes == 1) {
     // Handles Case I
-    int32_t planeIndex = selectedPlaneIndices[0];
+    size_t planeIndex = selectedPlaneIndices[0];
     const Plane& selectedPlane = this->_boundingPlanes[planeIndex];
     std::array<glm::dvec3, 4> vertices =
         getPlaneVertices(this->_vertices, planeIndex);
@@ -377,8 +377,8 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
       return glm::distance2(facePoint, position);
     }
     double minimumDistanceSquared = std::numeric_limits<double>::max();
-    for (int i = 0; i < 2; i++) {
-      int32_t planeIndex = selectedPlaneIndices[i];
+    for (size_t i = 0; i < 2; i++) {
+      size_t planeIndex = selectedPlaneIndices[i];
       const Plane& selectedPlane = this->_boundingPlanes[planeIndex];
       std::array<glm::dvec3, 4> vertices =
           getPlaneVertices(this->_vertices, planeIndex);
@@ -406,7 +406,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
   }
 
   // Handles Case III
-  int32_t skip =
+  size_t skip =
       selectedPlaneIndices[1] == 2 && selectedPlaneIndices[2] == 5 ? 0 : 1;
 
   // Vertex is on top plane.
