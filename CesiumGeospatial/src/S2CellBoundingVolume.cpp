@@ -356,7 +356,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
         vertices,
         edgeNormals);
 
-    return glm::distance(facePoint, position);
+    return glm::distance2(facePoint, position);
   } else if (numSelectedPlanes == 2) {
     // Handles Case II
     // Since we are on the ellipsoid, the dihedral angle between a top plane and
@@ -369,7 +369,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
           this->_vertices
               [4 * selectedPlaneIndices[0] +
                ((selectedPlaneIndices[1] - 2 + 1) % 4)]);
-      return glm::distance(facePoint, position);
+      return glm::distance2(facePoint, position);
     }
     double minimumDistanceSquared = std::numeric_limits<double>::max();
     for (int i = 0; i < 2; i++) {
@@ -389,7 +389,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
         minimumDistanceSquared = distanceSquared;
       }
     }
-    return glm::sqrt(minimumDistanceSquared);
+    return minimumDistanceSquared;
   } else if (numSelectedPlanes > 3) {
     // Handles Case IV
     std::array<glm::dvec3, 4> vertices = getPlaneVertices(this->_vertices, 1);
@@ -397,7 +397,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
         this->_boundingPlanes[1].projectPointOntoPlane(position),
         vertices,
         computeEdgeNormals(this->_boundingPlanes[1], vertices, false));
-    return glm::distance(facePoint, position);
+    return glm::distance2(facePoint, position);
   }
 
   // Handles Case III
@@ -406,13 +406,13 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
 
   // Vertex is on top plane.
   if (selectedPlaneIndices[0] == 0) {
-    return glm::distance(
+    return glm::distance2(
         position,
         this->_vertices[(selectedPlaneIndices[1] - 2 + skip) % 4]);
   }
 
   // Vertex is on bottom plane.
-  return glm::distance(
+  return glm::distance2(
       position,
       this->_vertices[4 + ((selectedPlaneIndices[1] - 2 + skip) % 4)]);
 }
