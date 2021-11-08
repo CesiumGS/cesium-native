@@ -5,6 +5,7 @@
 #include "CesiumGeometry/OctreeTileID.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 
+#include <cstdint>
 #include <optional>
 
 namespace Cesium3DTilesSelection {

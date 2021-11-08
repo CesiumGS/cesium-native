@@ -13,7 +13,7 @@ namespace Cesium3DTilesSelection {
 ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
     : pParentNode(nullptr),
       pCurrentNode(nullptr),
-      availability(0),
+      availability(0U),
       usingImplicitQuadtreeTiling(false),
       usingImplicitOctreeTiling(false),
       shouldQueueSubtreeLoad(false) {}
@@ -23,7 +23,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
     ImplicitTraversalInfo* pParentInfo) noexcept
     : pParentNode(nullptr),
       pCurrentNode(nullptr),
-      availability(0),
+      availability(0U),
       usingImplicitQuadtreeTiling(false),
       usingImplicitOctreeTiling(false),
       shouldQueueSubtreeLoad(false) {
