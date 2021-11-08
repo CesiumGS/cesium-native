@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ImplicitTraversalInfo.h"
+#include "ImplicitTraversal.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
@@ -471,7 +471,7 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const FrameState& frameState,
-      const ImplicitTraversalInfo& implicitInfo,
+      ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,

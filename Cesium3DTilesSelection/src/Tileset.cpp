@@ -1479,405 +1479,6 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
   return glm::exp(-(fogScalar * fogScalar)) > 0.0;
 }
 
-static void createImplicitQuadtreeTile(
-    const ImplicitTilingContext& implicitContext,
-    Tile& parent,
-    Tile& child,
-    const QuadtreeTileID& childID,
-    uint8_t availability) {
-
-  if (!implicitContext.quadtreeTilingScheme) {
-    return;
-  }
-
-  child.setContext(parent.getContext());
-  child.setParent(&parent);
-  child.setRefine(parent.getRefine());
-
-  if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
-    child.setTileID(childID);
-  } else /*if (upsample) */ {
-    child.setTileID(UpsampledQuadtreeNode{childID});
-  }
-
-  // TODO: check override geometric error from metadata
-  child.setGeometricError(parent.getGeometricError() * 0.5);
-
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&implicitContext.implicitRootBoundingVolume);
-  const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-      std::get_if<BoundingRegionWithLooseFittingHeights>(
-          &implicitContext.implicitRootBoundingVolume);
-  const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
-      &implicitContext.implicitRootBoundingVolume);
-
-  if (!pRegion && pLooseRegion) {
-    pRegion = &pLooseRegion->getBoundingRegion();
-  }
-
-  if (pRegion && implicitContext.projection) {
-    double minimumHeight = -1000.0;
-    double maximumHeight = 9000.0;
-
-    const BoundingRegion* pParentRegion =
-        std::get_if<BoundingRegion>(&parent.getBoundingVolume());
-    if (!pParentRegion) {
-      const BoundingRegionWithLooseFittingHeights* pParentLooseRegion =
-          std::get_if<BoundingRegionWithLooseFittingHeights>(
-              &parent.getBoundingVolume());
-      if (pParentLooseRegion) {
-        pParentRegion = &pParentLooseRegion->getBoundingRegion();
-      }
-    }
-
-    if (pParentRegion) {
-      minimumHeight = pParentRegion->getMinimumHeight();
-      maximumHeight = pParentRegion->getMaximumHeight();
-    }
-
-    child.setBoundingVolume(
-        BoundingRegionWithLooseFittingHeights(BoundingRegion(
-            unprojectRectangleSimple(
-                *implicitContext.projection,
-                implicitContext.quadtreeTilingScheme->tileToRectangle(childID)),
-            minimumHeight,
-            maximumHeight)));
-
-  } else if (pBox) {
-    CesiumGeometry::Rectangle rectangleLocal =
-        implicitContext.quadtreeTilingScheme->tileToRectangle(childID);
-    glm::dvec2 centerLocal = rectangleLocal.getCenter();
-    const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
-    child.setBoundingVolume(OrientedBoundingBox(
-        rootHalfAxes * glm::dvec3(centerLocal.x, centerLocal.y, 0.0),
-        glm::dmat3(
-            0.5 * rectangleLocal.computeWidth() * rootHalfAxes[0],
-            0.5 * rectangleLocal.computeHeight() * rootHalfAxes[1],
-            rootHalfAxes[2])));
-  }
-}
-
-static void createImplicitOctreeTile(
-    const ImplicitTilingContext& implicitContext,
-    Tile& parent,
-    Tile& child,
-    const OctreeTileID& childID,
-    uint8_t availability) {
-
-  if (!implicitContext.octreeTilingScheme) {
-    return;
-  }
-
-  child.setContext(parent.getContext());
-  child.setParent(&parent);
-  child.setRefine(parent.getRefine());
-
-  if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
-    child.setTileID(childID);
-  } else {
-    return;
-    // TODO: optionally upsample missing octree tiles?
-    // child.setTileID(UpsampledOctreeNode{childID});
-  }
-
-  // TODO: check for overrided geometric error metadata
-  child.setGeometricError(parent.getGeometricError() * 0.5);
-
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&implicitContext.implicitRootBoundingVolume);
-  const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
-      &implicitContext.implicitRootBoundingVolume);
-
-  if (pRegion && implicitContext.projection) {
-    child.setBoundingVolume(unprojectRegionSimple(
-        *implicitContext.projection,
-        implicitContext.octreeTilingScheme->tileToBox(childID)));
-  } else if (pBox) {
-    AxisAlignedBox childLocal =
-        implicitContext.octreeTilingScheme->tileToBox(childID);
-    const glm::dvec3& centerLocal = childLocal.center;
-    const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
-    child.setBoundingVolume(OrientedBoundingBox(
-        rootHalfAxes * centerLocal,
-        glm::dmat3(
-            0.5 * childLocal.lengthX * rootHalfAxes[0],
-            0.5 * childLocal.lengthY * rootHalfAxes[1],
-            0.5 * childLocal.lengthZ * rootHalfAxes[2])));
-  }
-}
-
-static void createImplicitChildrenIfNeeded(
-    Tile& tile,
-    const ImplicitTraversalInfo& implicitInfo) {
-  // TODO: If the children availability is known and they are all unavailable
-  // we should stop checking for availbility.
-  // Maybe we should remove the tile context from the absolute leaf implicit
-  // tile??
-  TileContext* pContext = tile.getContext();
-  if (pContext && pContext->implicitContext && tile.getChildren().empty()) {
-    const ImplicitTilingContext& implicitContext =
-        pContext->implicitContext.value();
-    const QuadtreeTileID* pQuadtreeTileID =
-        std::get_if<QuadtreeTileID>(&tile.getTileID());
-    const OctreeTileID* pOctreeTileID =
-        std::get_if<OctreeTileID>(&tile.getTileID());
-
-    if (pQuadtreeTileID) {
-      // Check if any child tiles are known to be available, and create them if
-      // they are.
-
-      const QuadtreeTileID swID(
-          pQuadtreeTileID->level + 1,
-          pQuadtreeTileID->x * 2,
-          pQuadtreeTileID->y * 2);
-      const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-      const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-      const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-
-      uint8_t sw = 0;
-      uint8_t se = 0;
-      uint8_t nw = 0;
-      uint8_t ne = 0;
-
-      if (implicitContext.rectangleAvailability) {
-        sw = implicitContext.rectangleAvailability->isTileAvailable(swID);
-        se = implicitContext.rectangleAvailability->isTileAvailable(seID);
-        nw = implicitContext.rectangleAvailability->isTileAvailable(nwID);
-        ne = implicitContext.rectangleAvailability->isTileAvailable(neID);
-      } else if (implicitContext.quadtreeAvailability) {
-        if ((swID.level %
-             implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) {
-          // If the tiles are in child subtrees, we know enough about them to
-          // decide whether to create the tile itself and whether each will act
-          // as the root to a child subtree, but we do not yet know if they
-          // will have content.
-          if (implicitContext.quadtreeAvailability->findChildNodeIndex(
-                  swID,
-                  implicitInfo.pCurrentNode)) {
-            sw = TileAvailabilityFlags::TILE_AVAILABLE |
-                 TileAvailabilityFlags::SUBTREE_AVAILABLE;
-          }
-
-          if (implicitContext.quadtreeAvailability->findChildNodeIndex(
-                  seID,
-                  implicitInfo.pCurrentNode)) {
-            se = TileAvailabilityFlags::TILE_AVAILABLE |
-                 TileAvailabilityFlags::SUBTREE_AVAILABLE;
-          }
-
-          if (implicitContext.quadtreeAvailability->findChildNodeIndex(
-                  nwID,
-                  implicitInfo.pCurrentNode)) {
-            nw = TileAvailabilityFlags::TILE_AVAILABLE |
-                 TileAvailabilityFlags::SUBTREE_AVAILABLE;
-          }
-
-          if (implicitContext.quadtreeAvailability->findChildNodeIndex(
-                  neID,
-                  implicitInfo.pCurrentNode)) {
-            ne = TileAvailabilityFlags::TILE_AVAILABLE |
-                 TileAvailabilityFlags::SUBTREE_AVAILABLE;
-          }
-        } else {
-          sw = implicitContext.quadtreeAvailability->computeAvailability(
-              swID,
-              implicitInfo.pCurrentNode);
-          se = implicitContext.quadtreeAvailability->computeAvailability(
-              seID,
-              implicitInfo.pCurrentNode);
-          nw = implicitContext.quadtreeAvailability->computeAvailability(
-              nwID,
-              implicitInfo.pCurrentNode);
-          ne = implicitContext.quadtreeAvailability->computeAvailability(
-              neID,
-              implicitInfo.pCurrentNode);
-        }
-      }
-
-      size_t childCount = static_cast<size_t>(
-          (sw & TileAvailabilityFlags::TILE_AVAILABLE) +
-          (se & TileAvailabilityFlags::TILE_AVAILABLE) +
-          (nw & TileAvailabilityFlags::TILE_AVAILABLE) +
-          (ne & TileAvailabilityFlags::TILE_AVAILABLE));
-
-      if (implicitContext.rectangleAvailability && childCount > 0) {
-        // For quantized mesh, if any children are available, we need to create
-        // all four in order to avoid holes. But non-available tiles will be
-        // upsampled instead of loaded.
-
-        tile.createChildTiles(4);
-        gsl::span<Tile> children = tile.getChildren();
-
-        createImplicitQuadtreeTile(
-            implicitContext,
-            tile,
-            children[0],
-            swID,
-            sw);
-        createImplicitQuadtreeTile(
-            implicitContext,
-            tile,
-            children[1],
-            seID,
-            se);
-        createImplicitQuadtreeTile(
-            implicitContext,
-            tile,
-            children[2],
-            nwID,
-            nw);
-        createImplicitQuadtreeTile(
-            implicitContext,
-            tile,
-            children[3],
-            neID,
-            ne);
-      } else if (implicitContext.quadtreeAvailability) {
-
-        tile.createChildTiles(childCount);
-        gsl::span<Tile> children = tile.getChildren();
-        size_t childIndex = 0;
-
-        if (sw & TileAvailabilityFlags::TILE_AVAILABLE) {
-          createImplicitQuadtreeTile(
-              implicitContext,
-              tile,
-              children[childIndex++],
-              swID,
-              sw);
-        }
-
-        if (se & TileAvailabilityFlags::TILE_AVAILABLE) {
-          createImplicitQuadtreeTile(
-              implicitContext,
-              tile,
-              children[childIndex++],
-              seID,
-              se);
-        }
-
-        if (nw & TileAvailabilityFlags::TILE_AVAILABLE) {
-          createImplicitQuadtreeTile(
-              implicitContext,
-              tile,
-              children[childIndex++],
-              nwID,
-              nw);
-        }
-
-        if (ne & TileAvailabilityFlags::TILE_AVAILABLE) {
-          createImplicitQuadtreeTile(
-              implicitContext,
-              tile,
-              children[childIndex],
-              neID,
-              ne);
-        }
-      }
-
-    } else if (pOctreeTileID && implicitContext.octreeAvailability) {
-      // Check if any child tiles are known to be available, and create them if
-      // they are.
-
-      uint8_t availabilities[8];
-      OctreeTileID childIDs[8];
-
-      OctreeTileID firstChildID(
-          pOctreeTileID->level + 1,
-          pOctreeTileID->x * 2,
-          pOctreeTileID->y * 2,
-          pOctreeTileID->z * 2);
-
-      uint8_t availableChildren = 0;
-
-      if ((childIDs[0].level %
-           implicitContext.octreeAvailability->getSubtreeLevels()) == 0) {
-        for (uint8_t relativeChildID = 0; relativeChildID < 8;
-             ++relativeChildID) {
-          childIDs[relativeChildID] = OctreeTileID(
-              firstChildID.level,
-              firstChildID.x + ((relativeChildID & 4) >> 2),
-              firstChildID.y + ((relativeChildID & 2) >> 1),
-              firstChildID.z + (relativeChildID & 1));
-
-          if (implicitContext.octreeAvailability->findChildNodeIndex(
-                  childIDs[relativeChildID],
-                  implicitInfo.pCurrentNode)) {
-            availabilities[relativeChildID] =
-                TileAvailabilityFlags::TILE_AVAILABLE |
-                TileAvailabilityFlags::SUBTREE_AVAILABLE;
-          }
-
-          if (availabilities[relativeChildID] &
-              TileAvailabilityFlags::TILE_AVAILABLE) {
-            ++availableChildren;
-          }
-        }
-      } else {
-        for (uint8_t relativeChildID = 0; relativeChildID < 8;
-             ++relativeChildID) {
-          childIDs[relativeChildID] = OctreeTileID(
-              firstChildID.level,
-              firstChildID.x + ((relativeChildID & 4) >> 2),
-              firstChildID.y + ((relativeChildID & 2) >> 1),
-              firstChildID.z + (relativeChildID & 1));
-
-          availabilities[relativeChildID] =
-              implicitContext.octreeAvailability->computeAvailability(
-                  childIDs[relativeChildID],
-                  implicitInfo.pCurrentNode);
-
-          if (availabilities[relativeChildID] &
-              TileAvailabilityFlags::TILE_AVAILABLE) {
-            ++availableChildren;
-          }
-        }
-      }
-
-      tile.createChildTiles(availableChildren);
-      gsl::span<Tile> children = tile.getChildren();
-
-      for (uint8_t relativeChildId = 0, availableChild = 0; relativeChildId < 8;
-           ++relativeChildId) {
-        uint8_t availability = availabilities[relativeChildId];
-        if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
-          createImplicitOctreeTile(
-              implicitContext,
-              tile,
-              children[availableChild++],
-              childIDs[relativeChildId],
-              availabilities[relativeChildId]);
-        }
-      }
-    }
-  }
-}
-
-static uint8_t
-getImplicitAvailability(const Tile& tile, const AvailabilityNode* pNode) {
-  const TileContext* pContext = tile.getContext();
-  if (pContext && pContext->implicitContext) {
-    const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
-
-    const TileID& tileID = tile.getTileID();
-    const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-    const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-    if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-      return implicitContext.quadtreeAvailability->computeAvailability(
-          *pQuadtreeID,
-          pNode);
-
-    } else if (pOctreeID && implicitContext.octreeAvailability) {
-      return implicitContext.octreeAvailability->computeAvailability(
-          *pOctreeID,
-          pNode);
-    }
-  }
-
-  return 0;
-}
-
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * It is not yet known whether the tile is visible.
 //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true,
@@ -1892,72 +1493,11 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     Tile& tile,
     ViewUpdateResult& result) {
 
-  // TODO: move to helper function
   TileContext* pContext = tile.getContext();
   if (pContext && pContext->implicitContext) {
-    ImplicitTilingContext& implicitContext = *pContext->implicitContext;
-
-    const TileID& tileID = tile.getTileID();
-    const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-    const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-    bool usingImplicitQuadtree =
-        implicitContext.quadtreeAvailability && pQuadtreeID;
-    bool usingImplicitOctree = implicitContext.octreeAvailability && pOctreeID;
-
-    if (usingImplicitQuadtree || usingImplicitOctree) {
-      if (implicitInfo.pCurrentNode) {
-        // If we have a subtree that contains this tile, we can fetch its
-        // availability. The subtree might not actually be loaded yet however.
-        implicitInfo.availability =
-            getImplicitAvailability(tile, implicitInfo.pCurrentNode);
-      } else if (implicitInfo.pParentNode) {
-        // If we don't have the node containing this tile but we know the parent
-        // node, try fetching the node that contains this tile.
-        if (usingImplicitQuadtree) {
-          implicitInfo.pCurrentNode =
-              implicitContext.quadtreeAvailability->findChildNode(
-                  *pQuadtreeID,
-                  implicitInfo.pParentNode);
-        } else if (usingImplicitOctree) {
-          implicitInfo.pCurrentNode =
-              implicitContext.octreeAvailability->findChildNode(
-                  *pOctreeID,
-                  implicitInfo.pParentNode);
-        }
-
-        if (implicitInfo.pCurrentNode) {
-          implicitInfo.availability =
-              getImplicitAvailability(tile, implicitInfo.pCurrentNode);
-        } else {
-          implicitInfo.availability = TileAvailabilityFlags::TILE_AVAILABLE |
-                                      TileAvailabilityFlags::SUBTREE_AVAILABLE;
-        }
-      } else {
-        // If we don't have either subtree nodes, we check to see if this is
-        // the root tile to an implicit tileset we haven't traversed yet.
-        if (implicitContext.quadtreeAvailability && pQuadtreeID &&
-            pQuadtreeID->level == 0) {
-          implicitInfo.pCurrentNode =
-              implicitContext.quadtreeAvailability->getRootNode();
-        } else if (
-            implicitContext.octreeAvailability && pOctreeID &&
-            pOctreeID->level == 0) {
-          implicitInfo.pCurrentNode =
-              implicitContext.octreeAvailability->getRootNode();
-        }
-
-        if (implicitInfo.pCurrentNode) {
-          implicitInfo.availability =
-              getImplicitAvailability(tile, implicitInfo.pCurrentNode);
-        } else {
-          implicitInfo.availability = TileAvailabilityFlags::TILE_AVAILABLE |
-                                      TileAvailabilityFlags::SUBTREE_AVAILABLE;
-        }
-      }
-    }
-
-    createImplicitChildrenIfNeeded(tile, implicitInfo);
+    ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
+        tile,
+        implicitInfo);
   }
 
   tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
@@ -2102,44 +1642,18 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       frameState.currentFrameNumber,
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
+
+  // TODO: for implicit tiles, should we load conditionally based on if content
+  // is available? Or is Tile "loading" still crucial regardless of content
+  // availability?
   double loadPriority = addTileToLoadQueue(
       this->_loadQueueMedium,
       frameState.frustums,
       tile,
       distances);
 
-  TileContext* pContext = tile.getContext();
-
-  bool usingImplicitTiling = pContext && pContext->implicitContext &&
-                             (pContext->implicitContext->quadtreeAvailability ||
-                              pContext->implicitContext->octreeAvailability);
-
-  if (usingImplicitTiling && !implicitInfo.pCurrentNode) {
-    // This tile is currently a leaf and it is available because it exists.
-    // So if its level index is a multiple of the number of subtree levels, it
-    // is a root to a subtree. Since implicitInfo.pCurrentNode == nullptr,
-    // this tile's subtree hasn't been loaded yet.
-
-    // Remember that if the subtree for a tile is known to be available, its
-    // tile is implied to be available, even though its explicit tile
-    // availability (contained in its own subtree) may not be loaded just yet.
-    // This is how this tile has come to be created before its subtree has
-    // been loaded.
-
-    const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
-
-    const TileID& tileID = tile.getTileID();
-    const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-    const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-    if ((pQuadtreeID && implicitContext.quadtreeAvailability &&
-         (pQuadtreeID->level %
-          implicitContext.quadtreeAvailability->getSubtreeLevels()) == 0) ||
-        (pOctreeID && implicitContext.octreeAvailability &&
-         (pOctreeID->level %
-          implicitContext.octreeAvailability->getSubtreeLevels()) == 0)) {
-      this->addSubtreeToLoadQueue(tile, std::move(implicitInfo), loadPriority);
-    }
+  if (implicitInfo.shouldQueueSubtreeLoad) {
+    this->addSubtreeToLoadQueue(tile, std::move(implicitInfo), loadPriority);
   }
 
   TraversalDetails traversalDetails;
@@ -2571,7 +2085,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
 Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
     const FrameState& frameState,
-    const ImplicitTraversalInfo& implicitInfo,
+    ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -2581,51 +2095,9 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   // TODO: actually visit near-to-far, rather than in order of occurrence.
   gsl::span<Tile> children = tile.getChildren();
   for (Tile& child : children) {
-
-    ImplicitTraversalInfo childImplicitInfo;
-    if (implicitInfo.pCurrentNode) {
-      const TileID& tileID = child.getTileID();
-      const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-      const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-      TileContext* pContext = child.getContext();
-      if (pContext && pContext->implicitContext) {
-        ImplicitTilingContext& implicitContext = *pContext->implicitContext;
-        if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-          // The child's availability is in the same subtree node unless it is
-          // the root of a child subtree.
-          if (pQuadtreeID->level %
-                  implicitContext.quadtreeAvailability->getSubtreeLevels() !=
-              0) {
-            childImplicitInfo = implicitInfo;
-          } else {
-            childImplicitInfo.pParentNode = implicitInfo.pCurrentNode;
-            childImplicitInfo.pCurrentNode =
-                implicitContext.quadtreeAvailability->findChildNode(
-                    *pQuadtreeID,
-                    implicitInfo.pCurrentNode);
-          }
-        } else if (pOctreeID && implicitContext.octreeAvailability) {
-          // The child's availability is in the same subtree node unless it is
-          // the root of a child subtree.
-          if (pOctreeID->level %
-                  implicitContext.octreeAvailability->getSubtreeLevels() !=
-              0) {
-            childImplicitInfo = implicitInfo;
-          } else {
-            childImplicitInfo.pParentNode = implicitInfo.pCurrentNode;
-            childImplicitInfo.pCurrentNode =
-                implicitContext.octreeAvailability->findChildNode(
-                    *pOctreeID,
-                    implicitInfo.pCurrentNode);
-          }
-        }
-      }
-    }
-
     const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,
-        std::move(childImplicitInfo),
+        ImplicitTraversalInfo(&child, &implicitInfo),
         depth + 1,
         ancestorMeetsSse,
         child,
@@ -2912,7 +2384,6 @@ void Tileset::processQueue(
   }
 }
 
-// TODO: remove temp scratch function
 void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
   if (!loadRecord.pTile) {
     return;
@@ -2971,7 +2442,7 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
                   }
                 }
               }
-            }); //
+            }); // TODO: catch errors here
                 //.catchInMainThread([]() {});
   }
 }
