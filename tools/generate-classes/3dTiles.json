@@ -12,6 +12,14 @@
             "attachTo": [
                 "tileset"
             ]
-        }
+        },
+        {
+          "className": "Extension3dTilesBoundingVolumeS2",
+          "extensionName": "3DTILES_bounding_volume_S2",
+          "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json",
+          "attachTo": [
+              "boundingVolume"
+          ]
+      }
     ]
 }
