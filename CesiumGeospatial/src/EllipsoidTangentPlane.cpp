@@ -26,7 +26,9 @@ EllipsoidTangentPlane::EllipsoidTangentPlane(
       _origin(eastNorthUpToFixedFrame[3]),
       _xAxis(eastNorthUpToFixedFrame[0]),
       _yAxis(eastNorthUpToFixedFrame[1]),
-      _plane(eastNorthUpToFixedFrame[3], eastNorthUpToFixedFrame[2]) {}
+      _plane(
+          glm::dvec3(eastNorthUpToFixedFrame[3]),
+          glm::dvec3(eastNorthUpToFixedFrame[2])) {}
 
 glm::dvec2 EllipsoidTangentPlane::projectPointToNearestOnPlane(
     const glm::dvec3& cartesian) const noexcept {

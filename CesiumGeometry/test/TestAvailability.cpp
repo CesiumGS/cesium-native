@@ -173,6 +173,8 @@ TEST_CASE("Test OctreeAvailability") {
       5);
   octreeAvailability.addSubtree(OctreeTileID(0, 0, 0, 0), std::move(subtree));
 
+  AvailabilityNode* pParentNode = octreeAvailability.getRootNode();
+
   SECTION("Test tile and content availability") {
     for (uint32_t level = 0; level < 3U; ++level) {
       for (uint32_t z = 0; z < (1U << level); ++z) {
@@ -180,6 +182,10 @@ TEST_CASE("Test OctreeAvailability") {
           for (uint32_t x = 0; x < (1U << level); ++x) {
             OctreeTileID id(level, x, y, z);
             uint8_t availability = octreeAvailability.computeAvailability(id);
+            uint8_t availability2 =
+                octreeAvailability.computeAvailability(id, pParentNode);
+
+            REQUIRE(availability == availability2);
 
             // All tiles should be available.
             REQUIRE(availability & TileAvailabilityFlags::TILE_AVAILABLE);
@@ -210,6 +216,8 @@ TEST_CASE("Test OctreeAvailability") {
         for (uint32_t x = 0; x < componentLengthAtLevel; ++x) {
           OctreeTileID id(3, x, y, z);
           uint8_t availability = octreeAvailability.computeAvailability(id);
+          std::optional<uint32_t> childIndex =
+              octreeAvailability.findChildNodeIndex(id, pParentNode);
 
           bool subtreeShouldBeAvailable = true;
           for (const OctreeTileID& tileID : unavailableSubtreeIds) {
@@ -222,6 +230,8 @@ TEST_CASE("Test OctreeAvailability") {
           REQUIRE(
               (bool)(availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) ==
               subtreeShouldBeAvailable);
+
+          REQUIRE((childIndex != std::nullopt) == subtreeShouldBeAvailable);
         }
       }
     }
@@ -236,16 +246,34 @@ TEST_CASE("Test OctreeAvailability") {
         OctreeTileID(3, 0, 2, 0),
         OctreeTileID(3, 1, 2, 1)};
 
-    for (const OctreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
-      AvailabilitySubtree childSubtree{
-          ConstantAvailability{true},
-          ConstantAvailability{true},
-          ConstantAvailability{false},
-          {}};
+    SECTION("Use addSubtree(id, newSubtree)") {
+      for (const OctreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
+        AvailabilitySubtree childSubtree{
+            ConstantAvailability{true},
+            ConstantAvailability{true},
+            ConstantAvailability{false},
+            {}};
 
-      octreeAvailability.addSubtree(
-          mockChildrenSubtreeId,
-          std::move(childSubtree));
+        octreeAvailability.addSubtree(
+            mockChildrenSubtreeId,
+            std::move(childSubtree));
+      }
+    }
+
+    SECTION("Use addNode and addLoadedSubtree") {
+      for (const OctreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
+        AvailabilitySubtree childSubtree{
+            ConstantAvailability{true},
+            ConstantAvailability{true},
+            ConstantAvailability{false},
+            {}};
+
+        AvailabilityNode* pNode =
+            octreeAvailability.addNode(mockChildrenSubtreeId, pParentNode);
+
+        REQUIRE(pNode != nullptr);
+        octreeAvailability.addLoadedSubtree(pNode, std::move(childSubtree));
+      }
     }
 
     // Check that the correct child subtrees are noted to be loaded.
@@ -254,7 +282,13 @@ TEST_CASE("Test OctreeAvailability") {
       for (uint32_t y = 0; y < componentLengthAtLevel; ++y) {
         for (uint32_t x = 0; x < componentLengthAtLevel; ++x) {
           OctreeTileID id(3, x, y, z);
+
+          // Test computeAvailability
           uint8_t availability = octreeAvailability.computeAvailability(id);
+
+          // Test findChildNode
+          AvailabilityNode* pChildNode =
+              octreeAvailability.findChildNode(id, pParentNode);
 
           bool subtreeShouldBeLoaded = false;
           for (const OctreeTileID& tileID : mockChildrenSubtreeIds) {
@@ -267,6 +301,8 @@ TEST_CASE("Test OctreeAvailability") {
           REQUIRE(
               (bool)(availability & TileAvailabilityFlags::SUBTREE_LOADED) ==
               subtreeShouldBeLoaded);
+
+          REQUIRE((pChildNode != nullptr) == subtreeShouldBeLoaded);
         }
       }
     }
@@ -333,12 +369,18 @@ TEST_CASE("Test QuadtreeAvailability") {
       5);
   quadtreeAvailability.addSubtree(QuadtreeTileID(0, 0, 0), std::move(subtree));
 
+  AvailabilityNode* pParentNode = quadtreeAvailability.getRootNode();
+
   SECTION("Test tile and content availability") {
     for (uint32_t level = 0; level < 3U; ++level) {
       for (uint32_t y = 0; y < (1U << level); ++y) {
         for (uint32_t x = 0; x < (1U << level); ++x) {
           QuadtreeTileID id(level, x, y);
           uint8_t availability = quadtreeAvailability.computeAvailability(id);
+          uint8_t availability2 =
+              quadtreeAvailability.computeAvailability(id, pParentNode);
+
+          REQUIRE(availability == availability2);
 
           // All tiles should be available.
           REQUIRE(availability & TileAvailabilityFlags::TILE_AVAILABLE);
@@ -367,6 +409,8 @@ TEST_CASE("Test QuadtreeAvailability") {
       for (uint32_t x = 0; x < componentLengthAtLevel; ++x) {
         QuadtreeTileID id(3, x, y);
         uint8_t availability = quadtreeAvailability.computeAvailability(id);
+        std::optional<uint32_t> childIndex =
+            quadtreeAvailability.findChildNodeIndex(id, pParentNode);
 
         bool subtreeShouldBeAvailable = true;
         for (const QuadtreeTileID& tileID : unavailableSubtreeIds) {
@@ -379,6 +423,8 @@ TEST_CASE("Test QuadtreeAvailability") {
         REQUIRE(
             (bool)(availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) ==
             subtreeShouldBeAvailable);
+
+        REQUIRE((childIndex != std::nullopt) == subtreeShouldBeAvailable);
       }
     }
   }
@@ -392,16 +438,36 @@ TEST_CASE("Test QuadtreeAvailability") {
         QuadtreeTileID(3, 0, 2),
         QuadtreeTileID(3, 1, 2)};
 
-    for (const QuadtreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
-      AvailabilitySubtree childSubtree{
-          ConstantAvailability{true},
-          ConstantAvailability{true},
-          ConstantAvailability{false},
-          {}};
+    SECTION("Use addSubtree(id, newSubtree)") {
+      for (const QuadtreeTileID& mockChildrenSubtreeId :
+           mockChildrenSubtreeIds) {
+        AvailabilitySubtree childSubtree{
+            ConstantAvailability{true},
+            ConstantAvailability{true},
+            ConstantAvailability{false},
+            {}};
 
-      quadtreeAvailability.addSubtree(
-          mockChildrenSubtreeId,
-          std::move(childSubtree));
+        quadtreeAvailability.addSubtree(
+            mockChildrenSubtreeId,
+            std::move(childSubtree));
+      }
+    }
+
+    SECTION("Use addNode and addLoadedSubtree") {
+      for (const QuadtreeTileID& mockChildrenSubtreeId :
+           mockChildrenSubtreeIds) {
+        AvailabilitySubtree childSubtree{
+            ConstantAvailability{true},
+            ConstantAvailability{true},
+            ConstantAvailability{false},
+            {}};
+
+        AvailabilityNode* pNode =
+            quadtreeAvailability.addNode(mockChildrenSubtreeId, pParentNode);
+
+        REQUIRE(pNode != nullptr);
+        quadtreeAvailability.addLoadedSubtree(pNode, std::move(childSubtree));
+      }
     }
 
     // Check that the correct child subtrees are noted to be loaded.
@@ -409,7 +475,13 @@ TEST_CASE("Test QuadtreeAvailability") {
     for (uint32_t y = 0; y < componentLengthAtLevel; ++y) {
       for (uint32_t x = 0; x < componentLengthAtLevel; ++x) {
         QuadtreeTileID id(3, x, y);
+
+        // Test computeAvailability
         uint8_t availability = quadtreeAvailability.computeAvailability(id);
+
+        // Test findChildNode
+        AvailabilityNode* pChildNode =
+            quadtreeAvailability.findChildNode(id, pParentNode);
 
         bool subtreeShouldBeLoaded = false;
         for (const QuadtreeTileID& tileID : mockChildrenSubtreeIds) {
@@ -422,6 +494,8 @@ TEST_CASE("Test QuadtreeAvailability") {
         REQUIRE(
             (bool)(availability & TileAvailabilityFlags::SUBTREE_LOADED) ==
             subtreeShouldBeLoaded);
+
+        REQUIRE((pChildNode != nullptr) == subtreeShouldBeLoaded);
       }
     }
   }

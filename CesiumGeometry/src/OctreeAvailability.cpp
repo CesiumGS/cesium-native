@@ -42,6 +42,13 @@ OctreeAvailability::OctreeAvailability(
 
 uint8_t OctreeAvailability::computeAvailability(
     const OctreeTileID& tileID) const noexcept {
+
+  // The root tile and root tile's subtree are implicitly available.
+  if (!this->_pRoot && tileID.level == 0) {
+    return TileAvailabilityFlags::TILE_AVAILABLE |
+           TileAvailabilityFlags::SUBTREE_AVAILABLE;
+  }
+
   if (!this->_pRoot || tileID.level > this->_maximumLevel) {
     return 0;
   }
@@ -49,8 +56,8 @@ uint8_t OctreeAvailability::computeAvailability(
   uint32_t level = 0;
   AvailabilityNode* pNode = this->_pRoot.get();
 
-  while (pNode && tileID.level >= level) {
-    const AvailabilitySubtree& subtree = pNode->subtree;
+  while (pNode && pNode->subtree && tileID.level >= level) {
+    const AvailabilitySubtree& subtree = *pNode->subtree;
 
     AvailabilityAccessor tileAvailabilityAccessor(
         subtree.tileAvailability,
@@ -163,7 +170,7 @@ uint8_t OctreeAvailability::computeAvailability(
   // This is the only case where execution should reach here. It means that a
   // subtree we need to traverse is known to be available, but it isn't yet
   // loaded.
-  assert(pNode == nullptr);
+  assert(pNode == nullptr || pNode->subtree == std::nullopt);
 
   // This means the tile was the root of a subtree that was available, but not
   // loaded. It is not reachable though, pending the load of the subtree. This
@@ -186,7 +193,8 @@ bool OctreeAvailability::addSubtree(
       return false;
     } else {
       // Set the root subtree.
-      this->_pRoot = std::make_unique<AvailabilityNode>(
+      this->_pRoot = std::make_unique<AvailabilityNode>();
+      this->_pRoot->setLoadedSubtree(
           std::move(newSubtree),
           this->_maximumChildrenSubtrees);
       return true;
@@ -200,8 +208,8 @@ bool OctreeAvailability::addSubtree(
   AvailabilityNode* pNode = this->_pRoot.get();
   uint32_t level = 0;
 
-  while (pNode && tileID.level > level) {
-    AvailabilitySubtree& subtree = pNode->subtree;
+  while (pNode && pNode->subtree && tileID.level > level) {
+    AvailabilitySubtree& subtree = *pNode->subtree;
 
     AvailabilityAccessor subtreeAvailabilityAccessor(
         subtree.subtreeAvailability,
@@ -268,9 +276,10 @@ bool OctreeAvailability::addSubtree(
         }
 
         pNode->childNodes[childSubtreeIndex] =
-            std::make_unique<AvailabilityNode>(
-                std::move(newSubtree),
-                this->_maximumChildrenSubtrees);
+            std::make_unique<AvailabilityNode>();
+        pNode->childNodes[childSubtreeIndex]->setLoadedSubtree(
+            std::move(newSubtree),
+            this->_maximumChildrenSubtrees);
         return true;
       } else {
         // We need to traverse this child subtree to find where to add the new
@@ -288,27 +297,107 @@ bool OctreeAvailability::addSubtree(
   return false;
 }
 
-bool OctreeAvailability::addSubtree(
+uint8_t OctreeAvailability::computeAvailability(
     const OctreeTileID& tileID,
-    AvailabilityNode* pParentNode,
-    AvailabilitySubtree&& newSubtree) noexcept {
+    const AvailabilityNode* pNode) const noexcept {
+
+  // If this is root of the subtree and the subtree isn't loaded yet, we can
+  // atleast assume this tile and its subtree are available.
+  bool subtreeLoaded = pNode && pNode->subtree;
+  uint32_t relativeLevel = tileID.level % this->_subtreeLevels;
+  if (!subtreeLoaded) {
+    if (relativeLevel == 0) {
+      return TileAvailabilityFlags::TILE_AVAILABLE |
+             TileAvailabilityFlags::SUBTREE_AVAILABLE;
+    }
+
+    return 0;
+  }
+
+  AvailabilityAccessor tileAvailabilityAccessor(
+      pNode->subtree->tileAvailability,
+      *pNode->subtree);
+  AvailabilityAccessor contentAvailabilityAccessor(
+      pNode->subtree->contentAvailability,
+      *pNode->subtree);
+  AvailabilityAccessor subtreeAvailability(
+      pNode->subtree->subtreeAvailability,
+      *pNode->subtree);
+
+  uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << relativeLevel);
+
+  // Assume the availability info is within this subtree.
+  // If this is not the case, we may return an incorrect availability.
+  uint8_t availability = TileAvailabilityFlags::REACHABLE;
+
+  uint32_t relativeMortonIndex = getMortonIndex(
+      tileID.x & subtreeRelativeMask,
+      tileID.y & subtreeRelativeMask,
+      tileID.z & subtreeRelativeMask);
+
+  // For reference:
+  // https://github.com/CesiumGS/3d-tiles/tree/3d-tiles-next/extensions/3DTILES_implicit_tiling#availability-bitstream-lengths
+  // The below is identical to:
+  // (8^levelRelativeToSubtree - 1) / 7
+  uint32_t offset = ((1U << (3U * relativeLevel)) - 1U) / 7U;
+
+  uint32_t availabilityIndex = relativeMortonIndex + offset;
+  uint32_t byteIndex = availabilityIndex >> 3;
+  uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
+  uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+
+  // Check tile availability.
+  if ((tileAvailabilityAccessor.isConstant() &&
+       tileAvailabilityAccessor.getConstant()) ||
+      (tileAvailabilityAccessor.isBufferView() &&
+       (uint8_t)tileAvailabilityAccessor[byteIndex] & bitMask)) {
+    availability |= TileAvailabilityFlags::TILE_AVAILABLE;
+  }
+
+  // Check content availability.
+  if ((contentAvailabilityAccessor.isConstant() &&
+       contentAvailabilityAccessor.getConstant()) ||
+      (contentAvailabilityAccessor.isBufferView() &&
+       (uint8_t)contentAvailabilityAccessor[byteIndex] & bitMask)) {
+    availability |= TileAvailabilityFlags::CONTENT_AVAILABLE;
+  }
+
+  // If this is the 0th level within the subtree, we know this tile's
+  // subtree is available and loaded.
+  if (relativeLevel == 0) {
+    // Setting TILE_AVAILABLE here may technically be redundant.
+    availability |= TileAvailabilityFlags::TILE_AVAILABLE;
+    availability |= TileAvailabilityFlags::SUBTREE_AVAILABLE;
+    availability |= TileAvailabilityFlags::SUBTREE_LOADED;
+  }
+
+  return availability;
+}
+
+AvailabilityNode* OctreeAvailability::addNode(
+    const OctreeTileID& tileID,
+    AvailabilityNode* pParentNode) noexcept {
 
   if (!pParentNode || tileID.level == 0) {
     if (this->_pRoot) {
-      // The root subtree already exists.
-      return false;
+      // The root node already exists.
+      return nullptr;
     } else {
-      // Set the root subtree.
-      this->_pRoot = std::make_unique<AvailabilityNode>(
-          std::move(newSubtree),
-          this->_maximumChildrenSubtrees);
-      return true;
+      // Set the root node.
+      this->_pRoot = std::make_unique<AvailabilityNode>();
+      return this->_pRoot.get();
     }
+  }
+
+  // We can't insert a new child node if the parent does not have a loaded
+  // subtree yet.
+  if (!pParentNode->subtree) {
+    return nullptr;
   }
 
   // The tile must fall exactly after the parent subtree.
   if ((tileID.level % this->_subtreeLevels) != 0) {
-    return false;
+    return nullptr;
   }
 
   uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << this->_subtreeLevels);
@@ -318,8 +407,8 @@ bool OctreeAvailability::addSubtree(
       tileID.z & subtreeRelativeMask);
 
   AvailabilityAccessor subtreeAvailabilityAccessor(
-      pParentNode->subtree.subtreeAvailability,
-      pParentNode->subtree);
+      pParentNode->subtree->subtreeAvailability,
+      *pParentNode->subtree);
 
   bool subtreeAvailable = false;
   uint32_t subtreeIndex = 0;
@@ -347,25 +436,39 @@ bool OctreeAvailability::addSubtree(
               static_cast<uint8_t>(availabilityByte >> (8 - bitIndex)));
     } else {
       // This subtree is not supposed to be available.
-      return false;
+      return nullptr;
     }
   }
 
   if (subtreeAvailable) {
-    pParentNode->childNodes[subtreeIndex] = std::make_unique<AvailabilityNode>(
-        std::move(newSubtree),
-        this->_maximumChildrenSubtrees);
-    return true;
+    pParentNode->childNodes[subtreeIndex] =
+        std::make_unique<AvailabilityNode>();
+    return pParentNode->childNodes[subtreeIndex].get();
   }
 
-  return false;
+  return nullptr;
 }
 
-AvailabilityNode* OctreeAvailability::findChildNode(
+bool OctreeAvailability::addLoadedSubtree(
+    AvailabilityNode* pNode,
+    AvailabilitySubtree&& newSubtree) noexcept {
+  if (!pNode || pNode->subtree) {
+    return false;
+  }
+
+  pNode->setLoadedSubtree(
+      std::move(newSubtree),
+      this->_maximumChildrenSubtrees);
+
+  return true;
+}
+
+std::optional<uint32_t> OctreeAvailability::findChildNodeIndex(
     const OctreeTileID& tileID,
-    AvailabilityNode* pParentNode) {
-  if (!pParentNode || (tileID.level % this->_subtreeLevels) != 0) {
-    return nullptr;
+    const AvailabilityNode* pParentNode) const {
+  if (!pParentNode || !pParentNode->subtree ||
+      (tileID.level % this->_subtreeLevels) != 0) {
+    return std::nullopt;
   }
 
   uint32_t subtreeRelativeMask = ~(0xFFFFFFFF << this->_subtreeLevels);
@@ -375,8 +478,8 @@ AvailabilityNode* OctreeAvailability::findChildNode(
       tileID.z & subtreeRelativeMask);
 
   AvailabilityAccessor subtreeAvailabilityAccessor(
-      pParentNode->subtree.subtreeAvailability,
-      pParentNode->subtree);
+      pParentNode->subtree->subtreeAvailability,
+      *pParentNode->subtree);
 
   bool subtreeAvailable = false;
   uint32_t subtreeIndex = 0;
@@ -406,10 +509,23 @@ AvailabilityNode* OctreeAvailability::findChildNode(
   }
 
   if (subtreeAvailable) {
-    return pParentNode->childNodes[subtreeIndex].get();
+    return subtreeIndex;
   }
 
-  return nullptr;
+  return std::nullopt;
 }
 
+AvailabilityNode* OctreeAvailability::findChildNode(
+    const OctreeTileID& tileID,
+    AvailabilityNode* pParentNode) const {
+
+  std::optional<uint32_t> childIndex =
+      this->findChildNodeIndex(tileID, pParentNode);
+
+  if (!childIndex || *childIndex >= pParentNode->childNodes.size()) {
+    return nullptr;
+  }
+
+  return pParentNode->childNodes[*childIndex].get();
+}
 } // namespace CesiumGeometry
