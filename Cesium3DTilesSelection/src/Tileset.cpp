@@ -406,7 +406,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
         const RasterOverlayTile* pRasterOverlayTile =
             mappedRasterTile.getReadyTile();
         if (pRasterOverlayTile != nullptr) {
-          for (const Credit credit : pRasterOverlayTile->getCredits()) {
+          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
           }
         }
