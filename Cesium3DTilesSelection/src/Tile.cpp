@@ -394,20 +394,6 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
         this->_pRendererResources = loadResult.pRendererResources;
         this->getTileset()->notifyTileDoneLoading(this);
         this->setState(loadResult.state);
-
-        if (this->getContext()->implicitContext) {
-          ImplicitTilingContext& context = *this->getContext()->implicitContext;
-          const QuadtreeTileID* pQuadtreeTileID =
-              std::get_if<QuadtreeTileID>(&this->getTileID());
-          if (pQuadtreeTileID && context.quadtreeTilingScheme &&
-              context.rectangleAvailability &&
-              !this->_pContent->availableTileRectangles.empty()) {
-            for (const QuadtreeTileRectangularRange& range :
-                 this->_pContent->availableTileRectangles) {
-              context.rectangleAvailability->addAvailableTileRange(range);
-            }
-          }
-        }
       })
       .catchInMainThread([this](const std::exception& e) {
         this->_pContent.reset();
@@ -420,6 +406,73 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
             "An exception occurred while loading tile: {}",
             e.what());
       });
+}
+
+void Tile::processLoadedContent() {
+  const TilesetExternals& externals = this->getTileset()->getExternals();
+
+  if (this->getState() == LoadState::ContentLoaded) {
+    if (externals.pPrepareRendererResources) {
+      this->_pRendererResources =
+          externals.pPrepareRendererResources->prepareInMainThread(
+              *this,
+              this->getRendererResources());
+    }
+
+    if (this->_pContent) {
+      // Apply children from content, but only if we don't already have
+      // children.
+      if (this->_pContent->childTiles && this->getChildren().empty()) {
+        for (Tile& childTile : this->_pContent->childTiles.value()) {
+          childTile.setParent(this);
+        }
+
+        this->createChildTiles(std::move(this->_pContent->childTiles.value()));
+
+        // Initialize the new contexts, if there are any.
+        for (auto&& pNewContext : this->_pContent->newTileContexts) {
+          if (pNewContext) {
+            if (pNewContext->contextInitializerCallback) {
+              pNewContext->contextInitializerCallback(
+                  *this->_pContext,
+                  *pNewContext);
+            }
+
+            this->_pContext->pTileset->addContext(std::move(pNewContext));
+          }
+        }
+      }
+
+      // If this tile has no model, we want to unconditionally refine past it.
+      // Note that "no" model is different from having a model, but it is blank.
+      // In the latter case, we'll happily render nothing in the space of this
+      // tile, which is sometimes useful.
+      if (!this->_pContent->model) {
+        this->setUnconditionallyRefine();
+      }
+
+      // A new and improved bounding volume.
+      if (this->_pContent->updatedBoundingVolume) {
+        this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
+      }
+
+      if (this->getContext()->implicitContext) {
+        ImplicitTilingContext& context = *this->getContext()->implicitContext;
+        const QuadtreeTileID* pQuadtreeTileID =
+            std::get_if<QuadtreeTileID>(&this->getTileID());
+        if (pQuadtreeTileID && context.quadtreeTilingScheme &&
+            context.rectangleAvailability &&
+            !this->_pContent->availableTileRectangles.empty()) {
+          for (const QuadtreeTileRectangularRange& range :
+               this->_pContent->availableTileRectangles) {
+            context.rectangleAvailability->addAvailableTileRange(range);
+          }
+        }
+      }
+    }
+
+    this->setState(LoadState::Done);
+  }
 }
 
 bool Tile::unloadContent() noexcept {
@@ -577,8 +630,8 @@ static void createQuadtreeSubdividedChildren(Tile& parent) {
 void Tile::update(
     int32_t /*previousFrameNumber*/,
     int32_t /*currentFrameNumber*/) {
-  const TilesetExternals& externals = this->getTileset()->getExternals();
 
+  // TODO: should this failcheck also be moved to processLoadedContent?
   if (this->getState() == LoadState::FailedTemporarily) {
     // Check with the TileContext to see if we should retry.
     if (this->_pContext->failedTileCallback) {
@@ -605,71 +658,6 @@ void Tile::update(
     } else {
       this->setState(LoadState::Failed);
     }
-  }
-
-  // QuadtreeTileID* pQuadtreeTileID = std::get_if<QuadtreeTileID>(&this->_id);
-
-  if (this->getState() == LoadState::ContentLoaded) {
-    if (externals.pPrepareRendererResources) {
-      this->_pRendererResources =
-          externals.pPrepareRendererResources->prepareInMainThread(
-              *this,
-              this->getRendererResources());
-    }
-
-    if (this->_pContent) {
-      // Apply children from content, but only if we don't already have
-      // children.
-      if (this->_pContent->childTiles && this->getChildren().empty()) {
-        for (Tile& childTile : this->_pContent->childTiles.value()) {
-          childTile.setParent(this);
-        }
-
-        this->createChildTiles(std::move(this->_pContent->childTiles.value()));
-
-        // Initialize the new contexts, if there are any.
-        for (auto&& pNewContext : this->_pContent->newTileContexts) {
-          if (pNewContext) {
-            if (pNewContext->contextInitializerCallback) {
-              pNewContext->contextInitializerCallback(
-                  *this->_pContext,
-                  *pNewContext);
-            }
-
-            this->_pContext->pTileset->addContext(std::move(pNewContext));
-          }
-        }
-      }
-
-      // If this tile has no model, we want to unconditionally refine past it.
-      // Note that "no" model is different from having a model, but it is blank.
-      // In the latter case, we'll happily render nothing in the space of this
-      // tile, which is sometimes useful.
-      if (!this->_pContent->model) {
-        this->setUnconditionallyRefine();
-      }
-
-      // A new and improved bounding volume.
-      if (this->_pContent->updatedBoundingVolume) {
-        this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
-      }
-      /*
-            if (this->getContext()->implicitContext) {
-              ImplicitTilingContext& context =
-         *this->getContext()->implicitContext;
-
-              if (pQuadtreeTileID && context.quadtreeTilingScheme &&
-                  context.rectangleAvailability &&
-                  !this->_pContent->availableTileRectangles.empty()) {
-                for (const QuadtreeTileRectangularRange& range :
-                     this->_pContent->availableTileRectangles) {
-                  context.rectangleAvailability->addAvailableTileRange(range);
-                }
-              }
-            }*/
-    }
-
-    this->setState(LoadState::Done);
   }
 
   const CesiumGeospatial::GlobeRectangle* pRectangle =

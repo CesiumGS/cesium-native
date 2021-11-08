@@ -523,6 +523,17 @@ public:
           maybeContentRequest = std::nullopt);
 
   /**
+   * @brief Finalizes the tile from the loaded content.
+   *
+   * Once the tile is {@link Tile::LoadState::ContentLoaded} after the
+   * asynchronous {@link Tile::loadContent} finishes, this should be called to
+   * finalize the tile from the loaded content. Nothing happens if this tile is
+   * not in {@link Tile::LoadState::ContentLoaded}. After this is called, the
+   * tile will be set to {@link Tile::LoadState::Done}.
+   */
+  void processLoadedContent();
+
+  /**
    * @brief Frees all resources that have been allocated for the
    * {@link Tile::getContent}.
    *
