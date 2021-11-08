@@ -68,12 +68,30 @@ Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
              headers,
              pAssetAccessor,
              std::move(loadedModel))
-      .thenInWorkerThread([](CesiumGltf::ModelReaderResult&& resolvedModel) {
-        std::unique_ptr<TileContentLoadResult> pResult =
-            std::make_unique<TileContentLoadResult>();
-        pResult->model = std::move(resolvedModel.model);
-        return pResult;
-      });
+      .thenInWorkerThread(
+          [pLogger, url](CesiumGltf::ModelReaderResult&& resolvedModel) {
+            std::unique_ptr<TileContentLoadResult> pResult =
+                std::make_unique<TileContentLoadResult>();
+
+            if (!resolvedModel.errors.empty()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Failed resolving external glTF buffers from {}:\n- {}",
+                  url,
+                  CesiumUtility::joinToString(resolvedModel.errors, "\n- "));
+            }
+
+            if (!resolvedModel.warnings.empty()) {
+              SPDLOG_LOGGER_WARN(
+                  pLogger,
+                  "Warning when resolving external gltf buffers from {}:\n- {}",
+                  url,
+                  CesiumUtility::joinToString(resolvedModel.warnings, "\n- "));
+            }
+
+            pResult->model = std::move(resolvedModel.model);
+            return pResult;
+          });
 }
 
 static int generateOverlayTextureCoordinates(

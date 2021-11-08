@@ -359,7 +359,12 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
 
   auto pResult = std::make_unique<ModelReaderResult>(std::move(result));
 
-  std::vector<Future<bool>> resolvedBuffers;
+  struct ExternalBufferLoadResult {
+    bool success = false;
+    std::string bufferUri;
+  };
+
+  std::vector<Future<ExternalBufferLoadResult>> resolvedBuffers;
   resolvedBuffers.reserve(uriBuffersCount);
 
   // We need to skip data uris.
@@ -378,15 +383,18 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                   [pBuffer =
                        &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
+
+                    std::string bufferUri = *pBuffer->uri;
+
                     if (pResponse) {
                       pBuffer->uri = std::nullopt;
                       pBuffer->cesium.data = std::vector<std::byte>(
                           pResponse->data().begin(),
                           pResponse->data().end());
-                      return true;
+                      return ExternalBufferLoadResult{true, bufferUri};
                     }
 
-                    return false;
+                    return ExternalBufferLoadResult{false, bufferUri};
                   }));
     }
   }
@@ -402,6 +410,9 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
               .thenInWorkerThread(
                   [pImage = &image](std::shared_ptr<IAssetRequest>&& pRequest) {
                     const IAssetResponse* pResponse = pRequest->response();
+
+                    std::string imageUri = *pImage->uri;
+
                     if (pResponse) {
                       pImage->uri = std::nullopt;
 
@@ -409,11 +420,11 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
                           readImage(pResponse->data());
                       if (imageResult.image) {
                         pImage->cesium = std::move(*imageResult.image);
-                        return true;
+                        return ExternalBufferLoadResult{true, imageUri};
                       }
                     }
 
-                    return false;
+                    return ExternalBufferLoadResult{false, imageUri};
                   }));
     }
   }
@@ -421,7 +432,14 @@ Future<ModelReaderResult> GltfReader::resolveExternalData(
   return asyncSystem.all(std::move(resolvedBuffers))
       .thenInWorkerThread(
           [pResult = std::move(pResult)](
-              std::vector<bool>&& /*bufferResolutions*/) mutable {
+              std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
+            for (auto& bufferResult : loadResults) {
+              if (!bufferResult.success) {
+                pResult->warnings.push_back(
+                    "Could not load the external gltf buffer: " +
+                    bufferResult.bufferUri);
+              }
+            }
             return std::move(*pResult.release());
           });
 }
