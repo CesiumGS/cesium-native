@@ -128,16 +128,18 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
 
   // Compute the availability.
   if (this->usingImplicitQuadtreeTiling) {
-    this->availability |=
+    this->availability = static_cast<uint8_t>(
+        this->availability |
         implicitContext.quadtreeAvailability->computeAvailability(
             *pQuadtreeID,
-            this->pCurrentNode);
+            this->pCurrentNode));
 
   } else if (this->usingImplicitOctreeTiling) {
-    this->availability |=
+    this->availability = static_cast<uint8_t>(
+        this->availability |
         implicitContext.octreeAvailability->computeAvailability(
             *pOctreeID,
-            this->pCurrentNode);
+            this->pCurrentNode));
   }
 }
 
