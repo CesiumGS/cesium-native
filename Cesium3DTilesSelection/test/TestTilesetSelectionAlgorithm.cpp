@@ -940,3 +940,152 @@ TEST_CASE("Test multiple frustums") {
     }
   }
 }
+
+TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
+          "documentation") {
+  std::string s = R"(
+      {
+        "asset": {
+          "version": "1.0"
+        },
+        "geometricError": 1000000,
+        "extensionsUsed": [
+          "3DTILES_bounding_volume_S2"
+        ],
+        "extensionsRequired": [
+          "3DTILES_bounding_volume_S2"
+        ],
+        "root": {
+          "boundingVolume": {
+            "extensions": {
+              "3DTILES_bounding_volume_S2": {
+                "token": "3",
+                "minimumHeight": 0,
+                "maximumHeight": 1000000
+              }
+            }
+          },
+          "refine": "REPLACE",
+          "geometricError": 50000,
+          "children": [
+            {
+              "boundingVolume": {
+                "extensions": {
+                  "3DTILES_bounding_volume_S2": {
+                    "token": "2c",
+                    "minimumHeight": 0,
+                    "maximumHeight": 500000
+                  }
+                }
+              },
+              "refine": "REPLACE",
+              "geometricError": 500000,
+              "children": [
+                {
+                  "boundingVolume": {
+                    "extensions": {
+                      "3DTILES_bounding_volume_S2": {
+                        "token": "2f",
+                        "minimumHeight": 0,
+                        "maximumHeight": 250000
+                      }
+                    }
+                  },
+                  "refine": "REPLACE",
+                  "geometricError": 250000,
+                  "children": [
+                    {
+                      "boundingVolume": {
+                        "extensions": {
+                          "3DTILES_bounding_volume_S2": {
+                            "token": "2ec",
+                            "minimumHeight": 0,
+                            "maximumHeight": 125000
+                          }
+                        }
+                      },
+                      "refine": "REPLACE",
+                      "geometricError": 125000
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      })";
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+
+  const std::byte* pStart = reinterpret_cast<const std::byte*>(s.c_str());
+
+  std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+      std::make_unique<SimpleAssetResponse>(
+          static_cast<uint16_t>(200),
+          "doesn't matter",
+          CesiumAsync::HttpHeaders{},
+          std::vector<std::byte>(pStart, pStart + s.size()));
+  mockCompletedRequests.insert(
+      {"tileset.json",
+       std::make_shared<SimpleAssetRequest>(
+           "GET",
+           "tileset.json",
+           CesiumAsync::HttpHeaders{},
+           std::move(mockCompletedResponse))});
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // create tileset and wait for it to load.
+  Tileset tileset(tilesetExternals, "tileset.json");
+  while (!tileset.getRootTile()) {
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+  }
+
+  const Tile* pRoot = tileset.getRootTile();
+  const S2CellBoundingVolume* pS2 =
+      std::get_if<S2CellBoundingVolume>(&pRoot->getBoundingVolume());
+  REQUIRE(pS2);
+
+  CHECK(pS2->getCellID().toToken() == "3");
+  CHECK(pS2->getMinimumHeight() == 0.0);
+  CHECK(pS2->getMaximumHeight() == 1000000.0);
+
+  REQUIRE(pRoot->getChildren().size() == 1);
+  const Tile* pChild = &pRoot->getChildren()[0];
+  const S2CellBoundingVolume* pS2Child =
+      std::get_if<S2CellBoundingVolume>(&pChild->getBoundingVolume());
+  REQUIRE(pS2Child);
+
+  CHECK(pS2Child->getCellID().toToken() == "2c");
+  CHECK(pS2Child->getMinimumHeight() == 0.0);
+  CHECK(pS2Child->getMaximumHeight() == 500000.0);
+
+  REQUIRE(pChild->getChildren().size() == 1);
+  const Tile* pGrandchild = &pChild->getChildren()[0];
+  const S2CellBoundingVolume* pS2Grandchild =
+      std::get_if<S2CellBoundingVolume>(&pGrandchild->getBoundingVolume());
+  REQUIRE(pS2Grandchild);
+
+  CHECK(pS2Grandchild->getCellID().toToken() == "2f");
+  CHECK(pS2Grandchild->getMinimumHeight() == 0.0);
+  CHECK(pS2Grandchild->getMaximumHeight() == 250000.0);
+
+  REQUIRE(pGrandchild->getChildren().size() == 1);
+  const Tile* pGreatGrandchild = &pGrandchild->getChildren()[0];
+  const S2CellBoundingVolume* pS2GreatGrandchild =
+      std::get_if<S2CellBoundingVolume>(&pGreatGrandchild->getBoundingVolume());
+  REQUIRE(pS2GreatGrandchild);
+
+  CHECK(pS2GreatGrandchild->getCellID().toToken() == "2ec");
+  CHECK(pS2GreatGrandchild->getMinimumHeight() == 0.0);
+  CHECK(pS2GreatGrandchild->getMaximumHeight() == 125000.0);
+
+  REQUIRE(pGreatGrandchild->getChildren().empty());
+}

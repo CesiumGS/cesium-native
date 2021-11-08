@@ -686,7 +686,7 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
       extensionsIt->value.IsObject()) {
     const auto s2It =
         extensionsIt->value.FindMember("3DTILES_bounding_volume_S2");
-    if (s2It != extensionsIt->value.MemberBegin() && s2It->value.IsObject()) {
+    if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
       std::string token =
           JsonHelpers::getStringOrDefault(s2It->value, "token", "1");
       double minimumHeight =
