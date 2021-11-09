@@ -130,7 +130,6 @@ computeVertices(const std::array<Plane, 6>& boundingPlanes) {
 
   return vertices;
 }
-
 } // namespace
 
 S2CellBoundingVolume::S2CellBoundingVolume(
@@ -140,7 +139,8 @@ S2CellBoundingVolume::S2CellBoundingVolume(
     const Ellipsoid& ellipsoid)
     : _cellID(cellID),
       _minimumHeight(minimumHeight),
-      _maximumHeight(maximumHeight) {
+      _maximumHeight(maximumHeight),
+      _boundingRegion(cellID.getVertices(), minimumHeight, maximumHeight) {
   Cartographic result = this->_cellID.getCenter();
   result.height = (this->_minimumHeight + this->_maximumHeight) * 0.5;
   this->_center = ellipsoid.cartographicToCartesian(result);

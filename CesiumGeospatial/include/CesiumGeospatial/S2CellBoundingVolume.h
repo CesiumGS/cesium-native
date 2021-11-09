@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BoundingRegion.h"
 #include "Ellipsoid.h"
 #include "S2CellID.h"
 
@@ -70,6 +71,10 @@ public:
 
   gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
+  const BoundingRegion& getBoundingRegion() const noexcept {
+    return this->_boundingRegion;
+  }
+
 private:
   S2CellID _cellID;
   double _minimumHeight;
@@ -77,6 +82,7 @@ private:
   glm::dvec3 _center;
   std::array<CesiumGeometry::Plane, 6> _boundingPlanes;
   std::array<glm::dvec3, 8> _vertices;
+  BoundingRegion _boundingRegion;
 };
 
 } // namespace CesiumGeospatial
