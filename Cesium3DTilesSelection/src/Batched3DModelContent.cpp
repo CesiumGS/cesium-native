@@ -88,10 +88,11 @@ Future<std::unique_ptr<TileContentLoadResult>>
 Batched3DModelContent::load(const TileContentLoadInput& input) {
   const AsyncSystem& asyncSystem = input.asyncSystem;
   const std::shared_ptr<spdlog::logger>& pLogger = input.pLogger;
-  const std::string& url = input.pRequest->url();
-  const HttpHeaders& headers = input.pRequest->headers();
+  const std::shared_ptr<IAssetRequest>& pRequest = input.pRequest;
+  const std::string& url = pRequest->url();
+  const HttpHeaders& headers = pRequest->headers();
   const std::shared_ptr<IAssetAccessor>& pAssetAccessor = input.pAssetAccessor;
-  const gsl::span<const std::byte>& data = input.pRequest->response()->data();
+  const gsl::span<const std::byte> data = pRequest->response()->data();
 
   // TODO: actually use the b3dm payload
   if (data.size() < sizeof(B3dmHeader)) {
@@ -192,14 +193,12 @@ Batched3DModelContent::load(const TileContentLoadInput& input) {
       .thenInWorkerThread([header = std::move(header),
                            headerLength,
                            pLogger,
-                           // Is passing this span safe? It points to the
-                           // response which is in the TileContentLoadInput
-                           // which outives the content loading, right?
-                           data](std::unique_ptr<TileContentLoadResult>&&
-                                     pResult) {
+                           pRequest](std::unique_ptr<TileContentLoadResult>&&
+                                         pResult) {
         if (pResult->model && header.featureTableJsonByteLength > 0) {
           CesiumGltf::Model& gltf = pResult->model.value();
 
+          const gsl::span<const std::byte> data = pRequest->response()->data();
           const gsl::span<const std::byte> featureTableJsonData =
               data.subspan(headerLength, header.featureTableJsonByteLength);
           rapidjson::Document featureTable =
