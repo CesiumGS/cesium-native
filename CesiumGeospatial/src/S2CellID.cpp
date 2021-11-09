@@ -17,6 +17,7 @@
 #endif
 
 #include "CesiumGeospatial/S2CellID.h"
+#include "HilbertOrder.h"
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -28,30 +29,29 @@ using GoogleS2CellID = S2CellId;
   return S2CellID(GoogleS2CellID::FromToken(token.data(), token.size()).id());
 }
 
+/*static*/ S2CellID S2CellID::fromFacePositionLevel(
+    uint8_t face,
+    uint64_t position,
+    uint32_t level) {
+  position <<= (30 - level) * 2 + 1;
+  return S2CellID(
+      GoogleS2CellID::FromFacePosLevel(int(face), position, int(level)).id());
+}
+
 /*static*/ S2CellID S2CellID::fromQuadtreeTileID(
     uint8_t face,
     const QuadtreeTileID& quadtreeTileID) {
 
-  // TODO: check if understanding is right here!
+  uint64_t position = (face & 1) == 0 ? HilbertOrder::encode2D(
+                                            quadtreeTileID.level,
+                                            quadtreeTileID.x,
+                                            quadtreeTileID.y)
+                                      : HilbertOrder::encode2D(
+                                            quadtreeTileID.level,
+                                            quadtreeTileID.y,
+                                            quadtreeTileID.x);
 
-  uint64_t id = 0x1000000000000000UL;
-
-  for (int32_t i = static_cast<int32_t>(quadtreeTileID.level); i >= 0; --i) {
-    const uint32_t bitmask = static_cast<uint32_t>(1 << i);
-    id >>= 2;
-
-    if ((quadtreeTileID.x & bitmask) != 0) {
-      id |= 0x0800000000000000UL;
-    }
-
-    if ((quadtreeTileID.y & bitmask) != 0) {
-      id |= 0x1000000000000000UL;
-    }
-  }
-
-  id |= (uint64_t)face << 60;
-
-  return S2CellID(id);
+  return S2CellID::fromFacePositionLevel(face, position, quadtreeTileID.level);
 }
 
 S2CellID::S2CellID(uint64_t id) : _id(id) {}
@@ -89,6 +89,14 @@ std::array<Cartographic, 4> S2CellID::getVertices() const {
       toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(1, 0))),
       toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(1, 1))),
       toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(0, 1)))};
+}
+
+S2CellID S2CellID::getParent() const {
+  return S2CellID(GoogleS2CellID(this->_id).parent().id());
+}
+
+S2CellID S2CellID::getChild(size_t index) const {
+  return S2CellID(GoogleS2CellID(this->_id).child(int(index)).id());
 }
 
 // GlobeRectangle S2CellID::computeBoundingRectangle() const {

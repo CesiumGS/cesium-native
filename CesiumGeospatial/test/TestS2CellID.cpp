@@ -4,6 +4,7 @@
 
 #include <catch2/catch.hpp>
 
+using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
@@ -213,5 +214,28 @@ TEST_CASE("S2CellID") {
         Math::degreesToRadians(-10.4900909942503),
         0.0,
         Math::EPSILON10));
+  }
+
+  SECTION("fromQuadtreeTileID") {
+    S2CellID a = S2CellID::fromQuadtreeTileID(
+        S2CellID::fromToken("1").getFace(),
+        QuadtreeTileID(0, 0, 0));
+    CHECK(a.getID() == S2CellID::fromToken("1").getID());
+    S2CellID b = S2CellID::fromQuadtreeTileID(
+        S2CellID::fromToken("1").getFace(),
+        QuadtreeTileID(1, 0, 0));
+    CHECK(b.getID() == S2CellID::fromToken("04").getID());
+    S2CellID c = S2CellID::fromQuadtreeTileID(
+        S2CellID::fromToken("1").getFace(),
+        QuadtreeTileID(1, 1, 0));
+    CHECK(c.getID() == S2CellID::fromToken("1c").getID());
+    S2CellID d = S2CellID::fromQuadtreeTileID(
+        S2CellID::fromToken("1").getFace(),
+        QuadtreeTileID(1, 0, 1));
+    CHECK(d.getID() == S2CellID::fromToken("0c").getID());
+    S2CellID e = S2CellID::fromQuadtreeTileID(
+        S2CellID::fromToken("1").getFace(),
+        QuadtreeTileID(1, 1, 1));
+    CHECK(e.getID() == S2CellID::fromToken("14").getID());
   }
 }
