@@ -15,6 +15,16 @@
 
 namespace CesiumGeospatial {
 
+/**
+ * A tile bounding volume specified as an S2 cell token with minimum and maximum
+ * heights. The bounding volume is a k DOP. A k-DOP is the Boolean intersection
+ * of extents along k directions.
+ *
+ * @param cellID The S2 cell ID.
+ * @param minimumHeight The minimum height of the bounding volume.
+ * @param maximumHeight The maximum height of the bounding volume.
+ * @param ellipsoid The ellipsoid.
+ */
 class CESIUMGEOSPATIAL_API S2CellBoundingVolume final {
 public:
   S2CellBoundingVolume(
@@ -23,6 +33,9 @@ public:
       double maximumHeight,
       const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
 
+  /**
+   * @brief Gets this bounding volume's cell ID.
+   */
   const S2CellID& getCellID() const { return this->_cellID; }
 
   /**
@@ -41,6 +54,12 @@ public:
    */
   glm::dvec3 getCenter() const noexcept;
 
+  /**
+   * @brief Gets the either corners of the bounding volume, in ellipsoid-fixed
+   * (ECEF) coordinates.
+   *
+   * @return An array of positions with a `size()` of 8.
+   */
   gsl::span<const glm::dvec3> getVertices() const noexcept;
 
   /**
@@ -69,6 +88,11 @@ public:
   double
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
 
+  /**
+   * @brief Gets the six planes that bound the volume.
+   *
+   * @return An array of planes with a `size()` of 6.
+   */
   gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
   const BoundingRegion& getBoundingRegion() const noexcept {
