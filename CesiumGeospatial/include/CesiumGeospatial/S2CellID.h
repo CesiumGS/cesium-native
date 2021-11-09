@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cartographic.h"
+#include "CesiumGeometry/QuadtreeTileID.h"
 #include "GlobeRectangle.h"
 #include "Library.h"
 
@@ -42,6 +43,17 @@ class CESIUMGEOSPATIAL_API S2CellID {
 public:
   static S2CellID fromToken(const std::string_view& token);
 
+  /**
+   * @brief Create an S2 id from a face and a quadtree tile id.
+   *
+   * @param face The S2 face (0...5) that this tile is on.
+   * @param quadtreeTileID The quadtree tile id for this tile, within the given
+   * face.
+   */
+  static S2CellID fromQuadtreeTileID(
+      uint8_t face,
+      const CesiumGeometry::QuadtreeTileID& quadtreeTileID);
+
   S2CellID(uint64_t id);
 
   bool isValid() const;
@@ -49,6 +61,7 @@ public:
   std::string toToken() const;
 
   int32_t getLevel() const;
+  uint8_t getFace() const;
   Cartographic getCenter() const;
   GlobeRectangle getVertices() const;
 

@@ -1,9 +1,10 @@
 
 #include "Cesium3DTilesSelection/ImplicitTraversal.h"
 
+#include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/TileContext.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
-#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/S2CellID.h"
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -152,10 +153,6 @@ void createImplicitQuadtreeTile(
     const QuadtreeTileID& childID,
     uint8_t availability) {
 
-  if (!implicitContext.quadtreeTilingScheme) {
-    return;
-  }
-
   child.setContext(parent.getContext());
   child.setParent(&parent);
   child.setRefine(parent.getRefine());
@@ -176,12 +173,15 @@ void createImplicitQuadtreeTile(
           &implicitContext.implicitRootBoundingVolume);
   const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
       &implicitContext.implicitRootBoundingVolume);
+  const S2CellBoundingVolume* pS2Cell = std::get_if<S2CellBoundingVolume>(
+      &implicitContext.implicitRootBoundingVolume);
 
   if (!pRegion && pLooseRegion) {
     pRegion = &pLooseRegion->getBoundingRegion();
   }
 
-  if (pRegion && implicitContext.projection) {
+  if (pRegion && implicitContext.projection &&
+      implicitContext.quadtreeTilingScheme) {
     double minimumHeight = -1000.0;
     double maximumHeight = 9000.0;
 
@@ -209,7 +209,7 @@ void createImplicitQuadtreeTile(
             minimumHeight,
             maximumHeight)));
 
-  } else if (pBox) {
+  } else if (pBox && implicitContext.quadtreeTilingScheme) {
     CesiumGeometry::Rectangle rectangleLocal =
         implicitContext.quadtreeTilingScheme->tileToRectangle(childID);
     glm::dvec2 centerLocal = rectangleLocal.getCenter();
@@ -220,6 +220,12 @@ void createImplicitQuadtreeTile(
             0.5 * rectangleLocal.computeWidth() * rootHalfAxes[0],
             0.5 * rectangleLocal.computeHeight() * rootHalfAxes[1],
             rootHalfAxes[2])));
+  } else if (pS2Cell) {
+    child.setBoundingVolume(BoundingRegion(
+        S2CellID::fromQuadtreeTileID(pS2Cell->getCellID().getFace(), childID)
+            .getVertices(),
+        pS2Cell->getMinimumHeight(),
+        pS2Cell->getMaximumHeight()));
   }
 }
 
@@ -229,10 +235,6 @@ void createImplicitOctreeTile(
     Tile& child,
     const OctreeTileID& childID,
     uint8_t availability) {
-
-  if (!implicitContext.octreeTilingScheme) {
-    return;
-  }
 
   child.setContext(parent.getContext());
   child.setParent(&parent);
@@ -253,12 +255,15 @@ void createImplicitOctreeTile(
       std::get_if<BoundingRegion>(&implicitContext.implicitRootBoundingVolume);
   const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
       &implicitContext.implicitRootBoundingVolume);
+  const S2CellBoundingVolume* pS2Cell = std::get_if<S2CellBoundingVolume>(
+      &implicitContext.implicitRootBoundingVolume);
 
-  if (pRegion && implicitContext.projection) {
+  if (pRegion && implicitContext.projection &&
+      implicitContext.octreeTilingScheme) {
     child.setBoundingVolume(unprojectRegionSimple(
         *implicitContext.projection,
         implicitContext.octreeTilingScheme->tileToBox(childID)));
-  } else if (pBox) {
+  } else if (pBox && implicitContext.octreeTilingScheme) {
     AxisAlignedBox childLocal =
         implicitContext.octreeTilingScheme->tileToBox(childID);
     const glm::dvec3& centerLocal = childLocal.center;
@@ -269,6 +274,22 @@ void createImplicitOctreeTile(
             0.5 * childLocal.lengthX * rootHalfAxes[0],
             0.5 * childLocal.lengthY * rootHalfAxes[1],
             0.5 * childLocal.lengthZ * rootHalfAxes[2])));
+  } else if (pS2Cell) {
+    // Derive the height directly from the root S2 bounding volume.
+    uint32_t tilesAtLevel = static_cast<uint32_t>(1U << childID.level);
+    double rootMinHeight = pS2Cell->getMinimumHeight();
+    double rootMaxHeight = pS2Cell->getMaximumHeight();
+    double tileSizeZ = (rootMaxHeight - rootMinHeight) / tilesAtLevel;
+
+    double tileMinHeight = childID.z * tileSizeZ;
+
+    child.setBoundingVolume(BoundingRegion(
+        S2CellID::fromQuadtreeTileID(
+            pS2Cell->getCellID().getFace(),
+            QuadtreeTileID(childID.level, childID.x, childID.y))
+            .getVertices(),
+        tileMinHeight,
+        tileMinHeight + tileSizeZ));
   }
 }
 

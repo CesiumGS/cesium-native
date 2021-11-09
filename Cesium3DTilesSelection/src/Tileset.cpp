@@ -850,6 +850,8 @@ static void parseImplicitTileset(
           std::get_if<BoundingRegion>(&boundingVolume);
       const OrientedBoundingBox* pBox =
           std::get_if<OrientedBoundingBox>(&boundingVolume);
+      const S2CellBoundingVolume* pS2Cell =
+          std::get_if<S2CellBoundingVolume>(&boundingVolume);
 
       ImplicitTilingContext implicitContext{
           {contentUri},
@@ -884,31 +886,30 @@ static void parseImplicitTileset(
                   0.5 * boxLengths.y),
               1,
               1);
+        } else if (!pS2Cell) {
+          return;
         }
 
-        if (implicitContext.quadtreeTilingScheme) {
-          implicitContext.quadtreeAvailability = QuadtreeAvailability(
-              *implicitContext.quadtreeTilingScheme,
-              subtreeLevels,
-              maximumLevel);
+        implicitContext.quadtreeAvailability =
+            QuadtreeAvailability(subtreeLevels, maximumLevel);
 
-          std::unique_ptr<TileContext> pNewContext =
-              std::make_unique<TileContext>();
-          pNewContext->pTileset = context.pTileset;
-          pNewContext->baseUrl = context.baseUrl;
-          pNewContext->requestHeaders = context.requestHeaders;
-          pNewContext->version = context.version;
-          pNewContext->failedTileCallback = context.failedTileCallback;
-          pNewContext->contextInitializerCallback =
-              context.contextInitializerCallback;
+        std::unique_ptr<TileContext> pNewContext =
+            std::make_unique<TileContext>();
+        pNewContext->pTileset = context.pTileset;
+        pNewContext->baseUrl = context.baseUrl;
+        pNewContext->requestHeaders = context.requestHeaders;
+        pNewContext->version = context.version;
+        pNewContext->failedTileCallback = context.failedTileCallback;
+        pNewContext->contextInitializerCallback =
+            context.contextInitializerCallback;
 
-          pNewContext->implicitContext =
-              std::make_optional<ImplicitTilingContext>(
-                  std::move(implicitContext));
+        pNewContext->implicitContext =
+            std::make_optional<ImplicitTilingContext>(
+                std::move(implicitContext));
 
-          tile.setContext(pNewContext.get());
-          newContexts.push_back(std::move(pNewContext));
-        }
+        tile.setContext(pNewContext.get());
+        newContexts.push_back(std::move(pNewContext));
+
       } else if (!std::strcmp(tilingScheme, "OCTREE")) {
         rootID = OctreeTileID(0, 0, 0, 0);
         if (pRegion) {
@@ -930,31 +931,29 @@ static void parseImplicitTileset(
               1,
               1,
               1);
+        } else if (!pS2Cell) {
+          return;
         }
 
-        if (implicitContext.octreeTilingScheme) {
-          implicitContext.octreeAvailability = OctreeAvailability(
-              *implicitContext.octreeTilingScheme,
-              subtreeLevels,
-              maximumLevel);
+        implicitContext.octreeAvailability =
+            OctreeAvailability(subtreeLevels, maximumLevel);
 
-          std::unique_ptr<TileContext> pNewContext =
-              std::make_unique<TileContext>();
-          pNewContext->pTileset = context.pTileset;
-          pNewContext->baseUrl = context.baseUrl;
-          pNewContext->requestHeaders = context.requestHeaders;
-          pNewContext->version = context.version;
-          pNewContext->failedTileCallback = context.failedTileCallback;
-          pNewContext->contextInitializerCallback =
-              context.contextInitializerCallback;
+        std::unique_ptr<TileContext> pNewContext =
+            std::make_unique<TileContext>();
+        pNewContext->pTileset = context.pTileset;
+        pNewContext->baseUrl = context.baseUrl;
+        pNewContext->requestHeaders = context.requestHeaders;
+        pNewContext->version = context.version;
+        pNewContext->failedTileCallback = context.failedTileCallback;
+        pNewContext->contextInitializerCallback =
+            context.contextInitializerCallback;
 
-          pNewContext->implicitContext =
-              std::make_optional<ImplicitTilingContext>(
-                  std::move(implicitContext));
+        pNewContext->implicitContext =
+            std::make_optional<ImplicitTilingContext>(
+                std::move(implicitContext));
 
-          tile.setContext(pNewContext.get());
-          newContexts.push_back(std::move(pNewContext));
-        }
+        tile.setContext(pNewContext.get());
+        newContexts.push_back(std::move(pNewContext));
       }
 
       // This will act as a dummy tile representing the implicit tileset. Its

@@ -1,5 +1,7 @@
 #include "CesiumGeometry/OctreeAvailability.h"
 
+#include <cassert>
+
 namespace CesiumGeometry {
 
 /**
@@ -31,11 +33,9 @@ static uint32_t getMortonIndex(uint32_t x, uint32_t y, uint32_t z) {
 }
 
 OctreeAvailability::OctreeAvailability(
-    const OctreeTilingScheme& tilingScheme,
     uint32_t subtreeLevels,
     uint32_t maximumLevel) noexcept
-    : _tilingScheme(tilingScheme),
-      _subtreeLevels(subtreeLevels),
+    : _subtreeLevels(subtreeLevels),
       _maximumLevel(maximumLevel),
       _maximumChildrenSubtrees(1U << (3U * subtreeLevels)),
       _pRoot(nullptr) {}
