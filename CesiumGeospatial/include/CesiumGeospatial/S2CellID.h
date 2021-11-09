@@ -50,6 +50,8 @@ public:
    */
   static S2CellID fromToken(const std::string_view& token);
 
+  static S2CellID fromFacePositionLevel(uint8_t face, uint64_t position, uint32_t level);
+
   /**
    * @brief Constructs a new S2 cell ID.
    *
@@ -106,6 +108,10 @@ public:
    * @return Four vertices specifying the corners of this cell.
    */
   std::array<Cartographic, 4> getVertices() const;
+
+  S2CellID getParent() const;
+
+  S2CellID getChild(size_t index) const;
 
   // /**
   //  * @brief Computes the globe rectangle that bounds this cell.
