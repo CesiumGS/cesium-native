@@ -51,7 +51,8 @@ public:
    */
   static S2CellID fromToken(const std::string_view& token);
 
-  static S2CellID fromFacePositionLevel(uint8_t face, uint64_t position, uint32_t level);
+  static S2CellID
+  fromFacePositionLevel(uint8_t face, uint64_t position, uint32_t level);
 
   /**
    * @brief Create an S2 id from a face and a quadtree tile id.
