@@ -129,10 +129,10 @@ TEST_CASE("Test OctreeAvailability") {
   }
 
   // Fill just the 72nd bit with one.
-  contentAvailabilityBuffer[9] = static_cast<std::byte>(0x80);
+  contentAvailabilityBuffer[9] = static_cast<std::byte>(0x01);
 
   // Set zeroes for bits 12, 13, 14, and 15.
-  contentAvailabilityBuffer[1] = static_cast<std::byte>(0xF0);
+  contentAvailabilityBuffer[1] = static_cast<std::byte>(0x0F);
 
   OctreeTileID unavailableContentIds[] = {
       OctreeTileID(2, 1, 1, 0),
@@ -151,7 +151,7 @@ TEST_CASE("Test OctreeAvailability") {
   }
 
   // Fill bits 44, 45, 46, and 47 with zeroes.
-  subtreeAvailabilityBuffer[5] = static_cast<std::byte>(0xF0);
+  subtreeAvailabilityBuffer[5] = static_cast<std::byte>(0x0F);
 
   OctreeTileID unavailableSubtreeIds[]{
       OctreeTileID(3, 2, 0, 3),
@@ -319,8 +319,8 @@ TEST_CASE("Test QuadtreeAvailability") {
   // These are tile IDs (2, 3, 1), (2, 0, 2), (2, 1, 2), and (2, 0, 3).
   std::vector<std::byte> contentAvailabilityBuffer = {
       static_cast<std::byte>(0xFF),
-      static_cast<std::byte>(0xF0),
-      static_cast<std::byte>(0xFC),
+      static_cast<std::byte>(0x0F),
+      static_cast<std::byte>(0x3F),
       static_cast<std::byte>(0x00),
       static_cast<std::byte>(0x00),
       static_cast<std::byte>(0x00),
@@ -342,7 +342,7 @@ TEST_CASE("Test QuadtreeAvailability") {
       static_cast<std::byte>(0xFF),
       static_cast<std::byte>(0xFF),
       static_cast<std::byte>(0xFF),
-      static_cast<std::byte>(0xF0),
+      static_cast<std::byte>(0x0F),
       static_cast<std::byte>(0xFF),
       static_cast<std::byte>(0xFF)};
 
