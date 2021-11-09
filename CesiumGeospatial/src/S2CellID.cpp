@@ -39,14 +39,20 @@ Cartographic S2CellID::getCenter() const {
   return Cartographic(ll.lng().radians(), ll.lat().radians(), 0.0);
 }
 
-GlobeRectangle S2CellID::getVertices() const {
+namespace {
+Cartographic toCartographic(const S2Point& p) {
+  S2LatLng ll(p);
+  return Cartographic(ll.lng().radians(), ll.lat().radians(), 0.0);
+}
+} // namespace
+
+std::array<Cartographic, 4> S2CellID::getVertices() const {
   GoogleS2CellID cell(this->_id);
   R2Rect rect = cell.GetBoundUV();
-  S2LatLng sw(S2::FaceUVtoXYZ(cell.face(), rect.lo()));
-  S2LatLng ne(S2::FaceUVtoXYZ(cell.face(), rect.hi()));
-  return GlobeRectangle(
-      sw.lng().radians(),
-      sw.lat().radians(),
-      ne.lng().radians(),
-      ne.lat().radians());
+  int face = cell.face();
+  return {
+      toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(0, 0))),
+      toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(1, 0))),
+      toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(1, 1))),
+      toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(0, 1)))};
 }
