@@ -107,6 +107,13 @@ public:
    */
   std::array<Cartographic, 4> getVertices() const;
 
+  // /**
+  //  * @brief Computes the globe rectangle that bounds this cell.
+  //  *
+  //  * @return The globe rectangle.
+  //  */
+  // GlobeRectangle computeBoundingRectangle() const;
+
 private:
   uint64_t _id;
 };

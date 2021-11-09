@@ -94,6 +94,13 @@ public:
    */
   gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
+  /**
+   * @brief Converts this bounding volume to a bounding region.
+   *
+   * @return The bounding region.
+   */
+  // BoundingRegion toBoundingRegion() const noexcept;
+
 private:
   S2CellID _cellID;
   double _minimumHeight;

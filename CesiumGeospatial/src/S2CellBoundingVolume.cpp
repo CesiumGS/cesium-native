@@ -422,3 +422,7 @@ gsl::span<const CesiumGeometry::Plane>
 S2CellBoundingVolume::getBoundingPlanes() const noexcept {
   return this->_boundingPlanes;
 }
+
+// BoundingRegion S2CellBoundingVolume::toBoundingRegion() const noexcept {
+//   throw 1;
+// }
