@@ -95,9 +95,12 @@ public:
    */
   gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
-  const BoundingRegion& getBoundingRegion() const noexcept {
-    return this->_boundingRegion;
-  }
+  /**
+   * @brief Converts this bounding volume to a bounding region.
+   *
+   * @return The bounding region.
+   */
+  // BoundingRegion toBoundingRegion() const noexcept;
 
 private:
   S2CellID _cellID;
@@ -106,7 +109,6 @@ private:
   glm::dvec3 _center;
   std::array<CesiumGeometry::Plane, 6> _boundingPlanes;
   std::array<glm::dvec3, 8> _vertices;
-  BoundingRegion _boundingRegion;
 };
 
 } // namespace CesiumGeospatial

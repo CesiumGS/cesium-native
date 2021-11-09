@@ -135,8 +135,7 @@ S2CellBoundingVolume::S2CellBoundingVolume(
     const Ellipsoid& ellipsoid)
     : _cellID(cellID),
       _minimumHeight(minimumHeight),
-      _maximumHeight(maximumHeight),
-      _boundingRegion(cellID.getVertices(), minimumHeight, maximumHeight) {
+      _maximumHeight(maximumHeight) {
   Cartographic result = this->_cellID.getCenter();
   result.height = (this->_minimumHeight + this->_maximumHeight) * 0.5;
   this->_center = ellipsoid.cartographicToCartesian(result);
@@ -422,3 +421,7 @@ gsl::span<const CesiumGeometry::Plane>
 S2CellBoundingVolume::getBoundingPlanes() const noexcept {
   return this->_boundingPlanes;
 }
+
+// BoundingRegion S2CellBoundingVolume::toBoundingRegion() const noexcept {
+//   throw 1;
+// }

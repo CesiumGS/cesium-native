@@ -1,25 +1,28 @@
-#include "CesiumGeospatial/S2CellID.h"
-
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4127 4996)
+#pragma warning(disable : 4100 4127 4309 4996)
 
 #define _CHAR_UNSIGNED
 #define NOMINMAX
 #define _USE_MATH_DEFINES
 #endif
 
+// #include <s2/s2cell.h>
 #include <s2/s2cell_id.h>
 #include <s2/s2latlng.h>
+// #include <s2/s2latlng_rect.h>
 
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
+#include "CesiumGeospatial/S2CellID.h"
+
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 using GoogleS2CellID = S2CellId;
+// using GoogleS2Cell = S2Cell;
 
 /*static*/ S2CellID S2CellID::fromToken(const std::string_view& token) {
   return S2CellID(GoogleS2CellID::FromToken(token.data(), token.size()).id());
@@ -87,3 +90,13 @@ std::array<Cartographic, 4> S2CellID::getVertices() const {
       toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(1, 1))),
       toCartographic(S2::FaceUVtoXYZ(face, rect.GetVertex(0, 1)))};
 }
+
+// GlobeRectangle S2CellID::computeBoundingRectangle() const {
+//   GoogleS2Cell cell(GoogleS2CellID(this->_id));
+//   S2LatLngRect rect = cell.GetRectBound();
+//   return GlobeRectangle(
+//       rect.lng_lo().radians(),
+//       rect.lat_lo().radians(),
+//       rect.lng_hi().radians(),
+//       rect.lat_hi().radians());
+// }
