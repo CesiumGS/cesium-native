@@ -90,7 +90,7 @@ uint8_t OctreeAvailability::computeAvailability(
       uint32_t availabilityIndex = relativeMortonIndex + offset;
       uint32_t byteIndex = availabilityIndex >> 3;
       uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
-      uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+      uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
       // Check tile availability.
       if ((tileAvailabilityAccessor.isConstant() &&
@@ -135,7 +135,7 @@ uint8_t OctreeAvailability::computeAvailability(
     } else if (subtreeAvailabilityAccessor.isBufferView()) {
       uint32_t byteIndex = childSubtreeMortonIndex >> 3;
       uint8_t bitIndex = static_cast<uint8_t>(childSubtreeMortonIndex & 7);
-      uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+      uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
       gsl::span<const std::byte> clippedSubtreeAvailability =
           subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
@@ -242,7 +242,7 @@ bool OctreeAvailability::addSubtree(
     } else if (subtreeAvailabilityAccessor.isBufferView()) {
       uint32_t byteIndex = childSubtreeMortonIndex >> 3;
       uint8_t bitIndex = static_cast<uint8_t>(childSubtreeMortonIndex & 7);
-      uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+      uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
       gsl::span<const std::byte> clippedSubtreeAvailability =
           subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
@@ -344,7 +344,7 @@ uint8_t OctreeAvailability::computeAvailability(
   uint32_t availabilityIndex = relativeMortonIndex + offset;
   uint32_t byteIndex = availabilityIndex >> 3;
   uint8_t bitIndex = static_cast<uint8_t>(availabilityIndex & 7);
-  uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+  uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
   // Check tile availability.
   if ((tileAvailabilityAccessor.isConstant() &&
@@ -418,7 +418,7 @@ AvailabilityNode* OctreeAvailability::addNode(
   } else if (subtreeAvailabilityAccessor.isBufferView()) {
     uint32_t byteIndex = mortonIndex >> 3;
     uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
-    uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+    uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
     gsl::span<const std::byte> clippedSubtreeAvailability =
         subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
@@ -489,7 +489,7 @@ std::optional<uint32_t> OctreeAvailability::findChildNodeIndex(
   } else if (subtreeAvailabilityAccessor.isBufferView()) {
     uint32_t byteIndex = mortonIndex >> 3;
     uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
-    uint8_t bitMask = static_cast<uint8_t>(0x80 >> bitIndex);
+    uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
     gsl::span<const std::byte> clippedSubtreeAvailability =
         subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
