@@ -221,9 +221,8 @@ void createImplicitQuadtreeTile(
             0.5 * rectangleLocal.computeHeight() * rootHalfAxes[1],
             rootHalfAxes[2])));
   } else if (pS2Cell) {
-    child.setBoundingVolume(BoundingRegion(
-        S2CellID::fromQuadtreeTileID(pS2Cell->getCellID().getFace(), childID)
-            .getVertices(),
+    child.setBoundingVolume(S2CellBoundingVolume(
+        S2CellID::fromQuadtreeTileID(pS2Cell->getCellID().getFace(), childID),
         pS2Cell->getMinimumHeight(),
         pS2Cell->getMaximumHeight()));
   }
@@ -283,11 +282,10 @@ void createImplicitOctreeTile(
 
     double tileMinHeight = childID.z * tileSizeZ;
 
-    child.setBoundingVolume(BoundingRegion(
+    child.setBoundingVolume(S2CellBoundingVolume(
         S2CellID::fromQuadtreeTileID(
             pS2Cell->getCellID().getFace(),
-            QuadtreeTileID(childID.level, childID.x, childID.y))
-            .getVertices(),
+            QuadtreeTileID(childID.level, childID.x, childID.y)),
         tileMinHeight,
         tileMinHeight + tileSizeZ));
   }

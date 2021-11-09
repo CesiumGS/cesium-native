@@ -96,9 +96,11 @@ public:
    * @return The cell ID, where 0 is the root.
    */
   int32_t getLevel() const;
-<<<<<<< HEAD
+
+  /**
+   * @brief Gets the face id (0...5) for this S2 cell.
+   */
   uint8_t getFace() const;
-=======
 
   /**
    * @brief Gets the longitude/latitude position at the center of this cell.
@@ -107,7 +109,6 @@ public:
    *
    * @return The center.
    */
->>>>>>> origin/s2
   Cartographic getCenter() const;
 
   /**
