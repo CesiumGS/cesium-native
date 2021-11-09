@@ -25,9 +25,7 @@ void rotate(uint32_t n, uint32_t& x, uint32_t& y, bool rx, bool ry) {
 
 /*static*/ uint64_t
 HilbertOrder::encode2D(uint32_t level, uint32_t x, uint32_t y) {
-  assert(x >= 0 && y >= 0);
-
-  uint32_t n = 1UL << level;
+  uint32_t n = 1U << level;
 
   assert(x < n && y < n);
 
