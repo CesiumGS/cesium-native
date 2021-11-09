@@ -39,12 +39,8 @@ std::array<Plane, 6> computeBoundingPlanes(
   //   - Get distance from vertex to top plane
   // - Find longest distance from vertex to top plane
   // - Translate top plane by the distance
-  GlobeRectangle rectangle = s2Cell.getCellID().getVertices();
-  Cartographic verticesCartographic[4] = {
-      rectangle.getSouthwest(),
-      rectangle.getSoutheast(),
-      rectangle.getNortheast(),
-      rectangle.getNorthwest()};
+  std::array<Cartographic, 4> verticesCartographic =
+      s2Cell.getCellID().getVertices();
   glm::dvec3 verticesCartesian[4];
 
   double maxDistance = 0;

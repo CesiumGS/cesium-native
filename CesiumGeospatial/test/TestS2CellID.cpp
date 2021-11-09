@@ -167,49 +167,49 @@ TEST_CASE("S2CellID") {
   }
 
   SECTION("gets correct vertices of cell") {
-    GlobeRectangle vertices =
+    std::array<Cartographic, 4> vertices =
         S2CellID::fromToken("2ef59bd352b93ac3").getVertices();
 
     CHECK(Math::equalsEpsilon(
-        vertices.getSouthwest().longitude,
+        vertices[0].longitude,
         Math::degreesToRadians(105.64131799299665),
         0.0,
         Math::EPSILON10));
     CHECK(Math::equalsEpsilon(
-        vertices.getSouthwest().latitude,
+        vertices[0].latitude,
         Math::degreesToRadians(-10.490091077431977),
         0.0,
         Math::EPSILON10));
 
     CHECK(Math::equalsEpsilon(
-        vertices.getSoutheast().longitude,
+        vertices[1].longitude,
         Math::degreesToRadians(105.64131808248949),
         0.0,
         Math::EPSILON10));
     CHECK(Math::equalsEpsilon(
-        vertices.getSoutheast().latitude,
+        vertices[1].latitude,
         Math::degreesToRadians(-10.490091072946313),
         0.0,
         Math::EPSILON10));
 
     CHECK(Math::equalsEpsilon(
-        vertices.getNortheast().longitude,
+        vertices[2].longitude,
         Math::degreesToRadians(105.64131808248948),
         0.0,
         Math::EPSILON10));
     CHECK(Math::equalsEpsilon(
-        vertices.getNortheast().latitude,
+        vertices[2].latitude,
         Math::degreesToRadians(-10.490090989764633),
         0.0,
         Math::EPSILON10));
 
     CHECK(Math::equalsEpsilon(
-        vertices.getNorthwest().longitude,
+        vertices[3].longitude,
         Math::degreesToRadians(105.64131799299665),
         0.0,
         Math::EPSILON10));
     CHECK(Math::equalsEpsilon(
-        vertices.getNorthwest().latitude,
+        vertices[3].latitude,
         Math::degreesToRadians(-10.4900909942503),
         0.0,
         Math::EPSILON10));

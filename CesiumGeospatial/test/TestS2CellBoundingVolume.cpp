@@ -126,4 +126,10 @@ TEST_CASE("S2CellBoundingVolume") {
         tileS2Cell.intersectPlane(Plane::ORIGIN_YZ_PLANE) ==
         CullingResult::Inside);
   }
+
+  SECTION("can construct face 2 (North pole)") {
+    S2CellBoundingVolume face2Root(S2CellID::fromToken("5"), 1000.0, 2000.0);
+    CHECK(face2Root.getCellID().isValid());
+    CHECK(face2Root.getCellID().getID() == 5764607523034234880U);
+  }
 }

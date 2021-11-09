@@ -5,6 +5,7 @@
 #include "GlobeRectangle.h"
 #include "Library.h"
 
+#include <array>
 #include <cstdint>
 #include <string_view>
 
@@ -114,15 +115,14 @@ public:
   /**
    * @brief Gets the vertices at the corners of the cell.
    *
-   * The longitude/latitude positions of the vertices can be obtained with
-   * {@link GlobeRectangle::getSouthwest} and similar methods.
+   * The height values are always 0.0.
    *
    * Note that all positions inside the S2 Cell are _not_ guaranteed to fall
-   * inside this rectangle. The rectangle only defines the corner positions.
+   * inside the rectangle formed by these vertices.
    *
-   * @return A rectangle specifying the corners of this cell.
+   * @return Four vertices specifying the corners of this cell.
    */
-  GlobeRectangle getVertices() const;
+  std::array<Cartographic, 4> getVertices() const;
 
 private:
   uint64_t _id;
