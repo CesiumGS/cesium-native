@@ -40,16 +40,71 @@ namespace CesiumGeospatial {
  */
 class CESIUMGEOSPATIAL_API S2CellID {
 public:
+  /**
+   * Creates a new S2Cell from a token. A token is a hexadecimal representation
+   * of the 64-bit S2CellID.
+   *
+   * @param token The token for the S2 Cell.
+   * @returns A new S2CellID.
+   */
   static S2CellID fromToken(const std::string_view& token);
 
+  /**
+   * @brief Constructs a new S2 cell ID.
+   *
+   * The cell ID value is not validated. Use {@link isValid} to check the
+   * validity after constructions.
+   *
+   * @param id The 64-bit cell ID value.
+   */
   S2CellID(uint64_t id);
 
+  /**
+   * @brief Determines if this cell ID is valid.
+   *
+   * @return true if the the cell ID refers to a valid cell; otherwise, false.
+   */
   bool isValid() const;
+
+  /**
+   * @brief Gets the ID of the cell.
+   *
+   * @return The ID.
+   */
   uint64_t getID() const { return this->_id; }
+
+  /**
+   * @brief Converts the cell ID to a hexadecimal token.
+   */
   std::string toToken() const;
 
+  /**
+   * @brief Gets the level of the cell from the cell ID.
+   *
+   * @return The cell ID, where 0 is the root.
+   */
   int32_t getLevel() const;
+
+  /**
+   * @brief Gets the longitude/latitude position at the center of this cell.
+   *
+   * The height is always 0.0.
+   *
+   * @return The center.
+   */
   Cartographic getCenter() const;
+
+  /**
+   * @brief Gets the vertices at the corners of the cell.
+   *
+   * The longitude/latitude positions of the vertices can be obtained with
+   * {@link GlobeRectangle::getSouthwest} and similar methods.
+   *
+   * Note that all positions inside the S2 Cell are _not_ guaranteed to fall
+   * inside this rectangle. The rectangle only defines the corner positions.
+   *
+   * @return A rectangle specifying the corners of this cell.
+   */
   GlobeRectangle getVertices() const;
 
 private:
