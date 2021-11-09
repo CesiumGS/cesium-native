@@ -969,6 +969,9 @@ static void parseImplicitTileset(
       childTile.setRefine(tile.getRefine());
 
       tile.setUnconditionallyRefine();
+
+      // Don't try to load content for this tile.
+      tile.setTileID("");
     }
   }
 
