@@ -120,7 +120,8 @@ static int generateOverlayTextureCoordinates(
   for (int64_t i = 0; i < positionView.size(); ++i) {
     // Get the ECEF position
     const glm::vec3 position = positionView[i];
-    const glm::dvec3 positionEcef = transform * glm::dvec4(position, 1.0);
+    const glm::dvec3 positionEcef =
+        glm::dvec3(transform * glm::dvec4(position, 1.0));
 
     // Convert it to cartographic
     std::optional<CesiumGeospatial::Cartographic> cartographic =
@@ -156,9 +157,9 @@ static int generateOverlayTextureCoordinates(
           projectPosition(projection, cartographic.value());
 
       const double distance1 =
-          rectangle.computeSignedDistance(projectedPosition);
+          rectangle.computeSignedDistance(glm::dvec2(projectedPosition));
       const double distance2 =
-          rectangle.computeSignedDistance(projectedPosition2);
+          rectangle.computeSignedDistance(glm::dvec2(projectedPosition2));
 
       if (distance2 < distance1) {
         projectedPosition = projectedPosition2;

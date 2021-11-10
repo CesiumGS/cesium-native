@@ -32,7 +32,7 @@ Tile::Tile() noexcept
     : _pContext(nullptr),
       _pParent(nullptr),
       _children(),
-      _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat4())),
+      _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat3())),
       _viewerRequestVolume(),
       _geometricError(0.0),
       _refine(TileRefine::Replace),

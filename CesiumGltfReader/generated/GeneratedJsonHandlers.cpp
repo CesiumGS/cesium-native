@@ -484,8 +484,8 @@ FeatureTextureJsonHandler::readObjectKeyFeatureTexture(
     FeatureTexture& o) {
   using namespace std::string_literals;
 
-  if ("classProperty"s == str)
-    return property("classProperty", this->_classProperty, o.classProperty);
+  if ("class"s == str)
+    return property("class", this->_classProperty, o.classProperty);
   if ("properties"s == str)
     return property("properties", this->_properties, o.properties);
 
@@ -532,8 +532,8 @@ FeatureTableJsonHandler::readObjectKeyFeatureTable(
     FeatureTable& o) {
   using namespace std::string_literals;
 
-  if ("classProperty"s == str)
-    return property("classProperty", this->_classProperty, o.classProperty);
+  if ("class"s == str)
+    return property("class", this->_classProperty, o.classProperty);
   if ("count"s == str)
     return property("count", this->_count, o.count);
   if ("properties"s == str)
@@ -1022,11 +1022,8 @@ ClassPropertyJsonHandler::readObjectKeyClassProperty(
     return property("max", this->_max, o.max);
   if ("min"s == str)
     return property("min", this->_min, o.min);
-  if ("defaultProperty"s == str)
-    return property(
-        "defaultProperty",
-        this->_defaultProperty,
-        o.defaultProperty);
+  if ("default"s == str)
+    return property("default", this->_defaultProperty, o.defaultProperty);
   if ("optional"s == str)
     return property("optional", this->_optional, o.optional);
   if ("semantic"s == str)

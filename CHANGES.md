@@ -1,10 +1,34 @@
 # Change Log
 
-### ? - ?
+### v0.9.0 - 2021-11-01
+
+##### Breaking Changes :mega:
+
+- Changed the following properties in CesiumGltf:
+  - `BufferView::target` now defaults to `std::nullopt` instead of `Target::ARRAY_BUFFER`.
+  - `ClassProperty::type` now defaults to `Type::INT8` instead of empty string.
+  - `ClassProperty::componentType` is now an optional string instead of a `JsonValue`.
+  - `FeatureTexture::classProperty` is no longer optional, consistent with changes to the extension spec.
+  - `Image::mimeType` now defaults to empty string instead of `MimeType::image_jpeg`.
+  - `Sampler::magFilter` and `Sampler::minFilter` now default to `std::nullopt` instead of `MagFilter::NEAREST`.
+- The version of `ExtensibleObject` in the `CesiumGltf` library and namespace has been removed. Use the one in the `CesiumUtility` library and namespace instead.
+- Renamed the following glTF extension classes:
+  - `KHR_draco_mesh_compression` -> `ExtensionKhrDracoMeshCompression`.
+  - `MeshPrimitiveEXT_feature_metadata` -> `ExtensionMeshPrimitiveExtFeatureMetadata`
+  - `ModelEXT_feature_metadata` -> `ExtensionModelExtFeatureMetadata`
+- `CesiumGltf::ReaderContext` has been removed. It has been replaced with either `CesiumJsonReader::ExtensionReaderContext` or `GltfReader`.
+
+##### Additions :tada:
+
+- Added new `Cesium3DTiles` and `Cesium3DTilesReader` libraries. They are useful for reading and working with 3D Tiles tilesets.
 
 ##### Fixes :wrench:
 
+- Fixed a bug that could cause crashes or incorrect behavior when using raster overlays.
+- Fixed a bug that caused 3D Tiles content to fail to load when the status code was zero. This code is used by libcurl for successful read of `file://` URLs, so the bug prevented loading from such URLs in some environments.
 - Errors and warnings that occur while loading glTF textures are now include in the model load errors and warnings.
+- Fixes how `generate-classes` deals with reserved C++ keywords. Property names that are C++ keywords should be appended with "Property" as was already done,
+but when parsing JSONs the original property name string should be used.
 
 ### v0.8.0 - 2021-10-01
 

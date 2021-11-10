@@ -25,7 +25,7 @@ struct CESIUMGLTF_API FeatureTexture final
    * @brief The class this feature texture conforms to. The value must be a
    * class ID declared in the `classes` dictionary.
    */
-  std::optional<std::string> classProperty;
+  std::string classProperty;
 
   /**
    * @brief A dictionary, where each key corresponds to a property ID in the
