@@ -105,13 +105,13 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
                                               1.0);
 
       std::optional<Cartographic> east =
-          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[0]);
+          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[0]));
       std::optional<Cartographic> west =
-          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[1]);
+          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[1]));
       std::optional<Cartographic> north =
-          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[2]);
+          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[2]));
       std::optional<Cartographic> south =
-          Ellipsoid::WGS84.cartesianToCartographic(ecefBounds[3]);
+          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[3]));
 
       if (!east || !west || !north || !south) {
         return std::nullopt;
