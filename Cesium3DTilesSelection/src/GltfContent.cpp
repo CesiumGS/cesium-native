@@ -258,7 +258,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           // Get the ECEF position
           const glm::vec3 position = positionView[positionIndex];
           const glm::dvec3 positionEcef =
-              fullTransform * glm::dvec4(position, 1.0);
+              glm::dvec3(fullTransform * glm::dvec4(position, 1.0));
 
           // Convert it to cartographic
           const std::optional<CesiumGeospatial::Cartographic> cartographic =
@@ -314,10 +314,10 @@ GltfContent::createRasterOverlayTextureCoordinates(
                   projection,
                   Cartographic(testLongitude, latitude, ellipsoidHeight));
 
-              const double distance1 =
-                  rectangle.computeSignedDistance(projectedPosition);
-              const double distance2 =
-                  rectangle.computeSignedDistance(projectedPosition2);
+              const double distance1 = rectangle.computeSignedDistance(
+                  glm::dvec2(projectedPosition));
+              const double distance2 = rectangle.computeSignedDistance(
+                  glm::dvec2(projectedPosition2));
 
               if (distance2 < distance1) {
                 projectedPosition = projectedPosition2;
@@ -414,7 +414,7 @@ GltfContent::createRasterOverlayTextureCoordinates(
           // Get the ECEF position
           const glm::vec3 position = positionView[i];
           const glm::dvec3 positionEcef =
-              fullTransform * glm::dvec4(position, 1.0);
+              glm::dvec3(fullTransform * glm::dvec4(position, 1.0));
 
           // Convert it to cartographic
           std::optional<CesiumGeospatial::Cartographic> cartographic =
