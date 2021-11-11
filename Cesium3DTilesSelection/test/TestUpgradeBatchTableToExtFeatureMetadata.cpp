@@ -4,6 +4,7 @@
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 #include "SimpleTaskProcessor.h"
+#include "readFile.h"
 #include "upgradeBatchTableToFeatureMetadata.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -246,30 +247,29 @@ static void createTestForArrayJson(
       totalInstances);
 }
 
-static std::unique_ptr<TileContentLoadResult> loadB3dm(
-    const std::filesystem::path& filePath) {
+static std::unique_ptr<TileContentLoadResult>
+loadB3dm(const std::filesystem::path& filePath) {
 
-  std::unique_ptr<SimpleAssetResponse> pResponse = 
+  std::unique_ptr<SimpleAssetResponse> pResponse =
       std::make_unique<SimpleAssetResponse>(
-        static_cast<uint16_t>(200),
-        "",
-        CesiumAsync::HttpHeaders(),
-        readFile(filePath));
-  
-  std::shared_ptr<SimpleAssetRequest> pRequest = 
-      std::make_shared<SimpleAssetRequest>(
-        "GET",
-        "test.url",
-        CesiumAsync::HttpHeaders(),
-        std::move(pResponse));
+          static_cast<uint16_t>(200),
+          "",
+          CesiumAsync::HttpHeaders(),
+          readFile(filePath));
 
-  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockedRequests = 
-      {{ "test.url", std::move(pRequest) }};
+  std::shared_ptr<SimpleAssetRequest> pRequest =
+      std::make_shared<SimpleAssetRequest>(
+          "GET",
+          "test.url",
+          CesiumAsync::HttpHeaders(),
+          std::move(pResponse));
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mockedRequests = {
+      {"test.url", std::move(pRequest)}};
 
   TileContentLoadInput input(
-      CesiumAsync::AsyncSystem(
-          std::make_shared<SimpleTaskProcessor>()),
-      spdlog::default_logger(), 
+      CesiumAsync::AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      spdlog::default_logger(),
       std::make_shared<SimpleAssetAccessor>(std::move(mockedRequests)),
       std::move(pRequest),
       Tile());
@@ -465,7 +465,7 @@ TEST_CASE("Convert binary batch table to EXT_feature_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
-  
+
   std::unique_ptr<TileContentLoadResult> pResult = loadB3dm(testFilePath);
 
   REQUIRE(pResult != nullptr);
