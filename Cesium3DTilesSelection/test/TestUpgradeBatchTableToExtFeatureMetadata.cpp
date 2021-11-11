@@ -1,5 +1,4 @@
 #include "Batched3DModelContent.h"
-#include "readFile.h"
 #include "SimpleAssetAccessor.h"
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
