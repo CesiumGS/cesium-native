@@ -4,8 +4,8 @@
 
 #include "BoundingVolume.h"
 #include "Content.h"
-#include "Library.h"
 
+#include <Cesium3DTiles/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>

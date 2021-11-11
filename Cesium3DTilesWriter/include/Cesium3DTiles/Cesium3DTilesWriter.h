@@ -2,8 +2,11 @@
 
 #include "WriterLibrary.h"
 
-#include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
+
+namespace Cesium3DTiles {
+struct Tileset;
+}
 
 namespace Cesium3DTiles {
 

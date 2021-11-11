@@ -10,6 +10,10 @@ option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
 
+set(CESIUM_3D_TILES_GENERATED_DIRECTORY "" CACHE STRING "Location of generated 3D Tiles files" FORCE)
+set(CESIUM_3D_TILES_READER_GENERATED_DIRECTORY "" CACHE STRING "Location of generated 3D Tiles reader files" FORCE)
+set(CESIUM_3D_TILES_WRITER_GENERATED_DIRECTORY "" CACHE STRING "Location of generated 3D Tiles writer files" FORCE)
+
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
 endif()

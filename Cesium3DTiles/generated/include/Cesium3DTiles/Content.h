@@ -3,8 +3,8 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "Library.h"
 
+#include <Cesium3DTiles/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>

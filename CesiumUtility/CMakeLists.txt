@@ -44,12 +44,12 @@ target_link_libraries_system(
     CesiumUtility
     PUBLIC
         glm
+        uriparser
 )
 
 target_link_libraries(CesiumUtility
     PUBLIC
         GSL
-        uriparser
 )
 
 install(TARGETS CesiumUtility

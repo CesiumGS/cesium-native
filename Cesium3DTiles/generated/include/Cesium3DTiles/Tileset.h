@@ -3,10 +3,10 @@
 #pragma once
 
 #include "Asset.h"
-#include "Library.h"
 #include "Properties.h"
 #include "Tile.h"
 
+#include <Cesium3DTiles/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <map>

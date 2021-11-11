@@ -145,6 +145,7 @@ const writerOptions = {
   namespace: argv.namespace,
   rootSchema: rootSchema,
   writers: writers,
+  extensions: options.extensions
 };
 
 generateCombinedWriter(writerOptions);

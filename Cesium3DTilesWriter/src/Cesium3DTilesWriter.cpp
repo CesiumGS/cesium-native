@@ -1,18 +1,15 @@
 #include "Cesium3DTiles/Cesium3DTilesWriter.h"
 
 #include "CesiumUtility/Tracing.h"
-#include "TilesetWriter.h"
 
+#include <Cesium3DTiles/TilesetWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 
 using namespace Cesium3DTiles;
-using namespace CesiumJsonWriter;
-using namespace CesiumUtility;
 
 Cesium3DTilesWriter::Cesium3DTilesWriter() {
-  this->_context
-      .registerExtension<Tileset, Extension3dTilesContentGltfWriter>();
+  Cesium3DTiles::populateTilesetExtensions(this->_context);
 }
 
 CesiumJsonWriter::ExtensionWriterContext& Cesium3DTilesWriter::getExtensions() {
