@@ -3,6 +3,12 @@
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtFeatureMetadataJsonHandler.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/JsonReader.h"
+#include "CesiumUtility/Tracing.h"
+#include "CesiumUtility/Uri.h"
 #include "ModelJsonHandler.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
@@ -23,6 +29,7 @@
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
 
+using namespace CesiumAsync;
 using namespace CesiumGltf;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
@@ -310,8 +317,106 @@ ModelReaderResult GltfReader::readModel(
   return result;
 }
 
+/*static*/
+Future<ModelReaderResult> GltfReader::resolveExternalData(
+    AsyncSystem asyncSystem,
+    const std::string& baseUrl,
+    const HttpHeaders& headers,
+    std::shared_ptr<IAssetAccessor> pAssetAccessor,
+    ModelReaderResult&& result) {
+  // TODO: Can we avoid this copy conversion?
+  std::vector<IAssetAccessor::THeader> tHeaders(headers.begin(), headers.end());
+
+  if (!result.model) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  size_t externalBufferCount = 0;
+  for (const Buffer& buffer : result.model->buffers) {
+    if (buffer.uri) {
+      ++externalBufferCount;
+    }
+  }
+
+  for (const Image& image : result.model->images) {
+    if (image.uri) {
+      ++externalBufferCount;
+    }
+  }
+
+  if (externalBufferCount == 0) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  std::vector<Future<bool>> resolvedBuffers;
+  resolvedBuffers.reserve(externalBufferCount);
+
+  for (Buffer& buffer : result.model->buffers) {
+    if (buffer.uri) {
+      resolvedBuffers.push_back(
+          pAssetAccessor
+              ->requestAsset(
+                  asyncSystem,
+                  Uri::resolve(baseUrl, *buffer.uri),
+                  tHeaders)
+              .thenInWorkerThread(
+                  // TODO: is this safe? result should be alive until
+                  // the final continuation is invoked.
+                  [pBuffer =
+                       &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
+                    const IAssetResponse* pResponse = pRequest->response();
+                    if (pResponse) {
+                      pBuffer->uri = std::nullopt;
+                      pBuffer->cesium.data = std::vector<std::byte>(
+                          pResponse->data().begin(),
+                          pResponse->data().end());
+                      return true;
+                    }
+
+                    return false;
+                  }));
+    }
+  }
+
+  for (Image& image : result.model->images) {
+    if (image.uri) {
+      resolvedBuffers.push_back(
+          pAssetAccessor
+              ->requestAsset(
+                  asyncSystem,
+                  Uri::resolve(baseUrl, *image.uri),
+                  tHeaders)
+              .thenInWorkerThread(
+                  // TODO: is this safe? result should be alive until
+                  // the final continuation is invoked.
+                  [pImage = &image](std::shared_ptr<IAssetRequest>&& pRequest) {
+                    const IAssetResponse* pResponse = pRequest->response();
+                    if (pResponse) {
+                      pImage->uri = std::nullopt;
+
+                      ImageReaderResult imageResult =
+                          readImage(pResponse->data());
+                      if (imageResult.image) {
+                        pImage->cesium = std::move(*imageResult.image);
+                        return true;
+                      }
+                    }
+
+                    return false;
+                  }));
+    }
+  }
+
+  return asyncSystem.all(std::move(resolvedBuffers))
+      .thenInWorkerThread([result = std::move(result)](
+                              std::vector<bool>&& /*bufferResolutions*/) {
+        return std::move(result);
+      });
+}
+
+/*static*/
 ImageReaderResult
-GltfReader::readImage(const gsl::span<const std::byte>& data) const {
+GltfReader::readImage(const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("CesiumGltf::readImage");
 
   ImageReaderResult result;
