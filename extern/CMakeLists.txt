@@ -60,6 +60,11 @@ add_library(
   s2geometry/src/s2/third_party/absl/base/internal/throw_delegate.cc
   s2geometry/src/s2/s1interval.cc
 )
+set_target_properties(s2geometry PROPERTIES
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED YES
+  CXX_EXTENSIONS NO
+)
 target_include_directories(s2geometry SYSTEM PUBLIC s2geometry/src)
 if (MSVC)
   target_compile_options(s2geometry PRIVATE "/J" "/wd4127" "/wd4996")
