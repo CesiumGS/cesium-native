@@ -61,7 +61,7 @@ add_library(
   s2geometry/src/s2/s1interval.cc
 )
 set_target_properties(s2geometry PROPERTIES
-  CXX_STANDARD 17
+  CXX_STANDARD 11
   CXX_STANDARD_REQUIRED YES
 )
 target_include_directories(s2geometry SYSTEM PUBLIC s2geometry/src)
