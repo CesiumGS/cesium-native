@@ -21,23 +21,30 @@ using namespace CesiumGltf;
 
 namespace Cesium3DTilesSelection {
 
+using namespace CesiumAsync;
+
 /*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
 
-CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
+Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
-  return input.asyncSystem.createResolvedFuture(load(
+  return load(
+      input.asyncSystem,
       input.pLogger,
       input.pRequest->url(),
-      input.pRequest->response()->data()));
+      input.pRequest->headers(),
+      input.pAssetAccessor,
+      input.pRequest->response()->data());
 }
 
-/*static*/ std::unique_ptr<TileContentLoadResult> GltfContent::load(
+/*static*/
+Future<std::unique_ptr<TileContentLoadResult>> GltfContent::load(
+    const AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
+    const HttpHeaders& headers,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const gsl::span<const std::byte>& data) {
   CESIUM_TRACE("Cesium3DTilesSelection::GltfContent::load");
-  std::unique_ptr<TileContentLoadResult> pResult =
-      std::make_unique<TileContentLoadResult>();
 
   CesiumGltf::ModelReaderResult loadedModel =
       GltfContent::_gltfReader.readModel(data);
@@ -60,8 +67,36 @@ GltfContent::load(const TileContentLoadInput& input) {
     loadedModel.model.value().extras["Cesium3DTiles_TileUrl"] = url;
   }
 
-  pResult->model = std::move(loadedModel.model);
-  return pResult;
+  return CesiumGltf::GltfReader::resolveExternalData(
+             asyncSystem,
+             url,
+             headers,
+             pAssetAccessor,
+             std::move(loadedModel))
+      .thenInWorkerThread(
+          [pLogger, url](CesiumGltf::ModelReaderResult&& resolvedModel) {
+            std::unique_ptr<TileContentLoadResult> pResult =
+                std::make_unique<TileContentLoadResult>();
+
+            if (!resolvedModel.errors.empty()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Failed resolving external glTF buffers from {}:\n- {}",
+                  url,
+                  CesiumUtility::joinToString(resolvedModel.errors, "\n- "));
+            }
+
+            if (!resolvedModel.warnings.empty()) {
+              SPDLOG_LOGGER_WARN(
+                  pLogger,
+                  "Warning when resolving external gltf buffers from {}:\n- {}",
+                  url,
+                  CesiumUtility::joinToString(resolvedModel.warnings, "\n- "));
+            }
+
+            pResult->model = std::move(resolvedModel.model);
+            return pResult;
+          });
 }
 
 namespace {

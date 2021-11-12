@@ -47,6 +47,12 @@ BoundingVolume transformBoundingVolume(
       // Regions are not transformed.
       return boundingRegion;
     }
+
+    BoundingVolume
+    operator()(const S2CellBoundingVolume& s2CellBoundingVolume) noexcept {
+      // S2 Cells are not transformed.
+      return s2CellBoundingVolume;
+    }
   };
 
   return std::visit(Operation{transform}, boundingVolume);
@@ -69,6 +75,10 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
     glm::dvec3 operator()(
         const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
       return boundingRegion.getBoundingRegion().getBoundingBox().getCenter();
+    }
+
+    glm::dvec3 operator()(const S2CellBoundingVolume& s2Cell) noexcept {
+      return s2Cell.getCenter();
     }
   };
 

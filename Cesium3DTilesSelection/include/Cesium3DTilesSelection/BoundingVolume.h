@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <variant>
 
@@ -21,12 +22,14 @@ namespace Cesium3DTilesSelection {
  * @see CesiumGeometry::OrientedBoundingBox
  * @see CesiumGeospatial::BoundingRegion
  * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
+ * @see CesiumGeospatial::S2CellBoundingVolume
  */
 typedef std::variant<
     CesiumGeometry::BoundingSphere,
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeospatial::BoundingRegion,
-    CesiumGeospatial::BoundingRegionWithLooseFittingHeights>
+    CesiumGeospatial::BoundingRegionWithLooseFittingHeights,
+    CesiumGeospatial::S2CellBoundingVolume>
     BoundingVolume;
 
 /**

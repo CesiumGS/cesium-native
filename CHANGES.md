@@ -14,6 +14,8 @@
 
 ##### Additions :tada:
 
+- Added support for the [3DTILES_bounding_volume_S2](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_bounding_volume_S2) extension.
+- Added support for external glTF buffers and images.
 - Added support for raster overlays, including clipping polygons, on any 3D Tiles tileset.
 - Raster overlay level-of detail is now selected using "target screen pixels" rather than the hard-to-interpret geometric error value.
 - A `RasterOverlay` can now be configured with a `maximumScreenSpaceError` independent of the screen-space error used for the geometry.
