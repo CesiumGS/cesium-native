@@ -2,6 +2,9 @@
 
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/JsonReader.h"
+#include "CesiumUtility/Tracing.h"
 #include "CesiumUtility/Uri.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
