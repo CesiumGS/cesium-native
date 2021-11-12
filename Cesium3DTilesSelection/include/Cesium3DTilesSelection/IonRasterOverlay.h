@@ -28,11 +28,13 @@ public:
    * @param name The user-given name of this overlay layer.
    * @param ionAssetID The asset ID.
    * @param ionAccessToken The access token.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   IonRasterOverlay(
       const std::string& name,
       uint32_t ionAssetID,
-      const std::string& ionAccessToken);
+      const std::string& ionAccessToken,
+      const RasterOverlayOptions& overlayOptions = {});
   virtual ~IonRasterOverlay() override;
 
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>

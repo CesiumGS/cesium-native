@@ -58,6 +58,20 @@ struct CESIUMGEOMETRY_API QuadtreeTileID final {
   computeInvertedY(const QuadtreeTilingScheme& tilingScheme) const noexcept;
 
   /**
+   * @brief Gets the ID of the parent of the tile with this ID.
+   *
+   * If this method is called on a level zero tile, it returns itself.
+   *
+   * @return The ID of the parent tile.
+   */
+  constexpr QuadtreeTileID getParent() const noexcept {
+    if (this->level == 0) {
+      return *this;
+    }
+    return QuadtreeTileID(this->level - 1, this->x >> 1, this->y >> 1);
+  }
+
+  /**
    * @brief The level of this tile ID, with 0 being the root tile.
    */
   uint32_t level;

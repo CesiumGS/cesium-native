@@ -57,14 +57,6 @@ public:
       uint32_t imageHeight) noexcept;
 
   /**
-   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
-   * instance.
-   */
-  const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept {
-    return this->_coverageRectangle;
-  }
-
-  /**
    * @brief Returns the minimum tile level of this instance.
    */
   uint32_t getMinimumLevel() const noexcept { return this->_minimumLevel; }
@@ -93,18 +85,17 @@ public:
   }
 
   /**
-   * Computes the appropriate tile level of detail (zoom level) for a given
-   * geometric error near a given projected position. The position is required
-   * because coordinates in many projections will map to real-world meters
-   * differently in different parts of the globe.
+   * @brief Computes the best quadtree level to use for an image intended to
+   * cover a given projected rectangle when it is a given size on the screen.
    *
-   * @param geometricError The geometric error for which to compute a level.
-   * @param position The projected position defining the area of interest.
-   * @return The level that is closest to the desired geometric error.
+   * @param rectangle The range of projected coordinates to cover.
+   * @param screenPixels The number of screen pixels to be covered by the
+   * rectangle.
+   * @return The level.
    */
-  uint32_t computeLevelFromGeometricError(
-      double geometricError,
-      const glm::dvec2& position) const noexcept;
+  uint32_t computeLevelFromTargetScreenPixels(
+      const CesiumGeometry::Rectangle& rectangle,
+      const glm::dvec2& screenPixels);
 
 protected:
   /**
@@ -122,8 +113,8 @@ private:
   loadTileImage(RasterOverlayTile& overlayTile) override final;
 
   struct LoadedQuadtreeImage {
-    std::shared_ptr<LoadedRasterOverlayImage> pLoaded;
-    std::optional<CesiumGeometry::Rectangle> subset;
+    std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
+    std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
   };
 
   CesiumAsync::SharedFuture<LoadedQuadtreeImage>
@@ -142,7 +133,7 @@ private:
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
-      double targetGeometricError);
+      const glm::dvec2 targetScreenPixels);
 
   void unloadCachedTiles();
 
@@ -163,7 +154,6 @@ private:
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);
 
-  CesiumGeometry::Rectangle _coverageRectangle;
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;
   uint32_t _imageWidth;

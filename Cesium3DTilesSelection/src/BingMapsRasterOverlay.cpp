@@ -228,8 +228,9 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
     const std::string& key,
     const std::string& mapStyle,
     const std::string& culture,
-    const Ellipsoid& ellipsoid)
-    : RasterOverlay(name),
+    const Ellipsoid& ellipsoid,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
       _url(url),
       _key(key),
       _mapStyle(mapStyle),

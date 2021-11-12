@@ -100,6 +100,7 @@ public:
    * the supported cultures.
    * @param ellipsoid The ellipsoid. Default value:
    * {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   BingMapsRasterOverlay(
       const std::string& name,
@@ -108,7 +109,8 @@ public:
       const std::string& mapStyle = BingMapsStyle::AERIAL,
       const std::string& culture = "",
       const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84);
+          CesiumGeospatial::Ellipsoid::WGS84,
+      const RasterOverlayOptions& overlayOptions = {});
   virtual ~BingMapsRasterOverlay() override;
 
   virtual CesiumAsync::Future<std::unique_ptr<RasterOverlayTileProvider>>
