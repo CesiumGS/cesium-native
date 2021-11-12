@@ -68,7 +68,8 @@ static void checkArrayProperty(
     size_t expectedTotalInstances) {
   const ClassProperty& property = metaClass.properties.at(propertyName);
   REQUIRE(property.type == "ARRAY");
-  REQUIRE(property.componentType == expectedComponentType);
+  REQUIRE(property.componentType.has_value());
+  REQUIRE(*property.componentType == expectedComponentType);
   if (expectedComponentCount > 0) {
     REQUIRE(
         property.componentCount.value() ==
