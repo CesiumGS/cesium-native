@@ -238,4 +238,174 @@ TEST_CASE("S2CellID") {
         QuadtreeTileID(1, 1, 1));
     CHECK(e.getID() == S2CellID::fromToken("14").getID());
   }
+
+  SECTION("computeBoundingRectangle") {
+    S2CellID root0 = S2CellID::fromFaceLevelPosition(0, 0, 0);
+    GlobeRectangle root0Rect = root0.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        root0Rect.getWest(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root0Rect.getEast(),
+        Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root0Rect.getSouth(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root0Rect.getNorth(),
+        Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+
+    S2CellID root1 = S2CellID::fromFaceLevelPosition(1, 0, 0);
+    GlobeRectangle root1Rect = root1.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        root1Rect.getWest(),
+        Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root1Rect.getEast(),
+        3.0 * Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root1Rect.getSouth(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root1Rect.getNorth(),
+        Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+
+    S2CellID root2 = S2CellID::fromFaceLevelPosition(2, 0, 0);
+    GlobeRectangle root2Rect = root2.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        root2Rect.getWest(),
+        -Math::ONE_PI,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root2Rect.getEast(),
+        Math::ONE_PI,
+        0.0,
+        Math::EPSILON14));
+    // The midpoint of the cell edge is at 45 degrees latitude, but the vertices
+    // extend significantly lower.
+    CHECK(root2Rect.getSouth() < Math::ONE_PI / 4.0 - Math::ONE_PI / 20.0);
+    CHECK(Math::equalsEpsilon(
+        root2Rect.getNorth(),
+        Math::ONE_PI / 2.0,
+        0.0,
+        Math::EPSILON14));
+
+    S2CellID root3 = S2CellID::fromFaceLevelPosition(3, 0, 0);
+    GlobeRectangle root3Rect = root3.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        root3Rect.getWest(),
+        3.0 * Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root3Rect.getEast(),
+        -3.0 * Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root3Rect.getSouth(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root3Rect.getNorth(),
+        Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+
+    S2CellID root4 = S2CellID::fromFaceLevelPosition(4, 0, 0);
+    GlobeRectangle root4Rect = root4.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        root4Rect.getWest(),
+        -3.0 * Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root4Rect.getEast(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root4Rect.getSouth(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root4Rect.getNorth(),
+        Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+
+    S2CellID root5 = S2CellID::fromFaceLevelPosition(5, 0, 0);
+    GlobeRectangle root5Rect = root5.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        root5Rect.getWest(),
+        -Math::ONE_PI,
+        0.0,
+        Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        root5Rect.getEast(),
+        Math::ONE_PI,
+        0.0,
+        Math::EPSILON14));
+    // The midpoint of the cell edge is at -45 degrees latitude, but the
+    // vertices extend significantly higher.
+    CHECK(Math::equalsEpsilon(
+        root5Rect.getSouth(),
+        -Math::ONE_PI / 2.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(root5Rect.getNorth() > -Math::ONE_PI / 4.0 + Math::ONE_PI / 20.0);
+
+    S2CellID equatorCell = S2CellID::fromFaceLevelPosition(0, 1, 0);
+    GlobeRectangle equatorRect = equatorCell.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(
+        equatorRect.getWest(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(
+        Math::equalsEpsilon(equatorRect.getEast(), 0.0, 0.0, Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        equatorRect.getSouth(),
+        -Math::ONE_PI / 4.0,
+        0.0,
+        Math::EPSILON14));
+    CHECK(
+        Math::equalsEpsilon(equatorRect.getNorth(), 0.0, 0.0, Math::EPSILON14));
+
+    S2CellID polarCell = S2CellID::fromFaceLevelPosition(2, 1, 0);
+    GlobeRectangle polarRect = polarCell.computeBoundingRectangle();
+    CHECK(Math::equalsEpsilon(polarRect.getWest(), 0.0, 0.0, Math::EPSILON14));
+    CHECK(Math::equalsEpsilon(
+        polarRect.getEast(),
+        Math::ONE_PI / 2.0,
+        0.0,
+        Math::EPSILON14));
+    // One vertex of the cell at 45 degrees latitude, but the other extends
+    // significantly lower.
+    CHECK(root2Rect.getSouth() < Math::ONE_PI / 4.0 - Math::ONE_PI / 20.0);
+    CHECK(Math::equalsEpsilon(
+        polarRect.getNorth(),
+        Math::ONE_PI / 2,
+        0.0,
+        Math::EPSILON14));
+  }
 }
