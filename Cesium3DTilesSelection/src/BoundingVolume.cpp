@@ -85,7 +85,6 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
   return std::visit(Operation{}, boundingVolume);
 }
 
-// TODO: Test this more thoroughly
 std::optional<GlobeRectangle>
 estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
   struct Operation {
@@ -187,6 +186,11 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
                    boundingRegionWithLooseFittingHeights) {
       return boundingRegionWithLooseFittingHeights.getBoundingRegion()
           .getRectangle();
+    }
+
+    std::optional<GlobeRectangle>
+    operator()(const S2CellBoundingVolume& s2Cell) {
+      return s2Cell.getCellID().computeBoundingRectangle();
     }
   };
 
