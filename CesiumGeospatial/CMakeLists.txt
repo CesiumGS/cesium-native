@@ -38,6 +38,8 @@ target_link_libraries(CesiumGeospatial PUBLIC
     CesiumGeometry
     CesiumUtility
     earcut
+    PRIVATE
+      s2geometry
 )
 
 install(TARGETS CesiumGeospatial

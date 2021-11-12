@@ -46,3 +46,6 @@
 [submodule "extern/cmake-modules"]
 	path = extern/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
+[submodule "extern/s2geometry"]
+	path = extern/s2geometry
+	url = https://github.com/google/s2geometry.git

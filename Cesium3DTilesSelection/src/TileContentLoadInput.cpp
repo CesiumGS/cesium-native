@@ -7,6 +7,25 @@
 using namespace Cesium3DTilesSelection;
 using namespace CesiumAsync;
 
+TileContentLoadInput::TileContentLoadInput()
+    : asyncSystem(nullptr),
+      pLogger(nullptr),
+      pAssetAccessor(nullptr),
+      pRequest(nullptr),
+      tileID(""),
+      tileBoundingVolume(CesiumGeospatial::BoundingRegion(
+          CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
+          0.0,
+          0.0)),
+      tileContentBoundingVolume(CesiumGeospatial::BoundingRegion(
+          CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0),
+          0.0,
+          0.0)),
+      tileRefine(TileRefine::Replace),
+      tileGeometricError(0.0),
+      tileTransform(glm::dmat4(1.0)),
+      contentOptions() {}
+
 TileContentLoadInput::TileContentLoadInput(const Tile& tile)
     : asyncSystem(nullptr),
       pLogger(nullptr),

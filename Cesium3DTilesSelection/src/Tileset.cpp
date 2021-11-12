@@ -422,7 +422,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums) {
         const RasterOverlayTile* pRasterOverlayTile =
             mappedRasterTile.getReadyTile();
         if (pRasterOverlayTile != nullptr) {
-          for (const Credit credit : pRasterOverlayTile->getCredits()) {
+          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
             pCreditSystem->addCreditToFrame(credit);
           }
         }
@@ -723,6 +723,25 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   const auto bvIt = tileJson.FindMember(key.c_str());
   if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
     return std::nullopt;
+  }
+
+  const auto extensionsIt = bvIt->value.FindMember("extensions");
+  if (extensionsIt != bvIt->value.MemberEnd() &&
+      extensionsIt->value.IsObject()) {
+    const auto s2It =
+        extensionsIt->value.FindMember("3DTILES_bounding_volume_S2");
+    if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
+      std::string token =
+          JsonHelpers::getStringOrDefault(s2It->value, "token", "1");
+      double minimumHeight =
+          JsonHelpers::getDoubleOrDefault(s2It->value, "minimumHeight", 0.0);
+      double maximumHeight =
+          JsonHelpers::getDoubleOrDefault(s2It->value, "maximumHeight", 0.0);
+      return S2CellBoundingVolume(
+          S2CellID::fromToken(token),
+          minimumHeight,
+          maximumHeight);
+    }
   }
 
   const auto boxIt = bvIt->value.FindMember("box");
