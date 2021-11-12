@@ -115,7 +115,7 @@ double JsonHelpers::getDoubleOrDefault(
 double JsonHelpers::getDoubleOrDefault(
     const rapidjson::Value& json,
     double defaultValue) {
-  if (json.IsDouble()) {
+  if (json.IsNumber()) {
     return json.GetDouble();
   }
   return defaultValue;
