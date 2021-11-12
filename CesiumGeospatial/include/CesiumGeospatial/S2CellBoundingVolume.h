@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BoundingRegion.h"
 #include "Ellipsoid.h"
 #include "S2CellID.h"
 
@@ -95,11 +96,11 @@ public:
   gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
   /**
-   * @brief Converts this bounding volume to a bounding region.
+   * @brief Computes the bounding begion that best fits this S2 cell volume.
    *
    * @return The bounding region.
    */
-  // BoundingRegion toBoundingRegion() const noexcept;
+  BoundingRegion computeBoundingRegion() const noexcept;
 
 private:
   S2CellID _cellID;
