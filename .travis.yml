@@ -64,5 +64,5 @@ jobs:
       script:
         - cmake --build . --config Debug
         - # Tests fail on macOS, see https://github.com/CesiumGS/cesium-native/issues/394
-        - ctest -V || echo "There are test failures, but we're note failing the build. See https://github.com/CesiumGS/cesium-native/issues/394"
+        - ctest -V || echo "There are test failures, but we're not failing the build. See https://github.com/CesiumGS/cesium-native/issues/394"
         - cmake --build . --config Debug --target cesium-native-docs
