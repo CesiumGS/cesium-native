@@ -101,7 +101,7 @@ S2CellID S2CellID::getParent() const {
 }
 
 S2CellID S2CellID::getChild(size_t index) const {
-  assert(index >= 0 && index <= 3);
+  assert(index <= 3);
   return S2CellID(GoogleS2CellID(this->_id).child(int(index)).id());
 }
 
