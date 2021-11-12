@@ -4,6 +4,8 @@
 #include "GlobeRectangle.h"
 #include "Library.h"
 
+#include <CesiumGeometry/QuadtreeTileID.h>
+
 #include <array>
 #include <cstdint>
 #include <string_view>
@@ -54,6 +56,17 @@ public:
   fromFacePositionLevel(uint8_t face, uint64_t position, uint32_t level);
 
   /**
+   * @brief Create an S2 id from a face and a quadtree tile id.
+   *
+   * @param face The S2 face (0...5) that this tile is on.
+   * @param quadtreeTileID The quadtree tile id for this tile, within the given
+   * face.
+   */
+  static S2CellID fromQuadtreeTileID(
+      uint8_t face,
+      const CesiumGeometry::QuadtreeTileID& quadtreeTileID);
+
+  /**
    * @brief Constructs a new S2 cell ID.
    *
    * The cell ID value is not validated. Use {@link isValid} to check the
@@ -88,6 +101,11 @@ public:
    * @return The cell ID, where 0 is the root.
    */
   int32_t getLevel() const;
+
+  /**
+   * @brief Gets the face id (0...5) for this S2 cell.
+   */
+  uint8_t getFace() const;
 
   /**
    * @brief Gets the longitude/latitude position at the center of this cell.

@@ -64,6 +64,10 @@ std::string S2CellID::toToken() const {
 
 int32_t S2CellID::getLevel() const { return GoogleS2CellID(this->_id).level(); }
 
+uint8_t S2CellID::getFace() const {
+  return static_cast<uint8_t>(GoogleS2CellID(this->_id).face());
+}
+
 Cartographic S2CellID::getCenter() const {
   S2LatLng ll = GoogleS2CellID(this->_id).ToLatLng();
   return Cartographic(ll.lng().radians(), ll.lat().radians(), 0.0);
