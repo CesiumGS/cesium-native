@@ -123,10 +123,6 @@ GlobeRectangleFromLatLng(const R1Interval& lat_, const S1Interval& lng_) {
   return GlobeRectangle(lng_.lo(), lat_.lo(), lng_.hi(), lat_.hi());
 }
 
-GlobeRectangle Empty() {
-  return GlobeRectangleFromLatLng(R1Interval::Empty(), S1Interval::Empty());
-}
-
 R1Interval FullLat() { return R1Interval(-M_PI_2, M_PI_2); }
 
 GlobeRectangle Expanded(
