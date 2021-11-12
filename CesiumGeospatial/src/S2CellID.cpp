@@ -20,6 +20,8 @@
 #include "CesiumGeospatial/S2CellID.h"
 #include "HilbertOrder.h"
 
+#include <cfloat>
+
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
