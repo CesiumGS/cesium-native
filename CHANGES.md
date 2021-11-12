@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for the [3DTILES_bounding_volume_S2](https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_bounding_volume_S2) extension.
+
 ### v0.9.0 - 2021-11-01
 
 ##### Breaking Changes :mega:
