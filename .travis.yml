@@ -58,3 +58,6 @@ jobs:
       env:
         - CC=clang-10
         - CXX=clang++-10
+    - name: macOS
+      os: osx
+      osx_image: xcode12
