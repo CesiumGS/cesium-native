@@ -63,7 +63,6 @@ add_library(
 set_target_properties(s2geometry PROPERTIES
   CXX_STANDARD 17
   CXX_STANDARD_REQUIRED YES
-  CXX_EXTENSIONS NO
 )
 target_include_directories(s2geometry SYSTEM PUBLIC s2geometry/src)
 if (MSVC)
