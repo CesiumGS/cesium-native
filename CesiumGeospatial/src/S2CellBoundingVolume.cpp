@@ -423,6 +423,9 @@ S2CellBoundingVolume::getBoundingPlanes() const noexcept {
   return this->_boundingPlanes;
 }
 
-// BoundingRegion S2CellBoundingVolume::toBoundingRegion() const noexcept {
-//   throw 1;
-// }
+BoundingRegion S2CellBoundingVolume::computeBoundingRegion() const noexcept {
+  return BoundingRegion(
+      this->_cellID.computeBoundingRectangle(),
+      this->_minimumHeight,
+      this->_maximumHeight);
+}

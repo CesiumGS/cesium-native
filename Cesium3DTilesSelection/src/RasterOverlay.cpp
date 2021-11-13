@@ -29,10 +29,9 @@ RasterOverlay::RasterOverlay(
     const RasterOverlayOptions& options)
     : _name(name),
       _pPlaceholder(),
-      _pTileProvider(),
       _pSelf(),
-      _isLoadingTileProvider(false),
-      _options(options) {}
+      _options(options),
+      _loadingTileProvider() {}
 
 RasterOverlay::~RasterOverlay() {
   // explicitly set those to nullptr, because RasterOverlayTile destructor
@@ -41,30 +40,43 @@ RasterOverlay::~RasterOverlay() {
   // destructed first, but it will never set to be nullptr. So when
   // _pPlaceholder is destroyed, its _pPlaceholder and _tiles member destructor
   // will retrieve _pTileProvider instead of _pPlaceholder and it crashes
-  this->_pTileProvider = nullptr;
-  this->_pPlaceholder = nullptr;
+  this->_loadingTileProvider.reset();
+  this->_pPlaceholder.reset();
 }
 
 RasterOverlayTileProvider* RasterOverlay::getTileProvider() noexcept {
-  return this->_pTileProvider ? this->_pTileProvider.get()
-                              : this->_pPlaceholder.get();
+  RasterOverlayTileProvider* pResult =
+      this->_loadingTileProvider && this->_loadingTileProvider->isReady()
+          ? this->_loadingTileProvider->wait().get()
+          : nullptr;
+  if (!pResult) {
+    pResult = this->_pPlaceholder.get();
+  }
+  return pResult;
 }
 
 const RasterOverlayTileProvider*
 RasterOverlay::getTileProvider() const noexcept {
-  return this->_pTileProvider ? this->_pTileProvider.get()
-                              : this->_pPlaceholder.get();
+  const RasterOverlayTileProvider* pResult =
+      this->_loadingTileProvider && this->_loadingTileProvider->isReady()
+          ? this->_loadingTileProvider->wait().get()
+          : nullptr;
+  if (!pResult) {
+    pResult = this->_pPlaceholder.get();
+  }
+  return pResult;
 }
 
-void RasterOverlay::loadTileProvider(
+CesiumAsync::SharedFuture<std::unique_ptr<RasterOverlayTileProvider>>
+RasterOverlay::loadTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger) {
 
-  if (this->_pPlaceholder) {
-    return;
+  if (this->_loadingTileProvider) {
+    return *this->_loadingTileProvider;
   }
 
   CESIUM_TRACE_BEGIN_IN_TRACK("createTileProvider");
@@ -74,31 +86,32 @@ void RasterOverlay::loadTileProvider(
       asyncSystem,
       pAssetAccessor);
 
-  this->_isLoadingTileProvider = true;
-
-  this->createTileProvider(
-          asyncSystem,
-          pAssetAccessor,
-          pCreditSystem,
-          pPrepareRendererResources,
-          pLogger,
-          this)
-      .thenInMainThread(
-          [this](
-              std::unique_ptr<RasterOverlayTileProvider>&& pProvider) noexcept {
-            this->_pTileProvider = std::move(pProvider);
-            this->_isLoadingTileProvider = false;
+  auto future =
+      this->createTileProvider(
+              asyncSystem,
+              pAssetAccessor,
+              pCreditSystem,
+              pPrepareRendererResources,
+              pLogger,
+              this)
+          .thenInMainThread([](std::unique_ptr<RasterOverlayTileProvider>&&
+                                   pProvider) noexcept {
             CESIUM_TRACE_END_IN_TRACK("createTileProvider");
+            return std::move(pProvider);
           })
-      .catchInMainThread([this, pLogger](const std::exception& e) {
-        SPDLOG_LOGGER_ERROR(
-            pLogger,
-            "Exception while creating tile provider: {0}",
-            e.what());
-        this->_pTileProvider.reset();
-        this->_isLoadingTileProvider = false;
-        CESIUM_TRACE_END_IN_TRACK("createTileProvider");
-      });
+          .catchInMainThread([pLogger](const std::exception& e) {
+            SPDLOG_LOGGER_ERROR(
+                pLogger,
+                "Exception while creating tile provider: {0}",
+                e.what());
+            CESIUM_TRACE_END_IN_TRACK("createTileProvider");
+            return std::unique_ptr<RasterOverlayTileProvider>();
+          })
+          .share();
+
+  this->_loadingTileProvider.emplace(std::move(future));
+
+  return *this->_loadingTileProvider;
 }
 
 void RasterOverlay::destroySafely(
@@ -112,7 +125,7 @@ void RasterOverlay::destroySafely(
   }
 
   // Check if it's safe to delete this object yet.
-  if (this->_isLoadingTileProvider) {
+  if (this->_loadingTileProvider && !this->_loadingTileProvider->isReady()) {
     // Loading, so it's not safe to unload yet.
     return;
   }

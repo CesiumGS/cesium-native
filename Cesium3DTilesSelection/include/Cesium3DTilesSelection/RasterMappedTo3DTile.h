@@ -3,6 +3,7 @@
 #include "RasterOverlayTile.h"
 
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
@@ -47,9 +48,12 @@ public:
    *
    * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the
    * geometry.
+   * @param textureCoordinateIndex The index of the texture coordinates to use
+   * with this mapped raster overlay.
    */
   RasterMappedTo3DTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile);
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
+      int32_t textureCoordinateIndex);
 
   /**
    * @brief Returns a {@link RasterOverlayTile} that is currently loading.
@@ -157,6 +161,47 @@ public:
    * @brief Detach the raster from the given tile.
    */
   void detachFromTile(Tile& tile) noexcept;
+
+  /**
+   * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
+   *
+   * @return If the mapped tile is already in the process of loading or it has
+   * already finished loading, this method does nothing and returns true. If too
+   * many loads are already in progress, this method does nothing and returns
+   * false. Otherwise, it begins the asynchronous process to load the tile and
+   * returns true.
+   */
+  bool loadThrottled() noexcept;
+
+  /**
+   * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.
+   *
+   * The returned mapping will be to a placeholder {@link RasterOverlayTile} if
+   * the overlay's tile provider is not yet ready (i.e. it's still a
+   * placeholder) or if the overlap between the tile and the raster overlay
+   * cannot yet be determined because the projected rectangle of the tile is not
+   * yet known.
+   *
+   * Returns a pointer to the created `RasterMappedTo3DTile` in the Tile's
+   * {@link Tile::getMappedRasterTiles} collection. Note that this pointer may
+   * become invalid as soon as another item is added to or removed from this
+   * collection.
+   *
+   * @param overlay The overlay to map to the tile.
+   * @param tile The tile to which to map the overlay.
+   * @param missingProjections The list of projections for which there are not
+   * yet any texture coordiantes. On return, the given overlay's Projection may
+   * be added to this collection if the Tile does not yet have texture
+   * coordinates for the Projection and the Projection is not already in the
+   * collection.
+   * @return A pointer the created mapping, which may be to a placeholder, or
+   * nullptr if no mapping was created at all because the Tile does not overlap
+   * the raster overlay.
+   */
+  static RasterMappedTo3DTile* mapOverlayToTile(
+      RasterOverlay& overlay,
+      Tile& tile,
+      std::vector<CesiumGeospatial::Projection>& missingProjections);
 
 private:
   void computeTranslationAndScale(const Tile& tile);

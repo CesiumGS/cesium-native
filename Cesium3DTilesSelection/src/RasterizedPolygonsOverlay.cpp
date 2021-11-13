@@ -13,19 +13,24 @@
 #include <memory>
 #include <string>
 
+using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 namespace {
 void rasterizePolygons(
-    CesiumGltf::ImageCesium& image,
+    LoadedRasterOverlayImage& loaded,
     const CesiumGeospatial::GlobeRectangle& rectangle,
+    const glm::dvec2& textureSize,
     const std::vector<CartographicPolygon>& cartographicPolygons) {
+
+  CesiumGltf::ImageCesium& image = loaded.image.emplace();
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
   if (Cesium3DTilesSelection::Impl::withinPolygons(
           rectangle,
           cartographicPolygons)) {
+    loaded.moreDetailAvailable = false;
     image.width = 1;
     image.height = 1;
     image.channels = 1;
@@ -51,6 +56,7 @@ void rasterizePolygons(
 
   // create a 1x1 mask if the rectangle is completely outside all polygons
   if (completelyOutsidePolygons) {
+    loaded.moreDetailAvailable = false;
     image.width = 1;
     image.height = 1;
     image.channels = 1;
@@ -64,11 +70,12 @@ void rasterizePolygons(
   const double rectangleHeight = rectangle.computeHeight();
 
   // create source image
-  image.width = 256;
-  image.height = 256;
+  loaded.moreDetailAvailable = true;
+  image.width = int32_t(glm::round(textureSize.x));
+  image.height = int32_t(glm::round(textureSize.y));
   image.channels = 1;
   image.bytesPerChannel = 1;
-  image.pixelData.resize(65536);
+  image.pixelData.resize(size_t(image.width * image.height));
 
   // TODO: this is naive approach, use line-triangle
   // intersections to rasterize one row at a time
@@ -106,13 +113,17 @@ void rasterizePolygons(
       const glm::dvec2 ca = a - c;
       const glm::dvec2 ca_perp(-ca.y, ca.x);
 
-      for (size_t j = 0; j < 256; ++j) {
+      size_t width = size_t(image.width);
+      size_t height = size_t(image.height);
+
+      for (size_t j = 0; j < height; ++j) {
         const double pixelY =
             rectangle.getSouth() +
-            rectangleHeight * (1.0 - (double(j) + 0.5) / 256.0);
-        for (size_t i = 0; i < 256; ++i) {
-          const double pixelX =
-              rectangle.getWest() + rectangleWidth * (double(i) + 0.5) / 256.0;
+            rectangleHeight * (1.0 - (double(j) + 0.5) / double(height));
+        for (size_t i = 0; i < width; ++i) {
+          const double pixelX = rectangle.getWest() + rectangleWidth *
+                                                          (double(i) + 0.5) /
+                                                          double(width);
           const glm::dvec2 v(pixelX, pixelY);
 
           const glm::dvec2 av = v - a;
@@ -127,13 +138,40 @@ void rasterizePolygons(
                v_proj_bc_perp >= 0.0) ||
               (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
                v_proj_bc_perp <= 0.0)) {
-            image.pixelData[256 * j + i] = static_cast<std::byte>(0xff);
+            image.pixelData[width * j + i] = static_cast<std::byte>(0xff);
           }
         }
       }
     }
   }
 }
+
+Rectangle computeCoverageRectangle(
+    const Projection& projection,
+    const std::vector<CartographicPolygon>& polygons) {
+  std::optional<GlobeRectangle> result;
+
+  for (const CartographicPolygon& polygon : polygons) {
+    std::optional<GlobeRectangle> maybeRectangle =
+        polygon.getBoundingRectangle();
+    if (!maybeRectangle) {
+      continue;
+    }
+
+    if (result) {
+      result = result->computeUnion(*maybeRectangle);
+    } else {
+      result = maybeRectangle;
+    }
+  }
+
+  if (result) {
+    return projectRectangleSimple(projection, *result);
+  } else {
+    return Rectangle(0.0, 0.0, 0.0, 0.0);
+  }
+}
+
 } // namespace
 
 class CESIUM3DTILESSELECTION_API RasterizedPolygonsTileProvider final
@@ -159,24 +197,33 @@ public:
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            projection),
+            projection,
+            computeCoverageRectangle(projection, polygons)),
         _polygons(polygons) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
+    // Choose the texture size according to the geometry screen size and raster
+    // SSE, but no larger than the maximum texture size.
+    const RasterOverlayOptions& options = this->getOwner().getOptions();
+    glm::dvec2 textureSize = glm::min(
+        overlayTile.getTargetScreenPixels() / options.maximumScreenSpaceError,
+        glm::dvec2(options.maximumTextureSize));
+
     return this->getAsyncSystem().runInWorkerThread(
         [&polygons = this->_polygons,
          projection = this->getProjection(),
-         rectangle = overlayTile.getRectangle()]() -> LoadedRasterOverlayImage {
+         rectangle = overlayTile.getRectangle(),
+         textureSize]() -> LoadedRasterOverlayImage {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
-          LoadedRasterOverlayImage resultImage;
-          resultImage.rectangle = rectangle;
-          CesiumGltf::ImageCesium image;
-          rasterizePolygons(image, tileRectangle, polygons);
-          resultImage.image = std::move(image);
-          return resultImage;
+          LoadedRasterOverlayImage result;
+          result.rectangle = rectangle;
+
+          rasterizePolygons(result, tileRectangle, textureSize, polygons);
+
+          return result;
         });
   }
 };
@@ -185,8 +232,9 @@ RasterizedPolygonsOverlay::RasterizedPolygonsOverlay(
     const std::string& name,
     const std::vector<CartographicPolygon>& polygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const CesiumGeospatial::Projection& projection)
-    : RasterOverlay(name),
+    const CesiumGeospatial::Projection& projection,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
       _polygons(polygons),
       _ellipsoid(ellipsoid),
       _projection(projection) {}

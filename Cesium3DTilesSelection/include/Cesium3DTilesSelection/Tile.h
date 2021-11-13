@@ -300,6 +300,22 @@ public:
   }
 
   /**
+   * @brief Gets the tile's geometric error as if by calling
+   * {@link getGeometricError}, except that if the error is smaller than
+   * {@link Math::EPSILON5} the returned geometric error is instead computed as
+   * half of the parent tile's (non-zero) geometric error.
+   *
+   * This is useful for determining when to refine what would ordinarily be a
+   * leaf tile, for example to attach more detailed raster overlays to it.
+   *
+   * If this tile and all of its ancestors have a geometric error less than
+   * {@link Math::EPSILON5}, returns {@link Math::EPSILON5}.
+   *
+   * @return The non-zero geometric error.
+   */
+  double getNonZeroGeometricError() const noexcept;
+
+  /**
    * @brief Returns whether to unconditionally refine this tile.
    *
    * This is useful in cases such as with external tilesets, where instead of a
@@ -583,39 +599,12 @@ private:
   void setState(LoadState value) noexcept;
 
   /**
-   * @brief Generates texture coordiantes for the raster overlays of the content
-   * of this tile.
-   *
-   * This will extend the accessors of the glTF model of the content of this
-   * tile with accessors that contain the texture coordinate sets for different
-   * projections. Further details are not specified here.
-   *
-   * @return The bounding region
-   */
-  static std::optional<CesiumGeospatial::BoundingRegion>
-  generateTextureCoordinates(
-      CesiumGltf::Model& model,
-      const glm::dmat4& transform,
-      const BoundingVolume& boundingVolume,
-      const std::vector<CesiumGeospatial::Projection>& projections);
-
-  /**
    * @brief Upsample the parent of this tile.
    *
    * This method should only be called when this tile's parent is already
    * loaded.
    */
   void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
-
-  /**
-   * @brief Initiates loading of any overlays attached to this tile.
-   *
-   * This method should only be called when the tile is in the ContentLoading
-   * state and _rasterTiles is empty.
-   *
-   * @param projections On return the set of projections used by the overlays.
-   */
-  void loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;

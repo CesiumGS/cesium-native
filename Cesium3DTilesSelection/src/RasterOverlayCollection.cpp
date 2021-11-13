@@ -5,6 +5,7 @@
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
@@ -25,6 +26,7 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
 
   RasterOverlay* pOverlayRaw = pOverlay.get();
   this->_overlays.push_back(std::move(pOverlay));
+
   pOverlayRaw->loadTileProvider(
       this->_pTileset->getAsyncSystem(),
       this->_pTileset->getExternals().pAssetAccessor,
@@ -37,7 +39,8 @@ void RasterOverlayCollection::add(std::unique_ptr<RasterOverlay>&& pOverlay) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     if (tile.getState() != Tile::LoadState::Unloaded) {
       tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
-          pOverlayRaw->getPlaceholder()->getTile(Rectangle(), 0.0)));
+          pOverlayRaw->getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0)),
+          -1));
     }
   });
 }

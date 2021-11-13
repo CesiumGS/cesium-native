@@ -699,6 +699,9 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
     for (auto&& pNewContext : newContexts) {
       pContext->pTileset->addContext(std::move(pNewContext));
     }
+
+    supportsRasterOverlays = true;
+    
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
@@ -1465,7 +1468,8 @@ static void markTileAndChildrenNonRendered(
  * @param viewState The {@link ViewState}
  * @param boundingVolume The bounding volume of the tile
  * @param forceRenderTilesUnderCamera Whether tiles under the camera should
- * always be rendered (see {@link Cesium3DTilesSelection::TilesetOptions})
+ * always be considered visible and rendered (see
+ * {@link Cesium3DTilesSelection::TilesetOptions}).
  * @return Whether the tile is visible according to the current camera
  * configuration
  */
@@ -1486,10 +1490,10 @@ static bool isVisibleFromCamera(
   // TODO: it would be better to test a line pointing down (and up?) from the
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&boundingVolume);
-  if (position && pRectangle) {
-    return pRectangle->contains(position.value());
+  std::optional<GlobeRectangle> maybeRectangle =
+      estimateGlobeRectangle(boundingVolume);
+  if (position && maybeRectangle) {
+    return maybeRectangle->contains(position.value());
   }
   return false;
 }

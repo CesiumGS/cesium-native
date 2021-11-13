@@ -147,6 +147,8 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param coverageRectangle The rectangle that bounds all the area covered by
+   * this overlay, expressed in projected coordinates.
    */
   RasterOverlayTileProvider(
       RasterOverlay& owner,
@@ -156,7 +158,8 @@ public:
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection) noexcept;
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
   /** @brief Default destructor. */
   virtual ~RasterOverlayTileProvider() {}
@@ -230,6 +233,14 @@ public:
   }
 
   /**
+   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
+   * instance.
+   */
+  const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept {
+    return this->_coverageRectangle;
+  }
+
+  /**
    * @brief Returns a new {@link RasterOverlayTile} with the given
    * specifications.
    *
@@ -241,16 +252,16 @@ public:
    * allowed to cover a slightly larger rectangle in order to maintain pixel
    * alignment. It may also cover a smaller rectangle when the overlay itself
    * does not cover the entire rectangle.
-   * @param targetGeometricError The geometric error (in meters) of the
-   * geometry tile to which the returned raster overlay tile will be attached.
-   * With the typical settings, this raster overlay will be shown when the
-   * geometric error, when projected to the screen, is up to 16 pixels. When the
-   * error is more than 16 pixels, more detailed data will be shown instead.
+   * @param targetScreenPixels The maximum number of pixels on the screen that
+   * this tile is meant to cover. The overlay image should be approximately this
+   * many pixels divided by the
+   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
+   * the desired level-of-detail, but it does not need to be exactly this size.
    * @return The tile.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
       const CesiumGeometry::Rectangle& rectangle,
-      double targetGeometricError);
+      const glm::dvec2& targetScreenPixels);
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.
@@ -378,6 +389,7 @@ private:
   std::shared_ptr<IPrepareRendererResources> _pPrepareRendererResources;
   std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
+  CesiumGeometry::Rectangle _coverageRectangle;
   std::unique_ptr<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
