@@ -8,7 +8,7 @@
             "overrideName": "CesiumUtility::ExtensibleObject"
         },
         "glTF Child of Root Property": {
-            "overrideName": "NamedObject"
+            "overrideName": "CesiumGltf::NamedObject"
         },
         "Buffer": {
             "toBeInherited": true

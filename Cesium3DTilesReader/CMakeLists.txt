@@ -8,17 +8,20 @@ else()
 endif()
 
 cesium_glob_files(CESIUM_3DTILES_READER_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
-    ${GENERATED_DIRECTORY}/Cesium3DTiles/*.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.cpp
+    ${GENERATED_DIRECTORY}/src/Cesium3DTilesReader/*.cpp
 )
 cesium_glob_files(CESIUM_3DTILES_READER_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/*.hpp
-    ${GENERATED_DIRECTORY}/Cesium3DTiles/*.h
-    ${GENERATED_DIRECTORY}/Cesium3DTiles/*.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTilesReader/*.hpp
+    ${GENERATED_DIRECTORY}/src/Cesium3DTilesReader/*.h
+    ${GENERATED_DIRECTORY}/src/Cesium3DTilesReader/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_READER_PUBLIC_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.h  # Correct is Cesium3DTiles not Cesium3DTilesReader
+    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesReader/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTilesReader/*.hpp
+    ${GENERATED_DIRECTORY}/include/Cesium3DTilesReader/*.h
+    ${GENERATED_DIRECTORY}/include/Cesium3DTilesReader/*.hpp
 )
 cesium_glob_files(CESIUM_3DTILES_READER_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
@@ -52,9 +55,10 @@ target_include_directories(
     Cesium3DTilesReader
     SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
+        ${GENERATED_DIRECTORY}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${GENERATED_DIRECTORY}
+        ${GENERATED_DIRECTORY}/src
 )
 
 target_link_libraries(Cesium3DTilesReader

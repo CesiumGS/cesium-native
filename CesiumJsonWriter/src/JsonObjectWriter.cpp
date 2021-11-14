@@ -8,19 +8,21 @@
 #include <stack>
 #include <utility>
 
-using namespace CesiumJsonWriter;
-using namespace CesiumUtility;
-using namespace rapidjson;
-
-void primitiveWriter(const JsonValue& item, CesiumJsonWriter::JsonWriter& j);
+namespace CesiumJsonWriter {
+namespace {
+void primitiveWriter(
+    const CesiumUtility::JsonValue& item,
+    CesiumJsonWriter::JsonWriter& j);
 void recursiveArrayWriter(
-    const JsonValue::Array& array,
+    const CesiumUtility::JsonValue::Array& array,
     CesiumJsonWriter::JsonWriter& j);
 void recursiveObjectWriter(
-    const JsonValue::Object& object,
+    const CesiumUtility::JsonValue::Object& object,
     CesiumJsonWriter::JsonWriter& j);
 
-void primitiveWriter(const JsonValue& item, CesiumJsonWriter::JsonWriter& j) {
+void primitiveWriter(
+    const CesiumUtility::JsonValue& item,
+    CesiumJsonWriter::JsonWriter& j) {
   if (item.isBool()) {
     j.Bool(item.getBool());
   }
@@ -47,7 +49,7 @@ void primitiveWriter(const JsonValue& item, CesiumJsonWriter::JsonWriter& j) {
 }
 
 void recursiveArrayWriter(
-    const JsonValue::Array& array,
+    const CesiumUtility::JsonValue::Array& array,
     CesiumJsonWriter::JsonWriter& j) {
   j.StartArray();
   for (const auto& item : array) {
@@ -67,7 +69,7 @@ void recursiveArrayWriter(
 }
 
 void recursiveObjectWriter(
-    const JsonValue::Object& object,
+    const CesiumUtility::JsonValue::Object& object,
     CesiumJsonWriter::JsonWriter& j) {
 
   j.StartObject();
@@ -75,11 +77,15 @@ void recursiveObjectWriter(
   for (const auto& [key, item] : object) {
     j.Key(key);
     if (item.isArray()) {
-      recursiveArrayWriter(std::get<JsonValue::Array>(item.value), j);
+      recursiveArrayWriter(
+          std::get<CesiumUtility::JsonValue::Array>(item.value),
+          j);
     }
 
     if (item.isObject()) {
-      recursiveObjectWriter(std::get<JsonValue::Object>(item.value), j);
+      recursiveObjectWriter(
+          std::get<CesiumUtility::JsonValue::Object>(item.value),
+          j);
     }
 
     else {
@@ -89,16 +95,22 @@ void recursiveObjectWriter(
 
   j.EndObject();
 }
+} // namespace
 
-void CesiumJsonWriter::writeJsonValue(
-    const JsonValue& value,
-    CesiumJsonWriter::JsonWriter& jsonWriter) {
+void writeJsonValue(
+    const CesiumUtility::JsonValue& value,
+    JsonWriter& jsonWriter) {
 
   if (value.isArray()) {
-    recursiveArrayWriter(std::get<JsonValue::Array>(value.value), jsonWriter);
+    recursiveArrayWriter(
+        std::get<CesiumUtility::JsonValue::Array>(value.value),
+        jsonWriter);
   } else if (value.isObject()) {
-    recursiveObjectWriter(std::get<JsonValue::Object>(value.value), jsonWriter);
+    recursiveObjectWriter(
+        std::get<CesiumUtility::JsonValue::Object>(value.value),
+        jsonWriter);
   } else {
     primitiveWriter(value, jsonWriter);
   }
 }
+} // namespace CesiumJsonWriter

@@ -16,7 +16,7 @@
 
 namespace Cesium3DTilesSelection {
 
-/*static*/ CesiumGltf::GltfReader GltfContent::_gltfReader{};
+/*static*/ CesiumGltfReader::GltfReader GltfContent::_gltfReader{};
 
 CesiumAsync::Future<std::unique_ptr<TileContentLoadResult>>
 GltfContent::load(const TileContentLoadInput& input) {
@@ -34,7 +34,7 @@ GltfContent::load(const TileContentLoadInput& input) {
   std::unique_ptr<TileContentLoadResult> pResult =
       std::make_unique<TileContentLoadResult>();
 
-  CesiumGltf::ModelReaderResult loadedModel =
+  CesiumGltfReader::ModelReaderResult loadedModel =
       GltfContent::_gltfReader.readModel(data);
   if (!loadedModel.errors.empty()) {
     SPDLOG_LOGGER_ERROR(

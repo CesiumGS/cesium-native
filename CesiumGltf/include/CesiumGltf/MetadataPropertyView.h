@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MetadataArrayView.h"
-#include "PropertyType.h"
-#include "PropertyTypeTraits.h"
+#include "CesiumGltf/MetadataArrayView.h"
+#include "CesiumGltf/PropertyType.h"
+#include "CesiumGltf/PropertyTypeTraits.h"
 
 #include <gsl/span>
 

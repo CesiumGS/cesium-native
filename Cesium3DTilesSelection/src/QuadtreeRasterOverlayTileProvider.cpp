@@ -3,13 +3,14 @@
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumGltf/ImageManipulation.h>
+#include <CesiumGltfReader/ImageManipulation.h>
 #include <CesiumUtility/Math.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
 namespace {

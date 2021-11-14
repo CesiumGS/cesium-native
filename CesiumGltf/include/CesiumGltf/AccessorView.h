@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Model.h"
+#include "CesiumGltf/Model.h"
 
 #include <cstddef>
 #include <stdexcept>

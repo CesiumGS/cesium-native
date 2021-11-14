@@ -8,7 +8,7 @@
 #include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGltf/GltfReader.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -16,11 +16,12 @@ using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
-/*static*/ CesiumGltf::GltfReader RasterOverlayTileProvider::_gltfReader{};
+/*static*/ GltfReader RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     RasterOverlay& owner,
@@ -168,7 +169,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             const gsl::span<const std::byte> data = pResponse->data();
 
-            CesiumGltf::ImageReaderResult loadedImage =
+            ImageReaderResult loadedImage =
                 RasterOverlayTileProvider::_gltfReader.readImage(data);
 
             if (!loadedImage.errors.empty()) {

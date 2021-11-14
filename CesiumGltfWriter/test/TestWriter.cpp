@@ -1,6 +1,7 @@
-#include "CesiumGltf/GltfReader.h"
-#include "CesiumGltf/WriteModelOptions.h"
-#include "CesiumGltf/Writer.h"
+#include "CesiumGltfReader/GltfReader.h"
+#include "CesiumGltfWriter/WriteModelOptions.h"
+#include "CesiumGltfWriter/WriteModelResult.h"
+#include "CesiumGltfWriter/Writer.h"
 
 #include <CesiumGltf/AccessorSparseIndices.h>
 #include <CesiumGltf/Buffer.h>
@@ -18,6 +19,8 @@
 #include <string>
 
 using namespace CesiumGltf;
+using namespace CesiumGltfWriter;
+using namespace CesiumGltfReader;
 
 // indices followed by positional data
 // 3 ushorts, 2 padding bytes, then 9 floats
@@ -100,13 +103,13 @@ Model generateTriangleModel() {
 TEST_CASE(
     "Generates glTF asset with required top level property `asset`",
     "[GltfWriter]") {
-  CesiumGltf::Model m;
+  Model m;
   m.asset.version = "2.0";
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  WriteModelOptions options;
+  options.exportType = GltfExportType::GLTF;
 
-  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto writeResult = writeModelAsEmbeddedBytes(m, options);
   const auto asBytes = writeResult.gltfAssetBytes;
   const auto expectedString = "{\"asset\":{\"version\":\"2.0\"}}";
   const std::string asString(
@@ -118,13 +121,13 @@ TEST_CASE(
 TEST_CASE(
     "Generates glb asset with required top level property `asset`",
     "[GltfWriter]") {
-  CesiumGltf::Model m;
+  Model m;
   m.asset.version = "2.0";
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  WriteModelOptions options;
+  options.exportType = GltfExportType::GLB;
 
-  const auto writeResult = CesiumGltf::writeModelAsEmbeddedBytes(m, options);
+  const auto writeResult = writeModelAsEmbeddedBytes(m, options);
   REQUIRE(writeResult.errors.empty());
   REQUIRE(writeResult.warnings.empty());
 
@@ -166,7 +169,7 @@ TEST_CASE(
 
 TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
   const auto validateStructure = [](const std::vector<std::byte>& gltfAsset) {
-    CesiumGltf::GltfReader reader;
+    GltfReader reader;
     auto loadedModelResult = reader.readModel(gsl::span(gltfAsset));
     REQUIRE(loadedModelResult.model.has_value());
     auto& loadedModel = loadedModelResult.model;
@@ -179,7 +182,7 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
     REQUIRE(accessors[0].byteOffset == 0);
     REQUIRE(
         accessors[0].componentType ==
-        CesiumGltf::AccessorSpec::ComponentType::UNSIGNED_SHORT);
+        AccessorSpec::ComponentType::UNSIGNED_SHORT);
     REQUIRE(accessors[0].count == 3);
     REQUIRE(accessors[0].min == std::vector<double>{0.0});
     REQUIRE(accessors[0].max == std::vector<double>{2.0});
@@ -187,9 +190,7 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
     // Triangle Positions
     REQUIRE(accessors[1].bufferView == 1);
     REQUIRE(accessors[1].byteOffset == 0);
-    REQUIRE(
-        accessors[1].componentType ==
-        CesiumGltf::AccessorSpec::ComponentType::FLOAT);
+    REQUIRE(accessors[1].componentType == AccessorSpec::ComponentType::FLOAT);
     REQUIRE(accessors[1].count == 3);
     REQUIRE(accessors[1].min == std::vector<double>{0.0, 0.0, 0.0});
     REQUIRE(accessors[1].max == std::vector<double>{1.0, 1.0, 0.0});
@@ -214,10 +215,9 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
     REQUIRE(indicesBufferView.buffer == 0);
     REQUIRE(indicesBufferView.byteOffset == 0);
     REQUIRE(indicesBufferView.byteLength == 6);
-    REQUIRE(
-        (indicesBufferView.target.has_value() &&
-         *indicesBufferView.target ==
-             CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER));
+    REQUIRE((
+        indicesBufferView.target.has_value() &&
+        *indicesBufferView.target == BufferView::Target::ELEMENT_ARRAY_BUFFER));
 
     const auto positionBufferView = bufferViews.at(1);
     REQUIRE(positionBufferView.buffer == 0);
@@ -225,8 +225,7 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
     REQUIRE(positionBufferView.byteLength == 36);
     REQUIRE(
         (positionBufferView.target.has_value() &&
-         *positionBufferView.target ==
-             CesiumGltf::BufferView::Target::ARRAY_BUFFER));
+         *positionBufferView.target == BufferView::Target::ARRAY_BUFFER));
 
     // Meshes
     const auto meshes = loadedModel->meshes;
@@ -254,20 +253,18 @@ TEST_CASE("Basic triangle is serialized to embedded glTF 2.0", "[GltfWriter]") {
 
   const auto model = generateTriangleModel();
 
-  CesiumGltf::WriteModelOptions options;
-  options.exportType = CesiumGltf::GltfExportType::GLTF;
+  WriteModelOptions options;
+  options.exportType = GltfExportType::GLTF;
   options.autoConvertDataToBase64 = true;
 
-  const auto writeResultGltf =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+  const auto writeResultGltf = writeModelAsEmbeddedBytes(model, options);
   REQUIRE(writeResultGltf.errors.empty());
   REQUIRE(writeResultGltf.warnings.empty());
   validateStructure(writeResultGltf.gltfAssetBytes);
 
-  options.exportType = CesiumGltf::GltfExportType::GLB;
+  options.exportType = GltfExportType::GLB;
   options.autoConvertDataToBase64 = false;
-  const auto writeResultGlb =
-      CesiumGltf::writeModelAsEmbeddedBytes(model, options);
+  const auto writeResultGlb = writeModelAsEmbeddedBytes(model, options);
   REQUIRE(writeResultGlb.errors.empty());
   REQUIRE(writeResultGlb.warnings.empty());
   validateStructure(writeResultGlb.gltfAssetBytes);

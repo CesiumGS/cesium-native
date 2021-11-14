@@ -5,15 +5,15 @@
 
 #include <CesiumUtility/JsonValue.h>
 
-using namespace CesiumJsonWriter;
-using namespace CesiumUtility;
-
+namespace CesiumJsonWriter {
 namespace {
 void objWriter(
     const std::any& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& /* context */) {
-  writeJsonValue(std::any_cast<const JsonValue&>(obj), jsonWriter);
+  writeJsonValue(
+      std::any_cast<const CesiumUtility::JsonValue&>(obj),
+      jsonWriter);
 }
 } // namespace
 
@@ -45,3 +45,4 @@ ExtensionWriterContext::createExtensionHandler(
 
   return objectTypeIt->second;
 }
+} // namespace CesiumJsonWriter

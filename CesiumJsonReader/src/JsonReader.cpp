@@ -4,8 +4,7 @@
 
 #include <cassert>
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 namespace {
 
 struct Dispatcher {
@@ -141,7 +140,8 @@ void JsonReader::FinalJsonHandler::setInputStream(
 
   bool success = true;
   while (success && !reader.IterativeParseComplete()) {
-    success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(
+    success = reader.IterativeParseNext<
+        rapidjson::kParseDefaultFlags | rapidjson::kParseFullPrecisionFlag>(
         inputStream,
         dispatcher);
   }
@@ -154,3 +154,4 @@ void JsonReader::FinalJsonHandler::setInputStream(
     errors.emplace_back(std::move(s));
   }
 }
+} // namespace CesiumJsonReader

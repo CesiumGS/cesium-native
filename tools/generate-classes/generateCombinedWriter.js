@@ -5,7 +5,7 @@ const getNameFromSchema = require("./getNameFromSchema");
 const unindent = require("./unindent");
 
 function generateCombinedWriter(options) {
-  const { writerOutputDir, config, namespace, rootSchema, writers, extensions } = options;
+  const { writerOutputDir, config, namespace, writerNamespace, rootSchema, writers, extensions } = options;
 
   const name = getNameFromSchema(config, rootSchema);
 
@@ -15,12 +15,12 @@ function generateCombinedWriter(options) {
         #pragma once
 
         // forward declarations
-
         namespace CesiumJsonWriter {
           class JsonWriter;
           class ExtensionWriterContext;
         } // namespace CesiumJsonWriter
 
+        // forward declarations
         namespace ${namespace} {
           ${writers
             .map((writer) => {
@@ -29,17 +29,13 @@ function generateCombinedWriter(options) {
             .join("\n")}
         } // namespace ${namespace}
 
-        namespace ${namespace} {
-
-          void populateTilesetExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
-          
+        namespace ${writerNamespace} {          
           ${writers
             .map((writer) => {
               return writer.writeDeclaration;
             })
             .join("\n")}
-        
-        } // namespace ${namespace}
+        } // namespace ${writerNamespace}
   `;
 
   const implementation = `
@@ -58,11 +54,8 @@ function generateCombinedWriter(options) {
             return writer.writeInclude;
           })
           .join("\n")}
-
-        using namespace CesiumJsonWriter;
-        using namespace CesiumUtility;
         
-        namespace ${namespace} {
+        namespace ${writerNamespace} {
         
         namespace {
         
@@ -74,36 +67,36 @@ function generateCombinedWriter(options) {
         
         [[maybe_unused]] void writeJson(
             const std::string& str,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& /* context */) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
           jsonWriter.String(str);
         }
         
         [[maybe_unused]] void writeJson(
             double val,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& /* context */) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
           jsonWriter.Double(val);
         }
         
         [[maybe_unused]] void writeJson(
             bool val,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& /* context */) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
           jsonWriter.Bool(val);
         }
         
         [[maybe_unused]] void writeJson(
             int64_t val,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& /* context */) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
           jsonWriter.Int64(val);
         }
         
         [[maybe_unused]] void writeJson(
-            const JsonValue::Object& obj,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& /* context */) {
+            const CesiumUtility::JsonValue::Object& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
           jsonWriter.StartObject();
           for (const auto& item : obj) {
             jsonWriter.Key(item.first);
@@ -115,8 +108,8 @@ function generateCombinedWriter(options) {
         template <typename T>
         [[maybe_unused]] void writeJson(
             const std::vector<T>& list,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& context) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
           jsonWriter.StartArray();
           for (const T& item : list) {
             writeJson(item, jsonWriter, context);
@@ -127,8 +120,8 @@ function generateCombinedWriter(options) {
         template <typename T>
         [[maybe_unused]] void writeJson(
             const std::optional<T>& val,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& context) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
           if (val.has_value()) {
             writeJson(*val, jsonWriter, context);
           } else {
@@ -139,8 +132,8 @@ function generateCombinedWriter(options) {
         template <typename T>
         [[maybe_unused]] void writeJson(
             const std::map<std::string, T>& obj,
-            JsonWriter& jsonWriter,
-            const ExtensionWriterContext& context) {
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
           jsonWriter.StartObject();
           for (const auto& item : obj) {
             jsonWriter.Key(item.first);
@@ -155,16 +148,7 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
 
-        } // namespace
-
-        void populateTilesetExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
-          ${extensions['Tileset']
-            .map((extension) => {
-              return `context.registerExtension<Tileset, ${extension.className}Writer>();`
-            })
-            .join("\n")}
-        }
-
+        } // namespace ${writerNamespace}
 
         ${writers
           .map((writer) => {
@@ -172,11 +156,11 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
         
-        } // namespace ${namespace}
+        } // namespace ${writerNamespace}
   
   `;
 
-  const writerHeaderOutputDir = path.join(writerOutputDir, "generated", namespace);
+  const writerHeaderOutputDir = path.join(writerOutputDir, "generated", "src", writerNamespace);
   fs.mkdirSync(writerHeaderOutputDir, { recursive: true });
 
   const headerOutputPath = path.join(writerHeaderOutputDir, `${name}Writer.h`);

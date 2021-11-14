@@ -4,8 +4,7 @@
 
 #include <cassert>
 
-using namespace CesiumJsonReader;
-
+namespace CesiumJsonReader {
 BoolJsonHandler::BoolJsonHandler() noexcept : JsonHandler() {}
 
 void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
@@ -18,3 +17,4 @@ IJsonHandler* BoolJsonHandler::readBool(bool b) {
   *this->_pBool = b;
   return this->parent();
 }
+} // namespace CesiumJsonReader

@@ -12,7 +12,9 @@ function resolveProperty(
   propertyName,
   propertyDetails,
   required,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   if (Object.keys(propertyDetails).length === 0) {
     // Ignore totally empty properties. The glTF and 3D Tiles JSON schema files often use empty properties in derived classes
@@ -36,7 +38,9 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       required,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
   } else if (propertyDetails.type == "integer") {
     return {
@@ -89,7 +93,9 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       required,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
   } else if (isEnum(propertyDetails)) {
     return resolveEnum(
@@ -100,7 +106,9 @@ function resolveProperty(
       cppSafeName,
       propertyDetails,
       makeOptional,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
   } else if (propertyDetails.$ref) {
     const itemSchema = schemaCache.load(propertyDetails.$ref);
@@ -115,14 +123,12 @@ function resolveProperty(
       };
     } else {
       const type = getNameFromSchema(config, itemSchema);
-      const typeName = getNameFromSchema(config, itemSchema);
-
       return {
         ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
-        type: makeOptional ? `std::optional<${typeName}>` : typeName,
-        headers: [`"${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
+        type: makeOptional ? `std::optional<${namespace}::${type}>` : `${namespace}::${type}`,
+        headers: [`"${namespace}/${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
         readerType: `${type}JsonHandler`,
-        readerHeaders: [`"${type}JsonHandler.h"`],
+        readerHeaders: [`"${readerNamespace}/${type}JsonHandler.h"`],
         schemas: [itemSchema],
       };
     }
@@ -134,7 +140,9 @@ function resolveProperty(
       propertyName,
       propertyDetails.allOf[0],
       required,
-      namespace
+      namespace,
+      readerNamespace,
+      writerNamespace
     );
 
     return {
@@ -201,7 +209,9 @@ function resolveArray(
   cppSafeName,
   propertyDetails,
   required,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   // If there is no items definition, pass an effectively empty object.
   // But if the definition is _actually_ empty, the property will be ignored
@@ -214,7 +224,9 @@ function resolveArray(
     propertyName + ".items",
     propertyDetails.items || { notEmpty: true },
     undefined,
-    namespace
+    namespace,
+    readerNamespace,
+    writerNamespace
   );
 
   if (!itemProperty) {
@@ -247,7 +259,9 @@ function resolveDictionary(
   cppSafeName,
   propertyDetails,
   required,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   const additional = resolveProperty(
     schemaCache,
@@ -257,8 +271,10 @@ function resolveDictionary(
     propertyDetails.additionalProperties,
     // Treat the nested property type as required so it's not wrapped in std::optional.
     [propertyName + ".additionalProperties"],
-    namespace
-  );
+    namespace,
+    readerNamespace,
+    writerNamespace
+);
 
   if (!additional) {
     return undefined;
@@ -342,7 +358,9 @@ function resolveEnum(
   cppSafeName,
   propertyDetails,
   makeOptional,
-  namespace
+  namespace,
+  readerNamespace,
+  writerNamespace
 ) {
   if (!isEnum(propertyDetails)) {
     return undefined;

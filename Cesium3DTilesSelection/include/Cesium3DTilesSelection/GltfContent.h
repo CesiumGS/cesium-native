@@ -7,7 +7,7 @@
 #include "TileID.h"
 #include "TileRefine.h"
 
-#include <CesiumGltf/GltfReader.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 #include <glm/mat4x4.hpp>
 #include <gsl/span>
@@ -88,7 +88,7 @@ public:
       const CesiumGeometry::Rectangle& rectangle);
 
 private:
-  static CesiumGltf::GltfReader _gltfReader;
+  static CesiumGltfReader::GltfReader _gltfReader;
 };
 
 } // namespace Cesium3DTilesSelection

@@ -1,12 +1,9 @@
-#include "Cesium3DTiles/Cesium3DTilesWriter.h"
+#include "Cesium3DTilesWriter/Cesium3DTilesWriter.h"
 
 #include <Cesium3DTiles/Extension3dTilesContentGltf.h>
-#include <Cesium3DTiles/TilesetReader.h>
+#include <Cesium3DTilesReader/TilesetReader.h>
 
 #include <catch2/catch.hpp>
-
-using namespace Cesium3DTiles;
-using namespace CesiumUtility;
 
 namespace {
 std::string removeWhitespace(const std::string& s) {
@@ -17,18 +14,20 @@ std::string removeWhitespace(const std::string& s) {
   return compact;
 }
 void check(const std::string& input, const std::string& expectedOutput) {
-  Cesium3DTiles::TilesetReader reader;
-  TilesetReaderResult readResult = reader.readTileset(gsl::span(
-      reinterpret_cast<const std::byte*>(input.c_str()),
-      input.size()));
+  Cesium3DTilesReader::TilesetReader reader;
+  Cesium3DTilesReader::TilesetReaderResult readResult =
+      reader.readTileset(gsl::span(
+          reinterpret_cast<const std::byte*>(input.c_str()),
+          input.size()));
   REQUIRE(readResult.errors.empty());
   REQUIRE(readResult.warnings.empty());
   REQUIRE(readResult.tileset.has_value());
 
-  Tileset& tileset = readResult.tileset.value();
+  Cesium3DTiles::Tileset& tileset = readResult.tileset.value();
 
-  Cesium3DTilesWriter writer;
-  TilesetWriterResult writeResult = writer.writeTileset(tileset);
+  Cesium3DTilesWriter::Cesium3DTilesWriter writer;
+  Cesium3DTilesWriter::TilesetWriterResult writeResult =
+      writer.writeTileset(tileset);
   const auto asBytes = writeResult.tilesetBytes;
 
   REQUIRE(writeResult.errors.empty());

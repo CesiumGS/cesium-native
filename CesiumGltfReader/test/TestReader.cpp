@@ -1,4 +1,4 @@
-#include "CesiumGltf/GltfReader.h"
+#include "CesiumGltfReader/GltfReader.h"
 
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
@@ -13,6 +13,7 @@
 #include <string>
 
 using namespace CesiumGltf;
+using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
 namespace {
@@ -75,7 +76,7 @@ TEST_CASE("CesiumGltf::GltfReader") {
     }
   )";
 
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   CHECK(result.errors.empty());
@@ -111,7 +112,7 @@ TEST_CASE("Read TriangleWithoutIndices") {
   gltfFile /=
       "TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf";
   std::vector<std::byte> data = readFile(gltfFile);
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
 
@@ -132,7 +133,7 @@ TEST_CASE("Read BoxTexturedWebp (with error messages)") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /= "BoxTexturedWebp/glTF/BoxTexturedWebp.gltf";
   std::vector<std::byte> data = readFile(gltfFile);
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult result = reader.readModel(data);
   REQUIRE(result.model);
   REQUIRE(result.warnings.empty());
@@ -158,7 +159,7 @@ TEST_CASE("Nested extras deserializes properly") {
     }
   )";
 
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult result = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
@@ -208,7 +209,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   )";
 
   ReadModelOptions options;
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult modelResult = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
@@ -308,7 +309,7 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   )";
 
   ReadModelOptions options;
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult withCustomExtModel = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
@@ -363,7 +364,7 @@ TEST_CASE("Unknown MIME types are handled") {
   )";
 
   ReadModelOptions options;
-  CesiumGltf::GltfReader reader;
+  GltfReader reader;
   ModelReaderResult modelResult = reader.readModel(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);

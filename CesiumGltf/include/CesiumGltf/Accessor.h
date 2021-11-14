@@ -1,12 +1,16 @@
 #pragma once
 
-#include "AccessorSpec.h"
-#include "Library.h"
+#include "CesiumGltf/AccessorSpec.h"
+#include "CesiumGltf/Library.h"
 
 #include <cstdint>
 
+// forward declarations
 namespace CesiumGltf {
 struct Model;
+}
+
+namespace CesiumGltf {
 
 /** @copydoc AccessorSpec */
 struct CESIUMGLTF_API Accessor final : public AccessorSpec {

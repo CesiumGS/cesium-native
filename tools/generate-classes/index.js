@@ -43,7 +43,17 @@ const argv = yargs.options({
     type: "string",
   },
   namespace: {
-    description: "Namespace to put the generated classes/methods in.",
+    description: "Namespace to put the generated classes in.",
+    demandOption: true,
+    type: "string",
+  },
+  readerNamespace: {
+    description: "Namespace to put the generated reader methods in.",
+    demandOption: true,
+    type: "string",
+  },
+  writerNamespace: {
+    description: "Namespace to put the generated writer methods in.",
     demandOption: true,
     type: "string",
   },
@@ -62,7 +72,7 @@ const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
 if (argv.oneHandlerFile) {
   // Clear the handler implementation file, and then we'll append to it in `generate`.
-  const readerHeaderOutputDir = path.join(argv.readerOutput, "generated");
+  const readerHeaderOutputDir = path.join(argv.readerOutput, "generated", "src", argv.readerNamespace);
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
   const readerSourceOutputPath = path.join(
     readerHeaderOutputDir,
@@ -78,6 +88,8 @@ const options = {
   readerOutputDir: argv.readerOutput,
   config: config,
   namespace: argv.namespace,
+  readerNamespace: argv.readerNamespace,
+  writerNamespace: argv.writerNamespace,
   // key: Title of the element name that is extended (e.g. "Mesh Primitive")
   // value: Array of extension type names.
   extensions: {},
@@ -143,6 +155,7 @@ const writerOptions = {
   writerOutputDir: argv.writerOutput,
   config: config,
   namespace: argv.namespace,
+  writerNamespace: argv.writerNamespace,
   rootSchema: rootSchema,
   writers: writers,
   extensions: options.extensions

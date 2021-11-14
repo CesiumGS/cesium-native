@@ -1,12 +1,34 @@
 add_library(CesiumGltfWriter "")
-
 configure_cesium_library(CesiumGltfWriter)
 
-cesium_glob_files(CESIUM_GLTF_WRITER_SOURCES src/*.cpp)
-cesium_glob_files(CESIUM_GLTF_WRITER_HEADERS src/*.h src/*.hpp)
-cesium_glob_files(CESIUM_GLTF_WRITER_PUBLIC_HEADERS include/CesiumGltf/*.h)
-cesium_glob_files(CESIUM_GLTF_WRITER_TEST_SOURCES test/*.cpp)
-cesium_glob_files(CESIUM_GLTF_WRITER_TEST_HEADERS test/*.h)
+if(CESIUM_GLTF_WRITER_GENERATED_DIRECTORY)
+    set(GENERATED_DIRECTORY ${CESIUM_GLTF_WRITER_GENERATED_DIRECTORY}/generated)
+else()
+    set(GENERATED_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
+endif()
+
+cesium_glob_files(CESIUM_GLTF_WRITER_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.cpp
+    ${GENERATED_DIRECTORY}/src/CesiumGltfWriter/*.cpp
+)
+cesium_glob_files(CESIUM_GLTF_WRITER_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/CesiumGltfWriter/*.hpp
+    ${GENERATED_DIRECTORY}/src/CesiumGltfWriter/*.h
+    ${GENERATED_DIRECTORY}/src/CesiumGltfWriter/*.hpp
+)
+cesium_glob_files(CESIUM_GLTF_WRITER_PUBLIC_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfWriter/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumGltfWriter/*.hpp
+    ${GENERATED_DIRECTORY}/include/CesiumGltfWriter/*.h
+    ${GENERATED_DIRECTORY}/include/CesiumGltfWriter/*.hpp
+)
+cesium_glob_files(CESIUM_GLTF_WRITER_TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
+)
+cesium_glob_files(CESIUM_GLTF_WRITER_TEST_HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/test/*.h
+)
 
 set_target_properties(CesiumGltfWriter
     PROPERTIES
@@ -32,14 +54,12 @@ target_compile_definitions(
 target_include_directories(
     CesiumGltfWriter
     SYSTEM PUBLIC
-        # draco
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
-        ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
+        ${GENERATED_DIRECTORY}/include
     PRIVATE
         ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${CMAKE_CURRENT_LIST_DIR}/generated
+        ${GENERATED_DIRECTORY}/src
 )
 
 target_link_libraries(CesiumGltfWriter
@@ -47,4 +67,9 @@ target_link_libraries(CesiumGltfWriter
         CesiumGltf
         CesiumJsonWriter
         modp_b64
+)
+
+install(TARGETS CesiumGltfWriter
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltfWriter
 )

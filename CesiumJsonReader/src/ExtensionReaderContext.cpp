@@ -4,9 +4,7 @@
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
 #include "CesiumJsonReader/JsonReader.h"
 
-using namespace CesiumJsonReader;
-using namespace CesiumUtility;
-
+namespace CesiumJsonReader {
 class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
                                 public IExtensionJsonHandler {
 public:
@@ -14,14 +12,17 @@ public:
 
   virtual void reset(
       IJsonHandler* pParentHandler,
-      ExtensibleObject& o,
+      CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override {
     std::any& value =
-        o.extensions.emplace(extensionName, JsonValue(JsonValue::Object()))
+        o.extensions
+            .emplace(
+                extensionName,
+                CesiumUtility::JsonValue(CesiumUtility::JsonValue::Object()))
             .first->second;
     JsonObjectJsonHandler::reset(
         pParentHandler,
-        &std::any_cast<JsonValue&>(value));
+        &std::any_cast<CesiumUtility::JsonValue&>(value));
   }
 
   virtual IJsonHandler* readNull() override {
@@ -106,3 +107,4 @@ ExtensionReaderContext::createExtensionHandler(
 
   return objectTypeIt->second(*this);
 }
+} // namespace CesiumJsonReader
