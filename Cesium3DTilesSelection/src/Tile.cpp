@@ -691,66 +691,138 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   const double minimumHeight = maybeRegion->getMinimumHeight();
   const double maximumHeight = maybeRegion->getMaximumHeight();
 
-  GlobeRectangle swRectangle(0.0, 0.0, 0.0, 0.0);
-  GlobeRectangle seRectangle(0.0, 0.0, 0.0, 0.0);
-  GlobeRectangle nwRectangle(0.0, 0.0, 0.0, 0.0);
-  GlobeRectangle neRectangle(0.0, 0.0, 0.0, 0.0);
-
-  // TODO: manually integrate merge
-
   // If we have an implicit tiling context, make these new tiles conform to it.
   // Otherwise just subdivide the bounding region.
   const TileContext* pContext = parent.getContext();
-  if (pRealParentTileID && pContext && pContext->implicitContext) {
-    const QuadtreeTilingScheme& tilingScheme =
-        pContext->implicitContext.value().tilingScheme;
-    const Projection& projection = pContext->implicitContext.value().projection;
+  if (pRealParentTileID && pContext && pContext->implicitContext &&
+      pContext->implicitContext->quadtreeTilingScheme) {
 
-    swRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(swID));
-    seRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(seID));
-    nwRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(nwID));
-    neRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(neID));
+    const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+    const QuadtreeTilingScheme& tilingScheme =
+        *implicitContext.quadtreeTilingScheme;
+
+    const BoundingRegion* pRegion = std::get_if<BoundingRegion>(
+        &implicitContext.implicitRootBoundingVolume);
+    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
+        std::get_if<BoundingRegionWithLooseFittingHeights>(
+            &implicitContext.implicitRootBoundingVolume);
+    const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
+        &implicitContext.implicitRootBoundingVolume);
+
+    if (!pRegion && pLooseRegion) {
+      pRegion = &pLooseRegion->getBoundingRegion();
+    }
+
+    CesiumGeometry::Rectangle swProjectedRectangle =
+        tilingScheme.tileToRectangle(swID);
+    CesiumGeometry::Rectangle seProjectedRectangle =
+        tilingScheme.tileToRectangle(seID);
+    CesiumGeometry::Rectangle nwProjectedRectangle =
+        tilingScheme.tileToRectangle(nwID);
+    CesiumGeometry::Rectangle neProjectedRectangle =
+        tilingScheme.tileToRectangle(neID);
+
+    if (pRegion && implicitContext.projection) {
+      const Projection& projection = *implicitContext.projection;
+
+      sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, swProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+      se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, seProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+      nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, nwProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+      ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, neProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+    } else if (pBox) {
+      const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
+
+      glm::dvec2 swProjectedCenter = swProjectedRectangle.getCenter();
+      sw.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(swProjectedCenter.x, swProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * swProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * swProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+
+      glm::dvec2 seProjectedCenter = seProjectedRectangle.getCenter();
+      se.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(seProjectedCenter.x, seProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * seProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * seProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+
+      glm::dvec2 nwProjectedCenter = nwProjectedRectangle.getCenter();
+      nw.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(nwProjectedCenter.x, nwProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * nwProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * nwProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+
+      glm::dvec2 neProjectedCenter = neProjectedRectangle.getCenter();
+      ne.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(neProjectedCenter.x, neProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * neProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * neProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+    }
   } else {
     const GlobeRectangle& parentRectangle = maybeRegion->getRectangle();
     Cartographic center = parentRectangle.computeCenter();
-    swRectangle = GlobeRectangle(
-        parentRectangle.getWest(),
-        parentRectangle.getSouth(),
-        center.longitude,
-        center.latitude);
-    seRectangle = GlobeRectangle(
-        center.longitude,
-        parentRectangle.getSouth(),
-        parentRectangle.getEast(),
-        center.latitude);
-    nwRectangle = GlobeRectangle(
-        parentRectangle.getWest(),
-        center.latitude,
-        center.longitude,
-        parentRectangle.getNorth());
-    neRectangle = GlobeRectangle(
-        center.longitude,
-        center.latitude,
-        parentRectangle.getEast(),
-        parentRectangle.getNorth());
-  }
+    sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            parentRectangle.getWest(),
+            parentRectangle.getSouth(),
+            center.longitude,
+            center.latitude),
+        minimumHeight,
+        maximumHeight)));
 
-  sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(swRectangle, minimumHeight, maximumHeight)));
-  se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(seRectangle, minimumHeight, maximumHeight)));
-  nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(nwRectangle, minimumHeight, maximumHeight)));
-  ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(neRectangle, minimumHeight, maximumHeight)));
+    se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            center.longitude,
+            parentRectangle.getSouth(),
+            parentRectangle.getEast(),
+            center.latitude),
+        minimumHeight,
+        maximumHeight)));
+
+    nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            parentRectangle.getWest(),
+            center.latitude,
+            center.longitude,
+            parentRectangle.getNorth()),
+        minimumHeight,
+        maximumHeight)));
+
+    se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            center.longitude,
+            center.latitude,
+            parentRectangle.getEast(),
+            parentRectangle.getNorth()),
+        minimumHeight,
+        maximumHeight)));
+  }
 
   sw.setTransform(parent.getTransform());
   se.setTransform(parent.getTransform());
