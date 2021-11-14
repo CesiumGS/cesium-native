@@ -7,7 +7,7 @@ struct Asset;
 
 // forward declarations
 namespace CesiumJsonWriter {
-struct JsonWriter;
+class JsonWriter;
 }
 
 namespace CesiumGltfWriter {

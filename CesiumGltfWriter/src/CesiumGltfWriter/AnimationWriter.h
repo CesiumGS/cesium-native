@@ -9,7 +9,7 @@ namespace CesiumGltf {
 struct Animation;
 }
 namespace CesiumJsonWriter {
-struct JsonWriter;
+class JsonWriter;
 }
 
 namespace CesiumGltfWriter {
