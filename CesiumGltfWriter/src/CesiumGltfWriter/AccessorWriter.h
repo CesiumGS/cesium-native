@@ -4,7 +4,7 @@
 
 // forward declarations
 namespace CesiumGltf {
-class Accessor;
+struct Accessor;
 }
 
 // forward declarations
