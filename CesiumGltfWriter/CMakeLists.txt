@@ -36,6 +36,11 @@ set_target_properties(CesiumGltfWriter
         TEST_HEADERS "${CESIUM_GLTF_WRITER_TEST_HEADERS}"
 )
 
+set_target_properties(CesiumGltfWriter
+    PROPERTIES
+    PUBLIC_HEADER "${CESIUM_GLTF_WRITER_PUBLIC_HEADERS}"
+)
+
 target_sources(
     CesiumGltfWriter
     PRIVATE
