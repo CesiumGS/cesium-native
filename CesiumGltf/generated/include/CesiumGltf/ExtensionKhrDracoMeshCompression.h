@@ -3,27 +3,32 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
+
 #include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
 #include <map>
 
 namespace CesiumGltf {
-    /**
-     * @brief KHR_draco_mesh_compression extension
-     */
-    struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final : public CesiumUtility::ExtensibleObject {
-        static inline constexpr const char* TypeName = "ExtensionKhrDracoMeshCompression";
-        static inline constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
+/**
+ * @brief KHR_draco_mesh_compression extension
+ */
+struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final
+    : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* TypeName =
+      "ExtensionKhrDracoMeshCompression";
+  static inline constexpr const char* ExtensionName =
+      "KHR_draco_mesh_compression";
 
-        /**
-         * @brief The index of the bufferView.
-         */
-        int32_t bufferView = -1;
+  /**
+   * @brief The index of the bufferView.
+   */
+  int32_t bufferView = -1;
 
-        /**
-         * @brief A dictionary object, where each key corresponds to an attribute and its unique attribute id stored in the compressed geometry.
-         */
-        std::map<std::string, int32_t> attributes;
-
-    };
-}
+  /**
+   * @brief A dictionary object, where each key corresponds to an attribute and
+   * its unique attribute id stored in the compressed geometry.
+   */
+  std::map<std::string, int32_t> attributes;
+};
+} // namespace CesiumGltf

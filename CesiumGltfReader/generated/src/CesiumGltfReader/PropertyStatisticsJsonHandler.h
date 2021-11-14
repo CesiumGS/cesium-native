@@ -8,34 +8,43 @@
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class PropertyStatisticsJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::PropertyStatistics;
+class PropertyStatisticsJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::PropertyStatistics;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    PropertyStatisticsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::PropertyStatistics* pObject);
+  PropertyStatisticsJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void
+  reset(IJsonHandler* pParentHandler, CesiumGltf::PropertyStatistics* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyPropertyStatistics(const std::string& objectType, const std::string_view& str, CesiumGltf::PropertyStatistics& o);
+protected:
+  IJsonHandler* readObjectKeyPropertyStatistics(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::PropertyStatistics& o);
 
-  private:
-
-    CesiumGltf::PropertyStatistics* _pObject = nullptr;
-    CesiumJsonReader::JsonObjectJsonHandler _min;
-    CesiumJsonReader::JsonObjectJsonHandler _max;
-    CesiumJsonReader::JsonObjectJsonHandler _mean;
-    CesiumJsonReader::JsonObjectJsonHandler _median;
-    CesiumJsonReader::JsonObjectJsonHandler _standardDeviation;
-    CesiumJsonReader::JsonObjectJsonHandler _variance;
-    CesiumJsonReader::JsonObjectJsonHandler _sum;
-    CesiumJsonReader::DictionaryJsonHandler<CesiumUtility::JsonValue, CesiumJsonReader::JsonObjectJsonHandler> _occurrences;
-  };
-}
+private:
+  CesiumGltf::PropertyStatistics* _pObject = nullptr;
+  CesiumJsonReader::JsonObjectJsonHandler _min;
+  CesiumJsonReader::JsonObjectJsonHandler _max;
+  CesiumJsonReader::JsonObjectJsonHandler _mean;
+  CesiumJsonReader::JsonObjectJsonHandler _median;
+  CesiumJsonReader::JsonObjectJsonHandler _standardDeviation;
+  CesiumJsonReader::JsonObjectJsonHandler _variance;
+  CesiumJsonReader::JsonObjectJsonHandler _sum;
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumUtility::JsonValue,
+      CesiumJsonReader::JsonObjectJsonHandler>
+      _occurrences;
+};
+} // namespace CesiumGltfReader

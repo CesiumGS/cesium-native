@@ -3,34 +3,44 @@
 #pragma once
 
 #include "CesiumGltfReader/PropertyStatisticsJsonHandler.h"
+
 #include <CesiumGltf/ClassStatistics.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class ClassStatisticsJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::ClassStatistics;
+class ClassStatisticsJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::ClassStatistics;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    ClassStatisticsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::ClassStatistics* pObject);
+  ClassStatisticsJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void
+  reset(IJsonHandler* pParentHandler, CesiumGltf::ClassStatistics* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyClassStatistics(const std::string& objectType, const std::string_view& str, CesiumGltf::ClassStatistics& o);
+protected:
+  IJsonHandler* readObjectKeyClassStatistics(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::ClassStatistics& o);
 
-  private:
-
-    CesiumGltf::ClassStatistics* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::PropertyStatistics, PropertyStatisticsJsonHandler> _properties;
-  };
-}
+private:
+  CesiumGltf::ClassStatistics* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumGltf::PropertyStatistics,
+      PropertyStatisticsJsonHandler>
+      _properties;
+};
+} // namespace CesiumGltfReader

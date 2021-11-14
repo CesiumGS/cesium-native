@@ -4,33 +4,42 @@
 
 #include "CesiumGltfReader/MeshPrimitiveJsonHandler.h"
 #include "CesiumGltfReader/NamedObjectJsonHandler.h"
+
 #include <CesiumGltf/Mesh.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class MeshJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::Mesh;
+class MeshJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::Mesh;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    MeshJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::Mesh* pObject);
+  MeshJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::Mesh* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyMesh(const std::string& objectType, const std::string_view& str, CesiumGltf::Mesh& o);
+protected:
+  IJsonHandler* readObjectKeyMesh(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::Mesh& o);
 
-  private:
-
-    CesiumGltf::Mesh* _pObject = nullptr;
-    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::MeshPrimitive, MeshPrimitiveJsonHandler> _primitives;
-    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _weights;
-  };
-}
+private:
+  CesiumGltf::Mesh* _pObject = nullptr;
+  CesiumJsonReader::
+      ArrayJsonHandler<CesiumGltf::MeshPrimitive, MeshPrimitiveJsonHandler>
+          _primitives;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _weights;
+};
+} // namespace CesiumGltfReader

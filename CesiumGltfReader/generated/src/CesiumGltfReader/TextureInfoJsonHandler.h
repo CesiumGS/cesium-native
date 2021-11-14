@@ -7,28 +7,33 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class TextureInfoJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::TextureInfo;
+class TextureInfoJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::TextureInfo;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    TextureInfoJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::TextureInfo* pObject);
+  TextureInfoJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::TextureInfo* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::TextureInfo& o);
+protected:
+  IJsonHandler* readObjectKeyTextureInfo(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::TextureInfo& o);
 
-  private:
-
-    CesiumGltf::TextureInfo* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _index;
-    CesiumJsonReader::IntegerJsonHandler<int64_t> _texCoord;
-  };
-}
+private:
+  CesiumGltf::TextureInfo* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _index;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _texCoord;
+};
+} // namespace CesiumGltfReader

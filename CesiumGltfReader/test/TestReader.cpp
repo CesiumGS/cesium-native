@@ -129,19 +129,6 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
 }
 
-TEST_CASE("Read BoxTexturedWebp (with error messages)") {
-  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /= "BoxTexturedWebp/glTF/BoxTexturedWebp.gltf";
-  std::vector<std::byte> data = readFile(gltfFile);
-  GltfReader reader;
-  ModelReaderResult result = reader.readModel(data);
-  REQUIRE(result.model);
-  REQUIRE(result.warnings.empty());
-
-  // Expect errors, because WebP cannot be read
-  REQUIRE(result.errors.size() > 0);
-}
-
 TEST_CASE("Nested extras deserializes properly") {
   const std::string s = R"(
     {

@@ -9,37 +9,61 @@
 
 namespace CesiumGltfReader {
 
-ExtensionKhrDracoMeshCompressionJsonHandler::ExtensionKhrDracoMeshCompressionJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _bufferView(), _attributes() {}
+ExtensionKhrDracoMeshCompressionJsonHandler::
+    ExtensionKhrDracoMeshCompressionJsonHandler(
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _attributes() {}
 
-void ExtensionKhrDracoMeshCompressionJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrDracoMeshCompression* pObject) {
+void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::ExtensionKhrDracoMeshCompression* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ExtensionKhrDracoMeshCompressionJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ExtensionKhrDracoMeshCompressionJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyExtensionKhrDracoMeshCompression(CesiumGltf::ExtensionKhrDracoMeshCompression::TypeName, str, *this->_pObject);
+  return this->readObjectKeyExtensionKhrDracoMeshCompression(
+      CesiumGltf::ExtensionKhrDracoMeshCompression::TypeName,
+      str,
+      *this->_pObject);
 }
 
-void ExtensionKhrDracoMeshCompressionJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) {
-  std::any& value =
-      o.extensions.emplace(extensionName, CesiumGltf::ExtensionKhrDracoMeshCompression())
-          .first->second;
+void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::any& value = o.extensions
+                        .emplace(
+                            extensionName,
+                            CesiumGltf::ExtensionKhrDracoMeshCompression())
+                        .first->second;
   this->reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionKhrDracoMeshCompression&>(value));
 }
 
-CesiumJsonReader::IJsonHandler* ExtensionKhrDracoMeshCompressionJsonHandler::readObjectKeyExtensionKhrDracoMeshCompression(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrDracoMeshCompression& o) {
+CesiumJsonReader::IJsonHandler* ExtensionKhrDracoMeshCompressionJsonHandler::
+    readObjectKeyExtensionKhrDracoMeshCompression(
+        const std::string& objectType,
+        const std::string_view& str,
+        CesiumGltf::ExtensionKhrDracoMeshCompression& o) {
   using namespace std::string_literals;
 
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
-  if ("attributes"s == str) return property("attributes", this->_attributes, o.attributes);
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("attributes"s == str)
+    return property("attributes", this->_attributes, o.attributes);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ExtensionKhrDracoMeshCompressionJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ExtensionKhrDracoMeshCompressionJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -55,40 +79,73 @@ void ExtensionKhrDracoMeshCompressionJsonHandler::populateExtensions(CesiumJsonR
 
 namespace CesiumGltfReader {
 
-ExtensionModelExtFeatureMetadataJsonHandler::ExtensionModelExtFeatureMetadataJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _schema(context), _schemaUri(), _statistics(context), _featureTables(context), _featureTextures(context) {}
+ExtensionModelExtFeatureMetadataJsonHandler::
+    ExtensionModelExtFeatureMetadataJsonHandler(
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _schema(context),
+      _schemaUri(),
+      _statistics(context),
+      _featureTables(context),
+      _featureTextures(context) {}
 
-void ExtensionModelExtFeatureMetadataJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ExtensionModelExtFeatureMetadata* pObject) {
+void ExtensionModelExtFeatureMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::ExtensionModelExtFeatureMetadata* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ExtensionModelExtFeatureMetadataJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ExtensionModelExtFeatureMetadataJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyExtensionModelExtFeatureMetadata(CesiumGltf::ExtensionModelExtFeatureMetadata::TypeName, str, *this->_pObject);
+  return this->readObjectKeyExtensionModelExtFeatureMetadata(
+      CesiumGltf::ExtensionModelExtFeatureMetadata::TypeName,
+      str,
+      *this->_pObject);
 }
 
-void ExtensionModelExtFeatureMetadataJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) {
-  std::any& value =
-      o.extensions.emplace(extensionName, CesiumGltf::ExtensionModelExtFeatureMetadata())
-          .first->second;
+void ExtensionModelExtFeatureMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
+  std::any& value = o.extensions
+                        .emplace(
+                            extensionName,
+                            CesiumGltf::ExtensionModelExtFeatureMetadata())
+                        .first->second;
   this->reset(
       pParentHandler,
       &std::any_cast<CesiumGltf::ExtensionModelExtFeatureMetadata&>(value));
 }
 
-CesiumJsonReader::IJsonHandler* ExtensionModelExtFeatureMetadataJsonHandler::readObjectKeyExtensionModelExtFeatureMetadata(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionModelExtFeatureMetadata& o) {
+CesiumJsonReader::IJsonHandler* ExtensionModelExtFeatureMetadataJsonHandler::
+    readObjectKeyExtensionModelExtFeatureMetadata(
+        const std::string& objectType,
+        const std::string_view& str,
+        CesiumGltf::ExtensionModelExtFeatureMetadata& o) {
   using namespace std::string_literals;
 
-  if ("schema"s == str) return property("schema", this->_schema, o.schema);
-  if ("schemaUri"s == str) return property("schemaUri", this->_schemaUri, o.schemaUri);
-  if ("statistics"s == str) return property("statistics", this->_statistics, o.statistics);
-  if ("featureTables"s == str) return property("featureTables", this->_featureTables, o.featureTables);
-  if ("featureTextures"s == str) return property("featureTextures", this->_featureTextures, o.featureTextures);
+  if ("schema"s == str)
+    return property("schema", this->_schema, o.schema);
+  if ("schemaUri"s == str)
+    return property("schemaUri", this->_schemaUri, o.schemaUri);
+  if ("statistics"s == str)
+    return property("statistics", this->_statistics, o.statistics);
+  if ("featureTables"s == str)
+    return property("featureTables", this->_featureTables, o.featureTables);
+  if ("featureTextures"s == str)
+    return property(
+        "featureTextures",
+        this->_featureTextures,
+        o.featureTextures);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ExtensionModelExtFeatureMetadataJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ExtensionModelExtFeatureMetadataJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -104,38 +161,76 @@ void ExtensionModelExtFeatureMetadataJsonHandler::populateExtensions(CesiumJsonR
 
 namespace CesiumGltfReader {
 
-ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _featureIdAttributes(context), _featureIdTextures(context), _featureTextures() {}
+ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::
+    ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler(
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _featureIdAttributes(context),
+      _featureIdTextures(context),
+      _featureTextures() {}
 
-void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata* pObject) {
+void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyExtensionMeshPrimitiveExtFeatureMetadata(CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata::TypeName, str, *this->_pObject);
+  return this->readObjectKeyExtensionMeshPrimitiveExtFeatureMetadata(
+      CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata::TypeName,
+      str,
+      *this->_pObject);
 }
 
-void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) {
+void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumUtility::ExtensibleObject& o,
+    const std::string_view& extensionName) {
   std::any& value =
-      o.extensions.emplace(extensionName, CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata())
+      o.extensions
+          .emplace(
+              extensionName,
+              CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata())
           .first->second;
   this->reset(
       pParentHandler,
-      &std::any_cast<CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata&>(value));
+      &std::any_cast<CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata&>(
+          value));
 }
 
-CesiumJsonReader::IJsonHandler* ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::readObjectKeyExtensionMeshPrimitiveExtFeatureMetadata(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata& o) {
+CesiumJsonReader::IJsonHandler*
+ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::
+    readObjectKeyExtensionMeshPrimitiveExtFeatureMetadata(
+        const std::string& objectType,
+        const std::string_view& str,
+        CesiumGltf::ExtensionMeshPrimitiveExtFeatureMetadata& o) {
   using namespace std::string_literals;
 
-  if ("featureIdAttributes"s == str) return property("featureIdAttributes", this->_featureIdAttributes, o.featureIdAttributes);
-  if ("featureIdTextures"s == str) return property("featureIdTextures", this->_featureIdTextures, o.featureIdTextures);
-  if ("featureTextures"s == str) return property("featureTextures", this->_featureTextures, o.featureTextures);
+  if ("featureIdAttributes"s == str)
+    return property(
+        "featureIdAttributes",
+        this->_featureIdAttributes,
+        o.featureIdAttributes);
+  if ("featureIdTextures"s == str)
+    return property(
+        "featureIdTextures",
+        this->_featureIdTextures,
+        o.featureIdTextures);
+  if ("featureTextures"s == str)
+    return property(
+        "featureTextures",
+        this->_featureTextures,
+        o.featureTextures);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -151,28 +246,45 @@ void ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler::populateExtensions(Ces
 
 namespace CesiumGltfReader {
 
-FeatureIDTextureJsonHandler::FeatureIDTextureJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _featureTable(), _featureIds(context) {}
+FeatureIDTextureJsonHandler::FeatureIDTextureJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _featureTable(),
+      _featureIds(context) {}
 
-void FeatureIDTextureJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::FeatureIDTexture* pObject) {
+void FeatureIDTextureJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::FeatureIDTexture* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* FeatureIDTextureJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+FeatureIDTextureJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyFeatureIDTexture(CesiumGltf::FeatureIDTexture::TypeName, str, *this->_pObject);
+  return this->readObjectKeyFeatureIDTexture(
+      CesiumGltf::FeatureIDTexture::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* FeatureIDTextureJsonHandler::readObjectKeyFeatureIDTexture(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureIDTexture& o) {
+CesiumJsonReader::IJsonHandler*
+FeatureIDTextureJsonHandler::readObjectKeyFeatureIDTexture(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::FeatureIDTexture& o) {
   using namespace std::string_literals;
 
-  if ("featureTable"s == str) return property("featureTable", this->_featureTable, o.featureTable);
-  if ("featureIds"s == str) return property("featureIds", this->_featureIds, o.featureIds);
+  if ("featureTable"s == str)
+    return property("featureTable", this->_featureTable, o.featureTable);
+  if ("featureIds"s == str)
+    return property("featureIds", this->_featureIds, o.featureIds);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void FeatureIDTextureJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void FeatureIDTextureJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -188,28 +300,45 @@ void FeatureIDTextureJsonHandler::populateExtensions(CesiumJsonReader::Extension
 
 namespace CesiumGltfReader {
 
-TextureAccessorJsonHandler::TextureAccessorJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _channels(), _texture(context) {}
+TextureAccessorJsonHandler::TextureAccessorJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _channels(),
+      _texture(context) {}
 
-void TextureAccessorJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::TextureAccessor* pObject) {
+void TextureAccessorJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::TextureAccessor* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* TextureAccessorJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+TextureAccessorJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyTextureAccessor(CesiumGltf::TextureAccessor::TypeName, str, *this->_pObject);
+  return this->readObjectKeyTextureAccessor(
+      CesiumGltf::TextureAccessor::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* TextureAccessorJsonHandler::readObjectKeyTextureAccessor(const std::string& objectType, const std::string_view& str, CesiumGltf::TextureAccessor& o) {
+CesiumJsonReader::IJsonHandler*
+TextureAccessorJsonHandler::readObjectKeyTextureAccessor(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::TextureAccessor& o) {
   using namespace std::string_literals;
 
-  if ("channels"s == str) return property("channels", this->_channels, o.channels);
-  if ("texture"s == str) return property("texture", this->_texture, o.texture);
+  if ("channels"s == str)
+    return property("channels", this->_channels, o.channels);
+  if ("texture"s == str)
+    return property("texture", this->_texture, o.texture);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void TextureAccessorJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void TextureAccessorJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -225,28 +354,45 @@ void TextureAccessorJsonHandler::populateExtensions(CesiumJsonReader::ExtensionR
 
 namespace CesiumGltfReader {
 
-TextureInfoJsonHandler::TextureInfoJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _index(), _texCoord() {}
+TextureInfoJsonHandler::TextureInfoJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _index(),
+      _texCoord() {}
 
-void TextureInfoJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::TextureInfo* pObject) {
+void TextureInfoJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::TextureInfo* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyTextureInfo(CesiumGltf::TextureInfo::TypeName, str, *this->_pObject);
+  return this->readObjectKeyTextureInfo(
+      CesiumGltf::TextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* TextureInfoJsonHandler::readObjectKeyTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::TextureInfo& o) {
+CesiumJsonReader::IJsonHandler*
+TextureInfoJsonHandler::readObjectKeyTextureInfo(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::TextureInfo& o) {
   using namespace std::string_literals;
 
-  if ("index"s == str) return property("index", this->_index, o.index);
-  if ("texCoord"s == str) return property("texCoord", this->_texCoord, o.texCoord);
+  if ("index"s == str)
+    return property("index", this->_index, o.index);
+  if ("texCoord"s == str)
+    return property("texCoord", this->_texCoord, o.texCoord);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void TextureInfoJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void TextureInfoJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -262,28 +408,45 @@ void TextureInfoJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReade
 
 namespace CesiumGltfReader {
 
-FeatureIDAttributeJsonHandler::FeatureIDAttributeJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _featureTable(), _featureIds(context) {}
+FeatureIDAttributeJsonHandler::FeatureIDAttributeJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _featureTable(),
+      _featureIds(context) {}
 
-void FeatureIDAttributeJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::FeatureIDAttribute* pObject) {
+void FeatureIDAttributeJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::FeatureIDAttribute* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* FeatureIDAttributeJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+FeatureIDAttributeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyFeatureIDAttribute(CesiumGltf::FeatureIDAttribute::TypeName, str, *this->_pObject);
+  return this->readObjectKeyFeatureIDAttribute(
+      CesiumGltf::FeatureIDAttribute::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* FeatureIDAttributeJsonHandler::readObjectKeyFeatureIDAttribute(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureIDAttribute& o) {
+CesiumJsonReader::IJsonHandler*
+FeatureIDAttributeJsonHandler::readObjectKeyFeatureIDAttribute(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::FeatureIDAttribute& o) {
   using namespace std::string_literals;
 
-  if ("featureTable"s == str) return property("featureTable", this->_featureTable, o.featureTable);
-  if ("featureIds"s == str) return property("featureIds", this->_featureIds, o.featureIds);
+  if ("featureTable"s == str)
+    return property("featureTable", this->_featureTable, o.featureTable);
+  if ("featureIds"s == str)
+    return property("featureIds", this->_featureIds, o.featureIds);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void FeatureIDAttributeJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void FeatureIDAttributeJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -299,29 +462,47 @@ void FeatureIDAttributeJsonHandler::populateExtensions(CesiumJsonReader::Extensi
 
 namespace CesiumGltfReader {
 
-FeatureIDsJsonHandler::FeatureIDsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _attribute(), _constant(), _divisor() {}
+FeatureIDsJsonHandler::FeatureIDsJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _attribute(),
+      _constant(),
+      _divisor() {}
 
-void FeatureIDsJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::FeatureIDs* pObject) {
+void FeatureIDsJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::FeatureIDs* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* FeatureIDsJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+FeatureIDsJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyFeatureIDs(CesiumGltf::FeatureIDs::TypeName, str, *this->_pObject);
+  return this->readObjectKeyFeatureIDs(
+      CesiumGltf::FeatureIDs::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* FeatureIDsJsonHandler::readObjectKeyFeatureIDs(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureIDs& o) {
+CesiumJsonReader::IJsonHandler* FeatureIDsJsonHandler::readObjectKeyFeatureIDs(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::FeatureIDs& o) {
   using namespace std::string_literals;
 
-  if ("attribute"s == str) return property("attribute", this->_attribute, o.attribute);
-  if ("constant"s == str) return property("constant", this->_constant, o.constant);
-  if ("divisor"s == str) return property("divisor", this->_divisor, o.divisor);
+  if ("attribute"s == str)
+    return property("attribute", this->_attribute, o.attribute);
+  if ("constant"s == str)
+    return property("constant", this->_constant, o.constant);
+  if ("divisor"s == str)
+    return property("divisor", this->_divisor, o.divisor);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void FeatureIDsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void FeatureIDsJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -337,28 +518,45 @@ void FeatureIDsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReader
 
 namespace CesiumGltfReader {
 
-FeatureTextureJsonHandler::FeatureTextureJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _classProperty(), _properties(context) {}
+FeatureTextureJsonHandler::FeatureTextureJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _classProperty(),
+      _properties(context) {}
 
-void FeatureTextureJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::FeatureTexture* pObject) {
+void FeatureTextureJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::FeatureTexture* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* FeatureTextureJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+FeatureTextureJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyFeatureTexture(CesiumGltf::FeatureTexture::TypeName, str, *this->_pObject);
+  return this->readObjectKeyFeatureTexture(
+      CesiumGltf::FeatureTexture::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* FeatureTextureJsonHandler::readObjectKeyFeatureTexture(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureTexture& o) {
+CesiumJsonReader::IJsonHandler*
+FeatureTextureJsonHandler::readObjectKeyFeatureTexture(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::FeatureTexture& o) {
   using namespace std::string_literals;
 
-  if ("class"s == str) return property("class", this->_classProperty, o.classProperty);
-  if ("properties"s == str) return property("properties", this->_properties, o.properties);
+  if ("class"s == str)
+    return property("class", this->_classProperty, o.classProperty);
+  if ("properties"s == str)
+    return property("properties", this->_properties, o.properties);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void FeatureTextureJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void FeatureTextureJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -374,29 +572,48 @@ void FeatureTextureJsonHandler::populateExtensions(CesiumJsonReader::ExtensionRe
 
 namespace CesiumGltfReader {
 
-FeatureTableJsonHandler::FeatureTableJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _classProperty(), _count(), _properties(context) {}
+FeatureTableJsonHandler::FeatureTableJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _classProperty(),
+      _count(),
+      _properties(context) {}
 
-void FeatureTableJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::FeatureTable* pObject) {
+void FeatureTableJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::FeatureTable* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* FeatureTableJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+FeatureTableJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyFeatureTable(CesiumGltf::FeatureTable::TypeName, str, *this->_pObject);
+  return this->readObjectKeyFeatureTable(
+      CesiumGltf::FeatureTable::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* FeatureTableJsonHandler::readObjectKeyFeatureTable(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureTable& o) {
+CesiumJsonReader::IJsonHandler*
+FeatureTableJsonHandler::readObjectKeyFeatureTable(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::FeatureTable& o) {
   using namespace std::string_literals;
 
-  if ("class"s == str) return property("class", this->_classProperty, o.classProperty);
-  if ("count"s == str) return property("count", this->_count, o.count);
-  if ("properties"s == str) return property("properties", this->_properties, o.properties);
+  if ("class"s == str)
+    return property("class", this->_classProperty, o.classProperty);
+  if ("count"s == str)
+    return property("count", this->_count, o.count);
+  if ("properties"s == str)
+    return property("properties", this->_properties, o.properties);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void FeatureTableJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void FeatureTableJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -412,30 +629,57 @@ void FeatureTableJsonHandler::populateExtensions(CesiumJsonReader::ExtensionRead
 
 namespace CesiumGltfReader {
 
-FeatureTablePropertyJsonHandler::FeatureTablePropertyJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _bufferView(), _offsetType(), _arrayOffsetBufferView(), _stringOffsetBufferView() {}
+FeatureTablePropertyJsonHandler::FeatureTablePropertyJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _offsetType(),
+      _arrayOffsetBufferView(),
+      _stringOffsetBufferView() {}
 
-void FeatureTablePropertyJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::FeatureTableProperty* pObject) {
+void FeatureTablePropertyJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::FeatureTableProperty* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* FeatureTablePropertyJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+FeatureTablePropertyJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyFeatureTableProperty(CesiumGltf::FeatureTableProperty::TypeName, str, *this->_pObject);
+  return this->readObjectKeyFeatureTableProperty(
+      CesiumGltf::FeatureTableProperty::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* FeatureTablePropertyJsonHandler::readObjectKeyFeatureTableProperty(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureTableProperty& o) {
+CesiumJsonReader::IJsonHandler*
+FeatureTablePropertyJsonHandler::readObjectKeyFeatureTableProperty(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::FeatureTableProperty& o) {
   using namespace std::string_literals;
 
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
-  if ("offsetType"s == str) return property("offsetType", this->_offsetType, o.offsetType);
-  if ("arrayOffsetBufferView"s == str) return property("arrayOffsetBufferView", this->_arrayOffsetBufferView, o.arrayOffsetBufferView);
-  if ("stringOffsetBufferView"s == str) return property("stringOffsetBufferView", this->_stringOffsetBufferView, o.stringOffsetBufferView);
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("offsetType"s == str)
+    return property("offsetType", this->_offsetType, o.offsetType);
+  if ("arrayOffsetBufferView"s == str)
+    return property(
+        "arrayOffsetBufferView",
+        this->_arrayOffsetBufferView,
+        o.arrayOffsetBufferView);
+  if ("stringOffsetBufferView"s == str)
+    return property(
+        "stringOffsetBufferView",
+        this->_stringOffsetBufferView,
+        o.stringOffsetBufferView);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void FeatureTablePropertyJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void FeatureTablePropertyJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -451,27 +695,41 @@ void FeatureTablePropertyJsonHandler::populateExtensions(CesiumJsonReader::Exten
 
 namespace CesiumGltfReader {
 
-StatisticsJsonHandler::StatisticsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _classes(context) {}
+StatisticsJsonHandler::StatisticsJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _classes(context) {}
 
-void StatisticsJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Statistics* pObject) {
+void StatisticsJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Statistics* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* StatisticsJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+StatisticsJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyStatistics(CesiumGltf::Statistics::TypeName, str, *this->_pObject);
+  return this->readObjectKeyStatistics(
+      CesiumGltf::Statistics::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* StatisticsJsonHandler::readObjectKeyStatistics(const std::string& objectType, const std::string_view& str, CesiumGltf::Statistics& o) {
+CesiumJsonReader::IJsonHandler* StatisticsJsonHandler::readObjectKeyStatistics(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Statistics& o) {
   using namespace std::string_literals;
 
-  if ("classes"s == str) return property("classes", this->_classes, o.classes);
+  if ("classes"s == str)
+    return property("classes", this->_classes, o.classes);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void StatisticsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void StatisticsJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -487,28 +745,45 @@ void StatisticsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReader
 
 namespace CesiumGltfReader {
 
-ClassStatisticsJsonHandler::ClassStatisticsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _count(), _properties(context) {}
+ClassStatisticsJsonHandler::ClassStatisticsJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _count(),
+      _properties(context) {}
 
-void ClassStatisticsJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ClassStatistics* pObject) {
+void ClassStatisticsJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::ClassStatistics* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ClassStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ClassStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyClassStatistics(CesiumGltf::ClassStatistics::TypeName, str, *this->_pObject);
+  return this->readObjectKeyClassStatistics(
+      CesiumGltf::ClassStatistics::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* ClassStatisticsJsonHandler::readObjectKeyClassStatistics(const std::string& objectType, const std::string_view& str, CesiumGltf::ClassStatistics& o) {
+CesiumJsonReader::IJsonHandler*
+ClassStatisticsJsonHandler::readObjectKeyClassStatistics(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::ClassStatistics& o) {
   using namespace std::string_literals;
 
-  if ("count"s == str) return property("count", this->_count, o.count);
-  if ("properties"s == str) return property("properties", this->_properties, o.properties);
+  if ("count"s == str)
+    return property("count", this->_count, o.count);
+  if ("properties"s == str)
+    return property("properties", this->_properties, o.properties);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ClassStatisticsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ClassStatisticsJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -524,34 +799,66 @@ void ClassStatisticsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionR
 
 namespace CesiumGltfReader {
 
-PropertyStatisticsJsonHandler::PropertyStatisticsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _min(), _max(), _mean(), _median(), _standardDeviation(), _variance(), _sum(), _occurrences() {}
+PropertyStatisticsJsonHandler::PropertyStatisticsJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _min(),
+      _max(),
+      _mean(),
+      _median(),
+      _standardDeviation(),
+      _variance(),
+      _sum(),
+      _occurrences() {}
 
-void PropertyStatisticsJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::PropertyStatistics* pObject) {
+void PropertyStatisticsJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::PropertyStatistics* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* PropertyStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+PropertyStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyPropertyStatistics(CesiumGltf::PropertyStatistics::TypeName, str, *this->_pObject);
+  return this->readObjectKeyPropertyStatistics(
+      CesiumGltf::PropertyStatistics::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* PropertyStatisticsJsonHandler::readObjectKeyPropertyStatistics(const std::string& objectType, const std::string_view& str, CesiumGltf::PropertyStatistics& o) {
+CesiumJsonReader::IJsonHandler*
+PropertyStatisticsJsonHandler::readObjectKeyPropertyStatistics(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::PropertyStatistics& o) {
   using namespace std::string_literals;
 
-  if ("min"s == str) return property("min", this->_min, o.min);
-  if ("max"s == str) return property("max", this->_max, o.max);
-  if ("mean"s == str) return property("mean", this->_mean, o.mean);
-  if ("median"s == str) return property("median", this->_median, o.median);
-  if ("standardDeviation"s == str) return property("standardDeviation", this->_standardDeviation, o.standardDeviation);
-  if ("variance"s == str) return property("variance", this->_variance, o.variance);
-  if ("sum"s == str) return property("sum", this->_sum, o.sum);
-  if ("occurrences"s == str) return property("occurrences", this->_occurrences, o.occurrences);
+  if ("min"s == str)
+    return property("min", this->_min, o.min);
+  if ("max"s == str)
+    return property("max", this->_max, o.max);
+  if ("mean"s == str)
+    return property("mean", this->_mean, o.mean);
+  if ("median"s == str)
+    return property("median", this->_median, o.median);
+  if ("standardDeviation"s == str)
+    return property(
+        "standardDeviation",
+        this->_standardDeviation,
+        o.standardDeviation);
+  if ("variance"s == str)
+    return property("variance", this->_variance, o.variance);
+  if ("sum"s == str)
+    return property("sum", this->_sum, o.sum);
+  if ("occurrences"s == str)
+    return property("occurrences", this->_occurrences, o.occurrences);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void PropertyStatisticsJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void PropertyStatisticsJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -567,31 +874,53 @@ void PropertyStatisticsJsonHandler::populateExtensions(CesiumJsonReader::Extensi
 
 namespace CesiumGltfReader {
 
-SchemaJsonHandler::SchemaJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _name(), _description(), _version(), _classes(context), _enums(context) {}
+SchemaJsonHandler::SchemaJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _name(),
+      _description(),
+      _version(),
+      _classes(context),
+      _enums(context) {}
 
-void SchemaJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Schema* pObject) {
+void SchemaJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Schema* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+SchemaJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeySchema(CesiumGltf::Schema::TypeName, str, *this->_pObject);
+  return this->readObjectKeySchema(
+      CesiumGltf::Schema::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKeySchema(const std::string& objectType, const std::string_view& str, CesiumGltf::Schema& o) {
+CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKeySchema(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Schema& o) {
   using namespace std::string_literals;
 
-  if ("name"s == str) return property("name", this->_name, o.name);
-  if ("description"s == str) return property("description", this->_description, o.description);
-  if ("version"s == str) return property("version", this->_version, o.version);
-  if ("classes"s == str) return property("classes", this->_classes, o.classes);
-  if ("enums"s == str) return property("enums", this->_enums, o.enums);
+  if ("name"s == str)
+    return property("name", this->_name, o.name);
+  if ("description"s == str)
+    return property("description", this->_description, o.description);
+  if ("version"s == str)
+    return property("version", this->_version, o.version);
+  if ("classes"s == str)
+    return property("classes", this->_classes, o.classes);
+  if ("enums"s == str)
+    return property("enums", this->_enums, o.enums);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void SchemaJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void SchemaJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -607,30 +936,50 @@ void SchemaJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderCont
 
 namespace CesiumGltfReader {
 
-EnumJsonHandler::EnumJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _name(), _description(), _valueType(), _values(context) {}
+EnumJsonHandler::EnumJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _name(),
+      _description(),
+      _valueType(),
+      _values(context) {}
 
-void EnumJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Enum* pObject) {
+void EnumJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Enum* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* EnumJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+EnumJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyEnum(CesiumGltf::Enum::TypeName, str, *this->_pObject);
+  return this->readObjectKeyEnum(
+      CesiumGltf::Enum::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* EnumJsonHandler::readObjectKeyEnum(const std::string& objectType, const std::string_view& str, CesiumGltf::Enum& o) {
+CesiumJsonReader::IJsonHandler* EnumJsonHandler::readObjectKeyEnum(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Enum& o) {
   using namespace std::string_literals;
 
-  if ("name"s == str) return property("name", this->_name, o.name);
-  if ("description"s == str) return property("description", this->_description, o.description);
-  if ("valueType"s == str) return property("valueType", this->_valueType, o.valueType);
-  if ("values"s == str) return property("values", this->_values, o.values);
+  if ("name"s == str)
+    return property("name", this->_name, o.name);
+  if ("description"s == str)
+    return property("description", this->_description, o.description);
+  if ("valueType"s == str)
+    return property("valueType", this->_valueType, o.valueType);
+  if ("values"s == str)
+    return property("values", this->_values, o.values);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void EnumJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void EnumJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -646,29 +995,47 @@ void EnumJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContex
 
 namespace CesiumGltfReader {
 
-EnumValueJsonHandler::EnumValueJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _name(), _description(), _value() {}
+EnumValueJsonHandler::EnumValueJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _name(),
+      _description(),
+      _value() {}
 
-void EnumValueJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::EnumValue* pObject) {
+void EnumValueJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::EnumValue* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* EnumValueJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+EnumValueJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyEnumValue(CesiumGltf::EnumValue::TypeName, str, *this->_pObject);
+  return this->readObjectKeyEnumValue(
+      CesiumGltf::EnumValue::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* EnumValueJsonHandler::readObjectKeyEnumValue(const std::string& objectType, const std::string_view& str, CesiumGltf::EnumValue& o) {
+CesiumJsonReader::IJsonHandler* EnumValueJsonHandler::readObjectKeyEnumValue(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::EnumValue& o) {
   using namespace std::string_literals;
 
-  if ("name"s == str) return property("name", this->_name, o.name);
-  if ("description"s == str) return property("description", this->_description, o.description);
-  if ("value"s == str) return property("value", this->_value, o.value);
+  if ("name"s == str)
+    return property("name", this->_name, o.name);
+  if ("description"s == str)
+    return property("description", this->_description, o.description);
+  if ("value"s == str)
+    return property("value", this->_value, o.value);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void EnumValueJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void EnumValueJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -684,29 +1051,47 @@ void EnumValueJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderC
 
 namespace CesiumGltfReader {
 
-ClassJsonHandler::ClassJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _name(), _description(), _properties(context) {}
+ClassJsonHandler::ClassJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _name(),
+      _description(),
+      _properties(context) {}
 
-void ClassJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Class* pObject) {
+void ClassJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Class* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ClassJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyClass(CesiumGltf::Class::TypeName, str, *this->_pObject);
+  return this->readObjectKeyClass(
+      CesiumGltf::Class::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(const std::string& objectType, const std::string_view& str, CesiumGltf::Class& o) {
+CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Class& o) {
   using namespace std::string_literals;
 
-  if ("name"s == str) return property("name", this->_name, o.name);
-  if ("description"s == str) return property("description", this->_description, o.description);
-  if ("properties"s == str) return property("properties", this->_properties, o.properties);
+  if ("name"s == str)
+    return property("name", this->_name, o.name);
+  if ("description"s == str)
+    return property("description", this->_description, o.description);
+  if ("properties"s == str)
+    return property("properties", this->_properties, o.properties);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ClassJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ClassJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -722,38 +1107,75 @@ void ClassJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderConte
 
 namespace CesiumGltfReader {
 
-ClassPropertyJsonHandler::ClassPropertyJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _name(), _description(), _type(), _enumType(), _componentType(), _componentCount(), _normalized(), _max(), _min(), _defaultProperty(), _optional(), _semantic() {}
+ClassPropertyJsonHandler::ClassPropertyJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _name(),
+      _description(),
+      _type(),
+      _enumType(),
+      _componentType(),
+      _componentCount(),
+      _normalized(),
+      _max(),
+      _min(),
+      _defaultProperty(),
+      _optional(),
+      _semantic() {}
 
-void ClassPropertyJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ClassProperty* pObject) {
+void ClassPropertyJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::ClassProperty* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ClassPropertyJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ClassPropertyJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyClassProperty(CesiumGltf::ClassProperty::TypeName, str, *this->_pObject);
+  return this->readObjectKeyClassProperty(
+      CesiumGltf::ClassProperty::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* ClassPropertyJsonHandler::readObjectKeyClassProperty(const std::string& objectType, const std::string_view& str, CesiumGltf::ClassProperty& o) {
+CesiumJsonReader::IJsonHandler*
+ClassPropertyJsonHandler::readObjectKeyClassProperty(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::ClassProperty& o) {
   using namespace std::string_literals;
 
-  if ("name"s == str) return property("name", this->_name, o.name);
-  if ("description"s == str) return property("description", this->_description, o.description);
-  if ("type"s == str) return property("type", this->_type, o.type);
-  if ("enumType"s == str) return property("enumType", this->_enumType, o.enumType);
-  if ("componentType"s == str) return property("componentType", this->_componentType, o.componentType);
-  if ("componentCount"s == str) return property("componentCount", this->_componentCount, o.componentCount);
-  if ("normalized"s == str) return property("normalized", this->_normalized, o.normalized);
-  if ("max"s == str) return property("max", this->_max, o.max);
-  if ("min"s == str) return property("min", this->_min, o.min);
-  if ("default"s == str) return property("default", this->_defaultProperty, o.defaultProperty);
-  if ("optional"s == str) return property("optional", this->_optional, o.optional);
-  if ("semantic"s == str) return property("semantic", this->_semantic, o.semantic);
+  if ("name"s == str)
+    return property("name", this->_name, o.name);
+  if ("description"s == str)
+    return property("description", this->_description, o.description);
+  if ("type"s == str)
+    return property("type", this->_type, o.type);
+  if ("enumType"s == str)
+    return property("enumType", this->_enumType, o.enumType);
+  if ("componentType"s == str)
+    return property("componentType", this->_componentType, o.componentType);
+  if ("componentCount"s == str)
+    return property("componentCount", this->_componentCount, o.componentCount);
+  if ("normalized"s == str)
+    return property("normalized", this->_normalized, o.normalized);
+  if ("max"s == str)
+    return property("max", this->_max, o.max);
+  if ("min"s == str)
+    return property("min", this->_min, o.min);
+  if ("default"s == str)
+    return property("default", this->_defaultProperty, o.defaultProperty);
+  if ("optional"s == str)
+    return property("optional", this->_optional, o.optional);
+  if ("semantic"s == str)
+    return property("semantic", this->_semantic, o.semantic);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ClassPropertyJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ClassPropertyJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -769,43 +1191,92 @@ void ClassPropertyJsonHandler::populateExtensions(CesiumJsonReader::ExtensionRea
 
 namespace CesiumGltfReader {
 
-ModelJsonHandler::ModelJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _extensionsUsed(), _extensionsRequired(), _accessors(context), _animations(context), _asset(context), _buffers(context), _bufferViews(context), _cameras(context), _images(context), _materials(context), _meshes(context), _nodes(context), _samplers(context), _scene(), _scenes(context), _skins(context), _textures(context) {}
+ModelJsonHandler::ModelJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _extensionsUsed(),
+      _extensionsRequired(),
+      _accessors(context),
+      _animations(context),
+      _asset(context),
+      _buffers(context),
+      _bufferViews(context),
+      _cameras(context),
+      _images(context),
+      _materials(context),
+      _meshes(context),
+      _nodes(context),
+      _samplers(context),
+      _scene(),
+      _scenes(context),
+      _skins(context),
+      _textures(context) {}
 
-void ModelJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Model* pObject) {
+void ModelJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Model* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ModelJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ModelJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyModel(CesiumGltf::Model::TypeName, str, *this->_pObject);
+  return this->readObjectKeyModel(
+      CesiumGltf::Model::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* ModelJsonHandler::readObjectKeyModel(const std::string& objectType, const std::string_view& str, CesiumGltf::Model& o) {
+CesiumJsonReader::IJsonHandler* ModelJsonHandler::readObjectKeyModel(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Model& o) {
   using namespace std::string_literals;
 
-  if ("extensionsUsed"s == str) return property("extensionsUsed", this->_extensionsUsed, o.extensionsUsed);
-  if ("extensionsRequired"s == str) return property("extensionsRequired", this->_extensionsRequired, o.extensionsRequired);
-  if ("accessors"s == str) return property("accessors", this->_accessors, o.accessors);
-  if ("animations"s == str) return property("animations", this->_animations, o.animations);
-  if ("asset"s == str) return property("asset", this->_asset, o.asset);
-  if ("buffers"s == str) return property("buffers", this->_buffers, o.buffers);
-  if ("bufferViews"s == str) return property("bufferViews", this->_bufferViews, o.bufferViews);
-  if ("cameras"s == str) return property("cameras", this->_cameras, o.cameras);
-  if ("images"s == str) return property("images", this->_images, o.images);
-  if ("materials"s == str) return property("materials", this->_materials, o.materials);
-  if ("meshes"s == str) return property("meshes", this->_meshes, o.meshes);
-  if ("nodes"s == str) return property("nodes", this->_nodes, o.nodes);
-  if ("samplers"s == str) return property("samplers", this->_samplers, o.samplers);
-  if ("scene"s == str) return property("scene", this->_scene, o.scene);
-  if ("scenes"s == str) return property("scenes", this->_scenes, o.scenes);
-  if ("skins"s == str) return property("skins", this->_skins, o.skins);
-  if ("textures"s == str) return property("textures", this->_textures, o.textures);
+  if ("extensionsUsed"s == str)
+    return property("extensionsUsed", this->_extensionsUsed, o.extensionsUsed);
+  if ("extensionsRequired"s == str)
+    return property(
+        "extensionsRequired",
+        this->_extensionsRequired,
+        o.extensionsRequired);
+  if ("accessors"s == str)
+    return property("accessors", this->_accessors, o.accessors);
+  if ("animations"s == str)
+    return property("animations", this->_animations, o.animations);
+  if ("asset"s == str)
+    return property("asset", this->_asset, o.asset);
+  if ("buffers"s == str)
+    return property("buffers", this->_buffers, o.buffers);
+  if ("bufferViews"s == str)
+    return property("bufferViews", this->_bufferViews, o.bufferViews);
+  if ("cameras"s == str)
+    return property("cameras", this->_cameras, o.cameras);
+  if ("images"s == str)
+    return property("images", this->_images, o.images);
+  if ("materials"s == str)
+    return property("materials", this->_materials, o.materials);
+  if ("meshes"s == str)
+    return property("meshes", this->_meshes, o.meshes);
+  if ("nodes"s == str)
+    return property("nodes", this->_nodes, o.nodes);
+  if ("samplers"s == str)
+    return property("samplers", this->_samplers, o.samplers);
+  if ("scene"s == str)
+    return property("scene", this->_scene, o.scene);
+  if ("scenes"s == str)
+    return property("scenes", this->_scenes, o.scenes);
+  if ("skins"s == str)
+    return property("skins", this->_skins, o.skins);
+  if ("textures"s == str)
+    return property("textures", this->_textures, o.textures);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void ModelJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ModelJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -821,28 +1292,44 @@ void ModelJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderConte
 
 namespace CesiumGltfReader {
 
-TextureJsonHandler::TextureJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _sampler(), _source() {}
+TextureJsonHandler::TextureJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _sampler(),
+      _source() {}
 
-void TextureJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Texture* pObject) {
+void TextureJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Texture* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+TextureJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyTexture(CesiumGltf::Texture::TypeName, str, *this->_pObject);
+  return this->readObjectKeyTexture(
+      CesiumGltf::Texture::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(const std::string& objectType, const std::string_view& str, CesiumGltf::Texture& o) {
+CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Texture& o) {
   using namespace std::string_literals;
 
-  if ("sampler"s == str) return property("sampler", this->_sampler, o.sampler);
-  if ("source"s == str) return property("source", this->_source, o.source);
+  if ("sampler"s == str)
+    return property("sampler", this->_sampler, o.sampler);
+  if ("source"s == str)
+    return property("source", this->_source, o.source);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void TextureJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void TextureJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -858,29 +1345,50 @@ void TextureJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderCon
 
 namespace CesiumGltfReader {
 
-SkinJsonHandler::SkinJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _inverseBindMatrices(), _skeleton(), _joints() {}
+SkinJsonHandler::SkinJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _inverseBindMatrices(),
+      _skeleton(),
+      _joints() {}
 
-void SkinJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Skin* pObject) {
+void SkinJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Skin* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* SkinJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+SkinJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeySkin(CesiumGltf::Skin::TypeName, str, *this->_pObject);
+  return this->readObjectKeySkin(
+      CesiumGltf::Skin::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* SkinJsonHandler::readObjectKeySkin(const std::string& objectType, const std::string_view& str, CesiumGltf::Skin& o) {
+CesiumJsonReader::IJsonHandler* SkinJsonHandler::readObjectKeySkin(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Skin& o) {
   using namespace std::string_literals;
 
-  if ("inverseBindMatrices"s == str) return property("inverseBindMatrices", this->_inverseBindMatrices, o.inverseBindMatrices);
-  if ("skeleton"s == str) return property("skeleton", this->_skeleton, o.skeleton);
-  if ("joints"s == str) return property("joints", this->_joints, o.joints);
+  if ("inverseBindMatrices"s == str)
+    return property(
+        "inverseBindMatrices",
+        this->_inverseBindMatrices,
+        o.inverseBindMatrices);
+  if ("skeleton"s == str)
+    return property("skeleton", this->_skeleton, o.skeleton);
+  if ("joints"s == str)
+    return property("joints", this->_joints, o.joints);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void SkinJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void SkinJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -896,27 +1404,40 @@ void SkinJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContex
 
 namespace CesiumGltfReader {
 
-SceneJsonHandler::SceneJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _nodes() {}
+SceneJsonHandler::SceneJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context), _nodes() {}
 
-void SceneJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Scene* pObject) {
+void SceneJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Scene* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+SceneJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyScene(CesiumGltf::Scene::TypeName, str, *this->_pObject);
+  return this->readObjectKeyScene(
+      CesiumGltf::Scene::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKeyScene(const std::string& objectType, const std::string_view& str, CesiumGltf::Scene& o) {
+CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKeyScene(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Scene& o) {
   using namespace std::string_literals;
 
-  if ("nodes"s == str) return property("nodes", this->_nodes, o.nodes);
+  if ("nodes"s == str)
+    return property("nodes", this->_nodes, o.nodes);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void SceneJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void SceneJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -932,30 +1453,50 @@ void SceneJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderConte
 
 namespace CesiumGltfReader {
 
-SamplerJsonHandler::SamplerJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _magFilter(), _minFilter(), _wrapS(), _wrapT() {}
+SamplerJsonHandler::SamplerJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _magFilter(),
+      _minFilter(),
+      _wrapS(),
+      _wrapT() {}
 
-void SamplerJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Sampler* pObject) {
+void SamplerJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Sampler* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* SamplerJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+SamplerJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeySampler(CesiumGltf::Sampler::TypeName, str, *this->_pObject);
+  return this->readObjectKeySampler(
+      CesiumGltf::Sampler::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* SamplerJsonHandler::readObjectKeySampler(const std::string& objectType, const std::string_view& str, CesiumGltf::Sampler& o) {
+CesiumJsonReader::IJsonHandler* SamplerJsonHandler::readObjectKeySampler(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Sampler& o) {
   using namespace std::string_literals;
 
-  if ("magFilter"s == str) return property("magFilter", this->_magFilter, o.magFilter);
-  if ("minFilter"s == str) return property("minFilter", this->_minFilter, o.minFilter);
-  if ("wrapS"s == str) return property("wrapS", this->_wrapS, o.wrapS);
-  if ("wrapT"s == str) return property("wrapT", this->_wrapT, o.wrapT);
+  if ("magFilter"s == str)
+    return property("magFilter", this->_magFilter, o.magFilter);
+  if ("minFilter"s == str)
+    return property("minFilter", this->_minFilter, o.minFilter);
+  if ("wrapS"s == str)
+    return property("wrapS", this->_wrapS, o.wrapS);
+  if ("wrapT"s == str)
+    return property("wrapT", this->_wrapT, o.wrapT);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void SamplerJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void SamplerJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -971,35 +1512,65 @@ void SamplerJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderCon
 
 namespace CesiumGltfReader {
 
-NodeJsonHandler::NodeJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _camera(), _children(), _skin(), _matrix(), _mesh(), _rotation(), _scale(), _translation(), _weights() {}
+NodeJsonHandler::NodeJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _camera(),
+      _children(),
+      _skin(),
+      _matrix(),
+      _mesh(),
+      _rotation(),
+      _scale(),
+      _translation(),
+      _weights() {}
 
-void NodeJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Node* pObject) {
+void NodeJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Node* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+NodeJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyNode(CesiumGltf::Node::TypeName, str, *this->_pObject);
+  return this->readObjectKeyNode(
+      CesiumGltf::Node::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(const std::string& objectType, const std::string_view& str, CesiumGltf::Node& o) {
+CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Node& o) {
   using namespace std::string_literals;
 
-  if ("camera"s == str) return property("camera", this->_camera, o.camera);
-  if ("children"s == str) return property("children", this->_children, o.children);
-  if ("skin"s == str) return property("skin", this->_skin, o.skin);
-  if ("matrix"s == str) return property("matrix", this->_matrix, o.matrix);
-  if ("mesh"s == str) return property("mesh", this->_mesh, o.mesh);
-  if ("rotation"s == str) return property("rotation", this->_rotation, o.rotation);
-  if ("scale"s == str) return property("scale", this->_scale, o.scale);
-  if ("translation"s == str) return property("translation", this->_translation, o.translation);
-  if ("weights"s == str) return property("weights", this->_weights, o.weights);
+  if ("camera"s == str)
+    return property("camera", this->_camera, o.camera);
+  if ("children"s == str)
+    return property("children", this->_children, o.children);
+  if ("skin"s == str)
+    return property("skin", this->_skin, o.skin);
+  if ("matrix"s == str)
+    return property("matrix", this->_matrix, o.matrix);
+  if ("mesh"s == str)
+    return property("mesh", this->_mesh, o.mesh);
+  if ("rotation"s == str)
+    return property("rotation", this->_rotation, o.rotation);
+  if ("scale"s == str)
+    return property("scale", this->_scale, o.scale);
+  if ("translation"s == str)
+    return property("translation", this->_translation, o.translation);
+  if ("weights"s == str)
+    return property("weights", this->_weights, o.weights);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void NodeJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void NodeJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1015,28 +1586,44 @@ void NodeJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContex
 
 namespace CesiumGltfReader {
 
-MeshJsonHandler::MeshJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _primitives(context), _weights() {}
+MeshJsonHandler::MeshJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _primitives(context),
+      _weights() {}
 
-void MeshJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Mesh* pObject) {
+void MeshJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Mesh* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* MeshJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+MeshJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMesh(CesiumGltf::Mesh::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMesh(
+      CesiumGltf::Mesh::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MeshJsonHandler::readObjectKeyMesh(const std::string& objectType, const std::string_view& str, CesiumGltf::Mesh& o) {
+CesiumJsonReader::IJsonHandler* MeshJsonHandler::readObjectKeyMesh(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Mesh& o) {
   using namespace std::string_literals;
 
-  if ("primitives"s == str) return property("primitives", this->_primitives, o.primitives);
-  if ("weights"s == str) return property("weights", this->_weights, o.weights);
+  if ("primitives"s == str)
+    return property("primitives", this->_primitives, o.primitives);
+  if ("weights"s == str)
+    return property("weights", this->_weights, o.weights);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void MeshJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void MeshJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1052,31 +1639,54 @@ void MeshJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContex
 
 namespace CesiumGltfReader {
 
-MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _attributes(), _indices(), _material(), _mode(), _targets() {}
+MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _attributes(),
+      _indices(),
+      _material(),
+      _mode(),
+      _targets() {}
 
-void MeshPrimitiveJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::MeshPrimitive* pObject) {
+void MeshPrimitiveJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::MeshPrimitive* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMeshPrimitive(CesiumGltf::MeshPrimitive::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMeshPrimitive(
+      CesiumGltf::MeshPrimitive::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MeshPrimitiveJsonHandler::readObjectKeyMeshPrimitive(const std::string& objectType, const std::string_view& str, CesiumGltf::MeshPrimitive& o) {
+CesiumJsonReader::IJsonHandler*
+MeshPrimitiveJsonHandler::readObjectKeyMeshPrimitive(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::MeshPrimitive& o) {
   using namespace std::string_literals;
 
-  if ("attributes"s == str) return property("attributes", this->_attributes, o.attributes);
-  if ("indices"s == str) return property("indices", this->_indices, o.indices);
-  if ("material"s == str) return property("material", this->_material, o.material);
-  if ("mode"s == str) return property("mode", this->_mode, o.mode);
-  if ("targets"s == str) return property("targets", this->_targets, o.targets);
+  if ("attributes"s == str)
+    return property("attributes", this->_attributes, o.attributes);
+  if ("indices"s == str)
+    return property("indices", this->_indices, o.indices);
+  if ("material"s == str)
+    return property("material", this->_material, o.material);
+  if ("mode"s == str)
+    return property("mode", this->_mode, o.mode);
+  if ("targets"s == str)
+    return property("targets", this->_targets, o.targets);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void MeshPrimitiveJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void MeshPrimitiveJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1092,34 +1702,71 @@ void MeshPrimitiveJsonHandler::populateExtensions(CesiumJsonReader::ExtensionRea
 
 namespace CesiumGltfReader {
 
-MaterialJsonHandler::MaterialJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _pbrMetallicRoughness(context), _normalTexture(context), _occlusionTexture(context), _emissiveTexture(context), _emissiveFactor(), _alphaMode(), _alphaCutoff(), _doubleSided() {}
+MaterialJsonHandler::MaterialJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _pbrMetallicRoughness(context),
+      _normalTexture(context),
+      _occlusionTexture(context),
+      _emissiveTexture(context),
+      _emissiveFactor(),
+      _alphaMode(),
+      _alphaCutoff(),
+      _doubleSided() {}
 
-void MaterialJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Material* pObject) {
+void MaterialJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Material* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* MaterialJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+MaterialJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMaterial(CesiumGltf::Material::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMaterial(
+      CesiumGltf::Material::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MaterialJsonHandler::readObjectKeyMaterial(const std::string& objectType, const std::string_view& str, CesiumGltf::Material& o) {
+CesiumJsonReader::IJsonHandler* MaterialJsonHandler::readObjectKeyMaterial(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Material& o) {
   using namespace std::string_literals;
 
-  if ("pbrMetallicRoughness"s == str) return property("pbrMetallicRoughness", this->_pbrMetallicRoughness, o.pbrMetallicRoughness);
-  if ("normalTexture"s == str) return property("normalTexture", this->_normalTexture, o.normalTexture);
-  if ("occlusionTexture"s == str) return property("occlusionTexture", this->_occlusionTexture, o.occlusionTexture);
-  if ("emissiveTexture"s == str) return property("emissiveTexture", this->_emissiveTexture, o.emissiveTexture);
-  if ("emissiveFactor"s == str) return property("emissiveFactor", this->_emissiveFactor, o.emissiveFactor);
-  if ("alphaMode"s == str) return property("alphaMode", this->_alphaMode, o.alphaMode);
-  if ("alphaCutoff"s == str) return property("alphaCutoff", this->_alphaCutoff, o.alphaCutoff);
-  if ("doubleSided"s == str) return property("doubleSided", this->_doubleSided, o.doubleSided);
+  if ("pbrMetallicRoughness"s == str)
+    return property(
+        "pbrMetallicRoughness",
+        this->_pbrMetallicRoughness,
+        o.pbrMetallicRoughness);
+  if ("normalTexture"s == str)
+    return property("normalTexture", this->_normalTexture, o.normalTexture);
+  if ("occlusionTexture"s == str)
+    return property(
+        "occlusionTexture",
+        this->_occlusionTexture,
+        o.occlusionTexture);
+  if ("emissiveTexture"s == str)
+    return property(
+        "emissiveTexture",
+        this->_emissiveTexture,
+        o.emissiveTexture);
+  if ("emissiveFactor"s == str)
+    return property("emissiveFactor", this->_emissiveFactor, o.emissiveFactor);
+  if ("alphaMode"s == str)
+    return property("alphaMode", this->_alphaMode, o.alphaMode);
+  if ("alphaCutoff"s == str)
+    return property("alphaCutoff", this->_alphaCutoff, o.alphaCutoff);
+  if ("doubleSided"s == str)
+    return property("doubleSided", this->_doubleSided, o.doubleSided);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void MaterialJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void MaterialJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1135,27 +1782,43 @@ void MaterialJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderCo
 
 namespace CesiumGltfReader {
 
-MaterialOcclusionTextureInfoJsonHandler::MaterialOcclusionTextureInfoJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : TextureInfoJsonHandler(context), _strength() {}
+MaterialOcclusionTextureInfoJsonHandler::
+    MaterialOcclusionTextureInfoJsonHandler(
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : TextureInfoJsonHandler(context), _strength() {}
 
-void MaterialOcclusionTextureInfoJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::MaterialOcclusionTextureInfo* pObject) {
+void MaterialOcclusionTextureInfoJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::MaterialOcclusionTextureInfo* pObject) {
   TextureInfoJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMaterialOcclusionTextureInfo(CesiumGltf::MaterialOcclusionTextureInfo::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMaterialOcclusionTextureInfo(
+      CesiumGltf::MaterialOcclusionTextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::readObjectKeyMaterialOcclusionTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::MaterialOcclusionTextureInfo& o) {
+CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::
+    readObjectKeyMaterialOcclusionTextureInfo(
+        const std::string& objectType,
+        const std::string_view& str,
+        CesiumGltf::MaterialOcclusionTextureInfo& o) {
   using namespace std::string_literals;
 
-  if ("strength"s == str) return property("strength", this->_strength, o.strength);
+  if ("strength"s == str)
+    return property("strength", this->_strength, o.strength);
 
   return this->readObjectKeyTextureInfo(objectType, str, *this->_pObject);
 }
 
-void MaterialOcclusionTextureInfoJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void MaterialOcclusionTextureInfoJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1171,27 +1834,42 @@ void MaterialOcclusionTextureInfoJsonHandler::populateExtensions(CesiumJsonReade
 
 namespace CesiumGltfReader {
 
-MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : TextureInfoJsonHandler(context), _scale() {}
+MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : TextureInfoJsonHandler(context), _scale() {}
 
-void MaterialNormalTextureInfoJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::MaterialNormalTextureInfo* pObject) {
+void MaterialNormalTextureInfoJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::MaterialNormalTextureInfo* pObject) {
   TextureInfoJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* MaterialNormalTextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+MaterialNormalTextureInfoJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMaterialNormalTextureInfo(CesiumGltf::MaterialNormalTextureInfo::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMaterialNormalTextureInfo(
+      CesiumGltf::MaterialNormalTextureInfo::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MaterialNormalTextureInfoJsonHandler::readObjectKeyMaterialNormalTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::MaterialNormalTextureInfo& o) {
+CesiumJsonReader::IJsonHandler*
+MaterialNormalTextureInfoJsonHandler::readObjectKeyMaterialNormalTextureInfo(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::MaterialNormalTextureInfo& o) {
   using namespace std::string_literals;
 
-  if ("scale"s == str) return property("scale", this->_scale, o.scale);
+  if ("scale"s == str)
+    return property("scale", this->_scale, o.scale);
 
   return this->readObjectKeyTextureInfo(objectType, str, *this->_pObject);
 }
 
-void MaterialNormalTextureInfoJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void MaterialNormalTextureInfoJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1207,31 +1885,68 @@ void MaterialNormalTextureInfoJsonHandler::populateExtensions(CesiumJsonReader::
 
 namespace CesiumGltfReader {
 
-MaterialPBRMetallicRoughnessJsonHandler::MaterialPBRMetallicRoughnessJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(context), _baseColorFactor(), _baseColorTexture(context), _metallicFactor(), _roughnessFactor(), _metallicRoughnessTexture(context) {}
+MaterialPBRMetallicRoughnessJsonHandler::
+    MaterialPBRMetallicRoughnessJsonHandler(
+        const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _baseColorFactor(),
+      _baseColorTexture(context),
+      _metallicFactor(),
+      _roughnessFactor(),
+      _metallicRoughnessTexture(context) {}
 
-void MaterialPBRMetallicRoughnessJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::MaterialPBRMetallicRoughness* pObject) {
+void MaterialPBRMetallicRoughnessJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::MaterialPBRMetallicRoughness* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
+    const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyMaterialPBRMetallicRoughness(CesiumGltf::MaterialPBRMetallicRoughness::TypeName, str, *this->_pObject);
+  return this->readObjectKeyMaterialPBRMetallicRoughness(
+      CesiumGltf::MaterialPBRMetallicRoughness::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::readObjectKeyMaterialPBRMetallicRoughness(const std::string& objectType, const std::string_view& str, CesiumGltf::MaterialPBRMetallicRoughness& o) {
+CesiumJsonReader::IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::
+    readObjectKeyMaterialPBRMetallicRoughness(
+        const std::string& objectType,
+        const std::string_view& str,
+        CesiumGltf::MaterialPBRMetallicRoughness& o) {
   using namespace std::string_literals;
 
-  if ("baseColorFactor"s == str) return property("baseColorFactor", this->_baseColorFactor, o.baseColorFactor);
-  if ("baseColorTexture"s == str) return property("baseColorTexture", this->_baseColorTexture, o.baseColorTexture);
-  if ("metallicFactor"s == str) return property("metallicFactor", this->_metallicFactor, o.metallicFactor);
-  if ("roughnessFactor"s == str) return property("roughnessFactor", this->_roughnessFactor, o.roughnessFactor);
-  if ("metallicRoughnessTexture"s == str) return property("metallicRoughnessTexture", this->_metallicRoughnessTexture, o.metallicRoughnessTexture);
+  if ("baseColorFactor"s == str)
+    return property(
+        "baseColorFactor",
+        this->_baseColorFactor,
+        o.baseColorFactor);
+  if ("baseColorTexture"s == str)
+    return property(
+        "baseColorTexture",
+        this->_baseColorTexture,
+        o.baseColorTexture);
+  if ("metallicFactor"s == str)
+    return property("metallicFactor", this->_metallicFactor, o.metallicFactor);
+  if ("roughnessFactor"s == str)
+    return property(
+        "roughnessFactor",
+        this->_roughnessFactor,
+        o.roughnessFactor);
+  if ("metallicRoughnessTexture"s == str)
+    return property(
+        "metallicRoughnessTexture",
+        this->_metallicRoughnessTexture,
+        o.metallicRoughnessTexture);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
 
-void MaterialPBRMetallicRoughnessJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void MaterialPBRMetallicRoughnessJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 
@@ -1247,29 +1962,857 @@ void MaterialPBRMetallicRoughnessJsonHandler::populateExtensions(CesiumJsonReade
 
 namespace CesiumGltfReader {
 
-ImageJsonHandler::ImageJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept : CesiumGltfReader::NamedObjectJsonHandler(context), _uri(), _mimeType(), _bufferView() {}
+ImageJsonHandler::ImageJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _uri(),
+      _mimeType(),
+      _bufferView() {}
 
-void ImageJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::Image* pObject) {
+void ImageJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Image* pObject) {
   CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
-CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKey(const std::string_view& str) {
+CesiumJsonReader::IJsonHandler*
+ImageJsonHandler::readObjectKey(const std::string_view& str) {
   assert(this->_pObject);
-  return this->readObjectKeyImage(CesiumGltf::Image::TypeName, str, *this->_pObject);
+  return this->readObjectKeyImage(
+      CesiumGltf::Image::TypeName,
+      str,
+      *this->_pObject);
 }
 
-CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKeyImage(const std::string& objectType, const std::string_view& str, CesiumGltf::Image& o) {
+CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKeyImage(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Image& o) {
   using namespace std::string_literals;
 
-  if ("uri"s == str) return property("uri", this->_uri, o.uri);
-  if ("mimeType"s == str) return property("mimeType", this->_mimeType, o.mimeType);
-  if ("bufferView"s == str) return property("bufferView", this->_bufferView, o.bufferView);
+  if ("uri"s == str)
+    return property("uri", this->_uri, o.uri);
+  if ("mimeType"s == str)
+    return property("mimeType", this->_mimeType, o.mimeType);
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
 
   return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
 }
 
-void ImageJsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
+void ImageJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "CameraJsonHandler.h"
+
+#include <CesiumGltf/Camera.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+CameraJsonHandler::CameraJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _orthographic(context),
+      _perspective(context),
+      _type() {}
+
+void CameraJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Camera* pObject) {
+  CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+CameraJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyCamera(
+      CesiumGltf::Camera::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Camera& o) {
+  using namespace std::string_literals;
+
+  if ("orthographic"s == str)
+    return property("orthographic", this->_orthographic, o.orthographic);
+  if ("perspective"s == str)
+    return property("perspective", this->_perspective, o.perspective);
+  if ("type"s == str)
+    return property("type", this->_type, o.type);
+
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
+}
+
+void CameraJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "CameraPerspectiveJsonHandler.h"
+
+#include <CesiumGltf/CameraPerspective.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _aspectRatio(),
+      _yfov(),
+      _zfar(),
+      _znear() {}
+
+void CameraPerspectiveJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::CameraPerspective* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyCameraPerspective(
+      CesiumGltf::CameraPerspective::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::CameraPerspective& o) {
+  using namespace std::string_literals;
+
+  if ("aspectRatio"s == str)
+    return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
+  if ("yfov"s == str)
+    return property("yfov", this->_yfov, o.yfov);
+  if ("zfar"s == str)
+    return property("zfar", this->_zfar, o.zfar);
+  if ("znear"s == str)
+    return property("znear", this->_znear, o.znear);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void CameraPerspectiveJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "CameraOrthographicJsonHandler.h"
+
+#include <CesiumGltf/CameraOrthographic.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _xmag(),
+      _ymag(),
+      _zfar(),
+      _znear() {}
+
+void CameraOrthographicJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::CameraOrthographic* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyCameraOrthographic(
+      CesiumGltf::CameraOrthographic::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::CameraOrthographic& o) {
+  using namespace std::string_literals;
+
+  if ("xmag"s == str)
+    return property("xmag", this->_xmag, o.xmag);
+  if ("ymag"s == str)
+    return property("ymag", this->_ymag, o.ymag);
+  if ("zfar"s == str)
+    return property("zfar", this->_zfar, o.zfar);
+  if ("znear"s == str)
+    return property("znear", this->_znear, o.znear);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void CameraOrthographicJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "BufferViewJsonHandler.h"
+
+#include <CesiumGltf/BufferView.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+BufferViewJsonHandler::BufferViewJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _buffer(),
+      _byteOffset(),
+      _byteLength(),
+      _byteStride(),
+      _target() {}
+
+void BufferViewJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::BufferView* pObject) {
+  CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyBufferView(
+      CesiumGltf::BufferView::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler* BufferViewJsonHandler::readObjectKeyBufferView(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::BufferView& o) {
+  using namespace std::string_literals;
+
+  if ("buffer"s == str)
+    return property("buffer", this->_buffer, o.buffer);
+  if ("byteOffset"s == str)
+    return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("byteLength"s == str)
+    return property("byteLength", this->_byteLength, o.byteLength);
+  if ("byteStride"s == str)
+    return property("byteStride", this->_byteStride, o.byteStride);
+  if ("target"s == str)
+    return property("target", this->_target, o.target);
+
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
+}
+
+void BufferViewJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "BufferJsonHandler.h"
+
+#include <CesiumGltf/Buffer.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+BufferJsonHandler::BufferJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _uri(),
+      _byteLength() {}
+
+void BufferJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Buffer* pObject) {
+  CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+BufferJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyBuffer(
+      CesiumGltf::Buffer::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Buffer& o) {
+  using namespace std::string_literals;
+
+  if ("uri"s == str)
+    return property("uri", this->_uri, o.uri);
+  if ("byteLength"s == str)
+    return property("byteLength", this->_byteLength, o.byteLength);
+
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
+}
+
+void BufferJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AssetJsonHandler.h"
+
+#include <CesiumGltf/Asset.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AssetJsonHandler::AssetJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _copyright(),
+      _generator(),
+      _version(),
+      _minVersion() {}
+
+void AssetJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Asset* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AssetJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAsset(
+      CesiumGltf::Asset::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Asset& o) {
+  using namespace std::string_literals;
+
+  if ("copyright"s == str)
+    return property("copyright", this->_copyright, o.copyright);
+  if ("generator"s == str)
+    return property("generator", this->_generator, o.generator);
+  if ("version"s == str)
+    return property("version", this->_version, o.version);
+  if ("minVersion"s == str)
+    return property("minVersion", this->_minVersion, o.minVersion);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AssetJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AnimationJsonHandler.h"
+
+#include <CesiumGltf/Animation.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AnimationJsonHandler::AnimationJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _channels(context),
+      _samplers(context) {}
+
+void AnimationJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Animation* pObject) {
+  CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAnimation(
+      CesiumGltf::Animation::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Animation& o) {
+  using namespace std::string_literals;
+
+  if ("channels"s == str)
+    return property("channels", this->_channels, o.channels);
+  if ("samplers"s == str)
+    return property("samplers", this->_samplers, o.samplers);
+
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
+}
+
+void AnimationJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AnimationSamplerJsonHandler.h"
+
+#include <CesiumGltf/AnimationSampler.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _input(),
+      _interpolation(),
+      _output() {}
+
+void AnimationSamplerJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::AnimationSampler* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationSamplerJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAnimationSampler(
+      CesiumGltf::AnimationSampler::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::AnimationSampler& o) {
+  using namespace std::string_literals;
+
+  if ("input"s == str)
+    return property("input", this->_input, o.input);
+  if ("interpolation"s == str)
+    return property("interpolation", this->_interpolation, o.interpolation);
+  if ("output"s == str)
+    return property("output", this->_output, o.output);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AnimationSamplerJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AnimationChannelJsonHandler.h"
+
+#include <CesiumGltf/AnimationChannel.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AnimationChannelJsonHandler::AnimationChannelJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _sampler(),
+      _target(context) {}
+
+void AnimationChannelJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::AnimationChannel* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationChannelJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAnimationChannel(
+      CesiumGltf::AnimationChannel::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationChannelJsonHandler::readObjectKeyAnimationChannel(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::AnimationChannel& o) {
+  using namespace std::string_literals;
+
+  if ("sampler"s == str)
+    return property("sampler", this->_sampler, o.sampler);
+  if ("target"s == str)
+    return property("target", this->_target, o.target);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AnimationChannelJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AnimationChannelTargetJsonHandler.h"
+
+#include <CesiumGltf/AnimationChannelTarget.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AnimationChannelTargetJsonHandler::AnimationChannelTargetJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _node(),
+      _path() {}
+
+void AnimationChannelTargetJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::AnimationChannelTarget* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationChannelTargetJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAnimationChannelTarget(
+      CesiumGltf::AnimationChannelTarget::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+AnimationChannelTargetJsonHandler::readObjectKeyAnimationChannelTarget(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::AnimationChannelTarget& o) {
+  using namespace std::string_literals;
+
+  if ("node"s == str)
+    return property("node", this->_node, o.node);
+  if ("path"s == str)
+    return property("path", this->_path, o.path);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AnimationChannelTargetJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AccessorJsonHandler.h"
+
+#include <CesiumGltf/Accessor.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AccessorJsonHandler::AccessorJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumGltfReader::NamedObjectJsonHandler(context),
+      _bufferView(),
+      _byteOffset(),
+      _componentType(),
+      _normalized(),
+      _count(),
+      _type(),
+      _max(),
+      _min(),
+      _sparse(context) {}
+
+void AccessorJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::Accessor* pObject) {
+  CesiumGltfReader::NamedObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAccessor(
+      CesiumGltf::Accessor::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler* AccessorJsonHandler::readObjectKeyAccessor(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::Accessor& o) {
+  using namespace std::string_literals;
+
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str)
+    return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("componentType"s == str)
+    return property("componentType", this->_componentType, o.componentType);
+  if ("normalized"s == str)
+    return property("normalized", this->_normalized, o.normalized);
+  if ("count"s == str)
+    return property("count", this->_count, o.count);
+  if ("type"s == str)
+    return property("type", this->_type, o.type);
+  if ("max"s == str)
+    return property("max", this->_max, o.max);
+  if ("min"s == str)
+    return property("min", this->_min, o.min);
+  if ("sparse"s == str)
+    return property("sparse", this->_sparse, o.sparse);
+
+  return this->readObjectKeyNamedObject(objectType, str, *this->_pObject);
+}
+
+void AccessorJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AccessorSparseJsonHandler.h"
+
+#include <CesiumGltf/AccessorSparse.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AccessorSparseJsonHandler::AccessorSparseJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _count(),
+      _indices(context),
+      _values(context) {}
+
+void AccessorSparseJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::AccessorSparse* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAccessorSparse(
+      CesiumGltf::AccessorSparse::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorSparseJsonHandler::readObjectKeyAccessorSparse(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::AccessorSparse& o) {
+  using namespace std::string_literals;
+
+  if ("count"s == str)
+    return property("count", this->_count, o.count);
+  if ("indices"s == str)
+    return property("indices", this->_indices, o.indices);
+  if ("values"s == str)
+    return property("values", this->_values, o.values);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AccessorSparseJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AccessorSparseValuesJsonHandler.h"
+
+#include <CesiumGltf/AccessorSparseValues.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AccessorSparseValuesJsonHandler::AccessorSparseValuesJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _byteOffset() {}
+
+void AccessorSparseValuesJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::AccessorSparseValues* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAccessorSparseValues(
+      CesiumGltf::AccessorSparseValues::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::AccessorSparseValues& o) {
+  using namespace std::string_literals;
+
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str)
+    return property("byteOffset", this->_byteOffset, o.byteOffset);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AccessorSparseValuesJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
+  (void)context;
+}
+
+} // namespace CesiumGltfReader
+// This file was generated by generate-classes.
+// DO NOT EDIT THIS FILE!
+#include "AccessorSparseIndicesJsonHandler.h"
+
+#include <CesiumGltf/AccessorSparseIndices.h>
+
+#include <cassert>
+#include <string>
+
+namespace CesiumGltfReader {
+
+AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(
+    const CesiumJsonReader::ExtensionReaderContext& context) noexcept
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(context),
+      _bufferView(),
+      _byteOffset(),
+      _componentType() {}
+
+void AccessorSparseIndicesJsonHandler::reset(
+    CesiumJsonReader::IJsonHandler* pParentHandler,
+    CesiumGltf::AccessorSparseIndices* pObject) {
+  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  this->_pObject = pObject;
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorSparseIndicesJsonHandler::readObjectKey(const std::string_view& str) {
+  assert(this->_pObject);
+  return this->readObjectKeyAccessorSparseIndices(
+      CesiumGltf::AccessorSparseIndices::TypeName,
+      str,
+      *this->_pObject);
+}
+
+CesiumJsonReader::IJsonHandler*
+AccessorSparseIndicesJsonHandler::readObjectKeyAccessorSparseIndices(
+    const std::string& objectType,
+    const std::string_view& str,
+    CesiumGltf::AccessorSparseIndices& o) {
+  using namespace std::string_literals;
+
+  if ("bufferView"s == str)
+    return property("bufferView", this->_bufferView, o.bufferView);
+  if ("byteOffset"s == str)
+    return property("byteOffset", this->_byteOffset, o.byteOffset);
+  if ("componentType"s == str)
+    return property("componentType", this->_componentType, o.componentType);
+
+  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+}
+
+void AccessorSparseIndicesJsonHandler::populateExtensions(
+    CesiumJsonReader::ExtensionReaderContext& context) {
   (void)context;
 }
 

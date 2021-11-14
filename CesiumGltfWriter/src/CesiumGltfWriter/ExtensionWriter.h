@@ -2,6 +2,7 @@
 
 #include <any>
 #include <map>
+#include <string>
 
 // forward declarations
 namespace CesiumJsonWriter {

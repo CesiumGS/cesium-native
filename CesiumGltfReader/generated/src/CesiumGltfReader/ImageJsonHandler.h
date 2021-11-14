@@ -3,34 +3,39 @@
 #pragma once
 
 #include "CesiumGltfReader/NamedObjectJsonHandler.h"
+
 #include <CesiumGltf/Image.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class ImageJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::Image;
+class ImageJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::Image;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    ImageJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::Image* pObject);
+  ImageJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::Image* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyImage(const std::string& objectType, const std::string_view& str, CesiumGltf::Image& o);
+protected:
+  IJsonHandler* readObjectKeyImage(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::Image& o);
 
-  private:
-
-    CesiumGltf::Image* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _uri;
-    CesiumJsonReader::StringJsonHandler _mimeType;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
-  };
-}
+private:
+  CesiumGltf::Image* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _uri;
+  CesiumJsonReader::StringJsonHandler _mimeType;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+};
+} // namespace CesiumGltfReader

@@ -3,35 +3,42 @@
 #pragma once
 
 #include "CesiumGltfReader/ClassPropertyJsonHandler.h"
+
 #include <CesiumGltf/Class.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class ClassJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::Class;
+class ClassJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::Class;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    ClassJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::Class* pObject);
+  ClassJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::Class* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyClass(const std::string& objectType, const std::string_view& str, CesiumGltf::Class& o);
+protected:
+  IJsonHandler* readObjectKeyClass(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::Class& o);
 
-  private:
-
-    CesiumGltf::Class* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _name;
-    CesiumJsonReader::StringJsonHandler _description;
-    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::ClassProperty, ClassPropertyJsonHandler> _properties;
-  };
-}
+private:
+  CesiumGltf::Class* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _name;
+  CesiumJsonReader::StringJsonHandler _description;
+  CesiumJsonReader::
+      DictionaryJsonHandler<CesiumGltf::ClassProperty, ClassPropertyJsonHandler>
+          _properties;
+};
+} // namespace CesiumGltfReader

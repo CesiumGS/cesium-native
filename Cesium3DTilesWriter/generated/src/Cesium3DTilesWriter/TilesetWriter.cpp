@@ -6,6 +6,7 @@
 #include <Cesium3DTiles/Asset.h>
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Content.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/Extension3dTilesContentGltf.h>
 #include <Cesium3DTiles/Properties.h>
 #include <Cesium3DTiles/Tile.h>
@@ -21,6 +22,11 @@ namespace {
 
 void writeJson(
     const Cesium3DTiles::Extension3dTilesContentGltf& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -146,6 +152,34 @@ void writeJson(
     jsonWriter.Key("extensionsRequired");
     writeJson(obj.extensionsRequired, jsonWriter, context);
   }
+
+  if (!obj.extensions.empty()) {
+    jsonWriter.Key("extensions");
+    writeJsonExtensions(obj, jsonWriter, context);
+  }
+
+  if (!obj.extras.empty()) {
+    jsonWriter.Key("extras");
+    writeJson(obj.extras, jsonWriter, context);
+  }
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("token");
+  writeJson(obj.token, jsonWriter, context);
+
+  jsonWriter.Key("minimumHeight");
+  writeJson(obj.minimumHeight, jsonWriter, context);
+
+  jsonWriter.Key("maximumHeight");
+  writeJson(obj.maximumHeight, jsonWriter, context);
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -376,6 +410,18 @@ void Extension3dTilesContentGltfWriter::write(
 }
 
 void Extension3dTilesContentGltfWriter::populateExtensions(
+    CesiumJsonWriter::ExtensionWriterContext& context) {
+  (void)context;
+}
+
+void Extension3dTilesBoundingVolumeS2Writer::write(
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesBoundingVolumeS2Writer::populateExtensions(
     CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
 }

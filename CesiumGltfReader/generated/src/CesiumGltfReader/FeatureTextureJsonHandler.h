@@ -3,34 +3,43 @@
 #pragma once
 
 #include "CesiumGltfReader/TextureAccessorJsonHandler.h"
+
 #include <CesiumGltf/FeatureTexture.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class FeatureTextureJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::FeatureTexture;
+class FeatureTextureJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::FeatureTexture;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    FeatureTextureJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureTexture* pObject);
+  FeatureTextureJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureTexture* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyFeatureTexture(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureTexture& o);
+protected:
+  IJsonHandler* readObjectKeyFeatureTexture(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::FeatureTexture& o);
 
-  private:
-
-    CesiumGltf::FeatureTexture* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _classProperty;
-    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::TextureAccessor, TextureAccessorJsonHandler> _properties;
-  };
-}
+private:
+  CesiumGltf::FeatureTexture* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _classProperty;
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumGltf::TextureAccessor,
+      TextureAccessorJsonHandler>
+      _properties;
+};
+} // namespace CesiumGltfReader

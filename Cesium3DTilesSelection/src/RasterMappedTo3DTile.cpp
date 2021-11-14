@@ -1,15 +1,18 @@
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/RasterOverlayCollection.h"
 #include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
 #include "Cesium3DTilesSelection/Tile.h"
+#include "Cesium3DTilesSelection/TileContentLoadResult.h"
 #include "Cesium3DTilesSelection/Tileset.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "TileUtilities.h"
 
-using namespace CesiumUtility;
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumUtility;
 
 namespace {
 
@@ -42,10 +45,11 @@ RasterOverlayTile* findTileOverlay(Tile& tile, const RasterOverlay& overlay) {
 namespace Cesium3DTilesSelection {
 
 RasterMappedTo3DTile::RasterMappedTo3DTile(
-    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile)
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pRasterTile,
+    int32_t textureCoordinateIndex)
     : _pLoadingTile(pRasterTile),
       _pReadyTile(nullptr),
-      _textureCoordinateID(0),
+      _textureCoordinateID(textureCoordinateIndex),
       _translation(0.0, 0.0),
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
@@ -188,21 +192,230 @@ void RasterMappedTo3DTile::detachFromTile(Tile& tile) noexcept {
   this->_state = AttachmentState::Unattached;
 }
 
-void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
-  if (!this->_pReadyTile) {
-    return;
+bool RasterMappedTo3DTile::loadThrottled() noexcept {
+  RasterOverlayTile* pLoading = this->getLoadingTile();
+  if (!pLoading) {
+    return true;
   }
 
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&tile.getBoundingVolume());
-  if (!pRectangle) {
+  RasterOverlayTileProvider* pProvider =
+      pLoading->getOverlay().getTileProvider();
+  if (!pProvider) {
+    // This should not be possible.
+    assert(pProvider);
+    return false;
+  }
+
+  return pProvider->loadTileThrottled(*pLoading);
+}
+
+namespace {
+
+IntrusivePointer<RasterOverlayTile> getPlaceholderTile(RasterOverlay& overlay) {
+  // Rectangle and geometric error don't matter for a placeholder.
+  return overlay.getPlaceholder()->getTile(Rectangle(), glm::dvec2(0.0));
+}
+
+std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
+    const Projection& projection,
+    const BoundingVolume& boundingVolume) {
+  const BoundingRegion* pRegion =
+      getBoundingRegionFromBoundingVolume(boundingVolume);
+  if (!pRegion) {
+    return std::nullopt;
+  }
+
+  // Currently _all_ supported projections can have a rectangle precisely
+  // determined from a bounding region. This may not be true, however, for
+  // projections we add in the future where X is not purely a function of
+  // longitude or Y is not purely a function of latitude.
+  return projectRectangleSimple(projection, pRegion->getRectangle());
+}
+
+int32_t addProjectionToList(
+    std::vector<Projection>& projections,
+    const Projection& projection) {
+  auto it = std::find(projections.begin(), projections.end(), projection);
+  if (it == projections.end()) {
+    projections.emplace_back(projection);
+    return int32_t(projections.size()) - 1;
+  } else {
+    return int32_t(it - projections.begin());
+  }
+}
+
+glm::dvec2 computeDesiredScreenPixels(
+    const Tile& tile,
+    const Projection& projection,
+    const Rectangle& rectangle,
+    double maxHeight,
+    const Ellipsoid& ellipsoid = Ellipsoid::WGS84) {
+  // We're aiming to estimate the maximum number of pixels (in each projected
+  // direction) the tile will occupy on the screen. The will be determined by
+  // the tile's geometric error, because when less error is needed (i.e. the
+  // viewer moved closer), the LOD will switch to show the tile's children
+  // instead of this tile.
+  //
+  // It works like this:
+  // * Estimate the size of the projected rectangle in world coordinates.
+  // * Compute the distance at which tile will switch to its children, based on
+  // its geometric error and the tileset SSE.
+  // * Compute the on-screen size of the projected rectangle at that distance.
+  //
+  // For the two compute steps, we use the usual perspective projection SSE
+  // equation:
+  // screenSize = (realSize * viewportHeight) / (distance * 2 * tan(0.5 * fovY))
+  //
+  // Conveniently a bunch of terms cancel out, so the screen pixel size at the
+  // switch distance is not actually dependent on the screen dimensions or
+  // field-of-view angle.
+  double geometryError = tile.getNonZeroGeometricError();
+  double geometrySSE = tile.getTileset()->getOptions().maximumScreenSpaceError;
+  glm::dvec2 diameters = computeProjectedRectangleSize(
+      projection,
+      rectangle,
+      maxHeight,
+      ellipsoid);
+  return diameters * geometrySSE / geometryError;
+}
+
+RasterMappedTo3DTile* addRealTile(
+    Tile& tile,
+    RasterOverlayTileProvider& provider,
+    const Rectangle& rectangle,
+    const glm::dvec2& screenPixels,
+    int32_t textureCoordinateIndex) {
+  IntrusivePointer<RasterOverlayTile> pTile =
+      provider.getTile(rectangle, screenPixels);
+  if (!pTile) {
+    return nullptr;
+  } else {
+    return &tile.getMappedRasterTiles().emplace_back(
+        RasterMappedTo3DTile(pTile, textureCoordinateIndex));
+  }
+}
+
+} // namespace
+
+/*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
+    RasterOverlay& overlay,
+    Tile& tile,
+    std::vector<Projection>& missingProjections) {
+  RasterOverlayTileProvider* pProvider = overlay.getTileProvider();
+  if (pProvider->isPlaceholder()) {
+    // Provider not created yet, so add a placeholder tile.
+    return &tile.getMappedRasterTiles().emplace_back(
+        RasterMappedTo3DTile(getPlaceholderTile(overlay), -1));
+  }
+
+  // We can get a more accurate estimate of the real-world size of the projected
+  // rectangle if we consider the rectangle at the true height of the geometry
+  // rather than assuming it's on the ellipsoid. This will make basically no
+  // difference for small tiles (because surface normals on opposite ends of
+  // tiles are effectively identical), and only a small difference for large
+  // ones (because heights will be small compared to the total size of a large
+  // tile). So we're skipping this complexity for now and estimating geometry
+  // width/height as if it's on the ellipsoid surface.
+  const double heightForSizeEstimation = 0.0;
+
+  const Projection& projection = pProvider->getProjection();
+
+  // If the tile is loaded, use the precise rectangle computed from the content.
+  const TileContentLoadResult* pContent = tile.getContent();
+  if (pContent) {
+    const Rectangle* pRectangle =
+        pContent->overlayDetails
+            ? pContent->overlayDetails->findRectangleForOverlayProjection(
+                  projection)
+            : nullptr;
+    if (pRectangle) {
+      // We have a rectangle and texture coordinates for this projection.
+      int32_t index = int32_t(
+          pRectangle - &pContent->overlayDetails->rasterOverlayRectangles[0]);
+      const glm::dvec2 screenPixels = computeDesiredScreenPixels(
+          tile,
+          projection,
+          *pRectangle,
+          heightForSizeEstimation,
+          Ellipsoid::WGS84);
+      return addRealTile(tile, *pProvider, *pRectangle, screenPixels, index);
+    } else {
+      // We don't have a precise rectangle for this projection, which means the
+      // tile was loaded before we knew we needed this projection. We'll need to
+      // reload the tile (later).
+      int32_t existingIndex =
+          pContent->overlayDetails
+              ? int32_t(
+                    pContent->overlayDetails->rasterOverlayProjections.size())
+              : 0;
+      int32_t textureCoordinateIndex =
+          existingIndex + addProjectionToList(missingProjections, projection);
+      return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+          getPlaceholderTile(overlay),
+          textureCoordinateIndex));
+    }
+  }
+
+  // Maybe we can derive a precise rectangle from the bounding volume.
+  int32_t textureCoordinateIndex =
+      addProjectionToList(missingProjections, projection);
+  std::optional<Rectangle> maybeRectangle =
+      getPreciseRectangleFromBoundingVolume(
+          pProvider->getProjection(),
+          tile.getBoundingVolume());
+  if (maybeRectangle) {
+    const glm::dvec2 screenPixels = computeDesiredScreenPixels(
+        tile,
+        projection,
+        *maybeRectangle,
+        heightForSizeEstimation,
+        Ellipsoid::WGS84);
+    return addRealTile(
+        tile,
+        *pProvider,
+        *maybeRectangle,
+        screenPixels,
+        textureCoordinateIndex);
+  } else {
+    // No precise rectangle yet, so return a placeholder for now.
+    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+        getPlaceholderTile(overlay),
+        textureCoordinateIndex));
+  }
+}
+
+void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
+  if (!this->_pReadyTile || !tile.getContent() ||
+      !tile.getContent()->overlayDetails) {
+    // This shouldn't happen
+    assert(false);
     return;
   }
 
   const RasterOverlayTileProvider& tileProvider =
       *this->_pReadyTile->getOverlay().getTileProvider();
-  const CesiumGeometry::Rectangle geometryRectangle =
-      projectRectangleSimple(tileProvider.getProjection(), *pRectangle);
+
+  const TileContentDetailsForOverlays& overlayDetails =
+      *tile.getContent()->overlayDetails;
+  const Projection& projection = tileProvider.getProjection();
+  const std::vector<Projection>& projections =
+      overlayDetails.rasterOverlayProjections;
+  const std::vector<Rectangle>& rectangles =
+      overlayDetails.rasterOverlayRectangles;
+
+  auto projectionIt =
+      std::find(projections.begin(), projections.end(), projection);
+  if (projectionIt == projections.end()) {
+    return;
+  }
+
+  int32_t projectionIndex = int32_t(projectionIt - projections.begin());
+  if (projectionIndex < 0 || size_t(projectionIndex) >= rectangles.size()) {
+    return;
+  }
+
+  const Rectangle& geometryRectangle = rectangles[size_t(projectionIndex)];
+
   const CesiumGeometry::Rectangle imageryRectangle =
       this->_pReadyTile->getRectangle();
 

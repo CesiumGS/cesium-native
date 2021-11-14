@@ -10,38 +10,43 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class ClassPropertyJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::ClassProperty;
+class ClassPropertyJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::ClassProperty;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    ClassPropertyJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::ClassProperty* pObject);
+  ClassPropertyJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::ClassProperty* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyClassProperty(const std::string& objectType, const std::string_view& str, CesiumGltf::ClassProperty& o);
+protected:
+  IJsonHandler* readObjectKeyClassProperty(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::ClassProperty& o);
 
-  private:
-
-    CesiumGltf::ClassProperty* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _name;
-    CesiumJsonReader::StringJsonHandler _description;
-    CesiumJsonReader::StringJsonHandler _type;
-    CesiumJsonReader::StringJsonHandler _enumType;
-    CesiumJsonReader::StringJsonHandler _componentType;
-    CesiumJsonReader::IntegerJsonHandler<int64_t> _componentCount;
-    CesiumJsonReader::BoolJsonHandler _normalized;
-    CesiumJsonReader::JsonObjectJsonHandler _max;
-    CesiumJsonReader::JsonObjectJsonHandler _min;
-    CesiumJsonReader::JsonObjectJsonHandler _defaultProperty;
-    CesiumJsonReader::BoolJsonHandler _optional;
-    CesiumJsonReader::StringJsonHandler _semantic;
-  };
-}
+private:
+  CesiumGltf::ClassProperty* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _name;
+  CesiumJsonReader::StringJsonHandler _description;
+  CesiumJsonReader::StringJsonHandler _type;
+  CesiumJsonReader::StringJsonHandler _enumType;
+  CesiumJsonReader::StringJsonHandler _componentType;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _componentCount;
+  CesiumJsonReader::BoolJsonHandler _normalized;
+  CesiumJsonReader::JsonObjectJsonHandler _max;
+  CesiumJsonReader::JsonObjectJsonHandler _min;
+  CesiumJsonReader::JsonObjectJsonHandler _defaultProperty;
+  CesiumJsonReader::BoolJsonHandler _optional;
+  CesiumJsonReader::StringJsonHandler _semantic;
+};
+} // namespace CesiumGltfReader

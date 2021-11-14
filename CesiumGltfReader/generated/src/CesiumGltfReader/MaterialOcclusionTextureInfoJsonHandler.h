@@ -3,31 +3,38 @@
 #pragma once
 
 #include "CesiumGltfReader/TextureInfoJsonHandler.h"
+
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
-  public:
-    using ValueType = CesiumGltf::MaterialOcclusionTextureInfo;
+class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
+public:
+  using ValueType = CesiumGltf::MaterialOcclusionTextureInfo;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    MaterialOcclusionTextureInfoJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::MaterialOcclusionTextureInfo* pObject);
+  MaterialOcclusionTextureInfoJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::MaterialOcclusionTextureInfo* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::MaterialOcclusionTextureInfo& o);
+protected:
+  IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::MaterialOcclusionTextureInfo& o);
 
-  private:
-
-    CesiumGltf::MaterialOcclusionTextureInfo* _pObject = nullptr;
-    CesiumJsonReader::DoubleJsonHandler _strength;
-  };
-}
+private:
+  CesiumGltf::MaterialOcclusionTextureInfo* _pObject = nullptr;
+  CesiumJsonReader::DoubleJsonHandler _strength;
+};
+} // namespace CesiumGltfReader

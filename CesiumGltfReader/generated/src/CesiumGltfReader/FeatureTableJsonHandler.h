@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CesiumGltfReader/FeatureTablePropertyJsonHandler.h"
+
 #include <CesiumGltf/FeatureTable.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
@@ -10,29 +11,37 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class FeatureTableJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::FeatureTable;
+class FeatureTableJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::FeatureTable;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    FeatureTableJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureTable* pObject);
+  FeatureTableJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureTable* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyFeatureTable(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureTable& o);
+protected:
+  IJsonHandler* readObjectKeyFeatureTable(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::FeatureTable& o);
 
-  private:
-
-    CesiumGltf::FeatureTable* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _classProperty;
-    CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::FeatureTableProperty, FeatureTablePropertyJsonHandler> _properties;
-  };
-}
+private:
+  CesiumGltf::FeatureTable* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _classProperty;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumGltf::FeatureTableProperty,
+      FeatureTablePropertyJsonHandler>
+      _properties;
+};
+} // namespace CesiumGltfReader

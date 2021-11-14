@@ -3,31 +3,38 @@
 #pragma once
 
 #include "CesiumGltfReader/TextureInfoJsonHandler.h"
+
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
-  public:
-    using ValueType = CesiumGltf::MaterialNormalTextureInfo;
+class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
+public:
+  using ValueType = CesiumGltf::MaterialNormalTextureInfo;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    MaterialNormalTextureInfoJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::MaterialNormalTextureInfo* pObject);
+  MaterialNormalTextureInfoJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::MaterialNormalTextureInfo* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyMaterialNormalTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::MaterialNormalTextureInfo& o);
+protected:
+  IJsonHandler* readObjectKeyMaterialNormalTextureInfo(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::MaterialNormalTextureInfo& o);
 
-  private:
-
-    CesiumGltf::MaterialNormalTextureInfo* _pObject = nullptr;
-    CesiumJsonReader::DoubleJsonHandler _scale;
-  };
-}
+private:
+  CesiumGltf::MaterialNormalTextureInfo* _pObject = nullptr;
+  CesiumJsonReader::DoubleJsonHandler _scale;
+};
+} // namespace CesiumGltfReader

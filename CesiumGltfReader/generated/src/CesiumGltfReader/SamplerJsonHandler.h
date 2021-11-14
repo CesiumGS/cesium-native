@@ -3,34 +3,39 @@
 #pragma once
 
 #include "CesiumGltfReader/NamedObjectJsonHandler.h"
+
 #include <CesiumGltf/Sampler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class SamplerJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::Sampler;
+class SamplerJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::Sampler;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    SamplerJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::Sampler* pObject);
+  SamplerJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CesiumGltf::Sampler* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeySampler(const std::string& objectType, const std::string_view& str, CesiumGltf::Sampler& o);
+protected:
+  IJsonHandler* readObjectKeySampler(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::Sampler& o);
 
-  private:
-
-    CesiumGltf::Sampler* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
-  };
-}
+private:
+  CesiumGltf::Sampler* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
+};
+} // namespace CesiumGltfReader

@@ -3,33 +3,40 @@
 #pragma once
 
 #include "CesiumGltfReader/TextureAccessorJsonHandler.h"
+
 #include <CesiumGltf/FeatureIDTexture.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltfReader {
-  class FeatureIDTextureJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::FeatureIDTexture;
+class FeatureIDTextureJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::FeatureIDTexture;
 
-    static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
+  static void
+  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
-    FeatureIDTextureJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureIDTexture* pObject);
+  FeatureIDTextureJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void
+  reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureIDTexture* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyFeatureIDTexture(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureIDTexture& o);
+protected:
+  IJsonHandler* readObjectKeyFeatureIDTexture(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::FeatureIDTexture& o);
 
-  private:
-
-    CesiumGltf::FeatureIDTexture* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _featureTable;
-    TextureAccessorJsonHandler _featureIds;
-  };
-}
+private:
+  CesiumGltf::FeatureIDTexture* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _featureTable;
+  TextureAccessorJsonHandler _featureIds;
+};
+} // namespace CesiumGltfReader

@@ -655,6 +655,7 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
         TileRefine::Replace,
         *pContext,
         pLogger);
+    supportsRasterOverlays = true;
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
@@ -679,6 +680,25 @@ static std::optional<BoundingVolume> getBoundingVolumeProperty(
   const auto bvIt = tileJson.FindMember(key.c_str());
   if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
     return std::nullopt;
+  }
+
+  const auto extensionsIt = bvIt->value.FindMember("extensions");
+  if (extensionsIt != bvIt->value.MemberEnd() &&
+      extensionsIt->value.IsObject()) {
+    const auto s2It =
+        extensionsIt->value.FindMember("3DTILES_bounding_volume_S2");
+    if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
+      std::string token =
+          JsonHelpers::getStringOrDefault(s2It->value, "token", "1");
+      double minimumHeight =
+          JsonHelpers::getDoubleOrDefault(s2It->value, "minimumHeight", 0.0);
+      double maximumHeight =
+          JsonHelpers::getDoubleOrDefault(s2It->value, "maximumHeight", 0.0);
+      return S2CellBoundingVolume(
+          S2CellID::fromToken(token),
+          minimumHeight,
+          maximumHeight);
+    }
   }
 
   const auto boxIt = bvIt->value.FindMember("box");
@@ -1201,7 +1221,8 @@ static void markTileAndChildrenNonRendered(
  * @param viewState The {@link ViewState}
  * @param boundingVolume The bounding volume of the tile
  * @param forceRenderTilesUnderCamera Whether tiles under the camera should
- * always be rendered (see {@link Cesium3DTilesSelection::TilesetOptions})
+ * always be considered visible and rendered (see
+ * {@link Cesium3DTilesSelection::TilesetOptions}).
  * @return Whether the tile is visible according to the current camera
  * configuration
  */
@@ -1222,10 +1243,10 @@ static bool isVisibleFromCamera(
   // TODO: it would be better to test a line pointing down (and up?) from the
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&boundingVolume);
-  if (position && pRectangle) {
-    return pRectangle->contains(position.value());
+  std::optional<GlobeRectangle> maybeRectangle =
+      estimateGlobeRectangle(boundingVolume);
+  if (position && maybeRectangle) {
+    return maybeRectangle->contains(position.value());
   }
   return false;
 }

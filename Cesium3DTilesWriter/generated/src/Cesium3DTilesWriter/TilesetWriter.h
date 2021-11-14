@@ -11,6 +11,7 @@ class ExtensionWriterContext;
 // forward declarations
 namespace Cesium3DTiles {
 struct Extension3dTilesContentGltf;
+struct Extension3dTilesBoundingVolumeS2;
 struct Tileset;
 struct Tile;
 struct Content;
@@ -28,6 +29,21 @@ struct Extension3dTilesContentGltfWriter {
 
   static void write(
       const Cesium3DTiles::Extension3dTilesContentGltf& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesBoundingVolumeS2Writer {
+  using ValueType = Cesium3DTiles::Extension3dTilesBoundingVolumeS2;
+
+  static inline constexpr const char* ExtensionName =
+      "3DTILES_bounding_volume_S2";
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 
