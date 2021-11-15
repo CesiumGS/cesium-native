@@ -836,7 +836,6 @@ void Tile::update(
     int32_t /*previousFrameNumber*/,
     int32_t /*currentFrameNumber*/) {
 
-  // TODO: should this failcheck also be moved to processLoadedContent?
   if (this->getState() == LoadState::FailedTemporarily) {
     // Check with the TileContext to see if we should retry.
     if (this->_pContext->failedTileCallback) {
