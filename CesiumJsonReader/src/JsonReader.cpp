@@ -141,7 +141,8 @@ void JsonReader::FinalJsonHandler::setInputStream(
 
   bool success = true;
   while (success && !reader.IterativeParseComplete()) {
-    success = reader.IterativeParseNext<rapidjson::kParseDefaultFlags>(
+    success = reader.IterativeParseNext<
+        rapidjson::kParseDefaultFlags | rapidjson::kParseFullPrecisionFlag>(
         inputStream,
         dispatcher);
   }
