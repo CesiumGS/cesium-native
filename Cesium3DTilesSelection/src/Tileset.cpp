@@ -2433,6 +2433,8 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
     return;
   }
 
+  TileID id = loadRecord.pTile->getTileID();
+
   auto request = this->requestAvailabilitySubtree(*loadRecord.pTile);
   if (request) {
     std::move(*request)
@@ -2486,8 +2488,15 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
                   }
                 }
               }
-            }); // TODO: catch errors here
-                //.catchInMainThread([]() {});
+            })
+        .catchInMainThread([this, id = std::move(id)](const std::exception& e) {
+          SPDLOG_LOGGER_ERROR(
+              this->_externals.pLogger,
+              "Unhandled error while loading the subtree for tile id {}: {}",
+              TileIdUtilities::createTileIdString(id),
+              e.what());
+          --this->_subtreeLoadsInProgress;
+        });
   }
 }
 
@@ -2526,8 +2535,8 @@ void Tileset::addSubtreeToLoadQueue(
 }
 
 void Tileset::processSubtreeQueue() {
-  // TODO: parameterize maxSimultaneousSubtreeLoads
-  if (this->_subtreeLoadsInProgress >= 20) {
+  if (this->_subtreeLoadsInProgress >=
+      this->_options.maximumSimultaneousSubtreeLoads) {
     return;
   }
 
@@ -2536,7 +2545,8 @@ void Tileset::processSubtreeQueue() {
   for (SubtreeLoadRecord& record : this->_subtreeLoadQueue) {
     // TODO: tracing code here
     loadSubtree(std::move(record));
-    if (this->_subtreeLoadsInProgress >= 20) {
+    if (this->_subtreeLoadsInProgress >=
+        this->_options.maximumSimultaneousSubtreeLoads) {
       break;
     }
   }
