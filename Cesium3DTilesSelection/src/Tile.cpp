@@ -869,6 +869,7 @@ void Tile::update(
     return;
   }
 
+  // TODO: if there's no model, we can actually free any existing overlays.
   if (this->getState() == LoadState::Done &&
       this->getTileset()->supportsRasterOverlays() && this->getContent() &&
       this->getContent()->model) {
