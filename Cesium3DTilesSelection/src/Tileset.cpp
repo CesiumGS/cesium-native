@@ -1515,7 +1515,7 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     const FrameState& frameState,
-    ImplicitTraversalInfo&& implicitInfo,
+    ImplicitTraversalInfo implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -1655,7 +1655,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   return this->_visitTile(
       frameState,
-      std::move(implicitInfo),
+      implicitInfo,
       depth,
       ancestorMeetsSse,
       tile,
@@ -1670,7 +1670,7 @@ static bool isLeaf(const Tile& tile) noexcept {
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
     const FrameState& frameState,
-    ImplicitTraversalInfo&& implicitInfo,
+    ImplicitTraversalInfo& implicitInfo,
     Tile& tile,
     const std::vector<double>& distances,
     ViewUpdateResult& result) {
@@ -1693,7 +1693,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       distances);
 
   if (implicitInfo.shouldQueueSubtreeLoad) {
-    this->addSubtreeToLoadQueue(tile, std::move(implicitInfo), loadPriority);
+    this->addSubtreeToLoadQueue(tile, implicitInfo, loadPriority);
   }
 
   TraversalDetails traversalDetails;
@@ -1969,7 +1969,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTile(
     const FrameState& frameState,
-    ImplicitTraversalInfo&& implicitInfo,
+    ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
                            // children!
@@ -1986,12 +1986,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    return _renderLeaf(
-        frameState,
-        std::move(implicitInfo),
-        tile,
-        distances,
-        result);
+    return _renderLeaf(frameState, implicitInfo, tile, distances, result);
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
@@ -2509,7 +2504,7 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
 
 void Tileset::addSubtreeToLoadQueue(
     Tile& tile,
-    ImplicitTraversalInfo&& implicitInfo,
+    ImplicitTraversalInfo& implicitInfo,
     double loadPriority) {
 
   if (!implicitInfo.pCurrentNode &&
@@ -2519,8 +2514,7 @@ void Tileset::addSubtreeToLoadQueue(
        implicitInfo.usingImplicitOctreeTiling) &&
       !implicitInfo.pCurrentNode) {
 
-    this->_subtreeLoadQueue.push_back(
-        {&tile, std::move(implicitInfo), loadPriority});
+    this->_subtreeLoadQueue.push_back({&tile, implicitInfo, loadPriority});
   }
 }
 

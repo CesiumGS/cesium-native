@@ -428,7 +428,7 @@ private:
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
-      ImplicitTraversalInfo&& implicitInfo,
+      ImplicitTraversalInfo& implicitInfo,
       Tile& tile,
       const std::vector<double>& distances,
       ViewUpdateResult& result);
@@ -455,7 +455,7 @@ private:
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
-      ImplicitTraversalInfo&& implicitInfo,
+      ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -464,7 +464,7 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
-      ImplicitTraversalInfo&& implicitInfo,
+      ImplicitTraversalInfo implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -645,7 +645,7 @@ private:
   void loadSubtree(SubtreeLoadRecord&& loadRecord);
   void addSubtreeToLoadQueue(
       Tile& tile,
-      ImplicitTraversalInfo&& implicitInfo,
+      ImplicitTraversalInfo& implicitInfo,
       double loadPriority);
   void processSubtreeQueue();
 
