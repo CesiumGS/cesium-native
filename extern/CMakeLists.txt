@@ -96,6 +96,18 @@ add_library(earcut INTERFACE)
 target_include_directories(earcut SYSTEM INTERFACE earcut/include)
 set_target_properties(earcut PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/earcut/include/mapbox/earcut.hpp")
 
+add_library(perfetto perfetto/sdk/perfetto.cc)
+target_include_directories(perfetto SYSTEM PUBLIC perfetto/sdk)
+if (MSVC)
+  target_compile_options(perfetto PRIVATE "/wd4267" "/wd4005" "/bigobj")
+  target_compile_definitions(perfetto PRIVATE NOMINMAX _WINSOCKAPI_)
+endif()
+set_target_properties(perfetto PROPERTIES
+  CXX_STANDARD 11
+  CXX_STANDARD_REQUIRED YES
+  CXX_EXTENSIONS NO
+)
+
 set(CESIUM_NATIVE_SPDLOG_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/spdlog/include" CACHE INTERNAL
     "Include directory for spdlog"
 )

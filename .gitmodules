@@ -49,3 +49,6 @@
 [submodule "extern/s2geometry"]
 	path = extern/s2geometry
 	url = https://github.com/google/s2geometry.git
+[submodule "extern/perfetto"]
+	path = extern/perfetto
+	url = https://android.googlesource.com/platform/external/perfetto

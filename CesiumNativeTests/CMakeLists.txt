@@ -63,6 +63,7 @@ target_sources(
         ${test_sources}
         ${test_headers}
         src/test-main.cpp
+        src/trace_categories.cpp
 )
 
 target_include_directories(
@@ -75,6 +76,8 @@ target_link_libraries(
     cesium-native-tests
     ${cesium_native_targets}
     Catch2::Catch2
+    perfetto
+    ws2_32
 )
 
 include(CTest)
