@@ -1,13 +1,13 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/OctreeAvailability.h"
-#include "CesiumGeometry/OctreeTilingScheme.h"
-#include "CesiumGeometry/QuadtreeAvailability.h"
-#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeospatial/Projection.h"
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OctreeAvailability.h>
+#include <CesiumGeometry/OctreeTilingScheme.h>
+#include <CesiumGeometry/QuadtreeAvailability.h>
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/Projection.h>
 
 #include <optional>
 #include <string>
