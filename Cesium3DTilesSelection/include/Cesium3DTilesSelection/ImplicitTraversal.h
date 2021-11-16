@@ -3,7 +3,7 @@
 #include "Tile.h"
 #include <CesiumGeometry/Availability.h>
 #include <CesiumGeometry/OctreeTileID.h>
-#include "CesiumGeometry/QuadtreeTileID.h"
+#include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <cstdint>
 #include <optional>
