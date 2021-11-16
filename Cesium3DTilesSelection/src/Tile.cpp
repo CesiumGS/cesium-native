@@ -344,9 +344,6 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
         this->setState(LoadState::Unloaded);
       }
     } else {
-      if (!this->_pContent) {
-        this->_pContent = std::make_unique<TileContentLoadResult>();
-      }
       this->setState(LoadState::ContentLoaded);
     }
 
@@ -972,6 +969,10 @@ int64_t Tile::computeByteSize() const noexcept {
   }
 
   return bytes;
+}
+
+void Tile::setEmptyContent() noexcept {
+  this->_pContent = std::make_unique<TileContentLoadResult>();
 }
 
 void Tile::setState(LoadState value) noexcept {

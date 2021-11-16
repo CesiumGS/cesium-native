@@ -446,6 +446,15 @@ public:
   }
 
   /**
+   * @brief Sets the {@link TileContentLoadResult} of this tile to be an empty
+   * object instead of nullptr.
+   *
+   * This is useful to indicate to the traversal that this tile points to an
+   * external or implicit tileset.
+   */
+  void setEmptyContent() noexcept;
+
+  /**
    * @brief Returns internal resources required for rendering this tile.
    *
    * This function is not supposed to be called by clients.

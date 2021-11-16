@@ -965,6 +965,7 @@ static void parseImplicitTileset(
 
       // Don't try to load content for this tile.
       tile.setTileID("");
+      tile.setEmptyContent();
     }
   }
 
