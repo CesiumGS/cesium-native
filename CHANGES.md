@@ -22,6 +22,7 @@
 - `RasterOverlay::loadTileProvider` now returns a `SharedFuture`, making it easy to attach a continuation to run when the load completes.
 - Added `GltfContent::applyRtcCenter` and `applyGltfUpAxisTransform`.
 - Clipping polygon edges now remain sharp even when zooming in past the available geometry detail.
+- Added `DebugColorizeTilesRasterOverlay`.
 
 ### v0.9.0 - 2021-11-01
 
