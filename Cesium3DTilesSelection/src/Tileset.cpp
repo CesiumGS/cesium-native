@@ -1521,20 +1521,26 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     Tile& tile,
     ViewUpdateResult& result) {
 
-  tile.processLoadedContent();
-  ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
-      tile,
-      implicitInfo);
+  // If the tile is ContentLoaded, complete processing it and push it to Done
+  // unless we are waiting on a subtree load. We have to wait for the subtree
+  // to load so that we don't create fake (upsampled) children before knowing
+  // whether or not the tile has actual implicit children by looking at the
+  // subtree.
+  if (tile.getState() == Tile::LoadState::ContentLoaded) {
+    const bool usingImplicitTiling = implicitInfo.usingImplicitQuadtreeTiling ||
+                                     implicitInfo.usingImplicitOctreeTiling;
+    const bool subtreeReady =
+        implicitInfo.pCurrentNode && implicitInfo.pCurrentNode->subtree;
 
-  // Don't update the tile if we're using implicit tiling and the subtree is
-  // not done loading. We do this to avoid creating fake (upsampled) children
-  // before we know whether or not the tile has actual implicit children
-  // by looking at the subtree.
-  if ((!implicitInfo.usingImplicitQuadtreeTiling &&
-       !implicitInfo.usingImplicitOctreeTiling) ||
-      (implicitInfo.pCurrentNode && implicitInfo.pCurrentNode->subtree)) {
-    tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
+    if (!usingImplicitTiling || subtreeReady) {
+      tile.processLoadedContent();
+      ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
+          tile,
+          implicitInfo);
+    }
   }
+
+  tile.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
 
   this->_markTileVisited(tile);
 
