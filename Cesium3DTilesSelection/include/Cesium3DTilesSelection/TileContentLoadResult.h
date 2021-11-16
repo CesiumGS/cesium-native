@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include "CesiumGeospatial/Projection.h"
 #include "Tile.h"
 #include "TileContext.h"
