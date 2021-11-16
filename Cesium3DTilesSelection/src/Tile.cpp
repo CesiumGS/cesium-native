@@ -344,6 +344,9 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
         this->setState(LoadState::Unloaded);
       }
     } else {
+      if (!this->_pContent) {
+        this->_pContent = std::make_unique<TileContentLoadResult>();
+      }
       this->setState(LoadState::ContentLoaded);
     }
 

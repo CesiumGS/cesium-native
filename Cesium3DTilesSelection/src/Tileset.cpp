@@ -894,23 +894,6 @@ static void parseImplicitTileset(
               *implicitContext.quadtreeTilingScheme,
               subtreeLevels,
               maximumLevel);
-
-          std::unique_ptr<TileContext> pNewContext =
-              std::make_unique<TileContext>();
-          pNewContext->pTileset = context.pTileset;
-          pNewContext->baseUrl = context.baseUrl;
-          pNewContext->requestHeaders = context.requestHeaders;
-          pNewContext->version = context.version;
-          pNewContext->failedTileCallback = context.failedTileCallback;
-          pNewContext->contextInitializerCallback =
-              context.contextInitializerCallback;
-
-          pNewContext->implicitContext =
-              std::make_optional<ImplicitTilingContext>(
-                  std::move(implicitContext));
-
-          tile.setContext(pNewContext.get());
-          newContexts.push_back(std::move(pNewContext));
         }
       } else if (!std::strcmp(tilingScheme, "OCTREE")) {
         rootID = OctreeTileID(0, 0, 0, 0);
@@ -940,24 +923,30 @@ static void parseImplicitTileset(
               *implicitContext.octreeTilingScheme,
               subtreeLevels,
               maximumLevel);
-
-          std::unique_ptr<TileContext> pNewContext =
-              std::make_unique<TileContext>();
-          pNewContext->pTileset = context.pTileset;
-          pNewContext->baseUrl = context.baseUrl;
-          pNewContext->requestHeaders = context.requestHeaders;
-          pNewContext->version = context.version;
-          pNewContext->failedTileCallback = context.failedTileCallback;
-          pNewContext->contextInitializerCallback =
-              context.contextInitializerCallback;
-
-          pNewContext->implicitContext =
-              std::make_optional<ImplicitTilingContext>(
-                  std::move(implicitContext));
-
-          tile.setContext(pNewContext.get());
-          newContexts.push_back(std::move(pNewContext));
         }
+      }
+
+      TileContext* pContext = nullptr;
+
+      if (implicitContext.quadtreeTilingScheme ||
+          implicitContext.octreeTilingScheme) {
+
+        std::unique_ptr<TileContext> pNewContext =
+            std::make_unique<TileContext>();
+        pNewContext->pTileset = context.pTileset;
+        pNewContext->baseUrl = context.baseUrl;
+        pNewContext->requestHeaders = context.requestHeaders;
+        pNewContext->version = context.version;
+        pNewContext->failedTileCallback = context.failedTileCallback;
+        pNewContext->contextInitializerCallback =
+            context.contextInitializerCallback;
+
+        pNewContext->implicitContext =
+            std::make_optional<ImplicitTilingContext>(
+                std::move(implicitContext));
+
+        pContext = pNewContext.get();
+        newContexts.push_back(std::move(pNewContext));
       }
 
       // This will act as a dummy tile representing the implicit tileset. Its
@@ -965,7 +954,7 @@ static void parseImplicitTileset(
       tile.createChildTiles(1);
 
       Tile& childTile = tile.getChildren()[0];
-      childTile.setContext(tile.getContext());
+      childTile.setContext(pContext);
       childTile.setParent(&tile);
       childTile.setTileID(rootID);
       childTile.setBoundingVolume(tile.getBoundingVolume());
