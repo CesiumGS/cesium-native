@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Tile.h"
-#include "CesiumGeometry/Availability.h"
+#include <CesiumGeometry/Availability.h>
 #include "CesiumGeometry/OctreeTileID.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
 
