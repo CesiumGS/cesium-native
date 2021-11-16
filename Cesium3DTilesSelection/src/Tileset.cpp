@@ -2429,7 +2429,24 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
     return;
   }
 
-  TileID id = loadRecord.pTile->getTileID();
+  ImplicitTilingContext& implicitContext =
+      *loadRecord.pTile->getContext()->implicitContext;
+
+  const TileID& tileID = loadRecord.pTile->getTileID();
+  const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
+  const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
+
+  if (pQuadtreeID && implicitContext.quadtreeAvailability) {
+    loadRecord.implicitInfo.pCurrentNode =
+        implicitContext.quadtreeAvailability->addNode(
+            *pQuadtreeID,
+            loadRecord.implicitInfo.pParentNode);
+  } else if (pOctreeID && implicitContext.octreeAvailability) {
+    loadRecord.implicitInfo.pCurrentNode =
+        implicitContext.octreeAvailability->addNode(
+            *pOctreeID,
+            loadRecord.implicitInfo.pParentNode);
+  }
 
   auto request = this->requestAvailabilitySubtree(*loadRecord.pTile);
   if (request) {
@@ -2458,38 +2475,32 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
               return asyncSystem.createResolvedFuture(
                   std::unique_ptr<AvailabilitySubtree>(nullptr));
             })
-        .thenInMainThread(
-            [this, loadRecord = std::move(loadRecord)](
-                std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
-              --this->_subtreeLoadsInProgress;
-              if (loadRecord.pTile && loadRecord.implicitInfo.pCurrentNode) {
-                const TileID& tileID = loadRecord.pTile->getTileID();
-                const QuadtreeTileID* pQuadtreeID =
-                    std::get_if<QuadtreeTileID>(&tileID);
-                const OctreeTileID* pOctreeID =
-                    std::get_if<OctreeTileID>(&tileID);
-
-                TileContext* pContext = loadRecord.pTile->getContext();
-                if (pContext && pContext->implicitContext) {
-                  ImplicitTilingContext& implicitContext =
-                      *pContext->implicitContext;
-                  if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-                    implicitContext.quadtreeAvailability->addLoadedSubtree(
-                        loadRecord.implicitInfo.pCurrentNode,
-                        std::move(*pSubtree.release()));
-                  } else if (pOctreeID && implicitContext.octreeAvailability) {
-                    implicitContext.octreeAvailability->addLoadedSubtree(
-                        loadRecord.implicitInfo.pCurrentNode,
-                        std::move(*pSubtree.release()));
-                  }
-                }
+        .thenInMainThread([this, loadRecord = std::move(loadRecord)](
+                              std::unique_ptr<AvailabilitySubtree>&&
+                                  pSubtree) mutable {
+          --this->_subtreeLoadsInProgress;
+          if (loadRecord.pTile && loadRecord.implicitInfo.pCurrentNode) {
+            TileContext* pContext = loadRecord.pTile->getContext();
+            if (pContext && pContext->implicitContext) {
+              ImplicitTilingContext& implicitContext =
+                  *pContext->implicitContext;
+              if (loadRecord.implicitInfo.usingImplicitQuadtreeTiling) {
+                implicitContext.quadtreeAvailability->addLoadedSubtree(
+                    loadRecord.implicitInfo.pCurrentNode,
+                    std::move(*pSubtree.release()));
+              } else if (loadRecord.implicitInfo.usingImplicitOctreeTiling) {
+                implicitContext.octreeAvailability->addLoadedSubtree(
+                    loadRecord.implicitInfo.pCurrentNode,
+                    std::move(*pSubtree.release()));
               }
-            })
-        .catchInMainThread([this, id = std::move(id)](const std::exception& e) {
+            }
+          }
+        })
+        .catchInMainThread([this, &tileID](const std::exception& e) {
           SPDLOG_LOGGER_ERROR(
               this->_externals.pLogger,
               "Unhandled error while loading the subtree for tile id {}: {}",
-              TileIdUtilities::createTileIdString(id),
+              TileIdUtilities::createTileIdString(tileID),
               e.what());
           --this->_subtreeLoadsInProgress;
         });
@@ -2502,31 +2513,14 @@ void Tileset::addSubtreeToLoadQueue(
     double loadPriority) {
 
   if (!implicitInfo.pCurrentNode &&
-      implicitInfo.availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) {
-    TileContext* pContext = tile.getContext();
-    if (pContext && pContext->implicitContext) {
-      ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+      (implicitInfo.availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) &&
+      implicitInfo.shouldQueueSubtreeLoad &&
+      (implicitInfo.usingImplicitQuadtreeTiling ||
+       implicitInfo.usingImplicitOctreeTiling) &&
+      !implicitInfo.pCurrentNode) {
 
-      const TileID& tileID = tile.getTileID();
-      const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-      const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-      if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-        implicitInfo.pCurrentNode =
-            implicitContext.quadtreeAvailability->addNode(
-                *pQuadtreeID,
-                implicitInfo.pParentNode);
-      } else if (pOctreeID && implicitContext.octreeAvailability) {
-        implicitInfo.pCurrentNode = implicitContext.octreeAvailability->addNode(
-            *pOctreeID,
-            implicitInfo.pParentNode);
-      }
-
-      if (implicitInfo.pCurrentNode) {
-        this->_subtreeLoadQueue.push_back(
-            {&tile, std::move(implicitInfo), loadPriority});
-      }
-    }
+    this->_subtreeLoadQueue.push_back(
+        {&tile, std::move(implicitInfo), loadPriority});
   }
 }
 
