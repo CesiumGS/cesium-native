@@ -80,6 +80,8 @@ target_link_libraries(
     ws2_32
 )
 
+target_compile_options(cesium-native-tests PRIVATE "/permissive-")
+
 include(CTest)
 include(Catch)
 catch_discover_tests(cesium-native-tests)
