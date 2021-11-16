@@ -323,8 +323,7 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
   Tileset& tileset = *this->getTileset();
 
   // TODO: rethink some of this logic, in implicit tiling, a tile may be
-  // available but have no content. It may still have children. Should we
-  // upsample according to "tile unavailablility" or "content unavailability".
+  // available but have no content. It may still have children.
   if (!maybeContentRequest) {
     // There is no content to load. But we may need to upsample.
 
