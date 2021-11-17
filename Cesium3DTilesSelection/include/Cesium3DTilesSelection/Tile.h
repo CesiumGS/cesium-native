@@ -537,10 +537,10 @@ public:
    * Do NOT call this function if the tile does not have content to load and
    * does not need to be upsampled.
    *
-   * This function should only be called when {@link Tile::getState} of this
-   * tile is {@link Tile::LoadState::Unloaded}.
+   * If this tile is not in {@link Tile::LoadState::Unloaded}, any previously
+   * throttled rasters will be reloaded.
    *
-   * If this is a non-upsampled tile:
+   * Otherwise, if this is a non-upsampled tile:
    * - The tile will be put into the {@link Tile::LoadState::ContentLoading}
    *   state, the content will be requested, and then be processed
    *   asynchronously.
@@ -562,17 +562,6 @@ public:
    * {@link Tile::LoadState::Unloaded}.
    */
   void loadContent();
-
-  /**
-   * @brief Continue the process of loading this tile and its overlays.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * Do not call this function if this tile is in the state
-   * {@link Tile::LoadState::Unloaded}, call {@link Tile::loadContent} in that
-   * case if there is any content to load.
-   */
-  void continueLoadingContent();
 
   /**
    * @brief Finalizes the tile from the loaded content.

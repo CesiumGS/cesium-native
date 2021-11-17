@@ -914,42 +914,39 @@ static void parseImplicitTileset(
         }
       }
 
-      TileContext* pContext = nullptr;
+      std::unique_ptr<TileContext> pNewContext =
+          std::make_unique<TileContext>();
+      pNewContext->pTileset = context.pTileset;
+      pNewContext->baseUrl = context.baseUrl;
+      pNewContext->requestHeaders = context.requestHeaders;
+      pNewContext->version = context.version;
+      pNewContext->failedTileCallback = context.failedTileCallback;
+      pNewContext->contextInitializerCallback =
+          context.contextInitializerCallback;
 
-      if (implicitContext.quadtreeTilingScheme ||
-          implicitContext.octreeTilingScheme) {
+      TileContext* pContext = pNewContext.get();
+      newContexts.push_back(std::move(pNewContext));
+      tile.setContext(pContext);
 
-        std::unique_ptr<TileContext> pNewContext =
-            std::make_unique<TileContext>();
-        pNewContext->pTileset = context.pTileset;
-        pNewContext->baseUrl = context.baseUrl;
-        pNewContext->requestHeaders = context.requestHeaders;
-        pNewContext->version = context.version;
-        pNewContext->failedTileCallback = context.failedTileCallback;
-        pNewContext->contextInitializerCallback =
-            context.contextInitializerCallback;
+      if (implicitContext.quadtreeAvailability ||
+          implicitContext.octreeAvailability) {
+        pContext->implicitContext = std::make_optional<ImplicitTilingContext>(
+            std::move(implicitContext));
 
-        pNewContext->implicitContext =
-            std::make_optional<ImplicitTilingContext>(
-                std::move(implicitContext));
+        // This will act as a dummy tile representing the implicit tileset. Its
+        // only child will act as the actual root content of the new tileset.
+        tile.createChildTiles(1);
 
-        pContext = pNewContext.get();
-        newContexts.push_back(std::move(pNewContext));
+        Tile& childTile = tile.getChildren()[0];
+        childTile.setContext(pContext);
+        childTile.setParent(&tile);
+        childTile.setTileID(rootID);
+        childTile.setBoundingVolume(tile.getBoundingVolume());
+        childTile.setGeometricError(tile.getGeometricError());
+        childTile.setRefine(tile.getRefine());
+
+        tile.setUnconditionallyRefine();
       }
-
-      // This will act as a dummy tile representing the implicit tileset. Its
-      // only child will act as the actual root content of the new tileset.
-      tile.createChildTiles(1);
-
-      Tile& childTile = tile.getChildren()[0];
-      childTile.setContext(pContext);
-      childTile.setParent(&tile);
-      childTile.setTileID(rootID);
-      childTile.setBoundingVolume(tile.getBoundingVolume());
-      childTile.setGeometricError(tile.getGeometricError());
-      childTile.setRefine(tile.getRefine());
-
-      tile.setUnconditionallyRefine();
 
       // Don't try to load content for this tile.
       tile.setTileID("");
@@ -2433,13 +2430,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-
-    if (record.pTile->getState() == Tile::LoadState::Unloaded) {
-      record.pTile->loadContent();
-    } else {
-      record.pTile->continueLoadingContent();
-    }
-
+    record.pTile->loadContent();
     if (loadsInProgress >= maximumLoadsInProgress) {
       break;
     }

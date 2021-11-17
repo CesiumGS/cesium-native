@@ -308,7 +308,14 @@ void* processNewTileContent(
 } // namespace
 
 void Tile::loadContent() {
-  assert(this->getState() == LoadState::Unloaded);
+  if (this->getState() != LoadState::Unloaded) {
+    // No need to load geometry, but give previously-throttled
+    // raster overlay tiles a chance to load.
+    for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+      mapped.loadThrottled();
+    }
+    return;
+  }
 
   this->setState(LoadState::ContentLoading);
 
@@ -324,10 +331,6 @@ void Tile::loadContent() {
       if (this->getParent()->getState() == LoadState::Done) {
         std::vector<Projection> projections = mapOverlaysToTile(*this);
         this->upsampleParent(std::move(projections));
-      } else if (this->getParent()->getState() != LoadState::Unloaded) {
-        // Try again later. Push the parent tile loading along if we can.
-        this->getParent()->continueLoadingContent();
-        this->setState(LoadState::Unloaded);
       } else {
         // Try again later. Parent tile is LoadState::Unloaded so attempt to
         // load its content.
@@ -463,13 +466,6 @@ void Tile::loadContent() {
             "An exception occurred while loading tile: {}",
             e.what());
       });
-}
-
-void Tile::continueLoadingContent() {
-  // Give previously-throttled raster overlay tiles a chance to load.
-  for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
-    mapped.loadThrottled();
-  }
 }
 
 void Tile::processLoadedContent() {
