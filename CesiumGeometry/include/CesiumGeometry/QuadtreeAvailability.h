@@ -18,8 +18,8 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param subtreeLevels The number of levels per subtree.
-   * @param maximumLevel The maximum level.
+   * @param subtreeLevels The number of levels in each subtree.
+   * @param maximumLevel The index of the maximum level in this tileset.
    */
   QuadtreeAvailability(uint32_t subtreeLevels, uint32_t maximumLevel) noexcept;
 
