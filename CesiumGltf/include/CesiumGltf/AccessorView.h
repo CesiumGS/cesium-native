@@ -129,7 +129,7 @@ public:
   /**
    * @brief Creates a new instance from a given model and {@link Accessor}.
    *
-   * If the accessor cannot be viewed, the construct will still complete
+   * If the accessor cannot be viewed, the constructor will still complete
    * successfully without throwing an exception. However, {@link size} will
    * return 0 and
    * {@link status} will indicate what went wrong.

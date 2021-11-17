@@ -4,6 +4,9 @@
 #include "Library.h"
 
 #include <glm/vec3.hpp>
+#include <gsl/span>
+
+#include <vector>
 
 namespace CesiumGeometry {
 
@@ -60,6 +63,14 @@ public:
    */
   double
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
+
+  static constexpr BoundingSphere
+  fromPoints(const gsl::span<glm::dvec3>& points) noexcept;
+
+  static constexpr BoundingSphere fromPoints(
+      gsl::span<std::byte> buffer,
+      int64_t offset,
+      int64_t stride) noexcept;
 
 private:
   glm::dvec3 _center;
