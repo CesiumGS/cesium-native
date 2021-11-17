@@ -1,15 +1,54 @@
 #pragma once
 
-#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
-#include "CesiumGeospatial/Projection.h"
 #include "Tile.h"
 #include "TileContext.h"
+
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeospatial/Projection.h>
 
 #include <memory>
 
 namespace Cesium3DTilesSelection {
 
 class Tile;
+
+/**
+ * @brief Holds details of the {@link TileContentLoadResult} that are useful
+ * for raster overlays.
+ */
+struct TileContentDetailsForOverlays {
+  /**
+   * @brief The raster overlay projections for which texture coordinates have
+   * been generated.
+   *
+   * For the projection at index `n`, there is a set of texture coordinates
+   * with the attribute name `_CESIUMOVERLAY_n` that corresponds to that
+   * projection.
+   */
+  std::vector<CesiumGeospatial::Projection> rasterOverlayProjections;
+
+  /**
+   * @brief The rectangle covered by this tile in each of the
+   * {@link rasterOverlayProjections}.
+   */
+  std::vector<CesiumGeometry::Rectangle> rasterOverlayRectangles;
+
+  /**
+   * @brief The precise bounding region of this tile.
+   */
+  CesiumGeospatial::BoundingRegion boundingRegion;
+
+  /**
+   * @brief Finds the rectangle corresponding to a given projection in
+   * {@link rasterOverlayProjections}.
+   *
+   * @param projection The projection.
+   * @return The tile's rectangle in the given projection, or nullptr if the
+   * projection is not in {@link rasterOverlayProjections}.
+   */
+  const CesiumGeometry::Rectangle* findRectangleForOverlayProjection(
+      const CesiumGeospatial::Projection& projection) const;
+};
 
 /**
  * @brief The result of loading a {@link Tile}'s content.
@@ -57,6 +96,14 @@ struct TileContentLoadResult {
   std::optional<BoundingVolume> updatedBoundingVolume{};
 
   /**
+   * @brief An improved bounding volume for the content of this tile.
+   *
+   * If this is available, then it is more accurate than the one the tile used
+   * originally.
+   */
+  std::optional<BoundingVolume> updatedContentBoundingVolume{};
+
+  /**
    * @brief Available quadtree tiles discovered as a result of loading this
    * tile.
    */
@@ -69,14 +116,11 @@ struct TileContentLoadResult {
   uint16_t httpStatusCode = 0;
 
   /**
-   * @brief The raster overlay projections for which texture coordinates have
-   * been generated.
+   * @brief Holds details of this content that are useful for raster overlays.
    *
-   * For the projection at index `n`, there is a set of texture coordinates
-   * with the attribute name `_CESIUMOVERLAY_n` that corresponds to that
-   * projection.
+   * If this tile does not have any overlays, this field will be std::nullopt.
    */
-  std::vector<CesiumGeospatial::Projection> rasterOverlayProjections;
+  std::optional<TileContentDetailsForOverlays> overlayDetails;
 };
 
 } // namespace Cesium3DTilesSelection

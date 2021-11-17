@@ -480,19 +480,10 @@ void Tileset::loadTilesFromJson(
       pLogger);
 }
 
-std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
 Tileset::requestTileContent(Tile& tile) {
   std::string url = this->getResolvedContentUrl(tile);
-  if (url.empty()) {
-    return std::nullopt;
-  }
-
-  // TODO: should we be checking for content availability or tile availability
-  // here? For implicit tiles, check if they are available.
-  // if (tile.getContext()->implicitContext &&
-  //    !(tile.getAvailability() & TileAvailabilityFlags::TILE_AVAILABLE)) {
-  //  return std::nullopt;
-  //}
+  assert(!url.empty());
 
   this->notifyTileStartLoading(&tile);
 
@@ -502,9 +493,10 @@ Tileset::requestTileContent(Tile& tile) {
       tile.getContext()->requestHeaders);
 }
 
-std::optional<CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
 Tileset::requestAvailabilitySubtree(Tile& tile) {
   std::string url = this->getResolvedSubtreeUrl(tile);
+  assert(!url.empty());
 
   ++this->_subtreeLoadsInProgress;
 
@@ -699,6 +691,9 @@ CesiumGeometry::Axis obtainGltfUpAxis(const rapidjson::Document& tileset) {
     for (auto&& pNewContext : newContexts) {
       pContext->pTileset->addContext(std::move(pNewContext));
     }
+
+    supportsRasterOverlays = true;
+
   } else if (
       formatIt != tileset.MemberEnd() && formatIt->value.IsString() &&
       std::string(formatIt->value.GetString()) == "quantized-mesh-1.0") {
@@ -890,26 +885,12 @@ static void parseImplicitTileset(
           return;
         }
 
-        implicitContext.quadtreeAvailability =
-            QuadtreeAvailability(subtreeLevels, maximumLevel);
-
-        std::unique_ptr<TileContext> pNewContext =
-            std::make_unique<TileContext>();
-        pNewContext->pTileset = context.pTileset;
-        pNewContext->baseUrl = context.baseUrl;
-        pNewContext->requestHeaders = context.requestHeaders;
-        pNewContext->version = context.version;
-        pNewContext->failedTileCallback = context.failedTileCallback;
-        pNewContext->contextInitializerCallback =
-            context.contextInitializerCallback;
-
-        pNewContext->implicitContext =
-            std::make_optional<ImplicitTilingContext>(
-                std::move(implicitContext));
-
-        tile.setContext(pNewContext.get());
-        newContexts.push_back(std::move(pNewContext));
-
+        if (implicitContext.quadtreeTilingScheme) {
+          implicitContext.quadtreeAvailability = QuadtreeAvailability(
+              *implicitContext.quadtreeTilingScheme,
+              subtreeLevels,
+              maximumLevel);
+        }
       } else if (!std::strcmp(tilingScheme, "OCTREE")) {
         rootID = OctreeTileID(0, 0, 0, 0);
         if (pRegion) {
@@ -935,8 +916,18 @@ static void parseImplicitTileset(
           return;
         }
 
-        implicitContext.octreeAvailability =
-            OctreeAvailability(subtreeLevels, maximumLevel);
+        if (implicitContext.octreeTilingScheme) {
+          implicitContext.octreeAvailability = OctreeAvailability(
+              *implicitContext.octreeTilingScheme,
+              subtreeLevels,
+              maximumLevel);
+        }
+      }
+
+      TileContext* pContext = nullptr;
+
+      if (implicitContext.quadtreeTilingScheme ||
+          implicitContext.octreeTilingScheme) {
 
         std::unique_ptr<TileContext> pNewContext =
             std::make_unique<TileContext>();
@@ -952,7 +943,7 @@ static void parseImplicitTileset(
             std::make_optional<ImplicitTilingContext>(
                 std::move(implicitContext));
 
-        tile.setContext(pNewContext.get());
+        pContext = pNewContext.get();
         newContexts.push_back(std::move(pNewContext));
       }
 
@@ -961,7 +952,7 @@ static void parseImplicitTileset(
       tile.createChildTiles(1);
 
       Tile& childTile = tile.getChildren()[0];
-      childTile.setContext(tile.getContext());
+      childTile.setContext(pContext);
       childTile.setParent(&tile);
       childTile.setTileID(rootID);
       childTile.setBoundingVolume(tile.getBoundingVolume());
@@ -972,6 +963,7 @@ static void parseImplicitTileset(
 
       // Don't try to load content for this tile.
       tile.setTileID("");
+      tile.setEmptyContent();
     }
   }
 
@@ -1467,7 +1459,8 @@ static void markTileAndChildrenNonRendered(
  * @param viewState The {@link ViewState}
  * @param boundingVolume The bounding volume of the tile
  * @param forceRenderTilesUnderCamera Whether tiles under the camera should
- * always be rendered (see {@link Cesium3DTilesSelection::TilesetOptions})
+ * always be considered visible and rendered (see
+ * {@link Cesium3DTilesSelection::TilesetOptions}).
  * @return Whether the tile is visible according to the current camera
  * configuration
  */
@@ -1488,10 +1481,10 @@ static bool isVisibleFromCamera(
   // TODO: it would be better to test a line pointing down (and up?) from the
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
-  const CesiumGeospatial::GlobeRectangle* pRectangle =
-      Impl::obtainGlobeRectangle(&boundingVolume);
-  if (position && pRectangle) {
-    return pRectangle->contains(position.value());
+  std::optional<GlobeRectangle> maybeRectangle =
+      estimateGlobeRectangle(boundingVolume);
+  if (position && maybeRectangle) {
+    return maybeRectangle->contains(position.value());
   }
   return false;
 }
@@ -1520,7 +1513,7 @@ static bool isVisibleInFog(double distance, double fogDensity) noexcept {
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     const FrameState& frameState,
-    ImplicitTraversalInfo&& implicitInfo,
+    ImplicitTraversalInfo implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -1638,7 +1631,12 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
     // Preload this culled sibling if requested.
     if (this->_options.preloadSiblings) {
-      addTileToLoadQueue(this->_loadQueueLow, frustums, tile, distances);
+      addTileToLoadQueue(
+          this->_loadQueueLow,
+          implicitInfo,
+          frustums,
+          tile,
+          distances);
     }
 
     ++result.tilesCulled;
@@ -1648,7 +1646,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   return this->_visitTile(
       frameState,
-      std::move(implicitInfo),
+      implicitInfo,
       depth,
       ancestorMeetsSse,
       tile,
@@ -1663,7 +1661,7 @@ static bool isLeaf(const Tile& tile) noexcept {
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
     const FrameState& frameState,
-    ImplicitTraversalInfo&& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     Tile& tile,
     const std::vector<double>& distances,
     ViewUpdateResult& result) {
@@ -1676,17 +1674,15 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  // TODO: for implicit tiles, should we load conditionally based on if content
-  // is available? Or is Tile "loading" still crucial regardless of content
-  // availability?
   double loadPriority = addTileToLoadQueue(
       this->_loadQueueMedium,
+      implicitInfo,
       frameState.frustums,
       tile,
       distances);
 
   if (implicitInfo.shouldQueueSubtreeLoad) {
-    this->addSubtreeToLoadQueue(tile, std::move(implicitInfo), loadPriority);
+    this->addSubtreeToLoadQueue(tile, implicitInfo, loadPriority);
   }
 
   TraversalDetails traversalDetails;
@@ -1702,6 +1698,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     const FrameState& frameState,
     Tile& tile,
+    const ImplicitTraversalInfo& implicitInfo,
     const std::vector<double>& distances) {
   if (!this->_options.forbidHoles) {
     return false;
@@ -1713,8 +1710,16 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
     if (!child.isRenderable() && !child.isExternalTileset()) {
       waitingForChildren = true;
 
+      ImplicitTraversalInfo childInfo(&child, &implicitInfo);
+
       // While we are waiting for the child to load, we need to push along the
       // tile and raster loading by continuing to update it.
+      if (tile.getState() == Tile::LoadState::ContentLoaded) {
+        tile.processLoadedContent();
+        ImplicitTraversalUtilities::createImplicitChildrenIfNeeded(
+            tile,
+            childInfo);
+      }
       child.update(frameState.lastFrameNumber, frameState.currentFrameNumber);
       this->_markTileVisited(child);
 
@@ -1723,6 +1728,7 @@ bool Tileset::_queueLoadOfChildrenRequiredForRefinement(
       // irrelevant; we can't display any of them until all are loaded, anyway.
       addTileToLoadQueue(
           this->_loadQueueMedium,
+          childInfo,
           frameState.frustums,
           child,
           distances);
@@ -1843,6 +1849,7 @@ Tileset::TraversalDetails Tileset::_refineToNothing(
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
     const FrameState& frameState,
     Tile& tile,
+    const ImplicitTraversalInfo& implicitInfo,
     ViewUpdateResult& result,
     const std::vector<double>& distances) {
   // If this tile uses additive refinement, we need to render this tile in
@@ -1851,6 +1858,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
     result.tilesToRenderThisFrame.push_back(&tile);
     addTileToLoadQueue(
         this->_loadQueueMedium,
+        implicitInfo,
         frameState.frustums,
         tile,
         distances);
@@ -1865,6 +1873,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
 bool Tileset::_kickDescendantsAndRenderTile(
     const FrameState& frameState,
     Tile& tile,
+    const ImplicitTraversalInfo& implicitInfo,
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
     size_t firstRenderedDescendantIndex,
@@ -1939,6 +1948,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     if (!queuedForLoad) {
       addTileToLoadQueue(
           this->_loadQueueMedium,
+          implicitInfo,
           frameState.frustums,
           tile,
           distances);
@@ -1962,7 +1972,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTile(
     const FrameState& frameState,
-    ImplicitTraversalInfo&& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
                            // children!
@@ -1979,18 +1989,16 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    return _renderLeaf(
-        frameState,
-        std::move(implicitInfo),
-        tile,
-        distances,
-        result);
+    return _renderLeaf(frameState, implicitInfo, tile, distances, result);
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
   const bool meetsSse = _meetsSse(frameState.frustums, tile, distances, culled);
-  const bool waitingForChildren =
-      _queueLoadOfChildrenRequiredForRefinement(frameState, tile, distances);
+  const bool waitingForChildren = _queueLoadOfChildrenRequiredForRefinement(
+      frameState,
+      tile,
+      implicitInfo,
+      distances);
 
   if (!unconditionallyRefine &&
       (meetsSse || ancestorMeetsSse || waitingForChildren)) {
@@ -2017,6 +2025,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
       if (meetsSse && !ancestorMeetsSse) {
         addTileToLoadQueue(
             this->_loadQueueMedium,
+            implicitInfo,
             frameState.frustums,
             tile,
             distances);
@@ -2040,6 +2049,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     if (meetsSse) {
       addTileToLoadQueue(
           this->_loadQueueHigh,
+          implicitInfo,
           frameState.frustums,
           tile,
           distances);
@@ -2048,8 +2058,12 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   // Refine!
 
-  bool queuedForLoad =
-      _loadAndRenderAdditiveRefinedTile(frameState, tile, result, distances);
+  bool queuedForLoad = _loadAndRenderAdditiveRefinedTile(
+      frameState,
+      tile,
+      implicitInfo,
+      result,
+      distances);
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
@@ -2088,6 +2102,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     queuedForLoad = _kickDescendantsAndRenderTile(
         frameState,
         tile,
+        implicitInfo,
         result,
         traversalDetails,
         firstRenderedDescendantIndex,
@@ -2108,6 +2123,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if (this->_options.preloadAncestors && !queuedForLoad) {
     addTileToLoadQueue(
         this->_loadQueueLow,
+        implicitInfo,
         frameState.frustums,
         tile,
         distances);
@@ -2118,7 +2134,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
 Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
     const FrameState& frameState,
-    ImplicitTraversalInfo& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -2357,6 +2373,7 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 
 /*static*/ double Tileset::addTileToLoadQueue(
     std::vector<Tileset::LoadRecord>& loadQueue,
+    const ImplicitTraversalInfo& implicitInfo,
     const std::vector<ViewState>& frustums,
     Tile& tile,
     const std::vector<double>& distances) {
@@ -2385,7 +2402,30 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
       }
     }
 
-    loadQueue.push_back({&tile, highestLoadPriority});
+    // Check if the tile has any content
+    const std::string* pStringID = std::get_if<std::string>(&tile.getTileID());
+    const bool emptyContentUri = pStringID && pStringID->empty();
+    const bool usingImplicitTiling = implicitInfo.usingImplicitQuadtreeTiling ||
+                                     implicitInfo.usingImplicitOctreeTiling;
+    const bool subtreeLoaded =
+        implicitInfo.pCurrentNode && implicitInfo.pCurrentNode->subtree;
+    const bool implicitContentAvailability =
+        implicitInfo.availability & TileAvailabilityFlags::CONTENT_AVAILABLE;
+
+    if (usingImplicitTiling && !subtreeLoaded) {
+      // If the subtree is not loaded yet, we don't know the content
+      // availability yet.
+      tile.setState(Tile::LoadState::Unloaded);
+    } else if (
+        emptyContentUri || (usingImplicitTiling && subtreeLoaded &&
+                            !implicitContentAvailability)) {
+      // The tile doesn't have content.
+      if (tile.getState() == Tile::LoadState::Unloaded) {
+        tile.setState(Tile::LoadState::ContentLoaded);
+      }
+    } else {
+      loadQueue.push_back({&tile, highestLoadPriority});
+    }
   }
 
   return highestLoadPriority;
@@ -2403,12 +2443,11 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-    // TODO: for implicit tilesets only create content request if content is
-    // available.
+
     if (record.pTile->getState() == Tile::LoadState::Unloaded) {
-      record.pTile->loadContent(this->requestTileContent(*record.pTile));
-    } else {
       record.pTile->loadContent();
+    } else {
+      record.pTile->continueLoadingContent();
     }
 
     if (loadsInProgress >= maximumLoadsInProgress) {
@@ -2417,106 +2456,104 @@ void Tileset::processQueue(
   }
 }
 
-void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
+void Tileset::loadSubtree(const SubtreeLoadRecord& loadRecord) {
   if (!loadRecord.pTile) {
     return;
   }
 
-  auto request = this->requestAvailabilitySubtree(*loadRecord.pTile);
-  if (request) {
-    std::move(*request)
-        .thenInWorkerThread(
-            [asyncSystem = this->getAsyncSystem(),
-             pLogger = this->getExternals().pLogger,
-             pAssetAccessor = this->getExternals().pAssetAccessor](
-                std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
-              const IAssetResponse* pResponse = pRequest->response();
+  ImplicitTilingContext& implicitContext =
+      *loadRecord.pTile->getContext()->implicitContext;
 
-              if (pResponse) {
-                uint16_t statusCode = pResponse->statusCode();
-                if (statusCode == 0 ||
-                    (statusCode >= 200 && statusCode < 300)) {
-                  return AvailabilitySubtreeContent::load(
-                      asyncSystem,
-                      pLogger,
-                      pRequest->url(),
-                      pResponse->data(),
-                      pAssetAccessor,
-                      pRequest->headers());
-                }
-              }
+  const TileID& tileID = loadRecord.pTile->getTileID();
+  const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
+  const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
 
-              return asyncSystem.createResolvedFuture(
-                  std::unique_ptr<AvailabilitySubtree>(nullptr));
-            })
-        .thenInMainThread(
-            [this, loadRecord = std::move(loadRecord)](
-                std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
-              --this->_subtreeLoadsInProgress;
-              if (loadRecord.pTile && loadRecord.implicitInfo.pCurrentNode) {
-                const TileID& tileID = loadRecord.pTile->getTileID();
-                const QuadtreeTileID* pQuadtreeID =
-                    std::get_if<QuadtreeTileID>(&tileID);
-                const OctreeTileID* pOctreeID =
-                    std::get_if<OctreeTileID>(&tileID);
+  AvailabilityNode* pNewNode = nullptr;
 
-                TileContext* pContext = loadRecord.pTile->getContext();
-                if (pContext && pContext->implicitContext) {
-                  ImplicitTilingContext& implicitContext =
-                      *pContext->implicitContext;
-                  if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-                    implicitContext.quadtreeAvailability->addLoadedSubtree(
-                        loadRecord.implicitInfo.pCurrentNode,
-                        std::move(*pSubtree.release()));
-                  } else if (pOctreeID && implicitContext.octreeAvailability) {
-                    implicitContext.octreeAvailability->addLoadedSubtree(
-                        loadRecord.implicitInfo.pCurrentNode,
-                        std::move(*pSubtree.release()));
-                  }
-                }
-              }
-            }); // TODO: catch errors here
-                //.catchInMainThread([]() {});
+  if (pQuadtreeID && implicitContext.quadtreeAvailability) {
+    pNewNode = implicitContext.quadtreeAvailability->addNode(
+        *pQuadtreeID,
+        loadRecord.implicitInfo.pParentNode);
+  } else if (pOctreeID && implicitContext.octreeAvailability) {
+    pNewNode = implicitContext.octreeAvailability->addNode(
+        *pOctreeID,
+        loadRecord.implicitInfo.pParentNode);
   }
+
+  this->requestAvailabilitySubtree(*loadRecord.pTile)
+      .thenInWorkerThread(
+          [asyncSystem = this->getAsyncSystem(),
+           pLogger = this->getExternals().pLogger,
+           pAssetAccessor = this->getExternals().pAssetAccessor](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+
+            if (pResponse) {
+              uint16_t statusCode = pResponse->statusCode();
+              if (statusCode == 0 || (statusCode >= 200 && statusCode < 300)) {
+                return AvailabilitySubtreeContent::load(
+                    asyncSystem,
+                    pLogger,
+                    pRequest->url(),
+                    pResponse->data(),
+                    pAssetAccessor,
+                    pRequest->headers());
+              }
+            }
+
+            return asyncSystem.createResolvedFuture(
+                std::unique_ptr<AvailabilitySubtree>(nullptr));
+          })
+      .thenInMainThread(
+          [this, loadRecord, pNewNode](
+              std::unique_ptr<AvailabilitySubtree>&& pSubtree) mutable {
+            --this->_subtreeLoadsInProgress;
+            if (loadRecord.pTile && pNewNode) {
+              TileContext* pContext = loadRecord.pTile->getContext();
+              if (pContext && pContext->implicitContext) {
+                ImplicitTilingContext& implicitContext =
+                    *pContext->implicitContext;
+                if (loadRecord.implicitInfo.usingImplicitQuadtreeTiling) {
+                  implicitContext.quadtreeAvailability->addLoadedSubtree(
+                      pNewNode,
+                      std::move(*pSubtree.release()));
+                } else if (loadRecord.implicitInfo.usingImplicitOctreeTiling) {
+                  implicitContext.octreeAvailability->addLoadedSubtree(
+                      pNewNode,
+                      std::move(*pSubtree.release()));
+                }
+              }
+            }
+          })
+      .catchInMainThread([this, &tileID](const std::exception& e) {
+        SPDLOG_LOGGER_ERROR(
+            this->_externals.pLogger,
+            "Unhandled error while loading the subtree for tile id {}: {}",
+            TileIdUtilities::createTileIdString(tileID),
+            e.what());
+        --this->_subtreeLoadsInProgress;
+      });
 }
 
 void Tileset::addSubtreeToLoadQueue(
     Tile& tile,
-    ImplicitTraversalInfo&& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     double loadPriority) {
 
   if (!implicitInfo.pCurrentNode &&
-      implicitInfo.availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) {
-    TileContext* pContext = tile.getContext();
-    if (pContext && pContext->implicitContext) {
-      ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+      (implicitInfo.availability & TileAvailabilityFlags::SUBTREE_AVAILABLE) &&
+      implicitInfo.shouldQueueSubtreeLoad &&
+      (implicitInfo.usingImplicitQuadtreeTiling ||
+       implicitInfo.usingImplicitOctreeTiling) &&
+      !implicitInfo.pCurrentNode) {
 
-      const TileID& tileID = tile.getTileID();
-      const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&tileID);
-      const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&tileID);
-
-      if (pQuadtreeID && implicitContext.quadtreeAvailability) {
-        implicitInfo.pCurrentNode =
-            implicitContext.quadtreeAvailability->addNode(
-                *pQuadtreeID,
-                implicitInfo.pParentNode);
-      } else if (pOctreeID && implicitContext.octreeAvailability) {
-        implicitInfo.pCurrentNode = implicitContext.octreeAvailability->addNode(
-            *pOctreeID,
-            implicitInfo.pParentNode);
-      }
-
-      if (implicitInfo.pCurrentNode) {
-        this->_subtreeLoadQueue.push_back(
-            {&tile, std::move(implicitInfo), loadPriority});
-      }
-    }
+    this->_subtreeLoadQueue.push_back({&tile, implicitInfo, loadPriority});
   }
 }
 
 void Tileset::processSubtreeQueue() {
-  // TODO: parameterize maxSimultaneousSubtreeLoads
-  if (this->_subtreeLoadsInProgress >= 20) {
+  if (this->_subtreeLoadsInProgress >=
+      this->_options.maximumSimultaneousSubtreeLoads) {
     return;
   }
 
@@ -2524,8 +2561,9 @@ void Tileset::processSubtreeQueue() {
 
   for (SubtreeLoadRecord& record : this->_subtreeLoadQueue) {
     // TODO: tracing code here
-    loadSubtree(std::move(record));
-    if (this->_subtreeLoadsInProgress >= 20) {
+    loadSubtree(record);
+    if (this->_subtreeLoadsInProgress >=
+        this->_options.maximumSimultaneousSubtreeLoads) {
       break;
     }
   }

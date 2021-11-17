@@ -53,8 +53,18 @@ public:
    */
   static S2CellID fromToken(const std::string_view& token);
 
+  /**
+   * @brief Creates a cell given its face (range 0..5), level, and Hilbert curve
+   * cell index within that face and level.
+   *
+   * @param face The face index.
+   * @param level The level within the face.
+   * @param position The Hilbert-order index of the cell within the face and
+   * level.
+   * @return The cell.
+   */
   static S2CellID
-  fromFacePositionLevel(uint8_t face, uint64_t position, uint32_t level);
+  fromFaceLevelPosition(uint8_t face, uint32_t level, uint64_t position);
 
   /**
    * @brief Create an S2 id from a face and a quadtree tile id.
@@ -129,16 +139,30 @@ public:
    */
   std::array<Cartographic, 4> getVertices() const;
 
+  /**
+   * @brief Gets the parent cell of this cell.
+   *
+   * If this is a root cell, the behavior is unspecified.
+   */
   S2CellID getParent() const;
 
+  /**
+   * @brief Gets a child cell of this cell.
+   *
+   * If the index is less than 0 or greater than 3, or if this is a leaf cell,
+   * the behavior is unspecified.
+   *
+   * @param index The index in the range 0 to 3.
+   * @return The child cell.
+   */
   S2CellID getChild(size_t index) const;
 
-  // /**
-  //  * @brief Computes the globe rectangle that bounds this cell.
-  //  *
-  //  * @return The globe rectangle.
-  //  */
-  // GlobeRectangle computeBoundingRectangle() const;
+  /**
+   * @brief Computes the globe rectangle that bounds this cell.
+   *
+   * @return The globe rectangle.
+   */
+  GlobeRectangle computeBoundingRectangle() const;
 
 private:
   uint64_t _id;

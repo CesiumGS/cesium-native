@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Tile.h"
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/OctreeTileID.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
+#include "Tile.h"
+
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <cstdint>
 #include <optional>
@@ -84,7 +85,7 @@ struct ImplicitTraversalInfo {
    */
   ImplicitTraversalInfo(
       Tile* pTile,
-      ImplicitTraversalInfo* pParentInfo = nullptr) noexcept;
+      const ImplicitTraversalInfo* pParentInfo = nullptr) noexcept;
 };
 
 namespace ImplicitTraversalUtilities {

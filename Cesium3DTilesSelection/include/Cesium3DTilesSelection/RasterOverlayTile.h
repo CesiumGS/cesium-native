@@ -113,7 +113,7 @@ public:
    */
   RasterOverlayTile(
       RasterOverlay& overlay,
-      double targetGeometricError,
+      const glm::dvec2& targetScreenPixels,
       const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
   /** @brief Default destructor. */
@@ -138,14 +138,14 @@ public:
   }
 
   /**
-   * @brief Gets the geometric error value that this overlay tile is suitable
-   * for.
+   * @brief Gets the number of screen pixels in each direction that should be
+   * covered by this tile's texture.
    *
    * This is used to control which content (how highly detailed) the
    * {@link RasterOverlayTileProvider} uses within the bounds of this tile.
    */
-  double getTargetGeometricError() const noexcept {
-    return this->_targetGeometricError;
+  glm::dvec2 getTargetScreenPixels() const noexcept {
+    return this->_targetScreenPixels;
   }
 
   /**
@@ -228,7 +228,7 @@ private:
   void setState(LoadState newState) noexcept;
 
   RasterOverlay* _pOverlay;
-  double _targetGeometricError;
+  glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<Credit> _tileCredits;
   LoadState _state;

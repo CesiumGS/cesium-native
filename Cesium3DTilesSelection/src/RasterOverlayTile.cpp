@@ -15,7 +15,7 @@ namespace Cesium3DTilesSelection {
 
 RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
     : _pOverlay(&overlay),
-      _targetGeometricError(0.0),
+      _targetScreenPixels(0.0),
       _rectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
       _tileCredits(),
       _state(LoadState::Placeholder),
@@ -26,10 +26,10 @@ RasterOverlayTile::RasterOverlayTile(RasterOverlay& overlay) noexcept
 
 RasterOverlayTile::RasterOverlayTile(
     RasterOverlay& overlay,
-    double targetGeometricError,
+    const glm::dvec2& targetScreenPixels,
     const CesiumGeometry::Rectangle& rectangle) noexcept
     : _pOverlay(&overlay),
-      _targetGeometricError(targetGeometricError),
+      _targetScreenPixels(targetScreenPixels),
       _rectangle(rectangle),
       _tileCredits(),
       _state(LoadState::Unloaded),

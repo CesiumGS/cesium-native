@@ -300,6 +300,22 @@ public:
   }
 
   /**
+   * @brief Gets the tile's geometric error as if by calling
+   * {@link getGeometricError}, except that if the error is smaller than
+   * {@link Math::EPSILON5} the returned geometric error is instead computed as
+   * half of the parent tile's (non-zero) geometric error.
+   *
+   * This is useful for determining when to refine what would ordinarily be a
+   * leaf tile, for example to attach more detailed raster overlays to it.
+   *
+   * If this tile and all of its ancestors have a geometric error less than
+   * {@link Math::EPSILON5}, returns {@link Math::EPSILON5}.
+   *
+   * @return The non-zero geometric error.
+   */
+  double getNonZeroGeometricError() const noexcept;
+
+  /**
    * @brief Returns whether to unconditionally refine this tile.
    *
    * This is useful in cases such as with external tilesets, where instead of a
@@ -430,6 +446,15 @@ public:
   }
 
   /**
+   * @brief Sets the {@link TileContentLoadResult} of this tile to be an empty
+   * object instead of nullptr.
+   *
+   * This is useful to indicate to the traversal that this tile points to an
+   * external or implicit tileset.
+   */
+  void setEmptyContent() noexcept;
+
+  /**
    * @brief Returns internal resources required for rendering this tile.
    *
    * This function is not supposed to be called by clients.
@@ -446,6 +471,13 @@ public:
   LoadState getState() const noexcept {
     return this->_state.load(std::memory_order::memory_order_acquire);
   }
+
+  /**
+   * @brief Set the {@link LoadState} of this tile.
+   *
+   * Not to be called by clients.
+   */
+  void setState(LoadState value) noexcept;
 
   /**
    * @brief Returns the {@link TileSelectionState} of this tile.
@@ -502,25 +534,45 @@ public:
    *
    * This function is not supposed to be called by clients.
    *
-   * If this tile is not in its initial state (indicated by the
-   * {@link Tile::getState} of this tile being *not*
-   * {@link Tile::LoadState::Unloaded}), then nothing will be done.
+   * Do NOT call this function if the tile does not have content to load and
+   * does not need to be upsampled.
    *
-   * Otherwise, the tile will go into the
-   * {@link Tile::LoadState::ContentLoading} state, and the request for
-   * loading the tile content will be sent out.
-   * The function will then return, and the response of the request will
-   * be received asynchronously. Depending on the type of the tile and
-   * the response, the tile will eventually go into the
-   * {@link Tile::LoadState::ContentLoaded} state, and the
-   * {@link Tile::getContent} will be available.
+   * This function should only be called when {@link Tile::getState} of this
+   * tile is {@link Tile::LoadState::Unloaded}.
    *
-   * @param
+   * If this is a non-upsampled tile:
+   * - The tile will be put into the {@link Tile::LoadState::ContentLoading}
+   *   state, the content will be requested, and then be processed
+   *   asynchronously.
+   *
+   * Otherwise, if this is an upsampled tile, this tile's content needs to be
+   * derived from its parent:
+   * - If the parent has a load state of {@link Tile::LoadState::Done}, we will
+   *   asynchronously upsample from it to load this tile's content.
+   * - If the parent has a load state of {@link Tile::LoadState::Unloaded}, we
+   *   will kick off {@link Tile::loadContent} for the parent and return after
+   *   setting this tile back to {@link Tile::Unloaded}.
+   * - If the parent is in any other load state, we will call
+   *   {@link Tile::continueLoading} on the parent and return after setting
+   *   this tile back to {@link Tile::LoadState::Unloaded}.
+   *
+   * Once the asynchronous content loading or upsampling is done, the tile's
+   * state will be set to {@link Tile::LoadState::ContentLoaded}. If we are
+   * waiting on a parent tile to be able to upsample, the state will be set to
+   * {@link Tile::LoadState::Unloaded}.
    */
-  void loadContent(
-      std::optional<
-          CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>&&
-          maybeContentRequest = std::nullopt);
+  void loadContent();
+
+  /**
+   * @brief Continue the process of loading this tile and its overlays.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * Do not call this function if this tile is in the state
+   * {@link Tile::LoadState::Unloaded}, call {@link Tile::loadContent} in that
+   * case if there is any content to load.
+   */
+  void continueLoadingContent();
 
   /**
    * @brief Finalizes the tile from the loaded content.
@@ -578,44 +630,12 @@ public:
 
 private:
   /**
-   * @brief Set the {@link LoadState} of this tile.
-   */
-  void setState(LoadState value) noexcept;
-
-  /**
-   * @brief Generates texture coordiantes for the raster overlays of the content
-   * of this tile.
-   *
-   * This will extend the accessors of the glTF model of the content of this
-   * tile with accessors that contain the texture coordinate sets for different
-   * projections. Further details are not specified here.
-   *
-   * @return The bounding region
-   */
-  static std::optional<CesiumGeospatial::BoundingRegion>
-  generateTextureCoordinates(
-      CesiumGltf::Model& model,
-      const glm::dmat4& transform,
-      const BoundingVolume& boundingVolume,
-      const std::vector<CesiumGeospatial::Projection>& projections);
-
-  /**
    * @brief Upsample the parent of this tile.
    *
    * This method should only be called when this tile's parent is already
    * loaded.
    */
   void upsampleParent(std::vector<CesiumGeospatial::Projection>&& projections);
-
-  /**
-   * @brief Initiates loading of any overlays attached to this tile.
-   *
-   * This method should only be called when the tile is in the ContentLoading
-   * state and _rasterTiles is empty.
-   *
-   * @param projections On return the set of projections used by the overlays.
-   */
-  void loadOverlays(std::vector<CesiumGeospatial::Projection>& projections);
 
   // Position in bounding-volume hierarchy.
   TileContext* _pContext;

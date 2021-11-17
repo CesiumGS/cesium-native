@@ -21,7 +21,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
 
 ImplicitTraversalInfo::ImplicitTraversalInfo(
     Tile* pTile,
-    ImplicitTraversalInfo* pParentInfo) noexcept
+    const ImplicitTraversalInfo* pParentInfo) noexcept
     : pParentNode(nullptr),
       pCurrentNode(nullptr),
       availability(0U),
@@ -41,17 +41,23 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
   const TileID& id = pTile->getTileID();
   const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&id);
   const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&id);
+  const UpsampledQuadtreeNode* pUpsampledNode =
+      std::get_if<UpsampledQuadtreeNode>(&id);
+
+  if (pUpsampledNode) {
+    // This tile is upsampling from an implicit tileset leaf. It needs no
+    // implicit information for itself.
+    return;
+  }
 
   ImplicitTilingContext& implicitContext = *pContext->implicitContext;
 
   // This tile was created and it uses implicit tiling, so the tile is implied
   // to be available.
-  // We explicitly consider all tiles here to be at
-  // least TILE_AVAILABLE by the fact that they are being traversed. This is
-  // built on the assumption that createImplicit[Quadtree|Octree]Children(...)
-  // wouldn't have created this tile if it wasn't available.
-  // TODO: maybe change this assumption. Maybe create...Children shouldn't have
-  // to check availability independently.
+  // We explicitly consider all tiles here to be at least TILE_AVAILABLE by the
+  // fact that they are being traversed. This is built on the assumption that
+  // createImplicitChildrenIfNeeded(...) wouldn't have created this tile if it
+  // wasn't available.
   this->availability = TileAvailabilityFlags::TILE_AVAILABLE;
 
   if (!pParentInfo ||
@@ -159,7 +165,7 @@ void createImplicitQuadtreeTile(
 
   if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);
-  } else /*if (upsample) */ {
+  } else {
     child.setTileID(UpsampledQuadtreeNode{childID});
   }
 
@@ -241,10 +247,6 @@ void createImplicitOctreeTile(
 
   if (availability & TileAvailabilityFlags::TILE_AVAILABLE) {
     child.setTileID(childID);
-  } else {
-    return;
-    // TODO: optionally upsample missing octree tiles?
-    // child.setTileID(UpsampledOctreeNode{childID});
   }
 
   // TODO: check for overrided geometric error metadata
@@ -294,10 +296,7 @@ void createImplicitOctreeTile(
 void createImplicitChildrenIfNeeded(
     Tile& tile,
     const ImplicitTraversalInfo& implicitInfo) {
-  // TODO: If the children availability is known and they are all unavailable
-  // we should stop checking for availbility.
-  // Maybe we should remove the tile context from the absolute leaf implicit
-  // tile??
+
   TileContext* pContext = tile.getContext();
   if (pContext && pContext->implicitContext && tile.getChildren().empty()) {
     const ImplicitTilingContext& implicitContext =

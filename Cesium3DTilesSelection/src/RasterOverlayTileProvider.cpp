@@ -33,6 +33,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPrepareRendererResources(nullptr),
       _pLogger(nullptr),
       _projection(CesiumGeospatial::GeographicProjection()),
+      _coverageRectangle(CesiumGeospatial::GeographicProjection::
+                             computeMaximumProjectedRectangle()),
       _pPlaceholder(std::make_unique<RasterOverlayTile>(owner)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
@@ -48,7 +50,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const CesiumGeospatial::Projection& projection) noexcept
+    const CesiumGeospatial::Projection& projection,
+    const Rectangle& coverageRectangle) noexcept
     : _pOwner(&owner),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
@@ -56,6 +59,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPrepareRendererResources(pPrepareRendererResources),
       _pLogger(pLogger),
       _projection(projection),
+      _coverageRectangle(coverageRectangle),
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
@@ -64,12 +68,17 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
 RasterOverlayTileProvider::getTile(
     const CesiumGeometry::Rectangle& rectangle,
-    double targetGeometricError) {
+    const glm::dvec2& targetScreenPixels) {
   if (this->_pPlaceholder) {
     return this->_pPlaceholder.get();
   }
+
+  if (!rectangle.overlaps(this->_coverageRectangle)) {
+    return nullptr;
+  }
+
   return {
-      new RasterOverlayTile(this->getOwner(), targetGeometricError, rectangle)};
+      new RasterOverlayTile(this->getOwner(), targetScreenPixels, rectangle)};
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
@@ -95,8 +104,6 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
 }
 
 bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     return true;
   }
@@ -287,6 +294,8 @@ void RasterOverlayTileProvider::doLoad(
     // Already loading or loaded, do nothing.
     return;
   }
+
+  CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);

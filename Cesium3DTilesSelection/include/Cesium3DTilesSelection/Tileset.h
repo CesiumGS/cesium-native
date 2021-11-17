@@ -215,12 +215,12 @@ public:
    *
    * This function is not supposed to be called by clients.
    *
+   * Do not call this function if the tile has no content to load.
+   *
    * @param tile The tile for which the content is requested.
-   * @return A future that resolves when the content response is received, or
-   * std::nullopt if this Tile has no content to load.
+   * @return A future that resolves when the content response is received.
    */
-  std::optional<
-      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   requestTileContent(Tile& tile);
 
   /**
@@ -229,11 +229,9 @@ public:
    * This function is not supposed to be called by client.
    *
    * @param tile The tile for which the subtree is requested.
-   * @return A future that resolves when the subtree response is received, or
-   * std::nullopt if this Tile cannot or does not need to load the subtree.
+   * @return A future that resolves when the subtree response is received.
    */
-  std::optional<
-      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   requestAvailabilitySubtree(Tile& tile);
 
   /**
@@ -428,7 +426,7 @@ private:
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
-      ImplicitTraversalInfo&& implicitInfo,
+      const ImplicitTraversalInfo& implicitInfo,
       Tile& tile,
       const std::vector<double>& distances,
       ViewUpdateResult& result);
@@ -444,6 +442,7 @@ private:
   bool _kickDescendantsAndRenderTile(
       const FrameState& frameState,
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
@@ -455,7 +454,7 @@ private:
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
-      ImplicitTraversalInfo&& implicitInfo,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -464,14 +463,14 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
-      ImplicitTraversalInfo&& implicitInfo,
+      const ImplicitTraversalInfo implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const FrameState& frameState,
-      ImplicitTraversalInfo& implicitInfo,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -485,6 +484,7 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile to potentially load and render.
+   * @param implicitInfo The implicit traversal information.
    * @param result The current view update result.
    * @param distance The distance to this tile, used to compute the load
    * priority.
@@ -495,6 +495,7 @@ private:
   bool _loadAndRenderAdditiveRefinedTile(
       const FrameState& frameState,
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
       const std::vector<double>& distances);
 
@@ -512,6 +513,7 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile that is potentially being refined.
+   * @param implicitInfo The implicit traversal info.
    * @param distance The distance to the tile.
    * @return true Some of the required children are not yet loaded, so this tile
    * _cannot_ yet be refined.
@@ -521,6 +523,7 @@ private:
   bool _queueLoadOfChildrenRequiredForRefinement(
       const FrameState& frameState,
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       const std::vector<double>& distances);
   bool _meetsSse(
       const std::vector<ViewState>& frustums,
@@ -634,6 +637,7 @@ private:
 
   static double addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
+      const ImplicitTraversalInfo& implicitInfo,
       const std::vector<ViewState>& frustums,
       Tile& tile,
       const std::vector<double>& distances);
@@ -642,10 +646,10 @@ private:
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
 
-  void loadSubtree(SubtreeLoadRecord&& loadRecord);
+  void loadSubtree(const SubtreeLoadRecord& loadRecord);
   void addSubtreeToLoadQueue(
       Tile& tile,
-      ImplicitTraversalInfo&& implicitInfo,
+      const ImplicitTraversalInfo& implicitInfo,
       double loadPriority);
   void processSubtreeQueue();
 

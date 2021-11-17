@@ -48,6 +48,11 @@ public:
   void remove(RasterOverlay* pOverlay) noexcept;
 
   /**
+   * @brief An iterator for {@link RasterOverlay} instances.
+   */
+  typedef std::vector<std::unique_ptr<RasterOverlay>>::iterator iterator;
+
+  /**
    * @brief A constant iterator for {@link RasterOverlay} instances.
    */
   typedef std::vector<std::unique_ptr<RasterOverlay>>::const_iterator
@@ -62,6 +67,16 @@ public:
    * @brief Returns an iterator at the end of this collection.
    */
   const_iterator end() const noexcept { return this->_overlays.end(); }
+
+  /**
+   * @brief Returns an iterator at the beginning of this collection.
+   */
+  iterator begin() noexcept { return this->_overlays.begin(); }
+
+  /**
+   * @brief Returns an iterator at the end of this collection.
+   */
+  iterator end() noexcept { return this->_overlays.end(); }
 
   /**
    * @brief Gets the number of overlays in the collection.
