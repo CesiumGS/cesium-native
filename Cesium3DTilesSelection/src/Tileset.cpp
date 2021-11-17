@@ -885,10 +885,9 @@ static void parseImplicitTileset(
           return;
         }
 
-        if (implicitContext.quadtreeTilingScheme) {
-          implicitContext.quadtreeAvailability =
-              QuadtreeAvailability(subtreeLevels, maximumLevel);
-        }
+        implicitContext.quadtreeAvailability =
+            QuadtreeAvailability(subtreeLevels, maximumLevel);
+
       } else if (!std::strcmp(tilingScheme, "OCTREE")) {
         rootID = OctreeTileID(0, 0, 0, 0);
         if (pRegion) {
@@ -914,16 +913,14 @@ static void parseImplicitTileset(
           return;
         }
 
-        if (implicitContext.octreeTilingScheme) {
-          implicitContext.octreeAvailability =
-              OctreeAvailability(subtreeLevels, maximumLevel);
-        }
+        implicitContext.octreeAvailability =
+            OctreeAvailability(subtreeLevels, maximumLevel);
       }
 
       TileContext* pContext = nullptr;
 
-      if (implicitContext.quadtreeTilingScheme ||
-          implicitContext.octreeTilingScheme) {
+      if (implicitContext.quadtreeAvailability ||
+          implicitContext.octreeAvailability) {
 
         std::unique_ptr<TileContext> pNewContext =
             std::make_unique<TileContext>();
