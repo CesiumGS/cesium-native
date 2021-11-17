@@ -70,5 +70,5 @@ target_link_libraries(Cesium3DTilesReader
 
 install(TARGETS Cesium3DTilesReader
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles # Correct is Cesium3DTiles not Cesium3DTilesReader
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesReader
 )
