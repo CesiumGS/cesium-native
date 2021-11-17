@@ -917,42 +917,39 @@ static void parseImplicitTileset(
             OctreeAvailability(subtreeLevels, maximumLevel);
       }
 
-      TileContext* pContext = nullptr;
+      std::unique_ptr<TileContext> pNewContext =
+          std::make_unique<TileContext>();
+      pNewContext->pTileset = context.pTileset;
+      pNewContext->baseUrl = context.baseUrl;
+      pNewContext->requestHeaders = context.requestHeaders;
+      pNewContext->version = context.version;
+      pNewContext->failedTileCallback = context.failedTileCallback;
+      pNewContext->contextInitializerCallback =
+          context.contextInitializerCallback;
+
+      TileContext* pContext = pNewContext.get();
+      newContexts.push_back(std::move(pNewContext));
+      tile.setContext(pContext);
 
       if (implicitContext.quadtreeAvailability ||
           implicitContext.octreeAvailability) {
+        pContext->implicitContext = std::make_optional<ImplicitTilingContext>(
+            std::move(implicitContext));
 
-        std::unique_ptr<TileContext> pNewContext =
-            std::make_unique<TileContext>();
-        pNewContext->pTileset = context.pTileset;
-        pNewContext->baseUrl = context.baseUrl;
-        pNewContext->requestHeaders = context.requestHeaders;
-        pNewContext->version = context.version;
-        pNewContext->failedTileCallback = context.failedTileCallback;
-        pNewContext->contextInitializerCallback =
-            context.contextInitializerCallback;
+        // This will act as a dummy tile representing the implicit tileset. Its
+        // only child will act as the actual root content of the new tileset.
+        tile.createChildTiles(1);
 
-        pNewContext->implicitContext =
-            std::make_optional<ImplicitTilingContext>(
-                std::move(implicitContext));
+        Tile& childTile = tile.getChildren()[0];
+        childTile.setContext(pContext);
+        childTile.setParent(&tile);
+        childTile.setTileID(rootID);
+        childTile.setBoundingVolume(tile.getBoundingVolume());
+        childTile.setGeometricError(tile.getGeometricError());
+        childTile.setRefine(tile.getRefine());
 
-        pContext = pNewContext.get();
-        newContexts.push_back(std::move(pNewContext));
+        tile.setUnconditionallyRefine();
       }
-
-      // This will act as a dummy tile representing the implicit tileset. Its
-      // only child will act as the actual root content of the new tileset.
-      tile.createChildTiles(1);
-
-      Tile& childTile = tile.getChildren()[0];
-      childTile.setContext(pContext);
-      childTile.setParent(&tile);
-      childTile.setTileID(rootID);
-      childTile.setBoundingVolume(tile.getBoundingVolume());
-      childTile.setGeometricError(tile.getGeometricError());
-      childTile.setRefine(tile.getRefine());
-
-      tile.setUnconditionallyRefine();
 
       // Don't try to load content for this tile.
       tile.setTileID("");
@@ -2405,18 +2402,36 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
     const bool implicitContentAvailability =
         implicitInfo.availability & TileAvailabilityFlags::CONTENT_AVAILABLE;
 
-    if (usingImplicitTiling && !subtreeLoaded) {
-      // If the subtree is not loaded yet, we don't know the content
-      // availability yet.
-      tile.setState(Tile::LoadState::Unloaded);
-    } else if (
-        emptyContentUri || (usingImplicitTiling && subtreeLoaded &&
-                            !implicitContentAvailability)) {
-      // The tile doesn't have content.
+    bool shouldLoad = false;
+    bool hasNoContent = false;
+
+    if (usingImplicitTiling) {
+      if (subtreeLoaded) {
+        if (implicitContentAvailability) {
+          shouldLoad = true;
+        } else {
+          hasNoContent = true;
+        }
+      }
+
+      // Note: We do nothing if we don't _know_ the content availability yet,
+      // i.e., the subtree isn't loaded.
+    } else {
+      if (emptyContentUri) {
+        hasNoContent = true;
+      } else {
+        // Assume it has loadable content.
+        shouldLoad = true;
+      }
+    }
+
+    if (hasNoContent) {
+      // The tile doesn't have content, so just put it in the ContentLoaded
+      // state if needed.
       if (tile.getState() == Tile::LoadState::Unloaded) {
         tile.setState(Tile::LoadState::ContentLoaded);
       }
-    } else {
+    } else if (shouldLoad) {
       loadQueue.push_back({&tile, highestLoadPriority});
     }
   }
@@ -2436,13 +2451,7 @@ void Tileset::processQueue(
 
   for (LoadRecord& record : queue) {
     CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
-
-    if (record.pTile->getState() == Tile::LoadState::Unloaded) {
-      record.pTile->loadContent();
-    } else {
-      record.pTile->continueLoadingContent();
-    }
-
+    record.pTile->loadContent();
     if (loadsInProgress >= maximumLoadsInProgress) {
       break;
     }

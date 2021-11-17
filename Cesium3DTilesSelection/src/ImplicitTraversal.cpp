@@ -50,6 +50,10 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
     return;
   }
 
+  if (!pQuadtreeID && !pOctreeID) {
+    return;
+  }
+
   ImplicitTilingContext& implicitContext = *pContext->implicitContext;
 
   // This tile was created and it uses implicit tiling, so the tile is implied
