@@ -2399,18 +2399,36 @@ static bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
     const bool implicitContentAvailability =
         implicitInfo.availability & TileAvailabilityFlags::CONTENT_AVAILABLE;
 
-    if (usingImplicitTiling && !subtreeLoaded) {
-      // If the subtree is not loaded yet, we don't know the content
-      // availability yet.
-      tile.setState(Tile::LoadState::Unloaded);
-    } else if (
-        emptyContentUri || (usingImplicitTiling && subtreeLoaded &&
-                            !implicitContentAvailability)) {
-      // The tile doesn't have content.
+    bool shouldLoad = false;
+    bool hasNoContent = false;
+
+    if (usingImplicitTiling) {
+      if (subtreeLoaded) {
+        if (implicitContentAvailability) {
+          shouldLoad = true;
+        } else {
+          hasNoContent = true;
+        }
+      }
+
+      // Note: We do nothing if we don't _know_ the content availability yet,
+      // i.e., the subtree isn't loaded.
+    } else {
+      if (emptyContentUri) {
+        hasNoContent = true;
+      } else {
+        // Assume it has loadable content.
+        shouldLoad = true;
+      }
+    }
+
+    if (hasNoContent) {
+      // The tile doesn't have content, so just put it in the ContentLoaded
+      // state if needed.
       if (tile.getState() == Tile::LoadState::Unloaded) {
         tile.setState(Tile::LoadState::ContentLoaded);
       }
-    } else {
+    } else if (shouldLoad) {
       loadQueue.push_back({&tile, highestLoadPriority});
     }
   }
