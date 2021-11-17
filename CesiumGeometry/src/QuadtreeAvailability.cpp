@@ -1,5 +1,7 @@
 #include "CesiumGeometry/QuadtreeAvailability.h"
 
+#include <cassert>
+
 namespace CesiumGeometry {
 
 // For reference:
@@ -45,11 +47,9 @@ static uint32_t getMortonIndex(uint32_t x, uint32_t y) {
 }
 
 QuadtreeAvailability::QuadtreeAvailability(
-    const QuadtreeTilingScheme& tilingScheme,
     uint32_t subtreeLevels,
     uint32_t maximumLevel) noexcept
-    : _tilingScheme(tilingScheme),
-      _subtreeLevels(subtreeLevels),
+    : _subtreeLevels(subtreeLevels),
       _maximumLevel(maximumLevel),
       _maximumChildrenSubtrees(1U << (subtreeLevels << 1U)),
       _pRoot(nullptr) {}

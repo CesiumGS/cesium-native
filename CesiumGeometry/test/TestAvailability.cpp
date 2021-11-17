@@ -3,10 +3,8 @@
 #include "CesiumGeometry/AxisAlignedBox.h"
 #include "CesiumGeometry/OctreeAvailability.h"
 #include "CesiumGeometry/OctreeTileID.h"
-#include "CesiumGeometry/OctreeTilingScheme.h"
 #include "CesiumGeometry/QuadtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
 #include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
 
@@ -167,10 +165,7 @@ TEST_CASE("Test OctreeAvailability") {
       SubtreeBufferView{0, 64, 1},
       {contentAvailabilityBuffer, subtreeAvailabilityBuffer}};
 
-  OctreeAvailability octreeAvailability(
-      OctreeTilingScheme(AxisAlignedBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0), 1, 1, 1),
-      3,
-      5);
+  OctreeAvailability octreeAvailability(3, 5);
   octreeAvailability.addSubtree(OctreeTileID(0, 0, 0, 0), std::move(subtree));
 
   AvailabilityNode* pParentNode = octreeAvailability.getRootNode();
@@ -363,10 +358,7 @@ TEST_CASE("Test QuadtreeAvailability") {
       SubtreeBufferView{0, 8, 1},
       {contentAvailabilityBuffer, subtreeAvailabilityBuffer}};
 
-  QuadtreeAvailability quadtreeAvailability(
-      QuadtreeTilingScheme(Rectangle(0.0, 0.0, 1.0, 1.0), 1, 1),
-      3,
-      5);
+  QuadtreeAvailability quadtreeAvailability(3, 5);
   quadtreeAvailability.addSubtree(QuadtreeTileID(0, 0, 0), std::move(subtree));
 
   AvailabilityNode* pParentNode = quadtreeAvailability.getRootNode();

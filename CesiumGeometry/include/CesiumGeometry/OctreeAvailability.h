@@ -3,7 +3,6 @@
 #include "Availability.h"
 #include "Library.h"
 #include "OctreeTileID.h"
-#include "OctreeTilingScheme.h"
 #include "TileAvailabilityFlags.h"
 
 #include <gsl/span>
@@ -19,13 +18,10 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param tilingScheme The {@link OctreeTilingScheme} to use with this
-   * availability.
+   * @param subtreeLevels The number of levels in each subtree.
+   * @param maximumLevel The index of the maximum level in this tileset.
    */
-  OctreeAvailability(
-      const OctreeTilingScheme& tilingScheme,
-      uint32_t subtreeLevels,
-      uint32_t maximumLevel) noexcept;
+  OctreeAvailability(uint32_t subtreeLevels, uint32_t maximumLevel) noexcept;
 
   /**
    * @brief Determines the currently known availability status of the given
@@ -159,7 +155,6 @@ public:
   AvailabilityNode* getRootNode() noexcept { return this->_pRoot.get(); }
 
 private:
-  OctreeTilingScheme _tilingScheme;
   uint32_t _subtreeLevels;
   uint32_t _maximumLevel;
   uint32_t _maximumChildrenSubtrees;

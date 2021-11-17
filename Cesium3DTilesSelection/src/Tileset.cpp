@@ -882,10 +882,8 @@ static void parseImplicitTileset(
         }
 
         if (implicitContext.quadtreeTilingScheme) {
-          implicitContext.quadtreeAvailability = QuadtreeAvailability(
-              *implicitContext.quadtreeTilingScheme,
-              subtreeLevels,
-              maximumLevel);
+          implicitContext.quadtreeAvailability =
+              QuadtreeAvailability(subtreeLevels, maximumLevel);
         }
       } else if (!std::strcmp(tilingScheme, "OCTREE")) {
         rootID = OctreeTileID(0, 0, 0, 0);
@@ -911,10 +909,8 @@ static void parseImplicitTileset(
         }
 
         if (implicitContext.octreeTilingScheme) {
-          implicitContext.octreeAvailability = OctreeAvailability(
-              *implicitContext.octreeTilingScheme,
-              subtreeLevels,
-              maximumLevel);
+          implicitContext.octreeAvailability =
+              OctreeAvailability(subtreeLevels, maximumLevel);
         }
       }
 
