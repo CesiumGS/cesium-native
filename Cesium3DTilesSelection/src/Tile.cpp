@@ -307,43 +307,39 @@ void* processNewTileContent(
 
 } // namespace
 
-void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
-                           maybeContentRequest) {
-  if (this->getState() != LoadState::Unloaded) {
-    // No need to load geometry, but give previously-throttled
-    // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
-      mapped.loadThrottled();
-    }
-    return;
-  }
+void Tile::loadContent() {
+  assert(this->getState() == LoadState::Unloaded);
 
   this->setState(LoadState::ContentLoading);
 
   Tileset& tileset = *this->getTileset();
 
-  // TODO: rethink some of this logic, in implicit tiling, a tile may be
-  // available but have no content. It may still have children.
-  if (!maybeContentRequest) {
-    // There is no content to load. But we may need to upsample.
-
-    const UpsampledQuadtreeNode* pSubdivided =
-        std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
-    if (pSubdivided) {
-      // We can't upsample this tile until its parent tile is done loading.
-      if (this->getParent() &&
-          this->getParent()->getState() == LoadState::Done) {
+  // If this is an upsampled tile, we need to derive this tile's content from
+  // its parent.
+  const UpsampledQuadtreeNode* pSubdivided =
+      std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
+  if (pSubdivided) {
+    // We can't upsample this tile until its parent tile is done loading.
+    if (this->getParent()) {
+      if (this->getParent()->getState() == LoadState::Done) {
         std::vector<Projection> projections = mapOverlaysToTile(*this);
         this->upsampleParent(std::move(projections));
-      } else {
+      } else if (this->getParent()->getState() != LoadState::Unloaded) {
         // Try again later. Push the parent tile loading along if we can.
-        if (this->getParent()) {
-          this->getParent()->loadContent();
-        }
+        this->getParent()->continueLoadingContent();
+        this->setState(LoadState::Unloaded);
+      } else {
+        // Try again later. Parent tile is LoadState::Unloaded so attempt to
+        // load its content.
+
+        // Note: Since the current tile is an upsampled node, we can assume
+        // that either the parent is also upsampled, or the parent has content.
+        this->getParent()->loadContent();
         this->setState(LoadState::Unloaded);
       }
     } else {
-      this->setState(LoadState::ContentLoaded);
+      // This shouldn't happen.
+      assert(this->getParent() != nullptr);
     }
 
     return;
@@ -360,7 +356,7 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
   TileContentLoadInput loadInput(*this);
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
-  std::move(maybeContentRequest.value())
+  tileset.requestTileContent(*this)
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            asyncSystem = tileset.getAsyncSystem(),
@@ -467,6 +463,13 @@ void Tile::loadContent(std::optional<Future<std::shared_ptr<IAssetRequest>>>&&
             "An exception occurred while loading tile: {}",
             e.what());
       });
+}
+
+void Tile::continueLoadingContent() {
+  // Give previously-throttled raster overlay tiles a chance to load.
+  for (RasterMappedTo3DTile& mapped : this->getMappedRasterTiles()) {
+    mapped.loadThrottled();
+  }
 }
 
 void Tile::processLoadedContent() {
@@ -896,11 +899,10 @@ void Tile::update(
 
           // Add a new mapping.
           std::vector<Projection> missingProjections;
-          RasterMappedTo3DTile* pMapping =
-              RasterMappedTo3DTile::mapOverlayToTile(
-                  pProvider->getOwner(),
-                  *this,
-                  missingProjections);
+          RasterMappedTo3DTile::mapOverlayToTile(
+              pProvider->getOwner(),
+              *this,
+              missingProjections);
 
           if (!missingProjections.empty()) {
             // The mesh doesn't have the right texture coordinates for this
@@ -910,10 +912,6 @@ void Tile::update(
             // texture coordinates without starting over from scratch.
             this->unloadContent();
             return;
-          }
-
-          if (pMapping) {
-            pMapping->loadThrottled();
           }
         }
 

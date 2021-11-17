@@ -40,6 +40,14 @@ ImplicitTraversalInfo::ImplicitTraversalInfo(
   const TileID& id = pTile->getTileID();
   const QuadtreeTileID* pQuadtreeID = std::get_if<QuadtreeTileID>(&id);
   const OctreeTileID* pOctreeID = std::get_if<OctreeTileID>(&id);
+  const UpsampledQuadtreeNode* pUpsampledNode =
+      std::get_if<UpsampledQuadtreeNode>(&id);
+
+  if (pUpsampledNode) {
+    // This tile is upsampling from an implicit tileset leaf. It needs no
+    // implicit information for itself.
+    return;
+  }
 
   ImplicitTilingContext& implicitContext = *pContext->implicitContext;
 
