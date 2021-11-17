@@ -85,7 +85,7 @@ struct ImplicitTraversalInfo {
    */
   ImplicitTraversalInfo(
       Tile* pTile,
-      ImplicitTraversalInfo* pParentInfo = nullptr) noexcept;
+      const ImplicitTraversalInfo* pParentInfo = nullptr) noexcept;
 };
 
 namespace ImplicitTraversalUtilities {

@@ -20,7 +20,7 @@ ImplicitTraversalInfo::ImplicitTraversalInfo() noexcept
 
 ImplicitTraversalInfo::ImplicitTraversalInfo(
     Tile* pTile,
-    ImplicitTraversalInfo* pParentInfo) noexcept
+    const ImplicitTraversalInfo* pParentInfo) noexcept
     : pParentNode(nullptr),
       pCurrentNode(nullptr),
       availability(0U),

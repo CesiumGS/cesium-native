@@ -1670,7 +1670,7 @@ static bool isLeaf(const Tile& tile) noexcept {
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
     const FrameState& frameState,
-    ImplicitTraversalInfo& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     Tile& tile,
     const std::vector<double>& distances,
     ViewUpdateResult& result) {
@@ -1969,7 +1969,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTile(
     const FrameState& frameState,
-    ImplicitTraversalInfo& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
                            // children!
@@ -2120,7 +2120,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
 Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
     const FrameState& frameState,
-    ImplicitTraversalInfo& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -2504,7 +2504,7 @@ void Tileset::loadSubtree(SubtreeLoadRecord&& loadRecord) {
 
 void Tileset::addSubtreeToLoadQueue(
     Tile& tile,
-    ImplicitTraversalInfo& implicitInfo,
+    const ImplicitTraversalInfo& implicitInfo,
     double loadPriority) {
 
   if (!implicitInfo.pCurrentNode &&
