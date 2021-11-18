@@ -56,10 +56,10 @@ target_include_directories(
     SYSTEM PUBLIC
         # Necessary for `draco/draco_features.h`
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${GENERATED_DIRECTORY}/include
     PRIVATE
+        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${GENERATED_DIRECTORY}/src
 )
