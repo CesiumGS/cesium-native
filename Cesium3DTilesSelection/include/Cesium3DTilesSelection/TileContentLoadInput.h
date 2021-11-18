@@ -108,7 +108,7 @@ struct CESIUM3DTILESSELECTION_API TileContentLoadInput {
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
   /**
-   * @brief The asset request and response data for the tile.
+   * @brief The content asset request and response data for the tile.
    */
   std::shared_ptr<CesiumAsync::IAssetRequest> pRequest;
 

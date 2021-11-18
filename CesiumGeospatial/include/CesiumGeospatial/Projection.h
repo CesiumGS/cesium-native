@@ -1,5 +1,8 @@
 #pragma once
 
+#include "BoundingRegion.h"
+#include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/Rectangle.h"
 #include "GeographicProjection.h"
 #include "WebMercatorProjection.h"
 
@@ -73,6 +76,37 @@ CesiumGeometry::Rectangle projectRectangleSimple(
 GlobeRectangle unprojectRectangleSimple(
     const Projection& projection,
     const CesiumGeometry::Rectangle& rectangle);
+
+/**
+ * @brief Projects a bounding region on the globe by simply projecting its
+ * eight corners.
+ *
+ * This is only accurate when the globe box is still a box after
+ * projecting, which is true for {@link WebMercatorProjection} but not
+ * necessarily true for other projections.
+ *
+ * @param projection The projection.
+ * @param boundingRegion The bounding region to be projected.
+ * @return The projected box.
+ */
+CesiumGeometry::AxisAlignedBox
+projectRegionSimple(const Projection& projection, const BoundingRegion& region);
+
+/**
+ * @brief Unprojects a box to the globe by simply unprojecting its eight
+ * corners.
+ *
+ * This is only accurate when the box is still a box after
+ * unprojecting, which is true for {@link WebMercatorProjection} but not
+ * necessarily true for other projections.
+ *
+ * @param projection The projection.
+ * @param box The box to be unprojected.
+ * @return The unprojected bounding region.
+ */
+BoundingRegion unprojectRegionSimple(
+    const Projection& projection,
+    const CesiumGeometry::AxisAlignedBox& box);
 
 /**
  * @brief Computes the approximate real-world size, in meters, of a given

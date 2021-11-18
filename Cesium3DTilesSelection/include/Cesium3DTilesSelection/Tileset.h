@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ImplicitTraversal.h"
 #include "Library.h"
 #include "RasterOverlayCollection.h"
 #include "Tile.h"
@@ -12,7 +13,8 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/QuadtreeTileAvailability.h>
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 
 #include <rapidjson/fwd.h>
 
@@ -190,6 +192,8 @@ public:
    * This method is safe to call from any thread.
    *
    * @param rootTile A blank tile into which to load the root.
+   * @param newContexts The new contexts that are generated from recursively
+   * parsing the tiles.
    * @param tilesetJson The parsed tileset.json.
    * @param parentTransform The new tile's parent transform.
    * @param parentRefine The default refinment to use if not specified
@@ -199,6 +203,7 @@ public:
    */
   static void loadTilesFromJson(
       Tile& rootTile,
+      std::vector<std::unique_ptr<TileContext>>& newContexts,
       const rapidjson::Value& tilesetJson,
       const glm::dmat4& parentTransform,
       TileRefine parentRefine,
@@ -210,13 +215,24 @@ public:
    *
    * This function is not supposed to be called by clients.
    *
+   * Do not call this function if the tile has no content to load.
+   *
    * @param tile The tile for which the content is requested.
-   * @return A future that resolves when the content response is received, or
-   * std::nullopt if this Tile has no content to load.
+   * @return A future that resolves when the content response is received.
    */
-  std::optional<
-      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>>
+  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   requestTileContent(Tile& tile);
+
+  /**
+   * @brief Request to load the availability subtree for the given tile.
+   *
+   * This function is not supposed to be called by client.
+   *
+   * @param tile The tile for which the subtree is requested.
+   * @return A future that resolves when the subtree response is received.
+   */
+  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
+  requestAvailabilitySubtree(Tile& tile);
 
   /**
    * @brief Add the given {@link TileContext} to this tile set.
@@ -362,6 +378,7 @@ private:
 
   static void _createTile(
       Tile& tile,
+      std::vector<std::unique_ptr<TileContext>>& newContexts,
       const rapidjson::Value& tileJson,
       const glm::dmat4& parentTransform,
       TileRefine parentRefine,
@@ -409,6 +426,7 @@ private:
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       Tile& tile,
       const std::vector<double>& distances,
       ViewUpdateResult& result);
@@ -424,6 +442,7 @@ private:
   bool _kickDescendantsAndRenderTile(
       const FrameState& frameState,
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
@@ -435,6 +454,7 @@ private:
 
   TraversalDetails _visitTile(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -443,12 +463,14 @@ private:
       ViewUpdateResult& result);
   TraversalDetails _visitTileIfNeeded(
       const FrameState& frameState,
+      const ImplicitTraversalInfo implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const FrameState& frameState,
+      const ImplicitTraversalInfo& implicitInfo,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -462,6 +484,7 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile to potentially load and render.
+   * @param implicitInfo The implicit traversal information.
    * @param result The current view update result.
    * @param distance The distance to this tile, used to compute the load
    * priority.
@@ -472,6 +495,7 @@ private:
   bool _loadAndRenderAdditiveRefinedTile(
       const FrameState& frameState,
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       ViewUpdateResult& result,
       const std::vector<double>& distances);
 
@@ -489,6 +513,7 @@ private:
    *
    * @param frameState The state of the current frame.
    * @param tile The tile that is potentially being refined.
+   * @param implicitInfo The implicit traversal info.
    * @param distance The distance to the tile.
    * @return true Some of the required children are not yet loaded, so this tile
    * _cannot_ yet be refined.
@@ -498,6 +523,7 @@ private:
   bool _queueLoadOfChildrenRequiredForRefinement(
       const FrameState& frameState,
       Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
       const std::vector<double>& distances);
   bool _meetsSse(
       const std::vector<ViewState>& frustums,
@@ -510,6 +536,7 @@ private:
   void _markTileVisited(Tile& tile) noexcept;
 
   std::string getResolvedContentUrl(const Tile& tile) const;
+  std::string getResolvedSubtreeUrl(const Tile& tile) const;
 
   std::vector<std::unique_ptr<TileContext>> _contexts;
   TilesetExternals _externals;
@@ -548,10 +575,38 @@ private:
     }
   };
 
+  struct SubtreeLoadRecord {
+    /**
+     * @brief The root tile of the subtree to load.
+     */
+    Tile* pTile;
+
+    /**
+     * @brief The implicit traversal information which will tell us what subtree
+     * to load and which parent to attach it to.
+     */
+    ImplicitTraversalInfo implicitInfo;
+
+    /**
+     * @brief The relative priority of loading this tile.
+     *
+     * Lower priority values load sooner.
+     */
+    double priority;
+
+    bool operator<(const SubtreeLoadRecord& rhs) const noexcept {
+      return this->priority < rhs.priority;
+    }
+  };
+
   std::vector<LoadRecord> _loadQueueHigh;
   std::vector<LoadRecord> _loadQueueMedium;
   std::vector<LoadRecord> _loadQueueLow;
   std::atomic<uint32_t> _loadsInProgress; // TODO: does this need to be atomic?
+
+  std::vector<SubtreeLoadRecord> _subtreeLoadQueue;
+  std::atomic<uint32_t>
+      _subtreeLoadsInProgress; // TODO: does this need to be atomic?
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -580,8 +635,9 @@ private:
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Tileset Loading Slot");
 
-  static void addTileToLoadQueue(
+  static double addTileToLoadQueue(
       std::vector<LoadRecord>& loadQueue,
+      const ImplicitTraversalInfo& implicitInfo,
       const std::vector<ViewState>& frustums,
       Tile& tile,
       const std::vector<double>& distances);
@@ -589,6 +645,13 @@ private:
       std::vector<Tileset::LoadRecord>& queue,
       const std::atomic<uint32_t>& loadsInProgress,
       uint32_t maximumLoadsInProgress);
+
+  void loadSubtree(const SubtreeLoadRecord& loadRecord);
+  void addSubtreeToLoadQueue(
+      Tile& tile,
+      const ImplicitTraversalInfo& implicitInfo,
+      double loadPriority);
+  void processSubtreeQueue();
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
