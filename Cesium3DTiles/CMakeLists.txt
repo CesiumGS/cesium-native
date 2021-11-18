@@ -1,17 +1,17 @@
 add_library(Cesium3DTiles "")
 configure_cesium_library(Cesium3DTiles)
 
-if(CESIUM_3D_TILES_GENERATED_DIRECTORY)
-    set(GENERATED_DIRECTORY ${CESIUM_3D_TILES_GENERATED_DIRECTORY}/generated)
+if(CESIUM_3DTILES_GENERATED_DIRECTORY)
+    set(GENERATED_DIRECTORY ${CESIUM_3DTILES_GENERATED_DIRECTORY}/generated)
 else()
     set(GENERATED_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
 endif()
 
-cesium_glob_files(CESIUM_3D_TILES_SOURCES
+cesium_glob_files(CESIUM_3DTILES_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.cpp
     ${GENERATED_DIRECTORY}/src/Cesium3DTiles/*.cpp
 )
-cesium_glob_files(CESIUM_3D_TILES_HEADERS
+cesium_glob_files(CESIUM_3DTILES_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.h
     ${CMAKE_CURRENT_LIST_DIR}/src/Cesium3DTiles/*.hpp
     ${GENERATED_DIRECTORY}/src/Cesium3DTiles/*.h
