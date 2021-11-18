@@ -102,7 +102,7 @@ public:
         this->_pSchedulers,
         _task.then(
             async::inline_scheduler(),
-            Impl::WithTracing<T>::end(nullptr, std::forward<Func>(f))));
+            Impl::WithTracingShared<T>::end(nullptr, std::forward<Func>(f))));
   }
 
   /**
