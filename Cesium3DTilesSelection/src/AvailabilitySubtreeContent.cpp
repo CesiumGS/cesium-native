@@ -1,7 +1,7 @@
 
 #include "AvailabilitySubtreeContent.h"
 
-#include "CesiumUtility/Uri.h"
+#include <CesiumUtility/Uri.h>
 
 #include <gsl/span>
 #include <rapidjson/document.h>
@@ -99,6 +99,18 @@ AvailabilitySubtreeContent::load(
   const SubtreeHeader* header =
       reinterpret_cast<const SubtreeHeader*>(data.data());
 
+  if (header->jsonByteLength > data.size() - headerLength) {
+    throw std::runtime_error(
+        "The Subtree file is invalid because it is too "
+        "small to include the jsonByteLength specified in its header.");
+  }
+
+  if (header->binaryByteLength > data.size() - headerLength - header->jsonByteLength) {
+    throw std::runtime_error(
+        "The Subtree file is invalid because it is too "
+        "small to include the binaryByteLength specified in its header.");
+  }
+
   rapidjson::Document document;
   document.Parse(
       reinterpret_cast<const char*>(data.data() + headerLength),
@@ -125,8 +137,6 @@ AvailabilitySubtreeContent::load(
     subtreeBufferViews.reserve(bufferViewsCount);
 
     for (uint32_t i = 0; i < bufferViewsCount; ++i) {
-      SubtreeBufferView subtreeBufferView;
-
       const auto& bufferViewIt = bufferViewsArray[i];
 
       if (bufferViewIt.IsObject()) {
@@ -141,12 +151,12 @@ AvailabilitySubtreeContent::load(
             byteOffsetIt->value.IsUint() &&
             byteLengthIt != bufferView.MemberEnd() &&
             byteLengthIt->value.IsUint()) {
+          SubtreeBufferView& subtreeBufferView =
+              subtreeBufferViews.emplace_back();
           subtreeBufferView.buffer =
               static_cast<uint8_t>(bufferIt->value.GetUint());
           subtreeBufferView.byteOffset = byteOffsetIt->value.GetUint();
           subtreeBufferView.byteLength = byteLengthIt->value.GetUint();
-
-          subtreeBufferViews.push_back(std::move(subtreeBufferView));
         }
       }
     }

@@ -549,12 +549,9 @@ public:
    * derived from its parent:
    * - If the parent has a load state of {@link Tile::LoadState::Done}, we will
    *   asynchronously upsample from it to load this tile's content.
-   * - If the parent has a load state of {@link Tile::LoadState::Unloaded}, we
-   *   will kick off {@link Tile::loadContent} for the parent and return after
-   *   setting this tile back to {@link Tile::Unloaded}.
-   * - If the parent is in any other load state, we will call
-   *   {@link Tile::continueLoading} on the parent and return after setting
-   *   this tile back to {@link Tile::LoadState::Unloaded}.
+   * - If the parent has any other load state, we will call
+   *   {@link Tile::loadContent} for the parent and return after setting this
+   *   tile back to {@link Tile::Unloaded}.
    *
    * Once the asynchronous content loading or upsampling is done, the tile's
    * state will be set to {@link Tile::LoadState::ContentLoaded}. If we are

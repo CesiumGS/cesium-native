@@ -862,12 +862,6 @@ void Tile::update(
     }
   }
 
-  std::optional<CesiumGeospatial::GlobeRectangle> rectangle =
-      estimateGlobeRectangle(this->getBoundingVolume());
-  if (!rectangle) {
-    return;
-  }
-
   // TODO: if there's no model, we can actually free any existing overlays.
   if (this->getState() == LoadState::Done &&
       this->getTileset()->supportsRasterOverlays() && this->getContent() &&
