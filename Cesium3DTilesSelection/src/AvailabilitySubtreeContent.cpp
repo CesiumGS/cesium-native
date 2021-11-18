@@ -105,7 +105,8 @@ AvailabilitySubtreeContent::load(
         "small to include the jsonByteLength specified in its header.");
   }
 
-  if (header->binaryByteLength > data.size() - headerLength - header->jsonByteLength) {
+  if (header->binaryByteLength >
+      data.size() - headerLength - header->jsonByteLength) {
     throw std::runtime_error(
         "The Subtree file is invalid because it is too "
         "small to include the binaryByteLength specified in its header.");
