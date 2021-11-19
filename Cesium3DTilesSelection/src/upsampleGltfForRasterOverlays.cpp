@@ -456,7 +456,7 @@ static void upsamplePrimitiveForRasterOverlays(
 
     attributes.push_back(FloatVertexAttribute{
         buffer.cesium.data,
-        accessor.byteOffset,
+        bufferView.byteOffset + accessor.byteOffset,
         accessorByteStride,
         accessorComponentElements,
         attribute.second,
