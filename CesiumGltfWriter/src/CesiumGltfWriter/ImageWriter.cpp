@@ -83,6 +83,7 @@ void writeImage(
         return;
       }
 
+      j.KeyPrimitive("uri", *image.uri);
       writeGLTFCallback(*image.uri, image.cesium.pixelData);
     }
 
