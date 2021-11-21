@@ -25,7 +25,7 @@
 
 ##### Fixes :wrench:
 
-- Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by corresponding glTF accessor.
+- Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by the corresponding glTF accessor.
 
 ### v0.9.0 - 2021-11-01
 
