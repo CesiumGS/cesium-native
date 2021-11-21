@@ -206,9 +206,9 @@ void copyDecodedAttribute(
   CESIUM_TRACE("CesiumGltf::copyDecodedAttribute");
   Model& model = readModel.model.value();
 
-  if (pAccessor->count > pMesh->num_points()) {
-    readModel.warnings.emplace_back("There are fewer decoded Draco indices "
-                                    "than are expected by the accessor.");
+  if (pAccessor->count != pMesh->num_points()) {
+    readModel.warnings.emplace_back(
+        "attribute accessor doesn't match with decoded Draco vertices number");
 
     pAccessor->count = pMesh->num_points();
   }
