@@ -277,12 +277,13 @@ function generate(options, schema, writers) {
         CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${namespace}::${name}& o) {
           using namespace std::string_literals;
 
+          ${properties.length > 0 ? `
           ${indent(
             properties
               .map((property) => formatReaderPropertyImpl(property))
               .join("\n"),
             10
-          )}
+          )}` : `(void)o;`}
 
           return this->readObjectKey${removeNamespace(base)}(objectType, str, *this->_pObject);
         }

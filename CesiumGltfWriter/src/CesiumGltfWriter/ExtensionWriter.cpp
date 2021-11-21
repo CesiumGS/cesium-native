@@ -1,5 +1,8 @@
 #include "ExtensionWriter.h"
 
+#include "CesiumGltfWriter/ExtensionMaterialsUnlit.h"
+
+#include <CesiumGltf/ExtensionMaterialsUnlit.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
@@ -23,6 +26,8 @@ void writeExtensions(
         extension.second.type() == typeid(CesiumUtility::JsonValue::Array);
     const auto isPrimitive =
         extension.second.type() == typeid(CesiumUtility::JsonValue);
+    const auto isExtensionMaterialsUnlit =
+        extension.second.type() == typeid(CesiumGltf::ExtensionMaterialsUnlit);
 
     // Always assume we're inside of an object, ExtensibleObject::extensions
     // forces extensions to be in a key / value setup.
@@ -44,6 +49,12 @@ void writeExtensions(
       const auto& primitive =
           std::any_cast<CesiumUtility::JsonValue>(extension.second);
       writeJsonValue(primitive, jsonWriter);
+    }
+
+    else if (isExtensionMaterialsUnlit) {
+      const auto& primitive =
+          std::any_cast<CesiumGltf::ExtensionMaterialsUnlit>(extension.second);
+      writeMaterialsUnlit(primitive, jsonWriter);
     }
   }
 
