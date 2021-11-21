@@ -23,6 +23,10 @@
 - Added `GltfContent::applyRtcCenter` and `applyGltfUpAxisTransform`.
 - Clipping polygon edges now remain sharp even when zooming in past the available geometry detail.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by corresponding glTF accessor.
+
 ### v0.9.0 - 2021-11-01
 
 ##### Breaking Changes :mega:
