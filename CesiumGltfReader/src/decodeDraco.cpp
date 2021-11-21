@@ -207,8 +207,8 @@ void copyDecodedAttribute(
   Model& model = readModel.model.value();
 
   if (pAccessor->count != pMesh->num_points()) {
-    readModel.warnings.emplace_back(
-        "Attribute accessor.count doesn't match with number of decoded Draco vertices.");
+    readModel.warnings.emplace_back("Attribute accessor.count doesn't match "
+                                    "with number of decoded Draco vertices.");
 
     pAccessor->count = pMesh->num_points();
   }
