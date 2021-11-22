@@ -4,24 +4,20 @@
 
 #include "ClassStatistics.h"
 #include "Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <unordered_map>
 
 namespace CesiumGltf {
-/**
- * @brief Statistics about features.
- */
-struct CESIUMGLTF_API Statistics final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "Statistics";
+    /**
+     * @brief Statistics about features.
+     */
+    struct CESIUMGLTF_API Statistics final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "Statistics";
 
-  /**
-   * @brief A dictionary, where each key is a class ID declared in the `classes`
-   * dictionary and each value is an object containing statistics about features
-   * that conform to the class.
-   */
-  std::unordered_map<std::string, ClassStatistics> classes;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief A dictionary, where each key is a class ID declared in the `classes` dictionary and each value is an object containing statistics about features that conform to the class.
+         */
+        std::unordered_map<std::string, ClassStatistics> classes;
+
+    };
+}

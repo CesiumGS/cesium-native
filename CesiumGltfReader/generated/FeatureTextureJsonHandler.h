@@ -3,39 +3,32 @@
 #pragma once
 
 #include "TextureAccessorJsonHandler.h"
-
 #include <CesiumGltf/FeatureTexture.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+  class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-class FeatureTextureJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = FeatureTexture;
+  class FeatureTextureJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = FeatureTexture;
 
-  FeatureTextureJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, FeatureTexture* pObject);
+    FeatureTextureJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, FeatureTexture* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyFeatureTexture(
-      const std::string& objectType,
-      const std::string_view& str,
-      FeatureTexture& o);
+  protected:
+    IJsonHandler* readObjectKeyFeatureTexture(const std::string& objectType, const std::string_view& str, FeatureTexture& o);
 
-private:
-  FeatureTexture* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _classProperty;
-  CesiumJsonReader::
-      DictionaryJsonHandler<TextureAccessor, TextureAccessorJsonHandler>
-          _properties;
-};
-} // namespace CesiumGltf
+  private:
+
+    FeatureTexture* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _classProperty;
+    CesiumJsonReader::DictionaryJsonHandler<TextureAccessor, TextureAccessorJsonHandler> _properties;
+  };
+}

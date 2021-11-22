@@ -3,39 +3,33 @@
 #pragma once
 
 #include "ClassPropertyJsonHandler.h"
-
 #include <CesiumGltf/Class.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+  class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-class ClassJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = Class;
+  class ClassJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = Class;
 
-  ClassJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, Class* pObject);
+    ClassJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, Class* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyClass(
-      const std::string& objectType,
-      const std::string_view& str,
-      Class& o);
+  protected:
+    IJsonHandler* readObjectKeyClass(const std::string& objectType, const std::string_view& str, Class& o);
 
-private:
-  Class* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _name;
-  CesiumJsonReader::StringJsonHandler _description;
-  CesiumJsonReader::
-      DictionaryJsonHandler<ClassProperty, ClassPropertyJsonHandler>
-          _properties;
-};
-} // namespace CesiumGltf
+  private:
+
+    Class* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _name;
+    CesiumJsonReader::StringJsonHandler _description;
+    CesiumJsonReader::DictionaryJsonHandler<ClassProperty, ClassPropertyJsonHandler> _properties;
+  };
+}

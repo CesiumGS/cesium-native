@@ -4,58 +4,54 @@
 
 #include "Library.h"
 #include "NamedObject.h"
-
 #include <cstdint>
 #include <optional>
 
 namespace CesiumGltf {
-/**
- * @brief A view into a buffer generally representing a subset of the buffer.
- */
-struct CESIUMGLTF_API BufferView final : public NamedObject {
-  static inline constexpr const char* TypeName = "BufferView";
+    /**
+     * @brief A view into a buffer generally representing a subset of the buffer.
+     */
+    struct CESIUMGLTF_API BufferView final : public NamedObject {
+        static inline constexpr const char* TypeName = "BufferView";
 
-  /**
-   * @brief Known values for The hint representing the intended GPU buffer type
-   * to use with this buffer view.
-   */
-  struct Target {
-    static constexpr int32_t ARRAY_BUFFER = 34962;
+        /**
+         * @brief Known values for The hint representing the intended GPU buffer type to use with this buffer view.
+         */
+        struct Target {
+            static constexpr int32_t ARRAY_BUFFER = 34962;
 
-    static constexpr int32_t ELEMENT_ARRAY_BUFFER = 34963;
-  };
+            static constexpr int32_t ELEMENT_ARRAY_BUFFER = 34963;
+        };
 
-  /**
-   * @brief The index of the buffer.
-   */
-  int32_t buffer = -1;
+        /**
+         * @brief The index of the buffer.
+         */
+        int32_t buffer = -1;
 
-  /**
-   * @brief The offset into the buffer in bytes.
-   */
-  int64_t byteOffset = 0;
+        /**
+         * @brief The offset into the buffer in bytes.
+         */
+        int64_t byteOffset = 0;
 
-  /**
-   * @brief The length of the bufferView in bytes.
-   */
-  int64_t byteLength = int64_t();
+        /**
+         * @brief The length of the bufferView in bytes.
+         */
+        int64_t byteLength = int64_t();
 
-  /**
-   * @brief The stride, in bytes.
-   *
-   * The stride, in bytes, between vertex attributes.  When this is not defined,
-   * data is tightly packed. When two or more accessors use the same buffer
-   * view, this field **MUST** be defined.
-   */
-  std::optional<int64_t> byteStride;
+        /**
+         * @brief The stride, in bytes.
+         *
+         * The stride, in bytes, between vertex attributes.  When this is not defined, data is tightly packed. When two or more accessors use the same buffer view, this field **MUST** be defined.
+         */
+        std::optional<int64_t> byteStride;
 
-  /**
-   * @brief The hint representing the intended GPU buffer type to use with this
-   * buffer view.
-   *
-   * Known values are defined in {@link Target}.
-   *
-   */
-  std::optional<int32_t> target;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The hint representing the intended GPU buffer type to use with this buffer view.
+         * 
+         * Known values are defined in {@link Target}.
+         *
+         */
+        std::optional<int32_t> target;
+
+    };
+}

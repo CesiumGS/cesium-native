@@ -4,29 +4,25 @@
 
 #include "Library.h"
 #include "TextureInfo.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief A description of how to access property values from the color channels
- * of a texture.
- */
-struct CESIUMGLTF_API TextureAccessor final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "TextureAccessor";
+    /**
+     * @brief A description of how to access property values from the color channels of a texture.
+     */
+    struct CESIUMGLTF_API TextureAccessor final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "TextureAccessor";
 
-  /**
-   * @brief Texture channels containing property values. Channels are labeled by
-   * `rgba` and are swizzled with a string of 1-4 characters.
-   */
-  std::string channels;
+        /**
+         * @brief Texture channels containing property values. Channels are labeled by `rgba` and are swizzled with a string of 1-4 characters.
+         */
+        std::string channels;
 
-  /**
-   * @brief The glTF texture and texture coordinates to use.
-   */
-  TextureInfo texture;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The glTF texture and texture coordinates to use.
+         */
+        TextureInfo texture;
+
+    };
+}

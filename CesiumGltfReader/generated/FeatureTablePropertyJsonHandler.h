@@ -8,32 +8,28 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+  class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-class FeatureTablePropertyJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = FeatureTableProperty;
+  class FeatureTablePropertyJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = FeatureTableProperty;
 
-  FeatureTablePropertyJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, FeatureTableProperty* pObject);
+    FeatureTablePropertyJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, FeatureTableProperty* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyFeatureTableProperty(
-      const std::string& objectType,
-      const std::string_view& str,
-      FeatureTableProperty& o);
+  protected:
+    IJsonHandler* readObjectKeyFeatureTableProperty(const std::string& objectType, const std::string_view& str, FeatureTableProperty& o);
 
-private:
-  FeatureTableProperty* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
-  CesiumJsonReader::StringJsonHandler _offsetType;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _arrayOffsetBufferView;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _stringOffsetBufferView;
-};
-} // namespace CesiumGltf
+  private:
+
+    FeatureTableProperty* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+    CesiumJsonReader::StringJsonHandler _offsetType;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _arrayOffsetBufferView;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _stringOffsetBufferView;
+  };
+}

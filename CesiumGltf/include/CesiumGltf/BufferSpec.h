@@ -4,36 +4,35 @@
 
 #include "Library.h"
 #include "NamedObject.h"
-
 #include <cstdint>
 #include <optional>
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief A buffer points to binary geometry, animation, or skins.
- */
-struct CESIUMGLTF_API BufferSpec : public NamedObject {
-  static inline constexpr const char* TypeName = "Buffer";
+    /**
+     * @brief A buffer points to binary geometry, animation, or skins.
+     */
+    struct CESIUMGLTF_API BufferSpec : public NamedObject {
+        static inline constexpr const char* TypeName = "Buffer";
 
-  /**
-   * @brief The URI (or IRI) of the buffer.
-   *
-   * Relative paths are relative to the current glTF asset.  Instead of
-   * referencing an external file, this field **MAY** contain a `data:`-URI.
-   */
-  std::optional<std::string> uri;
+        /**
+         * @brief The URI (or IRI) of the buffer.
+         *
+         * Relative paths are relative to the current glTF asset.  Instead of referencing an external file, this field **MAY** contain a `data:`-URI.
+         */
+        std::optional<std::string> uri;
 
-  /**
-   * @brief The length of the buffer in bytes.
-   */
-  int64_t byteLength = int64_t();
+        /**
+         * @brief The length of the buffer in bytes.
+         */
+        int64_t byteLength = int64_t();
 
-private:
-  /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
-   */
-  BufferSpec() = default;
-  friend struct Buffer;
-};
-} // namespace CesiumGltf
+    private:
+      /**
+       * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
+       */
+      BufferSpec() = default;
+      friend struct Buffer;
+
+    };
+}

@@ -17,131 +17,129 @@
 #include "Scene.h"
 #include "Skin.h"
 #include "Texture.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <string>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief The root object for a glTF asset.
- */
-struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "Model";
+    /**
+     * @brief The root object for a glTF asset.
+     */
+    struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "Model";
 
-  /**
-   * @brief Names of glTF extensions used in this asset.
-   */
-  std::vector<std::string> extensionsUsed;
+        /**
+         * @brief Names of glTF extensions used in this asset.
+         */
+        std::vector<std::string> extensionsUsed;
 
-  /**
-   * @brief Names of glTF extensions required to properly load this asset.
-   */
-  std::vector<std::string> extensionsRequired;
+        /**
+         * @brief Names of glTF extensions required to properly load this asset.
+         */
+        std::vector<std::string> extensionsRequired;
 
-  /**
-   * @brief An array of accessors.
-   *
-   * An accessor is a typed view into a bufferView.
-   */
-  std::vector<Accessor> accessors;
+        /**
+         * @brief An array of accessors.
+         *
+         * An accessor is a typed view into a bufferView.
+         */
+        std::vector<Accessor> accessors;
 
-  /**
-   * @brief An array of keyframe animations.
-   */
-  std::vector<Animation> animations;
+        /**
+         * @brief An array of keyframe animations.
+         */
+        std::vector<Animation> animations;
 
-  /**
-   * @brief Metadata about the glTF asset.
-   */
-  Asset asset;
+        /**
+         * @brief Metadata about the glTF asset.
+         */
+        Asset asset;
 
-  /**
-   * @brief An array of buffers.
-   *
-   * A buffer points to binary geometry, animation, or skins.
-   */
-  std::vector<Buffer> buffers;
+        /**
+         * @brief An array of buffers.
+         *
+         * A buffer points to binary geometry, animation, or skins.
+         */
+        std::vector<Buffer> buffers;
 
-  /**
-   * @brief An array of bufferViews.
-   *
-   * A bufferView is a view into a buffer generally representing a subset of the
-   * buffer.
-   */
-  std::vector<BufferView> bufferViews;
+        /**
+         * @brief An array of bufferViews.
+         *
+         * A bufferView is a view into a buffer generally representing a subset of the buffer.
+         */
+        std::vector<BufferView> bufferViews;
 
-  /**
-   * @brief An array of cameras.
-   *
-   * A camera defines a projection matrix.
-   */
-  std::vector<Camera> cameras;
+        /**
+         * @brief An array of cameras.
+         *
+         * A camera defines a projection matrix.
+         */
+        std::vector<Camera> cameras;
 
-  /**
-   * @brief An array of images.
-   *
-   * An image defines data used to create a texture.
-   */
-  std::vector<Image> images;
+        /**
+         * @brief An array of images.
+         *
+         * An image defines data used to create a texture.
+         */
+        std::vector<Image> images;
 
-  /**
-   * @brief An array of materials.
-   *
-   * A material defines the appearance of a primitive.
-   */
-  std::vector<Material> materials;
+        /**
+         * @brief An array of materials.
+         *
+         * A material defines the appearance of a primitive.
+         */
+        std::vector<Material> materials;
 
-  /**
-   * @brief An array of meshes.
-   *
-   * A mesh is a set of primitives to be rendered.
-   */
-  std::vector<Mesh> meshes;
+        /**
+         * @brief An array of meshes.
+         *
+         * A mesh is a set of primitives to be rendered.
+         */
+        std::vector<Mesh> meshes;
 
-  /**
-   * @brief An array of nodes.
-   */
-  std::vector<Node> nodes;
+        /**
+         * @brief An array of nodes.
+         */
+        std::vector<Node> nodes;
 
-  /**
-   * @brief An array of samplers.
-   *
-   * A sampler contains properties for texture filtering and wrapping modes.
-   */
-  std::vector<Sampler> samplers;
+        /**
+         * @brief An array of samplers.
+         *
+         * A sampler contains properties for texture filtering and wrapping modes.
+         */
+        std::vector<Sampler> samplers;
 
-  /**
-   * @brief The index of the default scene.
-   *
-   * This property **MUST NOT** be defined, when `scenes` is undefined.
-   */
-  int32_t scene = -1;
+        /**
+         * @brief The index of the default scene.
+         *
+         * This property **MUST NOT** be defined, when `scenes` is undefined.
+         */
+        int32_t scene = -1;
 
-  /**
-   * @brief An array of scenes.
-   */
-  std::vector<Scene> scenes;
+        /**
+         * @brief An array of scenes.
+         */
+        std::vector<Scene> scenes;
 
-  /**
-   * @brief An array of skins.
-   *
-   * A skin is defined by joints and matrices.
-   */
-  std::vector<Skin> skins;
+        /**
+         * @brief An array of skins.
+         *
+         * A skin is defined by joints and matrices.
+         */
+        std::vector<Skin> skins;
 
-  /**
-   * @brief An array of textures.
-   */
-  std::vector<Texture> textures;
+        /**
+         * @brief An array of textures.
+         */
+        std::vector<Texture> textures;
 
-private:
-  /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Model} instead.
-   */
-  ModelSpec() = default;
-  friend struct Model;
-};
-} // namespace CesiumGltf
+    private:
+      /**
+       * @brief This class is not meant to be instantiated directly. Use {@link Model} instead.
+       */
+      ModelSpec() = default;
+      friend struct Model;
+
+    };
+}

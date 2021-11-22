@@ -4,37 +4,32 @@
 
 #include "AccessorSparseIndicesJsonHandler.h"
 #include "AccessorSparseValuesJsonHandler.h"
-
 #include <CesiumGltf/AccessorSparse.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+  class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-class AccessorSparseJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = AccessorSparse;
+  class AccessorSparseJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = AccessorSparse;
 
-  AccessorSparseJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, AccessorSparse* pObject);
+    AccessorSparseJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, AccessorSparse* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAccessorSparse(
-      const std::string& objectType,
-      const std::string_view& str,
-      AccessorSparse& o);
+  protected:
+    IJsonHandler* readObjectKeyAccessorSparse(const std::string& objectType, const std::string_view& str, AccessorSparse& o);
 
-private:
-  AccessorSparse* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-  AccessorSparseIndicesJsonHandler _indices;
-  AccessorSparseValuesJsonHandler _values;
-};
-} // namespace CesiumGltf
+  private:
+
+    AccessorSparse* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
+    AccessorSparseIndicesJsonHandler _indices;
+    AccessorSparseValuesJsonHandler _values;
+  };
+}

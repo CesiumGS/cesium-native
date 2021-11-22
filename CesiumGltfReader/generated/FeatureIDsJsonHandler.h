@@ -8,31 +8,27 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+  class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-class FeatureIDsJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = FeatureIDs;
+  class FeatureIDsJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = FeatureIDs;
 
-  FeatureIDsJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, FeatureIDs* pObject);
+    FeatureIDsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, FeatureIDs* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyFeatureIDs(
-      const std::string& objectType,
-      const std::string_view& str,
-      FeatureIDs& o);
+  protected:
+    IJsonHandler* readObjectKeyFeatureIDs(const std::string& objectType, const std::string_view& str, FeatureIDs& o);
 
-private:
-  FeatureIDs* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _attribute;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _constant;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _divisor;
-};
-} // namespace CesiumGltf
+  private:
+
+    FeatureIDs* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _attribute;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _constant;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _divisor;
+  };
+}

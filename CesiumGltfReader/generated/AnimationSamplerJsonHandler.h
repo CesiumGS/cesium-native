@@ -8,31 +8,27 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class ExtensionReaderContext;
+  class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-class AnimationSamplerJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = AnimationSampler;
+  class AnimationSamplerJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = AnimationSampler;
 
-  AnimationSamplerJsonHandler(
-      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-  void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
+    AnimationSamplerJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+    void reset(IJsonHandler* pParentHandler, AnimationSampler* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAnimationSampler(
-      const std::string& objectType,
-      const std::string_view& str,
-      AnimationSampler& o);
+  protected:
+    IJsonHandler* readObjectKeyAnimationSampler(const std::string& objectType, const std::string_view& str, AnimationSampler& o);
 
-private:
-  AnimationSampler* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
-  CesiumJsonReader::StringJsonHandler _interpolation;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
-};
-} // namespace CesiumGltf
+  private:
+
+    AnimationSampler* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _input;
+    CesiumJsonReader::StringJsonHandler _interpolation;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _output;
+  };
+}
