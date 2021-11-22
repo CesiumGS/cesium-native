@@ -8,6 +8,13 @@ option(KTX_FEATURE_STATIC_LIBRARY "" on)
 option(KTX_FEATURE_TESTS "" off)
 add_subdirectory(KTX-Software)
 
+#get_target_property(ktx_read_defs ktx_read COMPILE_DEFINITIONS)
+#message("********************${ktx_read_defs}")
+#list(REMOVE_AT ktx_read_defs 0)
+#STRING(REPLACE "$<$<CONFIG:Debug>:_DEBUG;DEBUG>;" "" ktx_read_defs "${ktx_read_defs}")
+#message("${ktx_read_defs}")
+#set_target_properties(ktx_read PROPERTIES COMPILE_DEFINITIONS "${ktx_read_defs}")
+
 option(URIPARSER_BUILD_TESTS "" off)
 option(URIPARSER_BUILD_DOCS "" off)
 option(URIPARSER_ENABLE_INSTALL "" on)
