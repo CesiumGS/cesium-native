@@ -16,10 +16,24 @@ namespace CesiumGeospatial {
  * longitude-latitude coordinates, but may be far from rectangular on the actual
  * globe surface.
  *
+ * The eastern coordinate may be less than the western coordinate, which
+ * indicates that the rectangle crosses the anti-meridian.
+ *
  * @see CesiumGeometry::Rectangle
  */
 class CESIUMGEOSPATIAL_API GlobeRectangle final {
 public:
+  /**
+   * @brief An empty rectangle.
+   *
+   * The rectangle has the following values:
+   *   * `west`: Pi
+   *   * `south`: Pi/2
+   *   * `east`: -Pi
+   *   * `north`: -Pi/2
+   */
+  static const GlobeRectangle EMPTY;
+
   /**
    * @brief Constructs a new instance.
    *
@@ -155,11 +169,20 @@ public:
   /**
    * @brief Returns `true` if this rectangle contains the given point.
    *
-   * This will take into account the wrapping of the latitude and longitude,
-   * and also return `true` when the longitude of the given point is within
-   * a very small error margin of the longitudes of this rectangle.
+   * The provided cartographic position must be within the longitude range [-Pi,
+   * Pi] and the latitude range [-Pi/2, Pi/2].
+   *
+   * This will take into account the wrapping of the longitude at the
+   * anti-meridian.
    */
   bool contains(const Cartographic& cartographic) const noexcept;
+
+  /**
+   * @brief Determines if this rectangle is empty.
+   *
+   * An empty rectangle bounds no part of the globe, not even a single point.
+   */
+  bool isEmpty() const noexcept;
 
   /**
    * @brief Computes the intersection of two rectangles.
@@ -186,6 +209,18 @@ public:
    * @return The union.
    */
   GlobeRectangle computeUnion(const GlobeRectangle& other) const noexcept;
+
+  /**
+   * @brief Expands the rectangle to include the given position.
+   *
+   * The rectangle will be kept as small as possible.
+   *
+   * @param position The position to be included in the rectangle. The height is
+   * ignored.
+   * @returns True if the rectangle was modified, or false if the rectangle
+   * already contained the position.
+   */
+  bool expandToIncludePosition(const Cartographic& position);
 
 private:
   double _west;

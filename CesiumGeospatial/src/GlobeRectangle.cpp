@@ -6,39 +6,57 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
+/*static*/ const GlobeRectangle GlobeRectangle::EMPTY{
+    Math::ONE_PI,
+    Math::PI_OVER_TWO,
+    -Math::ONE_PI,
+    -Math::PI_OVER_TWO};
+
 Cartographic GlobeRectangle::computeCenter() const noexcept {
-  double east = this->_east;
-  const double west = this->_west;
+  double latitudeCenter = (this->_south + this->_north) * 0.5;
 
-  if (east < west) {
-    east += Math::TWO_PI;
+  if (this->_west <= this->_east) {
+    // Simple rectangle not crossing the anti-meridian.
+    return Cartographic((this->_west + this->_east) * 0.5, latitudeCenter, 0.0);
+  } else {
+    // Rectangle crosses the anti-meridian.
+    double westToAntiMeridian = Math::ONE_PI - this->_west;
+    double antiMeridianToEast = this->_east - -Math::ONE_PI;
+    double total = westToAntiMeridian + antiMeridianToEast;
+    if (westToAntiMeridian >= antiMeridianToEast) {
+      // Center is in the Eastern hemisphere.
+      return Cartographic(
+          glm::min(Math::ONE_PI, this->_west + total * 0.5),
+          latitudeCenter,
+          0.0);
+    } else {
+      // Center is in the Western hemisphere.
+      return Cartographic(
+          glm::max(-Math::ONE_PI, this->_east - total * 0.5),
+          latitudeCenter,
+          0.0);
+    }
   }
-
-  const double longitude = Math::negativePiToPi((west + east) * 0.5);
-  const double latitude = (this->_south + this->_north) * 0.5;
-
-  return Cartographic(longitude, latitude, 0.0);
 }
 
 bool GlobeRectangle::contains(const Cartographic& cartographic) const noexcept {
-  double longitude = cartographic.longitude;
   const double latitude = cartographic.latitude;
-
-  const double west = this->_west;
-  double east = this->_east;
-
-  if (east < west) {
-    east += Math::TWO_PI;
-    if (longitude < 0.0) {
-      longitude += Math::TWO_PI;
-    }
+  if (latitude < this->_south || latitude > this->_north) {
+    return false;
   }
-  return (
-      (longitude > west ||
-       Math::equalsEpsilon(longitude, west, Math::EPSILON14)) &&
-      (longitude < east ||
-       Math::equalsEpsilon(longitude, east, Math::EPSILON14)) &&
-      latitude >= this->_south && latitude <= this->_north);
+
+  const double longitude = cartographic.longitude;
+  if (this->_west <= this->_east) {
+    // Simple rectangle not crossing the anti-meridian.
+    return longitude >= this->_west && longitude <= this->_east;
+  } else {
+    // Rectangle crosses the anti-meridian.
+    return longitude >= this->_west || longitude <= this->_east;
+  }
+}
+
+bool GlobeRectangle::isEmpty() const noexcept {
+  return this->_south > this->_north || this->_west > this->_east;
 }
 
 std::optional<GlobeRectangle> GlobeRectangle::computeIntersection(
@@ -111,6 +129,43 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
       glm::min(this->_south, other._south),
       east,
       glm::max(this->_north, other._north));
+}
+
+bool GlobeRectangle::expandToIncludePosition(const Cartographic& position) {
+  if (this->isEmpty()) {
+    this->_west = this->_east = position.longitude;
+    this->_south = this->_north = position.latitude;
+    return true;
+  }
+
+  if (this->contains(position)) {
+    return false;
+  }
+
+  this->_south = glm::min(this->_south, position.latitude);
+  this->_north = glm::max(this->_north, position.latitude);
+
+  double positionToWestDistance = this->_west - position.longitude;
+  if (positionToWestDistance < 0.0) {
+    const double antiMeridianToWest = this->_west - (-Math::ONE_PI);
+    const double positionToAntiMeridian = Math::ONE_PI - position.longitude;
+    positionToWestDistance = antiMeridianToWest + positionToAntiMeridian;
+  }
+
+  double eastToPositionDistance = position.longitude - this->_east;
+  if (eastToPositionDistance < 0.0) {
+    const double antiMeridianToPosition = position.longitude - (-Math::ONE_PI);
+    const double eastToAntiMeridian = Math::ONE_PI - this->_east;
+    eastToPositionDistance = antiMeridianToPosition + eastToAntiMeridian;
+  }
+
+  if (positionToWestDistance < eastToPositionDistance) {
+    this->_west = position.longitude;
+  } else {
+    this->_east = position.longitude;
+  }
+
+  return true;
 }
 
 } // namespace CesiumGeospatial
