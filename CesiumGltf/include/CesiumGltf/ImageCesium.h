@@ -7,6 +7,17 @@
 #include <vector>
 
 namespace CesiumGltf {
+
+/**
+ * @brief Supported block compressed pixel formats that KTX v2 may have been
+ * transcoded to.
+ */
+enum CESIUMGLTF_API CompressedPixelFormatCesium {
+  DXT1,
+  KTX,
+  NONE,
+};
+
 /**
  * @brief Holds {@link Image} properties that are specific to the glTF loader
  * rather than part of the glTF spec.
@@ -33,14 +44,25 @@ struct CESIUMGLTF_API ImageCesium final {
   int32_t bytesPerChannel = 1;
 
   /**
-   * @brief The raw pixel data.
+   * @brief The compressed pixel format.
+   */
+  CompressedPixelFormatCesium compressedPixelFormat =
+      CompressedPixelFormatCesium::NONE;
+
+  /**
+   * @brief The pixel data.
    *
-   * The pixel data is consistent with the
-   * [stb](https://github.com/nothings/stb) image library.
+   * This will be the raw pixel data when compressedPixelFormat is NONE.
+   * Otherwise, this buffer will store the compressed pixel data in the
+   * specified format.
    *
-   * For a correctly-formed image, the size of the array will be
-   * `width * height * channels * bytesPerChannel` bytes. There is no
-   * padding between rows or columns of the image, regardless of format.
+   * When this is an uncompressed texture:
+   * -The pixel data is consistent with the
+   *  [stb](https://github.com/nothings/stb) image library.
+   *
+   * -For a correctly-formed image, the size of the array will be
+   *  `width * height * channels * bytesPerChannel` bytes. There is no
+   *  padding between rows or columns of the image, regardless of format.
    *
    * The channels and their meaning are as follows:
    *
@@ -52,16 +74,5 @@ struct CESIUMGLTF_API ImageCesium final {
    * | 4                  | red, green, blue, alpha   |
    */
   std::vector<std::byte> pixelData;
-
-  /**
-   * @brief The compressed pixel format. Maps to enum codes in UnrealEngine
-   * PixelFormat.h.
-   */
-  int32_t compressedPixelFormat = 0;
-
-  /**
-   * @brief The compressed pixel data.
-   */
-  std::vector<std::byte> compressedPixelData;
 };
 } // namespace CesiumGltf

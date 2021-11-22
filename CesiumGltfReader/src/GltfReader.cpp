@@ -494,7 +494,8 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
       if (ktxTexture2_NeedsTranscoding(texture)) {
         errorCode = ktxTexture2_TranscodeBasis(texture, KTX_TTF_BC1_RGB, 0);
         if (errorCode == KTX_SUCCESS) {
-          image.compressedPixelFormat = 5; // PF_DXT1
+          // TODO: this is currently hardcoded, but shouldn't be
+          image.compressedPixelFormat = CompressedPixelFormatCesium::DXT1;
           image.width = static_cast<int32_t>(texture->baseWidth);
           image.height = static_cast<int32_t>(texture->baseHeight);
 
@@ -502,9 +503,9 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
               ktxTexture_GetData(ktxTexture(texture));
           ktx_size_t compressedPixelDataSize =
               ktxTexture_GetDataSize(ktxTexture(texture));
-          image.compressedPixelData.resize(compressedPixelDataSize);
+          image.pixelData.resize(compressedPixelDataSize);
           std::uint8_t* u8Pointer =
-              reinterpret_cast<std::uint8_t*>(image.compressedPixelData.data());
+              reinterpret_cast<std::uint8_t*>(image.pixelData.data());
           std::copy(
               compressedPixelData,
               compressedPixelData + compressedPixelDataSize,
