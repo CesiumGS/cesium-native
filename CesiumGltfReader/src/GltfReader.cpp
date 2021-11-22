@@ -495,8 +495,8 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
         errorCode = ktxTexture2_TranscodeBasis(texture, KTX_TTF_BC1_RGB, 0);
         if (errorCode == KTX_SUCCESS) {
           image.compressedPixelFormat = 5; // PF_DXT1
-          image.width = texture->baseWidth;
-          image.height = texture->baseHeight;
+          image.width = static_cast<int32_t>(texture->baseWidth);
+          image.height = static_cast<int32_t>(texture->baseHeight);
 
           ktx_uint8_t* compressedPixelData =
               ktxTexture_GetData(ktxTexture(texture));
