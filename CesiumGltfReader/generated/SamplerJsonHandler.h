@@ -3,32 +3,36 @@
 #pragma once
 
 #include "NamedObjectJsonHandler.h"
+
 #include <CesiumGltf/Sampler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-  class SamplerJsonHandler : public NamedObjectJsonHandler {
-  public:
-    using ValueType = Sampler;
+class SamplerJsonHandler : public NamedObjectJsonHandler {
+public:
+  using ValueType = Sampler;
 
-    SamplerJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, Sampler* pObject);
+  SamplerJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, Sampler* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeySampler(const std::string& objectType, const std::string_view& str, Sampler& o);
+protected:
+  IJsonHandler* readObjectKeySampler(
+      const std::string& objectType,
+      const std::string_view& str,
+      Sampler& o);
 
-  private:
-
-    Sampler* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
-  };
-}
+private:
+  Sampler* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
+};
+} // namespace CesiumGltf

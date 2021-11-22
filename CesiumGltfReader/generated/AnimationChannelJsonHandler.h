@@ -3,31 +3,36 @@
 #pragma once
 
 #include "AnimationChannelTargetJsonHandler.h"
+
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-  class AnimationChannelJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = AnimationChannel;
+class AnimationChannelJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = AnimationChannel;
 
-    AnimationChannelJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, AnimationChannel* pObject);
+  AnimationChannelJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, AnimationChannel* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyAnimationChannel(const std::string& objectType, const std::string_view& str, AnimationChannel& o);
+protected:
+  IJsonHandler* readObjectKeyAnimationChannel(
+      const std::string& objectType,
+      const std::string_view& str,
+      AnimationChannel& o);
 
-  private:
-
-    AnimationChannel* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _sampler;
-    AnimationChannelTargetJsonHandler _target;
-  };
-}
+private:
+  AnimationChannel* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _sampler;
+  AnimationChannelTargetJsonHandler _target;
+};
+} // namespace CesiumGltf

@@ -3,32 +3,39 @@
 #pragma once
 
 #include "PropertyStatisticsJsonHandler.h"
+
 #include <CesiumGltf/ClassStatistics.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-  class ClassStatisticsJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = ClassStatistics;
+class ClassStatisticsJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = ClassStatistics;
 
-    ClassStatisticsJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, ClassStatistics* pObject);
+  ClassStatisticsJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, ClassStatistics* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyClassStatistics(const std::string& objectType, const std::string_view& str, ClassStatistics& o);
+protected:
+  IJsonHandler* readObjectKeyClassStatistics(
+      const std::string& objectType,
+      const std::string_view& str,
+      ClassStatistics& o);
 
-  private:
-
-    ClassStatistics* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-    CesiumJsonReader::DictionaryJsonHandler<PropertyStatistics, PropertyStatisticsJsonHandler> _properties;
-  };
-}
+private:
+  ClassStatistics* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
+  CesiumJsonReader::
+      DictionaryJsonHandler<PropertyStatistics, PropertyStatisticsJsonHandler>
+          _properties;
+};
+} // namespace CesiumGltf

@@ -7,28 +7,32 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class ExtensionReaderContext;
+class ExtensionReaderContext;
 }
 
 namespace CesiumGltf {
-  class CameraOrthographicJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CameraOrthographic;
+class CameraOrthographicJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CameraOrthographic;
 
-    CameraOrthographicJsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
-    void reset(IJsonHandler* pParentHandler, CameraOrthographic* pObject);
+  CameraOrthographicJsonHandler(
+      const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
+  void reset(IJsonHandler* pParentHandler, CameraOrthographic* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyCameraOrthographic(const std::string& objectType, const std::string_view& str, CameraOrthographic& o);
+protected:
+  IJsonHandler* readObjectKeyCameraOrthographic(
+      const std::string& objectType,
+      const std::string_view& str,
+      CameraOrthographic& o);
 
-  private:
-
-    CameraOrthographic* _pObject = nullptr;
-    CesiumJsonReader::DoubleJsonHandler _xmag;
-    CesiumJsonReader::DoubleJsonHandler _ymag;
-    CesiumJsonReader::DoubleJsonHandler _zfar;
-    CesiumJsonReader::DoubleJsonHandler _znear;
-  };
-}
+private:
+  CameraOrthographic* _pObject = nullptr;
+  CesiumJsonReader::DoubleJsonHandler _xmag;
+  CesiumJsonReader::DoubleJsonHandler _ymag;
+  CesiumJsonReader::DoubleJsonHandler _zfar;
+  CesiumJsonReader::DoubleJsonHandler _znear;
+};
+} // namespace CesiumGltf
