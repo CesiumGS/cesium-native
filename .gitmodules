@@ -49,3 +49,6 @@
 [submodule "extern/s2geometry"]
 	path = extern/s2geometry
 	url = https://github.com/google/s2geometry.git
+[submodule "extern/KTX-Software"]
+	path = extern/KTX-Software
+	url = https://github.com/KhronosGroup/KTX-Software.git
