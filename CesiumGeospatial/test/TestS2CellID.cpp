@@ -1,3 +1,4 @@
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellID.h>
 #include <CesiumUtility/Math.h>
