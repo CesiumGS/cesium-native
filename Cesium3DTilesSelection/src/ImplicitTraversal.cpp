@@ -3,8 +3,9 @@
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 #include "Cesium3DTilesSelection/TileContext.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
-#include "CesiumGeospatial/S2CellID.h"
+
+#include <CesiumGeometry/TileAvailabilityFlags.h>
+#include <CesiumGeospatial/S2CellID.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
