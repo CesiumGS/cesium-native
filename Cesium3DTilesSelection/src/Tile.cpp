@@ -281,14 +281,14 @@ void* processNewTileContent(
     const GlobeRectangle& original = pRegion->getRectangle();
     const GlobeRectangle& computed =
         content.overlayDetails->boundingRegion.getRectangle();
-    if (!Math::equalsEpsilon(computed.getWest(), original.getWest(), 0.01) &&
-            computed.getWest() < original.getWest() ||
-        !Math::equalsEpsilon(computed.getSouth(), original.getSouth(), 0.01) &&
-            computed.getSouth() < original.getSouth() ||
-        !Math::equalsEpsilon(computed.getEast(), original.getEast(), 0.01) &&
-            computed.getEast() > original.getEast() ||
-        !Math::equalsEpsilon(computed.getNorth(), original.getNorth(), 0.01) &&
-            computed.getNorth() > original.getNorth()) {
+    if ((!Math::equalsEpsilon(computed.getWest(), original.getWest(), 0.01) &&
+         computed.getWest() < original.getWest()) ||
+        (!Math::equalsEpsilon(computed.getSouth(), original.getSouth(), 0.01) &&
+         computed.getSouth() < original.getSouth()) ||
+        (!Math::equalsEpsilon(computed.getEast(), original.getEast(), 0.01) &&
+         computed.getEast() > original.getEast()) ||
+        (!Math::equalsEpsilon(computed.getNorth(), original.getNorth(), 0.01) &&
+         computed.getNorth() > original.getNorth())) {
 
       auto it = model.extras.find("Cesium3DTiles_TileUrl");
       std::string url = it != model.extras.end()
