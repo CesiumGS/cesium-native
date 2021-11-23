@@ -32,6 +32,7 @@
 - Fixed a bug that would result in incorrect geometry when upsampling a glTF with a position accessor pointing to a bufferView that did not start at the beginning of its buffer.
 - Fixed a problem that could cause incorrect distance computation for a degenerate bounding region that is a single point with a min/max height.
 - Improved the numerical stability of `GlobeRectangle::computeCenter` and `GlobeRectangle::contains`.
+- Error messages are no longer printed to the Output Log when an upsampled tile happens to have a primitive with no vertices.
 
 ##### Fixes :wrench:
 

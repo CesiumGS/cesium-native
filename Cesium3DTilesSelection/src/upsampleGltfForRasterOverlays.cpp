@@ -27,7 +27,7 @@ struct EdgeIndices {
   std::vector<EdgeVertex> north;
 };
 
-static void upsamplePrimitiveForRasterOverlays(
+static bool upsamplePrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
     Mesh& mesh,
@@ -137,13 +137,22 @@ Model upsampleGltfForRasterOverlays(
   }
 
   for (Mesh& mesh : result.meshes) {
-    for (MeshPrimitive& primitive : mesh.primitives) {
-      upsamplePrimitiveForRasterOverlays(
+    for (size_t i = 0; i < mesh.primitives.size(); ++i) {
+      MeshPrimitive& primitive = mesh.primitives[i];
+
+      bool keep = upsamplePrimitiveForRasterOverlays(
           parentModel,
           result,
           mesh,
           primitive,
           childID);
+
+      // We're assuming here that nothing references primitives by index, so we
+      // can remove them without any drama.
+      if (!keep) {
+        mesh.primitives.erase(mesh.primitives.begin() + i);
+        --i;
+      }
     }
   }
 
@@ -360,7 +369,7 @@ static T getVertexValue(
 }
 
 template <class TIndex>
-static void upsamplePrimitiveForRasterOverlays(
+static bool upsamplePrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
     Mesh& /*mesh*/,
@@ -441,7 +450,8 @@ static void upsamplePrimitiveForRasterOverlays(
         accessor.computeNumberOfComponents();
     if (accessor.componentType != Accessor::ComponentType::FLOAT) {
       // Can only interpolate floating point vertex attributes
-      return;
+      toRemove.push_back(attribute.first);
+      continue;
     }
 
     attribute.second = static_cast<int>(model.accessors.size());
@@ -475,9 +485,8 @@ static void upsamplePrimitiveForRasterOverlays(
   }
 
   if (uvAccessorIndex == -1) {
-    // We don't know how to divide this primitive, so just copy it verbatim.
-    // TODO
-    return;
+    // We don't know how to divide this primitive, so just remove it.
+    return false;
   }
 
   for (const std::string& attribute : toRemove) {
@@ -492,7 +501,7 @@ static void upsamplePrimitiveForRasterOverlays(
 
   if (uvView.status() != AccessorViewStatus::Valid ||
       indicesView.status() != AccessorViewStatus::Valid) {
-    return;
+    return false;
   }
 
   // check if the primitive has skirts
@@ -647,6 +656,10 @@ static void upsamplePrimitiveForRasterOverlays(
         positionAttributeIndex);
   }
 
+  if (newVertexFloats.empty() || indices.empty()) {
+    return false;
+  }
+
   // Update the accessor vertex counts and min/max values
   const int64_t numberOfVertices =
       int64_t(newVertexFloats.size()) / vertexSizeFloats;
@@ -744,6 +757,8 @@ static void upsamplePrimitiveForRasterOverlays(
   primitive.extras.emplace("WaterMaskScale", waterMaskScale);
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
+
+  return true;
 }
 
 static uint32_t getOrCreateVertex(
@@ -1105,7 +1120,7 @@ static void addSkirts(
       positionAttributeIndex);
 }
 
-static void upsamplePrimitiveForRasterOverlays(
+static bool upsamplePrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
     Mesh& mesh,
@@ -1115,16 +1130,15 @@ static void upsamplePrimitiveForRasterOverlays(
       primitive.indices < 0 ||
       primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
     // Not indexed triangles, so we don't know how to divide this primitive
-    // (yet). So just copy it verbatim.
-    // TODO
-    return;
+    // (yet). So remove it.
+    return false;
   }
 
   const Accessor& indicesAccessorGltf =
       parentModel.accessors[static_cast<size_t>(primitive.indices)];
   if (indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_SHORT) {
-    upsamplePrimitiveForRasterOverlays<uint16_t>(
+    return upsamplePrimitiveForRasterOverlays<uint16_t>(
         parentModel,
         model,
         mesh,
@@ -1133,13 +1147,15 @@ static void upsamplePrimitiveForRasterOverlays(
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_INT) {
-    upsamplePrimitiveForRasterOverlays<uint32_t>(
+    return upsamplePrimitiveForRasterOverlays<uint32_t>(
         parentModel,
         model,
         mesh,
         primitive,
         childID);
   }
+
+  return false;
 }
 
 } // namespace Cesium3DTilesSelection
