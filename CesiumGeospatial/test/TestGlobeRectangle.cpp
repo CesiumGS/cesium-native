@@ -17,47 +17,6 @@ TEST_CASE("GlobeRectangle::fromDegrees example") {
 TEST_CASE("GlobeRectangle") {
   SECTION("isEmpty") { CHECK(GlobeRectangle::EMPTY.isEmpty()); }
 
-  SECTION("expandToIncludePosition") {
-    GlobeRectangle rectangle = GlobeRectangle::EMPTY;
-    CHECK(!rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(1.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
-
-    rectangle.expandToIncludePosition(Cartographic(0.0, 0.0, 0.0));
-    CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(1.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
-
-    rectangle.expandToIncludePosition(Cartographic(Math::ONE_PI, 1.0, 0.0));
-    CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
-    CHECK(rectangle.contains(Cartographic(1.0, 0.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
-    CHECK(rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
-    CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
-
-    GlobeRectangle simple = rectangle;
-    simple.expandToIncludePosition(Cartographic(-1.0, 1.0, 0.0));
-    CHECK(simple.contains(Cartographic(0.0, 0.0, 0.0)));
-    CHECK(simple.contains(Cartographic(1.0, 0.0, 0.0)));
-    CHECK(simple.contains(Cartographic(-1.0, 0.0, 0.0)));
-    CHECK(!simple.contains(Cartographic(-3.0, 0.0, 0.0)));
-    CHECK(simple.contains(Cartographic(0.0, 1.0, 0.0)));
-    CHECK(!simple.contains(Cartographic(0.0, -1.0, 0.0)));
-
-    GlobeRectangle wrapped = rectangle;
-    wrapped.expandToIncludePosition(Cartographic(-3.0, 1.0, 0.0));
-    CHECK(wrapped.contains(Cartographic(0.0, 0.0, 0.0)));
-    CHECK(wrapped.contains(Cartographic(1.0, 0.0, 0.0)));
-    CHECK(!wrapped.contains(Cartographic(-1.0, 0.0, 0.0)));
-    CHECK(wrapped.contains(Cartographic(-3.0, 0.0, 0.0)));
-    CHECK(wrapped.contains(Cartographic(0.0, 1.0, 0.0)));
-    CHECK(!wrapped.contains(Cartographic(0.0, -1.0, 0.0)));
-  }
-
   SECTION("computeCenter") {
     GlobeRectangle simple(0.1, 0.2, 0.3, 0.4);
     Cartographic center = simple.computeCenter();

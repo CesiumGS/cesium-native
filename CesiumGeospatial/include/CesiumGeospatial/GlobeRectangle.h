@@ -85,9 +85,19 @@ public:
   constexpr double getWest() const noexcept { return this->_west; }
 
   /**
+   * @brief Sets the westernmost longitude, in radians.
+   */
+  void setWest(double value) noexcept { this->_west = value; }
+
+  /**
    * @brief Returns the southernmost latitude, in radians.
    */
   constexpr double getSouth() const noexcept { return this->_south; }
+
+  /**
+   * @brief Sets the southernmost latitude, in radians.
+   */
+  void setSouth(double value) noexcept { this->_south = value; }
 
   /**
    * @brief Returns the easternmost longitude, in radians.
@@ -95,9 +105,19 @@ public:
   constexpr double getEast() const noexcept { return this->_east; }
 
   /**
+   * @brief Sets the easternmost longitude, in radians.
+   */
+  void setEast(double value) noexcept { this->_east = value; }
+
+  /**
    * @brief Returns the northernmost latitude, in radians.
    */
   constexpr double getNorth() const noexcept { return this->_north; }
+
+  /**
+   * @brief Sets the northernmost latitude, in radians.
+   */
+  void setNorth(double value) noexcept { this->_north = value; }
 
   /**
    * @brief Returns the {@link Cartographic} position of the south-west corner.
@@ -209,18 +229,6 @@ public:
    * @return The union.
    */
   GlobeRectangle computeUnion(const GlobeRectangle& other) const noexcept;
-
-  /**
-   * @brief Expands the rectangle to include the given position.
-   *
-   * The rectangle will be kept as small as possible.
-   *
-   * @param position The position to be included in the rectangle. The height is
-   * ignored.
-   * @returns True if the rectangle was modified, or false if the rectangle
-   * already contained the position.
-   */
-  bool expandToIncludePosition(const Cartographic& position);
 
 private:
   double _west;

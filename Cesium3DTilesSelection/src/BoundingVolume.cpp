@@ -200,13 +200,13 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
 const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume) {
   const BoundingRegion* pResult = std::get_if<BoundingRegion>(&boundingVolume);
-  // if (!pResult) {
-  //   const BoundingRegionWithLooseFittingHeights* pLoose =
-  //       std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume);
-  //   if (pLoose) {
-  //     pResult = &pLoose->getBoundingRegion();
-  //   }
-  // }
+  if (!pResult) {
+    const BoundingRegionWithLooseFittingHeights* pLoose =
+        std::get_if<BoundingRegionWithLooseFittingHeights>(&boundingVolume);
+    if (pLoose) {
+      pResult = &pLoose->getBoundingRegion();
+    }
+  }
   return pResult;
 }
 

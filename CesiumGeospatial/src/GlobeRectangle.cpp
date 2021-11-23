@@ -56,7 +56,7 @@ bool GlobeRectangle::contains(const Cartographic& cartographic) const noexcept {
 }
 
 bool GlobeRectangle::isEmpty() const noexcept {
-  return this->_south > this->_north || this->_west > this->_east;
+  return this->_south > this->_north;
 }
 
 std::optional<GlobeRectangle> GlobeRectangle::computeIntersection(
@@ -129,43 +129,6 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
       glm::min(this->_south, other._south),
       east,
       glm::max(this->_north, other._north));
-}
-
-bool GlobeRectangle::expandToIncludePosition(const Cartographic& position) {
-  if (this->isEmpty()) {
-    this->_west = this->_east = position.longitude;
-    this->_south = this->_north = position.latitude;
-    return true;
-  }
-
-  if (this->contains(position)) {
-    return false;
-  }
-
-  this->_south = glm::min(this->_south, position.latitude);
-  this->_north = glm::max(this->_north, position.latitude);
-
-  double positionToWestDistance = this->_west - position.longitude;
-  if (positionToWestDistance < 0.0) {
-    const double antiMeridianToWest = this->_west - (-Math::ONE_PI);
-    const double positionToAntiMeridian = Math::ONE_PI - position.longitude;
-    positionToWestDistance = antiMeridianToWest + positionToAntiMeridian;
-  }
-
-  double eastToPositionDistance = position.longitude - this->_east;
-  if (eastToPositionDistance < 0.0) {
-    const double antiMeridianToPosition = position.longitude - (-Math::ONE_PI);
-    const double eastToAntiMeridian = Math::ONE_PI - this->_east;
-    eastToPositionDistance = antiMeridianToPosition + eastToAntiMeridian;
-  }
-
-  if (positionToWestDistance < eastToPositionDistance) {
-    this->_west = position.longitude;
-  } else {
-    this->_east = position.longitude;
-  }
-
-  return true;
 }
 
 } // namespace CesiumGeospatial
