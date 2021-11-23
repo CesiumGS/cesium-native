@@ -4,7 +4,6 @@
 
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeospatial/S2CellID.h>
 
 #include <string>
 #include <variant>

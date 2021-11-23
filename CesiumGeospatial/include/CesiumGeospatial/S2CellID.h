@@ -1,15 +1,16 @@
 #pragma once
 
 #include "Cartographic.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
 #include "GlobeRectangle.h"
 #include "Library.h"
-
-#include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <array>
 #include <cstdint>
 #include <string_view>
+
+namespace CesiumGeometry {
+struct QuadtreeTileID;
+}
 
 namespace CesiumGeospatial {
 

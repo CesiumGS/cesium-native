@@ -126,6 +126,7 @@ computeVertices(const std::array<Plane, 6>& boundingPlanes) {
 
   return vertices;
 }
+
 } // namespace
 
 S2CellBoundingVolume::S2CellBoundingVolume(
