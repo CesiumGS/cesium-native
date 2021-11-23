@@ -33,6 +33,10 @@
 - Fixed a problem that could cause incorrect distance computation for a degenerate bounding region that is a single point with a min/max height.
 - Improved the numerical stability of `GlobeRectangle::computeCenter` and `GlobeRectangle::contains`.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause memory corruption when a decoded Draco mesh was larger than indicated by the corresponding glTF accessor.
+
 ### v0.9.0 - 2021-11-01
 
 ##### Breaking Changes :mega:

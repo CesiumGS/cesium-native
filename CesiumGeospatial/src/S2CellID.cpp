@@ -20,13 +20,14 @@
 #include "CesiumGeospatial/S2CellID.h"
 #include "HilbertOrder.h"
 
+#include <CesiumGeometry/QuadtreeTileID.h>
+
 #include <cfloat>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 using GoogleS2CellID = S2CellId;
-// using GoogleS2Cell = S2Cell;
 
 /*static*/ S2CellID S2CellID::fromToken(const std::string_view& token) {
   return S2CellID(GoogleS2CellID::FromToken(token.data(), token.size()).id());
