@@ -151,6 +151,7 @@ void copyDecodedIndices(
   indicesBufferView.byteOffset = 0;
   indicesBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
   pIndicesAccessor->type = Accessor::Type::SCALAR;
+  pIndicesAccessor->byteOffset = 0;
 
   static_assert(sizeof(draco::PointIndex) == sizeof(uint32_t));
 
