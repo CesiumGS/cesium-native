@@ -481,28 +481,28 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
     // hacky glTF
     // TODO: no support for embedded mipmap
 
-    ktxTexture2* texture;
+    ktxTexture2* pTexture = nullptr;
     KTX_error_code errorCode;
 
     errorCode = ktxTexture2_CreateFromMemory(
         reinterpret_cast<const std::uint8_t*>(data.data()),
         data.size(),
         KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
-        &texture);
+        &pTexture);
 
     if (errorCode == KTX_SUCCESS) {
-      if (ktxTexture2_NeedsTranscoding(texture)) {
-        errorCode = ktxTexture2_TranscodeBasis(texture, KTX_TTF_BC1_RGB, 0);
+      if (ktxTexture2_NeedsTranscoding(pTexture)) {
+        errorCode = ktxTexture2_TranscodeBasis(pTexture, KTX_TTF_BC1_RGB, 0);
         if (errorCode == KTX_SUCCESS) {
           // TODO: this is currently hardcoded, but shouldn't be
           image.compressedPixelFormat = CompressedPixelFormatCesium::DXT1;
-          image.width = static_cast<int32_t>(texture->baseWidth);
-          image.height = static_cast<int32_t>(texture->baseHeight);
+          image.width = static_cast<int32_t>(pTexture->baseWidth);
+          image.height = static_cast<int32_t>(pTexture->baseHeight);
 
           ktx_uint8_t* compressedPixelData =
-              ktxTexture_GetData(ktxTexture(texture));
+              ktxTexture_GetData(ktxTexture(pTexture));
           ktx_size_t compressedPixelDataSize =
-              ktxTexture_GetDataSize(ktxTexture(texture));
+              ktxTexture_GetDataSize(ktxTexture(pTexture));
           image.pixelData.resize(compressedPixelDataSize);
           std::uint8_t* u8Pointer =
               reinterpret_cast<std::uint8_t*>(image.pixelData.data());
@@ -510,7 +510,7 @@ GltfReader::readImage(const gsl::span<const std::byte>& data) {
               compressedPixelData,
               compressedPixelData + compressedPixelDataSize,
               u8Pointer);
-          ktxTexture_Destroy(ktxTexture(texture));
+          ktxTexture_Destroy(ktxTexture(pTexture));
 
           return result;
         }
