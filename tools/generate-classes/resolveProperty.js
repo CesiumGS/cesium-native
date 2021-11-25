@@ -121,12 +121,29 @@ function resolveProperty(
         readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
       };
+    } else if (itemSchema.type !== "object") {
+      return resolveProperty(
+        schemaCache,
+        config,
+        parentName,
+        propertyName,
+        itemSchema,
+        required,
+        namespace,
+        readerNamespace,
+        writerNamespace
+      );
     } else {
       const type = getNameFromSchema(config, itemSchema);
       return {
         ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
-        type: makeOptional ? `std::optional<${namespace}::${type}>` : `${namespace}::${type}`,
-        headers: [`"${namespace}/${type}.h"`, ...(makeOptional ? ["<optional>"] : [])],
+        type: makeOptional
+          ? `std::optional<${namespace}::${type}>`
+          : `${namespace}::${type}`,
+        headers: [
+          `"${namespace}/${type}.h"`,
+          ...(makeOptional ? ["<optional>"] : []),
+        ],
         readerType: `${type}JsonHandler`,
         readerHeaders: [`"${readerNamespace}/${type}JsonHandler.h"`],
         schemas: [itemSchema],
@@ -147,8 +164,10 @@ function resolveProperty(
 
     return {
       ...nested,
-      briefDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails).briefDoc,
-      fullDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails).fullDoc,
+      briefDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails)
+        .briefDoc,
+      fullDoc: propertyDefaults(propertyName, cppSafeName, propertyDetails)
+        .fullDoc,
     };
   } else {
     console.warn(`Cannot interpret property ${propertyName}; using JsonValue.`);
@@ -274,7 +293,7 @@ function resolveDictionary(
     namespace,
     readerNamespace,
     writerNamespace
-);
+  );
 
   if (!additional) {
     return undefined;
@@ -381,7 +400,11 @@ function resolveEnum(
     propertyDetails
   );
 
-  const propertyDefaultValues = propertyDefaults(propertyName, cppSafeName, propertyDetails);
+  const propertyDefaultValues = propertyDefaults(
+    propertyName,
+    cppSafeName,
+    propertyDetails
+  );
   const enumBriefDoc =
     propertyDefaultValues.briefDoc +
     "\n * \n * Known values are defined in {@link " +
