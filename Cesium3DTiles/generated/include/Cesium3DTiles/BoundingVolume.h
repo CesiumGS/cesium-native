@@ -10,8 +10,9 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief A bounding volume that encloses a tile or its content. Exactly one
- * `box`, `region`, or `sphere` property is required.
+ * @brief A bounding volume that encloses a tile or its content. At least one
+ * bounding volume property is required. Bounding volumes include `box`,
+ * `region`, or `sphere`.
  */
 struct CESIUM3DTILES_API BoundingVolume final
     : public CesiumUtility::ExtensibleObject {

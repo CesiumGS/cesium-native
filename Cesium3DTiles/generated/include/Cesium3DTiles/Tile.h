@@ -68,8 +68,9 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * viewerRequestVolume--from the tile's local coordinate system to the parent
    * tile's coordinate system, or, in the case of a root tile, from the tile's
    * local coordinate system to the tileset's coordinate system. `transform`
-   * does not apply to geometricError, nor does it apply any volume property
-   * when the volume is a region, defined in EPSG:4979 coordinates.
+   * does not apply to any volume property when the volume is a region, defined
+   * in EPSG:4979 coordinates. `transform` scales the `geometricError` by the
+   * maximum scaling factor from the matrix.
    */
   std::vector<double> transform =
       {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
