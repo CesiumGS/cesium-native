@@ -12,6 +12,8 @@ class ExtensionWriterContext;
 namespace Cesium3DTiles {
 struct Extension3dTilesContentGltf;
 struct Extension3dTilesBoundingVolumeS2;
+struct Extension3dTilesImplicitTiling;
+struct Subtree;
 struct Tileset;
 struct Tile;
 struct Content;
@@ -44,6 +46,32 @@ struct Extension3dTilesBoundingVolumeS2Writer {
 
   static void write(
       const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesImplicitTilingWriter {
+  using ValueType = Cesium3DTiles::Extension3dTilesImplicitTiling;
+
+  static inline constexpr const char* ExtensionName = "3DTILES_implicit_tiling";
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesImplicitTiling& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct SubtreeWriter {
+  using ValueType = Cesium3DTiles::Subtree;
+
+  static void write(
+      const Cesium3DTiles::Subtree& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 
