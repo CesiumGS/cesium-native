@@ -13,11 +13,11 @@ namespace CesiumGltfWriter {
 
 /**
  * @brief The result of writing a glTF with
- * {@link GltfWriter::writeGltf}.
+ * {@link GltfWriter::writeGltf} or {@link GltfWriter::writeGlb}
  */
 struct CESIUMGLTFWRITER_API GltfWriterResult {
   /**
-   * @brief The final generated std::vector<std::byte> of the glTF.
+   * @brief The final generated std::vector<std::byte> of the glTF or glb.
    */
   std::vector<std::byte> gltfBytes;
 
@@ -30,32 +30,6 @@ struct CESIUMGLTFWRITER_API GltfWriterResult {
    * @brief Warnings, if any, that occurred during the write process.
    */
   std::vector<std::string> warnings;
-};
-
-enum class GltfExportType { GLB, GLTF };
-
-/**
- * @brief Options for how to write a glTF.
- */
-
-struct CESIUMGLTFWRITER_API GltfWriterOptions {
-  /**
-   * @brief If the glTF should be exported as a GLB (binary) or glTF (JSON)
-   */
-  GltfExportType exportType = GltfExportType::GLB;
-
-  /**
-   * @brief If the glTF should be pretty printed. Usable with glTF or GLB (not
-   * advised)
-   */
-  bool prettyPrint = false;
-
-  /**
-   * @brief If {@link CesiumGltf::BufferCesium} and
-   * {@link CesiumGltf::ImageCesium} should be automatically encoded into base64
-   * uris or not.
-   */
-  bool autoConvertDataToBase64 = false;
 };
 
 /**
@@ -79,16 +53,33 @@ public:
   const CesiumJsonWriter::ExtensionWriterContext& getExtensions() const;
 
   /**
-   * @brief Serializes the provided model into a glTF byte vector using the
-   * provided flags to convert.
+   * @brief Serializes the provided model into a glTF JSON byte vector.
+   *
+   * @details Ignores internal data such as {@link CesiumGltf::BufferCesium}
+   * and {@link CesiumGltf::ImageCesium} when serializing the glTF. Internal
+   * data must either be converted to data uris or saved as external files. The
+   * buffer.uri and image.uri fields must be set accordingly prior to calling
+   * this function.
    *
    * @param model The model.
-   * @param options Options for how to write the glTF.
    * @return The result of writing the glTF.
    */
-  GltfWriterResult writeGltf(
+  GltfWriterResult writeGltf(const CesiumGltf::Model& model) const;
+
+  /**
+   * @brief Serializes the provided model into a glb byte vector.
+   *
+   * @details The first buffer object refers to GLB-stored data (bufferData)
+   * and must not have a uri. Ignores internal data such as
+   * {@link CesiumGltf::BufferCesium} and {@link CesiumGltf::ImageCesium}.
+   *
+   * @param model The model.
+   * @param bufferData The buffer data.
+   * @return The result of writing the glb.
+   */
+  GltfWriterResult writeGlb(
       const CesiumGltf::Model& model,
-      const GltfWriterOptions& options = GltfWriterOptions()) const;
+      const std::vector<std::byte>& bufferData) const;
 
 private:
   CesiumJsonWriter::ExtensionWriterContext _context;
