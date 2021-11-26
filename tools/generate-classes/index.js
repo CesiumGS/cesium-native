@@ -33,7 +33,6 @@ const argv = yargs.options({
   },
   extensions: {
     description: "The extensions directory.",
-    demandOption: true,
     type: "string",
   },
   config: {

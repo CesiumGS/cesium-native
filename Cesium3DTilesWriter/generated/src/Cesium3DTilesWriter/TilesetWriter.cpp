@@ -10,7 +10,7 @@
 #include <Cesium3DTiles/Extension3dTilesContentGltf.h>
 #include <Cesium3DTiles/Extension3dTilesImplicitTiling.h>
 #include <Cesium3DTiles/Properties.h>
-#include <Cesium3DTiles/Subtree.h>
+#include <Cesium3DTiles/Subtrees.h>
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
@@ -38,7 +38,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const Cesium3DTiles::Subtree& obj,
+    const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -95,6 +95,13 @@ void writeJson(
 
 [[maybe_unused]] void writeJson(
     int64_t val,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
+  jsonWriter.Int64(val);
+}
+
+[[maybe_unused]] void writeJson(
+    int32_t val,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
   jsonWriter.Int64(val);
@@ -238,7 +245,7 @@ void writeJson(
 }
 
 void writeJson(
-    const Cesium3DTiles::Subtree& obj,
+    const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -503,14 +510,14 @@ void Extension3dTilesImplicitTilingWriter::populateExtensions(
   (void)context;
 }
 
-void SubtreeWriter::write(
-    const Cesium3DTiles::Subtree& obj,
+void SubtreesWriter::write(
+    const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void SubtreeWriter::populateExtensions(
+void SubtreesWriter::populateExtensions(
     CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
 }

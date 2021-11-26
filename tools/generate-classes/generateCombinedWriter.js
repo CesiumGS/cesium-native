@@ -92,6 +92,13 @@ function generateCombinedWriter(options) {
             const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
           jsonWriter.Int64(val);
         }
+
+        [[maybe_unused]] void writeJson(
+            int32_t val,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
+          jsonWriter.Int64(val);
+        }
         
         [[maybe_unused]] void writeJson(
             const CesiumUtility::JsonValue::Object& obj,

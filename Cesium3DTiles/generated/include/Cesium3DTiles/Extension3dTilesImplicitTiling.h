@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Cesium3DTiles/Library.h"
-#include "Cesium3DTiles/Subtree.h"
+#include "Cesium3DTiles/Subtrees.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
@@ -56,6 +56,6 @@ struct CESIUM3DTILES_API Extension3dTilesImplicitTiling final
   /**
    * @brief An object describing the location of subtree files.
    */
-  Cesium3DTiles::Subtree subtrees;
+  Cesium3DTiles::Subtrees subtrees;
 };
 } // namespace Cesium3DTiles

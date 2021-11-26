@@ -13,7 +13,7 @@ namespace Cesium3DTiles {
 struct Extension3dTilesContentGltf;
 struct Extension3dTilesBoundingVolumeS2;
 struct Extension3dTilesImplicitTiling;
-struct Subtree;
+struct Subtrees;
 struct Tileset;
 struct Tile;
 struct Content;
@@ -67,11 +67,11 @@ struct Extension3dTilesImplicitTilingWriter {
   populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct SubtreeWriter {
-  using ValueType = Cesium3DTiles::Subtree;
+struct SubtreesWriter {
+  using ValueType = Cesium3DTiles::Subtrees;
 
   static void write(
-      const Cesium3DTiles::Subtree& obj,
+      const Cesium3DTiles::Subtrees& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 
