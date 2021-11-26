@@ -445,10 +445,13 @@ function formatWriterPropertyImpl(property) {
   const hasEmptyGuard =
     type.startsWith("std::vector") || type.startsWith("std::map");
   const hasOptionalGuard = type.startsWith("std::optional");
-  const hasGuard = hasEmptyGuard || hasOptionalGuard;
+  const hasNegativeIndexGuard = property.optionalId;
+  const hasGuard = hasEmptyGuard || hasOptionalGuard || hasNegativeIndexGuard;
 
   if (hasEmptyGuard) {
     result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
+  } else if (hasNegativeIndexGuard) {
+    result += `if (obj.${property.cppSafeName} > -1) {\n`;
   } else if (hasOptionalGuard) {
     result += `if (obj.${property.cppSafeName}.has_value()) {\n`;
   }

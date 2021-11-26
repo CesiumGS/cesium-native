@@ -120,6 +120,7 @@ function resolveProperty(
         headers: ["<cstdint>"],
         readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
         readerType: "CesiumJsonReader::IntegerJsonHandler<int32_t>",
+        optionalId: makeOptional
       };
     } else if (itemSchema.type !== "object") {
       return resolveProperty(

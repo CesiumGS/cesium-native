@@ -710,11 +710,15 @@ void writeJson(
   jsonWriter.Key("offsetType");
   writeJson(obj.offsetType, jsonWriter, context);
 
-  jsonWriter.Key("arrayOffsetBufferView");
-  writeJson(obj.arrayOffsetBufferView, jsonWriter, context);
+  if (obj.arrayOffsetBufferView > -1) {
+    jsonWriter.Key("arrayOffsetBufferView");
+    writeJson(obj.arrayOffsetBufferView, jsonWriter, context);
+  }
 
-  jsonWriter.Key("stringOffsetBufferView");
-  writeJson(obj.stringOffsetBufferView, jsonWriter, context);
+  if (obj.stringOffsetBufferView > -1) {
+    jsonWriter.Key("stringOffsetBufferView");
+    writeJson(obj.stringOffsetBufferView, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1108,8 +1112,10 @@ void writeJson(
     writeJson(obj.samplers, jsonWriter, context);
   }
 
-  jsonWriter.Key("scene");
-  writeJson(obj.scene, jsonWriter, context);
+  if (obj.scene > -1) {
+    jsonWriter.Key("scene");
+    writeJson(obj.scene, jsonWriter, context);
+  }
 
   if (!obj.scenes.empty()) {
     jsonWriter.Key("scenes");
@@ -1145,11 +1151,15 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("sampler");
-  writeJson(obj.sampler, jsonWriter, context);
+  if (obj.sampler > -1) {
+    jsonWriter.Key("sampler");
+    writeJson(obj.sampler, jsonWriter, context);
+  }
 
-  jsonWriter.Key("source");
-  writeJson(obj.source, jsonWriter, context);
+  if (obj.source > -1) {
+    jsonWriter.Key("source");
+    writeJson(obj.source, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1170,11 +1180,15 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("inverseBindMatrices");
-  writeJson(obj.inverseBindMatrices, jsonWriter, context);
+  if (obj.inverseBindMatrices > -1) {
+    jsonWriter.Key("inverseBindMatrices");
+    writeJson(obj.inverseBindMatrices, jsonWriter, context);
+  }
 
-  jsonWriter.Key("skeleton");
-  writeJson(obj.skeleton, jsonWriter, context);
+  if (obj.skeleton > -1) {
+    jsonWriter.Key("skeleton");
+    writeJson(obj.skeleton, jsonWriter, context);
+  }
 
   if (!obj.joints.empty()) {
     jsonWriter.Key("joints");
@@ -1259,24 +1273,30 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("camera");
-  writeJson(obj.camera, jsonWriter, context);
+  if (obj.camera > -1) {
+    jsonWriter.Key("camera");
+    writeJson(obj.camera, jsonWriter, context);
+  }
 
   if (!obj.children.empty()) {
     jsonWriter.Key("children");
     writeJson(obj.children, jsonWriter, context);
   }
 
-  jsonWriter.Key("skin");
-  writeJson(obj.skin, jsonWriter, context);
+  if (obj.skin > -1) {
+    jsonWriter.Key("skin");
+    writeJson(obj.skin, jsonWriter, context);
+  }
 
   if (!obj.matrix.empty()) {
     jsonWriter.Key("matrix");
     writeJson(obj.matrix, jsonWriter, context);
   }
 
-  jsonWriter.Key("mesh");
-  writeJson(obj.mesh, jsonWriter, context);
+  if (obj.mesh > -1) {
+    jsonWriter.Key("mesh");
+    writeJson(obj.mesh, jsonWriter, context);
+  }
 
   if (!obj.rotation.empty()) {
     jsonWriter.Key("rotation");
@@ -1351,11 +1371,15 @@ void writeJson(
     writeJson(obj.attributes, jsonWriter, context);
   }
 
-  jsonWriter.Key("indices");
-  writeJson(obj.indices, jsonWriter, context);
+  if (obj.indices > -1) {
+    jsonWriter.Key("indices");
+    writeJson(obj.indices, jsonWriter, context);
+  }
 
-  jsonWriter.Key("material");
-  writeJson(obj.material, jsonWriter, context);
+  if (obj.material > -1) {
+    jsonWriter.Key("material");
+    writeJson(obj.material, jsonWriter, context);
+  }
 
   jsonWriter.Key("mode");
   writeJson(obj.mode, jsonWriter, context);
@@ -1531,8 +1555,10 @@ void writeJson(
     writeJson(obj.mimeType, jsonWriter, context);
   }
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   if (!obj.extensions.empty()) {
     jsonWriter.Key("extensions");
@@ -1835,8 +1861,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("node");
-  writeJson(obj.node, jsonWriter, context);
+  if (obj.node > -1) {
+    jsonWriter.Key("node");
+    writeJson(obj.node, jsonWriter, context);
+  }
 
   jsonWriter.Key("path");
   writeJson(obj.path, jsonWriter, context);
@@ -1860,8 +1888,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("bufferView");
-  writeJson(obj.bufferView, jsonWriter, context);
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
+  }
 
   jsonWriter.Key("byteOffset");
   writeJson(obj.byteOffset, jsonWriter, context);
