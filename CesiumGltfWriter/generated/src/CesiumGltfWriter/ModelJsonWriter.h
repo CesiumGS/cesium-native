@@ -494,4 +494,5 @@ struct AccessorSparseIndicesJsonWriter {
 };
 
 void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+
 } // namespace CesiumGltfWriter

@@ -380,7 +380,7 @@ function generate(options, schema, writers) {
     writeJsonDeclaration,
     writeDefinition,
     writeJsonDefinition,
-    writeExtensionRegistration
+    writeExtensionsRegistration
   });
 
   if (options.oneHandlerFile) {

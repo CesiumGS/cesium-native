@@ -78,9 +78,7 @@ getPadding(size_t byteLength, size_t byteOffset = 0) noexcept {
 }
 } // namespace
 
-GltfWriter::GltfWriter() {
-  populateExtensions(this->_context);
-}
+GltfWriter::GltfWriter() { populateExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& GltfWriter::getExtensions() {
   return this->_context;
