@@ -1,5 +1,8 @@
 {
     "classes": {
+        "Subtree Property": {
+            "overrideName": "CesiumUtility::ExtensibleObject"
+        },
         "Tileset Property": {
             "overrideName": "CesiumUtility::ExtensibleObject"
         }

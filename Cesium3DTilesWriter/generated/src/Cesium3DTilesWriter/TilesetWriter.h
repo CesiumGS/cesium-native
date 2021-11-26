@@ -20,6 +20,10 @@ struct Content;
 struct BoundingVolume;
 struct Properties;
 struct Asset;
+struct Subtree;
+struct Availability;
+struct BufferView;
+struct Buffer;
 } // namespace Cesium3DTiles
 
 namespace Cesium3DTilesWriter {
@@ -144,6 +148,54 @@ struct AssetWriter {
 
   static void write(
       const Cesium3DTiles::Asset& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct SubtreeWriter {
+  using ValueType = Cesium3DTiles::Subtree;
+
+  static void write(
+      const Cesium3DTiles::Subtree& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct AvailabilityWriter {
+  using ValueType = Cesium3DTiles::Availability;
+
+  static void write(
+      const Cesium3DTiles::Availability& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BufferViewWriter {
+  using ValueType = Cesium3DTiles::BufferView;
+
+  static void write(
+      const Cesium3DTiles::BufferView& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+
+  static void
+  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BufferWriter {
+  using ValueType = Cesium3DTiles::Buffer;
+
+  static void write(
+      const Cesium3DTiles::Buffer& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 

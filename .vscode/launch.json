@@ -13,14 +13,6 @@
             "runtimeArgs": ["run-script", "generate-3d-tiles"]
         },
         {
-            "name": "npm run generate-subtree",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": ["run-script", "generate-subtree"]
-        },
-        {
             "name": "npm run generate-gltf",
             "type": "node",
             "request": "launch",
