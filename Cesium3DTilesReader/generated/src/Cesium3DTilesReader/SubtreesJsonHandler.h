@@ -16,9 +16,6 @@ class SubtreesJsonHandler
 public:
   using ValueType = Cesium3DTiles::Subtrees;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   SubtreesJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Subtrees* pObject);

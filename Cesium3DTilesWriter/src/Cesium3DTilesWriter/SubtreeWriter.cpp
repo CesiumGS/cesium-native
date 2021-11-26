@@ -8,9 +8,7 @@
 
 namespace Cesium3DTilesWriter {
 
-SubtreeWriter::SubtreeWriter() {
-  SubtreeJsonWriter::populateExtensions(this->_context);
-}
+SubtreeWriter::SubtreeWriter() {}
 
 CesiumJsonWriter::ExtensionWriterContext& SubtreeWriter::getExtensions() {
   return this->_context;

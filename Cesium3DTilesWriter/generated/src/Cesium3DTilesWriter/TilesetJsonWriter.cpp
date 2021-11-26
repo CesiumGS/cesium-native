@@ -143,6 +143,26 @@ void writeJson(
   jsonWriter.EndObject();
 }
 
+[[maybe_unused]] void writeJson(
+    const CesiumUtility::JsonValue& value,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
+  writeJsonValue(value, jsonWriter);
+}
+
+template <typename T>
+[[maybe_unused]] void writeJson(
+    const std::map<std::string, T>& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+  for (const auto& item : obj) {
+    jsonWriter.Key(item.first);
+    writeJson(item.second, jsonWriter, context);
+  }
+  jsonWriter.EndObject();
+}
+
 template <typename T>
 [[maybe_unused]] void writeJson(
     const std::vector<T>& list,
@@ -165,19 +185,6 @@ template <typename T>
   } else {
     jsonWriter.Null();
   }
-}
-
-template <typename T>
-[[maybe_unused]] void writeJson(
-    const std::map<std::string, T>& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-  for (const auto& item : obj) {
-    jsonWriter.Key(item.first);
-    writeJson(item.second, jsonWriter, context);
-  }
-  jsonWriter.EndObject();
 }
 
 void writeJson(
@@ -644,21 +651,11 @@ void Extension3dTilesContentGltfJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void Extension3dTilesContentGltfJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-}
-
 void Extension3dTilesBoundingVolumeS2JsonWriter::write(
     const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-void Extension3dTilesBoundingVolumeS2JsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
 }
 
 void Extension3dTilesImplicitTilingJsonWriter::write(
@@ -668,21 +665,11 @@ void Extension3dTilesImplicitTilingJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void Extension3dTilesImplicitTilingJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-}
-
 void SubtreesJsonWriter::write(
     const Cesium3DTiles::Subtrees& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-void SubtreesJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
 }
 
 void TilesetJsonWriter::write(
@@ -692,27 +679,11 @@ void TilesetJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void TilesetJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-
-  context.registerExtension<
-      Cesium3DTiles::Tileset,
-      Extension3dTilesContentGltfJsonWriter>();
-}
-
 void TileJsonWriter::write(
     const Cesium3DTiles::Tile& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-void TileJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-
-  context.registerExtension<
-      Cesium3DTiles::Tile,
-      Extension3dTilesImplicitTilingJsonWriter>();
 }
 
 void ContentJsonWriter::write(
@@ -722,21 +693,11 @@ void ContentJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ContentJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-}
-
 void BoundingVolumeJsonWriter::write(
     const Cesium3DTiles::BoundingVolume& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-void BoundingVolumeJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
 }
 
 void PropertiesJsonWriter::write(
@@ -746,21 +707,11 @@ void PropertiesJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void PropertiesJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-}
-
 void AssetJsonWriter::write(
     const Cesium3DTiles::Asset& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-void AssetJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
 }
 
 void SubtreeJsonWriter::write(
@@ -770,21 +721,11 @@ void SubtreeJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void SubtreeJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-}
-
 void AvailabilityJsonWriter::write(
     const Cesium3DTiles::Availability& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
-}
-
-void AvailabilityJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
 }
 
 void BufferViewJsonWriter::write(
@@ -794,11 +735,6 @@ void BufferViewJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void BufferViewJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
-  (void)context;
-}
-
 void BufferJsonWriter::write(
     const Cesium3DTiles::Buffer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -806,9 +742,19 @@ void BufferJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void BufferJsonWriter::populateExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
+void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
-}
 
+  context.registerExtension<
+      Cesium3DTiles::Tileset,
+      Extension3dTilesContentGltfJsonWriter>();
+
+  context.registerExtension<
+      Cesium3DTiles::Tile,
+      Extension3dTilesImplicitTilingJsonWriter>();
+
+  context.registerExtension<
+      Cesium3DTiles::BoundingVolume,
+      Extension3dTilesBoundingVolumeS2JsonWriter>();
+}
 } // namespace Cesium3DTilesWriter

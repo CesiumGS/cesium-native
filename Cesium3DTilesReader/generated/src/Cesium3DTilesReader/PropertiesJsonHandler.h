@@ -16,9 +16,6 @@ class PropertiesJsonHandler
 public:
   using ValueType = Cesium3DTiles::Properties;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   PropertiesJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Properties* pObject);

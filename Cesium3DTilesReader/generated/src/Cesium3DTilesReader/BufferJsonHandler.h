@@ -16,9 +16,6 @@ class BufferJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
   using ValueType = Cesium3DTiles::Buffer;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   BufferJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Buffer* pObject);

@@ -22,9 +22,6 @@ public:
 
   static inline constexpr const char* ExtensionName = "3DTILES_implicit_tiling";
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   Extension3dTilesImplicitTilingJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

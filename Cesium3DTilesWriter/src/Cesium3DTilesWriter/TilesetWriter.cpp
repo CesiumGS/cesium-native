@@ -8,9 +8,7 @@
 
 namespace Cesium3DTilesWriter {
 
-TilesetWriter::TilesetWriter() {
-  TilesetJsonWriter::populateExtensions(this->_context);
-}
+TilesetWriter::TilesetWriter() { populateExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& TilesetWriter::getExtensions() {
   return this->_context;

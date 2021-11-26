@@ -21,9 +21,6 @@ public:
   static inline constexpr const char* ExtensionName =
       "3DTILES_bounding_volume_S2";
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   Extension3dTilesBoundingVolumeS2JsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

@@ -16,9 +16,6 @@ class AvailabilityJsonHandler
 public:
   using ValueType = Cesium3DTiles::Availability;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   AvailabilityJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

@@ -20,9 +20,6 @@ public:
 
   static inline constexpr const char* ExtensionName = "3DTILES_content_gltf";
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   Extension3dTilesContentGltfJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

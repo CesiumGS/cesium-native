@@ -17,9 +17,6 @@ class BufferViewJsonHandler
 public:
   using ValueType = Cesium3DTiles::BufferView;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   BufferViewJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::BufferView* pObject);

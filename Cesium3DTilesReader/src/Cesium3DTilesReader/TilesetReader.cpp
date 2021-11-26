@@ -1,5 +1,8 @@
 #include "Cesium3DTilesReader/TilesetReader.h"
 
+#include "Cesium3DTilesReader/Extension3dTilesBoundingVolumeS2JsonHandler.h"
+#include "Cesium3DTilesReader/Extension3dTilesContentGltfJsonHandler.h"
+#include "Cesium3DTilesReader/Extension3dTilesImplicitTilingJsonHandler.h"
 #include "Cesium3DTilesReader/TilesetJsonHandler.h"
 
 #include <CesiumJsonReader/JsonReader.h>
@@ -28,7 +31,17 @@ TilesetReaderResult readTilesetJson(
 } // namespace
 
 TilesetReader::TilesetReader() {
-  TilesetJsonHandler::populateExtensions(this->_context);
+  this->_context.registerExtension<
+      Cesium3DTiles::Tileset,
+      Extension3dTilesContentGltfJsonHandler>();
+
+  this->_context.registerExtension<
+      Cesium3DTiles::Tile,
+      Extension3dTilesImplicitTilingJsonHandler>();
+
+  this->_context.registerExtension<
+      Cesium3DTiles::BoundingVolume,
+      Extension3dTilesBoundingVolumeS2JsonHandler>();
 }
 
 CesiumJsonReader::ExtensionReaderContext& TilesetReader::getExtensions() {

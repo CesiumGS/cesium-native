@@ -17,9 +17,6 @@ class BoundingVolumeJsonHandler
 public:
   using ValueType = Cesium3DTiles::BoundingVolume;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   BoundingVolumeJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

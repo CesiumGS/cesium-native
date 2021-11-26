@@ -18,9 +18,6 @@ class ContentJsonHandler
 public:
   using ValueType = Cesium3DTiles::Content;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   ContentJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Content* pObject);

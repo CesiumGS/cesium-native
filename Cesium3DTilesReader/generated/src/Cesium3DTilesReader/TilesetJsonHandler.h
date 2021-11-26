@@ -23,9 +23,6 @@ class TilesetJsonHandler
 public:
   using ValueType = Cesium3DTiles::Tileset;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   TilesetJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Tileset* pObject);

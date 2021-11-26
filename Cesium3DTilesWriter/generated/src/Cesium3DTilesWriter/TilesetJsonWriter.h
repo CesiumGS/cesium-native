@@ -37,9 +37,6 @@ struct Extension3dTilesContentGltfJsonWriter {
       const Cesium3DTiles::Extension3dTilesContentGltf& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct Extension3dTilesBoundingVolumeS2JsonWriter {
@@ -52,9 +49,6 @@ struct Extension3dTilesBoundingVolumeS2JsonWriter {
       const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct Extension3dTilesImplicitTilingJsonWriter {
@@ -66,9 +60,6 @@ struct Extension3dTilesImplicitTilingJsonWriter {
       const Cesium3DTiles::Extension3dTilesImplicitTiling& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct SubtreesJsonWriter {
@@ -78,9 +69,6 @@ struct SubtreesJsonWriter {
       const Cesium3DTiles::Subtrees& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct TilesetJsonWriter {
@@ -90,9 +78,6 @@ struct TilesetJsonWriter {
       const Cesium3DTiles::Tileset& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct TileJsonWriter {
@@ -102,9 +87,6 @@ struct TileJsonWriter {
       const Cesium3DTiles::Tile& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct ContentJsonWriter {
@@ -114,9 +96,6 @@ struct ContentJsonWriter {
       const Cesium3DTiles::Content& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct BoundingVolumeJsonWriter {
@@ -126,9 +105,6 @@ struct BoundingVolumeJsonWriter {
       const Cesium3DTiles::BoundingVolume& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct PropertiesJsonWriter {
@@ -138,9 +114,6 @@ struct PropertiesJsonWriter {
       const Cesium3DTiles::Properties& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct AssetJsonWriter {
@@ -150,9 +123,6 @@ struct AssetJsonWriter {
       const Cesium3DTiles::Asset& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct SubtreeJsonWriter {
@@ -162,9 +132,6 @@ struct SubtreeJsonWriter {
       const Cesium3DTiles::Subtree& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct AvailabilityJsonWriter {
@@ -174,9 +141,6 @@ struct AvailabilityJsonWriter {
       const Cesium3DTiles::Availability& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct BufferViewJsonWriter {
@@ -186,9 +150,6 @@ struct BufferViewJsonWriter {
       const Cesium3DTiles::BufferView& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct BufferJsonWriter {
@@ -198,9 +159,8 @@ struct BufferJsonWriter {
       const Cesium3DTiles::Buffer& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
-
-  static void
-  populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 };
+
+void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 
 } // namespace Cesium3DTilesWriter
