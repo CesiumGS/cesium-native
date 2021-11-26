@@ -1,6 +1,6 @@
-#include "Cesium3DTilesWriter/CesiumSubtreeWriter.h"
+#include "Cesium3DTilesWriter/SubtreeWriter.h"
 
-#include "Cesium3DTilesWriter/TilesetWriter.h"
+#include "Cesium3DTilesWriter/TilesetJsonWriter.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -8,23 +8,23 @@
 
 namespace Cesium3DTilesWriter {
 
-CesiumSubtreeWriter::CesiumSubtreeWriter() {
+SubtreeWriter::SubtreeWriter() {
   SubtreeJsonWriter::populateExtensions(this->_context);
 }
 
-CesiumJsonWriter::ExtensionWriterContext& CesiumSubtreeWriter::getExtensions() {
+CesiumJsonWriter::ExtensionWriterContext& SubtreeWriter::getExtensions() {
   return this->_context;
 }
 
 const CesiumJsonWriter::ExtensionWriterContext&
-CesiumSubtreeWriter::getExtensions() const {
+SubtreeWriter::getExtensions() const {
   return this->_context;
 }
 
-SubtreeWriterResult CesiumSubtreeWriter::writeSubtree(
+SubtreeWriterResult SubtreeWriter::writeSubtree(
     const Cesium3DTiles::Subtree& subtree,
     const WriteSubtreeOptions& options) const {
-  CESIUM_TRACE("CesiumSubtreeWriter::writeSubtree");
+  CESIUM_TRACE("SubtreeWriter::writeSubtree");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();

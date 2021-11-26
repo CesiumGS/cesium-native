@@ -13,7 +13,7 @@ namespace Cesium3DTilesWriter {
 
 /**
  * @brief The result of writing a tileset with
- * {@link Cesium3DTilesWriter::writeTileset}.
+ * {@link TilesetWriter::writeTileset}.
  */
 struct CESIUM3DTILESWRITER_API TilesetWriterResult {
   /**
@@ -45,12 +45,12 @@ struct CESIUM3DTILESWRITER_API WriteTilesetOptions {
 /**
  * @brief Writes tilesets.
  */
-class CESIUM3DTILESWRITER_API Cesium3DTilesWriter {
+class CESIUM3DTILESWRITER_API TilesetWriter {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  Cesium3DTilesWriter();
+  TilesetWriter();
 
   /**
    * @brief Gets the context used to control how tileset extensions are written.

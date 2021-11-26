@@ -1,4 +1,4 @@
-#include "Cesium3DTilesWriter/Cesium3DTilesWriter.h"
+#include "Cesium3DTilesWriter/TilesetWriter.h"
 
 #include <Cesium3DTiles/Extension3dTilesContentGltf.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
@@ -25,7 +25,7 @@ void check(const std::string& input, const std::string& expectedOutput) {
 
   Cesium3DTiles::Tileset& tileset = readResult.tileset.value();
 
-  Cesium3DTilesWriter::Cesium3DTilesWriter writer;
+  Cesium3DTilesWriter::TilesetWriter writer;
   Cesium3DTilesWriter::TilesetWriterResult writeResult =
       writer.writeTileset(tileset);
   const auto asBytes = writeResult.tilesetBytes;

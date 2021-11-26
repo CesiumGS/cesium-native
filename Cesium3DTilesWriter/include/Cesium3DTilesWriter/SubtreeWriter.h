@@ -13,7 +13,7 @@ namespace Cesium3DTilesWriter {
 
 /**
  * @brief The result of writing a subtree with
- * {@link CesiumSubtreeWriterWriter::writeSubtree}.
+ * {@link SubtreeWriterWriter::writeSubtree}.
  */
 struct CESIUM3DTILESWRITER_API SubtreeWriterResult {
   /**
@@ -45,12 +45,12 @@ struct CESIUM3DTILESWRITER_API WriteSubtreeOptions {
 /**
  * @brief Writes subtrees.
  */
-class CESIUM3DTILESWRITER_API CesiumSubtreeWriter {
+class CESIUM3DTILESWRITER_API SubtreeWriter {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  CesiumSubtreeWriter();
+  SubtreeWriter();
 
   /**
    * @brief Gets the context used to control how tileset extensions are written.

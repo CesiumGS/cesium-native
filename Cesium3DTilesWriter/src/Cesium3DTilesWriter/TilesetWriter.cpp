@@ -1,6 +1,6 @@
-#include "Cesium3DTilesWriter/Cesium3DTilesWriter.h"
-
 #include "Cesium3DTilesWriter/TilesetWriter.h"
+
+#include "Cesium3DTilesWriter/TilesetJsonWriter.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -8,23 +8,23 @@
 
 namespace Cesium3DTilesWriter {
 
-Cesium3DTilesWriter::Cesium3DTilesWriter() {
+TilesetWriter::TilesetWriter() {
   TilesetJsonWriter::populateExtensions(this->_context);
 }
 
-CesiumJsonWriter::ExtensionWriterContext& Cesium3DTilesWriter::getExtensions() {
+CesiumJsonWriter::ExtensionWriterContext& TilesetWriter::getExtensions() {
   return this->_context;
 }
 
 const CesiumJsonWriter::ExtensionWriterContext&
-Cesium3DTilesWriter::getExtensions() const {
+TilesetWriter::getExtensions() const {
   return this->_context;
 }
 
-TilesetWriterResult Cesium3DTilesWriter::writeTileset(
+TilesetWriterResult TilesetWriter::writeTileset(
     const Cesium3DTiles::Tileset& tileset,
     const WriteTilesetOptions& options) const {
-  CESIUM_TRACE("Cesium3DTilesWriter::writeTileset");
+  CESIUM_TRACE("TilesetWriter::writeTileset");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
