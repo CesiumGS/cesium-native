@@ -461,13 +461,13 @@ function formatWriterPropertyImpl(property) {
   const hasGuard = hasEmptyGuard || hasOptionalGuard;
 
   if (hasEmptyGuard) {
-    result += `if (!obj.${property.name}.empty()) {\n`;
+    result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
   } else if (hasOptionalGuard) {
-    result += `if (obj.${property.name}.has_value()) {\n`;
+    result += `if (obj.${property.cppSafeName}.has_value()) {\n`;
   }
 
   result += `jsonWriter.Key("${property.name}");\n`;
-  result += `writeJson(obj.${property.name}, jsonWriter, context);\n`;
+  result += `writeJson(obj.${property.cppSafeName}, jsonWriter, context);\n`;
 
   if (hasGuard) {
     result += "}\n";

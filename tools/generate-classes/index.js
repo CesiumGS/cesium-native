@@ -173,10 +173,6 @@ if (additionalSchemas) {
   }
 }
 
-if (argv.namespace === "CesiumGltf") {
-  return;
-}
-
 const writerOptions = {
   writerOutputDir: argv.writerOutput,
   config: config,

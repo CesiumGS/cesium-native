@@ -112,6 +112,26 @@ function generateCombinedWriter(options) {
           jsonWriter.EndObject();
         }
         
+        [[maybe_unused]] void writeJson(
+            const CesiumUtility::JsonValue& value,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& /* context */) {
+          writeJsonValue(value, jsonWriter);
+        }      
+
+        template <typename T>
+        [[maybe_unused]] void writeJson(
+            const std::map<std::string, T>& obj,
+            CesiumJsonWriter::JsonWriter& jsonWriter,
+            const CesiumJsonWriter::ExtensionWriterContext& context) {
+          jsonWriter.StartObject();
+          for (const auto& item : obj) {
+            jsonWriter.Key(item.first);
+            writeJson(item.second, jsonWriter, context);
+          }
+          jsonWriter.EndObject();
+        }
+
         template <typename T>
         [[maybe_unused]] void writeJson(
             const std::vector<T>& list,
@@ -134,19 +154,6 @@ function generateCombinedWriter(options) {
           } else {
             jsonWriter.Null();
           }
-        }
-
-        template <typename T>
-        [[maybe_unused]] void writeJson(
-            const std::map<std::string, T>& obj,
-            CesiumJsonWriter::JsonWriter& jsonWriter,
-            const CesiumJsonWriter::ExtensionWriterContext& context) {
-          jsonWriter.StartObject();
-          for (const auto& item : obj) {
-            jsonWriter.Key(item.first);
-            writeJson(item.second, jsonWriter, context);
-          }
-          jsonWriter.EndObject();
         }
         
         ${writers
