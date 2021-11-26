@@ -23,7 +23,7 @@ SubtreeWriter::getExtensions() const {
 
 SubtreeWriterResult SubtreeWriter::writeSubtree(
     const Cesium3DTiles::Subtree& subtree,
-    const WriteSubtreeOptions& options) const {
+    const SubtreeWriterOptions& options) const {
   CESIUM_TRACE("SubtreeWriter::writeSubtree");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =

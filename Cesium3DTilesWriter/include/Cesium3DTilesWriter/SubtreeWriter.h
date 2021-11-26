@@ -35,7 +35,7 @@ struct CESIUM3DTILESWRITER_API SubtreeWriterResult {
 /**
  * @brief Options for how to write a subtree.
  */
-struct CESIUM3DTILESWRITER_API WriteSubtreeOptions {
+struct CESIUM3DTILESWRITER_API SubtreeWriterOptions {
   /**
    * @brief If the subtree JSON should be pretty printed.
    */
@@ -72,7 +72,7 @@ public:
    */
   SubtreeWriterResult writeSubtree(
       const Cesium3DTiles::Subtree& subtree,
-      const WriteSubtreeOptions& options = WriteSubtreeOptions()) const;
+      const SubtreeWriterOptions& options = SubtreeWriterOptions()) const;
 
 private:
   CesiumJsonWriter::ExtensionWriterContext _context;
