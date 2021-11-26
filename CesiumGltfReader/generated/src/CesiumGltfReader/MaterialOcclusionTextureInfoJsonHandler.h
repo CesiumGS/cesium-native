@@ -16,9 +16,6 @@ class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   using ValueType = CesiumGltf::MaterialOcclusionTextureInfo;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   MaterialOcclusionTextureInfoJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

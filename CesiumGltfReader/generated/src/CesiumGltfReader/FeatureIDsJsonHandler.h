@@ -17,9 +17,6 @@ class FeatureIDsJsonHandler
 public:
   using ValueType = CesiumGltf::FeatureIDs;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   FeatureIDsJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureIDs* pObject);

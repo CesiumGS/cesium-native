@@ -19,9 +19,6 @@ class ClassStatisticsJsonHandler
 public:
   using ValueType = CesiumGltf::ClassStatistics;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   ClassStatisticsJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

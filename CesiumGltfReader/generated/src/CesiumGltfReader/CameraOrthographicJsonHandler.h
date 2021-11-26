@@ -16,9 +16,6 @@ class CameraOrthographicJsonHandler
 public:
   using ValueType = CesiumGltf::CameraOrthographic;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   CameraOrthographicJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

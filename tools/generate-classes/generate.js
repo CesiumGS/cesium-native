@@ -98,7 +98,7 @@ function generate(options, schema, writers) {
         }
     `;
 
-  const headerOutputDir = path.join(outputDir, "generated", thisConfig.toBeInherited ? "src" : "include", namespace);
+  const headerOutputDir = path.join(outputDir, "generated", "include", namespace);
   fs.mkdirSync(headerOutputDir, { recursive: true });
   const headerOutputPath = path.join(
     headerOutputDir,
@@ -143,8 +143,6 @@ function generate(options, schema, writers) {
             using ValueType = ${namespace}::${name};
 
             ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
-
-            static void populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
 
             ${name}JsonHandler(const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
             void reset(IJsonHandler* pParentHandler, ${namespace}::${name}* pObject);
@@ -288,16 +286,6 @@ function generate(options, schema, writers) {
           return this->readObjectKey${removeNamespace(base)}(objectType, str, *this->_pObject);
         }
 
-        void ${name}JsonHandler::populateExtensions(CesiumJsonReader::ExtensionReaderContext& context) {
-          ${extensions[name] ? `
-            ${extensions[name]
-              .map((extension) => {
-                return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonHandler>();`
-              })
-              .join("\n")}          
-          ` : "(void)context;"}
-        }
-
         ${indent(readerLocalTypesImpl.join("\n\n"), 8)}
         } // namespace ${readerNamespace}
   `;
@@ -316,8 +304,6 @@ function generate(options, schema, writers) {
               const ${namespace}::${name}& obj,
               CesiumJsonWriter::JsonWriter& jsonWriter,
               const CesiumJsonWriter::ExtensionWriterContext& context);
-
-          static void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
         };
   `;
 
@@ -334,16 +320,6 @@ function generate(options, schema, writers) {
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context) {
           writeJson(obj, jsonWriter, context);
-        }
-
-        void ${name}JsonWriter::populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
-          ${extensions[name] ? `
-            ${extensions[name]
-              .map((extension) => {
-                return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`
-              })
-              .join("\n")}
-          ` : "(void)context;"}
         }
   `;
 
@@ -387,6 +363,16 @@ function generate(options, schema, writers) {
         }
   `;
 
+  const writeExtensionsRegistration = `
+        ${extensions[schema.title] ? 
+          extensions[schema.title]
+            .map((extension) => {
+              return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`
+            })
+            .join("\n")
+        : ""}
+  `;
+
   writers.push({
     writeInclude,
     writeForwardDeclaration,
@@ -394,6 +380,7 @@ function generate(options, schema, writers) {
     writeJsonDeclaration,
     writeDefinition,
     writeJsonDefinition,
+    writeExtensionRegistration
   });
 
   if (options.oneHandlerFile) {

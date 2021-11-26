@@ -19,9 +19,6 @@ class ClassPropertyJsonHandler
 public:
   using ValueType = CesiumGltf::ClassProperty;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   ClassPropertyJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::ClassProperty* pObject);

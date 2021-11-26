@@ -18,9 +18,6 @@ public:
 
   static inline constexpr const char* ExtensionName = "KHR_materials_unlit";
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   ExtensionMaterialsUnlitJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

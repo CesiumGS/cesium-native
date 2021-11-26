@@ -23,9 +23,6 @@ public:
 
   static inline constexpr const char* ExtensionName = "EXT_feature_metadata";
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

@@ -35,6 +35,9 @@ function generateCombinedWriter(options) {
               return writer.writeDeclaration;
             })
             .join("\n")}
+
+        void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context); 
+
         } // namespace ${writerNamespace}
   `;
 
@@ -170,6 +173,14 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
         
+        void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
+          (void)context;
+          ${writers
+            .map((writer) => {
+              return writer.writeExtensionsRegistration
+            })
+            .join("\n")}
+        }
         } // namespace ${writerNamespace}
   
   `;

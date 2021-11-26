@@ -19,9 +19,6 @@ class MaterialPBRMetallicRoughnessJsonHandler
 public:
   using ValueType = CesiumGltf::MaterialPBRMetallicRoughness;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   MaterialPBRMetallicRoughnessJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

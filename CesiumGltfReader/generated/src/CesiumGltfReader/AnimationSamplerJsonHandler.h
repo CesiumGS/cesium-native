@@ -17,9 +17,6 @@ class AnimationSamplerJsonHandler
 public:
   using ValueType = CesiumGltf::AnimationSampler;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   AnimationSamplerJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

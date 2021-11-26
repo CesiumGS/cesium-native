@@ -18,9 +18,6 @@ class FeatureIDAttributeJsonHandler
 public:
   using ValueType = CesiumGltf::FeatureIDAttribute;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   FeatureIDAttributeJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

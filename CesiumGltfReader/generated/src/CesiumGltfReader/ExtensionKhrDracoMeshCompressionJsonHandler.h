@@ -21,9 +21,6 @@ public:
   static inline constexpr const char* ExtensionName =
       "KHR_draco_mesh_compression";
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   ExtensionKhrDracoMeshCompressionJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

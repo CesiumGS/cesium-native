@@ -18,9 +18,6 @@ class TextureAccessorJsonHandler
 public:
   using ValueType = CesiumGltf::TextureAccessor;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   TextureAccessorJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

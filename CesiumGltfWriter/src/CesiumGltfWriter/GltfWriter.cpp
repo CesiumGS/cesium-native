@@ -8,9 +8,7 @@
 
 namespace CesiumGltfWriter {
 
-GltfWriter::GltfWriter() {
-  ModelJsonWriter::populateExtensions(this->_context);
-}
+GltfWriter::GltfWriter() { populateExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& GltfWriter::getExtensions() {
   return this->_context;

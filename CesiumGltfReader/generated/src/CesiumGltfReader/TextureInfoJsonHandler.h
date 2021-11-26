@@ -16,9 +16,6 @@ class TextureInfoJsonHandler
 public:
   using ValueType = CesiumGltf::TextureInfo;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   TextureInfoJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::TextureInfo* pObject);

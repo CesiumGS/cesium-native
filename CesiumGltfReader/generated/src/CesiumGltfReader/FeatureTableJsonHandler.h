@@ -20,9 +20,6 @@ class FeatureTableJsonHandler
 public:
   using ValueType = CesiumGltf::FeatureTable;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   FeatureTableJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureTable* pObject);

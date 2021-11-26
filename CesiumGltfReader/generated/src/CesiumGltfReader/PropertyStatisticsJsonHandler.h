@@ -17,9 +17,6 @@ class PropertyStatisticsJsonHandler
 public:
   using ValueType = CesiumGltf::PropertyStatistics;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   PropertyStatisticsJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

@@ -16,9 +16,6 @@ class MaterialNormalTextureInfoJsonHandler : public TextureInfoJsonHandler {
 public:
   using ValueType = CesiumGltf::MaterialNormalTextureInfo;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   MaterialNormalTextureInfoJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

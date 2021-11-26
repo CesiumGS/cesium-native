@@ -16,9 +16,6 @@ class CameraPerspectiveJsonHandler
 public:
   using ValueType = CesiumGltf::CameraPerspective;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   CameraPerspectiveJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void

@@ -18,9 +18,6 @@ class MeshPrimitiveJsonHandler
 public:
   using ValueType = CesiumGltf::MeshPrimitive;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   MeshPrimitiveJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::MeshPrimitive* pObject);

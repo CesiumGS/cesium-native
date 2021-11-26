@@ -19,9 +19,6 @@ class FeatureTextureJsonHandler
 public:
   using ValueType = CesiumGltf::FeatureTexture;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   FeatureTextureJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureTexture* pObject);

@@ -16,9 +16,6 @@ class AccessorSparseValuesJsonHandler
 public:
   using ValueType = CesiumGltf::AccessorSparseValues;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   AccessorSparseValuesJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

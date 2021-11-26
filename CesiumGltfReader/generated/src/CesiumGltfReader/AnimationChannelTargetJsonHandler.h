@@ -17,9 +17,6 @@ class AnimationChannelTargetJsonHandler
 public:
   using ValueType = CesiumGltf::AnimationChannelTarget;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   AnimationChannelTargetJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(

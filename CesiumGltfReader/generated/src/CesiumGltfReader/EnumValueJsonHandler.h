@@ -17,9 +17,6 @@ class EnumValueJsonHandler
 public:
   using ValueType = CesiumGltf::EnumValue;
 
-  static void
-  populateExtensions(CesiumJsonReader::ExtensionReaderContext& context);
-
   EnumValueJsonHandler(
       const CesiumJsonReader::ExtensionReaderContext& context) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::EnumValue* pObject);
