@@ -15,7 +15,7 @@ namespace CesiumGeometry {
 /**
  * @brief Manages information about the availability of tiles in a quadtree.
  */
-class CESIUMGEOMETRY_API QuadtreeTileAvailability final {
+class CESIUMGEOMETRY_API QuadtreeRectangleAvailability final {
 public:
   /**
    * @brief Creates a new instance.
@@ -24,7 +24,7 @@ public:
    * @param maximumLevel The maximum level (height of the tree) for which
    * the availability should be tracked.
    */
-  QuadtreeTileAvailability(
+  QuadtreeRectangleAvailability(
       const QuadtreeTilingScheme& tilingScheme,
       uint32_t maximumLevel) noexcept;
 
@@ -59,9 +59,10 @@ public:
    * the x- and y- coordinates of the queried tile.
    *
    * @param id The quadtree tile ID.
-   * @returns Whether the tile is available.
+   * @returns The {@link CesiumGeometry::TileAvailabilityFlags} for this tile,
+   * encoded into an uint8_t.
    */
-  bool isTileAvailable(const QuadtreeTileID& id) const noexcept;
+  uint8_t isTileAvailable(const QuadtreeTileID& id) const noexcept;
 
 private:
   struct RectangleWithLevel {
@@ -103,11 +104,12 @@ private:
   static void putRectangleInQuadtree(
       const QuadtreeTilingScheme& tilingScheme,
       uint32_t maximumLevel,
-      QuadtreeTileAvailability::QuadtreeNode& node,
-      const QuadtreeTileAvailability::RectangleWithLevel& rectangle) noexcept;
+      QuadtreeRectangleAvailability::QuadtreeNode& node,
+      const QuadtreeRectangleAvailability::RectangleWithLevel&
+          rectangle) noexcept;
   static bool rectangleLevelComparator(
-      const QuadtreeTileAvailability::RectangleWithLevel& a,
-      const QuadtreeTileAvailability::RectangleWithLevel& b) noexcept;
+      const QuadtreeRectangleAvailability::RectangleWithLevel& a,
+      const QuadtreeRectangleAvailability::RectangleWithLevel& b) noexcept;
   static uint32_t findMaxLevelFromNode(
       QuadtreeNode* pStopNode,
       QuadtreeNode& node,

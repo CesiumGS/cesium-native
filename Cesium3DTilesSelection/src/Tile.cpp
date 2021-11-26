@@ -4,6 +4,7 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileContentFactory.h"
 #include "Cesium3DTilesSelection/Tileset.h"
+#include "CesiumGeometry/TileAvailabilityFlags.h"
 #include "TileUtilities.h"
 #include "upsampleGltfForRasterOverlays.h"
 
@@ -320,29 +321,28 @@ void Tile::loadContent() {
 
   Tileset& tileset = *this->getTileset();
 
-  std::optional<Future<std::shared_ptr<IAssetRequest>>> maybeRequestFuture =
-      tileset.requestTileContent(*this);
-
-  if (!maybeRequestFuture) {
-    // There is no content to load. But we may need to upsample.
-
-    const UpsampledQuadtreeNode* pSubdivided =
-        std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
-    if (pSubdivided) {
-      // We can't upsample this tile until its parent tile is done loading.
-      if (this->getParent() &&
-          this->getParent()->getState() == LoadState::Done) {
+  // If this is an upsampled tile, we need to derive this tile's content from
+  // its parent.
+  const UpsampledQuadtreeNode* pSubdivided =
+      std::get_if<UpsampledQuadtreeNode>(&this->getTileID());
+  if (pSubdivided) {
+    // We can't upsample this tile until its parent tile is done loading.
+    if (this->getParent()) {
+      if (this->getParent()->getState() == LoadState::Done) {
         std::vector<Projection> projections = mapOverlaysToTile(*this);
         this->upsampleParent(std::move(projections));
       } else {
-        // Try again later. Push the parent tile loading along if we can.
-        if (this->getParent()) {
-          this->getParent()->loadContent();
-        }
+        // Try again later. Parent tile is LoadState::Unloaded so attempt to
+        // load its content.
+
+        // Note: Since the current tile is an upsampled node, we can assume
+        // that either the parent is also upsampled, or the parent has content.
+        this->getParent()->loadContent();
         this->setState(LoadState::Unloaded);
       }
     } else {
-      this->setState(LoadState::ContentLoaded);
+      // This shouldn't happen.
+      assert(this->getParent() != nullptr);
     }
 
     return;
@@ -359,7 +359,7 @@ void Tile::loadContent() {
   TileContentLoadInput loadInput(*this);
 
   const CesiumGeometry::Axis gltfUpAxis = tileset.getGltfUpAxis();
-  std::move(maybeRequestFuture.value())
+  tileset.requestTileContent(*this)
       .thenInWorkerThread(
           [loadInput = std::move(loadInput),
            asyncSystem = tileset.getAsyncSystem(),
@@ -468,6 +468,73 @@ void Tile::loadContent() {
       });
 }
 
+void Tile::processLoadedContent() {
+  const TilesetExternals& externals = this->getTileset()->getExternals();
+
+  if (this->getState() == LoadState::ContentLoaded) {
+    if (externals.pPrepareRendererResources) {
+      this->_pRendererResources =
+          externals.pPrepareRendererResources->prepareInMainThread(
+              *this,
+              this->getRendererResources());
+    }
+
+    if (this->_pContent) {
+      // Apply children from content, but only if we don't already have
+      // children.
+      if (this->_pContent->childTiles && this->getChildren().empty()) {
+        for (Tile& childTile : this->_pContent->childTiles.value()) {
+          childTile.setParent(this);
+        }
+
+        this->createChildTiles(std::move(this->_pContent->childTiles.value()));
+
+        // Initialize the new contexts, if there are any.
+        for (auto&& pNewContext : this->_pContent->newTileContexts) {
+          if (pNewContext) {
+            if (pNewContext->contextInitializerCallback) {
+              pNewContext->contextInitializerCallback(
+                  *this->_pContext,
+                  *pNewContext);
+            }
+
+            this->_pContext->pTileset->addContext(std::move(pNewContext));
+          }
+        }
+      }
+
+      // If this tile has no model, we want to unconditionally refine past it.
+      // Note that "no" model is different from having a model, but it is blank.
+      // In the latter case, we'll happily render nothing in the space of this
+      // tile, which is sometimes useful.
+      if (!this->_pContent->model) {
+        this->setUnconditionallyRefine();
+      }
+
+      // A new and improved bounding volume.
+      if (this->_pContent->updatedBoundingVolume) {
+        this->setBoundingVolume(this->_pContent->updatedBoundingVolume.value());
+      }
+
+      if (this->getContext()->implicitContext) {
+        ImplicitTilingContext& context = *this->getContext()->implicitContext;
+        const QuadtreeTileID* pQuadtreeTileID =
+            std::get_if<QuadtreeTileID>(&this->getTileID());
+        if (pQuadtreeTileID && context.quadtreeTilingScheme &&
+            context.rectangleAvailability &&
+            !this->_pContent->availableTileRectangles.empty()) {
+          for (const QuadtreeTileRectangularRange& range :
+               this->_pContent->availableTileRectangles) {
+            context.rectangleAvailability->addAvailableTileRange(range);
+          }
+        }
+      }
+    }
+
+    this->setState(LoadState::Done);
+  }
+}
+
 bool Tile::unloadContent() noexcept {
   if (this->getState() != Tile::LoadState::Unloaded) {
     // Cannot unload while an async operation is in progress.
@@ -513,50 +580,6 @@ bool Tile::unloadContent() noexcept {
   this->_rasterTiles.clear();
 
   return true;
-}
-
-static void createImplicitTile(
-    const ImplicitTilingContext& implicitContext,
-    Tile& parent,
-    Tile& child,
-    const QuadtreeTileID& childID,
-    bool available) {
-  child.setContext(parent.getContext());
-  child.setParent(&parent);
-
-  if (available) {
-    child.setTileID(childID);
-  } else {
-    child.setTileID(UpsampledQuadtreeNode{childID});
-  }
-
-  child.setGeometricError(parent.getGeometricError() * 0.5);
-
-  double minimumHeight = -1000.0;
-  double maximumHeight = 9000.0;
-
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&parent.getBoundingVolume());
-  if (!pRegion) {
-    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-        std::get_if<BoundingRegionWithLooseFittingHeights>(
-            &parent.getBoundingVolume());
-    if (pLooseRegion) {
-      pRegion = &pLooseRegion->getBoundingRegion();
-    }
-  }
-
-  if (pRegion) {
-    minimumHeight = pRegion->getMinimumHeight();
-    maximumHeight = pRegion->getMaximumHeight();
-  }
-
-  child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
-      unprojectRectangleSimple(
-          implicitContext.projection,
-          implicitContext.tilingScheme.tileToRectangle(childID)),
-      minimumHeight,
-      maximumHeight)));
 }
 
 namespace {
@@ -666,64 +689,138 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
   const double minimumHeight = maybeRegion->getMinimumHeight();
   const double maximumHeight = maybeRegion->getMaximumHeight();
 
-  GlobeRectangle swRectangle(0.0, 0.0, 0.0, 0.0);
-  GlobeRectangle seRectangle(0.0, 0.0, 0.0, 0.0);
-  GlobeRectangle nwRectangle(0.0, 0.0, 0.0, 0.0);
-  GlobeRectangle neRectangle(0.0, 0.0, 0.0, 0.0);
-
   // If we have an implicit tiling context, make these new tiles conform to it.
   // Otherwise just subdivide the bounding region.
   const TileContext* pContext = parent.getContext();
-  if (pRealParentTileID && pContext && pContext->implicitContext) {
-    const QuadtreeTilingScheme& tilingScheme =
-        pContext->implicitContext.value().tilingScheme;
-    const Projection& projection = pContext->implicitContext.value().projection;
+  if (pRealParentTileID && pContext && pContext->implicitContext &&
+      pContext->implicitContext->quadtreeTilingScheme) {
 
-    swRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(swID));
-    seRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(seID));
-    nwRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(nwID));
-    neRectangle = unprojectRectangleSimple(
-        projection,
-        tilingScheme.tileToRectangle(neID));
+    const ImplicitTilingContext& implicitContext = *pContext->implicitContext;
+    const QuadtreeTilingScheme& tilingScheme =
+        *implicitContext.quadtreeTilingScheme;
+
+    const BoundingRegion* pRegion = std::get_if<BoundingRegion>(
+        &implicitContext.implicitRootBoundingVolume);
+    const BoundingRegionWithLooseFittingHeights* pLooseRegion =
+        std::get_if<BoundingRegionWithLooseFittingHeights>(
+            &implicitContext.implicitRootBoundingVolume);
+    const OrientedBoundingBox* pBox = std::get_if<OrientedBoundingBox>(
+        &implicitContext.implicitRootBoundingVolume);
+
+    if (!pRegion && pLooseRegion) {
+      pRegion = &pLooseRegion->getBoundingRegion();
+    }
+
+    CesiumGeometry::Rectangle swProjectedRectangle =
+        tilingScheme.tileToRectangle(swID);
+    CesiumGeometry::Rectangle seProjectedRectangle =
+        tilingScheme.tileToRectangle(seID);
+    CesiumGeometry::Rectangle nwProjectedRectangle =
+        tilingScheme.tileToRectangle(nwID);
+    CesiumGeometry::Rectangle neProjectedRectangle =
+        tilingScheme.tileToRectangle(neID);
+
+    if (pRegion && implicitContext.projection) {
+      const Projection& projection = *implicitContext.projection;
+
+      sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, swProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+      se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, seProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+      nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, nwProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+      ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+          unprojectRectangleSimple(projection, neProjectedRectangle),
+          minimumHeight,
+          maximumHeight)));
+
+    } else if (pBox) {
+      const glm::dmat3& rootHalfAxes = pBox->getHalfAxes();
+
+      glm::dvec2 swProjectedCenter = swProjectedRectangle.getCenter();
+      sw.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(swProjectedCenter.x, swProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * swProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * swProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+
+      glm::dvec2 seProjectedCenter = seProjectedRectangle.getCenter();
+      se.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(seProjectedCenter.x, seProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * seProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * seProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+
+      glm::dvec2 nwProjectedCenter = nwProjectedRectangle.getCenter();
+      nw.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(nwProjectedCenter.x, nwProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * nwProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * nwProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+
+      glm::dvec2 neProjectedCenter = neProjectedRectangle.getCenter();
+      ne.setBoundingVolume(OrientedBoundingBox(
+          rootHalfAxes *
+              glm::dvec3(neProjectedCenter.x, neProjectedCenter.y, 0.0),
+          glm::dmat3(
+              0.5 * neProjectedRectangle.computeWidth() * rootHalfAxes[0],
+              0.5 * neProjectedRectangle.computeHeight() * rootHalfAxes[1],
+              rootHalfAxes[2])));
+    }
   } else {
     const GlobeRectangle& parentRectangle = maybeRegion->getRectangle();
     Cartographic center = parentRectangle.computeCenter();
-    swRectangle = GlobeRectangle(
-        parentRectangle.getWest(),
-        parentRectangle.getSouth(),
-        center.longitude,
-        center.latitude);
-    seRectangle = GlobeRectangle(
-        center.longitude,
-        parentRectangle.getSouth(),
-        parentRectangle.getEast(),
-        center.latitude);
-    nwRectangle = GlobeRectangle(
-        parentRectangle.getWest(),
-        center.latitude,
-        center.longitude,
-        parentRectangle.getNorth());
-    neRectangle = GlobeRectangle(
-        center.longitude,
-        center.latitude,
-        parentRectangle.getEast(),
-        parentRectangle.getNorth());
-  }
+    sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            parentRectangle.getWest(),
+            parentRectangle.getSouth(),
+            center.longitude,
+            center.latitude),
+        minimumHeight,
+        maximumHeight)));
 
-  sw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(swRectangle, minimumHeight, maximumHeight)));
-  se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(seRectangle, minimumHeight, maximumHeight)));
-  nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(nwRectangle, minimumHeight, maximumHeight)));
-  ne.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(neRectangle, minimumHeight, maximumHeight)));
+    se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            center.longitude,
+            parentRectangle.getSouth(),
+            parentRectangle.getEast(),
+            center.latitude),
+        minimumHeight,
+        maximumHeight)));
+
+    nw.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            parentRectangle.getWest(),
+            center.latitude,
+            center.longitude,
+            parentRectangle.getNorth()),
+        minimumHeight,
+        maximumHeight)));
+
+    se.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+        GlobeRectangle(
+            center.longitude,
+            center.latitude,
+            parentRectangle.getEast(),
+            parentRectangle.getNorth()),
+        minimumHeight,
+        maximumHeight)));
+  }
 
   sw.setTransform(parent.getTransform());
   se.setTransform(parent.getTransform());
@@ -736,7 +833,6 @@ void createQuadtreeSubdividedChildren(Tile& parent) {
 void Tile::update(
     int32_t /*previousFrameNumber*/,
     int32_t /*currentFrameNumber*/) {
-  const TilesetExternals& externals = this->getTileset()->getExternals();
 
   if (this->getState() == LoadState::FailedTemporarily) {
     // Check with the TileContext to see if we should retry.
@@ -763,110 +859,6 @@ void Tile::update(
       }
     } else {
       this->setState(LoadState::Failed);
-    }
-  }
-
-  if (this->getState() == LoadState::ContentLoaded) {
-    if (externals.pPrepareRendererResources) {
-      this->_pRendererResources =
-          externals.pPrepareRendererResources->prepareInMainThread(
-              *this,
-              this->getRendererResources());
-    }
-
-    if (this->_pContent) {
-      // Apply children from content, but only if we don't already have
-      // children.
-      if (this->_pContent->childTiles && this->getChildren().empty()) {
-        for (Tile& childTile : this->_pContent->childTiles.value()) {
-          childTile.setParent(this);
-        }
-
-        this->createChildTiles(std::move(this->_pContent->childTiles.value()));
-
-        // Initialize the new context, if there is one.
-        if (this->_pContent->pNewTileContext &&
-            this->_pContent->pNewTileContext->contextInitializerCallback) {
-          this->_pContent->pNewTileContext->contextInitializerCallback(
-              *this->getContext(),
-              *this->_pContent->pNewTileContext);
-        }
-
-        this->getTileset()->addContext(
-            std::move(this->_pContent->pNewTileContext));
-      }
-
-      // If this tile has no model, we want to unconditionally refine past it.
-      // Note that "no" model is different from having a model, but it is blank.
-      // In the latter case, we'll happily render nothing in the space of this
-      // tile, which is sometimes useful.
-      if (!this->_pContent->model) {
-        this->setUnconditionallyRefine();
-      }
-
-      // A new and improved bounding volume.
-      if (this->_pContent->updatedBoundingVolume) {
-        this->setBoundingVolume(*this->_pContent->updatedBoundingVolume);
-      }
-      if (this->_pContent->updatedContentBoundingVolume) {
-        // There should not be an updated content bounding volume unless there
-        // is also an updated regular bounding volume.
-        assert(this->_pContent->updatedBoundingVolume);
-        this->setContentBoundingVolume(
-            *this->_pContent->updatedContentBoundingVolume);
-      }
-
-      if (!this->_pContent->availableTileRectangles.empty() &&
-          this->getContext()->implicitContext) {
-        ImplicitTilingContext& context =
-            this->getContext()->implicitContext.value();
-        for (const QuadtreeTileRectangularRange& range :
-             this->_pContent->availableTileRectangles) {
-          context.availability.addAvailableTileRange(range);
-        }
-      }
-    }
-
-    this->setState(LoadState::Done);
-  }
-
-  if (this->getContext()->implicitContext && this->getChildren().empty() &&
-      std::get_if<QuadtreeTileID>(&this->_id)) {
-    // Check if any child tiles are known to be available, and create them if
-    // they are.
-    const ImplicitTilingContext& implicitContext =
-        this->getContext()->implicitContext.value();
-    const CesiumGeometry::QuadtreeTileAvailability& availability =
-        implicitContext.availability;
-
-    const QuadtreeTileID id = std::get<QuadtreeTileID>(this->_id);
-
-    const QuadtreeTileID swID(id.level + 1, id.x * 2, id.y * 2);
-    const uint32_t sw = availability.isTileAvailable(swID) ? 1 : 0;
-
-    const QuadtreeTileID seID(swID.level, swID.x + 1, swID.y);
-    const uint32_t se = availability.isTileAvailable(seID) ? 1 : 0;
-
-    const QuadtreeTileID nwID(swID.level, swID.x, swID.y + 1);
-    const uint32_t nw = availability.isTileAvailable(nwID) ? 1 : 0;
-
-    const QuadtreeTileID neID(swID.level, swID.x + 1, swID.y + 1);
-    const uint32_t ne = availability.isTileAvailable(neID) ? 1 : 0;
-
-    const size_t childCount = sw + se + nw + ne;
-    if (childCount > 0) {
-      // If any children are available, we need to create all four in order to
-      // avoid holes. But non-available tiles will be upsampled instead of
-      // loaded.
-      // TODO: this is the right thing to do for terrain, which is the only use
-      // of implicit tiling currently. But we may need to re-evaluate it if
-      // we're using implicit tiling for buildings (for example) in the future.
-      this->_children.resize(4);
-
-      createImplicitTile(implicitContext, *this, this->_children[0], swID, sw);
-      createImplicitTile(implicitContext, *this, this->_children[1], seID, se);
-      createImplicitTile(implicitContext, *this, this->_children[2], nwID, nw);
-      createImplicitTile(implicitContext, *this, this->_children[3], neID, ne);
     }
   }
 
@@ -897,11 +889,10 @@ void Tile::update(
 
           // Add a new mapping.
           std::vector<Projection> missingProjections;
-          RasterMappedTo3DTile* pMapping =
-              RasterMappedTo3DTile::mapOverlayToTile(
-                  pProvider->getOwner(),
-                  *this,
-                  missingProjections);
+          RasterMappedTo3DTile::mapOverlayToTile(
+              pProvider->getOwner(),
+              *this,
+              missingProjections);
 
           if (!missingProjections.empty()) {
             // The mesh doesn't have the right texture coordinates for this
@@ -911,10 +902,6 @@ void Tile::update(
             // texture coordinates without starting over from scratch.
             this->unloadContent();
             return;
-          }
-
-          if (pMapping) {
-            pMapping->loadThrottled();
           }
         }
 
@@ -970,6 +957,10 @@ int64_t Tile::computeByteSize() const noexcept {
   }
 
   return bytes;
+}
+
+void Tile::setEmptyContent() noexcept {
+  this->_pContent = std::make_unique<TileContentLoadResult>();
 }
 
 void Tile::setState(LoadState value) noexcept {

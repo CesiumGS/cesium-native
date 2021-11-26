@@ -78,6 +78,12 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   uint32_t maximumSimultaneousTileLoads = 20;
 
   /**
+   * @brief The maximum number of subtrees that may simultaneously be in the
+   * process of loading.
+   */
+  uint32_t maximumSimultaneousSubtreeLoads = 20;
+
+  /**
    * @brief Indicates whether the ancestors of rendered tiles should be
    * preloaded. Setting this to true optimizes the zoom-out experience and
    * provides more detail in newly-exposed areas when panning. The down side is

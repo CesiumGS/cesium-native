@@ -4,6 +4,9 @@
 #include "TileContext.h"
 
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeospatial/Projection.h>
+
+#include <memory>
 
 namespace Cesium3DTilesSelection {
 
@@ -71,9 +74,9 @@ struct TileContentLoadResult {
   std::optional<CesiumGltf::Model> model{};
 
   /**
-   * @brief A new context, if any, used by the `childTiles`.
+   * @brief The new contexts used by the `childTiles`, if any.
    */
-  std::unique_ptr<TileContext> pNewTileContext{};
+  std::vector<std::unique_ptr<TileContext>> newTileContexts;
 
   /**
    * @brief New child tiles discovered by loading this tile.
@@ -106,8 +109,6 @@ struct TileContentLoadResult {
    */
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
       availableTileRectangles{};
-
-  // TODO: other forms of tile availability, like a bitfield?
 
   /**
    * @brief The HTTP status code received when accessing this content.
