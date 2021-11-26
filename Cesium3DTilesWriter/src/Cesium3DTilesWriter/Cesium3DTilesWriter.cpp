@@ -9,7 +9,7 @@
 namespace Cesium3DTilesWriter {
 
 Cesium3DTilesWriter::Cesium3DTilesWriter() {
-  TilesetWriter::populateExtensions(this->_context);
+  TilesetJsonWriter::populateExtensions(this->_context);
 }
 
 CesiumJsonWriter::ExtensionWriterContext& Cesium3DTilesWriter::getExtensions() {
@@ -38,7 +38,7 @@ TilesetWriterResult Cesium3DTilesWriter::writeTileset(
     writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  TilesetWriter::write(tileset, *writer, context);
+  TilesetJsonWriter::write(tileset, *writer, context);
   result.tilesetBytes = writer->toBytes();
 
   return result;

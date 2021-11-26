@@ -9,7 +9,7 @@
 namespace Cesium3DTilesWriter {
 
 CesiumSubtreeWriter::CesiumSubtreeWriter() {
-  SubtreeWriter::populateExtensions(this->_context);
+  SubtreeJsonWriter::populateExtensions(this->_context);
 }
 
 CesiumJsonWriter::ExtensionWriterContext& CesiumSubtreeWriter::getExtensions() {
@@ -38,7 +38,7 @@ SubtreeWriterResult CesiumSubtreeWriter::writeSubtree(
     writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  SubtreeWriter::write(subtree, *writer, context);
+  SubtreeJsonWriter::write(subtree, *writer, context);
   result.subtreeBytes = writer->toBytes();
 
   return result;

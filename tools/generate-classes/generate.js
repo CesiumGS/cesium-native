@@ -307,7 +307,7 @@ function generate(options, schema, writers) {
   const writeInclude = `#include <${namespace}/${name}.h>`
 
   const writeDeclaration = `
-        struct ${name}Writer {
+        struct ${name}JsonWriter {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
@@ -329,18 +329,18 @@ function generate(options, schema, writers) {
   `;
 
   const writeDefinition = `
-        void ${name}Writer::write(
+        void ${name}JsonWriter::write(
             const ${namespace}::${name}& obj,
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context) {
           writeJson(obj, jsonWriter, context);
         }
 
-        void ${name}Writer::populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
+        void ${name}JsonWriter::populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
           ${extensions[name] ? `
             ${extensions[name]
               .map((extension) => {
-                return `context.registerExtension<${namespace}::${name}, ${extension.className}Writer>();`
+                return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`
               })
               .join("\n")}
           ` : "(void)context;"}
