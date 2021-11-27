@@ -5,7 +5,15 @@ const getNameFromSchema = require("./getNameFromSchema");
 const unindent = require("./unindent");
 
 function generateCombinedWriter(options) {
-  const { writerOutputDir, config, namespace, writerNamespace, rootSchema, writers, extensions } = options;
+  const {
+    writerOutputDir,
+    config,
+    namespace,
+    writerNamespace,
+    rootSchema,
+    writers,
+    extensions,
+  } = options;
 
   const name = getNameFromSchema(config, rootSchema);
 
@@ -36,7 +44,7 @@ function generateCombinedWriter(options) {
             })
             .join("\n")}
 
-        void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context); 
+        void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context); 
 
         } // namespace ${writerNamespace}
   `;
@@ -173,11 +181,11 @@ function generateCombinedWriter(options) {
           })
           .join("\n")}
         
-        void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
+        void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
           (void)context;
           ${writers
             .map((writer) => {
-              return writer.writeExtensionsRegistration
+              return writer.writeExtensionsRegistration;
             })
             .join("\n")}
         }
@@ -185,10 +193,18 @@ function generateCombinedWriter(options) {
   
   `;
 
-  const writerHeaderOutputDir = path.join(writerOutputDir, "generated", "src", writerNamespace);
+  const writerHeaderOutputDir = path.join(
+    writerOutputDir,
+    "generated",
+    "src",
+    writerNamespace
+  );
   fs.mkdirSync(writerHeaderOutputDir, { recursive: true });
 
-  const headerOutputPath = path.join(writerHeaderOutputDir, `${name}JsonWriter.h`);
+  const headerOutputPath = path.join(
+    writerHeaderOutputDir,
+    `${name}JsonWriter.h`
+  );
 
   const implementationOutputPath = path.join(
     writerHeaderOutputDir,

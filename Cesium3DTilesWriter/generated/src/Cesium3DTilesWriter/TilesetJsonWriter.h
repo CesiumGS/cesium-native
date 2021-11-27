@@ -161,6 +161,6 @@ struct BufferJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
 
 } // namespace Cesium3DTilesWriter

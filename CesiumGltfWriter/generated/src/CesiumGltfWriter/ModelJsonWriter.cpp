@@ -2348,7 +2348,7 @@ void AccessorSparseIndicesJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void populateExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
+void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
 
   context.registerExtension<

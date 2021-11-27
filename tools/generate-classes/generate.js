@@ -15,7 +15,7 @@ function generate(options, schema, writers) {
     namespace,
     readerNamespace,
     writerNamespace,
-    extensions
+    extensions,
   } = options;
 
   const name = getNameFromSchema(config, schema);
@@ -98,7 +98,12 @@ function generate(options, schema, writers) {
         }
     `;
 
-  const headerOutputDir = path.join(outputDir, "generated", "include", namespace);
+  const headerOutputDir = path.join(
+    outputDir,
+    "generated",
+    "include",
+    namespace
+  );
   fs.mkdirSync(headerOutputDir, { recursive: true });
   const headerOutputPath = path.join(
     headerOutputDir,
@@ -209,7 +214,12 @@ function generate(options, schema, writers) {
         }
   `;
 
-  const readerHeaderOutputDir = path.join(readerOutputDir, "generated", "src", readerNamespace);
+  const readerHeaderOutputDir = path.join(
+    readerOutputDir,
+    "generated",
+    "src",
+    readerNamespace
+  );
   fs.mkdirSync(readerHeaderOutputDir, { recursive: true });
 
   const readerHeaderOutputPath = path.join(
@@ -231,7 +241,10 @@ function generate(options, schema, writers) {
     const initializerList = properties
       .filter((p) => p.readerType.toLowerCase().indexOf("jsonhandler") != -1)
       .map(
-        (p) => `_${p.cppSafeName}(${p.schemas && p.schemas.length > 0 ? varName : ""})`
+        (p) =>
+          `_${p.cppSafeName}(${
+            p.schemas && p.schemas.length > 0 ? varName : ""
+          })`
       )
       .join(", ");
     return initializerList == "" ? "" : ", " + initializerList;
@@ -292,13 +305,17 @@ function generate(options, schema, writers) {
 
   const writeForwardDeclaration = `struct ${name};`;
 
-  const writeInclude = `#include <${namespace}/${name}.h>`
+  const writeInclude = `#include <${namespace}/${name}.h>`;
 
   const writeDeclaration = `
         struct ${name}JsonWriter {
           using ValueType = ${namespace}::${name};
 
-          ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+          ${
+            thisConfig.extensionName
+              ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+              : ""
+          }
 
           static void write(
               const ${namespace}::${name}& obj,
@@ -364,13 +381,15 @@ function generate(options, schema, writers) {
   `;
 
   const writeExtensionsRegistration = `
-        ${extensions[schema.title] ? 
+        ${
           extensions[schema.title]
-            .map((extension) => {
-              return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`
-            })
-            .join("\n")
-        : ""}
+            ? extensions[schema.title]
+                .map((extension) => {
+                  return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
+                })
+                .join("\n")
+            : ""
+        }
   `;
 
   writers.push({
@@ -380,7 +399,7 @@ function generate(options, schema, writers) {
     writeJsonDeclaration,
     writeDefinition,
     writeJsonDefinition,
-    writeExtensionsRegistration
+    writeExtensionsRegistration,
   });
 
   if (options.oneHandlerFile) {
